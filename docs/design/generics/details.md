@@ -1468,11 +1468,27 @@ adapter FormattedSong for Song {
   impl as Printable { method (this: Self) Print() { Print("EA"); } }
 }
 adapter FormattedSongByTitle for Song {
-  // Open question: Allow "impl as Printable = FormattedSong;" here?
   impl as Printable = FormattedSong as Printable;
   impl as Comparable = SongByTitle as Comparable;
 }
 ```
+
+**Open question:** As an alternative to:
+
+```
+impl as Printable = FormattedSong as Printable;
+```
+
+we could allow users to write:
+
+```
+impl as Printable = FormattedSong;
+```
+
+This would remove ceremony that the compiler doesn't need. The concern is
+whether it makes sense or is a category error. In this example, is
+`FormattedSong`, a type, a suitable value to provide when asking for a
+`Printable` implementation?
 
 This allows us to provide implementations of new interfaces (as in
 `SongByTitle`), provide different implementations of the same interface (as in
@@ -1528,11 +1544,14 @@ interface, `Hashable`, and use the same implementation for that interface. The
 one difference between them is that `Song as Hashable` may be implicitly cast to
 `Song`, which implements interface `Printable`, and `PlayableSong as Hashable`
 may be implicilty cast to `PlayableSong`, which implements interface `Media`.
-This means that it is safe to cast between `HashMap(Song, Int)` and
-`HashMap(PlayableSong, Int)` (though maybe only with an explicit cast) but
-`HashMap(SongHashedByTitle, Int)` is incompatible. This is a relief, because we
-know that in practice the invariants of a `HashMap` implementation rely on the
-hashing function staying the same.
+This means that it is safe to cast between
+`HashMap(Song, Int) == HashMap(Song as Hashable, Int)` and
+`HashMap(PlayableSong, Int) == HashMap(PlayableSong as Hashable, Int)` (though
+maybe only with an explicit cast) but
+`HashMap(SongHashedByTitle, Int) == Hashmap(SongHashByTitle as Hashable, Int)`
+is incompatible. This is a relief, because we know that in practice the
+invariants of a `HashMap` implementation rely on the hashing function staying
+the same.
 
 ### Extending adapter
 
@@ -1640,8 +1659,11 @@ adapter ComparableFromDifferenceFn
 }
 struct IntWrapper {
   var x: Int;
-  fn Difference(this: Self, that: Self) { return that.x - this.x; }
-  impl as Comparable = ComparableFromDifferenceFn(IntWrapper, Difference)
+  fn Difference(this: Self, that: Self) {
+    return that.x - this.x;
+  }
+  impl as Comparable =
+      ComparableFromDifferenceFn(IntWrapper, Difference)
       as Comparable;
 }
 ```
@@ -1666,6 +1688,10 @@ interface NSpacePoint {
 }
 ```
 
+**Note:**
+[Question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565)
+considers the syntax for associated constants.
+
 Implementations of `NSpacePoint` for different types might have different values
 for `N`:
 
@@ -1689,7 +1715,7 @@ struct Point3D {
 }
 ```
 
-And these values may be accessed as follows:
+And these values may be accessed as members of the type:
 
 ```
 Assert(Point2D.N == 2);
@@ -1772,14 +1798,15 @@ implements `StackAssociatedType`:
 
 ```
 struct DynamicArray(T:$ Type) {
+  struct IteratorType { ... }
   method (this: Self*) Begin() -> IteratorType;
   method (this: Self*) End() -> IteratorType;
   method (this: Self*) Insert(pos: IteratorType, value: T);
   method (this: Self*) Remove(pos: IteratorType);
 
   impl as StackAssociatedType {
-    var ElementType:$ Type = T;
-    // `Self` and `DynamicArray(T)` are still equivalent here.
+    // Set the associated type `ElementType` to `T`.
+    alias ElementType = T;
     method (this: Self*) Push(value: ElementType) {
       this->Insert(this->End(), value);
     }
@@ -1798,8 +1825,25 @@ struct DynamicArray(T:$ Type) {
 }
 ```
 
-Now we can write a generic function that operates on anything implementing the
-`StackAssociatedType` interface, for example:
+**Open question:** What syntax should `DynamicArray(T)` use to specify the value
+of `StackAssociatedType.ElementType`?
+
+```
+alias ElementType = T;
+```
+
+or:
+
+```
+var ElementType:$ Type = T;
+```
+
+Note that the resolution of
+[question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565)
+may affect the answer to this question.
+
+The definition of the `StackAssociatedType` is sufficient for writing a generic
+function that operates on anything implementing that interface, for example:
 
 ```
 fn PeekAtTopOfStack[StackType:$ StackAssociatedType](s: StackType*)
@@ -1877,39 +1921,9 @@ removing this feature because it was the one thing in Swift that required global
 type inference, which they otherwise avoided. They
 [ultimately decided to keep the feature](https://github.com/apple/swift-evolution/blob/main/proposals/0108-remove-assoctype-inference.md).
 
-FIXME: Alternate text!
-
-Imagine we have an interface that has an associated type used in the signature
-of one of its methods:
-
-```
-interface A {
-  var T:$ Type;
-  method (this: Self) F() -> T;
-}
-```
-
-And we have a type implementing that interface:
-
-```
-struct S {
-  impl as A {
-    // var T:$ Type = Int;
-    method (this: Self) F() -> Int { return 3; }
-  }
-}
-```
-
-The compiler could infer the type to assign to the associated type by matching
-the definition of `F`. This is
-[supported in Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190),
-but may be tricky in the presence of function overloading or something where we
-would prefer the user to be explicit (so, for example, the name `T` was visible
-in the definition of `S`).
-
 ### Model
 
-The associated type is modeled by a witness table field in the interface.
+The associated type can be modeled by a witness table field in the interface.
 
 ```
 interface Iterator {
@@ -1994,7 +2008,7 @@ be comparable with multiple other types, and in fact interfaces for
 [operator overloads](#operator-overloading) more generally. Example:
 
 ```
-interface EqualityComparableTo(T:$ Type) {
+interface EquatableWith(T:$ Type) {
   fn operator==(this: Self, that: T) -> Bool;
   ...
 }
@@ -2003,8 +2017,8 @@ struct Complex {
   var imag: Float64;
   // Can implement this interface more than once as long as it has different
   // arguments.
-  impl as EqualityComparableTo(Complex) { ... }
-  impl as EqualityComparableTo(Float64) { ... }
+  impl as EquatableWith(Complex) { ... }
+  impl as EquatableWith(Float64) { ... }
 }
 ```
 
@@ -3729,27 +3743,27 @@ Since interfaces with parameters can have multiple implementations for a single
 type, it opens the question of how they work when implementing one interface in
 terms of another.
 
-**Open question:** We could allow templated `impl`s to take each of these
+**Open question:** We could allow parameterized `impl`s to take each of these
 multiple implementations for one interface and manufacture an `impl` for another
 interface, as in this example:
 
 ```
 // Some interfaces with type parameters.
-interface EqualityComparableTo(T:$ Type) { ... }
-// Types can implement templated interfaces more than once as long as the
+interface EquatableWith(T:$ Type) { ... }
+// Types can implement parameterized interfaces more than once as long as the
 // templated arguments differ.
 struct Complex {
   var r: Float64;
   var i: Float64;
-  impl as EqualityComparableTo(Complex) { ... }
-  impl as EqualityComparableTo(Float64) { ... }
+  impl as EquatableWith(Complex) { ... }
+  impl as EquatableWith(Float64) { ... }
 }
 // Some other interface with a type parameter.
 interface Foo(T:$ Type) { ... }
-// This provides an impl of Foo(T) for U if U is EqualityComparableTo(T).
+// This provides an impl of Foo(T) for U if U is EquatableWith(T).
 // In the case of Complex, this provides two impls, one for T == Complex,
 // and one for T == Float64.
-external impl [U:$ EqualityComparableTo(T:$$ Type)] U as Foo(T) {
+external impl [U:$ EquatableWith(T:$$ Type)] U as Foo(T) {
   ...
 }
 ```
