@@ -33,7 +33,7 @@ TEST(ParenContentsTest, UnaryNoCommaAsExpression) {
   // )
   // ```
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::No);
 
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
@@ -43,7 +43,7 @@ TEST(ParenContentsTest, UnaryNoCommaAsExpression) {
 
 TEST(ParenContentsTest, UnaryNoCommaAsTuple) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::No);
 
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
@@ -56,7 +56,7 @@ TEST(ParenContentsTest, UnaryNoCommaAsTuple) {
 
 TEST(ParenContentsTest, UnaryWithCommaAsExpression) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
@@ -69,7 +69,7 @@ TEST(ParenContentsTest, UnaryWithCommaAsExpression) {
 
 TEST(ParenContentsTest, UnaryWithCommaAsTuple) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
@@ -82,8 +82,8 @@ TEST(ParenContentsTest, UnaryWithCommaAsTuple) {
 
 TEST(ParenContentsTest, BinaryAsExpression) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)},
-       {.expression = Expression::MakeInt(/*line_num=*/3, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)},
+       {.expression = *Expression::MakeInt(/*line_num=*/3, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
@@ -97,8 +97,8 @@ TEST(ParenContentsTest, BinaryAsExpression) {
 
 TEST(ParenContentsTest, BinaryAsTuple) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)},
-       {.expression = Expression::MakeInt(/*line_num=*/3, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)},
+       {.expression = *Expression::MakeInt(/*line_num=*/3, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);

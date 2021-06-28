@@ -74,8 +74,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       for (const TupleElement& field : *t->GetTuple().elements) {
         args.push_back(
             {.name = field.name,
-             .expression = ReifyType(state->heap.Read(field.address, line_num),
-                                     line_num)});
+             .expression = *ReifyType(state->heap.Read(field.address, line_num),
+                                      line_num)});
       }
       return Expression::MakeTuple(0, args);
     }
@@ -220,10 +220,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           arg_expected = state->heap.Read(
               (*expected->GetTuple().elements)[i].address, e->line_num);
         }
-        auto arg_res = TypeCheckExp(arg->expression, new_types, values,
-                                    arg_expected, context);
+        auto arg_res = TypeCheckExp(arg->expression.GetPointer(), new_types,
+                                    values, arg_expected, context);
         new_types = arg_res.types;
-        new_args.push_back({.name = arg->name, .expression = arg_res.exp});
+        new_args.push_back({.name = arg->name, .expression = *arg_res.exp});
         arg_types->push_back(
             {.name = arg->name,
              .address = state->heap.AllocateValue(arg_res.type)});
@@ -586,7 +586,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      return Statement::MakeReturn(line_num, Expression::MakeTuple(line_num, {}));
+      return Statement::MakeReturn(line_num,
+                                   Expression::MakeTuple(line_num, {}));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"

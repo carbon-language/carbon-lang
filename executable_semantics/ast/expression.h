@@ -21,7 +21,7 @@ struct FieldInitializer {
   std::string name;
 
   // The expression that initializes the field.
-  const Expression* expression;
+  IndirectValue<Expression> expression;
 };
 
 enum class ExpressionKind {

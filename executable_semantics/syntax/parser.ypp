@@ -264,9 +264,9 @@ tuple: "(" paren_contents ")"
 ;
 field_initializer:
   pattern
-    { $$ = Carbon::FieldInitializer({"", $1}); }
+    { $$ = Carbon::FieldInitializer({"", *$1}); }
 | designator "=" pattern
-    { $$ = Carbon::FieldInitializer({$1, $3}); }
+    { $$ = Carbon::FieldInitializer({$1, *$3}); }
 ;
 paren_contents:
   // Empty

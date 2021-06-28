@@ -653,7 +653,7 @@ void StepLvalue() {
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      const Expression* e1 = exp->GetTuple().fields[0].expression;
+      const Expression* e1 = exp->GetTuple().fields[0].expression.GetPointer();
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -704,7 +704,8 @@ void StepExp() {
       if (exp->GetTuple().fields.size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = exp->GetTuple().fields[0].expression;
+        const Expression* e1 =
+            exp->GetTuple().fields[0].expression.GetPointer();
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -1117,7 +1118,7 @@ void HandleValue() {
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
             const Expression* elt =
-                exp->GetTuple().fields[act->pos].expression;
+                exp->GetTuple().fields[act->pos].expression.GetPointer();
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1150,7 +1151,7 @@ void HandleValue() {
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
             const Expression* elt =
-                exp->GetTuple().fields[act->pos].expression;
+                exp->GetTuple().fields[act->pos].expression.GetPointer();
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1497,8 +1498,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg =
-      Expression::MakeTuple(0, {});
+  const Expression* arg = Expression::MakeTuple(0, {});
   const Expression* call_main =
       Expression::MakeCall(0, Expression::MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));

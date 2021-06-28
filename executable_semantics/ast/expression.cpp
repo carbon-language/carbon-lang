@@ -233,7 +233,7 @@ static void PrintFields(const std::vector<FieldInitializer>& fields) {
       std::cout << ", ";
     }
     std::cout << iter->name << " = ";
-    PrintExp(iter->expression);
+    PrintExp(iter->expression.GetPointer());
   }
 }
 
