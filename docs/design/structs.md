@@ -127,19 +127,20 @@ is a base type for use in inheritance with a
 [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) for dynamic
 dispatch. The term "abstract" means that the base type can't be instantiated due
 to methods without implementation, they are said to be "abstract" or "pure
-virtual". Only child types that implement those methods may be instantiated.
+virtual". Only derived types that implement those methods may be instantiated.
 
 Abstract base classes can't have data fields in the base type, which avoids the
 main implementation difficulties and complexity of multiple inheritance. This
 allows a type to inherit from multiple abstract base classes.
 
 Abstract base classes are primarily used for
+
 [subtyping](https://en.wikipedia.org/wiki/Subtyping). In practice that means
-that if we have a type `Concrete` that is a concrete child of an abstract base
-class named `ABC`, object of type `Concrete` will be accessed through pointers
-of type `ABC*`, which means "a pointer to type inheriting from `ABC`." Such
-types should only be allowed to be deleted by way of that pointer if a virtual
-destructor is included in the abstract base class.
+that if we have a type `Concrete` that is a concrete derived type of an abstract
+base class named `ABC`, object of type `Concrete` will be accessed through
+pointers of type `ABC*`, which means "a pointer to type inheriting from `ABC`."
+Such types should only be allowed to be deleted by way of that pointer if a
+virtual destructor is included in the abstract base class.
 
 The use cases for abstract base classes almost entirely overlap with the
 object-safe (as
@@ -183,8 +184,8 @@ a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
 We exclude complex multiple inheritance schemes, virtual inheritance, and so on
 from this use case. This is to avoid the complexity and overhead they bring,
 particularly since the use of these features in C++ is generally discouraged.
-The rule is that every type has at most one parent type with data members for
-subtyping purposes. Carbon will support additional parent types as long as they
+The rule is that every type has at most one base type with data members for
+subtyping purposes. Carbon will support additional base types as long as they
 are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
 
 **Background:**
@@ -214,7 +215,7 @@ Note that there are two uses for protected methods: those implemented in the
 base and called in the descendant, and the other way around.
 ["The End Of Object Inheritance & The Beginning Of A New Modularity" talk by Augie Fackler and Nathaniel Manista](https://www.youtube.com/watch?v=3MNVP9-hglc)
 discusses design patterns that split up types to reduce the number of kinds of
-calls between child and parent types, and make sure calls only go in one
+calls between base and derived types, and make sure calls only go in one
 direction.
 
 We expect polymorphic types in idiomatic Carbon-only code, at least for the
@@ -230,8 +231,8 @@ implementation reuse rather than subtyping, and so don't need to use a vtable.
 
 A mixin might be an implementation detail of a [data type](#data-types),
 [object type](#object-types), or
-[child of a polymorphic type](#polymorphic-types). A mixin might partially
-implement an [abstract base class](#abstract-base-classes).
+[derived type of a polymorphic type](#polymorphic-types). A mixin might
+partially implement an [abstract base class](#abstract-base-classes).
 
 **Examples:**
 [intrusive linked list](https://www.boost.org/doc/libs/1_63_0/doc/html/intrusive.html),
@@ -625,7 +626,7 @@ Carbon will need ways of saying:
 -   this method is "virtual" and may be overridden in descendents
 -   this method is "pure virtual" or "abstract" and must be overridden in
     descendants
--   this method overrides a method declared in a parent
+-   this method overrides a method declared in a base type
 
 Multiple inheritance will be limited in at least a couple of ways:
 
