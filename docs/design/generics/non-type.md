@@ -11,8 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Imagine we had a regular function that printed some number of 'X' characters:
 
 ```
-fn PrintXs_Regular(Int: n) {
-  var Int: i = 0;
+fn PrintXs_Regular(n: Int) {
+  var i: Int = 0;
   while (i < n) {
     Print("X");
     i += 1;
@@ -21,7 +21,7 @@ fn PrintXs_Regular(Int: n) {
 
 PrintXs_Regular(1); // Prints: X
 PrintXs_Regular(2); // Prints: XX
-var Int: n = 3;
+var n: Int = 3;
 PrintXs_Regular(n); // Prints: XXX
 ```
 
@@ -30,8 +30,8 @@ PrintXs_Regular(n); // Prints: XXX
 What would it mean to change the parameter to be a generic parameter?
 
 ```
-fn PrintXs_Generic(Int:$ N) {
-  var Int: i = 0;
+fn PrintXs_Generic(N:$ Int) {
+  var i: Int = 0;
   while (i < N) {
     Print("X");
     i += 1;
@@ -40,7 +40,7 @@ fn PrintXs_Generic(Int:$ N) {
 
 PrintXs_Generic(1);  // Prints: X
 PrintXs_Generic(2);  // Prints: XX
-var Int: m = 3;
+var m: Int = 3;
 PrintXs_Generic(m);  // Compile error: value for generic parameter `n`
                      // unknown at compile time.
 ```
@@ -67,9 +67,9 @@ time, we can use the generic parameter in places we would expect a compile-time
 constant value, such as in types.
 
 ```
-fn CreateArray(UInt:$ N, Int: value) -> FixedArray(Int, N) {
-  var FixedArray(Int, N): ret;
-  var Int: i = 0;
+fn CreateArray(N:$ UInt, value: Int) -> FixedArray(Int, N) {
+  var ret: FixedArray(Int, N);
+  var i: Int = 0;
   while (i < N) {
     ret[i] = value;
     i += 1;
@@ -92,11 +92,11 @@ Imagine we had a regular function that printed some number of 'X' characters:
 
 ```
 fn PrintXs_Regular(n: Int) {
- var i: Int = 0;
- while (i < n) {
-   Print("X");
-   i += 1;
- }
+  var i: Int = 0;
+  while (i < n) {
+    Print("X");
+    i += 1;
+  }
 }
 
 PrintXs_Regular(1); // Prints: X
@@ -109,18 +109,18 @@ What would it mean to change the parameter to be a generic parameter?
 
 ```
 fn PrintXs_Generic(N:$ Int) {
- var i: Int = 0;
- while (i < N) {
-   Print("X");
-   i += 1;
- }
+  var i: Int = 0;
+  while (i < N) {
+    Print("X");
+    i += 1;
+  }
 }
 
 PrintXs_Generic(1);  // Prints: X
 PrintXs_Generic(2);  // Prints: XX
 var m: Int = 3;
 PrintXs_Generic(m);  // Compile error: value for generic parameter `n`
-                    // unknown at compile time.
+                     // unknown at compile time.
 ```
 
 The body of the function type checks using the same logic as `PrintXs_Regular`.
@@ -145,13 +145,13 @@ expected, including in types.
 
 ```
 fn CreateArray(N:$ UInt, value: Int) -> FixedArray(Int, N) {
- var ret: FixedArray(Int, N);
- var i: Int = 0;
- while (i < N) {
-   ret[i] = value;
-   i += 1;
- }
- return ret;
+  var ret: FixedArray(Int, N);
+  var i: Int = 0;
+  while (i < N) {
+    ret[i] = value;
+    i += 1;
+  }
+  return ret;
 }
 ```
 
