@@ -399,8 +399,10 @@ Assert(with_defaults.x == 0);
 Assert(with_defaults.y == 2);
 ```
 
-Note that the type syntax uses an introducer to make it both clear that it is
-introducing names and to distinguish type declarations from struct literals.
+Note that the type syntax uses an introducer to distinguish type declarations
+from struct literals. For tuples, we can say the type of a tuple is the tuple of
+the types. That policy wouldn't give a good option for defining field defaults
+in `struct` types.
 
 ### Option parameters
 
