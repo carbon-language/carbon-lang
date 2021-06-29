@@ -2079,36 +2079,8 @@ but play no role in selecting the `impl`.
 have two kinds of parameters. "Multi" parameters would work as described above.
 "Deducible" type parameters would only allow one implementation of an interface,
 not one per interface & type parameter combination. These deducible type
-parameters could be inferred like associated types are. For example, we could
-make a `Stack` interface that took a deducible `ElementType` parameter. You
-would only be able to implement that interface once for a type, which would
-allow you to infer the `ElementType` parameter like so:
-
-```
-fn PeekAtTopOfStack[ElementType:$ Type, StackType:$ Stack(ElementType)]
-    (s: StackType*) -> ElementType { ... }
-```
-
-This can result in more concise code for interfaces where you generally need to
-talk about some parameter anytime you use that interface. For example,
-`NTuple(N, type)` is much shorter without having to specify names with the
-arguments.
-
-**Rationale for the rejection:**
-
--   Having only one type of parameter simplifies the language.
--   Multi parameters express something we need, while deducible parameters can
-    always be changed to associated types.
--   One implementation per interface & type parameter combination is more
-    consistent with other parameterized constructs in Carbon. For example,
-    parameterized types `Foo(A)` and `Foo(B)` are distinct, unconnected types.
--   It would be hard to give clear guidance on when to use associated types
-    versus deducible type parameters, since which is best for a particular use
-    is more of a subtle judgement call.
--   Deducible parameters
-    [complicate the lookup rules for impls](appendix-interface-param-impl.md).
--   Deducible parameters in structural interfaces require additional rules to
-    ensure they can be deduced unambiguously.
+parameters could be inferred like associated types are. See
+[the detailed rationale](appendix-deduced-interface-params.md)
 
 ### Impl lookup
 
