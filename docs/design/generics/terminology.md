@@ -41,7 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface type parameters versus associated types](#interface-type-parameters-versus-associated-types)
 -   [Type constraints](#type-constraints)
--   [type-of-type](#type-of-type)
+-   [Type-of-type](#type-of-type)
 
 <!-- tocstop -->
 
@@ -601,7 +601,7 @@ express, for example:
 Note that type constraints can be a restriction on one type parameter, or can
 define a relationship between multiple type parameters.
 
-## type-of-type
+## Type-of-type
 
 A type-of-type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
