@@ -63,7 +63,7 @@ auto MakeExpAct(const Expression* e) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ExpressionAction;
   act->u.exp = e;
-  act->pos = -1;
+  act->pos = 0;
   return act;
 }
 
@@ -71,7 +71,7 @@ auto MakeLvalAct(const Expression* e) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::LValAction;
   act->u.exp = e;
-  act->pos = -1;
+  act->pos = 0;
   return act;
 }
 
@@ -79,7 +79,7 @@ auto MakeStmtAct(const Statement* s) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::StatementAction;
   act->u.stmt = s;
-  act->pos = -1;
+  act->pos = 0;
   return act;
 }
 
@@ -87,21 +87,21 @@ auto MakeValAct(const Value* v) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ValAction;
   act->u.val = v;
-  act->pos = -1;
+  act->pos = 0;
   return act;
 }
 
 auto MakeExpToLvalAct() -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ExpToLValAction;
-  act->pos = -1;
+  act->pos = 0;
   return act;
 }
 
 auto MakeDeleteAct(Address a) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::DeleteTmpAction;
-  act->pos = -1;
+  act->pos = 0;
   act->u.delete_tmp = a;
   return act;
 }
