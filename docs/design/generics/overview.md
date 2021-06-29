@@ -494,7 +494,7 @@ At that point, two erasures occur:
     implementations would be restricted to various conditions are true for the
     parameters. When there are two implementations that can apply, there is a
     specialization rule that picks the more specific one.
--   Support functions that accept types that types that vary at runtime.
+-   Support functions should have a way to accept types that types that vary at runtime.
 -   You should have the ability to mark items as `upcoming` or `deprecated` to
     support evolution.
 -   Types should be able to define overloads for operators by implementing
