@@ -21,33 +21,81 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
                      this);
 }
 
+/*
+// Helper function for printing TypeLocClass. Useful for debugging.
+static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
+    -> std::string {
+  switch (c) {
+    // Mirrors the definition in clang/AST/TypeLoc.h in order to print names.
+#define ABSTRACT_TYPE(Class, Base)
+#define TYPE(Class, Base)     \
+  case clang::TypeLoc::Class: \
+    return #Class;
+#include "clang/AST/TypeNodes.inc"
+    case clang::TypeLoc::Qualified:
+      return "Qualified";
+  }
+}
+*/
+
 // Returns a string for the type.
 static auto GetTypeStr(const clang::VarDecl* decl,
                        const clang::SourceManager& sm,
                        const clang::LangOptions& lang_opts) -> std::string {
+  // Built a vector of class information, because we'll be traversing reverse
+  // order to construct the final type.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  std::vector<std::pair<clang::SourceLocation, std::string>> segments;
+  std::vector<std::pair<clang::TypeLoc::TypeLocClass, std::string>> segments;
   while (!type_loc.isNull()) {
     std::string text;
     auto qualifiers = type_loc.getType().getLocalQualifiers();
+    std::string qual_str;
     if (!qualifiers.empty()) {
-      text = qualifiers.getAsString() + " ";
+      qual_str = qualifiers.getAsString();
     }
-    auto range = type_loc.getLocalSourceRange();
-    text += clang::Lexer::getSourceText(
-        clang::CharSourceRange::getTokenRange(range), sm, lang_opts);
-    segments.push_back({range.getBegin(), text});
+    auto range =
+        clang::CharSourceRange::getTokenRange(type_loc.getLocalSourceRange());
+    std::string range_str =
+        clang::Lexer::getSourceText(range, sm, lang_opts).str();
+
+    auto c = type_loc.getTypeLocClass();
+    if (qual_str.empty()) {
+      segments.push_back({c, range_str});
+    } else if (range_str.empty()) {
+      segments.push_back({c, qual_str});
+    } else {
+      segments.push_back({c, qual_str + " " + range_str});
+    }
+
     type_loc = type_loc.getNextTypeLoc();
   }
 
-  // Sort type segments as they're written in the file. This avoids needing to
-  // understand TypeLoc traversal ordering.
-  std::sort(segments.begin(), segments.end(),
-            [](const auto& a, const auto& b) { return a.first < b.first; });
-
+  // Construct the final type based on the class of each step.
   std::string type_str;
-  for (const auto& segment : segments) {
-    type_str += segment.second;
+  auto prev_c = clang::TypeLoc::Auto;  // Placeholder class, used in loop.
+  for (int i = segments.size() - 1; i >= 0; --i) {
+    clang::TypeLoc::TypeLocClass c;
+    std::string text;
+    std::tie(c, text) = segments[i];
+    switch (c) {
+      case clang::TypeLoc::Elaborated:
+        type_str.insert(0, text);
+        break;
+      case clang::TypeLoc::Qualified:
+        if (prev_c == clang::TypeLoc::Pointer) {
+          type_str += " " + text;
+        } else {
+          if (!type_str.empty()) {
+            type_str.insert(0, " ");
+          }
+          type_str.insert(0, text);
+        }
+        break;
+      default:
+        type_str += text;
+        break;
+    }
+    prev_c = c;
   }
   return type_str;
 }

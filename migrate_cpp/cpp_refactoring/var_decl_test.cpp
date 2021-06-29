@@ -34,6 +34,20 @@ TEST_F(VarDeclTest, DeclarationConstArray) {
   ExpectReplacement(Before, After);
 }
 
+TEST_F(VarDeclTest, DeclarationConstPointer) {
+  constexpr char Before[] = R"cpp(
+    int i = 0;
+    int* const j = &i;
+    const int* k = &i;
+  )cpp";
+  constexpr char After[] = R"(
+    var i: int;
+    int* const let j: int* const;
+    var k: const int*;
+  )";
+  ExpectReplacement(Before, After);
+}
+
 TEST_F(VarDeclTest, DeclarationComma) {
   // TODO: Maybe replace the comma with a `;`.
   constexpr char Before[] = "int i, j;";
@@ -177,6 +191,28 @@ TEST_F(VarDeclTest, RangeFor) {
         var j: int;
       }
     }
+  )";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, Template) {
+  constexpr char Before[] = R"cpp(
+    template <typename T>
+    struct R {};
+
+    template <typename T>
+    struct S {};
+
+    R<S<int>> x;
+  )cpp";
+  constexpr char After[] = R"(
+    template <typename T>
+    struct R {};
+
+    template <typename T>
+    struct S {};
+
+    var x: R<S<int>>;
   )";
   ExpectReplacement(Before, After);
 }
