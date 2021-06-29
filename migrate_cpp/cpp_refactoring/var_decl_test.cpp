@@ -28,6 +28,12 @@ TEST_F(VarDeclTest, DeclarationArray) {
   ExpectReplacement(Before, After);
 }
 
+TEST_F(VarDeclTest, DeclarationConstArray) {
+  constexpr char Before[] = "const int i[] = {0, 1};";
+  constexpr char After[] = "let i: const int[];";
+  ExpectReplacement(Before, After);
+}
+
 TEST_F(VarDeclTest, DeclarationComma) {
   // TODO: Maybe replace the comma with a `;`.
   constexpr char Before[] = "int i, j;";

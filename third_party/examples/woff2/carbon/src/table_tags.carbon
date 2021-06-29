@@ -23,7 +23,7 @@ let kHmtxTableTag: const uint32_t;
 let kHheaTableTag: const uint32_t;
 let kMaxpTableTag: const uint32_t;
 
-let kKnownTags: const uint32_tconst [];
+let kKnownTags: const uint32_t[];
 
 } // namespace woff2
 

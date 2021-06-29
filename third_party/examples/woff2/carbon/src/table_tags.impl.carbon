@@ -13,6 +13,6 @@ namespace woff2 {
 // Note that the byte order is big-endian, not the same as ots.cc
 #define TAG(a, b, c, d) (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
 
-let kKnownTags: const uint32_tconst [63];
+let kKnownTags: const uint32_t[63];
 
 } // namespace woff2

@@ -29,7 +29,7 @@ static auto GetTypeStr(const clang::VarDecl* decl,
   std::vector<std::pair<clang::SourceLocation, std::string>> segments;
   while (!type_loc.isNull()) {
     std::string text;
-    auto qualifiers = type_loc.getType().getQualifiers();
+    auto qualifiers = type_loc.getType().getLocalQualifiers();
     if (!qualifiers.empty()) {
       text = qualifiers.getAsString() + " ";
     }
