@@ -1303,6 +1303,7 @@ void ShrinkWrapping::moveSaveRestores() {
 
     const FrameIndexEntry *FIESave = CSA.SaveFIEByReg[I];
     const FrameIndexEntry *FIELoad = CSA.LoadFIEByReg[I];
+    (void)FIELoad;
     assert(FIESave && FIELoad);
     StackPointerTracking &SPT = Info.getStackPointerTracking();
     const std::pair<int, int> SPFP = *SPT.getStateBefore(*BestPosSave);
@@ -2003,6 +2004,7 @@ bool ShrinkWrapping::perform() {
   processDeletions();
   if (foldIdenticalSplitEdges()) {
     const std::pair<unsigned, uint64_t> Stats = BF.eraseInvalidBBs();
+    (void)Stats;
     LLVM_DEBUG(dbgs() << "Deleted " << Stats.first
                       << " redundant split edge BBs (" << Stats.second
                       << " bytes) for " << BF.getPrintName() << "\n");

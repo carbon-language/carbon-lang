@@ -1750,6 +1750,7 @@ BinaryContext::getSectionNameForAddress(uint64_t Address) const {
 
 BinarySection &BinaryContext::registerSection(BinarySection *Section) {
   auto Res = Sections.insert(Section);
+  (void)Res;
   assert(Res.second && "can't register the same section twice.");
 
   // Only register allocatable sections in the AddressToSection map.
@@ -1787,6 +1788,7 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
 
     LLVM_DEBUG(dbgs() << "BOLT-DEBUG: updating " << *Section << " -> ");
     const bool Flag = Section->isAllocatable();
+    (void)Flag;
     Section->update(Data, Size, Alignment, ELFType, ELFFlags);
     LLVM_DEBUG(dbgs() << *Section << "\n");
     // FIXME: Fix section flags/attributes for MachO.

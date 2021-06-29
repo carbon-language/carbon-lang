@@ -228,6 +228,7 @@ AddressSectionBuffer DebugAddrWriter::finalize() {
       switch (AddrSize) {
       default:
         assert(false && "Address Size is invalid.");
+        break;
       case 4:
         support::endian::write(AddressStream, static_cast<uint32_t>(Address),
                                support::little);

@@ -168,6 +168,7 @@ void DWARFRewriter::updateDebugInfo() {
     uint64_t AttrOffset = 0;
     Optional<DWARFFormValue> ValDwoName =
         DIE.find(dwarf::DW_AT_GNU_dwo_name, &AttrOffset);
+    (void)ValDwoName;
     assert(ValDwoName && "Skeleton CU doesn't have dwo_name.");
 
     std::string ObjectName = getDWOName(Unit, &NameToIndexMap, DWOIdToName);
@@ -176,6 +177,7 @@ void DWARFRewriter::updateDebugInfo() {
 
     Optional<DWARFFormValue> ValCompDir =
         DIE.find(dwarf::DW_AT_comp_dir, &AttrOffset);
+    (void)ValCompDir;
     assert(ValCompDir && "DW_AT_comp_dir is not in Skeleton CU.");
     if (!opts::DwoOutputPath.empty()) {
       uint32_t NewOffset = StrWriter->addString(opts::DwoOutputPath.c_str());

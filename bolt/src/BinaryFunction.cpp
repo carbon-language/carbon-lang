@@ -3926,6 +3926,7 @@ bool BinaryFunction::replaceJumpTableEntryIn(BinaryBasicBlock *BB,
   assert(JT && "No jump table structure for this indirect branch");
   bool Patched = JT->replaceDestination(JTAddress, OldDest->getLabel(),
                                         NewDest->getLabel());
+  (void)Patched;
   assert(Patched && "Invalid entry to be replaced in jump table");
   return true;
 }

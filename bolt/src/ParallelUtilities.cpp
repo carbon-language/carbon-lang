@@ -212,6 +212,7 @@ void runOnEachFunctionWithUniqueAllocId(
       if (!BC.MIB->checkAllocatorExists(AllocId)) {
         MCPlusBuilder::AllocatorIdTy Id =
             BC.MIB->initializeNewAnnotationAllocator();
+        (void)Id;
         assert(AllocId == Id && "unexpected allocator id created");
       }
       Pool.async(runBlock, BlockBegin, std::next(It), AllocId);
@@ -224,6 +225,7 @@ void runOnEachFunctionWithUniqueAllocId(
   if (!BC.MIB->checkAllocatorExists(AllocId)) {
     MCPlusBuilder::AllocatorIdTy Id =
         BC.MIB->initializeNewAnnotationAllocator();
+    (void)Id;
     assert(AllocId == Id && "unexpected allocator id created");
   }
 

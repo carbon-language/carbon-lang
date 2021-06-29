@@ -785,6 +785,7 @@ private:
         Block *BB2 = ChainPred->blocks()[Offset];
         // Does the splitting break FT successors?
         if (BB1->FallthroughSucc != nullptr) {
+          (void)BB2;
           assert(BB1->FallthroughSucc == BB2 && "Fallthrough not preserved");
           continue;
         }
@@ -850,8 +851,6 @@ private:
         return MergedChain(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
       case MergeTypeTy::X2_X1_Y:
         return MergedChain(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
-      default:
-        llvm_unreachable("unexpected merge type");
     }
   }
 

@@ -1550,6 +1550,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
                    std::max<uint64_t>(TotalIndexBasedCandidates, 1))
          << "%\n";
 
+  (void)verifyProfile;
 #ifndef NDEBUG
   verifyProfile(BFs);
 #endif
