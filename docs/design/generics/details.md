@@ -70,7 +70,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Type inequality](#type-inequality)
     -   [Implicit constraints](#implicit-constraints)
-    -   [Covariant refinement](#covariant-refinement)
+    -   [Covariant extension](#covariant-extension)
     -   [Generic type equality](#generic-type-equality)
         -   [Type equality with where clauses](#type-equality-with-where-clauses)
         -   [Type equality with argument passing](#type-equality-with-argument-passing)
@@ -85,12 +85,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
     -   [Subtlety around interfaces with parameters](#subtlety-around-interfaces-with-parameters)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
--   [Other constraints as type-types](#other-constraints-as-type-types)
+-   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
     -   [Type facet of another type](#type-facet-of-another-type)
-    -   [Sized types and type-types](#sized-types-and-type-types)
+    -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Model](#model-2)
     -   [`TypeId`](#typeid)
 -   [Dynamic types](#dynamic-types)
@@ -2129,12 +2129,12 @@ TODO: Fix this up a lot
 
 -   In a declaration of a function, type, interface, or impl.
 -   Within the body of an interface definition.
--   Naming a new type-type that represents the constraint (typically an `alias`
-    or `structural interface` definition).
+-   Naming a new type-of-type that represents the constraint (typically an
+    `alias` or `structural interface` definition).
 
 To handle this last use case, we expand the kinds of requirements that
-type-types can have from just interface requirements to also include the various
-kinds of constraints discussed later in this section.
+type-of-types can have from just interface requirements to also include the
+various kinds of constraints discussed later in this section.
 
 ### Two approaches for expressing constraints
 
@@ -2195,8 +2195,8 @@ Disadvantages:
     either the syntax is restricted heavily, or algorithms become heuristic and
     potentially slow. Further, the boundary between acceptable code and rejected
     code becomes fuzzy and unpredictable.
--   Awkward to produce type-types that have specified values for all associated
-    types for use with `DynPtr` and `DynBox`.
+-   Awkward to produce type-of-types that have specified values for all
+    associated types for use with `DynPtr` and `DynBox`.
 -   Can introduce some inconsistency/redundancy with how interface parameters
     are specified.
 -   Adds a redundant way of expressing some constraints.
@@ -2237,8 +2237,8 @@ Disadvantages:
     some" `[...]` inferred variables
     ([1](#type-bounds-on-associated-types-in-interfaces),
     [2](#same-type-constraints)).
--   Type-types would become callable, and when called would return a type-type
-    that could then be called again.
+-   type-of-types would become callable, and when called would return a
+    type-of-type that could then be called again.
 
 ### Constraint use cases
 
@@ -2359,8 +2359,8 @@ for this case.
 
 ##### Concern
 
-Sometimes we may need a single type-type without any parameters or unspecified
-associated constants/types, such as to define a `DynPtr(TT)` (as
+Sometimes we may need a single type-of-type without any parameters or
+unspecified associated constants/types, such as to define a `DynPtr(TT)` (as
 [described in the following dynamic pointer type section](#dynamic-pointer-type)).
 To do this with a `where` clause approach you would have to name the constraint
 before using it, an annoying extra step. For Rust, it is part of
@@ -2449,7 +2449,7 @@ Now note that inside the `PeekAtTopOfStack` function from the example in the
 `StackType.ElementType`, so we can't perform any operations on values of that
 type, other than pass them to `Stack` methods. We can define an interface that
 has an associated type constrained to satisfy an interface (or any
-[other type-type](#adapting-types)). For example, we might say interface
+[other type-of-type](#adapting-types)). For example, we might say interface
 `Container` has a `Begin` method returning values with type satisfying the
 `Iterator` interface:
 
@@ -2492,9 +2492,9 @@ interface RandomAccessIterator {
 }
 ```
 
-We would like to be able to define a `RandomAccessContainer` to be a type-type
-whose types satisfy `ContainerInterface` with an `IteratorType` satisfying
-`RandomAccessIterator`.
+We would like to be able to define a `RandomAccessContainer` to be a
+type-of-type whose types satisfy `ContainerInterface` with an `IteratorType`
+satisfying `RandomAccessIterator`.
 
 **Concern:** We would need to introduce some sort of "for some" operator to
 support this with argument passing. We might use a `[...]` to indicate that the
@@ -2630,9 +2630,9 @@ interface HasEqualContainers {
 Another way to solve the [type bounds](#type-bounds) and
 [same type](#same-type-constraints) constraint use cases using argument passing
 without the "for some" `[...]` operator would be to have a `ForSome(F)`
-construct, where `F` is a function from types to type-types.
+construct, where `F` is a function from types to type-of-types.
 
-> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
+> `ForSome(F)`, where `F` is a function from type `T` to type-of-type `TT`, is a
 > type whose values are types `U` with type `TT=F(T)` for some type `T`.
 
 **Example:** Pairs of values where both values have the same type might be
@@ -2674,7 +2674,7 @@ passing or where clauses.
 
 For `where` clause we could represent this by a binary `extends` operator
 returning a boolean. For argument passing, we'd introduce an `Extends(T)`
-type-type, whose values are types that extend `T`, that is types `U` that are
+type-of-type, whose values are types that extend `T`, that is types `U` that are
 subtypes of `T`.
 
 ```
@@ -2960,7 +2960,7 @@ Furthermore, inferring that two types are equal (in contrast to the type bound
 constraints described so far) introduces additional problems for establishing
 which types are equal in a generic context.
 
-### Covariant refinement
+### Covariant extension
 
 Under C++ type inheritance, there are some changes allowed to the members of the
 supertype in the subtype. For example, the signatures of functions can change as
@@ -2971,15 +2971,15 @@ constrained interface.
 
 For containers, imagine that we have a `ForwardContainer` interface that
 supports iteration in one direction, represented by having an `IteratorType`
-implementing `ForwardIterator`. To define a `BidirectionalContainer` refinement
+implementing `ForwardIterator`. To define a `BidirectionalContainer` extension
 of `ForwardContainer` that supports iteration in the reverse direction, we would
 need to:
 
--   define `BidirectionalIterator` refining `ForwardIterator`, and
+-   define `BidirectionalIterator` extending `ForwardIterator`, and
 -   enforce that the `IteratorType` of a `BidirectionalContainer` implements
     `BidirectionalIterator`.
 
-Since `BidirectionalIterator` refines `ForwardIterator`, any type satisfying
+Since `BidirectionalIterator` extends `ForwardIterator`, any type satisfying
 `BidirectionalIterator` can be used as the `IteratorType` of a
 `ForwardContainer`.
 
@@ -3009,12 +3009,12 @@ passing approach, you would use an inferred variable:
 
 ```
 interface BidirectionalContainer {
-  // `Refined` is some new name so we don't collide with
+  // `Extended` is some new name so we don't collide with
   // `IteratorType`. The `[...]` mean this new name is
   // only used as a constraint, and is not part of the
   // `BidirectionalContainer` API.
-  [Refined:$ var BidirectionalIterator];
-  extends ForwardContainer(.IteratorType = Refined);
+  [var Extended:$ BidirectionalIterator];
+  extends ForwardContainer(.IteratorType = Extended);
 }
 ```
 
@@ -3033,15 +3033,15 @@ the child type. The analogous thing for interfaces would be to provide
 [a blanket impl](#parameterized-impls) of the parent interface, however the
 specifics of how this would be done are future work.
 
-**Open question:** We may want to support refinement of other items as well,
-such as methods. This would be part of matching the features of C++ `class`
+**Open question:** We may want to support extension of other items as well, such
+as methods. This would be part of matching the features of C++ `class`
 inheritance.
 
 **Open question:** We might support a dedicated syntax for this kind of
-refinement when extending an interface, if we observe it to be a common case or
+extension when extending an interface, if we observe it to be a common case or
 otherwise cumbersome. One possibility would be to allow a block of these kinds
-of refinements in place of a terminating semicolon (`;`) for `impl` and
-`extends` declarations in an interface, as in:
+of extensions in place of a terminating semicolon (`;`) for `impl` and `extends`
+declarations in an interface, as in:
 
 ```
 interface BidirectionalContainer {
@@ -3290,8 +3290,8 @@ constraints needed by users in practice?
 ##### Canonical types and type checking
 
 TODO: For assignment to type check, argument has to have the same or a more
-restrictive type-type than the parameter. This means that the canonical type
-expression would have the right (most restrictive) type-type to use for all
+restrictive type-of-type than the parameter. This means that the canonical type
+expression would have the right (most restrictive) type-of-type to use for all
 expressions equal to it, with the exception of
 [implicit constraints](#implicit-constraints).
 
@@ -3369,8 +3369,8 @@ alias B = A.T.U;
 ```
 
 unless the type bounds on `A.T.U` do not match the `Z` bound on `B`. In that
-case, we need to find a type-type `Z2` that represents the intersection of the
-two type constraints and a different rewrite:
+case, we need to find a type-of-type `Z2` that represents the intersection of
+the two type constraints and a different rewrite:
 
 ```
 var Z2:$ B
@@ -3379,11 +3379,11 @@ var A:$ ...(.T = AT);
 ```
 
 **Note:** It would be great if the
-['&' operator for type-types](#combining-interfaces-by-anding-type-types) was
-all we needed to define the intersection of two type constraints, but it isn't
-yet defined for two type-types that have the same interface but with different
-constraints. And that requires being able to automatically combine constraints
-of the form `B.X == Foo` and `B.X == Bar`.
+['&' operator for type-of-types](#combining-interfaces-by-anding-type-of-types)
+was all we needed to define the intersection of two type constraints, but it
+isn't yet defined for two type-of-types that have the same interface but with
+different constraints. And that requires being able to automatically combine
+constraints of the form `B.X == Foo` and `B.X == Bar`.
 
 **Open question:** How much rewriting can be done automatically?
 
@@ -3523,7 +3523,7 @@ struct Pair(T:$ Type, U:$ Type) {
 Some other ideas we have considered lack the consistency between internal and
 external conditional conformance:
 
--   One approach would be to use implicit arguments in square brackets after the
+-   One approach would be to use deduced arguments in square brackets after the
     `impl` keyword, and an `if` clause to add constraints:
 
 ```
@@ -3759,9 +3759,9 @@ single best match. Best is defined using the "more specific" partial ordering:
 -   Matching an exact type (`Foo` or `Foo(Bar)`) is more specific than a
     parameterized family of types (`Foo(T)` for any type `T`) is more specific
     than a generic type (`T` for any type `T`).
--   A more restrictive constraint is more specific. In particular, a type-type
-    `T` is more restrictive than a type-type `U` if the set of restrictions for
-    `T` is a superset of those for `U`. So `Foo(T)` for
+-   A more restrictive constraint is more specific. In particular, a
+    type-of-type `T` is more restrictive than a type-of-type `U` if the set of
+    restrictions for `T` is a superset of those for `U`. So `Foo(T)` for
     `Comparable & Printable:$ T` is more specific than `Comparable:$ T`, which
     is more specific than `Type:$ T`.
 -   TODO: others?
@@ -3796,22 +3796,22 @@ implementations.
 **Comparison with other languages:** See
 [Rust's rules for deciding which impl is more specific](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#defining-the-precedence-rules).
 
-## Other constraints as type-types
+## Other constraints as type-of-types
 
-There are some constraints that we will naturally represent as named type-types
-that the user can specify.
+There are some constraints that we will naturally represent as named
+type-of-types that the user can specify.
 
 ### Type compatible with another type
 
-Given a type `U`, define the type-type `CompatibleWith(U)` as follows:
+Given a type `U`, define the type-of-type `CompatibleWith(U)` as follows:
 
 > `CompatibleWith(U)` is a type whose values are types `T` such that `T` and `U`
 > are [compatible](terminology.md#compatible-types). That is values of types `T`
 > and `U` can be cast back and forth without any change in representation (for
 > example `T` is an [adapter](#adapting-types) for `U`).
 
-To support this, we extend the requirements that type-types are allowed to have
-to include a "data representation requirement" option.
+To support this, we extend the requirements that type-of-types are allowed to
+have to include a "data representation requirement" option.
 
 `CompatibleWith` determines an equivalence relationship between types.
 Specifically, given two types `T1` and `T2`, they are equivalent if
@@ -3916,7 +3916,7 @@ Similar to `CompatibleWith(T)`, `FacetOf(T)` introduces an equivalence
 relationship between types. `T1 is FacetOf(T2)` if both `T1` and `T2` are facets
 of the same type.
 
-### Sized types and type-types
+### Sized types and type-of-types
 
 What is the size of a type?
 
@@ -3937,7 +3937,7 @@ What is the size of a type?
 
 I'm going to call a type "sized" if it is in the first two categories, and
 "unsized" otherwise. (Note: something with size 0 is still considered "sized".)
-The type-type `Sized` is defined as follows:
+The type-of-type `Sized` is defined as follows:
 
 > `Sized` is a type whose values are types `T` that are "sized" -- that is the
 > size of `T` is known, though possibly only generically.
@@ -3975,7 +3975,7 @@ compiling the generic function if we are using the dynamic strategy. Should we
 automatically [box](#boxed) local variables when using the dynamic strategy? Or
 should we only allow `MaybeBox` values to be instantiated locally?
 
-**Open question:** Should the `Sized` type-type expose an associated constant
+**Open question:** Should the `Sized` type-of-type expose an associated constant
 with the size? So you could say `T.ByteSize` in the above example to get a
 generic int value with the size of `T`. Similarly you might say `T.ByteStride`
 to get the number of bytes used for each element of an array of `T`.
@@ -4050,7 +4050,7 @@ code for this parameter.
 **Restriction:** The type's size will only be known at runtime, so patterns that
 use a type's size such as declaring local variables of that type or passing
 values of that type by value are forbidden. Essentially the type is considered
-[unsized](#sized-types-and-type-types), even if the type-type is `Sized`.
+[unsized](#sized-types-and-type-of-types), even if the type-of-type is `Sized`.
 
 **Note:** In principle you could imagine supporting values with a dynamic size,
 but it would add a large amount of implementation complexity and would not have
@@ -4074,8 +4074,8 @@ Rust made the transition in the other direction
 
 **Restriction:**
 [Rust requires](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types)
-all of the type-type's parameters and associated types be specified, since they
-can not vary at runtime.
+all of the type-of-type's parameters and associated types be specified, since
+they can not vary at runtime.
 
 TODO examples
 
@@ -4114,7 +4114,7 @@ using the keyword "`any`", instead of Rust's "`dyn`".
 
 #### Dynamic pointer type
 
-Given a type-type `TT` (with some restrictions described below), define
+Given a type-of-type `TT` (with some restrictions described below), define
 `DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
 satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
 
@@ -4536,7 +4536,7 @@ as long as we allow more specific implementations to be incomplete and reuse
 more general implementations for anything unspecified.
 
 One variation on this may be default implementations of entire interfaces. For
-example, `RandomAccessContainer` refines `Container` with an `IteratorType`
+example, `RandomAccessContainer` extends `Container` with an `IteratorType`
 satisfying `RandomAccessIterator`. That is sufficient to provide a default
 implementation of the indexing operator (operator `[]`), by way of
 [implementing an interface](#operator-overloading).
@@ -4544,7 +4544,7 @@ implementation of the indexing operator (operator `[]`), by way of
 ```
 interface RandomAccessContainer {
   extends Container {
-    // Refinement of the associated type `IteratorType` from `Container`.
+    // Extension of the associated type `IteratorType` from `Container`.
     var IteratorType:$ RandomAccessIterator;
   }
   // Either `impl` or `extends` here, depending if you want
@@ -4889,10 +4889,10 @@ There are four use cases to support:
 -   `Min`: All matching arguments are the same type, but that type is a generic
     type parameter.
 -   `StaticStrCat`: All matching arguments have a generic type satisfying a
-    type-type, but may all be different.
--   `DynamicStrCat`: All matching arguments have types satisfying a type-type,
-    those types may be different, and we use dynamic dispatch to access the
-    methods of those types.
+    type-of-type, but may all be different.
+-   `DynamicStrCat`: All matching arguments have types satisfying a
+    type-of-type, those types may be different, and we use dynamic dispatch to
+    access the methods of those types.
 
 Examples:
 
