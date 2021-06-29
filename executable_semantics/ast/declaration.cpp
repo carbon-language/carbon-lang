@@ -20,9 +20,9 @@ void StructDeclaration::Print() const {
 
 void ChoiceDeclaration::Print() const {
   std::cout << "choice " << name << " {" << std::endl;
-  for (auto& alternative : alternatives) {
-    std::cout << "alt " << alternative.first << " ";
-    PrintExp(alternative.second);
+  for (const auto& [name, signature] : alternatives) {
+    std::cout << "alt " << name << " ";
+    PrintExp(&signature);
     std::cout << ";" << std::endl;
   }
   std::cout << "}" << std::endl;

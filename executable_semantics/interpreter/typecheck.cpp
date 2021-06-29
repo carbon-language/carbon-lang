@@ -789,9 +789,9 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
 
 auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto alts = new VarValues();
-  for (auto a : alternatives) {
-    auto t = InterpExp(tops.values, a.second);
-    alts->push_back(std::make_pair(a.first, t));
+  for (const auto& [name, signature] : alternatives) {
+    auto t = InterpExp(tops.values, &signature);
+    alts->push_back(std::make_pair(name, t));
   }
   auto ct = Value::MakeChoiceTypeVal(name, alts);
   Address a = state->heap.AllocateValue(ct);

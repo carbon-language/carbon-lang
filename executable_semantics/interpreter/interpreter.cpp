@@ -314,9 +314,9 @@ void InitGlobals(std::list<Declaration>* fs) {
 
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
-  for (auto kv : alternatives) {
-    auto t = InterpExp(Env(), kv.second);
-    alts->push_back(make_pair(kv.first, t));
+  for (const auto& [name, signature] : alternatives) {
+    auto t = InterpExp(Env(), &signature);
+    alts->push_back(make_pair(name, t));
   }
   auto ct = Value::MakeChoiceTypeVal(name, alts);
   auto a = state->heap.AllocateValue(ct);

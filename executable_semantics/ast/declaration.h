@@ -127,12 +127,11 @@ struct StructDeclaration {
 struct ChoiceDeclaration {
   int line_num;
   std::string name;
-  std::list<std::pair<std::string, const Expression*>> alternatives;
+  std::list<std::pair<std::string, Expression>> alternatives;
 
-  ChoiceDeclaration(
-      int line_num, std::string name,
-      std::list<std::pair<std::string, const Expression*>> alternatives)
-      : line_num(line_num), name(name), alternatives(alternatives) {}
+  ChoiceDeclaration(int line_num, std::string name,
+                    std::list<std::pair<std::string, Expression>> alternatives)
+      : line_num(line_num), name(name), alternatives(std::move(alternatives)) {}
 
   void Print() const;
   auto Name() const -> std::string;
