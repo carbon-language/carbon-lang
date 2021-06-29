@@ -165,7 +165,7 @@ fn NormalizeGlyphs(font: woff2::Font *) -> bool {
 
 fn NormalizeOffsets(font: woff2::Font *) -> bool {
   var offset: uint32_t;
-  for (auto tag var __begin1: : var __range1: fontfont) {
+  for (auto tag : font->OutputOrderedTags()) {
     var table: auto&;
     table.offset = offset;
     offset += Round4(table.length);
@@ -182,7 +182,7 @@ fn ComputeHeaderChecksum(font: const woff2::Font &) -> uint32_t {
   var range_shift: uint16_t;
   checksum += (font.num_tables << 16 | search_range);
   checksum += (max_pow2 << 16 | range_shift);
-  for (const auto& i var __begin2: : var __range2: fontfont) {
+  for (const auto& i : font.tables) {
     var table: const Font::Table *;
     if (table->IsReused()) {
       table = table->reuse_of;
@@ -214,7 +214,7 @@ fn FixChecksums(font: woff2::Font *) -> bool {
   StoreU32(0, &offset, head_buf);
   var file_checksum: uint32_t;
   var head_checksum: uint32_t;
-  for (auto& i var __begin1: : var __range1: fontfont) {
+  for (auto& i : font->tables) {
     var table: Font::Table *;
     if (table->IsReused()) {
       table = table->reuse_of;
@@ -274,7 +274,7 @@ fn NormalizeFontCollection(font_collection: woff2::FontCollection *) -> bool {
   }
 
   var offset: uint32_t;
-  for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
+  for (auto& font : font_collection->fonts) {
     if (!NormalizeWithoutFixingChecksums(&font)) {
 #ifdef FONT_COMPRESSION_BIN
       fprintf(stderr, "Font normalization failed.\n");
@@ -285,8 +285,8 @@ fn NormalizeFontCollection(font_collection: woff2::FontCollection *) -> bool {
   }
 
   // Start table offsets after TTC Header and Sfnt Headers
-  for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
-    for (auto tag var __begin2: : var __range2: fontfont) {
+  for (auto& font : font_collection->fonts) {
+    for (auto tag : font.OutputOrderedTags()) {
       var table: Font::Table &;
       if (table.IsReused()) {
         table.offset = table.reuse_of->offset;
@@ -298,7 +298,7 @@ fn NormalizeFontCollection(font_collection: woff2::FontCollection *) -> bool {
   }
 
   // Now we can fix the checksums
-  for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
+  for (auto& font : font_collection->fonts) {
     if (!FixChecksums(&font)) {
 #ifdef FONT_COMPRESSION_BIN
       fprintf(stderr, "Failed to fix checksums\n");
