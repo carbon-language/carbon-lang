@@ -16,16 +16,16 @@
 
 namespace woff2 {
 
-var kWoff2Signature: const uint32_t;  // "wOF2"
+let kWoff2Signature: const uint32_t;  // "wOF2"
 
 // Leave the first byte open to store flag_byte
-var kWoff2FlagsTransform: const unsigned int;
+let kWoff2FlagsTransform: const unsigned int;
 
 // TrueType Collection ID string: 'ttcf'
-var kTtcFontFlavor: const uint32_t;
+let kTtcFontFlavor: const uint32_t;
 
-var kSfntHeaderSize: const size_t;
-var kSfntEntrySize: const size_t;
+let kSfntHeaderSize: const size_t;
+let kSfntEntrySize: const size_t;
 
 struct Point {
   int x;

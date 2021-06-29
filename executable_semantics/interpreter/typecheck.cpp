@@ -67,15 +67,15 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakeContinuationType(0);
     case ValKind::FunctionTV:
       return Expression::MakeFunType(
-          0, ReifyType(t->GetFunctionType().param, line_num),
-          ReifyType(t->GetFunctionType().ret, line_num));
+          0, *ReifyType(t->GetFunctionType().param, line_num),
+          *ReifyType(t->GetFunctionType().ret, line_num));
     case ValKind::TupleV: {
-      auto args = new std::vector<FieldInitializer>();
+      std::vector<FieldInitializer> args;
       for (const TupleElement& field : *t->GetTuple().elements) {
-        args->push_back(
+        args.push_back(
             {.name = field.name,
-             .expression = ReifyType(state->heap.Read(field.address, line_num),
-                                     line_num)});
+             .expression = *ReifyType(state->heap.Read(field.address, line_num),
+                                      line_num)});
       }
       return Expression::MakeTuple(0, args);
     }
@@ -85,7 +85,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakeVar(0, *t->GetChoiceType().name);
     case ValKind::PointerTV:
       return Expression::MakeUnOp(
-          0, Operator::Ptr, ReifyType(t->GetPointerType().type, line_num));
+          0, Operator::Ptr, *ReifyType(t->GetPointerType().type, line_num));
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
@@ -144,7 +144,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             << std::endl;
         exit(-1);
       }
-      auto t = InterpExp(values, e->GetPatternVariable().type);
+      auto t = InterpExp(values, e->GetPatternVariable().type.GetPointer());
       if (t->tag == ValKind::AutoTV) {
         if (expected == nullptr) {
           std::cerr << e->line_num
@@ -157,18 +157,20 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       } else if (expected) {
         ExpectType(e->line_num, "pattern variable", t, expected);
       }
-      auto new_e = Expression::MakeVarPat(
-          e->line_num, e->GetPatternVariable().name, ReifyType(t, e->line_num));
+      auto new_e =
+          Expression::MakeVarPat(e->line_num, e->GetPatternVariable().name,
+                                 *ReifyType(t, e->line_num));
       types.Set(e->GetPatternVariable().name, t);
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::Index: {
-      auto res = TypeCheckExp(e->GetIndex().aggregate, types, values, nullptr,
-                              TCContext::ValueContext);
+      auto res = TypeCheckExp(e->GetIndex().aggregate.GetPointer(), types,
+                              values, nullptr, TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
         case ValKind::TupleV: {
-          auto i = ToInteger(InterpExp(values, e->GetIndex().offset));
+          auto i =
+              ToInteger(InterpExp(values, e->GetIndex().offset.GetPointer()));
           std::string f = std::to_string(i);
           std::optional<Address> field_address = FindTupleField(f, t);
           if (field_address == std::nullopt) {
@@ -180,7 +182,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           }
           auto field_t = state->heap.Read(*field_address, e->line_num);
           auto new_e = Expression::MakeIndex(
-              e->line_num, res.exp, Expression::MakeInt(e->line_num, i));
+              e->line_num, *res.exp, *Expression::MakeInt(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
         }
         default:
@@ -190,7 +192,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Tuple: {
-      auto new_args = new std::vector<FieldInitializer>();
+      std::vector<FieldInitializer> new_args;
       auto arg_types = new std::vector<TupleElement>();
       auto new_types = types;
       if (expected && expected->tag != ValKind::TupleV) {
@@ -198,7 +200,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                   << std::endl;
         exit(-1);
       }
-      if (expected && e->GetTuple().fields->size() !=
+      if (expected && e->GetTuple().fields.size() !=
                           expected->GetTuple().elements->size()) {
         std::cerr << e->line_num
                   << ": compilation error, tuples of different length"
@@ -206,8 +208,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         exit(-1);
       }
       int i = 0;
-      for (auto arg = e->GetTuple().fields->begin();
-           arg != e->GetTuple().fields->end(); ++arg, ++i) {
+      for (auto arg = e->GetTuple().fields.begin();
+           arg != e->GetTuple().fields.end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
           if ((*expected->GetTuple().elements)[i].name != arg->name) {
@@ -220,10 +222,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           arg_expected = state->heap.Read(
               (*expected->GetTuple().elements)[i].address, e->line_num);
         }
-        auto arg_res = TypeCheckExp(arg->expression, new_types, values,
-                                    arg_expected, context);
+        auto arg_res = TypeCheckExp(arg->expression.GetPointer(), new_types,
+                                    values, arg_expected, context);
         new_types = arg_res.types;
-        new_args->push_back({.name = arg->name, .expression = arg_res.exp});
+        new_args.push_back({.name = arg->name, .expression = *arg_res.exp});
         arg_types->push_back(
             {.name = arg->name,
              .address = state->heap.AllocateValue(arg_res.type)});
@@ -314,14 +316,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     case ExpressionKind::Boolean:
       return TCResult(e, Value::MakeBoolTypeVal(), types);
     case ExpressionKind::PrimitiveOp: {
-      auto es = new std::vector<const Expression*>();
+      std::vector<Expression> es;
       std::vector<const Value*> ts;
       auto new_types = types;
-      for (auto& argument : *e->GetPrimitiveOperator().arguments) {
-        auto res = TypeCheckExp(argument, types, values, nullptr,
+      for (const Expression& argument : e->GetPrimitiveOperator().arguments) {
+        auto res = TypeCheckExp(&argument, types, values, nullptr,
                                 TCContext::ValueContext);
         new_types = res.types;
-        es->push_back(res.exp);
+        es.push_back(*res.exp);
         ts.push_back(res.type);
       }
       auto new_e =
@@ -372,18 +374,18 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       break;
     }
     case ExpressionKind::Call: {
-      auto fun_res = TypeCheckExp(e->GetCall().function, types, values, nullptr,
-                                  TCContext::ValueContext);
+      auto fun_res = TypeCheckExp(e->GetCall().function.GetPointer(), types,
+                                  values, nullptr, TCContext::ValueContext);
       switch (fun_res.type->tag) {
         case ValKind::FunctionTV: {
           auto fun_t = fun_res.type;
           auto arg_res =
-              TypeCheckExp(e->GetCall().argument, fun_res.types, values,
-                           fun_t->GetFunctionType().param, context);
+              TypeCheckExp(e->GetCall().argument.GetPointer(), fun_res.types,
+                           values, fun_t->GetFunctionType().param, context);
           ExpectType(e->line_num, "call", fun_t->GetFunctionType().param,
                      arg_res.type);
           auto new_e =
-              Expression::MakeCall(e->line_num, fun_res.exp, arg_res.exp);
+              Expression::MakeCall(e->line_num, *fun_res.exp, *arg_res.exp);
           return TCResult(new_e, fun_t->GetFunctionType().ret, arg_res.types);
         }
         default: {
@@ -401,22 +403,25 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       switch (context) {
         case TCContext::ValueContext:
         case TCContext::TypeContext: {
-          auto pt = InterpExp(values, e->GetFunctionType().parameter);
-          auto rt = InterpExp(values, e->GetFunctionType().return_type);
+          auto pt =
+              InterpExp(values, e->GetFunctionType().parameter.GetPointer());
+          auto rt =
+              InterpExp(values, e->GetFunctionType().return_type.GetPointer());
           auto new_e =
-              Expression::MakeFunType(e->line_num, ReifyType(pt, e->line_num),
-                                      ReifyType(rt, e->line_num));
+              Expression::MakeFunType(e->line_num, *ReifyType(pt, e->line_num),
+                                      *ReifyType(rt, e->line_num));
           return TCResult(new_e, Value::MakeTypeTypeVal(), types);
         }
         case TCContext::PatternContext: {
-          auto param_res = TypeCheckExp(e->GetFunctionType().parameter, types,
-                                        values, nullptr, context);
-          auto ret_res =
-              TypeCheckExp(e->GetFunctionType().return_type, param_res.types,
+          auto param_res =
+              TypeCheckExp(e->GetFunctionType().parameter.GetPointer(), types,
                            values, nullptr, context);
+          auto ret_res =
+              TypeCheckExp(e->GetFunctionType().return_type.GetPointer(),
+                           param_res.types, values, nullptr, context);
           auto new_e = Expression::MakeFunType(
-              e->line_num, ReifyType(param_res.type, e->line_num),
-              ReifyType(ret_res.type, e->line_num));
+              e->line_num, *ReifyType(param_res.type, e->line_num),
+              *ReifyType(ret_res.type, e->line_num));
           return TCResult(new_e, Value::MakeTypeTypeVal(), ret_res.types);
         }
       }
@@ -586,7 +591,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      return Statement::MakeReturn(line_num, Expression::MakeUnit(line_num));
+      return Statement::MakeReturn(line_num,
+                                   Expression::MakeTuple(line_num, {}));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"
@@ -643,7 +649,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
         return Statement::MakeSeq(
             stmt->line_num, stmt,
             Statement::MakeReturn(stmt->line_num,
-                                  Expression::MakeUnit(stmt->line_num)));
+                                  Expression::MakeTuple(stmt->line_num, {})));
       } else {
         std::cerr
             << stmt->line_num

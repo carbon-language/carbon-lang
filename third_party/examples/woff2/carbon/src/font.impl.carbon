@@ -19,19 +19,19 @@
 namespace woff2 {
 
 fn Font::FindTable(tag: uint32_t) -> Font::Table* {
-  var it: std::__map_iterator<std::__tree_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>>;
+  var it: auto;
   return it == tables.end() ? nullptr : &it->second;
 }
 
 fn Font::FindTable(tag: uint32_t) const -> const Font::Table* {
-  var it: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>>;
+  var it: auto;
   return it == tables.end() ? nullptr : &it->second;
 }
 
 fn Font::OutputOrderedTags() const -> std::vector<uint32_t> {
   var output_order: std::vector<uint32_t>;
 
-  for (const auto& i var __begin1: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range1: const std::map<unsigned int, woff2::Font::Table> &) {
+  for (const auto& i var __begin1: : var __range1: tablestables) {
     var table: const Font::Table &;
     // This is a transformed table, we will write it together with the
     // original version.
@@ -42,8 +42,8 @@ fn Font::OutputOrderedTags() const -> std::vector<uint32_t> {
   }
 
   // Alphabetize then put loca immediately after glyf
-  var glyf_loc: std::__wrap_iter<unsigned int *>;
-  var loca_loc: std::__wrap_iter<unsigned int *>;
+  var glyf_loc: auto;
+  var loca_loc: auto;
   if (glyf_loc != output_order.end() && loca_loc != output_order.end()) {
     output_order.erase(loca_loc);
     output_order.insert(std::find(output_order.begin(), output_order.end(),
@@ -88,7 +88,7 @@ fn ReadTrueTypeFont(file: woff2::Buffer *, data: const uint8_t *, len: size_t,
 
   // Check that tables are non-overlapping.
   var last_offset: uint32_t;
-  for (const auto& i var __begin1: std::__map_iterator<std::__tree_iterator<std::__value_type<unsigned int, unsigned int>, std::__tree_node<std::__value_type<unsigned int, unsigned int>, void *> *, long>> var __range1: std::map<unsigned int, unsigned int> &) {
+  for (const auto& i var __begin1: : var __range1: intervalsintervals) {
     if (i.first < last_offset || i.first + i.second < i.first) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -114,7 +114,7 @@ fn ReadCollectionFont(file: woff2::Buffer *, data: const uint8_t *, len: size_t,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  for (auto& entry var __begin1: std::__map_iterator<std::__tree_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range1: std::map<unsigned int, woff2::Font::Table> &) {
+  for (auto& entry var __begin1: : var __range1: fontfont) {
     var table: Font::Table &;
 
     if (all_tables->find(table.offset) == all_tables->end()) {
@@ -149,10 +149,10 @@ fn ReadTrueTypeCollection(file: woff2::Buffer *, data: const uint8_t *, len: siz
     }
 
     font_collection->fonts.resize(offsets.size());
-    var font_it: std::__wrap_iter<woff2::Font *>;
+    var font_it: auto;
 
     var all_tables: std::map<uint32_t, Font::Table *>;
-    for (const auto offset var __begin1: std::__wrap_iter<unsigned int *> var __range1: std::vector<unsigned int> &) {
+    for (const auto offset var __begin1: : var __range1: offsetsoffsets) {
       file->set_offset(offset);
       var font: woff2::Font &;
       if (!ReadCollectionFont(file, data, len, &font, &all_tables)) {
@@ -195,7 +195,7 @@ fn ReadFontCollection(data: const uint8_t *, len: size_t,
 
 fn FontFileSize(font: const woff2::Font &) -> size_t {
   var max_offset: size_t;
-  for (const auto& i var __begin1: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range1: const std::map<unsigned int, woff2::Font::Table> &) {
+  for (const auto& i var __begin1: : var __range1: fontfont) {
     var table: const Font::Table &;
     var padding_size: size_t;
     var end_offset: size_t;
@@ -206,7 +206,7 @@ fn FontFileSize(font: const woff2::Font &) -> size_t {
 
 fn FontCollectionFileSize(font_collection: const woff2::FontCollection &) -> size_t {
   var max_offset: size_t;
-  for (auto& font var __begin1: std::__wrap_iter<const woff2::Font *> var __range1: const std::vector<woff2::Font> &) {
+  for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
     // font file size actually just finds max offset
     max_offset = std::max(max_offset, FontFileSize(font));
   }
@@ -270,7 +270,7 @@ fn WriteFont(font: const woff2::Font &, offset: size_t *, dst: uint8_t *,
   Store16(max_pow2, offset, dst);
   Store16(range_shift, offset, dst);
 
-  for (const auto& i var __begin1: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range1: const std::map<unsigned int, woff2::Font::Table> &) {
+  for (const auto& i var __begin1: : var __range1: fontfont) {
     if (!WriteTable(i.second, offset, dst, dst_size)) {
       return false;
     }
@@ -306,7 +306,7 @@ fn WriteFontCollection(font_collection: const woff2::FontCollection &, dst: uint
   }
 
   // Write fonts and their offsets.
-  for (const auto & font var __begin1: std::__wrap_iter<const woff2::Font *> var __range1: const std::vector<woff2::Font> &) {
+  for (const auto & font var __begin1: : var __range1: font_collectionfont_collection) {
     StoreU32(offset, &offset_table, dst);
     if (!WriteFont(font, &offset, dst, dst_size)) {
       return false;
@@ -385,7 +385,7 @@ fn GetGlyphData(font: const woff2::Font &, glyph_index: int,
 }
 
 fn RemoveDigitalSignature(font: woff2::Font *) -> bool {
-  var it: std::__map_iterator<std::__tree_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>>;
+  var it: auto;
   if (it != font->tables.end()) {
     font->tables.erase(it);
     font->num_tables = font->tables.size();

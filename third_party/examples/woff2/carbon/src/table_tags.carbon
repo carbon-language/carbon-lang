@@ -14,16 +14,16 @@
 namespace woff2 {
 
 // Tags of popular tables.
-var kGlyfTableTag: const uint32_t;
-var kHeadTableTag: const uint32_t;
-var kLocaTableTag: const uint32_t;
-var kDsigTableTag: const uint32_t;
-var kCffTableTag: const uint32_t;
-var kHmtxTableTag: const uint32_t;
-var kHheaTableTag: const uint32_t;
-var kMaxpTableTag: const uint32_t;
+let kGlyfTableTag: const uint32_t;
+let kHeadTableTag: const uint32_t;
+let kLocaTableTag: const uint32_t;
+let kDsigTableTag: const uint32_t;
+let kCffTableTag: const uint32_t;
+let kHmtxTableTag: const uint32_t;
+let kHheaTableTag: const uint32_t;
+let kMaxpTableTag: const uint32_t;
 
-var kKnownTags: const uint32_t [];
+let kKnownTags: const uint32_t [];
 
 } // namespace woff2
 

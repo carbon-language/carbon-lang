@@ -17,7 +17,7 @@
 namespace woff2 {
 
 // Suggested max size for output.
-var kDefaultMaxSize: const size_t;
+let kDefaultMaxSize: const size_t;
 
 /**
  * Output interface for the woff2 decoding.

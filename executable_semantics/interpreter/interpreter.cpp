@@ -428,7 +428,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elements = new std::vector<TupleElement>();
-  auto f = act->u.exp->GetTuple().fields->begin();
+  auto f = act->u.exp->GetTuple().fields.begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = state->heap.AllocateValue(*i);  // copy?
     elements->push_back({.name = f->name, .address = a});
@@ -658,10 +658,10 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate.GetPointer()));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().offset.GetPointer()));
         act->pos++;
       } else if (act->pos == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
@@ -684,15 +684,17 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
+        const Expression* e1 =
+            exp->GetTuple().fields[0].expression.GetPointer();
         frame->todo.Push(MakeLvalAct(e1));
         act->pos++;
-      } else if (act->pos != static_cast<int>(exp->GetTuple().fields->size())) {
+      } else if (act->pos != static_cast<int>(exp->GetTuple().fields.size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Expression* elt = (*exp->GetTuple().fields)[act->pos].expression;
+        const Expression* elt =
+            exp->GetTuple().fields[act->pos].expression.GetPointer();
         frame->todo.Push(MakeLvalAct(elt));
         act->pos++;
       } else {
@@ -732,7 +734,8 @@ void StepExp() {
   switch (exp->tag()) {
     case ExpressionKind::PatternVariable: {
       if (act->pos == 0) {
-        frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
+        frame->todo.Push(
+            MakeExpAct(exp->GetPatternVariable().type.GetPointer()));
         act->pos++;
       } else {
         auto v = Value::MakeVarPatVal(exp->GetPatternVariable().name,
@@ -746,10 +749,10 @@ void StepExp() {
       if (act->pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate.GetPointer()));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().offset.GetPointer()));
         act->pos++;
       } else if (act->pos == 2) {
         auto tuple = act->results[0];
@@ -782,21 +785,23 @@ void StepExp() {
     }
     case ExpressionKind::Tuple: {
       if (act->pos == 0) {
-        if (exp->GetTuple().fields->size() > 0) {
+        if (exp->GetTuple().fields.size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-          const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
+          const Expression* e1 =
+              exp->GetTuple().fields[0].expression.GetPointer();
           frame->todo.Push(MakeExpAct(e1));
           act->pos++;
         } else {
           CreateTuple(frame, act, exp);
         }
-      } else if (act->pos != static_cast<int>(exp->GetTuple().fields->size())) {
+      } else if (act->pos != static_cast<int>(exp->GetTuple().fields.size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Expression* elt = (*exp->GetTuple().fields)[act->pos].expression;
+        const Expression* elt =
+            exp->GetTuple().fields[act->pos].expression.GetPointer();
         frame->todo.Push(MakeExpAct(elt));
         act->pos++;
       } else {
@@ -851,11 +856,11 @@ void StepExp() {
       break;
     case ExpressionKind::PrimitiveOp:
       if (act->pos !=
-          static_cast<int>(exp->GetPrimitiveOperator().arguments->size())) {
+          static_cast<int>(exp->GetPrimitiveOperator().arguments.size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         const Expression* arg =
-            (*exp->GetPrimitiveOperator().arguments)[act->pos];
+            &(exp->GetPrimitiveOperator().arguments[act->pos]);
         frame->todo.Push(MakeExpAct(arg));
         act->pos++;
       } else {
@@ -871,12 +876,12 @@ void StepExp() {
       if (act->pos == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetCall().function));
+        frame->todo.Push(MakeExpAct(exp->GetCall().function.GetPointer()));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetCall().argument));
+        frame->todo.Push(MakeExpAct(exp->GetCall().argument.GetPointer()));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
@@ -918,12 +923,14 @@ void StepExp() {
     }
     case ExpressionKind::FunctionT: {
       if (act->pos == 0) {
-        frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
+        frame->todo.Push(
+            MakeExpAct(exp->GetFunctionType().parameter.GetPointer()));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
+        frame->todo.Push(
+            MakeExpAct(exp->GetFunctionType().return_type.GetPointer()));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -1226,7 +1233,7 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(MakeStmtAct(Statement::MakeReturn(
-          stmt->line_num, Expression::MakeUnit(stmt->line_num))));
+          stmt->line_num, Expression::MakeTuple(stmt->line_num, {}))));
       todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
@@ -1250,7 +1257,7 @@ void StepStmt() {
         // Push an expression statement action to ignore the result
         // value from the continuation.
         Action* ignore_result = MakeStmtAct(Statement::MakeExpStmt(
-            stmt->line_num, Expression::MakeUnit(stmt->line_num)));
+            stmt->line_num, Expression::MakeTuple(stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
@@ -1393,10 +1400,9 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg =
-      Expression::MakeTuple(0, new std::vector<FieldInitializer>());
+  const Expression* arg = Expression::MakeTuple(0, {});
   const Expression* call_main =
-      Expression::MakeCall(0, Expression::MakeVar(0, "main"), arg);
+      Expression::MakeCall(0, *Expression::MakeVar(0, "main"), *arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);
