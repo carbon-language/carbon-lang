@@ -372,7 +372,7 @@ well.
 Anonymous struct literals are written using this syntax:
 
 ```
-var kvpair: auto = {.key = "the", .value = 27}
+var kvpair: auto = {.key = "the", .value = 27};
 ```
 
 This produces a struct value with two fields:
@@ -381,6 +381,15 @@ This produces a struct value with two fields:
     field is set to the type of the value, and so is `String`.
 -   The second field is named "`value`" and has the value `27`. The type of the
     field is set to the type of the value, and so is `Int`.
+
+**Open question:** To keep the literal syntax from being ambiguous with compound
+statements, Carbon will adopt some combination of:
+
+-   looking ahead after a `{` to see if it is followed by `.name`;
+-   not allowing a literal struct at the beginning of a statement;
+-   only allowing `{` to introduce a compound statement in contexts introduced
+    by a keyword where they are required, like requiring `{ ... }` around the
+    cases of an `if...else` statement.
 
 ### Type declarations
 
