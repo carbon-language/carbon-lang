@@ -35,6 +35,8 @@ TEST_F(VarDeclTest, DeclarationConstArray) {
 }
 
 TEST_F(VarDeclTest, DeclarationConstPointer) {
+  // TODO: Include init.
+  // TODO: Fix j replacement location.
   constexpr char Before[] = R"cpp(
     int i = 0;
     int* const j = &i;
