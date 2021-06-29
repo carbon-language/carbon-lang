@@ -26,36 +26,28 @@ static auto GetTypeStr(const clang::VarDecl* decl,
                        const clang::SourceManager& sm,
                        const clang::LangOptions& lang_opts) -> std::string {
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  std::vector<clang::SourceRange> segments;
+  std::vector<std::pair<clang::SourceLocation, std::string>> segments;
   while (!type_loc.isNull()) {
-    switch (type_loc.getTypeLocClass()) {
-      case clang::TypeLoc::LValueReference:
-      case clang::TypeLoc::RValueReference:
-      case clang::TypeLoc::Pointer:
-      case clang::TypeLoc::Auto:
-      case clang::TypeLoc::Qualified:
-        segments.push_back(type_loc.getLocalSourceRange());
-        type_loc = type_loc.getNextTypeLoc();
-        break;
-
-      default:
-        // For non-auto types, use the canonical type, which adds things like
-        // namespace qualifiers.
-        return clang::QualType::getAsString(decl->getType().split(), lang_opts);
+    std::string text;
+    auto qualifiers = type_loc.getType().getQualifiers();
+    if (!qualifiers.empty()) {
+      text = qualifiers.getAsString() + " ";
     }
+    auto range = type_loc.getLocalSourceRange();
+    text += clang::Lexer::getSourceText(
+        clang::CharSourceRange::getTokenRange(range), sm, lang_opts);
+    segments.push_back({range.getBegin(), text});
+    type_loc = type_loc.getNextTypeLoc();
   }
 
   // Sort type segments as they're written in the file. This avoids needing to
   // understand TypeLoc traversal ordering.
   std::sort(segments.begin(), segments.end(),
-            [](clang::SourceRange a, clang::SourceRange b) {
-              return a.getBegin() < b.getBegin();
-            });
+            [](const auto& a, const auto& b) { return a.first < b.first; });
 
   std::string type_str;
   for (const auto& segment : segments) {
-    type_str += clang::Lexer::getSourceText(
-        clang::CharSourceRange::getTokenRange(segment), sm, lang_opts);
+    type_str += segment.second;
   }
   return type_str;
 }
