@@ -53,6 +53,7 @@ set(LLVM_LINK_COMPONENTS
   CodeGen
   Core
   DebugInfoDWARF
+  DWP
   MC
   MCDisassembler
   MCParser

@@ -114,7 +114,11 @@ class DWARFRewriter {
   void updateGdbIndexSection();
 
   /// Output .dwo files.
-  void writeOutDWOFiles(std::unordered_map<uint64_t, std::string> &DWOIdToName);
+  void writeDWOFiles(std::unordered_map<uint64_t, std::string> &DWOIdToName);
+
+  /// Output .dwp files.
+  void writeDWP(std::unordered_map<uint64_t, std::string> &DWOIdToName);
+
   /// Abbreviations that were converted to use DW_AT_ranges.
   std::set<const DWARFAbbreviationDeclaration *> ConvertedRangesAbbrevs;
 
@@ -220,6 +224,13 @@ public:
     return getBinaryDWOPatcherHelper<DebugAbbrevDWOPatchers,
                                      DebugAbbrevPatcher>(
         BinaryDWOAbbrevPatchers, DwoId);
+  }
+
+  /// Given a DWO ID, return its DebugLocWriter if it exists.
+  DebugLocWriter *getDebugLocWriter(uint64_t DWOId) {
+    auto Iter = LocListWritersByCU.find(DWOId);
+    return Iter == LocListWritersByCU.end() ? nullptr
+                                            : LocListWritersByCU[DWOId].get();
   }
 };
 
