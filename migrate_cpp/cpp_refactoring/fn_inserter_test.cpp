@@ -51,6 +51,8 @@ TEST_F(FnInserterTest, Methods) {
      private:
       double radius_;
     };
+
+    void Shape::Draw() {}
   )cpp";
   constexpr char After[] = R"(
     class Shape {
@@ -68,6 +70,8 @@ TEST_F(FnInserterTest, Methods) {
      private:
       double radius_;
     };
+
+    fn Shape::Draw() {}
   )";
   ExpectReplacement(Before, After);
 }

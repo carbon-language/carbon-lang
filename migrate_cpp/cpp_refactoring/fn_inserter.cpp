@@ -32,11 +32,16 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   auto& sm = *(result.SourceManager);
   auto lang_opts = result.Context->getLangOpts();
 
-  auto range = clang::CharSourceRange::getCharRange(decl->getBeginLoc(),
-                                                    decl->getLocation());
-  auto text = clang::Lexer::getSourceText(range, sm, lang_opts);
+  // For names like "Class::Method", replace up to "Class" not "Method".
+  auto qual_loc = decl->getQualifierLoc();
+  auto name_start =
+      qual_loc.hasQualifier() ? qual_loc.getBeginLoc() : decl->getLocation();
+  auto range =
+      clang::CharSourceRange::getCharRange(decl->getBeginLoc(), name_start);
+
   // In order to handle keywords like "virtual" in "virtual auto Foo() -> ...",
-  // split the tokens and drop any auto/void entries.
+  // scan the replaced text and only drop auto/void entries.
+  auto text = clang::Lexer::getSourceText(range, sm, lang_opts);
   llvm::SmallVector<llvm::StringRef> split;
   text.split(split, ' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   std::string new_text = "fn ";
