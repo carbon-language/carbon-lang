@@ -482,7 +482,7 @@ At that point, two erasures occur:
     or tuple.
 -   A "newtype" mechanism called "adapting types" is provided to create new
     types that are compatible with existing types but with different interface
-    implementations. This can be used to add or replace implementations, or
+    implementations. This could be used to add or replace implementations, or
     define implementations for reuse.
 -   Associated types and interface parameters will be provided to allow function
     signatures to vary with the implementing type. The biggest difference
