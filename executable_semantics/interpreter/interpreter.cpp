@@ -646,7 +646,7 @@ void StepLvalue() {
     case ExpressionKind::Index: {
       //    { {e[i] :: C, E, F} :: S, H}
       // -> { e :: [][i] :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
+      frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate.GetPointer()));
       act->pos++;
       break;
     }
@@ -689,14 +689,14 @@ void StepExp() {
   }
   switch (exp->tag()) {
     case ExpressionKind::PatternVariable: {
-      frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
+      frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type.GetPointer()));
       act->pos++;
       break;
     }
     case ExpressionKind::Index: {
       //    { { e[i] :: C, E, F} :: S, H}
       // -> { { e :: [][i] :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
+      frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate.GetPointer()));
       act->pos++;
       break;
     }
@@ -764,7 +764,7 @@ void StepExp() {
     case ExpressionKind::Call:
       //    { {e1(e2) :: C, E, F} :: S, H}
       // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(exp->GetCall().function));
+      frame->todo.Push(MakeExpAct(exp->GetCall().function.GetPointer()));
       act->pos++;
       break;
     case ExpressionKind::IntT: {
@@ -792,7 +792,8 @@ void StepExp() {
       break;
     }
     case ExpressionKind::FunctionT: {
-      frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
+      frame->todo.Push(
+          MakeExpAct(exp->GetFunctionType().parameter.GetPointer()));
       act->pos++;
       break;
     }
@@ -1093,7 +1094,7 @@ void HandleValue() {
         case ExpressionKind::Index: {
           if (act->pos == 1) {
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
+            frame->todo.Push(MakeExpAct(exp->GetIndex().offset.GetPointer()));
           } else if (act->pos == 2) {
             //    { v :: [][i] :: C, E, F} :: S, H}
             // -> { { &v[i] :: C, E, F} :: S, H }
@@ -1163,7 +1164,7 @@ void HandleValue() {
         case ExpressionKind::Index: {
           if (act->pos == 1) {
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
+            frame->todo.Push(MakeExpAct(exp->GetIndex().offset.GetPointer()));
           } else if (act->pos == 2) {
             auto tuple = act->results[0];
             switch (tuple->tag) {
@@ -1227,7 +1228,7 @@ void HandleValue() {
             //    { { v :: [](e) :: C, E, F} :: S, H}
             // -> { { e :: v([]) :: C, E, F} :: S, H}
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->GetCall().argument));
+            frame->todo.Push(MakeExpAct(exp->GetCall().argument.GetPointer()));
           } else if (act->pos == 2) {
             //    { { v2 :: v1([]) :: C, E, F} :: S, H}
             // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1252,7 +1253,8 @@ void HandleValue() {
             //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
             // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
+            frame->todo.Push(
+                MakeExpAct(exp->GetFunctionType().return_type.GetPointer()));
           }
           break;
         }
@@ -1500,7 +1502,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 
   const Expression* arg = Expression::MakeTuple(0, {});
   const Expression* call_main =
-      Expression::MakeCall(0, Expression::MakeVar(0, "main"), arg);
+      Expression::MakeCall(0, *Expression::MakeVar(0, "main"), *arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);

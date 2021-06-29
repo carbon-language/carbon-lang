@@ -84,11 +84,12 @@ auto Expression::MakeContinuationType(int line_num) -> const Expression* {
   return type;
 }
 
-auto Expression::MakeFunType(int line_num, const Expression* param,
-                             const Expression* ret) -> const Expression* {
+auto Expression::MakeFunType(int line_num, Expression param, Expression ret)
+    -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = FunctionType({.parameter = param, .return_type = ret});
+  t->value = FunctionType(
+      {.parameter = std::move(param), .return_type = std::move(ret)});
   return t;
 }
 
@@ -99,11 +100,11 @@ auto Expression::MakeVar(int line_num, std::string var) -> const Expression* {
   return v;
 }
 
-auto Expression::MakeVarPat(int line_num, std::string var,
-                            const Expression* type) -> const Expression* {
+auto Expression::MakeVarPat(int line_num, std::string var, Expression type)
+    -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value = PatternVariable({.name = std::move(var), .type = type});
+  v->value = PatternVariable({.name = std::move(var), .type = std::move(type)});
   return v;
 }
 
@@ -146,11 +147,11 @@ auto Expression::MakeBinOp(int line_num, enum Operator op, Expression arg1,
   return e;
 }
 
-auto Expression::MakeCall(int line_num, const Expression* fun,
-                          const Expression* arg) -> const Expression* {
+auto Expression::MakeCall(int line_num, Expression fun, Expression arg)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = Call({.function = fun, .argument = arg});
+  e->value = Call({.function = std::move(fun), .argument = std::move(arg)});
   return e;
 }
 
@@ -186,11 +187,11 @@ auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer> args)
   return e;
 }
 
-auto Expression::MakeIndex(int line_num, const Expression* exp,
-                           const Expression* i) -> const Expression* {
+auto Expression::MakeIndex(int line_num, Expression exp, Expression i)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = Index({.aggregate = exp, .offset = i});
+  e->value = Index({.aggregate = std::move(exp), .offset = std::move(i)});
   return e;
 }
 
@@ -237,9 +238,9 @@ static void PrintFields(const std::vector<FieldInitializer>& fields) {
 void PrintExp(const Expression* e) {
   switch (e->tag()) {
     case ExpressionKind::Index:
-      PrintExp(e->GetIndex().aggregate);
+      PrintExp(e->GetIndex().aggregate.GetPointer());
       std::cout << "[";
-      PrintExp(e->GetIndex().offset);
+      PrintExp(e->GetIndex().offset.GetPointer());
       std::cout << "]";
       break;
     case ExpressionKind::GetField:
@@ -285,17 +286,17 @@ void PrintExp(const Expression* e) {
       std::cout << e->GetVariable().name;
       break;
     case ExpressionKind::PatternVariable:
-      PrintExp(e->GetPatternVariable().type);
+      PrintExp(e->GetPatternVariable().type.GetPointer());
       std::cout << ": ";
       std::cout << e->GetPatternVariable().name;
       break;
     case ExpressionKind::Call:
-      PrintExp(e->GetCall().function);
+      PrintExp(e->GetCall().function.GetPointer());
       if (e->GetCall().argument->tag() == ExpressionKind::Tuple) {
-        PrintExp(e->GetCall().argument);
+        PrintExp(e->GetCall().argument.GetPointer());
       } else {
         std::cout << "(";
-        PrintExp(e->GetCall().argument);
+        PrintExp(e->GetCall().argument.GetPointer());
         std::cout << ")";
       }
       break;
@@ -316,9 +317,9 @@ void PrintExp(const Expression* e) {
       break;
     case ExpressionKind::FunctionT:
       std::cout << "fn ";
-      PrintExp(e->GetFunctionType().parameter);
+      PrintExp(e->GetFunctionType().parameter.GetPointer());
       std::cout << " -> ";
-      PrintExp(e->GetFunctionType().return_type);
+      PrintExp(e->GetFunctionType().return_type.GetPointer());
       break;
   }
 }
