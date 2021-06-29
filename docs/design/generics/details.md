@@ -22,10 +22,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Generics](#generics)
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
--   [Type-types and facet types](#type-types-and-facet-types)
+-   [Type-of-types and facet types](#type-of-types-and-facet-types)
 -   [Structural interfaces](#structural-interfaces)
-    -   [Subtyping between type-types](#subtyping-between-type-types)
--   [Combining interfaces by anding type-types](#combining-interfaces-by-anding-type-types)
+    -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
+-   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
         -   [`extends` and `impl` with structural interfaces](#extends-and-impl-with-structural-interfaces)
@@ -42,8 +42,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Conditional conformance](#conditional-conformance)
     -   [Parameterized impls](#parameterized-impls)
         -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
-    -   [Other constraints as type-types](#other-constraints-as-type-types)
-        -   [Sized types and type-types](#sized-types-and-type-types)
+    -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
+        -   [Sized types and type-of-types](#sized-types-and-type-of-types)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
         -   [Runtime type fields](#runtime-type-fields)
@@ -77,12 +77,12 @@ is the value to print, let's call that `val`, the other is the type of that
 value, let's call that `T`. The type of `val` is `T`, what is the type of `T`?
 Well, since we want to let `T` be any type implementing the
 `ConvertibleToString` interface, we express that in the "interfaces are
-type-types" model by saying the type of `T` is `ConvertibleToString`.
+type-of-types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
 pass in `T` explicitly, it can be an
-[implicit argument](terminology.md#implicit-parameter) (also see
-[implicit argument](overview.md#implicit-arguments) in the Generics overview
+[deduced argument](terminology.md#deduced-parameter) (also see
+[deduced argument](overview.md#deduced-parameters) in the Generics overview
 doc). Basically, the user passes in a value for `val`, and the type of `val`
 determines `T`. `T` still gets passed into the function though, and it plays an
 important role -- it defines the implementation of the interface. We can think
@@ -94,8 +94,8 @@ the type argument. For more on this, see [the model section](#model) below.
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
-[type's size](#sized-types-and-type-types) (represented by an integer constant
-member of the type) is an optional member of an interface and its
+[type's size](#sized-types-and-type-of-types) (represented by an integer
+constant member of the type) is an optional member of an interface and its
 implementation. There are a few cases why we would include another interface
 implementation as a member:
 
@@ -185,7 +185,7 @@ type. Each declaration in the interface defines an _associated item_ (same
 [terminology as Rust](https://doc.rust-lang.org/reference/items/associated-items.html)).
 In this example, `Vector` has two associated methods, `Add` and `Scale`.
 
-An interface defines a type-type, that is a type whose values are types. The
+An interface defines a type-of-type, that is a type whose values are types. The
 values of an interface are specifically
 [facet types](terminology.md#facet-type), by which we mean types that are
 declared as specifically implementing **exactly** this interface, and which
@@ -270,7 +270,7 @@ subset of names that are visible.
 **Note:** In general the above is written assuming that casts are written
 "`a as T`" where `a` is a value and `T` is the type to cast to. When we write
 `Point as Vector`, the value `Point` is a type, and `Vector` is a type of a
-type, or a "type-type".
+type, or a "type-of-type".
 
 **Note:** A type may implement any number of different interfaces, but may
 provide at most one implementation of any single interface. This makes the act
@@ -608,7 +608,7 @@ var v3: Point2 = AddAndScaleGeneric(a, w, 2.5);
 ### Model
 
 The underlying model here is interfaces are
-[type-types](terminology.md#type-type), in particular, the type of
+[type-of-types](terminology.md#type-of-type), in particular, the type of
 [facet types](terminology.md#facet-type):
 
 -   [Interfaces](#interfaces) are types of
@@ -693,36 +693,36 @@ An interface's name may be used in a few different contexts:
 
 -   to define [an `impl` for a type](#implementing-interfaces),
 -   as a namespace name in [a qualified name](#qualified-member-names), and
--   as a [type-type](terminology.md#type-type) for
+-   as a [type-of-type](terminology.md#type-of-type) for
     [a generic type parameter](#generics).
 
-While interfaces are examples of type-types, type-types are a more general
+While interfaces are examples of type-of-types, type-of-types are a more general
 concept, for which interfaces are a building block.
 
-## Type-types and facet types
+## Type-of-types and facet types
 
-A [type-type](terminology.md#type-type) consists of a set of requirements and a
-set of names. Requirements are typically a set of interfaces that a type must
-satisfy (though other kinds of requirements are added below). The names are
+A [type-of-type](terminology.md#type-of-type) consists of a set of requirements
+and a set of names. Requirements are typically a set of interfaces that a type
+must satisfy (though other kinds of requirements are added below). The names are
 aliases for qualified names in those interfaces.
 
-An interface is one particularly simple example of a type-type. For example,
-`Vector` as a type-type has a set of requirements consisting of the single
+An interface is one particularly simple example of a type-of-type. For example,
+`Vector` as a type-of-type has a set of requirements consisting of the single
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types may be cast to a given type-type. The
-result of casting a type `T` to a type-type `I` (written `T as I`) is called a
-facet type, you might say a facet type `F` is the `I` facet of `T` if `F` is
-`T as I`. The API of `F` is determined by the set of names in the type-type.
+The requirements determine which types may be cast to a given type-of-type. The
+result of casting a type `T` to a type-of-type `I` (written `T as I`) is called
+a facet type, you might say a facet type `F` is the `I` facet of `T` if `F` is
+`T as I`. The API of `F` is determined by the set of names in the type-of-type.
 
-This general structure of type-types holds not just for interfaces, but others
-described in the rest of this document.
+This general structure of type-of-types holds not just for interfaces, but
+others described in the rest of this document.
 
 ## Structural interfaces
 
 If the nominal interfaces discussed above are the building blocks for
-type-types, [structural interfaces](terminology.md#structural-interfaces)
+type-of-types, [structural interfaces](terminology.md#structural-interfaces)
 describe how they may be composed together. Unlike nominal interfaces, the name
 of a structural interface is not a part of its value. Two different structural
 interfaces with the same definition are equivalent even if they have different
@@ -732,7 +732,7 @@ interfaces they can satisfy.
 
 A structural interface definition can contain interface requirements using
 `impl` declarations and names using `alias` declarations. Note that this allows
-us to declare the aspects of a type-type directly.
+us to declare the aspects of a type-of-type directly.
 
 ```
 structural interface VectorLegoFish {
@@ -754,8 +754,8 @@ example, we can define the Carbon builtin `Type` as:
 structural interface Type { }
 ```
 
-That is, `Type` is the type-type with no requirements (so matches every type),
-and defines no names.
+That is, `Type` is the type-of-type with no requirements (so matches every
+type), and defines no names.
 
 ```
 fn Identity[T:$ Type](x: T) -> T {
@@ -827,14 +827,14 @@ struct ImplementsS {
 }
 ```
 
-### Subtyping between type-types
+### Subtyping between type-of-types
 
-There is a subtyping relationship between type-types that allows you to call one
-generic function from another as long as you are calling a function with a
+There is a subtyping relationship between type-of-types that allows you to call
+one generic function from another as long as you are calling a function with a
 subset of your requirements.
 
-Given a generic type `T` with type-type `I1`, it may be
-[implicitly cast](terminology.md#subtyping-and-casting) to a type-type `I2`,
+Given a generic type `T` with type-of-type `I1`, it may be
+[implicitly cast](terminology.md#subtyping-and-casting) to a type-of-type `I2`,
 resulting in `T as I2`, as long as the requirements of `I1` are a superset of
 the requirements of `I2`. Further, given a value `x` of type `T`, it can be
 implicitly cast to `T as I2`. For example:
@@ -866,12 +866,12 @@ fn PrintDrawPrint[T1:$ PrintAndRender](x1: T1) {
 }
 ```
 
-## Combining interfaces by anding type-types
+## Combining interfaces by anding type-of-types
 
 In order to support functions that require more than one interface to be
-implemented, we provide a combination operator on type-types, written `&`. This
-operator gives the type-type with the union of all the requirements and the
-union of the names minus any conflicts.
+implemented, we provide a combination operator on type-of-types, written `&`.
+This operator gives the type-of-type with the union of all the requirements and
+the union of the names minus any conflicts.
 
 ```
 interface Printable {
@@ -882,7 +882,7 @@ interface Renderable {
   method (this: Self) Draw();
 }
 
-// `Printable & Renderable` is syntactic sugar for this type-type:
+// `Printable & Renderable` is syntactic sugar for this type-of-type:
 structural interface {
   impl as Printable;
   impl as Renderable;
@@ -924,7 +924,7 @@ interface EndOfGame {
   method (this: Self) Draw();
   method (this: Self) Winner(player: Int);
 }
-// `Renderable & EndOfGame` is syntactic sugar for this type-type:
+// `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
 structural interface {
   impl as Renderable;
   impl as EndOfGame;
@@ -959,14 +959,14 @@ fn RenderTieGame[T:$ RenderableAndEndOfGame](x: T) {
 ```
 
 Reserving the name when there is a conflict is part of resolving what happens
-when you combine more than two type-types. If `x` is forbidden in `A`, it is
+when you combine more than two type-of-types. If `x` is forbidden in `A`, it is
 forbidden in `A & B`, whether or not `B` defines the name `x`. This makes `&`
 associative and commutative, and so it is well defined on sets of interfaces, or
-other type-types, independent of order.
+other type-of-types, independent of order.
 
-Note that we do _not_ consider two type-types using the same name to mean the
-same thing to be a conflict. For example, combining a type-type with itself
-gives itself, `MyTypeType & MyTypeType == MyTypeType`. Also, given two
+Note that we do _not_ consider two type-of-types using the same name to mean the
+same thing to be a conflict. For example, combining a type-of-type with itself
+gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the sum
 should not conflict on any names in the common base.
 
@@ -976,21 +976,21 @@ considered using `+`,
 See [#531](https://github.com/carbon-language/carbon-lang/issues/531) for the
 discussion.
 
-**Future work:** We may want to define another operator on type-types for adding
-requirements to a type-type without affecting the names, and so avoid the
-possibility of name conflicts. Note this means the operation is not commutative.
-If we call this operator `[&]`, then `A [&] B` has the names of `A` and
-`B [&] A` has the names of `B`.
+**Future work:** We may want to define another operator on type-of-types for
+adding requirements to a type-of-type without affecting the names, and so avoid
+the possibility of name conflicts. Note this means the operation is not
+commutative. If we call this operator `[&]`, then `A [&] B` has the names of `A`
+and `B [&] A` has the names of `B`.
 
 ```
-// `Printable [&] Renderable` is syntactic sugar for this type-type:
+// `Printable [&] Renderable` is syntactic sugar for this type-of-type:
 structural interface {
   impl as Printable;
   impl as Renderable;
   alias Print = Printable.Print;
 }
 
-// `Renderable [&] EndOfGame` is syntactic sugar for this type-type:
+// `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
 structural interface {
   impl as Renderable;
   impl as EndOfGame;
@@ -1025,8 +1025,8 @@ type. For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
 `Swappable`. This is already a capability for
-[type-types in general](#type-types-and-facet-types). For consistency we will
-use the same semantics and syntax as we do for
+[type-of-types in general](#type-of-types-and-facet-types). For consistency we
+will use the same semantics and syntax as we do for
 [structural interfaces](#structural-interfaces):
 
 ```
@@ -1092,8 +1092,8 @@ DoHashAndEquals(y);
 ```
 
 This allows us to say that `Hashable`
-["extends" or "refines"](terminology.md#extendingrefining-an-interface)
-`Equatable`, with some benefits:
+["extends"](terminology.md#extending-an-interface) `Equatable`, with some
+benefits:
 
 -   This allows `Equatable` to be an implementation detail of `Hashable`.
 -   This allows types implementing `Hashable` to implement all of its API in one
@@ -1132,10 +1132,10 @@ Examples:
     [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
     shows how those concepts might be translated into Carbon interfaces.
 -   The [C++ concepts](https://en.cppreference.com/w/cpp/named_req) for
-    containers, iterators, and concurrency include many refinement
+    containers, iterators, and concurrency include many requirement
     relationships.
 -   Swift protocols, such as
-    [`Collection](https://developer.apple.com/documentation/swift/collection).
+    [Collection](https://developer.apple.com/documentation/swift/collection).
 
 To write an interface extending multiple interfaces, use multiple `extends`
 declarations. For example, the
@@ -1361,8 +1361,8 @@ requiring an implementation of interface `B` means `A` is more specific than
 
 None of the casts between facet types change the implementation of any
 interfaces for a type. So the result of a cast does not depend on the sequence
-of casts you perform, just the original type and the final type-type. That is,
-these types will all be equal:
+of casts you perform, just the original type and the final type-of-type. That
+is, these types will all be equal:
 
 -   `T as I`
 -   `(T as A) as I`
@@ -1459,12 +1459,12 @@ For this to work, we need a rule that picks a single `impl` in the case where
 there are multiple `impl` definitions that match a particular type and interface
 combination.
 
-### Other constraints as type-types
+### Other constraints as type-of-types
 
-There are some constraints that we will naturally represent as named type-types
-that the user can specify.
+There are some constraints that we will naturally represent as named
+type-of-types that the user can specify.
 
-#### Sized types and type-types
+#### Sized types and type-of-types
 
 Like Rust, we may have types that have values whose size is only determined at
 runtime. Many functions may want to restrict to types with known size.
