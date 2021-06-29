@@ -13,6 +13,10 @@
 #include "executable_semantics/ast/struct_definition.h"
 #include "executable_semantics/interpreter/dictionary.h"
 
+namespace yy {
+class parser;
+}
+
 namespace Carbon {
 
 struct Value;
@@ -56,7 +60,7 @@ class Declaration {
   // Add an entry in the compile time global symbol tables for this declaration.
   auto TopLevel(TypeCheckContext& e) const -> void { return box->TopLevel(e); }
 
- private:  // types
+ private:
   // A base class that erases the type of a `Boxed<Content>`, where `Content`
   // satisfies the Declaration concept.
   struct Box {
@@ -95,15 +99,21 @@ class Declaration {
     }
   };
 
- private:  // data members
+  // Constructs an instance in a "partially formed" state, which can only be
+  // assigned to or destroyed.
+  Declaration() = default;
+
+  // Give Bison access to the default constructor.
+  friend class yy::parser;
+
   // Note: the pointee is const as long as we have no mutating methods. When
   std::shared_ptr<const Box> box;
 };
 
 struct FunctionDeclaration {
-  const FunctionDefinition* definition;
-  explicit FunctionDeclaration(const FunctionDefinition* definition)
-      : definition(definition) {}
+  FunctionDefinition definition;
+  explicit FunctionDeclaration(FunctionDefinition definition)
+      : definition(std::move(definition)) {}
 
   auto Print() const -> void;
   auto Name() const -> std::string;

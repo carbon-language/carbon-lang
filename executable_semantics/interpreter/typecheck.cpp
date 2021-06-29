@@ -674,8 +674,9 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return MakeFunDef(f->line_num, f->name, *ReifyType(return_type, f->line_num),
-                    f->param_pattern, body);
+  return new FunctionDefinition(MakeFunDef(f->line_num, f->name,
+                                           *ReifyType(return_type, f->line_num),
+                                           f->param_pattern, body));
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
@@ -704,7 +705,7 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
 }
 
 auto FunctionDeclaration::Name() const -> std::string {
-  return definition->name;
+  return definition.name;
 }
 
 auto StructDeclaration::Name() const -> std::string { return *definition.name; }
@@ -728,7 +729,7 @@ auto StructDeclaration::TypeChecked(TypeEnv types, Env values) const
 
 auto FunctionDeclaration::TypeChecked(TypeEnv types, Env values) const
     -> Declaration {
-  return FunctionDeclaration(TypeCheckFunDef(definition, types, values));
+  return FunctionDeclaration(*TypeCheckFunDef(&definition, types, values));
 }
 
 auto ChoiceDeclaration::TypeChecked(TypeEnv types, Env values) const
@@ -769,7 +770,7 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
 }
 
 auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
-  auto t = TypeOfFunDef(tops.types, tops.values, definition);
+  auto t = TypeOfFunDef(tops.types, tops.values, &definition);
   tops.types.Set(Name(), t);
   InitGlobals(tops.values);
 }

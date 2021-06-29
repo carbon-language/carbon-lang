@@ -342,10 +342,10 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 }
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
-  auto pt = InterpExp(globals, &definition->param_pattern);
-  auto f = Value::MakeFunVal(definition->name, pt, definition->body);
+  auto pt = InterpExp(globals, &definition.param_pattern);
+  auto f = Value::MakeFunVal(definition.name, pt, definition.body);
   Address a = state->heap.AllocateValue(f);
-  globals.Set(definition->name, a);
+  globals.Set(definition.name, a);
 }
 
 // Adds an entry in `globals` mapping the variable's name to the

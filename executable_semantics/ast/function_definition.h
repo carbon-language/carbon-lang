@@ -19,9 +19,9 @@ struct FunctionDefinition {
 };
 
 auto MakeFunDef(int line_num, std::string name, Expression ret_type,
-                Expression param, const Statement* body) -> FunctionDefinition*;
-void PrintFunDef(const FunctionDefinition*);
-void PrintFunDefDepth(const FunctionDefinition*, int);
+                Expression param, const Statement* body) -> FunctionDefinition;
+void PrintFunDef(const FunctionDefinition&);
+void PrintFunDefDepth(const FunctionDefinition&, int);
 
 }  // namespace Carbon
 

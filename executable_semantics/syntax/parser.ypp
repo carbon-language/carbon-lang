@@ -92,10 +92,10 @@ void yy::parser::error(
 %token <int> integer_literal
 %token <char*> identifier
 %type <char*> designator
-%type <Carbon::Declaration*> declaration
-%type <Carbon::FunctionDefinition*> function_declaration
-%type <Carbon::FunctionDefinition*> function_definition
-%type <std::list<Carbon::Declaration>*> declaration_list
+%type <Carbon::Declaration> declaration
+%type <Carbon::FunctionDefinition> function_declaration
+%type <Carbon::FunctionDefinition> function_definition
+%type <std::list<Carbon::Declaration>> declaration_list
 %type <const Carbon::Statement*> statement
 %type <const Carbon::Statement*> optional_else
 %type <const Carbon::Statement*> statement_list
@@ -401,32 +401,32 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
 | function_declaration
-    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
 | STRUCT identifier "{" member_list "}"
     {
-      $$ = new Carbon::Declaration(
+      $$ = Carbon::Declaration(
         Carbon::StructDeclaration{yylineno, $2, $4});
     }
 | CHOICE identifier "{" alternative_list "}"
     {
-      $$ = new Carbon::Declaration(
+      $$ = Carbon::Declaration(
         Carbon::ChoiceDeclaration{yylineno, $2, $4});
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = new Carbon::Declaration(
+      $$ = Carbon::Declaration(
         Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
     }
 ;
 declaration_list:
   // Empty
-    { $$ = new std::list<Carbon::Declaration>(); }
+    { $$ = std::list<Carbon::Declaration>(); }
 | declaration declaration_list
     {
       $$ = $2;
-      $$->push_front(*$1);
+      $$.push_front($1);
     }
 ;
 %%
