@@ -11,6 +11,7 @@
 #include "Instrumentation.h"
 #include "ParallelUtilities.h"
 #include "RuntimeLibs/InstrumentationRuntimeLibrary.h"
+#include "Utils.h"
 #include "llvm/Support/CommandLine.h"
 #include <stack>
 
@@ -90,7 +91,7 @@ uint32_t Instrumentation::getFunctionNameIndex(const BinaryFunction &Function) {
     return Iter->second;
   size_t Idx = Summary->StringTable.size();
   FuncToStringIdx.emplace(std::make_pair(&Function, Idx));
-  Summary->StringTable.append(std::string(Function.getOneName()));
+  Summary->StringTable.append(getEscapedName(Function.getOneName()));
   Summary->StringTable.append(1, '\0');
   return Idx;
 }

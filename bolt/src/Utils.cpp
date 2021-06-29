@@ -48,6 +48,26 @@ void check_error(Error E, Twine Message) {
   });
 }
 
+std::string getEscapedName(const StringRef &Name) {
+  std::string Output = Name.str();
+  for (size_t I = 0; I < Output.size(); ++I) {
+    if (Output[I] == ' ' || Output[I] == '\\')
+      Output.insert(I++, 1, '\\');
+  }
+
+  return Output;
+}
+
+std::string getUnescapedName(const StringRef &Name) {
+  std::string Output = Name.str();
+  for (size_t I = 0; I < Output.size(); ++I) {
+    if (Output[I] == '\\')
+      Output.erase(I++, 1);
+  }
+
+  return Output;
+}
+
 Optional<uint8_t> readDWARFExpressionTargetReg(StringRef ExprBytes) {
   uint8_t Opcode = ExprBytes[0];
   if (Opcode == dwarf::DW_CFA_def_cfa_expression)

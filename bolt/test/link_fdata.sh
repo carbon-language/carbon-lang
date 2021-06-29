@@ -7,7 +7,7 @@ mapfile -t symbols < <(nm --defined-only "$2")
 
 for line in "${symbols[@]}"; do
     val=$(echo $line | cut -d' ' -f1)
-    symname=$(echo $line | cut -d' ' -f3)
+    symname=$(echo $line | awk '{ $1=$2=""; print $0 }' | sed 's/^[ \t]*//')
     if [ -z "$symname" ]; then
         continue
     fi

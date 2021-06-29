@@ -2201,9 +2201,8 @@ DataAggregator::writeAggregatedFile(StringRef OutputFilename) const {
       OutFile << (Loc.IsSymbol ? "4 " : "3 ");
     else
       OutFile << (Loc.IsSymbol ? "1 " : "0 ");
-    OutFile << (Loc.Name.empty() ? "[unknown]" : Loc.Name)  << " "
-            << Twine::utohexstr(Loc.Offset)
-            << FieldSeparator;
+    OutFile << (Loc.Name.empty() ? "[unknown]" : getEscapedName(Loc.Name))
+            << " " << Twine::utohexstr(Loc.Offset) << FieldSeparator;
   };
 
   uint64_t BranchValues = 0;

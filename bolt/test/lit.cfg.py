@@ -51,6 +51,7 @@ tool_dirs = [config.llvm_tools_dir,
              config.test_source_root]
 
 tools = [
+    ToolSubst('llc', unresolved='fatal'),
     ToolSubst('llvm-dwarfdump', unresolved='fatal'),
     ToolSubst('llvm-bolt', unresolved='fatal'),
     ToolSubst('perf2bolt', unresolved='fatal'),
@@ -58,6 +59,7 @@ tools = [
     ToolSubst('llvm-mc', unresolved='fatal'),
     ToolSubst('llvm-nm', unresolved='fatal'),
     ToolSubst('llvm-objdump', unresolved='fatal'),
+    ToolSubst('llvm-objcopy', unresolved='fatal'),
     ToolSubst('llvm-strip', unresolved='fatal'),
     ToolSubst('link_fdata', command=FindTool('link_fdata.sh'), unresolved='fatal'),
 ]

@@ -35,6 +35,12 @@ void check_error(std::error_code EC, StringRef Message);
 
 void check_error(Error E, Twine Message);
 
+/// Return the name with escaped whitespace and backslash characters
+std::string getEscapedName(const StringRef &Name);
+
+/// Return the unescaped name
+std::string getUnescapedName(const StringRef &Name);
+
 // Determines which register a given DWARF expression is being assigned to.
 // If the expression is defining the CFA, return NoneType.
 Optional<uint8_t> readDWARFExpressionTargetReg(StringRef ExprBytes);
