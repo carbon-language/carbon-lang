@@ -601,7 +601,7 @@ express, for example:
 Note that type constraints can be a restriction on one type parameter, or can
 define a relationship between multiple type parameters.
 
-## type-of-type
+## Type-of-type
 
 A type-of-type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
