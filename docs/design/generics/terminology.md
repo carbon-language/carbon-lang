@@ -30,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Facet type](#facet-type)
--   [Extending/refining an interface](#extendingrefining-an-interface)
+-   [Extending an interface](#extending-an-interface)
 -   [Witness tables](#witness-tables)
     -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
     -   [Static-dispatch witness table](#static-dispatch-witness-table)
@@ -417,7 +417,7 @@ A facet type associated with a specific interface, corresponds to the
 Using such a facet type removes ambiguity about where to find the declaration
 and definition of any accessed methods.
 
-## Extending/refining an interface
+## Extending an interface
 
 An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
