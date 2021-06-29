@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Definition checking](#definition-checking)
         -   [Complete definition checking](#complete-definition-checking)
         -   [Early versus late type checking](#early-versus-late-type-checking)
--   [Implicit parameter](#implicit-parameter)
+-   [Deduced parameter](#deduced-parameter)
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
     -   [Nominal interfaces](#nominal-interfaces)
@@ -242,17 +242,17 @@ Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
 complete definition checking. This occurs for template dependent values.
 
-## Implicit parameter
+## Deduced parameter
 
-An implicit parameter is listed in the optional `[` `]` section right after the
+An deduced parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
 
-`fn` &lt;name> `[` &lt;implicit parameters> `](` &lt;explicit parameters `) ->`
+`fn` &lt;name> `[` &lt;deduced parameters> `](` &lt;explicit parameters `) ->`
 &lt;return type>
 
-Implicit arguments are determined as a result of pattern matching the explicit
+Deduced arguments are determined as a result of pattern matching the explicit
 argument values (usually the types of those values) to the explicit parameters.
-Note that function signatures can typically be rewritten to avoid using implicit
+Note that function signatures can typically be rewritten to avoid using deduced
 parameters:
 
 ```
@@ -261,7 +261,7 @@ fn F[T:$$ Type](value: T);
 fn F(value: (T:$$ Type));
 ```
 
-See more [here](overview.md#implicit-parameters).
+See more [here](overview.md#deduced-parameters).
 
 ## Interface
 
