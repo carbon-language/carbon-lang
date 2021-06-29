@@ -205,9 +205,9 @@ expression:
 | expression designator
     { $$ = Carbon::Expression::MakeGetField(yylineno, $1, $2); }
 | expression "[" expression "]"
-    { $$ = Carbon::Expression::MakeIndex(yylineno, $1, $3); }
+    { $$ = Carbon::Expression::MakeIndex(yylineno, *$1, *$3); }
 | identifier ":" expression
-    { $$ = Carbon::Expression::MakeVarPat(yylineno, $1, $3); }
+    { $$ = Carbon::Expression::MakeVarPat(yylineno, $1, *$3); }
 | integer_literal
     { $$ = Carbon::Expression::MakeInt(yylineno, $1); }
 | TRUE
@@ -246,13 +246,13 @@ expression:
 | UNARY_STAR expression %prec PREFIX_STAR
     { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Deref, *$2); }
 | expression tuple
-    { $$ = Carbon::Expression::MakeCall(yylineno, $1, $2); }
+    { $$ = Carbon::Expression::MakeCall(yylineno, *$1, *$2); }
 | expression POSTFIX_STAR
     { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Ptr, *$1); }
 | expression UNARY_STAR
     { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Ptr, *$1); }
 | FNTY tuple return_type
-    { $$ = Carbon::Expression::MakeFunType(yylineno, $2, $3); }
+    { $$ = Carbon::Expression::MakeFunType(yylineno, *$2, *$3); }
 ;
 designator: "." identifier { $$ = $2; }
 ;
@@ -297,7 +297,7 @@ clause:
 | DEFAULT DBLARROW statement
     {
       auto vp = Carbon::Expression::MakeVarPat(yylineno, "_",
-                                   Carbon::Expression::MakeAutoType(yylineno));
+                                   *Carbon::Expression::MakeAutoType(yylineno));
       $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>(vp, $3);
     }
 ;

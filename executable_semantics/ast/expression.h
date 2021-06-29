@@ -70,14 +70,14 @@ struct FieldAccess {
 
 struct Index {
   static constexpr ExpressionKind Kind = ExpressionKind::Index;
-  const Expression* aggregate;
-  const Expression* offset;
+  IndirectValue<Expression> aggregate;
+  IndirectValue<Expression> offset;
 };
 
 struct PatternVariable {
   static constexpr ExpressionKind Kind = ExpressionKind::PatternVariable;
   std::string name;
-  const Expression* type;
+  IndirectValue<Expression> type;
 };
 
 struct IntLiteral {
@@ -103,14 +103,14 @@ struct PrimitiveOperator {
 
 struct Call {
   static constexpr ExpressionKind Kind = ExpressionKind::Call;
-  const Expression* function;
-  const Expression* argument;
+  IndirectValue<Expression> function;
+  IndirectValue<Expression> argument;
 };
 
 struct FunctionType {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionT;
-  const Expression* parameter;
-  const Expression* return_type;
+  IndirectValue<Expression> parameter;
+  IndirectValue<Expression> return_type;
 };
 
 struct AutoT {
@@ -138,7 +138,7 @@ struct Expression {
   inline auto tag() const -> ExpressionKind;
 
   static auto MakeVar(int line_num, std::string var) -> const Expression*;
-  static auto MakeVarPat(int line_num, std::string var, const Expression* type)
+  static auto MakeVarPat(int line_num, std::string var, Expression type)
       -> const Expression*;
   static auto MakeInt(int line_num, int i) -> const Expression*;
   static auto MakeBool(int line_num, bool b) -> const Expression*;
@@ -148,19 +148,19 @@ struct Expression {
       -> const Expression*;
   static auto MakeBinOp(int line_num, enum Operator op, Expression arg1,
                         Expression arg2) -> const Expression*;
-  static auto MakeCall(int line_num, const Expression* fun,
-                       const Expression* arg) -> const Expression*;
+  static auto MakeCall(int line_num, Expression fun, Expression arg)
+      -> const Expression*;
   static auto MakeGetField(int line_num, const Expression* exp,
                            std::string field) -> const Expression*;
   static auto MakeTuple(int line_num, std::vector<FieldInitializer> args)
       -> const Expression*;
-  static auto MakeIndex(int line_num, const Expression* exp,
-                        const Expression* i) -> const Expression*;
+  static auto MakeIndex(int line_num, Expression exp, Expression i)
+      -> const Expression*;
   static auto MakeTypeType(int line_num) -> const Expression*;
   static auto MakeIntType(int line_num) -> const Expression*;
   static auto MakeBoolType(int line_num) -> const Expression*;
-  static auto MakeFunType(int line_num, const Expression* param,
-                          const Expression* ret) -> const Expression*;
+  static auto MakeFunType(int line_num, Expression param, Expression ret)
+      -> const Expression*;
   static auto MakeAutoType(int line_num) -> const Expression*;
   static auto MakeContinuationType(int line_num) -> const Expression*;
 
