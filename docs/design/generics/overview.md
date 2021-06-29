@@ -478,8 +478,8 @@ At that point, two erasures occur:
 
 ## Future work
 
--   Be able to have non-type generic parameters like the `UInt` size of an array
-    or tuple.
+-   Be able to have non-type generic parameters, like the `UInt` size of an
+    array or tuple.
 -   A "newtype" mechanism called "adapting types" is provided to create new
     types that are compatible with existing types but with different interface
     implementations. This could be used to add or replace implementations, or
