@@ -35,6 +35,8 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   auto range = clang::CharSourceRange::getCharRange(decl->getBeginLoc(),
                                                     decl->getLocation());
   auto text = clang::Lexer::getSourceText(range, sm, lang_opts);
+  // In order to handle keywords like "virtual" in "virtual auto Foo() -> ...",
+  // split the tokens and drop any auto/void entries.
   llvm::SmallVector<llvm::StringRef> split;
   text.split(split, ' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   std::string new_text = "fn ";
