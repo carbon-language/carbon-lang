@@ -75,7 +75,7 @@ Summary of how Carbon generics work:
     an unparameterized one. Functions can freely mix generic, template, and
     regular parameters.
 -   Interfaces can require other interfaces be implemented, or
-    [extend](terminology.md#extendingrefining-an-interface) them.
+    [extend](terminology.md#extending-an-interface) them.
 -   The `&` operation on type-of-types allows you conveniently combine
     interfaces. It gives you all the names that don't conflict.
 -   You may also declare a new type-of-type directly using
@@ -344,10 +344,10 @@ interface Iterable {
 }
 ```
 
-The `extends` keyword is used to
-[extend](terminology.md#extendingrefining-an-interface) another interface. If
-interface `Child` extends interface `Parent`, `Parent`'s interface is both
-required and all its methods are included in `Child`'s interface.
+The `extends` keyword is used to [extend](terminology.md#extending-an-interface)
+another interface. If interface `Child` extends interface `Parent`, `Parent`'s
+interface is both required and all its methods are included in `Child`'s
+interface.
 
 ```
 // `Hashable` extends `Equatable`.
