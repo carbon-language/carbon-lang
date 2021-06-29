@@ -129,7 +129,8 @@ TEST_F(VarDeclTest, ParamsConst) {
 }
 
 TEST_F(VarDeclTest, ParamStruct) {
-  // This is to ensure the 'struct' keyword doesn't get added to the call type.
+  // This is to ensure the 'struct' keyword doesn't get added to the qualified
+  // type.
   constexpr char Before[] = R"cpp(
     struct Circle {};
     auto Draw(int times, const Circle& circle) -> bool;
@@ -155,20 +156,20 @@ TEST_F(VarDeclTest, Member) {
   ExpectReplacement(Before, Before);
 }
 
-TEST_F(VarDeclTest, DISABLED_RangeFor) {
-  // TODO: Handle range based for loops. Test shouldn't be enabled without
-  // addressing this because the output is quirky and fragile.
+TEST_F(VarDeclTest, RangeFor) {
   constexpr char Before[] = R"cpp(
     void Foo() {
       int items[] = {1};
       for (int i : items) {
+        int j;
       }
     }
   )cpp";
   constexpr char After[] = R"(
     void Foo() {
-      var items: int[] = {1};
+      var items: int [1];
       for (int i : items) {
+        var j: int;
       }
     }
   )";

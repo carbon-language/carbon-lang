@@ -14,7 +14,11 @@ namespace Carbon {
 VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
                  cam::MatchFinder* finder)
     : Matcher(in_replacements) {
-  finder->addMatcher(cam::varDecl().bind(Label), this);
+  // Skip range-based for loops in this var-inserter.
+  finder->addMatcher(cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
+                                      cam::hasParent(cam::cxxForRangeStmt())))))
+                         .bind(Label),
+                     this);
 }
 
 // Returns a string for the type.
