@@ -5,6 +5,7 @@
 #include "migrate_cpp/cpp_refactoring/fn_inserter.h"
 
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/Lex/Lexer.h"
 
 namespace cam = ::clang::ast_matchers;
 
@@ -27,10 +28,22 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   if (!decl) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
   }
-  auto begin = decl->getBeginLoc();
-  // Replace the first token in the range, `auto`.
-  auto range = clang::CharSourceRange::getTokenRange(begin, begin);
-  AddReplacement(*(result.SourceManager), range, "fn");
+
+  auto& sm = *(result.SourceManager);
+  auto lang_opts = result.Context->getLangOpts();
+
+  auto range = clang::CharSourceRange::getCharRange(decl->getBeginLoc(),
+                                                    decl->getLocation());
+  auto text = clang::Lexer::getSourceText(range, sm, lang_opts);
+  llvm::SmallVector<llvm::StringRef> split;
+  text.split(split, ' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  std::string new_text = "fn ";
+  for (const auto& t : split) {
+    if (t != "auto" && t != "void") {
+      new_text += t.str() + " ";
+    }
+  }
+  AddReplacement(*(result.SourceManager), range, new_text);
 }
 
 }  // namespace Carbon

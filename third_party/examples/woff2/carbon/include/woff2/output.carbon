@@ -34,13 +34,13 @@ class WOFF2Out {
 
   // Append n bytes of data from buf.
   // Return true if all written, false otherwise.
-  fn auto Write(buf: const void *, n: size_t) -> bool = 0;
+  fn virtual Write(buf: const void *, n: size_t) -> bool = 0;
 
   // Write n bytes of data from buf at offset.
   // Return true if all written, false otherwise.
-  fn auto Write(buf: const void *, offset: size_t, n: size_t) -> bool = 0;
+  fn virtual Write(buf: const void *, offset: size_t, n: size_t) -> bool = 0;
 
-  fn auto Size() -> size_t = 0;
+  fn virtual Size() -> size_t = 0;
 };
 
 /**

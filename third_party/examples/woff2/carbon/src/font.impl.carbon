@@ -18,17 +18,17 @@
 
 namespace woff2 {
 
-fn Font::FindTable(tag: uint32_t) -> Font::Table* {
+fn Font:: FindTable(tag: uint32_t) -> Font::Table* {
   var it: auto;
   return it == tables.end() ? nullptr : &it->second;
 }
 
-fn Font::FindTable(tag: uint32_t) const -> const Font::Table* {
+fn Font:: FindTable(tag: uint32_t) const -> const Font::Table* {
   var it: auto;
   return it == tables.end() ? nullptr : &it->second;
 }
 
-fn Font::OutputOrderedTags() const -> std::vector<uint32_t> {
+fn Font:: OutputOrderedTags() const -> std::vector<uint32_t> {
   var output_order: std::vector<uint32_t>;
 
   for (const auto& i : tables) {
@@ -338,7 +338,7 @@ fn IndexFormat(font: const woff2::Font &) -> int {
   return head_table->data[51];
 }
 
-fn Font::Table::IsReused() const -> bool {
+fn Font::Table:: IsReused() const -> bool {
   return this->reuse_of != nullptr;
 }
 
