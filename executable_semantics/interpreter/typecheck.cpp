@@ -663,9 +663,9 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
 
 auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     -> struct FunctionDefinition* {
-  auto param_res = TypeCheckExp(f->param_pattern, types, values, nullptr,
+  auto param_res = TypeCheckExp(&f->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
-  auto return_type = InterpExp(values, f->return_type);
+  auto return_type = InterpExp(values, &f->return_type);
   if (f->name == "main") {
     ExpectType(f->line_num, "return type of `main`", Value::MakeIntTypeVal(),
                return_type);
@@ -674,18 +674,18 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return MakeFunDef(f->line_num, f->name, ReifyType(return_type, f->line_num),
+  return MakeFunDef(f->line_num, f->name, *ReifyType(return_type, f->line_num),
                     f->param_pattern, body);
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
     -> const Value* {
-  auto param_res = TypeCheckExp(fun_def->param_pattern, types, values, nullptr,
+  auto param_res = TypeCheckExp(&fun_def->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
-  auto ret = InterpExp(values, fun_def->return_type);
+  auto ret = InterpExp(values, &fun_def->return_type);
   if (ret->tag == ValKind::AutoTV) {
     auto f = TypeCheckFunDef(fun_def, types, values);
-    ret = InterpExp(values, f->return_type);
+    ret = InterpExp(values, &f->return_type);
   }
   return Value::MakeFunTypeVal(param_res.type, ret);
 }

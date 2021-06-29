@@ -356,16 +356,16 @@ return_type:
 ;
 function_definition:
   FN identifier tuple return_type "{" statement_list "}"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
+    { $$ = MakeFunDef(yylineno, $2, *$4, *$3, $6); }
 | FN identifier tuple DBLARROW expression ";"
     {
-      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::Expression::MakeAutoType(yylineno), $3,
+      $$ = Carbon::MakeFunDef(yylineno, $2, *Carbon::Expression::MakeAutoType(yylineno), *$3,
                               Carbon::Statement::MakeReturn(yylineno, $5));
     }
 ;
 function_declaration:
   FN identifier tuple return_type ";"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
+    { $$ = MakeFunDef(yylineno, $2, *$4, *$3, 0); }
 ;
 variable_declaration: identifier ":" expression
     { $$ = MakeField(yylineno, $1, $3); }
