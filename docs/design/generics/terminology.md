@@ -41,7 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface type parameters versus associated types](#interface-type-parameters-versus-associated-types)
 -   [Type constraints](#type-constraints)
--   [Type-type](#type-type)
+-   [type-of-type](#type-of-type)
 
 <!-- tocstop -->
 
@@ -336,10 +336,11 @@ function signatures can change from base class to derived class, see
 [covariance and contravariance in Wikipedia](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>).
 
 In a generics context, we are specifically interested in the subtyping
-relationships between [type-types](#type-type). In particular, a type-type
-encompasses a set of [type constraints](#type-constraints), and you can convert
-a type from a more-restrictive type-type to another type-type whose constraints
-are implied by the first. C++ concepts terminology uses the term
+relationships between [type-of-types](#type-of-type). In particular, a
+type-of-type encompasses a set of [type constraints](#type-constraints), and you
+can convert a type from a more-restrictive type-of-type to another type-of-type
+whose constraints are implied by the first. C++ concepts terminology uses the
+term
 ["subsumes"](https://en.cppreference.com/w/cpp/language/constraints#Partial_ordering_of_constraints)
 to talk about this partial ordering of constraints, but we avoid that term since
 it is at odds with the use of the term in
@@ -401,9 +402,9 @@ A facet type is a [compatible type](#compatible-types) of some original type
 written by the user, that has a specific API. This API might correspond to a
 specific [interface](#interface), or the API required by particular
 [type constraints](#type-constraints). In either case, the API can be specified
-using a [type-type](#type-type). Casting a type to a type-type results in a
-facet type, with data representation matching the original type and API matching
-the type-type.
+using a [type-of-type](#type-of-type). Casting a type to a type-of-type results
+in a facet type, with data representation matching the original type and API
+matching the type-of-type.
 
 Casting to a facet type is one way of modeling compile-time
 [type erasure](#type-erasure) when calling a generic function. It is also a way
@@ -600,13 +601,13 @@ express, for example:
 Note that type constraints can be a restriction on one type parameter, or can
 define a relationship between multiple type parameters.
 
-## Type-type
+## type-of-type
 
-A type-type is the type used when declaring some type parameter. It foremost
+A type-of-type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
 as [type constraints](#type-constraints). For template parameters, that is all a
-type-type does. For generic parameters, it also determines the API that is
+type-of-type does. For generic parameters, it also determines the API that is
 available in the body of the function. Calling a function with a type `T` passed
-to a generic type parameter `U` with type-type `I`, ends up setting `U` to the
-facet type `T as I`. This has the API determined by `I`, with the implementation
-of that API coming from `T`.
+to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
+the facet type `T as I`. This has the API determined by `I`, with the
+implementation of that API coming from `T`.
