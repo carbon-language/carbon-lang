@@ -478,8 +478,8 @@ At that point, two erasures occur:
 
 ## Future work
 
--   Be able to have non-type generic parameters, like the `UInt` size of an
-    array or tuple.
+-   Be able to have non-type generic parameters like the `UInt` size of an array
+    or tuple.
 -   A "newtype" mechanism called "adapting types" may be provided to create new
     types that are compatible with existing types but with different interface
     implementations. This could be used to add or replace implementations, or
@@ -494,7 +494,8 @@ At that point, two erasures occur:
     implementations would be restricted to various conditions are true for the
     parameters. When there are two implementations that can apply, there is a
     specialization rule that picks the more specific one.
--   Support functions should have a way to accept types that types that vary at runtime.
+-   Support functions should have a way to accept types that types that vary at
+    runtime.
 -   You should have the ability to mark items as `upcoming` or `deprecated` to
     support evolution.
 -   Types should be able to define overloads for operators by implementing
