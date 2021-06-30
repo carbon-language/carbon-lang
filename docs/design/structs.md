@@ -195,6 +195,13 @@ The rule is that every type has at most one base type with data members for
 subtyping purposes. Carbon will support additional base types as long as they
 are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
 
+While an abstract base class is an interface that allows decoupling, a
+polymorphic type is a collaboration between a base and derived type to provide
+some functionality. This is a bit like the difference between a library and a
+framework, where you might use many of the former but only one of the latter.
+However, there are some cases of overlap where there is an interface at the root
+of a type hierarchy and polymorphic types as interior branches of the tree.
+
 **Background:**
 [The "Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
 and
