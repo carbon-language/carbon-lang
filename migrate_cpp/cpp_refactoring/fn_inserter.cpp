@@ -33,8 +33,8 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   auto lang_opts = result.Context->getLangOpts();
 
   // For names like "Class::Method", replace up to "Class" not "Method".
-  auto qual_loc = decl->getQualifierLoc();
-  auto name_begin_loc =
+  clang::NestedNameSpecifierLoc qual_loc = decl->getQualifierLoc();
+  clang::SourceLocation name_begin_loc =
       qual_loc.hasQualifier() ? qual_loc.getBeginLoc() : decl->getLocation();
   auto range =
       clang::CharSourceRange::getCharRange(decl->getBeginLoc(), name_begin_loc);
