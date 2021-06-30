@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Use cases](#use-cases)
-    -   [Data types](#data-types)
+    -   [Data classes](#data-classes)
     -   [Object types](#object-types)
     -   [Abstract base classes](#abstract-base-classes)
     -   [Polymorphic types](#polymorphic-types)
@@ -68,18 +68,14 @@ initialize or assign values to named struct variables.
 The use cases for structs include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
-**This design currently only attempts to address the "data types" use case.**
+**This design currently only attempts to address the "data classes" use case.**
 Addressing the other use cases is future work.
 
-### Data types
+### Data classes
 
-**TODO:** rename to "data classes" or something else, since
-["data types"](https://en.wikipedia.org/wiki/Data_type) has a different accepted
-meaning.
-
-Data types consist of data fields that are publicly accessible and directly read
-and manipulated by client code. They have few if any methods, and generally are
-not involved in inheritance at all.
+Data classes are types that consist of data fields that are publicly accessible
+and directly read and manipulated by client code. They have few if any methods,
+and generally are not involved in inheritance at all.
 
 Examples include:
 
@@ -90,7 +86,7 @@ Properties:
 
 -   Operations like copy, move, destroy, unformed, and so on are defined
     field-wise.
--   Anonymous structs types and literals should match data type semantics.
+-   Anonymous structs types and literals should match data class semantics.
 
 Expected in idiomatic Carbon-only code.
 
@@ -242,7 +238,7 @@ the "main type". The methods of a mixin may also use data, methods, and
 interface implementations provided by the main type. Mixins are designed around
 implementation reuse rather than subtyping, and so don't need to use a vtable.
 
-A mixin might be an implementation detail of a [data type](#data-types),
+A mixin might be an implementation detail of a [data class](#data-classes),
 [object type](#object-types), or
 [derived type of a polymorphic type](#polymorphic-types). A mixin might
 partially implement an [abstract base class](#abstract-base-classes).
@@ -392,8 +388,8 @@ deallocated.
 
 ## Anonymous structs
 
-Anonymous structs are convenient for defining [data types](#data-types) in an
-ad-hoc manner. They would commonly be used:
+Anonymous structs are convenient for defining [data classes](#data-classes) in
+an ad-hoc manner. They would commonly be used:
 
 -   as the return type of a function that returns multiple values and wants
     those values to have names so a [tuple](tuples.md) is inappropriate
@@ -401,7 +397,7 @@ ad-hoc manner. They would commonly be used:
 -   as an initializer for other `struct` variables or values
 -   as a type parameter to a container
 
-**Open question:** We may want to support nominal [data types](#data-types) as
+**Future work:** We intend to support nominal [data classes](#data-classes) as
 well.
 
 ### Literals
