@@ -21,8 +21,9 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
                      this);
 }
 
-/*
+#ifndef NDEBUG
 // Helper function for printing TypeLocClass. Useful for debugging.
+LLVM_ATTRIBUTE_UNUSED
 static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
     -> std::string {
   switch (c) {
@@ -36,7 +37,7 @@ static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
       return "Qualified";
   }
 }
-*/
+#endif  // NDEBUG
 
 // Returns a string for the type.
 static auto GetTypeStr(const clang::VarDecl* decl,
@@ -73,10 +74,10 @@ static auto GetTypeStr(const clang::VarDecl* decl,
   // Construct the final type based on the class of each step.
   std::string type_str;
   auto prev_c = clang::TypeLoc::Auto;  // Placeholder class, used in loop.
-  for (int i = segments.size() - 1; i >= 0; --i) {
+  for (const auto& segment : llvm::reverse(segments)) {
     clang::TypeLoc::TypeLocClass c;
     std::string text;
-    std::tie(c, text) = segments[i];
+    std::tie(c, text) = segment;
     switch (c) {
       case clang::TypeLoc::Elaborated:
         type_str.insert(0, text);
