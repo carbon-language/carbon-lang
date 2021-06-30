@@ -21,7 +21,6 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
                      this);
 }
 
-#ifndef NDEBUG
 // Helper function for printing TypeLocClass. Useful for debugging.
 LLVM_ATTRIBUTE_UNUSED
 static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
@@ -37,7 +36,6 @@ static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
       return "Qualified";
   }
 }
-#endif  // NDEBUG
 
 // Returns a string for the type.
 static auto GetTypeStr(const clang::VarDecl* decl,
@@ -59,6 +57,9 @@ static auto GetTypeStr(const clang::VarDecl* decl,
     std::string range_str =
         clang::Lexer::getSourceText(range, sm, lang_opts).str();
 
+    // Make a list of segments with their TypeLocClass for reconstruction of the
+    // string. Locally, we will have a qualifier (such as `const`) and a type
+    // string (such as `int`) which is also used.
     auto c = type_loc.getTypeLocClass();
     if (qual_str.empty()) {
       segments.push_back({c, range_str});
@@ -71,19 +72,18 @@ static auto GetTypeStr(const clang::VarDecl* decl,
     type_loc = type_loc.getNextTypeLoc();
   }
 
-  // Construct the final type based on the class of each step.
+  // Construct the final type based on the class of each step. This reverses to
+  // start from the "inside" of the type and go "out" when constructing
+  // type_str.
   std::string type_str;
-  auto prev_c = clang::TypeLoc::Auto;  // Placeholder class, used in loop.
-  for (const auto& segment : llvm::reverse(segments)) {
-    clang::TypeLoc::TypeLocClass c;
-    std::string text;
-    std::tie(c, text) = segment;
-    switch (c) {
+  auto prev_class = clang::TypeLoc::Auto;  // Placeholder class, used in loop.
+  for (const auto& [type_loc_class, text] : llvm::reverse(segments)) {
+    switch (type_loc_class) {
       case clang::TypeLoc::Elaborated:
         type_str.insert(0, text);
         break;
       case clang::TypeLoc::Qualified:
-        if (prev_c == clang::TypeLoc::Pointer) {
+        if (prev_class == clang::TypeLoc::Pointer) {
           type_str += " " + text;
         } else {
           if (!type_str.empty()) {
@@ -96,7 +96,7 @@ static auto GetTypeStr(const clang::VarDecl* decl,
         type_str += text;
         break;
     }
-    prev_c = c;
+    prev_class = type_loc_class;
   }
   return type_str;
 }
