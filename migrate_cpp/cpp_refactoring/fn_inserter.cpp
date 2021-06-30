@@ -45,7 +45,7 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   llvm::SmallVector<llvm::StringRef> split;
   text.split(split, ' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   std::string new_text = "fn ";
-  for (const auto& t : split) {
+  for (llvm::StringRef t : split) {
     if (t != "auto" && t != "void") {
       new_text += t.str() + " ";
     }
