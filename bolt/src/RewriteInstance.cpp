@@ -1025,10 +1025,11 @@ void RewriteInstance::discoverFileObjects() {
 
     FileSymRefs[Address] = Symbol;
 
-    // Symbols that will be registered by disassemblePLT()
-    if ((PLTSection && PLTSection->getAddress() == Address) ||
-        (PLTGOTSection && PLTGOTSection->getAddress() == Address)) {
-      continue;
+    // Skip section symbols that will be registered by disassemblePLT().
+    if ((cantFail(Symbol.getType()) == SymbolRef::ST_Debug)) {
+      ErrorOr<BinarySection &> BSection = BC->getSectionForAddress(Address);
+      if (BSection && getPLTSectionInfo(BSection->getName()))
+        continue;
     }
 
     /// It is possible we are seeing a globalized local. LLVM might treat it as
@@ -1332,11 +1333,7 @@ void RewriteInstance::discoverFileObjects() {
 }
 
 void RewriteInstance::disassemblePLT() {
-  // Used to analyze both the .plt section (most common) and the less common
-  // .plt.got created by the BFD linker.
-  auto analyzeOnePLTSection = [&](BinarySection &Section,
-                                  const BinarySection &RelocsSection,
-                                  uint64_t RelocType, uint64_t EntrySize) {
+  auto analyzeOnePLTSection = [&](BinarySection &Section, uint64_t EntrySize) {
     const uint64_t PLTAddress = Section.getAddress();
     StringRef PLTContents = Section.getContents();
     ArrayRef<uint8_t> PLTData(
@@ -1344,85 +1341,68 @@ void RewriteInstance::disassemblePLT() {
         Section.getSize());
     const unsigned PtrSize = BC->AsmInfo->getCodePointerSize();
 
-    // Runtime linker will put a value of an external symbol at the location
-    // referenced by the relocation. Map the address to the name of the symbol.
-    std::unordered_map<uint64_t, StringRef> RelAddrToNameMap;
-    for (const RelocationRef &Rel :
-         RelocsSection.getSectionRef().relocations()) {
-      if (Rel.getType() != RelocType)
-        continue;
-      const auto SymbolIter = Rel.getSymbol();
-      assert(SymbolIter != InputFile->symbol_end() &&
-             "non-null symbol expected");
-      RelAddrToNameMap[Rel.getOffset()] = cantFail((*SymbolIter).getName());
-    }
-
-    for (uint64_t Offset = 0; Offset < Section.getSize(); Offset += EntrySize) {
+    for (uint64_t EntryOffset = 0; EntryOffset + EntrySize <= Section.getSize();
+         EntryOffset += EntrySize) {
+      uint64_t InstrOffset = EntryOffset;
       uint64_t InstrSize;
       MCInst Instruction;
-      const uint64_t InstrAddr = PLTAddress + Offset;
-      if (!BC->DisAsm->getInstruction(Instruction, InstrSize,
-                                      PLTData.slice(Offset), InstrAddr,
-                                      nulls())) {
-        errs() << "BOLT-ERROR: unable to disassemble instruction in PLT "
-                  "section "
-               << Section.getName() << " at offset 0x"
-               << Twine::utohexstr(Offset) << '\n';
-        exit(1);
+      while (InstrOffset < EntryOffset + EntrySize) {
+        uint64_t InstrAddr = PLTAddress + InstrOffset;
+        if (!BC->DisAsm->getInstruction(Instruction, InstrSize,
+                                        PLTData.slice(InstrOffset), InstrAddr,
+                                        nulls())) {
+          errs() << "BOLT-ERROR: unable to disassemble instruction in PLT "
+                    "section "
+                 << Section.getName() << " at offset 0x"
+                 << Twine::utohexstr(InstrOffset) << '\n';
+          exit(1);
+        }
+
+        if (BC->MIB->isIndirectBranch(Instruction))
+          break;
+
+        InstrOffset += InstrSize;
       }
 
-      if (!BC->MIB->isIndirectBranch(Instruction))
+      if (InstrOffset + InstrSize > EntryOffset + EntrySize)
         continue;
 
       uint64_t TargetAddress;
       if (!BC->MIB->evaluateMemOperandTarget(Instruction, TargetAddress,
-                                             InstrAddr, InstrSize)) {
+                                             PLTAddress + InstrOffset,
+                                             InstrSize)) {
         errs() << "BOLT-ERROR: error evaluating PLT instruction at offset 0x"
-               << Twine::utohexstr(InstrAddr) << '\n';
+               << Twine::utohexstr(PLTAddress + InstrOffset) << '\n';
         exit(1);
       }
 
-      auto NI = RelAddrToNameMap.find(TargetAddress);
-      if (NI == RelAddrToNameMap.end())
+      const Relocation *Rel = BC->getDynamicRelocationAt(TargetAddress);
+      if (!Rel || !Rel->Symbol)
         continue;
 
-      StringRef SymbolName = NI->second;
-      BinaryFunction *BF =
-          BC->createBinaryFunction(SymbolName.str() + "@PLT", Section,
-                                   InstrAddr, 0, EntrySize, PLTAlignment);
+      BinaryFunction *BF = BC->createBinaryFunction(
+          Rel->Symbol->getName().str() + "@PLT", Section,
+          PLTAddress + EntryOffset, 0, EntrySize, Section.getAlignment());
       MCSymbol *TargetSymbol =
-          BC->registerNameAtAddress(SymbolName.str() + "@GOT",
-                                    TargetAddress, PtrSize, PLTAlignment);
+          BC->registerNameAtAddress(Rel->Symbol->getName().str() + "@GOT",
+                                    TargetAddress, PtrSize, PtrSize);
       BF->setPLTSymbol(TargetSymbol);
     }
   };
 
-  if (PLTSection) {
-    // Pseudo function for the start of PLT. The table could have a matching
-    // FDE that we want to match to pseudo function.
-    BinaryFunction *BF = BC->createBinaryFunction(
-        "__BOLT_PLT_PSEUDO", *PLTSection, PLTSection->getAddress(), 0, PLTSize,
-        PLTAlignment);
-    BF->setPseudo(true);
-    if (RelaPLTSection) {
-      analyzeOnePLTSection(*PLTSection, *RelaPLTSection,
-                           ELF::R_X86_64_JUMP_SLOT, PLTSize);
-    }
-  }
+  for (BinarySection &Section : BC->allocatableSections()) {
+    const PLTSectionInfo *PLTSI = getPLTSectionInfo(Section.getName());
+    if (!PLTSI)
+      continue;
 
-  if (PLTGOTSection) {
-    if (RelaDynSection) {
-      analyzeOnePLTSection(*PLTGOTSection, *RelaDynSection,
-                           ELF::R_X86_64_GLOB_DAT, /*Size=*/8);
-    }
-    // If we did not register any function at PLTGOT start, we may be missing
-    // relocs. Add a function at the start to mark this section.
-    if (BC->getBinaryFunctions().find(PLTGOTSection->getAddress()) ==
+    analyzeOnePLTSection(Section, PLTSI->EntrySize);
+    // If we did not register any function at the start of the section,
+    // then it must be a general PLT entry. Add a function at the location.
+    if (BC->getBinaryFunctions().find(Section.getAddress()) ==
         BC->getBinaryFunctions().end()) {
-      BinaryFunction *BF =
-          BC->createBinaryFunction("__BOLT_PLTGOT_PSEUDO", *PLTGOTSection,
-                                   PLTGOTSection->getAddress(), 0,
-                                   /*SymbolSize*/ 8, PLTAlignment);
+      BinaryFunction *BF = BC->createBinaryFunction(
+          "__BOLT_PSEUDO_" + Section.getName().str(), Section,
+          Section.getAddress(), 0, PLTSI->EntrySize, Section.getAlignment());
       BF->setPseudo(true);
     }
   }
@@ -1605,9 +1585,7 @@ void RewriteInstance::readSpecialSections() {
   HasTextRelocations = (bool)BC->getUniqueSectionByName(".rela.text");
   LSDASection = BC->getUniqueSectionByName(".gcc_except_table");
   EHFrameSection = BC->getUniqueSectionByName(".eh_frame");
-  PLTSection = BC->getUniqueSectionByName(".plt");
   GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
-  PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
   RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
   RelaDynSection = BC->getUniqueSectionByName(".rela.dyn");
   BuildIDSection = BC->getUniqueSectionByName(".note.gnu.build-id");
