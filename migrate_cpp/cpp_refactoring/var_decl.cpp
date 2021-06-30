@@ -60,13 +60,13 @@ static auto GetTypeStr(const clang::VarDecl* decl,
     // Make a list of segments with their TypeLocClass for reconstruction of the
     // string. Locally, we will have a qualifier (such as `const`) and a type
     // string (such as `int`) which is also used.
-    auto c = type_loc.getTypeLocClass();
+    auto type_loc_class = type_loc.getTypeLocClass();
     if (qual_str.empty()) {
-      segments.push_back({c, range_str});
+      segments.push_back({type_loc_class, range_str});
     } else if (range_str.empty()) {
-      segments.push_back({c, qual_str});
+      segments.push_back({type_loc_class, qual_str});
     } else {
-      segments.push_back({c, qual_str + " " + range_str});
+      segments.push_back({type_loc_class, qual_str + " " + range_str});
     }
 
     type_loc = type_loc.getNextTypeLoc();
