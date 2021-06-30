@@ -3415,8 +3415,8 @@ TODO: fold in content from
 
 [The problem](terminology.md#conditional-conformance) we are trying to solve
 here is expressing that we have an `impl` of some interface for some type, but
-only if some additional type restrictions are met. To do this, we leverage
-[`external impl`](#external-impl):
+only if some additional type restrictions are met. We can represent these type
+constraints in a couple of different ways:
 
 -   We can provide the same `impl` argument in two places to constrain them to
     be the same.
@@ -3426,6 +3426,8 @@ only if some additional type restrictions are met. To do this, we leverage
 
 **Example:** [Interface constraint] Here we implement the `Printable` interface
 for arrays of `N` elements of `Printable` type `T`, generically for `N`.
+
+First, showing this with an [`external impl`](#external-impl):
 
 ```
 interface Printable {
@@ -3450,8 +3452,32 @@ external impl FixedArray(T:$ Printable, N:$ Int) as Printable {
 }
 ```
 
+To define these `impl`s inline in a `struct` definition, include a more-specific
+type between the `impl` and `as` keywords.
+
+```
+struct FixedArray(T:$ Type, N:$ Int) {
+  // A few different syntax possibilities here:
+  impl FixedArray(P:$ Printable, N2:$ Int) as Printable { ... }
+  impl FixedArray(P:$ Printable, N) as Printable { ... }
+  impl [P:$ Printable] FixedArray(P, N) as Printable { ... }
+  impl FixedArray[P:$ Printable](P, N) as Printable { ... }
+}
+```
+
+As noted, there are still some open questions about the syntax, and the rules to
+prevent inconsistent reuse of the names from the outer scope. This proposal has
+the desirable property that the syntax for internal versus external conditional
+conformance is very similar. This makes it straightforward to refactor between
+those two choices (add or remove `external` and any type parameters from the
+context), and is easier to learn.
+
+**Note:** This conditional interface implementation syntax was decided in
+[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+
 **Example:** [Same-type constraint] We implement interface `Foo(T)` for
-`Pair(T, U)` when `T` and `U` are the same.
+`Pair(T, U)` when `T` and `U` are the same. Using external impl we can write
+this either directly, or using deduced parameters in square brackets.
 
 ```
 interface Foo(T:$ Type) { ... }
@@ -3460,6 +3486,14 @@ external impl Pair(T:$ Type, T) as Foo(T) { ... }
 
 // Alternatively:
 external impl Pair[T:$ Type](T, T) as Foo(T) { ... }
+```
+
+You may also define the `impl` inline:
+
+```
+struct Pair(T:$ Type, U:$ Type) {
+  impl Pair(T, T) as Foo(T) { ... }
+}
 ```
 
 **Proposal:** [Other boolean condition constraints] Just like we support
@@ -3478,33 +3512,12 @@ interface implemented for this type" undecidable in general.
 This means we will likely need some heuristic like a limit on how many steps of
 recursion are allowed.
 
-To define these `impl`s inline in a `struct` definition, include a more-specific
-type between the `impl` and `as` keywords.
+**FIXME:** Move the rejected alternatives considered to a separate "appendix"
+document.
 
-```
-struct FixedArray(T:$ Type, N:$ Int) {
-  // A few different syntax possibilities here:
-  impl FixedArray(P:$ Printable, N2:$ Int) as Printable { ... }
-  impl FixedArray(P:$ Printable, N) as Printable { ... }
-  impl [P:$ Printable] FixedArray(P, N) as Printable { ... }
-  impl FixedArray[P:$ Printable](P, N) as Printable { ... }
-}
-
-struct Pair(T:$ Type, U:$ Type) {
-  impl Pair(T, T) as Foo(T) { ... }
-}
-```
-
-We would need rules to prevent inconsistent reuse of the names from the outer
-scope. This proposal has the desirable property that the syntax for internal
-versus external conditional conformance is very similar. This makes it
-straightforward to refactor between those two choices (add or remove `external`
-and any type parameters from the context), and is easier to learn.
-
-FIXME: Add section links
-
-**Rejected alternative:** In conjunction with using the `extend` syntax for
-external implementations, we also used `extend` declarations inside the `struct`
+**Rejected alternative:** In conjunction with using
+[the `extend` syntax for external implementations](#rejected-extend-blocks), an
+earlier design iteration also used `extend` declarations inside the `struct`
 definition to make it inline:
 
 ```
@@ -3631,15 +3644,22 @@ for any type implementing `I`:
 Some things going on here:
 
 -   Our syntax for `external impl` statements already allows you to have a
-    templated type parameter. This can be used to provide a general `impl` that
-    depends on templated access to the type, even though the interface itself is
-    defined generically.
+    (possibly templated) type parameter. This can be used to provide a general
+    `impl` that depends on templated access to the type, even though the
+    interface itself is defined generically.
 -   We very likely will want to restrict the `impl` in some ways.
     -   Easy case: An `impl` for a family of parameterized types.
     -   Trickier is "structural conformance": we might want to say "here is an
         `impl` for interface `Foo` for any class implementing a method `Bar`".
         This is particularly for C++ types, and for
         [functions that are transitioning from templates into generics](goals.md#upgrade-path-from-templates).
+
+The approach here is a generalization of the approach for
+[conditional conformance](#conditional-conformance). Recall that conditional
+conformance is about restricting an `impl` to apply only to those types whose
+parameters meet a criteria. In this section, we extend the ways of
+parameterizing a single `impl` declaration so that it applies to multiple types
+or multiple interface arguments.
 
 ### Bridge for C++ templates
 
