@@ -1729,13 +1729,16 @@ fn PrintPoint[PointT:$ NSpacePoint](p: PointT) {
 }
 
 fn ExtractPoint[PointT:$ NSpacePoint](
-    PointT: p,
-    Array(dest: Float64, PointT.N)*) {
+    p: PointT,
+    dest: Array(Float64, PointT.N)*) {
   for (var i: Int = 0; i < PointT.N; ++i) {
     (*dest)[i] = p.Get(i);
   }
 }
 ```
+
+**Comparison with other languages:** This feature is also called
+[associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
 ### Associated functions
 
@@ -1767,9 +1770,6 @@ var y: MySerializableType = Deserialize(MySerializableType, "4");
 
 **Aside:** In general, any field declared as "generic" (using the `:$` syntax),
 will only have compile-time and not runtime storage associated with it.
-
-**Comparison with other languages:** This feature is also called
-[associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
 ## Associated types
 
@@ -1861,7 +1861,7 @@ Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
 For context, see
-["Interface type parameters versus associated types" in the Carbon: Generics Terminology doc](terminology.md#interface-type-parameters-versus-associated-types).
+["Interface type parameters versus associated types" in the generics terminology document](terminology.md#interface-type-parameters-versus-associated-types).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
@@ -1880,7 +1880,7 @@ struct DynamicArray(T:$ Type) {
   // ...
 
   impl as StackAssociatedType {
-    // Not needed: var ElementType:$ Type = T;
+    // Not needed: alias ElementType = T;
     method (this: Self*) Push(value: T) { ... }
     method (this: Self*) Pop() -> T { ... }
     method (this: Self*) IsEmpty() -> Bool { ... }
@@ -1958,10 +1958,13 @@ struct Container(Self:$ Type) {
 ## Parameterized interfaces
 
 Associated types don't change the fact that a type can only implement an
-interface at most once. If instead you want a family of related interfaces, each
-of which could be implemented for a given type, you could use parameterized
-interfaces instead. To parameterized the stack interface instead of using
-associated types, write a parameter list after the name of the interface:
+interface at most once.
+
+If instead you want a family of related interfaces, one per possible value of a
+type parameter, multiple of which could be implemented for a single type, you
+would use parameterized interfaces. To write a parameterized version the stack
+interface instead of using associated types, write a parameter list after the
+name of the interface instead of the associated type declaration:
 
 ```
 interface StackParameterized(ElementType:$ Type) {
@@ -2001,6 +2004,35 @@ struct Produce {
     }
   }
 }
+```
+
+Unlike associated types in interfaces and parameters to types, interface
+parameters can't be deduced. For example, if we were to rewrite
+[the `PeekAtTopOfStack` example in the "associated types" section](#associated-types)
+for `StackParameterized(T)` it would generate a compile error:
+
+```
+// Error: can't deduce interface parameter `T`.
+fn BrokenPeekAtTopOfStackParameterized
+    [T:$ Type, StackType:$ StackParameterized(T)]
+    (s: StackType*) -> T { ... }
+```
+
+This error is because the compiler can not determine if `T` should be `Fruit` or
+`Veggie` when passing in argument of type `Produce*`. The function's signature
+would have to be changed so that the value for `T` could be determined from the
+explicit parameters.
+
+```
+fn PeekAtTopOfStackParameterized
+    [T:$ Type, StackType:$ StackParameterized(T)]
+    (s: StackType*, T) -> T { ... }
+
+var produce: Produce = ...;
+var top_fruit: Fruit =
+    PeekAtTopOfStackParameterized(&produce, Fruit);
+var top_veggie: Veggie =
+    PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
 
 This approach is useful for the `ComparableTo(T)` interface, where a type might
