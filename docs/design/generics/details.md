@@ -429,6 +429,10 @@ With this definition, `Point3` includes `Add` in its API but not `Scale`, while
 `Point3 as Vector` includes both. This maintains the property that you can
 determine the API of a type by looking at its definition.
 
+**Question for reviewers:** There are three rejected alternatives described
+below. Should they moved into a separate appendix document and only linked to
+from here?
+
 **Rejected alternative:** We could allow types to have different APIs in
 different files based on explicit configuration in that file. For example, we
 could support a declaration that a given interface or a given method of an
