@@ -16,8 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Facet type](#facet-type)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
-    -   [Rejected: out-of-line impl](#rejected-out-of-line-impl)
-    -   [Rejected: extend blocks](#rejected-extend-blocks)
     -   [Qualified member names](#qualified-member-names)
 -   [Generics](#generics)
     -   [Model](#model)
@@ -366,6 +364,8 @@ external impl Point2 as Vector {
 
 **Note:** The external interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+Additional alternatives considered are discussed in
+[an appendix](appendix-impl-syntax.md).
 
 The `external impl` statement is allowed to be defined in a different library
 from `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that
@@ -429,10 +429,6 @@ With this definition, `Point3` includes `Add` in its API but not `Scale`, while
 `Point3 as Vector` includes both. This maintains the property that you can
 determine the API of a type by looking at its definition.
 
-**Question for reviewers:** There are three rejected alternatives described
-below. Should they moved into a separate appendix document and only linked to
-from here?
-
 **Rejected alternative:** We could allow types to have different APIs in
 different files based on explicit configuration in that file. For example, we
 could support a declaration that a given interface or a given method of an
@@ -453,48 +449,6 @@ is more similar to
 but, unlike Swift, we don't allow a type's API to be modified outside its
 definition. In Rust, all implementations are external as in
 [this example](https://doc.rust-lang.org/rust-by-example/trait.html).
-
-### Rejected: out-of-line impl
-
-We considered an out-of-line syntax for declaring and defining interface `impl`
-blocks, to replace both the inline syntax and the `external impl` statement.
-For, example:
-
-```
-struct Point { ... }
-impl Vector for Point { ... }
-```
-
-The main advantage of this syntax was that it was uniform across many cases,
-including [conditional conformance](#conditional-conformance). It wasn't ideal
-across a number of dimensions though.
-
--   It repeated the type name which was redundant and verbose
--   It could affect the API of the type outside of the type definition.
--   We prefer the type name before the interface name (using `as), instead of
-    this ordering used by Rust.
-
-### Rejected: extend blocks
-
-Instead of the `external impl` statement, we considered putting all external
-implementations in an `extend` block.
-
-```
-struct Point { ... }
-extend Point {
-  impl Vector { ... }
-}
-```
-
-The `extend` approach had some disadvantages:
-
--   Implementations were indented more than the `external impl` approach.
--   Extra ceremony in the case of only implementing one type for an interface.
-    This case is expected to be common since external implementations will most
-    often be defined with the interface.
--   When implementing multiple interfaces in a single `extend` block, the name
-    of the type being extended could be far from the `impl` declaration and hard
-    to find.
 
 ### Qualified member names
 
