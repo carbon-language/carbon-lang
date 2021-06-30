@@ -170,9 +170,12 @@ virtual methods may be
 only called through the non-abstract API, but can still be implemented in
 descendants.
 
-We expect idiomatic Carbon-only code to use Carbon interfaces instead of
-abstract base classes. Extending this design to support abstract base classes is
-future work.
+We expect idiomatic Carbon-only code to generally use Carbon interfaces instead
+of abstract base classes. We may still support abstract base classes long term
+if we determine that the ability to put the pointer to the method
+implementations in the object value is important for users, particularly with a
+single parent as in the [polymorphic type case](#polymorphic-types). Extending
+this design to support abstract base classes is future work.
 
 **Background:**
 [Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) model
