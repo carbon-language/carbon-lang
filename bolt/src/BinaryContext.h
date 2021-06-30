@@ -576,9 +576,6 @@ public:
   /// the execution of the binary is completed.
   Optional<uint64_t> FiniFunctionAddress;
 
-  Optional<uint64_t> DynamicRelocationsAddress;
-  Optional<uint64_t> DynamicRelocationsSize;
-
   /// Page alignment used for code layout.
   uint64_t PageAlign{HugePageSize};
 
@@ -722,6 +719,9 @@ public:
                                     uint64_t Size = 0,
                                     uint16_t Alignment = 0,
                                     unsigned Flags = 0);
+
+  /// Create a global symbol without registering an address.
+  MCSymbol *getOrCreateUndefinedGlobalSymbol(StringRef Name);
 
   /// Register a symbol with \p Name at a given \p Address using \p Size,
   /// \p Alignment, and \p Flags. See llvm::SymbolRef::Flags for the definition

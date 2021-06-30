@@ -792,6 +792,10 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   return registerNameAtAddress(Name, Address, Size, Alignment, Flags);
 }
 
+MCSymbol *BinaryContext::getOrCreateUndefinedGlobalSymbol(StringRef Name) {
+  return Ctx->getOrCreateSymbol(Name);
+}
+
 BinaryFunction *BinaryContext::createBinaryFunction(
     const std::string &Name, BinarySection &Section, uint64_t Address,
     uint64_t Size, uint64_t SymbolSize, uint16_t Alignment) {
@@ -1723,7 +1727,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
   }
 }
 
-ErrorOr<BinarySection&> BinaryContext::getSectionForAddress(uint64_t Address) {
+ErrorOr<BinarySection &> BinaryContext::getSectionForAddress(uint64_t Address) {
   auto SI = AddressToSection.upper_bound(Address);
   if (SI != AddressToSection.begin()) {
     --SI;

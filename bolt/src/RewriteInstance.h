@@ -430,6 +430,14 @@ private:
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
 
+  /// Location and size of dynamic relocations.
+  Optional<uint64_t> DynamicRelocationsAddress;
+  uint64_t DynamicRelocationsSize{0};
+
+  /// PLT relocations are special kind of dynamic relocations stored separately.
+  Optional<uint64_t> PLTRelocationsAddress;
+  uint64_t PLTRelocationsSize{0};
+
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
 
