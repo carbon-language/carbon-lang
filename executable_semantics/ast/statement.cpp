@@ -65,53 +65,52 @@ Run Statement::GetRun() const {
   return u.run;
 }
 
-auto Statement::MakeExpStmt(int line_num, const Expression* exp)
-    -> const Statement* {
+auto Statement::MakeExpStmt(int line_num, Expression exp) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::ExpressionStatement;
-  s->u.exp = exp;
+  s->u.exp = new Expression(std::move(exp));
   return s;
 }
 
-auto Statement::MakeAssign(int line_num, const Expression* lhs,
-                           const Expression* rhs) -> const Statement* {
+auto Statement::MakeAssign(int line_num, Expression lhs, Expression rhs)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Assign;
-  s->u.assign.lhs = lhs;
-  s->u.assign.rhs = rhs;
+  s->u.assign.lhs = new Expression(std::move(lhs));
+  s->u.assign.rhs = new Expression(std::move(rhs));
   return s;
 }
 
-auto Statement::MakeVarDef(int line_num, const Expression* pat,
-                           const Expression* init) -> const Statement* {
+auto Statement::MakeVarDef(int line_num, Expression pat, Expression init)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::VariableDefinition;
-  s->u.variable_definition.pat = pat;
-  s->u.variable_definition.init = init;
+  s->u.variable_definition.pat = new Expression(std::move(pat));
+  s->u.variable_definition.init = new Expression(std::move(init));
   return s;
 }
 
-auto Statement::MakeIf(int line_num, const Expression* cond,
+auto Statement::MakeIf(int line_num, Expression cond,
                        const Statement* then_stmt, const Statement* else_stmt)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::If;
-  s->u.if_stmt.cond = cond;
+  s->u.if_stmt.cond = new Expression(std::move(cond));
   s->u.if_stmt.then_stmt = then_stmt;
   s->u.if_stmt.else_stmt = else_stmt;
   return s;
 }
 
-auto Statement::MakeWhile(int line_num, const Expression* cond,
-                          const Statement* body) -> const Statement* {
+auto Statement::MakeWhile(int line_num, Expression cond, const Statement* body)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::While;
-  s->u.while_stmt.cond = cond;
+  s->u.while_stmt.cond = new Expression(std::move(cond));
   s->u.while_stmt.body = body;
   return s;
 }
@@ -130,12 +129,11 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
   return s;
 }
 
-auto Statement::MakeReturn(int line_num, const Expression* e)
-    -> const Statement* {
+auto Statement::MakeReturn(int line_num, Expression e) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Return;
-  s->u.return_stmt = e;
+  s->u.return_stmt = new Expression(std::move(e));
   return s;
 }
 
@@ -159,13 +157,13 @@ auto Statement::MakeBlock(int line_num, const Statement* stmt)
 }
 
 auto Statement::MakeMatch(
-    int line_num, const Expression* exp,
+    int line_num, Expression exp,
     std::list<std::pair<const Expression*, const Statement*>>* clauses)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Match;
-  s->u.match_stmt.exp = exp;
+  s->u.match_stmt.exp = new Expression(std::move(exp));
   s->u.match_stmt.clauses = clauses;
   return s;
 }
@@ -185,12 +183,11 @@ auto Statement::MakeContinuation(int line_num,
 }
 
 // Returns an AST node for a run statement give its line number and argument.
-auto Statement::MakeRun(int line_num, const Expression* argument)
-    -> const Statement* {
+auto Statement::MakeRun(int line_num, Expression argument) -> const Statement* {
   auto* run = new Statement();
   run->line_num = line_num;
   run->tag = StatementKind::Run;
-  run->u.run.argument = argument;
+  run->u.run.argument = new Expression(std::move(argument));
   return run;
 }
 

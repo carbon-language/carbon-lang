@@ -311,29 +311,29 @@ clause_list:
 ;
 statement:
   expression "=" expression ";"
-    { $$ = Carbon::Statement::MakeAssign(yylineno, $1, $3); }
+    { $$ = Carbon::Statement::MakeAssign(yylineno, *$1, *$3); }
 | VAR pattern "=" expression ";"
-    { $$ = Carbon::Statement::MakeVarDef(yylineno, $2, $4); }
+    { $$ = Carbon::Statement::MakeVarDef(yylineno, *$2, *$4); }
 | expression ";"
-    { $$ = Carbon::Statement::MakeExpStmt(yylineno, $1); }
+    { $$ = Carbon::Statement::MakeExpStmt(yylineno, *$1); }
 | IF "(" expression ")" statement optional_else
-    { $$ = Carbon::Statement::MakeIf(yylineno, $3, $5, $6); }
+    { $$ = Carbon::Statement::MakeIf(yylineno, *$3, $5, $6); }
 | WHILE "(" expression ")" statement
-    { $$ = Carbon::Statement::MakeWhile(yylineno, $3, $5); }
+    { $$ = Carbon::Statement::MakeWhile(yylineno, *$3, $5); }
 | BREAK ";"
     { $$ = Carbon::Statement::MakeBreak(yylineno); }
 | CONTINUE ";"
     { $$ = Carbon::Statement::MakeContinue(yylineno); }
 | RETURN expression ";"
-    { $$ = Carbon::Statement::MakeReturn(yylineno, $2); }
+    { $$ = Carbon::Statement::MakeReturn(yylineno, *$2); }
 | "{" statement_list "}"
     { $$ = Carbon::Statement::MakeBlock(yylineno, $2); }
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = Carbon::Statement::MakeMatch(yylineno, $3, $6); }
+    { $$ = Carbon::Statement::MakeMatch(yylineno, *$3, $6); }
 | CONTINUATION identifier statement
     { $$ = Carbon::Statement::MakeContinuation(yylineno, $2, $3); }
 | RUN expression ";"
-    { $$ = Carbon::Statement::MakeRun(yylineno, $2); }
+    { $$ = Carbon::Statement::MakeRun(yylineno, *$2); }
 | AWAIT ";"
     { $$ = Carbon::Statement::MakeAwait(yylineno); }
 ;
@@ -360,7 +360,7 @@ function_definition:
 | FN identifier tuple DBLARROW expression ";"
     {
       $$ = Carbon::MakeFunDef(yylineno, $2, *Carbon::Expression::MakeAutoType(yylineno), *$3,
-                              Carbon::Statement::MakeReturn(yylineno, $5));
+                              Carbon::Statement::MakeReturn(yylineno, *$5));
     }
 ;
 function_declaration:

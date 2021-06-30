@@ -473,7 +473,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
             res_type, clause.first, clause.second, types, values, ret_type));
       }
       const Statement* new_s =
-          Statement::MakeMatch(s->line_num, res.exp, new_clauses);
+          Statement::MakeMatch(s->line_num, *res.exp, new_clauses);
       return TCStatement(new_s, types);
     }
     case StatementKind::While: {
@@ -484,7 +484,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto body_res =
           TypeCheckStmt(s->GetWhile().body, types, values, ret_type);
       auto new_s =
-          Statement::MakeWhile(s->line_num, cnd_res.exp, body_res.stmt);
+          Statement::MakeWhile(s->line_num, *cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, types);
     }
     case StatementKind::Break:
@@ -503,7 +503,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto lhs_res = TypeCheckExp(s->GetVariableDefinition().pat, types, values,
                                   rhs_ty, TCContext::PatternContext);
       const Statement* new_s = Statement::MakeVarDef(
-          s->line_num, s->GetVariableDefinition().pat, res.exp);
+          s->line_num, *s->GetVariableDefinition().pat, *res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::Sequence: {
@@ -525,13 +525,14 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
                                   TCContext::ValueContext);
       auto lhs_t = lhs_res.type;
       ExpectType(s->line_num, "assign", lhs_t, rhs_t);
-      auto new_s = Statement::MakeAssign(s->line_num, lhs_res.exp, rhs_res.exp);
+      auto new_s =
+          Statement::MakeAssign(s->line_num, *lhs_res.exp, *rhs_res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::ExpressionStatement: {
       auto res = TypeCheckExp(s->GetExpression(), types, values, nullptr,
                               TCContext::ValueContext);
-      auto new_s = Statement::MakeExpStmt(s->line_num, res.exp);
+      auto new_s = Statement::MakeExpStmt(s->line_num, *res.exp);
       return TCStatement(new_s, types);
     }
     case StatementKind::If: {
@@ -543,7 +544,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
           TypeCheckStmt(s->GetIf().then_stmt, types, values, ret_type);
       auto els_res =
           TypeCheckStmt(s->GetIf().else_stmt, types, values, ret_type);
-      auto new_s = Statement::MakeIf(s->line_num, cnd_res.exp, thn_res.stmt,
+      auto new_s = Statement::MakeIf(s->line_num, *cnd_res.exp, thn_res.stmt,
                                      els_res.stmt);
       return TCStatement(new_s, types);
     }
@@ -558,7 +559,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
-      return TCStatement(Statement::MakeReturn(s->line_num, res.exp), types);
+      return TCStatement(Statement::MakeReturn(s->line_num, *res.exp), types);
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
@@ -577,7 +578,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       ExpectType(s->line_num, "argument of `run`",
                  Value::MakeContinuationTypeVal(), argument_result.type);
       const Statement* new_run =
-          Statement::MakeRun(s->line_num, argument_result.exp);
+          Statement::MakeRun(s->line_num, *argument_result.exp);
       return TCStatement(new_run, types);
     }
     case StatementKind::Await: {
@@ -592,7 +593,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
   if (!stmt) {
     if (void_return) {
       return Statement::MakeReturn(line_num,
-                                   Expression::MakeTuple(line_num, {}));
+                                   *Expression::MakeTuple(line_num, {}));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"
@@ -609,7 +610,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
         new_clauses->push_back(std::make_pair(i->first, s));
       }
-      return Statement::MakeMatch(stmt->line_num, stmt->GetMatch().exp,
+      return Statement::MakeMatch(stmt->line_num, *stmt->GetMatch().exp,
                                   new_clauses);
     }
     case StatementKind::Block:
@@ -618,7 +619,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
                                               void_return, stmt->line_num));
     case StatementKind::If:
       return Statement::MakeIf(
-          stmt->line_num, stmt->GetIf().cond,
+          stmt->line_num, *stmt->GetIf().cond,
           CheckOrEnsureReturn(stmt->GetIf().then_stmt, void_return,
                               stmt->line_num),
           CheckOrEnsureReturn(stmt->GetIf().else_stmt, void_return,
@@ -649,7 +650,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
         return Statement::MakeSeq(
             stmt->line_num, stmt,
             Statement::MakeReturn(stmt->line_num,
-                                  Expression::MakeTuple(stmt->line_num, {})));
+                                  *Expression::MakeTuple(stmt->line_num, {})));
       } else {
         std::cerr
             << stmt->line_num

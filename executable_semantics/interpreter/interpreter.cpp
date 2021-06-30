@@ -1233,7 +1233,7 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(MakeStmtAct(Statement::MakeReturn(
-          stmt->line_num, Expression::MakeTuple(stmt->line_num, {}))));
+          stmt->line_num, *Expression::MakeTuple(stmt->line_num, {}))));
       todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
@@ -1257,7 +1257,7 @@ void StepStmt() {
         // Push an expression statement action to ignore the result
         // value from the continuation.
         Action* ignore_result = MakeStmtAct(Statement::MakeExpStmt(
-            stmt->line_num, Expression::MakeTuple(stmt->line_num, {})));
+            stmt->line_num, *Expression::MakeTuple(stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
