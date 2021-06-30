@@ -2041,7 +2041,7 @@ be comparable with multiple other types, and in fact interfaces for
 
 ```
 interface EquatableWith(T:$ Type) {
-  fn operator==(this: Self, that: T) -> Bool;
+  method (this: Self) Equals(that: T) -> Bool;
   ...
 }
 struct Complex {
@@ -4284,11 +4284,13 @@ about reducing restrictions in Swift.
 TODO
 
 ```
-// Note: InterfaceType is essentially "TypeTypeType".
-struct DynPtr(TT:$$ InterfaceType) {  // TT is any interface
+// Note: InterfaceType is essentially "TypeOfTypeOfType".
+// It allows `TT` to be any interface or type-of-type.
+struct DynPtr(TT:$$ InterfaceType) {
   struct DynPtrImpl {
     private t: TT;
-    private p: Void*;  // Really t* instead of Void*.
+    // The type of `p` is really `t*` instead of `Void*`.
+    private p: Void*;
     impl as TT {
       // Defined using meta-programming.
       // Forwards this->F(...) to (this->p as (this->t)*)->F(...)
@@ -4297,8 +4299,12 @@ struct DynPtr(TT:$$ InterfaceType) {  // TT is any interface
   }
   var T:$ TT = (DynPtrImpl as TT);
   private impl_: DynPtrImpl;
-  fn operator->(this: Self*) -> T* { return &this->impl_; }
-  fn operator=[U:$ TT](this: Self*, p: U*) { this->impl_ = (.t = U, .p = p); }
+  impl as Deref(T) {
+    method (this: Self) Deref() -> T* { return &this->impl_; }
+  }
+  impl as Assignable[U:$ TT](U) {
+    method (this: Self*) Assign(p: U*) { this->impl_ = (.t = U, .p = p); }
+  }
 }
 ```
 
