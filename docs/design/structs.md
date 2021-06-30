@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Abstract base classes](#abstract-base-classes)
     -   [Polymorphic types](#polymorphic-types)
     -   [Mixins](#mixins)
+    -   [Non-virtual inheritance](#non-virtual-inheritance)
     -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
 -   [Background](#background)
 -   [Overview](#overview-1)
@@ -41,6 +42,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Inheritance](#inheritance)
     -   [Abstract base classes interoperating with object-safe interfaces](#abstract-base-classes-interoperating-with-object-safe-interfaces)
     -   [Mixins](#mixins-1)
+    -   [Non-virtual inheritance](#non-virtual-inheritance-1)
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
 
@@ -70,6 +72,10 @@ that we expect to be included in idiomatic Carbon-only code.
 Addressing the other use cases is future work.
 
 ### Data types
+
+**TODO:** rename to "data classes" or something else, since
+["data types"](https://en.wikipedia.org/wiki/Data_type) has a different accepted
+meaning.
 
 Data types consist of data fields that are publicly accessible and directly read
 and manipulated by client code. They have few if any methods, and generally are
@@ -120,7 +126,13 @@ used as an implementation detail of the public methods.
 Object types are expected in idiomatic Carbon-only code. Extending this design
 to support object types is future work.
 
+Note that other kinds of types necessarily need to provide encapsulation as part
+of providing subtyping, while object types are just about encapsulation.
+
 ### Abstract base classes
+
+**TODO:** rename to Java interfaces or something else, since ABCs in C++ are
+allowed to have data?
 
 An [abstract base class](https://en.wikipedia.org/wiki/Abstract_type), or "ABC",
 is a base type for use in inheritance with a
@@ -201,8 +213,10 @@ Polymorphic types support a number of different kinds of methods:
     -   Polymorphic types may have pure-virtual methods, but in contrast to ABCs
         they aren't required.
     -   It is more common for polymorphic types to have a default implementation
-        of virtual methods or have protected virtual methods intended to be
-        called by methods in the base type but implemented in the descendant.
+        of virtual methods or have protected or
+        [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
+        virtual methods intended to be called by methods in the base type but
+        implemented in the descendant.
 -   They may have non-virtual public or private helper methods, like object
     types. These avoid the overhead of a virtual function call, and are more
     frequent in polymorphic types than abstract base classes due to the ability
@@ -252,6 +266,29 @@ in C++, but other languages support them directly.
     implementing, which restores a form of subtyping. See
     [Dart: What are mixins?](https://medium.com/flutter-community/dart-what-are-mixins-3a72344011f3).
 -   [Proposal to add mixin support to Swift](https://github.com/Anton3/swift-evolution/blob/mixins/proposals/NNNN-mixins.md).
+
+### Non-virtual inheritance
+
+While it is not common, there are cases where C++ code uses inheritance without
+dynamic dispatch or a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table). Instead, methods
+are never overridden, and derived types only add data and methods. There are
+some cases where this is done in C++ but would be done differently in Carbon:
+
+-   For implementation reuse without subtyping, in Carbon use mixins or
+    composition instead of traditional inheritance. Carbon won't support private
+    inheritance.
+-   Carbon will allow data members to have size zero, so the
+    [empty-base optimization](https://en.cppreference.com/w/cpp/language/ebo) is
+    unnecessary.
+-   For cases where the derived type does not add any data members, in Carbon
+    you can use adapter types instead of inheritance.
+
+However, there are still some cases where non-virtual inheritance makes sense.
+
+**Examples:** LLVM
+[red-black tree](https://github.com/llvm-mirror/libcxx/blob/master/include/__tree)
+and doubly-linked lists **TODO**
 
 ### Interop with C++ multiple inheritance
 
@@ -669,6 +706,20 @@ may only be partially provided by a mixin. Mixin methods will need to be able to
 convert between pointers to the mixin type and the main type.
 
 Mixins also complicate how constructors work.
+
+### Non-virtual inheritance
+
+We need some way of addressing two safety concerns created by non-virtual
+inheritance:
+
+-   Unclear how to safely run the right destructor.
+-   [Object slicing](https://en.wikipedia.org/wiki/Object_slicing) is a danger
+    when dereferencing a pointer of a base type.
+
+These concerns would be resolved by distinguishing between pointers that point
+to a specified type only and those that point to a type or any subtype. The
+latter case would have restrictions to prevent misuse. This distinction may be
+more complexity than is justified for a relatively rare use case.
 
 ### Memory layout
 
