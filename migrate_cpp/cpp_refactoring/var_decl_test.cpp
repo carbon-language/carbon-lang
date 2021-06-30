@@ -24,7 +24,29 @@ TEST_F(VarDeclTest, Declaration) {
 
 TEST_F(VarDeclTest, DeclarationArray) {
   constexpr char Before[] = "int i[4];";
-  constexpr char After[] = "var i: int [4];";
+  constexpr char After[] = "var i: int[4];";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, DeclarationConstArray) {
+  constexpr char Before[] = "const int i[] = {0, 1};";
+  constexpr char After[] = "let i: const int[];";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, DeclarationConstPointer) {
+  // TODO: Include init.
+  // TODO: Fix j replacement location.
+  constexpr char Before[] = R"cpp(
+    int i = 0;
+    int* const j = &i;
+    const int* k = &i;
+  )cpp";
+  constexpr char After[] = R"(
+    var i: int;
+    int* const let j: int* const;
+    var k: const int*;
+  )";
   ExpectReplacement(Before, After);
 }
 
@@ -39,7 +61,7 @@ TEST_F(VarDeclTest, DeclarationCommaArray) {
   // TODO: Maybe replace the comma with a `;`.
   // TODO: Need to handle j's array.
   constexpr char Before[] = "int i[4], j[4];";
-  constexpr char After[] = "var i: int [4], j[4];";
+  constexpr char After[] = "var i: int[4], j[4];";
   ExpectReplacement(Before, After);
 }
 
@@ -48,7 +70,7 @@ TEST_F(VarDeclTest, DeclarationCommaPointers) {
   // TODO: Need to handle j's pointer.
   // constexpr char After[] = "var i: int *, var j: int *;";
   constexpr char Before[] = "int *i, *j;";
-  constexpr char After[] = "var i: int *, *j;";
+  constexpr char After[] = "var i: int*, *j;";
   ExpectReplacement(Before, After);
 }
 
@@ -67,14 +89,13 @@ TEST_F(VarDeclTest, Auto) {
 
 TEST_F(VarDeclTest, AutoRef) {
   // TODO: Include init.
-  // TODO: j should have const.
   constexpr char Before[] = R"cpp(
     auto i = 0;
     const auto& j = i;
   )cpp";
   constexpr char After[] = R"(
     var i: auto;
-    var j: auto&;
+    var j: const auto&;
   )";
   ExpectReplacement(Before, After);
 }
@@ -88,7 +109,7 @@ TEST_F(VarDeclTest, Const) {
 
 TEST_F(VarDeclTest, ConstPointer) {
   constexpr char Before[] = "const int* i;";
-  constexpr char After[] = "var i: const int *;";
+  constexpr char After[] = "var i: const int*;";
   ExpectReplacement(Before, After);
 }
 
@@ -137,7 +158,7 @@ TEST_F(VarDeclTest, ParamStruct) {
   )cpp";
   constexpr char After[] = R"(
     struct Circle {};
-    auto Draw(times: int, circle: const Circle &) -> bool;
+    auto Draw(times: int, circle: const Circle&) -> bool;
   )";
   ExpectReplacement(Before, After);
 }
@@ -167,11 +188,33 @@ TEST_F(VarDeclTest, RangeFor) {
   )cpp";
   constexpr char After[] = R"(
     void Foo() {
-      var items: int [1];
+      var items: int[];
       for (int i : items) {
         var j: int;
       }
     }
+  )";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, Template) {
+  constexpr char Before[] = R"cpp(
+    template <typename T>
+    struct R {};
+
+    template <typename T>
+    struct S {};
+
+    R<S<int>> x;
+  )cpp";
+  constexpr char After[] = R"(
+    template <typename T>
+    struct R {};
+
+    template <typename T>
+    struct S {};
+
+    var x: R<S<int>>;
   )";
   ExpectReplacement(Before, After);
 }

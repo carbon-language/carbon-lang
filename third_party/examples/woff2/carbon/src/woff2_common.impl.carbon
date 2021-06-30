@@ -15,7 +15,7 @@
 namespace woff2 {
 
 
-fn ComputeULongSum(buf: const uint8_t *, size: size_t) -> uint32_t {
+fn ComputeULongSum(buf: const uint8_t*, size: size_t) -> uint32_t {
   var checksum: uint32_t;
   var aligned_size: size_t;
   for (var i: size_t; i < aligned_size; i += 4) {

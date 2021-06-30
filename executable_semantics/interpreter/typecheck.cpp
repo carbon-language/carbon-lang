@@ -473,7 +473,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
             res_type, clause.first, clause.second, types, values, ret_type));
       }
       const Statement* new_s =
-          Statement::MakeMatch(s->line_num, res.exp, new_clauses);
+          Statement::MakeMatch(s->line_num, *res.exp, new_clauses);
       return TCStatement(new_s, types);
     }
     case StatementKind::While: {
@@ -484,7 +484,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto body_res =
           TypeCheckStmt(s->GetWhile().body, types, values, ret_type);
       auto new_s =
-          Statement::MakeWhile(s->line_num, cnd_res.exp, body_res.stmt);
+          Statement::MakeWhile(s->line_num, *cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, types);
     }
     case StatementKind::Break:
@@ -503,7 +503,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto lhs_res = TypeCheckExp(s->GetVariableDefinition().pat, types, values,
                                   rhs_ty, TCContext::PatternContext);
       const Statement* new_s = Statement::MakeVarDef(
-          s->line_num, s->GetVariableDefinition().pat, res.exp);
+          s->line_num, *s->GetVariableDefinition().pat, *res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::Sequence: {
@@ -525,13 +525,14 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
                                   TCContext::ValueContext);
       auto lhs_t = lhs_res.type;
       ExpectType(s->line_num, "assign", lhs_t, rhs_t);
-      auto new_s = Statement::MakeAssign(s->line_num, lhs_res.exp, rhs_res.exp);
+      auto new_s =
+          Statement::MakeAssign(s->line_num, *lhs_res.exp, *rhs_res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::ExpressionStatement: {
       auto res = TypeCheckExp(s->GetExpression(), types, values, nullptr,
                               TCContext::ValueContext);
-      auto new_s = Statement::MakeExpStmt(s->line_num, res.exp);
+      auto new_s = Statement::MakeExpStmt(s->line_num, *res.exp);
       return TCStatement(new_s, types);
     }
     case StatementKind::If: {
@@ -543,7 +544,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
           TypeCheckStmt(s->GetIf().then_stmt, types, values, ret_type);
       auto els_res =
           TypeCheckStmt(s->GetIf().else_stmt, types, values, ret_type);
-      auto new_s = Statement::MakeIf(s->line_num, cnd_res.exp, thn_res.stmt,
+      auto new_s = Statement::MakeIf(s->line_num, *cnd_res.exp, thn_res.stmt,
                                      els_res.stmt);
       return TCStatement(new_s, types);
     }
@@ -558,7 +559,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
-      return TCStatement(Statement::MakeReturn(s->line_num, res.exp), types);
+      return TCStatement(Statement::MakeReturn(s->line_num, *res.exp), types);
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
@@ -577,7 +578,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       ExpectType(s->line_num, "argument of `run`",
                  Value::MakeContinuationTypeVal(), argument_result.type);
       const Statement* new_run =
-          Statement::MakeRun(s->line_num, argument_result.exp);
+          Statement::MakeRun(s->line_num, *argument_result.exp);
       return TCStatement(new_run, types);
     }
     case StatementKind::Await: {
@@ -592,7 +593,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
   if (!stmt) {
     if (void_return) {
       return Statement::MakeReturn(line_num,
-                                   Expression::MakeTuple(line_num, {}));
+                                   *Expression::MakeTuple(line_num, {}));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"
@@ -609,7 +610,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
         new_clauses->push_back(std::make_pair(i->first, s));
       }
-      return Statement::MakeMatch(stmt->line_num, stmt->GetMatch().exp,
+      return Statement::MakeMatch(stmt->line_num, *stmt->GetMatch().exp,
                                   new_clauses);
     }
     case StatementKind::Block:
@@ -618,7 +619,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
                                               void_return, stmt->line_num));
     case StatementKind::If:
       return Statement::MakeIf(
-          stmt->line_num, stmt->GetIf().cond,
+          stmt->line_num, *stmt->GetIf().cond,
           CheckOrEnsureReturn(stmt->GetIf().then_stmt, void_return,
                               stmt->line_num),
           CheckOrEnsureReturn(stmt->GetIf().else_stmt, void_return,
@@ -649,7 +650,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
         return Statement::MakeSeq(
             stmt->line_num, stmt,
             Statement::MakeReturn(stmt->line_num,
-                                  Expression::MakeTuple(stmt->line_num, {})));
+                                  *Expression::MakeTuple(stmt->line_num, {})));
       } else {
         std::cerr
             << stmt->line_num
@@ -663,9 +664,9 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
 
 auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     -> struct FunctionDefinition* {
-  auto param_res = TypeCheckExp(f->param_pattern, types, values, nullptr,
+  auto param_res = TypeCheckExp(&f->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
-  auto return_type = InterpExp(values, f->return_type);
+  auto return_type = InterpExp(values, &f->return_type);
   if (f->name == "main") {
     ExpectType(f->line_num, "return type of `main`", Value::MakeIntTypeVal(),
                return_type);
@@ -674,18 +675,19 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return MakeFunDef(f->line_num, f->name, ReifyType(return_type, f->line_num),
-                    f->param_pattern, body);
+  return new FunctionDefinition(MakeFunDef(f->line_num, f->name,
+                                           *ReifyType(return_type, f->line_num),
+                                           f->param_pattern, body));
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
     -> const Value* {
-  auto param_res = TypeCheckExp(fun_def->param_pattern, types, values, nullptr,
+  auto param_res = TypeCheckExp(&fun_def->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
-  auto ret = InterpExp(values, fun_def->return_type);
+  auto ret = InterpExp(values, &fun_def->return_type);
   if (ret->tag == ValKind::AutoTV) {
     auto f = TypeCheckFunDef(fun_def, types, values);
-    ret = InterpExp(values, f->return_type);
+    ret = InterpExp(values, &f->return_type);
   }
   return Value::MakeFunTypeVal(param_res.type, ret);
 }
@@ -704,7 +706,7 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
 }
 
 auto FunctionDeclaration::Name() const -> std::string {
-  return definition->name;
+  return definition.name;
 }
 
 auto StructDeclaration::Name() const -> std::string { return *definition.name; }
@@ -728,7 +730,7 @@ auto StructDeclaration::TypeChecked(TypeEnv types, Env values) const
 
 auto FunctionDeclaration::TypeChecked(TypeEnv types, Env values) const
     -> Declaration {
-  return FunctionDeclaration(TypeCheckFunDef(definition, types, values));
+  return FunctionDeclaration(*TypeCheckFunDef(&definition, types, values));
 }
 
 auto ChoiceDeclaration::TypeChecked(TypeEnv types, Env values) const
@@ -769,7 +771,7 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
 }
 
 auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
-  auto t = TypeOfFunDef(tops.types, tops.values, definition);
+  auto t = TypeOfFunDef(tops.types, tops.values, &definition);
   tops.types.Set(Name(), t);
   InitGlobals(tops.values);
 }
@@ -789,9 +791,9 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
 
 auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto alts = new VarValues();
-  for (auto a : alternatives) {
-    auto t = InterpExp(tops.values, a.second);
-    alts->push_back(std::make_pair(a.first, t));
+  for (const auto& [name, signature] : alternatives) {
+    auto t = InterpExp(tops.values, &signature);
+    alts->push_back(std::make_pair(name, t));
   }
   auto ct = Value::MakeChoiceTypeVal(name, alts);
   Address a = state->heap.AllocateValue(ct);

@@ -314,9 +314,9 @@ void InitGlobals(std::list<Declaration>* fs) {
 
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
-  for (auto kv : alternatives) {
-    auto t = InterpExp(Env(), kv.second);
-    alts->push_back(make_pair(kv.first, t));
+  for (const auto& [name, signature] : alternatives) {
+    auto t = InterpExp(Env(), &signature);
+    alts->push_back(make_pair(name, t));
   }
   auto ct = Value::MakeChoiceTypeVal(name, alts);
   auto a = state->heap.AllocateValue(ct);
@@ -342,10 +342,10 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 }
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
-  auto pt = InterpExp(globals, definition->param_pattern);
-  auto f = Value::MakeFunVal(definition->name, pt, definition->body);
+  auto pt = InterpExp(globals, &definition.param_pattern);
+  auto f = Value::MakeFunVal(definition.name, pt, definition.body);
   Address a = state->heap.AllocateValue(f);
-  globals.Set(definition->name, a);
+  globals.Set(definition.name, a);
 }
 
 // Adds an entry in `globals` mapping the variable's name to the
@@ -1233,7 +1233,7 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(MakeStmtAct(Statement::MakeReturn(
-          stmt->line_num, Expression::MakeTuple(stmt->line_num, {}))));
+          stmt->line_num, *Expression::MakeTuple(stmt->line_num, {}))));
       todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
@@ -1257,7 +1257,7 @@ void StepStmt() {
         // Push an expression statement action to ignore the result
         // value from the continuation.
         Action* ignore_result = MakeStmtAct(Statement::MakeExpStmt(
-            stmt->line_num, Expression::MakeTuple(stmt->line_num, {})));
+            stmt->line_num, *Expression::MakeTuple(stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
