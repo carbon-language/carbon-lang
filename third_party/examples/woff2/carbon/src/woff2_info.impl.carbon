@@ -19,11 +19,11 @@ fn PrintTag(tag: int) -> std::string {
   if (tag & 0x80808080) {
     return std::string("_xfm");  // print _xfm for xform tables (else garbage)
   }
-  var printable: char [4];
+  var printable: char[];
   return std::string(printable, 4);
 }
 
-fn main(argc: int, argv: char **) -> int {
+fn main(argc: int, argv: char**) -> int {
   using std::string;
 
   if (argc != 2) {
@@ -31,11 +31,11 @@ fn main(argc: int, argv: char **) -> int {
     return 1;
   }
 
-  var filename: std::string;
-  var outfilename: std::string;
+  var filename: string;
+  var outfilename: string;
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
-  var input: std::string;
+  var input: string;
 
   var file: woff2::Buffer;
 

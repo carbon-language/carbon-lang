@@ -21,41 +21,82 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
                      this);
 }
 
+// Helper function for printing TypeLocClass. Useful for debugging.
+LLVM_ATTRIBUTE_UNUSED
+static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
+    -> std::string {
+  switch (c) {
+    // Mirrors the definition in clang/AST/TypeLoc.h in order to print names.
+#define ABSTRACT_TYPE(Class, Base)
+#define TYPE(Class, Base)     \
+  case clang::TypeLoc::Class: \
+    return #Class;
+#include "clang/AST/TypeNodes.inc"
+    case clang::TypeLoc::Qualified:
+      return "Qualified";
+  }
+}
+
 // Returns a string for the type.
 static auto GetTypeStr(const clang::VarDecl* decl,
                        const clang::SourceManager& sm,
                        const clang::LangOptions& lang_opts) -> std::string {
+  // Built a vector of class information, because we'll be traversing reverse
+  // order to construct the final type.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  std::vector<clang::SourceRange> segments;
+  std::vector<std::pair<clang::TypeLoc::TypeLocClass, std::string>> segments;
   while (!type_loc.isNull()) {
-    switch (type_loc.getTypeLocClass()) {
-      case clang::TypeLoc::LValueReference:
-      case clang::TypeLoc::RValueReference:
-      case clang::TypeLoc::Pointer:
-      case clang::TypeLoc::Auto:
-      case clang::TypeLoc::Qualified:
-        segments.push_back(type_loc.getLocalSourceRange());
-        type_loc = type_loc.getNextTypeLoc();
-        break;
-
-      default:
-        // For non-auto types, use the canonical type, which adds things like
-        // namespace qualifiers.
-        return clang::QualType::getAsString(decl->getType().split(), lang_opts);
+    std::string text;
+    auto qualifiers = type_loc.getType().getLocalQualifiers();
+    std::string qual_str;
+    if (!qualifiers.empty()) {
+      qual_str = qualifiers.getAsString();
     }
+    auto range =
+        clang::CharSourceRange::getTokenRange(type_loc.getLocalSourceRange());
+    std::string range_str =
+        clang::Lexer::getSourceText(range, sm, lang_opts).str();
+
+    // Make a list of segments with their TypeLocClass for reconstruction of the
+    // string. Locally, we will have a qualifier (such as `const`) and a type
+    // string (such as `int`) which is also used.
+    auto type_loc_class = type_loc.getTypeLocClass();
+    if (qual_str.empty()) {
+      segments.push_back({type_loc_class, range_str});
+    } else if (range_str.empty()) {
+      segments.push_back({type_loc_class, qual_str});
+    } else {
+      segments.push_back({type_loc_class, qual_str + " " + range_str});
+    }
+
+    type_loc = type_loc.getNextTypeLoc();
   }
 
-  // Sort type segments as they're written in the file. This avoids needing to
-  // understand TypeLoc traversal ordering.
-  std::sort(segments.begin(), segments.end(),
-            [](clang::SourceRange a, clang::SourceRange b) {
-              return a.getBegin() < b.getBegin();
-            });
-
+  // Construct the final type based on the class of each step. This reverses to
+  // start from the "inside" of the type and go "out" when constructing
+  // type_str.
   std::string type_str;
-  for (const auto& segment : segments) {
-    type_str += clang::Lexer::getSourceText(
-        clang::CharSourceRange::getTokenRange(segment), sm, lang_opts);
+  auto prev_class = clang::TypeLoc::Auto;  // Placeholder class, used in loop.
+  for (const auto& [type_loc_class, text] : llvm::reverse(segments)) {
+    switch (type_loc_class) {
+      case clang::TypeLoc::Elaborated:
+        type_str.insert(0, text);
+        break;
+      case clang::TypeLoc::Qualified:
+        if (prev_class == clang::TypeLoc::Pointer) {
+          type_str += " " + text;
+        } else {
+          if (!type_str.empty()) {
+            type_str.insert(0, " ");
+          }
+          type_str.insert(0, text);
+        }
+        break;
+      default:
+        type_str += text;
+        break;
+    }
+    prev_class = type_loc_class;
   }
   return type_str;
 }
