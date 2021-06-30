@@ -23,7 +23,7 @@ namespace {
 let FLAG_ARG_1_AND_2_ARE_WORDS: const int;
 let FLAG_WE_HAVE_INSTRUCTIONS: const int;
 
-fn WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t) {
+fn WriteBytes(out: std::vector<uint8_t>*, data: const uint8_t*, len: size_t) {
   if (len == 0) { return;
 }
   var offset: size_t;
@@ -31,18 +31,18 @@ fn WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t) {
   memcpy(&(*out)[offset], data, len);
 }
 
-fn WriteBytes(out: std::vector<uint8_t> *, in: const std::vector<uint8_t> &) {
+fn WriteBytes(out: std::vector<uint8_t>*, in: const std::vector<uint8_t>&) {
   for (unsigned char i : in) {
     out->push_back(i);
   }
 }
 
-fn WriteUShort(out: std::vector<uint8_t> *, value: int) {
+fn WriteUShort(out: std::vector<uint8_t>*, value: int) {
   out->push_back(value >> 8);
   out->push_back(value & 255);
 }
 
-fn WriteLong(out: std::vector<uint8_t> *, value: int) {
+fn WriteLong(out: std::vector<uint8_t>*, value: int) {
   out->push_back((value >> 24) & 255);
   out->push_back((value >> 16) & 255);
   out->push_back((value >> 8) & 255);
@@ -58,7 +58,7 @@ class GlyfEncoder {
     bbox_bitmap_.resize(((num_glyphs + 31) >> 5) << 2);
   }
 
-  fn Encode(glyph_id: int, glyph: const woff2::Glyph &) -> bool {
+  fn Encode(glyph_id: int, glyph: const Glyph&) -> bool {
     if (glyph.composite_data_size > 0) {
       WriteCompositeGlyph(glyph_id, glyph);
     } else if (glyph.contours.size() > 0) {
@@ -69,7 +69,7 @@ class GlyfEncoder {
     return true;
   }
 
-  fn GetTransformedGlyfBytes(result: std::vector<uint8_t> *) {
+  fn GetTransformedGlyfBytes(result: std::vector<uint8_t>*) {
     WriteLong(result, 0);  // version
     WriteUShort(result, n_glyphs_);
     WriteUShort(result, 0);  // index_format, will be set later
@@ -91,13 +91,13 @@ class GlyfEncoder {
   }
 
  private:
-  fn WriteInstructions(glyph: const woff2::Glyph &) {
+  fn WriteInstructions(glyph: const Glyph&) {
     Write255UShort(&glyph_stream_, glyph.instructions_size);
     WriteBytes(&instruction_stream_,
                glyph.instructions_data, glyph.instructions_size);
   }
 
-  fn ShouldWriteSimpleGlyphBbox(glyph: const woff2::Glyph &) -> bool {
+  fn ShouldWriteSimpleGlyphBbox(glyph: const Glyph&) -> bool {
     if (glyph.contours.empty() || glyph.contours[0].empty()) {
       return glyph.x_min || glyph.y_min || glyph.x_max || glyph.y_max;
     }
@@ -135,7 +135,7 @@ class GlyfEncoder {
     return false;
   }
 
-  fn WriteSimpleGlyph(glyph_id: int, glyph: const woff2::Glyph &) {
+  fn WriteSimpleGlyph(glyph_id: int, glyph: const Glyph&) {
     var num_contours: int;
     WriteUShort(&n_contour_stream_, num_contours);
     if (ShouldWriteSimpleGlyphBbox(glyph)) {
@@ -163,7 +163,7 @@ class GlyfEncoder {
     }
   }
 
-  fn WriteCompositeGlyph(glyph_id: int, glyph: const woff2::Glyph &) {
+  fn WriteCompositeGlyph(glyph_id: int, glyph: const Glyph&) {
     WriteUShort(&n_contour_stream_, -1);
     WriteBbox(glyph_id, glyph);
     WriteBytes(&composite_stream_,
@@ -174,7 +174,7 @@ class GlyfEncoder {
     }
   }
 
-  fn WriteBbox(glyph_id: int, glyph: const woff2::Glyph &) {
+  fn WriteBbox(glyph_id: int, glyph: const Glyph&) {
     bbox_bitmap_[glyph_id >> 3] |= 0x80 >> (glyph_id & 7);
     WriteUShort(&bbox_stream_, glyph.x_min);
     WriteUShort(&bbox_stream_, glyph.y_min);
@@ -236,10 +236,10 @@ class GlyfEncoder {
 
 }  // namespace
 
-fn TransformGlyfAndLocaTables(font: woff2::Font *) -> bool {
+fn TransformGlyfAndLocaTables(font: Font*) -> bool {
   // no transform for CFF
-  var glyf_table: const Font::Table *;
-  var loca_table: const Font::Table *;
+  var glyf_table: const Font::Table*;
+  var loca_table: const Font::Table*;
 
   // If you don't have glyf/loca this transform isn't very interesting
   if (loca_table == nullptr && glyf_table == nullptr) {
@@ -257,14 +257,14 @@ fn TransformGlyfAndLocaTables(font: woff2::Font *) -> bool {
     return true;
   }
 
-  var transformed_glyf: Font::Table *;
-  var transformed_loca: Font::Table *;
+  var transformed_glyf: Font::Table*;
+  var transformed_loca: Font::Table*;
 
   var num_glyphs: int;
-  var encoder: woff2::(anonymous namespace)::GlyfEncoder;
+  var encoder: GlyfEncoder;
   for (var i: int; i < num_glyphs; ++i) {
-    var glyph: woff2::Glyph;
-    var glyph_data: const uint8_t *;
+    var glyph: Glyph;
+    var glyph_data: const uint8_t*;
     var glyph_size: size_t;
     if (!GetGlyphData(*font, i, &glyph_data, &glyph_size) ||
         (glyph_size > 0 && !ReadGlyph(glyph_data, glyph_size, &glyph))) {
@@ -274,7 +274,7 @@ fn TransformGlyfAndLocaTables(font: woff2::Font *) -> bool {
   }
   encoder.GetTransformedGlyfBytes(&transformed_glyf->buffer);
 
-  var head_table: const Font::Table *;
+  var head_table: const Font::Table*;
   if (head_table == nullptr || head_table->length < 52) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -293,10 +293,10 @@ fn TransformGlyfAndLocaTables(font: woff2::Font *) -> bool {
 
 // See https://www.microsoft.com/typography/otspec/hmtx.htm
 // See WOFF2 spec, 5.4. Transformed hmtx table format
-fn TransformHmtxTable(font: woff2::Font *) -> bool {
-  var glyf_table: const Font::Table *;
-  var hmtx_table: const Font::Table *;
-  var hhea_table: const Font::Table *;
+fn TransformHmtxTable(font: Font*) -> bool {
+  var glyf_table: const Font::Table*;
+  var hmtx_table: const Font::Table*;
+  var hhea_table: const Font::Table*;
 
   // If you don't have hmtx or a glyf not much is going to happen here
   if (hmtx_table == nullptr || glyf_table == nullptr) {
@@ -309,7 +309,7 @@ fn TransformHmtxTable(font: woff2::Font *) -> bool {
   }
 
   // Skip 34 to reach 'hhea' numberOfHMetrics
-  var hhea_buf: woff2::Buffer;
+  var hhea_buf: Buffer;
   var num_hmetrics: uint16_t;
   if (!hhea_buf.Skip(34) || !hhea_buf.ReadU16(&num_hmetrics)) {
     return FONT_COMPRESSION_FAILURE();
@@ -330,10 +330,10 @@ fn TransformHmtxTable(font: woff2::Font *) -> bool {
   var remove_proportional_lsb: bool;
   var remove_monospace_lsb: bool;
 
-  var hmtx_buf: woff2::Buffer;
+  var hmtx_buf: Buffer;
   for (var i: int; i < num_glyphs; i++) {
-    var glyph: woff2::Glyph;
-    var glyph_data: const uint8_t *;
+    var glyph: Glyph;
+    var glyph_data: const uint8_t*;
     var glyph_size: size_t;
     if (!GetGlyphData(*font, i, &glyph_data, &glyph_size) ||
         (glyph_size > 0 && !ReadGlyph(glyph_data, glyph_size, &glyph))) {
@@ -376,7 +376,7 @@ fn TransformHmtxTable(font: woff2::Font *) -> bool {
     }
   }
 
-  var transformed_hmtx: Font::Table *;
+  var transformed_hmtx: Font::Table*;
 
   var flags: uint8_t;
   var transformed_size: size_t;
@@ -392,7 +392,7 @@ fn TransformHmtxTable(font: woff2::Font *) -> bool {
   }
 
   transformed_hmtx->buffer.reserve(transformed_size);
-  var out: std::vector<uint8_t> *;
+  var out: std::vector<uint8_t>*;
   WriteBytes(out, &flags, 1);
   for (uint16_t advance_width : advance_widths) {
     WriteUShort(out, advance_width);

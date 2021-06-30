@@ -45,7 +45,7 @@ struct Table {
   uint32_t dst_length;
   const uint8_t* dst_data;
 
-  fn operator<(other: const woff2::Table &) const -> bool {
+  fn operator<(other: const Table&) const -> bool {
     return tag < other.tag;
   }
 };
@@ -57,7 +57,7 @@ struct Table {
 fn CollectionHeaderSize(header_version: uint32_t, num_fonts: uint32_t) -> size_t;
 
 // Compute checksum over size bytes of buf
-fn ComputeULongSum(buf: const uint8_t *, size: size_t) -> uint32_t;
+fn ComputeULongSum(buf: const uint8_t*, size: size_t) -> uint32_t;
 
 } // namespace woff2
 

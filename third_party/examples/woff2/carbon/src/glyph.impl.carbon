@@ -28,7 +28,7 @@ let kFLAG_WE_HAVE_AN_X_AND_Y_SCALE: const int32_t;
 let kFLAG_WE_HAVE_A_TWO_BY_TWO: const int32_t;
 let kFLAG_WE_HAVE_INSTRUCTIONS: const int32_t;
 
-fn ReadCompositeGlyphData(buffer: woff2::Buffer *, glyph: woff2::Glyph *) -> bool {
+fn ReadCompositeGlyphData(buffer: Buffer*, glyph: Glyph*) -> bool {
   glyph->have_instructions = false;
   glyph->composite_data = buffer->buffer() + buffer->offset();
   var start_offset: size_t;
@@ -62,8 +62,8 @@ fn ReadCompositeGlyphData(buffer: woff2::Buffer *, glyph: woff2::Glyph *) -> boo
   return true;
 }
 
-fn ReadGlyph(data: const uint8_t *, len: size_t, glyph: woff2::Glyph *) -> bool {
-  var buffer: woff2::Buffer;
+fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool {
+  var buffer: Buffer;
 
   var num_contours: int16_t;
   if (!buffer.ReadS16(&num_contours)) {
@@ -109,7 +109,7 @@ fn ReadGlyph(data: const uint8_t *, len: size_t, glyph: woff2::Glyph *) -> bool 
     }
 
     // Read the run-length coded flags.
-    var flags: std::vector<std::vector<uint8_t>>;
+    var flags: std::vector<std::vector<uint8_t> >;
     {
       var flag: uint8_t;
       var flag_repeat: uint8_t;
@@ -212,19 +212,19 @@ fn ReadGlyph(data: const uint8_t *, len: size_t, glyph: woff2::Glyph *) -> bool 
 
 namespace {
 
-fn StoreBbox(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) {
+fn StoreBbox(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) {
   Store16(glyph.x_min, offset, dst);
   Store16(glyph.y_min, offset, dst);
   Store16(glyph.x_max, offset, dst);
   Store16(glyph.y_max, offset, dst);
 }
 
-fn StoreInstructions(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) {
+fn StoreInstructions(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) {
   Store16(glyph.instructions_size, offset, dst);
   StoreBytes(glyph.instructions_data, glyph.instructions_size, offset, dst);
 }
 
-fn StoreEndPtsOfContours(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) -> bool {
+fn StoreEndPtsOfContours(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) -> bool {
   var end_point: int;
   for (const auto& contour : glyph.contours) {
     end_point += contour.size();
@@ -237,8 +237,8 @@ fn StoreEndPtsOfContours(glyph: const woff2::Glyph &, offset: size_t *, dst: uin
   return true;
 }
 
-fn StorePoints(glyph: const woff2::Glyph &, offset: size_t *,
-                 dst: uint8_t *, dst_size: size_t) -> bool {
+fn StorePoints(glyph: const Glyph&, offset: size_t*,
+                 dst: uint8_t*, dst_size: size_t) -> bool {
   var last_flag: int;
   var repeat_count: int;
   var last_x: int;
@@ -333,7 +333,7 @@ fn StorePoints(glyph: const woff2::Glyph &, offset: size_t *,
 
 }  // namespace
 
-fn StoreGlyph(glyph: const woff2::Glyph &, dst: uint8_t *, dst_size: size_t *) -> bool {
+fn StoreGlyph(glyph: const Glyph&, dst: uint8_t*, dst_size: size_t*) -> bool {
   var offset: size_t;
   if (glyph.composite_data_size > 0) {
     // Composite glyph.

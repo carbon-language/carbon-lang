@@ -13,7 +13,7 @@
 #include <woff2/decode.h>
 
 
-fn main(argc: int, argv: char **) -> int {
+fn main(argc: int, argv: char**) -> int {
   using std::string;
 
   if (argc != 2) {
@@ -21,13 +21,13 @@ fn main(argc: int, argv: char **) -> int {
     return 1;
   }
 
-  var filename: std::string;
-  var outfilename: std::string;
+  var filename: string;
+  var outfilename: string;
 
   // Note: update woff2_dec_fuzzer_new_entry.cc if this pattern changes.
-  var input: std::string;
-  var raw_input: auto*;
-  var output: std::string;
+  var input: string;
+  var raw_input: const auto*;
+  var output: string;
   var out: woff2::WOFF2StringOut;
 
   let ok: const bool;
