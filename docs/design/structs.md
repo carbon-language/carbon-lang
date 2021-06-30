@@ -180,6 +180,9 @@ abstract base classes.
 
 ### Polymorphic types
 
+Carbon will fully support single-inheritance type hierarchies with polymorphic
+types.
+
 Polymorphic types support dynamic dispatch using a
 [vtable](https://en.wikipedia.org/wiki/Virtual_method_table), but unlike
 [abstract base classes](#abstract-base-classes) may also include private data in
