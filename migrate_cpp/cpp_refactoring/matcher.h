@@ -11,23 +11,39 @@
 namespace Carbon {
 
 // This is an abstract class with helpers to make it easier to write matchers.
-class Matcher : public clang::ast_matchers::MatchFinder::MatchCallback {
+class Matcher {
  public:
-  // Alias these to elide the namespaces in subclass headers.
-  using MatchFinder = clang::ast_matchers::MatchFinder;
-  using Replacements = clang::tooling::Replacements;
+  using ReplacementMap = std::map<std::string, clang::tooling::Replacements>;
 
-  explicit Matcher(std::map<std::string, Replacements>& in_replacements)
-      : replacements(&in_replacements) {}
+  Matcher(const clang::ast_matchers::MatchFinder::MatchResult& in_match_result,
+          ReplacementMap* in_replacements)
+      : match_result(in_match_result), replacements(in_replacements) {}
+  virtual ~Matcher() {}
+
+  // Children must implement this for the main execution.
+  virtual void Run() = 0;
 
  protected:
   // Replaces the given range with the specified text.
-  void AddReplacement(const clang::SourceManager& sm,
-                      clang::CharSourceRange range,
+  void AddReplacement(clang::CharSourceRange range,
                       llvm::StringRef replacement_text);
 
+  const clang::SourceManager& GetSource() {
+    return *match_result.SourceManager;
+  }
+
+  template <typename NodeType>
+  auto GetNodeOrDie(llvm::StringRef id) -> const NodeType& {
+    auto* node = match_result.Nodes.getNodeAs<NodeType>(id);
+    if (!node) {
+      llvm::report_fatal_error(std::string("getNodeAs failed for ") + id);
+    }
+    return *node;
+  }
+
  private:
-  std::map<std::string, Replacements>* const replacements;
+  const clang::ast_matchers::MatchFinder::MatchResult& match_result;
+  ReplacementMap* const replacements;
 };
 
 }  // namespace Carbon

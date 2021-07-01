@@ -12,13 +12,9 @@ namespace Carbon {
 // Updates variable declarations for `var name: Type`.
 class VarDecl : public Matcher {
  public:
-  explicit VarDecl(std::map<std::string, Replacements>& in_replacements,
-                   MatchFinder* finder);
-
-  void run(const MatchFinder::MatchResult& result) override;
-
- private:
-  static constexpr char Label[] = "VarDecl";
+  static clang::ast_matchers::DeclarationMatcher GetAstMatcher();
+  using Matcher::Matcher;
+  void Run() override;
 };
 
 }  // namespace Carbon

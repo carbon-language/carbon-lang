@@ -4,28 +4,29 @@
 
 #include "migrate_cpp/cpp_refactoring/matcher.h"
 
-namespace ct = ::clang::tooling;
+#include "clang/Basic/SourceManager.h"
 
 namespace Carbon {
 
-void Matcher::AddReplacement(const clang::SourceManager& sm,
-                             clang::CharSourceRange range,
+void Matcher::AddReplacement(clang::CharSourceRange range,
                              llvm::StringRef replacement_text) {
   if (!range.isValid()) {
     // Invalid range.
     return;
   }
-  if (sm.getDecomposedLoc(range.getBegin()).first !=
-      sm.getDecomposedLoc(range.getEnd()).first) {
+  if (GetSource().getDecomposedLoc(range.getBegin()).first !=
+      GetSource().getDecomposedLoc(range.getEnd()).first) {
     // Range spans macro expansions.
     return;
   }
-  if (sm.getFileID(range.getBegin()) != sm.getFileID(range.getEnd())) {
+  if (GetSource().getFileID(range.getBegin()) !=
+      GetSource().getFileID(range.getEnd())) {
     // Range spans files.
     return;
   }
 
-  auto rep = ct::Replacement(sm, sm.getExpansionRange(range), replacement_text);
+  auto rep = clang::tooling::Replacement(
+      GetSource(), GetSource().getExpansionRange(range), replacement_text);
   auto entry = replacements->find(std::string(rep.getFilePath()));
   if (entry == replacements->end()) {
     // The replacement was in a file which isn't being updated, such as a system
