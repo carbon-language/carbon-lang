@@ -9,8 +9,6 @@
 #include <variant>
 #include <vector>
 
-#include "common/indirect_value.h"
-
 namespace Carbon {
 
 struct Expression;
@@ -21,7 +19,7 @@ struct FieldInitializer {
   std::string name;
 
   // The expression that initializes the field.
-  IndirectValue<Expression> expression;
+  const Expression* expression;
 };
 
 enum class ExpressionKind {
@@ -64,20 +62,20 @@ struct Variable {
 
 struct FieldAccess {
   static constexpr ExpressionKind Kind = ExpressionKind::GetField;
-  IndirectValue<Expression> aggregate;
+  const Expression* aggregate;
   std::string field;
 };
 
 struct Index {
   static constexpr ExpressionKind Kind = ExpressionKind::Index;
-  IndirectValue<Expression> aggregate;
-  IndirectValue<Expression> offset;
+  const Expression* aggregate;
+  const Expression* offset;
 };
 
 struct PatternVariable {
   static constexpr ExpressionKind Kind = ExpressionKind::PatternVariable;
   std::string name;
-  IndirectValue<Expression> type;
+  const Expression* type;
 };
 
 struct IntLiteral {
@@ -98,19 +96,19 @@ struct Tuple {
 struct PrimitiveOperator {
   static constexpr ExpressionKind Kind = ExpressionKind::PrimitiveOp;
   Operator op;
-  std::vector<Expression> arguments;
+  std::vector<const Expression*> arguments;
 };
 
 struct Call {
   static constexpr ExpressionKind Kind = ExpressionKind::Call;
-  IndirectValue<Expression> function;
-  IndirectValue<Expression> argument;
+  const Expression* function;
+  const Expression* argument;
 };
 
 struct FunctionType {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionT;
-  IndirectValue<Expression> parameter;
-  IndirectValue<Expression> return_type;
+  const Expression* parameter;
+  const Expression* return_type;
 };
 
 struct AutoT {
@@ -138,29 +136,29 @@ struct Expression {
   inline auto tag() const -> ExpressionKind;
 
   static auto MakeVar(int line_num, std::string var) -> const Expression*;
-  static auto MakeVarPat(int line_num, std::string var, Expression type)
+  static auto MakeVarPat(int line_num, std::string var, const Expression* type)
       -> const Expression*;
   static auto MakeInt(int line_num, int i) -> const Expression*;
   static auto MakeBool(int line_num, bool b) -> const Expression*;
-  static auto MakeOp(int line_num, Operator op, std::vector<Expression> args)
+  static auto MakeOp(int line_num, Operator op,
+                     std::vector<const Expression*> args) -> const Expression*;
+  static auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
       -> const Expression*;
-  static auto MakeUnOp(int line_num, enum Operator op, Expression arg)
-      -> const Expression*;
-  static auto MakeBinOp(int line_num, enum Operator op, Expression arg1,
-                        Expression arg2) -> const Expression*;
-  static auto MakeCall(int line_num, Expression fun, Expression arg)
-      -> const Expression*;
+  static auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
+                        const Expression* arg2) -> const Expression*;
+  static auto MakeCall(int line_num, const Expression* fun,
+                       const Expression* arg) -> const Expression*;
   static auto MakeGetField(int line_num, const Expression* exp,
                            std::string field) -> const Expression*;
   static auto MakeTuple(int line_num, std::vector<FieldInitializer> args)
       -> const Expression*;
-  static auto MakeIndex(int line_num, Expression exp, Expression i)
-      -> const Expression*;
+  static auto MakeIndex(int line_num, const Expression* exp,
+                        const Expression* i) -> const Expression*;
   static auto MakeTypeType(int line_num) -> const Expression*;
   static auto MakeIntType(int line_num) -> const Expression*;
   static auto MakeBoolType(int line_num) -> const Expression*;
-  static auto MakeFunType(int line_num, Expression param, Expression ret)
-      -> const Expression*;
+  static auto MakeFunType(int line_num, const Expression* param,
+                          const Expression* ret) -> const Expression*;
   static auto MakeAutoType(int line_num) -> const Expression*;
   static auto MakeContinuationType(int line_num) -> const Expression*;
 
