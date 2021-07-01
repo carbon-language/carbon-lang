@@ -31,12 +31,17 @@ class Matcher {
 
   // Returns a matched node by ID, exiting if not present.
   template <typename NodeType>
-  auto GetNodeOrDie(llvm::StringRef id) -> const NodeType& {
+  auto GetNodeAsOrDie(llvm::StringRef id) -> const NodeType& {
     auto* node = match_result.Nodes.getNodeAs<NodeType>(id);
     if (!node) {
       llvm::report_fatal_error(std::string("getNodeAs failed for ") + id);
     }
     return *node;
+  }
+
+  // Returns the language options.
+  const clang::LangOptions& GetLangOpts() {
+    return match_result.Context->getLangOpts();
   }
 
   // Returns the full source manager.
@@ -46,8 +51,7 @@ class Matcher {
 
   // Returns the source text for a given range.
   auto GetSourceText(clang::CharSourceRange range) -> llvm::StringRef {
-    return clang::Lexer::getSourceText(range, GetSource(),
-                                       match_result.Context->getLangOpts());
+    return clang::Lexer::getSourceText(range, GetSource(), GetLangOpts());
   }
 
  private:

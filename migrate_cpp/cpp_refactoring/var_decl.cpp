@@ -5,7 +5,6 @@
 #include "migrate_cpp/cpp_refactoring/var_decl.h"
 
 #include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/Lex/Lexer.h"
 
 namespace cam = ::clang::ast_matchers;
 
@@ -36,12 +35,10 @@ static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
 }
 
 // Returns a string for the type.
-static auto GetTypeStr(const clang::VarDecl* decl,
-                       const clang::SourceManager& sm,
-                       const clang::LangOptions& lang_opts) -> std::string {
+auto VarDecl::GetTypeStr(const clang::VarDecl& decl) -> std::string {
   // Built a vector of class information, because we'll be traversing reverse
   // order to construct the final type.
-  auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
+  auto type_loc = decl.getTypeSourceInfo()->getTypeLoc();
   std::vector<std::pair<clang::TypeLoc::TypeLocClass, std::string>> segments;
   while (!type_loc.isNull()) {
     std::string text;
@@ -52,8 +49,7 @@ static auto GetTypeStr(const clang::VarDecl* decl,
     }
     auto range =
         clang::CharSourceRange::getTokenRange(type_loc.getLocalSourceRange());
-    std::string range_str =
-        clang::Lexer::getSourceText(range, sm, lang_opts).str();
+    std::string range_str = GetSourceText(range).str();
 
     // Make a list of segments with their TypeLocClass for reconstruction of the
     // string. Locally, we will have a qualifier (such as `const`) and a type
@@ -100,7 +96,7 @@ static auto GetTypeStr(const clang::VarDecl* decl,
 }
 
 void VarDecl::Run() {
-  const auto& decl = GetNodeOrDie<clang::VarDecl>(Label);
+  const auto& decl = GetNodeAsOrDie<clang::VarDecl>(Label);
   if (decl.getTypeSourceInfo() == nullptr) {
     // TODO: Need to understand what's happening in this case. Not sure if we
     // need to address it.
@@ -110,12 +106,12 @@ void VarDecl::Run() {
   std::string after;
   if (decl.getType().isConstQualified()) {
     after = "let ";
-  } else if (clang::ParmVarDecl::classof(&decl)) {
+  } else if (!clang::ParmVarDecl::classof(&decl)) {
     // Start the replacement with "var" unless it's a parameter.
     after = "var ";
   }
   // Add "identifier: type" to the replacement.
-  after += decl.getNameAsString() + ": " + GetTypeStr(decl, sources, lang_opts);
+  after += decl.getNameAsString() + ": " + GetTypeStr(decl);
 
   // This decides the range to replace. Normally the entire decl is replaced,
   // but for code like `int i, j` we need to detect the comma between the
@@ -123,15 +119,14 @@ void VarDecl::Run() {
   // If there's a comma, this range will be non-empty.
   auto type_loc = decl.getTypeSourceInfo()->getTypeLoc();
   auto after_type_loc = clang::Lexer::getLocForEndOfToken(
-      type_loc.getEndLoc(), 0, sources, lang_opts);
-  auto comma_source_text = clang::Lexer::getSourceText(
-      clang::CharSourceRange::getCharRange(after_type_loc, decl.getLocation()),
-      sources, lang_opts);
+      type_loc.getEndLoc(), 0, GetSource(), GetLangOpts());
+  auto comma_source_text = GetSourceText(
+      clang::CharSourceRange::getCharRange(after_type_loc, decl.getLocation()));
   bool has_comma = !comma_source_text.trim().empty();
   clang::CharSourceRange replace_range = clang::CharSourceRange::getTokenRange(
       has_comma ? decl.getLocation() : decl.getBeginLoc(), decl.getEndLoc());
 
-  AddReplacement(sources, replace_range, after);
+  AddReplacement(replace_range, after);
 }
 
 }  // namespace Carbon

@@ -15,6 +15,9 @@ class VarDecl : public Matcher {
   static clang::ast_matchers::DeclarationMatcher GetAstMatcher();
   using Matcher::Matcher;
   void Run() override;
+
+ private:
+  auto GetTypeStr(const clang::VarDecl& decl) -> std::string;
 };
 
 }  // namespace Carbon

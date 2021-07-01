@@ -14,9 +14,9 @@ using clang::tooling::RefactoringTool;
 // initialized files.
 static void InitReplacements(RefactoringTool* tool) {
   clang::FileManager& files = tool->getFiles();
-  Matcher::Replacements& repl = tool->getReplacements();
+  Carbon::Matcher::ReplacementMap& repl = tool->getReplacements();
   for (const std::string& path : tool->getSourcePaths()) {
-    llvm::ErrorOr<const FileEntry*> file = files.getFile(path);
+    llvm::ErrorOr<const clang::FileEntry*> file = files.getFile(path);
     if (file.getError()) {
       llvm::report_fatal_error("Error accessing `" + path +
                                "`: " + file.getError().message() + "\n");
@@ -33,7 +33,7 @@ auto main(int argc, const char** argv) -> int {
   InitReplacements(&tool);
 
   // Set up AST matcher callbacks.
-  MatcherManager matchers(tool.getReplacements());
+  Carbon::MatcherManager matchers(&tool.getReplacements());
   matchers.Register<Carbon::FnInserter>();
   matchers.Register<Carbon::VarDecl>();
 

@@ -21,7 +21,7 @@ cam::DeclarationMatcher FnInserter::GetAstMatcher() {
 }
 
 void FnInserter::Run() {
-  const auto& decl = GetNodeOrDie<clang::FunctionDecl>(Label);
+  const auto& decl = GetNodeAsOrDie<clang::FunctionDecl>(Label);
 
   // For names like "Class::Method", replace up to "Class" not "Method".
   clang::NestedNameSpecifierLoc qual_loc = decl.getQualifierLoc();
