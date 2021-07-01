@@ -10,7 +10,7 @@ The interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 This appendix has additional discussion about rejected alternatives.
 
-### Rejected: out-of-line impl
+## Rejected: out-of-line impl
 
 We considered an out-of-line syntax for declaring and defining interface `impl`
 blocks, to replace both the inline syntax and the `external impl` statement.
@@ -30,7 +30,7 @@ wasn't ideal across a number of dimensions though.
 -   We prefer the type name before the interface name (using `as), instead of
     this ordering used by Rust.
 
-### Rejected: extend blocks
+## Rejected: extend blocks
 
 Instead of the `external impl` statement, we considered putting all external
 implementations in an `extend` block.
