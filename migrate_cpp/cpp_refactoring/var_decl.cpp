@@ -106,7 +106,7 @@ void VarDecl::Run() {
   std::string after;
   if (decl.getType().isConstQualified()) {
     after = "let ";
-  } else if (!clang::ParmVarDecl::classof(&decl)) {
+  } else if (!llvm::isa<clang::ParmVarDecl>(&decl)) {
     // Start the replacement with "var" unless it's a parameter.
     after = "var ";
   }
@@ -119,7 +119,7 @@ void VarDecl::Run() {
   // If there's a comma, this range will be non-empty.
   auto type_loc = decl.getTypeSourceInfo()->getTypeLoc();
   clang::SourceLocation after_type_loc = clang::Lexer::getLocForEndOfToken(
-      type_loc.getEndLoc(), 0, GetSource(), GetLangOpts());
+      type_loc.getEndLoc(), 0, GetSources(), GetLangOpts());
   llvm::StringRef comma_source_text = GetSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl.getLocation()));
   bool has_comma = !comma_source_text.trim().empty();

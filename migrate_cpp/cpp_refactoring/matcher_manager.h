@@ -17,6 +17,7 @@ class MatcherManager {
   explicit MatcherManager(Matcher::ReplacementMap* in_replacements)
       : replacements(in_replacements) {}
 
+  // Registers Matcher implementations.
   template <typename MatcherType>
   void Register() {
     matchers.push_back(
@@ -37,7 +38,7 @@ class MatcherManager {
 
     void run(const clang::ast_matchers::MatchFinder::MatchResult& match_result)
         override {
-      MatcherType matcher(match_result, replacements);
+      MatcherType matcher(&match_result, replacements);
       matcher.Run();
     }
 

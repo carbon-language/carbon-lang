@@ -14,19 +14,19 @@ void Matcher::AddReplacement(clang::CharSourceRange range,
     // Invalid range.
     return;
   }
-  if (GetSource().getDecomposedLoc(range.getBegin()).first !=
-      GetSource().getDecomposedLoc(range.getEnd()).first) {
+  if (GetSources().getDecomposedLoc(range.getBegin()).first !=
+      GetSources().getDecomposedLoc(range.getEnd()).first) {
     // Range spans macro expansions.
     return;
   }
-  if (GetSource().getFileID(range.getBegin()) !=
-      GetSource().getFileID(range.getEnd())) {
+  if (GetSources().getFileID(range.getBegin()) !=
+      GetSources().getFileID(range.getEnd())) {
     // Range spans files.
     return;
   }
 
   auto rep = clang::tooling::Replacement(
-      GetSource(), GetSource().getExpansionRange(range), replacement_text);
+      GetSources(), GetSources().getExpansionRange(range), replacement_text);
   auto entry = replacements->find(std::string(rep.getFilePath()));
   if (entry == replacements->end()) {
     // The replacement was in a file which isn't being updated, such as a system

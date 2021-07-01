@@ -12,16 +12,26 @@
 namespace Carbon {
 
 // This is an abstract class with helpers to make it easier to write matchers.
+//
+// As part of implementing Matcher, children should also implement a static
+// GetAstMatcher method. This will be called by MatcherManager::Register when
+// preparing Matchers for use. The signature should be:
+//   static auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
+// The returned AST matcher will determine when the Matcher is instantiated and
+// run.
 class Matcher {
  public:
   using ReplacementMap = std::map<std::string, clang::tooling::Replacements>;
 
-  Matcher(const clang::ast_matchers::MatchFinder::MatchResult& in_match_result,
+  Matcher(const clang::ast_matchers::MatchFinder::MatchResult* in_match_result,
           ReplacementMap* in_replacements)
       : match_result(in_match_result), replacements(in_replacements) {}
   virtual ~Matcher() = default;
 
-  // Children must implement this for the main execution.
+  // Performs main execution of the matcher when a result is found.
+  //
+  // Although Run() will be invoked with a known type, it is virtual to allow
+  // earlier compilation checks.
   virtual void Run() = 0;
 
  protected:
@@ -32,7 +42,7 @@ class Matcher {
   // Returns a matched node by ID, exiting if not present.
   template <typename NodeType>
   auto GetNodeAsOrDie(llvm::StringRef id) -> const NodeType& {
-    auto* node = match_result.Nodes.getNodeAs<NodeType>(id);
+    auto* node = match_result->Nodes.getNodeAs<NodeType>(id);
     if (!node) {
       llvm::report_fatal_error(std::string("getNodeAs failed for ") + id);
     }
@@ -41,21 +51,21 @@ class Matcher {
 
   // Returns the language options.
   auto GetLangOpts() -> const clang::LangOptions& {
-    return match_result.Context->getLangOpts();
+    return match_result->Context->getLangOpts();
   }
 
   // Returns the full source manager.
-  auto GetSource() -> const clang::SourceManager& {
-    return *match_result.SourceManager;
+  auto GetSources() -> const clang::SourceManager& {
+    return *match_result->SourceManager;
   }
 
   // Returns the source text for a given range.
   auto GetSourceText(clang::CharSourceRange range) -> llvm::StringRef {
-    return clang::Lexer::getSourceText(range, GetSource(), GetLangOpts());
+    return clang::Lexer::getSourceText(range, GetSources(), GetLangOpts());
   }
 
  private:
-  const clang::ast_matchers::MatchFinder::MatchResult& match_result;
+  const clang::ast_matchers::MatchFinder::MatchResult* const match_result;
   ReplacementMap* const replacements;
 };
 
