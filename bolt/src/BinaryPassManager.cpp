@@ -27,6 +27,7 @@
 #include "Passes/RetpolineInsertion.h"
 #include "Passes/SplitFunctions.h"
 #include "Passes/StokeInfo.h"
+#include "Passes/TailDuplication.h"
 #include "Passes/ValidateInternalCalls.h"
 #include "Passes/VeneerElimination.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -75,6 +76,11 @@ JTFootprintReductionFlag("jt-footprint-reduction",
            "instructions at jump sites"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
+
+static cl::opt<bool> TailDuplicationFlag(
+    "tail-duplication",
+    cl::desc("duplicate unconditional branches that cross a cache line"),
+    cl::ZeroOrMore, cl::ReallyHidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintJTFootprintReduction("print-after-jt-footprint-reduction",
@@ -448,6 +454,9 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   Manager.registerPass(std::make_unique<SplitFunctions>(PrintSplit));
 
   Manager.registerPass(std::make_unique<LoopInversionPass>());
+
+  Manager.registerPass(std::make_unique<TailDuplication>(),
+                       opts::TailDuplicationFlag);
 
   // This pass syncs local branches with CFG. If any of the following
   // passes breaks the sync - they either need to re-run the pass or
