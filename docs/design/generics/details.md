@@ -122,6 +122,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Variadic arguments](#variadic-arguments)
     -   [Interaction with inheritance](#interaction-with-inheritance)
 -   [Notes](#notes)
+    -   [Other dynamic types](#other-dynamic-types)
 -   [Broken links footnote](#broken-links-footnote)
 
 <!-- tocstop -->
@@ -4893,7 +4894,8 @@ fn DynamicStrCat(args: Array(DynPtr(ConvertibleToString))...) -> String {
 ### Interaction with inheritance
 
 Would like to make object-safe interfaces and abstract base classes (ABCs)
-interchangeable to a degree. This is particularly important for C++ interop.
+without data members interchangeable to a degree. This is particularly important
+for C++ interop.
 
 -   Should be able to inherit from an object-safe interface, and the result
     should be considered to implement that interface.
@@ -4915,6 +4917,16 @@ not yet been incorporated into the main text above.
 -   Want inheritance with virtual functions to be modeled by interface
     extension. Example showing the interaction between Dynamic pointer types and
     interface extension.
+
+### Other dynamic types
+
+There are additional use cases for dynamic types beyond
+[`DynPtr`](#dynamic-pointer-type) and [`DynBoxed`](#dynboxed). Particularly we
+want tools for specific situations where greater performance or type safety is
+possible. One example is
+[DynStack](https://guiand.xyz/blog-posts/unboxed-trait-objects.html) which holds
+a sequence of items with dynamic types more efficiently than a container holding
+`DynBoxed` values.
 
 ## Broken links footnote
 
