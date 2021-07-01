@@ -426,9 +426,9 @@ extend Point2 {
 ```
 
 **Note:** The external interface implementation syntax was decided in
-[question-for-leads issue
-#575](https://github.com/carbon-language/carbon-lang/is sues/575). Additional
-alternatives considered are discussed in [an appendix](appendix-impl-syntax.md).
+[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+Additional alternatives considered are discussed in
+[an appendix](appendix-impl-syntax.md).
 
 The `extend` statement is allowed to be defined in a different library from
 `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
