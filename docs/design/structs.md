@@ -127,8 +127,8 @@ of providing subtyping, while object types are just about encapsulation.
 
 ### Abstract base classes
 
-**TODO:** rename to Java interfaces or something else, since ABCs in C++ are
-allowed to have data?
+**TODO:** rename to "interface base class/type" or "pure interface base
+class/type", since ABCs in C++ are allowed to have data?
 
 An [abstract base class](https://en.wikipedia.org/wiki/Abstract_type), or "ABC",
 is a base type for use in inheritance with a
