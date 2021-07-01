@@ -6,6 +6,7 @@
 #define MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Tooling/Core/Replacement.h"
 
 namespace Carbon {
@@ -28,10 +29,7 @@ class Matcher {
   void AddReplacement(clang::CharSourceRange range,
                       llvm::StringRef replacement_text);
 
-  const clang::SourceManager& GetSource() {
-    return *match_result.SourceManager;
-  }
-
+  // Returns a matched node by ID, exiting if not present.
   template <typename NodeType>
   auto GetNodeOrDie(llvm::StringRef id) -> const NodeType& {
     auto* node = match_result.Nodes.getNodeAs<NodeType>(id);
@@ -39,6 +37,17 @@ class Matcher {
       llvm::report_fatal_error(std::string("getNodeAs failed for ") + id);
     }
     return *node;
+  }
+
+  // Returns the full source manager.
+  const clang::SourceManager& GetSource() {
+    return *match_result.SourceManager;
+  }
+
+  // Returns the source text for a given range.
+  auto GetSourceText(clang::CharSourceRange range) -> llvm::StringRef {
+    return clang::Lexer::getSourceText(range, GetSource(),
+                                       match_result.Context->getLangOpts());
   }
 
  private:

@@ -4,6 +4,8 @@
 
 #include "migrate_cpp/cpp_refactoring/fn_inserter.h"
 
+#include "clang/ASTMatchers/ASTMatchers.h"
+
 namespace cam = ::clang::ast_matchers;
 
 namespace Carbon {
@@ -20,10 +22,25 @@ cam::DeclarationMatcher FnInserter::GetAstMatcher() {
 
 void FnInserter::Run() {
   const auto& decl = GetNodeOrDie<clang::FunctionDecl>(Label);
-  clang::SourceLocation begin = decl.getBeginLoc();
-  // Replace the first token in the range, `auto`.
-  auto range = clang::CharSourceRange::getTokenRange(begin, begin);
-  AddReplacement(range, "fn");
+
+  // For names like "Class::Method", replace up to "Class" not "Method".
+  clang::NestedNameSpecifierLoc qual_loc = decl.getQualifierLoc();
+  clang::SourceLocation name_begin_loc =
+      qual_loc.hasQualifier() ? qual_loc.getBeginLoc() : decl.getLocation();
+  auto range =
+      clang::CharSourceRange::getCharRange(decl.getBeginLoc(), name_begin_loc);
+
+  // In order to handle keywords like "virtual" in "virtual auto Foo() -> ...",
+  // scan the replaced text and only drop auto/void entries.
+  llvm::SmallVector<llvm::StringRef> split;
+  GetSourceText(range).split(split, ' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  std::string new_text = "fn ";
+  for (llvm::StringRef t : split) {
+    if (t != "auto" && t != "void") {
+      new_text += t.str() + " ";
+    }
+  }
+  AddReplacement(range, new_text);
 }
 
 }  // namespace Carbon

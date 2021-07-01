@@ -81,7 +81,7 @@ class Buffer {
     return true;
   }
 
-  fn auto ReadU8(value: uint8_t*) -> bool {
+  fn inline ReadU8(value: uint8_t*) -> bool {
     if (offset_ + 1 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
