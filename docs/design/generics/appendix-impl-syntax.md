@@ -22,8 +22,8 @@ impl Vector for Point { ... }
 ```
 
 The main advantage of this syntax was that it was uniform across many cases,
-including [conditional conformance](#conditional-conformance). It wasn't ideal
-across a number of dimensions though.
+including [conditional conformance](details.md#conditional-conformance). It
+wasn't ideal across a number of dimensions though.
 
 -   It repeated the type name which was redundant and verbose
 -   It could affect the API of the type outside of the type definition.
