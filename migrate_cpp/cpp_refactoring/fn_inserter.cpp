@@ -12,7 +12,7 @@ namespace Carbon {
 
 static constexpr char Label[] = "FnInserter";
 
-cam::DeclarationMatcher FnInserter::GetAstMatcher() {
+auto FnInserter::GetAstMatcher() -> cam::DeclarationMatcher {
   return cam::functionDecl(cam::anyOf(cam::hasTrailingReturn(),
                                       cam::returns(cam::asString("void"))),
                            cam::unless(cam::anyOf(cam::cxxConstructorDecl(),

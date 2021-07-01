@@ -19,7 +19,7 @@ class Matcher {
   Matcher(const clang::ast_matchers::MatchFinder::MatchResult& in_match_result,
           ReplacementMap* in_replacements)
       : match_result(in_match_result), replacements(in_replacements) {}
-  virtual ~Matcher() {}
+  virtual ~Matcher() = default;
 
   // Children must implement this for the main execution.
   virtual void Run() = 0;
@@ -40,12 +40,12 @@ class Matcher {
   }
 
   // Returns the language options.
-  const clang::LangOptions& GetLangOpts() {
+  auto GetLangOpts() -> const clang::LangOptions& {
     return match_result.Context->getLangOpts();
   }
 
   // Returns the full source manager.
-  const clang::SourceManager& GetSource() {
+  auto GetSource() -> const clang::SourceManager& {
     return *match_result.SourceManager;
   }
 

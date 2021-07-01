@@ -12,7 +12,7 @@ namespace Carbon {
 
 static constexpr char Label[] = "VarDecl";
 
-cam::DeclarationMatcher VarDecl::GetAstMatcher() {
+auto VarDecl::GetAstMatcher() -> cam::DeclarationMatcher {
   return cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
                           cam::hasParent(cam::cxxForRangeStmt())))))
       .bind(Label);
@@ -56,11 +56,11 @@ auto VarDecl::GetTypeStr(const clang::VarDecl& decl) -> std::string {
     // string (such as `int`) which is also used.
     auto type_loc_class = type_loc.getTypeLocClass();
     if (qual_str.empty()) {
-      segments.push_back({type_loc_class, range_str});
+      segments.emplace_back(type_loc_class, range_str);
     } else if (range_str.empty()) {
-      segments.push_back({type_loc_class, qual_str});
+      segments.emplace_back(type_loc_class, qual_str);
     } else {
-      segments.push_back({type_loc_class, qual_str + " " + range_str});
+      segments.emplace_back(type_loc_class, qual_str + " " + range_str);
     }
 
     type_loc = type_loc.getNextTypeLoc();

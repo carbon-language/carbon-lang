@@ -24,7 +24,7 @@ class MatcherManager {
     finder.addMatcher(MatcherType::GetAstMatcher(), matchers.back().get());
   }
 
-  clang::ast_matchers::MatchFinder* GetFinder() { return &finder; }
+  auto GetFinder() -> clang::ast_matchers::MatchFinder* { return &finder; }
 
  private:
   // Adapts Matcher for use with MatchCallback.

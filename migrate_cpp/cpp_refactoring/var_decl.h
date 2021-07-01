@@ -12,7 +12,7 @@ namespace Carbon {
 // Updates variable declarations for `var name: Type`.
 class VarDecl : public Matcher {
  public:
-  static clang::ast_matchers::DeclarationMatcher GetAstMatcher();
+  static auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
   using Matcher::Matcher;
   void Run() override;
 
