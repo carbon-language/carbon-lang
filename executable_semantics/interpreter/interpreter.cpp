@@ -315,7 +315,7 @@ void InitGlobals(std::list<Declaration>* fs) {
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (const auto& [name, signature] : alternatives) {
-    auto t = InterpExp(Env(), &signature);
+    auto t = InterpExp(Env(), signature);
     alts->push_back(make_pair(name, t));
   }
   auto ct = Value::MakeChoiceTypeVal(name, alts);
@@ -342,7 +342,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 }
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
-  auto pt = InterpExp(globals, &definition.param_pattern);
+  auto pt = InterpExp(globals, definition.param_pattern);
   auto f = Value::MakeFunVal(definition.name, pt, definition.body);
   Address a = state->heap.AllocateValue(f);
   globals.Set(definition.name, a);
@@ -640,8 +640,7 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(
-            MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
+        frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
@@ -658,10 +657,10 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(exp->GetIndex().offset.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
         act->pos++;
       } else if (act->pos == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
@@ -684,8 +683,7 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 =
-            exp->GetTuple().fields[0].expression.GetPointer();
+        const Expression* e1 = exp->GetTuple().fields[0].expression;
         frame->todo.Push(MakeLvalAct(e1));
         act->pos++;
       } else if (act->pos != static_cast<int>(exp->GetTuple().fields.size())) {
@@ -693,8 +691,7 @@ void StepLvalue() {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Expression* elt =
-            exp->GetTuple().fields[act->pos].expression.GetPointer();
+        const Expression* elt = exp->GetTuple().fields[act->pos].expression;
         frame->todo.Push(MakeLvalAct(elt));
         act->pos++;
       } else {
@@ -734,8 +731,7 @@ void StepExp() {
   switch (exp->tag()) {
     case ExpressionKind::PatternVariable: {
       if (act->pos == 0) {
-        frame->todo.Push(
-            MakeExpAct(exp->GetPatternVariable().type.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
         act->pos++;
       } else {
         auto v = Value::MakeVarPatVal(exp->GetPatternVariable().name,
@@ -749,10 +745,10 @@ void StepExp() {
       if (act->pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(exp->GetIndex().offset.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
         act->pos++;
       } else if (act->pos == 2) {
         auto tuple = act->results[0];
@@ -788,8 +784,7 @@ void StepExp() {
         if (exp->GetTuple().fields.size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-          const Expression* e1 =
-              exp->GetTuple().fields[0].expression.GetPointer();
+          const Expression* e1 = exp->GetTuple().fields[0].expression;
           frame->todo.Push(MakeExpAct(e1));
           act->pos++;
         } else {
@@ -800,8 +795,7 @@ void StepExp() {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Expression* elt =
-            exp->GetTuple().fields[act->pos].expression.GetPointer();
+        const Expression* elt = exp->GetTuple().fields[act->pos].expression;
         frame->todo.Push(MakeExpAct(elt));
         act->pos++;
       } else {
@@ -813,8 +807,7 @@ void StepExp() {
       if (act->pos == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(
-            MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
+        frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
         act->pos++;
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
@@ -859,8 +852,7 @@ void StepExp() {
           static_cast<int>(exp->GetPrimitiveOperator().arguments.size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        const Expression* arg =
-            &(exp->GetPrimitiveOperator().arguments[act->pos]);
+        const Expression* arg = exp->GetPrimitiveOperator().arguments[act->pos];
         frame->todo.Push(MakeExpAct(arg));
         act->pos++;
       } else {
@@ -876,12 +868,12 @@ void StepExp() {
       if (act->pos == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetCall().function.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetCall().function));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetCall().argument.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetCall().argument));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
@@ -923,14 +915,12 @@ void StepExp() {
     }
     case ExpressionKind::FunctionT: {
       if (act->pos == 0) {
-        frame->todo.Push(
-            MakeExpAct(exp->GetFunctionType().parameter.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            MakeExpAct(exp->GetFunctionType().return_type.GetPointer()));
+        frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -1233,7 +1223,7 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(MakeStmtAct(Statement::MakeReturn(
-          stmt->line_num, *Expression::MakeTuple(stmt->line_num, {}))));
+          stmt->line_num, Expression::MakeTuple(stmt->line_num, {}))));
       todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
@@ -1257,7 +1247,7 @@ void StepStmt() {
         // Push an expression statement action to ignore the result
         // value from the continuation.
         Action* ignore_result = MakeStmtAct(Statement::MakeExpStmt(
-            stmt->line_num, *Expression::MakeTuple(stmt->line_num, {})));
+            stmt->line_num, Expression::MakeTuple(stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
@@ -1402,7 +1392,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 
   const Expression* arg = Expression::MakeTuple(0, {});
   const Expression* call_main =
-      Expression::MakeCall(0, *Expression::MakeVar(0, "main"), *arg);
+      Expression::MakeCall(0, Expression::MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);
