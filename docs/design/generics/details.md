@@ -16,7 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Facet type](#facet-type)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
-    -   [Rejected: out-of-line impl](#rejected-out-of-line-impl)
     -   [Qualified member names](#qualified-member-names)
 -   [Generics](#generics)
     -   [Model](#model)
@@ -426,6 +425,11 @@ extend Point2 {
 }
 ```
 
+**Note:** The external interface implementation syntax was decided in
+[question-for-leads issue
+#575](https://github.com/carbon-language/carbon-lang/is sues/575). Additional
+alternatives considered are discussed in [an appendix](appendix-impl-syntax.md).
+
 The `extend` statement is allowed to be defined in a different library from
 `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
 that the implementation of an interface won't change based on imports. In
@@ -510,25 +514,6 @@ is more similar to
 but, unlike Swift, we don't allow a type's API to be modified outside its
 definition. In Rust, all implementations are external as in
 [this example](https://doc.rust-lang.org/rust-by-example/trait.html).
-
-### Rejected: out-of-line impl
-
-We considered an out-of-line syntax for declaring and defining interface `impl`
-blocks, to replace both the inline syntax and the `extend` statement. For,
-example:
-
-```
-struct Point { ... }
-impl Vector for Point { ... }
-```
-
-The main advantage of this syntax was that it was uniform across many cases,
-including [conditional conformance](#conditional-conformance). It wasn't ideal
-across a number of dimensions though:
-
--   it was redundant and verbose,
--   it was difficult to read and author, and
--   it could affect the API of the type outside of the type definition.
 
 ### Qualified member names
 
@@ -3506,6 +3491,8 @@ context), and is easier to learn.
 
 **Note:** This conditional interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+Additional context for alternatives considered are in
+[an appendix](appendix-impl-syntax.md).
 
 **Example:** [Same-type constraint] We implement interface `Foo(T)` for
 `Pair(T, U)` when `T` and `U` are the same. Using external impl we can write
@@ -3543,99 +3530,6 @@ interface implemented for this type" undecidable in general.
 [This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
 This means we will likely need some heuristic like a limit on how many steps of
 recursion are allowed.
-
-**FIXME:** Move the rejected alternatives considered to a separate "appendix"
-document.
-
-**Rejected alternative:** In conjunction with using
-[the `extend` syntax for external implementations](#rejected-extend-blocks), an
-earlier design iteration also used `extend` declarations inside the `struct`
-definition to make it inline:
-
-```
-struct FixedArray(T:$ Type, N:$ Int) {
-  // A few different syntax possibilities here:
-  extend FixedArray(P:$ Printable, N2:$ Int) { impl as Printable { ... } }
-  extend FixedArray(P:$ Printable, N) { impl as Printable { ... } }
-  extend[P:$ Printable] FixedArray(P, N) { impl as Printable { ... } }
-}
-
-struct Pair(T:$ Type, U:$ Type) {
-  extend Pair(T, T) { impl as Foo(T) { ... } }
-}
-```
-
-Some other ideas we have considered lack the consistency between internal and
-external conditional conformance:
-
--   One approach would be to use deduced arguments in square brackets after the
-    `impl` keyword, and an `if` clause to add constraints:
-
-```
-struct FixedArray(T:$ Type, N:$ Int) {
-  impl as [U:$ Printable] Printable if T == U {
-    // Here `T` and `U` have the same value and so you can freely
-    // cast between them. The difference is that you can call the
-    // `Print` method on values of type `U`.
-  }
-}
-
-struct Pair(T:$ Type, U:$ Type) {
-  impl as Foo(T) if T == U {
-    // Can cast between `Pair(T, U)` and `Pair(T, T)` since `T == U`.
-  }
-}
-```
-
--   Another approach is to use pattern matching instead of boolean conditions.
-    This might look like (though it introduces another level of indentation):
-
-```
-struct FixedArray(T:$ Type, N:$ Int) {
-  @if let Printable:$ P = T {
-    impl as Printable { ... }
-  }
-}
-
-interface Foo(T:$ Type) { ... }
-struct Pair(T:$ Type, U:$ Type) {
-  @if let Pair(P:$ T, T) = Self {
-    impl as Foo(T) { ... }
-  }
-}
-```
-
-We can have this consistency, but lose the property that all unqualified names
-for a type come from its `struct` definition:
-
--   We could keep `extend` statements outside of the struct block to avoid
-    sharing names between scopes, but allow them to have an `internal` keyword
-    (as long as it is in the same library).
-
-```
-struct FixedArray(T:$ Type, N:$ Int) { ... }
-extend FixedArray(P:$ Printable, N:$ Int) internal {
-  impl as Printable { ... }
-}
-
-struct Pair(T:$ Type, U:$ Type) { ... }
-extend Pair(T:$ Type, T) internal { ... }
-```
-
-Lastly, we could adopt a "flow sensitive" approach, where the meaning of names
-can change in an inner scope. This would allow the `if` conditions that govern
-when an `impl` is used to affect the types in that `impl`'s definition:
-
-```
-struct FixedArray(T:$ Type, N:$ Int) {
-  impl as Printable if (T implements Printable) {
-    // Inside this scope, `T` has type `Printable` instead of `Type`.
-  }
-}
-```
-
-This would require mechanisms to both describe these conditions and determine
-how they affect types.
 
 **Future work:**
 [Rust uses this mechanism](https://doc.rust-lang.org/book/ch10-02-traits.html#using-trait-bounds-to-conditionally-implement-methods)
