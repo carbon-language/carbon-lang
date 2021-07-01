@@ -34,7 +34,7 @@ void Matcher::AddReplacement(clang::CharSourceRange range,
     return;
   }
 
-  auto err = entry->second.add(rep);
+  llvm::Error err = entry->second.add(rep);
   if (err) {
     llvm::errs() << "Error with replacement `" << rep.toString()
                  << "`: " << llvm::toString(std::move(err)) << "\n";

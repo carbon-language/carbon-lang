@@ -118,9 +118,9 @@ void VarDecl::Run() {
   // declared names. That case currently results in `var i: int, var j: int`.
   // If there's a comma, this range will be non-empty.
   auto type_loc = decl.getTypeSourceInfo()->getTypeLoc();
-  auto after_type_loc = clang::Lexer::getLocForEndOfToken(
+  clang::SourceLocation after_type_loc = clang::Lexer::getLocForEndOfToken(
       type_loc.getEndLoc(), 0, GetSource(), GetLangOpts());
-  auto comma_source_text = GetSourceText(
+  llvm::StringRef comma_source_text = GetSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl.getLocation()));
   bool has_comma = !comma_source_text.trim().empty();
   clang::CharSourceRange replace_range = clang::CharSourceRange::getTokenRange(
