@@ -86,6 +86,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
 -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
     -   [Type compatible with another type](#type-compatible-with-another-type)
+        -   [Same implementation restriction](#same-implementation-restriction)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
     -   [Type facet of another type](#type-facet-of-another-type)
@@ -3779,6 +3780,8 @@ another way of determining `U`:
 fn Allowed[U:$ Type, T:$ CompatibleWith(U)](x: U*, y: T*) ...
 ```
 
+#### Same implementation restriction
+
 In some cases, we need to restrict to types that implement certain interfaces
 the same way as the type `U`.
 
@@ -3792,7 +3795,9 @@ struct HashSet(T:$ Hashable) { ... }
 ```
 
 Then `HashSet(T)` may be cast to `HashSet(U)` if
-`T is CompatibleWith(U, Hashable)`.
+`T is CompatibleWith(U, Hashable)`. The one-parameter interpretation of
+`CompatibleWith(U)` is recovered by letting the default for the second `TT`
+parameter be `Type`.
 
 #### Example: Multiple implementations of the same interface
 
