@@ -125,7 +125,7 @@ var x: MyType = CreateMyObject();
 ```
 
 The `<expression>` in the return statement of `CreateMyObject` initializes the
-variable `x` here. There is no copy or similar. It is precisely the same as:
+variable `x` here. There is no copy or similar. It is equivalent to:
 
 ```carbon
 var x: MyType = <expression>;
