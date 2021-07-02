@@ -22,7 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 The `return` statement ends the flow of execution within a
 [function](../functions.md), returning execution to the caller. Its syntax is:
 
-`return [<expression>];`
+> `return` _[ expression ];_
 
 If the function returns a value to the caller, that value is provided by an
 expression in the return statement. For example:
@@ -72,12 +72,17 @@ fn MaybeDraw(should_draw: bool) -> () {
 
 ### `returned var`
 
-Variables declared with the `returned` statement must be returned using
-`return var`, rather than specifying the identifier. When a `returned var` is in
-scope, other expressions must not be passed to `return`; only `return var` is
-allowed. For example:
+[Variables](../variables.md) may be declared with a `returned` statement. Its
+syntax is:
 
-> TODO: Document `returned` in variables.md, link there -- waiting on #618
+> `returned var` _var syntax_
+
+When a variable is marked as `returned`, it must be the only `returned` value
+in-scope.
+
+If a `returned var` is returned, the specific syntax `return var` must be used.
+Returning other expressions is not allowed while a `returned var` is in-scope.
+For example:
 
 ```carbon
 fn MakeCircle(radius: Int) -> Circle {
@@ -85,6 +90,24 @@ fn MakeCircle(radius: Int) -> Circle {
   c.radius = radius;
   // `return c` would be invalid because `returned` is in use.
   return var;
+}
+```
+
+If control flow exits the scope of a `returned` variable in any way other than
+`return var`, the `returned var`'s lifetime ends as normal. When this occurs,
+`return` may again be used with expressions. For example:
+
+```carbon
+fn MakePointInArea(Area area, Int preferred_x, Int preferred_y) -> Point {
+  {
+    returned var p: Point = { .x = preferred_x, .y = preferred_y };
+    if (area.Contains(p)) {
+      return var;
+    }
+    // p's lifetime ends here when `return var` is not reached.
+  }
+
+  return area.RandomPoint();
 }
 ```
 
