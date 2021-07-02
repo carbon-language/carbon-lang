@@ -4926,7 +4926,9 @@ want tools for specific situations where greater performance or type safety is
 possible. One example is
 [DynStack](https://guiand.xyz/blog-posts/unboxed-trait-objects.html) which holds
 a sequence of items with dynamic types more efficiently than a container holding
-`DynBoxed` values.
+`DynBoxed` values. We may also want to provide unsafe building blocks for other
+types holding values with dynamic types, like
+[Rust's unstable CoerceUnsized](https://doc.rust-lang.org/std/ops/trait.CoerceUnsized.html).
 
 ## Broken links footnote
 
