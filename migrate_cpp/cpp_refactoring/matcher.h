@@ -49,13 +49,14 @@ class Matcher {
   }
 
   // Returns the full source manager.
-  auto GetSources() -> const clang::SourceManager& {
+  auto GetSourceManager() -> const clang::SourceManager& {
     return *match_result->SourceManager;
   }
 
   // Returns the source text for a given range.
   auto GetSourceText(clang::CharSourceRange range) -> llvm::StringRef {
-    return clang::Lexer::getSourceText(range, GetSources(), GetLangOpts());
+    return clang::Lexer::getSourceText(range, GetSourceManager(),
+                                       GetLangOpts());
   }
 
  private:

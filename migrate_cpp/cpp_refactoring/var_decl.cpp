@@ -113,7 +113,7 @@ void VarDecl::Run() {
   // If there's a comma, this range will be non-empty.
   auto type_loc = decl.getTypeSourceInfo()->getTypeLoc();
   clang::SourceLocation after_type_loc = clang::Lexer::getLocForEndOfToken(
-      type_loc.getEndLoc(), 0, GetSources(), GetLangOpts());
+      type_loc.getEndLoc(), 0, GetSourceManager(), GetLangOpts());
   llvm::StringRef comma_source_text = GetSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl.getLocation()));
   bool has_comma = !comma_source_text.trim().empty();
