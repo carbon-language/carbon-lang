@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
     -   [Returning empty tuples](#returning-empty-tuples)
     -   [`returned var`](#returned-var)
+    -   [`return` and initialization](#return-and-initialization)
 -   [Relevant proposals](#relevant-proposals)
 
 <!-- tocstop -->
@@ -110,6 +111,46 @@ fn MakePointInArea(Area area, Int preferred_x, Int preferred_y) -> Point {
   return area.RandomPoint();
 }
 ```
+
+### `return` and initialization
+
+Consider the following common initialization code:
+
+```carbon
+fn CreateMyObject() -> MyType {
+  return <expression>;
+}
+
+var x: MyType = CreateMyObject();
+```
+
+The `<expression>` in the return statement of `CreateMyObject` initializes the
+variable `x` here. There is no copy or similar. It is precisely the same as:
+
+```carbon
+var x: MyType = <expression>;
+```
+
+This applies recursively, similar to C++'s guaranteed copy elision.
+
+The use of `returned` allows for improved efficiency, wherein the `returned var`
+can directly use the address of `var` declared by the caller. For example, here
+the `returned var vector` in `CreateVector` uses the address of `my_vector` for
+initialization, avoiding a copy:
+
+```carbon
+fn CreateVector(x: Int, y: Int) -> Vector {
+  returned var vector: Vector;
+  vector.x = x;
+  vector.y = y;
+  return var;
+}
+
+var my_vector: Vector = CreateVector(1, 2);
+```
+
+As a consequence, `returned var` is encouraged because it makes it easier to
+avoid copies.
 
 ## Relevant proposals
 
