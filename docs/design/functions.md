@@ -30,7 +30,7 @@ primarily divided up into "functions" (or "procedures", "subroutines", or
 language. Let's look at a simple example to understand how these work:
 
 ```
-fn Sum(Int a, Int b) -> Int;
+fn Sum(a: Int, b: Int) -> Int;
 ```
 
 This declares a function called `Sum` which accepts two `Int` parameters, the
