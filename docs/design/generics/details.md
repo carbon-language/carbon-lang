@@ -3779,6 +3779,21 @@ another way of determining `U`:
 fn Allowed[U:$ Type, T:$ CompatibleWith(U)](x: U*, y: T*) ...
 ```
 
+In some cases, we need to restrict to types that implement certain interfaces
+the same way as the type `U`.
+
+> The values of type `CompatibleWith(U, TT)` are types satisfying
+> `CompatibleWith(U)` that have the same implementation of `TT` as `U`.
+
+For example, if we have a type `HashSet(T)`:
+
+```
+struct HashSet(T:$ Hashable) { ... }
+```
+
+Then `HashSet(T)` may be cast to `HashSet(U)` if
+`T is CompatibleWith(U, Hashable)`.
+
 #### Example: Multiple implementations of the same interface
 
 This allows us to represent functions that accept multiple implementations of
