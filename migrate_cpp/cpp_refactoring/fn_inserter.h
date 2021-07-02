@@ -17,6 +17,7 @@ class FnInserter : public Matcher {
 };
 
 class FnInserterFactory : public MatcherFactoryBase<FnInserter> {
+ public:
   auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher override;
 };
 

@@ -20,6 +20,7 @@ class VarDecl : public Matcher {
 };
 
 class VarDeclFactory : public MatcherFactoryBase<VarDecl> {
+ public:
   auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher override;
 };
 
