@@ -9,7 +9,7 @@
 namespace Carbon {
 namespace {
 
-class FnInserterTest : public MatcherTestBase<FnInserter> {};
+class FnInserterTest : public MatcherTestBase<FnInserterFactory> {};
 
 TEST_F(FnInserterTest, TrailingReturn) {
   constexpr char Before[] = "auto A() -> int;";

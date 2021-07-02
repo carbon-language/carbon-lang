@@ -15,11 +15,11 @@
 namespace Carbon {
 
 // Matcher test framework.
-template <typename MatcherType>
+template <typename MatcherFactoryType>
 class MatcherTestBase : public ::testing::Test {
  protected:
   MatcherTestBase() : matchers(&replacements) {
-    matchers.Register<MatcherType>();
+    matchers.Register(std::make_unique<MatcherFactoryType>());
   }
 
   // Expects that that the replacements produced by running the finder result in

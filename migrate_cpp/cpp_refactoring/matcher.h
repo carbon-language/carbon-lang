@@ -12,13 +12,7 @@
 namespace Carbon {
 
 // This is an abstract class with helpers to make it easier to write matchers.
-//
-// As part of implementing Matcher, children should also implement a static
-// GetAstMatcher method. This will be called by MatcherManager::Register when
-// preparing Matchers for use. The signature should be:
-//   static auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
-// The returned AST matcher will determine when the Matcher is instantiated and
-// run.
+// Note a MatcherFactory (below) is also typically required.
 class Matcher {
  public:
   using ReplacementMap = std::map<std::string, clang::tooling::Replacements>;
@@ -67,6 +61,29 @@ class Matcher {
  private:
   const clang::ast_matchers::MatchFinder::MatchResult* const match_result;
   ReplacementMap* const replacements;
+};
+
+class MatcherFactory {
+ public:
+  virtual ~MatcherFactory() = default;
+
+  virtual std::unique_ptr<Matcher> CreateMatcher(
+      const clang::ast_matchers::MatchFinder::MatchResult* match_result,
+      Matcher::ReplacementMap* replacements) = 0;
+
+  // Returns the AST matcher which determines when the Matcher is instantiated
+  // and run.
+  virtual auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher = 0;
+};
+
+template <typename MatcherType>
+class MatcherFactoryBase : public MatcherFactory {
+ public:
+  std::unique_ptr<Matcher> CreateMatcher(
+      const clang::ast_matchers::MatchFinder::MatchResult* match_result,
+      Matcher::ReplacementMap* replacements) override {
+    return std::make_unique<MatcherType>(match_result, replacements);
+  }
 };
 
 }  // namespace Carbon

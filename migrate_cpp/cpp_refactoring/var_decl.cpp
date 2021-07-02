@@ -12,12 +12,6 @@ namespace Carbon {
 
 static constexpr char Label[] = "VarDecl";
 
-auto VarDecl::GetAstMatcher() -> cam::DeclarationMatcher {
-  return cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
-                          cam::hasParent(cam::cxxForRangeStmt())))))
-      .bind(Label);
-}
-
 // Helper function for printing TypeLocClass. Useful for debugging.
 LLVM_ATTRIBUTE_UNUSED
 static auto TypeLocClassToString(clang::TypeLoc::TypeLocClass c)
@@ -127,6 +121,12 @@ void VarDecl::Run() {
       has_comma ? decl.getLocation() : decl.getBeginLoc(), decl.getEndLoc());
 
   AddReplacement(replace_range, after);
+}
+
+auto VarDeclFactory::GetAstMatcher() -> cam::DeclarationMatcher {
+  return cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
+                          cam::hasParent(cam::cxxForRangeStmt())))))
+      .bind(Label);
 }
 
 }  // namespace Carbon

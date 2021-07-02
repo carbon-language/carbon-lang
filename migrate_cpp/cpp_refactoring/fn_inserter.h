@@ -12,9 +12,12 @@ namespace Carbon {
 // Inserts `fn` for functions and methods.
 class FnInserter : public Matcher {
  public:
-  static auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
   using Matcher::Matcher;
   void Run() override;
+};
+
+class FnInserterFactory : public MatcherFactoryBase<FnInserter> {
+  virtual auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
 };
 
 }  // namespace Carbon

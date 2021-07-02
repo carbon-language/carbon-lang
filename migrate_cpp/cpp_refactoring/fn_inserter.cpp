@@ -12,14 +12,6 @@ namespace Carbon {
 
 static constexpr char Label[] = "FnInserter";
 
-auto FnInserter::GetAstMatcher() -> cam::DeclarationMatcher {
-  return cam::functionDecl(cam::anyOf(cam::hasTrailingReturn(),
-                                      cam::returns(cam::asString("void"))),
-                           cam::unless(cam::anyOf(cam::cxxConstructorDecl(),
-                                                  cam::cxxDestructorDecl())))
-      .bind(Label);
-}
-
 void FnInserter::Run() {
   const auto& decl = GetNodeAsOrDie<clang::FunctionDecl>(Label);
 
@@ -41,6 +33,14 @@ void FnInserter::Run() {
     }
   }
   AddReplacement(range, new_text);
+}
+
+auto FnInserterFactory::GetAstMatcher() -> cam::DeclarationMatcher {
+  return cam::functionDecl(cam::anyOf(cam::hasTrailingReturn(),
+                                      cam::returns(cam::asString("void"))),
+                           cam::unless(cam::anyOf(cam::cxxConstructorDecl(),
+                                                  cam::cxxDestructorDecl())))
+      .bind(Label);
 }
 
 }  // namespace Carbon

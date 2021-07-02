@@ -34,8 +34,8 @@ auto main(int argc, const char** argv) -> int {
 
   // Set up AST matcher callbacks.
   Carbon::MatcherManager matchers(&tool.getReplacements());
-  matchers.Register<Carbon::FnInserter>();
-  matchers.Register<Carbon::VarDecl>();
+  matchers.Register(std::make_unique<Carbon::FnInserterFactory>());
+  matchers.Register(std::make_unique<Carbon::VarDeclFactory>());
 
   return tool.runAndSave(
       clang::tooling::newFrontendActionFactory(matchers.GetFinder()).get());

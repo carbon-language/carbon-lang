@@ -18,37 +18,39 @@ class MatcherManager {
       : replacements(in_replacements) {}
 
   // Registers Matcher implementations.
-  template <typename MatcherType>
-  void Register() {
-    matchers.push_back(
-        std::make_unique<MatchCallbackWrapper<MatcherType>>(replacements));
-    finder.addMatcher(MatcherType::GetAstMatcher(), matchers.back().get());
+  void Register(std::unique_ptr<MatcherFactory> factory) {
+    matchers.push_back(std::make_unique<MatchCallbackWrapper>(
+        &finder, std::move(factory), replacements));
   }
 
   auto GetFinder() -> clang::ast_matchers::MatchFinder* { return &finder; }
 
  private:
   // Adapts Matcher for use with MatchCallback.
-  template <typename MatcherType>
   class MatchCallbackWrapper
       : public clang::ast_matchers::MatchFinder::MatchCallback {
    public:
-    explicit MatchCallbackWrapper(Matcher::ReplacementMap* in_replacements)
-        : replacements(in_replacements) {}
+    explicit MatchCallbackWrapper(clang::ast_matchers::MatchFinder* finder,
+                                  std::unique_ptr<MatcherFactory> in_factory,
+                                  Matcher::ReplacementMap* in_replacements)
+        : factory(std::move(in_factory)), replacements(in_replacements) {
+      finder->addMatcher(factory->GetAstMatcher(), this);
+    }
 
     void run(const clang::ast_matchers::MatchFinder::MatchResult& match_result)
         override {
-      MatcherType matcher(&match_result, replacements);
-      matcher.Run();
+      factory->CreateMatcher(&match_result, replacements)->Run();
     }
 
+   private:
+    std::unique_ptr<MatcherFactory> factory;
     Matcher::ReplacementMap* const replacements;
   };
 
   Matcher::ReplacementMap* const replacements;
   clang::ast_matchers::MatchFinder finder;
-  std::vector<std::unique_ptr<clang::ast_matchers::MatchFinder::MatchCallback>>
-      matchers;
+  std::vector<std::unique_ptr<MatcherFactory>> factories;
+  std::vector<std::unique_ptr<MatchCallbackWrapper>> matchers;
 };
 
 }  // namespace Carbon
