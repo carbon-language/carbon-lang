@@ -22,7 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon's local variable syntax is:
 
-`var <identifier>: <type> [ = <value> ];`
+> `var` _identifier_`:` _type_ _[_ `=` _value_ _]_`;`
 
 Blocks introduce nested scopes and can contain local variable declarations that
 work similarly to function parameters.
