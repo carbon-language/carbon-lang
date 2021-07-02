@@ -3726,6 +3726,17 @@ do an `impl` lookup.
 
 TODO: Example
 
+**Open question:** We need a story for resolving situations where multiple "good
+enough" implementations apply. Examples:
+[adding a vector to something iterable](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#in-defense-of-ordering),
+[strong and partial ordering with mixed types](https://docs.google.com/presentation/d/1EQHNy1dMlSNu7dDgQmP6LLNtaEV5ZLuXPJxfZR-Zz5U/edit?resourcekey=0-L9Vv0RxrveukomtzmzQ8tQ#slide=id.gd858c35064_0_49),
+[ordering implying an equality relation](https://docs.google.com/presentation/d/1EQHNy1dMlSNu7dDgQmP6LLNtaEV5ZLuXPJxfZR-Zz5U/edit?resourcekey=0-L9Vv0RxrveukomtzmzQ8tQ#slide=id.g7b0b30288d_0_0).
+
+**Open question:** The specialization rules can lead to conflicts between
+implementations in completely independent libraries, as seen in
+["Little Orphan Impls" on the "Baby Steps" blog](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/).
+Is this acceptable? Do we want to add some restrictions to avoid this problem?
+
 **Open question:** Rust
 [doesn't allow specialization of a general implementation unless its items are marked `default`](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#the-default-keyword).
 Is that something we want to require? This would allow us to relax the
@@ -3734,8 +3745,11 @@ restriction of the previous implication for items that may not be specialized.
 **Future Work:** Rust's
 [specialization rules](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#the-default-keyword)
 allow you to omit definitions in the more specific implementation, using the
-definition in the more general implementation as a default. It furthermore
-supports defining a general
+definition in the more general implementation as a default. This requires that
+implementations are completely ordered, not just a best match, which is
+[a restriction in practice](https://github.com/rust-lang/rfcs/issues/1856).
+
+**Future Work:** Rust furthermore supports defining a general
 [`default impl`](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls)
 that is incomplete (in fact this feature was originally called "partial impl")
 and _only_ used to provide default implementations for more specialized
