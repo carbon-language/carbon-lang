@@ -67,9 +67,9 @@ class MatcherFactory {
  public:
   virtual ~MatcherFactory() = default;
 
-  virtual std::unique_ptr<Matcher> CreateMatcher(
+  virtual auto CreateMatcher(
       const clang::ast_matchers::MatchFinder::MatchResult* match_result,
-      Matcher::ReplacementMap* replacements) = 0;
+      Matcher::ReplacementMap* replacements) -> std::unique_ptr<Matcher> = 0;
 
   // Returns the AST matcher which determines when the Matcher is instantiated
   // and run.
@@ -79,9 +79,10 @@ class MatcherFactory {
 template <typename MatcherType>
 class MatcherFactoryBase : public MatcherFactory {
  public:
-  std::unique_ptr<Matcher> CreateMatcher(
+  auto CreateMatcher(
       const clang::ast_matchers::MatchFinder::MatchResult* match_result,
-      Matcher::ReplacementMap* replacements) override {
+      Matcher::ReplacementMap* replacements)
+      -> std::unique_ptr<Matcher> override {
     return std::make_unique<MatcherType>(match_result, replacements);
   }
 };

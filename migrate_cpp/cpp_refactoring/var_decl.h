@@ -20,7 +20,7 @@ class VarDecl : public Matcher {
 };
 
 class VarDeclFactory : public MatcherFactoryBase<VarDecl> {
-  virtual auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
+  auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher override;
 };
 
 }  // namespace Carbon

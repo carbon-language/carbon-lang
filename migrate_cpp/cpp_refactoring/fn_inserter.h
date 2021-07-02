@@ -17,7 +17,7 @@ class FnInserter : public Matcher {
 };
 
 class FnInserterFactory : public MatcherFactoryBase<FnInserter> {
-  virtual auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher;
+  auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher override;
 };
 
 }  // namespace Carbon
