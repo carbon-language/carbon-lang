@@ -1452,7 +1452,7 @@ adapter SongByTitle for Song {
   }
 }
 adapter FormattedSong for Song {
-  impl as Printable { method (this: Self) Print() { Print("EA"); } }
+  impl as Printable { method (this: Self) Print() { ... } }
 }
 adapter FormattedSongByTitle for Song {
   impl as Printable = FormattedSong as Printable;
@@ -1493,6 +1493,31 @@ This allows us to provide implementations of new interfaces (as in
 -   For the purposes of generics, we only need to support adding interface
     implementations. But this `adapter` feature could be used more generally,
     for example to add methods as well.
+
+Inside an adapter, the `Self` type matches the adapter. Members of the original
+type may be accessed like any other facet type; either by a cast:
+
+```
+adapter SongByTitle for Song {
+  impl as Comparable {
+    method (this: Self) Less(that: Self) -> Bool {
+      return (this as Song).Title() < (that as Song).Title();
+    }
+  }
+}
+```
+
+or using qualified names:
+
+```
+adapter SongByTitle for Song {
+  impl as Comparable {
+    method (this: Self) Less(that: Self) -> Bool {
+      return this.(Song.Title)() < that(Song.Title)();
+    }
+  }
+}
+```
 
 **Comparison with other languages:** This matches the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding coherence
