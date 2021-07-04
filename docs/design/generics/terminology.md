@@ -375,8 +375,10 @@ that is not with either of its parents (parent type or parent interface).
 
 Note that in addition to an orphan rule that implementations are visible when
 queried, coherence also requires a rule for resolving what happens if there are
-multiple non-orphan implementations. This could be just producing an error in
-that situation, or picking one using some specialization rule.
+multiple non-orphan implementations. In Rust, this is called the
+[overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check).
+This could be just producing an error in that situation, or picking one using
+some specialization rule.
 
 ## Adapting a type
 
