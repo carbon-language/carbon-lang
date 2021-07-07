@@ -23,9 +23,6 @@ class Matcher {
   virtual ~Matcher() = default;
 
   // Performs main execution of the matcher when a result is found.
-  //
-  // Although Run() will be invoked with a known type, it is virtual to allow
-  // earlier compilation checks.
   virtual void Run() = 0;
 
  protected:
