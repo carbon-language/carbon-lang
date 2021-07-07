@@ -59,6 +59,6 @@ request:
 -   [0538 - `return` with no argument](p0538.md)
 -   [0540 - Remove `Void`](p0540.md)
 -   [0555 - Operator precedence](p0555.md)
--   [0623 - require-braces](p0623.md)
+-   [0623 - Require braces](p0623.md)
 
 <!-- endproposals -->
