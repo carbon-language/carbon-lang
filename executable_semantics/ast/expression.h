@@ -148,10 +148,6 @@ struct Expression {
   static auto MakePrimitiveOperatorExpression(
       int line_num, Operator op, std::vector<const Expression*> args)
       -> const Expression*;
-  static auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
-      -> const Expression*;
-  static auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
-                        const Expression* arg2) -> const Expression*;
   static auto MakeCallExpression(int line_num, const Expression* fun,
                                  const Expression* arg) -> const Expression*;
   static auto MakeFieldAccessExpression(int line_num, const Expression* exp,

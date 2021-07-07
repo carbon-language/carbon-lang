@@ -84,8 +84,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::ChoiceType:
       return Expression::MakeIdentifierExpression(0, *t->GetChoiceType().name);
     case ValKind::PointerType:
-      return Expression::MakeUnOp(
-          0, Operator::Ptr, ReifyType(t->GetPointerType().type, line_num));
+      return Expression::MakePrimitiveOperatorExpression(
+          0, Operator::Ptr, {ReifyType(t->GetPointerType().type, line_num)});
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
