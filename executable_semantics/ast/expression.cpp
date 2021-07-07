@@ -130,23 +130,6 @@ auto Expression::MakeOp(int line_num, enum Operator op,
   return e;
 }
 
-auto Expression::MakeUnOp(int line_num, enum Operator op, const Expression* arg)
-    -> const Expression* {
-  auto* e = new Expression();
-  e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = {arg}});
-  return e;
-}
-
-auto Expression::MakeBinOp(int line_num, enum Operator op,
-                           const Expression* arg1, const Expression* arg2)
-    -> const Expression* {
-  auto* e = new Expression();
-  e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = {arg1, arg2}});
-  return e;
-}
-
 auto Expression::MakeCall(int line_num, const Expression* fun,
                           const Expression* arg) -> const Expression* {
   auto* e = new Expression();
