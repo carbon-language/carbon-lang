@@ -34,8 +34,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Construction](#construction)
     -   [Member type](#member-type)
     -   [Self](#self)
-    -   [Alias](#alias)
-    -   [Method syntax](#method-syntax)
+    -   [Let](#let)
+    -   [Methods](#methods)
     -   [Destructuring, pattern matching, and extract](#destructuring-pattern-matching-and-extract)
     -   [Access control](#access-control)
     -   [Operator overloading](#operator-overloading)
@@ -610,29 +610,34 @@ struct IntList {
 }
 ```
 
-### Alias
+### Let
 
-Other type constants can provisionally be defined using an `alias` declaration:
+Other type constants can provisionally be defined using a `let` declaration:
 
 ```
 struct MyStruct {
-  alias Pi = 3.141592653589793;
-  alias IndexType = Int;
+  let Pi : Float32 = 3.141592653589793;
+  let IndexType : Type = Int;
 }
 ```
 
-### Method syntax
+### Methods
 
-We will need some way of defining
-[methods](<https://en.wikipedia.org/wiki/Method_(computer_programming)>) on
-structs. The big concern is how we designate the different ways the receiver can
-be passed into the method. This question is being tracked in
+A future proposal will incorporate
+[method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
+declaration, definition, and calling into structs. The syntax for declaring
+methods has been decided in
 [question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
-As an example, we need some way to distinguish methods that don't take a
-receiver at all, like
-[C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>)
+Summarizing that issue:
 
-We do not expect to have implicit member access in methods.
+-   Accessors are written: `fn Diameter[me: Self]() -> Float { ... }`
+-   Mutators are written: `fn Expand[addr me: Self*](distance: Float) { ... }`
+-   Associated functions that don't take a receiver at all, like
+    [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+    are written: `fn Create() -> Self { ... }`
+
+We do not expect to have implicit member access in methods, so inside the method
+body members will be accessed through the `me` parameter.
 
 ### Destructuring, pattern matching, and extract
 
