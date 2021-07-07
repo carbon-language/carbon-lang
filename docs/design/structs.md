@@ -621,6 +621,12 @@ struct MyStruct {
 }
 ```
 
+There are definite questions about this syntax:
+
+-   Should these use the `:!` generic syntax decided in
+    [issue #565](https://github.com/carbon-language/carbon-lang/issues/565)?
+-   Would we also have `alias` declarations? How would they be different?
+
 ### Methods
 
 A future proposal will incorporate
