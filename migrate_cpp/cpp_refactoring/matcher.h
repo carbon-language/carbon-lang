@@ -61,6 +61,8 @@ class Matcher {
   ReplacementMap* const replacements;
 };
 
+// A factory used to instantiate per-MatchResult Matchers, to be registered with
+// the MatcherManager.
 class MatcherFactory {
  public:
   virtual ~MatcherFactory() = default;
@@ -74,6 +76,8 @@ class MatcherFactory {
   virtual auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher = 0;
 };
 
+// A convenience factory that implements CreateMatcher for Matchers that have a
+// standard constructor.
 template <typename MatcherType>
 class MatcherFactoryBase : public MatcherFactory {
  public:
