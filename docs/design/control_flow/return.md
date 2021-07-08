@@ -42,7 +42,8 @@ because the function will complete without returning a value.
 
 An empty tuple `()` is special, and similar to C++'s `void` returns. When a
 function has no specified return type, its return type is implicitly `()`.
-`return` must not have an expression argument in this case. For example:
+`return` must not have an expression argument in this case. It also has an
+implicit `return;` at the end of the function. For example:
 
 ```carbon
 // No return type is specified, so this returns `()` implicitly.
@@ -52,6 +53,7 @@ fn MaybeDraw(should_draw: bool) {
     return;
   }
   ActuallyDraw();
+  // There is an implicit `return;` here.
 }
 ```
 
@@ -68,6 +70,8 @@ fn MaybeDraw(should_draw: bool) -> () {
     return ();
   }
   ActuallyDraw();
+  // The return value must again be explicit.
+  return ();
 }
 ```
 
@@ -76,7 +80,7 @@ fn MaybeDraw(should_draw: bool) -> () {
 [Variables](../variables.md) may be declared with a `returned` statement. Its
 syntax is:
 
-> `returned var` _var syntax_
+> `returned` _var statement_
 
 When a variable is marked as `returned`, it must be the only `returned` value
 in-scope.
@@ -100,7 +104,7 @@ If control flow exits the scope of a `returned` variable in any way other than
 
 ```carbon
 fn MakePointInArea(Area area, Int preferred_x, Int preferred_y) -> Point {
-  {
+  if (preferred_x >= 0 && preferred_y >= 0) {
     returned var p: Point = { .x = preferred_x, .y = preferred_y };
     if (area.Contains(p)) {
       return var;
@@ -133,10 +137,12 @@ var x: MyType = <expression>;
 
 This applies recursively, similar to C++'s guaranteed copy elision.
 
-The use of `returned` allows for improved efficiency, wherein the `returned var`
-can directly use the address of `var` declared by the caller. For example, here
-the `returned var vector` in `CreateVector` uses the address of `my_vector` for
-initialization, avoiding a copy:
+In the case where additional statements should be run between constructing the
+return value and returning, the use of `returned var` allows for improved
+efficiency because the `returned var` can directly use the address of `var`
+declared by the caller. For example, here the `returned var vector` in
+`CreateVector` uses the address of `my_vector` for initialization, avoiding a
+copy:
 
 ```carbon
 fn CreateVector(x: Int, y: Int) -> Vector {
