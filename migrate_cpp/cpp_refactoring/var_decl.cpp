@@ -120,6 +120,8 @@ void VarDecl::Run() {
   clang::CharSourceRange replace_range = clang::CharSourceRange::getTokenRange(
       has_comma ? decl.getLocation() : decl.getBeginLoc(), decl.getEndLoc());
 
+  // If there's initialization, append the relevant source, which will be
+  // everything after the identifier+qualifiers.
   if (decl.hasInit()) {
     clang::SourceLocation identifier_end = clang::Lexer::getLocForEndOfToken(
         decl.getLocation(), 0, GetSourceManager(), GetLangOpts());
