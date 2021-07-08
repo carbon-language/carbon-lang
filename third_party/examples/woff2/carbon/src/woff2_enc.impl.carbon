@@ -185,7 +185,7 @@ fn MaxWOFF2CompressedSize(data: const uint8_t*, length: size_t) -> size_t {
   return MaxWOFF2CompressedSize(data, length, "");
 }
 
-fn MaxWOFF2CompressedSize(const uint8_t*  /*data*/: const uint8_t*  /*data*/, length: size_t,
+fn MaxWOFF2CompressedSize(const uint8_t*  /*data*/: const uint8_t* length: size_t,
     extended_metadata: const string&) -> size_t {
   // Except for the header size, which is 32 bytes larger in woff2 format,
   // all other parts should be smaller (table header in short format,

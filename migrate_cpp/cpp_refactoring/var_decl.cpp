@@ -116,20 +116,18 @@ void VarDecl::Run() {
       type_loc.getEndLoc(), 0, GetSourceManager(), GetLangOpts());
   llvm::StringRef comma_source_text = GetSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl.getLocation()));
-  bool has_comma = !comma_source_text.trim().empty();
-  clang::CharSourceRange replace_range = clang::CharSourceRange::getTokenRange(
-      has_comma ? decl.getLocation() : decl.getBeginLoc(), decl.getEndLoc());
+  clang::SourceLocation replace_start = !comma_source_text.trim().empty()
+                                            ? decl.getLocation()
+                                            : decl.getBeginLoc();
 
-  // If there's initialization, append the relevant source, which will be
-  // everything after the identifier+qualifiers.
-  if (decl.hasInit()) {
-    clang::SourceLocation identifier_end = clang::Lexer::getLocForEndOfToken(
-        decl.getLocation(), 0, GetSourceManager(), GetLangOpts());
-    after += GetSourceText(clang::CharSourceRange::getTokenRange(
-        std::max(identifier_end, after_type_loc), decl.getEndLoc()));
-  }
+  // Figure out where the replacement ends. For example, `int i` the end is the
+  // identifier, `int i[4]` the end is the `[4]` type qualifier.
+  clang::SourceLocation identifier_end = clang::Lexer::getLocForEndOfToken(
+      decl.getLocation(), 0, GetSourceManager(), GetLangOpts());
+  clang::SourceLocation replace_end = std::max(identifier_end, after_type_loc);
 
-  AddReplacement(replace_range, after);
+  AddReplacement(
+      clang::CharSourceRange::getCharRange(replace_start, replace_end), after);
 }
 
 auto VarDeclFactory::GetAstMatcher() -> cam::DeclarationMatcher {
