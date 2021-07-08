@@ -120,8 +120,9 @@ void VarDecl::Run() {
                                             ? decl.getLocation()
                                             : decl.getBeginLoc();
 
-  // Figure out where the replacement ends. For example, `int i` the end is the
-  // identifier, `int i[4]` the end is the `[4]` type qualifier.
+  // Figure out where the replacement ends and initialization begins. For
+  // example, `int i` the end is the identifier, `int i[4]` the end is the `[4]`
+  // type qualifier.
   clang::SourceLocation identifier_end = clang::Lexer::getLocForEndOfToken(
       decl.getLocation(), 0, GetSourceManager(), GetLangOpts());
   clang::SourceLocation replace_end = std::max(identifier_end, after_type_loc);
