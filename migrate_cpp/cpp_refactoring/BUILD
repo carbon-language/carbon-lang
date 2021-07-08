@@ -19,7 +19,10 @@ cc_binary(
 cc_library(
     name = "matcher",
     srcs = ["matcher.cpp"],
-    hdrs = ["matcher.h"],
+    hdrs = [
+        "matcher.h",
+        "matcher_manager.h",
+    ],
     deps = [
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling_core",
@@ -29,9 +32,9 @@ cc_library(
 cc_library(
     name = "matcher_test_base",
     testonly = 1,
-    srcs = ["matcher_test_base.cpp"],
     hdrs = ["matcher_test_base.h"],
     deps = [
+        ":matcher",
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling",
         "@llvm-project//llvm:gmock",
