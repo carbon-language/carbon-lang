@@ -120,6 +120,13 @@ void VarDecl::Run() {
   clang::CharSourceRange replace_range = clang::CharSourceRange::getTokenRange(
       has_comma ? decl.getLocation() : decl.getBeginLoc(), decl.getEndLoc());
 
+  if (decl.hasInit()) {
+    clang::SourceLocation identifier_end = clang::Lexer::getLocForEndOfToken(
+        decl.getLocation(), 0, GetSourceManager(), GetLangOpts());
+    after += GetSourceText(clang::CharSourceRange::getTokenRange(
+        std::max(identifier_end, after_type_loc), decl.getEndLoc()));
+  }
+
   AddReplacement(replace_range, after);
 }
 
