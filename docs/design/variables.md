@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Caveats](#caveats)
+-   [Notes](#notes)
 -   [Alternatives](#alternatives)
     -   [Global variables](#global-variables)
 -   [Relevant proposals](#relevant-proposals)
@@ -42,7 +42,7 @@ yet, but this gives you the basic idea.
 
 While there can be global constants, there are no global variables.
 
-## Caveats
+## Notes
 
 > TODO: Constant syntax is an ongoing discussion.
 
