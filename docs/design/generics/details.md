@@ -183,6 +183,9 @@ type. Each declaration in the interface defines an _associated item_ (same
 [terminology as Rust](https://doc.rust-lang.org/reference/items/associated-items.html)).
 In this example, `Vector` has two associated methods, `Add` and `Scale`.
 
+TODO: Link to `struct` method syntax once submitted and/or
+[question-for-leads issue #494 deciding method syntax](https://github.com/carbon-language/carbon-lang/issues/494).
+
 An interface defines a type-of-type, that is a type whose values are types. The
 values of an interface are specifically
 [facet types](terminology.md#facet-type), by which we mean types that are
