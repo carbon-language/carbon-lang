@@ -201,58 +201,72 @@ pattern:
 ;
 expression:
   identifier
-    { $$ = Carbon::Expression::MakeVar(yylineno, $1); }
+    { $$ = Carbon::Expression::MakeIdentifierExpression(yylineno, $1); }
 | expression designator
-    { $$ = Carbon::Expression::MakeGetField(yylineno, $1, $2); }
+    { $$ = Carbon::Expression::MakeFieldAccessExpression(yylineno, $1, $2); }
 | expression "[" expression "]"
-    { $$ = Carbon::Expression::MakeIndex(yylineno, $1, $3); }
+    { $$ = Carbon::Expression::MakeIndexExpression(yylineno, $1, $3); }
 | identifier ":" expression
-    { $$ = Carbon::Expression::MakeVarPat(yylineno, $1, $3); }
+    {
+      $$ = Carbon::Expression::MakeBindingExpression(yylineno, $1, $3);
+    }
 | integer_literal
-    { $$ = Carbon::Expression::MakeInt(yylineno, $1); }
+    { $$ = Carbon::Expression::MakeIntLiteral(yylineno, $1); }
 | TRUE
-    { $$ = Carbon::Expression::MakeBool(yylineno, true); }
+    { $$ = Carbon::Expression::MakeBoolLiteral(yylineno, true); }
 | FALSE
-    { $$ = Carbon::Expression::MakeBool(yylineno, false); }
+    { $$ = Carbon::Expression::MakeBoolLiteral(yylineno, false); }
 | INT
-    { $$ = Carbon::Expression::MakeIntType(yylineno); }
+    { $$ = Carbon::Expression::MakeIntTypeLiteral(yylineno); }
 | BOOL
-    { $$ = Carbon::Expression::MakeBoolType(yylineno); }
+    { $$ = Carbon::Expression::MakeBoolTypeLiteral(yylineno); }
 | TYPE
-    { $$ = Carbon::Expression::MakeTypeType(yylineno); }
+    { $$ = Carbon::Expression::MakeTypeTypeLiteral(yylineno); }
 | AUTO
-    { $$ = Carbon::Expression::MakeAutoType(yylineno); }
+    { $$ = Carbon::Expression::MakeAutoTypeLiteral(yylineno); }
 | CONTINUATION_TYPE
-    { $$ = Carbon::Expression::MakeContinuationType(yylineno); }
+    { $$ = Carbon::Expression::MakeContinuationTypeLiteral(yylineno); }
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
-    { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Eq, {$1, $3}); }
 | expression "+" expression
-    { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::Add, $1, $3); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Add, {$1, $3}); }
 | expression "-" expression
-    { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::Sub, $1, $3); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Sub, {$1, $3}); }
 | expression BINARY_STAR expression
-    { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::Mul, $1, $3); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Mul, {$1, $3}); }
 | expression AND expression
-    { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::And, $1, $3); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::And, {$1, $3}); }
 | expression OR expression
-    { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Or, {$1, $3}); }
 | NOT expression
-    { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Not, $2); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Not, {$2}); }
 | "-" expression %prec UNARY_MINUS
-    { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Neg, {$2}); }
 | PREFIX_STAR expression
-    { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Deref, $2); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Deref, {$2}); }
 | UNARY_STAR expression %prec PREFIX_STAR
-    { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Deref, $2); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Deref, {$2}); }
 | expression tuple
-    { $$ = Carbon::Expression::MakeCall(yylineno, $1, $2); }
+    { $$ = Carbon::Expression::MakeCallExpression(yylineno, $1, $2); }
 | expression POSTFIX_STAR
-    { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Ptr, $1); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Ptr, {$1}); }
 | expression UNARY_STAR
-    { $$ = Carbon::Expression::MakeUnOp(yylineno, Carbon::Operator::Ptr, $1); }
+    { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
+        yylineno, Carbon::Operator::Ptr, {$1}); }
 | FNTY tuple return_type
-    { $$ = Carbon::Expression::MakeFunType(yylineno, $2, $3); }
+    { $$ = Carbon::Expression::MakeFunctionTypeLiteral(yylineno, $2, $3); }
 ;
 designator: "." identifier { $$ = $2; }
 ;
@@ -296,8 +310,8 @@ clause:
     { $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = Carbon::Expression::MakeVarPat(yylineno, "_",
-                                   Carbon::Expression::MakeAutoType(yylineno));
+      auto vp = Carbon::Expression::MakeBindingExpression(
+          yylineno, "_", Carbon::Expression::MakeAutoTypeLiteral(yylineno));
       $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>(vp, $3);
     }
 ;
@@ -350,7 +364,7 @@ statement_list:
 ;
 return_type:
   // Empty
-    { $$ = Carbon::Expression::MakeTuple(yylineno, {}); }
+    { $$ = Carbon::Expression::MakeTupleLiteral(yylineno, {}); }
 | ARROW expression %prec FNARROW
     { $$ = $2; }
 ;
@@ -359,8 +373,9 @@ function_definition:
     { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
 | FN identifier tuple DBLARROW expression ";"
     {
-      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::Expression::MakeAutoType(yylineno), $3,
-                              Carbon::Statement::MakeReturn(yylineno, $5));
+      $$ = Carbon::MakeFunDef(yylineno, $2,
+                              Carbon::Expression::MakeAutoTypeLiteral(yylineno),
+                              $3, Carbon::Statement::MakeReturn(yylineno, $5));
     }
 ;
 function_declaration:
@@ -385,7 +400,7 @@ alternative:
 | identifier
     {
       $$ = std::pair<std::string, const Carbon::Expression*>(
-          $1, Carbon::Expression::MakeTuple(yylineno, {}));
+          $1, Carbon::Expression::MakeTupleLiteral(yylineno, {}));
     }
 ;
 alternative_list:

@@ -9,12 +9,7 @@
 namespace Carbon {
 namespace {
 
-class VarDeclTest : public MatcherTestBase {
- protected:
-  VarDeclTest() : var_decl(replacements, &finder) {}
-
-  Carbon::VarDecl var_decl;
-};
+class VarDeclTest : public MatcherTestBase<VarDeclFactory> {};
 
 TEST_F(VarDeclTest, Declaration) {
   constexpr char Before[] = "int i;";
