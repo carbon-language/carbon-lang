@@ -34,7 +34,7 @@ class MatcherManager {
                                   std::unique_ptr<MatcherFactory> in_factory,
                                   Matcher::ReplacementMap* in_replacements)
         : factory(std::move(in_factory)), replacements(in_replacements) {
-      finder->addMatcher(factory->GetAstMatcher(), this);
+      factory->AddMatcher(finder, this);
     }
 
     void run(const clang::ast_matchers::MatchFinder::MatchResult& match_result)

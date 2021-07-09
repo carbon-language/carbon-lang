@@ -123,10 +123,12 @@ void VarDecl::Run() {
   AddReplacement(replace_range, after);
 }
 
-auto VarDeclFactory::GetAstMatcher() -> cam::DeclarationMatcher {
-  return cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
-                          cam::hasParent(cam::cxxForRangeStmt())))))
-      .bind(Label);
+void VarDeclFactory::AddMatcher(cam::MatchFinder* finder,
+                                cam::MatchFinder::MatchCallback* callback) {
+  finder->addMatcher(cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
+                                      cam::hasParent(cam::cxxForRangeStmt())))))
+                         .bind(Label),
+                     callback);
 }
 
 }  // namespace Carbon

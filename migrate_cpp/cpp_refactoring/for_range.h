@@ -10,7 +10,7 @@
 namespace Carbon {
 
 // Updates variable declarations for `var name: Type`.
-class VarDecl : public Matcher {
+class ForRange : public Matcher {
  public:
   using Matcher::Matcher;
   void Run() override;
@@ -19,7 +19,7 @@ class VarDecl : public Matcher {
   auto GetTypeStr(const clang::VarDecl& decl) -> std::string;
 };
 
-class VarDeclFactory : public MatcherFactoryBase<VarDecl> {
+class ForRangeFactory : public MatcherFactoryBase<ForRange> {
  public:
   void AddMatcher(
       clang::ast_matchers::MatchFinder* finder,

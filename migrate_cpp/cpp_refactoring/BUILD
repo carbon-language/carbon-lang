@@ -63,6 +63,24 @@ cc_test(
 )
 
 cc_library(
+    name = "for_range",
+    srcs = ["for_range.cpp"],
+    hdrs = ["for_range.h"],
+    deps = [":matcher"],
+)
+
+cc_test(
+    name = "for_range_test",
+    srcs = ["for_range_test.cpp"],
+    deps = [
+        ":for_range",
+        ":matcher_test_base",
+        "@llvm-project//clang:tooling",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
     name = "var_decl",
     srcs = ["var_decl.cpp"],
     hdrs = ["var_decl.h"],
