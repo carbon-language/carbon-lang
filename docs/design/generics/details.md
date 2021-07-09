@@ -239,8 +239,8 @@ have two methods:
 ```
 interface Vector {
   // Here "Self" means "the type implementing this interface".
-  method (a: Self) Add(b: Self) -> Self;
-  method (a: Self) Scale(v: Double) -> Self;
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: Double) -> Self;
 }
 ```
 
@@ -275,10 +275,10 @@ struct Point {
   var y: Double;
   impl Vector {
     // In this scope, "Self" is an alias for "Point".
-    method (a: Self) Add(b: Self) -> Self {
+    fn Add[me: Self](b: Self) -> Self {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     }
-    method (a: Self) Scale(v: Double) -> Self {
+    fn Scale[me: Self](v: Double) -> Self {
       return Point(.x = a.x * v, .y = a.y * v);
     }
   }
@@ -355,11 +355,11 @@ struct Point {
   var x: Double;
   var y: Double;
   impl Vector {
-    method (a: Self) Add(b: Self) -> Self { ... }
-    method (a: Self) Scale(v: Double) -> Self { ... }
+    fn Add[me: Self](b: Self) -> Self { ... }
+    fn Scale[me: Self](v: Double) -> Self { ... }
   }
   impl Drawable {
-    method (a: Self) Draw() { ... }
+    fn Draw[me: Self]() { ... }
   }
 }
 ```
@@ -371,13 +371,13 @@ in common.
 ```
 struct GameBoard {
   impl Drawable {
-    method (this: Self) Draw() { ... }
+    fn Draw[me: Self]() { ... }
   }
   impl EndOfGame {
     // Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
-    method (this: Self) Draw() { ... }
-    method (this: Self) Winner(player: Int) { ... }
+    fn Draw[me: Self]() { ... }
+    fn Winner[me: Self](player: Int) { ... }
   }
 }
 ```
@@ -391,7 +391,7 @@ experience.
 struct Player {
   var name: String;
   impl Icon {
-    method (this: Self) Name() -> String { return this.name; }
+    fn Name[me: Self]() -> String { return this.name; }
     // ...
   }
   impl GameUnit {
@@ -417,10 +417,10 @@ struct Point2 {
 extend Point2 {
   // In this scope, "Self" is an alias for "Point2".
   impl Vector {
-    method (a: Self) Add(b: Self) -> Self {
+    fn Add[me: Self](b: Self) -> Self {
       return Point2(.x = a.x + b.x, .y = a.y + b.y);
     }
-    method (a: Self) Scale(v: Double) -> Self {
+    fn Scale[me: Self](v: Double) -> Self {
       return Point2(.x = a.x * v, .y = a.y * v);
     }
   }
@@ -477,7 +477,7 @@ needed:
 struct Point3 {
   var x: Double;
   var y: Double;
-  method (a: Self) Add(b: Self) -> Self {
+  fn Add[me: Self](b: Self) -> Self {
     return Point3(.x = a.x + b.x, .y = a.y + b.y);
   }
 }
@@ -485,7 +485,7 @@ struct Point3 {
 extend Point3 {
   impl Vector {
     alias Add = Point3.Add;  // Syntax TBD
-    method (a: Self) Scale(v: Double) -> Self {
+    fn Scale[me: Self](v: Double) -> Self {
       return Point3(.x = a.x * v, .y = a.y * v);
     }
   }
@@ -859,8 +859,8 @@ the requirements of `I2`. Further, given a value `x` of type `T`, it can be
 implicitly cast to `T as I2`. For example:
 
 ```
-interface Printable { method (this: Self) Print(); }
-interface Renderable { method (this: Self) Draw(); }
+interface Printable { fn Print[me: Self](); }
+interface Renderable { fn Draw[me: Self](); }
 
 structural interface PrintAndRender {
   impl Printable;
@@ -894,11 +894,11 @@ union of the names minus any conflicts.
 
 ```
 interface Printable {
-  method (this: Self) Print();
+  fn Print[me: Self]();
 }
 interface Renderable {
-  method (this: Self) Center() -> (Int, Int);
-  method (this: Self) Draw();
+  fn Center[me: Self]() -> (Int, Int);
+  fn Draw[me: Self]();
 }
 
 // `Printable & Renderable` is syntactic sugar for this type-type:
@@ -919,11 +919,11 @@ fn PrintThenDraw[T:! Printable & Renderable](x: T) {
 struct Sprite {
   // ...
   impl Printable {
-    method (this: Self) Print() { ... }
+    fn Print[me: Self]() { ... }
   }
   impl Renderable {
-    method (this: Self) Center() -> (Int, Int) { ... }
-    method (this: Self) Draw() { ... }
+    fn Center[me: Self]() -> (Int, Int) { ... }
+    fn Draw[me: Self]() { ... }
   }
 }
 
@@ -936,12 +936,12 @@ error to use.
 
 ```
 interface Renderable {
-  method (this: Self) Center() -> (Int, Int);
-  method (this: Self) Draw();
+  fn Center[me: Self]() -> (Int, Int);
+  fn Draw[me: Self]();
 }
 interface EndOfGame {
-  method (this: Self) Draw();
-  method (this: Self) Winner(player: Int);
+  fn Draw[me: Self]();
+  fn Winner[me: Self](player: Int);
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-type:
 structural interface {
@@ -1049,10 +1049,10 @@ use the same semantics and syntax as we do for
 [structural interfaces](#structural-interfaces):
 
 ```
-interface Equatable { method (this: Self) Equals(that: Self) -> Bool; }
+interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
 
 interface Iterable {
-  method (this: Self*) Advance() -> Bool;
+  fn Advance[addr me: Self*]() -> Bool;
   impl Equatable;
 }
 
@@ -1065,8 +1065,8 @@ def DoAdvanceAndEquals[T:! Iterable](x: T) {
 }
 
 struct Iota {
-  impl Iterable { method (this: Self) Advance() { ... } }
-  impl Equatable { method (this: Self) Equals(that: Self) -> Bool { ... } }
+  impl Iterable { fn Advance[me: Self]() { ... } }
+  impl Equatable { fn Equals[me: Self](that: Self) -> Bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1078,7 +1078,7 @@ by itself add any names to the interface, but again those can be added with
 
 ```
 interface Hashable {
-  method (this: Self) Hash() -> UInt64;
+  fn Hash[me: Self]() -> UInt64;
   impl Equatable;
   alias Equals = Equatable.Equals;
 }
@@ -1102,8 +1102,8 @@ as well. In the case of `Hashable` above, this includes all the members of
 ```
 struct Song {
   impl Hashable {
-    method (this: Self) Hash() -> UInt64 { ... }
-    method (this: Self) Equals(that: Self) -> Bool { ... }
+    fn Hash[me: Self]() -> UInt64 { ... }
+    fn Equals[me: Self](that: Self) -> Bool { ... }
   }
 }
 var y: Song;
@@ -1122,17 +1122,17 @@ This allows us to say that `Hashable`
 We expect this concept to be common enough to warrant dedicated syntax:
 
 ```
-interface Equatable { method (this: Self) Equals(that: Self) -> Bool; }
+interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
 
 interface Hashable {
   extends Equatable;
-  method (this: Self) Hash() -> UInt64;
+  fn Hash[me: Self]() -> UInt64;
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
 //   impl Equatable;
 //   alias Equals = Equatable.Equals;
-//   method (this: Self) Hash() -> UInt64;
+//   fn Hash[me: Self]() -> UInt64;
 // }
 ```
 
@@ -1261,19 +1261,19 @@ Consider this set of interfaces, simplified from
 
 ```
 interface Graph {
-  method (this: Self*) Source(e: EdgeDescriptor) -> VertexDescriptor;
-  method (this: Self*) Target(e: EdgeDescriptor) -> VertexDescriptor;
+  fn Source[addr me: Self*](e: EdgeDescriptor) -> VertexDescriptor;
+  fn Target[addr me: Self*](e: EdgeDescriptor) -> VertexDescriptor;
 }
 
 interface IncidenceGraph {
   extends Graph;
-  method (this: Self*) OutEdges(u: VertexDescriptor)
+  fn OutEdges[addr me: Self*](u: VertexDescriptor)
     -> (EdgeIterator, EdgeIterator);
 }
 
 interface EdgeListGraph {
   extends Graph;
-  method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator);
+  fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator);
 }
 ```
 
@@ -1298,13 +1298,13 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 ```
 struct MyEdgeListIncidenceGraph {
   impl IncidenceGraph {
-    method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
-    method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
-    method (this: Self*) OutEdges(u: VertexDescriptor)
+    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    fn OutEdges[addr me: Self*](u: VertexDescriptor)
         -> (EdgeIterator, EdgeIterator) { ... }
   }
   impl EdgeListGraph {
-    method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator) { ... }
+    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
   }
 }
 ```
@@ -1315,13 +1315,13 @@ struct MyEdgeListIncidenceGraph {
 ```
 struct MyEdgeListIncidenceGraph {
   impl IncidenceGraph {
-    method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
-    method (this: Self*) OutEdges(u: VertexDescriptor)
+    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    fn OutEdges[addr me: Self*](u: VertexDescriptor)
         -> (EdgeIterator, EdgeIterator) { ... }
   }
   impl EdgeListGraph {
-    method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
-    method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator) { ... }
+    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
   }
 }
 ```
@@ -1331,8 +1331,8 @@ struct MyEdgeListIncidenceGraph {
 ```
 struct MyEdgeListIncidenceGraph {
   impl Graph {
-    method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
-    method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
+    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
   }
   impl IncidenceGraph { ... }
   impl EdgeListGraph { ... }
@@ -1349,17 +1349,17 @@ the capabilities of the iterator being passed in:
 ```
 interface ForwardIterator {
   var Element:! Type;
-  method (this: Self*) Advance();
-  method (this: Self) Get() -> Element;
+  fn Advance[addr me: Self*]();
+  fn Get[me: Self]() -> Element;
 }
 interface BidirectionalIterator {
   extends ForwardIterator;
-  method (this: Self*) Back();
+  fn Back[addr me: Self*]();
 }
 interface RandomAccessIterator {
   extends BidirectionalIterator;
-  method (this: Self*) Skip(offset: Int);
-  method (this: Self) Difference(that: Self) -> Int;
+  fn Skip[addr me: Self*](offset: Int);
+  fn Difference[me: Self](that: Self) -> Int;
 }
 
 fn SearchInSortedList
@@ -1438,21 +1438,21 @@ APIs, in particular with different interface implementations, by
 
 ```
 interface Printable {
-  method (this: Self) Print();
+  fn Print[me: Self]();
 }
 interface Comparable {
-  method (this: Self) Less(that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> Bool;
 }
 struct Song {
-  impl as Printable { method (this: Self) Print() { ... } }
+  impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter SongByTitle for Song {
   impl as Comparable {
-    method (this: Self) Less(that: Self) -> Bool { ... }
+    fn Less[me: Self](that: Self) -> Bool { ... }
   }
 }
 adapter FormattedSong for Song {
-  impl as Printable { method (this: Self) Print() { ... } }
+  impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter FormattedSongByTitle for Song {
   impl as Printable = FormattedSong as Printable;
@@ -1500,7 +1500,7 @@ type may be accessed like any other facet type; either by a cast:
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
-    method (this: Self) Less(that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> Bool {
       return (this as Song).Title() < (that as Song).Title();
     }
   }
@@ -1512,7 +1512,7 @@ or using qualified names:
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
-    method (this: Self) Less(that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> Bool {
       return this.(Song.Title)() < that(Song.Title)();
     }
   }
@@ -1659,12 +1659,12 @@ syntax.
 
 ```
 interface Comparable {
-  method (this: Self) Less(that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> Bool;
 }
 adapter ComparableFromDifferenceFn
     (T:! Type, Difference:! fnty(T, T)->Int) for T {
   impl as Comparable {
-    method (this: Self) Less(that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> Bool {
       return Difference(this, that) < 0;
     }
   }
@@ -1693,10 +1693,10 @@ constant.
 interface NSpacePoint {
   var N:! Int;
   // The following require: 0 <= i < N.
-  method (this: Self*) Get(i: Int) -> Float64;
-  method (this: Self*) Set(i: Int, value: Float64);
+  fn Get[addr me: Self*](i: Int) -> Float64;
+  fn Set[addr me: Self*](i: Int, value: Float64);
   // Associated constants may be used in signatures:
-  method (this: Self*) SetAll(value: Array(Float64, N));
+  fn SetAll[addr me: Self*](value: Array(Float64, N));
 }
 ```
 
@@ -1711,18 +1711,18 @@ for `N`:
 struct Point2D {
   impl as NSpacePoint {
     var N:! Int = 2;
-    method (this: Self*) Get(i: Int) -> Float64 { ... }
-    method (this: Self*) Set(i: Int, value: Float64) { ... }
-    method (this: Self*) SetAll(value: Array(Float64, 2)) { ... }
+    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
+    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
+    fn SetAll[addr me: Self*](value: Array(Float64, 2)) { ... }
   }
 }
 
 struct Point3D {
   impl as NSpacePoint {
     var N:! Int = 3;
-    method (this: Self*) Get(i: Int) -> Float64 { ... }
-    method (this: Self*) Set(i: Int, value: Float64) { ... }
-    method (this: Self*) SetAll(value: Array(Float64, 3)) { ... }
+    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
+    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
+    fn SetAll[addr me: Self*](value: Array(Float64, 3)) { ... }
   }
 }
 ```
@@ -1796,9 +1796,9 @@ will provide a type under a specific name. For example:
 ```
 interface StackAssociatedType {
   var ElementType:! Type;
-  method (this: Self*) Push(value: ElementType);
-  method (this: Self*) Pop() -> ElementType;
-  method (this: Self*) IsEmpty() -> Bool;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> Bool;
 }
 ```
 
@@ -1811,18 +1811,18 @@ implements `StackAssociatedType`:
 ```
 struct DynamicArray(T:! Type) {
   struct IteratorType { ... }
-  method (this: Self*) Begin() -> IteratorType;
-  method (this: Self*) End() -> IteratorType;
-  method (this: Self*) Insert(pos: IteratorType, value: T);
-  method (this: Self*) Remove(pos: IteratorType);
+  fn Begin[addr me: Self*]() -> IteratorType;
+  fn End[addr me: Self*]() -> IteratorType;
+  fn Insert[addr me: Self*](pos: IteratorType, value: T);
+  fn Remove[addr me: Self*](pos: IteratorType);
 
   impl as StackAssociatedType {
     // Set the associated type `ElementType` to `T`.
     alias ElementType = T;
-    method (this: Self*) Push(value: ElementType) {
+    fn Push[addr me: Self*](value: ElementType) {
       this->Insert(this->End(), value);
     }
-    method (this: Self*) Pop() -> ElementType {
+    fn Pop[addr me: Self*]() -> ElementType {
       var pos: IteratorType = this->End();
       Assert(pos != this->Begin());
       --pos;
@@ -1830,7 +1830,7 @@ struct DynamicArray(T:! Type) {
       this->Remove(pos);
       return ret;
     }
-    method (this: Self*) IsEmpty() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> Bool {
       return this->Begin() == this->End();
     }
   }
@@ -1893,9 +1893,9 @@ struct DynamicArray(T:! Type) {
 
   impl as StackAssociatedType {
     // Not needed: alias ElementType = T;
-    method (this: Self*) Push(value: T) { ... }
-    method (this: Self*) Pop() -> T { ... }
-    method (this: Self*) IsEmpty() -> Bool { ... }
+    fn Push[addr me: Self*](value: T) { ... }
+    fn Pop[addr me: Self*]() -> T { ... }
+    fn IsEmpty[addr me: Self*]() -> Bool { ... }
   }
 }
 ```
@@ -1912,15 +1912,15 @@ be clear how they should match up, as in this example:
 ```
 interface Has2OverloadsWithDefaults {
   var T:! StackAssociatedType;
-  method (this: Self) F(x: DynamicArray(T), y: T) { ... }
-  method (this: Self) F(x: T, y: T.ElementType) { ... }
+  fn F[me: Self](x: DynamicArray(T), y: T) { ... }
+  fn F[me: Self](x: T, y: T.ElementType) { ... }
 }
 
 struct S {
   impl as Has2OverloadsWithDefaults {
      // Unclear if T == DynamicArray(Int) or
      // T == DynamicArray(DynamicArray(Int)).
-     method (this: Self) F(
+     fn F[me: Self](
          x: DynamicArray(DynamicArray(Int)),
          y: DynamicArray(Int)) { ... }
   }
@@ -1939,12 +1939,12 @@ The associated type can be modeled by a witness table field in the interface.
 
 ```
 interface Iterator {
-  method (this: Self*) Advance();
+  fn Advance[addr me: Self*]();
 }
 
 interface Container {
   var IteratorType:! Iterator;
-  method (this: Self*) Begin() -> IteratorType;
+  fn Begin[addr me: Self*]() -> IteratorType;
 }
 ```
 
@@ -1980,9 +1980,9 @@ name of the interface instead of the associated type declaration:
 
 ```
 interface StackParameterized(ElementType:! Type) {
-  method (this: Self*) Push(value: ElementType);
-  method (this: Self*) Pop() -> ElementType;
-  method (this: Self*) IsEmpty() -> Bool;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> Bool;
 }
 ```
 
@@ -1994,24 +1994,24 @@ struct Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
   impl as StackParameterized(Fruit) {
-    method (this: Self*) Push(value: Fruit) {
+    fn Push[addr me: Self*](value: Fruit) {
       this->fruit.Push(value);
     }
-    method (this: Self*) Pop() -> Fruit {
+    fn Pop[addr me: Self*]() -> Fruit {
       return this->fruit.Pop();
     }
-    method (this: Self*) IsEmpty() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> Bool {
       return this->fruit.IsEmpty();
     }
   }
   impl as StackParameterized(Veggie) {
-    method (this: Self*) Push(value: Veggie) {
+    fn Push[addr me: Self*](value: Veggie) {
       this->veggie.Push(value);
     }
-    method (this: Self*) Pop() -> Veggie {
+    fn Pop[addr me: Self*]() -> Veggie {
       return this->veggie.Pop();
     }
-    method (this: Self*) IsEmpty() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> Bool {
       return this->veggie.IsEmpty();
     }
   }
@@ -2053,7 +2053,7 @@ be comparable with multiple other types, and in fact interfaces for
 
 ```
 interface EquatableWith(T:! Type) {
-  method (this: Self) Equals(that: T) -> Bool;
+  fn Equals[me: Self](that: T) -> Bool;
   ...
 }
 struct Complex {
@@ -2082,7 +2082,7 @@ that the interface parameters will always be different. For example:
 
 ```
 interface Map(FromType:! Type, ToType:! Type) {
-  method (this: Self*) Map(needle: FromType) -> Optional(ToType);
+  fn Map[addr me: Self*](needle: FromType) -> Optional(ToType);
 }
 struct Bijection(FromType:! Type, ToType:! Type) {
   impl as Map(FromType, ToType) { ... }
@@ -2216,7 +2216,7 @@ interface A(T:! B) where ... {
   // Constraints on an associated type or constant:
   var U:! C where ...;
   // Constraints on a method:
-  method (this: Self) G[V:! D](v: V) where ...;
+  fn G[me: Self, V:! D](v: V) where ...;
 }
 ```
 
@@ -2434,7 +2434,7 @@ The same syntax would be used in an interface definition:
 ```
 interface HyperPointInterface {
   var N:! Int where N > 3;
-  method (this: Self*) Get(i: Int) -> Float64;
+  fn Get[addr me: Self*](i: Int) -> Float64;
 }
 ```
 
@@ -2499,12 +2499,12 @@ has an associated type constrained to satisfy an interface (or any
 
 ```
 interface Iterator {
-  method (this: Self*) Advance();
+  fn Advance[addr me: Self*]();
   ...
 }
 interface Container {
   var IteratorType:! Iterator;
-  method (this: Self*) Begin() -> IteratorType;
+  fn Begin[addr me: Self*]() -> IteratorType;
   ...
 }
 ```
@@ -2769,7 +2769,7 @@ encode the return type:
 interface HasAbs {
   extends Numeric;
   var MagnitudeType:! Numeric;
-  method (this: Self) Abs() -> MagnitudeType;
+  fn Abs[me: Self]() -> MagnitudeType;
 }
 ```
 
@@ -2825,7 +2825,7 @@ interface Container {
   var SliceType where SliceType.ElementType:! Container == ElementType,
                                   Slicetype.SliceType == SliceType;
 
-  method (this: Self*) GetSlice(start: IteratorType,
+  fn GetSlice[addr me: Self*](start: IteratorType,
                                     IteratorType: end) -> SliceType;
 }
 ```
@@ -2874,7 +2874,7 @@ interface Container {
   }
   var SliceType:! ContainerIsSlice(.ElementType = ElementType);
 
-  method (this: Self*) GetSlice(start: IteratorType,
+  fn GetSlice[addr me: Self*](start: IteratorType,
                                     IteratorType: end) -> SliceType;
 }
 ```
@@ -3030,18 +3030,18 @@ Since `BidirectionalIterator` extends `ForwardIterator`, any type satisfying
 ```
 interface ForwardIterator {
   // ...
-  method (this: Self*) Advance();
+  fn Advance[addr me: Self*]();
 }
 
 interface BidirectionalIterator {
   extends ForwardIterator;
-  method (this: Self*) Back();
+  fn Back[addr me: Self*]();
 }
 
 interface ForwardContainer {
   var IteratorType:! ForwardIterator;
-  method (this: Self*) Begin() -> IteratorType;
-  method (this: Self*) End() -> IteratorType;
+  fn Begin[addr me: Self*]() -> IteratorType;
+  fn End[addr me: Self*]() -> IteratorType;
   // ...
 }
 
@@ -3475,14 +3475,14 @@ First, showing this with an [`external impl`](#external-impl):
 
 ```
 interface Printable {
-  method (this: Self*) Print() -> String;
+  fn Print[addr me: Self*]() -> String;
 }
 struct FixedArray(T:! Type, N:! Int) { ... }
 
 // By saying "Printable:! T" instead of "Type:! T" here, we constrain
 // T to be Printable for this impl.
 external impl FixedArray(T:! Printable, N:! Int) as Printable {
-  method (this: Self*) Print() -> String {
+  fn Print[addr me: Self*]() -> String {
     var first: Bool = False;
     var ret: String = "";
     for (a: auto) in *this {
@@ -3568,7 +3568,7 @@ cases.
 ```
 struct FixedArray(T:! Type, N:! Int) {
   // ...
-  method (this: FixedArray[P:! Printable](P, N)*) Print() { ... }
+  fn *) Print[me: FixedArray[P:! Printable](P, N]() { ... }
 }
 
 // FixedArray(T, N) has a `Print()` method if `T` is `Printable`.
@@ -3633,7 +3633,7 @@ We first define the common API for the template:
 ```
 // In Carbon
 interface SInterface(T:! Type) {
-  method (this: Self*) F(t: T*);
+  fn F[addr me: Self*](t: T*);
 }
 ```
 
@@ -3644,7 +3644,7 @@ and once we implement that interface for the C++ type `S`:
 // C++ template `S`. There is no problem passing a template
 // argument `T` to the generic argument of `SInterface`.
 external impl C++::S(template T:! Type) as SInterface(T) {
-  method (this: Self*) F(t: T*) { this->F(t); }
+  fn F[addr me: Self*](t: T*) { this->F(t); }
 }
 ```
 
@@ -3846,7 +3846,7 @@ the same interface for a type.
 ```
 enum CompareResult { Less, Equal, Greater }
 interface Comparable {
-  method (this: Self) Compare(that: Self) -> CompareResult;
+  fn Compare[me: Self](that: Self) -> CompareResult;
 }
 fn CombinedLess[T:! Type](a: T, b: T,
                           U:! CompatibleWith(T) & Comparable,
@@ -3898,7 +3898,7 @@ combine `CompatibleWith` with [type adaptation](#adapting-types):
 adapter ThenCompare(T:! Type,
                     CompareList:! List(CompatibleWith(T) & Comparable)) for T {
   impl as Comparable {
-    method (this: Self) Compare(that: Self) -> CompareResult {
+    fn Compare[me: Self](that: Self) -> CompareResult {
       for (U: auto) in CompareList {
         var result: CompareResult = (this as U).Compare(that);
         if (result != CompareResult.Equal) {
@@ -4135,15 +4135,15 @@ Example:
 
 ```
 interface Printable {
-  method (this: Self*) Print();
+  fn Print[addr me: Self*]();
 }
 struct AnInt {
   var x: Int;
-  impl as Printable { method (this: Self*) Print() { PrintInt(this->x); } }
+  impl as Printable { fn Print[addr me: Self*]() { PrintInt(this->x); } }
 }
 struct AString {
   var x: String;
-  impl as Printable { method (this: Self*) Print() { PrintString(this->x); } }
+  impl as Printable { fn Print[addr me: Self*]() { PrintString(this->x); } }
 }
 
 var i: AnInt = (.x = 3);
@@ -4176,7 +4176,7 @@ argument:
 
 ```
 interface EqualCompare {
-  method (this: Self*) IsEqual(that: Self*) -> Bool;
+  fn IsEqual[addr me: Self*](that: Self*) -> Bool;
 }
 ```
 
@@ -4184,12 +4184,12 @@ and implementations of this interface for our two types:
 
 ```
 external impl AnInt as EqualCompare {
-  method (this: AnInt*) IsEqual(that: AnInt*) -> Bool {
+  fn IsEqual[me: AnInt*](that: AnInt*) -> Bool {
     return this->x == that->x;
   }
 }
 external impl AString as EqualCompare {
-  method (this: AString*) IsEqual(that: AString*) -> Bool {
+  fn IsEqual[me: AString*](that: AString*) -> Bool {
     return this->x == that->x;
   }
 }
@@ -4254,10 +4254,10 @@ struct DynPtr(template TT:! InterfaceType) {
   var T:! TT = (DynPtrImpl as TT);
   private impl_: DynPtrImpl;
   impl as Deref(T) {
-    method (this: Self) Deref() -> T* { return &this->impl_; }
+    fn Deref[me: Self]() -> T* { return &this->impl_; }
   }
   impl as Assignable[U:! TT](U) {
-    method (this: Self*) Assign(p: U*) { this->impl_ = (.t = U, .p = p); }
+    fn Assign[addr me: Self*](p: U*) { this->impl_ = (.t = U, .p = p); }
   }
 }
 ```
@@ -4272,7 +4272,7 @@ interface `Deref` that both `DynPtr` and `T*` implement:
 interface Deref {
   var DerefT:! Type;
   // This is used for the `->` and `*` dereferencing operators.
-  method (this: Self) Deref() -> DerefT*;
+  fn Deref[me: Self]() -> DerefT*;
 }
 
 // Implementation of Deref() for DynPtr(TT).
@@ -4286,7 +4286,7 @@ external impl DynPtr(template TT:! InterfaceType) as Deref {
 // Implementation of Deref for T*.
 external impl (T:! Type)* as Deref {
   alias DerefT = T;
-  method (this: T*) Deref() -> T* { return this; }
+  fn Deref[me: T*]() -> T* { return this; }
 }
 ```
 
@@ -4444,7 +4444,7 @@ supports zero-runtime-cost casting.
 adapter NotBoxed(T:! Movable & Sized) for T {  // `template` here?
   impl as Movable = T as Movable;
   impl as Deref {
-    method (this: Self*) Deref() -> T* { return this as T*; }
+    fn Deref[addr me: Self*]() -> T* { return this as T*; }
   }
   impl as MaybeBoxed { }
 }
@@ -4472,7 +4472,7 @@ the caller decide which of these mechanisms is the best fit for the specific
 types being used.
 
 ```
-interface Foo { method (this: Self*) F(); }
+interface Foo { fn F[addr me: Self*](); }
 fn UseBoxed[T:! Foo, BoxType:! MaybeBoxed(.T=T)](x: BoxType) {
   x->F();  // Possible indirection is visible
 }
@@ -4565,10 +4565,10 @@ interface RandomAccessContainer {
   // `RandomAccessContainer`'s API to include these names.
   impl as OperatorIndex(Int) {
     // Default implementation of interface.
-    method (this: Self) Get(i: Int) -> ElementType {
+    fn Get[me: Self](i: Int) -> ElementType {
       return (this.Begin() + i).Get();
     }
-    method (this: Self*) Set(i: Int, value: ElementType) {
+    fn Set[addr me: Self*](i: Int, value: ElementType) {
       (this->Begin() + i).Set(value);
     }
   }
@@ -4589,7 +4589,7 @@ if we had an interface `Foo` with a method `F`:
 
 ```
 interface Foo {
-  method (this: Self) F() -> Int;
+  fn F[me: Self]() -> Int;
 }
 ```
 
@@ -4598,8 +4598,8 @@ interface with a new name:
 
 ```
 interface Foo2 {
-  method (this: Self) F() -> Int;
-  method (this: Self) G() -> Int { return this.F() + 1; }
+  fn F[me: Self]() -> Int;
+  fn G[me: Self]() -> Int { return this.F() + 1; }
 }
 
 structural interface Foo {
@@ -4647,9 +4647,9 @@ we had a `Song` type with two slightly different `Print` definitions:
 struct Song {
   // ...
   impl as ConvertibleToString {
-    method (me: Self) ToString() -> String { ... }
+    fn ToString[me: Self]() -> String { ... }
   }
-  method (me: Self) Print() {
+  fn Print[me: Self]() {
     StdOut.Print("Song: ", me.ToString());
   }
 }
@@ -4658,7 +4658,7 @@ struct Song {
 // of `Song` above, in the same file as the `Printable`
 // interface definition.
 external impl (T:! ConvertibleToString) as Printable {
-  method (me: Self) Print() {
+  fn Print[me: Self]() {
     StdOut.Print(me.ToString());
   }
 }
