@@ -124,7 +124,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return Value::MakeContinuationType();
     case ValKind::StructType:
     case ValKind::ChoiceType:
-    case ValKind::PatternVariableValue:
+    case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
       return val;  // no need to copy these because they are immutable?
       // No, they need to be copied so they don't get killed. -Jeremy
@@ -448,10 +448,10 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
                   std::list<std::string>* vars, int line_num)
     -> std::optional<Env> {
   switch (p->tag) {
-    case ValKind::PatternVariableValue: {
+    case ValKind::BindingPlaceholderValue: {
       Address a = state->heap.AllocateValue(CopyVal(v, line_num));
-      vars->push_back(*p->GetPatternVariableValue().name);
-      values.Set(*p->GetPatternVariableValue().name, a);
+      vars->push_back(*p->GetBindingPlaceholderValue().name);
+      values.Set(*p->GetBindingPlaceholderValue().name, a);
       return values;
     }
     case ValKind::TupleValue:
@@ -715,7 +715,7 @@ void StepLvalue() {
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::PatternVariableExpression: {
+    case ExpressionKind::BindingExpression: {
       frame->todo.Pop();
       frame->todo.Push(MakeExpToLvalAct());
       frame->todo.Push(MakeExpAct(exp));
@@ -735,13 +735,13 @@ void StepExp() {
     std::cout << " --->" << std::endl;
   }
   switch (exp->tag()) {
-    case ExpressionKind::PatternVariableExpression: {
+    case ExpressionKind::BindingExpression: {
       if (act->pos == 0) {
-        frame->todo.Push(MakeExpAct(exp->GetPatternVariableExpression().type));
+        frame->todo.Push(MakeExpAct(exp->GetBindingExpression().type));
         act->pos++;
       } else {
-        auto v = Value::MakePatternVariableValue(
-            exp->GetPatternVariableExpression().name, act->results[0]);
+        auto v = Value::MakeBindingPlaceholderValue(
+            exp->GetBindingExpression().name, act->results[0]);
         frame->todo.Pop(1);
         frame->todo.Push(MakeValAct(v));
       }

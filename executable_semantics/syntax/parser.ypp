@@ -208,7 +208,7 @@ expression:
     { $$ = Carbon::Expression::MakeIndexExpression(yylineno, $1, $3); }
 | identifier ":" expression
     {
-      $$ = Carbon::Expression::MakePatternVariableExpression(yylineno, $1, $3);
+      $$ = Carbon::Expression::MakeBindingExpression(yylineno, $1, $3);
     }
 | integer_literal
     { $$ = Carbon::Expression::MakeIntLiteral(yylineno, $1); }
@@ -310,7 +310,7 @@ clause:
     { $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = Carbon::Expression::MakePatternVariableExpression(
+      auto vp = Carbon::Expression::MakeBindingExpression(
           yylineno, "_", Carbon::Expression::MakeAutoTypeLiteral(yylineno));
       $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>(vp, $3);
     }
