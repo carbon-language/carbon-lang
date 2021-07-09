@@ -37,6 +37,7 @@ for x in $(
   COMPILE_FLAGS+=("${x}")
 done
 
+# Construct a compilation database for use by run-clang-tidy.py.
 COMPDB="${EXAMPLE}/carbon/compile_commands.json"
 echo "[" > "${COMPDB}"
 for f in $(find "${EXAMPLE}/carbon" -regex ".*\.\(cc\|h\)"); do
