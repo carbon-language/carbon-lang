@@ -17,9 +17,8 @@ This document explains the rationale for choosing to make
 -   [Approach taken: coherence](#approach-taken-coherence)
 -   [The "Hashtable Problem"](#the-hashtable-problem)
 -   [Incoherence means context sensitivity](#incoherence-means-context-sensitivity)
--   [Rejected alternative: dynamic](#rejected-alternative-dynamic)
+-   [Rejected alternative: dynamic implementation binding](#rejected-alternative-dynamic-implementation-binding)
 -   [Rejected alternative: manual conflict resolution](#rejected-alternative-manual-conflict-resolution)
--   [Rejected alternative: scoped conformance](#rejected-alternative-scoped-conformance)
 
 <!-- tocstop -->
 
@@ -153,16 +152,47 @@ differently depending on which of those two libraries are imported:
 Furthermore, this means that the behavior of a file can depend on an import even
 if nothing from that package is referenced explicitly.
 
-## Rejected alternative: dynamic
+## Rejected alternative: dynamic implementation binding
 
 One possible approach would be to bind interface implementations to a value at
-the point it was created. In the example above,
+the point it was created. In [the example above](#the-hashtable-problem), the
+implementation of the `Hashable` interface for `Song` would be fixed for the
+`song_set` `HashSet` object based on which implementation was in scope in the
+body of the `SomethingWeirdHappens` function.
+
+This has some downsides:
+
+-   It is harder to reason about. The behavior of `SongUtil.IsInHashSet` depends
+    on the dynamic behavior of the program. At the time of the call, we may have
+    no idea where the `HashSet` argument was created.
+-   It requires more data space at runtime because we need to store a pointer to
+    the witness table representing the implementation with the object, since it
+    varies instead of being known statically.
+-   It is slower to execute from dynamic dispatch and the inability to inline.
+
+As a result, this doesn't make sense as the default behavior for Carbon based on
+its [goals](/project/goals.md). That being said, this could be a feature added
+later as opt-in behavior to either allow users to reduce code size or support
+use cases that require dynamic dispatch.
 
 ## Rejected alternative: manual conflict resolution
 
-[The problems with this approach have been considered in the context of Rust](https://github.com/Ixrec/rust-orphan-rules#whats-wrong-with-incoherence).
+Carbon could alternatively provide some kind of manual disambiguation syntax to
+resolve problems where they arise. The problems with this approach have been
+[considered in the context of Rust](https://github.com/Ixrec/rust-orphan-rules#whats-wrong-with-incoherence).
 
-## Rejected alternative: scoped conformance
+A specific example of this approach is called
+[scoped conformance](https://forums.swift.org/t/scoped-conformances/37159),
+where the conflict resolution is based on limiting the visibility of
+implementations to particular scopes. This hasn't been implemented, but it has
+the drawbacks described above. Depending on the details of the implementation,
+either:
 
-FIXME:
-[scoped conformances](https://forums.swift.org/t/scoped-conformances/37159).
+-   there are incompatible values with types that have the same name, or
+-   it is difficult to reason about the program's behavior because it behaves
+    like
+    [dynamic implementation binding](#rejected-alternative-dynamic-implementation-binding)
+    (though perhaps with a monomorphization cost instead of a runtime cost).
+
+In general,
+[Carbon is avoiding this sort of context sensitivity](https://docs.google.com/document/d/1dLpEmUbE2_JQZ-pRNgEDnw6VuH4FXfURSYej6nPV6m0/edit#).
