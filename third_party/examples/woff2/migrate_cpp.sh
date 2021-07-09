@@ -52,6 +52,7 @@ for f in $(find "${EXAMPLE}/carbon" -regex ".*\.\(cc\|h\)"); do
   echo "  ]" >> "${COMPDB}"
   echo "}," >> "${COMPDB}"
 done
+# Remove the last comma, for JSON syntax correctness.
 sed -i '$ s/,$//' "${COMPDB}"
 echo "]" >> "${EXAMPLE}/carbon/compile_commands.json"
 
