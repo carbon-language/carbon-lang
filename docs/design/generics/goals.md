@@ -645,9 +645,9 @@ when recursion creates an infinite collection of types, such as in
 or:
 
 ```carbon
-fn Sort[Comparable T](List(T) list) -> List(T) {
+fn Sort[T:! Comparable](list: List(T)) -> List(T) {
   if (list.size() == 1) return list;
-  var List(List(T)) chunks = FormChunks(list, sqrt(list.size()));
+  var chunks: List(List(T)) = FormChunks(list, sqrt(list.size()));
   chunks = chunks.ApplyToEach(Sort);
   chunks = Sort(chunks);
   return MergeSortedListOfSortedLists(chunks);
