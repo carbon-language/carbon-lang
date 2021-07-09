@@ -57,8 +57,8 @@ std::string* Value::GetVariableType() const {
   return u.var_type;
 }
 
-PatternVariableValue Value::GetPatternVariableValue() const {
-  CHECK(tag == ValKind::PatternVariableValue);
+BindingPlaceholderValue Value::GetBindingPlaceholderValue() const {
+  CHECK(tag == ValKind::BindingPlaceholderValue);
   return u.var_pat;
 }
 
@@ -202,10 +202,10 @@ auto Value::MakeContinuationValue(std::vector<Frame*> stack) -> Value* {
   return v;
 }
 
-auto Value::MakePatternVariableValue(std::string name, const Value* type)
+auto Value::MakeBindingPlaceholderValue(std::string name, const Value* type)
     -> const Value* {
   auto* v = new Value();
-  v->tag = ValKind::PatternVariableValue;
+  v->tag = ValKind::BindingPlaceholderValue;
   v->u.var_pat.name = new std::string(std::move(name));
   v->u.var_pat.type = type;
   return v;
@@ -300,9 +300,9 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
           << *val->GetAlternativeConstructorValue().alt_name;
       break;
     }
-    case ValKind::PatternVariableValue: {
-      PrintValue(val->GetPatternVariableValue().type, out);
-      out << ": " << *val->GetPatternVariableValue().name;
+    case ValKind::BindingPlaceholderValue: {
+      PrintValue(val->GetBindingPlaceholderValue().type, out);
+      out << ": " << *val->GetBindingPlaceholderValue().name;
       break;
     }
     case ValKind::AlternativeValue: {
@@ -495,7 +495,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return TypeEqual(v1, v2);
     case ValKind::StructValue:
     case ValKind::AlternativeValue:
-    case ValKind::PatternVariableValue:
+    case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
     case ValKind::ContinuationValue:
       std::cerr << "ValueEqual does not support this kind of value."

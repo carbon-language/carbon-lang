@@ -135,7 +135,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     std::cout << std::endl;
   }
   switch (e->tag()) {
-    case ExpressionKind::PatternVariableExpression: {
+    case ExpressionKind::BindingExpression: {
       if (context != TCContext::PatternContext) {
         std::cerr
             << e->line_num
@@ -144,7 +144,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             << std::endl;
         exit(-1);
       }
-      auto t = InterpExp(values, e->GetPatternVariableExpression().type);
+      auto t = InterpExp(values, e->GetBindingExpression().type);
       if (t->tag == ValKind::AutoType) {
         if (expected == nullptr) {
           std::cerr << e->line_num
@@ -157,10 +157,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       } else if (expected) {
         ExpectType(e->line_num, "pattern variable", t, expected);
       }
-      auto new_e = Expression::MakePatternVariableExpression(
-          e->line_num, e->GetPatternVariableExpression().name,
+      auto new_e = Expression::MakeBindingExpression(
+          e->line_num, e->GetBindingExpression().name,
           ReifyType(t, e->line_num));
-      types.Set(e->GetPatternVariableExpression().name, t);
+      types.Set(e->GetBindingExpression().name, t);
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::IndexExpression: {
