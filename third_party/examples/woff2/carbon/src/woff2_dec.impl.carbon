@@ -382,7 +382,7 @@ fn StoreLoca(loca_values: const std::vector<uint32_t>&, index_format: int,
   var loca_content: std::vector<uint8_t>;
   var dst: uint8_t*;
   var offset: size_t;
-  for (unsigned int value : loca_values) {
+  for (unsigned int value  in  loca_values) {
     if (index_format) {
       offset = StoreU32(dst, offset, value);
     } else {
@@ -647,7 +647,7 @@ fn ReconstructGlyf(data: const uint8_t*, glyf_table: Table*,
 }
 
 fn FindTable(tables: std::vector<Table*>*, tag: uint32_t) -> Table* {
-  for (Table* table : *tables) {
+  for (Table* table  in  *tables) {
     if (table->tag == tag) {
       return table;
     }
@@ -864,7 +864,7 @@ fn ComputeOffsetToFirstTable(hdr: const WOFF2Header&) -> uint64_t {
   if (hdr.header_version) {
     offset = CollectionHeaderSize(hdr.header_version, hdr.ttc_fonts.size())
       + kSfntHeaderSize * hdr.ttc_fonts.size();
-    for (const auto& ttc_font : hdr.ttc_fonts) {
+    for (const auto& ttc_font  in  hdr.ttc_fonts) {
       offset += kSfntEntrySize * ttc_font.table_indices.size();
     }
   }
@@ -874,11 +874,11 @@ fn ComputeOffsetToFirstTable(hdr: const WOFF2Header&) -> uint64_t {
 fn Tables(hdr: WOFF2Header*, font_index: size_t) -> std::vector<Table*> {
   var tables: std::vector<Table*>;
   if (PREDICT_FALSE(hdr->header_version)) {
-    for (auto index : hdr->ttc_fonts[font_index].table_indices) {
+    for (auto index  in  hdr->ttc_fonts[font_index].table_indices) {
       tables.push_back(&hdr->tables[index]);
     }
   } else {
-    for (auto& table : hdr->tables) {
+    for (auto& table  in  hdr->tables) {
       tables.push_back(&table);
     }
   }
@@ -1227,13 +1227,13 @@ fn WriteHeaders(metadata: RebuildMetadata*,
   var sorted_tables: std::vector<Table>;
   if (hdr->header_version) {
     // collection; we have to sort the table offset vector in each font
-    for (auto& ttc_font : hdr->ttc_fonts) {
+    for (auto& ttc_font  in  hdr->ttc_fonts) {
       var sorted_index_by_tag: std::map<uint32_t, uint16_t>;
-      for (auto table_index : ttc_font.table_indices) {
+      for (auto table_index  in  ttc_font.table_indices) {
         sorted_index_by_tag[hdr->tables[table_index].tag] = table_index;
       }
       var index: uint16_t;
-      for (auto& i : sorted_index_by_tag) {
+      for (auto& i  in  sorted_index_by_tag) {
         ttc_font.table_indices[index++] = i.second;
       }
     }
@@ -1275,7 +1275,7 @@ fn WriteHeaders(metadata: RebuildMetadata*,
       offset = StoreOffsetTable(result, offset, ttc_font.flavor,
                                 ttc_font.table_indices.size());
 
-      for (const auto table_index : ttc_font.table_indices) {
+      for (const auto table_index  in  ttc_font.table_indices) {
         var tag: uint32_t;
         metadata->font_infos[i].table_entry_by_tag[tag] = offset;
         offset = StoreTableEntry(result, offset, tag);

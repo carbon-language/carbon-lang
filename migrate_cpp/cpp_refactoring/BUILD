@@ -11,6 +11,7 @@ cc_binary(
     srcs = ["main.cpp"],
     deps = [
         ":fn_inserter",
+        ":for_range",
         ":var_decl",
         "@llvm-project//clang:tooling",
     ],

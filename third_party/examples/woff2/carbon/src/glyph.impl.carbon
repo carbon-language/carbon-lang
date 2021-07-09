@@ -226,7 +226,7 @@ fn StoreInstructions(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) {
 
 fn StoreEndPtsOfContours(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) -> bool {
   var end_point: int;
-  for (const auto& contour : glyph.contours) {
+  for (const auto& contour  in  glyph.contours) {
     end_point += contour.size();
     if (contour.size() > std::numeric_limits<uint16_t>::max() ||
         end_point > std::numeric_limits<uint16_t>::max()) {
@@ -247,8 +247,8 @@ fn StorePoints(glyph: const Glyph&, offset: size_t*,
   var y_bytes: size_t;
 
   // Store the flags and calculate the total size of the x and y coordinates.
-  for (const auto& contour : glyph.contours) {
-    for (const auto& point : contour) {
+  for (const auto& contour  in  glyph.contours) {
+    for (const auto& point  in  contour) {
       var flag: int;
       var dx: int;
       var dy: int;
@@ -305,8 +305,8 @@ fn StorePoints(glyph: const Glyph&, offset: size_t*,
   var y_offset: size_t;
   last_x = 0;
   last_y = 0;
-  for (const auto& contour : glyph.contours) {
-    for (const auto& point : contour) {
+  for (const auto& contour  in  glyph.contours) {
+    for (const auto& point  in  contour) {
       var dx: int;
       var dy: int;
       if (dx == 0) {

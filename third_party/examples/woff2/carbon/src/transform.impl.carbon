@@ -32,7 +32,7 @@ fn WriteBytes(out: std::vector<uint8_t>*, data: const uint8_t*, len: size_t) {
 }
 
 fn WriteBytes(out: std::vector<uint8_t>*, in: const std::vector<uint8_t>&) {
-  for (unsigned char i : in) {
+  for (unsigned char i  in  in) {
     out->push_back(i);
   }
 }
@@ -106,8 +106,8 @@ class GlyfEncoder {
     var y_min: int16_t;
     var x_max: int16_t;
     var y_max: int16_t;
-    for (const auto& contour : glyph.contours) {
-      for (const auto& point : contour) {
+    for (const auto& contour  in  glyph.contours) {
+      for (const auto& point  in  contour) {
         if (point.x < x_min) { x_min = point.x;
 }
         if (point.x > x_max) { x_max = point.x;
@@ -394,17 +394,17 @@ fn TransformHmtxTable(font: Font*) -> bool {
   transformed_hmtx->buffer.reserve(transformed_size);
   var out: std::vector<uint8_t>*;
   WriteBytes(out, &flags, 1);
-  for (uint16_t advance_width : advance_widths) {
+  for (uint16_t advance_width  in  advance_widths) {
     WriteUShort(out, advance_width);
   }
 
   if (!remove_proportional_lsb) {
-    for (int16_t lsb : proportional_lsbs) {
+    for (int16_t lsb  in  proportional_lsbs) {
       WriteUShort(out, lsb);
     }
   }
   if (!remove_monospace_lsb) {
-    for (int16_t lsb : monospace_lsbs) {
+    for (int16_t lsb  in  monospace_lsbs) {
       WriteUShort(out, lsb);
     }
   }
