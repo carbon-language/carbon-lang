@@ -6,21 +6,20 @@
 
 /* Library for converting WOFF2 format font files to their TTF versions. */
 
+#include <brotli/decode.h>
 #include <woff2/decode.h>
 
-#include <cstdlib>
 #include <algorithm>
 #include <complex>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
-#include <memory>
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
-#include <brotli/decode.h>
 #include "./buffer.h"
 #include "./port.h"
 #include "./round.h"
