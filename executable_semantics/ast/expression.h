@@ -189,7 +189,7 @@ void PrintExp(const Expression* exp);
 
 // Implementation details only beyond this point
 
-struct TagVisitor {
+struct ExpressionTagVisitor {
   template <typename Alternative>
   auto operator()(const Alternative&) -> ExpressionKind {
     return Alternative::Kind;
@@ -197,7 +197,7 @@ struct TagVisitor {
 };
 
 auto Expression::tag() const -> ExpressionKind {
-  return std::visit(TagVisitor(), value);
+  return std::visit(ExpressionTagVisitor(), value);
 }
 
 }  // namespace Carbon
