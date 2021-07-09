@@ -20,8 +20,6 @@ enum class ActionKind {
   ExpressionAction,
   StatementAction,
   ValAction,
-  ExpToLValAction,
-  DeleteTmpAction
 };
 
 struct Action {
@@ -46,8 +44,6 @@ auto MakeExpAct(const Expression* e) -> Action*;
 auto MakeLvalAct(const Expression* e) -> Action*;
 auto MakeStmtAct(const Statement* s) -> Action*;
 auto MakeValAct(const Value* v) -> Action*;
-auto MakeExpToLvalAct() -> Action*;
-auto MakeDeleteAct(Address a) -> Action*;
 
 }  // namespace Carbon
 

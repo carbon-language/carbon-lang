@@ -19,12 +19,6 @@ namespace Carbon {
 
 void PrintAct(Action* act, std::ostream& out) {
   switch (act->tag) {
-    case ActionKind::DeleteTmpAction:
-      std::cout << "delete_tmp(" << act->u.delete_tmp << ")";
-      break;
-    case ActionKind::ExpToLValAction:
-      out << "exp=>lval";
-      break;
     case ActionKind::LValAction:
     case ActionKind::ExpressionAction:
       PrintExp(act->u.exp);
@@ -88,21 +82,6 @@ auto MakeValAct(const Value* v) -> Action* {
   act->tag = ActionKind::ValAction;
   act->u.val = v;
   act->pos = 0;
-  return act;
-}
-
-auto MakeExpToLvalAct() -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ExpToLValAction;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeDeleteAct(Address a) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::DeleteTmpAction;
-  act->pos = 0;
-  act->u.delete_tmp = a;
   return act;
 }
 
