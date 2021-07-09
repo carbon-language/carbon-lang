@@ -44,7 +44,6 @@ enum class ValKind {
   StructValue,
   AlternativeValue,
   TupleValue,
-  VarTV,
   IntType,
   BoolType,
   TypeType,
@@ -140,7 +139,6 @@ struct Value {
       -> const Value*;
   static auto MakeBindingPlaceholderValue(std::string name, const Value* type)
       -> const Value*;
-  static auto MakeVarTypeVal(std::string name) -> const Value*;
   static auto MakeIntType() -> const Value*;
   static auto MakeContinuationType() -> const Value*;
   static auto MakeAutoType() -> const Value*;
@@ -163,7 +161,6 @@ struct Value {
   AlternativeValue GetAlternativeValue() const;
   TupleValue GetTupleValue() const;
   Address GetPointerValue() const;
-  std::string* GetVariableType() const;
   BindingPlaceholderValue GetBindingPlaceholderValue() const;
   FunctionType GetFunctionType() const;
   PointerType GetPointerType() const;
@@ -181,7 +178,6 @@ struct Value {
     AlternativeValue alt;
     TupleValue tuple;
     Address ptr;
-    std::string* var_type;
     BindingPlaceholderValue var_pat;
     FunctionType fun_type;
     PointerType ptr_type;

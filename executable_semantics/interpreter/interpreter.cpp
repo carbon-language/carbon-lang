@@ -116,8 +116,6 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return Value::MakeBoolType();
     case ValKind::TypeType:
       return Value::MakeTypeType();
-    case ValKind::VarTV:
-      return Value::MakeVarTypeVal(*val->GetVariableType());
     case ValKind::AutoType:
       return Value::MakeAutoType();
     case ValKind::ContinuationType:
