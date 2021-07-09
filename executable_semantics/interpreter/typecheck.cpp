@@ -55,8 +55,6 @@ void PrintTypeEnv(TypeEnv types, std::ostream& out) {
 // Reify type to type expression.
 auto ReifyType(const Value* t, int line_num) -> const Expression* {
   switch (t->tag) {
-    case ValKind::VarTV:
-      return Expression::MakeIdentifierExpression(0, *t->GetVariableType());
     case ValKind::IntType:
       return Expression::MakeIntTypeLiteral(0);
     case ValKind::BoolType:

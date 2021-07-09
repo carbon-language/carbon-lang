@@ -52,11 +52,6 @@ Address Value::GetPointerValue() const {
   return u.ptr;
 }
 
-std::string* Value::GetVariableType() const {
-  CHECK(tag == ValKind::VarTV);
-  return u.var_type;
-}
-
 BindingPlaceholderValue Value::GetBindingPlaceholderValue() const {
   CHECK(tag == ValKind::BindingPlaceholderValue);
   return u.var_pat;
@@ -211,13 +206,6 @@ auto Value::MakeBindingPlaceholderValue(std::string name, const Value* type)
   return v;
 }
 
-auto Value::MakeVarTypeVal(std::string name) -> const Value* {
-  auto* v = new Value();
-  v->tag = ValKind::VarTV;
-  v->u.var_type = new std::string(std::move(name));
-  return v;
-}
-
 auto Value::MakeIntType() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntType;
@@ -369,9 +357,6 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       out << " -> ";
       PrintValue(val->GetFunctionType().ret, out);
       break;
-    case ValKind::VarTV:
-      out << *val->GetVariableType();
-      break;
     case ValKind::StructType:
       out << "struct " << *val->GetStructType().name;
       break;
@@ -394,8 +379,6 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     return false;
   }
   switch (t1->tag) {
-    case ValKind::VarTV:
-      return *t1->GetVariableType() == *t2->GetVariableType();
     case ValKind::PointerType:
       return TypeEqual(t1->GetPointerType().type, t2->GetPointerType().type);
     case ValKind::FunctionType:
@@ -482,7 +465,6 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return FieldsValueEqual(v1->GetTupleValue().elements,
                               v2->GetTupleValue().elements, line_num);
     default:
-    case ValKind::VarTV:
     case ValKind::IntType:
     case ValKind::BoolType:
     case ValKind::TypeType:
