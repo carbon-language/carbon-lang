@@ -44,7 +44,6 @@ enum class ValKind {
   StructValue,
   AlternativeValue,
   TupleValue,
-  VarTV,
   IntType,
   BoolType,
   TypeType,
@@ -54,7 +53,7 @@ enum class ValKind {
   StructType,
   ChoiceType,
   ContinuationType,  // The type of a continuation.
-  PatternVariableValue,
+  BindingPlaceholderValue,
   AlternativeConstructorValue,
   ContinuationValue  // A first-class continuation value.
 };
@@ -87,7 +86,7 @@ struct TupleValue {
   std::vector<TupleElement>* elements;
 };
 
-struct PatternVariableValue {
+struct BindingPlaceholderValue {
   std::string* name;
   const Value* type;
 };
@@ -138,9 +137,8 @@ struct Value {
   static auto MakeAlternativeConstructorValue(std::string alt_name,
                                               std::string choice_name)
       -> const Value*;
-  static auto MakePatternVariableValue(std::string name, const Value* type)
+  static auto MakeBindingPlaceholderValue(std::string name, const Value* type)
       -> const Value*;
-  static auto MakeVarTypeVal(std::string name) -> const Value*;
   static auto MakeIntType() -> const Value*;
   static auto MakeContinuationType() -> const Value*;
   static auto MakeAutoType() -> const Value*;
@@ -163,8 +161,7 @@ struct Value {
   AlternativeValue GetAlternativeValue() const;
   TupleValue GetTupleValue() const;
   Address GetPointerValue() const;
-  std::string* GetVariableType() const;
-  PatternVariableValue GetPatternVariableValue() const;
+  BindingPlaceholderValue GetBindingPlaceholderValue() const;
   FunctionType GetFunctionType() const;
   PointerType GetPointerType() const;
   StructType GetStructType() const;
@@ -181,8 +178,7 @@ struct Value {
     AlternativeValue alt;
     TupleValue tuple;
     Address ptr;
-    std::string* var_type;
-    PatternVariableValue var_pat;
+    BindingPlaceholderValue var_pat;
     FunctionType fun_type;
     PointerType ptr_type;
     StructType struct_type;
