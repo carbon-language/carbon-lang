@@ -10,6 +10,19 @@ This document explains the rationale for choosing to make
 [implementation coherence](terminology.md#coherence)
 [a goal for Carbon](goals.md#coherence), and the alternatives considered.
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Approach taken: coherence](#approach-taken-coherence)
+-   [The "Hashtable Problem"](#the-hashtable-problem)
+-   [Incoherence means context sensitivity](#incoherence-means-context-sensitivity)
+-   [Rejected alternative: dynamic](#rejected-alternative-dynamic)
+-   [Rejected alternative: manual conflict resolution](#rejected-alternative-manual-conflict-resolution)
+-   [Rejected alternative: scoped conformance](#rejected-alternative-scoped-conformance)
+
+<!-- tocstop -->
+
 ## Approach taken: coherence
 
 The main thing to understand is that coherence is a desirable property, but to
@@ -17,7 +30,8 @@ get that property we need an orphan rule, and that rule has a cost. It in
 particular limits how much control users of a type have over how that type
 implements interfaces. There are two main use cases to consider:
 
--   Selecting between multiple implementations of a `Comparable` interface for a
+-   Selecting between multiple implementations of an interface for a type. For
+    example selecting the implementation of the `Comparable` interface for a
     `Song` type to support "by title", "by artist", and "by album" orderings.
 -   Implementing an interface for a type when there is no relationship between
     the libraries defining the interface and the type.
@@ -118,30 +132,35 @@ When we go to look up the same song in `SongUtil.IsInHashSet`, it uses the hash
 function from `SongHashArtistAndTitle` which returns a different hash value for
 `unchained_melody`, and so reports the song is missing.
 
-FIXME: https://gist.github.com/nikomatsakis/1421744
+**Background:** [This post](https://gist.github.com/nikomatsakis/1421744)
+discusses the hashtable problem in the context of Haskell, and
+[this 2011 Rust followup](https://mail.mozilla.org/pipermail/rust-dev/2011-December/001036.html)
+discusses how to detect problems at compile time.
 
-## Problems with incohernce
+## Incoherence means context sensitivity
 
-FIXME
+The undesirable result of incoherence is that the interpretation of source code
+changes based on imports. In particular, imagine there is a function call that
+depends on a type implementing an interface, and two different implementations
+are defined in two different libraries. A call to that function will be treated
+differently depending on which of those two libraries are imported:
 
--   "Import what you use" is hard to measure: libraries `Y.T1` and `Z.T2` are
-    important/used even though `Y` and `Z` are not mentioned outside the
-    `import` statement.
--   The call `F(a)` has different interpretations depending on what libraries
-    are imported:
-    -   If neither is imported, it is an error.
-    -   If both are imported, it is ambiguous.
-    -   If only one is imported, you get totally different code executed
-        depending on which it is.
+-   If neither is imported, it is an error.
+-   If both are imported, it is ambiguous.
+-   If only one is imported, you get totally different code executed depending
+    on which it is.
+
+Furthermore, this means that the behavior of a file can depend on an import even
+if nothing from that package is referenced explicitly.
 
 ## Rejected alternative: dynamic
 
-FIXME
+One possible approach would be to bind interface implementations to a value at
+the point it was created. In the example above,
 
 ## Rejected alternative: manual conflict resolution
 
-FIXME:
-[Addressing "the hashtable problem" with type classes](https://mail.mozilla.org/pipermail/rust-dev/2011-December/001036.html)
+[The problems with this approach have been considered in the context of Rust](https://github.com/Ixrec/rust-orphan-rules#whats-wrong-with-incoherence).
 
 ## Rejected alternative: scoped conformance
 
