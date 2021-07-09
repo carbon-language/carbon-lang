@@ -101,10 +101,10 @@ You might have one generic function that could sort any array with comparable
 elements:
 
 ```
-fn SortVector(T:$ Comparable, a: Vector(T)*) { ... }
+fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `$` to indicate that the parameter named `T` is generic.
+The syntax above adds a `!` to indicate that the parameter named `T` is generic.
 
 Given an `Int32` vector `iv`, `SortVector(Int32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -114,7 +114,7 @@ function.
 
 This ability to generalize makes `SortVector` a _generic_.
 
-**NOTE:** The `$` syntax is a placeholder. The syntax is being decided in
+**NOTE:** The `:!` syntax was being decided in
 [question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
 ### Interfaces
@@ -150,14 +150,13 @@ Example:
 
 ```
 interface Comparable {
-  // Placeholder method syntax
   // `Less` is an associated method.
-  method (this: Self) Less(that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> Bool;
 }
 ```
 
-[Question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494)
-is on method syntax.
+**Note:** The method syntax was decided in
+[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 
 Interfaces describe functionality, but not data; no variables may be declared in
 an interface.
@@ -183,7 +182,7 @@ Consider this interface:
 
 ```
 interface Printable {
-  method (this: Self) Print();
+  fn Print[me: Self]();
 }
 ```
 
@@ -200,7 +199,7 @@ struct Song {
   // of the `Song` API.
   impl as Printable {
     // Could use `Self` in place of `Song` here.
-    method (this: Song) Print() { ... }
+    fn Print[me: Song]() { ... }
   }
 }
 
@@ -209,13 +208,13 @@ struct Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  method (this: Self) Less(that: Self) -> Bool { ... }
+  fn Less[me: Self](that: Self) -> Bool { ... }
 }
 ```
 
 **Note:** The interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
-TODO: move this to details and link.
+TODO: move these syntax issues to details and link.
 
 Implementations may be defined within the struct definition itself or
 externally. External implementations may be defined in the library defining the
@@ -273,7 +272,7 @@ already included in the type of the second argument. To eliminate the argument
 at the call site, use a _deduced parameter_.
 
 ```
-fn SortVectorDeduced[T:$ Comparable](a: Vector(T)*) { ... }
+fn SortVectorDeduced[T:! Comparable](a: Vector(T)*) { ... }
 ```
 
 The `T` parameter is defined in square brackets before the explicit parameter
@@ -296,7 +295,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[Type:$ T, Type:$ U](x: T) -> U { ... }
+fn Illegal[Type:! T, Type:! U](x: T) -> U { ... }
 ```
 
 #### Generic type parameters
@@ -305,7 +304,7 @@ A function with a generic type parameter can have the same function body as an
 unparameterized one.
 
 ```
-fn PrintIt[T:$ Printable](p: T*) {
+fn PrintIt[T:! Printable](p: T*) {
   p->Print();
 }
 
@@ -334,13 +333,13 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  method (this: Self) IsEqual(that: Self) -> Bool;
+  fn IsEqual[me: Self](that: Self) -> Bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
   impl as Equatable;
-  method (this: Self*) Advance();
+  fn Advance[addr me: Self*]();
 }
 ```
 
@@ -353,13 +352,13 @@ interface.
 // `Hashable` extends `Equatable`.
 interface Hashable {
   extends Equatable;
-  method (this: Self) Hash() -> UInt64;
+  fn Hash[me: Self]() -> UInt64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
   impl as Equatable;
   alias IsEqual = Equatable.IsEqual;
-  method (this: Self) Hash() -> UInt64;
+  fn Hash[me: Self]() -> UInt64;
 }
 ```
 
@@ -370,8 +369,8 @@ methods in the child implementation.
 struct Key {
   // ...
   impl as Hashable {
-    method (this: Key) IsEqual(that: Key) -> Bool { ... }
-    method (this: Key) Hash() -> UInt64 { ... }
+    fn IsEqual[me: Key](that: Key) -> Bool { ... }
+    fn Hash[me: Key]() -> UInt64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -387,17 +386,17 @@ It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  method (this: Self) GetCenter() -> (Int, Int);
+  fn GetCenter[me: Self]() -> (Int, Int);
   // Draw the object to the screen
-  method (this: Self) Draw();
+  fn Draw[me: Self]();
 }
 interface EndOfGame {
-  method (this: Self*) SetWinner(player: Int);
+  fn SetWinner[addr me: Self*](player: Int);
   // Indicate the game was a draw
-  method (this: Self*) Draw();
+  fn Draw[addr me: Self*]();
 }
 
-fn F[T:$ Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
+fn F[T:! Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
   game_state->SetWinner(1);
   return game_state->Center();
 }
@@ -407,7 +406,7 @@ Names with conflicts can be accessed using the
 [qualified syntax](#qualified-and-unqualified-access).
 
 ```
-fn BothDraws[T:$ Renderable & EndOfGame](game_state: T*) {
+fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
   game_state->(Renderable.Draw)();
   game_state->(GameState.Draw)();
 }
@@ -430,7 +429,7 @@ structural interface Combined {
   alias SetWinner = EndOfGame.SetWinner;
 }
 
-fn CallItAll[T:$ Combined](game_state: T*, int winner) {
+fn CallItAll[T:! Combined](game_state: T*, int winner) {
   if (winner > 0) {
     game_state->SetWinner(winner);
   } else {
@@ -462,7 +461,7 @@ struct CDCover  {
 it can be passed to this `PrintIt` function:
 
 ```
-fn PrintIt[T:$ Printable](p: T*) {
+fn PrintIt[T:! Printable](p: T*) {
   p->Print();
 }
 ```
