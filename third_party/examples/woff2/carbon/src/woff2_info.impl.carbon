@@ -19,7 +19,12 @@ fn PrintTag(tag: int) -> std::string {
   if (tag & 0x80808080) {
     return std::string("_xfm");  // print _xfm for xform tables (else garbage)
   }
-  var printable: char[];
+  var printable: char[] = {
+    static_cast<char>((tag >> 24) & 0xFF),
+    static_cast<char>((tag >> 16) & 0xFF),
+    static_cast<char>((tag >> 8) & 0xFF),
+    static_cast<char>(tag & 0xFF)
+  };
   return std::string(printable, 4);
 }
 
@@ -31,13 +36,14 @@ fn main(argc: int, argv: char**) -> int {
     return 1;
   }
 
-  var filename: string;
-  var outfilename: string;
+  var filename: string(argv[1]);
+  var outfilename: string = filename.substr(0, filename.find_last_of('.')) + ".woff2";
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
-  var input: string;
+  var input: string = woff2::GetFileContent(filename);
 
-  var file: woff2::Buffer;
+  var file: woff2::Buffer(reinterpret_cast<const uint8_t*>(input.data()),
+    input.size());
 
   printf("WOFF2Header\n");
   var signature: uint32_t, var flavor: uint32_t, var length: uint32_t, var totalSfntSize: uint32_t, var totalCompressedSize: uint32_t;
@@ -94,8 +100,8 @@ fn main(argc: int, argv: char**) -> int {
   var table_tags: std::vector<uint32_t>;
   printf("TableDirectory starts at +%zu\n", file.offset());
   printf("Entry offset flags tag  origLength txLength\n");
-  for (var i: auto; i < num_tables; i++) {
-    var offset: size_t;
+  for (var i: auto = 0; i < num_tables; i++) {
+    var offset: size_t = file.offset();
     var flags: uint8_t;
     var tag: uint32_t, var origLength: uint32_t, var transformLength: uint32_t;
     if (!file.ReadU8(&flags)) { return 1;
@@ -113,7 +119,7 @@ fn main(argc: int, argv: char**) -> int {
     printf("%5d %6zu  0x%02x %s %10d", i, offset, flags,
         PrintTag(tag).c_str(), origLength);
 
-    var xform_version: uint8_t;
+    var xform_version: uint8_t = (flags >> 6) & 0x3;
     if (tag == woff2::kGlyfTableTag || tag == woff2::kLocaTableTag) {
       if (xform_version == 0) {
         if (!ReadBase128(&file, &transformLength)) { return 1;
@@ -137,7 +143,7 @@ fn main(argc: int, argv: char**) -> int {
 }
     printf("CollectionHeader 0x%08x %d fonts\n", version, numFonts);
 
-    for (var i: auto; i < numFonts; i++) {
+    for (var i: auto = 0; i < numFonts; i++) {
       var numTables: uint32_t, var flavor: uint32_t;
       if (!woff2::Read255UShort(&file, &numTables)) { return 1;
 }
@@ -145,7 +151,7 @@ fn main(argc: int, argv: char**) -> int {
 }
       printf("CollectionFontEntry %d flavor 0x%08x %d tables\n", i, flavor,
           numTables);
-      for (var j: auto; j < numTables; j++) {
+      for (var j: auto = 0; j < numTables; j++) {
         var table_idx: uint32_t;
         if (!woff2::Read255UShort(&file, &table_idx)) { return 1;
 }
