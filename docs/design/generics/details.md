@@ -104,7 +104,7 @@ implementation as a member:
 The function can decide whether that type argument is passed in
 [statically](terminology.md#static-dispatch-witness-table) (basically generating
 a separate function body for every different type passed in) by using the
-"generic argument" syntax (`:$`, see [the generics section](#generics) below) or
+"generic argument" syntax (`:!`, see [the generics section](#generics) below) or
 [dynamically](terminology.md#dynamic-dispatch-witness-table) using the regular
 argument syntax (just a colon, `:`, see
 [the runtime type parameters section](#runtime-type-parameters) below). Either
@@ -500,13 +500,13 @@ Now let us write a function that can accept values of any type that has
 implemented the `Vector` interface:
 
 ```
-fn AddAndScaleGeneric[T:$ Vector](a: T, b: T, s: Double) -> T {
+fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
   return a.Add(b).Scale(s);
 }
 var v: Point = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-Here `T` is a type whose type is `Vector`. The `:$` syntax means that `T` is a
+Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
 _[generic parameter](terminology.md#generic-versus-template-parameters)_, that
 is it must be known to the caller but we will only use the information present
 in the signature of the function to typecheck the body of `AddAndScaleGeneric`'s
@@ -574,7 +574,7 @@ The underlying model here is interfaces are
 -   Facet types (defined by [Impls](#implementing-interfaces)) are
     [witness table](terminology.md#witness-tables) values
 -   The compiler rewrites functions with an implicit type argument
-    (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
+    (`fn Foo[InterfaceName:! T](...)`) to have an actual argument with type
     determined by the interface, and supplied at the callsite using a value
     determined by the impl.
 
@@ -584,7 +584,7 @@ defining a witness table type like:
 ```
 struct Vector {
   // Self is the representation type.
-  var Self:$ Type;
+  var Self:! Type;
   // `fnty` is **placeholder** syntax for a "function type",
   // so `Add` is a function that takes two `Self` parameters
   // and returns a value of type `Self`.
@@ -616,14 +616,14 @@ witness table an explicit argument to the function:
 
 ```
 fn AddAndScaleGeneric
-    (impl:$ Vector, a: impl.Self, b: impl.Self, s: Double) -> impl.Self {
+    (impl:! Vector, a: impl.Self, b: impl.Self, s: Double) -> impl.Self {
   return impl.Scale(impl.Add(a, b), s);
 }
 // Point implements Vector.
 var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
 ```
 
-The rule is that generic arguments (declared using `:$`) are passed at compile
+The rule is that generic arguments (declared using `:!`) are passed at compile
 time, so the actual value of the `impl` argument here can be used to generate
 the code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 [static-dispatch witness table](terminology.md#static-dispatch-witness-table).
@@ -716,7 +716,7 @@ That is, `Type` is the type-of-type with no requirements (so matches every
 type), and defines no names.
 
 ```
-fn Identity[T:$ Type](x: T) -> T {
+fn Identity[T:! Type](x: T) -> T {
   // Can accept values of any type. But, since we no nothing about the
   // type, we don't know about any operations on `x` inside this function.
   return x;
@@ -726,12 +726,12 @@ var i: Int = Identity(3);
 var s: String = Identity("string");
 ```
 
-**Aside:** We can define `auto` as syntactic sugar for `(_:$$ Type)`. This
-definition allows you to use `auto` as the type for a local variable whose type
-can be statically determined by the compiler. It also allows you to use `auto`
-as the type of a function parameter, to mean "accepts a value of any type, and
-this function will be instantiated separately for every different type." This is
-consistent with the
+**Aside:** We can define `auto` as syntactic sugar for `(template _:! Type)`.
+This definition allows you to use `auto` as the type for a local variable whose
+type can be statically determined by the compiler. It also allows you to use
+`auto` as the type of a function parameter, to mean "accepts a value of any
+type, and this function will be instantiated separately for every different
+type." This is consistent with the
 [use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
 
 In general we should support the same kinds of declarations in a
@@ -809,10 +809,10 @@ structural interface JustPrint {
   impl as Printable;
 }
 
-fn PrintIt[T2:$ JustPrint](x2: T2) {
+fn PrintIt[T2:! JustPrint](x2: T2) {
   x2.(Printable.Print)();
 }
-fn PrintDrawPrint[T1:$ PrintAndRender](x1: T1) {
+fn PrintDrawPrint[T1:! PrintAndRender](x1: T1) {
   // x1 implements `Printable` and `Renderable`.
   x1.(Printable.Print)();
   x1.(Renderable.Draw)();
@@ -849,7 +849,7 @@ structural interface {
   alias Draw = Renderable.Draw;
 }
 
-fn PrintThenDraw[T:$ Printable & Renderable](x: T) {
+fn PrintThenDraw[T:! Printable & Renderable](x: T) {
   // Can use methods of `Printable` or `Renderable` on `x` here.
   x.Print();  // Same as `x.(Printable.Print)();`.
   x.Draw();  // Same as `x.(Renderable.Draw)();`.
@@ -908,7 +908,7 @@ structural interface RenderableAndEndOfGame {
   alias Winner = EndOfGame.Winner;
 }
 
-fn RenderTieGame[T:$ RenderableAndEndOfGame](x: T) {
+fn RenderTieGame[T:! RenderableAndEndOfGame](x: T) {
   // Calls Renderable.Draw()
   x.RenderableDraw();
   // Calls EndOfGame.Draw()
@@ -995,7 +995,7 @@ interface Iterable {
   impl as Equatable;
 }
 
-def DoAdvanceAndEquals[T:$ Iterable](x: T) {
+def DoAdvanceAndEquals[T:! Iterable](x: T) {
   // `x` has type `T` that implements `Iterable`, and so has `Advance`.
   x.Advance();
   // `Iterable` requires an implementation of `Equatable`,
@@ -1022,7 +1022,7 @@ interface Hashable {
   alias Equals = Equatable.Equals;
 }
 
-def DoHashAndEquals[T:$ Hashable](x: T) {
+def DoHashAndEquals[T:! Hashable](x: T) {
   // Now both `Hash` and `Equals` are available directly:
   x.Hash();
   x.Equals(x);
@@ -1118,11 +1118,11 @@ in parameters or constraints of the interface being extended.
 ```
 // A type can implement `ConvertibleTo` many times, using
 // different values of `T`.
-interface ConvertibleTo(T:$ Type) { ... }
+interface ConvertibleTo(T:! Type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  var AssociatedType:$ Type;
+  var AssociatedType:! Type;
   extends ConvertibleTo(AssociatedType);
 }
 ```
@@ -1283,7 +1283,7 @@ the capabilities of the iterator being passed in:
 
 ```
 interface ForwardIterator {
-  var Element:$ Type;
+  var Element:! Type;
   method (this: Self*) Advance();
   method (this: Self) Get() -> Element;
 }
@@ -1298,14 +1298,14 @@ interface RandomAccessIterator {
 }
 
 fn SearchInSortedList
-    [T:$ Comparable, IterT:$ ForwardIterator(.Element = T)]
+    [T:! Comparable, IterT:! ForwardIterator(.Element = T)]
     (begin: IterT, end: IterT, needle: T) -> Bool {
   ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
 fn SearchInSortedList
-    [T:$ Comparable, IterT:$ RandomAccessIterator(.Element = T)]
+    [T:! Comparable, IterT:! RandomAccessIterator(.Element = T)]
     (begin: IterT, end: IterT, needle: T) -> Bool {
   ... // does binary search
 }
@@ -1330,7 +1330,7 @@ Now consider a type with a generic type parameter, like a hash map type:
 
 ```
 interface Hashable { ... }
-struct HashMap(KeyT:$ Hashable, ValueT:$ Type) { ... }
+struct HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
 ```
 
 If we write something like `HashMap(String, Int)` the type we actually get is:
@@ -1354,7 +1354,7 @@ constraints than the type requires:
 
 ```
 fn PrintValue
-    [KeyT:$ Printable & Hashable, ValueT:$ Printable]
+    [KeyT:! Printable & Hashable, ValueT:! Printable]
     (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
 
 var m: HashMap(String, Int);
