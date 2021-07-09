@@ -22,9 +22,8 @@ auto Expression::GetIndexExpression() const -> const IndexExpression& {
   return std::get<IndexExpression>(value);
 }
 
-auto Expression::GetPatternVariableExpression() const
-    -> const PatternVariableExpression& {
-  return std::get<PatternVariableExpression>(value);
+auto Expression::GetBindingExpression() const -> const BindingExpression& {
+  return std::get<BindingExpression>(value);
 }
 
 auto Expression::GetIntLiteral() const -> int {
@@ -106,12 +105,12 @@ auto Expression::MakeIdentifierExpression(int line_num, std::string var)
   return v;
 }
 
-auto Expression::MakePatternVariableExpression(int line_num, std::string var,
-                                               const Expression* type)
+auto Expression::MakeBindingExpression(int line_num, std::string var,
+                                       const Expression* type)
     -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value = PatternVariableExpression({.name = std::move(var), .type = type});
+  v->value = BindingExpression({.name = std::move(var), .type = type});
   return v;
 }
 
@@ -281,10 +280,10 @@ void PrintExp(const Expression* e) {
     case ExpressionKind::IdentifierExpression:
       std::cout << e->GetIdentifierExpression().name;
       break;
-    case ExpressionKind::PatternVariableExpression:
-      PrintExp(e->GetPatternVariableExpression().type);
+    case ExpressionKind::BindingExpression:
+      PrintExp(e->GetBindingExpression().type);
       std::cout << ": ";
-      std::cout << e->GetPatternVariableExpression().name;
+      std::cout << e->GetBindingExpression().name;
       break;
     case ExpressionKind::CallExpression:
       PrintExp(e->GetCallExpression().function);

@@ -33,7 +33,7 @@ enum class ExpressionKind {
   IntTypeLiteral,
   ContinuationTypeLiteral,  // The type of a continuation value.
   IntLiteral,
-  PatternVariableExpression,
+  BindingExpression,
   PrimitiveOperatorExpression,
   TupleLiteral,
   TypeTypeLiteral,
@@ -72,9 +72,8 @@ struct IndexExpression {
   const Expression* offset;
 };
 
-struct PatternVariableExpression {
-  static constexpr ExpressionKind Kind =
-      ExpressionKind::PatternVariableExpression;
+struct BindingExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
   std::string name;
   const Expression* type;
 };
@@ -140,8 +139,8 @@ struct Expression {
 
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
-  static auto MakePatternVariableExpression(int line_num, std::string var,
-                                            const Expression* type)
+  static auto MakeBindingExpression(int line_num, std::string var,
+                                    const Expression* type)
       -> const Expression*;
   static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
   static auto MakeBoolLiteral(int line_num, bool b) -> const Expression*;
@@ -168,7 +167,7 @@ struct Expression {
   auto GetIdentifierExpression() const -> const IdentifierExpression&;
   auto GetFieldAccessExpression() const -> const FieldAccessExpression&;
   auto GetIndexExpression() const -> const IndexExpression&;
-  auto GetPatternVariableExpression() const -> const PatternVariableExpression&;
+  auto GetBindingExpression() const -> const BindingExpression&;
   auto GetIntLiteral() const -> int;
   auto GetBoolLiteral() const -> bool;
   auto GetTupleLiteral() const -> const TupleLiteral&;
@@ -179,7 +178,7 @@ struct Expression {
 
  private:
   std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,
-               PatternVariableExpression, IntLiteral, BoolLiteral, TupleLiteral,
+               BindingExpression, IntLiteral, BoolLiteral, TupleLiteral,
                PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
                AutoTypeLiteral, BoolTypeLiteral, IntTypeLiteral,
                ContinuationTypeLiteral, TypeTypeLiteral>
