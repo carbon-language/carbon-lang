@@ -22,7 +22,7 @@ execution to the caller. If the function returns a value to the caller, that
 value is provided by an expression in the return statement. For example:
 
 ```carbon
-fn Sum(Int a, Int b) -> Int {
+fn Sum(a: Int, b: Int) -> Int {
   return a + b;
 }
 ```
