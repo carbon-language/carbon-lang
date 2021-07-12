@@ -71,9 +71,10 @@ class MatcherFactory {
       const clang::ast_matchers::MatchFinder::MatchResult* match_result,
       Matcher::ReplacementMap* replacements) -> std::unique_ptr<Matcher> = 0;
 
-  // Returns the AST matcher which determines when the Matcher is instantiated
-  // and run.
-  virtual auto GetAstMatcher() -> clang::ast_matchers::DeclarationMatcher = 0;
+  // Adds the Matcher to the finder with the provided callback.
+  virtual void AddMatcher(
+      clang::ast_matchers::MatchFinder* finder,
+      clang::ast_matchers::MatchFinder::MatchCallback* callback) = 0;
 };
 
 // A convenience factory that implements CreateMatcher for Matchers that have a
