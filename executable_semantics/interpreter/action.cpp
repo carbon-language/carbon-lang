@@ -17,23 +17,85 @@
 
 namespace Carbon {
 
+auto Action::MakeLValAction(const Expression* e) -> Action* {
+  auto* act = new Action();
+  act->value = LValAction{.exp = e};
+  return act;
+}
+
+auto Action::MakeExpressionAction(const Expression* e) -> Action* {
+  auto* act = new Action();
+  act->value = ExpressionAction{.exp = e};
+  return act;
+}
+
+auto Action::MakeStatementAction(const Statement* s) -> Action* {
+  auto* act = new Action();
+  act->value = StatementAction{.stmt = s};
+  return act;
+}
+
+auto Action::MakeValAction(const Value* v) -> Action* {
+  auto* act = new Action();
+  act->value = ValAction{.val = v};
+  return act;
+}
+
+auto Action::MakeExpToLValAction() -> Action* {
+  auto* act = new Action();
+  act->value = ExpToLValAction();
+  return act;
+}
+
+auto Action::MakeDeleteTmpAction(Address a) -> Action* {
+  auto* act = new Action();
+  act->value = DeleteTmpAction{.delete_tmp = a};
+  return act;
+}
+
+auto Action::GetLValAction() const -> const LValAction& {
+  return std::get<LValAction>(value);
+}
+
+auto Action::GetExpressionAction() const -> const ExpressionAction& {
+  return std::get<ExpressionAction>(value);
+}
+
+auto Action::GetStatementAction() const -> const StatementAction& {
+  return std::get<StatementAction>(value);
+}
+
+auto Action::GetValAction() const -> const ValAction& {
+  return std::get<ValAction>(value);
+}
+
+auto Action::GetExpToLValAction() const -> const ExpToLValAction& {
+  return std::get<ExpToLValAction>(value);
+}
+
+auto Action::GetDeleteTmpAction() const -> const DeleteTmpAction& {
+  return std::get<DeleteTmpAction>(value);
+}
+
 void PrintAct(Action* act, std::ostream& out) {
-  switch (act->tag) {
+  switch (act->tag()) {
     case ActionKind::DeleteTmpAction:
-      std::cout << "delete_tmp(" << act->u.delete_tmp << ")";
+      std::cout << "delete_tmp(" << act->GetDeleteTmpAction().delete_tmp << ")";
       break;
     case ActionKind::ExpToLValAction:
       out << "exp=>lval";
       break;
     case ActionKind::LValAction:
+      PrintExp(act->GetLValAction().exp);
+      break;
     case ActionKind::ExpressionAction:
-      PrintExp(act->u.exp);
+      PrintExp(act->GetExpressionAction().exp);
       break;
     case ActionKind::StatementAction:
-      PrintStatement(act->u.stmt, 1);
+      PrintStatement(act->GetStatementAction().stmt, 1);
       break;
     case ActionKind::ValAction:
-      PrintValue(act->u.val, out);
+      PrintValue(act->GetValAction().val, out);
       break;
   }
   out << "<" << act->pos << ">";
@@ -57,53 +119,6 @@ void PrintActList(Stack<Action*> ls, std::ostream& out) {
       PrintActList(ls, out);
     }
   }
-}
-
-auto MakeExpAct(const Expression* e) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ExpressionAction;
-  act->u.exp = e;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeLvalAct(const Expression* e) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::LValAction;
-  act->u.exp = e;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeStmtAct(const Statement* s) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::StatementAction;
-  act->u.stmt = s;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeValAct(const Value* v) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ValAction;
-  act->u.val = v;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeExpToLvalAct() -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ExpToLValAction;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeDeleteAct(Address a) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::DeleteTmpAction;
-  act->pos = 0;
-  act->u.delete_tmp = a;
-  return act;
 }
 
 }  // namespace Carbon

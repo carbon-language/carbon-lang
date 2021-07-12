@@ -24,30 +24,82 @@ enum class ActionKind {
   DeleteTmpAction
 };
 
+struct LValAction {
+  static constexpr ActionKind Kind = ActionKind::LValAction;
+  const Expression* exp;
+};
+
+struct ExpressionAction {
+  static constexpr ActionKind Kind = ActionKind::ExpressionAction;
+  const Expression* exp;
+};
+
+struct StatementAction {
+  static constexpr ActionKind Kind = ActionKind::StatementAction;
+  const Statement* stmt;
+};
+
+struct ValAction {
+  static constexpr ActionKind Kind = ActionKind::ValAction;
+  const Value* val;
+};
+
+struct ExpToLValAction {
+  static constexpr ActionKind Kind = ActionKind::ExpToLValAction;
+};
+
+struct DeleteTmpAction {
+  static constexpr ActionKind Kind = ActionKind::DeleteTmpAction;
+  Address delete_tmp;
+};
+
 struct Action {
-  ActionKind tag;
-  union {
-    const Expression* exp;  // for LValAction and ExpressionAction
-    const Statement* stmt;
-    const Value* val;  // for finished actions with a value (ValAction)
-    Address delete_tmp;
-  } u;
-  int pos;  // position or state of the action, starts at 0 and goes up to
-  // the number of subexpressions.
+  inline auto tag() const -> ActionKind;
+
+  static auto MakeLValAction(const Expression* e) -> Action*;
+  static auto MakeExpressionAction(const Expression* e) -> Action*;
+  static auto MakeStatementAction(const Statement* s) -> Action*;
+  static auto MakeValAction(const Value* v) -> Action*;
+  static auto MakeExpToLValAction() -> Action*;
+  static auto MakeDeleteTmpAction(Address a) -> Action*;
+
+  auto GetLValAction() const -> const LValAction&;
+  auto GetExpressionAction() const -> const ExpressionAction&;
+  auto GetStatementAction() const -> const StatementAction&;
+  auto GetValAction() const -> const ValAction&;
+  auto GetExpToLValAction() const -> const ExpToLValAction&;
+  auto GetDeleteTmpAction() const -> const DeleteTmpAction&;
+
+  // The position or state of the action. Starts at 0 and goes up to the number
+  // of subexpressions.
+  //
   // pos indicates how many of the entries in the following `results` vector
   // will be filled in the next time this action is active.
   // For each i < pos, results[i] contains a pointer to a Value.
-  std::vector<const Value*> results;  // results from subexpression
+  int pos = 0;
+
+  // Results from a subexpression.
+  std::vector<const Value*> results;
+
+ private:
+  std::variant<LValAction, ExpressionAction, StatementAction, ValAction,
+               ExpToLValAction, DeleteTmpAction>
+      value;
 };
 
 void PrintAct(Action* act, std::ostream& out);
 void PrintActList(Stack<Action*> ls, std::ostream& out);
-auto MakeExpAct(const Expression* e) -> Action*;
-auto MakeLvalAct(const Expression* e) -> Action*;
-auto MakeStmtAct(const Statement* s) -> Action*;
-auto MakeValAct(const Value* v) -> Action*;
-auto MakeExpToLvalAct() -> Action*;
-auto MakeDeleteAct(Address a) -> Action*;
+
+struct ActionTagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> ActionKind {
+    return Alternative::Kind;
+  }
+};
+
+auto Action::tag() const -> ActionKind {
+  return std::visit(ActionTagVisitor(), value);
+}
 
 }  // namespace Carbon
 
