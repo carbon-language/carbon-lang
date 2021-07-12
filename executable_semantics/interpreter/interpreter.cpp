@@ -26,9 +26,7 @@ State* state = nullptr;
 auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
 auto Step() -> void;
-auto GetMember(Address a, const std::string& f, int line_num) -> Address;
-auto GetMember(const Value* v, const std::string& f, int line_num)
-    -> const Value*;
+auto GetMember(const Value* v, const std::string& f, int line_num) -> Address;
 //
 // Auxiliary Functions
 //
@@ -641,16 +639,14 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(
-            MakeLvalAct(exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(MakeExpAct(exp->GetFieldAccessExpression().aggregate));
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         const Value* str = act->results[0];
-        Address a =
-            GetMember(ValToPtr(str, exp->line_num),
-                      exp->GetFieldAccessExpression().field, exp->line_num);
+        Address a = GetMember(str, exp->GetFieldAccessExpression().field,
+                              exp->line_num);
         frame->todo.Pop(1);
         frame->todo.Push(MakeValAct(Value::MakePointerValue(a)));
       }
@@ -820,11 +816,11 @@ void StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        const Value* element =
+        Address element =
             GetMember(act->results[0], exp->GetFieldAccessExpression().field,
                       exp->line_num);
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(element));
+        frame->todo.Push(MakeValAct(state->heap.Read(element, exp->line_num)));
       }
       break;
     }
@@ -1284,49 +1280,7 @@ void StepStmt() {
   }
 }
 
-auto GetMember(const Value* v, const std::string& f, int line_num)
-    -> const Value* {
-  switch (v->tag) {
-    case ValKind::StructValue: {
-      auto a = FindTupleField(f, v->GetStructValue().inits);
-      if (a == std::nullopt) {
-        std::cerr << "runtime error, member " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
-        exit(-1);
-      }
-      return state->heap.Read(*a, line_num);
-    }
-    case ValKind::TupleValue: {
-      auto a = FindTupleField(f, v);
-      if (a == std::nullopt) {
-        std::cerr << "field " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
-        exit(-1);
-      }
-      return state->heap.Read(*a, line_num);
-    }
-    case ValKind::ChoiceType: {
-      if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
-        std::cerr << "alternative " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
-        exit(-1);
-      }
-      return Value::MakeAlternativeConstructorValue(f,
-                                                    *v->GetChoiceType().name);
-    }
-    default:
-      std::cerr << "field access not allowed for value ";
-      PrintValue(v, std::cerr);
-      std::cerr << std::endl;
-      exit(-1);
-  }
-}
-
-auto GetMember(Address a, const std::string& f, int line_num) -> Address {
-  const Value* v = state->heap.Read(a, line_num);
+auto GetMember(const Value* v, const std::string& f, int line_num) -> Address {
   switch (v->tag) {
     case ValKind::StructValue: {
       auto a = FindTupleField(f, v->GetStructValue().inits);
