@@ -165,6 +165,9 @@ This has some downsides:
 -   It is harder to reason about. The behavior of `SongUtil.IsInHashSet` depends
     on the dynamic behavior of the program. At the time of the call, we may have
     no idea where the `HashSet` argument was created.
+-   An object may be created far from a call that has a particular interface
+    requirement, with no guarantee that the object was created with any
+    implementation of the interface at all.
 -   It requires more data space at runtime because we need to store a pointer to
     the witness table representing the implementation with the object, since it
     varies instead of being known statically.
