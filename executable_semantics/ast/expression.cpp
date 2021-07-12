@@ -8,6 +8,21 @@
 
 namespace Carbon {
 
+namespace {
+
+struct TagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> ExpressionKind {
+    return Alternative::Kind;
+  }
+};
+
+}  // namespace
+
+auto Expression::tag() const -> ExpressionKind {
+  return std::visit(TagVisitor(), value);
+}
+
 auto Expression::GetIdentifierExpression() const
     -> const IdentifierExpression& {
   return std::get<IdentifierExpression>(value);

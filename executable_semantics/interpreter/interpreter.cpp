@@ -64,25 +64,25 @@ void Heap::CheckAlive(Address address, int line_num) {
 }
 
 auto CopyVal(const Value* val, int line_num) -> const Value* {
-  switch (val->tag) {
+  switch (val->tag()) {
     case ValKind::TupleValue: {
-      auto* elements = new std::vector<TupleElement>();
-      for (const TupleElement& element : *val->GetTupleValue().elements) {
+      std::vector<TupleElement> elements;
+      for (const TupleElement& element : val->GetTupleValue().elements) {
         const Value* new_element =
             CopyVal(state->heap.Read(element.address, line_num), line_num);
         Address new_address = state->heap.AllocateValue(new_element);
-        elements->push_back({.name = element.name, .address = new_address});
+        elements.push_back({.name = element.name, .address = new_address});
       }
-      return Value::MakeTupleValue(elements);
+      return Value::MakeTupleValue(std::move(elements));
     }
     case ValKind::AlternativeValue: {
       const Value* arg = CopyVal(
           state->heap.Read(val->GetAlternativeValue().argument, line_num),
           line_num);
       Address argument_address = state->heap.AllocateValue(arg);
-      return Value::MakeAlternativeValue(
-          *val->GetAlternativeValue().alt_name,
-          *val->GetAlternativeValue().choice_name, argument_address);
+      return Value::MakeAlternativeValue(val->GetAlternativeValue().alt_name,
+                                         val->GetAlternativeValue().choice_name,
+                                         argument_address);
     }
     case ValKind::StructValue: {
       const Value* inits = CopyVal(val->GetStructValue().inits, line_num);
@@ -93,7 +93,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::BoolValue:
       return Value::MakeBoolValue(val->GetBoolValue());
     case ValKind::FunctionValue:
-      return Value::MakeFunctionValue(*val->GetFunctionValue().name,
+      return Value::MakeFunctionValue(val->GetFunctionValue().name,
                                       val->GetFunctionValue().param,
                                       val->GetFunctionValue().body);
     case ValKind::PointerValue:
@@ -129,7 +129,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
 }
 
 void Heap::DeallocateSubObjects(const Value* val) {
-  switch (val->tag) {
+  switch (val->tag()) {
     case ValKind::AlternativeValue:
       Deallocate(val->GetAlternativeValue().argument);
       break;
@@ -137,7 +137,7 @@ void Heap::DeallocateSubObjects(const Value* val) {
       DeallocateSubObjects(val->GetStructValue().inits);
       break;
     case ValKind::TupleValue:
-      for (const TupleElement& element : *val->GetTupleValue().elements) {
+      for (const TupleElement& element : val->GetTupleValue().elements) {
         Deallocate(element.address);
       }
       break;
@@ -172,7 +172,7 @@ void PrintEnv(Env values, std::ostream& out) {
 void PrintFrame(Frame* frame, std::ostream& out) {
   out << frame->name;
   out << "{";
-  PrintActList(frame->todo, out);
+  Action::PrintList(frame->todo, out);
   out << "}";
 }
 
@@ -223,7 +223,7 @@ void PrintState(std::ostream& out) {
 //
 
 auto ValToInt(const Value* v, int line_num) -> int {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::IntValue:
       return v->GetIntValue();
     default:
@@ -234,7 +234,7 @@ auto ValToInt(const Value* v, int line_num) -> int {
 }
 
 auto ValToBool(const Value* v, int line_num) -> int {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::BoolValue:
       return v->GetBoolValue();
     default:
@@ -244,7 +244,7 @@ auto ValToBool(const Value* v, int line_num) -> int {
 }
 
 auto ValToPtr(const Value* v, int line_num) -> Address {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::PointerValue:
       return v->GetPointerValue();
     default:
@@ -260,8 +260,8 @@ auto ValToPtr(const Value* v, int line_num) -> Address {
 // - Precondition: continuation->tag == ValKind::ContinuationV.
 auto ContinuationToVector(const Value* continuation, int sourceLocation)
     -> std::vector<Frame*> {
-  if (continuation->tag == ValKind::ContinuationValue) {
-    return *continuation->GetContinuationValue().stack;
+  if (continuation->tag() == ValKind::ContinuationValue) {
+    return continuation->GetContinuationValue().stack;
   } else {
     std::cerr << sourceLocation << ": runtime error: expected an integer"
               << std::endl;
@@ -311,30 +311,31 @@ void InitGlobals(std::list<Declaration>* fs) {
 }
 
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
-  auto alts = new VarValues();
+  VarValues alts;
   for (const auto& [name, signature] : alternatives) {
     auto t = InterpExp(Env(), signature);
-    alts->push_back(make_pair(name, t));
+    alts.push_back(make_pair(name, t));
   }
-  auto ct = Value::MakeChoiceType(name, alts);
+  auto ct = Value::MakeChoiceType(name, std::move(alts));
   auto a = state->heap.AllocateValue(ct);
   globals.Set(name, a);
 }
 
 auto StructDeclaration::InitGlobals(Env& globals) const -> void {
-  auto fields = new VarValues();
-  auto methods = new VarValues();
+  VarValues fields;
+  VarValues methods;
   for (auto i = definition.members->begin(); i != definition.members->end();
        ++i) {
     switch ((*i)->tag) {
       case MemberKind::FieldMember: {
         auto t = InterpExp(Env(), (*i)->u.field.type);
-        fields->push_back(make_pair(*(*i)->u.field.name, t));
+        fields.push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
     }
   }
-  auto st = Value::MakeStructType(*definition.name, fields, methods);
+  auto st = Value::MakeStructType(*definition.name, std::move(fields),
+                                  std::move(methods));
   auto a = state->heap.AllocateValue(st);
   globals.Set(*definition.name, a);
 }
@@ -360,7 +361,7 @@ auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
 //       F is the function
 void CallFunction(int line_num, std::vector<const Value*> operas,
                   State* state) {
-  switch (operas[0]->tag) {
+  switch (operas[0]->tag()) {
     case ValKind::FunctionValue: {
       // Bind arguments to parameters
       std::list<std::string> params;
@@ -374,9 +375,9 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       }
       // Create the new frame and push it on the stack
       auto* scope = new Scope(*matches, params);
-      auto* frame =
-          new Frame(*operas[0]->GetFunctionValue().name, Stack(scope),
-                    Stack(MakeStmtAct(operas[0]->GetFunctionValue().body)));
+      auto* frame = new Frame(operas[0]->GetFunctionValue().name, Stack(scope),
+                              Stack(Action::MakeStatementAction(
+                                  operas[0]->GetFunctionValue().body)));
       state->stack.Push(frame);
       break;
     }
@@ -384,17 +385,17 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* sv = Value::MakeStructValue(operas[0], arg);
       Frame* frame = state->stack.Top();
-      frame->todo.Push(MakeValAct(sv));
+      frame->todo.Push(Action::MakeValAction(sv));
       break;
     }
     case ValKind::AlternativeConstructorValue: {
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* av = Value::MakeAlternativeValue(
-          *operas[0]->GetAlternativeConstructorValue().alt_name,
-          *operas[0]->GetAlternativeConstructorValue().choice_name,
+          operas[0]->GetAlternativeConstructorValue().alt_name,
+          operas[0]->GetAlternativeConstructorValue().choice_name,
           state->heap.AllocateValue(arg));
       Frame* frame = state->stack.Top();
-      frame->todo.Push(MakeValAct(av));
+      frame->todo.Push(Action::MakeValAction(av));
       break;
     }
     default:
@@ -422,18 +423,19 @@ void DeallocateLocals(int line_num, Frame* frame) {
   }
 }
 
-void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
+void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
-  auto elements = new std::vector<TupleElement>();
-  auto f = act->u.exp->GetTupleLiteral().fields.begin();
+  std::vector<TupleElement> elements;
+  auto f = exp->GetTupleLiteral().fields.begin();
+
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = state->heap.AllocateValue(*i);  // copy?
-    elements->push_back({.name = f->name, .address = a});
+    elements.push_back({.name = f->name, .address = a});
   }
-  const Value* tv = Value::MakeTupleValue(elements);
+  const Value* tv = Value::MakeTupleValue(std::move(elements));
   frame->todo.Pop(1);
-  frame->todo.Push(MakeValAct(tv));
+  frame->todo.Push(Action::MakeValAction(tv));
 }
 
 // Returns an updated environment that includes the bindings of
@@ -444,23 +446,23 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
 auto PatternMatch(const Value* p, const Value* v, Env values,
                   std::list<std::string>* vars, int line_num)
     -> std::optional<Env> {
-  switch (p->tag) {
+  switch (p->tag()) {
     case ValKind::BindingPlaceholderValue: {
       Address a = state->heap.AllocateValue(CopyVal(v, line_num));
-      vars->push_back(*p->GetBindingPlaceholderValue().name);
-      values.Set(*p->GetBindingPlaceholderValue().name, a);
+      vars->push_back(p->GetBindingPlaceholderValue().name);
+      values.Set(p->GetBindingPlaceholderValue().name, a);
       return values;
     }
     case ValKind::TupleValue:
-      switch (v->tag) {
+      switch (v->tag()) {
         case ValKind::TupleValue: {
-          if (p->GetTupleValue().elements->size() !=
-              v->GetTupleValue().elements->size()) {
+          if (p->GetTupleValue().elements.size() !=
+              v->GetTupleValue().elements.size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (const TupleElement& element : *p->GetTupleValue().elements) {
+          for (const TupleElement& element : p->GetTupleValue().elements) {
             auto a = FindTupleField(element.name, v);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << element.name << "not in ";
@@ -486,12 +488,12 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           exit(-1);
       }
     case ValKind::AlternativeValue:
-      switch (v->tag) {
+      switch (v->tag()) {
         case ValKind::AlternativeValue: {
-          if (*p->GetAlternativeValue().choice_name !=
-                  *v->GetAlternativeValue().choice_name ||
-              *p->GetAlternativeValue().alt_name !=
-                  *v->GetAlternativeValue().alt_name) {
+          if (p->GetAlternativeValue().choice_name !=
+                  v->GetAlternativeValue().choice_name ||
+              p->GetAlternativeValue().alt_name !=
+                  v->GetAlternativeValue().alt_name) {
             return std::nullopt;
           }
           std::optional<Env> matches = PatternMatch(
@@ -512,7 +514,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           exit(-1);
       }
     case ValKind::FunctionType:
-      switch (v->tag) {
+      switch (v->tag()) {
         case ValKind::FunctionType: {
           std::optional<Env> matches =
               PatternMatch(p->GetFunctionType().param,
@@ -537,21 +539,21 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 }
 
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
-  switch (pat->tag) {
+  switch (pat->tag()) {
     case ValKind::PointerValue:
       state->heap.Write(ValToPtr(pat, line_num), CopyVal(val, line_num),
                         line_num);
       break;
     case ValKind::TupleValue: {
-      switch (val->tag) {
+      switch (val->tag()) {
         case ValKind::TupleValue: {
-          if (pat->GetTupleValue().elements->size() !=
-              val->GetTupleValue().elements->size()) {
+          if (pat->GetTupleValue().elements.size() !=
+              val->GetTupleValue().elements.size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (const TupleElement& element : *pat->GetTupleValue().elements) {
+          for (const TupleElement& element : pat->GetTupleValue().elements) {
             auto a = FindTupleField(element.name, val);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << element.name << "not in ";
@@ -575,12 +577,12 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       break;
     }
     case ValKind::AlternativeValue: {
-      switch (val->tag) {
+      switch (val->tag()) {
         case ValKind::AlternativeValue: {
-          if (*pat->GetAlternativeValue().choice_name !=
-                  *val->GetAlternativeValue().choice_name ||
-              *pat->GetAlternativeValue().alt_name !=
-                  *val->GetAlternativeValue().alt_name) {
+          if (pat->GetAlternativeValue().choice_name !=
+                  val->GetAlternativeValue().choice_name ||
+              pat->GetAlternativeValue().alt_name !=
+                  val->GetAlternativeValue().alt_name) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
@@ -613,7 +615,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
 void StepLvalue() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  const Expression* exp = act->u.exp;
+  const Expression* exp = act->GetLValAction().exp;
   if (tracing_output) {
     std::cout << "--- step lvalue ";
     PrintExp(exp);
@@ -632,14 +634,15 @@ void StepLvalue() {
       }
       const Value* v = Value::MakePointerValue(*pointer);
       frame->todo.Pop();
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(Action::MakeValAction(v));
       break;
     }
     case ExpressionKind::FieldAccessExpression: {
       if (act->pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFieldAccessExpression().aggregate));
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
@@ -648,7 +651,7 @@ void StepLvalue() {
         Address a = GetMember(str, exp->GetFieldAccessExpression().field,
                               exp->line_num);
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(Value::MakePointerValue(a)));
+        frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(a)));
       }
       break;
     }
@@ -656,10 +659,12 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetIndexExpression().aggregate));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetIndexExpression().aggregate));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(exp->GetIndexExpression().offset));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetIndexExpression().offset));
         act->pos++;
       } else if (act->pos == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
@@ -674,7 +679,7 @@ void StepLvalue() {
           exit(-1);
         }
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(Value::MakePointerValue(*a)));
+        frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(*a)));
       }
       break;
     }
@@ -683,7 +688,7 @@ void StepLvalue() {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
         const Expression* e1 = exp->GetTupleLiteral().fields[0].expression;
-        frame->todo.Push(MakeLvalAct(e1));
+        frame->todo.Push(Action::MakeLValAction(e1));
         act->pos++;
       } else if (act->pos !=
                  static_cast<int>(exp->GetTupleLiteral().fields.size())) {
@@ -693,7 +698,7 @@ void StepLvalue() {
         // H}
         const Expression* elt =
             exp->GetTupleLiteral().fields[act->pos].expression;
-        frame->todo.Push(MakeLvalAct(elt));
+        frame->todo.Push(Action::MakeLValAction(elt));
         act->pos++;
       } else {
         CreateTuple(frame, act, exp);
@@ -724,7 +729,7 @@ void StepLvalue() {
 void StepExp() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  const Expression* exp = act->u.exp;
+  const Expression* exp = act->GetExpressionAction().exp;
   if (tracing_output) {
     std::cout << "--- step exp ";
     PrintExp(exp);
@@ -733,13 +738,14 @@ void StepExp() {
   switch (exp->tag()) {
     case ExpressionKind::BindingExpression: {
       if (act->pos == 0) {
-        frame->todo.Push(MakeExpAct(exp->GetBindingExpression().type));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetBindingExpression().type));
         act->pos++;
       } else {
         auto v = Value::MakeBindingPlaceholderValue(
             exp->GetBindingExpression().name, act->results[0]);
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(v));
+        frame->todo.Push(Action::MakeValAction(v));
       }
       break;
     }
@@ -747,14 +753,16 @@ void StepExp() {
       if (act->pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetIndexExpression().aggregate));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetIndexExpression().aggregate));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(exp->GetIndexExpression().offset));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetIndexExpression().offset));
         act->pos++;
       } else if (act->pos == 2) {
         auto tuple = act->results[0];
-        switch (tuple->tag) {
+        switch (tuple->tag()) {
           case ValKind::TupleValue: {
             //    { { v :: [][i] :: C, E, F} :: S, H}
             // -> { { v_i :: C, E, F} : S, H}
@@ -768,7 +776,7 @@ void StepExp() {
             }
             frame->todo.Pop(1);
             const Value* element = state->heap.Read(*a, exp->line_num);
-            frame->todo.Push(MakeValAct(element));
+            frame->todo.Push(Action::MakeValAction(element));
             break;
           }
           default:
@@ -787,7 +795,7 @@ void StepExp() {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
           const Expression* e1 = exp->GetTupleLiteral().fields[0].expression;
-          frame->todo.Push(MakeExpAct(e1));
+          frame->todo.Push(Action::MakeExpressionAction(e1));
           act->pos++;
         } else {
           CreateTuple(frame, act, exp);
@@ -800,7 +808,7 @@ void StepExp() {
         // H}
         const Expression* elt =
             exp->GetTupleLiteral().fields[act->pos].expression;
-        frame->todo.Push(MakeExpAct(elt));
+        frame->todo.Push(Action::MakeExpressionAction(elt));
         act->pos++;
       } else {
         CreateTuple(frame, act, exp);
@@ -811,7 +819,8 @@ void StepExp() {
       if (act->pos == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFieldAccessExpression().aggregate));
         act->pos++;
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
@@ -820,7 +829,8 @@ void StepExp() {
             GetMember(act->results[0], exp->GetFieldAccessExpression().field,
                       exp->line_num);
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(state->heap.Read(element, exp->line_num)));
+        frame->todo.Push(
+            Action::MakeValAction(state->heap.Read(element, exp->line_num)));
       }
       break;
     }
@@ -836,20 +846,22 @@ void StepExp() {
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(pointee));
+      frame->todo.Push(Action::MakeValAction(pointee));
       break;
     }
     case ExpressionKind::IntLiteral:
       CHECK(act->pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(Value::MakeIntValue(exp->GetIntLiteral())));
+      frame->todo.Push(
+          Action::MakeValAction(Value::MakeIntValue(exp->GetIntLiteral())));
       break;
     case ExpressionKind::BoolLiteral:
       CHECK(act->pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(Value::MakeBoolValue(exp->GetBoolLiteral())));
+      frame->todo.Push(
+          Action::MakeValAction(Value::MakeBoolValue(exp->GetBoolLiteral())));
       break;
     case ExpressionKind::PrimitiveOperatorExpression:
       if (act->pos !=
@@ -859,7 +871,7 @@ void StepExp() {
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         const Expression* arg =
             exp->GetPrimitiveOperatorExpression().arguments[act->pos];
-        frame->todo.Push(MakeExpAct(arg));
+        frame->todo.Push(Action::MakeExpressionAction(arg));
         act->pos++;
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
@@ -867,19 +879,21 @@ void StepExp() {
         const Value* v = EvalPrim(exp->GetPrimitiveOperatorExpression().op,
                                   act->results, exp->line_num);
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(v));
+        frame->todo.Push(Action::MakeValAction(v));
       }
       break;
     case ExpressionKind::CallExpression:
       if (act->pos == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetCallExpression().function));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetCallExpression().function));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetCallExpression().argument));
+        frame->todo.Push(
+            Action::MakeExpressionAction(exp->GetCallExpression().argument));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
@@ -895,38 +909,40 @@ void StepExp() {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeIntType();
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(Action::MakeValAction(v));
       break;
     }
     case ExpressionKind::BoolTypeLiteral: {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeBoolType();
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(Action::MakeValAction(v));
       break;
     }
     case ExpressionKind::AutoTypeLiteral: {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeAutoType();
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(Action::MakeValAction(v));
       break;
     }
     case ExpressionKind::TypeTypeLiteral: {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeTypeType();
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(Action::MakeValAction(v));
       break;
     }
     case ExpressionKind::FunctionTypeLiteral: {
       if (act->pos == 0) {
-        frame->todo.Push(MakeExpAct(exp->GetFunctionTypeLiteral().parameter));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFunctionTypeLiteral().parameter));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetFunctionTypeLiteral().return_type));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFunctionTypeLiteral().return_type));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -934,7 +950,7 @@ void StepExp() {
         const Value* v =
             Value::MakeFunctionType(act->results[0], act->results[1]);
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(v));
+        frame->todo.Push(Action::MakeValAction(v));
       }
       break;
     }
@@ -942,16 +958,16 @@ void StepExp() {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeContinuationType();
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(Action::MakeValAction(v));
       break;
     }
   }  // switch (exp->tag)
 }
 
 auto IsWhileAct(Action* act) -> bool {
-  switch (act->tag) {
+  switch (act->tag()) {
     case ActionKind::StatementAction:
-      switch (act->u.stmt->tag) {
+      switch (act->GetStatementAction().stmt->tag) {
         case StatementKind::While:
           return true;
         default:
@@ -963,9 +979,9 @@ auto IsWhileAct(Action* act) -> bool {
 }
 
 auto IsBlockAct(Action* act) -> bool {
-  switch (act->tag) {
+  switch (act->tag()) {
     case ActionKind::StatementAction:
-      switch (act->u.stmt->tag) {
+      switch (act->GetStatementAction().stmt->tag) {
         case StatementKind::Block:
           return true;
         default:
@@ -981,7 +997,7 @@ auto IsBlockAct(Action* act) -> bool {
 void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  const Statement* stmt = act->u.stmt;
+  const Statement* stmt = act->GetStatementAction().stmt;
   CHECK(stmt != nullptr && "null statement!");
   if (tracing_output) {
     std::cout << "--- step stmt ";
@@ -993,7 +1009,7 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetMatch().exp));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetMatch().exp));
         act->pos++;
       } else {
         // Regarding act->pos:
@@ -1017,7 +1033,7 @@ void StepStmt() {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          frame->todo.Push(MakeExpAct(c->first));
+          frame->todo.Push(Action::MakeExpressionAction(c->first));
           act->pos++;
         } else {  // try to match
           auto v = act->results[0];
@@ -1031,11 +1047,11 @@ void StepStmt() {
             frame->scopes.Push(new_scope);
             const Statement* body_block =
                 Statement::MakeBlock(stmt->line_num, c->second);
-            Action* body_act = MakeStmtAct(body_block);
+            Action* body_act = Action::MakeStatementAction(body_block);
             body_act->pos = 1;
             frame->todo.Pop(1);
             frame->todo.Push(body_act);
-            frame->todo.Push(MakeStmtAct(c->second));
+            frame->todo.Push(Action::MakeStatementAction(c->second));
           } else {
             // this case did not match, moving on
             act->pos++;
@@ -1052,14 +1068,14 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetWhile().cond));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetWhile().cond));
         act->pos++;
       } else if (ValToBool(act->results[0], stmt->line_num)) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
         frame->todo.Top()->pos = 0;
         frame->todo.Top()->results.clear();
-        frame->todo.Push(MakeStmtAct(stmt->GetWhile().body));
+        frame->todo.Push(Action::MakeStatementAction(stmt->GetWhile().body));
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { C, E, F } :: S, H}
@@ -1100,7 +1116,7 @@ void StepStmt() {
         if (stmt->GetBlock().stmt) {
           auto* scope = new Scope(CurrentEnv(state), {});
           frame->scopes.Push(scope);
-          frame->todo.Push(MakeStmtAct(stmt->GetBlock().stmt));
+          frame->todo.Push(Action::MakeStatementAction(stmt->GetBlock().stmt));
           act->pos++;
           act->pos++;
         } else {
@@ -1118,10 +1134,12 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().init));
+        frame->todo.Push(
+            Action::MakeExpressionAction(stmt->GetVariableDefinition().init));
         act->pos++;
       } else if (act->pos == 1) {
-        frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().pat));
+        frame->todo.Push(
+            Action::MakeExpressionAction(stmt->GetVariableDefinition().pat));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
@@ -1146,7 +1164,7 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetExpression()));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetExpression()));
         act->pos++;
       } else {
         frame->todo.Pop(1);
@@ -1156,12 +1174,12 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeLvalAct(stmt->GetAssign().lhs));
+        frame->todo.Push(Action::MakeLValAction(stmt->GetAssign().lhs));
         act->pos++;
       } else if (act->pos == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetAssign().rhs));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetAssign().rhs));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
@@ -1176,20 +1194,20 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetIf().cond));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetIf().cond));
         act->pos++;
       } else if (ValToBool(act->results[0], stmt->line_num)) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { then_stmt :: C, E, F } :: S, H}
         frame->todo.Pop(1);
-        frame->todo.Push(MakeStmtAct(stmt->GetIf().then_stmt));
+        frame->todo.Push(Action::MakeStatementAction(stmt->GetIf().then_stmt));
       } else if (stmt->GetIf().else_stmt) {
         //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
         frame->todo.Pop(1);
-        frame->todo.Push(MakeStmtAct(stmt->GetIf().else_stmt));
+        frame->todo.Push(Action::MakeStatementAction(stmt->GetIf().else_stmt));
       } else {
         frame->todo.Pop(1);
       }
@@ -1198,7 +1216,7 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(stmt->GetReturn()));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetReturn()));
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -1207,7 +1225,7 @@ void StepStmt() {
         DeallocateLocals(stmt->line_num, frame);
         state->stack.Pop(1);
         frame = state->stack.Top();
-        frame->todo.Push(MakeValAct(ret_val));
+        frame->todo.Push(Action::MakeValAction(ret_val));
       }
       break;
     case StatementKind::Sequence:
@@ -1216,9 +1234,9 @@ void StepStmt() {
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       if (stmt->GetSequence().next) {
-        frame->todo.Push(MakeStmtAct(stmt->GetSequence().next));
+        frame->todo.Push(Action::MakeStatementAction(stmt->GetSequence().next));
       }
-      frame->todo.Push(MakeStmtAct(stmt->GetSequence().stmt));
+      frame->todo.Push(Action::MakeStatementAction(stmt->GetSequence().stmt));
       break;
     case StatementKind::Continuation: {
       CHECK(act->pos == 0);
@@ -1228,9 +1246,9 @@ void StepStmt() {
       Stack<Scope*> scopes;
       scopes.Push(scope);
       Stack<Action*> todo;
-      todo.Push(MakeStmtAct(Statement::MakeReturn(
+      todo.Push(Action::MakeStatementAction(Statement::MakeReturn(
           stmt->line_num, Expression::MakeTupleLiteral(stmt->line_num, {}))));
-      todo.Push(MakeStmtAct(stmt->GetContinuation().body));
+      todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
           Value::MakeContinuationValue({continuation_frame}));
@@ -1246,14 +1264,15 @@ void StepStmt() {
     case StatementKind::Run:
       if (act->pos == 0) {
         // Evaluate the argument of the run statement.
-        frame->todo.Push(MakeExpAct(stmt->GetRun().argument));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetRun().argument));
         act->pos++;
       } else {
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
-        Action* ignore_result = MakeStmtAct(Statement::MakeExpStmt(
-            stmt->line_num, Expression::MakeTupleLiteral(stmt->line_num, {})));
+        Action* ignore_result = Action::MakeStatementAction(
+            Statement::MakeExpStmt(stmt->line_num, Expression::MakeTupleLiteral(
+                                                       stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
@@ -1281,7 +1300,7 @@ void StepStmt() {
 }
 
 auto GetMember(const Value* v, const std::string& f, int line_num) -> Address {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::StructValue: {
       auto a = FindTupleField(f, v->GetStructValue().inits);
       if (a == std::nullopt) {
@@ -1310,7 +1329,7 @@ auto GetMember(const Value* v, const std::string& f, int line_num) -> Address {
         exit(-1);
       }
       auto ac =
-          Value::MakeAlternativeConstructorValue(f, *v->GetChoiceType().name);
+          Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
       return state->heap.AllocateValue(ac);
     }
     default:
@@ -1331,11 +1350,11 @@ void Step() {
   }
 
   Action* act = frame->todo.Top();
-  switch (act->tag) {
+  switch (act->tag()) {
     case ActionKind::ValAction: {
       Action* val_act = frame->todo.Pop();
       Action* act = frame->todo.Top();
-      act->results.push_back(val_act->u.val);
+      act->results.push_back(val_act->GetValAction().val);
       break;
     }
     case ActionKind::LValAction:
@@ -1361,7 +1380,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   const Expression* arg = Expression::MakeTupleLiteral(0, {});
   const Expression* call_main = Expression::MakeCallExpression(
       0, Expression::MakeIdentifierExpression(0, "main"), arg);
-  auto todo = Stack(MakeExpAct(call_main));
+  auto todo = Stack(Action::MakeExpressionAction(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);
   state->stack = Stack(frame);
@@ -1373,29 +1392,29 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 
   while (state->stack.CountExceeds(1) ||
          state->stack.Top()->todo.CountExceeds(1) ||
-         state->stack.Top()->todo.Top()->tag != ActionKind::ValAction) {
+         state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
     if (tracing_output) {
       PrintState(std::cout);
     }
   }
-  const Value* v = state->stack.Top()->todo.Top()->u.val;
+  const Value* v = state->stack.Top()->todo.Top()->GetValAction().val;
   return ValToInt(v, 0);
 }
 
 // Interpret an expression at compile-time.
 auto InterpExp(Env values, const Expression* e) -> const Value* {
-  auto todo = Stack(MakeExpAct(e));
+  auto todo = Stack(Action::MakeExpressionAction(e));
   auto* scope = new Scope(values, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);
 
   while (state->stack.CountExceeds(1) ||
          state->stack.Top()->todo.CountExceeds(1) ||
-         state->stack.Top()->todo.Top()->tag != ActionKind::ValAction) {
+         state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
   }
-  const Value* v = state->stack.Top()->todo.Top()->u.val;
+  const Value* v = state->stack.Top()->todo.Top()->GetValAction().val;
   return v;
 }
 

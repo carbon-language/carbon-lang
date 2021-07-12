@@ -10,23 +10,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
-    -   [Declaring constants](#declaring-constants)
+-   [Notes](#notes)
 -   [Alternatives](#alternatives)
-    -   [Declaring constants](#declaring-constants-1)
     -   [Global variables](#global-variables)
+-   [Relevant proposals](#relevant-proposals)
 
 <!-- tocstop -->
 
-## TODO
-
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
-
 ## Overview
+
+Carbon's local variable syntax is:
+
+> `var` _identifier_`:` _type_ _[_ `=` _value_ _]_`;`
 
 Blocks introduce nested scopes and can contain local variable declarations that
 work similarly to function parameters.
@@ -35,7 +31,7 @@ For example:
 
 ```
 fn Foo() {
-  var Int x = 42;
+  var x: Int = 42;
 }
 ```
 
@@ -46,26 +42,11 @@ yet, but this gives you the basic idea.
 
 While there can be global constants, there are no global variables.
 
-### Declaring constants
+## Notes
 
-Constants will use template-like syntax for declarations. For example, a simple
-integer constant looks like:
-
-```carbon
-var Int$$ MyVal = 42;
-```
+> TODO: Constant syntax is an ongoing discussion.
 
 ## Alternatives
-
-### Declaring constants
-
-There is other syntax that could be used for declaring constants. There are
-serious problems with the use of `const` in C++ as part of the type system.
-Another alternative is `let` from Swift, although there are some questions
-around how intuitive it is for this to introduce a constant. Another candidate
-is `val` from Kotlin. Another thing we need to contend with is the surprise of
-const and reference (semantic) types. At present we are leaning towards the
-tempalte-like syntax for consistency within Carbon.
 
 ### Global variables
 
@@ -74,3 +55,11 @@ patterns to replace the important use cases programmers still have for global
 variables. We may be unable to fully address them, at least for migrated code,
 and be forced to add some limited form of global variables back. We may also
 discover that their convenience outweighs any improvements afforded.
+
+## Relevant proposals
+
+Most discussion of design choices and alternatives may be found in relevant
+proposals.
+
+-   [`var` statement](/proposals/p0339.md)
+-   [`var` ordering](/proposals/p0618.md)

@@ -17,23 +17,80 @@
 
 namespace Carbon {
 
-void PrintAct(Action* act, std::ostream& out) {
-  switch (act->tag) {
+namespace {
+
+struct TagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> ActionKind {
+    return Alternative::Kind;
+  }
+};
+
+}  // namespace
+
+auto Action::tag() const -> ActionKind {
+  return std::visit(TagVisitor(), value);
+}
+
+auto Action::MakeLValAction(const Expression* e) -> Action* {
+  auto* act = new Action();
+  act->value = LValAction({.exp = e});
+  return act;
+}
+
+auto Action::MakeExpressionAction(const Expression* e) -> Action* {
+  auto* act = new Action();
+  act->value = ExpressionAction({.exp = e});
+  return act;
+}
+
+auto Action::MakeStatementAction(const Statement* s) -> Action* {
+  auto* act = new Action();
+  act->value = StatementAction({.stmt = s});
+  return act;
+}
+
+auto Action::MakeValAction(const Value* v) -> Action* {
+  auto* act = new Action();
+  act->value = ValAction({.val = v});
+  return act;
+}
+
+auto Action::GetLValAction() const -> const LValAction& {
+  return std::get<LValAction>(value);
+}
+
+auto Action::GetExpressionAction() const -> const ExpressionAction& {
+  return std::get<ExpressionAction>(value);
+}
+
+auto Action::GetStatementAction() const -> const StatementAction& {
+  return std::get<StatementAction>(value);
+}
+
+auto Action::GetValAction() const -> const ValAction& {
+  return std::get<ValAction>(value);
+}
+
+void Action::Print(std::ostream& out) {
+  switch (tag()) {
     case ActionKind::LValAction:
+      PrintExp(GetLValAction().exp);
+      break;
     case ActionKind::ExpressionAction:
-      PrintExp(act->u.exp);
+      PrintExp(GetExpressionAction().exp);
       break;
     case ActionKind::StatementAction:
-      PrintStatement(act->u.stmt, 1);
+      PrintStatement(GetStatementAction().stmt, 1);
       break;
     case ActionKind::ValAction:
-      PrintValue(act->u.val, out);
+      PrintValue(GetValAction().val, out);
       break;
   }
-  out << "<" << act->pos << ">";
-  if (act->results.size() > 0) {
+  out << "<" << pos << ">";
+  if (results.size() > 0) {
     out << "(";
-    for (auto& result : act->results) {
+    for (auto& result : results) {
       if (result) {
         PrintValue(result, out);
       }
@@ -43,46 +100,14 @@ void PrintAct(Action* act, std::ostream& out) {
   }
 }
 
-void PrintActList(Stack<Action*> ls, std::ostream& out) {
+void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
   if (!ls.IsEmpty()) {
-    PrintAct(ls.Pop(), out);
+    PrintList(ls.Pop(), out);
     if (!ls.IsEmpty()) {
       out << " :: ";
-      PrintActList(ls, out);
+      PrintList(ls, out);
     }
   }
-}
-
-auto MakeExpAct(const Expression* e) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ExpressionAction;
-  act->u.exp = e;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeLvalAct(const Expression* e) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::LValAction;
-  act->u.exp = e;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeStmtAct(const Statement* s) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::StatementAction;
-  act->u.stmt = s;
-  act->pos = 0;
-  return act;
-}
-
-auto MakeValAct(const Value* v) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ValAction;
-  act->u.val = v;
-  act->pos = 0;
-  return act;
 }
 
 }  // namespace Carbon
