@@ -160,6 +160,9 @@ implementation of the `Hashable` interface for `Song` would be fixed for the
 `song_set` `HashSet` object based on which implementation was in scope in the
 body of the `SomethingWeirdHappens` function.
 
+This idea is discussed briefly in section 5.4 on separate compilation of
+[this proposal for implementing "Indiana" C++0x concepts proposal](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.86.9526&rep=rep1&type=pdf).
+
 This has some downsides:
 
 -   It is harder to reason about. The behavior of `SongUtil.IsInHashSet` depends
@@ -167,7 +170,8 @@ This has some downsides:
     no idea where the `HashSet` argument was created.
 -   An object may be created far from a call that has a particular interface
     requirement, with no guarantee that the object was created with any
-    implementation of the interface at all.
+    implementation of the interface at all. This error would only be detected at
+    runtime, not at type checking time.
 -   It requires more data space at runtime because we need to store a pointer to
     the witness table representing the implementation with the object, since it
     varies instead of being known statically.
