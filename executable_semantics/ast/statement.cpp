@@ -174,9 +174,9 @@ auto Statement::MakeContinuation(int line_num,
                                  const Statement* body) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->value = Continuation(
-      {.continuation_variable = new std::string(continuation_variable),
-       .body = body});
+  s->value =
+      Continuation({.continuation_variable = std::move(continuation_variable),
+                    .body = body});
   return s;
 }
 
@@ -290,8 +290,8 @@ void PrintStatement(const Statement* s, int depth) {
       }
       break;
     case StatementKind::Continuation:
-      std::cout << "continuation "
-                << *s->GetContinuation().continuation_variable << " ";
+      std::cout << "continuation " << s->GetContinuation().continuation_variable
+                << " ";
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
       }

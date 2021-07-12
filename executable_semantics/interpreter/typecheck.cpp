@@ -559,9 +559,9 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       TCStatement body_result =
           TypeCheckStmt(s->GetContinuation().body, types, values, ret_type);
       const Statement* new_continuation = Statement::MakeContinuation(
-          s->line_num, *s->GetContinuation().continuation_variable,
+          s->line_num, s->GetContinuation().continuation_variable,
           body_result.stmt);
-      types.Set(*s->GetContinuation().continuation_variable,
+      types.Set(s->GetContinuation().continuation_variable,
                 Value::MakeContinuationType());
       return TCStatement(new_continuation, types);
     }

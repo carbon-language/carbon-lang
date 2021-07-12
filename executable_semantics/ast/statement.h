@@ -92,7 +92,7 @@ struct Match {
 
 struct Continuation {
   static constexpr StatementKind Kind = StatementKind::Continuation;
-  std::string* continuation_variable;
+  std::string continuation_variable;
   const Statement* body;
 };
 

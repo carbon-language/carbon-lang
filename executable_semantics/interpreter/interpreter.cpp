@@ -1258,7 +1258,7 @@ void StepStmt() {
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
       frame->scopes.Top()->values.Set(
-          *stmt->GetContinuation().continuation_variable, continuation_address);
+          stmt->GetContinuation().continuation_variable, continuation_address);
       // Pop the continuation statement.
       frame->todo.Pop();
       break;
