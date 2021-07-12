@@ -19,7 +19,8 @@ namespace Carbon {
 
 namespace {
 
-struct TagVisitor {
+// TODO: Can be renamed TagVisitor for consistency once #635 is in.
+struct ActionTagVisitor {
   template <typename Alternative>
   auto operator()(const Alternative&) -> ActionKind {
     return Alternative::Kind;
@@ -29,30 +30,30 @@ struct TagVisitor {
 }  // namespace
 
 auto Action::tag() const -> ActionKind {
-  return std::visit(TagVisitor(), value);
+  return std::visit(ActionTagVisitor(), value);
 }
 
 auto Action::MakeLValAction(const Expression* e) -> Action* {
   auto* act = new Action();
-  act->value = LValAction{.exp = e};
+  act->value = LValAction({.exp = e});
   return act;
 }
 
 auto Action::MakeExpressionAction(const Expression* e) -> Action* {
   auto* act = new Action();
-  act->value = ExpressionAction{.exp = e};
+  act->value = ExpressionAction({.exp = e});
   return act;
 }
 
 auto Action::MakeStatementAction(const Statement* s) -> Action* {
   auto* act = new Action();
-  act->value = StatementAction{.stmt = s};
+  act->value = StatementAction({.stmt = s});
   return act;
 }
 
 auto Action::MakeValAction(const Value* v) -> Action* {
   auto* act = new Action();
-  act->value = ValAction{.val = v};
+  act->value = ValAction({.val = v});
   return act;
 }
 
@@ -64,7 +65,7 @@ auto Action::MakeExpToLValAction() -> Action* {
 
 auto Action::MakeDeleteTmpAction(Address a) -> Action* {
   auto* act = new Action();
-  act->value = DeleteTmpAction{.delete_tmp = a};
+  act->value = DeleteTmpAction({.delete_tmp = a});
   return act;
 }
 

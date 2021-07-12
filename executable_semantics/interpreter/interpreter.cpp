@@ -423,24 +423,11 @@ void DeallocateLocals(int line_num, Frame* frame) {
   }
 }
 
-void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
+void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elements = new std::vector<TupleElement>();
-  const Expression* act_expr;
-  switch (act->tag()) {
-    case ActionKind::ExpressionAction:
-      act_expr = act->GetExpressionAction().exp;
-      break;
-    case ActionKind::LValAction:
-      act_expr = act->GetLValAction().exp;
-      break;
-    default:
-      std::cerr << "unexpected ActionKind " << static_cast<int>(act->tag())
-                << std::endl;
-      exit(-1);
-  }
-  auto f = act_expr->GetTupleLiteral().fields.begin();
+  auto f = exp->GetTupleLiteral().fields.begin();
 
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = state->heap.AllocateValue(*i);  // copy?
