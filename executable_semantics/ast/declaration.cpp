@@ -8,6 +8,22 @@
 
 namespace Carbon {
 
+auto Declaration::GetFunctionDeclaration() const -> const FunctionDeclaration& {
+  return std::get<FunctionDeclaration>(value);
+}
+
+auto Declaration::GetStructDeclaration() const -> const StructDeclaration& {
+  return std::get<StructDeclaration>(value);
+}
+
+auto Declaration::GetChoiceDeclaration() const -> const ChoiceDeclaration& {
+  return std::get<ChoiceDeclaration>(value);
+}
+
+auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
+  return std::get<VariableDeclaration>(value);
+}
+
 void FunctionDeclaration::Print() const { PrintFunDef(definition); }
 
 void StructDeclaration::Print() const {

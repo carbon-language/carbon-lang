@@ -28,15 +28,25 @@ struct TypeCheckContext {
   Env values;
 };
 
+enum class DeclarationKind {
+  FunctionDeclaration,
+  StructDeclaration,
+  ChoiceDeclaration,
+  VariableDeclaration,
+};
+
 struct FunctionDeclaration {
+  static constexpr DeclarationKind Kind = ExpressionKind::FunctionDeclaration;
   FunctionDefinition definition;
 };
 
 struct StructDeclaration {
+  static constexpr DeclarationKind Kind = ExpressionKind::StructDeclaration;
   StructDefinition definition;
 };
 
 struct ChoiceDeclaration {
+  static constexpr DeclarationKind Kind = ExpressionKind::ChoiceDeclaration;
   int line_num;
   std::string name;
   std::list<std::pair<std::string, const Expression*>> alternatives;
@@ -44,6 +54,7 @@ struct ChoiceDeclaration {
 
 // Global variable definition implements the Declaration concept.
 struct VariableDeclaration {
+  static constexpr DeclarationKind Kind = ExpressionKind::VariableDeclaration;
   int source_location;
   std::string name;
   const Expression* type;
@@ -54,10 +65,15 @@ class Declaration {
  public:
   auto tag() const -> ExpressionKind;
 
-  static auto FunctionDeclaration() -> const Expression*;
-  static auto StructDeclaration() -> const Expression*;
-  static auto ChoiceDeclaration() -> const Expression*;
-  static auto VariableDeclaration() -> const Expression*;
+  static auto MakeFunctionDeclaration() -> const Expression*;
+  static auto MakeStructDeclaration() -> const Expression*;
+  static auto MakeChoiceDeclaration() -> const Expression*;
+  static auto MakeVariableDeclaration() -> const Expression*;
+
+  auto GetFunctionDeclaration() const -> const FunctionDeclaration&;
+  auto GetStructDeclaration() const -> const StructDeclaration&;
+  auto GetChoiceDeclaration() const -> const ChoiceDeclaration&;
+  auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
   /*
    void Print() const;
@@ -76,7 +92,9 @@ class Declaration {
    */
 
  private:
-  std::variant<FunctionDeclaration> value;
+  std::variant<FunctionDeclaration, StructDeclaration, ChoiceDeclaration,
+               VariableDeclaration>
+      value;
 };
 
 }  // namespace Carbon
