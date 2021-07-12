@@ -63,12 +63,16 @@ struct Action {
   static auto MakeExpToLValAction() -> Action*;
   static auto MakeDeleteTmpAction(Address a) -> Action*;
 
+  static void PrintList(Stack<Action*> ls, std::ostream& out);
+
   auto GetLValAction() const -> const LValAction&;
   auto GetExpressionAction() const -> const ExpressionAction&;
   auto GetStatementAction() const -> const StatementAction&;
   auto GetValAction() const -> const ValAction&;
   auto GetExpToLValAction() const -> const ExpToLValAction&;
   auto GetDeleteTmpAction() const -> const DeleteTmpAction&;
+
+  void Print(std::ostream& out);
 
   // The position or state of the action. Starts at 0 and goes up to the number
   // of subexpressions.
@@ -86,9 +90,6 @@ struct Action {
                ExpToLValAction, DeleteTmpAction>
       value;
 };
-
-void PrintAct(Action* act, std::ostream& out);
-void PrintActList(Stack<Action*> ls, std::ostream& out);
 
 struct ActionTagVisitor {
   template <typename Alternative>

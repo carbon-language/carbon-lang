@@ -173,7 +173,7 @@ void PrintEnv(Env values, std::ostream& out) {
 void PrintFrame(Frame* frame, std::ostream& out) {
   out << frame->name;
   out << "{";
-  PrintActList(frame->todo, out);
+  Action::PrintList(frame->todo, out);
   out << "}";
 }
 

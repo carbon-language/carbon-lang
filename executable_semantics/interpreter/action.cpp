@@ -77,31 +77,31 @@ auto Action::GetDeleteTmpAction() const -> const DeleteTmpAction& {
   return std::get<DeleteTmpAction>(value);
 }
 
-void PrintAct(Action* act, std::ostream& out) {
-  switch (act->tag()) {
+void Action::Print(std::ostream& out) {
+  switch (tag()) {
     case ActionKind::DeleteTmpAction:
-      std::cout << "delete_tmp(" << act->GetDeleteTmpAction().delete_tmp << ")";
+      std::cout << "delete_tmp(" << GetDeleteTmpAction().delete_tmp << ")";
       break;
     case ActionKind::ExpToLValAction:
       out << "exp=>lval";
       break;
     case ActionKind::LValAction:
-      PrintExp(act->GetLValAction().exp);
+      PrintExp(GetLValAction().exp);
       break;
     case ActionKind::ExpressionAction:
-      PrintExp(act->GetExpressionAction().exp);
+      PrintExp(GetExpressionAction().exp);
       break;
     case ActionKind::StatementAction:
-      PrintStatement(act->GetStatementAction().stmt, 1);
+      PrintStatement(GetStatementAction().stmt, 1);
       break;
     case ActionKind::ValAction:
-      PrintValue(act->GetValAction().val, out);
+      PrintValue(GetValAction().val, out);
       break;
   }
-  out << "<" << act->pos << ">";
-  if (act->results.size() > 0) {
+  out << "<" << pos << ">";
+  if (results.size() > 0) {
     out << "(";
-    for (auto& result : act->results) {
+    for (auto& result : results) {
       if (result) {
         PrintValue(result, out);
       }
@@ -111,12 +111,12 @@ void PrintAct(Action* act, std::ostream& out) {
   }
 }
 
-void PrintActList(Stack<Action*> ls, std::ostream& out) {
+void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
   if (!ls.IsEmpty()) {
-    PrintAct(ls.Pop(), out);
+    PrintList(ls.Pop(), out);
     if (!ls.IsEmpty()) {
       out << " :: ";
-      PrintActList(ls, out);
+      PrintList(ls, out);
     }
   }
 }
