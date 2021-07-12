@@ -135,7 +135,7 @@ struct TypeTypeLiteral {
 
 struct Expression {
   int line_num;
-  inline auto tag() const -> ExpressionKind;
+  auto tag() const -> ExpressionKind;
 
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
@@ -186,19 +186,6 @@ struct Expression {
 };
 
 void PrintExp(const Expression* exp);
-
-// Implementation details only beyond this point
-
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ExpressionKind {
-    return Alternative::Kind;
-  }
-};
-
-auto Expression::tag() const -> ExpressionKind {
-  return std::visit(TagVisitor(), value);
-}
 
 }  // namespace Carbon
 
