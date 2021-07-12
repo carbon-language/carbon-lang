@@ -57,7 +57,7 @@ struct Stack {
   Stack() { head = nullptr; }
 
   // Creates an instance containing just `x`.
-  Stack(T x) : Stack() { Push(x); }
+  explicit Stack(T x) : Stack() { Push(x); }
 
   // Pushes `x` onto the top of the stack.
   void Push(T x) { head = new ListNode<T>(x, head); }
