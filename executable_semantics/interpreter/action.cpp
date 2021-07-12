@@ -17,6 +17,21 @@
 
 namespace Carbon {
 
+namespace {
+
+struct ActionTagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> ActionKind {
+    return Alternative::Kind;
+  }
+};
+
+}  // namespace
+
+auto Action::tag() const -> ActionKind {
+  return std::visit(ActionTagVisitor(), value);
+}
+
 auto Action::MakeLValAction(const Expression* e) -> Action* {
   auto* act = new Action();
   act->value = LValAction{.exp = e};

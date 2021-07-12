@@ -54,7 +54,7 @@ struct DeleteTmpAction {
 };
 
 struct Action {
-  inline auto tag() const -> ActionKind;
+  auto tag() const -> ActionKind;
 
   static auto MakeLValAction(const Expression* e) -> Action*;
   static auto MakeExpressionAction(const Expression* e) -> Action*;
@@ -90,17 +90,6 @@ struct Action {
                ExpToLValAction, DeleteTmpAction>
       value;
 };
-
-struct ActionTagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ActionKind {
-    return Alternative::Kind;
-  }
-};
-
-auto Action::tag() const -> ActionKind {
-  return std::visit(ActionTagVisitor(), value);
-}
 
 }  // namespace Carbon
 
