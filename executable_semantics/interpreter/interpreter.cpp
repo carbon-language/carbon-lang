@@ -65,25 +65,25 @@ void Heap::CheckAlive(Address address, int line_num) {
 }
 
 auto CopyVal(const Value* val, int line_num) -> const Value* {
-  switch (val->tag) {
+  switch (val->tag()) {
     case ValKind::TupleValue: {
-      auto* elements = new std::vector<TupleElement>();
-      for (const TupleElement& element : *val->GetTupleValue().elements) {
+      std::vector<TupleElement> elements;
+      for (const TupleElement& element : val->GetTupleValue().elements) {
         const Value* new_element =
             CopyVal(state->heap.Read(element.address, line_num), line_num);
         Address new_address = state->heap.AllocateValue(new_element);
-        elements->push_back({.name = element.name, .address = new_address});
+        elements.push_back({.name = element.name, .address = new_address});
       }
-      return Value::MakeTupleValue(elements);
+      return Value::MakeTupleValue(std::move(elements));
     }
     case ValKind::AlternativeValue: {
       const Value* arg = CopyVal(
           state->heap.Read(val->GetAlternativeValue().argument, line_num),
           line_num);
       Address argument_address = state->heap.AllocateValue(arg);
-      return Value::MakeAlternativeValue(
-          *val->GetAlternativeValue().alt_name,
-          *val->GetAlternativeValue().choice_name, argument_address);
+      return Value::MakeAlternativeValue(val->GetAlternativeValue().alt_name,
+                                         val->GetAlternativeValue().choice_name,
+                                         argument_address);
     }
     case ValKind::StructValue: {
       const Value* inits = CopyVal(val->GetStructValue().inits, line_num);
@@ -94,7 +94,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::BoolValue:
       return Value::MakeBoolValue(val->GetBoolValue());
     case ValKind::FunctionValue:
-      return Value::MakeFunctionValue(*val->GetFunctionValue().name,
+      return Value::MakeFunctionValue(val->GetFunctionValue().name,
                                       val->GetFunctionValue().param,
                                       val->GetFunctionValue().body);
     case ValKind::PointerValue:
@@ -130,7 +130,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
 }
 
 void Heap::DeallocateSubObjects(const Value* val) {
-  switch (val->tag) {
+  switch (val->tag()) {
     case ValKind::AlternativeValue:
       Deallocate(val->GetAlternativeValue().argument);
       break;
@@ -138,7 +138,7 @@ void Heap::DeallocateSubObjects(const Value* val) {
       DeallocateSubObjects(val->GetStructValue().inits);
       break;
     case ValKind::TupleValue:
-      for (const TupleElement& element : *val->GetTupleValue().elements) {
+      for (const TupleElement& element : val->GetTupleValue().elements) {
         Deallocate(element.address);
       }
       break;
@@ -224,7 +224,7 @@ void PrintState(std::ostream& out) {
 //
 
 auto ValToInt(const Value* v, int line_num) -> int {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::IntValue:
       return v->GetIntValue();
     default:
@@ -235,7 +235,7 @@ auto ValToInt(const Value* v, int line_num) -> int {
 }
 
 auto ValToBool(const Value* v, int line_num) -> int {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::BoolValue:
       return v->GetBoolValue();
     default:
@@ -245,7 +245,7 @@ auto ValToBool(const Value* v, int line_num) -> int {
 }
 
 auto ValToPtr(const Value* v, int line_num) -> Address {
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::PointerValue:
       return v->GetPointerValue();
     default:
@@ -261,8 +261,8 @@ auto ValToPtr(const Value* v, int line_num) -> Address {
 // - Precondition: continuation->tag == ValKind::ContinuationV.
 auto ContinuationToVector(const Value* continuation, int sourceLocation)
     -> std::vector<Frame*> {
-  if (continuation->tag == ValKind::ContinuationValue) {
-    return *continuation->GetContinuationValue().stack;
+  if (continuation->tag() == ValKind::ContinuationValue) {
+    return continuation->GetContinuationValue().stack;
   } else {
     std::cerr << sourceLocation << ": runtime error: expected an integer"
               << std::endl;
@@ -312,30 +312,31 @@ void InitGlobals(std::list<Declaration>* fs) {
 }
 
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
-  auto alts = new VarValues();
+  VarValues alts;
   for (const auto& [name, signature] : alternatives) {
     auto t = InterpExp(Env(), signature);
-    alts->push_back(make_pair(name, t));
+    alts.push_back(make_pair(name, t));
   }
-  auto ct = Value::MakeChoiceType(name, alts);
+  auto ct = Value::MakeChoiceType(name, std::move(alts));
   auto a = state->heap.AllocateValue(ct);
   globals.Set(name, a);
 }
 
 auto StructDeclaration::InitGlobals(Env& globals) const -> void {
-  auto fields = new VarValues();
-  auto methods = new VarValues();
+  VarValues fields;
+  VarValues methods;
   for (auto i = definition.members->begin(); i != definition.members->end();
        ++i) {
     switch ((*i)->tag) {
       case MemberKind::FieldMember: {
         auto t = InterpExp(Env(), (*i)->u.field.type);
-        fields->push_back(make_pair(*(*i)->u.field.name, t));
+        fields.push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
     }
   }
-  auto st = Value::MakeStructType(*definition.name, fields, methods);
+  auto st = Value::MakeStructType(*definition.name, std::move(fields),
+                                  std::move(methods));
   auto a = state->heap.AllocateValue(st);
   globals.Set(*definition.name, a);
 }
@@ -361,7 +362,7 @@ auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
 //       F is the function
 void CallFunction(int line_num, std::vector<const Value*> operas,
                   State* state) {
-  switch (operas[0]->tag) {
+  switch (operas[0]->tag()) {
     case ValKind::FunctionValue: {
       // Bind arguments to parameters
       std::list<std::string> params;
@@ -376,7 +377,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       // Create the new frame and push it on the stack
       auto* scope = new Scope(*matches, params);
       auto* frame =
-          new Frame(*operas[0]->GetFunctionValue().name, Stack(scope),
+          new Frame(operas[0]->GetFunctionValue().name, Stack(scope),
                     Stack(MakeStmtAct(operas[0]->GetFunctionValue().body)));
       state->stack.Push(frame);
       break;
@@ -391,8 +392,8 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     case ValKind::AlternativeConstructorValue: {
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* av = Value::MakeAlternativeValue(
-          *operas[0]->GetAlternativeConstructorValue().alt_name,
-          *operas[0]->GetAlternativeConstructorValue().choice_name,
+          operas[0]->GetAlternativeConstructorValue().alt_name,
+          operas[0]->GetAlternativeConstructorValue().choice_name,
           state->heap.AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
@@ -426,13 +427,13 @@ void DeallocateLocals(int line_num, Frame* frame) {
 void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
-  auto elements = new std::vector<TupleElement>();
+  std::vector<TupleElement> elements;
   auto f = act->u.exp->GetTupleLiteral().fields.begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = state->heap.AllocateValue(*i);  // copy?
-    elements->push_back({.name = f->name, .address = a});
+    elements.push_back({.name = f->name, .address = a});
   }
-  const Value* tv = Value::MakeTupleValue(elements);
+  const Value* tv = Value::MakeTupleValue(std::move(elements));
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
 }
@@ -445,23 +446,23 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
 auto PatternMatch(const Value* p, const Value* v, Env values,
                   std::list<std::string>* vars, int line_num)
     -> std::optional<Env> {
-  switch (p->tag) {
+  switch (p->tag()) {
     case ValKind::BindingPlaceholderValue: {
       Address a = state->heap.AllocateValue(CopyVal(v, line_num));
-      vars->push_back(*p->GetBindingPlaceholderValue().name);
-      values.Set(*p->GetBindingPlaceholderValue().name, a);
+      vars->push_back(p->GetBindingPlaceholderValue().name);
+      values.Set(p->GetBindingPlaceholderValue().name, a);
       return values;
     }
     case ValKind::TupleValue:
-      switch (v->tag) {
+      switch (v->tag()) {
         case ValKind::TupleValue: {
-          if (p->GetTupleValue().elements->size() !=
-              v->GetTupleValue().elements->size()) {
+          if (p->GetTupleValue().elements.size() !=
+              v->GetTupleValue().elements.size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (const TupleElement& element : *p->GetTupleValue().elements) {
+          for (const TupleElement& element : p->GetTupleValue().elements) {
             auto a = FindTupleField(element.name, v);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << element.name << "not in ";
@@ -487,12 +488,12 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           exit(-1);
       }
     case ValKind::AlternativeValue:
-      switch (v->tag) {
+      switch (v->tag()) {
         case ValKind::AlternativeValue: {
-          if (*p->GetAlternativeValue().choice_name !=
-                  *v->GetAlternativeValue().choice_name ||
-              *p->GetAlternativeValue().alt_name !=
-                  *v->GetAlternativeValue().alt_name) {
+          if (p->GetAlternativeValue().choice_name !=
+                  v->GetAlternativeValue().choice_name ||
+              p->GetAlternativeValue().alt_name !=
+                  v->GetAlternativeValue().alt_name) {
             return std::nullopt;
           }
           std::optional<Env> matches = PatternMatch(
@@ -513,7 +514,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           exit(-1);
       }
     case ValKind::FunctionType:
-      switch (v->tag) {
+      switch (v->tag()) {
         case ValKind::FunctionType: {
           std::optional<Env> matches =
               PatternMatch(p->GetFunctionType().param,
@@ -538,21 +539,21 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 }
 
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
-  switch (pat->tag) {
+  switch (pat->tag()) {
     case ValKind::PointerValue:
       state->heap.Write(ValToPtr(pat, line_num), CopyVal(val, line_num),
                         line_num);
       break;
     case ValKind::TupleValue: {
-      switch (val->tag) {
+      switch (val->tag()) {
         case ValKind::TupleValue: {
-          if (pat->GetTupleValue().elements->size() !=
-              val->GetTupleValue().elements->size()) {
+          if (pat->GetTupleValue().elements.size() !=
+              val->GetTupleValue().elements.size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (const TupleElement& element : *pat->GetTupleValue().elements) {
+          for (const TupleElement& element : pat->GetTupleValue().elements) {
             auto a = FindTupleField(element.name, val);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << element.name << "not in ";
@@ -576,12 +577,12 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       break;
     }
     case ValKind::AlternativeValue: {
-      switch (val->tag) {
+      switch (val->tag()) {
         case ValKind::AlternativeValue: {
-          if (*pat->GetAlternativeValue().choice_name !=
-                  *val->GetAlternativeValue().choice_name ||
-              *pat->GetAlternativeValue().alt_name !=
-                  *val->GetAlternativeValue().alt_name) {
+          if (pat->GetAlternativeValue().choice_name !=
+                  val->GetAlternativeValue().choice_name ||
+              pat->GetAlternativeValue().alt_name !=
+                  val->GetAlternativeValue().alt_name) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
@@ -756,7 +757,7 @@ void StepExp() {
         act->pos++;
       } else if (act->pos == 2) {
         auto tuple = act->results[0];
-        switch (tuple->tag) {
+        switch (tuple->tag()) {
           case ValKind::TupleValue: {
             //    { { v :: [][i] :: C, E, F} :: S, H}
             // -> { { v_i :: C, E, F} : S, H}
@@ -1286,7 +1287,7 @@ void StepStmt() {
 
 auto GetMember(Address a, const std::string& f, int line_num) -> Address {
   const Value* v = state->heap.Read(a, line_num);
-  switch (v->tag) {
+  switch (v->tag()) {
     case ValKind::StructValue: {
       auto a = FindTupleField(f, v->GetStructValue().inits);
       if (a == std::nullopt) {
@@ -1315,7 +1316,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
         exit(-1);
       }
       auto ac =
-          Value::MakeAlternativeConstructorValue(f, *v->GetChoiceType().name);
+          Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
       return state->heap.AllocateValue(ac);
     }
     default:
