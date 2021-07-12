@@ -456,7 +456,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
   if (!s) {
     return TCStatement(s, types);
   }
-  switch (s->tag) {
+  switch (s->tag()) {
     case StatementKind::Match: {
       auto res = TypeCheckExp(s->GetMatch().exp, types, values, nullptr,
                               TCContext::ValueContext);
@@ -524,8 +524,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::ExpressionStatement: {
-      auto res = TypeCheckExp(s->GetExpression(), types, values, nullptr,
-                              TCContext::ValueContext);
+      auto res = TypeCheckExp(s->GetExpressionStatement().exp, types, values,
+                              nullptr, TCContext::ValueContext);
       auto new_s = Statement::MakeExpStmt(s->line_num, res.exp);
       return TCStatement(new_s, types);
     }
@@ -543,7 +543,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, types);
     }
     case StatementKind::Return: {
-      auto res = TypeCheckExp(s->GetReturn(), types, values, nullptr,
+      auto res = TypeCheckExp(s->GetReturn().exp, types, values, nullptr,
                               TCContext::ValueContext);
       if (ret_type->tag() == ValKind::AutoType) {
         // The following infers the return type from the first 'return'
@@ -595,7 +595,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       exit(-1);
     }
   }
-  switch (stmt->tag) {
+  switch (stmt->tag()) {
     case StatementKind::Match: {
       auto new_clauses =
           new std::list<std::pair<const Expression*, const Statement*>>();

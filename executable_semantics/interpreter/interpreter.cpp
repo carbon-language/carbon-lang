@@ -968,7 +968,7 @@ void StepExp() {
 auto IsWhileAct(Action* act) -> bool {
   switch (act->tag()) {
     case ActionKind::StatementAction:
-      switch (act->GetStatementAction().stmt->tag) {
+      switch (act->GetStatementAction().stmt->tag()) {
         case StatementKind::While:
           return true;
         default:
@@ -982,7 +982,7 @@ auto IsWhileAct(Action* act) -> bool {
 auto IsBlockAct(Action* act) -> bool {
   switch (act->tag()) {
     case ActionKind::StatementAction:
-      switch (act->GetStatementAction().stmt->tag) {
+      switch (act->GetStatementAction().stmt->tag()) {
         case StatementKind::Block:
           return true;
         default:
@@ -1005,7 +1005,7 @@ void StepStmt() {
     PrintStatement(stmt, 1);
     std::cout << " --->" << std::endl;
   }
-  switch (stmt->tag) {
+  switch (stmt->tag()) {
     case StatementKind::Match:
       if (act->pos == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
@@ -1165,7 +1165,8 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(stmt->GetExpression()));
+        frame->todo.Push(
+            Action::MakeExpressionAction(stmt->GetExpressionStatement().exp));
         act->pos++;
       } else {
         frame->todo.Pop(1);
@@ -1217,7 +1218,7 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(stmt->GetReturn()));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetReturn().exp));
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
