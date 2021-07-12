@@ -75,8 +75,6 @@ class MatcherFactory {
   virtual void AddMatcher(
       clang::ast_matchers::MatchFinder* finder,
       clang::ast_matchers::MatchFinder::MatchCallback* callback) = 0;
-
- protected:
 };
 
 // A convenience factory that implements CreateMatcher for Matchers that have a
