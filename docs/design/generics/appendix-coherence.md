@@ -201,5 +201,5 @@ either:
     [dynamic implementation binding](#rejected-alternative-dynamic-implementation-binding)
     (though perhaps with a monomorphization cost instead of a runtime cost).
 
-In general,
-[Carbon is avoiding this sort of context sensitivity](https://docs.google.com/document/d/1dLpEmUbE2_JQZ-pRNgEDnw6VuH4FXfURSYej6nPV6m0/edit#).
+In general, Carbon is
+[avoiding this sort of context sensitivity](https://docs.google.com/document/d/1dLpEmUbE2_JQZ-pRNgEDnw6VuH4FXfURSYej6nPV6m0/edit#).
