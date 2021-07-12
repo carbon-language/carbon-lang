@@ -19,7 +19,7 @@ namespace Carbon {
 
 namespace {
 
-struct ActionTagVisitor {
+struct TagVisitor {
   template <typename Alternative>
   auto operator()(const Alternative&) -> ActionKind {
     return Alternative::Kind;
@@ -29,7 +29,7 @@ struct ActionTagVisitor {
 }  // namespace
 
 auto Action::tag() const -> ActionKind {
-  return std::visit(ActionTagVisitor(), value);
+  return std::visit(TagVisitor(), value);
 }
 
 auto Action::MakeLValAction(const Expression* e) -> Action* {
