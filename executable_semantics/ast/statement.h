@@ -30,7 +30,7 @@ enum class StatementKind {
 
 struct Statement;
 
-struct Assignment {
+struct Assign {
   const Expression* lhs;
   const Expression* rhs;
 };
@@ -75,9 +75,7 @@ struct Run {
 };
 
 struct Statement {
-  // TODO: change Statement to a class and make all members private
-  int line_num;
-  StatementKind tag;
+  auto tag() const -> StatementKind;
 
   // Constructors
   static auto MakeExpStmt(int line_num, const Expression* exp)
@@ -121,7 +119,7 @@ struct Statement {
 
   // Access to the alternatives
   const Expression* GetExpression() const;
-  Assignment GetAssign() const;
+  Assign GetAssign() const;
   VariableDefinition GetVariableDefinition() const;
   IfStatement GetIf() const;
   const Expression* GetReturn() const;
@@ -132,20 +130,25 @@ struct Statement {
   Continuation GetContinuation() const;
   Run GetRun() const;
 
+  int line_num;
+
  private:
-  union {
-    const Expression* exp;
-    Assignment assign;
-    VariableDefinition variable_definition;
-    IfStatement if_stmt;
-    const Expression* return_stmt;
-    Sequence sequence;
-    Block block;
-    While while_stmt;
-    Match match_stmt;
-    Continuation continuation;
-    Run run;
-  } u;
+  /*
+   union {
+     const Expression* exp;
+     Assignment assign;
+     VariableDefinition variable_definition;
+     IfStatement if_stmt;
+     const Expression* return_stmt;
+     Sequence sequence;
+     Block block;
+     While while_stmt;
+     Match match_stmt;
+     Continuation continuation;
+     Run run;
+   } u;
+   */
+  std::variant<Assign> value;
 };
 
 void PrintStatement(const Statement*, int);

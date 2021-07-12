@@ -10,6 +10,21 @@
 
 namespace Carbon {
 
+namespace {
+
+struct TagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> StatementKind {
+    return Alternative::Kind;
+  }
+};
+
+}  // namespace
+
+auto Statement::tag() const -> StatementKind {
+  return std::visit(TagVisitor(), value);
+}
+
 const Expression* Statement::GetExpression() const {
   CHECK(tag == StatementKind::ExpressionStatement);
   return u.exp;
