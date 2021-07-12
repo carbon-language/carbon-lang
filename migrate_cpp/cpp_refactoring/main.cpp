@@ -5,6 +5,7 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "migrate_cpp/cpp_refactoring/fn_inserter.h"
+#include "migrate_cpp/cpp_refactoring/for_range.h"
 #include "migrate_cpp/cpp_refactoring/matcher_manager.h"
 #include "migrate_cpp/cpp_refactoring/var_decl.h"
 
@@ -35,6 +36,7 @@ auto main(int argc, const char** argv) -> int {
   // Set up AST matcher callbacks.
   Carbon::MatcherManager matchers(&tool.getReplacements());
   matchers.Register(std::make_unique<Carbon::FnInserterFactory>());
+  matchers.Register(std::make_unique<Carbon::ForRangeFactory>());
   matchers.Register(std::make_unique<Carbon::VarDeclFactory>());
 
   return tool.runAndSave(

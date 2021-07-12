@@ -165,7 +165,7 @@ fn NormalizeGlyphs(font: Font*) -> bool {
 
 fn NormalizeOffsets(font: Font*) -> bool {
   var offset: uint32_t = 12 + 16 * font->num_tables;
-  for (auto tag : font->OutputOrderedTags()) {
+  for (auto tag  in  font->OutputOrderedTags()) {
     var table: auto& = font->tables[tag];
     table.offset = offset;
     offset += Round4(table.length);
@@ -182,7 +182,7 @@ fn ComputeHeaderChecksum(font: const Font&) -> uint32_t {
   var range_shift: uint16_t = (font.num_tables << 4) - search_range;
   checksum += (font.num_tables << 16 | search_range);
   checksum += (max_pow2 << 16 | range_shift);
-  for (const auto& i : font.tables) {
+  for (const auto& i  in  font.tables) {
     var table: const Font::Table* = &i.second;
     if (table->IsReused()) {
       table = table->reuse_of;
@@ -214,7 +214,7 @@ fn FixChecksums(font: Font*) -> bool {
   StoreU32(0, &offset, head_buf);
   var file_checksum: uint32_t = 0;
   var head_checksum: uint32_t = 0;
-  for (auto& i : font->tables) {
+  for (auto& i  in  font->tables) {
     var table: Font::Table* = &i.second;
     if (table->IsReused()) {
       table = table->reuse_of;
@@ -275,7 +275,7 @@ fn NormalizeFontCollection(font_collection: FontCollection*) -> bool {
 
   var offset: uint32_t = CollectionHeaderSize(font_collection->header_version,
     font_collection->fonts.size());
-  for (auto& font : font_collection->fonts) {
+  for (auto& font  in  font_collection->fonts) {
     if (!NormalizeWithoutFixingChecksums(&font)) {
 #ifdef FONT_COMPRESSION_BIN
       fprintf(stderr, "Font normalization failed.\n");
@@ -286,8 +286,8 @@ fn NormalizeFontCollection(font_collection: FontCollection*) -> bool {
   }
 
   // Start table offsets after TTC Header and Sfnt Headers
-  for (auto& font : font_collection->fonts) {
-    for (auto tag : font.OutputOrderedTags()) {
+  for (auto& font  in  font_collection->fonts) {
+    for (auto tag  in  font.OutputOrderedTags()) {
       var table: Font::Table& = font.tables[tag];
       if (table.IsReused()) {
         table.offset = table.reuse_of->offset;
@@ -299,7 +299,7 @@ fn NormalizeFontCollection(font_collection: FontCollection*) -> bool {
   }
 
   // Now we can fix the checksums
-  for (auto& font : font_collection->fonts) {
+  for (auto& font  in  font_collection->fonts) {
     if (!FixChecksums(&font)) {
 #ifdef FONT_COMPRESSION_BIN
       fprintf(stderr, "Failed to fix checksums\n");
