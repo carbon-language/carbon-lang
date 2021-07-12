@@ -36,17 +36,17 @@ enum class DeclarationKind {
 };
 
 struct FunctionDeclaration {
-  static constexpr DeclarationKind Kind = ExpressionKind::FunctionDeclaration;
+  static constexpr DeclarationKind Kind = DeclarationKind::FunctionDeclaration;
   FunctionDefinition definition;
 };
 
 struct StructDeclaration {
-  static constexpr DeclarationKind Kind = ExpressionKind::StructDeclaration;
+  static constexpr DeclarationKind Kind = DeclarationKind::StructDeclaration;
   StructDefinition definition;
 };
 
 struct ChoiceDeclaration {
-  static constexpr DeclarationKind Kind = ExpressionKind::ChoiceDeclaration;
+  static constexpr DeclarationKind Kind = DeclarationKind::ChoiceDeclaration;
   int line_num;
   std::string name;
   std::list<std::pair<std::string, const Expression*>> alternatives;
@@ -54,7 +54,7 @@ struct ChoiceDeclaration {
 
 // Global variable definition implements the Declaration concept.
 struct VariableDeclaration {
-  static constexpr DeclarationKind Kind = ExpressionKind::VariableDeclaration;
+  static constexpr DeclarationKind Kind = DeclarationKind::VariableDeclaration;
   int source_location;
   std::string name;
   const Expression* type;
@@ -63,12 +63,12 @@ struct VariableDeclaration {
 
 class Declaration {
  public:
-  auto tag() const -> ExpressionKind;
+  auto tag() const -> DeclarationKind;
 
-  static auto MakeFunctionDeclaration() -> const Expression*;
-  static auto MakeStructDeclaration() -> const Expression*;
-  static auto MakeChoiceDeclaration() -> const Expression*;
-  static auto MakeVariableDeclaration() -> const Expression*;
+  static auto MakeFunctionDeclaration() -> const Declaration*;
+  static auto MakeStructDeclaration() -> const Declaration*;
+  static auto MakeChoiceDeclaration() -> const Declaration*;
+  static auto MakeVariableDeclaration() -> const Declaration*;
 
   auto GetFunctionDeclaration() const -> const FunctionDeclaration&;
   auto GetStructDeclaration() const -> const StructDeclaration&;

@@ -8,6 +8,43 @@
 
 namespace Carbon {
 
+struct TagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> DeclarationKind {
+    return Alternative::Kind;
+  }
+};
+
+}  // namespace Carbon
+
+auto Declaration::tag() const -> DeclarationKind {
+  return std::visit(TagVisitor(), value);
+}
+
+static auto MakeFunctionDeclaration() -> const Declaration* {
+  Declaration* d = new Declaration();
+  d->value = FunctionDeclaration();
+  return d;
+}
+
+static auto MakeStructDeclaration() -> const Declaration* {
+  Declaration* d = new Declaration();
+  d->value = StructDeclaration();
+  return d;
+}
+
+static auto MakeChoiceDeclaration() -> const Declaration* {
+  Declaration* d = new Declaration();
+  d->value = ChoiceDeclaration();
+  return d;
+}
+
+static auto MakeVariableDeclaration() -> const Declaration* {
+  Declaration* d = new Declaration();
+  d->value = VariableDeclaration();
+  return d;
+}
+
 auto Declaration::GetFunctionDeclaration() const -> const FunctionDeclaration& {
   return std::get<FunctionDeclaration>(value);
 }
