@@ -26,8 +26,7 @@ State* state = nullptr;
 auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
 auto Step() -> void;
-auto GetMember(Address a, const std::string& f, int line_num) -> Address;
-
+auto GetMember(const Value* v, const std::string& f, int line_num) -> Address;
 //
 // Auxiliary Functions
 //
@@ -642,16 +641,15 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(
-            Action::MakeLValAction(exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFieldAccessExpression().aggregate));
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         const Value* str = act->results[0];
-        Address a =
-            GetMember(ValToPtr(str, exp->line_num),
-                      exp->GetFieldAccessExpression().field, exp->line_num);
+        Address a = GetMember(str, exp->GetFieldAccessExpression().field,
+                              exp->line_num);
         frame->todo.Pop(1);
         frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(a)));
       }
@@ -718,9 +716,10 @@ void StepLvalue() {
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::BindingExpression: {
-      frame->todo.Pop();
-      frame->todo.Push(Action::MakeExpToLValAction());
-      frame->todo.Push(Action::MakeExpressionAction(exp));
+      std::cerr << "Can't treat expression as lvalue: ";
+      PrintExp(exp);
+      std::cerr << std::endl;
+      exit(-1);
     }
   }
 }
@@ -820,18 +819,18 @@ void StepExp() {
       if (act->pos == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(
-            Action::MakeLValAction(exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFieldAccessExpression().aggregate));
         act->pos++;
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        auto a =
-            GetMember(ValToPtr(act->results[0], exp->line_num),
-                      exp->GetFieldAccessExpression().field, exp->line_num);
-        const Value* element = state->heap.Read(a, exp->line_num);
+        Address element =
+            GetMember(act->results[0], exp->GetFieldAccessExpression().field,
+                      exp->line_num);
         frame->todo.Pop(1);
-        frame->todo.Push(Action::MakeValAction(element));
+        frame->todo.Push(
+            Action::MakeValAction(state->heap.Read(element, exp->line_num)));
       }
       break;
     }
@@ -1300,8 +1299,7 @@ void StepStmt() {
   }
 }
 
-auto GetMember(Address a, const std::string& f, int line_num) -> Address {
-  const Value* v = state->heap.Read(a, line_num);
+auto GetMember(const Value* v, const std::string& f, int line_num) -> Address {
   switch (v->tag()) {
     case ValKind::StructValue: {
       auto a = FindTupleField(f, v->GetStructValue().inits);
@@ -1342,31 +1340,6 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
   }
 }
 
-void InsertDelete(Action* del, Stack<Action*>& todo) {
-  if (!todo.IsEmpty()) {
-    switch (todo.Top()->tag()) {
-      case ActionKind::StatementAction: {
-        // This places the delete before the enclosing statement.
-        // Not sure if that is OK. Conceptually it should go after
-        // but that is tricky for some statements, like 'return'. -Jeremy
-        todo.Push(del);
-        break;
-      }
-      case ActionKind::LValAction:
-      case ActionKind::ExpressionAction:
-      case ActionKind::ValAction:
-      case ActionKind::ExpToLValAction:
-      case ActionKind::DeleteTmpAction:
-        auto top = todo.Pop();
-        InsertDelete(del, todo);
-        todo.Push(top);
-        break;
-    }
-  } else {
-    todo.Push(del);
-  }
-}
-
 // State transition.
 void Step() {
   Frame* frame = state->stack.Top();
@@ -1378,19 +1351,6 @@ void Step() {
 
   Action* act = frame->todo.Top();
   switch (act->tag()) {
-    case ActionKind::DeleteTmpAction:
-      state->heap.Deallocate(act->GetDeleteTmpAction().delete_tmp);
-      frame->todo.Pop(1);
-      frame->todo.Push(Action::MakeValAction(act->results[0]));
-      break;
-    case ActionKind::ExpToLValAction: {
-      Address a = state->heap.AllocateValue(act->results[0]);
-      auto del = Action::MakeDeleteTmpAction(a);
-      frame->todo.Pop(1);
-      InsertDelete(del, frame->todo);
-      frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(a)));
-      break;
-    }
     case ActionKind::ValAction: {
       Action* val_act = frame->todo.Pop();
       Action* act = frame->todo.Top();
