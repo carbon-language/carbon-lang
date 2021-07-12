@@ -497,7 +497,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       const Value* rhs_ty = res.type;
       auto lhs_res = TypeCheckExp(s->GetVariableDefinition().pat, types, values,
                                   rhs_ty, TCContext::PatternContext);
-      const Statement* new_s = Statement::MakeVarDef(
+      const Statement* new_s = Statement::MakeVariableDefinition(
           s->line_num, s->GetVariableDefinition().pat, res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
@@ -509,7 +509,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
           TypeCheckStmt(s->GetSequence().next, types2, values, ret_type);
       auto types3 = next_res.types;
       return TCStatement(
-          Statement::MakeSeq(s->line_num, stmt_res.stmt, next_res.stmt),
+          Statement::MakeSequence(s->line_num, stmt_res.stmt, next_res.stmt),
           types3);
     }
     case StatementKind::Assign: {
@@ -526,7 +526,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
     case StatementKind::ExpressionStatement: {
       auto res = TypeCheckExp(s->GetExpressionStatement().exp, types, values,
                               nullptr, TCContext::ValueContext);
-      auto new_s = Statement::MakeExpStmt(s->line_num, res.exp);
+      auto new_s = Statement::MakeExpressionStatement(s->line_num, res.exp);
       return TCStatement(new_s, types);
     }
     case StatementKind::If: {
@@ -622,7 +622,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       return stmt;
     case StatementKind::Sequence:
       if (stmt->GetSequence().next) {
-        return Statement::MakeSeq(
+        return Statement::MakeSequence(
             stmt->line_num, stmt->GetSequence().stmt,
             CheckOrEnsureReturn(stmt->GetSequence().next, void_return,
                                 stmt->line_num));
@@ -641,7 +641,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
       if (void_return) {
-        return Statement::MakeSeq(
+        return Statement::MakeSequence(
             stmt->line_num, stmt,
             Statement::MakeReturn(stmt->line_num, Expression::MakeTupleLiteral(
                                                       stmt->line_num, {})));

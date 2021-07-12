@@ -77,7 +77,7 @@ auto Statement::GetAwait() const -> const Await& {
   return std::get<Await>(value);
 }
 
-auto Statement::MakeExpStmt(int line_num, const Expression* exp)
+auto Statement::MakeExpressionStatement(int line_num, const Expression* exp)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
@@ -93,8 +93,9 @@ auto Statement::MakeAssign(int line_num, const Expression* lhs,
   return s;
 }
 
-auto Statement::MakeVarDef(int line_num, const Expression* pat,
-                           const Expression* init) -> const Statement* {
+auto Statement::MakeVariableDefinition(int line_num, const Expression* pat,
+                                       const Expression* init)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->value = VariableDefinition({.pat = pat, .init = init});
@@ -140,8 +141,8 @@ auto Statement::MakeReturn(int line_num, const Expression* e)
   return s;
 }
 
-auto Statement::MakeSeq(int line_num, const Statement* s1, const Statement* s2)
-    -> const Statement* {
+auto Statement::MakeSequence(int line_num, const Statement* s1,
+                             const Statement* s2) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->value = Sequence({.stmt = s1, .next = s2});

@@ -1272,9 +1272,10 @@ void StepStmt() {
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
-        Action* ignore_result = Action::MakeStatementAction(
-            Statement::MakeExpStmt(stmt->line_num, Expression::MakeTupleLiteral(
-                                                       stmt->line_num, {})));
+        Action* ignore_result =
+            Action::MakeStatementAction(Statement::MakeExpressionStatement(
+                stmt->line_num,
+                Expression::MakeTupleLiteral(stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
