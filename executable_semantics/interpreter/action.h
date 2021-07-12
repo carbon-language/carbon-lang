@@ -20,8 +20,6 @@ enum class ActionKind {
   ExpressionAction,
   StatementAction,
   ValAction,
-  ExpToLValAction,
-  DeleteTmpAction
 };
 
 struct LValAction {
@@ -44,15 +42,6 @@ struct ValAction {
   const Value* val;
 };
 
-struct ExpToLValAction {
-  static constexpr ActionKind Kind = ActionKind::ExpToLValAction;
-};
-
-struct DeleteTmpAction {
-  static constexpr ActionKind Kind = ActionKind::DeleteTmpAction;
-  Address delete_tmp;
-};
-
 struct Action {
   auto tag() const -> ActionKind;
 
@@ -69,8 +58,6 @@ struct Action {
   auto GetExpressionAction() const -> const ExpressionAction&;
   auto GetStatementAction() const -> const StatementAction&;
   auto GetValAction() const -> const ValAction&;
-  auto GetExpToLValAction() const -> const ExpToLValAction&;
-  auto GetDeleteTmpAction() const -> const DeleteTmpAction&;
 
   void Print(std::ostream& out);
 
@@ -86,9 +73,7 @@ struct Action {
   std::vector<const Value*> results;
 
  private:
-  std::variant<LValAction, ExpressionAction, StatementAction, ValAction,
-               ExpToLValAction, DeleteTmpAction>
-      value;
+  std::variant<LValAction, ExpressionAction, StatementAction, ValAction> value;
 };
 
 }  // namespace Carbon
