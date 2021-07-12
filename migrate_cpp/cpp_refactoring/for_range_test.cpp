@@ -30,13 +30,14 @@ TEST_F(ForRangeTest, Basic) {
 }
 
 TEST_F(ForRangeTest, NoSpace) {
-  constexpr char Before[] = R"cpp(
+  // Do not mark `cpp` so that clang-format won't "fix" the `:` spacing.
+  constexpr char Before[] = R"(
     void Foo() {
       int items[] = {1};
-      for (int i : items) {
+      for (int i:items) {
       }
     }
-  )cpp";
+  )";
   constexpr char After[] = R"(
     void Foo() {
       int items[] = {1};
