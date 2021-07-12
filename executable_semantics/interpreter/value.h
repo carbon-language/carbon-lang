@@ -163,7 +163,7 @@ struct ContinuationValue {
 };
 
 struct Value {
-  inline auto tag() const -> ValKind;
+  auto tag() const -> ValKind;
 
   // Constructors
 
@@ -224,17 +224,6 @@ struct Value {
                AlternativeConstructorValue, ContinuationValue>
       value;
 };
-
-struct ValueTagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ValKind {
-    return Alternative::Kind;
-  }
-};
-
-auto Value::tag() const -> ValKind {
-  return std::visit(ValueTagVisitor(), value);
-}
 
 void PrintValue(const Value* val, std::ostream& out);
 
