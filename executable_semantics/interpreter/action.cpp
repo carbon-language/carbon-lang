@@ -56,18 +56,6 @@ auto Action::MakeValAction(const Value* v) -> Action* {
   return act;
 }
 
-auto Action::MakeExpToLValAction() -> Action* {
-  auto* act = new Action();
-  act->value = ExpToLValAction();
-  return act;
-}
-
-auto Action::MakeDeleteTmpAction(Address a) -> Action* {
-  auto* act = new Action();
-  act->value = DeleteTmpAction({.delete_tmp = a});
-  return act;
-}
-
 auto Action::GetLValAction() const -> const LValAction& {
   return std::get<LValAction>(value);
 }
@@ -84,22 +72,8 @@ auto Action::GetValAction() const -> const ValAction& {
   return std::get<ValAction>(value);
 }
 
-auto Action::GetExpToLValAction() const -> const ExpToLValAction& {
-  return std::get<ExpToLValAction>(value);
-}
-
-auto Action::GetDeleteTmpAction() const -> const DeleteTmpAction& {
-  return std::get<DeleteTmpAction>(value);
-}
-
 void Action::Print(std::ostream& out) {
   switch (tag()) {
-    case ActionKind::DeleteTmpAction:
-      std::cout << "delete_tmp(" << GetDeleteTmpAction().delete_tmp << ")";
-      break;
-    case ActionKind::ExpToLValAction:
-      out << "exp=>lval";
-      break;
     case ActionKind::LValAction:
       PrintExp(GetLValAction().exp);
       break;
