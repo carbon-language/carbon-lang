@@ -700,17 +700,6 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
                                std::move(methods));
 }
 
-auto FunctionDeclaration::Name() const -> std::string {
-  return definition.name;
-}
-
-auto StructDeclaration::Name() const -> std::string { return *definition.name; }
-
-auto ChoiceDeclaration::Name() const -> std::string { return name; }
-
-// Returns the name of the declared variable.
-auto VariableDeclaration::Name() const -> std::string { return name; }
-
 auto StructDeclaration::TypeChecked(TypeEnv types, Env values) const
     -> Declaration {
   auto fields = new std::list<Member*>();
@@ -751,7 +740,7 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
   bool found_main = false;
 
   for (auto const& d : *fs) {
-    if (d.Name() == "main") {
+    if (d.GetName() == "main") {
       found_main = true;
     }
     d.TopLevel(tops);
@@ -767,14 +756,14 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
 
 auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto t = TypeOfFunDef(tops.types, tops.values, &definition);
-  tops.types.Set(Name(), t);
+  tops.types.Set(GetName(), t);
   InitGlobals(tops.values);
 }
 
 auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = state->heap.AllocateValue(st);
-  tops.values.Set(Name(), a);  // Is this obsolete?
+  tops.values.Set(GetName(), a);  // Is this obsolete?
   std::vector<TupleElement> field_types;
   for (const auto& [field_name, field_value] : st->GetStructType().fields) {
     field_types.push_back({.name = field_name,
@@ -782,7 +771,7 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   }
   auto fun_ty = Value::MakeFunctionType(
       Value::MakeTupleValue(std::move(field_types)), st);
-  tops.types.Set(Name(), fun_ty);
+  tops.types.Set(GetName(), fun_ty);
 }
 
 auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
@@ -793,15 +782,15 @@ auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   }
   auto ct = Value::MakeChoiceType(name, std::move(alts));
   Address a = state->heap.AllocateValue(ct);
-  tops.values.Set(Name(), a);  // Is this obsolete?
-  tops.types.Set(Name(), ct);
+  tops.values.Set(GetName(), a);  // Is this obsolete?
+  tops.types.Set(GetName(), ct);
 }
 
 // Associate the variable name with it's declared type in the
 // compile-time symbol table.
 auto VariableDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   const Value* declared_type = InterpExp(tops.values, type);
-  tops.types.Set(Name(), declared_type);
+  tops.types.Set(GetName(), declared_type);
 }
 
 }  // namespace Carbon
