@@ -82,7 +82,7 @@ repos:
     rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
     hooks:
       - id: codespell
-        args: ['-I', '.codespell_ignore']
+        args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
         exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
