@@ -102,7 +102,7 @@ void Action::Print(std::ostream& out) {
 
 void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
   if (!ls.IsEmpty()) {
-    PrintList(ls.Pop(), out);
+    ls.Pop()->Print(out);
     if (!ls.IsEmpty()) {
       out << " :: ";
       PrintList(ls, out);
