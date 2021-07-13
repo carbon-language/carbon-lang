@@ -702,7 +702,7 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
 
 namespace {
 
-class GetNameHelper : public Declaration::Visitor<const std::string&> {
+class GetNameVisitor : public Declaration::Visitor<const std::string&> {
  public:
   auto operator()(const FunctionDeclaration& alt) const
       -> const std::string& override {
@@ -772,9 +772,9 @@ class MakeTypeCheckedVisitor : public Declaration::Visitor<Declaration> {
   const Env& values;
 };
 
-class TopLevelHelper : public Declaration::Visitor<void> {
+class TopLevelVisitor : public Declaration::Visitor<void> {
  public:
-  TopLevelHelper(const Declaration* decl, TypeCheckContext* tops)
+  TopLevelVisitor(const Declaration* decl, TypeCheckContext* tops)
       : decl(decl), tops(tops) {}
 
   void operator()(const FunctionDeclaration& alt) const {
@@ -824,7 +824,7 @@ class TopLevelHelper : public Declaration::Visitor<void> {
 }  // namespace
 
 static auto GetName(const Declaration& d) -> const std::string& {
-  return d.Visit(GetNameHelper());
+  return d.Visit(GetNameVisitor());
 }
 
 auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
@@ -840,7 +840,7 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
     if (GetName(d) == "main") {
       found_main = true;
     }
-    d.Visit(TopLevelHelper(&d, &tops));
+    d.Visit(TopLevelVisitor(&d, &tops));
   }
 
   if (found_main == false) {
