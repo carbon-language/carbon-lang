@@ -318,7 +318,7 @@ class InitEnvVisitor : public Declaration::Visitor<void> {
     }
     auto ct = Value::MakeChoiceType(alt.name, std::move(alts));
     auto a = state->heap.AllocateValue(ct);
-    globals.Set(alt.name, a);
+    env->Set(alt.name, a);
   }
 
   void operator()(const StructDeclaration& alt) const override {
@@ -337,23 +337,23 @@ class InitEnvVisitor : public Declaration::Visitor<void> {
     auto st = Value::MakeStructType(*alt.definition.name, std::move(fields),
                                     std::move(methods));
     auto a = state->heap.AllocateValue(st);
-    globals.Set(*alt.definition.name, a);
+    env->Set(*alt.definition.name, a);
   }
 
   void operator()(const FunctionDeclaration& alt) const override {
-    auto pt = InterpExp(globals, alt.definition.param_pattern);
+    auto pt = InterpExp(*env, alt.definition.param_pattern);
     auto f =
         Value::MakeFunctionValue(alt.definition.name, pt, alt.definition.body);
     Address a = state->heap.AllocateValue(f);
-    globals.Set(alt.definition.name, a);
+    env->Set(alt.definition.name, a);
   }
 
   // Adds an entry in `globals` mapping the variable's name to the
   // result of evaluating the initializer.
   void operator()(const VariableDeclaration& alt) const override {
-    auto v = InterpExp(globals, alt.initializer);
+    auto v = InterpExp(*env, alt.initializer);
     Address a = state->heap.AllocateValue(v);
-    globals.Set(alt.name, a);
+    env->Set(alt.name, a);
   }
 
   Env* env;
