@@ -64,6 +64,9 @@ expensive in some cases where the compiler can verify that what is written is
 correct. How much do we want to allow that? Context affecting meaning is much
 more concerning than context affecting validity that the compiler can check.
 
+**Background:** See
+[this post on language ergonomics in the Rust blog](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
+
 ## Applications of the principle
 
 Adding an import should never change behavior of existing code. This means you
