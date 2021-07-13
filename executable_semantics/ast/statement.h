@@ -106,8 +106,6 @@ struct Await {
 };
 
 struct Statement {
-  auto tag() const -> StatementKind;
-
   // Constructors
   static auto MakeExpressionStatement(int line_num, const Expression* exp)
       -> const Statement*;
@@ -163,6 +161,10 @@ struct Statement {
   auto GetContinuation() const -> const Continuation&;
   auto GetRun() const -> const Run&;
   auto GetAwait() const -> const Await&;
+
+  inline auto tag() const -> StatementKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
 
   int line_num;
 
