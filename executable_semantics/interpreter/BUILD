@@ -22,6 +22,7 @@ cc_library(
         "value.h",
     ],
     deps = [
+        ":address",
         ":containers",
         "//common:check",
         "//executable_semantics:tracing_flag",
@@ -30,6 +31,19 @@ cc_library(
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",
+    ],
+)
+
+cc_library(
+    name = "field_path",
+    hdrs = ["field_path.h"],
+)
+
+cc_library(
+    name = "address",
+    hdrs = ["address.h"],
+    deps = [
+        ":field_path",
     ],
 )
 
