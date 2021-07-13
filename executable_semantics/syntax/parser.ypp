@@ -416,9 +416,9 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration(Carbon::MakeFunctionDeclaration(std::move($1))); }
 | function_declaration
-    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration(Carbon::MakeFunctionDeclaration(std::move($1))); }
 | STRUCT identifier "{" member_list "}"
     {
       $$ = Carbon::Declaration(

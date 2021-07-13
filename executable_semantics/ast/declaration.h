@@ -63,9 +63,8 @@ struct VariableDeclaration {
 
 class Declaration {
  public:
-  auto tag() const -> DeclarationKind;
-
-  static auto MakeFunctionDeclaration() -> const Declaration*;
+  static auto MakeFunctionDeclaration(FunctionDefinition definition)
+      -> const Declaration*;
   static auto MakeStructDeclaration() -> const Declaration*;
   static auto MakeChoiceDeclaration() -> const Declaration*;
   static auto MakeVariableDeclaration() -> const Declaration*;
@@ -75,21 +74,13 @@ class Declaration {
   auto GetChoiceDeclaration() const -> const ChoiceDeclaration&;
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
-  /*
-   void Print() const;
-   auto Name() const -> std::string;
+  void Print();
 
-   // Signals a type error if the declaration is not well typed,
-   // otherwise returns this declaration with annotated types.
-   //
-   // - Parameter env: types of run-time names.
-   // - Paraemter ct_env: values of compile-time names.
-   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-   // Add an entry in the runtime global symbol table for this declaration.
-   void InitGlobals(Env& globals) const;
-   // Add an entry in the compile time global symbol tables for this
-   declaration. void TopLevel(TypeCheckContext& e) const;
-   */
+  // auto Visit(std::function<
+
+  auto tag() const -> DeclarationKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
 
  private:
   std::variant<FunctionDeclaration, StructDeclaration, ChoiceDeclaration,

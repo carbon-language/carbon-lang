@@ -8,38 +8,26 @@
 
 namespace Carbon {
 
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> DeclarationKind {
-    return Alternative::Kind;
-  }
-};
-
-}  // namespace Carbon
-
-auto Declaration::tag() const -> DeclarationKind {
-  return std::visit(TagVisitor(), value);
-}
-
-static auto MakeFunctionDeclaration() -> const Declaration* {
+auto Declaration::MakeFunctionDeclaration(FunctionDefinition definition)
+    -> const Declaration* {
   Declaration* d = new Declaration();
-  d->value = FunctionDeclaration();
+  d->value = FunctionDeclaration({.definition = definition});
   return d;
 }
 
-static auto MakeStructDeclaration() -> const Declaration* {
+auto Declaration::MakeStructDeclaration() -> const Declaration* {
   Declaration* d = new Declaration();
   d->value = StructDeclaration();
   return d;
 }
 
-static auto MakeChoiceDeclaration() -> const Declaration* {
+auto Declaration::MakeChoiceDeclaration() -> const Declaration* {
   Declaration* d = new Declaration();
   d->value = ChoiceDeclaration();
   return d;
 }
 
-static auto MakeVariableDeclaration() -> const Declaration* {
+auto Declaration::MakeVariableDeclaration() -> const Declaration* {
   Declaration* d = new Declaration();
   d->value = VariableDeclaration();
   return d;
@@ -61,33 +49,41 @@ auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
   return std::get<VariableDeclaration>(value);
 }
 
-void FunctionDeclaration::Print() const { PrintFunDef(definition); }
-
-void StructDeclaration::Print() const {
-  std::cout << "struct " << *definition.name << " {" << std::endl;
-  for (auto& member : *definition.members) {
-    PrintMember(member);
+void Declaration::Print() {
+  switch (tag()) {
+    case DeclarationKind::FunctionDeclaration:
+      PrintFunDef(GetFunctionDeclaration().definition);
+      break;
+    case DeclarationKind::StructDeclaration: {
+      const auto& d = GetStructDeclaration();
+      std::cout << "struct " << *d.definition.name << " {" << std::endl;
+      for (auto& member : *d.definition.members) {
+        PrintMember(member);
+      }
+      std::cout << "}" << std::endl;
+      break;
+    }
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& d = GetChoiceDeclaration();
+      std::cout << "choice " << d.name << " {" << std::endl;
+      for (const auto& [name, signature] : d.alternatives) {
+        std::cout << "alt " << name << " ";
+        PrintExp(signature);
+        std::cout << ";" << std::endl;
+      }
+      std::cout << "}" << std::endl;
+      break;
+    }
+    case DeclarationKind::VariableDeclaration: {
+      const auto& d = GetVariableDeclaration();
+      std::cout << "var ";
+      PrintExp(d.type);
+      std::cout << " : " << d.name << " = ";
+      PrintExp(d.initializer);
+      std::cout << std::endl;
+      break;
+    }
   }
-  std::cout << "}" << std::endl;
-}
-
-void ChoiceDeclaration::Print() const {
-  std::cout << "choice " << name << " {" << std::endl;
-  for (const auto& [name, signature] : alternatives) {
-    std::cout << "alt " << name << " ";
-    PrintExp(signature);
-    std::cout << ";" << std::endl;
-  }
-  std::cout << "}" << std::endl;
-}
-
-// Print a global variable declaration to standard out.
-void VariableDeclaration::Print() const {
-  std::cout << "var ";
-  PrintExp(type);
-  std::cout << " : " << name << " = ";
-  PrintExp(initializer);
-  std::cout << std::endl;
 }
 
 }  // namespace Carbon
