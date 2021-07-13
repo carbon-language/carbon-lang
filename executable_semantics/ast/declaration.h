@@ -63,22 +63,46 @@ struct VariableDeclaration {
 
 class Declaration {
  public:
+  template <typename ReturnType>
+  class Visitor {
+   public:
+    virtual auto operator()(const FunctionDeclaration& alt) const
+        -> ReturnType = 0;
+    virtual auto operator()(const StructDeclaration& alt) const
+        -> ReturnType = 0;
+    virtual auto operator()(const ChoiceDeclaration& alt) const
+        -> ReturnType = 0;
+    virtual auto operator()(const VariableDeclaration& alt) const
+        -> ReturnType = 0;
+  };
+
   static auto MakeFunctionDeclaration(FunctionDefinition definition)
-      -> const Declaration*;
-  static auto MakeStructDeclaration() -> const Declaration*;
-  static auto MakeChoiceDeclaration() -> const Declaration*;
-  static auto MakeVariableDeclaration() -> const Declaration*;
+      -> const Declaration;
+  static auto MakeStructDeclaration(int line_num, std::string name,
+                                    std::list<Member*>* members)
+      -> const Declaration;
+  static auto MakeChoiceDeclaration(
+      int line_num, std::string name,
+      std::list<std::pair<std::string, const Expression*>> alternatives)
+      -> const Declaration;
+  static auto MakeVariableDeclaration(int source_location, std::string name,
+                                      const Expression* type,
+                                      const Expression* initializer)
+      -> const Declaration;
 
   auto GetFunctionDeclaration() const -> const FunctionDeclaration&;
   auto GetStructDeclaration() const -> const StructDeclaration&;
   auto GetChoiceDeclaration() const -> const ChoiceDeclaration&;
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
-  void Print();
+  void Print() const;
 
-  // auto Visit(std::function<
+  template <typename ReturnType>
+  inline auto Visit(const Visitor<ReturnType>& visitor) const -> ReturnType {
+    return std::visit(visitor, value);
+  }
 
-  auto tag() const -> DeclarationKind {
+  inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
   }
 

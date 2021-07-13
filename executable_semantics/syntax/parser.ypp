@@ -416,23 +416,20 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::Declaration(Carbon::MakeFunctionDeclaration(std::move($1))); }
+    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
 | function_declaration
-    { $$ = Carbon::Declaration(Carbon::MakeFunctionDeclaration(std::move($1))); }
+    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
 | STRUCT identifier "{" member_list "}"
     {
-      $$ = Carbon::Declaration(
-        Carbon::StructDeclaration{yylineno, $2, $4});
+      $$ = Carbon::Declaration::MakeStructDeclaration(yylineno, $2, $4);
     }
 | CHOICE identifier "{" alternative_list "}"
     {
-      $$ = Carbon::Declaration(
-        Carbon::ChoiceDeclaration{yylineno, $2, $4});
+      $$ = Carbon::Declaration::MakeChoiceDeclaration(yylineno, $2, $4);
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = Carbon::Declaration(
-        Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
+      $$ = Carbon::Declaration::MakeVariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4);
     }
 ;
 declaration_list:
