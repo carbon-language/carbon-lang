@@ -933,7 +933,7 @@ void StepExp() {
 auto IsWhileAct(Action* act) -> bool {
   switch (act->tag()) {
     case ActionKind::StatementAction:
-      switch (act->GetStatementAction().stmt->tag) {
+      switch (act->GetStatementAction().stmt->tag()) {
         case StatementKind::While:
           return true;
         default:
@@ -947,7 +947,7 @@ auto IsWhileAct(Action* act) -> bool {
 auto IsBlockAct(Action* act) -> bool {
   switch (act->tag()) {
     case ActionKind::StatementAction:
-      switch (act->GetStatementAction().stmt->tag) {
+      switch (act->GetStatementAction().stmt->tag()) {
         case StatementKind::Block:
           return true;
         default:
@@ -970,7 +970,7 @@ void StepStmt() {
     PrintStatement(stmt, 1);
     std::cout << " --->" << std::endl;
   }
-  switch (stmt->tag) {
+  switch (stmt->tag()) {
     case StatementKind::Match:
       if (act->pos == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
@@ -1130,7 +1130,8 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(stmt->GetExpression()));
+        frame->todo.Push(
+            Action::MakeExpressionAction(stmt->GetExpressionStatement().exp));
         act->pos++;
       } else {
         frame->todo.Pop(1);
@@ -1182,7 +1183,7 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(stmt->GetReturn()));
+        frame->todo.Push(Action::MakeExpressionAction(stmt->GetReturn().exp));
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -1222,7 +1223,7 @@ void StepStmt() {
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
       frame->scopes.Top()->values.Set(
-          *stmt->GetContinuation().continuation_variable, continuation_address);
+          stmt->GetContinuation().continuation_variable, continuation_address);
       // Pop the continuation statement.
       frame->todo.Pop();
       break;
@@ -1236,9 +1237,10 @@ void StepStmt() {
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
-        Action* ignore_result = Action::MakeStatementAction(
-            Statement::MakeExpStmt(stmt->line_num, Expression::MakeTupleLiteral(
-                                                       stmt->line_num, {})));
+        Action* ignore_result =
+            Action::MakeStatementAction(Statement::MakeExpressionStatement(
+                stmt->line_num,
+                Expression::MakeTupleLiteral(stmt->line_num, {})));
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
