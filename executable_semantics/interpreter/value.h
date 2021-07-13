@@ -163,8 +163,6 @@ struct ContinuationValue {
 };
 
 struct Value {
-  auto tag() const -> ValKind;
-
   // Constructors
 
   // Return a first-class continuation represented by the
@@ -215,6 +213,10 @@ struct Value {
   auto GetStructType() const -> const StructType&;
   auto GetChoiceType() const -> const ChoiceType&;
   auto GetContinuationValue() const -> const ContinuationValue&;
+
+  inline auto tag() const -> ValKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
 
  private:
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
