@@ -700,6 +700,17 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
                                std::move(methods));
 }
 
+auto FunctionDeclaration::Name() const -> std::string {
+  return definition.name;
+}
+
+auto StructDeclaration::Name() const -> std::string { return *definition.name; }
+
+auto ChoiceDeclaration::Name() const -> std::string { return name; }
+
+// Returns the name of the declared variable.
+auto VariableDeclaration::Name() const -> std::string { return name; }
+
 auto StructDeclaration::TypeChecked(TypeEnv types, Env values) const
     -> Declaration {
   auto fields = new std::list<Member*>();
