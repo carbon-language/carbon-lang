@@ -12,19 +12,6 @@
 
 namespace Carbon {
 
-namespace {
-
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ValKind {
-    return Alternative::Kind;
-  }
-};
-
-}  // namespace
-
-auto Value::tag() const -> ValKind { return std::visit(TagVisitor(), value); }
-
 auto Value::GetIntValue() const -> int {
   return std::get<IntValue>(value).value;
 }
