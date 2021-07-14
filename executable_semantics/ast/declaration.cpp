@@ -65,42 +65,41 @@ auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
   return std::get<VariableDeclaration>(value);
 }
 
-namespace {
-
-struct PrintVisitor {
-  void operator()(const FunctionDeclaration& alt) {
-    PrintFunDef(alt.definition);
-  }
-
-  void operator()(const StructDeclaration& alt) {
-    std::cout << "struct " << *alt.definition.name << " {" << std::endl;
-    for (auto& member : *alt.definition.members) {
-      PrintMember(member);
+void Declaration::Print() const {
+  switch (tag()) {
+    case DeclarationKind::FunctionDeclaration:
+      PrintFunDef(GetFunctionDeclaration().definition);
+      break;
+    case DeclarationKind::StructDeclaration: {
+      const auto& alt = GetStructDeclaration();
+      std::cout << "struct " << *alt.definition.name << " {" << std::endl;
+      for (auto& member : *alt.definition.members) {
+        PrintMember(member);
+      }
+      std::cout << "}" << std::endl;
+      break;
     }
-    std::cout << "}" << std::endl;
-  }
-
-  void operator()(const ChoiceDeclaration& alt) {
-    std::cout << "choice " << alt.name << " {" << std::endl;
-    for (const auto& [name, signature] : alt.alternatives) {
-      std::cout << "alt " << name << " ";
-      PrintExp(signature);
-      std::cout << ";" << std::endl;
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& alt = GetChoiceDeclaration();
+      std::cout << "choice " << alt.name << " {" << std::endl;
+      for (const auto& [name, signature] : alt.alternatives) {
+        std::cout << "alt " << name << " ";
+        PrintExp(signature);
+        std::cout << ";" << std::endl;
+      }
+      std::cout << "}" << std::endl;
+      break;
     }
-    std::cout << "}" << std::endl;
+    case DeclarationKind::VariableDeclaration: {
+      const auto& alt = GetVariableDeclaration();
+      std::cout << "var ";
+      PrintExp(alt.type);
+      std::cout << " : " << alt.name << " = ";
+      PrintExp(alt.initializer);
+      std::cout << std::endl;
+      break;
+    }
   }
-
-  void operator()(const VariableDeclaration& alt) {
-    std::cout << "var ";
-    PrintExp(alt.type);
-    std::cout << " : " << alt.name << " = ";
-    PrintExp(alt.initializer);
-    std::cout << std::endl;
-  }
-};
-
-}  // namespace
-
-void Declaration::Print() const { std::visit(PrintVisitor(), value); }
+}
 
 }  // namespace Carbon

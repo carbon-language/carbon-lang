@@ -361,7 +361,64 @@ class InitEnvVisitor : public Declaration::Visitor<void> {
 
 }  // namespace
 
-void InitEnv(const Declaration& d, Env* env) { d.Visit(InitEnvVisitor(env)); }
+void InitEnv(const Declaration& d, Env* env) {
+  switch (d.tag()) {
+    case DeclarationKind::FunctionDeclaration: {
+      const auto& alt = d.GetFunctionDeclaration();
+      auto pt = InterpExp(*env, alt.definition.param_pattern);
+      auto f = Value::MakeFunctionValue(alt.definition.name, pt,
+                                        alt.definition.body);
+      Address a = state->heap.AllocateValue(f);
+      env->Set(alt.definition.name, a);
+      break;
+    }
+
+    case DeclarationKind::StructDeclaration: {
+      const auto& alt = d.GetStructDeclaration();
+
+      VarValues fields;
+      VarValues methods;
+      for (auto i = alt.definition.members->begin();
+           i != alt.definition.members->end(); ++i) {
+        switch ((*i)->tag) {
+          case MemberKind::FieldMember: {
+            auto t = InterpExp(Env(), (*i)->u.field.type);
+            fields.push_back(make_pair(*(*i)->u.field.name, t));
+            break;
+          }
+        }
+      }
+      auto st = Value::MakeStructType(*alt.definition.name, std::move(fields),
+                                      std::move(methods));
+      auto a = state->heap.AllocateValue(st);
+      env->Set(*alt.definition.name, a);
+      break;
+    }
+
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& alt = d.GetChoiceDeclaration();
+      VarValues alts;
+      for (const auto& [name, signature] : alt.alternatives) {
+        auto t = InterpExp(Env(), signature);
+        alts.push_back(make_pair(name, t));
+      }
+      auto ct = Value::MakeChoiceType(alt.name, std::move(alts));
+      auto a = state->heap.AllocateValue(ct);
+      env->Set(alt.name, a);
+      break;
+    }
+
+    case DeclarationKind::VariableDeclaration: {
+      const auto& alt = d.GetVariableDeclaration();
+      // Adds an entry in `globals` mapping the variable's name to the
+      // result of evaluating the initializer.
+      auto v = InterpExp(*env, alt.initializer);
+      Address a = state->heap.AllocateValue(v);
+      env->Set(alt.name, a);
+      break;
+    }
+  }
+}
 
 static void InitGlobals(std::list<Declaration>* fs) {
   for (auto const& d : *fs) {

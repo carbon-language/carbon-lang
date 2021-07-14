@@ -97,11 +97,6 @@ class Declaration {
 
   void Print() const;
 
-  template <typename ReturnType>
-  inline auto Visit(const Visitor<ReturnType>& visitor) const -> ReturnType {
-    return std::visit(visitor, value);
-  }
-
   inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
   }
