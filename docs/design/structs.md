@@ -13,12 +13,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Use cases](#use-cases)
     -   [Data classes](#data-classes)
-    -   [Object types](#object-types)
-    -   [Abstract base classes](#abstract-base-classes)
-    -   [Polymorphic types](#polymorphic-types)
+    -   [Encapsulated types](#encapsulated-types)
+        -   [Without inheritance](#without-inheritance)
+        -   [With inheritance and subtyping](#with-inheritance-and-subtyping)
+            -   [Polymorphic types](#polymorphic-types)
+                -   [Interface as base class](#interface-as-base-class)
+            -   [Non-polymorphic inheritance](#non-polymorphic-inheritance)
+            -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
     -   [Mixins](#mixins)
-    -   [Non-virtual inheritance](#non-virtual-inheritance)
-    -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
 -   [Background](#background)
 -   [Overview](#overview-1)
 -   [Members](#members)
@@ -42,7 +44,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Inheritance](#inheritance)
     -   [Abstract base classes interoperating with object-safe interfaces](#abstract-base-classes-interoperating-with-object-safe-interfaces)
     -   [Mixins](#mixins-1)
-    -   [Non-virtual inheritance](#non-virtual-inheritance-1)
+    -   [Non-virtual inheritance](#non-virtual-inheritance)
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
 
@@ -97,35 +99,109 @@ boilerplate. Python has a
 proposed in [PEP 557](https://www.python.org/dev/peps/pep-0557/), that fills a
 similar role.
 
-### Object types
+### Encapsulated types
 
-An object type is a type that has
+There are several categories of types that support
 [encapsulation](<https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)>).
-That is, its data fields are private and access and modification of values are
-all done through methods defined on the type. An object type does not have a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), and does not
-support being inherited from -- they are
-["final"](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>).
+This is done by making their data fields private so access and modification of
+values are all done through methods defined on the type.
 
-Examples: strings, containers, iterators, types with invariants such as `Date`.
+#### Without inheritance
 
-Object types include:
+The common case for encapsulated types are those that do not participate in
+inheritance. These types neither extend other types nor do they support being
+inherited from (they are
+["final"](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>)).
 
+Examples of this use case include:
+
+-   strings, containers, iterators
+-   types with invariants such as `Date`
 -   RAII types that are movable but not copyable like C++'s `std::unique_ptr` or
     a file handle
 -   non-movable types like `Mutex`
 
-We expect two kinds of methods on object types: public methods defining the API
+We expect two kinds of methods on these types: public methods defining the API
 for accessing and manipulating values of the type, and private helper methods
 used as an implementation detail of the public methods.
 
-Object types are expected in idiomatic Carbon-only code. Extending this design
-to support object types is future work.
+These types are expected in idiomatic Carbon-only code. Extending this design to
+support these types is future work.
 
-Note that other kinds of types necessarily need to provide encapsulation as part
-of providing subtyping, while object types are just about encapsulation.
+#### With inheritance and subtyping
 
-### Abstract base classes
+FIXME
+
+Generally needs encapsulation for subtyping
+
+An object type does not have a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), and does not
+support being inherited from
+
+##### Polymorphic types
+
+Carbon will fully support single-inheritance type hierarchies with polymorphic
+types.
+
+Polymorphic types support dynamic dispatch using a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), but unlike
+[abstract base classes](#abstract-base-classes) may also include private data in
+a base type. Polymorphic types support traditional
+[object-oriented single inheritance](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>),
+a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
+[implementation and code reuse](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Code_reuse>).
+
+We exclude complex multiple inheritance schemes, virtual inheritance, and so on
+from this use case. This is to avoid the complexity and overhead they bring,
+particularly since the use of these features in C++ is generally discouraged.
+The rule is that every type has at most one base type with data members for
+subtyping purposes. Carbon will support additional base types as long as they
+are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
+
+While an abstract base class is an interface that allows decoupling, a
+polymorphic type is a collaboration between a base and derived type to provide
+some functionality. This is a bit like the difference between a library and a
+framework, where you might use many of the former but only one of the latter.
+However, there are some cases of overlap where there is an interface at the root
+of a type hierarchy and polymorphic types as interior branches of the tree.
+
+**Background:**
+[The "Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
+and
+[the Composition Over Inheritance Principle](https://python-patterns.guide/gang-of-four/composition-over-inheritance/)
+describe design patterns to use instead of multiple inheritance to support types
+that vary over multiple axes.
+
+Polymorphic types support a number of different kinds of methods:
+
+-   Like abstract base classes, they will have virtual methods:
+    -   Polymorphic types will always include virtual destructors.
+    -   Polymorphic types may have pure-virtual methods, but in contrast to ABCs
+        they aren't required.
+    -   It is more common for polymorphic types to have a default implementation
+        of virtual methods or have protected or
+        [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
+        virtual methods intended to be called by methods in the base type but
+        implemented in the descendant.
+-   They may have non-virtual public or private helper methods, like
+    encapsulated types without inheritance. These avoid the overhead of a
+    virtual function call, and are more frequent in polymorphic types than
+    abstract base classes due to the ability to reference some of the data
+    members of the type.
+-   They may have protected helper methods, typically non-virtual, provided by
+    the base type to be called by the descendant.
+
+Note that there are two uses for protected methods: those implemented in the
+base and called in the descendant, and the other way around.
+["The End Of Object Inheritance & The Beginning Of A New Modularity" talk by Augie Fackler and Nathaniel Manista](https://www.youtube.com/watch?v=3MNVP9-hglc)
+discusses design patterns that split up types to reduce the number of kinds of
+calls between base and derived types, and make sure calls only go in one
+direction.
+
+We expect polymorphic types in idiomatic Carbon-only code, at least for the
+medium term. Extending this design to support polymorphic types is future work.
+
+###### Interface as base class
 
 **TODO:** rename to "interface base class/type" or "pure interface base
 class/type", since ABCs in C++ are allowed to have data?
@@ -181,67 +257,45 @@ this design to support abstract base classes is future work.
 [Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) model
 abstract base classes.
 
-### Polymorphic types
+##### Non-polymorphic inheritance
 
-Carbon will fully support single-inheritance type hierarchies with polymorphic
-types.
+While it is not common, there are cases where C++ code uses inheritance without
+dynamic dispatch or a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table). Instead, methods
+are never overridden, and derived types only add data and methods. There are
+some cases where this is done in C++ but would be done differently in Carbon:
 
-Polymorphic types support dynamic dispatch using a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), but unlike
-[abstract base classes](#abstract-base-classes) may also include private data in
-a base type. Polymorphic types support traditional
-[object-oriented single inheritance](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>),
-a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
-[implementation and code reuse](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Code_reuse>).
+-   For implementation reuse without subtyping, in Carbon use mixins or
+    composition instead of traditional inheritance. Carbon won't support private
+    inheritance.
+-   Carbon will allow data members to have size zero, so the
+    [empty-base optimization](https://en.cppreference.com/w/cpp/language/ebo) is
+    unnecessary.
+-   For cases where the derived type does not add any data members, in Carbon
+    you can use adapter types instead of inheritance.
 
-We exclude complex multiple inheritance schemes, virtual inheritance, and so on
-from this use case. This is to avoid the complexity and overhead they bring,
-particularly since the use of these features in C++ is generally discouraged.
-The rule is that every type has at most one base type with data members for
-subtyping purposes. Carbon will support additional base types as long as they
-are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
+However, there are still some cases where non-virtual inheritance makes sense.
 
-While an abstract base class is an interface that allows decoupling, a
-polymorphic type is a collaboration between a base and derived type to provide
-some functionality. This is a bit like the difference between a library and a
-framework, where you might use many of the former but only one of the latter.
-However, there are some cases of overlap where there is an interface at the root
-of a type hierarchy and polymorphic types as interior branches of the tree.
+**Examples:** LLVM
+[red-black tree](https://github.com/llvm-mirror/libcxx/blob/master/include/__tree)
+and doubly-linked lists **TODO**
 
-**Background:**
-[The "Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
-and
-[the Composition Over Inheritance Principle](https://python-patterns.guide/gang-of-four/composition-over-inheritance/)
-describe design patterns to use instead of multiple inheritance to support types
-that vary over multiple axes.
+##### Interop with C++ multiple inheritance
 
-Polymorphic types support a number of different kinds of methods:
+While Carbon won't support all the C++ forms of multiple inheritance, Carbon
+code will still need to interoperate with C++ code that does. Of particular
+concern are the `std::iostream` family of types. Most uses of those types are
+the input and output variations or could be migrated to use those variations,
+not the harder bidirectional cases.
 
--   Like abstract base classes, they will have virtual methods:
-    -   Polymorphic types will always include virtual destructors.
-    -   Polymorphic types may have pure-virtual methods, but in contrast to ABCs
-        they aren't required.
-    -   It is more common for polymorphic types to have a default implementation
-        of virtual methods or have protected or
-        [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
-        virtual methods intended to be called by methods in the base type but
-        implemented in the descendant.
--   They may have non-virtual public or private helper methods, like object
-    types. These avoid the overhead of a virtual function call, and are more
-    frequent in polymorphic types than abstract base classes due to the ability
-    to reference some of the data members of the type.
--   They may have protected helper methods, typically non-virtual, provided by
-    the base type to be called by the descendant.
+Much of the complexity of this interoperation could be alleviated by adopting
+the restriction that Carbon code can't directly access the fields of a virtual
+base class. In the cases where such access is needed, the workaround is to
+access them through C++ functions.
 
-Note that there are two uses for protected methods: those implemented in the
-base and called in the descendant, and the other way around.
-["The End Of Object Inheritance & The Beginning Of A New Modularity" talk by Augie Fackler and Nathaniel Manista](https://www.youtube.com/watch?v=3MNVP9-hglc)
-discusses design patterns that split up types to reduce the number of kinds of
-calls between base and derived types, and make sure calls only go in one
-direction.
-
-We expect polymorphic types in idiomatic Carbon-only code, at least for the
-medium term. Extending this design to support polymorphic types is future work.
+We do not expect idiomatic Carbon-only code to use multiple inheritance.
+Extending this design to support interopating with C++ types using multiple
+inheritance is future work.
 
 ### Mixins
 
@@ -275,46 +329,6 @@ in C++, but other languages support them directly.
     implementing, which restores a form of subtyping. See
     [Dart: What are mixins?](https://medium.com/flutter-community/dart-what-are-mixins-3a72344011f3).
 -   [Proposal to add mixin support to Swift](https://github.com/Anton3/swift-evolution/blob/mixins/proposals/NNNN-mixins.md).
-
-### Non-virtual inheritance
-
-While it is not common, there are cases where C++ code uses inheritance without
-dynamic dispatch or a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table). Instead, methods
-are never overridden, and derived types only add data and methods. There are
-some cases where this is done in C++ but would be done differently in Carbon:
-
--   For implementation reuse without subtyping, in Carbon use mixins or
-    composition instead of traditional inheritance. Carbon won't support private
-    inheritance.
--   Carbon will allow data members to have size zero, so the
-    [empty-base optimization](https://en.cppreference.com/w/cpp/language/ebo) is
-    unnecessary.
--   For cases where the derived type does not add any data members, in Carbon
-    you can use adapter types instead of inheritance.
-
-However, there are still some cases where non-virtual inheritance makes sense.
-
-**Examples:** LLVM
-[red-black tree](https://github.com/llvm-mirror/libcxx/blob/master/include/__tree)
-and doubly-linked lists **TODO**
-
-### Interop with C++ multiple inheritance
-
-While Carbon won't support all the C++ forms of multiple inheritance, Carbon
-code will still need to interoperate with C++ code that does. Of particular
-concern are the `std::iostream` family of types. Most uses of those types are
-the input and output variations or could be migrated to use those variations,
-not the harder bidirectional cases.
-
-Much of the complexity of this interoperation could be alleviated by adopting
-the restriction that Carbon code can't directly access the fields of a virtual
-base class. In the cases where such access is needed, the workaround is to
-access them through C++ functions.
-
-We do not expect idiomatic Carbon-only code to use multiple inheritance.
-Extending this design to support interopating with C++ types using multiple
-inheritance is future work.
 
 ## Background
 
