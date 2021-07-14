@@ -304,117 +304,58 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
 // Globally-defined entities, such as functions, structs, choices.
 static Env globals;
 
-namespace {
-
-class InitEnvVisitor : public Declaration::Visitor<void> {
- public:
-  InitEnvVisitor(Env* env) : env(env) {}
-
-  void operator()(const ChoiceDeclaration& alt) const override {
-    VarValues alts;
-    for (const auto& [name, signature] : alt.alternatives) {
-      auto t = InterpExp(Env(), signature);
-      alts.push_back(make_pair(name, t));
-    }
-    auto ct = Value::MakeChoiceType(alt.name, std::move(alts));
-    auto a = state->heap.AllocateValue(ct);
-    env->Set(alt.name, a);
-  }
-
-  void operator()(const StructDeclaration& alt) const override {
-    VarValues fields;
-    VarValues methods;
-    for (auto i = alt.definition.members->begin();
-         i != alt.definition.members->end(); ++i) {
-      switch ((*i)->tag) {
-        case MemberKind::FieldMember: {
-          auto t = InterpExp(Env(), (*i)->u.field.type);
-          fields.push_back(make_pair(*(*i)->u.field.name, t));
-          break;
-        }
-      }
-    }
-    auto st = Value::MakeStructType(*alt.definition.name, std::move(fields),
-                                    std::move(methods));
-    auto a = state->heap.AllocateValue(st);
-    env->Set(*alt.definition.name, a);
-  }
-
-  void operator()(const FunctionDeclaration& alt) const override {
-    auto pt = InterpExp(*env, alt.definition.param_pattern);
-    auto f =
-        Value::MakeFunctionValue(alt.definition.name, pt, alt.definition.body);
-    Address a = state->heap.AllocateValue(f);
-    env->Set(alt.definition.name, a);
-  }
-
-  // Adds an entry in `globals` mapping the variable's name to the
-  // result of evaluating the initializer.
-  void operator()(const VariableDeclaration& alt) const override {
-    auto v = InterpExp(*env, alt.initializer);
-    Address a = state->heap.AllocateValue(v);
-    env->Set(alt.name, a);
-  }
-
-  Env* env;
-};
-
-}  // namespace
-
 void InitEnv(const Declaration& d, Env* env) {
   switch (d.tag()) {
     case DeclarationKind::FunctionDeclaration: {
-      const auto& alt = d.GetFunctionDeclaration();
-      auto pt = InterpExp(*env, alt.definition.param_pattern);
-      auto f = Value::MakeFunctionValue(alt.definition.name, pt,
-                                        alt.definition.body);
+      const FunctionDefinition& func_def =
+          d.GetFunctionDeclaration().definition;
+      auto pt = InterpExp(*env, func_def.param_pattern);
+      auto f = Value::MakeFunctionValue(func_def.name, pt, func_def.body);
       Address a = state->heap.AllocateValue(f);
-      env->Set(alt.definition.name, a);
+      env->Set(func_def.name, a);
       break;
     }
 
     case DeclarationKind::StructDeclaration: {
-      const auto& alt = d.GetStructDeclaration();
-
+      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
       VarValues fields;
       VarValues methods;
-      for (auto i = alt.definition.members->begin();
-           i != alt.definition.members->end(); ++i) {
-        switch ((*i)->tag) {
+      for (const Member* member : struct_def.members) {
+        switch (member->tag) {
           case MemberKind::FieldMember: {
-            auto t = InterpExp(Env(), (*i)->u.field.type);
-            fields.push_back(make_pair(*(*i)->u.field.name, t));
+            auto t = InterpExp(Env(), member->u.field.type);
+            fields.push_back(make_pair(*member->u.field.name, t));
             break;
           }
         }
       }
-      auto st = Value::MakeStructType(*alt.definition.name, std::move(fields),
+      auto st = Value::MakeStructType(struct_def.name, std::move(fields),
                                       std::move(methods));
       auto a = state->heap.AllocateValue(st);
-      env->Set(*alt.definition.name, a);
+      env->Set(struct_def.name, a);
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
-      const auto& alt = d.GetChoiceDeclaration();
+      const auto& choice = d.GetChoiceDeclaration();
       VarValues alts;
-      for (const auto& [name, signature] : alt.alternatives) {
+      for (const auto& [name, signature] : choice.alternatives) {
         auto t = InterpExp(Env(), signature);
         alts.push_back(make_pair(name, t));
       }
-      auto ct = Value::MakeChoiceType(alt.name, std::move(alts));
+      auto ct = Value::MakeChoiceType(choice.name, std::move(alts));
       auto a = state->heap.AllocateValue(ct);
-      env->Set(alt.name, a);
+      env->Set(choice.name, a);
       break;
     }
 
     case DeclarationKind::VariableDeclaration: {
-      const auto& alt = d.GetVariableDeclaration();
+      const auto& var = d.GetVariableDeclaration();
       // Adds an entry in `globals` mapping the variable's name to the
       // result of evaluating the initializer.
-      auto v = InterpExp(*env, alt.initializer);
+      auto v = InterpExp(*env, var.initializer);
       Address a = state->heap.AllocateValue(v);
-      env->Set(alt.name, a);
+      env->Set(var.name, a);
       break;
     }
   }

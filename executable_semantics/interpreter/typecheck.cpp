@@ -690,14 +690,13 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
     -> const Value* {
   VarValues fields;
   VarValues methods;
-  for (auto m = sd->members->begin(); m != sd->members->end(); ++m) {
-    if ((*m)->tag == MemberKind::FieldMember) {
-      auto t = InterpExp(ct_top, (*m)->u.field.type);
-      fields.push_back(std::make_pair(*(*m)->u.field.name, t));
+  for (const Member* m : sd->members) {
+    if (m->tag == MemberKind::FieldMember) {
+      auto t = InterpExp(ct_top, m->u.field.type);
+      fields.push_back(std::make_pair(*m->u.field.name, t));
     }
   }
-  return Value::MakeStructType(*sd->name, std::move(fields),
-                               std::move(methods));
+  return Value::MakeStructType(sd->name, std::move(fields), std::move(methods));
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
@@ -705,7 +704,7 @@ static auto GetName(const Declaration& d) -> const std::string& {
     case DeclarationKind::FunctionDeclaration:
       return d.GetFunctionDeclaration().definition.name;
     case DeclarationKind::StructDeclaration:
-      return *d.GetStructDeclaration().definition.name;
+      return d.GetStructDeclaration().definition.name;
     case DeclarationKind::ChoiceDeclaration:
       return d.GetChoiceDeclaration().name;
     case DeclarationKind::VariableDeclaration:
@@ -716,44 +715,38 @@ static auto GetName(const Declaration& d) -> const std::string& {
 auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
                      const Env& values) -> Declaration {
   switch (d.tag()) {
-    case DeclarationKind::FunctionDeclaration: {
-      const auto& alt = d.GetFunctionDeclaration();
-      return Declaration::MakeFunctionDeclaration(
-          *TypeCheckFunDef(&alt.definition, types, values));
-    }
+    case DeclarationKind::FunctionDeclaration:
+      return Declaration::MakeFunctionDeclaration(*TypeCheckFunDef(
+          &d.GetFunctionDeclaration().definition, types, values));
 
     case DeclarationKind::StructDeclaration: {
-      const auto& alt = d.GetStructDeclaration();
-      auto fields = new std::list<Member*>();
-      for (auto& m : *alt.definition.members) {
+      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
+      std::list<Member*> fields;
+      for (Member* m : struct_def.members) {
         if (m->tag == MemberKind::FieldMember) {
           // TODO: Interpret the type expression and store the result.
-          fields->push_back(m);
+          fields.push_back(m);
         }
       }
-      return Declaration::MakeStructDeclaration(alt.definition.line_num,
-                                                *alt.definition.name, fields);
+      return Declaration::MakeStructDeclaration(
+          struct_def.line_num, struct_def.name, std::move(fields));
     }
 
-    case DeclarationKind::ChoiceDeclaration: {
-      const auto& alt = d.GetChoiceDeclaration();
+    case DeclarationKind::ChoiceDeclaration:
       // TODO
-      return Declaration::MakeChoiceDeclaration(alt.line_num, alt.name,
-                                                alt.alternatives);
-    }
+      return d;
 
     case DeclarationKind::VariableDeclaration: {
-      const auto& alt = d.GetVariableDeclaration();
+      const auto& var = d.GetVariableDeclaration();
       // Signals a type error if the initializing expression does not have
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
       TCResult type_checked_initializer = TypeCheckExp(
-          alt.initializer, types, values, nullptr, TCContext::ValueContext);
-      const Value* declared_type = InterpExp(values, alt.type);
-      ExpectType(alt.source_location, "initializer of variable", declared_type,
+          var.initializer, types, values, nullptr, TCContext::ValueContext);
+      const Value* declared_type = InterpExp(values, var.type);
+      ExpectType(var.source_location, "initializer of variable", declared_type,
                  type_checked_initializer.type);
-      return Declaration::MakeVariableDeclaration(alt.source_location, alt.name,
-                                                  alt.type, alt.initializer);
+      return d;
     }
   }
 }
@@ -761,18 +754,19 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
 static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
   switch (d.tag()) {
     case DeclarationKind::FunctionDeclaration: {
-      const auto& alt = d.GetFunctionDeclaration();
-      auto t = TypeOfFunDef(tops->types, tops->values, &alt.definition);
-      tops->types.Set(alt.definition.name, t);
+      const FunctionDefinition& func_def =
+          d.GetFunctionDeclaration().definition;
+      auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
+      tops->types.Set(func_def.name, t);
       InitEnv(d, &tops->values);
       break;
     }
 
     case DeclarationKind::StructDeclaration: {
-      const auto& alt = d.GetStructDeclaration();
-      auto st = TypeOfStructDef(&alt.definition, tops->types, tops->values);
+      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
+      auto st = TypeOfStructDef(&struct_def, tops->types, tops->values);
       Address a = state->heap.AllocateValue(st);
-      tops->values.Set(*alt.definition.name, a);  // Is this obsolete?
+      tops->values.Set(struct_def.name, a);  // Is this obsolete?
       std::vector<TupleElement> field_types;
       for (const auto& [field_name, field_value] : st->GetStructType().fields) {
         field_types.push_back(
@@ -781,30 +775,30 @@ static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
       }
       auto fun_ty = Value::MakeFunctionType(
           Value::MakeTupleValue(std::move(field_types)), st);
-      tops->types.Set(*alt.definition.name, fun_ty);
+      tops->types.Set(struct_def.name, fun_ty);
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
-      const auto& alt = d.GetChoiceDeclaration();
+      const auto& choice = d.GetChoiceDeclaration();
       VarValues alts;
-      for (const auto& [name, signature] : alt.alternatives) {
+      for (const auto& [name, signature] : choice.alternatives) {
         auto t = InterpExp(tops->values, signature);
         alts.push_back(std::make_pair(name, t));
       }
-      auto ct = Value::MakeChoiceType(alt.name, std::move(alts));
+      auto ct = Value::MakeChoiceType(choice.name, std::move(alts));
       Address a = state->heap.AllocateValue(ct);
-      tops->values.Set(alt.name, a);  // Is this obsolete?
-      tops->types.Set(alt.name, ct);
+      tops->values.Set(choice.name, a);  // Is this obsolete?
+      tops->types.Set(choice.name, ct);
       break;
     }
 
     case DeclarationKind::VariableDeclaration: {
-      const auto& alt = d.GetVariableDeclaration();
+      const auto& var = d.GetVariableDeclaration();
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
-      const Value* declared_type = InterpExp(tops->values, alt.type);
-      tops->types.Set(alt.name, declared_type);
+      const Value* declared_type = InterpExp(tops->values, var.type);
+      tops->types.Set(var.name, declared_type);
       break;
     }
   }

@@ -16,13 +16,13 @@ auto Declaration::MakeFunctionDeclaration(FunctionDefinition definition)
 }
 
 auto Declaration::MakeStructDeclaration(int line_num, std::string name,
-                                        std::list<Member*>* members)
+                                        std::list<Member*> members)
     -> const Declaration {
   Declaration d;
   d.value = StructDeclaration(
       {.definition = StructDefinition({.line_num = line_num,
-                                       .name = new std::string(name),
-                                       .members = members})});
+                                       .name = std::move(name),
+                                       .members = std::move(members)})});
   return d;
 }
 
@@ -72,9 +72,9 @@ void Declaration::Print() const {
       break;
 
     case DeclarationKind::StructDeclaration: {
-      const auto& alt = GetStructDeclaration();
-      std::cout << "struct " << *alt.definition.name << " {" << std::endl;
-      for (auto& member : *alt.definition.members) {
+      const StructDefinition& struct_def = GetStructDeclaration().definition;
+      std::cout << "struct " << struct_def.name << " {" << std::endl;
+      for (auto& member : struct_def.members) {
         PrintMember(member);
       }
       std::cout << "}" << std::endl;
@@ -82,9 +82,9 @@ void Declaration::Print() const {
     }
 
     case DeclarationKind::ChoiceDeclaration: {
-      const auto& alt = GetChoiceDeclaration();
-      std::cout << "choice " << alt.name << " {" << std::endl;
-      for (const auto& [name, signature] : alt.alternatives) {
+      const auto& choice = GetChoiceDeclaration();
+      std::cout << "choice " << choice.name << " {" << std::endl;
+      for (const auto& [name, signature] : choice.alternatives) {
         std::cout << "alt " << name << " ";
         PrintExp(signature);
         std::cout << ";" << std::endl;
@@ -94,11 +94,11 @@ void Declaration::Print() const {
     }
 
     case DeclarationKind::VariableDeclaration: {
-      const auto& alt = GetVariableDeclaration();
+      const auto& var = GetVariableDeclaration();
       std::cout << "var ";
-      PrintExp(alt.type);
-      std::cout << " : " << alt.name << " = ";
-      PrintExp(alt.initializer);
+      PrintExp(var.type);
+      std::cout << " : " << var.name << " = ";
+      PrintExp(var.initializer);
       std::cout << std::endl;
       break;
     }

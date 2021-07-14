@@ -63,23 +63,10 @@ struct VariableDeclaration {
 
 class Declaration {
  public:
-  template <typename ReturnType>
-  class Visitor {
-   public:
-    virtual auto operator()(const FunctionDeclaration& alt) const
-        -> ReturnType = 0;
-    virtual auto operator()(const StructDeclaration& alt) const
-        -> ReturnType = 0;
-    virtual auto operator()(const ChoiceDeclaration& alt) const
-        -> ReturnType = 0;
-    virtual auto operator()(const VariableDeclaration& alt) const
-        -> ReturnType = 0;
-  };
-
   static auto MakeFunctionDeclaration(FunctionDefinition definition)
       -> const Declaration;
   static auto MakeStructDeclaration(int line_num, std::string name,
-                                    std::list<Member*>* members)
+                                    std::list<Member*> members)
       -> const Declaration;
   static auto MakeChoiceDeclaration(
       int line_num, std::string name,

@@ -106,7 +106,7 @@ void yy::parser::error(
 %type <const Carbon::Expression*> tuple
 %type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
-%type <std::list<Carbon::Member*>*> member_list
+%type <std::list<Carbon::Member*>> member_list
 %type <Carbon::FieldInitializer> field_initializer
 %type <Carbon::ParenContents> paren_contents
 %type <std::vector<Carbon::FieldInitializer>> paren_contents_without_trailing_comma
@@ -390,9 +390,9 @@ member: VAR variable_declaration ";"
 ;
 member_list:
   // Empty
-    { $$ = new std::list<Carbon::Member*>(); }
+    { $$ = std::list<Carbon::Member*>(); }
 | member member_list
-    { $$ = $2; $$->push_front($1); }
+    { $$ = $2; $$.push_front($1); }
 ;
 alternative:
   identifier tuple
