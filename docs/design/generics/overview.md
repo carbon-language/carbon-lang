@@ -114,7 +114,7 @@ function.
 
 This ability to generalize makes `SortVector` a _generic_.
 
-**NOTE:** The `:!` syntax was being decided in
+**NOTE:** The `:!` syntax was decided in
 [question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
 ### Interfaces
