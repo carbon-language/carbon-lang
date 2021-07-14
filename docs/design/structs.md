@@ -130,13 +130,32 @@ support these types is future work.
 
 #### With inheritance and subtyping
 
-FIXME
+The subtyping you get with inheritance is that you may assign the address of an
+object of a derived type to a pointer to its base type. For this to work, the
+compiler needs implementation strategies that allow operations performed through
+the pointer to the base type work independent of which derived type it actually
+points to. These strategies include:
 
-Generally needs encapsulation for subtyping
+-   Arranging for the the data layout of derived types to start with the data
+    layout of the base type as a prefix.
+-   Putting a pointer to a table of function pointers, a
+    [vtable](https://en.wikipedia.org/wiki/Virtual_method_table), as the first
+    data member of the object. This allows methods marked `virtual` to have a
+    derived-type-specific implementation, an "override", that is used even when
+    invoking the method on a pointer to a base type.
+-   Non-virtual methods implemented on a base type should be applicable to all
+    derived types. In general, derived types should not attempt to overload or
+    override non-virtual names defined in the base type.
 
-An object type does not have a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), and does not
-support being inherited from
+Note that these subtyping implementation strategies generally rely on
+encapsulation, but encapsulation is not a strict requirement in all cases.
+
+This subtyping relationship also creates safety concerns, which Carbon should
+protect against.
+[Slicing problems](https://en.wikipedia.org/wiki/Object_slicing) can arise when
+the source or target of an assignment is a dereferenced pointer to the base
+type. It is also incorrect to delete an object with a non-virtual destructor
+through a pointer to a base type.
 
 ##### Polymorphic types
 
@@ -144,9 +163,14 @@ Carbon will fully support single-inheritance type hierarchies with polymorphic
 types.
 
 Polymorphic types support dynamic dispatch using a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), but unlike
-[abstract base classes](#abstract-base-classes) may also include private data in
-a base type. Polymorphic types support traditional
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), and data members,
+but only single inheritance.
+
+FIXME: Talk about dynamic dispatch versus single implementation choice being
+made separately for every method.
+
+but unlike [abstract base classes](#abstract-base-classes) may also include
+private data in a base type. Polymorphic types support traditional
 [object-oriented single inheritance](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>),
 a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
 [implementation and code reuse](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Code_reuse>).
