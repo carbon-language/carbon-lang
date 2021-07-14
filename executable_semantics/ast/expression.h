@@ -134,9 +134,6 @@ struct TypeTypeLiteral {
 };
 
 struct Expression {
-  int line_num;
-  auto tag() const -> ExpressionKind;
-
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
   static auto MakeBindingExpression(int line_num, std::string var,
@@ -175,6 +172,12 @@ struct Expression {
       -> const PrimitiveOperatorExpression&;
   auto GetCallExpression() const -> const CallExpression&;
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
+
+  inline auto tag() const -> ExpressionKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
+  int line_num;
 
  private:
   std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,

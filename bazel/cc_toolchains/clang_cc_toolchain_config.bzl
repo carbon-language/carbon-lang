@@ -119,6 +119,7 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
+                            "-Werror",
                             "-Wall",
                             "-Wextra",
                             "-Wthread-safety",
