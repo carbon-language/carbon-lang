@@ -4,7 +4,7 @@
 
 """Rule for a golden test."""
 
-def golden_test(name, golden, cmd, data, golden_is_subset = 0, **kwargs):
+def golden_test(name, golden, cmd, data, golden_is_subset = False, **kwargs):
     """Compares two files. Passes if they are identical.
 
     Args:
@@ -12,7 +12,7 @@ def golden_test(name, golden, cmd, data, golden_is_subset = 0, **kwargs):
       cmd: The command whose output is being tested.
       golden: The golden file to be compared against the command output.
       data: Data files.
-      golden_is_subset: Set to 1 if the golden file should be a subset of
+      golden_is_subset: Set to True if the golden file should be a subset of
         command output.
       **kwargs: Any additional parameters for the generated py_test.
     """

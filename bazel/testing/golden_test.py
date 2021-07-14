@@ -87,12 +87,12 @@ def _get_subject_output(args):
 
 def _check_diff(args, subject):
     """Prints and checks the diff. Returns the appropriate exit code."""
-    # TODO: consider using difflib instead of a subprocess
     subject_lines = subject.splitlines(keepends=True)
     with open(args.golden_path) as golden:
         golden_lines = list(golden.readlines())
     if args.golden_is_subset:
-        subject_lines = [line for line in subject_lines if line in golden_lines]
+        golden_set = frozenset(golden_lines)
+        subject_lines = [line for line in subject_lines if line in golden_set]
     context_diff = list(
         difflib.context_diff(
             subject_lines, golden_lines, fromfile="subject", tofile="golden"
