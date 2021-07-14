@@ -66,6 +66,7 @@ genrule(
     ],
     cmd = "M4=$(M4) $(BISON) " +
           "--output=$(location parser.cpp) " +
+          "--report=state " +
           "--defines=$(location parser.h) " +
           "$(location parser.ypp)",
     toolchains = [

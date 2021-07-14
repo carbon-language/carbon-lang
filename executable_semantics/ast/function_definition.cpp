@@ -9,12 +9,14 @@
 namespace Carbon {
 
 auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
+                std::vector<GenericBindingExpression> deduced_params,
                 const Expression* param_pattern, const Statement* body)
     -> FunctionDefinition {
   FunctionDefinition f;
   f.line_num = line_num;
   f.name = std::move(name);
   f.return_type = ret_type;
+  f.deduced_parameters = deduced_params;
   f.param_pattern = param_pattern;
   f.body = body;
   return f;

@@ -26,6 +26,11 @@ auto Expression::GetBindingExpression() const -> const BindingExpression& {
   return std::get<BindingExpression>(value);
 }
 
+auto Expression::GetGenericBindingExpression() const
+    -> const GenericBindingExpression& {
+  return std::get<GenericBindingExpression>(value);
+}
+
 auto Expression::GetIntLiteral() const -> int {
   return std::get<IntLiteral>(value).value;
 }
@@ -111,6 +116,24 @@ auto Expression::MakeBindingExpression(int line_num, std::string var,
   auto* v = new Expression();
   v->line_num = line_num;
   v->value = BindingExpression({.name = std::move(var), .type = type});
+  return v;
+}
+
+auto Expression::MakeGenericBindingExpression(int line_num, std::string var,
+                                              const Expression* type)
+    -> const Expression* {
+  auto* v = new Expression();
+  v->line_num = line_num;
+  v->value = GenericBindingExpression({.name = std::move(var), .type = type});
+  return v;
+}
+
+auto Expression::MakeGenericBinding(int line_num,
+                                    GenericBindingExpression binding)
+    -> const Expression* {
+  auto* v = new Expression();
+  v->line_num = line_num;
+  v->value = binding;
   return v;
 }
 
@@ -284,6 +307,11 @@ void PrintExp(const Expression* e) {
       PrintExp(e->GetBindingExpression().type);
       std::cout << ": ";
       std::cout << e->GetBindingExpression().name;
+      break;
+    case ExpressionKind::GenericBindingExpression:
+      PrintExp(e->GetGenericBindingExpression().type);
+      std::cout << ":! ";
+      std::cout << e->GetGenericBindingExpression().name;
       break;
     case ExpressionKind::CallExpression:
       PrintExp(e->GetCallExpression().function);

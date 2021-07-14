@@ -13,12 +13,14 @@ namespace Carbon {
 struct FunctionDefinition {
   int line_num;
   std::string name;
+  std::vector<GenericBindingExpression> deduced_parameters;
   const Expression* param_pattern;
   const Expression* return_type;
   const Statement* body;
 };
 
 auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
+                std::vector<GenericBindingExpression> deduced_params,
                 const Expression* param, const Statement* body)
     -> FunctionDefinition;
 void PrintFunDef(const FunctionDefinition&);

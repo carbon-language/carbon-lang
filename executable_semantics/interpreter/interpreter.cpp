@@ -715,7 +715,8 @@ void StepLvalue() {
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::BindingExpression: {
+    case ExpressionKind::BindingExpression:
+    case ExpressionKind::GenericBindingExpression: {
       std::cerr << "Can't treat expression as lvalue: ";
       PrintExp(exp);
       std::cerr << std::endl;
@@ -736,6 +737,10 @@ void StepExp() {
     std::cout << " --->" << std::endl;
   }
   switch (exp->tag()) {
+    case ExpressionKind::GenericBindingExpression: {
+      std::cerr << exp->line_num << "generic binding not implemented yet\n";
+      exit(-1);
+    }
     case ExpressionKind::BindingExpression: {
       if (act->pos == 0) {
         frame->todo.Push(

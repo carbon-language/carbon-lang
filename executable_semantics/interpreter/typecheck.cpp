@@ -133,6 +133,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     std::cout << std::endl;
   }
   switch (e->tag()) {
+    case ExpressionKind::GenericBindingExpression: {
+      std::cerr << "generic binding not implemented yet\n";
+      exit(-1);
+    }
     case ExpressionKind::BindingExpression: {
       if (context != TCContext::PatternContext) {
         std::cerr
@@ -669,9 +673,9 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(MakeFunDef(f->line_num, f->name,
-                                           ReifyType(return_type, f->line_num),
-                                           f->param_pattern, body));
+  return new FunctionDefinition(MakeFunDef(
+      f->line_num, f->name, ReifyType(return_type, f->line_num),
+      std::vector<GenericBindingExpression>(), f->param_pattern, body));
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
