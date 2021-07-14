@@ -70,6 +70,7 @@ void Declaration::Print() const {
     case DeclarationKind::FunctionDeclaration:
       PrintFunDef(GetFunctionDeclaration().definition);
       break;
+
     case DeclarationKind::StructDeclaration: {
       const auto& alt = GetStructDeclaration();
       std::cout << "struct " << *alt.definition.name << " {" << std::endl;
@@ -79,6 +80,7 @@ void Declaration::Print() const {
       std::cout << "}" << std::endl;
       break;
     }
+
     case DeclarationKind::ChoiceDeclaration: {
       const auto& alt = GetChoiceDeclaration();
       std::cout << "choice " << alt.name << " {" << std::endl;
@@ -90,6 +92,7 @@ void Declaration::Print() const {
       std::cout << "}" << std::endl;
       break;
     }
+
     case DeclarationKind::VariableDeclaration: {
       const auto& alt = GetVariableDeclaration();
       std::cout << "var ";
