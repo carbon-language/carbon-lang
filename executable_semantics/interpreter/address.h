@@ -14,6 +14,9 @@
 
 namespace Carbon {
 
+// An Address represents a memory address in the Carbon virtual machine.
+// Addresses are used to access values stored in a Heap, and are obtained
+// from a Heap (or by deriving them from other Addresses).
 class Address {
  public:
   Address(const Address&) = default;
@@ -21,6 +24,7 @@ class Address {
   auto operator=(const Address&) -> Address& = default;
   auto operator=(Address&&) -> Address& = default;
 
+  // Returns true if the two addresses refer to the same memory location.
   friend auto operator==(const Address& lhs, const Address& rhs) -> bool {
     return lhs.index == rhs.index;
   }
@@ -29,11 +33,18 @@ class Address {
     return !(lhs == rhs);
   }
 
+  // Prints a human-readable representation of `a` to `out`.
+  //
+  // Currently, that representation consists of an integer index identifying
+  // the whole memory allocation, and an optional FieldPath specifying a
+  // particular field within that allocation.
   friend auto operator<<(std::ostream& out, const Address& a) -> std::ostream& {
-    out << a.index << a.field_path;
+    out << "Address(" << a.index << ")" << a.field_path;
     return out;
   }
 
+  // If *this represents the address of an object with a field named
+  // `field_name`, this method returns the address of that field.
   auto SubobjectAddress(std::string field_name) const -> Address {
     Address result = *this;
     result.field_path.Append(std::move(field_name));
@@ -41,6 +52,9 @@ class Address {
   }
 
  private:
+  // The representation of Address describes how to locate an object within
+  // the Heap, so its implementation details are tied to the implementation
+  // details of the Heap.
   friend class Heap;
 
   explicit Address(uint64_t index) : index(index) {}

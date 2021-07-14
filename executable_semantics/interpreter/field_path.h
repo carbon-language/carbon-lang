@@ -52,6 +52,9 @@ class FieldPath {
   }
 
  private:
+  // The representation of FieldPath describes how to locate a Value within
+  // another Value, so its implementation details are tied to the implementation
+  // details of Value.
   friend struct Value;
   std::vector<std::string> components;
 };
