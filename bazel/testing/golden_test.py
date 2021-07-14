@@ -56,15 +56,15 @@ def _parse_args():
         "subject_command", help="The command line to compare output with."
     )
     arg_parser.add_argument(
-        "--update",
-        action="store_true",
-        help="Whether to update the golden file.",
-    )
-    arg_parser.add_argument(
         "--golden_is_subset",
         action="store_true",
         help="Indicates that the golden file will be a subset of output, "
-        "rather than full output. Must not be used with --update.",
+        "rather than full output.",
+    )
+    arg_parser.add_argument(
+        "--update",
+        action="store_true",
+        help="Whether to update the golden file.",
     )
     return arg_parser.parse_args()
 
