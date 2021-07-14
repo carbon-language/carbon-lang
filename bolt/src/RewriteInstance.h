@@ -458,7 +458,7 @@ private:
   const PLTSectionInfo X86_64_PLTSections[4] = {
       { ".plt", 16 },
       { ".plt.got", 8 },
-      { ".plt.sec", 16 },
+      { ".plt.sec", 8 },
       { nullptr, 0 }
   };
 

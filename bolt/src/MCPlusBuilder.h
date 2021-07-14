@@ -479,6 +479,12 @@ public:
     return false;
   }
 
+  /// Return true if the instruction is used to terminate an indirect branch.
+  virtual bool isTerminateBranch(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// Return the width, in bytes, of the memory access performed by \p Inst, if
   /// this is a pop instruction. Return zero otherwise.
   virtual int getPopSize(const MCInst &Inst) const {

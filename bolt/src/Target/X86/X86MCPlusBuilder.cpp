@@ -472,6 +472,10 @@ public:
     return getPopSize(Inst) == 0 ? false : true;
   }
 
+  bool isTerminateBranch(const MCInst &Inst) const override {
+    return Inst.getOpcode() == X86::ENDBR32 || Inst.getOpcode() == X86::ENDBR64;
+  }
+
   int getPopSize(const MCInst &Inst) const override {
     switch (Inst.getOpcode()) {
     case X86::POP16r:
