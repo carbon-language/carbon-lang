@@ -114,5 +114,5 @@ EXAMPLES = [
         "testdata/%s.carbon" % e,
     ],
     golden = "testdata/%s.golden" % e,
-    golden_is_subset = 1,
+    golden_is_subset = True,
 ) for e in EXAMPLES]
