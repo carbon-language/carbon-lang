@@ -296,7 +296,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[Type:$ T, Type:$ U](x: T) -> U { ... }
+fn Illegal[T:$ Type, U:$ Type](x: T) -> U { ... }
 ```
 
 #### Generic type parameters
