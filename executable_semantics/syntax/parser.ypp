@@ -397,12 +397,14 @@ deduced_param_list:
     }
 ;
 deduced_params:
-  "[" deduced_param_list "]"
+  // Empty
+    { $$ = std::vector<Carbon::GenericBindingExpression>(); }
+| "[" deduced_param_list "]"
     { $$ = $2; }
 ;
 function_definition:
   FN identifier deduced_params tuple return_type "{" statement_list "}"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, $4, $7); }
+    { $$ = MakeFunDef(yylineno, $2, $5, $3, $4, $7); }
 | FN identifier deduced_params tuple DBLARROW expression ";"
     {
       $$ = Carbon::MakeFunDef(yylineno, $2,
@@ -412,7 +414,7 @@ function_definition:
 ;
 function_declaration:
   FN identifier deduced_params tuple return_type ";"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, $4, 0); }
+    { $$ = MakeFunDef(yylineno, $2, $5, $3, $4, 0); }
 ;
 variable_declaration: identifier ":" expression
     { $$ = MakeField(yylineno, $1, $3); }

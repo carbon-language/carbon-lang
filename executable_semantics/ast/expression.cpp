@@ -304,9 +304,9 @@ void PrintExp(const Expression* e) {
       std::cout << e->GetIdentifierExpression().name;
       break;
     case ExpressionKind::BindingExpression:
-      PrintExp(e->GetBindingExpression().type);
-      std::cout << ": ";
       std::cout << e->GetBindingExpression().name;
+      std::cout << " : ";
+      PrintExp(e->GetBindingExpression().type);
       break;
     case ExpressionKind::GenericBindingExpression:
       PrintExp(e->GetGenericBindingExpression().type);

@@ -103,6 +103,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return val;
     case ValKind::FunctionType:
       return Value::MakeFunctionType(
+          val->GetFunctionType().deduced,
           CopyVal(val->GetFunctionType().param, line_num),
           CopyVal(val->GetFunctionType().ret, line_num));
 
@@ -119,6 +120,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return Value::MakeAutoType();
     case ValKind::ContinuationType:
       return Value::MakeContinuationType();
+    case ValKind::IdentifierType:
     case ValKind::StructType:
     case ValKind::ChoiceType:
     case ValKind::BindingPlaceholderValue:
@@ -341,7 +343,14 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 }
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
-  auto pt = InterpExp(globals, definition.param_pattern);
+  Env values = globals;
+  // Bring the deduced parameters into scope
+  for (const auto& deduced : definition.deduced_parameters) {
+    Address a =
+        state->heap.AllocateValue(Value::MakeIdentifierType(deduced.name));
+    values.Set(deduced.name, a);
+  }
+  auto pt = InterpExp(values, definition.param_pattern);
   auto f = Value::MakeFunctionValue(definition.name, pt, definition.body);
   Address a = state->heap.AllocateValue(f);
   globals.Set(definition.name, a);
@@ -732,6 +741,9 @@ void StepExp() {
   Action* act = frame->todo.Top();
   const Expression* exp = act->GetExpressionAction().exp;
   if (tracing_output) {
+    std::cout << "in scope ";
+    PrintEnv(CurrentEnv(state), std::cout);
+    std::cout << std::endl;
     std::cout << "--- step exp ";
     PrintExp(exp);
     std::cout << " --->" << std::endl;
@@ -953,7 +965,7 @@ void StepExp() {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         const Value* v =
-            Value::MakeFunctionType(act->results[0], act->results[1]);
+            Value::MakeFunctionType({}, act->results[0], act->results[1]);
         frame->todo.Pop(1);
         frame->todo.Push(Action::MakeValAction(v));
       }

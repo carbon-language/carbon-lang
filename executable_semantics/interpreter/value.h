@@ -54,6 +54,7 @@ enum class ValKind {
   StructType,
   ChoiceType,
   ContinuationType,  // The type of a continuation.
+  IdentifierType,    // for generic type parameters
   BindingPlaceholderValue,
   AlternativeConstructorValue,
   ContinuationValue  // A first-class continuation value.
@@ -127,6 +128,7 @@ struct TypeType {
 
 struct FunctionType {
   static constexpr ValKind Kind = ValKind::FunctionType;
+  std::vector<GenericBindingExpression> deduced;
   const Value* param;
   const Value* ret;
 };
@@ -155,6 +157,11 @@ struct ChoiceType {
 
 struct ContinuationType {
   static constexpr ValKind Kind = ValKind::ContinuationType;
+};
+
+struct IdentifierType {
+  static constexpr ValKind Kind = ValKind::IdentifierType;
+  std::string name;
 };
 
 struct ContinuationValue {
@@ -189,13 +196,15 @@ struct Value {
   static auto MakeAutoType() -> const Value*;
   static auto MakeBoolType() -> const Value*;
   static auto MakeTypeType() -> const Value*;
-  static auto MakeFunctionType(const Value* param, const Value* ret)
-      -> const Value*;
+  static auto MakeFunctionType(
+      const std::vector<GenericBindingExpression>& deduced_params,
+      const Value* param, const Value* ret) -> const Value*;
   static auto MakePointerType(const Value* type) -> const Value*;
   static auto MakeStructType(std::string name, VarValues fields,
                              VarValues methods) -> const Value*;
   static auto MakeUnitTypeVal() -> const Value*;
   static auto MakeChoiceType(std::string name, VarValues alts) -> const Value*;
+  static auto MakeIdentifierType(std::string name) -> const Value*;
 
   // Access to alternatives
   auto GetIntValue() const -> int;
@@ -212,6 +221,7 @@ struct Value {
   auto GetPointerType() const -> const PointerType&;
   auto GetStructType() const -> const StructType&;
   auto GetChoiceType() const -> const ChoiceType&;
+  auto GetIdentifierType() const -> const IdentifierType&;
   auto GetContinuationValue() const -> const ContinuationValue&;
 
   inline auto tag() const -> ValKind {
@@ -222,7 +232,7 @@ struct Value {
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
                AlternativeValue, TupleValue, IntType, BoolType, TypeType,
                FunctionType, PointerType, AutoType, StructType, ChoiceType,
-               ContinuationType, BindingPlaceholderValue,
+               ContinuationType, IdentifierType, BindingPlaceholderValue,
                AlternativeConstructorValue, ContinuationValue>
       value;
 };

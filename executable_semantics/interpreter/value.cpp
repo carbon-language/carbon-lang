@@ -66,6 +66,10 @@ auto Value::GetChoiceType() const -> const ChoiceType& {
   return std::get<ChoiceType>(value);
 }
 
+auto Value::GetIdentifierType() const -> const IdentifierType& {
+  return std::get<IdentifierType>(value);
+}
+
 auto Value::GetContinuationValue() const -> const ContinuationValue& {
   return std::get<ContinuationValue>(value);
 }
@@ -211,10 +215,12 @@ auto Value::MakeAutoType() -> const Value* {
   return v;
 }
 
-auto Value::MakeFunctionType(const Value* param, const Value* ret)
-    -> const Value* {
+auto Value::MakeFunctionType(
+    const std::vector<GenericBindingExpression>& deduced_params,
+    const Value* param, const Value* ret) -> const Value* {
   auto* v = new Value();
-  v->value = FunctionType({.param = param, .ret = ret});
+  v->value =
+      FunctionType({.deduced = deduced_params, .param = param, .ret = ret});
   return v;
 }
 
@@ -243,6 +249,12 @@ auto Value::MakeChoiceType(std::string name, VarValues alts) -> const Value* {
   auto* v = new Value();
   v->value =
       ChoiceType({.name = std::move(name), .alternatives = std::move(alts)});
+  return v;
+}
+
+auto Value::MakeIdentifierType(std::string name) -> const Value* {
+  auto* v = new Value();
+  v->value = IdentifierType({.name = std::move(name)});
   return v;
 }
 
@@ -318,6 +330,18 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     case ValKind::FunctionType:
       out << "fn ";
+      if (val->GetFunctionType().deduced.size() > 0) {
+        out << "[";
+        unsigned int i = 0;
+        for (const auto& deduced : val->GetFunctionType().deduced) {
+          std::cout << deduced.name << " :! ";
+          PrintExp(deduced.type);
+          if (i != 0)
+            std::cout << ",";
+          ++i;
+        }
+        out << "]";
+      }
       PrintValue(val->GetFunctionType().param, out);
       out << " -> ";
       PrintValue(val->GetFunctionType().ret, out);
@@ -327,6 +351,9 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     case ValKind::ChoiceType:
       out << "choice " << val->GetChoiceType().name;
+      break;
+    case ValKind::IdentifierType:
+      out << val->GetIdentifierType().name;
       break;
     case ValKind::ContinuationValue:
       out << "continuation[[";
@@ -377,6 +404,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::ContinuationType:
     case ValKind::TypeType:
       return true;
+    case ValKind::IdentifierType:
+      return t1->GetIdentifierType().name == t2->GetIdentifierType().name;
     default:
       std::cerr << "TypeEqual used to compare non-type values" << std::endl;
       PrintValue(t1, std::cerr);

@@ -24,6 +24,18 @@ auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
 
 void PrintFunDefDepth(const FunctionDefinition& f, int depth) {
   std::cout << "fn " << f.name << " ";
+  if (f.deduced_parameters.size() > 0) {
+    std::cout << "[";
+    unsigned int i = 0;
+    for (const auto& deduced : f.deduced_parameters) {
+      std::cout << deduced.name << " :! ";
+      PrintExp(deduced.type);
+      if (i != 0)
+        std::cout << ",";
+      ++i;
+    }
+    std::cout << "]";
+  }
   PrintExp(f.param_pattern);
   std::cout << " -> ";
   PrintExp(f.return_type);

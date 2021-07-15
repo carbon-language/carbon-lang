@@ -84,9 +84,161 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::PointerType:
       return Expression::MakePrimitiveOperatorExpression(
           0, Operator::Ptr, {ReifyType(t->GetPointerType().type, line_num)});
+    case ValKind::IdentifierType:
+      return Expression::MakeIdentifierExpression(0,
+                                                  t->GetIdentifierType().name);
     default:
-      std::cerr << line_num << ": expected a type, not ";
+      std::cerr << line_num << ": in ReifyType, expected a type, not ";
       PrintValue(t, std::cerr);
+      std::cerr << std::endl;
+      exit(-1);
+  }
+}
+
+// Perform type argument deduction, matching the parameter type `param`
+// against the argument type `arg`. Whenever there is an IdentifierType
+// in the parameter type, it is deduced to be the corresponding type
+// inside the argument type.
+// The `deduced` parameter is an accumulator, that is, it holds the
+// results so-far.
+auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
+                       const Value* arg) -> TypeEnv {
+  switch (param->tag()) {
+    case ValKind::IdentifierType: {
+      std::optional<const Value*> d =
+          deduced.Get(param->GetIdentifierType().name);
+      if (!d) {
+        deduced.Set(param->GetIdentifierType().name, arg);
+      } else {
+        ExpectType(line_num, "argument deduction", *d, arg);
+      }
+      return deduced;
+    }
+    case ValKind::TupleValue: {
+      if (arg->tag() != ValKind::TupleValue) {
+        ExpectType(line_num, "argument deduction", param, arg);
+      }
+      if (param->GetTupleValue().elements.size() !=
+          arg->GetTupleValue().elements.size()) {
+        ExpectType(line_num, "argument deduction", param, arg);
+      }
+      for (size_t i = 0; i < param->GetTupleValue().elements.size(); ++i) {
+        if (param->GetTupleValue().elements[i].name !=
+            arg->GetTupleValue().elements[i].name) {
+          std::cerr << line_num << ": mismatch in tuple names, "
+                    << param->GetTupleValue().elements[i].name
+                    << " != " << arg->GetTupleValue().elements[i].name
+                    << std::endl;
+          exit(-1);
+        }
+        deduced = ArgumentDeduction(
+            line_num, deduced,
+            state->heap.Read(param->GetTupleValue().elements[i].address, 0),
+            state->heap.Read(arg->GetTupleValue().elements[i].address, 0));
+      }
+      return deduced;
+    }
+    case ValKind::FunctionType: {
+      if (arg->tag() != ValKind::FunctionType) {
+        ExpectType(line_num, "argument deduction", param, arg);
+      }
+      // TODO: handle situation when arg has deduced parameters.
+      deduced =
+          ArgumentDeduction(line_num, deduced, param->GetFunctionType().param,
+                            arg->GetFunctionType().param);
+      deduced =
+          ArgumentDeduction(line_num, deduced, param->GetFunctionType().ret,
+                            arg->GetFunctionType().ret);
+      return deduced;
+    }
+    case ValKind::PointerType: {
+      if (arg->tag() != ValKind::PointerType) {
+        ExpectType(line_num, "argument deduction", param, arg);
+      }
+      return ArgumentDeduction(line_num, deduced, param->GetPointerType().type,
+                               arg->GetPointerType().type);
+    }
+    // Nothing to do in the case for `auto`.
+    case ValKind::AutoType: {
+      return deduced;
+    }
+    // For the following cases, we check for type equality.
+    case ValKind::ContinuationType:
+    case ValKind::StructType:
+    case ValKind::ChoiceType:
+    case ValKind::IntType:
+    case ValKind::BoolType:
+    case ValKind::TypeType: {
+      ExpectType(line_num, "argument deduction", param, arg);
+      return deduced;
+    }
+    // The rest of these cases should never happen.
+    case ValKind::IntValue:
+    case ValKind::BoolValue:
+    case ValKind::FunctionValue:
+    case ValKind::PointerValue:
+    case ValKind::StructValue:
+    case ValKind::AlternativeValue:
+    case ValKind::BindingPlaceholderValue:
+    case ValKind::AlternativeConstructorValue:
+    case ValKind::ContinuationValue:
+      std::cerr
+          << line_num
+          << ": internal error in ArgumentDeduction: expected type, not value ";
+      PrintValue(param, std::cerr);
+      std::cerr << std::endl;
+      exit(-1);
+  }
+}
+
+auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
+  switch (type->tag()) {
+    case ValKind::IdentifierType: {
+      std::optional<const Value*> t = dict.Get(type->GetIdentifierType().name);
+      if (!t) {
+        return type;
+      } else {
+        return *t;
+      }
+    }
+    case ValKind::TupleValue: {
+      std::vector<TupleElement> elts;
+      for (const auto& elt : type->GetTupleValue().elements) {
+        auto t = Substitute(dict, state->heap.Read(elt.address, 0));
+        elts.push_back(
+            {.name = elt.name, .address = state->heap.AllocateValue(t)});
+      }
+      return Value::MakeTupleValue(elts);
+    }
+    case ValKind::FunctionType: {
+      auto param = Substitute(dict, type->GetFunctionType().param);
+      auto ret = Substitute(dict, type->GetFunctionType().ret);
+      return Value::MakeFunctionType({}, param, ret);
+    }
+    case ValKind::PointerType: {
+      return Value::MakePointerType(
+          Substitute(dict, type->GetPointerType().type));
+    }
+    case ValKind::AutoType:
+    case ValKind::IntType:
+    case ValKind::BoolType:
+    case ValKind::TypeType:
+    case ValKind::StructType:
+    case ValKind::ChoiceType:
+    case ValKind::ContinuationType:
+      return type;
+    // The rest of these cases should never happen.
+    case ValKind::IntValue:
+    case ValKind::BoolValue:
+    case ValKind::FunctionValue:
+    case ValKind::PointerValue:
+    case ValKind::StructValue:
+    case ValKind::AlternativeValue:
+    case ValKind::BindingPlaceholderValue:
+    case ValKind::AlternativeConstructorValue:
+    case ValKind::ContinuationValue:
+      std::cerr << "internal error in Substitute: expected type, not value ";
+      PrintValue(type, std::cerr);
       std::cerr << std::endl;
       exit(-1);
   }
@@ -118,9 +270,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         std::cout << "checking expression ";
         break;
       case TCContext::PatternContext:
-        std::cout << "checking pattern, ";
+        std::cout << "checking pattern";
         if (expected) {
-          std::cout << "expecting ";
+          std::cout << ", expecting ";
           PrintValue(expected, std::cerr);
         }
         std::cout << ", ";
@@ -284,7 +436,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             if (e->GetFieldAccessExpression().field == vt->first) {
               const Expression* new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
-              auto fun_ty = Value::MakeFunctionType(vt->second, t);
+              auto fun_ty = Value::MakeFunctionType({}, vt->second, t);
               return TCResult(new_e, fun_ty, res.types);
             }
           }
@@ -384,11 +536,29 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           auto arg_res =
               TypeCheckExp(e->GetCallExpression().argument, fun_res.types,
                            values, fun_t->GetFunctionType().param, context);
-          ExpectType(e->line_num, "call", fun_t->GetFunctionType().param,
-                     arg_res.type);
+          auto parameter_type = fun_t->GetFunctionType().param;
+          auto return_type = fun_t->GetFunctionType().ret;
+          if (fun_t->GetFunctionType().deduced.size() > 0) {
+            auto deduced_args = ArgumentDeduction(e->line_num, TypeEnv(),
+                                                  parameter_type, arg_res.type);
+            // check that all the type parameters were deduced
+            for (auto& deduced_param : fun_t->GetFunctionType().deduced) {
+              if (!deduced_args.Get(deduced_param.name)) {
+                std::cerr << e->line_num
+                          << ": error, could not deduce type argument for type "
+                             "parameter "
+                          << deduced_param.name << std::endl;
+                exit(-1);
+              }
+            }
+            parameter_type = Substitute(deduced_args, parameter_type);
+            return_type = Substitute(deduced_args, return_type);
+          } else {
+            ExpectType(e->line_num, "call", parameter_type, arg_res.type);
+          }
           auto new_e = Expression::MakeCallExpression(e->line_num, fun_res.exp,
                                                       arg_res.exp);
-          return TCResult(new_e, fun_t->GetFunctionType().ret, arg_res.types);
+          return TCResult(new_e, return_type, arg_res.types);
         }
         default: {
           std::cerr << e->line_num
@@ -662,8 +832,17 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
 
 auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     -> struct FunctionDefinition* {
+  // Bring the deduced parameters into scope
+  for (const auto& deduced : f->deduced_parameters) {
+    // auto t = InterpExp(values, deduced.type);
+    Address a =
+        state->heap.AllocateValue(Value::MakeIdentifierType(deduced.name));
+    values.Set(deduced.name, a);
+  }
+  // Type check the parameter pattern
   auto param_res = TypeCheckExp(f->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
+  // Evaluate the return type expression
   auto return_type = InterpExp(values, f->return_type);
   if (f->name == "main") {
     ExpectType(f->line_num, "return type of `main`", Value::MakeIntType(),
@@ -673,21 +852,31 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(MakeFunDef(
-      f->line_num, f->name, ReifyType(return_type, f->line_num),
-      std::vector<GenericBindingExpression>(), f->param_pattern, body));
+  return new FunctionDefinition(
+      MakeFunDef(f->line_num, f->name, ReifyType(return_type, f->line_num),
+                 f->deduced_parameters, f->param_pattern, body));
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
     -> const Value* {
+  // Bring the deduced parameters into scope
+  for (const auto& deduced : fun_def->deduced_parameters) {
+    // auto t = InterpExp(values, deduced.type);
+    Address a =
+        state->heap.AllocateValue(Value::MakeIdentifierType(deduced.name));
+    values.Set(deduced.name, a);
+  }
+  // Type check the parameter pattern
   auto param_res = TypeCheckExp(fun_def->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
+  // Evaluate the return type expression
   auto ret = InterpExp(values, fun_def->return_type);
   if (ret->tag() == ValKind::AutoType) {
     auto f = TypeCheckFunDef(fun_def, types, values);
     ret = InterpExp(values, f->return_type);
   }
-  return Value::MakeFunctionType(param_res.type, ret);
+  return Value::MakeFunctionType(fun_def->deduced_parameters, param_res.type,
+                                 ret);
 }
 
 auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
@@ -785,7 +974,7 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
                            .address = state->heap.AllocateValue(field_value)});
   }
   auto fun_ty = Value::MakeFunctionType(
-      Value::MakeTupleValue(std::move(field_types)), st);
+      {}, Value::MakeTupleValue(std::move(field_types)), st);
   tops.types.Set(Name(), fun_ty);
 }
 
