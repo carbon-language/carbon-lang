@@ -8,21 +8,24 @@
 
 namespace Carbon {
 
-auto MakeField(int line_num, std::string name, const Expression* type)
-    -> Member* {
+auto Member::MakeFieldMember(int line_num, std::string name,
+                             const Expression* type) -> Member* {
   auto m = new Member();
   m->line_num = line_num;
-  m->tag = MemberKind::FieldMember;
-  m->u.field.name = new std::string(std::move(name));
-  m->u.field.type = type;
+  m->value = FieldMember({.name = std::move(name), .type = type});
   return m;
 }
 
-void PrintMember(Member* m) {
-  switch (m->tag) {
+auto Member::GetFieldMember() const -> const FieldMember& {
+  return std::get<FieldMember>(value);
+}
+
+void Member::Print() {
+  switch (tag()) {
     case MemberKind::FieldMember:
-      std::cout << "var " << *m->u.field.name << " : ";
-      PrintExp(m->u.field.type);
+      const auto& field = GetFieldMember();
+      std::cout << "var " << field.name << " : ";
+      PrintExp(field.type);
       std::cout << ";" << std::endl;
       break;
   }

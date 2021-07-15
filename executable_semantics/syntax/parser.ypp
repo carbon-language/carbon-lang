@@ -384,7 +384,7 @@ function_declaration:
     { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, 0); }
 ;
 variable_declaration: identifier ":" expression
-    { $$ = MakeField(yylineno, $1, $3); }
+    { $$ = Carbon::Member::MakeFieldMember(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
     { $$ = $2; }
@@ -433,7 +433,8 @@ declaration:
 | VAR variable_declaration "=" expression ";"
     {
       $$ = Carbon::Declaration(
-        Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
+        Carbon::VariableDeclaration(yylineno, $2->GetFieldMember().name,
+                                    $2->GetFieldMember().type, $4));
     }
 ;
 declaration_list:

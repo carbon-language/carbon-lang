@@ -13,7 +13,7 @@ void FunctionDeclaration::Print() const { definition.Print(); }
 void StructDeclaration::Print() const {
   std::cout << "struct " << *definition.name << " {" << std::endl;
   for (auto& member : *definition.members) {
-    PrintMember(member);
+    member->Print();
   }
   std::cout << "}" << std::endl;
 }
