@@ -16,7 +16,8 @@ jobs:
           stale-issue-message: >
             This issue is stale because it has been open 90 days with no
             activity. Remove the `stale` label or comment, or this issue will be
-            closed and archived in 7 days.
+            closed and archived in 7 days. The `long term` label can also be
+            added for issues which are expected to take time.
           close-issue-message: >
             This issue was closed because it has been stale with no comments for
             7 days. Reopen and comment if appropriate.
@@ -27,5 +28,6 @@ jobs:
           close-pr-message: >
             This PR was closed because it has been stale with no comments for 7
             days. Reopen and comment if appropriate.
+          exempt-issue-labels: 'long term'
           days-before-stale: 90
           days-before-close: 7
