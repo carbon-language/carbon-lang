@@ -180,6 +180,9 @@ private:
   /// Update address of MCDecodedPseudoProbe.
   void updatePseudoProbes();
 
+  /// Encode MCDecodedPseudoProbe.
+  void encodePseudoProbes();
+
   /// Return the list of code sections in the output order.
   std::vector<BinarySection *> getCodeSections();
 

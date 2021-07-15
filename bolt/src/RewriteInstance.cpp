@@ -49,6 +49,7 @@
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Timer.h"
@@ -3176,6 +3177,9 @@ void RewriteInstance::updateMetadata() {
 }
 
 void RewriteInstance::updatePseudoProbes() {
+  // check if there is pseudo probe section decoded
+  if (BC->ProbeDecoder.getAddress2ProbesMap().empty())
+    return;
   // input address converted to output
   AddressProbesMap &Address2ProbesMap = BC->ProbeDecoder.getAddress2ProbesMap();
   const GUIDProbeFunctionMap &GUID2Func =
@@ -3249,6 +3253,147 @@ void RewriteInstance::updatePseudoProbes() {
     }
     outs() << "=======================================\n";
   }
+
+  // encode pseudo probes with updated addresses
+  encodePseudoProbes();
+}
+
+template <typename F>
+static void emitLEB128IntValue(F encode, uint64_t Value,
+                               SmallString<8> &Contents) {
+  SmallString<128> Tmp;
+  raw_svector_ostream OSE(Tmp);
+  encode(Value, OSE);
+  Contents.append(OSE.str().begin(), OSE.str().end());
+}
+
+void RewriteInstance::encodePseudoProbes() {
+  // Buffer for new pseudo probes section
+  SmallString<8> Contents;
+  MCDecodedPseudoProbe *LastProbe = nullptr;
+
+  auto EmitInt = [&](uint64_t Value, uint Size) {
+    const bool IsLittleEndian = BC->AsmInfo->isLittleEndian();
+    uint64_t Swapped = support::endian::byte_swap(
+        Value, IsLittleEndian ? support::little : support::big);
+    unsigned Index = IsLittleEndian ? 0 : 8 - Size;
+    auto Entry = StringRef(reinterpret_cast<char *>(&Swapped) + Index, Size);
+    Contents.append(Entry.begin(), Entry.end());
+  };
+
+  auto EmitULEB128IntValue = [&](uint64_t Value) {
+    SmallString<128> Tmp;
+    raw_svector_ostream OSE(Tmp);
+    encodeULEB128(Value, OSE, 0);
+    Contents.append(OSE.str().begin(), OSE.str().end());
+  };
+
+  auto EmitSLEB128IntValue = [&](int64_t Value) {
+    SmallString<128> Tmp;
+    raw_svector_ostream OSE(Tmp);
+    encodeSLEB128(Value, OSE);
+    Contents.append(OSE.str().begin(), OSE.str().end());
+  };
+
+  // Emit indiviual pseudo probes in a inline tree node
+  // Probe index, type, attribute, address type and address are encoded
+  // Address of the first probe is absolute.
+  // Other probes' address are represented by delta
+  auto EmitDecodedPseudoProbe = [&](MCDecodedPseudoProbe *&CurProbe) {
+    EmitULEB128IntValue(CurProbe->getIndex());
+    uint8_t PackedType = CurProbe->getType() | (CurProbe->getAttributes() << 4);
+    uint8_t Flag =
+        LastProbe ? ((int8_t)MCPseudoProbeFlag::AddressDelta << 7) : 0;
+    EmitInt(Flag | PackedType, 1);
+    if (LastProbe) {
+      // Emit the delta between the address label and LastProbe.
+      int64_t Delta = CurProbe->getAddress() - LastProbe->getAddress();
+      EmitSLEB128IntValue(Delta);
+    } else {
+      // Emit absolute address for encoding the first pseudo probe.
+      unsigned AddrSize = BC->AsmInfo->getCodePointerSize();
+      EmitInt(CurProbe->getAddress(), AddrSize);
+    }
+  };
+
+  std::map<InlineSite, MCDecodedPseudoProbeInlineTree *,
+           std::greater<InlineSite>>
+      Inlinees;
+
+  // DFS of inline tree to emit pseudo probes in all tree node
+  // Inline site index of a probe is emitted first.
+  // Then tree node Guid, size of pseudo probes and children nodes, and detail
+  // of contained probes are emitted Deleted probes are skipped Root node is not
+  // encoded to binaries. It's a "wrapper" of inline trees of each function.
+  std::list<std::pair<uint64_t, MCDecodedPseudoProbeInlineTree *>> NextNodes;
+  const MCDecodedPseudoProbeInlineTree &Root =
+      BC->ProbeDecoder.getDummyInlineRoot();
+  for (auto Child = Root.getChildren().begin();
+       Child != Root.getChildren().end(); ++Child)
+    Inlinees[Child->first] = Child->second.get();
+
+  for (auto Inlinee : Inlinees)
+    // INT64_MAX is "placeholder" of unused callsite index field in the pair
+    NextNodes.push_back({INT64_MAX, Inlinee.second});
+
+  Inlinees.clear();
+
+  while (!NextNodes.empty()) {
+    uint64_t ProbeIndex = NextNodes.back().first;
+    MCDecodedPseudoProbeInlineTree *Cur = NextNodes.back().second;
+    NextNodes.pop_back();
+
+    if (Cur->Parent && !Cur->Parent->isRoot())
+      // Emit probe inline site
+      EmitULEB128IntValue(ProbeIndex);
+
+    // Emit probes grouped by GUID.
+    LLVM_DEBUG({
+      dbgs().indent(MCPseudoProbeTable::DdgPrintIndent);
+      dbgs() << "GUID: " << Cur->Guid << "\n";
+    });
+    // Emit Guid
+    EmitInt(Cur->Guid, 8);
+    // Emit number of probes in this node
+    uint64_t Deleted = 0;
+    for (MCDecodedPseudoProbe *&Probe : Cur->getProbes())
+      if (Probe->getAddress() == INT64_MAX)
+        Deleted++;
+    LLVM_DEBUG(dbgs() << "Deleted Probes:" << Deleted << "\n");
+    uint64_t ProbesSize = Cur->getProbes().size() - Deleted;
+    EmitULEB128IntValue(ProbesSize);
+    // Emit number of direct inlinees
+    EmitULEB128IntValue(Cur->getChildren().size());
+    // Emit probes in this group
+    for (MCDecodedPseudoProbe *&Probe : Cur->getProbes()) {
+      if (Probe->getAddress() == INT64_MAX)
+        continue;
+      EmitDecodedPseudoProbe(Probe);
+      LastProbe = Probe;
+    }
+
+    for (auto Child = Cur->getChildren().begin();
+         Child != Cur->getChildren().end(); ++Child)
+      Inlinees[Child->first] = Child->second.get();
+    for (const auto &Inlinee : Inlinees) {
+      assert(Cur->Guid != 0 && "non root tree node must have nonzero Guid");
+      NextNodes.push_back({std::get<1>(Inlinee.first), Inlinee.second});
+      LLVM_DEBUG({
+        dbgs().indent(MCPseudoProbeTable::DdgPrintIndent);
+        dbgs() << "InlineSite: " << std::get<1>(Inlinee.first) << "\n";
+      });
+    }
+    Inlinees.clear();
+  }
+
+  // Create buffer for new contents for the section
+  // Freed when parent section is destroyed
+  uint8_t *Output = new uint8_t[Contents.str().size()];
+  memcpy(Output, Contents.str().data(), Contents.str().size());
+  addToDebugSectionsToOverwrite(".pseudo_probe");
+  BC->registerOrUpdateSection(".pseudo_probe", PseudoProbeSection->getELFType(),
+                              PseudoProbeSection->getELFFlags(), Output,
+                              Contents.str().size(), 1);
 }
 
 void RewriteInstance::updateSDTMarkers() {
