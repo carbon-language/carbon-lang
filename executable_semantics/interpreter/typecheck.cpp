@@ -681,10 +681,13 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
     -> const Value* {
   VarValues fields;
   VarValues methods;
-  for (auto m = sd->members->begin(); m != sd->members->end(); ++m) {
-    if ((*m)->tag == MemberKind::FieldMember) {
-      auto t = InterpExp(ct_top, (*m)->u.field.type);
-      fields.push_back(std::make_pair(*(*m)->u.field.name, t));
+  for (Member* m : *sd->members) {
+    switch (m->tag()) {
+      case MemberKind::FieldMember:
+        const auto& field = m->GetFieldMember();
+        auto t = InterpExp(ct_top, field.type);
+        fields.push_back(std::make_pair(field.name, t));
+        break;
     }
   }
   return Value::MakeStructType(*sd->name, std::move(fields),
@@ -705,10 +708,12 @@ auto VariableDeclaration::Name() const -> std::string { return name; }
 auto StructDeclaration::TypeChecked(TypeEnv types, Env values) const
     -> Declaration {
   auto fields = new std::list<Member*>();
-  for (auto& m : *definition.members) {
-    if (m->tag == MemberKind::FieldMember) {
-      // TODO: Interpret the type expression and store the result.
-      fields->push_back(m);
+  for (Member* m : *definition.members) {
+    switch (m->tag()) {
+      case MemberKind::FieldMember:
+        // TODO: Interpret the type expression and store the result.
+        fields->push_back(m);
+        break;
     }
   }
   return StructDeclaration(definition.line_num, *definition.name, fields);
