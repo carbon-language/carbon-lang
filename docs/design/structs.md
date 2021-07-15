@@ -109,9 +109,9 @@ values are all done through methods defined on the type.
 #### Without inheritance
 
 The common case for encapsulated types are those that do not participate in
-inheritance. These types neither extend other types nor do they support being
-inherited from (they are
-["final"](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>)).
+inheritance. These types neither support being inherited from (they are
+["final"](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>))
+nor do they extend other types.
 
 Examples of this use case include:
 
@@ -162,15 +162,13 @@ through a pointer to a base type.
 Carbon will fully support single-inheritance type hierarchies with polymorphic
 types.
 
-Polymorphic types support dynamic dispatch using a
+Polymorphic types support
+[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch) using a
 [vtable](https://en.wikipedia.org/wiki/Virtual_method_table), and data members,
-but only single inheritance.
-
-FIXME: Talk about dynamic dispatch versus single implementation choice being
-made separately for every method.
-
-but unlike [abstract base classes](#abstract-base-classes) may also include
-private data in a base type. Polymorphic types support traditional
+but only single inheritance. Individual methods opt in to using dynamic
+dispatch, so types will have a mix of
+["virtual"](https://en.wikipedia.org/wiki/Virtual_function) and non-virtual
+methods. Polymorphic types support traditional
 [object-oriented single inheritance](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>),
 a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
 [implementation and code reuse](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Code_reuse>).
@@ -180,14 +178,8 @@ from this use case. This is to avoid the complexity and overhead they bring,
 particularly since the use of these features in C++ is generally discouraged.
 The rule is that every type has at most one base type with data members for
 subtyping purposes. Carbon will support additional base types as long as they
-are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
-
-While an abstract base class is an interface that allows decoupling, a
-polymorphic type is a collaboration between a base and derived type to provide
-some functionality. This is a bit like the difference between a library and a
-framework, where you might use many of the former but only one of the latter.
-However, there are some cases of overlap where there is an interface at the root
-of a type hierarchy and polymorphic types as interior branches of the tree.
+[don't have data members](#interface-as-base-class) or
+[don't support subtyping](#mixins).
 
 **Background:**
 [The "Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
@@ -198,10 +190,10 @@ that vary over multiple axes.
 
 Polymorphic types support a number of different kinds of methods:
 
--   Like abstract base classes, they will have virtual methods:
-    -   Polymorphic types will always include virtual destructors.
-    -   Polymorphic types may have pure-virtual methods, but in contrast to ABCs
-        they aren't required.
+-   They will have virtual methods:
+    -   Polymorphic types will typically include virtual destructors.
+    -   Polymorphic types may have pure-virtual methods, but they aren't
+        required. Virtual methods may have default implementations.
     -   It is more common for polymorphic types to have a default implementation
         of virtual methods or have protected or
         [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
@@ -209,9 +201,8 @@ Polymorphic types support a number of different kinds of methods:
         implemented in the descendant.
 -   They may have non-virtual public or private helper methods, like
     encapsulated types without inheritance. These avoid the overhead of a
-    virtual function call, and are more frequent in polymorphic types than
-    abstract base classes due to the ability to reference some of the data
-    members of the type.
+    virtual function call, and can be written when the base class has sufficient
+    data members.
 -   They may have protected helper methods, typically non-virtual, provided by
     the base type to be called by the descendant.
 
@@ -229,6 +220,20 @@ medium term. Extending this design to support polymorphic types is future work.
 
 **TODO:** rename to "interface base class/type" or "pure interface base
 class/type", since ABCs in C++ are allowed to have data?
+
+FIXME
+
+but unlike [abstract base classes](#interface-as-base-class) may also include
+private data in a base type.
+
+While an abstract base class is an interface that allows decoupling, a
+polymorphic type is a collaboration between a base and derived type to provide
+some functionality. This is a bit like the difference between a library and a
+framework, where you might use many of the former but only one of the latter.
+However, there are some cases of overlap where there is an interface at the root
+of a type hierarchy and polymorphic types as interior branches of the tree.
+
+FIXME
 
 An [abstract base class](https://en.wikipedia.org/wiki/Abstract_type), or "ABC",
 is a base type for use in inheritance with a
@@ -270,6 +275,22 @@ virtual methods may be
 only called through the non-abstract API, but can still be implemented in
 descendants.
 
+FIXME
+
+    -   It is more common for polymorphic types to have a default implementation
+        of virtual methods or have protected or
+        [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
+        virtual methods intended to be called by methods in the base type but
+        implemented in the descendant.
+
+-   They may have non-virtual public or private helper methods, like
+    encapsulated types without inheritance. These avoid the overhead of a
+    virtual function call, and are more frequent in polymorphic types than
+    abstract base classes due to the ability to reference some of the data
+    members of the type.
+
+FIXME
+
 We expect idiomatic Carbon-only code to generally use Carbon interfaces instead
 of abstract base classes. We may still support abstract base classes long term
 if we determine that the ability to put the pointer to the method
@@ -278,8 +299,9 @@ single parent as in the [polymorphic type case](#polymorphic-types). Extending
 this design to support abstract base classes is future work.
 
 **Background:**
-[Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) model
-abstract base classes.
+[Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) and
+[C++ abstract base classes](https://en.wikipedia.org/wiki/Abstract_type) that
+don't have data members model this case.
 
 ##### Non-polymorphic inheritance
 
@@ -332,7 +354,7 @@ implementation reuse rather than subtyping, and so don't need to use a vtable.
 A mixin might be an implementation detail of a [data class](#data-classes),
 [object type](#object-types), or
 [derived type of a polymorphic type](#polymorphic-types). A mixin might
-partially implement an [abstract base class](#abstract-base-classes).
+partially implement an [interface as base class](#interface-as-base-class).
 
 **Examples:**
 [intrusive linked list](https://www.boost.org/doc/libs/1_63_0/doc/html/intrusive.html),
@@ -352,7 +374,8 @@ in C++, but other languages support them directly.
 -   In Dart, the mixin defines an interface that the destination type ends up
     implementing, which restores a form of subtyping. See
     [Dart: What are mixins?](https://medium.com/flutter-community/dart-what-are-mixins-3a72344011f3).
--   [Proposal to add mixin support to Swift](https://github.com/Anton3/swift-evolution/blob/mixins/proposals/NNNN-mixins.md).
+-   Swift is considering
+    [a proposal to add mixin support](https://github.com/Anton3/swift-evolution/blob/mixins/proposals/NNNN-mixins.md).
 
 ## Background
 
@@ -744,16 +767,18 @@ There is a
 ### Abstract base classes interoperating with object-safe interfaces
 
 We want four things so that Carbon's object-safe interfaces may interoperate
-with C++ abstract base classes:
+with C++ abstract base classes without data members:
 
 -   Ability to convert an object-safe interface (a type-of-type) into an
     abstract base class (a base type), maybe using `AsBaseType(MyInterface)`.
--   Ability to convert an abstract base class (a base type) into an object-safe
-    interface (a type-of-type), maybe using `AsInterface(MyABC)`.
+-   Ability to convert an interface base class (a base type) into an object-safe
+    interface (a type-of-type), maybe using `AsInterface(MyIBC)`.
 -   Ability to convert a (thin) pointer to an abstract base class to a `DynPtr`
     of the corresponding interface.
--   We should arrange that `DynPtr(MyInterface)` should be a type extending the
-    corresponding abstract base class.
+-   We should arrange that there be some proxy type that holds a pointer to a
+    value with type satisfying `MyInterface` that extends the corresponding base
+    class `AsBaseType(MyInterface)`. There should be an easy conversion from
+    `DynPtr(MyInterface)` values to this proxy type.
 
 ### Mixins
 
