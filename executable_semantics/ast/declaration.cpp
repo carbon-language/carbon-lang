@@ -74,8 +74,8 @@ void Declaration::Print() const {
     case DeclarationKind::StructDeclaration: {
       const StructDefinition& struct_def = GetStructDeclaration().definition;
       std::cout << "struct " << struct_def.name << " {" << std::endl;
-      for (auto& member : struct_def.members) {
-        member->Print();
+      for (Member* m : struct_def.members) {
+        m->Print();
       }
       std::cout << "}" << std::endl;
       break;
