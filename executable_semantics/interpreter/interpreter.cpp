@@ -324,12 +324,12 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
 auto StructDeclaration::InitGlobals(Env& globals) const -> void {
   VarValues fields;
   VarValues methods;
-  for (auto i = definition.members->begin(); i != definition.members->end();
-       ++i) {
-    switch ((*i)->tag) {
+  for (Member* m : *definition.members) {
+    switch (m->tag()) {
       case MemberKind::FieldMember: {
-        auto t = InterpExp(Env(), (*i)->u.field.type);
-        fields.push_back(make_pair(*(*i)->u.field.name, t));
+        const auto& field = m->GetFieldMember();
+        auto t = InterpExp(Env(), field.type);
+        fields.push_back({field.name, t});
         break;
       }
     }
