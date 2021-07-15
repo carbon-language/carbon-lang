@@ -53,6 +53,7 @@ EXAMPLES = [
     "if1",
     "if2",
     "if3",
+    "invalid_char",
     "match_any_int",
     "match_int_default",
     "match_int",

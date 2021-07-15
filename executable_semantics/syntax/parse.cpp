@@ -9,6 +9,7 @@
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
 #include "executable_semantics/tracing_flag.h"
+#include "llvm/Support/ErrorHandling.h"
 
 extern FILE* yyin;
 
@@ -21,9 +22,8 @@ auto parse(const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   yyin = fopen(input_file_name.c_str(), "r");
   if (yyin == nullptr) {
-    std::cerr << "Error opening '" << input_file_name
-              << "': " << std::strerror(errno) << std::endl;
-    exit(1);
+    llvm::report_fatal_error("Error opening '" + input_file_name +
+                             "': " + std::strerror(errno));
   }
 
   std::optional<AST> parsed_input = std::nullopt;
@@ -39,9 +39,8 @@ auto parse(const std::string& input_file_name)
   }
 
   if (parsed_input == std::nullopt) {
-    std::cerr << "Internal error: parser validated syntax yet didn't produce "
-                 "an AST.\n";
-    exit(1);
+    llvm::report_fatal_error(
+        "Internal error: parser validated syntax yet didn't produce an AST.");
   }
   return *parsed_input;
 }
