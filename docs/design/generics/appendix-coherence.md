@@ -203,3 +203,6 @@ either:
 
 In general, Carbon is
 [avoiding this sort of context sensitivity](https://docs.google.com/document/d/1dLpEmUbE2_JQZ-pRNgEDnw6VuH4FXfURSYej6nPV6m0/edit#).
+TODO: update to [this link](/docs/project/principles/low_context_sensitivity.md)
+once [proposal #646](https://github.com/carbon-language/carbon-lang/pull/646) is
+submitted.
