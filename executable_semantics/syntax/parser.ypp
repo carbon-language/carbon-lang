@@ -106,7 +106,7 @@ void yy::parser::error(
 %type <const Carbon::Expression*> tuple
 %type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
-%type <std::list<Carbon::Member*>*> member_list
+%type <std::list<Carbon::Member*>> member_list
 %type <Carbon::FieldInitializer> field_initializer
 %type <Carbon::ParenContents> paren_contents
 %type <std::vector<Carbon::FieldInitializer>> paren_contents_without_trailing_comma
@@ -391,9 +391,9 @@ member: VAR variable_declaration ";"
 ;
 member_list:
   // Empty
-    { $$ = new std::list<Carbon::Member*>(); }
+    { $$ = std::list<Carbon::Member*>(); }
 | member member_list
-    { $$ = $2; $$->push_front($1); }
+    { $$ = $2; $$.push_front($1); }
 ;
 alternative:
   identifier tuple
@@ -417,24 +417,21 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
 | function_declaration
-    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
 | STRUCT identifier "{" member_list "}"
     {
-      $$ = Carbon::Declaration(
-        Carbon::StructDeclaration{yylineno, $2, $4});
+      $$ = Carbon::Declaration::MakeStructDeclaration(yylineno, $2, $4);
     }
 | CHOICE identifier "{" alternative_list "}"
     {
-      $$ = Carbon::Declaration(
-        Carbon::ChoiceDeclaration{yylineno, $2, $4});
+      $$ = Carbon::Declaration::MakeChoiceDeclaration(yylineno, $2, $4);
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = Carbon::Declaration(
-        Carbon::VariableDeclaration(yylineno, $2->GetFieldMember().name,
-                                    $2->GetFieldMember().type, $4));
+      $$ = Carbon::Declaration::MakeVariableDeclaration(
+          yylineno, $2->GetFieldMember().name, $2->GetFieldMember().type, $4);
     }
 ;
 declaration_list:

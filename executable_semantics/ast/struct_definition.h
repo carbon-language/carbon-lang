@@ -14,8 +14,8 @@ namespace Carbon {
 
 struct StructDefinition {
   int line_num;
-  std::string* name;
-  std::list<Member*>* members;
+  std::string name;
+  std::list<Member*> members;
 };
 
 }  // namespace Carbon
