@@ -669,9 +669,8 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(MakeFunDef(f->line_num, f->name,
-                                           ReifyType(return_type, f->line_num),
-                                           f->param_pattern, body));
+  return new FunctionDefinition(f->line_num, f->name, f->param_pattern,
+                                ReifyType(return_type, f->line_num), body);
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
