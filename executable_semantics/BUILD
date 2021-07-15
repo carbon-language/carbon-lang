@@ -102,3 +102,17 @@ EXAMPLES = [
     ],
     golden = "testdata/%s.golden" % e,
 ) for e in EXAMPLES]
+
+# Test --trace by expecting golden output to be a *subset* of trace output. Note
+# the normal test must be used to update golden files.
+[golden_test(
+    name = "%s_trace_test" % e,
+    cmd = "'$(location executable_semantics) --trace " +
+          "$(location testdata/%s.carbon)'" % e,
+    data = [
+        ":executable_semantics",
+        "testdata/%s.carbon" % e,
+    ],
+    golden = "testdata/%s.golden" % e,
+    golden_is_subset = True,
+) for e in EXAMPLES]
