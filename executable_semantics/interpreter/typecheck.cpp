@@ -70,10 +70,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::TupleValue: {
       std::vector<FieldInitializer> args;
       for (const TupleElement& field : t->GetTupleValue().elements) {
-        args.push_back(
-            {.name = field.name,
-             .expression = ReifyType(state->heap.Read(field.address, line_num),
-                                     line_num)});
+        args.push_back({.name = field.name,
+                        .expression = ReifyType(field.value, line_num)});
       }
       return Expression::MakeTupleLiteral(0, args);
     }
@@ -169,15 +167,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         case ValKind::TupleValue: {
           auto i = ToInteger(InterpExp(values, e->GetIndexExpression().offset));
           std::string f = std::to_string(i);
-          std::optional<Address> field_address = FindTupleField(f, t);
-          if (field_address == std::nullopt) {
+          const Value* field_t = t->GetTupleValue().FindField(f);
+          if (field_t == nullptr) {
             std::cerr << e->line_num << ": compilation error, field " << f
                       << " is not in the tuple ";
             PrintValue(t, std::cerr);
             std::cerr << std::endl;
             exit(-1);
           }
-          auto field_t = state->heap.Read(*field_address, e->line_num);
           auto new_e = Expression::MakeIndexExpression(
               e->line_num, res.exp, Expression::MakeIntLiteral(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
@@ -217,16 +214,13 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                       << " but got " << arg->name << std::endl;
             exit(-1);
           }
-          arg_expected = state->heap.Read(
-              expected->GetTupleValue().elements[i].address, e->line_num);
+          arg_expected = expected->GetTupleValue().elements[i].value;
         }
         auto arg_res = TypeCheckExp(arg->expression, new_types, values,
                                     arg_expected, context);
         new_types = arg_res.types;
         new_args.push_back({.name = arg->name, .expression = arg_res.exp});
-        arg_types.push_back(
-            {.name = arg->name,
-             .address = state->heap.AllocateValue(arg_res.type)});
+        arg_types.push_back({.name = arg->name, .value = arg_res.type});
       }
       auto tuple_e = Expression::MakeTupleLiteral(e->line_num, new_args);
       auto tuple_t = Value::MakeTupleValue(std::move(arg_types));
@@ -264,9 +258,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             if (e->GetFieldAccessExpression().field == field.name) {
               auto new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
-              return TCResult(new_e,
-                              state->heap.Read(field.address, e->line_num),
-                              res.types);
+              return TCResult(new_e, field.value, res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
@@ -777,8 +769,7 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   tops.values.Set(Name(), a);  // Is this obsolete?
   std::vector<TupleElement> field_types;
   for (const auto& [field_name, field_value] : st->GetStructType().fields) {
-    field_types.push_back({.name = field_name,
-                           .address = state->heap.AllocateValue(field_value)});
+    field_types.push_back({.name = field_name, .value = field_value});
   }
   auto fun_ty = Value::MakeFunctionType(
       Value::MakeTupleValue(std::move(field_types)), st);
