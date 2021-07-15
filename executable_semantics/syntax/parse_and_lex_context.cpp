@@ -11,8 +11,9 @@
 // the given line, to standard error.
 auto Carbon::ParseAndLexContext::PrintDiagnostic(const std::string& message,
                                                  int line_num) -> void {
-  // TODO: Do we really want to exit here?  It makes the comment and the name a
-  // lie, and renders some of the other yyparse() result propagation code moot.
+  // TODO: Do we really want this to be fatal?  It makes the comment and the
+  // name a lie, and renders some of the other yyparse() result propagation code
+  // moot.
   llvm::report_fatal_error(input_file_name + ":" + llvm::Twine(line_num) +
                            ": " + message);
 }
