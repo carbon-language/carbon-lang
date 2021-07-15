@@ -97,7 +97,8 @@ struct State {
 
 extern State* state;
 
-auto PrintFrame(Frame* frame, std::ostream& out) -> void;
+void InitEnv(const Declaration& d, Env* env);
+void PrintFrame(Frame* frame, std::ostream& out);
 void PrintStack(Stack<Frame*> ls, std::ostream& out);
 void PrintEnv(Env values);
 auto CopyVal(const Value* val, int line_num) -> const Value*;

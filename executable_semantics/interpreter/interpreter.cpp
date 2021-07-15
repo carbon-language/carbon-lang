@@ -278,57 +278,70 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
 }
 
 // Globally-defined entities, such as functions, structs, choices.
-Env globals;
+static Env globals;
 
-void InitGlobals(std::list<Declaration>* fs) {
-  for (auto const& d : *fs) {
-    d.InitGlobals(globals);
-  }
-}
+void InitEnv(const Declaration& d, Env* env) {
+  switch (d.tag()) {
+    case DeclarationKind::FunctionDeclaration: {
+      const FunctionDefinition& func_def =
+          d.GetFunctionDeclaration().definition;
+      auto pt = InterpExp(*env, func_def.param_pattern);
+      auto f = Value::MakeFunctionValue(func_def.name, pt, func_def.body);
+      Address a = state->heap.AllocateValue(f);
+      env->Set(func_def.name, a);
+      break;
+    }
 
-auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
-  VarValues alts;
-  for (const auto& [name, signature] : alternatives) {
-    auto t = InterpExp(Env(), signature);
-    alts.push_back(make_pair(name, t));
-  }
-  auto ct = Value::MakeChoiceType(name, std::move(alts));
-  auto a = state->heap.AllocateValue(ct);
-  globals.Set(name, a);
-}
-
-auto StructDeclaration::InitGlobals(Env& globals) const -> void {
-  VarValues fields;
-  VarValues methods;
-  for (Member* m : *definition.members) {
-    switch (m->tag()) {
-      case MemberKind::FieldMember: {
-        const auto& field = m->GetFieldMember();
-        auto t = InterpExp(Env(), field.type);
-        fields.push_back({field.name, t});
-        break;
+    case DeclarationKind::StructDeclaration: {
+      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
+      VarValues fields;
+      VarValues methods;
+      for (const Member* m : struct_def.members) {
+        switch (m->tag()) {
+          case MemberKind::FieldMember: {
+            const auto& field = m->GetFieldMember();
+            auto t = InterpExp(Env(), field.type);
+            fields.push_back(make_pair(field.name, t));
+            break;
+          }
+        }
       }
+      auto st = Value::MakeStructType(struct_def.name, std::move(fields),
+                                      std::move(methods));
+      auto a = state->heap.AllocateValue(st);
+      env->Set(struct_def.name, a);
+      break;
+    }
+
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& choice = d.GetChoiceDeclaration();
+      VarValues alts;
+      for (const auto& [name, signature] : choice.alternatives) {
+        auto t = InterpExp(Env(), signature);
+        alts.push_back(make_pair(name, t));
+      }
+      auto ct = Value::MakeChoiceType(choice.name, std::move(alts));
+      auto a = state->heap.AllocateValue(ct);
+      env->Set(choice.name, a);
+      break;
+    }
+
+    case DeclarationKind::VariableDeclaration: {
+      const auto& var = d.GetVariableDeclaration();
+      // Adds an entry in `globals` mapping the variable's name to the
+      // result of evaluating the initializer.
+      auto v = InterpExp(*env, var.initializer);
+      Address a = state->heap.AllocateValue(v);
+      env->Set(var.name, a);
+      break;
     }
   }
-  auto st = Value::MakeStructType(*definition.name, std::move(fields),
-                                  std::move(methods));
-  auto a = state->heap.AllocateValue(st);
-  globals.Set(*definition.name, a);
 }
 
-auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
-  auto pt = InterpExp(globals, definition.param_pattern);
-  auto f = Value::MakeFunctionValue(definition.name, pt, definition.body);
-  Address a = state->heap.AllocateValue(f);
-  globals.Set(definition.name, a);
-}
-
-// Adds an entry in `globals` mapping the variable's name to the
-// result of evaluating the initializer.
-auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
-  auto v = InterpExp(globals, initializer);
-  Address a = state->heap.AllocateValue(v);
-  globals.Set(name, a);
+static void InitGlobals(std::list<Declaration>* fs) {
+  for (auto const& d : *fs) {
+    InitEnv(d, &globals);
+  }
 }
 
 //    { S, H} -> { { C, E, F} :: S, H}

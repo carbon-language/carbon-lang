@@ -45,6 +45,8 @@ auto TypeCheckStmt(const Statement*, TypeEnv, Env, Value const*&)
 auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;
 
+auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
+                     const Env& values) -> Declaration;
 auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext;
 
 void PrintErrorString(const std::string& s);

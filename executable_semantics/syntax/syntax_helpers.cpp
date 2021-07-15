@@ -26,7 +26,7 @@ void ExecProgram(std::list<Declaration>* fs) {
   Env ct_top = p.values;
   std::list<Declaration> new_decls;
   for (const auto& decl : *fs) {
-    new_decls.push_back(decl.TypeChecked(top, ct_top));
+    new_decls.push_back(MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {
     std::cout << std::endl;
