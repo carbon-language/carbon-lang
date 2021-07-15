@@ -68,14 +68,14 @@ auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
 void Declaration::Print() const {
   switch (tag()) {
     case DeclarationKind::FunctionDeclaration:
-      PrintFunDef(GetFunctionDeclaration().definition);
+      GetFunctionDeclaration().definition.Print();
       break;
 
     case DeclarationKind::StructDeclaration: {
       const StructDefinition& struct_def = GetStructDeclaration().definition;
       std::cout << "struct " << struct_def.name << " {" << std::endl;
       for (auto& member : struct_def.members) {
-        PrintMember(member);
+        member->Print();
       }
       std::cout << "}" << std::endl;
       break;

@@ -35,12 +35,15 @@ void FnInserter::Run() {
   AddReplacement(range, new_text);
 }
 
-auto FnInserterFactory::GetAstMatcher() -> cam::DeclarationMatcher {
-  return cam::functionDecl(cam::anyOf(cam::hasTrailingReturn(),
-                                      cam::returns(cam::asString("void"))),
-                           cam::unless(cam::anyOf(cam::cxxConstructorDecl(),
-                                                  cam::cxxDestructorDecl())))
-      .bind(Label);
+void FnInserterFactory::AddMatcher(cam::MatchFinder* finder,
+                                   cam::MatchFinder::MatchCallback* callback) {
+  finder->addMatcher(
+      cam::functionDecl(cam::anyOf(cam::hasTrailingReturn(),
+                                   cam::returns(cam::asString("void"))),
+                        cam::unless(cam::anyOf(cam::cxxConstructorDecl(),
+                                               cam::cxxDestructorDecl())))
+          .bind(Label),
+      callback);
 }
 
 }  // namespace Carbon

@@ -17,21 +17,6 @@
 
 namespace Carbon {
 
-namespace {
-
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ActionKind {
-    return Alternative::Kind;
-  }
-};
-
-}  // namespace
-
-auto Action::tag() const -> ActionKind {
-  return std::visit(TagVisitor(), value);
-}
-
 auto Action::MakeLValAction(const Expression* e) -> Action* {
   auto* act = new Action();
   act->value = LValAction({.exp = e});
@@ -102,7 +87,7 @@ void Action::Print(std::ostream& out) {
 
 void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
   if (!ls.IsEmpty()) {
-    PrintList(ls.Pop(), out);
+    ls.Pop()->Print(out);
     if (!ls.IsEmpty()) {
       out << " :: ";
       PrintList(ls, out);

@@ -12,19 +12,6 @@
 
 namespace Carbon {
 
-namespace {
-
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ValKind {
-    return Alternative::Kind;
-  }
-};
-
-}  // namespace
-
-auto Value::tag() const -> ValKind { return std::visit(TagVisitor(), value); }
-
 auto Value::GetIntValue() const -> int {
   return std::get<IntValue>(value).value;
 }
@@ -110,15 +97,13 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
   }
 }
 
-auto FindTupleField(const std::string& name, const Value* tuple)
-    -> std::optional<Address> {
-  CHECK(tuple->tag() == ValKind::TupleValue);
-  for (const TupleElement& element : tuple->GetTupleValue().elements) {
+auto TupleValue::FindField(const std::string& name) const -> const Value* {
+  for (const TupleElement& element : elements) {
     if (element.name == name) {
-      return element.address;
+      return element.value;
     }
   }
-  return std::nullopt;
+  return nullptr;
 }
 
 auto Value::MakeIntValue(int i) -> const Value* {
@@ -161,7 +146,7 @@ auto Value::MakeTupleValue(std::vector<TupleElement> elements) -> const Value* {
 }
 
 auto Value::MakeAlternativeValue(std::string alt_name, std::string choice_name,
-                                 Address argument) -> const Value* {
+                                 const Value* argument) -> const Value* {
   auto* v = new Value();
   v->value = AlternativeValue({.alt_name = std::move(alt_name),
                                .choice_name = std::move(choice_name),
@@ -259,6 +244,106 @@ auto Value::MakeChoiceType(std::string name, VarValues alts) -> const Value* {
   return v;
 }
 
+namespace {
+
+auto GetMember(const Value* v, const std::string& f, int line_num)
+    -> const Value* {
+  switch (v->tag()) {
+    case ValKind::StructValue: {
+      const Value* field =
+          v->GetStructValue().inits->GetTupleValue().FindField(f);
+      if (field == nullptr) {
+        std::cerr << "runtime error, member " << f << " not in ";
+        PrintValue(v, std::cerr);
+        std::cerr << std::endl;
+        exit(-1);
+      }
+      return field;
+    }
+    case ValKind::TupleValue: {
+      const Value* field = v->GetTupleValue().FindField(f);
+      if (field == nullptr) {
+        std::cerr << "field " << f << " not in ";
+        PrintValue(v, std::cerr);
+        std::cerr << std::endl;
+        exit(-1);
+      }
+      return field;
+    }
+    case ValKind::ChoiceType: {
+      if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
+        std::cerr << "alternative " << f << " not in ";
+        PrintValue(v, std::cerr);
+        std::cerr << std::endl;
+        exit(-1);
+      }
+      return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
+    }
+    default:
+      std::cerr << "field access not allowed for value ";
+      PrintValue(v, std::cerr);
+      std::cerr << std::endl;
+      exit(-1);
+  }
+}
+
+}  // namespace
+
+auto Value::GetField(const FieldPath& path, int line_num) const
+    -> const Value* {
+  const Value* value = this;
+  for (const std::string& field : path.components) {
+    value = GetMember(value, field, line_num);
+  }
+  return value;
+}
+
+namespace {
+
+auto SetFieldImpl(const Value* value,
+                  std::vector<std::string>::const_iterator path_begin,
+                  std::vector<std::string>::const_iterator path_end,
+                  const Value* field_value, int line_num) -> const Value* {
+  if (path_begin == path_end) {
+    return field_value;
+  }
+  switch (value->tag()) {
+    case ValKind::StructValue: {
+      return SetFieldImpl(value->GetStructValue().inits, path_begin, path_end,
+                          field_value, line_num);
+    }
+    case ValKind::TupleValue: {
+      std::vector<TupleElement> elements = value->GetTupleValue().elements;
+      auto it = std::find_if(elements.begin(), elements.end(),
+                             [path_begin](const TupleElement& element) {
+                               return element.name == *path_begin;
+                             });
+      if (it == elements.end()) {
+        std::cerr << "field " << *path_begin << " not in ";
+        PrintValue(value, std::cerr);
+        std::cerr << std::endl;
+        exit(-1);
+      }
+      it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
+                               line_num);
+      return Value::MakeTupleValue(elements);
+    }
+    default:
+      std::cerr << "field access not allowed for value ";
+      PrintValue(value, std::cerr);
+      std::cerr << std::endl;
+      exit(-1);
+  }
+}
+
+}  // namespace
+
+auto Value::SetField(const FieldPath& path, const Value* field_value,
+                     int line_num) const -> const Value* {
+  return SetFieldImpl(this, path.components.begin(), path.components.end(),
+                      field_value, line_num);
+}
+
 auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag()) {
     case ValKind::AlternativeConstructorValue: {
@@ -274,7 +359,7 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
     case ValKind::AlternativeValue: {
       out << "alt " << val->GetAlternativeValue().choice_name << "."
           << val->GetAlternativeValue().alt_name << " ";
-      state->heap.PrintAddress(val->GetAlternativeValue().argument, out);
+      PrintValue(val->GetAlternativeValue().argument, out);
       break;
     }
     case ValKind::StructValue: {
@@ -293,7 +378,7 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
         }
 
         out << element.name << " = ";
-        state->heap.PrintAddress(element.address, out);
+        PrintValue(element.value, out);
       }
       out << ")";
       break;
@@ -377,9 +462,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
             t2->GetTupleValue().elements[i].name) {
           return false;
         }
-        if (!TypeEqual(
-                state->heap.Read(t1->GetTupleValue().elements[i].address, 0),
-                state->heap.Read(t2->GetTupleValue().elements[i].address, 0))) {
+        if (!TypeEqual(t1->GetTupleValue().elements[i].value,
+                       t2->GetTupleValue().elements[i].value)) {
           return false;
         }
       }
@@ -414,8 +498,7 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
     if (iter == ts2.end()) {
       return false;
     }
-    if (!ValueEqual(state->heap.Read(element.address, line_num),
-                    state->heap.Read(iter->address, line_num), line_num)) {
+    if (!ValueEqual(element.value, iter->value, line_num)) {
       return false;
     }
   }

@@ -327,9 +327,9 @@ statement:
   expression "=" expression ";"
     { $$ = Carbon::Statement::MakeAssign(yylineno, $1, $3); }
 | VAR pattern "=" expression ";"
-    { $$ = Carbon::Statement::MakeVarDef(yylineno, $2, $4); }
+    { $$ = Carbon::Statement::MakeVariableDefinition(yylineno, $2, $4); }
 | expression ";"
-    { $$ = Carbon::Statement::MakeExpStmt(yylineno, $1); }
+    { $$ = Carbon::Statement::MakeExpressionStatement(yylineno, $1); }
 | IF "(" expression ")" statement optional_else
     { $$ = Carbon::Statement::MakeIf(yylineno, $3, $5, $6); }
 | WHILE "(" expression ")" statement
@@ -360,7 +360,7 @@ statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
-    { $$ = Carbon::Statement::MakeSeq(yylineno, $1, $2); }
+    { $$ = Carbon::Statement::MakeSequence(yylineno, $1, $2); }
 ;
 return_type:
   // Empty
@@ -370,20 +370,21 @@ return_type:
 ;
 function_definition:
   FN identifier tuple return_type "{" statement_list "}"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $6); }
 | FN identifier tuple DBLARROW expression ";"
     {
-      $$ = Carbon::MakeFunDef(yylineno, $2,
-                              Carbon::Expression::MakeAutoTypeLiteral(yylineno),
-                              $3, Carbon::Statement::MakeReturn(yylineno, $5));
+      $$ = Carbon::FunctionDefinition(
+               yylineno, $2, $3,
+               Carbon::Expression::MakeAutoTypeLiteral(yylineno),
+               Carbon::Statement::MakeReturn(yylineno, $5));
     }
 ;
 function_declaration:
   FN identifier tuple return_type ";"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, 0); }
 ;
 variable_declaration: identifier ":" expression
-    { $$ = MakeField(yylineno, $1, $3); }
+    { $$ = Carbon::Member::MakeFieldMember(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
     { $$ = $2; }
@@ -429,7 +430,8 @@ declaration:
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = Carbon::Declaration::MakeVariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4);
+      $$ = Carbon::Declaration::MakeVariableDeclaration(
+          yylineno, $2->GetFieldMember().name, $2->GetFieldMember().type, $4);
     }
 ;
 declaration_list:

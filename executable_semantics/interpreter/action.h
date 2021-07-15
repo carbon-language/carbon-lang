@@ -43,14 +43,10 @@ struct ValAction {
 };
 
 struct Action {
-  auto tag() const -> ActionKind;
-
   static auto MakeLValAction(const Expression* e) -> Action*;
   static auto MakeExpressionAction(const Expression* e) -> Action*;
   static auto MakeStatementAction(const Statement* s) -> Action*;
   static auto MakeValAction(const Value* v) -> Action*;
-  static auto MakeExpToLValAction() -> Action*;
-  static auto MakeDeleteTmpAction(Address a) -> Action*;
 
   static void PrintList(Stack<Action*> ls, std::ostream& out);
 
@@ -60,6 +56,10 @@ struct Action {
   auto GetValAction() const -> const ValAction&;
 
   void Print(std::ostream& out);
+
+  inline auto tag() const -> ActionKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
 
   // The position or state of the action. Starts at 0 and goes up to the number
   // of subexpressions.

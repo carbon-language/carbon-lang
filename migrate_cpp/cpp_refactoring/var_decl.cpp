@@ -131,10 +131,12 @@ void VarDecl::Run() {
       clang::CharSourceRange::getCharRange(replace_start, replace_end), after);
 }
 
-auto VarDeclFactory::GetAstMatcher() -> cam::DeclarationMatcher {
-  return cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
-                          cam::hasParent(cam::cxxForRangeStmt())))))
-      .bind(Label);
+void VarDeclFactory::AddMatcher(cam::MatchFinder* finder,
+                                cam::MatchFinder::MatchCallback* callback) {
+  finder->addMatcher(cam::varDecl(cam::unless(cam::hasParent(cam::declStmt(
+                                      cam::hasParent(cam::cxxForRangeStmt())))))
+                         .bind(Label),
+                     callback);
 }
 
 }  // namespace Carbon

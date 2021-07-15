@@ -70,10 +70,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::TupleValue: {
       std::vector<FieldInitializer> args;
       for (const TupleElement& field : t->GetTupleValue().elements) {
-        args.push_back(
-            {.name = field.name,
-             .expression = ReifyType(state->heap.Read(field.address, line_num),
-                                     line_num)});
+        args.push_back({.name = field.name,
+                        .expression = ReifyType(field.value, line_num)});
       }
       return Expression::MakeTupleLiteral(0, args);
     }
@@ -169,15 +167,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         case ValKind::TupleValue: {
           auto i = ToInteger(InterpExp(values, e->GetIndexExpression().offset));
           std::string f = std::to_string(i);
-          std::optional<Address> field_address = FindTupleField(f, t);
-          if (field_address == std::nullopt) {
+          const Value* field_t = t->GetTupleValue().FindField(f);
+          if (field_t == nullptr) {
             std::cerr << e->line_num << ": compilation error, field " << f
                       << " is not in the tuple ";
             PrintValue(t, std::cerr);
             std::cerr << std::endl;
             exit(-1);
           }
-          auto field_t = state->heap.Read(*field_address, e->line_num);
           auto new_e = Expression::MakeIndexExpression(
               e->line_num, res.exp, Expression::MakeIntLiteral(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
@@ -217,16 +214,13 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                       << " but got " << arg->name << std::endl;
             exit(-1);
           }
-          arg_expected = state->heap.Read(
-              expected->GetTupleValue().elements[i].address, e->line_num);
+          arg_expected = expected->GetTupleValue().elements[i].value;
         }
         auto arg_res = TypeCheckExp(arg->expression, new_types, values,
                                     arg_expected, context);
         new_types = arg_res.types;
         new_args.push_back({.name = arg->name, .expression = arg_res.exp});
-        arg_types.push_back(
-            {.name = arg->name,
-             .address = state->heap.AllocateValue(arg_res.type)});
+        arg_types.push_back({.name = arg->name, .value = arg_res.type});
       }
       auto tuple_e = Expression::MakeTupleLiteral(e->line_num, new_args);
       auto tuple_t = Value::MakeTupleValue(std::move(arg_types));
@@ -264,9 +258,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             if (e->GetFieldAccessExpression().field == field.name) {
               auto new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
-              return TCResult(new_e,
-                              state->heap.Read(field.address, e->line_num),
-                              res.types);
+              return TCResult(new_e, field.value, res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
@@ -456,7 +448,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
   if (!s) {
     return TCStatement(s, types);
   }
-  switch (s->tag) {
+  switch (s->tag()) {
     case StatementKind::Match: {
       auto res = TypeCheckExp(s->GetMatch().exp, types, values, nullptr,
                               TCContext::ValueContext);
@@ -497,7 +489,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       const Value* rhs_ty = res.type;
       auto lhs_res = TypeCheckExp(s->GetVariableDefinition().pat, types, values,
                                   rhs_ty, TCContext::PatternContext);
-      const Statement* new_s = Statement::MakeVarDef(
+      const Statement* new_s = Statement::MakeVariableDefinition(
           s->line_num, s->GetVariableDefinition().pat, res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
@@ -509,7 +501,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
           TypeCheckStmt(s->GetSequence().next, types2, values, ret_type);
       auto types3 = next_res.types;
       return TCStatement(
-          Statement::MakeSeq(s->line_num, stmt_res.stmt, next_res.stmt),
+          Statement::MakeSequence(s->line_num, stmt_res.stmt, next_res.stmt),
           types3);
     }
     case StatementKind::Assign: {
@@ -524,9 +516,9 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::ExpressionStatement: {
-      auto res = TypeCheckExp(s->GetExpression(), types, values, nullptr,
-                              TCContext::ValueContext);
-      auto new_s = Statement::MakeExpStmt(s->line_num, res.exp);
+      auto res = TypeCheckExp(s->GetExpressionStatement().exp, types, values,
+                              nullptr, TCContext::ValueContext);
+      auto new_s = Statement::MakeExpressionStatement(s->line_num, res.exp);
       return TCStatement(new_s, types);
     }
     case StatementKind::If: {
@@ -543,7 +535,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, types);
     }
     case StatementKind::Return: {
-      auto res = TypeCheckExp(s->GetReturn(), types, values, nullptr,
+      auto res = TypeCheckExp(s->GetReturn().exp, types, values, nullptr,
                               TCContext::ValueContext);
       if (ret_type->tag() == ValKind::AutoType) {
         // The following infers the return type from the first 'return'
@@ -559,9 +551,9 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       TCStatement body_result =
           TypeCheckStmt(s->GetContinuation().body, types, values, ret_type);
       const Statement* new_continuation = Statement::MakeContinuation(
-          s->line_num, *s->GetContinuation().continuation_variable,
+          s->line_num, s->GetContinuation().continuation_variable,
           body_result.stmt);
-      types.Set(*s->GetContinuation().continuation_variable,
+      types.Set(s->GetContinuation().continuation_variable,
                 Value::MakeContinuationType());
       return TCStatement(new_continuation, types);
     }
@@ -595,7 +587,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       exit(-1);
     }
   }
-  switch (stmt->tag) {
+  switch (stmt->tag()) {
     case StatementKind::Match: {
       auto new_clauses =
           new std::list<std::pair<const Expression*, const Statement*>>();
@@ -622,7 +614,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       return stmt;
     case StatementKind::Sequence:
       if (stmt->GetSequence().next) {
-        return Statement::MakeSeq(
+        return Statement::MakeSequence(
             stmt->line_num, stmt->GetSequence().stmt,
             CheckOrEnsureReturn(stmt->GetSequence().next, void_return,
                                 stmt->line_num));
@@ -641,7 +633,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
       if (void_return) {
-        return Statement::MakeSeq(
+        return Statement::MakeSequence(
             stmt->line_num, stmt,
             Statement::MakeReturn(stmt->line_num, Expression::MakeTupleLiteral(
                                                       stmt->line_num, {})));
@@ -669,9 +661,8 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(MakeFunDef(f->line_num, f->name,
-                                           ReifyType(return_type, f->line_num),
-                                           f->param_pattern, body));
+  return new FunctionDefinition(f->line_num, f->name, f->param_pattern,
+                                ReifyType(return_type, f->line_num), body);
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
@@ -691,9 +682,11 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
   VarValues fields;
   VarValues methods;
   for (const Member* m : sd->members) {
-    if (m->tag == MemberKind::FieldMember) {
-      auto t = InterpExp(ct_top, m->u.field.type);
-      fields.push_back(std::make_pair(*m->u.field.name, t));
+    switch (m->tag()) {
+      case MemberKind::FieldMember:
+        auto t = InterpExp(ct_top, m->GetFieldMember().type);
+        fields.push_back(std::make_pair(m->GetFieldMember().name, t));
+        break;
     }
   }
   return Value::MakeStructType(sd->name, std::move(fields), std::move(methods));
@@ -723,9 +716,11 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
       const StructDefinition& struct_def = d.GetStructDeclaration().definition;
       std::list<Member*> fields;
       for (Member* m : struct_def.members) {
-        if (m->tag == MemberKind::FieldMember) {
-          // TODO: Interpret the type expression and store the result.
-          fields.push_back(m);
+        switch (m->tag()) {
+          case MemberKind::FieldMember:
+            // TODO: Interpret the type expression and store the result.
+            fields.push_back(m);
+            break;
         }
       }
       return Declaration::MakeStructDeclaration(
@@ -769,9 +764,7 @@ static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
       tops->values.Set(struct_def.name, a);  // Is this obsolete?
       std::vector<TupleElement> field_types;
       for (const auto& [field_name, field_value] : st->GetStructType().fields) {
-        field_types.push_back(
-            {.name = field_name,
-             .address = state->heap.AllocateValue(field_value)});
+        field_types.push_back({.name = field_name, .value = field_value});
       }
       auto fun_ty = Value::MakeFunctionType(
           Value::MakeTupleValue(std::move(field_types)), st);
