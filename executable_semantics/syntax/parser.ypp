@@ -422,18 +422,18 @@ declaration:
 | STRUCT identifier "{" member_list "}"
     {
       $$ = Carbon::Declaration(
-          Carbon::StructDeclaration{yylineno, $2, $4});
+        Carbon::StructDeclaration{yylineno, $2, $4});
     }
 | CHOICE identifier "{" alternative_list "}"
     {
       $$ = Carbon::Declaration(
-          Carbon::ChoiceDeclaration{yylineno, $2, $4});
+        Carbon::ChoiceDeclaration{yylineno, $2, $4});
     }
 | VAR variable_declaration "=" expression ";"
     {
       $$ = Carbon::Declaration(
-          Carbon::VariableDeclaration(yylineno, $2->GetFieldMember().name,
-                                      $2->GetFieldMember().type, $4));
+        Carbon::VariableDeclaration(yylineno, $2->GetFieldMember().name,
+                                    $2->GetFieldMember().type, $4));
     }
 ;
 declaration_list:
