@@ -47,16 +47,10 @@ struct Frame {
   Stack<Action*> todo;
   // If this frame is the bottom frame of a continuation, then it stores
   // the address of the continuation.
-  // Otherwise the `continuation` field is the sentinel UINT_MAX.
-  Address continuation;
-  // Returns whether this frame is the bottom frame of a continuation.
-  auto IsContinuation() -> bool { return continuation != UINT_MAX; }
+  std::optional<Address> continuation;
 
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
-      : name(std::move(std::move(n))),
-        scopes(s),
-        todo(c),
-        continuation(UINT_MAX) {}
+      : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 };
 
 // A Heap represents the abstract machine's dynamically allocated memory.
@@ -70,30 +64,27 @@ class Heap {
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
-  auto Read(Address a, int line_num) -> const Value*;
+  auto Read(const Address& a, int line_num) -> const Value*;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  auto Write(Address a, const Value* v, int line_num) -> void;
+  auto Write(const Address& a, const Value* v, int line_num) -> void;
 
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(const Value* v) -> Address;
 
   // Marks the object at this address, and all of its sub-objects, as dead.
-  auto Deallocate(Address address) -> void;
+  auto Deallocate(const Address& address) -> void;
 
   // Print the value at the given address to the stream `out`.
-  auto PrintAddress(Address a, std::ostream& out) -> void;
+  auto PrintAddress(const Address& a, std::ostream& out) -> void;
 
   // Print all the values on the heap to the stream `out`.
   auto PrintHeap(std::ostream& out) -> void;
 
  private:
   // Signal an error if the address is no longer alive.
-  void CheckAlive(Address address, int line_num);
-
-  // Marks all sub-objects of this value as dead.
-  void DeallocateSubObjects(const Value* val);
+  void CheckAlive(const Address& address, int line_num);
 
   std::vector<const Value*> values_;
   std::vector<bool> alive_;

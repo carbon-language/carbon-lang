@@ -26,7 +26,6 @@ State* state = nullptr;
 auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
 auto Step() -> void;
-auto GetMember(const Value* v, const std::string& f, int line_num) -> Address;
 //
 // Auxiliary Functions
 //
@@ -37,27 +36,27 @@ auto Heap::AllocateValue(const Value* v) -> Address {
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
   CHECK(v != nullptr);
-  Address a = values_.size();
+  Address a(values_.size());
   values_.push_back(v);
   alive_.push_back(true);
   return a;
 }
 
-auto Heap::Read(Address a, int line_num) -> const Value* {
+auto Heap::Read(const Address& a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
-  return values_[a];
+  return values_[a.index]->GetField(a.field_path, line_num);
 }
 
-auto Heap::Write(Address a, const Value* v, int line_num) -> void {
+auto Heap::Write(const Address& a, const Value* v, int line_num) -> void {
   CHECK(v != nullptr);
   this->CheckAlive(a, line_num);
-  values_[a] = v;
+  values_[a.index] = values_[a.index]->SetField(a.field_path, v, line_num);
 }
 
-void Heap::CheckAlive(Address address, int line_num) {
-  if (!alive_[address]) {
+void Heap::CheckAlive(const Address& address, int line_num) {
+  if (!alive_[address.index]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(values_[address], std::cerr);
+    PrintValue(values_[address.index], std::cerr);
     std::cerr << std::endl;
     exit(-1);
   }
@@ -68,21 +67,16 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::TupleValue: {
       std::vector<TupleElement> elements;
       for (const TupleElement& element : val->GetTupleValue().elements) {
-        const Value* new_element =
-            CopyVal(state->heap.Read(element.address, line_num), line_num);
-        Address new_address = state->heap.AllocateValue(new_element);
-        elements.push_back({.name = element.name, .address = new_address});
+        elements.push_back(
+            {.name = element.name, .value = CopyVal(element.value, line_num)});
       }
       return Value::MakeTupleValue(std::move(elements));
     }
     case ValKind::AlternativeValue: {
-      const Value* arg = CopyVal(
-          state->heap.Read(val->GetAlternativeValue().argument, line_num),
-          line_num);
-      Address argument_address = state->heap.AllocateValue(arg);
+      const Value* arg = CopyVal(val->GetAlternativeValue().argument, line_num);
       return Value::MakeAlternativeValue(val->GetAlternativeValue().alt_name,
                                          val->GetAlternativeValue().choice_name,
-                                         argument_address);
+                                         arg);
     }
     case ValKind::StructValue: {
       const Value* inits = CopyVal(val->GetStructValue().inits, line_num);
@@ -128,28 +122,10 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
   }
 }
 
-void Heap::DeallocateSubObjects(const Value* val) {
-  switch (val->tag()) {
-    case ValKind::AlternativeValue:
-      Deallocate(val->GetAlternativeValue().argument);
-      break;
-    case ValKind::StructValue:
-      DeallocateSubObjects(val->GetStructValue().inits);
-      break;
-    case ValKind::TupleValue:
-      for (const TupleElement& element : val->GetTupleValue().elements) {
-        Deallocate(element.address);
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-void Heap::Deallocate(Address address) {
-  if (alive_[address]) {
-    alive_[address] = false;
-    DeallocateSubObjects(values_[address]);
+void Heap::Deallocate(const Address& address) {
+  CHECK(address.field_path.IsEmpty());
+  if (alive_[address.index]) {
+    alive_[address.index] = false;
   } else {
     std::cerr << "runtime error, deallocating an already dead value"
               << std::endl;
@@ -187,17 +163,17 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
 }
 
 void Heap::PrintHeap(std::ostream& out) {
-  for (Address i = 0; i < values_.size(); ++i) {
-    PrintAddress(i, out);
+  for (size_t i = 0; i < values_.size(); ++i) {
+    PrintAddress(Address(i), out);
     out << ", ";
   }
 }
 
-auto Heap::PrintAddress(Address a, std::ostream& out) -> void {
-  if (!alive_[a]) {
+auto Heap::PrintAddress(const Address& a, std::ostream& out) -> void {
+  if (!alive_[a.index]) {
     out << "!!";
   }
-  PrintValue(values_[a], out);
+  PrintValue(values_[a.index], out);
 }
 
 auto CurrentEnv(State* state) -> Env {
@@ -392,8 +368,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* av = Value::MakeAlternativeValue(
           operas[0]->GetAlternativeConstructorValue().alt_name,
-          operas[0]->GetAlternativeConstructorValue().choice_name,
-          state->heap.AllocateValue(arg));
+          operas[0]->GetAlternativeConstructorValue().choice_name, arg);
       Frame* frame = state->stack.Top();
       frame->todo.Push(Action::MakeValAction(av));
       break;
@@ -430,8 +405,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
   auto f = exp->GetTupleLiteral().fields.begin();
 
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
-    Address a = state->heap.AllocateValue(*i);  // copy?
-    elements.push_back({.name = f->name, .address = a});
+    elements.push_back({.name = f->name, .value = *i});
   }
   const Value* tv = Value::MakeTupleValue(std::move(elements));
   frame->todo.Pop(1);
@@ -462,17 +436,19 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
                       << std::endl;
             exit(-1);
           }
-          for (const TupleElement& element : p->GetTupleValue().elements) {
-            auto a = FindTupleField(element.name, v);
-            if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << element.name << "not in ";
+          for (const TupleElement& pattern_element :
+               p->GetTupleValue().elements) {
+            const Value* value_field =
+                v->GetTupleValue().FindField(pattern_element.name);
+            if (value_field == nullptr) {
+              std::cerr << "runtime error: field " << pattern_element.name
+                        << "not in ";
               PrintValue(v, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
             std::optional<Env> matches = PatternMatch(
-                state->heap.Read(element.address, line_num),
-                state->heap.Read(*a, line_num), values, vars, line_num);
+                pattern_element.value, value_field, values, vars, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -497,9 +473,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             return std::nullopt;
           }
           std::optional<Env> matches = PatternMatch(
-              state->heap.Read(p->GetAlternativeValue().argument, line_num),
-              state->heap.Read(v->GetAlternativeValue().argument, line_num),
-              values, vars, line_num);
+              p->GetAlternativeValue().argument,
+              v->GetAlternativeValue().argument, values, vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
@@ -553,16 +528,18 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
                       << std::endl;
             exit(-1);
           }
-          for (const TupleElement& element : pat->GetTupleValue().elements) {
-            auto a = FindTupleField(element.name, val);
-            if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << element.name << "not in ";
+          for (const TupleElement& pattern_element :
+               pat->GetTupleValue().elements) {
+            const Value* value_field =
+                val->GetTupleValue().FindField(pattern_element.name);
+            if (value_field == nullptr) {
+              std::cerr << "runtime error: field " << pattern_element.name
+                        << "not in ";
               PrintValue(val, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(state->heap.Read(element.address, line_num),
-                              state->heap.Read(*a, line_num), line_num);
+            PatternAssignment(pattern_element.value, value_field, line_num);
           }
           break;
         }
@@ -586,10 +563,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(
-              state->heap.Read(pat->GetAlternativeValue().argument, line_num),
-              state->heap.Read(val->GetAlternativeValue().argument, line_num),
-              line_num);
+          PatternAssignment(pat->GetAlternativeValue().argument,
+                            val->GetAlternativeValue().argument, line_num);
           break;
         }
         default:
@@ -641,17 +616,17 @@ void StepLvalue() {
       if (act->pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(
-            exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(
+            Action::MakeLValAction(exp->GetFieldAccessExpression().aggregate));
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
-        const Value* str = act->results[0];
-        Address a = GetMember(str, exp->GetFieldAccessExpression().field,
-                              exp->line_num);
+        Address aggregate = act->results[0]->GetPointerValue();
+        Address field =
+            aggregate.SubobjectAddress(exp->GetFieldAccessExpression().field);
         frame->todo.Pop(1);
-        frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(a)));
+        frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(field)));
       }
       break;
     }
@@ -660,7 +635,7 @@ void StepLvalue() {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
         frame->todo.Push(
-            Action::MakeExpressionAction(exp->GetIndexExpression().aggregate));
+            Action::MakeLValAction(exp->GetIndexExpression().aggregate));
         act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(
@@ -669,17 +644,11 @@ void StepLvalue() {
       } else if (act->pos == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
-        const Value* tuple = act->results[0];
+        Address aggregate = act->results[0]->GetPointerValue();
         std::string f = std::to_string(ToInteger(act->results[1]));
-        auto a = FindTupleField(f, tuple);
-        if (a == std::nullopt) {
-          std::cerr << "runtime error: field " << f << "not in ";
-          PrintValue(tuple, std::cerr);
-          std::cerr << std::endl;
-          exit(-1);
-        }
+        Address field = aggregate.SubobjectAddress(f);
         frame->todo.Pop(1);
-        frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(*a)));
+        frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(field)));
       }
       break;
     }
@@ -767,16 +736,15 @@ void StepExp() {
             //    { { v :: [][i] :: C, E, F} :: S, H}
             // -> { { v_i :: C, E, F} : S, H}
             std::string f = std::to_string(ToInteger(act->results[1]));
-            auto a = FindTupleField(f, tuple);
-            if (a == std::nullopt) {
+            const Value* field = tuple->GetTupleValue().FindField(f);
+            if (field == nullptr) {
               std::cerr << "runtime error, field " << f << " not in ";
               PrintValue(tuple, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
             frame->todo.Pop(1);
-            const Value* element = state->heap.Read(*a, exp->line_num);
-            frame->todo.Push(Action::MakeValAction(element));
+            frame->todo.Push(Action::MakeValAction(field));
             break;
           }
           default:
@@ -825,12 +793,10 @@ void StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        Address element =
-            GetMember(act->results[0], exp->GetFieldAccessExpression().field,
-                      exp->line_num);
+        const Value* element = act->results[0]->GetField(
+            FieldPath(exp->GetFieldAccessExpression().field), exp->line_num);
         frame->todo.Pop(1);
-        frame->todo.Push(
-            Action::MakeValAction(state->heap.Read(element, exp->line_num)));
+        frame->todo.Push(Action::MakeValAction(element));
       }
       break;
     }
@@ -1293,52 +1259,11 @@ void StepStmt() {
       std::vector<Frame*> paused;
       do {
         paused.push_back(state->stack.Pop());
-      } while (!paused.back()->IsContinuation());
+      } while (paused.back()->continuation == std::nullopt);
       // Update the continuation with the paused stack.
-      state->heap.Write(paused.back()->continuation,
+      state->heap.Write(*paused.back()->continuation,
                         Value::MakeContinuationValue(paused), stmt->line_num);
       break;
-  }
-}
-
-auto GetMember(const Value* v, const std::string& f, int line_num) -> Address {
-  switch (v->tag()) {
-    case ValKind::StructValue: {
-      auto a = FindTupleField(f, v->GetStructValue().inits);
-      if (a == std::nullopt) {
-        std::cerr << "runtime error, member " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
-        exit(-1);
-      }
-      return *a;
-    }
-    case ValKind::TupleValue: {
-      auto a = FindTupleField(f, v);
-      if (a == std::nullopt) {
-        std::cerr << "field " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
-        exit(-1);
-      }
-      return *a;
-    }
-    case ValKind::ChoiceType: {
-      if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
-        std::cerr << "alternative " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
-        exit(-1);
-      }
-      auto ac =
-          Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
-      return state->heap.AllocateValue(ac);
-    }
-    default:
-      std::cerr << "field access not allowed for value ";
-      PrintValue(v, std::cerr);
-      std::cerr << std::endl;
-      exit(-1);
   }
 }
 

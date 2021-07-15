@@ -11,6 +11,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/struct_definition.h"
+#include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
 
 namespace yy {
@@ -21,7 +22,6 @@ namespace Carbon {
 
 struct Value;
 
-using Address = unsigned int;
 using TypeEnv = Dictionary<std::string, const Value*>;
 using Env = Dictionary<std::string, Address>;
 

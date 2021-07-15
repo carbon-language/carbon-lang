@@ -8,7 +8,7 @@
 
 namespace Carbon {
 
-void FunctionDeclaration::Print() const { PrintFunDef(definition); }
+void FunctionDeclaration::Print() const { definition.Print(); }
 
 void StructDeclaration::Print() const {
   std::cout << "struct " << *definition.name << " {" << std::endl;
