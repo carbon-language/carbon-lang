@@ -17,7 +17,7 @@ TEST(CheckTest, CheckFalse) {
 TEST(CheckTest, CheckTrueMessage) { CHECK(true) << "msg"; }
 
 TEST(CheckTest, CheckFalseMessage) {
-  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false");
+  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg");
 }
 
 }  // namespace Carbon

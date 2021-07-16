@@ -17,16 +17,27 @@ class ExitWrapper {
     if (exiting) {
       llvm::sys::PrintStackTrace(llvm::errs());
       if (!buffer.empty()) {
-        llvm::errs() << ": " << buffer;
+        llvm::errs() << buffer;
       }
       exit(-1);
     }
+  }
+
+  // Indicates that initial input is in, so this is where a ": " should be added
+  // before user input.
+  ExitWrapper& add_separator() {
+    separator = true;
+    return *this;
   }
 
   explicit operator bool() const { return true; }
 
   template <typename T>
   ExitWrapper& operator<<(T input) {
+    if (separator) {
+      buffer_stream << ": ";
+      separator = false;
+    }
     buffer_stream << input;
     return *this;
   }
@@ -42,12 +53,14 @@ class ExitWrapper {
   std::string buffer;
   llvm::raw_string_ostream buffer_stream = llvm::raw_string_ostream(buffer);
   bool exiting = false;
+  bool separator = false;
 };
 
 }  // namespace CheckInternal
 
-#define CHECK(condition)                                     \
-  (!(condition)) && CheckInternal::ExitWrapper() << "CHECK " \
-                                                    "failure: " #condition
+#define CHECK(condition)                                             \
+  (!(condition)) &&                                                  \
+      (CheckInternal::ExitWrapper() << "CHECK failure: " #condition) \
+          .add_separator()
 
 #endif  // COMMON_CHECK_H_
