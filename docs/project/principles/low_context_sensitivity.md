@@ -22,9 +22,7 @@ Instead, we should favor explicit constructs that are not ambiguous so that they
 don't need context for disambiguation. This is in service to the goal that
 [Carbon code is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
 In particular, this is about prioritizing reading and understanding over
-writing. We should be willing to pay in conciseness (which does benefit both
-reading and writing) if it means greatly reducing the amount of context that
-must be consumed to read and understand code.
+writing. We should be willing to trade off conciseness, which still benefits reading as well as writing, for a sufficiently impactful reduction in the amount of context needed to read and understand code.
 
 Context can be expensive in different ways, for example:
 
@@ -36,7 +34,7 @@ Context can be expensive in different ways, for example:
     be assumed to be freely available.
 -   It can be _unpredictable_. If you can easily predict where to look for a
     piece of contextual information then it is much less expensive than having
-    to search all of your imports.
+    to search all of your code, or worse imports.
 -   It can be _subtle_. The concern here is how easy it is to make a mistake
     finding the correct context, or cases where the contextual clues are easy to
     miss or mistake.
