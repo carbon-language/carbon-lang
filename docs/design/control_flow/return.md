@@ -158,6 +158,11 @@ var my_vector: Vector = CreateVector(1, 2);
 As a consequence, `returned var` is encouraged because it makes it easier to
 avoid copies.
 
+> **TODO:** Have some discussion of RVO and NRVO as they are found in C++ here,
+> and the fact that Carbon provides the essential part of these as first-class
+> featuers and therefore they are never "optimizations" or done implicitly or
+> optionally.
+
 ## Relevant proposals
 
 -   [Initialization of memory and variables](/proposals/p0257.md)
