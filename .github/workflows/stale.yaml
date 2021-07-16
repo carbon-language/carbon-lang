@@ -15,19 +15,24 @@ jobs:
         with:
           stale-issue-message: >
             This issue is stale because it has been open 90 days with no
-            activity. Remove the `stale` label or comment, or this issue will be
-            closed and archived in 7 days. The `long term` label can also be
-            added for issues which are expected to take time.
+            activity. We archive inactive issues in order to make active issues
+            easier to find. Remove the `stale` label or comment, or this issue
+            will be closed and archived in 7 days. The `long term` label can
+            also be added for issues which are expected to take time.
           close-issue-message: >
             This issue was closed because it has been stale with no comments for
-            7 days. Reopen and comment if appropriate.
+            7 days. We archive inactive issues in order to make active issues
+            easier to find. Please reopen the issue and comment if the issue
+            still requires resolution.
           stale-pr-message: >
             This PR is stale because it has been open 90 days with no activity.
+            We archive inactive PRs in order to make active PRs easier to find.
             Remove the `stale` label or comment, or this PR will be closed and
             archived in 7 days.
           close-pr-message: >
             This PR was closed because it has been stale with no comments for 7
-            days. Reopen and comment if appropriate.
+            days. We archive inactive PRs in order to make active PRs easier to
+            find. Please reopen the PR and comment when work on it resumes.
           exempt-issue-labels: 'long term'
           days-before-stale: 90
           days-before-close: 7
