@@ -11,14 +11,14 @@
 
 namespace CheckInternal {
 
+// Wraps a stream and exiting for CHECK.
 class ExitWrapper {
  public:
   ~ExitWrapper() {
+    // If exiting will occur, print the buffer and errors.
     if (exiting) {
       llvm::sys::PrintStackTrace(llvm::errs());
-      if (!buffer.empty()) {
-        llvm::errs() << buffer;
-      }
+      llvm::errs() << buffer << "\n";
       exit(-1);
     }
   }

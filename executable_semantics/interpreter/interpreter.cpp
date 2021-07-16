@@ -977,7 +977,7 @@ void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   const Statement* stmt = act->GetStatementAction().stmt;
-  CHECK(stmt != nullptr && "null statement!");
+  CHECK(stmt != nullptr) << "null statement!";
   if (tracing_output) {
     std::cout << "--- step stmt ";
     PrintStatement(stmt, 1);
