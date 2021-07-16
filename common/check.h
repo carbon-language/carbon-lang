@@ -14,13 +14,14 @@ namespace CheckInternal {
 // Wraps a stream and exiting for CHECK.
 class ExitWrapper {
  public:
+  ExitWrapper() {
+    // Start by printing a stack trace.
+    llvm::sys::PrintStackTrace(llvm::errs());
+  }
   ~ExitWrapper() {
-    // If exiting will occur, print the buffer and errors.
-    if (exiting) {
-      llvm::sys::PrintStackTrace(llvm::errs());
-      llvm::errs() << buffer << "\n";
-      exit(-1);
-    }
+    // Finish with a newline.
+    llvm::errs() << "\n";
+    exit(-1);
   }
 
   // Indicates that initial input is in, so this is where a ": " should be added
@@ -31,25 +32,19 @@ class ExitWrapper {
   }
 
   // If the bool cast occurs, it's because the condition is false.
-  explicit operator bool() {
-    exiting = true;
-    return true;
-  }
+  explicit operator bool() { return true; }
 
-  // Forward output strings to the buffer.
+  // Forward output to llvm::errs.
   template <typename T>
   ExitWrapper& operator<<(T& message) {
     if (separator) {
-      buffer_stream << ": ";
+      llvm::errs() << ": ";
       separator = false;
     }
-    buffer_stream << message;
+    llvm::errs() << message;
     return *this;
   }
 
-  std::string buffer;
-  llvm::raw_string_ostream buffer_stream = llvm::raw_string_ostream(buffer);
-  bool exiting = false;
   bool separator = false;
 };
 
