@@ -56,6 +56,7 @@ EXAMPLES = [
     "match_any_int",
     "match_int_default",
     "match_int",
+    "match_placeholder",
     "match_type",
     "next",
     "pattern_init",

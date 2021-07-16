@@ -105,7 +105,8 @@ auto Expression::MakeIdentifierExpression(int line_num, std::string var)
   return v;
 }
 
-auto Expression::MakeBindingExpression(int line_num, std::string var,
+auto Expression::MakeBindingExpression(int line_num,
+                                       std::optional<std::string> var,
                                        const Expression* type)
     -> const Expression* {
   auto* v = new Expression();
@@ -280,11 +281,17 @@ void PrintExp(const Expression* e) {
     case ExpressionKind::IdentifierExpression:
       std::cout << e->GetIdentifierExpression().name;
       break;
-    case ExpressionKind::BindingExpression:
-      PrintExp(e->GetBindingExpression().type);
+    case ExpressionKind::BindingExpression: {
+      const BindingExpression& binding = e->GetBindingExpression();
+      if (binding.name.has_value()) {
+        std::cout << *binding.name;
+      } else {
+        std::cout << "_";
+      }
       std::cout << ": ";
-      std::cout << e->GetBindingExpression().name;
+      PrintExp(e->GetBindingExpression().type);
       break;
+    }
     case ExpressionKind::CallExpression:
       PrintExp(e->GetCallExpression().function);
       if (e->GetCallExpression().argument->tag() ==

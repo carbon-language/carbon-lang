@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -74,7 +75,8 @@ struct IndexExpression {
 
 struct BindingExpression {
   static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
-  std::string name;
+  // nullopt represents the `_` placeholder
+  std::optional<std::string> name;
   const Expression* type;
 };
 
@@ -136,7 +138,8 @@ struct TypeTypeLiteral {
 struct Expression {
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
-  static auto MakeBindingExpression(int line_num, std::string var,
+  static auto MakeBindingExpression(int line_num,
+                                    std::optional<std::string> var,
                                     const Expression* type)
       -> const Expression*;
   static auto MakeIntLiteral(int line_num, int i) -> const Expression*;

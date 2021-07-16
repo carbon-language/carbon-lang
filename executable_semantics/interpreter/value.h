@@ -110,7 +110,8 @@ struct TupleValue {
 
 struct BindingPlaceholderValue {
   static constexpr ValKind Kind = ValKind::BindingPlaceholderValue;
-  std::string name;
+  // nullopt represents the `_` placeholder
+  std::optional<std::string> name;
   const Value* type;
 };
 
@@ -183,8 +184,8 @@ struct Value {
   static auto MakeAlternativeConstructorValue(std::string alt_name,
                                               std::string choice_name)
       -> const Value*;
-  static auto MakeBindingPlaceholderValue(std::string name, const Value* type)
-      -> const Value*;
+  static auto MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                          const Value* type) -> const Value*;
   static auto MakeIntType() -> const Value*;
   static auto MakeContinuationType() -> const Value*;
   static auto MakeAutoType() -> const Value*;
