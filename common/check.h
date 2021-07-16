@@ -32,16 +32,18 @@ class ExitWrapper {
 
   explicit operator bool() const { return true; }
 
+  // Forward output strings to the buffer.
   template <typename T>
-  ExitWrapper& operator<<(T input) {
+  ExitWrapper& operator<<(T& message) {
     if (separator) {
       buffer_stream << ": ";
       separator = false;
     }
-    buffer_stream << input;
+    buffer_stream << message;
     return *this;
   }
 
+  // Toggle exit behavior based on the condition.
   friend ExitWrapper& operator&&(bool cond,
                                  CheckInternal::ExitWrapper& exit_wrapper) {
     if (cond) {
@@ -58,6 +60,9 @@ class ExitWrapper {
 
 }  // namespace CheckInternal
 
+// Checks the given condition, and if it's false, prints an error and exits.
+// For example:
+//   CHECK(is_valid) << "Data is not valid!";
 #define CHECK(condition)                                             \
   (!(condition)) &&                                                  \
       (CheckInternal::ExitWrapper() << "CHECK failure: " #condition) \
