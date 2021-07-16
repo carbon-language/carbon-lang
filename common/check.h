@@ -30,7 +30,11 @@ class ExitWrapper {
     return *this;
   }
 
-  explicit operator bool() const { return true; }
+  // If the bool cast occurs, it's because the condition is false.
+  explicit operator bool() {
+    exiting = true;
+    return true;
+  }
 
   // Forward output strings to the buffer.
   template <typename T>
@@ -41,15 +45,6 @@ class ExitWrapper {
     }
     buffer_stream << message;
     return *this;
-  }
-
-  // Toggle exit behavior based on the condition.
-  friend ExitWrapper& operator&&(bool cond,
-                                 CheckInternal::ExitWrapper& exit_wrapper) {
-    if (cond) {
-      exit_wrapper.exiting = true;
-    }
-    return exit_wrapper;
   }
 
   std::string buffer;
