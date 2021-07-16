@@ -31,8 +31,9 @@ class ExitWrapper {
     return *this;
   }
 
-  // If the bool cast occurs, it's because the condition is false.
-  explicit operator bool() { return true; }
+  // If the bool cast occurs, it's because the condition is false. This supports
+  // && short-circuiting the creation of ExitWrapper.
+  explicit operator bool() const { return true; }
 
   // Forward output to llvm::errs.
   template <typename T>
