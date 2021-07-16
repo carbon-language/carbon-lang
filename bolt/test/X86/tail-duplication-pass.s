@@ -10,6 +10,7 @@
 # FDATA: 1 main 2 1 main #.BB2# 0 10
 # FDATA: 1 main 4 1 main #.BB2# 0 20
 # CHECK: tail duplication possible duplications: 1
+# CHECK: BB Layout   : .LBB00, .Ltail-dup0, .Ltmp0, .Ltmp1
 
     .text
     .globl main

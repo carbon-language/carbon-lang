@@ -964,6 +964,8 @@ public:
     return Index;
   }
 
+  bool hasJumpTable() const;
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 

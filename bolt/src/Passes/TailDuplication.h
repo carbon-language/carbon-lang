@@ -51,15 +51,20 @@ class TailDuplication : public BinaryFunctionPass {
   /// Record how many times these duplications would get used.
   uint64_t PossibleDuplicationsDynamicCount = 0;
 
-  /// Record the execution count of all unconditional branches
+  /// Record the execution count of all unconditional branches.
   uint64_t UnconditionalBranchDynamicCount = 0;
 
-  /// Record the execution count of all blocks
+  /// Record the execution count of all blocks.
   uint64_t AllBlocksDynamicCount = 0;
 
   /// True if Succ is in the same cache line as BB (approximately)
   bool isInCacheLine(const BinaryBasicBlock &BB,
                      const BinaryBasicBlock &Succ) const;
+
+  /// Duplicates BlocksToDuplicate and places them after BB.
+  void
+  tailDuplicate(BinaryBasicBlock &BB,
+                const std::vector<BinaryBasicBlock *> &BlocksToDuplicate) const;
 
   /// Returns a vector of BinaryBasicBlock to copy after BB. If it's empty,
   /// nothing should be duplicated

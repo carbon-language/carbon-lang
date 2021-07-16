@@ -39,6 +39,12 @@ bool BinaryBasicBlock::hasInstructions() const {
   return getParent()->hasInstructions();
 }
 
+bool BinaryBasicBlock::hasJumpTable() const {
+  const MCInst *Inst = getLastNonPseudoInstr();
+  const JumpTable *JT = Inst ? Function->getJumpTable(*Inst) : nullptr;
+  return (JT != nullptr);
+}
+
 void BinaryBasicBlock::adjustNumPseudos(const MCInst &Inst, int Sign) {
   BinaryContext &BC = Function->getBinaryContext();
   if (BC.MIB->isPseudo(Inst))
