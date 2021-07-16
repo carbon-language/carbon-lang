@@ -14,23 +14,35 @@ jobs:
       - uses: actions/stale@v4
         with:
           stale-issue-message: >
+            We archive inactive PRs and issues in order to make it easier to
+            find active work. If this issue should remain active, please comment
+            or remove the `stale` label. The `long term` label can also be added
+            for issues which are expected to take time.
+
             This issue is stale because it has been open 90 days with no
-            activity. We archive inactive issues in order to make active issues
-            easier to find. Remove the `stale` label or comment, or this issue
-            will be closed and archived in 7 days. The `long term` label can
-            also be added for issues which are expected to take time.
+            activity. This issue will be closed and archived after being stale
+            for 7 days.
           close-issue-message: >
-            This issue was closed because it has been stale with no comments for
-            7 days. Please reopen the issue and comment if the issue still needs
-            attention.
+            We archive inactive PRs and issues in order to make it easier to
+            find active work. If this issue should remain active, please reopen
+            it. The `long term` label can also be added for issues which are
+            expected to take time.
+
+            This issue was closed because it remained stale with no comments for
+            7 days.
           stale-pr-message: >
+            We archive inactive PRs and issues in order to make it easier to
+            find active work. If this PR should remain active, please comment or
+            remove the `stale` label.
+
             This PR is stale because it has been open 90 days with no activity.
-            We archive inactive PRs in order to make active PRs easier to find.
-            Remove the `stale` label or comment, or this PR will be closed and
-            archived in 7 days.
+            This PR will be closed and archived after being stale for 7 days.
           close-pr-message: >
-            This PR was closed because it has been stale with no comments for 7
-            days. Please reopen the PR and comment when work on it resumes.
+            We archive inactive PRs and issues in order to make it easier to
+            find active work. If this PR should remain active, please reopen it.
+
+            This PR was closed because it remained stale with no comments for 7
+            days.
           exempt-issue-labels: 'long term'
           days-before-stale: 90
           days-before-close: 7
