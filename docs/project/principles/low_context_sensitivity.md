@@ -69,17 +69,17 @@ more concerning than context affecting validity that the compiler can check.
 
 ## Applications of the principle
 
-Adding an import should never change behavior of existing code. This means you
-don't have to look through all imports to understand how code behaves. This is
-also important for tooling, which should not have to worry about unwanted side
-effects when adding an import.
+Adding an import or reodering imports should never change behavior of existing
+code. This means you don't have to look through all imports to understand how
+code behaves. This is also important for tooling, which should not have to worry
+about unwanted side effects when adding an import.
 
 We should limit how names can be reused with shadowing rules, so the meaning of
-a name doesn't change in surprising ways between scopes. Further, if you find a matching
-declaration you don't have to keep searching to see if there is another that
-hides the one you found. This both expands the context you have to consider, and
-is an opportunity to make a mistake identifying the correct context, potentially
-leading to misunderstanding of the code.
+a name doesn't change in surprising ways between scopes. Further, if you find a
+matching declaration you don't have to keep searching to see if there is another
+that hides the one you found. This both expands the context you have to
+consider, and is an opportunity to make a mistake identifying the correct
+context, potentially leading to misunderstanding of the code.
 
 This principle is an argument against
 [flow-sensitive typing](https://en.wikipedia.org/wiki/Flow-sensitive_typing),
