@@ -34,15 +34,16 @@ fn Sum(a: Int, b: Int) -> Int {
 }
 ```
 
-When a return type is specified, a function must _always_ `return` before control flow can reach the end of the
-function body. In other words, `fn DoNothing() -> Int {}` would be invalid
-because execution will reach the end of the function body without returning a value.
+When a return type is specified, a function must _always_ `return` before
+control flow can reach the end of the function body. In other words,
+`fn DoNothing() -> Int {}` would be invalid because execution will reach the end
+of the function body without returning a value.
 
 ### Returning empty tuples
 
-Returning an empty tuple `()` is special, and similar to C++'s `void` returns. When a
-function has no specified return type, its return type is implicitly `()`.
-`return` must not have an expression argument in this case. It also has an
+Returning an empty tuple `()` is special, and similar to C++'s `void` returns.
+When a function has no specified return type, its return type is implicitly
+`()`. `return` must not have an expression argument in this case. It also has an
 implicit `return;` at the end of the function body. For example:
 
 ```carbon
@@ -57,10 +58,11 @@ fn MaybeDraw(should_draw: bool) {
 }
 ```
 
-When `-> ()` is specified in the function signature, the return expression is required. Omitting `-> ()`
-is encouraged, but specifying it is supported for generalized code structures, including
-[templates](../templates.md). In order to be consistent with other explicitly specified return types, `return;` is
-invalid in this case. For example:
+When `-> ()` is specified in the function signature, the return expression is
+required. Omitting `-> ()` is encouraged, but specifying it is supported for
+generalized code structures, including [templates](../templates.md). In order to
+be consistent with other explicitly specified return types, `return;` is invalid
+in this case. For example:
 
 ```carbon
 // `-> ()` defines an explicit return value.
