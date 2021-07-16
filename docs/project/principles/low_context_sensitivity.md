@@ -22,7 +22,9 @@ Instead, we should favor explicit constructs that are not ambiguous so that they
 don't need context for disambiguation. This is in service to the goal that
 [Carbon code is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
 In particular, this is about prioritizing reading and understanding over
-writing. We should be willing to trade off conciseness, which still benefits reading as well as writing, for a sufficiently impactful reduction in the amount of context needed to read and understand code.
+writing. We should be willing to trade off conciseness, which still benefits
+reading as well as writing, for a sufficiently impactful reduction in the amount
+of context needed to read and understand code.
 
 Context can be expensive in different ways, for example:
 
@@ -50,9 +52,6 @@ burdensome, we will then have more information to inform the next step. Ideally
 we would address those use cases with simple tools that solve multiple problems.
 The goal is to make a bunch of orthogonal mechanisms, that each are easy to
 understand and act in unsurprising ways.
-
-TODO: Example of this: ? operator in Rust rather than a lot of exception
-mechanism in Swift
 
 If that next step is to loosen restrictions, that is generally easier to do
 while maintaining compatibility with existing code than adding new restrictions.
