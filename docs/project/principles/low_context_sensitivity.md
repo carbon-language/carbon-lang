@@ -26,7 +26,7 @@ writing. We should be willing to pay in conciseness (which does benefit both
 reading and writing) if it means greatly reducing the amount of context that
 must be consumed to read and understand code.
 
-Context can be expensive in a few different ways:
+Context can be expensive in different ways, for example:
 
 -   It can be _large_. This means you would have to look through a lot of lines
     of code to resolve an ambiguity.
@@ -39,7 +39,7 @@ Context can be expensive in a few different ways:
     to search all of your imports.
 -   It can be _subtle_. The concern here is how easy it is to make a mistake
     finding the correct context, or cases where the contextual clues are easy to
-    miss.
+    miss or mistake.
 
 Code that isn't context sensitive is easier to copy or move between contexts,
 like files or functions. It is code that needs fewer changes when it is
@@ -75,7 +75,7 @@ also important for tooling, which should not have to worry about unwanted side
 effects when adding an import.
 
 We should limit how names can be reused with shadowing rules, so the meaning of
-a name doesn't change as you exit scopes. Further, if you find a matching
+a name doesn't change in surprising ways between scopes. Further, if you find a matching
 declaration you don't have to keep searching to see if there is another that
 hides the one you found. This both expands the context you have to consider, and
 is an opportunity to make a mistake identifying the correct context, potentially
