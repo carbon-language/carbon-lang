@@ -34,16 +34,16 @@ fn Sum(a: Int, b: Int) -> Int {
 }
 ```
 
-When a return type is specified, a function must _always_ `return` before normal
-function completion. In other words, `fn DoNothing() -> Int {}` would be invalid
-because the function will complete without returning a value.
+When a return type is specified, a function must _always_ `return` before control flow can reach the end of the
+function body. In other words, `fn DoNothing() -> Int {}` would be invalid
+because execution will reach the end of the function body without returning a value.
 
 ### Returning empty tuples
 
-An empty tuple `()` is special, and similar to C++'s `void` returns. When a
+Returning an empty tuple `()` is special, and similar to C++'s `void` returns. When a
 function has no specified return type, its return type is implicitly `()`.
 `return` must not have an expression argument in this case. It also has an
-implicit `return;` at the end of the function. For example:
+implicit `return;` at the end of the function body. For example:
 
 ```carbon
 // No return type is specified, so this returns `()` implicitly.
@@ -57,9 +57,9 @@ fn MaybeDraw(should_draw: bool) {
 }
 ```
 
-When `-> ()` is specified, the return expression is required. Omitting `-> ()`
-is encouraged, but is supported for generalized code structures, including
-[templates](../templates.md). In order to require consistency, `return;` is
+When `-> ()` is specified in the function signature, the return expression is required. Omitting `-> ()`
+is encouraged, but specifying it is supported for generalized code structures, including
+[templates](../templates.md). In order to be consistent with other explicitly specified return types, `return;` is
 invalid in this case. For example:
 
 ```carbon
@@ -141,7 +141,7 @@ In the case where additional statements should be run between constructing the
 return value and returning, the use of `returned var` allows for improved
 efficiency because the `returned var` can directly use the address of `var`
 declared by the caller. For example, here the `returned var vector` in
-`CreateVector` uses the address of `my_vector` for initialization, avoiding a
+`CreateVector` uses the storage of `my_vector` for initialization, avoiding a
 copy:
 
 ```carbon
