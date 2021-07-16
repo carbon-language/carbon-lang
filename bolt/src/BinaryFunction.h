@@ -45,7 +45,7 @@ class DWARFUnit;
 
 namespace bolt {
 
-using InputOffsetToAddressMapTy = std::unordered_map<uint64_t, uint64_t>;
+using InputOffsetToAddressMapTy = std::unordered_multimap<uint64_t, uint64_t>;
 
 /// Types of macro-fusion alignment corrections.
 enum MacroFusionType {

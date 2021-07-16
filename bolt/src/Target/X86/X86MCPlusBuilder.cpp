@@ -3515,6 +3515,14 @@ public:
         if (IsTailCall)
           addAnnotation(CallOrJmp, "TC", true);
 
+        if (CallOrJmp.getOpcode() == X86::CALL64r ||
+            CallOrJmp.getOpcode() == X86::CALL64pcrel32) {
+          if (hasAnnotation(CallInst, "Offset"))
+            // Annotated as duplicated call
+            addAnnotation(CallOrJmp, "Offset",
+                          getAnnotationAs<uint32_t>(CallInst, "Offset"));
+        }
+
         if (isInvoke(CallInst) && !isInvoke(CallOrJmp)) {
           // Copy over any EH or GNU args size information from the original
           // call.

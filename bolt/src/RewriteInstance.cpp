@@ -277,6 +277,7 @@ enum PrintPseudoProbesOptions {
   PPP_None = 0,
   PPP_Probes_Section_Decode = 0x1,
   PPP_Probes_Address_Conversion = 0x2,
+  PPP_Encoded_Probes = 0x3,
   PPP_All = 0xf
 };
 
@@ -287,6 +288,8 @@ cl::opt<PrintPseudoProbesOptions> PrintPseudoProbes(
                           "decode probes section from binary"),
                clEnumValN(PPP_Probes_Address_Conversion, "address_conversion",
                           "update address2ProbesMap with output block address"),
+               clEnumValN(PPP_Encoded_Probes, "encoded_probes",
+                          "display the encoded probes in binary section"),
                clEnumValN(PPP_All, "all", "enable all debugging printout")),
     cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
 
@@ -3184,14 +3187,20 @@ void RewriteInstance::updatePseudoProbes() {
   AddressProbesMap &Address2ProbesMap = BC->ProbeDecoder.getAddress2ProbesMap();
   const GUIDProbeFunctionMap &GUID2Func =
       BC->ProbeDecoder.getGUID2FuncDescMap();
+
   for (auto &AP : Address2ProbesMap) {
     BinaryFunction *F = BC->getBinaryFunctionContainingAddress(AP.first);
-    // If F is not emitted, eliminate all probes inside it from inline tree
+    // If F is removed, eliminate all probes inside it from inline tree
     // Setting probes' addresses as INT64_MAX means elimination
-    if (!F->isEmitted()) {
+    if (!F) {
       for (MCDecodedPseudoProbe &Probe : AP.second) {
         Probe.setAddress(INT64_MAX);
       }
+      continue;
+    }
+    // If F is not emitted, the function will remain in the same address as its
+    // input
+    if (!F->isEmitted()) {
       continue;
     }
     uint64_t Offset = AP.first - F->getAddress();
@@ -3206,18 +3215,36 @@ void RewriteInstance::updatePseudoProbes() {
       }
       continue;
     }
-    for (MCDecodedPseudoProbe &Probe : AP.second) {
-      if (Probe.isBlock())
-        Probe.setAddress(BlkOutputAddress);
-      else if (Probe.isCall()) {
+
+    unsigned ProbeTrack = AP.second.size();
+    std::list<MCDecodedPseudoProbe>::iterator Probe = AP.second.begin();
+    while (ProbeTrack != 0) {
+      if (Probe->isBlock())
+        Probe->setAddress(BlkOutputAddress);
+      else if (Probe->isCall()) {
+        // A call probe may be duplicated due to ICP
+        // Go through output of InputOffsetToAddressMap to collect all related
+        // probes
         const InputOffsetToAddressMapTy &Offset2Addr =
             F->getInputOffsetToAddressMap();
-        auto CallOutputAddress = Offset2Addr.find(Offset);
-        if (CallOutputAddress == Offset2Addr.end())
-          Probe.setAddress(INT64_MAX);
-        else
-          Probe.setAddress(CallOutputAddress->second);
+        auto CallOutputAddresses = Offset2Addr.equal_range(Offset);
+        auto CallOutputAddress = CallOutputAddresses.first;
+        if (CallOutputAddress == CallOutputAddresses.second) {
+          Probe->setAddress(INT64_MAX);
+        } else {
+          Probe->setAddress(CallOutputAddress->second);
+          CallOutputAddress = std::next(CallOutputAddress);
+        }
+
+        while (CallOutputAddress != CallOutputAddresses.second) {
+          AP.second.push_back(*Probe);
+          AP.second.back().setAddress(CallOutputAddress->second);
+          Probe->getInlineTreeNode()->addProbes(&(AP.second.back()));
+          CallOutputAddress = std::next(CallOutputAddress);
+        }
       }
+      Probe = std::next(Probe);
+      ProbeTrack--;
     }
   }
 
@@ -3394,6 +3421,21 @@ void RewriteInstance::encodePseudoProbes() {
   BC->registerOrUpdateSection(".pseudo_probe", PseudoProbeSection->getELFType(),
                               PseudoProbeSection->getELFFlags(), Output,
                               Contents.str().size(), 1);
+  if (opts::PrintPseudoProbes == opts::PrintPseudoProbesOptions::PPP_All ||
+      opts::PrintPseudoProbes ==
+          opts::PrintPseudoProbesOptions::PPP_Encoded_Probes) {
+    // create a dummy decoder;
+    MCPseudoProbeDecoder DummyDecoder;
+    StringRef DescContents = PseudoProbeDescSection->getContents();
+    DummyDecoder.buildGUID2FuncDescMap(
+        reinterpret_cast<const uint8_t *>(DescContents.data()),
+        DescContents.size());
+    StringRef ProbeContents = PseudoProbeSection->getOutputContents();
+    DummyDecoder.buildAddress2ProbeMap(
+        reinterpret_cast<const uint8_t *>(ProbeContents.data()),
+        ProbeContents.size());
+    DummyDecoder.printProbesForAllAddresses(outs());
+  }
 }
 
 void RewriteInstance::updateSDTMarkers() {
