@@ -275,6 +275,9 @@ virtual methods may be
 only called through the non-abstract API, but can still be implemented in
 descendants.
 
+An interface as base class needs to either have a virtual destructor or forbid
+deallocation.
+
 FIXME
 
     -   It is more common for polymorphic types to have a default implementation
