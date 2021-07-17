@@ -9,6 +9,8 @@
 #include <variant>
 #include <vector>
 
+#include "common/ostream.h"
+
 namespace Carbon {
 
 struct Expression;
@@ -173,6 +175,8 @@ struct Expression {
   auto GetCallExpression() const -> const CallExpression&;
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
 
+  void Print(llvm::raw_ostream& out) const;
+
   inline auto tag() const -> ExpressionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
   }
@@ -187,8 +191,6 @@ struct Expression {
                ContinuationTypeLiteral, TypeTypeLiteral>
       value;
 };
-
-void PrintExp(const Expression* exp);
 
 }  // namespace Carbon
 

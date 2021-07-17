@@ -2,7 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <optional>
@@ -57,19 +56,19 @@ auto Action::GetValAction() const -> const ValAction& {
   return std::get<ValAction>(value);
 }
 
-void Action::Print(std::ostream& out) {
+void Action::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case ActionKind::LValAction:
-      PrintExp(GetLValAction().exp);
+      GetLValAction().exp->Print(out);
       break;
     case ActionKind::ExpressionAction:
-      PrintExp(GetExpressionAction().exp);
+      GetExpressionAction().exp->Print(out);
       break;
     case ActionKind::StatementAction:
-      PrintStatement(GetStatementAction().stmt, 1);
+      GetStatementAction().stmt->Print(out, 1);
       break;
     case ActionKind::ValAction:
-      PrintValue(GetValAction().val, out);
+      GetValAction().val->Print(out);
       break;
   }
   out << "<" << pos << ">";
@@ -77,7 +76,7 @@ void Action::Print(std::ostream& out) {
     out << "(";
     for (auto& result : results) {
       if (result) {
-        PrintValue(result, out);
+        result->Print(out);
       }
       out << ",";
     }
@@ -85,7 +84,7 @@ void Action::Print(std::ostream& out) {
   }
 }
 
-void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
+void Action::PrintList(Stack<Action*> ls, llvm::raw_ostream& out) {
   if (!ls.IsEmpty()) {
     ls.Pop()->Print(out);
     if (!ls.IsEmpty()) {

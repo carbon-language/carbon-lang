@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 
 namespace Carbon {
@@ -25,7 +26,7 @@ struct Member {
 
   auto GetFieldMember() const -> const FieldMember&;
 
-  void Print();
+  void Print(llvm::raw_ostream& out) const;
 
   inline auto tag() const -> MemberKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

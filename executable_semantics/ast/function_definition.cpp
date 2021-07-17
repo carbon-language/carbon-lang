@@ -4,21 +4,19 @@
 
 #include "executable_semantics/ast/function_definition.h"
 
-#include <iostream>
-
 namespace Carbon {
 
-void FunctionDefinition::PrintDepth(int depth) const {
-  std::cout << "fn " << name << " ";
-  PrintExp(param_pattern);
-  std::cout << " -> ";
-  PrintExp(return_type);
+void FunctionDefinition::PrintDepth(llvm::raw_ostream& out, int depth) const {
+  out << "fn " << name << " ";
+  param_pattern->Print(out);
+  out << " -> ";
+  return_type->Print(out);
   if (body) {
-    std::cout << " {" << std::endl;
-    PrintStatement(body, depth);
-    std::cout << std::endl << "}" << std::endl;
+    out << " {\n";
+    body->Print(out, depth);
+    out << "\n}\n";
   } else {
-    std::cout << ";" << std::endl;
+    out << ";\n";
   }
 }
 

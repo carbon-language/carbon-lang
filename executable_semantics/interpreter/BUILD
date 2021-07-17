@@ -31,12 +31,16 @@ cc_library(
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",
+        "@llvm-project//llvm:Support",
     ],
 )
 
 cc_library(
     name = "field_path",
     hdrs = ["field_path.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
@@ -44,6 +48,7 @@ cc_library(
     hdrs = ["address.h"],
     deps = [
         ":field_path",
+        "@llvm-project//llvm:Support",
     ],
 )
 

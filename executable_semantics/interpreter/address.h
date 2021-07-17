@@ -6,11 +6,11 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_ADDRESS_H_
 
 #include <cstdint>
-#include <iostream>
 #include <string>
 #include <vector>
 
 #include "executable_semantics/interpreter/field_path.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -38,7 +38,8 @@ class Address {
   // Currently, that representation consists of an integer index identifying
   // the whole memory allocation, and an optional FieldPath specifying a
   // particular field within that allocation.
-  friend auto operator<<(std::ostream& out, const Address& a) -> std::ostream& {
+  friend auto operator<<(llvm::raw_ostream& out, const Address& a)
+      -> llvm::raw_ostream& {
     out << "Address(" << a.index << ")" << a.field_path;
     return out;
   }

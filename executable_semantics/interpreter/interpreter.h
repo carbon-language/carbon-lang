@@ -14,6 +14,7 @@
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -32,6 +33,11 @@ struct Scope {
 
 // A frame represents either a function call or a delimited continuation.
 struct Frame {
+  Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
+      : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
+
+  void Print(llvm::raw_ostream& out) const;
+
   // The name of the function.
   std::string name;
   // If the frame represents a function call, the bottom scope
@@ -48,9 +54,6 @@ struct Frame {
   // If this frame is the bottom frame of a continuation, then it stores
   // the address of the continuation.
   std::optional<Address> continuation;
-
-  Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
-      : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 };
 
 // A Heap represents the abstract machine's dynamically allocated memory.
@@ -68,19 +71,19 @@ class Heap {
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  auto Write(const Address& a, const Value* v, int line_num) -> void;
+  void Write(const Address& a, const Value* v, int line_num);
 
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(const Value* v) -> Address;
 
   // Marks the object at this address, and all of its sub-objects, as dead.
-  auto Deallocate(const Address& address) -> void;
+  void Deallocate(const Address& address);
 
   // Print the value at the given address to the stream `out`.
-  auto PrintAddress(const Address& a, std::ostream& out) -> void;
+  void PrintAddress(const Address& a, llvm::raw_ostream& out) const;
 
   // Print all the values on the heap to the stream `out`.
-  auto PrintHeap(std::ostream& out) -> void;
+  void Print(llvm::raw_ostream& out) const;
 
  private:
   // Signal an error if the address is no longer alive.
@@ -98,8 +101,7 @@ struct State {
 extern State* state;
 
 void InitEnv(const Declaration& d, Env* env);
-void PrintFrame(Frame* frame, std::ostream& out);
-void PrintStack(Stack<Frame*> ls, std::ostream& out);
+void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out);
 void PrintEnv(Env values);
 auto CopyVal(const Value* val, int line_num) -> const Value*;
 auto ToInteger(const Value* v) -> int;

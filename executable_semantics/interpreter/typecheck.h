@@ -11,12 +11,13 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
 using TypeEnv = Dictionary<std::string, const Value*>;
 
-void PrintTypeEnv(TypeEnv types);
+void PrintTypeEnv(llvm::raw_ostream& out, TypeEnv types);
 
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
@@ -48,8 +49,6 @@ auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
 auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
                      const Env& values) -> Declaration;
 auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext;
-
-void PrintErrorString(const std::string& s);
 
 }  // namespace Carbon
 
