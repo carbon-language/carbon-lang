@@ -99,6 +99,16 @@ def _check_diff(args, subject):
         )
     )
     if context_diff:
+        if args.golden_is_subset:
+            print("=" * 80)
+            print("Subject output (including ignored lines)")
+            print("=" * 80)
+            print(subject)
+        print("=" * 80)
+        print("Output diff")
+        print("=" * 80)
+        sys.stdout.writelines(context_diff)
+        print("=" * 80)
         print(
             _ERROR_MESSAGE.format(
                 dir=os.getenv("TEST_SRCDIR"),
