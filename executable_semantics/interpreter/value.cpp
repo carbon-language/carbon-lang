@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include "common/check.h"
-#include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
 
@@ -427,13 +426,68 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       out << "choice " << val->GetChoiceType().name;
       break;
     case ValKind::ContinuationValue:
-      out << "continuation[[";
-      for (Frame* frame : val->GetContinuationValue().stack) {
-        PrintFrame(frame, out);
-        out << " :: ";
-      }
-      out << "]]";
+      out << "continuation";
       break;
+  }
+}
+
+auto CopyVal(const Value* val, int line_num) -> const Value* {
+  switch (val->tag()) {
+    case ValKind::TupleValue: {
+      std::vector<TupleElement> elements;
+      for (const TupleElement& element : val->GetTupleValue().elements) {
+        elements.push_back(
+            {.name = element.name, .value = CopyVal(element.value, line_num)});
+      }
+      return Value::MakeTupleValue(std::move(elements));
+    }
+    case ValKind::AlternativeValue: {
+      const Value* arg = CopyVal(val->GetAlternativeValue().argument, line_num);
+      return Value::MakeAlternativeValue(val->GetAlternativeValue().alt_name,
+                                         val->GetAlternativeValue().choice_name,
+                                         arg);
+    }
+    case ValKind::StructValue: {
+      const Value* inits = CopyVal(val->GetStructValue().inits, line_num);
+      return Value::MakeStructValue(val->GetStructValue().type, inits);
+    }
+    case ValKind::IntValue:
+      return Value::MakeIntValue(val->GetIntValue());
+    case ValKind::BoolValue:
+      return Value::MakeBoolValue(val->GetBoolValue());
+    case ValKind::FunctionValue:
+      return Value::MakeFunctionValue(val->GetFunctionValue().name,
+                                      val->GetFunctionValue().param,
+                                      val->GetFunctionValue().body);
+    case ValKind::PointerValue:
+      return Value::MakePointerValue(val->GetPointerValue());
+    case ValKind::ContinuationValue:
+      // Copying a continuation is "shallow".
+      return val;
+    case ValKind::FunctionType:
+      return Value::MakeFunctionType(
+          CopyVal(val->GetFunctionType().param, line_num),
+          CopyVal(val->GetFunctionType().ret, line_num));
+
+    case ValKind::PointerType:
+      return Value::MakePointerType(
+          CopyVal(val->GetPointerType().type, line_num));
+    case ValKind::IntType:
+      return Value::MakeIntType();
+    case ValKind::BoolType:
+      return Value::MakeBoolType();
+    case ValKind::TypeType:
+      return Value::MakeTypeType();
+    case ValKind::AutoType:
+      return Value::MakeAutoType();
+    case ValKind::ContinuationType:
+      return Value::MakeContinuationType();
+    case ValKind::StructType:
+    case ValKind::ChoiceType:
+    case ValKind::BindingPlaceholderValue:
+    case ValKind::AlternativeConstructorValue:
+      return val;  // no need to copy these because they are immutable?
+      // No, they need to be copied so they don't get killed. -Jeremy
   }
 }
 

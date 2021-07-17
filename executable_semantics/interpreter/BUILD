@@ -6,30 +6,75 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
-# TODO: It may be helpful to break this apart.
 cc_library(
     name = "interpreter",
     srcs = [
-        "action.cpp",
         "interpreter.cpp",
-        "typecheck.cpp",
-        "value.cpp",
     ],
     hdrs = [
-        "action.h",
         "interpreter.h",
-        "typecheck.h",
-        "value.h",
     ],
     deps = [
+        ":action",
         ":address",
         ":containers",
+        ":frame",
+        ":heap",
+        ":value",
         "//common:check",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
-        "//executable_semantics/ast:member",
+    ],
+)
+
+cc_library(
+    name = "typecheck",
+    srcs = ["typecheck.cpp"],
+    hdrs = ["typecheck.h"],
+    deps = [
+        ":containers",
+        ":interpreter",
+        "//executable_semantics:tracing_flag",
+        "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:function_definition",
+        "//executable_semantics/ast:statement",
+    ],
+)
+
+cc_library(
+    name = "action",
+    srcs = ["action.cpp"],
+    hdrs = ["action.h"],
+    deps = [
+        ":containers",
+        ":value",
+        "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:function_definition",
+        "//executable_semantics/ast:statement",
+    ],
+)
+
+cc_library(
+    name = "frame",
+    srcs = ["frame.cpp"],
+    hdrs = ["frame.h"],
+    deps = [
+        ":action",
+        ":address",
+        ":containers",
+    ],
+)
+
+cc_library(
+    name = "value",
+    srcs = ["value.cpp"],
+    hdrs = ["value.h"],
+    deps = [
+        ":address",
+        ":containers",
+        ":field_path",
         "//executable_semantics/ast:statement",
     ],
 )
@@ -44,6 +89,16 @@ cc_library(
     hdrs = ["address.h"],
     deps = [
         ":field_path",
+    ],
+)
+
+cc_library(
+    name = "heap",
+    srcs = ["heap.cpp"],
+    hdrs = ["heap.h"],
+    deps = [
+        ":address",
+        ":value",
     ],
 )
 
