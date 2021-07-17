@@ -546,15 +546,4 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   }
 }
 
-auto ToInteger(const Value* v) -> int {
-  switch (v->tag()) {
-    case ValKind::IntValue:
-      return v->GetIntValue();
-    default:
-      std::cerr << "expected an integer, not ";
-      PrintValue(v, std::cerr);
-      exit(-1);
-  }
-}
-
 }  // namespace Carbon
