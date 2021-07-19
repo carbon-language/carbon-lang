@@ -84,9 +84,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::PointerType:
       return Expression::MakePrimitiveOperatorExpression(
           0, Operator::Ptr, {ReifyType(t->GetPointerType().type, line_num)});
-    case ValKind::IdentifierType:
-      return Expression::MakeIdentifierExpression(0,
-                                                  t->GetIdentifierType().name);
+    case ValKind::Symbol:
+      return Expression::MakeIdentifierExpression(0, t->GetSymbol().name);
     default:
       std::cerr << line_num << ": in ReifyType, expected a type, not ";
       PrintValue(t, std::cerr);
@@ -96,7 +95,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 }
 
 // Perform type argument deduction, matching the parameter type `param`
-// against the argument type `arg`. Whenever there is an IdentifierType
+// against the argument type `arg`. Whenever there is an Symbol
 // in the parameter type, it is deduced to be the corresponding type
 // inside the argument type.
 // The `deduced` parameter is an accumulator, that is, it holds the
@@ -104,11 +103,10 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
                        const Value* arg) -> TypeEnv {
   switch (param->tag()) {
-    case ValKind::IdentifierType: {
-      std::optional<const Value*> d =
-          deduced.Get(param->GetIdentifierType().name);
+    case ValKind::Symbol: {
+      std::optional<const Value*> d = deduced.Get(param->GetSymbol().name);
       if (!d) {
-        deduced.Set(param->GetIdentifierType().name, arg);
+        deduced.Set(param->GetSymbol().name, arg);
       } else {
         ExpectType(line_num, "argument deduction", *d, arg);
       }
@@ -193,8 +191,8 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
 
 auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
   switch (type->tag()) {
-    case ValKind::IdentifierType: {
-      std::optional<const Value*> t = dict.Get(type->GetIdentifierType().name);
+    case ValKind::Symbol: {
+      std::optional<const Value*> t = dict.Get(type->GetSymbol().name);
       if (!t) {
         return type;
       } else {
@@ -285,10 +283,6 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     std::cout << std::endl;
   }
   switch (e->tag()) {
-    case ExpressionKind::GenericBindingExpression: {
-      std::cerr << "generic binding not implemented yet\n";
-      exit(-1);
-    }
     case ExpressionKind::BindingExpression: {
       if (context != TCContext::PatternContext) {
         std::cerr
@@ -541,8 +535,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           if (fun_t->GetFunctionType().deduced.size() > 0) {
             auto deduced_args = ArgumentDeduction(e->line_num, TypeEnv(),
                                                   parameter_type, arg_res.type);
-            // check that all the type parameters were deduced
             for (auto& deduced_param : fun_t->GetFunctionType().deduced) {
+              // TODO: change the following to a CHECK once the real checking
+              // has been added to the type checking of function signatures.
               if (!deduced_args.Get(deduced_param.name)) {
                 std::cerr << e->line_num
                           << ": error, could not deduce type argument for type "
@@ -830,13 +825,16 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
   }
 }
 
+// TODO: factor common parts of TypeCheckFunDef and TypeOfFunDef into
+// a function.
+// TODO: Add checking to function definitions to ensure that
+//   all deduced type parameters will be deduced.
 auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     -> struct FunctionDefinition* {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
-    Address a =
-        state->heap.AllocateValue(Value::MakeIdentifierType(deduced.name));
+    Address a = state->heap.AllocateValue(Value::MakeSymbol(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
@@ -862,8 +860,7 @@ auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
-    Address a =
-        state->heap.AllocateValue(Value::MakeIdentifierType(deduced.name));
+    Address a = state->heap.AllocateValue(Value::MakeSymbol(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern

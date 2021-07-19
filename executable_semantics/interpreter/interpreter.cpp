@@ -120,7 +120,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return Value::MakeAutoType();
     case ValKind::ContinuationType:
       return Value::MakeContinuationType();
-    case ValKind::IdentifierType:
+    case ValKind::Symbol:
     case ValKind::StructType:
     case ValKind::ChoiceType:
     case ValKind::BindingPlaceholderValue:
@@ -346,8 +346,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values = globals;
   // Bring the deduced parameters into scope
   for (const auto& deduced : definition.deduced_parameters) {
-    Address a =
-        state->heap.AllocateValue(Value::MakeIdentifierType(deduced.name));
+    Address a = state->heap.AllocateValue(Value::MakeSymbol(deduced.name));
     values.Set(deduced.name, a);
   }
   auto pt = InterpExp(values, definition.param_pattern);
@@ -724,8 +723,7 @@ void StepLvalue() {
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::BindingExpression:
-    case ExpressionKind::GenericBindingExpression: {
+    case ExpressionKind::BindingExpression: {
       std::cerr << "Can't treat expression as lvalue: ";
       PrintExp(exp);
       std::cerr << std::endl;
@@ -749,10 +747,6 @@ void StepExp() {
     std::cout << " --->" << std::endl;
   }
   switch (exp->tag()) {
-    case ExpressionKind::GenericBindingExpression: {
-      std::cerr << exp->line_num << "generic binding not implemented yet\n";
-      exit(-1);
-    }
     case ExpressionKind::BindingExpression: {
       if (act->pos == 0) {
         frame->todo.Push(

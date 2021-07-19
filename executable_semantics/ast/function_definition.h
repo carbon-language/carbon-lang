@@ -10,17 +10,24 @@
 
 namespace Carbon {
 
+// TODO: expand the kinds of things that can be deduced parameters.
+//   For now, only generic parameters are supported.
+struct GenericBinding {
+  std::string name;
+  const Expression* type;
+};
+
 struct FunctionDefinition {
   int line_num;
   std::string name;
-  std::vector<GenericBindingExpression> deduced_parameters;
+  std::vector<GenericBinding> deduced_parameters;
   const Expression* param_pattern;
   const Expression* return_type;
   const Statement* body;
 };
 
 auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
-                std::vector<GenericBindingExpression> deduced_params,
+                std::vector<GenericBinding> deduced_params,
                 const Expression* param, const Statement* body)
     -> FunctionDefinition;
 void PrintFunDef(const FunctionDefinition&);

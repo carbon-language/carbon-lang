@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn id[T:! Type](x: T) -> T {
-  return x;
+fn swap[T:! Type, U:! Type](tuple: (T, U)) -> (U, T) {
+  return (tuple[1], tuple[0]);
 }
 
 fn main() -> Int {
-  return id(0);
+  return swap((0, true))[1];
 }

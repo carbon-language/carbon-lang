@@ -100,9 +100,9 @@ void yy::parser::error(
 %type <const Carbon::Statement*> optional_else
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
-%type <Carbon::GenericBindingExpression> generic_binding
-%type <std::vector<Carbon::GenericBindingExpression>> deduced_params
-%type <std::vector<Carbon::GenericBindingExpression>> deduced_param_list
+%type <Carbon::GenericBinding> generic_binding
+%type <std::vector<Carbon::GenericBinding>> deduced_params
+%type <std::vector<Carbon::GenericBinding>> deduced_param_list
 %type <const Carbon::Expression*> pattern
 %type <const Carbon::Expression*> return_type
 %type <const Carbon::Expression*> paren_expression
@@ -206,7 +206,7 @@ pattern:
 generic_binding:
   identifier ":!" expression
     {
-      $$ = Carbon::GenericBindingExpression({.name = std::move($1), .type = $3});
+      $$ = Carbon::GenericBinding({.name = std::move($1), .type = $3});
     }
 ;
 expression:
@@ -216,10 +216,6 @@ expression:
     { $$ = Carbon::Expression::MakeFieldAccessExpression(yylineno, $1, $2); }
 | expression "[" expression "]"
     { $$ = Carbon::Expression::MakeIndexExpression(yylineno, $1, $3); }
-| generic_binding
-    {
-      $$ = Carbon::Expression::MakeGenericBinding(yylineno, $1);
-    }
 | identifier ":" expression
     {
       $$ = Carbon::Expression::MakeBindingExpression(yylineno, $1, $3);
@@ -384,10 +380,10 @@ return_type:
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<Carbon::GenericBindingExpression>(); }
+    { $$ = std::vector<Carbon::GenericBinding>(); }
 | generic_binding
     {
-      $$ = std::vector<Carbon::GenericBindingExpression>();
+      $$ = std::vector<Carbon::GenericBinding>();
       $$.push_back($1);
     }
 | generic_binding "," deduced_param_list
@@ -398,7 +394,7 @@ deduced_param_list:
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<Carbon::GenericBindingExpression>(); }
+    { $$ = std::vector<Carbon::GenericBinding>(); }
 | "[" deduced_param_list "]"
     { $$ = $2; }
 ;

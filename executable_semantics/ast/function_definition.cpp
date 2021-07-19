@@ -9,14 +9,14 @@
 namespace Carbon {
 
 auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
-                std::vector<GenericBindingExpression> deduced_params,
+                std::vector<GenericBinding> deduced_params,
                 const Expression* param_pattern, const Statement* body)
     -> FunctionDefinition {
   FunctionDefinition f;
   f.line_num = line_num;
   f.name = std::move(name);
   f.return_type = ret_type;
-  f.deduced_parameters = deduced_params;
+  f.deduced_parameters = std::move(deduced_params);
   f.param_pattern = param_pattern;
   f.body = body;
   return f;
@@ -28,10 +28,11 @@ void PrintFunDefDepth(const FunctionDefinition& f, int depth) {
     std::cout << "[";
     unsigned int i = 0;
     for (const auto& deduced : f.deduced_parameters) {
-      std::cout << deduced.name << " :! ";
+      if (i != 0) {
+        std::cout << ", ";
+      }
+      std::cout << deduced.name << ":! ";
       PrintExp(deduced.type);
-      if (i != 0)
-        std::cout << ",";
       ++i;
     }
     std::cout << "]";
