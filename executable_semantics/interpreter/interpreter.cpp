@@ -384,9 +384,13 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     -> std::optional<Env> {
   switch (p->tag()) {
     case ValKind::BindingPlaceholderValue: {
-      Address a = state->heap.AllocateValue(CopyVal(v, line_num));
-      vars->push_back(p->GetBindingPlaceholderValue().name);
-      values.Set(p->GetBindingPlaceholderValue().name, a);
+      const BindingPlaceholderValue& placeholder =
+          p->GetBindingPlaceholderValue();
+      if (placeholder.name.has_value()) {
+        Address a = state->heap.AllocateValue(CopyVal(v, line_num));
+        vars->push_back(*placeholder.name);
+        values.Set(*placeholder.name, a);
+      }
       return values;
     }
     case ValKind::TupleValue:

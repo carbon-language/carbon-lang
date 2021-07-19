@@ -171,8 +171,8 @@ auto Value::MakeContinuationValue(std::vector<Frame*> stack) -> Value* {
   return v;
 }
 
-auto Value::MakeBindingPlaceholderValue(std::string name, const Value* type)
-    -> const Value* {
+auto Value::MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                        const Value* type) -> const Value* {
   auto* v = new Value();
   v->value = BindingPlaceholderValue({.name = std::move(name), .type = type});
   return v;
@@ -352,8 +352,15 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     }
     case ValKind::BindingPlaceholderValue: {
+      const BindingPlaceholderValue& placeholder =
+          val->GetBindingPlaceholderValue();
+      if (placeholder.name.has_value()) {
+        out << *placeholder.name;
+      } else {
+        out << "_";
+      }
+      out << ": ";
       PrintValue(val->GetBindingPlaceholderValue().type, out);
-      out << ": " << val->GetBindingPlaceholderValue().name;
       break;
     }
     case ValKind::AlternativeValue: {
