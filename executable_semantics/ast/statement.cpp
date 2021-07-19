@@ -238,8 +238,10 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       GetIf().cond->Print(out);
       out << ")\n";
       GetIf().then_stmt->Print(out, depth - 1);
-      out << "\nelse\n";
-      GetIf().else_stmt->Print(out, depth - 1);
+      if (GetIf().else_stmt) {
+        out << "\nelse\n";
+        GetIf().else_stmt->Print(out, depth - 1);
+      }
       break;
     case StatementKind::Return:
       out << "return ";
@@ -253,16 +255,20 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       } else {
         out << " ";
       }
-      GetSequence().next->Print(out, depth - 1);
+      if (GetSequence().next) {
+        GetSequence().next->Print(out, depth - 1);
+      }
       break;
     case StatementKind::Block:
       out << "{";
       if (depth < 0 || depth > 1) {
         out << "\n";
       }
-      GetBlock().stmt->Print(out, depth);
-      if (depth < 0 || depth > 1) {
-        out << "\n";
+      if (GetBlock().stmt) {
+        GetBlock().stmt->Print(out, depth);
+        if (depth < 0 || depth > 1) {
+          out << "\n";
+        }
       }
       out << "}";
       if (depth < 0 || depth > 1) {
@@ -289,4 +295,5 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       break;
   }
 }
+
 }  // namespace Carbon

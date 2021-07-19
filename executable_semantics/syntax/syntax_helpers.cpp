@@ -15,7 +15,7 @@ void ExecProgram(std::list<Declaration>* fs) {
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
     for (const auto& decl : *fs) {
-      decl.Print(llvm::outs());
+      decl.Print(llvm::errs());
     }
     llvm::outs() << "********** type checking **********\n";
   }
