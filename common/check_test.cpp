@@ -24,10 +24,11 @@ TEST(CheckTest, CheckTrueCallbackNotUsed) {
   EXPECT_FALSE(called);
 }
 
-TEST(CheckTest, CheckTrueVars) {
-  auto msg = "msg";
+TEST(CheckTest, CheckOutputForms) {
+  const char msg[] = "msg";
+  std::string str = "str";
   int i = 1;
-  CHECK(true) << msg << i << 0;
+  CHECK(true) << msg << str << i << 0;
 }
 
 TEST(CheckTest, CheckFalseMessage) {
