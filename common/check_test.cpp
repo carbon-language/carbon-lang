@@ -24,15 +24,15 @@ TEST(CheckTest, CheckTrueCallbackNotUsed) {
   EXPECT_FALSE(called);
 }
 
+TEST(CheckTest, CheckFalseMessage) {
+  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg");
+}
+
 TEST(CheckTest, CheckOutputForms) {
   const char msg[] = "msg";
   std::string str = "str";
   int i = 1;
   CHECK(true) << msg << str << i << 0;
-}
-
-TEST(CheckTest, CheckFalseMessage) {
-  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg");
 }
 
 }  // namespace Carbon
