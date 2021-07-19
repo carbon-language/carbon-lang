@@ -86,27 +86,27 @@ If we were to support this in Carbon, you could unwrap an optional value by
 testing it against `None`.
 
 ```
-var Optional(Int): x = ...;
+var x: Optional(Int) = ...;
 if (x != None) {
-  // x has type Int
+  // x has type Int.
   PrintInt(x);
 }
-// x is back to type Optional(Int)
+// x is back to type Optional(Int).
 ```
 
 This can be taken farther, this example has `x` taking on three different types:
 
 ```
-var Optional(Optional(Int)): x = ...;
+var x: Optional(Optional(Int)) = ...;
 if (x != None) {
-  // x has type Optional(Int)
+  // x has type Optional(Int).
   if (x != None) {
-    // x has type Int
+    // x has type Int.
     PrintInt(x);
   }
-  // x has type Optional(Int)
+  // x has type Optional(Int).
 }
-// x has type Optional(Optional(Int))
+// x has type Optional(Optional(Int)).
 ```
 
 The concern here is that the context is very subtle. The type of `x` is affected
