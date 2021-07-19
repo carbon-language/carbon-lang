@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Principle
 
 Carbon should favor designs and mechanisms that are not sensitive to context.
-Instead, we should favor explicit constructs that are not ambiguous so that they
+Instead, we should favor constructs that are not ambiguous so that they
 don't need context for disambiguation. This is in service to the goal that
 [Carbon code is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
 In particular, this is about prioritizing reading and understanding over
