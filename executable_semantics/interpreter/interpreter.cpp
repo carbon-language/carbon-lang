@@ -194,79 +194,28 @@ void PrintState(std::ostream& out) {
   out << std::endl << "}" << std::endl;
 }
 
-//
-// More Auxiliary Functions
-//
-
-auto ValToInt(const Value* v, int line_num) -> int {
-  switch (v->tag()) {
-    case ValKind::IntValue:
-      return v->GetIntValue();
-    default:
-      std::cerr << line_num << ": runtime error: expected an integer"
-                << std::endl;
-      exit(-1);
-  }
-}
-
-auto ValToBool(const Value* v, int line_num) -> int {
-  switch (v->tag()) {
-    case ValKind::BoolValue:
-      return v->GetBoolValue();
-    default:
-      std::cerr << "runtime type error: expected a Boolean" << std::endl;
-      exit(-1);
-  }
-}
-
-auto ValToPtr(const Value* v, int line_num) -> Address {
-  switch (v->tag()) {
-    case ValKind::PointerValue:
-      return v->GetPointerValue();
-    default:
-      std::cerr << "runtime type error: expected a pointer, not ";
-      PrintValue(v, std::cerr);
-      std::cerr << std::endl;
-      exit(-1);
-  }
-}
-
-// Returns *continuation represented as a list of frames.
-//
-// - Precondition: continuation->tag == ValKind::ContinuationV.
-auto ContinuationToVector(const Value* continuation, int sourceLocation)
-    -> std::vector<Frame*> {
-  if (continuation->tag() == ValKind::ContinuationValue) {
-    return continuation->GetContinuationValue().stack;
-  } else {
-    std::cerr << sourceLocation << ": runtime error: expected an integer"
-              << std::endl;
-    exit(-1);
-  }
-}
-
 auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     -> const Value* {
   switch (op) {
     case Operator::Neg:
-      return Value::MakeIntValue(-ValToInt(args[0], line_num));
+      return Value::MakeIntValue(-args[0]->GetIntValue());
     case Operator::Add:
-      return Value::MakeIntValue(ValToInt(args[0], line_num) +
-                                 ValToInt(args[1], line_num));
+      return Value::MakeIntValue(args[0]->GetIntValue() +
+                                 args[1]->GetIntValue());
     case Operator::Sub:
-      return Value::MakeIntValue(ValToInt(args[0], line_num) -
-                                 ValToInt(args[1], line_num));
+      return Value::MakeIntValue(args[0]->GetIntValue() -
+                                 args[1]->GetIntValue());
     case Operator::Mul:
-      return Value::MakeIntValue(ValToInt(args[0], line_num) *
-                                 ValToInt(args[1], line_num));
+      return Value::MakeIntValue(args[0]->GetIntValue() *
+                                 args[1]->GetIntValue());
     case Operator::Not:
-      return Value::MakeBoolValue(!ValToBool(args[0], line_num));
+      return Value::MakeBoolValue(!args[0]->GetBoolValue());
     case Operator::And:
-      return Value::MakeBoolValue(ValToBool(args[0], line_num) &&
-                                  ValToBool(args[1], line_num));
+      return Value::MakeBoolValue(args[0]->GetBoolValue() &&
+                                  args[1]->GetBoolValue());
     case Operator::Or:
-      return Value::MakeBoolValue(ValToBool(args[0], line_num) ||
-                                  ValToBool(args[1], line_num));
+      return Value::MakeBoolValue(args[0]->GetBoolValue() ||
+                                  args[1]->GetBoolValue());
     case Operator::Eq:
       return Value::MakeBoolValue(ValueEqual(args[0], args[1], line_num));
     case Operator::Ptr:
@@ -529,7 +478,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag()) {
     case ValKind::PointerValue:
-      state->heap.Write(ValToPtr(pat, line_num), CopyVal(val, line_num),
+      state->heap.Write(pat->GetPointerValue(), CopyVal(val, line_num),
                         line_num);
       break;
     case ValKind::TupleValue: {
@@ -658,7 +607,7 @@ void StepLvalue() {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address aggregate = act->results[0]->GetPointerValue();
-        std::string f = std::to_string(ToInteger(act->results[1]));
+        std::string f = std::to_string(act->results[1]->GetIntValue());
         Address field = aggregate.SubobjectAddress(f);
         frame->todo.Pop(1);
         frame->todo.Push(Action::MakeValAction(Value::MakePointerValue(field)));
@@ -748,7 +697,7 @@ void StepExp() {
           case ValKind::TupleValue: {
             //    { { v :: [][i] :: C, E, F} :: S, H}
             // -> { { v_i :: C, E, F} : S, H}
-            std::string f = std::to_string(ToInteger(act->results[1]));
+            std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
               std::cerr << "runtime error, field " << f << " not in ";
@@ -1049,7 +998,7 @@ void StepStmt() {
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         frame->todo.Push(Action::MakeExpressionAction(stmt->GetWhile().cond));
         act->pos++;
-      } else if (ValToBool(act->results[0], stmt->line_num)) {
+      } else if (act->results[0]->GetBoolValue()) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
         frame->todo.Top()->pos = 0;
@@ -1176,7 +1125,7 @@ void StepStmt() {
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         frame->todo.Push(Action::MakeExpressionAction(stmt->GetIf().cond));
         act->pos++;
-      } else if (ValToBool(act->results[0], stmt->line_num)) {
+      } else if (act->results[0]->GetBoolValue()) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { then_stmt :: C, E, F } :: S, H}
@@ -1257,8 +1206,8 @@ void StepStmt() {
         ignore_result->pos = 0;
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
-        std::vector<Frame*> continuation_vector =
-            ContinuationToVector(act->results[0], stmt->line_num);
+        const std::vector<Frame*>& continuation_vector =
+            act->results[0]->GetContinuationValue().stack;
         for (auto frame_iter = continuation_vector.rbegin();
              frame_iter != continuation_vector.rend(); ++frame_iter) {
           state->stack.Push(*frame_iter);
@@ -1339,7 +1288,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
     }
   }
   const Value* v = state->stack.Top()->todo.Top()->GetValAction().val;
-  return ValToInt(v, 0);
+  return v->GetIntValue();
 }
 
 // Interpret an expression at compile-time.
