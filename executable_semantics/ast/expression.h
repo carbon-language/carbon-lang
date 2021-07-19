@@ -75,7 +75,7 @@ struct IndexExpression {
 
 struct BindingExpression {
   static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
-  // nullopt represents the `_` placeholder
+  // nullopt represents the `_` placeholder.
   std::optional<std::string> name;
   const Expression* type;
 };
