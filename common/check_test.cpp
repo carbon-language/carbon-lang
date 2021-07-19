@@ -14,7 +14,15 @@ TEST(CheckTest, CheckFalse) {
   ASSERT_DEATH({ CHECK(false); }, "CHECK failure: false");
 }
 
-TEST(CheckTest, CheckTrueMessage) { CHECK(true) << "msg"; }
+TEST(CheckTest, CheckTrueMessage) {
+  bool called = false;
+  auto callback = [&]() {
+    called = true;
+    return "called";
+  };
+  CHECK(true) << callback();
+  EXPECT_FALSE(called);
+}
 
 TEST(CheckTest, CheckFalseMessage) {
   ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg");

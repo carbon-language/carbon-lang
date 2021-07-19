@@ -37,15 +37,16 @@ class ExitWrapper {
 
   // Forward output to llvm::errs.
   template <typename T>
-  ExitWrapper& operator<<(T& message) {
+  ExitWrapper& operator<<(T message) {
     if (separator) {
       llvm::errs() << ": ";
       separator = false;
     }
-    llvm::errs() << message;
+    llvm::errs() << std::move(message);
     return *this;
   }
 
+ private:
   bool separator = false;
 };
 
