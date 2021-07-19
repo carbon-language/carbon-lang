@@ -15,9 +15,10 @@ jobs:
         with:
           stale-issue-message: >
             We archive inactive PRs and issues in order to make it easier to
-            find active work. If this issue should remain active, please comment
-            or remove the `stale` label. The `long term` label can also be added
-            for issues which are expected to take time.
+            find active work. If this issue should remain active or becomes
+            active again, please comment or remove the `stale` label. The `long
+            term` label can also be added for issues which are expected to take
+            time.
 
             This issue is stale because it has been open 90 days with no
             activity. This issue will be closed and archived after being stale
@@ -39,7 +40,8 @@ jobs:
             This PR will be closed and archived after being stale for 7 days.
           close-pr-message: >
             We archive inactive PRs and issues in order to make it easier to
-            find active work. If this PR should remain active, please reopen it.
+            find active work. If this PR should remain active or becomes active
+            again, please reopen it.
 
             This PR was closed because it remained stale with no comments for 7
             days.
