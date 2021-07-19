@@ -153,10 +153,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       } else if (expected) {
         ExpectType(e->line_num, "pattern variable", t, expected);
       }
-      auto new_e = Expression::MakeBindingExpression(
-          e->line_num, e->GetBindingExpression().name,
-          ReifyType(t, e->line_num));
-      types.Set(e->GetBindingExpression().name, t);
+      const std::optional<std::string>& name = e->GetBindingExpression().name;
+      auto new_e = Expression::MakeBindingExpression(e->line_num, name,
+                                                     ReifyType(t, e->line_num));
+      if (name.has_value()) {
+        types.Set(*name, t);
+      }
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::IndexExpression: {
@@ -165,7 +167,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       auto t = res.type;
       switch (t->tag()) {
         case ValKind::TupleValue: {
-          auto i = ToInteger(InterpExp(values, e->GetIndexExpression().offset));
+          auto i =
+              InterpExp(values, e->GetIndexExpression().offset)->GetIntValue();
           std::string f = std::to_string(i);
           const Value* field_t = t->GetTupleValue().FindField(f);
           if (field_t == nullptr) {

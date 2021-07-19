@@ -171,8 +171,8 @@ auto Value::MakeContinuationValue(std::vector<Frame*> stack) -> Value* {
   return v;
 }
 
-auto Value::MakeBindingPlaceholderValue(std::string name, const Value* type)
-    -> const Value* {
+auto Value::MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                        const Value* type) -> const Value* {
   auto* v = new Value();
   v->value = BindingPlaceholderValue({.name = std::move(name), .type = type});
   return v;
@@ -352,8 +352,15 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     }
     case ValKind::BindingPlaceholderValue: {
+      const BindingPlaceholderValue& placeholder =
+          val->GetBindingPlaceholderValue();
+      if (placeholder.name.has_value()) {
+        out << *placeholder.name;
+      } else {
+        out << "_";
+      }
+      out << ": ";
       PrintValue(val->GetBindingPlaceholderValue().type, out);
-      out << ": " << val->GetBindingPlaceholderValue().name;
       break;
     }
     case ValKind::AlternativeValue: {
@@ -542,17 +549,6 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::ContinuationValue:
       std::cerr << "ValueEqual does not support this kind of value."
                 << std::endl;
-      exit(-1);
-  }
-}
-
-auto ToInteger(const Value* v) -> int {
-  switch (v->tag()) {
-    case ValKind::IntValue:
-      return v->GetIntValue();
-    default:
-      std::cerr << "expected an integer, not ";
-      PrintValue(v, std::cerr);
       exit(-1);
   }
 }
