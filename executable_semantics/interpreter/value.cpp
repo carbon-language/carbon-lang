@@ -486,8 +486,8 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::ChoiceType:
     case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
-      return val;  // no need to copy these because they are immutable?
-      // No, they need to be copied so they don't get killed. -Jeremy
+      // TODO: These should be copied so that they don't get destructed.
+      return val;
   }
 }
 
