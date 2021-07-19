@@ -242,8 +242,6 @@ void PrintValue(const Value* val, std::ostream& out);
 auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
 
-auto ToInteger(const Value* v) -> int;
-
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_

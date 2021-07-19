@@ -165,7 +165,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       auto t = res.type;
       switch (t->tag()) {
         case ValKind::TupleValue: {
-          auto i = ToInteger(InterpExp(values, e->GetIndexExpression().offset));
+          auto i =
+              InterpExp(values, e->GetIndexExpression().offset)->GetIntValue();
           std::string f = std::to_string(i);
           const Value* field_t = t->GetTupleValue().FindField(f);
           if (field_t == nullptr) {
