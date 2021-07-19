@@ -153,10 +153,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       } else if (expected) {
         ExpectType(e->line_num, "pattern variable", t, expected);
       }
-      auto new_e = Expression::MakeBindingExpression(
-          e->line_num, e->GetBindingExpression().name,
-          ReifyType(t, e->line_num));
-      types.Set(e->GetBindingExpression().name, t);
+      const std::optional<std::string>& name = e->GetBindingExpression().name;
+      auto new_e = Expression::MakeBindingExpression(e->line_num, name,
+                                                     ReifyType(t, e->line_num));
+      if (name.has_value()) {
+        types.Set(*name, t);
+      }
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::IndexExpression: {
