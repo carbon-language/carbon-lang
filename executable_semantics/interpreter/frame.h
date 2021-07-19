@@ -17,16 +17,12 @@ namespace Carbon {
 
 using Env = Dictionary<std::string, Address>;
 
-/***** Scopes *****/
-
 struct Scope {
   Scope(Env values, std::list<std::string> l)
       : values(values), locals(std::move(l)) {}
   Env values;
   std::list<std::string> locals;
 };
-
-/***** Frames and State *****/
 
 // A frame represents either a function call or a delimited continuation.
 struct Frame {

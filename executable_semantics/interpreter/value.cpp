@@ -427,6 +427,8 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     case ValKind::ContinuationValue:
       out << "continuation";
+      // TODO: Find a way to print useful information about the continuation
+      // without creating a dependency cycle.
       break;
   }
 }
