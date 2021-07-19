@@ -103,7 +103,8 @@ auto Expression::MakeIdentifierExpression(int line_num, std::string var)
   return v;
 }
 
-auto Expression::MakeBindingExpression(int line_num, std::string var,
+auto Expression::MakeBindingExpression(int line_num,
+                                       std::optional<std::string> var,
                                        const Expression* type)
     -> const Expression* {
   auto* v = new Expression();
@@ -274,11 +275,17 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::IdentifierExpression:
       out << GetIdentifierExpression().name;
       break;
-    case ExpressionKind::BindingExpression:
-      GetBindingExpression().type->Print(out);
+    case ExpressionKind::BindingExpression: {
+      const BindingExpression& binding = GetBindingExpression();
+      if (binding.name.has_value()) {
+        out << *binding.name;
+      } else {
+        out << "_";
+      }
       out << ": ";
-      out << GetBindingExpression().name;
+      binding.type->Print(out);
       break;
+    }
     case ExpressionKind::CallExpression:
       GetCallExpression().function->Print(out);
       if (GetCallExpression().argument->tag() == ExpressionKind::TupleLiteral) {
@@ -311,6 +318,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       GetFunctionTypeLiteral().return_type->Print(out);
       break;
   }
-}
+}  // namespace Carbon
 
 }  // namespace Carbon

@@ -100,6 +100,8 @@ def _check_diff(args, subject):
     )
     if context_diff:
         if args.golden_is_subset:
+            # Print subject output for context, because it may be useful in
+            # debugging.
             print("=" * 80)
             print("Subject output (including ignored lines)")
             print("=" * 80)

@@ -111,7 +111,8 @@ struct TupleValue {
 
 struct BindingPlaceholderValue {
   static constexpr ValKind Kind = ValKind::BindingPlaceholderValue;
-  std::string name;
+  // nullopt represents the `_` placeholder
+  std::optional<std::string> name;
   const Value* type;
 };
 
@@ -184,8 +185,8 @@ struct Value {
   static auto MakeAlternativeConstructorValue(std::string alt_name,
                                               std::string choice_name)
       -> const Value*;
-  static auto MakeBindingPlaceholderValue(std::string name, const Value* type)
-      -> const Value*;
+  static auto MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                          const Value* type) -> const Value*;
   static auto MakeIntType() -> const Value*;
   static auto MakeContinuationType() -> const Value*;
   static auto MakeAutoType() -> const Value*;
@@ -242,8 +243,6 @@ struct Value {
 
 auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
-
-auto ToInteger(const Value* v) -> int;
 
 }  // namespace Carbon
 

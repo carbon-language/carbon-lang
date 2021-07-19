@@ -38,10 +38,8 @@ class Address {
   // Currently, that representation consists of an integer index identifying
   // the whole memory allocation, and an optional FieldPath specifying a
   // particular field within that allocation.
-  friend auto operator<<(llvm::raw_ostream& out, const Address& a)
-      -> llvm::raw_ostream& {
-    out << "Address(" << a.index << ")" << a.field_path;
-    return out;
+  void Print(llvm::raw_ostream& out) const {
+    out << "Address(" << index << ")" << field_path;
   }
 
   // If *this represents the address of an object with a field named

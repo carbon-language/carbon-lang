@@ -44,12 +44,10 @@ class FieldPath {
     components.push_back(std::move(name));
   }
 
-  friend auto operator<<(llvm::raw_ostream& out, const FieldPath& path)
-      -> llvm::raw_ostream& {
-    for (const std::string& component : path.components) {
+  void Print(llvm::raw_ostream& out) const {
+    for (const std::string& component : components) {
       out << "." << component;
     }
-    return out;
   }
 
  private:
