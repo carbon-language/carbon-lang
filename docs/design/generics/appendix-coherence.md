@@ -43,7 +43,7 @@ interface implementations, and casting between those types as needed.
 
 ## The "Hashtable Problem"
 
-The "Hashtable" problem is that the specific hash function used to compute the
+The "Hashtable problem" is that the specific hash function used to compute the
 hash of keys in a hashtable must be the same when adding an entry, when looking
 it up, and other operations like resizing. So a hashtable type is dependent on
 both the key type, and the key type's implementation of the `Hashable`
@@ -59,7 +59,7 @@ this:
 
     ```
     package Container;
-    struct HashSet(Hashable$ Key) { ... }
+    struct HashSet(Key:! Hashable) { ... }
     ```
 
 -   A `Song` type is defined in package `SongLib`.
