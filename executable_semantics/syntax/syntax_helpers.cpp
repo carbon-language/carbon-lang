@@ -5,9 +5,9 @@
 #include "executable_semantics/syntax/syntax_helpers.h"
 
 #include "common/ostream.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 

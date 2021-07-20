@@ -17,6 +17,13 @@ cc_binary(
     ],
 )
 
+cc_library(
+    name = "tracing_flag",
+    srcs = ["tracing_flag.cpp"],
+    hdrs = ["tracing_flag.h"],
+    visibility = ["//executable_semantics:__subpackages__"],
+)
+
 EXAMPLES = [
     "assignment_copy1",
     "assignment_copy2",
