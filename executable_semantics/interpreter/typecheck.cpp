@@ -19,9 +19,9 @@ namespace Carbon {
 void ExpectType(int line_num, const std::string& context, const Value* expected,
                 const Value* actual) {
   if (!TypeEqual(expected, actual)) {
-    llvm::errs() << line_num << ": type error in " << context << "\n";
-    llvm::errs() << "expected: " << *expected << "\n";
-    llvm::errs() << "actual: " << *actual << "\n";
+    llvm::errs() << line_num << ": type error in " << context << "\n"
+                 << "expected: " << *expected << "\n"
+                 << "actual: " << *actual << "\n";
     exit(-1);
   }
 }
@@ -29,9 +29,9 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
 void ExpectPointerType(int line_num, const std::string& context,
                        const Value* actual) {
   if (actual->tag() != ValKind::PointerType) {
-    llvm::errs() << line_num << ": type error in " << context << "\n";
-    llvm::errs() << "expected a pointer type\n";
-    llvm::errs() << "actual: " << *actual << "\n";
+    llvm::errs() << line_num << ": type error in " << context << "\n"
+                 << "expected a pointer type\n"
+                 << "actual: " << *actual << "\n";
     exit(-1);
   }
 }
