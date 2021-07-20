@@ -306,6 +306,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
           << *GetFunctionTypeLiteral().return_type;
       break;
   }
-}  // namespace Carbon
+}
 
 }  // namespace Carbon
