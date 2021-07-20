@@ -84,12 +84,13 @@ void Action::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void Action::PrintList(Stack<Action*> ls, llvm::raw_ostream& out) {
-  if (!ls.IsEmpty()) {
-    out << *ls.Pop();
-    if (!ls.IsEmpty()) {
+void Action::PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out) {
+  auto it = ls.begin();
+  while (it != ls.end()) {
+    out << **it;
+    ++it;
+    if (it != ls.end()) {
       out << " :: ";
-      PrintList(ls, out);
     }
   }
 }

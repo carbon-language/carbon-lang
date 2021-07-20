@@ -28,7 +28,7 @@ struct State {
 extern State* state;
 
 void InitEnv(const Declaration& d, Env* env);
-void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out);
+void PrintStack(const Stack<Frame*>& ls, llvm::raw_ostream& out);
 void PrintEnv(Env values);
 
 /***** Interpreters *****/
