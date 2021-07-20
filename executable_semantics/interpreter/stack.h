@@ -34,7 +34,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Pop() -> T {
-    CHECK(!IsEmpty() && "Can't pop from empty stack.");
+    CHECK(!IsEmpty()) << "Can't pop from empty stack.";
     auto r = std::move(elements.back());
     elements.pop_back();
     return r;
@@ -44,9 +44,9 @@ struct Stack {
   //
   // - Requires: n >= 0 && n <= Count()
   void Pop(int n) {
-    CHECK(n >= 0 && "Negative pop count disallowed.");
-    CHECK(static_cast<size_t>(n) <= elements.size() &&
-          "Can only pop as many elements as stack has.");
+    CHECK(n >= 0) << "Negative pop count disallowed.";
+    CHECK(static_cast<size_t>(n) <= elements.size())
+        << "Can only pop as many elements as stack has.";
     elements.resize(elements.size() - n);
   }
 
@@ -54,7 +54,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Top() const -> T {
-    CHECK(!IsEmpty() && "Empty stack has no Top().");
+    CHECK(!IsEmpty()) << "Empty stack has no Top().";
     return elements.back();
   }
 

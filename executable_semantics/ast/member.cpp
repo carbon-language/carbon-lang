@@ -4,8 +4,6 @@
 
 #include "executable_semantics/ast/member.h"
 
-#include <iostream>
-
 namespace Carbon {
 
 auto Member::MakeFieldMember(int line_num, std::string name,
@@ -20,13 +18,11 @@ auto Member::GetFieldMember() const -> const FieldMember& {
   return std::get<FieldMember>(value);
 }
 
-void Member::Print() {
+void Member::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case MemberKind::FieldMember:
       const auto& field = GetFieldMember();
-      std::cout << "var " << field.name << " : ";
-      PrintExp(field.type);
-      std::cout << ";" << std::endl;
+      out << "var " << field.name << " : " << *field.type << ";\n";
       break;
   }
 }

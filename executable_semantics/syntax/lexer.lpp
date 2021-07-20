@@ -7,7 +7,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %{
 #include <cstdlib>
 #include <iostream>
+
+#include "executable_semantics/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
+#include "llvm/ADT/StringExtras.h"
 %}
 
 /* Turn off legacy bits we don't need */
@@ -208,8 +211,13 @@ operator and its operand, leading to three more cases:
 }
 
 . {
-  std::cerr << context.current_token_position << ": invalid character '"
-            << yytext[0] << "' in source file." << std::endl;
+  if (Carbon::tracing_output) {
+    // Print a newline because tracing prints an incomplete line
+    // "Reading a token: ".
+    std::cerr << std::endl;
+  }
+  std::cerr << context.current_token_position << ": invalid character '\\x"
+            << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file." << std::endl;
   std::exit(1);
 }
 

@@ -4,8 +4,7 @@
 
 #include "executable_semantics/syntax/syntax_helpers.h"
 
-#include <iostream>
-
+#include "common/ostream.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/typecheck.h"
 #include "executable_semantics/tracing_flag.h"
@@ -14,11 +13,11 @@ namespace Carbon {
 
 void ExecProgram(std::list<Declaration>* fs) {
   if (tracing_output) {
-    std::cout << "********** source program **********" << std::endl;
+    llvm::outs() << "********** source program **********\n";
     for (const auto& decl : *fs) {
-      decl.Print();
+      llvm::outs() << decl;
     }
-    std::cout << "********** type checking **********" << std::endl;
+    llvm::outs() << "********** type checking **********\n";
   }
   state = new State();  // Compile-time state.
   TypeCheckContext p = TopLevel(fs);
@@ -29,15 +28,15 @@ void ExecProgram(std::list<Declaration>* fs) {
     new_decls.push_back(MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {
-    std::cout << std::endl;
-    std::cout << "********** type checking complete **********" << std::endl;
+    llvm::outs() << "\n";
+    llvm::outs() << "********** type checking complete **********\n";
     for (const auto& decl : new_decls) {
-      decl.Print();
+      llvm::outs() << decl;
     }
-    std::cout << "********** starting execution **********" << std::endl;
+    llvm::outs() << "********** starting execution **********\n";
   }
   int result = InterpProgram(&new_decls);
-  std::cout << "result: " << result << std::endl;
+  llvm::outs() << "result: " << result << "\n";
 }
 
 }  // namespace Carbon

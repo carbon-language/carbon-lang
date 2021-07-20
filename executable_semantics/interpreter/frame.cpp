@@ -10,10 +10,9 @@
 
 namespace Carbon {
 
-void PrintFrame(Frame* frame, std::ostream& out) {
-  out << frame->name;
-  out << "{";
-  Action::PrintList(frame->todo, out);
+void Frame::Print(llvm::raw_ostream& out) const {
+  out << name << "{";
+  Action::PrintList(todo, out);
   out << "}";
 }
 

@@ -4,7 +4,6 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 
-#include <iostream>
 #include <iterator>
 #include <list>
 #include <map>
@@ -26,12 +25,12 @@ State* state = nullptr;
 
 auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
-auto Step() -> void;
+void Step();
 //
 // Auxiliary Functions
 //
 
-void PrintEnv(Env values, std::ostream& out) {
+void PrintEnv(Env values, llvm::raw_ostream& out) {
   for (const auto& [name, address] : values) {
     out << name << ": ";
     state->heap.PrintAddress(address, out);
@@ -43,10 +42,10 @@ void PrintEnv(Env values, std::ostream& out) {
 // State Operations
 //
 
-void PrintStack(const Stack<Frame*>& ls, std::ostream& out) {
+void PrintStack(const Stack<Frame*>& ls, llvm::raw_ostream& out) {
   auto it = ls.begin();
   while (it != ls.end()) {
-    PrintFrame(*it, out);
+    out << **it;
     ++it;
     if (it != ls.end()) {
       out << " :: ";
@@ -59,17 +58,15 @@ auto CurrentEnv(State* state) -> Env {
   return frame->scopes.Top()->values;
 }
 
-void PrintState(std::ostream& out) {
-  out << "{" << std::endl;
-  out << "stack: ";
+void PrintState(llvm::raw_ostream& out) {
+  out << "{\nstack: ";
   PrintStack(state->stack, out);
-  out << std::endl << "heap: ";
-  state->heap.PrintHeap(out);
+  out << "\nheap: " << state->heap;
   if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
-    out << std::endl << "values: ";
+    out << "\nvalues: ";
     PrintEnv(CurrentEnv(state), out);
   }
-  out << std::endl << "}" << std::endl;
+  out << "\n}\n";
 }
 
 auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
@@ -99,7 +96,7 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Ptr:
       return Value::MakePointerType(args[0]);
     case Operator::Deref:
-      std::cerr << line_num << ": dereference not implemented yet\n";
+      llvm::errs() << line_num << ": dereference not implemented yet\n";
       exit(-1);
   }
 }
@@ -185,8 +182,8 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
           PatternMatch(operas[0]->GetFunctionValue().param, operas[1], globals,
                        &params, line_num);
       if (!matches) {
-        std::cerr << "internal error in call_function, pattern match failed"
-                  << std::endl;
+        llvm::errs()
+            << "internal error in call_function, pattern match failed\n";
         exit(-1);
       }
       // Create the new frame and push it on the stack
@@ -214,9 +211,8 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       break;
     }
     default:
-      std::cerr << line_num << ": in call, expected a function, not ";
-      PrintValue(operas[0], std::cerr);
-      std::cerr << std::endl;
+      llvm::errs() << line_num << ": in call, expected a function, not "
+                   << *operas[0] << "\n";
       exit(-1);
   }
 }
@@ -225,7 +221,7 @@ void DeallocateScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
     if (!a) {
-      std::cerr << "internal error in DeallocateScope" << std::endl;
+      llvm::errs() << "internal error in DeallocateScope\n";
       exit(-1);
     }
     state->heap.Deallocate(*a);
@@ -277,8 +273,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         case ValKind::TupleValue: {
           if (p->GetTupleValue().elements.size() !=
               v->GetTupleValue().elements.size()) {
-            std::cerr << "runtime error: arity mismatch in tuple pattern match"
-                      << std::endl;
+            llvm::errs()
+                << "runtime error: arity mismatch in tuple pattern match\n";
             exit(-1);
           }
           for (const TupleElement& pattern_element :
@@ -286,10 +282,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             const Value* value_field =
                 v->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              std::cerr << "runtime error: field " << pattern_element.name
-                        << "not in ";
-              PrintValue(v, std::cerr);
-              std::cerr << std::endl;
+              llvm::errs() << "runtime error: field " << pattern_element.name
+                           << "not in " << *v << "\n";
               exit(-1);
             }
             std::optional<Env> matches = PatternMatch(
@@ -302,10 +296,9 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return values;
         }
         default:
-          std::cerr
-              << "internal error, expected a tuple value in pattern, not ";
-          PrintValue(v, std::cerr);
-          std::cerr << std::endl;
+          llvm::errs()
+              << "internal error, expected a tuple value in pattern, not " << *v
+              << "\n";
           exit(-1);
       }
     case ValKind::AlternativeValue:
@@ -326,11 +319,10 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return *matches;
         }
         default:
-          std::cerr
+          llvm::errs()
               << "internal error, expected a choice alternative in pattern, "
-                 "not ";
-          PrintValue(v, std::cerr);
-          std::cerr << std::endl;
+                 "not "
+              << *v << "\n";
           exit(-1);
       }
     case ValKind::FunctionType:
@@ -369,8 +361,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
         case ValKind::TupleValue: {
           if (pat->GetTupleValue().elements.size() !=
               val->GetTupleValue().elements.size()) {
-            std::cerr << "runtime error: arity mismatch in tuple pattern match"
-                      << std::endl;
+            llvm::errs()
+                << "runtime error: arity mismatch in tuple pattern match\n";
             exit(-1);
           }
           for (const TupleElement& pattern_element :
@@ -378,10 +370,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             const Value* value_field =
                 val->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              std::cerr << "runtime error: field " << pattern_element.name
-                        << "not in ";
-              PrintValue(val, std::cerr);
-              std::cerr << std::endl;
+              llvm::errs() << "runtime error: field " << pattern_element.name
+                           << "not in " << *val << "\n";
               exit(-1);
             }
             PatternAssignment(pattern_element.value, value_field, line_num);
@@ -389,11 +379,10 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          std::cerr
+          llvm::errs()
               << "internal error, expected a tuple value on right-hand-side, "
-                 "not ";
-          PrintValue(val, std::cerr);
-          std::cerr << std::endl;
+                 "not "
+              << *val << "\n";
           exit(-1);
       }
       break;
@@ -405,7 +394,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
                   val->GetAlternativeValue().choice_name ||
               pat->GetAlternativeValue().alt_name !=
                   val->GetAlternativeValue().alt_name) {
-            std::cerr << "internal error in pattern assignment" << std::endl;
+            llvm::errs() << "internal error in pattern assignment\n";
             exit(-1);
           }
           PatternAssignment(pat->GetAlternativeValue().argument,
@@ -413,18 +402,17 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          std::cerr
+          llvm::errs()
               << "internal error, expected an alternative in left-hand-side, "
-                 "not ";
-          PrintValue(val, std::cerr);
-          std::cerr << std::endl;
+                 "not "
+              << *val << "\n";
           exit(-1);
       }
       break;
     }
     default:
       if (!ValueEqual(pat, val, line_num)) {
-        std::cerr << "internal error in pattern assignment" << std::endl;
+        llvm::errs() << "internal error in pattern assignment\n";
         exit(-1);
       }
   }
@@ -437,9 +425,7 @@ void StepLvalue() {
   Action* act = frame->todo.Top();
   const Expression* exp = act->GetLValAction().exp;
   if (tracing_output) {
-    std::cout << "--- step lvalue ";
-    PrintExp(exp);
-    std::cout << " --->" << std::endl;
+    llvm::outs() << "--- step lvalue " << *exp << " --->\n";
   }
   switch (exp->tag()) {
     case ExpressionKind::IdentifierExpression: {
@@ -448,8 +434,8 @@ void StepLvalue() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        std::cerr << exp->line_num << ": could not find `"
-                  << exp->GetIdentifierExpression().name << "`" << std::endl;
+        llvm::errs() << exp->line_num << ": could not find `"
+                     << exp->GetIdentifierExpression().name << "`\n";
         exit(-1);
       }
       const Value* v = Value::MakePointerValue(*pointer);
@@ -530,9 +516,7 @@ void StepLvalue() {
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::BindingExpression: {
-      std::cerr << "Can't treat expression as lvalue: ";
-      PrintExp(exp);
-      std::cerr << std::endl;
+      llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
       exit(-1);
     }
   }
@@ -545,9 +529,7 @@ void StepExp() {
   Action* act = frame->todo.Top();
   const Expression* exp = act->GetExpressionAction().exp;
   if (tracing_output) {
-    std::cout << "--- step exp ";
-    PrintExp(exp);
-    std::cout << " --->" << std::endl;
+    llvm::outs() << "--- step exp " << *exp << " --->\n";
   }
   switch (exp->tag()) {
     case ExpressionKind::BindingExpression: {
@@ -583,9 +565,8 @@ void StepExp() {
             std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
-              std::cerr << "runtime error, field " << f << " not in ";
-              PrintValue(tuple, std::cerr);
-              std::cerr << std::endl;
+              llvm::errs() << "runtime error, field " << f << " not in "
+                           << *tuple << "\n";
               exit(-1);
             }
             frame->todo.Pop(1);
@@ -593,10 +574,10 @@ void StepExp() {
             break;
           }
           default:
-            std::cerr
+            llvm::errs()
                 << "runtime type error, expected a tuple in field access, "
-                   "not ";
-            PrintValue(tuple, std::cerr);
+                   "not "
+                << *tuple << "\n";
             exit(-1);
         }
       }
@@ -651,8 +632,8 @@ void StepExp() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        std::cerr << exp->line_num << ": could not find `"
-                  << exp->GetIdentifierExpression().name << "`" << std::endl;
+        llvm::errs() << exp->line_num << ": could not find `"
+                     << exp->GetIdentifierExpression().name << "`\n";
         exit(-1);
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
@@ -712,7 +693,7 @@ void StepExp() {
         frame->todo.Pop(1);
         CallFunction(exp->line_num, act->results, state);
       } else {
-        std::cerr << "internal error in handle_value with Call" << std::endl;
+        llvm::errs() << "internal error in handle_value with Call\n";
         exit(-1);
       }
       break;
@@ -809,11 +790,11 @@ void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   const Statement* stmt = act->GetStatementAction().stmt;
-  CHECK(stmt != nullptr && "null statement!");
+  CHECK(stmt != nullptr) << "null statement!";
   if (tracing_output) {
-    std::cout << "--- step stmt ";
-    PrintStatement(stmt, 1);
-    std::cout << " --->" << std::endl;
+    llvm::outs() << "--- step stmt ";
+    stmt->PrintDepth(1, llvm::outs());
+    llvm::outs() << " --->\n";
   }
   switch (stmt->tag()) {
     case StatementKind::Match:
@@ -962,9 +943,9 @@ void StepStmt() {
             PatternMatch(p, v, frame->scopes.Top()->values,
                          &frame->scopes.Top()->locals, stmt->line_num);
         if (!matches) {
-          std::cerr << stmt->line_num
-                    << ": internal error in variable definition, match failed"
-                    << std::endl;
+          llvm::errs()
+              << stmt->line_num
+              << ": internal error in variable definition, match failed\n";
           exit(-1);
         }
         frame->scopes.Top()->values = *matches;
@@ -1116,8 +1097,8 @@ void StepStmt() {
 void Step() {
   Frame* frame = state->stack.Top();
   if (frame->todo.IsEmpty()) {
-    std::cerr << "runtime error: fell off end of function " << frame->name
-              << " without `return`" << std::endl;
+    llvm::errs() << "runtime error: fell off end of function " << frame->name
+                 << " without `return`\n";
     exit(-1);
   }
 
@@ -1145,7 +1126,7 @@ void Step() {
 auto InterpProgram(std::list<Declaration>* fs) -> int {
   state = new State();  // Runtime state.
   if (tracing_output) {
-    std::cout << "********** initializing globals **********" << std::endl;
+    llvm::outs() << "********** initializing globals **********\n";
   }
   InitGlobals(fs);
 
@@ -1158,15 +1139,15 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   state->stack = Stack(frame);
 
   if (tracing_output) {
-    std::cout << "********** calling main function **********" << std::endl;
-    PrintState(std::cout);
+    llvm::outs() << "********** calling main function **********\n";
+    PrintState(llvm::outs());
   }
 
   while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
     if (tracing_output) {
-      PrintState(std::cout);
+      PrintState(llvm::outs());
     }
   }
   const Value* v = state->stack.Top()->todo.Top()->GetValAction().val;

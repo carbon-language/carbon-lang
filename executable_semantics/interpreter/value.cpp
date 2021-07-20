@@ -5,7 +5,6 @@
 #include "executable_semantics/interpreter/value.h"
 
 #include <algorithm>
-#include <iostream>
 
 #include "common/check.h"
 
@@ -252,9 +251,8 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       const Value* field =
           v->GetStructValue().inits->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        std::cerr << "runtime error, member " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
+        llvm::errs() << "runtime error, member " << f << " not in " << *v
+                     << "\n";
         exit(-1);
       }
       return field;
@@ -262,26 +260,20 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
     case ValKind::TupleValue: {
       const Value* field = v->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        std::cerr << "field " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
+        llvm::errs() << "field " << f << " not in " << *v << "\n";
         exit(-1);
       }
       return field;
     }
     case ValKind::ChoiceType: {
       if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
-        std::cerr << "alternative " << f << " not in ";
-        PrintValue(v, std::cerr);
-        std::cerr << std::endl;
+        llvm::errs() << "alternative " << f << " not in " << *v << "\n";
         exit(-1);
       }
       return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
     }
     default:
-      std::cerr << "field access not allowed for value ";
-      PrintValue(v, std::cerr);
-      std::cerr << std::endl;
+      llvm::errs() << "field access not allowed for value " << *v << "\n";
       exit(-1);
   }
 }
@@ -318,9 +310,7 @@ auto SetFieldImpl(const Value* value,
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
-        std::cerr << "field " << *path_begin << " not in ";
-        PrintValue(value, std::cerr);
-        std::cerr << std::endl;
+        llvm::errs() << "field " << *path_begin << " not in " << *value << "\n";
         exit(-1);
       }
       it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
@@ -328,9 +318,7 @@ auto SetFieldImpl(const Value* value,
       return Value::MakeTupleValue(elements);
     }
     default:
-      std::cerr << "field access not allowed for value ";
-      PrintValue(value, std::cerr);
-      std::cerr << std::endl;
+      llvm::errs() << "field access not allowed for value " << *value << "\n";
       exit(-1);
   }
 }
@@ -343,63 +331,60 @@ auto Value::SetField(const FieldPath& path, const Value* field_value,
                       field_value, line_num);
 }
 
-auto PrintValue(const Value* val, std::ostream& out) -> void {
-  switch (val->tag()) {
+void Value::Print(llvm::raw_ostream& out) const {
+  switch (tag()) {
     case ValKind::AlternativeConstructorValue: {
-      out << val->GetAlternativeConstructorValue().choice_name << "."
-          << val->GetAlternativeConstructorValue().alt_name;
+      out << GetAlternativeConstructorValue().choice_name << "."
+          << GetAlternativeConstructorValue().alt_name;
       break;
     }
     case ValKind::BindingPlaceholderValue: {
-      const BindingPlaceholderValue& placeholder =
-          val->GetBindingPlaceholderValue();
+      const BindingPlaceholderValue& placeholder = GetBindingPlaceholderValue();
       if (placeholder.name.has_value()) {
         out << *placeholder.name;
       } else {
         out << "_";
       }
-      out << ": ";
-      PrintValue(val->GetBindingPlaceholderValue().type, out);
+      out << ": " << *placeholder.type;
       break;
     }
     case ValKind::AlternativeValue: {
-      out << "alt " << val->GetAlternativeValue().choice_name << "."
-          << val->GetAlternativeValue().alt_name << " ";
-      PrintValue(val->GetAlternativeValue().argument, out);
+      out << "alt " << GetAlternativeValue().choice_name << "."
+          << GetAlternativeValue().alt_name << " "
+          << *GetAlternativeValue().argument;
       break;
     }
     case ValKind::StructValue: {
-      out << val->GetStructValue().type->GetStructType().name;
-      PrintValue(val->GetStructValue().inits, out);
+      out << GetStructValue().type->GetStructType().name
+          << *GetStructValue().inits;
       break;
     }
     case ValKind::TupleValue: {
       out << "(";
       bool add_commas = false;
-      for (const TupleElement& element : val->GetTupleValue().elements) {
+      for (const TupleElement& element : GetTupleValue().elements) {
         if (add_commas) {
           out << ", ";
         } else {
           add_commas = true;
         }
 
-        out << element.name << " = ";
-        PrintValue(element.value, out);
+        out << element.name << " = " << *element.value;
       }
       out << ")";
       break;
     }
     case ValKind::IntValue:
-      out << val->GetIntValue();
+      out << GetIntValue();
       break;
     case ValKind::BoolValue:
-      out << std::boolalpha << val->GetBoolValue();
+      out << (GetBoolValue() ? "true" : "false");
       break;
     case ValKind::FunctionValue:
-      out << "fun<" << val->GetFunctionValue().name << ">";
+      out << "fun<" << GetFunctionValue().name << ">";
       break;
     case ValKind::PointerValue:
-      out << "ptr<" << val->GetPointerValue() << ">";
+      out << "ptr<" << GetPointerValue() << ">";
       break;
     case ValKind::BoolType:
       out << "Bool";
@@ -417,20 +402,17 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       out << "Continuation";
       break;
     case ValKind::PointerType:
-      PrintValue(val->GetPointerType().type, out);
-      out << "*";
+      out << *GetPointerType().type << "*";
       break;
     case ValKind::FunctionType:
-      out << "fn ";
-      PrintValue(val->GetFunctionType().param, out);
-      out << " -> ";
-      PrintValue(val->GetFunctionType().ret, out);
+      out << "fn " << *GetFunctionType().param << " -> "
+          << *GetFunctionType().ret;
       break;
     case ValKind::StructType:
-      out << "struct " << val->GetStructType().name;
+      out << "struct " << GetStructType().name;
       break;
     case ValKind::ChoiceType:
-      out << "choice " << val->GetChoiceType().name;
+      out << "choice " << GetChoiceType().name;
       break;
     case ValKind::ContinuationValue:
       out << "continuation";
@@ -538,10 +520,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::TypeType:
       return true;
     default:
-      std::cerr << "TypeEqual used to compare non-type values" << std::endl;
-      PrintValue(t1, std::cerr);
-      std::cerr << std::endl;
-      PrintValue(t2, std::cerr);
+      llvm::errs() << "TypeEqual used to compare non-type values\n"
+                   << *t1 << "\n"
+                   << *t2 << "\n";
       exit(-1);
   }
 }
@@ -603,8 +584,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
     case ValKind::ContinuationValue:
-      std::cerr << "ValueEqual does not support this kind of value."
-                << std::endl;
+      llvm::errs() << "ValueEqual does not support this kind of value.\n";
       exit(-1);
   }
 }

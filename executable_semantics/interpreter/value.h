@@ -11,6 +11,7 @@
 #include <variant>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/field_path.h"
@@ -229,6 +230,8 @@ struct Value {
   auto SetField(const FieldPath& path, const Value* field_value,
                 int line_num) const -> const Value*;
 
+  void Print(llvm::raw_ostream& out) const;
+
  private:
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
                AlternativeValue, TupleValue, IntType, BoolType, TypeType,
@@ -237,8 +240,6 @@ struct Value {
                AlternativeConstructorValue, ContinuationValue>
       value;
 };
-
-void PrintValue(const Value* val, std::ostream& out);
 
 auto CopyVal(const Value* val, int line_num) -> const Value*;
 
