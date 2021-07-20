@@ -187,15 +187,11 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
   }
   switch (tag()) {
     case StatementKind::Match:
-      out << "match (";
-      GetMatch().exp->Print(out);
-      out << ") {";
+      out << "match (" << *GetMatch().exp << ") {";
       if (depth < 0 || depth > 1) {
         out << "\n";
         for (auto& clause : *GetMatch().clauses) {
-          out << "case ";
-          clause.first->Print(out);
-          out << " =>\n";
+          out << "case " << *clause.first << " =>\n";
           clause.second->Print(out, depth - 1);
           out << "\n";
         }
@@ -205,9 +201,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       out << "}";
       break;
     case StatementKind::While:
-      out << "while (";
-      GetWhile().cond->Print(out);
-      out << ")\n";
+      out << "while (" << *GetWhile().cond << ")\n";
       GetWhile().body->Print(out, depth - 1);
       break;
     case StatementKind::Break:
@@ -217,26 +211,17 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       out << "continue;";
       break;
     case StatementKind::VariableDefinition:
-      out << "var ";
-      GetVariableDefinition().pat->Print(out);
-      out << " = ";
-      GetVariableDefinition().init->Print(out);
-      out << ";";
+      out << "var " << *GetVariableDefinition().pat << " = "
+          << *GetVariableDefinition().init << ";";
       break;
     case StatementKind::ExpressionStatement:
-      GetExpressionStatement().exp->Print(out);
-      out << ";";
+      out << *GetExpressionStatement().exp << ";";
       break;
     case StatementKind::Assign:
-      GetAssign().lhs->Print(out);
-      out << " = ";
-      GetAssign().rhs->Print(out);
-      out << ";";
+      out << *GetAssign().lhs << " = " << *GetAssign().rhs << ";";
       break;
     case StatementKind::If:
-      out << "if (";
-      GetIf().cond->Print(out);
-      out << ")\n";
+      out << "if (" << *GetIf().cond << ")\n";
       GetIf().then_stmt->Print(out, depth - 1);
       if (GetIf().else_stmt) {
         out << "\nelse\n";
@@ -244,9 +229,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       }
       break;
     case StatementKind::Return:
-      out << "return ";
-      GetReturn().exp->Print(out);
-      out << ";";
+      out << "return " << *GetReturn().exp << ";";
       break;
     case StatementKind::Sequence:
       GetSequence().stmt->Print(out, depth);
@@ -286,9 +269,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       }
       break;
     case StatementKind::Run:
-      out << "run ";
-      GetRun().argument->Print(out);
-      out << ";";
+      out << "run " << *GetRun().argument << ";";
       break;
     case StatementKind::Await:
       out << "await;";

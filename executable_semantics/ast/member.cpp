@@ -22,9 +22,7 @@ void Member::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case MemberKind::FieldMember:
       const auto& field = GetFieldMember();
-      out << "var " << field.name << " : ";
-      field.type->Print(out);
-      out << ";\n";
+      out << "var " << field.name << " : " << *field.type << ";\n";
       break;
   }
 }

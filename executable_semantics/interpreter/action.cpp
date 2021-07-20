@@ -59,16 +59,16 @@ auto Action::GetValAction() const -> const ValAction& {
 void Action::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case ActionKind::LValAction:
-      GetLValAction().exp->Print(out);
+      out << *GetLValAction().exp;
       break;
     case ActionKind::ExpressionAction:
-      GetExpressionAction().exp->Print(out);
+      out << *GetExpressionAction().exp;
       break;
     case ActionKind::StatementAction:
       GetStatementAction().stmt->Print(out, 1);
       break;
     case ActionKind::ValAction:
-      GetValAction().val->Print(out);
+      out << *GetValAction().val;
       break;
   }
   out << "<" << pos << ">";
@@ -76,7 +76,7 @@ void Action::Print(llvm::raw_ostream& out) const {
     out << "(";
     for (auto& result : results) {
       if (result) {
-        result->Print(out);
+        out << *result;
       }
       out << ",";
     }
@@ -86,7 +86,7 @@ void Action::Print(llvm::raw_ostream& out) const {
 
 void Action::PrintList(Stack<Action*> ls, llvm::raw_ostream& out) {
   if (!ls.IsEmpty()) {
-    ls.Pop()->Print(out);
+    out << *ls.Pop();
     if (!ls.IsEmpty()) {
       out << " :: ";
       PrintList(ls, out);

@@ -4,10 +4,10 @@
 
 #include "executable_semantics/syntax/syntax_helpers.h"
 
+#include "common/ostream.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/typecheck.h"
 #include "executable_semantics/tracing_flag.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -15,7 +15,7 @@ void ExecProgram(std::list<Declaration>* fs) {
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
     for (const auto& decl : *fs) {
-      decl.Print(llvm::outs());
+      llvm::outs() << decl;
     }
     llvm::outs() << "********** type checking **********\n";
   }
@@ -31,7 +31,7 @@ void ExecProgram(std::list<Declaration>* fs) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
     for (const auto& decl : new_decls) {
-      decl.Print(llvm::outs());
+      llvm::outs() << decl;
     }
     llvm::outs() << "********** starting execution **********\n";
   }

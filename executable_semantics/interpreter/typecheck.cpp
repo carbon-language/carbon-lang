@@ -20,11 +20,8 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
                 const Value* actual) {
   if (!TypeEqual(expected, actual)) {
     llvm::errs() << line_num << ": type error in " << context << "\n";
-    llvm::errs() << "expected: ";
-    expected->Print(llvm::errs());
-    llvm::errs() << "\nactual: ";
-    actual->Print(llvm::errs());
-    llvm::errs() << "\n";
+    llvm::errs() << "expected: " << *expected << "\n";
+    llvm::errs() << "actual: " << *actual << "\n";
     exit(-1);
   }
 }
@@ -34,18 +31,14 @@ void ExpectPointerType(int line_num, const std::string& context,
   if (actual->tag() != ValKind::PointerType) {
     llvm::errs() << line_num << ": type error in " << context << "\n";
     llvm::errs() << "expected a pointer type\n";
-    llvm::errs() << "actual: ";
-    actual->Print(llvm::errs());
-    llvm::errs() << "\n";
+    llvm::errs() << "actual: " << *actual << "\n";
     exit(-1);
   }
 }
 
 void PrintTypeEnv(llvm::raw_ostream& out, TypeEnv types) {
   for (const auto& [name, value] : types) {
-    out << name << ": ";
-    value->Print(out);
-    out << ", ";
+    out << name << ": " << *value << ", ";
   }
 }
 
@@ -80,9 +73,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakePrimitiveOperatorExpression(
           0, Operator::Ptr, {ReifyType(t->GetPointerType().type, line_num)});
     default:
-      llvm::errs() << line_num << ": expected a type, not ";
-      t->Print(llvm::errs());
-      llvm::errs() << "\n";
+      llvm::errs() << line_num << ": expected a type, not " << *t << "\n";
       exit(-1);
   }
 }
@@ -115,8 +106,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       case TCContext::PatternContext:
         llvm::outs() << "checking pattern, ";
         if (expected) {
-          llvm::outs() << "expecting ";
-          expected->Print(llvm::errs());
+          llvm::outs() << "expecting " << *expected;
         }
         llvm::outs() << ", ";
         break;
@@ -124,8 +114,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         llvm::outs() << "checking type ";
         break;
     }
-    e->Print(llvm::outs());
-    llvm::outs() << "\n";
+    llvm::outs() << *e << "\n";
   }
   switch (e->tag()) {
     case ExpressionKind::BindingExpression: {
@@ -170,9 +159,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           const Value* field_t = t->GetTupleValue().FindField(f);
           if (field_t == nullptr) {
             llvm::errs() << e->line_num << ": compilation error, field " << f
-                         << " is not in the tuple ";
-            t->Print(llvm::errs());
-            llvm::errs() << "\n";
+                         << " is not in the tuple " << *t << "\n";
             exit(-1);
           }
           auto new_e = Expression::MakeIndexExpression(
@@ -284,9 +271,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         default:
           llvm::errs()
               << e->line_num
-              << ": compilation error in field access, expected a struct\n";
-          e->Print(llvm::errs());
-          llvm::errs() << "\n";
+              << ": compilation error in field access, expected a struct\n"
+              << *e << "\n";
           exit(-1);
       }
     }
@@ -379,9 +365,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         }
         default: {
           llvm::errs() << e->line_num
-                       << ": compilation error in call, expected a function\n";
-          e->Print(llvm::errs());
-          llvm::errs() << "\n";
+                       << ": compilation error in call, expected a function\n"
+                       << *e << "\n";
           exit(-1);
         }
       }

@@ -4,6 +4,8 @@
 
 #include "executable_semantics/ast/declaration.h"
 
+#include "common/ostream.h"
+
 namespace Carbon {
 
 auto Declaration::MakeFunctionDeclaration(FunctionDefinition definition)
@@ -66,7 +68,7 @@ auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case DeclarationKind::FunctionDeclaration:
-      GetFunctionDeclaration().definition.Print(out);
+      out << GetFunctionDeclaration().definition;
       break;
 
     case DeclarationKind::StructDeclaration: {

@@ -252,9 +252,8 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       const Value* field =
           v->GetStructValue().inits->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        llvm::errs() << "runtime error, member " << f << " not in ";
-        v->Print(llvm::errs());
-        llvm::errs() << "\n";
+        llvm::errs() << "runtime error, member " << f << " not in " << *v
+                     << "\n";
         exit(-1);
       }
       return field;
@@ -262,26 +261,20 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
     case ValKind::TupleValue: {
       const Value* field = v->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        llvm::errs() << "field " << f << " not in ";
-        v->Print(llvm::errs());
-        llvm::errs() << "\n";
+        llvm::errs() << "field " << f << " not in " << *v << "\n";
         exit(-1);
       }
       return field;
     }
     case ValKind::ChoiceType: {
       if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
-        llvm::errs() << "alternative " << f << " not in ";
-        v->Print(llvm::errs());
-        llvm::errs() << "\n";
+        llvm::errs() << "alternative " << f << " not in " << *v << "\n";
         exit(-1);
       }
       return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
     }
     default:
-      llvm::errs() << "field access not allowed for value ";
-      v->Print(llvm::errs());
-      llvm::errs() << "\n";
+      llvm::errs() << "field access not allowed for value " << *v << "\n";
       exit(-1);
   }
 }
@@ -318,9 +311,7 @@ auto SetFieldImpl(const Value* value,
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
-        llvm::errs() << "field " << *path_begin << " not in ";
-        value->Print(llvm::errs());
-        llvm::errs() << "\n";
+        llvm::errs() << "field " << *path_begin << " not in " << *value << "\n";
         exit(-1);
       }
       it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
@@ -328,9 +319,7 @@ auto SetFieldImpl(const Value* value,
       return Value::MakeTupleValue(elements);
     }
     default:
-      llvm::errs() << "field access not allowed for value ";
-      value->Print(llvm::errs());
-      llvm::errs() << "\n";
+      llvm::errs() << "field access not allowed for value " << *value << "\n";
       exit(-1);
   }
 }
@@ -357,19 +346,18 @@ void Value::Print(llvm::raw_ostream& out) const {
       } else {
         out << "_";
       }
-      out << ": ";
-      placeholder.type->Print(out);
+      out << ": " << *placeholder.type;
       break;
     }
     case ValKind::AlternativeValue: {
       out << "alt " << GetAlternativeValue().choice_name << "."
-          << GetAlternativeValue().alt_name << " ";
-      GetAlternativeValue().argument->Print(out);
+          << GetAlternativeValue().alt_name << " "
+          << *GetAlternativeValue().argument;
       break;
     }
     case ValKind::StructValue: {
-      out << GetStructValue().type->GetStructType().name;
-      GetStructValue().inits->Print(out);
+      out << GetStructValue().type->GetStructType().name
+          << *GetStructValue().inits;
       break;
     }
     case ValKind::TupleValue: {
@@ -382,8 +370,7 @@ void Value::Print(llvm::raw_ostream& out) const {
           add_commas = true;
         }
 
-        out << element.name << " = ";
-        element.value->Print(out);
+        out << element.name << " = " << *element.value;
       }
       out << ")";
       break;
@@ -416,14 +403,11 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "Continuation";
       break;
     case ValKind::PointerType:
-      GetPointerType().type->Print(out);
-      out << "*";
+      out << *GetPointerType().type << "*";
       break;
     case ValKind::FunctionType:
-      out << "fn ";
-      GetFunctionType().param->Print(out);
-      out << " -> ";
-      GetFunctionType().ret->Print(out);
+      out << "fn " << *GetFunctionType().param << " -> "
+          << *GetFunctionType().ret;
       break;
     case ValKind::StructType:
       out << "struct " << GetStructType().name;
@@ -434,8 +418,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case ValKind::ContinuationValue:
       out << "continuation[[";
       for (Frame* frame : GetContinuationValue().stack) {
-        frame->Print(out);
-        out << " :: ";
+        out << *frame << " :: ";
       }
       out << "]]";
       break;
@@ -481,10 +464,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       return true;
     default:
       llvm::errs() << "TypeEqual used to compare non-type values"
-                   << "\n";
-      t1->Print(llvm::errs());
-      llvm::errs() << "\n";
-      t2->Print(llvm::errs());
+                   << "\n"
+                   << *t1 << "\n"
+                   << *t2 << "\n";
       exit(-1);
   }
 }
@@ -546,8 +528,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
     case ValKind::ContinuationValue:
-      llvm::errs() << "ValueEqual does not support this kind of value."
-                   << "\n";
+      llvm::errs() << "ValueEqual does not support this kind of value.\n";
       exit(-1);
   }
 }

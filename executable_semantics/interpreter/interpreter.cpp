@@ -54,9 +54,8 @@ void Heap::Write(const Address& a, const Value* v, int line_num) {
 
 void Heap::CheckAlive(const Address& address, int line_num) {
   if (!alive_[address.index]) {
-    llvm::errs() << line_num << ": undefined behavior: access to dead value ";
-    values_[address.index]->Print(llvm::errs());
-    llvm::errs() << "\n";
+    llvm::errs() << line_num << ": undefined behavior: access to dead value "
+                 << *values_[address.index] << "\n";
     exit(-1);
   }
 }
@@ -152,7 +151,7 @@ void Frame::Print(llvm::raw_ostream& out) const {
 
 void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out) {
   if (!ls.IsEmpty()) {
-    ls.Pop()->Print(out);
+    out << *ls.Pop();
     if (!ls.IsEmpty()) {
       out << " :: ";
       PrintStack(ls, out);
@@ -171,7 +170,7 @@ void Heap::PrintAddress(const Address& a, llvm::raw_ostream& out) const {
   if (!alive_[a.index]) {
     out << "!!";
   }
-  values_[a.index]->Print(out);
+  out << *values_[a.index];
 }
 
 auto CurrentEnv(State* state) -> Env {
@@ -180,11 +179,9 @@ auto CurrentEnv(State* state) -> Env {
 }
 
 void PrintState(llvm::raw_ostream& out) {
-  out << "{\n";
-  out << "stack: ";
+  out << "{\nstack: ";
   PrintStack(state->stack, out);
-  out << "\nheap: ";
-  state->heap.Print(out);
+  out << "\nheap: " << state->heap;
   if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
     out << "\nvalues: ";
     PrintEnv(CurrentEnv(state), out);
@@ -334,9 +331,8 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       break;
     }
     default:
-      llvm::errs() << line_num << ": in call, expected a function, not ";
-      operas[0]->Print(llvm::errs());
-      llvm::errs() << "\n";
+      llvm::errs() << line_num << ": in call, expected a function, not "
+                   << *operas[0] << "\n";
       exit(-1);
   }
 }
@@ -406,9 +402,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
                 v->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
               llvm::errs() << "runtime error: field " << pattern_element.name
-                           << "not in ";
-              v->Print(llvm::errs());
-              llvm::errs() << "\n";
+                           << "not in " << *v << "\n";
               exit(-1);
             }
             std::optional<Env> matches = PatternMatch(
@@ -422,9 +416,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         }
         default:
           llvm::errs()
-              << "internal error, expected a tuple value in pattern, not ";
-          v->Print(llvm::errs());
-          llvm::errs() << "\n";
+              << "internal error, expected a tuple value in pattern, not " << *v
+              << "\n";
           exit(-1);
       }
     case ValKind::AlternativeValue:
@@ -447,9 +440,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         default:
           llvm::errs()
               << "internal error, expected a choice alternative in pattern, "
-                 "not ";
-          v->Print(llvm::errs());
-          llvm::errs() << "\n";
+                 "not "
+              << *v << "\n";
           exit(-1);
       }
     case ValKind::FunctionType:
@@ -498,9 +490,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
                 val->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
               llvm::errs() << "runtime error: field " << pattern_element.name
-                           << "not in ";
-              val->Print(llvm::errs());
-              llvm::errs() << "\n";
+                           << "not in " << *val << "\n";
               exit(-1);
             }
             PatternAssignment(pattern_element.value, value_field, line_num);
@@ -510,9 +500,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
         default:
           llvm::errs()
               << "internal error, expected a tuple value on right-hand-side, "
-                 "not ";
-          val->Print(llvm::errs());
-          llvm::errs() << "\n";
+                 "not "
+              << *val << "\n";
           exit(-1);
       }
       break;
@@ -534,9 +523,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
         default:
           llvm::errs()
               << "internal error, expected an alternative in left-hand-side, "
-                 "not ";
-          val->Print(llvm::errs());
-          llvm::errs() << "\n";
+                 "not "
+              << *val << "\n";
           exit(-1);
       }
       break;
@@ -556,9 +544,7 @@ void StepLvalue() {
   Action* act = frame->todo.Top();
   const Expression* exp = act->GetLValAction().exp;
   if (tracing_output) {
-    llvm::outs() << "--- step lvalue ";
-    exp->Print(llvm::outs());
-    llvm::outs() << " --->\n";
+    llvm::outs() << "--- step lvalue " << *exp << " --->\n";
   }
   switch (exp->tag()) {
     case ExpressionKind::IdentifierExpression: {
@@ -649,9 +635,7 @@ void StepLvalue() {
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::BindingExpression: {
-      llvm::errs() << "Can't treat expression as lvalue: ";
-      exp->Print(llvm::errs());
-      llvm::errs() << "\n";
+      llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
       exit(-1);
     }
   }
@@ -664,9 +648,7 @@ void StepExp() {
   Action* act = frame->todo.Top();
   const Expression* exp = act->GetExpressionAction().exp;
   if (tracing_output) {
-    llvm::outs() << "--- step exp ";
-    exp->Print(llvm::outs());
-    llvm::outs() << " --->\n";
+    llvm::outs() << "--- step exp " << *exp << " --->\n";
   }
   switch (exp->tag()) {
     case ExpressionKind::BindingExpression: {
@@ -702,9 +684,8 @@ void StepExp() {
             std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
-              llvm::errs() << "runtime error, field " << f << " not in ";
-              tuple->Print(llvm::errs());
-              llvm::errs() << "\n";
+              llvm::errs() << "runtime error, field " << f << " not in "
+                           << *tuple << "\n";
               exit(-1);
             }
             frame->todo.Pop(1);
@@ -714,8 +695,8 @@ void StepExp() {
           default:
             llvm::errs()
                 << "runtime type error, expected a tuple in field access, "
-                   "not ";
-            tuple->Print(llvm::errs());
+                   "not "
+                << *tuple << "\n";
             exit(-1);
         }
       }

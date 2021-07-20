@@ -219,28 +219,26 @@ static void PrintOp(llvm::raw_ostream& out, Operator op) {
 
 static void PrintFields(llvm::raw_ostream& out,
                         const std::vector<FieldInitializer>& fields) {
-  int i = 0;
-  for (auto iter = fields.begin(); iter != fields.end(); ++iter, ++i) {
-    if (i != 0) {
+  bool comma = false;
+  for (const auto& field : fields) {
+    if (!comma) {
       out << ", ";
+    } else {
+      comma = true;
     }
-    out << iter->name << " = ";
-    iter->expression->Print(out);
+    out << field.name << " = " << *field.expression;
   }
 }
 
 void Expression::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case ExpressionKind::IndexExpression:
-      GetIndexExpression().aggregate->Print(out);
-      out << "[";
-      GetIndexExpression().offset->Print(out);
-      out << "]";
+      out << *GetIndexExpression().aggregate << "["
+          << *GetIndexExpression().offset << "]";
       break;
     case ExpressionKind::FieldAccessExpression:
-      GetFieldAccessExpression().aggregate->Print(out);
-      out << ".";
-      out << GetFieldAccessExpression().field;
+      out << *GetFieldAccessExpression().aggregate << "."
+          << GetFieldAccessExpression().field;
       break;
     case ExpressionKind::TupleLiteral:
       out << "(";
@@ -260,14 +258,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
         PrintOp(out, op.op);
       } else if (op.arguments.size() == 1) {
         PrintOp(out, op.op);
-        out << " ";
-        op.arguments[0]->Print(out);
+        out << " " << *op.arguments[0];
       } else if (op.arguments.size() == 2) {
-        op.arguments[0]->Print(out);
-        out << " ";
+        out << *op.arguments[0] << " ";
         PrintOp(out, op.op);
-        out << " ";
-        op.arguments[1]->Print(out);
+        out << " " << *op.arguments[1];
       }
       out << ")";
       break;
@@ -282,18 +277,15 @@ void Expression::Print(llvm::raw_ostream& out) const {
       } else {
         out << "_";
       }
-      out << ": ";
-      binding.type->Print(out);
+      out << ": " << *binding.type;
       break;
     }
     case ExpressionKind::CallExpression:
-      GetCallExpression().function->Print(out);
+      out << *GetCallExpression().function;
       if (GetCallExpression().argument->tag() == ExpressionKind::TupleLiteral) {
-        GetCallExpression().argument->Print(out);
+        out << *GetCallExpression().argument;
       } else {
-        out << "(";
-        GetCallExpression().argument->Print(out);
-        out << ")";
+        out << "(" << *GetCallExpression().argument << ")";
       }
       break;
     case ExpressionKind::BoolTypeLiteral:
@@ -312,10 +304,8 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "Continuation";
       break;
     case ExpressionKind::FunctionTypeLiteral:
-      out << "fn ";
-      GetFunctionTypeLiteral().parameter->Print(out);
-      out << " -> ";
-      GetFunctionTypeLiteral().return_type->Print(out);
+      out << "fn " << *GetFunctionTypeLiteral().parameter << " -> "
+          << *GetFunctionTypeLiteral().return_type;
       break;
   }
 }  // namespace Carbon
