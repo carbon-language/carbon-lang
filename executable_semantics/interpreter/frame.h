@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 
+#include "common/ostream.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
@@ -45,9 +46,9 @@ struct Frame {
 
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
       : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
-};
 
-void PrintFrame(Frame* frame, std::ostream& out);
+  void Print(llvm::raw_ostream& out) const;
+};
 
 }  // namespace Carbon
 

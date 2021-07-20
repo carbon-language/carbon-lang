@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/struct_definition.h"
@@ -82,7 +83,7 @@ class Declaration {
   auto GetChoiceDeclaration() const -> const ChoiceDeclaration&;
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
-  void Print() const;
+  void Print(llvm::raw_ostream& out) const;
 
   inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

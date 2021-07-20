@@ -5,9 +5,10 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_FIELD_PATH_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_FIELD_PATH_H_
 
-#include <ostream>
 #include <string>
 #include <vector>
+
+#include "common/ostream.h"
 
 namespace Carbon {
 
@@ -43,12 +44,10 @@ class FieldPath {
     components.push_back(std::move(name));
   }
 
-  friend auto operator<<(std::ostream& out, const FieldPath& path)
-      -> std::ostream& {
-    for (const std::string& component : path.components) {
+  void Print(llvm::raw_ostream& out) const {
+    for (const std::string& component : components) {
       out << "." << component;
     }
-    return out;
   }
 
  private:

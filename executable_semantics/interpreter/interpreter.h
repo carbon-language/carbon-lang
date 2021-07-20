@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/heap.h"
@@ -27,7 +28,7 @@ struct State {
 extern State* state;
 
 void InitEnv(const Declaration& d, Env* env);
-void PrintStack(Stack<Frame*> ls, std::ostream& out);
+void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out);
 void PrintEnv(Env values);
 
 /***** Interpreters *****/
