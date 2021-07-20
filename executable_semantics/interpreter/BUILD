@@ -87,10 +87,10 @@ cc_library(
         ":value",
         "//common:check",
         "//common:ostream",
-        "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
+        "//executable_semantics/common:tracing_flag",
     ],
 )
 
@@ -102,10 +102,10 @@ cc_library(
         ":containers",
         ":interpreter",
         "//common:ostream",
-        "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:tracing_flag",
     ],
 )
 
@@ -119,5 +119,6 @@ cc_library(
         ":field_path",
         "//common:ostream",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:error",
     ],
 )

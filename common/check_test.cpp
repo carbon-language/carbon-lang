@@ -11,7 +11,7 @@ namespace Carbon {
 TEST(CheckTest, CheckTrue) { CHECK(true); }
 
 TEST(CheckTest, CheckFalse) {
-  ASSERT_DEATH({ CHECK(false); }, "CHECK failure: false\n");
+  ASSERT_DEATH({ CHECK(false); }, "CHECK failure: false");
 }
 
 TEST(CheckTest, CheckTrueCallbackNotUsed) {
@@ -25,7 +25,7 @@ TEST(CheckTest, CheckTrueCallbackNotUsed) {
 }
 
 TEST(CheckTest, CheckFalseMessage) {
-  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg\n");
+  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg");
 }
 
 TEST(CheckTest, CheckOutputForms) {
@@ -33,16 +33,6 @@ TEST(CheckTest, CheckOutputForms) {
   std::string str = "str";
   int i = 1;
   CHECK(true) << msg << str << i << 0;
-  ASSERT_DEATH({ CHECK(false) << msg << str << i; },
-               "CHECK failure: false: msgstr1\n");
-}
-
-TEST(CheckTest, Fatal) {
-  ASSERT_DEATH({ FATAL_IF(true) << "msg"; }, "FATAL: msg\n");
-}
-
-TEST(CheckTest, FatalNoInput) {
-  ASSERT_DEATH({ FATAL_IF(true); }, "FATAL: \n");
 }
 
 }  // namespace Carbon

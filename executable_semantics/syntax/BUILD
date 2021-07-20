@@ -29,10 +29,12 @@ cc_library(
     ],
     deps = [
         ":paren_contents",
+        "//common:check",
         "//common:ostream",
-        "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/common:error",
+        "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
         "//executable_semantics/interpreter:typecheck",
     ],

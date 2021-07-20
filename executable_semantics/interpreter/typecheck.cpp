@@ -11,29 +11,26 @@
 #include <vector>
 
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
-#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
 void ExpectType(int line_num, const std::string& context, const Value* expected,
                 const Value* actual) {
-  if (!TypeEqual(expected, actual)) {
-    llvm::errs() << line_num << ": type error in " << context << "\n"
-                 << "expected: " << *expected << "\n"
-                 << "actual: " << *actual << "\n";
-    exit(-1);
-  }
+  USER_ERROR_IF(!TypeEqual(expected, actual))
+      << line_num << ": type error in " << context << "\n"
+      << "expected: " << *expected << "\n"
+      << "actual: " << *actual << "\n";
 }
 
 void ExpectPointerType(int line_num, const std::string& context,
                        const Value* actual) {
-  if (actual->tag() != ValKind::PointerType) {
-    llvm::errs() << line_num << ": type error in " << context << "\n"
-                 << "expected a pointer type\n"
-                 << "actual: " << *actual << "\n";
-    exit(-1);
-  }
+  USER_ERROR_IF(actual->tag() != ValKind::PointerType)
+      << line_num << ": type error in " << context << "\n"
+      << "expected a pointer type\n"
+      << "actual: " << *actual << "\n";
 }
 
 // Reify type to type expression.

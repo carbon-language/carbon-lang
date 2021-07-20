@@ -4,7 +4,7 @@
 
 #include "executable_semantics/ast/expression.h"
 
-#include "common/check.h"
+#include "executable_semantics/common/error.h"
 
 namespace Carbon {
 
@@ -167,7 +167,7 @@ auto Expression::MakeTupleLiteral(int line_num,
   bool seen_named_member = false;
   for (auto& arg : args) {
     if (arg.name == "") {
-      FATAL_IF(seen_named_member)
+      USER_ERROR_IF(seen_named_member)
           << line_num << ": positional members must come before named members";
       arg.name = std::to_string(i);
       ++i;

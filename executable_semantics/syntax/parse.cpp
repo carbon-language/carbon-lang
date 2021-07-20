@@ -6,9 +6,11 @@
 
 #include <iostream>
 
+#include "common/check.h"
+#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
-#include "executable_semantics/tracing_flag.h"
 
 extern FILE* yyin;
 
@@ -20,11 +22,8 @@ namespace Carbon {
 auto parse(const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   yyin = fopen(input_file_name.c_str(), "r");
-  if (yyin == nullptr) {
-    std::cerr << "Error opening '" << input_file_name
-              << "': " << std::strerror(errno) << std::endl;
-    exit(1);
-  }
+  USER_ERROR_IF(yyin == nullptr) << "Error opening '" << input_file_name
+                                 << "': " << std::strerror(errno) << "\n";
 
   std::optional<AST> parsed_input = std::nullopt;
   ParseAndLexContext context(input_file_name);
@@ -38,11 +37,8 @@ auto parse(const std::string& input_file_name)
     return syntax_error_code;
   }
 
-  if (parsed_input == std::nullopt) {
-    std::cerr << "Internal error: parser validated syntax yet didn't produce "
-                 "an AST.\n";
-    exit(1);
-  }
+  CHECK(parsed_input != std::nullopt)
+      << "parser validated syntax yet didn't produce an AST.";
   return *parsed_input;
 }
 

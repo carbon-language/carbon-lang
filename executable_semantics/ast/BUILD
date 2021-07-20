@@ -28,9 +28,9 @@ cc_library(
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
     deps = [
-        "//common:check",
         "//common:indirect_value",
         "//common:ostream",
+        "//executable_semantics/common:error",
     ],
 )
 
