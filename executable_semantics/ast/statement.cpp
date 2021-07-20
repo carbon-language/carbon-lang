@@ -180,7 +180,7 @@ auto Statement::MakeAwait(int line_num) -> const Statement* {
   return s;
 }
 
-void Statement::Print(llvm::raw_ostream& out, int depth) const {
+void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   if (depth == 0) {
     out << " ... ";
     return;
@@ -192,7 +192,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
         out << "\n";
         for (auto& clause : *GetMatch().clauses) {
           out << "case " << *clause.first << " =>\n";
-          clause.second->Print(out, depth - 1);
+          clause.second->PrintDepth(depth - 1, out);
           out << "\n";
         }
       } else {
@@ -202,7 +202,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       break;
     case StatementKind::While:
       out << "while (" << *GetWhile().cond << ")\n";
-      GetWhile().body->Print(out, depth - 1);
+      GetWhile().body->PrintDepth(depth - 1, out);
       break;
     case StatementKind::Break:
       out << "break;";
@@ -222,24 +222,24 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       break;
     case StatementKind::If:
       out << "if (" << *GetIf().cond << ")\n";
-      GetIf().then_stmt->Print(out, depth - 1);
+      GetIf().then_stmt->PrintDepth(depth - 1, out);
       if (GetIf().else_stmt) {
         out << "\nelse\n";
-        GetIf().else_stmt->Print(out, depth - 1);
+        GetIf().else_stmt->PrintDepth(depth - 1, out);
       }
       break;
     case StatementKind::Return:
       out << "return " << *GetReturn().exp << ";";
       break;
     case StatementKind::Sequence:
-      GetSequence().stmt->Print(out, depth);
+      GetSequence().stmt->PrintDepth(depth, out);
       if (depth < 0 || depth > 1) {
         out << "\n";
       } else {
         out << " ";
       }
       if (GetSequence().next) {
-        GetSequence().next->Print(out, depth - 1);
+        GetSequence().next->PrintDepth(depth - 1, out);
       }
       break;
     case StatementKind::Block:
@@ -248,7 +248,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
         out << "\n";
       }
       if (GetBlock().stmt) {
-        GetBlock().stmt->Print(out, depth);
+        GetBlock().stmt->PrintDepth(depth, out);
         if (depth < 0 || depth > 1) {
           out << "\n";
         }
@@ -263,7 +263,7 @@ void Statement::Print(llvm::raw_ostream& out, int depth) const {
       if (depth < 0 || depth > 1) {
         out << "\n";
       }
-      GetContinuation().body->Print(out, depth - 1);
+      GetContinuation().body->PrintDepth(depth - 1, out);
       if (depth < 0 || depth > 1) {
         out << "\n";
       }

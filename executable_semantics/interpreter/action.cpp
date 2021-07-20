@@ -65,7 +65,7 @@ void Action::Print(llvm::raw_ostream& out) const {
       out << *GetExpressionAction().exp;
       break;
     case ActionKind::StatementAction:
-      GetStatementAction().stmt->Print(out, 1);
+      GetStatementAction().stmt->PrintDepth(1, out);
       break;
     case ActionKind::ValAction:
       out << *GetValAction().val;

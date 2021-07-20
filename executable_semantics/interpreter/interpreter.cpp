@@ -791,7 +791,7 @@ void StepStmt() {
   CHECK(stmt != nullptr && "null statement!");
   if (tracing_output) {
     llvm::outs() << "--- step stmt ";
-    stmt->Print(llvm::outs(), 1);
+    stmt->PrintDepth(1, llvm::outs());
     llvm::outs() << " --->\n";
   }
   switch (stmt->tag()) {

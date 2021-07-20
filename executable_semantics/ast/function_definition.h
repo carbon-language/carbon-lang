@@ -22,8 +22,8 @@ struct FunctionDefinition {
         return_type(return_type),
         body(body) {}
 
-  void Print(llvm::raw_ostream& out) const { PrintDepth(out, -1); }
-  void PrintDepth(llvm::raw_ostream& out, int depth) const;
+  void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   int line_num;
   std::string name;

@@ -6,11 +6,11 @@
 
 namespace Carbon {
 
-void FunctionDefinition::PrintDepth(llvm::raw_ostream& out, int depth) const {
+void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
   out << "fn " << name << " " << *param_pattern << " -> " << *return_type;
   if (body) {
     out << " {\n";
-    body->Print(out, depth);
+    body->PrintDepth(depth, out);
     out << "\n}\n";
   } else {
     out << ";\n";

@@ -163,7 +163,7 @@ struct Statement {
   auto GetRun() const -> const Run&;
   auto GetAwait() const -> const Await&;
 
-  void Print(llvm::raw_ostream& out, int depth) const;
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   inline auto tag() const -> StatementKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
