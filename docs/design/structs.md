@@ -189,6 +189,10 @@ and
 describe design patterns to use instead of multiple inheritance to support types
 that vary over multiple axes.
 
+In rare cases where the complex multiple inheritance schemes of C++ are truly
+needed, they can be effectively approximated using a combination of these
+simpler building blocks.
+
 Polymorphic types support a number of different kinds of methods:
 
 -   They will have virtual methods:
