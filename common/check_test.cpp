@@ -38,11 +38,11 @@ TEST(CheckTest, CheckOutputForms) {
 }
 
 TEST(CheckTest, Fatal) {
-  ASSERT_DEATH({ Fatal() << "msg"; }, "FATAL: msg\n");
+  ASSERT_DEATH({ FATAL_IF(true) << "msg"; }, "FATAL: msg\n");
 }
 
 TEST(CheckTest, FatalNoInput) {
-  ASSERT_DEATH({ Fatal(); }, "FATAL: \n");
+  ASSERT_DEATH({ FATAL_IF(true); }, "FATAL: \n");
 }
 
 }  // namespace Carbon
