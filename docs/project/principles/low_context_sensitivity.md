@@ -18,8 +18,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Principle
 
 Carbon should favor designs and mechanisms that are not sensitive to context.
-Instead, we should favor constructs that are not ambiguous so that they
-don't need context for disambiguation. This is in service to the goal that
+Instead, we should favor constructs that are not ambiguous so that they don't
+need context for disambiguation. This is in service to the goal that
 [Carbon code is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
 In particular, this is about prioritizing reading and understanding over
 writing. We should be willing to trade off conciseness, which still benefits
@@ -147,4 +147,6 @@ A cast from a base to a derived class will be significantly cheaper than a cast
 to a sibling. Similarly, virtual inheritance will add cost to ordinary looking
 method calls and implicit conversions, even with single inheritance. When
 combined with multiple inheritance, the vtable pointer for an object can be set
-over and over during construction.
+over and over during construction. Carbon should avoid features with hidden
+costs, particularly when they scale based on subtle aspects of the context where
+those features are used.
