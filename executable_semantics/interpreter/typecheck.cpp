@@ -22,7 +22,7 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
   USER_ERROR_IF(!TypeEqual(expected, actual))
       << line_num << ": type error in " << context << "\n"
       << "expected: " << *expected << "\n"
-      << "actual: " << *actual << "\n";
+      << "actual: " << *actual;
 }
 
 void ExpectPointerType(int line_num, const std::string& context,
@@ -30,7 +30,7 @@ void ExpectPointerType(int line_num, const std::string& context,
   USER_ERROR_IF(actual->tag() != ValKind::PointerType)
       << line_num << ": type error in " << context << "\n"
       << "expected a pointer type\n"
-      << "actual: " << *actual << "\n";
+      << "actual: " << *actual;
 }
 
 // Reify type to type expression.

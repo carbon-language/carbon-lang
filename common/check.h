@@ -53,9 +53,9 @@ class ExitWrapper {
 
 }  // namespace CheckInternal
 
-// Checks the given condition, and if it's false, prints an error and exits.
-// This should be used for unexpected errors, such as a bug in the
-// application.
+// Checks the given condition, and if it's false, prints a stack, streams the
+// error message, then exits. This should be used for unexpected errors, such as
+// a bug in the application.
 //
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";

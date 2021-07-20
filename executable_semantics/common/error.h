@@ -39,8 +39,6 @@ class ExitWrapper {
 //
 // For example:
 //   USER_ERROR_IF(is_invalid) << "Data is not valid!";
-// Would print:
-//   FATAL: Data is not valid!
 #define USER_ERROR_IF(condition) \
   ((condition)) && (ErrorInternal::ExitWrapper() << "ERROR: ")
 
