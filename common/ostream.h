@@ -11,7 +11,8 @@ namespace Carbon {
 
 // Support ostream << for types which implement:
 //   void Print(llvm::raw_ostream& out) const;
-template <typename T>
+template <typename T, typename std::enable_if<std::is_member_function_pointer<
+                          decltype(&T::Print)>::value>::type* = nullptr>
 auto operator<<(llvm::raw_ostream& out, const T& obj) -> llvm::raw_ostream& {
   obj.Print(out);
   return out;
