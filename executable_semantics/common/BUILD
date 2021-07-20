@@ -2,9 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# TODO(https://github.com/carbon-language/carbon-lang/issues/266):
-# Migrate bison/flex usage to a more hermetic bazel build.
-
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
