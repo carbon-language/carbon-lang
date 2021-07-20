@@ -232,8 +232,9 @@ void DeallocateScope(int line_num, Scope* scope) {
 }
 
 void DeallocateLocals(int line_num, Frame* frame) {
-  for (auto scope : frame->scopes) {
-    DeallocateScope(line_num, scope);
+  while (!frame->scopes.IsEmpty()) {
+    DeallocateScope(line_num, frame->scopes.Top());
+    frame->scopes.Pop();
   }
 }
 
@@ -1160,8 +1161,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
     PrintState(std::cout);
   }
 
-  while (state->stack.CountExceeds(1) ||
-         state->stack.Top()->todo.CountExceeds(1) ||
+  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
     if (tracing_output) {
@@ -1179,8 +1179,7 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  while (state->stack.CountExceeds(1) ||
-         state->stack.Top()->todo.CountExceeds(1) ||
+  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
   }
