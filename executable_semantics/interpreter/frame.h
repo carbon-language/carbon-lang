@@ -43,6 +43,9 @@ struct Frame {
   // the address of the continuation.
   std::optional<Address> continuation;
 
+  Frame(const Frame&) = delete;
+  Frame& operator=(const Frame&) = delete;
+
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
       : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 };

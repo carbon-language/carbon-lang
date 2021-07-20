@@ -48,7 +48,7 @@ struct Action {
   static auto MakeStatementAction(const Statement* s) -> Action*;
   static auto MakeValAction(const Value* v) -> Action*;
 
-  static void PrintList(Stack<Action*> ls, std::ostream& out);
+  static void PrintList(const Stack<Action*>& ls, std::ostream& out);
 
   auto GetLValAction() const -> const LValAction&;
   auto GetExpressionAction() const -> const ExpressionAction&;

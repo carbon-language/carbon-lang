@@ -43,12 +43,13 @@ void PrintEnv(Env values, std::ostream& out) {
 // State Operations
 //
 
-void PrintStack(Stack<Frame*> ls, std::ostream& out) {
-  if (!ls.IsEmpty()) {
-    PrintFrame(ls.Pop(), out);
-    if (!ls.IsEmpty()) {
+void PrintStack(const Stack<Frame*>& ls, std::ostream& out) {
+  auto it = ls.begin();
+  while (it != ls.end()) {
+    PrintFrame(*it, out);
+    ++it;
+    if (it != ls.end()) {
       out << " :: ";
-      PrintStack(ls, out);
     }
   }
 }

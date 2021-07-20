@@ -85,12 +85,13 @@ void Action::Print(std::ostream& out) {
   }
 }
 
-void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
-  if (!ls.IsEmpty()) {
-    ls.Pop()->Print(out);
-    if (!ls.IsEmpty()) {
+void Action::PrintList(const Stack<Action*>& ls, std::ostream& out) {
+  auto it = ls.begin();
+  while (it != ls.end()) {
+    (*it)->Print(out);
+    ++it;
+    if (it != ls.end()) {
       out << " :: ";
-      PrintList(ls, out);
     }
   }
 }
