@@ -140,7 +140,7 @@ points to. These strategies include:
     layout of the base type as a prefix.
 -   Putting a pointer to a table of function pointers, a
     [vtable](https://en.wikipedia.org/wiki/Virtual_method_table), as the first
-    data member of the object. This allows methods marked `virtual` to have a
+    data member of the object. This allows methods to be ["virtual"](https://en.wikipedia.org/wiki/Virtual_function) and have a
     derived-type-specific implementation, an "override", that is used even when
     invoking the method on a pointer to a base type.
 -   Non-virtual methods implemented on a base type should be applicable to all
