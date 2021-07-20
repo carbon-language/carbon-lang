@@ -26,10 +26,7 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
-    deps = [
-        "//common:indirect_value",
-        "@llvm-project//llvm:Support",
-    ],
+    deps = ["//common:indirect_value"],
 )
 
 cc_library(

@@ -6,9 +6,6 @@
 
 #include <iostream>
 
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/ErrorHandling.h"
-
 namespace Carbon {
 
 auto Expression::GetIdentifierExpression() const
@@ -171,9 +168,10 @@ auto Expression::MakeTupleLiteral(int line_num,
   for (auto& arg : args) {
     if (arg.name == "") {
       if (seen_named_member) {
-        llvm::report_fatal_error(
-            llvm::Twine(line_num) +
-            ": positional members must come before named members");
+        std::cerr << line_num
+                  << ": positional members must come before named members"
+                  << std::endl;
+        exit(-1);
       }
       arg.name = std::to_string(i);
       ++i;
