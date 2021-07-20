@@ -4,7 +4,6 @@
 
 #include "executable_semantics/interpreter/action.h"
 
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <optional>
@@ -57,19 +56,19 @@ auto Action::GetValAction() const -> const ValAction& {
   return std::get<ValAction>(value);
 }
 
-void Action::Print(std::ostream& out) {
+void Action::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case ActionKind::LValAction:
-      PrintExp(GetLValAction().exp);
+      out << *GetLValAction().exp;
       break;
     case ActionKind::ExpressionAction:
-      PrintExp(GetExpressionAction().exp);
+      out << *GetExpressionAction().exp;
       break;
     case ActionKind::StatementAction:
-      PrintStatement(GetStatementAction().stmt, 1);
+      GetStatementAction().stmt->PrintDepth(1, out);
       break;
     case ActionKind::ValAction:
-      PrintValue(GetValAction().val, out);
+      out << *GetValAction().val;
       break;
   }
   out << "<" << pos << ">";
@@ -77,7 +76,7 @@ void Action::Print(std::ostream& out) {
     out << "(";
     for (auto& result : results) {
       if (result) {
-        PrintValue(result, out);
+        out << *result;
       }
       out << ",";
     }
@@ -85,9 +84,9 @@ void Action::Print(std::ostream& out) {
   }
 }
 
-void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
+void Action::PrintList(Stack<Action*> ls, llvm::raw_ostream& out) {
   if (!ls.IsEmpty()) {
-    ls.Pop()->Print(out);
+    out << *ls.Pop();
     if (!ls.IsEmpty()) {
       out << " :: ";
       PrintList(ls, out);

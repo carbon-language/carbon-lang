@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_FUNCTION_DEFINITION_H_
 #define EXECUTABLE_SEMANTICS_AST_FUNCTION_DEFINITION_H_
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 
@@ -21,8 +22,8 @@ struct FunctionDefinition {
         return_type(return_type),
         body(body) {}
 
-  void Print() const { PrintDepth(-1); }
-  void PrintDepth(int depth) const;
+  void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   int line_num;
   std::string name;

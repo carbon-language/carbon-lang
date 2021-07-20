@@ -4,8 +4,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 
-#include <iostream>
-
 namespace Carbon {
 
 auto Declaration::MakeFunctionDeclaration(FunctionDefinition definition)
@@ -65,41 +63,36 @@ auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
   return std::get<VariableDeclaration>(value);
 }
 
-void Declaration::Print() const {
+void Declaration::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case DeclarationKind::FunctionDeclaration:
-      GetFunctionDeclaration().definition.Print();
+      out << GetFunctionDeclaration().definition;
       break;
 
     case DeclarationKind::StructDeclaration: {
       const StructDefinition& struct_def = GetStructDeclaration().definition;
-      std::cout << "struct " << struct_def.name << " {" << std::endl;
+      out << "struct " << struct_def.name << " {\n";
       for (Member* m : struct_def.members) {
-        m->Print();
+        out << *m;
       }
-      std::cout << "}" << std::endl;
+      out << "}\n";
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = GetChoiceDeclaration();
-      std::cout << "choice " << choice.name << " {" << std::endl;
+      out << "choice " << choice.name << " {\n";
       for (const auto& [name, signature] : choice.alternatives) {
-        std::cout << "alt " << name << " ";
-        PrintExp(signature);
-        std::cout << ";" << std::endl;
+        out << "alt " << name << " " << *signature << ";\n";
       }
-      std::cout << "}" << std::endl;
+      out << "}\n";
       break;
     }
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = GetVariableDeclaration();
-      std::cout << "var ";
-      PrintExp(var.type);
-      std::cout << " : " << var.name << " = ";
-      PrintExp(var.initializer);
-      std::cout << std::endl;
+      out << "var " << *var.type << " : " << var.name << " = "
+          << *var.initializer << "\n";
       break;
     }
   }

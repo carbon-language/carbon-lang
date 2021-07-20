@@ -23,7 +23,7 @@ auto Heap::Read(const Address& a, int line_num) -> const Value* {
   return values_[a.index]->GetField(a.field_path, line_num);
 }
 
-auto Heap::Write(const Address& a, const Value* v, int line_num) -> void {
+void Heap::Write(const Address& a, const Value* v, int line_num) {
   CHECK(v != nullptr);
   this->CheckAlive(a, line_num);
   values_[a.index] = values_[a.index]->SetField(a.field_path, v, line_num);
@@ -31,9 +31,8 @@ auto Heap::Write(const Address& a, const Value* v, int line_num) -> void {
 
 void Heap::CheckAlive(const Address& address, int line_num) {
   if (!alive_[address.index]) {
-    std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(values_[address.index], std::cerr);
-    std::cerr << std::endl;
+    llvm::errs() << line_num << ": undefined behavior: access to dead value "
+                 << *values_[address.index] << "\n";
     exit(-1);
   }
 }
@@ -43,24 +42,23 @@ void Heap::Deallocate(const Address& address) {
   if (alive_[address.index]) {
     alive_[address.index] = false;
   } else {
-    std::cerr << "runtime error, deallocating an already dead value"
-              << std::endl;
+    llvm::errs() << "runtime error, deallocating an already dead value\n";
     exit(-1);
   }
 }
 
-void Heap::PrintHeap(std::ostream& out) {
+void Heap::Print(llvm::raw_ostream& out) const {
   for (size_t i = 0; i < values_.size(); ++i) {
     PrintAddress(Address(i), out);
     out << ", ";
   }
 }
 
-auto Heap::PrintAddress(const Address& a, std::ostream& out) -> void {
+void Heap::PrintAddress(const Address& a, llvm::raw_ostream& out) const {
   if (!alive_[a.index]) {
     out << "!!";
   }
-  PrintValue(values_[a.index], out);
+  out << *values_[a.index];
 }
 
 }  // namespace Carbon

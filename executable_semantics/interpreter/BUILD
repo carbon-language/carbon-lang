@@ -13,6 +13,7 @@ cc_library(
     deps = [
         ":containers",
         ":value",
+        "//common:ostream",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
@@ -24,6 +25,7 @@ cc_library(
     hdrs = ["address.h"],
     deps = [
         ":field_path",
+        "//common:ostream",
     ],
 )
 
@@ -42,6 +44,7 @@ cc_library(
 cc_library(
     name = "field_path",
     hdrs = ["field_path.h"],
+    deps = ["//common:ostream"],
 )
 
 cc_library(
@@ -52,6 +55,7 @@ cc_library(
         ":action",
         ":address",
         ":containers",
+        "//common:ostream",
     ],
 )
 
@@ -62,6 +66,7 @@ cc_library(
     deps = [
         ":address",
         ":value",
+        "//common:ostream",
     ],
 )
 
@@ -81,6 +86,7 @@ cc_library(
         ":heap",
         ":value",
         "//common:check",
+        "//common:ostream",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
@@ -95,6 +101,7 @@ cc_library(
     deps = [
         ":containers",
         ":interpreter",
+        "//common:ostream",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
@@ -110,6 +117,7 @@ cc_library(
         ":address",
         ":containers",
         ":field_path",
+        "//common:ostream",
         "//executable_semantics/ast:statement",
     ],
 )

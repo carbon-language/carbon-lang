@@ -5,9 +5,9 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_MEMORY_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_MEMORY_H_
 
-#include <ostream>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/value.h"
 
@@ -28,19 +28,19 @@ class Heap {
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  auto Write(const Address& a, const Value* v, int line_num) -> void;
+  void Write(const Address& a, const Value* v, int line_num);
 
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(const Value* v) -> Address;
 
   // Marks the object at this address, and all of its sub-objects, as dead.
-  auto Deallocate(const Address& address) -> void;
+  void Deallocate(const Address& address);
 
   // Print the value at the given address to the stream `out`.
-  auto PrintAddress(const Address& a, std::ostream& out) -> void;
+  void PrintAddress(const Address& a, llvm::raw_ostream& out) const;
 
   // Print all the values on the heap to the stream `out`.
-  auto PrintHeap(std::ostream& out) -> void;
+  void Print(llvm::raw_ostream& out) const;
 
  private:
   // Signal an error if the address is no longer alive.

@@ -4,8 +4,6 @@
 
 #include "executable_semantics/ast/statement.h"
 
-#include <iostream>
-
 #include "common/check.h"
 
 namespace Carbon {
@@ -182,117 +180,101 @@ auto Statement::MakeAwait(int line_num) -> const Statement* {
   return s;
 }
 
-void PrintStatement(const Statement* s, int depth) {
-  if (!s) {
-    return;
-  }
+void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   if (depth == 0) {
-    std::cout << " ... ";
+    out << " ... ";
     return;
   }
-  switch (s->tag()) {
+  switch (tag()) {
     case StatementKind::Match:
-      std::cout << "match (";
-      PrintExp(s->GetMatch().exp);
-      std::cout << ") {";
+      out << "match (" << *GetMatch().exp << ") {";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
-        for (auto& clause : *s->GetMatch().clauses) {
-          std::cout << "case ";
-          PrintExp(clause.first);
-          std::cout << " =>" << std::endl;
-          PrintStatement(clause.second, depth - 1);
-          std::cout << std::endl;
+        out << "\n";
+        for (auto& clause : *GetMatch().clauses) {
+          out << "case " << *clause.first << " =>\n";
+          clause.second->PrintDepth(depth - 1, out);
+          out << "\n";
         }
       } else {
-        std::cout << "...";
+        out << "...";
       }
-      std::cout << "}";
+      out << "}";
       break;
     case StatementKind::While:
-      std::cout << "while (";
-      PrintExp(s->GetWhile().cond);
-      std::cout << ")" << std::endl;
-      PrintStatement(s->GetWhile().body, depth - 1);
+      out << "while (" << *GetWhile().cond << ")\n";
+      GetWhile().body->PrintDepth(depth - 1, out);
       break;
     case StatementKind::Break:
-      std::cout << "break;";
+      out << "break;";
       break;
     case StatementKind::Continue:
-      std::cout << "continue;";
+      out << "continue;";
       break;
     case StatementKind::VariableDefinition:
-      std::cout << "var ";
-      PrintExp(s->GetVariableDefinition().pat);
-      std::cout << " = ";
-      PrintExp(s->GetVariableDefinition().init);
-      std::cout << ";";
+      out << "var " << *GetVariableDefinition().pat << " = "
+          << *GetVariableDefinition().init << ";";
       break;
     case StatementKind::ExpressionStatement:
-      PrintExp(s->GetExpressionStatement().exp);
-      std::cout << ";";
+      out << *GetExpressionStatement().exp << ";";
       break;
     case StatementKind::Assign:
-      PrintExp(s->GetAssign().lhs);
-      std::cout << " = ";
-      PrintExp(s->GetAssign().rhs);
-      std::cout << ";";
+      out << *GetAssign().lhs << " = " << *GetAssign().rhs << ";";
       break;
     case StatementKind::If:
-      std::cout << "if (";
-      PrintExp(s->GetIf().cond);
-      std::cout << ")" << std::endl;
-      PrintStatement(s->GetIf().then_stmt, depth - 1);
-      std::cout << std::endl << "else" << std::endl;
-      PrintStatement(s->GetIf().else_stmt, depth - 1);
+      out << "if (" << *GetIf().cond << ")\n";
+      GetIf().then_stmt->PrintDepth(depth - 1, out);
+      if (GetIf().else_stmt) {
+        out << "\nelse\n";
+        GetIf().else_stmt->PrintDepth(depth - 1, out);
+      }
       break;
     case StatementKind::Return:
-      std::cout << "return ";
-      PrintExp(s->GetReturn().exp);
-      std::cout << ";";
+      out << "return " << *GetReturn().exp << ";";
       break;
     case StatementKind::Sequence:
-      PrintStatement(s->GetSequence().stmt, depth);
+      GetSequence().stmt->PrintDepth(depth, out);
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       } else {
-        std::cout << " ";
+        out << " ";
       }
-      PrintStatement(s->GetSequence().next, depth - 1);
+      if (GetSequence().next) {
+        GetSequence().next->PrintDepth(depth - 1, out);
+      }
       break;
     case StatementKind::Block:
-      std::cout << "{";
+      out << "{";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
-      PrintStatement(s->GetBlock().stmt, depth);
-      if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+      if (GetBlock().stmt) {
+        GetBlock().stmt->PrintDepth(depth, out);
+        if (depth < 0 || depth > 1) {
+          out << "\n";
+        }
       }
-      std::cout << "}";
+      out << "}";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
       break;
     case StatementKind::Continuation:
-      std::cout << "continuation " << s->GetContinuation().continuation_variable
-                << " ";
+      out << "continuation " << GetContinuation().continuation_variable << " ";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
-      PrintStatement(s->GetContinuation().body, depth - 1);
+      GetContinuation().body->PrintDepth(depth - 1, out);
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
       break;
     case StatementKind::Run:
-      std::cout << "run ";
-      PrintExp(s->GetRun().argument);
-      std::cout << ";";
+      out << "run " << *GetRun().argument << ";";
       break;
     case StatementKind::Await:
-      std::cout << "await;";
+      out << "await;";
       break;
   }
 }
+
 }  // namespace Carbon
