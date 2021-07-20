@@ -73,7 +73,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Pop() -> T {
-    CHECK(!IsEmpty() && "Can't pop from empty stack.");
+    CHECK(!IsEmpty()) << "Can't pop from empty stack.";
     auto r = head->curr;
     head = head->next;
     return r;
@@ -83,9 +83,9 @@ struct Stack {
   //
   // - Requires: n >= 0 && n <= Count()
   void Pop(int n) {
-    CHECK(n >= 0 && "Negative pop count disallowed.");
+    CHECK(n >= 0) << "Negative pop count disallowed.";
     while (n--) {
-      CHECK(head != nullptr && "Can only pop as many elements as stack has.");
+      CHECK(head != nullptr) << "Can only pop as many elements as stack has.";
       head = head->next;
     }
   }
@@ -103,7 +103,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Top() const -> T {
-    CHECK(!IsEmpty() && "Empty stack has no Top().");
+    CHECK(!IsEmpty()) << "Empty stack has no Top().";
     return head->curr;
   }
 
