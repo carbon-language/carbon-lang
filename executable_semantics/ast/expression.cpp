@@ -219,14 +219,12 @@ static void PrintOp(llvm::raw_ostream& out, Operator op) {
 
 static void PrintFields(llvm::raw_ostream& out,
                         const std::vector<FieldInitializer>& fields) {
-  bool comma = false;
-  for (const auto& field : fields) {
-    if (!comma) {
+  int i = 0;
+  for (auto iter = fields.begin(); iter != fields.end(); ++iter, ++i) {
+    if (i != 0) {
       out << ", ";
-    } else {
-      comma = true;
     }
-    out << field.name << " = " << *field.expression;
+    out << iter->name << " = " << *iter->expression;
   }
 }
 
