@@ -33,7 +33,7 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/interpreter",
-        "@llvm-project//llvm:Support",
+        "//executable_semantics/interpreter:typecheck",
     ],
 )
 

@@ -11,18 +11,25 @@
 namespace Carbon {
 
 struct FunctionDefinition {
+  FunctionDefinition() = default;
+  FunctionDefinition(int line_num, std::string name,
+                     const Expression* param_pattern,
+                     const Expression* return_type, const Statement* body)
+      : line_num(line_num),
+        name(std::move(name)),
+        param_pattern(param_pattern),
+        return_type(return_type),
+        body(body) {}
+
+  void Print() const { PrintDepth(-1); }
+  void PrintDepth(int depth) const;
+
   int line_num;
   std::string name;
   const Expression* param_pattern;
   const Expression* return_type;
   const Statement* body;
 };
-
-auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
-                const Expression* param, const Statement* body)
-    -> FunctionDefinition;
-void PrintFunDef(const FunctionDefinition&);
-void PrintFunDefDepth(const FunctionDefinition&, int);
 
 }  // namespace Carbon
 
