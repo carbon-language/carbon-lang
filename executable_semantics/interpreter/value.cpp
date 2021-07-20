@@ -463,8 +463,7 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::TypeType:
       return true;
     default:
-      llvm::errs() << "TypeEqual used to compare non-type values"
-                   << "\n"
+      llvm::errs() << "TypeEqual used to compare non-type values\n"
                    << *t1 << "\n"
                    << *t2 << "\n";
       exit(-1);

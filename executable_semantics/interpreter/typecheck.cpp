@@ -565,8 +565,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
                                    Expression::MakeTupleLiteral(line_num, {}));
     } else {
       llvm::errs()
-          << "control-flow reaches end of non-void function without a return"
-          << "\n";
+          << "control-flow reaches end of non-void function without a return\n";
       exit(-1);
     }
   }
