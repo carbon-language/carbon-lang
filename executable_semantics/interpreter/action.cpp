@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "executable_semantics/interpreter/action.h"
+
 #include <iterator>
 #include <map>
 #include <optional>
@@ -10,9 +12,7 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/stack.h"
-#include "executable_semantics/interpreter/typecheck.h"
 
 namespace Carbon {
 

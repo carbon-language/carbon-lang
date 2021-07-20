@@ -34,6 +34,7 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/interpreter",
+        "//executable_semantics/interpreter:typecheck",
     ],
 )
 

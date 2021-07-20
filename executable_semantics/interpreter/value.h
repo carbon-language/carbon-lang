@@ -241,6 +241,8 @@ struct Value {
       value;
 };
 
+auto CopyVal(const Value* val, int line_num) -> const Value*;
+
 auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
 

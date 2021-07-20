@@ -14,8 +14,9 @@
 #include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/interpreter/action.h"
+#include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
-#include "executable_semantics/interpreter/typecheck.h"
 #include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
@@ -29,107 +30,6 @@ void Step();
 // Auxiliary Functions
 //
 
-auto Heap::AllocateValue(const Value* v) -> Address {
-  // Putting the following two side effects together in this function
-  // ensures that we don't do anything else in between, which is really bad!
-  // Consider whether to include a copy of the input v in this function
-  // or to leave it up to the caller.
-  CHECK(v != nullptr);
-  Address a(values_.size());
-  values_.push_back(v);
-  alive_.push_back(true);
-  return a;
-}
-
-auto Heap::Read(const Address& a, int line_num) -> const Value* {
-  this->CheckAlive(a, line_num);
-  return values_[a.index]->GetField(a.field_path, line_num);
-}
-
-void Heap::Write(const Address& a, const Value* v, int line_num) {
-  CHECK(v != nullptr);
-  this->CheckAlive(a, line_num);
-  values_[a.index] = values_[a.index]->SetField(a.field_path, v, line_num);
-}
-
-void Heap::CheckAlive(const Address& address, int line_num) {
-  if (!alive_[address.index]) {
-    llvm::errs() << line_num << ": undefined behavior: access to dead value "
-                 << *values_[address.index] << "\n";
-    exit(-1);
-  }
-}
-
-auto CopyVal(const Value* val, int line_num) -> const Value* {
-  switch (val->tag()) {
-    case ValKind::TupleValue: {
-      std::vector<TupleElement> elements;
-      for (const TupleElement& element : val->GetTupleValue().elements) {
-        elements.push_back(
-            {.name = element.name, .value = CopyVal(element.value, line_num)});
-      }
-      return Value::MakeTupleValue(std::move(elements));
-    }
-    case ValKind::AlternativeValue: {
-      const Value* arg = CopyVal(val->GetAlternativeValue().argument, line_num);
-      return Value::MakeAlternativeValue(val->GetAlternativeValue().alt_name,
-                                         val->GetAlternativeValue().choice_name,
-                                         arg);
-    }
-    case ValKind::StructValue: {
-      const Value* inits = CopyVal(val->GetStructValue().inits, line_num);
-      return Value::MakeStructValue(val->GetStructValue().type, inits);
-    }
-    case ValKind::IntValue:
-      return Value::MakeIntValue(val->GetIntValue());
-    case ValKind::BoolValue:
-      return Value::MakeBoolValue(val->GetBoolValue());
-    case ValKind::FunctionValue:
-      return Value::MakeFunctionValue(val->GetFunctionValue().name,
-                                      val->GetFunctionValue().param,
-                                      val->GetFunctionValue().body);
-    case ValKind::PointerValue:
-      return Value::MakePointerValue(val->GetPointerValue());
-    case ValKind::ContinuationValue:
-      // Copying a continuation is "shallow".
-      return val;
-    case ValKind::FunctionType:
-      return Value::MakeFunctionType(
-          CopyVal(val->GetFunctionType().param, line_num),
-          CopyVal(val->GetFunctionType().ret, line_num));
-
-    case ValKind::PointerType:
-      return Value::MakePointerType(
-          CopyVal(val->GetPointerType().type, line_num));
-    case ValKind::IntType:
-      return Value::MakeIntType();
-    case ValKind::BoolType:
-      return Value::MakeBoolType();
-    case ValKind::TypeType:
-      return Value::MakeTypeType();
-    case ValKind::AutoType:
-      return Value::MakeAutoType();
-    case ValKind::ContinuationType:
-      return Value::MakeContinuationType();
-    case ValKind::StructType:
-    case ValKind::ChoiceType:
-    case ValKind::BindingPlaceholderValue:
-    case ValKind::AlternativeConstructorValue:
-      return val;  // no need to copy these because they are immutable?
-      // No, they need to be copied so they don't get killed. -Jeremy
-  }
-}
-
-void Heap::Deallocate(const Address& address) {
-  CHECK(address.field_path.IsEmpty());
-  if (alive_[address.index]) {
-    alive_[address.index] = false;
-  } else {
-    llvm::errs() << "runtime error, deallocating an already dead value\n";
-    exit(-1);
-  }
-}
-
 void PrintEnv(Env values, llvm::raw_ostream& out) {
   for (const auto& [name, address] : values) {
     out << name << ": ";
@@ -139,15 +39,8 @@ void PrintEnv(Env values, llvm::raw_ostream& out) {
 }
 
 //
-// Frame and State Operations
+// State Operations
 //
-
-void Frame::Print(llvm::raw_ostream& out) const {
-  out << name;
-  out << "{";
-  Action::PrintList(todo, out);
-  out << "}";
-}
 
 void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out) {
   if (!ls.IsEmpty()) {
@@ -157,20 +50,6 @@ void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out) {
       PrintStack(ls, out);
     }
   }
-}
-
-void Heap::Print(llvm::raw_ostream& out) const {
-  for (size_t i = 0; i < values_.size(); ++i) {
-    PrintAddress(Address(i), out);
-    out << ", ";
-  }
-}
-
-void Heap::PrintAddress(const Address& a, llvm::raw_ostream& out) const {
-  if (!alive_[a.index]) {
-    out << "!!";
-  }
-  out << *values_[a.index];
 }
 
 auto CurrentEnv(State* state) -> Env {
