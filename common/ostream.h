@@ -2,10 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_OUTPUT_H_
-#define COMMON_OUTPUT_H_
+#ifndef COMMON_OSTREAM_H_
+#define COMMON_OSTREAM_H_
 
 #include "llvm/Support/raw_ostream.h"
+
+namespace Carbon {
 
 // Support ostream << for types which implement:
 //   void Print(llvm::raw_ostream& out) const;
@@ -15,4 +17,6 @@ auto operator<<(llvm::raw_ostream& out, const T& obj) -> llvm::raw_ostream& {
   return out;
 }
 
-#endif  // COMMON_OUTPUT_H_
+}  // namespace Carbon
+
+#endif  // COMMON_OSTREAM_H_
