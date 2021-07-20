@@ -36,12 +36,6 @@ void ExpectPointerType(int line_num, const std::string& context,
   }
 }
 
-void PrintTypeEnv(llvm::raw_ostream& out, TypeEnv types) {
-  for (const auto& [name, value] : types) {
-    out << name << ": " << *value << ", ";
-  }
-}
-
 // Reify type to type expression.
 auto ReifyType(const Value* t, int line_num) -> const Expression* {
   switch (t->tag()) {

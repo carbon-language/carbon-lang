@@ -17,8 +17,6 @@ namespace Carbon {
 
 using TypeEnv = Dictionary<std::string, const Value*>;
 
-void PrintTypeEnv(llvm::raw_ostream& out, TypeEnv types);
-
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
 struct TCResult {
