@@ -7,11 +7,11 @@
 
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 

@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/interpreter/field_path.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 

@@ -25,13 +25,13 @@ cc_library(
         ":address",
         ":containers",
         "//common:check",
+        "//common:ostream",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -39,7 +39,7 @@ cc_library(
     name = "field_path",
     hdrs = ["field_path.h"],
     deps = [
-        "@llvm-project//llvm:Support",
+        "//common:ostream",
     ],
 )
 
@@ -48,7 +48,7 @@ cc_library(
     hdrs = ["address.h"],
     deps = [
         ":field_path",
-        "@llvm-project//llvm:Support",
+        "//common:ostream",
     ],
 )
 

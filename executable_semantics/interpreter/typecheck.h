@@ -7,11 +7,11 @@
 
 #include <set>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/interpreter.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 

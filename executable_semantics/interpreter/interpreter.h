@@ -9,12 +9,12 @@
 #include <utility>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 

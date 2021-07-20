@@ -4,8 +4,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 
-#include "common/ostream.h"
-
 namespace Carbon {
 
 auto Declaration::MakeFunctionDeclaration(FunctionDefinition definition)
