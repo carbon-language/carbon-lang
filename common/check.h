@@ -14,10 +14,7 @@ namespace CheckInternal {
 // Wraps a stream and exiting for CHECK.
 class ExitWrapper {
  public:
-  ExitWrapper() {
-    // Start by printing a stack trace.
-    llvm::sys::PrintStackTrace(llvm::errs());
-  }
+  ExitWrapper() {}
   ~ExitWrapper() {
     // Finish with a newline.
     llvm::errs() << "\n";
@@ -26,8 +23,14 @@ class ExitWrapper {
 
   // Indicates that initial input is in, so this is where a ": " should be added
   // before user input.
-  ExitWrapper& add_separator() {
+  ExitWrapper& AddSeparator() {
     separator = true;
+    return *this;
+  }
+
+  // Prints the current stack trace.
+  ExitWrapper& PrintStackTrace() {
+    llvm::sys::PrintStackTrace(llvm::errs());
     return *this;
   }
 
@@ -53,12 +56,26 @@ class ExitWrapper {
 
 }  // namespace CheckInternal
 
-// Checks the given condition, and if it's false, prints an error and exits.
+// Checks the given condition, and if it's **false**, prints the stack, an
+// error, and exits.
+//
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";
-#define CHECK(condition)                                             \
-  (!(condition)) &&                                                  \
-      (CheckInternal::ExitWrapper() << "CHECK failure: " #condition) \
-          .add_separator()
+// Would print:
+//   <stack trace>
+//   CHECK failure: is_valid: Data is not valid!
+#define CHECK(condition)                                            \
+  (!(condition)) && (CheckInternal::ExitWrapper().PrintStackTrace() \
+                     << "CHECK failure: " #condition)               \
+                        .AddSeparator()
+
+// Checks the given condition, and if it's **true**, prints an error and exits.
+//
+// For example:
+//   FATAL_IF(is_invalid) << "Data is not valid!";
+// Would print:
+//   FATAL: Data is not valid!
+#define FATAL_IF(condition) \
+  ((condition)) && (CheckInternal::ExitWrapper() << "FATAL: ")
 
 #endif  // COMMON_CHECK_H_
