@@ -93,7 +93,7 @@ Properties:
 Expected in idiomatic Carbon-only code.
 
 **Background:** Kotlin has a dedicated concise syntax for defining
-["data classes"](https://kotlinlang.org/docs/data-classes.html) that avoids
+[_data classes_](https://kotlinlang.org/docs/data-classes.html) that avoids
 boilerplate. Python has a
 [data class library](https://docs.python.org/3/library/dataclasses.html),
 proposed in [PEP 557](https://www.python.org/dev/peps/pep-0557/), that fills a
@@ -314,9 +314,8 @@ dynamic dispatch or a
 are never overridden, and derived types only add data and methods. There are
 some cases where this is done in C++ but would be done differently in Carbon:
 
--   For implementation reuse without subtyping, in Carbon use mixins or
-    composition instead of traditional inheritance. Carbon won't support private
-    inheritance.
+-   For implementation reuse without subtyping, Carbon code should use mixins or
+    composition. Carbon won't support private inheritance.
 -   Carbon will allow data members to have size zero, so the
     [empty-base optimization](https://en.cppreference.com/w/cpp/language/ebo) is
     unnecessary.
@@ -680,8 +679,8 @@ Other type constants can provisionally be defined using a `let` declaration:
 
 ```
 struct MyStruct {
-  let Pi : Float32 = 3.141592653589793;
-  let IndexType : Type = Int;
+  let Pi: Float32 = 3.141592653589793;
+  let IndexType: Type = Int;
 }
 ```
 
