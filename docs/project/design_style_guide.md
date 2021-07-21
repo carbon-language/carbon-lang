@@ -37,8 +37,11 @@ documentation.
 
 -   Links to issues and to complete proposals should use the text `#nnnn`, where
     `nnnn` is the issue number, and should link to the issue or pull request on
-    GitHub. It can be helpful to mention the proposal title. For example, `[#123](https://github.com/carbon-language/carbon-lang/pull/123): Widget painting`.
--   Links to specific sections of a proposal should use section title and link to the repository copy of the proposal file. For example,
+    GitHub. It can be helpful to mention the proposal title. For example,
+    `[#123](https://github.com/carbon-language/carbon-lang/pull/123): Widget painting`.
+-   Links to specific sections of a proposal should link to the repository copy
+    of the proposal file, using the section title or other appropriate link
+    text. For example,
     `[Painting details](/docs/proposals/p0123.md#painting-details)`
 
 ## Document structure
@@ -72,7 +75,7 @@ that were considered, along with references to the proposals in which those
 designs were discussed. For example:
 
 ```md
--   [Paint widgets from bottom to top](/docs/proposals/p999999.md#alternatives-considered).
+-   [Paint widgets from bottom to top](/docs/proposals/p0123.md#alternatives-considered).
 ```
 
 ### References
@@ -87,8 +90,7 @@ For example:
 
 ```md
 -   [Wikipedia example page](https://en.wikipedia.org/wiki/Wikipedia:Example)
--   Proposal
-    [#999999](https://github.com/carbon-language/carbon-lang/pull/999999):
+-   Proposal [#123](https://github.com/carbon-language/carbon-lang/pull/123):
     widget painting.
 ```
 
