@@ -1,4 +1,4 @@
-10: type error in return
+ERROR: 10: type error in return
 expected: ()
 actual: Int
 EXIT CODE: 255

@@ -4,6 +4,8 @@
 
 #include "executable_semantics/ast/expression.h"
 
+#include "executable_semantics/common/error.h"
+
 namespace Carbon {
 
 auto Expression::GetIdentifierExpression() const
@@ -166,9 +168,9 @@ auto Expression::MakeTupleLiteral(int line_num,
   for (auto& arg : args) {
     if (arg.name == "") {
       if (seen_named_member) {
-        llvm::errs() << line_num
-                     << ": positional members must come before named members\n";
-        exit(-1);
+        FatalUserError()
+            << line_num
+            << ": positional members must come before named members";
       }
       arg.name = std::to_string(i);
       ++i;
