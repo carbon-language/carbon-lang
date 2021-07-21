@@ -282,9 +282,11 @@ changes form part of the proposal, and need not be additionally described in the
 proposal document beyond a mention in the "Proposal" section that such changes
 exist. For example:
 
-> \#\# Proposal
->
-> See the proposed changes to the design documents.
+``md
+## Proposal
+
+See the proposed changes to the design documents.
+``
 
 Readers of proposals are expected to consult the PR or the git commit that
 merged the PR in order to understand the proposed changes.
