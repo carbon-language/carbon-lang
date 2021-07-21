@@ -22,8 +22,10 @@ namespace Carbon {
 auto parse(const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   yyin = fopen(input_file_name.c_str(), "r");
-  USER_ERROR_IF(yyin == nullptr) << "Error opening '" << input_file_name
-                                 << "': " << std::strerror(errno) << "\n";
+  if (yyin == nullptr) {
+    UserError() << "Error opening '" << input_file_name
+                << "': " << std::strerror(errno);
+  }
 
   std::optional<AST> parsed_input = std::nullopt;
   ParseAndLexContext context(input_file_name);

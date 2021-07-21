@@ -19,18 +19,20 @@ namespace Carbon {
 
 void ExpectType(int line_num, const std::string& context, const Value* expected,
                 const Value* actual) {
-  USER_ERROR_IF(!TypeEqual(expected, actual))
-      << line_num << ": type error in " << context << "\n"
-      << "expected: " << *expected << "\n"
-      << "actual: " << *actual;
+  if (!TypeEqual(expected, actual)) {
+    UserError() << line_num << ": type error in " << context << "\n"
+                << "expected: " << *expected << "\n"
+                << "actual: " << *actual;
+  }
 }
 
 void ExpectPointerType(int line_num, const std::string& context,
                        const Value* actual) {
-  USER_ERROR_IF(actual->tag() != ValKind::PointerType)
-      << line_num << ": type error in " << context << "\n"
-      << "expected a pointer type\n"
-      << "actual: " << *actual;
+  if (actual->tag() != ValKind::PointerType) {
+    UserError() << line_num << ": type error in " << context << "\n"
+                << "expected a pointer type\n"
+                << "actual: " << *actual;
+  }
 }
 
 // Reify type to type expression.

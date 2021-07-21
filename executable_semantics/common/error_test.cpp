@@ -8,18 +8,8 @@
 
 namespace Carbon {
 
-TEST(ErrorTest, UserErrorIfTrue) {
-  ASSERT_DEATH({ USER_ERROR_IF(true) << "test"; }, "ERROR: test\n");
-}
-
-TEST(ErrorTest, UserErrorIfFalse) {
-  bool called = false;
-  auto callback = [&]() {
-    called = true;
-    return "called";
-  };
-  USER_ERROR_IF(false) << callback();
-  EXPECT_FALSE(called);
+TEST(ErrorTest, UserError) {
+  ASSERT_DEATH({ UserError() << "test"; }, "ERROR: test\n");
 }
 
 }  // namespace Carbon

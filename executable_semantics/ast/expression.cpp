@@ -167,8 +167,10 @@ auto Expression::MakeTupleLiteral(int line_num,
   bool seen_named_member = false;
   for (auto& arg : args) {
     if (arg.name == "") {
-      USER_ERROR_IF(seen_named_member)
-          << line_num << ": positional members must come before named members";
+      if (seen_named_member) {
+        UserError() << line_num
+                    << ": positional members must come before named members";
+      }
       arg.name = std::to_string(i);
       ++i;
     } else {
