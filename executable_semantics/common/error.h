@@ -11,15 +11,15 @@
 
 namespace Carbon {
 
-// Prints an error and exits.
-// This should be used for non-recoverable errors with user input.
+// Prints an error and exits. This should be used for non-recoverable errors
+// with user input.
 //
 // For example:
-//   UserError() << "Input is not valid!";
-class UserError {
+//   FatalUserError() << "Input is not valid!";
+class FatalUserError {
  public:
-  UserError() { llvm::errs() << "ERROR: "; }
-  ~UserError() {
+  FatalUserError() { llvm::errs() << "ERROR: "; }
+  ~FatalUserError() {
     // Finish with a newline.
     llvm::errs() << "\n";
     exit(-1);
@@ -27,7 +27,7 @@ class UserError {
 
   // Forward output to llvm::errs.
   template <typename T>
-  UserError& operator<<(const T& message) {
+  FatalUserError& operator<<(const T& message) {
     llvm::errs() << message;
     return *this;
   }

@@ -8,8 +8,8 @@
 
 namespace Carbon {
 
-TEST(ErrorTest, UserError) {
-  ASSERT_DEATH({ UserError() << "test"; }, "ERROR: test\n");
+TEST(ErrorTest, FatalUserError) {
+  ASSERT_DEATH({ FatalUserError() << "test"; }, "ERROR: test\n");
 }
 
 }  // namespace Carbon
