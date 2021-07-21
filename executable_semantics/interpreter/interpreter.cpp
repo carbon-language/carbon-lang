@@ -14,10 +14,10 @@
 #include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
-#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
@@ -42,12 +42,13 @@ void PrintEnv(Env values, llvm::raw_ostream& out) {
 // State Operations
 //
 
-void PrintStack(Stack<Frame*> ls, llvm::raw_ostream& out) {
-  if (!ls.IsEmpty()) {
-    out << *ls.Pop();
-    if (!ls.IsEmpty()) {
+void PrintStack(const Stack<Frame*>& ls, llvm::raw_ostream& out) {
+  auto it = ls.begin();
+  while (it != ls.end()) {
+    out << **it;
+    ++it;
+    if (it != ls.end()) {
       out << " :: ";
-      PrintStack(ls, out);
     }
   }
 }
@@ -228,8 +229,9 @@ void DeallocateScope(int line_num, Scope* scope) {
 }
 
 void DeallocateLocals(int line_num, Frame* frame) {
-  for (auto scope : frame->scopes) {
-    DeallocateScope(line_num, scope);
+  while (!frame->scopes.IsEmpty()) {
+    DeallocateScope(line_num, frame->scopes.Top());
+    frame->scopes.Pop();
   }
 }
 
@@ -1141,8 +1143,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
     PrintState(llvm::outs());
   }
 
-  while (state->stack.CountExceeds(1) ||
-         state->stack.Top()->todo.CountExceeds(1) ||
+  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
     if (tracing_output) {
@@ -1160,8 +1161,7 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  while (state->stack.CountExceeds(1) ||
-         state->stack.Top()->todo.CountExceeds(1) ||
+  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
   }

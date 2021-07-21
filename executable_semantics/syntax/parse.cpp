@@ -8,9 +8,9 @@
 
 #include "common/check.h"
 #include "executable_semantics/common/error.h"
+#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
-#include "executable_semantics/tracing_flag.h"
 
 extern FILE* yyin;
 
