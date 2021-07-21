@@ -30,8 +30,8 @@ conventions for the language design, where they have been established.
 ## General
 
 The language design documentation follows the
-[style conventions](/CONTRIBUTING.html#google-docs-and-markdown)
-for Carbon documentation.
+[style conventions](/CONTRIBUTING.html#google-docs-and-markdown) for Carbon
+documentation.
 
 ## Formatting
 
@@ -69,10 +69,10 @@ This section should provide bullet points briefly describing alternative designs
 that were considered, along with references to the proposals in which those
 designs were discussed. For example:
 
-``md
+```md
 -   Paint widgets from bottom to top
     ([#999999](https://github.com/carbon-language/carbon-lang/pull/999999)).
-``
+```
 
 ### References
 
@@ -84,11 +84,11 @@ This section should provide bullet points linking to the following:
 
 For example:
 
-``md
+```md
 -   [Wikipedia example page](https://en.wikipedia.org/wiki/Wikipedia:Example)
 -   Proposal: widget painting
     ([#999999](https://github.com/carbon-language/carbon-lang/pull/999999)).
-``
+```
 
 Links to related parts of the design should be included inline, where relevant,
 not in the references section.
