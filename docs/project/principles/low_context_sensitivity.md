@@ -56,6 +56,12 @@ understand and act in unsurprising ways.
 If that next step is to loosen restrictions, that is generally easier to do
 while maintaining compatibility with existing code than adding new restrictions.
 
+**Question:** A way in which context could be less expensive is if the stakes
+are low. That is if a mistake in understanding is unlikely to lead to a bug or
+cause a misunderstanding in the semantics of code.
+
+A specific example of this is when the compiler can detect mistakes.
+
 **Question:** In the Rust world, they accept context that would be potentially
 expensive in some cases where the compiler can verify that what is written is
 correct. How much do we want to allow that? Context affecting meaning is much
@@ -63,6 +69,15 @@ more concerning than context affecting validity that the compiler can check.
 
 **Background:** See
 [this post on language ergonomics in the Rust blog](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
+
+An example of this situation in Rust is that the same syntax is used for a move
+and a copy of the value in a variable. Those cases are distinguished by whether
+the type implements a specific trait, which may not be readily ascertained. The
+compiler verifies that the code never uses a variable that is no longer valid
+due to having been moved from, which is expected to catch the problems that
+could arise from this difference. Otherwise the semantic difference between a
+move and a copy is considered in Rust to be low-enough stakes for there to be no
+need to signal that difference in the code.
 
 ## Applications of the principle
 
