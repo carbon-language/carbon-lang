@@ -53,6 +53,7 @@
   {}
 #endif
 
+#pragma GCC visibility push(hidden)
 
 extern "C" {
 
