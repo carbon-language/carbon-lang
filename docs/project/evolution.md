@@ -271,7 +271,7 @@ help readers rapidly skim the material.
 
 The purpose of the proposal document is to present the case for deciding to
 adopt the proposal. Any information that feeds into making that decision, and
-that should not be maintained as part of our living design docuemntation,
+that should not be maintained as part of our living design documentation,
 belongs in the proposal document. This includes background material to introduce
 the problem, comparisons to any alternative designs that were considered and any
 other current proposals in the same area, records of informal polls taken to
@@ -294,8 +294,7 @@ merged the PR in order to understand the proposed changes.
 
 The author of a proposal is not required to include changes to the design
 documentation as part of a proposal, and it may in some cases be preferable to
-decouple the proposal process from updating the design. In this case, the
-proposal, if accepted, will be implemented through a series of future PRs to the
+decouple the proposal process from updating the design. When accepted, the proposal would then be implemented through a series of future PRs to the
 rest of the project, and the proposal document should describe what is being
 proposed in enough detail to validate that those future PRs properly implement
 the proposed direction.
