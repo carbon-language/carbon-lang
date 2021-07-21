@@ -269,18 +269,19 @@ help readers rapidly skim the material.
 
 #### What goes in the proposal document
 
-A proposal PR need not contain any changes beyond the proposal document. In this
-case, the changes to the rest of the Carbon project resulting from the proposal
-should be implemented through a series of future PRs to the rest of the project,
-and the proposal document should describe what is being proposed in enough
-detail to validate that those future PRs properly implement the proposed
-direction.
+The purpose of the proposal document is to present the case for deciding to
+adopt the proposal. Any information that feeds into making that decision, and
+that should not be maintained as part of our living design docuemntation,
+belongs in the proposal document. This includes background material to introduce
+the problem, comparisons to any alternative designs that were considered and any
+other current proposals in the same area, records of informal polls taken to
+determine community preferences, and rationale for the decision based on the
+project's goals.
 
-As an alternative, the proposal PR can contain related changes to the Carbon
-project, such as updates to the design documentation. In this case, those
-changes form part of the proposal, and need not be additionally described in the
-proposal document beyond a mention in the "Proposal" section that such changes
-exist. For example:
+The proposal PR can contain related changes to the Carbon project, such as
+updates to the design documentation. Those changes form part of the proposal,
+and need not be additionally described in the proposal document beyond a mention
+in the "Proposal" section that such changes exist. For example:
 
 ```md
 ## Proposal
@@ -291,10 +292,13 @@ See the proposed changes to the design documents.
 Readers of proposals are expected to consult the PR or the git commit that
 merged the PR in order to understand the proposed changes.
 
-Regardless of whether the proposed change is described in the proposal document
-or in the changes to the rest of the project, the proposal document should
-contain any relevant analysis of alternatives and a rationale for the proposal
-based on Carbon's goals.
+The author of a proposal is not required to include changes to the design
+documentation as part of a proposal, and it may in some cases be preferable to
+decouple the proposal process from updating the design. In this case, the
+proposal, if accepted, will be implemented through a series of future PRs to the
+rest of the project, and the proposal document should describe what is being
+proposed in enough detail to validate that those future PRs properly implement
+the proposed direction.
 
 #### Open questions
 

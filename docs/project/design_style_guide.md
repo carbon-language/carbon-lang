@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Background](#background)
 -   [General](#general)
--   [Formatting](#formatting)
+-   [Linking](#linking)
 -   [Document structure](#document-structure)
     -   [Overview and detailed design](#overview-and-detailed-design)
     -   [Alternatives considered](#alternatives-considered)
@@ -33,11 +33,13 @@ The language design documentation follows the
 [style conventions](/CONTRIBUTING.html#google-docs-and-markdown) for Carbon
 documentation.
 
-## Formatting
+## Linking
 
--   Links to issues and proposals should use the text `#nnnn`, where `nnnn` is
-    the issue number, and should link to the issue or pull request on GitHub,
-    not to the P-numbered proposal document in /docs/proposals.
+-   Links to issues and to complete proposals should use the text `#nnnn`, where
+    `nnnn` is the issue number, and should link to the issue or pull request on
+    GitHub.
+-   Links to specific sections of a proposal should instead link to
+    `/docs/proposals/pNNNN.md#anchor`.
 
 ## Document structure
 
@@ -58,10 +60,10 @@ following BLUF principles. Where the overview does not fully cover the detailed
 design, additional sections can be added as needed to more completely describe
 the design.
 
-The aim of these sections is to describe the design as it is, how this portion
-of the design fits into the overall design of Carbon, and how this part of the
-design can be used to solve programming problems. Rationale for this choice of
-design as compared to others should not be included.
+The aim of these sections is to describe the design choices that have been made,
+how those choices fit into the overall design of Carbon, the rationale for those
+choices, and how and why those choices differ from other languages to which
+Carbon is likely to be compared, particularly C++, Rust, and Swift.
 
 ### Alternatives considered
 
@@ -70,8 +72,7 @@ that were considered, along with references to the proposals in which those
 designs were discussed. For example:
 
 ```md
--   Paint widgets from bottom to top
-    ([#999999](https://github.com/carbon-language/carbon-lang/pull/999999)).
+-   [Paint widgets from bottom to top](/docs/proposals/p999999.md#alternatives-considered).
 ```
 
 ### References
@@ -80,14 +81,15 @@ This section should provide bullet points linking to the following:
 
 -   External documents providing background on the topic or additional useful
     information.
--   Proposals that contributed to the design described in this document.
+-   Each proposal that contributed to the design described in this document.
 
 For example:
 
 ```md
 -   [Wikipedia example page](https://en.wikipedia.org/wiki/Wikipedia:Example)
--   Proposal: widget painting
-    ([#999999](https://github.com/carbon-language/carbon-lang/pull/999999)).
+-   Proposal
+    [#999999](https://github.com/carbon-language/carbon-lang/pull/999999):
+    widget painting.
 ```
 
 Links to related parts of the design should be included inline, where relevant,
