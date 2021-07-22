@@ -4960,11 +4960,14 @@ for C++ interop.
 
 -   Should be able to inherit from an object-safe interface, and the result
     should be considered to implement that interface.
--   An ABC should be considered an object-safe interface.
+-   An ABC without data-members should be considered an object-safe interface.
 -   You should be able to construct an object from a "pointer to type `T`
     implementing `MyInterface`" that inherits from `MyInterface` as an ABC.
     Ideally, this object would have type
-    [`DynPtr(MyInterface)'](#dynamic-pointer-type).
+    [`DynPtr(MyInterface)`](#dynamic-pointer-type).
+-   Should be able to declare a method of an interface with an implementation as
+    `final`, to match the behavior and performance of a non-virtual method in a
+    base class.
 
 ## Notes
 
