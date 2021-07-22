@@ -1,2 +1,2 @@
-12: undefined behavior: access to dead value 1
+ERROR: 12: undefined behavior: access to dead value 1
 EXIT CODE: 255

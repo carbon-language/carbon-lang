@@ -9,7 +9,27 @@
 namespace Carbon {
 
 TEST(ErrorTest, FatalUserError) {
-  ASSERT_DEATH({ FatalUserError() << "test"; }, "ERROR: test\n");
+  ASSERT_DEATH({ FatalUserError(ErrorLine::None) << "test"; }, "ERROR: test\n");
+}
+
+TEST(ErrorTest, FatalRuntimeError) {
+  ASSERT_DEATH({ FatalRuntimeError(ErrorLine::None) << "test"; },
+               "RUNTIME ERROR: test\n");
+}
+
+TEST(ErrorTest, FatalCompilationError) {
+  ASSERT_DEATH({ FatalCompilationError(ErrorLine::None) << "test"; },
+               "COMPILATION ERROR: test\n");
+}
+
+TEST(ErrorTest, FatalUserErrorLine) {
+  ASSERT_DEATH({ FatalUserError(1) << "test"; }, "ERROR: 1: test\n");
+}
+
+auto NoReturnRequired() -> int { FatalUserError(ErrorLine::None) << "test"; }
+
+TEST(ErrorTest, NoReturnRequired) {
+  ASSERT_DEATH({ NoReturnRequired(); }, "ERROR: test\n");
 }
 
 }  // namespace Carbon
