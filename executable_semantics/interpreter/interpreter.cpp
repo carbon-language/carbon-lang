@@ -344,7 +344,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values = globals;
-  // Bring the deduced parameters into scope
+  // Bring the deduced parameters into scope.
   for (const auto& deduced : definition.deduced_parameters) {
     Address a =
         state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
