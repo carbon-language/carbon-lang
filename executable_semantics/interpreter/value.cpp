@@ -5,10 +5,8 @@
 #include "executable_semantics/interpreter/value.h"
 
 #include <algorithm>
-#include <iostream>
 
 #include "common/check.h"
-#include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
 
@@ -101,15 +99,13 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
   }
 }
 
-auto FindTupleField(const std::string& name, const Value* tuple)
-    -> std::optional<Address> {
-  CHECK(tuple->tag() == ValKind::TupleValue);
-  for (const TupleElement& element : tuple->GetTupleValue().elements) {
+auto TupleValue::FindField(const std::string& name) const -> const Value* {
+  for (const TupleElement& element : elements) {
     if (element.name == name) {
-      return element.address;
+      return element.value;
     }
   }
-  return std::nullopt;
+  return nullptr;
 }
 
 auto Value::MakeIntValue(int i) -> const Value* {
@@ -152,7 +148,7 @@ auto Value::MakeTupleValue(std::vector<TupleElement> elements) -> const Value* {
 }
 
 auto Value::MakeAlternativeValue(std::string alt_name, std::string choice_name,
-                                 Address argument) -> const Value* {
+                                 const Value* argument) -> const Value* {
   auto* v = new Value();
   v->value = AlternativeValue({.alt_name = std::move(alt_name),
                                .choice_name = std::move(choice_name),
@@ -177,8 +173,8 @@ auto Value::MakeContinuationValue(std::vector<Frame*> stack) -> Value* {
   return v;
 }
 
-auto Value::MakeBindingPlaceholderValue(std::string name, const Value* type)
-    -> const Value* {
+auto Value::MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                        const Value* type) -> const Value* {
   auto* v = new Value();
   v->value = BindingPlaceholderValue({.name = std::move(name), .type = type});
   return v;
@@ -258,56 +254,149 @@ auto Value::MakeVariableType(std::string name) -> const Value* {
   return v;
 }
 
-auto PrintValue(const Value* val, std::ostream& out) -> void {
-  switch (val->tag()) {
+namespace {
+
+auto GetMember(const Value* v, const std::string& f, int line_num)
+    -> const Value* {
+  switch (v->tag()) {
+    case ValKind::StructValue: {
+      const Value* field =
+          v->GetStructValue().inits->GetTupleValue().FindField(f);
+      if (field == nullptr) {
+        llvm::errs() << "runtime error, member " << f << " not in " << *v
+                     << "\n";
+        exit(-1);
+      }
+      return field;
+    }
+    case ValKind::TupleValue: {
+      const Value* field = v->GetTupleValue().FindField(f);
+      if (field == nullptr) {
+        llvm::errs() << "field " << f << " not in " << *v << "\n";
+        exit(-1);
+      }
+      return field;
+    }
+    case ValKind::ChoiceType: {
+      if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
+        llvm::errs() << "alternative " << f << " not in " << *v << "\n";
+        exit(-1);
+      }
+      return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
+    }
+    default:
+      llvm::errs() << "field access not allowed for value " << *v << "\n";
+      exit(-1);
+  }
+}
+
+}  // namespace
+
+auto Value::GetField(const FieldPath& path, int line_num) const
+    -> const Value* {
+  const Value* value = this;
+  for (const std::string& field : path.components) {
+    value = GetMember(value, field, line_num);
+  }
+  return value;
+}
+
+namespace {
+
+auto SetFieldImpl(const Value* value,
+                  std::vector<std::string>::const_iterator path_begin,
+                  std::vector<std::string>::const_iterator path_end,
+                  const Value* field_value, int line_num) -> const Value* {
+  if (path_begin == path_end) {
+    return field_value;
+  }
+  switch (value->tag()) {
+    case ValKind::StructValue: {
+      return SetFieldImpl(value->GetStructValue().inits, path_begin, path_end,
+                          field_value, line_num);
+    }
+    case ValKind::TupleValue: {
+      std::vector<TupleElement> elements = value->GetTupleValue().elements;
+      auto it = std::find_if(elements.begin(), elements.end(),
+                             [path_begin](const TupleElement& element) {
+                               return element.name == *path_begin;
+                             });
+      if (it == elements.end()) {
+        llvm::errs() << "field " << *path_begin << " not in " << *value << "\n";
+        exit(-1);
+      }
+      it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
+                               line_num);
+      return Value::MakeTupleValue(elements);
+    }
+    default:
+      llvm::errs() << "field access not allowed for value " << *value << "\n";
+      exit(-1);
+  }
+}
+
+}  // namespace
+
+auto Value::SetField(const FieldPath& path, const Value* field_value,
+                     int line_num) const -> const Value* {
+  return SetFieldImpl(this, path.components.begin(), path.components.end(),
+                      field_value, line_num);
+}
+
+void Value::Print(llvm::raw_ostream& out) const {
+  switch (tag()) {
     case ValKind::AlternativeConstructorValue: {
-      out << val->GetAlternativeConstructorValue().choice_name << "."
-          << val->GetAlternativeConstructorValue().alt_name;
+      out << GetAlternativeConstructorValue().choice_name << "."
+          << GetAlternativeConstructorValue().alt_name;
       break;
     }
     case ValKind::BindingPlaceholderValue: {
-      PrintValue(val->GetBindingPlaceholderValue().type, out);
-      out << ": " << val->GetBindingPlaceholderValue().name;
+      const BindingPlaceholderValue& placeholder = GetBindingPlaceholderValue();
+      if (placeholder.name.has_value()) {
+        out << *placeholder.name;
+      } else {
+        out << "_";
+      }
+      out << ": " << *placeholder.type;
       break;
     }
     case ValKind::AlternativeValue: {
-      out << "alt " << val->GetAlternativeValue().choice_name << "."
-          << val->GetAlternativeValue().alt_name << " ";
-      state->heap.PrintAddress(val->GetAlternativeValue().argument, out);
+      out << "alt " << GetAlternativeValue().choice_name << "."
+          << GetAlternativeValue().alt_name << " "
+          << *GetAlternativeValue().argument;
       break;
     }
     case ValKind::StructValue: {
-      out << val->GetStructValue().type->GetStructType().name;
-      PrintValue(val->GetStructValue().inits, out);
+      out << GetStructValue().type->GetStructType().name
+          << *GetStructValue().inits;
       break;
     }
     case ValKind::TupleValue: {
       out << "(";
       bool add_commas = false;
-      for (const TupleElement& element : val->GetTupleValue().elements) {
+      for (const TupleElement& element : GetTupleValue().elements) {
         if (add_commas) {
           out << ", ";
         } else {
           add_commas = true;
         }
 
-        out << element.name << " = ";
-        state->heap.PrintAddress(element.address, out);
+        out << element.name << " = " << *element.value;
       }
       out << ")";
       break;
     }
     case ValKind::IntValue:
-      out << val->GetIntValue();
+      out << GetIntValue();
       break;
     case ValKind::BoolValue:
-      out << std::boolalpha << val->GetBoolValue();
+      out << (GetBoolValue() ? "true" : "false");
       break;
     case ValKind::FunctionValue:
-      out << "fun<" << val->GetFunctionValue().name << ">";
+      out << "fun<" << GetFunctionValue().name << ">";
       break;
     case ValKind::PointerValue:
-      out << "ptr<" << val->GetPointerValue() << ">";
+      out << "ptr<" << GetPointerValue() << ">";
       break;
     case ValKind::BoolType:
       out << "Bool";
@@ -325,45 +414,100 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       out << "Continuation";
       break;
     case ValKind::PointerType:
-      PrintValue(val->GetPointerType().type, out);
-      out << "*";
+      out << *GetPointerType().type << "*";
       break;
     case ValKind::FunctionType:
       out << "fn ";
-      if (val->GetFunctionType().deduced.size() > 0) {
+      if (GetFunctionType().deduced.size() > 0) {
         out << "[";
         unsigned int i = 0;
-        for (const auto& deduced : val->GetFunctionType().deduced) {
+        for (const auto& deduced : GetFunctionType().deduced) {
           if (i != 0) {
-            std::cout << ", ";
+            out << ", ";
           }
-          std::cout << deduced.name << ":! ";
-          PrintExp(deduced.type);
+          out << deduced.name << ":! " << *deduced.type;
           ++i;
         }
         out << "]";
       }
-      PrintValue(val->GetFunctionType().param, out);
-      out << " -> ";
-      PrintValue(val->GetFunctionType().ret, out);
+      out << *GetFunctionType().param << " -> " << *GetFunctionType().ret;
       break;
     case ValKind::StructType:
-      out << "struct " << val->GetStructType().name;
+      out << "struct " << GetStructType().name;
       break;
     case ValKind::ChoiceType:
-      out << "choice " << val->GetChoiceType().name;
+      out << "choice " << GetChoiceType().name;
       break;
     case ValKind::VariableType:
-      out << val->GetVariableType().name;
+      out << GetVariableType().name;
       break;
     case ValKind::ContinuationValue:
-      out << "continuation[[";
-      for (Frame* frame : val->GetContinuationValue().stack) {
-        PrintFrame(frame, out);
-        out << " :: ";
-      }
-      out << "]]";
+      out << "continuation";
+      // TODO: Find a way to print useful information about the continuation
+      // without creating a dependency cycle.
       break;
+  }
+}
+
+auto CopyVal(const Value* val, int line_num) -> const Value* {
+  switch (val->tag()) {
+    case ValKind::TupleValue: {
+      std::vector<TupleElement> elements;
+      for (const TupleElement& element : val->GetTupleValue().elements) {
+        elements.push_back(
+            {.name = element.name, .value = CopyVal(element.value, line_num)});
+      }
+      return Value::MakeTupleValue(std::move(elements));
+    }
+    case ValKind::AlternativeValue: {
+      const Value* arg = CopyVal(val->GetAlternativeValue().argument, line_num);
+      return Value::MakeAlternativeValue(val->GetAlternativeValue().alt_name,
+                                         val->GetAlternativeValue().choice_name,
+                                         arg);
+    }
+    case ValKind::StructValue: {
+      const Value* inits = CopyVal(val->GetStructValue().inits, line_num);
+      return Value::MakeStructValue(val->GetStructValue().type, inits);
+    }
+    case ValKind::IntValue:
+      return Value::MakeIntValue(val->GetIntValue());
+    case ValKind::BoolValue:
+      return Value::MakeBoolValue(val->GetBoolValue());
+    case ValKind::FunctionValue:
+      return Value::MakeFunctionValue(val->GetFunctionValue().name,
+                                      val->GetFunctionValue().param,
+                                      val->GetFunctionValue().body);
+    case ValKind::PointerValue:
+      return Value::MakePointerValue(val->GetPointerValue());
+    case ValKind::ContinuationValue:
+      // Copying a continuation is "shallow".
+      return val;
+    case ValKind::FunctionType:
+      return Value::MakeFunctionType(
+          val->GetFunctionType().deduced,
+          CopyVal(val->GetFunctionType().param, line_num),
+          CopyVal(val->GetFunctionType().ret, line_num));
+
+    case ValKind::PointerType:
+      return Value::MakePointerType(
+          CopyVal(val->GetPointerType().type, line_num));
+    case ValKind::IntType:
+      return Value::MakeIntType();
+    case ValKind::BoolType:
+      return Value::MakeBoolType();
+    case ValKind::TypeType:
+      return Value::MakeTypeType();
+    case ValKind::AutoType:
+      return Value::MakeAutoType();
+    case ValKind::ContinuationType:
+      return Value::MakeContinuationType();
+    case ValKind::VariableType:
+    case ValKind::StructType:
+    case ValKind::ChoiceType:
+    case ValKind::BindingPlaceholderValue:
+    case ValKind::AlternativeConstructorValue:
+      // TODO: These should be copied so that they don't get destructed.
+      return val;
   }
 }
 
@@ -392,9 +536,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
             t2->GetTupleValue().elements[i].name) {
           return false;
         }
-        if (!TypeEqual(
-                state->heap.Read(t1->GetTupleValue().elements[i].address, 0),
-                state->heap.Read(t2->GetTupleValue().elements[i].address, 0))) {
+        if (!TypeEqual(t1->GetTupleValue().elements[i].value,
+                       t2->GetTupleValue().elements[i].value)) {
           return false;
         }
       }
@@ -408,10 +551,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::VariableType:
       return t1->GetVariableType().name == t2->GetVariableType().name;
     default:
-      std::cerr << "TypeEqual used to compare non-type values" << std::endl;
-      PrintValue(t1, std::cerr);
-      std::cerr << std::endl;
-      PrintValue(t2, std::cerr);
+      llvm::errs() << "TypeEqual used to compare non-type values\n"
+                   << *t1 << "\n"
+                   << *t2 << "\n";
       exit(-1);
   }
 }
@@ -431,8 +573,7 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
     if (iter == ts2.end()) {
       return false;
     }
-    if (!ValueEqual(state->heap.Read(element.address, line_num),
-                    state->heap.Read(iter->address, line_num), line_num)) {
+    if (!ValueEqual(element.value, iter->value, line_num)) {
       return false;
     }
   }
@@ -474,19 +615,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
     case ValKind::ContinuationValue:
-      std::cerr << "ValueEqual does not support this kind of value."
-                << std::endl;
-      exit(-1);
-  }
-}
-
-auto ToInteger(const Value* v) -> int {
-  switch (v->tag()) {
-    case ValKind::IntValue:
-      return v->GetIntValue();
-    default:
-      std::cerr << "expected an integer, not ";
-      PrintValue(v, std::cerr);
+      llvm::errs() << "ValueEqual does not support this kind of value.\n";
       exit(-1);
   }
 }

@@ -1,4 +1,4 @@
-8: type error in ==
+ERROR: 8: type error in ==
 expected: (0 = Int, 1 = Int)
 actual: (0 = Int)
 EXIT CODE: 255

@@ -1,4 +1,4 @@
-10: type error in argument deduction
+ERROR: 10: type error in argument deduction
 expected: Int
 actual: Bool
 EXIT CODE: 255

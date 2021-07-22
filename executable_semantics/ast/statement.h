@@ -7,6 +7,7 @@
 
 #include <list>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 
 namespace Carbon {
@@ -162,6 +163,8 @@ struct Statement {
   auto GetRun() const -> const Run&;
   auto GetAwait() const -> const Await&;
 
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
+
   inline auto tag() const -> StatementKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
   }
@@ -174,8 +177,6 @@ struct Statement {
                Run, Await>
       value;
 };
-
-void PrintStatement(const Statement*, int);
 
 }  // namespace Carbon
 

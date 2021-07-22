@@ -7,7 +7,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %{
 #include <cstdlib>
 #include <iostream>
+
+#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
+#include "llvm/ADT/StringExtras.h"
 %}
 
 /* Turn off legacy bits we don't need */
@@ -56,6 +59,7 @@ CONTINUATION_TYPE "__Continuation"
 CONTINUATION      "__continuation"
 RUN               "__run"
 AWAIT             "__await"
+UNDERSCORE        "_"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -116,6 +120,7 @@ operand_start [(A-Za-z0-9_"]
 {CONTINUATION}    { return yy::parser::make_CONTINUATION(context.current_token_position); }
 {RUN}      { return yy::parser::make_RUN(context.current_token_position); }
 {AWAIT}    { return yy::parser::make_AWAIT(context.current_token_position); }
+{UNDERSCORE}      { return yy::parser::make_UNDERSCORE(context.current_token_position); }
 
 "=" return yy::parser::make_EQUAL(context.current_token_position);
 "-" return yy::parser::make_MINUS(context.current_token_position);
@@ -207,8 +212,13 @@ operator and its operand, leading to three more cases:
 }
 
 . {
-  std::cerr << context.current_token_position << ": invalid character '"
-            << yytext[0] << "' in source file." << std::endl;
+  if (Carbon::tracing_output) {
+    // Print a newline because tracing prints an incomplete line
+    // "Reading a token: ".
+    std::cerr << std::endl;
+  }
+  std::cerr << context.current_token_position << ": invalid character '\\x"
+            << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file." << std::endl;
   std::exit(1);
 }
 

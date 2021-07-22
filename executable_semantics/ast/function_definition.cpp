@@ -4,51 +4,31 @@
 
 #include "executable_semantics/ast/function_definition.h"
 
-#include <iostream>
-
 namespace Carbon {
 
-auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
-                std::vector<GenericBinding> deduced_params,
-                const Expression* param_pattern, const Statement* body)
-    -> FunctionDefinition {
-  FunctionDefinition f;
-  f.line_num = line_num;
-  f.name = std::move(name);
-  f.return_type = ret_type;
-  f.deduced_parameters = std::move(deduced_params);
-  f.param_pattern = param_pattern;
-  f.body = body;
-  return f;
-}
-
-void PrintFunDefDepth(const FunctionDefinition& f, int depth) {
-  std::cout << "fn " << f.name << " ";
-  if (f.deduced_parameters.size() > 0) {
-    std::cout << "[";
+void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
+  out << "fn " << name << " ";
+  if (deduced_parameters.size() > 0) {
+    out << "[";
     unsigned int i = 0;
-    for (const auto& deduced : f.deduced_parameters) {
+    for (const auto& deduced : deduced_parameters) {
       if (i != 0) {
-        std::cout << ", ";
+        out << ", ";
       }
-      std::cout << deduced.name << ":! ";
-      PrintExp(deduced.type);
+      out << deduced.name << ":! ";
+      deduced.type->Print(out);
       ++i;
     }
-    std::cout << "]";
+    out << "]";
   }
-  PrintExp(f.param_pattern);
-  std::cout << " -> ";
-  PrintExp(f.return_type);
-  if (f.body) {
-    std::cout << " {" << std::endl;
-    PrintStatement(f.body, depth);
-    std::cout << std::endl << "}" << std::endl;
+  out << *param_pattern << " -> " << *return_type;
+  if (body) {
+    out << " {\n";
+    body->PrintDepth(depth, out);
+    out << "\n}\n";
   } else {
-    std::cout << ";" << std::endl;
+    out << ";\n";
   }
 }
-
-void PrintFunDef(const FunctionDefinition& f) { PrintFunDefDepth(f, -1); }
 
 }  // namespace Carbon

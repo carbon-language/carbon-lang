@@ -5,9 +5,12 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include "common/ostream.h"
 
 namespace Carbon {
 
@@ -74,7 +77,8 @@ struct IndexExpression {
 
 struct BindingExpression {
   static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
-  std::string name;
+  // nullopt represents the `_` placeholder.
+  std::optional<std::string> name;
   const Expression* type;
 };
 
@@ -136,7 +140,8 @@ struct TypeTypeLiteral {
 struct Expression {
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
-  static auto MakeBindingExpression(int line_num, std::string var,
+  static auto MakeBindingExpression(int line_num,
+                                    std::optional<std::string> var,
                                     const Expression* type)
       -> const Expression*;
   static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
@@ -173,6 +178,8 @@ struct Expression {
   auto GetCallExpression() const -> const CallExpression&;
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
 
+  void Print(llvm::raw_ostream& out) const;
+
   inline auto tag() const -> ExpressionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
   }
@@ -187,8 +194,6 @@ struct Expression {
                ContinuationTypeLiteral, TypeTypeLiteral>
       value;
 };
-
-void PrintExp(const Expression* exp);
 
 }  // namespace Carbon
 

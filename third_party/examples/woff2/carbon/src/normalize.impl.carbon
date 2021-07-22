@@ -12,9 +12,9 @@
 #include <cstddef>
 
 #include "./buffer.h"
-#include "./port.h"
 #include "./font.h"
 #include "./glyph.h"
+#include "./port.h"
 #include "./round.h"
 #include "./store_bytes.h"
 #include "./table_tags.h"

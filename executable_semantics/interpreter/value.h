@@ -7,35 +7,33 @@
 
 #include <list>
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/address.h"
+#include "executable_semantics/interpreter/field_path.h"
 #include "executable_semantics/interpreter/stack.h"
 
 namespace Carbon {
 
 struct Value;
-using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
 
 auto FindInVarValues(const std::string& field, const VarValues& inits)
     -> const Value*;
 auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
 
-// Finds the field in `*tuple` named `name`, and returns its address, or
-// nullopt if there is no such field. `*tuple` must be a tuple value.
-auto FindTupleField(const std::string& name, const Value* tuple)
-    -> std::optional<Address>;
-
 // A TupleElement represents the value of a single tuple field.
 struct TupleElement {
   // The field name.
   std::string name;
 
-  // Location of the field's value.
-  Address address;
+  // The field's value.
+  const Value* value;
 };
 
 enum class ValKind {
@@ -101,17 +99,22 @@ struct AlternativeValue {
   static constexpr ValKind Kind = ValKind::AlternativeValue;
   std::string alt_name;
   std::string choice_name;
-  Address argument;
+  const Value* argument;
 };
 
 struct TupleValue {
   static constexpr ValKind Kind = ValKind::TupleValue;
   std::vector<TupleElement> elements;
+
+  // Returns the value of the field named `name` in this tuple, or
+  // null if there is no such field.
+  auto FindField(const std::string& name) const -> const Value*;
 };
 
 struct BindingPlaceholderValue {
   static constexpr ValKind Kind = ValKind::BindingPlaceholderValue;
-  std::string name;
+  // nullopt represents the `_` placeholder
+  std::optional<std::string> name;
   const Value* type;
 };
 
@@ -185,13 +188,13 @@ struct Value {
       -> const Value*;
   static auto MakeTupleValue(std::vector<TupleElement> elts) -> const Value*;
   static auto MakeAlternativeValue(std::string alt_name,
-                                   std::string choice_name, Address argument)
-      -> const Value*;
+                                   std::string choice_name,
+                                   const Value* argument) -> const Value*;
   static auto MakeAlternativeConstructorValue(std::string alt_name,
                                               std::string choice_name)
       -> const Value*;
-  static auto MakeBindingPlaceholderValue(std::string name, const Value* type)
-      -> const Value*;
+  static auto MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                          const Value* type) -> const Value*;
   static auto MakeIntType() -> const Value*;
   static auto MakeContinuationType() -> const Value*;
   static auto MakeAutoType() -> const Value*;
@@ -229,6 +232,17 @@ struct Value {
     return std::visit([](const auto& t) { return t.Kind; }, value);
   }
 
+  // Returns the sub-Value specified by `path`, which must be a valid field
+  // path for *this.
+  auto GetField(const FieldPath& path, int line_num) const -> const Value*;
+
+  // Returns a copy of *this, but with the sub-Value specified by `path`
+  // set to `field_value`. `path` must be a valid field path for *this.
+  auto SetField(const FieldPath& path, const Value* field_value,
+                int line_num) const -> const Value*;
+
+  void Print(llvm::raw_ostream& out) const;
+
  private:
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
                AlternativeValue, TupleValue, IntType, BoolType, TypeType,
@@ -238,12 +252,10 @@ struct Value {
       value;
 };
 
-void PrintValue(const Value* val, std::ostream& out);
+auto CopyVal(const Value* val, int line_num) -> const Value*;
 
 auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
-
-auto ToInteger(const Value* v) -> int;
 
 }  // namespace Carbon
 

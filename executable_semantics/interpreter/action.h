@@ -5,9 +5,9 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_ACTION_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_ACTION_H_
 
-#include <iostream>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -48,14 +48,14 @@ struct Action {
   static auto MakeStatementAction(const Statement* s) -> Action*;
   static auto MakeValAction(const Value* v) -> Action*;
 
-  static void PrintList(Stack<Action*> ls, std::ostream& out);
+  static void PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out);
 
   auto GetLValAction() const -> const LValAction&;
   auto GetExpressionAction() const -> const ExpressionAction&;
   auto GetStatementAction() const -> const StatementAction&;
   auto GetValAction() const -> const ValAction&;
 
-  void Print(std::ostream& out);
+  void Print(llvm::raw_ostream& out) const;
 
   inline auto tag() const -> ActionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

@@ -61,7 +61,7 @@
 
 #include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
-}
+}  // %code top
 
 %code requires {
 #include <optional>
@@ -73,21 +73,19 @@
 
 namespace Carbon {
 class ParseAndLexContext;
-}
+}  // namespace Carbon
 
-}
+}  // %code requires
 
 %code {
 
 extern int yylineno;
 
-void yy::parser::error(
-    const location_type&, const std::string& message)
-{
+void yy::parser::error(const location_type&, const std::string& message) {
   context.PrintDiagnostic(message, yylineno);
 }
 
-}
+}  // %code
 
 %token <int> integer_literal
 %token <char*> identifier
@@ -107,9 +105,10 @@ void yy::parser::error(
 %type <const Carbon::Expression*> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
+%type <std::optional<std::string>> binding_lhs
 %type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
-%type <std::list<Carbon::Member*>*> member_list
+%type <std::list<Carbon::Member*>> member_list
 %type <Carbon::FieldInitializer> field_initializer
 %type <Carbon::ParenContents> paren_contents
 %type <std::vector<Carbon::FieldInitializer>> paren_contents_without_trailing_comma
@@ -149,6 +148,7 @@ void yy::parser::error(
 %token DBLARROW "=>"
 %token DEFAULT
 %token AUTO
+%token UNDERSCORE
 %token
   EQUAL  "="
   MINUS  "-"
@@ -203,11 +203,9 @@ pattern:
   expression
     { $$ = $1; }
 ;
-generic_binding:
-  identifier ":!" expression
-    {
-      $$ = Carbon::GenericBinding({.name = std::move($1), .type = $3});
-    }
+binding_lhs:
+  identifier { $$ = $1; }
+| UNDERSCORE { $$ = std::nullopt; }
 ;
 expression:
   identifier
@@ -216,7 +214,7 @@ expression:
     { $$ = Carbon::Expression::MakeFieldAccessExpression(yylineno, $1, $2); }
 | expression "[" expression "]"
     { $$ = Carbon::Expression::MakeIndexExpression(yylineno, $1, $3); }
-| identifier ":" expression
+| binding_lhs ":" expression
     {
       $$ = Carbon::Expression::MakeBindingExpression(yylineno, $1, $3);
     }
@@ -378,6 +376,12 @@ return_type:
 | ARROW expression %prec FNARROW
     { $$ = $2; }
 ;
+generic_binding:
+  identifier ":!" expression
+    {
+      $$ = Carbon::GenericBinding({.name = std::move($1), .type = $3});
+    }
+;
 deduced_param_list:
   // Empty
     { $$ = std::vector<Carbon::GenericBinding>(); }
@@ -400,29 +404,30 @@ deduced_params:
 ;
 function_definition:
   FN identifier deduced_params tuple return_type "{" statement_list "}"
-    { $$ = MakeFunDef(yylineno, $2, $5, $3, $4, $7); }
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $7); }
 | FN identifier deduced_params tuple DBLARROW expression ";"
     {
-      $$ = Carbon::MakeFunDef(yylineno, $2,
-                              Carbon::Expression::MakeAutoTypeLiteral(yylineno),
-			      $3, $4, Carbon::Statement::MakeReturn(yylineno, $6));
+      $$ = Carbon::FunctionDefinition(
+               yylineno, $2, $3, $4,
+               Carbon::Expression::MakeAutoTypeLiteral(yylineno),
+               Carbon::Statement::MakeReturn(yylineno, $6));
     }
 ;
 function_declaration:
-  FN identifier deduced_params tuple return_type ";"
-    { $$ = MakeFunDef(yylineno, $2, $5, $3, $4, 0); }
+  FN identifier  deduced_params tuple return_type ";"
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, 0); }
 ;
 variable_declaration: identifier ":" expression
-    { $$ = MakeField(yylineno, $1, $3); }
+    { $$ = Carbon::Member::MakeFieldMember(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
     { $$ = $2; }
 ;
 member_list:
   // Empty
-    { $$ = new std::list<Carbon::Member*>(); }
+    { $$ = std::list<Carbon::Member*>(); }
 | member member_list
-    { $$ = $2; $$->push_front($1); }
+    { $$ = $2; $$.push_front($1); }
 ;
 alternative:
   identifier tuple
@@ -446,23 +451,21 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
 | function_declaration
-    { $$ = Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
 | STRUCT identifier "{" member_list "}"
     {
-      $$ = Carbon::Declaration(
-        Carbon::StructDeclaration{yylineno, $2, $4});
+      $$ = Carbon::Declaration::MakeStructDeclaration(yylineno, $2, $4);
     }
 | CHOICE identifier "{" alternative_list "}"
     {
-      $$ = Carbon::Declaration(
-        Carbon::ChoiceDeclaration{yylineno, $2, $4});
+      $$ = Carbon::Declaration::MakeChoiceDeclaration(yylineno, $2, $4);
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = Carbon::Declaration(
-        Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
+      $$ = Carbon::Declaration::MakeVariableDeclaration(
+          yylineno, $2->GetFieldMember().name, $2->GetFieldMember().type, $4);
     }
 ;
 declaration_list:
