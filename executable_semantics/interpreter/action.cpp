@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/stack.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -74,11 +75,12 @@ void Action::Print(llvm::raw_ostream& out) const {
   out << "<" << pos << ">";
   if (results.size() > 0) {
     out << "(";
+    llvm::ListSeparator sep;
     for (auto& result : results) {
+      out << sep;
       if (result) {
         out << *result;
       }
-      out << ",";
     }
     out << ")";
   }

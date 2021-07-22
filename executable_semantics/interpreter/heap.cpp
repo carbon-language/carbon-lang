@@ -4,6 +4,8 @@
 
 #include "executable_semantics/interpreter/heap.h"
 
+#include "llvm/ADT/StringExtras.h"
+
 namespace Carbon {
 
 auto Heap::AllocateValue(const Value* v) -> Address {
@@ -48,9 +50,10 @@ void Heap::Deallocate(const Address& address) {
 }
 
 void Heap::Print(llvm::raw_ostream& out) const {
+  llvm::ListSeparator sep;
   for (size_t i = 0; i < values_.size(); ++i) {
+    out << sep;
     PrintAddress(Address(i), out);
-    out << ", ";
   }
 }
 
