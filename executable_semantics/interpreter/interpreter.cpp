@@ -419,9 +419,9 @@ void StepLvalue() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        llvm::errs() << exp->line_num << ": could not find `"
-                     << exp->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FatalRuntimeError(exp->line_num)
+            << ": could not find `" << exp->GetIdentifierExpression().name
+            << "`";
       }
       const Value* v = Value::MakePointerValue(*pointer);
       frame->todo.Pop();
@@ -501,8 +501,8 @@ void StepLvalue() {
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::BindingExpression: {
-      llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
-      exit(-1);
+      FatalRuntimeError(ErrorLine::None)
+          << "Can't treat expression as lvalue: " << *exp;
     }
   }
 }
@@ -550,20 +550,16 @@ void StepExp() {
             std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
-              llvm::errs() << "runtime error, field " << f << " not in "
-                           << *tuple << "\n";
-              exit(-1);
+              FatalRuntimeError(ErrorLine::None)
+                  << "field " << f << " not in " << *tuple;
             }
             frame->todo.Pop(1);
             frame->todo.Push(Action::MakeValAction(field));
             break;
           }
           default:
-            llvm::errs()
-                << "runtime type error, expected a tuple in field access, "
-                   "not "
-                << *tuple << "\n";
-            exit(-1);
+            FatalRuntimeError(ErrorLine::None)
+                << "expected a tuple in field access, not " << *tuple;
         }
       }
       break;
@@ -617,9 +613,9 @@ void StepExp() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        llvm::errs() << exp->line_num << ": could not find `"
-                     << exp->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FatalRuntimeError(exp->line_num)
+            << ": could not find `" << exp->GetIdentifierExpression().name
+            << "`";
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
