@@ -98,6 +98,9 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <const Carbon::Statement*> optional_else
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
+%type <Carbon::GenericBinding> generic_binding
+%type <std::vector<Carbon::GenericBinding>> deduced_params
+%type <std::vector<Carbon::GenericBinding>> deduced_param_list
 %type <const Carbon::Expression*> pattern
 %type <const Carbon::Expression*> return_type
 %type <const Carbon::Expression*> paren_expression
@@ -167,12 +170,13 @@ void yy::parser::error(const location_type&, const std::string& message) {
   PERIOD "."
   COMMA ","
   SEMICOLON ";"
+  COLON_BANG ":!"
   COLON ":"
 ;
 
 %precedence FNARROW
 %precedence "{" "}"
-%precedence ":" "," DBLARROW
+%precedence ":!" ":" "," DBLARROW
 %left OR AND
 %nonassoc EQUAL_EQUAL
 %left "+" "-"
@@ -372,20 +376,46 @@ return_type:
 | ARROW expression %prec FNARROW
     { $$ = $2; }
 ;
+generic_binding:
+  identifier ":!" expression
+    {
+      $$ = Carbon::GenericBinding({.name = std::move($1), .type = $3});
+    }
+;
+deduced_param_list:
+  // Empty
+    { $$ = std::vector<Carbon::GenericBinding>(); }
+| generic_binding
+    {
+      $$ = std::vector<Carbon::GenericBinding>();
+      $$.push_back($1);
+    }
+| generic_binding "," deduced_param_list
+    {
+      $$ = $3;
+      $$.push_back($1);
+    }
+;
+deduced_params:
+  // Empty
+    { $$ = std::vector<Carbon::GenericBinding>(); }
+| "[" deduced_param_list "]"
+    { $$ = $2; }
+;
 function_definition:
-  FN identifier tuple return_type "{" statement_list "}"
-    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $6); }
-| FN identifier tuple DBLARROW expression ";"
+  FN identifier deduced_params tuple return_type "{" statement_list "}"
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $7); }
+| FN identifier deduced_params tuple DBLARROW expression ";"
     {
       $$ = Carbon::FunctionDefinition(
-               yylineno, $2, $3,
+               yylineno, $2, $3, $4,
                Carbon::Expression::MakeAutoTypeLiteral(yylineno),
-               Carbon::Statement::MakeReturn(yylineno, $5));
+               Carbon::Statement::MakeReturn(yylineno, $6));
     }
 ;
 function_declaration:
-  FN identifier tuple return_type ";"
-    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, 0); }
+  FN identifier  deduced_params tuple return_type ";"
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, 0); }
 ;
 variable_declaration: identifier ":" expression
     { $$ = Carbon::Member::MakeFieldMember(yylineno, $1, $3); }

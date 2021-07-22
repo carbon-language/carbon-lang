@@ -109,7 +109,14 @@ void InitEnv(const Declaration& d, Env* env) {
     case DeclarationKind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           d.GetFunctionDeclaration().definition;
-      auto pt = InterpExp(*env, func_def.param_pattern);
+      Env new_env = *env;
+      // Bring the deduced parameters into scope.
+      for (const auto& deduced : func_def.deduced_parameters) {
+        Address a =
+            state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
+        new_env.Set(deduced.name, a);
+      }
+      auto pt = InterpExp(new_env, func_def.param_pattern);
       auto f = Value::MakeFunctionValue(func_def.name, pt, func_def.body);
       Address a = state->heap.AllocateValue(f);
       env->Set(func_def.name, a);
@@ -740,7 +747,7 @@ void StepExp() {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         const Value* v =
-            Value::MakeFunctionType(act->results[0], act->results[1]);
+            Value::MakeFunctionType({}, act->results[0], act->results[1]);
         frame->todo.Pop(1);
         frame->todo.Push(Action::MakeValAction(v));
       }

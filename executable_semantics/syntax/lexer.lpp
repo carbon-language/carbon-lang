@@ -135,6 +135,7 @@ operand_start [(A-Za-z0-9_"]
 "." return yy::parser::make_PERIOD(context.current_token_position);
 "," return yy::parser::make_COMMA(context.current_token_position);
 ";" return yy::parser::make_SEMICOLON(context.current_token_position);
+":!" return yy::parser::make_COLON_BANG(context.current_token_position);
 ":" return yy::parser::make_COLON(context.current_token_position);
 
  /*
