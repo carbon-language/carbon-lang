@@ -82,8 +82,8 @@ design to support the following audiences:
 -   People writing Carbon code who wish to understand why the language rules are
     the way they are.
 
-For Carbon developers, separate documentation that is more suitable for learning
-the language will be made available separately.
+For Carbon developers, documentation that is more suitable for learning the
+language will be made available separately.
 
 ## Context and disclaimer
 
