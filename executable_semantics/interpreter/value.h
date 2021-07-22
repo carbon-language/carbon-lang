@@ -55,7 +55,7 @@ enum class ValKind {
   StructType,
   ChoiceType,
   ContinuationType,  // The type of a continuation.
-  Symbol,            // e.g. generic type parameters
+  VariableType,      // e.g. generic type parameters
   BindingPlaceholderValue,
   AlternativeConstructorValue,
   ContinuationValue  // A first-class continuation value.
@@ -160,8 +160,8 @@ struct ContinuationType {
   static constexpr ValKind Kind = ValKind::ContinuationType;
 };
 
-struct Symbol {
-  static constexpr ValKind Kind = ValKind::Symbol;
+struct VariableType {
+  static constexpr ValKind Kind = ValKind::VariableType;
   std::string name;
 };
 
@@ -205,7 +205,7 @@ struct Value {
                              VarValues methods) -> const Value*;
   static auto MakeUnitTypeVal() -> const Value*;
   static auto MakeChoiceType(std::string name, VarValues alts) -> const Value*;
-  static auto MakeSymbol(std::string name) -> const Value*;
+  static auto MakeVariableType(std::string name) -> const Value*;
 
   // Access to alternatives
   auto GetIntValue() const -> int;
@@ -222,7 +222,7 @@ struct Value {
   auto GetPointerType() const -> const PointerType&;
   auto GetStructType() const -> const StructType&;
   auto GetChoiceType() const -> const ChoiceType&;
-  auto GetSymbol() const -> const Symbol&;
+  auto GetVariableType() const -> const VariableType&;
   auto GetContinuationValue() const -> const ContinuationValue&;
 
   inline auto tag() const -> ValKind {
@@ -233,7 +233,7 @@ struct Value {
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
                AlternativeValue, TupleValue, IntType, BoolType, TypeType,
                FunctionType, PointerType, AutoType, StructType, ChoiceType,
-               ContinuationType, Symbol, BindingPlaceholderValue,
+               ContinuationType, VariableType, BindingPlaceholderValue,
                AlternativeConstructorValue, ContinuationValue>
       value;
 };

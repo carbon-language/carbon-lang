@@ -66,8 +66,8 @@ auto Value::GetChoiceType() const -> const ChoiceType& {
   return std::get<ChoiceType>(value);
 }
 
-auto Value::GetSymbol() const -> const Symbol& {
-  return std::get<Symbol>(value);
+auto Value::GetVariableType() const -> const VariableType& {
+  return std::get<VariableType>(value);
 }
 
 auto Value::GetContinuationValue() const -> const ContinuationValue& {
@@ -252,9 +252,9 @@ auto Value::MakeChoiceType(std::string name, VarValues alts) -> const Value* {
   return v;
 }
 
-auto Value::MakeSymbol(std::string name) -> const Value* {
+auto Value::MakeVariableType(std::string name) -> const Value* {
   auto* v = new Value();
-  v->value = Symbol({.name = std::move(name)});
+  v->value = VariableType({.name = std::move(name)});
   return v;
 }
 
@@ -353,8 +353,8 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
     case ValKind::ChoiceType:
       out << "choice " << val->GetChoiceType().name;
       break;
-    case ValKind::Symbol:
-      out << val->GetSymbol().name;
+    case ValKind::VariableType:
+      out << val->GetVariableType().name;
       break;
     case ValKind::ContinuationValue:
       out << "continuation[[";
@@ -405,8 +405,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::ContinuationType:
     case ValKind::TypeType:
       return true;
-    case ValKind::Symbol:
-      return t1->GetSymbol().name == t2->GetSymbol().name;
+    case ValKind::VariableType:
+      return t1->GetVariableType().name == t2->GetVariableType().name;
     default:
       std::cerr << "TypeEqual used to compare non-type values" << std::endl;
       PrintValue(t1, std::cerr);

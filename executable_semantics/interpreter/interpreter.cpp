@@ -120,7 +120,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return Value::MakeAutoType();
     case ValKind::ContinuationType:
       return Value::MakeContinuationType();
-    case ValKind::Symbol:
+    case ValKind::VariableType:
     case ValKind::StructType:
     case ValKind::ChoiceType:
     case ValKind::BindingPlaceholderValue:
@@ -346,7 +346,8 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values = globals;
   // Bring the deduced parameters into scope
   for (const auto& deduced : definition.deduced_parameters) {
-    Address a = state->heap.AllocateValue(Value::MakeSymbol(deduced.name));
+    Address a =
+        state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
     values.Set(deduced.name, a);
   }
   auto pt = InterpExp(values, definition.param_pattern);

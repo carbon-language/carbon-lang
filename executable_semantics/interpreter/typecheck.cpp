@@ -84,8 +84,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::PointerType:
       return Expression::MakePrimitiveOperatorExpression(
           0, Operator::Ptr, {ReifyType(t->GetPointerType().type, line_num)});
-    case ValKind::Symbol:
-      return Expression::MakeIdentifierExpression(0, t->GetSymbol().name);
+    case ValKind::VariableType:
+      return Expression::MakeIdentifierExpression(0, t->GetVariableType().name);
     default:
       std::cerr << line_num << ": in ReifyType, expected a type, not ";
       PrintValue(t, std::cerr);
@@ -95,7 +95,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 }
 
 // Perform type argument deduction, matching the parameter type `param`
-// against the argument type `arg`. Whenever there is an Symbol
+// against the argument type `arg`. Whenever there is an VariableType
 // in the parameter type, it is deduced to be the corresponding type
 // inside the argument type.
 // The `deduced` parameter is an accumulator, that is, it holds the
@@ -103,10 +103,11 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
                        const Value* arg) -> TypeEnv {
   switch (param->tag()) {
-    case ValKind::Symbol: {
-      std::optional<const Value*> d = deduced.Get(param->GetSymbol().name);
+    case ValKind::VariableType: {
+      std::optional<const Value*> d =
+          deduced.Get(param->GetVariableType().name);
       if (!d) {
-        deduced.Set(param->GetSymbol().name, arg);
+        deduced.Set(param->GetVariableType().name, arg);
       } else {
         ExpectType(line_num, "argument deduction", *d, arg);
       }
@@ -191,8 +192,8 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
 
 auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
   switch (type->tag()) {
-    case ValKind::Symbol: {
-      std::optional<const Value*> t = dict.Get(type->GetSymbol().name);
+    case ValKind::VariableType: {
+      std::optional<const Value*> t = dict.Get(type->GetVariableType().name);
       if (!t) {
         return type;
       } else {
@@ -834,7 +835,8 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
-    Address a = state->heap.AllocateValue(Value::MakeSymbol(deduced.name));
+    Address a =
+        state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
@@ -860,7 +862,8 @@ auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
-    Address a = state->heap.AllocateValue(Value::MakeSymbol(deduced.name));
+    Address a =
+        state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
