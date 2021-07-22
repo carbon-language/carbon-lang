@@ -64,6 +64,10 @@ auto Value::GetChoiceType() const -> const ChoiceType& {
   return std::get<ChoiceType>(value);
 }
 
+auto Value::GetVariableType() const -> const VariableType& {
+  return std::get<VariableType>(value);
+}
+
 auto Value::GetContinuationValue() const -> const ContinuationValue& {
   return std::get<ContinuationValue>(value);
 }
@@ -207,10 +211,12 @@ auto Value::MakeAutoType() -> const Value* {
   return v;
 }
 
-auto Value::MakeFunctionType(const Value* param, const Value* ret)
+auto Value::MakeFunctionType(std::vector<GenericBinding> deduced_params,
+                             const Value* param, const Value* ret)
     -> const Value* {
   auto* v = new Value();
-  v->value = FunctionType({.param = param, .ret = ret});
+  v->value = FunctionType(
+      {.deduced = std::move(deduced_params), .param = param, .ret = ret});
   return v;
 }
 
@@ -239,6 +245,12 @@ auto Value::MakeChoiceType(std::string name, VarValues alts) -> const Value* {
   auto* v = new Value();
   v->value =
       ChoiceType({.name = std::move(name), .alternatives = std::move(alts)});
+  return v;
+}
+
+auto Value::MakeVariableType(std::string name) -> const Value* {
+  auto* v = new Value();
+  v->value = VariableType({.name = std::move(name)});
   return v;
 }
 
@@ -405,14 +417,29 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << *GetPointerType().type << "*";
       break;
     case ValKind::FunctionType:
-      out << "fn " << *GetFunctionType().param << " -> "
-          << *GetFunctionType().ret;
+      out << "fn ";
+      if (GetFunctionType().deduced.size() > 0) {
+        out << "[";
+        unsigned int i = 0;
+        for (const auto& deduced : GetFunctionType().deduced) {
+          if (i != 0) {
+            out << ", ";
+          }
+          out << deduced.name << ":! " << *deduced.type;
+          ++i;
+        }
+        out << "]";
+      }
+      out << *GetFunctionType().param << " -> " << *GetFunctionType().ret;
       break;
     case ValKind::StructType:
       out << "struct " << GetStructType().name;
       break;
     case ValKind::ChoiceType:
       out << "choice " << GetChoiceType().name;
+      break;
+    case ValKind::VariableType:
+      out << GetVariableType().name;
       break;
     case ValKind::ContinuationValue:
       out << "continuation";
@@ -457,6 +484,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return val;
     case ValKind::FunctionType:
       return Value::MakeFunctionType(
+          val->GetFunctionType().deduced,
           CopyVal(val->GetFunctionType().param, line_num),
           CopyVal(val->GetFunctionType().ret, line_num));
 
@@ -473,6 +501,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return Value::MakeAutoType();
     case ValKind::ContinuationType:
       return Value::MakeContinuationType();
+    case ValKind::VariableType:
     case ValKind::StructType:
     case ValKind::ChoiceType:
     case ValKind::BindingPlaceholderValue:
@@ -519,6 +548,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::ContinuationType:
     case ValKind::TypeType:
       return true;
+    case ValKind::VariableType:
+      return t1->GetVariableType().name == t2->GetVariableType().name;
     default:
       llvm::errs() << "TypeEqual used to compare non-type values\n"
                    << *t1 << "\n"

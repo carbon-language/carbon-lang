@@ -118,6 +118,7 @@ cc_library(
         ":containers",
         ":field_path",
         "//common:ostream",
+        "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
     ],
 )
