@@ -16,8 +16,8 @@ namespace ErrorInternal {
 // An error-printing stream that exits on destruction.
 class ExitingStream {
  public:
+  // Ends the error with a newline and exits.
   LLVM_ATTRIBUTE_NORETURN virtual ~ExitingStream() {
-    // Finish with a newline.
     llvm::errs() << "\n";
     exit(-1);
   }
