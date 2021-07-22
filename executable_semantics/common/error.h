@@ -11,10 +11,11 @@
 
 namespace Carbon {
 
-enum class ErrorLine { None };
-
 namespace ErrorInternal {
+
+// An error-printing stream that exits on destruction.
 class ExitingStream {
+ public:
   LLVM_ATTRIBUTE_NORETURN virtual ~ExitingStream() {
     // Finish with a newline.
     llvm::errs() << "\n";
@@ -29,53 +30,25 @@ class ExitingStream {
   }
 };
 
+}  // namespace ErrorInternal
+
+// Indicates there is no line for an error. Otherwise, the integer line is
+// passed.
+enum class ErrorLine { None };
+
 // Prints an error and exits. This should be used for non-recoverable errors
 // with user input.
 //
 // For example:
 //   FatalUserError(line_num) << "Line is bad!";
 //   FatalUserError(ErrorLine::None) << "Application is bad!";
+ErrorInternal::ExitingStream FatalUserError(ErrorLine none);
+ErrorInternal::ExitingStream FatalUserError(int line_num);
+ErrorInternal::ExitingStream FatalCompilationError(ErrorLine none);
+ErrorInternal::ExitingStream FatalCompilationError(int line_num);
+ErrorInternal::ExitingStream FatalRuntimeError(ErrorLine none);
+ErrorInternal::ExitingStream FatalRuntimeError(int line_num);
 
-class FatalUserError {
- public:
-  FatalUserError(int line_num) {
-    WritePrefix();
-    llvm::errs() << line_num << ": ";
-  }
-  FatalUserError(ErrorLine no_line) { WritePrefix(); }
-  LLVM_ATTRIBUTE_NORETURN virtual ~FatalUserError() {
-    // Finish with a newline.
-    llvm::errs() << "\n";
-    exit(-1);
-  }
-
-  // Forward output to llvm::errs.
-  template <typename T>
-  FatalUserError& operator<<(const T& message) {
-    llvm::errs() << message;
-    return *this;
-  }
-
- protected:
-  virtual void WritePrefix() { llvm::errs() << "ERROR: "; }
-};
-
-class FatalRuntimeError : public FatalUserError {
- public:
-  using FatalUserError::FatalUserError;
-
- protected:
-  void WritePrefix() override { llvm::errs() << "RUNTIME ERROR: "; }
-};
-
-class FatalCompilationError : public FatalUserError {
- public:
-  using FatalUserError::FatalUserError;
-
- protected:
-  void WritePrefix() override { llvm::errs() << "COMPILATION ERROR: "; }
-};
-
-}  // namespace ErrorInternal
+}  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_COMMON_ERROR_H_

@@ -1,2 +1,2 @@
-11: compilation error, field names do not match, expected y but got z
+COMPILATION ERROR: 11: field names do not match, expected y but got z
 EXIT CODE: 255
