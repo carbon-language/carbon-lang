@@ -5,9 +5,12 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include "common/ostream.h"
 
 namespace Carbon {
 
@@ -33,7 +36,7 @@ enum class ExpressionKind {
   IntTypeLiteral,
   ContinuationTypeLiteral,  // The type of a continuation value.
   IntLiteral,
-  PatternVariableExpression,
+  BindingExpression,
   PrimitiveOperatorExpression,
   TupleLiteral,
   TypeTypeLiteral,
@@ -72,10 +75,10 @@ struct IndexExpression {
   const Expression* offset;
 };
 
-struct PatternVariableExpression {
-  static constexpr ExpressionKind Kind =
-      ExpressionKind::PatternVariableExpression;
-  std::string name;
+struct BindingExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
+  // nullopt represents the `_` placeholder.
+  std::optional<std::string> name;
   const Expression* type;
 };
 
@@ -135,13 +138,11 @@ struct TypeTypeLiteral {
 };
 
 struct Expression {
-  int line_num;
-  inline auto tag() const -> ExpressionKind;
-
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
-  static auto MakePatternVariableExpression(int line_num, std::string var,
-                                            const Expression* type)
+  static auto MakeBindingExpression(int line_num,
+                                    std::optional<std::string> var,
+                                    const Expression* type)
       -> const Expression*;
   static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
   static auto MakeBoolLiteral(int line_num, bool b) -> const Expression*;
@@ -168,7 +169,7 @@ struct Expression {
   auto GetIdentifierExpression() const -> const IdentifierExpression&;
   auto GetFieldAccessExpression() const -> const FieldAccessExpression&;
   auto GetIndexExpression() const -> const IndexExpression&;
-  auto GetPatternVariableExpression() const -> const PatternVariableExpression&;
+  auto GetBindingExpression() const -> const BindingExpression&;
   auto GetIntLiteral() const -> int;
   auto GetBoolLiteral() const -> bool;
   auto GetTupleLiteral() const -> const TupleLiteral&;
@@ -177,29 +178,22 @@ struct Expression {
   auto GetCallExpression() const -> const CallExpression&;
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
 
+  void Print(llvm::raw_ostream& out) const;
+
+  inline auto tag() const -> ExpressionKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
+  int line_num;
+
  private:
   std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,
-               PatternVariableExpression, IntLiteral, BoolLiteral, TupleLiteral,
+               BindingExpression, IntLiteral, BoolLiteral, TupleLiteral,
                PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
                AutoTypeLiteral, BoolTypeLiteral, IntTypeLiteral,
                ContinuationTypeLiteral, TypeTypeLiteral>
       value;
 };
-
-void PrintExp(const Expression* exp);
-
-// Implementation details only beyond this point
-
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ExpressionKind {
-    return Alternative::Kind;
-  }
-};
-
-auto Expression::tag() const -> ExpressionKind {
-  return std::visit(TagVisitor(), value);
-}
 
 }  // namespace Carbon
 

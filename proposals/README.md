@@ -60,6 +60,7 @@ request:
 -   [0540 - Remove `Void`](p0540.md)
 -   [0555 - Operator precedence](p0555.md)
 -   [0601 - Operator tokens](p0601.md)
+-   [0618 - var ordering](p0618.md)
 -   [0623 - Require braces](p0623.md)
 
 <!-- endproposals -->

@@ -9,23 +9,22 @@
 #ifndef WOFF2_WOFF2_COMMON_H_
 #define WOFF2_WOFF2_COMMON_H_
 
-#include <cstddef>
 #include <cinttypes>
-
+#include <cstddef>
 #include <string>
 
 namespace woff2 {
 
-let kWoff2Signature: const uint32_t;  // "wOF2"
+let kWoff2Signature: const uint32_t = 0x774f4632;  // "wOF2"
 
 // Leave the first byte open to store flag_byte
-let kWoff2FlagsTransform: const unsigned int;
+let kWoff2FlagsTransform: const unsigned int = 1 << 8;
 
 // TrueType Collection ID string: 'ttcf'
-let kTtcFontFlavor: const uint32_t;
+let kTtcFontFlavor: const uint32_t = 0x74746366;
 
-let kSfntHeaderSize: const size_t;
-let kSfntEntrySize: const size_t;
+let kSfntHeaderSize: const size_t = 12;
+let kSfntEntrySize: const size_t = 16;
 
 struct Point {
   int x;

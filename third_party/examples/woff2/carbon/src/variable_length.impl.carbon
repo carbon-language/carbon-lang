@@ -11,7 +11,7 @@
 namespace woff2 {
 
 fn Size255UShort(value: uint16_t) -> size_t {
-  var result: size_t;
+  var result: size_t = 3;
   if (value < 253) {
     result = 1;
   } else if (value < 762) {
@@ -41,37 +41,37 @@ fn Write255UShort(out: std::vector<uint8_t>*, value: int) {
 fn Store255UShort(val: int, offset: size_t*, dst: uint8_t*) {
   var packed: std::vector<uint8_t>;
   Write255UShort(&packed, val);
-  for (uint8_t packed_byte : packed) {
+  for (uint8_t packed_byte  in  packed) {
     dst[(*offset)++] = packed_byte;
   }
 }
 
 // Based on section 6.1.1 of MicroType Express draft spec
 fn Read255UShort(buf: Buffer*, value: unsigned int*) -> bool {
-  let kWordCode: const int;
-  let kOneMoreByteCode2: const int;
-  let kOneMoreByteCode1: const int;
-  let kLowestUCode: const int;
-  var code: uint8_t;
+  let kWordCode: const int = 253;
+  let kOneMoreByteCode2: const int = 254;
+  let kOneMoreByteCode1: const int = 255;
+  let kLowestUCode: const int = 253;
+  var code: uint8_t = 0;
   if (!buf->ReadU8(&code)) {
     return FONT_COMPRESSION_FAILURE();
   }
   if (code == kWordCode) {
-    var result: uint16_t;
+    var result: uint16_t = 0;
     if (!buf->ReadU16(&result)) {
       return FONT_COMPRESSION_FAILURE();
     }
     *value = result;
     return true;
   } else if (code == kOneMoreByteCode1) {
-    var result: uint8_t;
+    var result: uint8_t = 0;
     if (!buf->ReadU8(&result)) {
       return FONT_COMPRESSION_FAILURE();
     }
     *value = result + kLowestUCode;
     return true;
   } else if (code == kOneMoreByteCode2) {
-    var result: uint8_t;
+    var result: uint8_t = 0;
     if (!buf->ReadU8(&result)) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -84,9 +84,9 @@ fn Read255UShort(buf: Buffer*, value: unsigned int*) -> bool {
 }
 
 fn ReadBase128(buf: Buffer*, value: uint32_t*) -> bool {
-  var result: uint32_t;
-  for (var i: size_t; i < 5; ++i) {
-    var code: uint8_t;
+  var result: uint32_t = 0;
+  for (var i: size_t = 0; i < 5; ++i) {
+    var code: uint8_t = 0;
     if (!buf->ReadU8(&code)) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -109,16 +109,16 @@ fn ReadBase128(buf: Buffer*, value: uint32_t*) -> bool {
 }
 
 fn Base128Size(n: size_t) -> size_t {
-  var size: size_t;
+  var size: size_t = 1;
   for (; n >= 128; n >>= 7) { ++size;
 }
   return size;
 }
 
 fn StoreBase128(len: size_t, offset: size_t*, dst: uint8_t*) {
-  var size: size_t;
-  for (var i: size_t; i < size; ++i) {
-    var b: int;
+  var size: size_t = Base128Size(len);
+  for (var i: size_t = 0; i < size; ++i) {
+    var b: int = static_cast<int>((len >> (7 * (size - i - 1))) & 0x7f);
     if (i < size - 1) {
       b |= 0x80;
     }

@@ -79,7 +79,7 @@ class _Workflow(object):
         with open(self._data_file("clang_tidy.yaml")) as f:
             config = f.read()
         subprocess.run(
-            ["clang-tidy", "--fix", "--config", config] + self._cpp_files,
+            ["run-clang-tidy.py", "-fix", "-config", config],
             check=True,
         )
 

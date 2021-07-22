@@ -6,12 +6,16 @@
 #include <cstring>
 #include <iostream>
 
+#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/syntax_helpers.h"
-#include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
 
 int main(int argc, char* argv[]) {
+  // Printing to stderr should flush stdout. This is most noticeable when stderr
+  // is piped to stdout.
+  llvm::errs().tie(&llvm::outs());
+
   using llvm::cl::desc;
   using llvm::cl::opt;
   opt<bool> trace_option("trace", desc("Enable tracing"));

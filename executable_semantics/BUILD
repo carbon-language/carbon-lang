@@ -12,16 +12,10 @@ cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
     deps = [
+        "//executable_semantics/common:tracing_flag",
         "//executable_semantics/syntax",
         "@llvm-project//llvm:Support",
     ],
-)
-
-cc_library(
-    name = "tracing_flag",
-    srcs = ["tracing_flag.cpp"],
-    hdrs = ["tracing_flag.h"],
-    visibility = ["//executable_semantics:__subpackages__"],
 )
 
 EXAMPLES = [
@@ -50,16 +44,20 @@ EXAMPLES = [
     "global_variable6",
     "global_variable7",
     "global_variable8",
+    "ignored_parameter",
     "if1",
     "if2",
     "if3",
+    "invalid_char",
     "match_any_int",
     "match_int_default",
     "match_int",
+    "match_placeholder",
     "match_type",
     "next",
     "pattern_init",
     "pattern_variable_fail",
+    "placeholder_variable",
     "record1",
     "star",
     "struct1",
@@ -101,4 +99,18 @@ EXAMPLES = [
         "testdata/%s.carbon" % e,
     ],
     golden = "testdata/%s.golden" % e,
+) for e in EXAMPLES]
+
+# Test --trace by expecting golden output to be a *subset* of trace output. Note
+# the normal test must be used to update golden files.
+[golden_test(
+    name = "%s_trace_test" % e,
+    cmd = "'$(location executable_semantics) --trace " +
+          "$(location testdata/%s.carbon)'" % e,
+    data = [
+        ":executable_semantics",
+        "testdata/%s.carbon" % e,
+    ],
+    golden = "testdata/%s.golden" % e,
+    golden_is_subset = True,
 ) for e in EXAMPLES]

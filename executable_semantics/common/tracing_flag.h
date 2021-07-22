@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_TRACING_FLAG_H_
-#define EXECUTABLE_SEMANTICS_TRACING_FLAG_H_
+#ifndef EXECUTABLE_SEMANTICS_COMMON_TRACING_FLAG_H_
+#define EXECUTABLE_SEMANTICS_COMMON_TRACING_FLAG_H_
 
 namespace Carbon {
 
@@ -12,4 +12,4 @@ extern bool tracing_output;
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_TRACING_FLAG_H_
+#endif  // EXECUTABLE_SEMANTICS_COMMON_TRACING_FLAG_H_

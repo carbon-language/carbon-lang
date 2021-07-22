@@ -7,27 +7,36 @@
 
 #include <string>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 
 namespace Carbon {
 
 enum class MemberKind { FieldMember };
 
-struct Member {
-  int line_num;
-  MemberKind tag;
-  union {
-    struct {
-      std::string* name;
-      const Expression* type;
-    } field;
-  } u;
+struct FieldMember {
+  static constexpr MemberKind Kind = MemberKind::FieldMember;
+  std::string name;
+  const Expression* type;
 };
 
-auto MakeField(int line_num, std::string name, const Expression* type)
-    -> Member*;
+struct Member {
+  static auto MakeFieldMember(int line_num, std::string name,
+                              const Expression* type) -> Member*;
 
-void PrintMember(Member* m);
+  auto GetFieldMember() const -> const FieldMember&;
+
+  void Print(llvm::raw_ostream& out) const;
+
+  inline auto tag() const -> MemberKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
+  int line_num;
+
+ private:
+  std::variant<FieldMember> value;
+};
 
 }  // namespace Carbon
 

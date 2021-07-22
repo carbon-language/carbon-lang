@@ -7,33 +7,32 @@
 
 #include <list>
 #include <optional>
+#include <string>
+#include <variant>
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/address.h"
+#include "executable_semantics/interpreter/field_path.h"
 #include "executable_semantics/interpreter/stack.h"
 
 namespace Carbon {
 
 struct Value;
-using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
 
-auto FindInVarValues(const std::string& field, VarValues* inits)
+auto FindInVarValues(const std::string& field, const VarValues& inits)
     -> const Value*;
-auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
-
-// Finds the field in `*tuple` named `name`, and returns its address, or
-// nullopt if there is no such field. `*tuple` must be a tuple value.
-auto FindTupleField(const std::string& name, const Value* tuple)
-    -> std::optional<Address>;
+auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
 
 // A TupleElement represents the value of a single tuple field.
 struct TupleElement {
   // The field name.
   std::string name;
 
-  // Location of the field's value.
-  Address address;
+  // The field's value.
+  const Value* value;
 };
 
 enum class ValKind {
@@ -44,7 +43,6 @@ enum class ValKind {
   StructValue,
   AlternativeValue,
   TupleValue,
-  VarTV,
   IntType,
   BoolType,
   TypeType,
@@ -54,71 +52,120 @@ enum class ValKind {
   StructType,
   ChoiceType,
   ContinuationType,  // The type of a continuation.
-  PatternVariableValue,
+  BindingPlaceholderValue,
   AlternativeConstructorValue,
   ContinuationValue  // A first-class continuation value.
 };
 
 struct Frame;  // used by continuation
 
+struct IntValue {
+  static constexpr ValKind Kind = ValKind::IntValue;
+  int value;
+};
+
 struct FunctionValue {
-  std::string* name;
+  static constexpr ValKind Kind = ValKind::FunctionValue;
+  std::string name;
   const Value* param;
   const Statement* body;
 };
 
+struct PointerValue {
+  static constexpr ValKind Kind = ValKind::PointerValue;
+  Address value;
+};
+
+struct BoolValue {
+  static constexpr ValKind Kind = ValKind::BoolValue;
+  bool value;
+};
+
 struct StructValue {
+  static constexpr ValKind Kind = ValKind::StructValue;
   const Value* type;
   const Value* inits;
 };
 
 struct AlternativeConstructorValue {
-  std::string* alt_name;
-  std::string* choice_name;
+  static constexpr ValKind Kind = ValKind::AlternativeConstructorValue;
+  std::string alt_name;
+  std::string choice_name;
 };
 
 struct AlternativeValue {
-  std::string* alt_name;
-  std::string* choice_name;
-  Address argument;
+  static constexpr ValKind Kind = ValKind::AlternativeValue;
+  std::string alt_name;
+  std::string choice_name;
+  const Value* argument;
 };
 
 struct TupleValue {
-  std::vector<TupleElement>* elements;
+  static constexpr ValKind Kind = ValKind::TupleValue;
+  std::vector<TupleElement> elements;
+
+  // Returns the value of the field named `name` in this tuple, or
+  // null if there is no such field.
+  auto FindField(const std::string& name) const -> const Value*;
 };
 
-struct PatternVariableValue {
-  std::string* name;
+struct BindingPlaceholderValue {
+  static constexpr ValKind Kind = ValKind::BindingPlaceholderValue;
+  // nullopt represents the `_` placeholder
+  std::optional<std::string> name;
   const Value* type;
 };
 
+struct IntType {
+  static constexpr ValKind Kind = ValKind::IntType;
+};
+
+struct BoolType {
+  static constexpr ValKind Kind = ValKind::BoolType;
+};
+
+struct TypeType {
+  static constexpr ValKind Kind = ValKind::TypeType;
+};
+
 struct FunctionType {
+  static constexpr ValKind Kind = ValKind::FunctionType;
   const Value* param;
   const Value* ret;
 };
 
 struct PointerType {
+  static constexpr ValKind Kind = ValKind::PointerType;
   const Value* type;
 };
 
+struct AutoType {
+  static constexpr ValKind Kind = ValKind::AutoType;
+};
+
 struct StructType {
-  std::string* name;
-  VarValues* fields;
-  VarValues* methods;
+  static constexpr ValKind Kind = ValKind::StructType;
+  std::string name;
+  VarValues fields;
+  VarValues methods;
 };
 
 struct ChoiceType {
-  std::string* name;
-  VarValues* alternatives;
+  static constexpr ValKind Kind = ValKind::ChoiceType;
+  std::string name;
+  VarValues alternatives;
+};
+
+struct ContinuationType {
+  static constexpr ValKind Kind = ValKind::ContinuationType;
 };
 
 struct ContinuationValue {
-  std::vector<Frame*>* stack;
+  static constexpr ValKind Kind = ValKind::ContinuationValue;
+  std::vector<Frame*> stack;
 };
 
 struct Value {
-  ValKind tag;
-
   // Constructors
 
   // Return a first-class continuation represented by the
@@ -131,16 +178,15 @@ struct Value {
   static auto MakePointerValue(Address addr) -> const Value*;
   static auto MakeStructValue(const Value* type, const Value* inits)
       -> const Value*;
-  static auto MakeTupleValue(std::vector<TupleElement>* elts) -> const Value*;
+  static auto MakeTupleValue(std::vector<TupleElement> elts) -> const Value*;
   static auto MakeAlternativeValue(std::string alt_name,
-                                   std::string choice_name, Address argument)
-      -> const Value*;
+                                   std::string choice_name,
+                                   const Value* argument) -> const Value*;
   static auto MakeAlternativeConstructorValue(std::string alt_name,
                                               std::string choice_name)
       -> const Value*;
-  static auto MakePatternVariableValue(std::string name, const Value* type)
-      -> const Value*;
-  static auto MakeVarTypeVal(std::string name) -> const Value*;
+  static auto MakeBindingPlaceholderValue(std::optional<std::string> name,
+                                          const Value* type) -> const Value*;
   static auto MakeIntType() -> const Value*;
   static auto MakeContinuationType() -> const Value*;
   static auto MakeAutoType() -> const Value*;
@@ -149,54 +195,56 @@ struct Value {
   static auto MakeFunctionType(const Value* param, const Value* ret)
       -> const Value*;
   static auto MakePointerType(const Value* type) -> const Value*;
-  static auto MakeStructType(std::string name, VarValues* fields,
-                             VarValues* methods) -> const Value*;
+  static auto MakeStructType(std::string name, VarValues fields,
+                             VarValues methods) -> const Value*;
   static auto MakeUnitTypeVal() -> const Value*;
-  static auto MakeChoiceType(std::string name, VarValues* alts) -> const Value*;
+  static auto MakeChoiceType(std::string name, VarValues alts) -> const Value*;
 
   // Access to alternatives
-  int GetIntValue() const;
-  bool GetBoolValue() const;
-  FunctionValue GetFunctionValue() const;
-  StructValue GetStructValue() const;
-  AlternativeConstructorValue GetAlternativeConstructorValue() const;
-  AlternativeValue GetAlternativeValue() const;
-  TupleValue GetTupleValue() const;
-  Address GetPointerValue() const;
-  std::string* GetVariableType() const;
-  PatternVariableValue GetPatternVariableValue() const;
-  FunctionType GetFunctionType() const;
-  PointerType GetPointerType() const;
-  StructType GetStructType() const;
-  ChoiceType GetChoiceType() const;
-  ContinuationValue GetContinuationValue() const;
+  auto GetIntValue() const -> int;
+  auto GetBoolValue() const -> bool;
+  auto GetFunctionValue() const -> const FunctionValue&;
+  auto GetStructValue() const -> const StructValue&;
+  auto GetAlternativeConstructorValue() const
+      -> const AlternativeConstructorValue&;
+  auto GetAlternativeValue() const -> const AlternativeValue&;
+  auto GetTupleValue() const -> const TupleValue&;
+  auto GetPointerValue() const -> Address;
+  auto GetBindingPlaceholderValue() const -> const BindingPlaceholderValue&;
+  auto GetFunctionType() const -> const FunctionType&;
+  auto GetPointerType() const -> const PointerType&;
+  auto GetStructType() const -> const StructType&;
+  auto GetChoiceType() const -> const ChoiceType&;
+  auto GetContinuationValue() const -> const ContinuationValue&;
+
+  inline auto tag() const -> ValKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
+  // Returns the sub-Value specified by `path`, which must be a valid field
+  // path for *this.
+  auto GetField(const FieldPath& path, int line_num) const -> const Value*;
+
+  // Returns a copy of *this, but with the sub-Value specified by `path`
+  // set to `field_value`. `path` must be a valid field path for *this.
+  auto SetField(const FieldPath& path, const Value* field_value,
+                int line_num) const -> const Value*;
+
+  void Print(llvm::raw_ostream& out) const;
 
  private:
-  union {
-    int integer;
-    bool boolean;
-    FunctionValue fun;
-    StructValue struct_val;
-    AlternativeConstructorValue alt_cons;
-    AlternativeValue alt;
-    TupleValue tuple;
-    Address ptr;
-    std::string* var_type;
-    PatternVariableValue var_pat;
-    FunctionType fun_type;
-    PointerType ptr_type;
-    StructType struct_type;
-    ChoiceType choice_type;
-    ContinuationValue continuation;
-  } u;
+  std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
+               AlternativeValue, TupleValue, IntType, BoolType, TypeType,
+               FunctionType, PointerType, AutoType, StructType, ChoiceType,
+               ContinuationType, BindingPlaceholderValue,
+               AlternativeConstructorValue, ContinuationValue>
+      value;
 };
 
-void PrintValue(const Value* val, std::ostream& out);
+auto CopyVal(const Value* val, int line_num) -> const Value*;
 
 auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
-
-auto ToInteger(const Value* v) -> int;
 
 }  // namespace Carbon
 
