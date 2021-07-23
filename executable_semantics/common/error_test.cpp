@@ -7,6 +7,7 @@
 #include "gtest/gtest.h"
 
 namespace Carbon {
+namespace {
 
 TEST(ErrorTest, FatalUserError) {
   ASSERT_DEATH({ FatalUserError(ErrorLine::None) << "test"; }, "ERROR: test\n");
@@ -32,4 +33,5 @@ TEST(ErrorTest, NoReturnRequired) {
   ASSERT_DEATH({ NoReturnRequired(); }, "ERROR: test\n");
 }
 
+}  // namespace
 }  // namespace Carbon

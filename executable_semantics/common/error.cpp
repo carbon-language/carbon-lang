@@ -6,12 +6,6 @@
 
 namespace Carbon {
 
-// Prints an error and exits. This should be used for non-recoverable errors
-// with user input.
-//
-// For example:
-//   FatalUserError(line_num) << "Line is bad!";
-//   FatalUserError(ErrorLine::None) << "Application is bad!";
 
 ErrorInternal::ExitingStream FatalUserError(ErrorLine none) {
   auto stream = ErrorInternal::ExitingStream();
@@ -20,9 +14,7 @@ ErrorInternal::ExitingStream FatalUserError(ErrorLine none) {
 }
 
 ErrorInternal::ExitingStream FatalUserError(int line_num) {
-  auto stream = FatalUserError(ErrorLine::None);
-  stream << line_num << ": ";
-  return stream;
+  return FatalUserError(ErrorLine::None) << line_num << ": ";
 }
 
 ErrorInternal::ExitingStream FatalCompilationError(ErrorLine none) {
