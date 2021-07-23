@@ -536,6 +536,10 @@ The type of `kvpair` in the last example would be declared:
 struct {.key: String, .value: Int}
 ```
 
+This syntax is intended to parallel the literal syntax, and so uses commas (`,`)
+to separate fields instead of a semicolon (`;`) terminator. This choice also
+reflects the expected use inline in function signature declarations.
+
 Anonymous struct may only have data members, so the type declaration is just a
 list of field names, types, and optional defaults.
 
@@ -546,9 +550,9 @@ Assert(with_defaults.y == 2);
 ```
 
 Note that the type syntax uses an introducer to distinguish type declarations
-from struct literals. For tuples, we can say the type of a tuple is the tuple of
-the types. That policy wouldn't give a good option for defining field defaults
-in `struct` types.
+from struct literals. This is in contrast with what we do for tuples, where we
+can say the type of a tuple is the tuple of the types. That policy wouldn't give
+a good option for defining field defaults in `struct` types.
 
 ### Option parameters
 
@@ -605,9 +609,15 @@ p = {.x = 3, .y = 5};
 
 Similarly, an anonymous struct has an unformed state if all its members do.
 
-**Open question:** Should we define less-than comparison on anonymous struct
-types if all its field types support it? We would have to forbid comparisons
-between values with fields in different orders.
+Ordering comparisons like `<` and `<=` are defined on an anonymous struct type
+if all its field types support it, using
+[lexicographical order](https://en.wikipedia.org/wiki/Lexicographic_order).
+
+```
+Assert({.x = 2, .y = 4} < {.x = 5, .y = 3});
+```
+
+Comparisons between values with fields in different orders are forbidden.
 
 ```
 // Illegal
@@ -635,8 +645,8 @@ struct TextLabel {
 ```
 
 It is an open question, though, how we will address the
-[different use cases](#use-cases). For example, will we a different introducer
-keyword like `class` for [polymorphic types](#polymorphic-types)?
+[different use cases](#use-cases). For example, we might mark
+[data classes](#data-classes) with a `impl DataClass {}` line.
 
 ### Construction
 
@@ -716,7 +726,8 @@ There are definite questions about this syntax:
 
 -   Should these use the `:!` generic syntax decided in
     [issue #565](https://github.com/carbon-language/carbon-lang/issues/565)?
--   Would we also have `alias` declarations? How would they be different?
+-   Would we also have `alias` declarations? They would only be used for names,
+    not other constant values.
 
 ### Methods
 
@@ -756,16 +767,13 @@ Some discussion on this topic has occurred in:
 
 ### Access control
 
-We will need some way of controlling access to the members of structs. For now,
-we assume all members are fully publicly accessible.
+We will need some way of controlling access to the members of structs. By
+default, all members are fully publicly accessible, as decided in
+[issue #665](https://github.com/carbon-language/carbon-lang/issues/665).
 
-The default access control level, and the options for access control, are pretty
-large open questions. Swift and C++ (especially w/ modules) provide a lot of
-options and a pretty wide space to explore here. If the default isn't right most
-of the time, access control runs the risk of becoming a significant ceremony
-burden that we may want to alleviate with grouped access regions instead of
-per-entity specifiers. Grouped access regions have some other advantages in
-terms of pulling the public interface into a specific area of the type.
+The set of access control options Carbon will support is an open question. Swift
+and C++ (especially w/ modules) provide a lot of options and a pretty wide space
+to explore here.
 
 ### Operator overloading
 
@@ -837,7 +845,12 @@ inheritance:
 These concerns would be resolved by distinguishing between pointers that point
 to a specified type only and those that point to a type or any subtype. The
 latter case would have restrictions to prevent misuse. This distinction may be
-more complexity than is justified for a relatively rare use case.
+more complexity than is justified for a relatively rare use case. An alternative
+approach would be to forbid destruction of non-final types without virtual
+destructors, and forbid assignment of non-final types entirely.
+
+This open question is being considered in
+[question-for-leads issue #652](https://github.com/carbon-language/carbon-lang/issues/652).
 
 ### Memory layout
 
