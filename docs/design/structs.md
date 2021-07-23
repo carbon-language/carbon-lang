@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Data members have an order](#data-members-have-an-order)
 -   [Anonymous structs](#anonymous-structs)
     -   [Literals](#literals)
-    -   [Type declarations](#type-declarations)
+    -   [Type expression](#type-expression)
     -   [Option parameters](#option-parameters)
     -   [Order is ignored on assignment](#order-is-ignored-on-assignment)
     -   [Operations performed field-wise](#operations-performed-field-wise)
@@ -528,9 +528,10 @@ statements, Carbon will adopt some combination of:
     by a keyword where they are required, like requiring `{ ... }` around the
     cases of an `if...else` statement.
 
-### Type declarations
+### Type expression
 
-The type of `kvpair` in the last example would be declared:
+The type of `kvpair` in the last example would be represented by this
+expression:
 
 ```
 struct {.key: String, .value: Int}
