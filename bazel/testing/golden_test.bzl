@@ -18,10 +18,10 @@ def golden_test(name, golden, cmd, data, env = None, golden_is_subset = False, *
       **kwargs: Any additional parameters for the generated py_test.
     """
     args = ["$(location %s)" % golden, cmd]
-    if golden_is_subset:
-        args.append("--golden_is_subset")
     if not env:
         env = {}
+    if golden_is_subset:
+        args.append("--golden_is_subset")
     native.py_test(
         name = name,
         srcs = ["//bazel/testing:golden_test.py"],
