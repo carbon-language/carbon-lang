@@ -90,7 +90,7 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
 }
 
 auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                         const Expression* ret)
+                                         ReturnExpression ret)
     -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;

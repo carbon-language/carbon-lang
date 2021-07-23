@@ -113,7 +113,7 @@ struct CallExpression {
 struct FunctionTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
-  const Expression* return_type;
+  const ReturnExpression return_type;
 };
 
 struct AutoTypeLiteral {
@@ -161,7 +161,7 @@ struct Expression {
   static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
   static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
   static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                      const Expression* ret)
+                                      const ReturnExpression ret)
       -> const Expression*;
   static auto MakeAutoTypeLiteral(int line_num) -> const Expression*;
   static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;

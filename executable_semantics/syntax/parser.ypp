@@ -69,6 +69,7 @@
 #include "executable_semantics/ast/abstract_syntax_tree.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/ast/return_expression.h"
 #include "executable_semantics/syntax/paren_contents.h"
 
 namespace Carbon {
@@ -96,13 +97,14 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <std::list<Carbon::Declaration>> declaration_list
 %type <const Carbon::Statement*> statement
 %type <const Carbon::Statement*> optional_else
+%type <const Carbon::ReturnExpression> return_expression
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
 %type <Carbon::GenericBinding> generic_binding
 %type <std::vector<Carbon::GenericBinding>> deduced_params
 %type <std::vector<Carbon::GenericBinding>> deduced_param_list
 %type <const Carbon::Expression*> pattern
-%type <const Carbon::Expression*> return_type
+%type <const Carbon::ReturnExpression> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
@@ -346,7 +348,7 @@ statement:
     { $$ = Carbon::Statement::MakeBreak(yylineno); }
 | CONTINUE ";"
     { $$ = Carbon::Statement::MakeContinue(yylineno); }
-| RETURN expression ";"
+| RETURN return_expression ";"
     { $$ = Carbon::Statement::MakeReturn(yylineno, $2); }
 | "{" statement_list "}"
     { $$ = Carbon::Statement::MakeBlock(yylineno, $2); }
@@ -364,6 +366,12 @@ optional_else:
     { $$ = 0; }
 | ELSE statement { $$ = $2; }
 ;
+return_expression:
+  // Empty
+    { $$ = Carbon::ReturnExpression(yylineno, nullptr); }
+| expression
+    { $$ = Carbon::ReturnExpression(yylineno, $1); }
+;
 statement_list:
   // Empty
     { $$ = 0; }
@@ -372,9 +380,9 @@ statement_list:
 ;
 return_type:
   // Empty
-    { $$ = Carbon::Expression::MakeTupleLiteral(yylineno, {}); }
+    { $$ = Carbon::ReturnExpression(yylineno, nullptr); }
 | ARROW expression %prec FNARROW
-    { $$ = $2; }
+    { $$ = Carbon::ReturnExpression(yylineno, $2); }
 ;
 generic_binding:
   identifier ":!" expression

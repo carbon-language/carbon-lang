@@ -55,11 +55,20 @@ cc_library(
 )
 
 cc_library(
+    name = "return_expression",
+    hdrs = ["return_expression.h"],
+    deps = [
+        ":expression",
+    ],
+)
+
+cc_library(
     name = "statement",
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
     deps = [
         ":expression",
+        ":return_expression",
         "//common:check",
         "//common:ostream",
     ],
