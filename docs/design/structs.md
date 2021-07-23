@@ -48,6 +48,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
+    -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
 
 <!-- tocstop -->
 
@@ -691,7 +692,8 @@ struct IntListNode {
 }
 ```
 
-`Self` is an alias for the current type:
+An equivalent definition of `IntListNode`, since `Self` is an alias for the
+current type, is:
 
 ```
 struct IntListNode {
@@ -892,3 +894,33 @@ want to support "read only" data members, that can be read through the public
 api but only modified with private access, for data members which may need to
 evolve into a computed property. There are also questions regarding how to
 support assigning or modifying computed properties, such as using `+=`.
+
+### Interfaces implemented for data classes
+
+We should define a way for defining implementations of interfaces for anonymous
+structs. To satisfy coherence, these implementations would have to be defined in
+the library with the interface definition. The syntax might look like:
+
+```
+interface ConstructWidgetFrom {
+  fn Construct(Self) -> Widget;
+}
+
+external impl struct {.kind: WidgetKind, .size: Int}
+    as ConstructWidgetFrom { ... }
+```
+
+In addition, we should define a way for interfaces to define templated blanket
+implementations for [data classes](#data-classes) more generally. These
+implementations will typically subject to the criteria that all the data fields
+of the type must implement the interface. For this we will need a type-of-type
+for capturing that criteria, maybe something like
+`DataClassFieldsImplement(MyInterface)`. The templated implementation will need
+some way of iterating through the fields so it can perform operations fieldwise.
+
+It is an open question how define implementations for binary operators. For
+example, if `Int` is comparable to `Float32`, then `{.x = 3, .y = 2.72}` should
+be comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
+that "`T` is comparable to `U` if they have the same field names in the same
+order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
+the type of `U.x`."
