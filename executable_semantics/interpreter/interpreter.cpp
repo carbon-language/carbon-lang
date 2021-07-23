@@ -18,6 +18,7 @@
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -31,10 +32,10 @@ void Step();
 //
 
 void PrintEnv(Env values, llvm::raw_ostream& out) {
+  llvm::ListSeparator sep;
   for (const auto& [name, address] : values) {
-    out << name << ": ";
+    out << sep << name << ": ";
     state->heap.PrintAddress(address, out);
-    out << ", ";
   }
 }
 
@@ -43,13 +44,9 @@ void PrintEnv(Env values, llvm::raw_ostream& out) {
 //
 
 void PrintStack(const Stack<Frame*>& ls, llvm::raw_ostream& out) {
-  auto it = ls.begin();
-  while (it != ls.end()) {
-    out << **it;
-    ++it;
-    if (it != ls.end()) {
-      out << " :: ";
-    }
+  llvm::ListSeparator sep(" :: ");
+  for (const auto& frame : ls) {
+    out << sep << *frame;
   }
 }
 
