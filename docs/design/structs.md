@@ -42,11 +42,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Access control](#access-control)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
-    -   [Abstract base classes interoperating with object-safe interfaces](#abstract-base-classes-interoperating-with-object-safe-interfaces)
+    -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
     -   [Mixins](#mixins-1)
     -   [Non-virtual inheritance](#non-virtual-inheritance)
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
+    -   [Computed properties](#computed-properties)
 
 <!-- tocstop -->
 
@@ -130,11 +131,12 @@ support these types is future work.
 
 #### With inheritance and subtyping
 
-The subtyping you get with inheritance is that you may assign the address of an
-object of a derived type to a pointer to its base type. For this to work, the
-compiler needs implementation strategies that allow operations performed through
-the pointer to the base type work independent of which derived type it actually
-points to. These strategies include:
+The [subtyping](https://en.wikipedia.org/wiki/Subtyping) you get with
+inheritance is that you may assign the address of an object of a derived type to
+a pointer to its base type. For this to work, the compiler needs implementation
+strategies that allow operations performed through the pointer to the base type
+work independent of which derived type it actually points to. These strategies
+include:
 
 -   Arranging for the the data layout of derived types to start with the data
     layout of the base type as a prefix.
@@ -197,17 +199,21 @@ Polymorphic types support a number of different kinds of methods:
 
 -   They will have virtual methods:
     -   Polymorphic types will typically include virtual destructors.
-    -   Polymorphic types may have pure-virtual methods, but they aren't
-        required. Virtual methods may have default implementations.
-    -   It is more common for polymorphic types to have a default implementation
-        of virtual methods or have protected or
-        [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
-        virtual methods intended to be called by methods in the base type but
-        implemented in the descendant.
+    -   The virtual methods types may have default implementations or be
+        [_abstract_](<https://en.wikipedia.org/wiki/Method_(computer_programming)#Abstract_methods>)
+        (or
+        [_pure virtual_](https://en.wikipedia.org/wiki/Virtual_function#Abstract_classes_and_pure_virtual_functions)).
+        In the latter case, they must be implemented in any derived class that
+        can be instantiated.
+    -   Virtual methods may be
+        [_protected_](https://en.wikipedia.org/wiki/Access_modifiers) or
+        [_private_](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c),
+        intended to be called by methods in the base type but implemented in the
+        descendant.
 -   They may have non-virtual public or private helper methods, like
-    encapsulated types without inheritance. These avoid the overhead of a
-    virtual function call, and can be written when the base class has sufficient
-    data members.
+    [encapsulated types without inheritance](#without-inheritance). These avoid
+    the overhead of a virtual function call, and can be written when the base
+    class has sufficient data members.
 -   They may have protected helper methods, typically non-virtual, provided by
     the base type to be called by the descendant.
 
@@ -223,93 +229,86 @@ medium term. Extending this design to support polymorphic types is future work.
 
 ###### Interface as base class
 
-**TODO:** rename to "interface base class/type" or "pure interface base
-class/type", since ABCs in C++ are allowed to have data?
+We distinguish the specific case of polymorphic base classes that have no data
+members:
 
-FIXME
+-   From an implementation perspective, the lack of data members removes most of
+    the problems with supporting multiple inheritance.
+-   They are about decoupling two pieces of code instead of collaborating.
+-   As a use case, they are used primarily for subtyping and much less
+    implementation reuse than other polymorphic types.
+-   This case overlaps with the
+    [interface](/docs/design/generics/terminology.md#interface) concept
+    introduced for [Carbon generics](/docs/design/generics/overview.md).
 
-but unlike [abstract base classes](#interface-as-base-class) may also include
-private data in a base type.
+Removing support for data fields greatly simplifies supporting multiple
+inheritance. For example, it removes the need for a mechanism to figure out the
+offset of those data fields in the object. Similarly we don't need
+[C++'s virtual inheritance](https://en.wikipedia.org/wiki/Virtual_inheritance)
+to avoid duplicating those fields. Some complexities still remain, such as
+pointers changing values when casting to a secondary parent type, but these seem
+manageable given the benefits of supporting this useful case of multiple
+inheritance.
 
-While an abstract base class is an interface that allows decoupling, a
-polymorphic type is a collaboration between a base and derived type to provide
-some functionality. This is a bit like the difference between a library and a
-framework, where you might use many of the former but only one of the latter.
-However, there are some cases of overlap where there is an interface at the root
-of a type hierarchy and polymorphic types as interior branches of the tree.
+While an interface base class is generally for providing an API that allows
+decoupling two pieces of code, a polymorphic type is a collaboration between a
+base and derived type to provide some functionality. This is a bit like the
+difference between a library and a framework, where you might use many of the
+former but only one of the latter.
 
-FIXME
+Interface base classes are primarily used for subtyping. The extent of
+implementation reuse is generally limited by the lack of data members, and the
+decoupling role they play is usually about defining an API as a set of public
+pure-virtual methods. Compared to other polymorphic types, they more rarely have
+methods with implementations (virtual or not), or have methods with restricted
+access. The main use case is when there is a method that is implemented in terms
+of pure-virtual methods. Those pure-virtual methods may be marked as protected
+to ensure they are only called through the non-abstract API, but can still be
+implemented in descendants.
 
-An [abstract base class](https://en.wikipedia.org/wiki/Abstract_type), or "ABC",
-is a base type for use in inheritance with a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table) for dynamic
-dispatch. The term "abstract" means that the base type can't be instantiated due
-to methods without implementation, they are said to be "abstract" or "pure
-virtual". Only derived types that implement those methods may be instantiated.
-
-Abstract base classes can't have data fields in the base type, which avoids the
-main implementation difficulties and complexity of multiple inheritance. This
-allows a type to inherit from multiple abstract base classes.
-
-Abstract base classes are primarily used for
-[subtyping](https://en.wikipedia.org/wiki/Subtyping). In practice that means
-that if we have a type `Concrete` that is a concrete type derived from an
-abstract base class named `ABC`, objects of type `Concrete` will be accessed
-through pointers of type `ABC*`, which means "a pointer to type inheriting from
-`ABC`." Such types should only be allowed to be deleted by way of that pointer
-if a virtual destructor is included in the abstract base class.
-
-The use cases for abstract base classes almost entirely overlap with the
-object-safe (as
-[defined by Rust](https://doc.rust-lang.org/reference/items/traits.html#object-safety))
-subset of [Carbon interfaces](generics/overview.md#interfaces). The main
-difference is the representation in memory. A type extending an abstract base
-class includes a pointer to the table of methods in the object value itself,
-while a type implementing an interface would store the pointer alongside the
-pointer to the value in a `DynPtr(MyInterface)`. Of course the interface option
-also allows the method table to be passed at compile time.
-
-The methods of an abstract base class will typically be pure virtual, with no
-implementation. This is both because of the main use case is for defining an
-interface without knowledge of how it is implemented, and because you typically
-won't be able to define the implementation without reference to the data fields
-of the object. In some cases, there may be non-abstract methods that are
-implemented in terms of the pure virtual methods. In those cases, the pure
-virtual methods may be
-["protected"](https://en.wikipedia.org/wiki/Access_modifiers) to ensure they are
-only called through the non-abstract API, but can still be implemented in
-descendants.
+While it is typical for this case to be associated with single-level inheritance
+hierarchies, there are some cases where there is an interface at the root of a
+type hierarchy and polymorphic types as interior branches of the tree. The case
+of generic interfaces extending or requiring other interface would also be
+modeled by deeper inheritance hierarchies.
 
 An interface as base class needs to either have a virtual destructor or forbid
 deallocation.
 
-FIXME
+There is significant overlap between interface base classes and
+[Carbon interfaces](generics/overview.md#interfaces). Both represent APIs as a
+collection of method names and signatures to implement. The subset of interfaces
+that support dynamic dispatch are called _object-safe_, following
+[Rust](https://doc.rust-lang.org/reference/items/traits.html#object-safety):
 
-    -   It is more common for polymorphic types to have a default implementation
-        of virtual methods or have protected or
-        [private](https://stackoverflow.com/questions/2170688/private-virtual-method-in-c)
-        virtual methods intended to be called by methods in the base type but
-        implemented in the descendant.
+-   They don't have a `Self` in the signature of a method in a contravariant
+    position like a parameter.
+-   They don't have free associated types or other associated items used in a
+    method signature.
 
--   They may have non-virtual public or private helper methods, like
-    encapsulated types without inheritance. These avoid the overhead of a
-    virtual function call, and are more frequent in polymorphic types than
-    abstract base classes due to the ability to reference some of the data
-    members of the type.
+The restrictions on object-safe interfaces match the restrictions on base class
+methods. The main difference is the representation in memory. A type extending a
+base class with virtual methods includes a pointer to the table of methods in
+the object value itself, while a type implementing an interface would store the
+pointer alongside the pointer to the value in a `DynPtr(MyInterface)`. Of
+course, the interface option also allows the method table to be passed at
+compile time.
 
-FIXME
+**Note:** This presumes that we include some concept of `final` methods in
+interfaces to match non-virtual functions in base classes.
 
 We expect idiomatic Carbon-only code to generally use Carbon interfaces instead
-of abstract base classes. We may still support abstract base classes long term
+of interface base classes. We may still support interface base classes long term
 if we determine that the ability to put the pointer to the method
 implementations in the object value is important for users, particularly with a
 single parent as in the [polymorphic type case](#polymorphic-types). Extending
-this design to support abstract base classes is future work.
+this design to support interface base classes is future work.
 
 **Background:**
-[Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) and
 [C++ abstract base classes](https://en.wikipedia.org/wiki/Abstract_type) that
-don't have data members model this case.
+don't have data members and
+[Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) model this
+case.
 
 ##### Non-polymorphic inheritance
 
@@ -325,13 +324,37 @@ some cases where this is done in C++ but would be done differently in Carbon:
     [empty-base optimization](https://en.cppreference.com/w/cpp/language/ebo) is
     unnecessary.
 -   For cases where the derived type does not add any data members, in Carbon
-    you can use adapter types instead of inheritance.
+    you can potentially use adapter types instead of inheritance.
 
 However, there are still some cases where non-virtual inheritance makes sense.
+One is a parameterized type where a prefix of the data is the same independent
+of the parameter. An example of this is containers with a
+[small-buffer optimization](https://akrzemi1.wordpress.com/2014/04/14/common-optimizations/#sbo),
+as described in the talk
+[CppCon 2016: Chandler Carruth "High Performance Code 201: Hybrid Data Structures"](https://www.youtube.com/watch?v=vElZc6zSIXM).
+By moving the data and methods that don't depend on the buffer size to a base
+class, we reduce the instantiation overhead for monomorphization. The base type
+is also useful for reducing instantiation for consumers of the container, as
+long as they only need to access methods defined in the base.
 
-**Examples:** LLVM
-[red-black tree](https://github.com/llvm-mirror/libcxx/blob/master/include/__tree)
-and doubly-linked lists **TODO**
+Another case for non-virtual inheritance is for different node types within a
+data structure that have some data members in common. This is done in LLVM's
+map,
+[red-black tree](https://github.com/llvm-mirror/libcxx/blob/master/include/__tree),
+and list data structure types. In a linked list, the base type might have the
+next and previous pointers, which is enough for a sentinel node, and there would
+also be a derived type with the actual data member. The base type can define
+operations like "splice" that only operate on the pointers not the data, and
+this is in fact enforced by the type system. Only the derived node type needs to
+be parameterized by the element type, saving on instantiation costs as before.
+
+Many of the concerns around non-polymorphic inheritance are the same as for the
+non-virtual methods of [polymorphic types](#polymorphic-types). Assignment and
+destruction are examples of operations that need particular care to be sure they
+are only done on values of the correct type, rather than through a subtyping
+relationship. This means having some extrinsic way of knowing when it is safe to
+downcast before performing one of those operations, or performing them on
+pointers that were never upcast to the base type.
 
 ##### Interop with C++ multiple inheritance
 
@@ -771,21 +794,26 @@ Multiple inheritance will be limited in at least a couple of ways:
 There is a
 [document considering the options for constructing objects with inheritance](https://docs.google.com/document/d/1GyrBIFyUbuLJGItmTAYUf9sqSDQjry_kjZKm5INl-84/edit).
 
-### Abstract base classes interoperating with object-safe interfaces
+### C++ abstract base classes interoperating with object-safe interfaces
 
 We want four things so that Carbon's object-safe interfaces may interoperate
-with C++ abstract base classes without data members:
+with C++ abstract base classes without data members, matching the
+[interface as base class use case](#interface-as-base-class):
 
 -   Ability to convert an object-safe interface (a type-of-type) into an
-    abstract base class (a base type), maybe using `AsBaseType(MyInterface)`.
--   Ability to convert an interface base class (a base type) into an object-safe
-    interface (a type-of-type), maybe using `AsInterface(MyIBC)`.
+    C++-compatible base class (a base type), maybe using
+    `AsBaseClass(MyInterface)`.
+-   Ability to convert a C++ base class without data members (a base type) into
+    an object-safe interface (a type-of-type), maybe using `AsInterface(MyIBC)`.
 -   Ability to convert a (thin) pointer to an abstract base class to a `DynPtr`
     of the corresponding interface.
--   We should arrange that there be some proxy type that holds a pointer to a
-    value with type satisfying `MyInterface` that extends the corresponding base
-    class `AsBaseType(MyInterface)`. There should be an easy conversion from
-    `DynPtr(MyInterface)` values to this proxy type.
+-   Ability to convert `DynPtr(MyInterface)` values to a proxy type that extends
+    the corresponding base class `AsBaseType(MyInterface)`.
+
+Note that the proxy type extending `AsBaseType(MyInterface)` would be a
+different type than `DynPtr(MyInterface)` since the receiver input to the
+function members of the vtable for the former does not match those in the
+witness table for the latter.
 
 ### Mixins
 
@@ -821,4 +849,32 @@ individual members.
 
 At the moment, there is no proposal to support
 [`static` member variables](https://en.wikipedia.org/wiki/Class_variable#Static_member_variables_and_static_member_functions),
-in line with avoiding global variables more generally.
+in line with avoiding global variables more generally. Carbon may need some
+support in this area, though, for parity with and migration from C++.
+
+### Computed properties
+
+Carbon might want to support members of a type that are accessed like a data
+member but return a computed value like a function. This has a number of
+implications:
+
+-   It would be a way of publicly exposing data members for
+    [encapsulated types](#encapsulated-types), allowing for rules that otherwise
+    forbid mixing public and private data members.
+-   It would provide a more graceful evolution path from a
+    [data class](#data-classes) to an [encapsulated type](#encapsulated-types).
+-   It would give an option to start with a [data class](#data-classes) instead
+    of writing all the boilerplate to create an
+    [encapsulated type](#encapsulated-types) preemptively to allow future
+    evolution.
+-   We should have some guidance for when to use a computed property instead of
+    a function with no arguments. One possible criteria is when it is a pure
+    function of the state of the object and executes in an amount of time
+    similar to ordinary member access.
+
+However, there are likely to be differences between computed properties and
+other data members, such as the ability to take the address of them. We might
+want to support "read only" data members, that can be read through the public
+api but only modified with private access, for data members which may need to
+evolve into a computed property. There are also questions regarding how to
+support assigning or modifying computed properties, such as using `+=`.
