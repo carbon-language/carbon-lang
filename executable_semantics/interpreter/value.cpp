@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -373,15 +374,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case ValKind::TupleValue: {
       out << "(";
-      bool add_commas = false;
+      llvm::ListSeparator sep;
       for (const TupleElement& element : GetTupleValue().elements) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << element.name << " = " << *element.value;
+        out << sep << element.name << " = " << *element.value;
       }
       out << ")";
       break;
