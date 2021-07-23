@@ -42,6 +42,7 @@ EXAMPLES = [
     "generic_function_apply",
     "generic_function_fail1",
     "generic_function_fail2",
+    "generic_function_fail3",
     "generic_function_swap",
     "generic_function_tuple_map",
     "global_variable1",
