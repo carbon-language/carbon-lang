@@ -33,6 +33,12 @@ cc_binary(
     golden = "testdata/%s.golden" % e,
 ) for e in TEST_LIST]
 
+# Convenience suite for running golden tests.
+test_suite(
+    name = "golden_tests",
+    tests = [":%s_test" % e for e in TEST_LIST],
+)
+
 # Test --trace by expecting golden output to be a *subset* of trace output. Note
 # the normal test must be used to update golden files.
 [golden_test(
@@ -50,3 +56,9 @@ cc_binary(
     golden = "testdata/%s.golden" % e,
     golden_is_subset = True,
 ) for e in TEST_LIST]
+
+# Convenience suite for running trace tests.
+test_suite(
+    name = "trace_tests",
+    tests = [":%s_trace_test" % e for e in TEST_LIST],
+)

@@ -124,12 +124,13 @@ def _update_goldens():
     # building new tests requires --update_list.
     bzl_content = open(_TEST_LIST_BZL).read()
     tests = re.findall(r'"(\w+)",', bzl_content)
-    print("Building tests...")
+
     # Build all tests at once in order to allow parallel builds.
+    print("Building tests...")
     subprocess.check_call(
-        ["bazel", "build"]
-        + ["//executable_semantics:%s_test" % test for test in tests]
+        ["bazel", "build", "//executable_semantics:golden_tests"]
     )
+
     print("Updating %d goldens..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
         results = [exec.submit(lambda: _update_golden(test)) for test in tests]
@@ -137,7 +138,7 @@ def _update_goldens():
     for result in results:
         result.result()
     # Each golden indicates progress with a dot without a newline, so put a
-    # newline in.
+    # newline to wrap.
     print("\nUpdated goldens.")
 
 
