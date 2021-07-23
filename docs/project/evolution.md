@@ -294,10 +294,11 @@ merged the PR in order to understand the proposed changes.
 
 The author of a proposal is not required to include changes to the design
 documentation as part of a proposal, and it may in some cases be preferable to
-decouple the proposal process from updating the design. When accepted, the proposal would then be implemented through a series of future PRs to the
-rest of the project, and the proposal document should describe what is being
-proposed in enough detail to validate that those future PRs properly implement
-the proposed direction.
+decouple the proposal process from updating the design. When accepted, the
+proposal would then be implemented through a series of future PRs to the rest of
+the project, and the proposal document should describe what is being proposed in
+enough detail to validate that those future PRs properly implement the proposed
+direction.
 
 #### Open questions
 
