@@ -72,6 +72,10 @@ struct Stack {
   std::vector<T> elements;
 };
 
+// Explicitly enable CTAD
+template <typename T>
+Stack(T x) -> Stack<T>;
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_INTERPRETER_CONS_LIST_H_
