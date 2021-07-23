@@ -6,7 +6,6 @@
 
 namespace Carbon {
 
-
 ErrorInternal::ExitingStream FatalUserError(ErrorLine none) {
   auto stream = ErrorInternal::ExitingStream();
   stream << "ERROR: ";
@@ -14,7 +13,9 @@ ErrorInternal::ExitingStream FatalUserError(ErrorLine none) {
 }
 
 ErrorInternal::ExitingStream FatalUserError(int line_num) {
-  return FatalUserError(ErrorLine::None) << line_num << ": ";
+  auto stream = FatalUserError(ErrorLine::None);
+  stream << line_num << ": ";
+  return stream;
 }
 
 ErrorInternal::ExitingStream FatalCompilationError(ErrorLine none) {

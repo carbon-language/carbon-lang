@@ -43,7 +43,9 @@ enum class ErrorLine { None };
 //   FatalUserError(line_num) << "Line is bad!";
 //   FatalUserError(ErrorLine::None) << "Application is bad!";
 //
-// Where possible, try to identify the error as a compilation error or runtime error. The generic user error option is provided as a fallback for cases that don't fit either of those classifications.
+// Where possible, try to identify the error as a compilation error or runtime
+// error. The generic user error option is provided as a fallback for cases that
+// don't fit either of those classifications.
 ErrorInternal::ExitingStream FatalUserError(ErrorLine none);
 ErrorInternal::ExitingStream FatalUserError(int line_num);
 ErrorInternal::ExitingStream FatalCompilationError(ErrorLine none);
