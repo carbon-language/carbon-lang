@@ -125,7 +125,7 @@ def _update_goldens():
     bzl_content = open(_TEST_LIST_BZL).read()
     tests = re.findall(r'"(\w+)",', bzl_content)
 
-    # Build all tests at once in order to allow parallel builds.
+    # Build all tests at once in order to allow parallel updates.
     print("Building tests...")
     subprocess.check_call(
         ["bazel", "build", "//executable_semantics:golden_tests"]
