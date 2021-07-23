@@ -87,13 +87,9 @@ void Action::Print(llvm::raw_ostream& out) const {
 }
 
 void Action::PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out) {
-  auto it = ls.begin();
-  while (it != ls.end()) {
-    out << **it;
-    ++it;
-    if (it != ls.end()) {
-      out << " :: ";
-    }
+  llvm::ListSeparator sep(" :: ");
+  for (const auto& action : ls) {
+    out << sep << *action;
   }
 }
 
