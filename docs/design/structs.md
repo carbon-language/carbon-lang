@@ -29,7 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Literals](#literals)
     -   [Type expression](#type-expression)
     -   [Option parameters](#option-parameters)
-    -   [Order is ignored on assignment](#order-is-ignored-on-assignment)
+    -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Future work](#future-work)
     -   [Nominal struct types](#nominal-struct-types)
@@ -542,7 +542,7 @@ This syntax is intended to parallel the literal syntax, and so uses commas (`,`)
 to separate fields instead of a semicolon (`;`) terminator. This choice also
 reflects the expected use inline in function signature declarations.
 
-Anonymous struct may only have data members, so the type declaration is just a
+Anonymous structs may only have data members, so the type declaration is just a
 list of field names, types, and optional defaults.
 
 ```
@@ -582,10 +582,10 @@ SortIntVector(&v, {.descending = true});
 SortIntVector(&v, {.stable = true, .descending = true});
 ```
 
-### Order is ignored on assignment
+### Assignment and initialization
 
 When initializing or assigning a struct variable to an anonymous struct value on
-the right hand side, the order of the fields do not have to match, just the
+the right hand side, the order of the fields does not have to match, just the
 names.
 
 ```
@@ -597,19 +597,47 @@ Assert(different_order.y == 2);
 SortIntVector(&v, {.descending = true, .stable = true});
 ```
 
+**Open question:** What operations and in what order happen for assignment and
+initialization?
+
+-   Is assignment just destruction followed by initialization? Is that
+    destruction completed for the whole object before initializing, or is it
+    interleaved field-by-field?
+-   When initializing to a literal value, is a temporary containing the literal
+    value constructed first or are the fields initialized directly?
+-   What is the ordering of construction and initialization, particularly when
+    the literal used to initialize has fields in a different order than the
+    variable?
+-   Perhaps some operations are _not_ ordered with respect to each other?
+
 ### Operations performed field-wise
 
-Assignment, destruction, and equality comparison is performed field-wise on
-anonymous struct values.
+Generally speaking, the operations that are available on an anonymous struct
+value are dependent on those operations being available for all the types of the
+fields.
+
+For example, an anonymous struct values may be compared for equality if it is
+supported for every member:
 
 ```
 var p: auto = {.x = 2, .y = 3};
 Assert(p == {.x = 2, .y = 3});
 Assert(p != {.x = 2, .y = 4});
+```
+
+A number of operations are available on anonymous struct values, based on
+whether those operations apply
+
+Assignment, destruction, and equality comparison is performed field-wise on
+anonymous struct values.
+
+```
 p = {.x = 3, .y = 5};
 ```
 
 Similarly, an anonymous struct has an unformed state if all its members do.
+Treatment of unformed state follows
+[#257](https://github.com/carbon-language/carbon-lang/pull/257).
 
 Ordering comparisons like `<` and `<=` are defined on an anonymous struct type
 if all its field types support it, using
