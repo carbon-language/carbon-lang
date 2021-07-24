@@ -556,6 +556,8 @@ from struct literals. This is in contrast with what we do for tuples, where we
 can say the type of a tuple is the tuple of the types. That policy wouldn't give
 a good option for defining field defaults in `struct` types.
 
+The result of an anonymous struct expression is an immutable type value.
+
 ### Option parameters
 
 Consider this function declaration:
@@ -604,7 +606,8 @@ initialization?
     destruction completed for the whole object before initializing, or is it
     interleaved field-by-field?
 -   When initializing to a literal value, is a temporary containing the literal
-    value constructed first or are the fields initialized directly?
+    value constructed first or are the fields initialized directly? The latter
+    approach supports types that can't be moved or copied, such as mutex.
 -   What is the ordering of construction and initialization, particularly when
     the literal used to initialize has fields in a different order than the
     variable?
@@ -625,16 +628,6 @@ Assert(p == {.x = 2, .y = 3});
 Assert(p != {.x = 2, .y = 4});
 ```
 
-A number of operations are available on anonymous struct values, based on
-whether those operations apply
-
-Assignment, destruction, and equality comparison is performed field-wise on
-anonymous struct values.
-
-```
-p = {.x = 3, .y = 5};
-```
-
 Similarly, an anonymous struct has an unformed state if all its members do.
 Treatment of unformed state follows
 [#257](https://github.com/carbon-language/carbon-lang/pull/257).
@@ -653,6 +646,11 @@ Comparisons between values with fields in different orders are forbidden.
 // Illegal
 Assert({.x = 2, .y = 3} < {.y = 4, .x = 5});
 ```
+
+Destruction is performed field-wise in reverse order.
+
+Extending user-defined operations on the fields to an operation on an entire
+anonymous struct is [future work](#interfaces-implemented-for-data-classes).
 
 ## Future work
 
