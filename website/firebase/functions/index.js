@@ -45,8 +45,7 @@ const validateIdToken = async (idToken) => {
     } = require('@google-cloud/secret-manager');
     const secrets = new SecretManagerServiceClient();
     const [secret] = await secrets.accessSecretVersion({
-      name:
-        'projects/985662022432/secrets/github-org-lookup-token-for-www/versions/latest',
+      name: 'projects/985662022432/secrets/github-org-lookup-token-for-www/versions/latest',
     });
     const authToken = secret.payload.data.toString('utf8');
 

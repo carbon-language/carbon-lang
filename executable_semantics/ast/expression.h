@@ -5,11 +5,12 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
 
-#include "common/indirect_value.h"
+#include "common/ostream.h"
 
 namespace Carbon {
 
@@ -25,21 +26,21 @@ struct FieldInitializer {
 };
 
 enum class ExpressionKind {
-  AutoT,
-  BoolT,
-  Boolean,
-  Call,
-  FunctionT,
-  GetField,
-  Index,
-  IntT,
-  ContinuationT,  // The type of a continuation value.
-  Integer,
-  PatternVariable,
-  PrimitiveOp,
-  Tuple,
-  TypeT,
-  Variable,
+  AutoTypeLiteral,
+  BoolTypeLiteral,
+  BoolLiteral,
+  CallExpression,
+  FunctionTypeLiteral,
+  FieldAccessExpression,
+  IndexExpression,
+  IntTypeLiteral,
+  ContinuationTypeLiteral,  // The type of a continuation value.
+  IntLiteral,
+  BindingExpression,
+  PrimitiveOperatorExpression,
+  TupleLiteral,
+  TypeTypeLiteral,
+  IdentifierExpression,
 };
 
 enum class Operator {
@@ -57,146 +58,142 @@ enum class Operator {
 
 struct Expression;
 
-struct Variable {
-  static constexpr ExpressionKind Kind = ExpressionKind::Variable;
+struct IdentifierExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::IdentifierExpression;
   std::string name;
 };
 
-struct FieldAccess {
-  static constexpr ExpressionKind Kind = ExpressionKind::GetField;
-  IndirectValue<Expression> aggregate;
+struct FieldAccessExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::FieldAccessExpression;
+  const Expression* aggregate;
   std::string field;
 };
 
-struct Index {
-  static constexpr ExpressionKind Kind = ExpressionKind::Index;
+struct IndexExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::IndexExpression;
   const Expression* aggregate;
   const Expression* offset;
 };
 
-struct PatternVariable {
-  static constexpr ExpressionKind Kind = ExpressionKind::PatternVariable;
-  std::string name;
+struct BindingExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
+  // nullopt represents the `_` placeholder.
+  std::optional<std::string> name;
   const Expression* type;
 };
 
 struct IntLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::Integer;
+  static constexpr ExpressionKind Kind = ExpressionKind::IntLiteral;
   int value;
 };
 
 struct BoolLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::Boolean;
+  static constexpr ExpressionKind Kind = ExpressionKind::BoolLiteral;
   bool value;
 };
 
-struct Tuple {
-  static constexpr ExpressionKind Kind = ExpressionKind::Tuple;
-  std::vector<FieldInitializer>* fields;
+struct TupleLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::TupleLiteral;
+  std::vector<FieldInitializer> fields;
 };
 
-struct PrimitiveOperator {
-  static constexpr ExpressionKind Kind = ExpressionKind::PrimitiveOp;
+struct PrimitiveOperatorExpression {
+  static constexpr ExpressionKind Kind =
+      ExpressionKind::PrimitiveOperatorExpression;
   Operator op;
-  std::vector<const Expression*>* arguments;
+  std::vector<const Expression*> arguments;
 };
 
-struct Call {
-  static constexpr ExpressionKind Kind = ExpressionKind::Call;
+struct CallExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::CallExpression;
   const Expression* function;
   const Expression* argument;
 };
 
-struct FunctionType {
-  static constexpr ExpressionKind Kind = ExpressionKind::FunctionT;
+struct FunctionTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
   const Expression* return_type;
 };
 
-struct AutoT {
-  static constexpr ExpressionKind Kind = ExpressionKind::AutoT;
+struct AutoTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::AutoTypeLiteral;
 };
 
-struct BoolT {
-  static constexpr ExpressionKind Kind = ExpressionKind::BoolT;
+struct BoolTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::BoolTypeLiteral;
 };
 
-struct IntT {
-  static constexpr ExpressionKind Kind = ExpressionKind::IntT;
+struct IntTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::IntTypeLiteral;
 };
 
-struct ContinuationT {
-  static constexpr ExpressionKind Kind = ExpressionKind::ContinuationT;
+struct ContinuationTypeLiteral {
+  static constexpr ExpressionKind Kind =
+      ExpressionKind::ContinuationTypeLiteral;
 };
 
-struct TypeT {
-  static constexpr ExpressionKind Kind = ExpressionKind::TypeT;
+struct TypeTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::TypeTypeLiteral;
 };
 
 struct Expression {
+  static auto MakeIdentifierExpression(int line_num, std::string var)
+      -> const Expression*;
+  static auto MakeBindingExpression(int line_num,
+                                    std::optional<std::string> var,
+                                    const Expression* type)
+      -> const Expression*;
+  static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
+  static auto MakeBoolLiteral(int line_num, bool b) -> const Expression*;
+  static auto MakePrimitiveOperatorExpression(
+      int line_num, Operator op, std::vector<const Expression*> args)
+      -> const Expression*;
+  static auto MakeCallExpression(int line_num, const Expression* fun,
+                                 const Expression* arg) -> const Expression*;
+  static auto MakeFieldAccessExpression(int line_num, const Expression* exp,
+                                        std::string field) -> const Expression*;
+  static auto MakeTupleLiteral(int line_num, std::vector<FieldInitializer> args)
+      -> const Expression*;
+  static auto MakeIndexExpression(int line_num, const Expression* exp,
+                                  const Expression* i) -> const Expression*;
+  static auto MakeTypeTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
+                                      const Expression* ret)
+      -> const Expression*;
+  static auto MakeAutoTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
+
+  auto GetIdentifierExpression() const -> const IdentifierExpression&;
+  auto GetFieldAccessExpression() const -> const FieldAccessExpression&;
+  auto GetIndexExpression() const -> const IndexExpression&;
+  auto GetBindingExpression() const -> const BindingExpression&;
+  auto GetIntLiteral() const -> int;
+  auto GetBoolLiteral() const -> bool;
+  auto GetTupleLiteral() const -> const TupleLiteral&;
+  auto GetPrimitiveOperatorExpression() const
+      -> const PrimitiveOperatorExpression&;
+  auto GetCallExpression() const -> const CallExpression&;
+  auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
+
+  void Print(llvm::raw_ostream& out) const;
+
+  inline auto tag() const -> ExpressionKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
   int line_num;
-  inline auto tag() const -> ExpressionKind;
-
-  static auto MakeVar(int line_num, std::string var) -> const Expression*;
-  static auto MakeVarPat(int line_num, std::string var, const Expression* type)
-      -> const Expression*;
-  static auto MakeInt(int line_num, int i) -> const Expression*;
-  static auto MakeBool(int line_num, bool b) -> const Expression*;
-  static auto MakeOp(int line_num, Operator op,
-                     std::vector<const Expression*>* args) -> const Expression*;
-  static auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
-      -> const Expression*;
-  static auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
-                        const Expression* arg2) -> const Expression*;
-  static auto MakeCall(int line_num, const Expression* fun,
-                       const Expression* arg) -> const Expression*;
-  static auto MakeGetField(int line_num, const Expression* exp,
-                           std::string field) -> const Expression*;
-  static auto MakeTuple(int line_num, std::vector<FieldInitializer>* args)
-      -> const Expression*;
-  static auto MakeUnit(int line_num) -> const Expression*;
-  static auto MakeIndex(int line_num, const Expression* exp,
-                        const Expression* i) -> const Expression*;
-  static auto MakeTypeType(int line_num) -> const Expression*;
-  static auto MakeIntType(int line_num) -> const Expression*;
-  static auto MakeBoolType(int line_num) -> const Expression*;
-  static auto MakeFunType(int line_num, const Expression* param,
-                          const Expression* ret) -> const Expression*;
-  static auto MakeAutoType(int line_num) -> const Expression*;
-  static auto MakeContinuationType(int line_num) -> const Expression*;
-
-  auto GetVariable() const -> const Variable&;
-  auto GetFieldAccess() const -> const FieldAccess&;
-  auto GetIndex() const -> const Index&;
-  auto GetPatternVariable() const -> const PatternVariable&;
-  auto GetInteger() const -> int;
-  auto GetBoolean() const -> bool;
-  auto GetTuple() const -> const Tuple&;
-  auto GetPrimitiveOperator() const -> const PrimitiveOperator&;
-  auto GetCall() const -> const Call&;
-  auto GetFunctionType() const -> const FunctionType&;
 
  private:
-  std::variant<Variable, FieldAccess, Index, PatternVariable, IntLiteral,
-               BoolLiteral, Tuple, PrimitiveOperator, Call, FunctionType, AutoT,
-               BoolT, IntT, ContinuationT, TypeT>
+  std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,
+               BindingExpression, IntLiteral, BoolLiteral, TupleLiteral,
+               PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
+               AutoTypeLiteral, BoolTypeLiteral, IntTypeLiteral,
+               ContinuationTypeLiteral, TypeTypeLiteral>
       value;
 };
-
-void PrintExp(const Expression* exp);
-
-// Implementation details only beyond this point
-
-struct TagVisitor {
-  template <typename Alternative>
-  auto operator()(const Alternative&) -> ExpressionKind {
-    return Alternative::Kind;
-  }
-};
-
-auto Expression::tag() const -> ExpressionKind {
-  return std::visit(TagVisitor(), value);
-}
 
 }  // namespace Carbon
 

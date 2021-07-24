@@ -278,8 +278,7 @@ Some common expressions in Carbon include:
 
 ### Functions
 
-> References: [Functions](functions.md) and
-> [syntactic conventions](syntactic_conventions.md)
+> References: [Functions](functions.md)
 >
 > **TODO:** References need to be evolved.
 
@@ -325,10 +324,7 @@ fn Foo() {
 
 ### Variables
 
-> References: [Variables](variables.md) and
-> [syntactic conventions](syntactic_conventions.md)
->
-> **TODO:** References need to be evolved.
+> References: [Variables](variables.md)
 
 Blocks introduce nested scopes and can contain local variable declarations that
 work similarly to function parameters.

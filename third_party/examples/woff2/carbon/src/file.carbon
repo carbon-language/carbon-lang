@@ -17,16 +17,16 @@ namespace woff2 {
 using std::string;
 
 
-fn auto GetFileContent(filename: const std::string &) -> string {
-  var ifs: std::ifstream;
+fn inline GetFileContent(filename: const string&) -> string {
+  var ifs: std::ifstream(filename.c_str(), std::ios::binary);
   return string(
     std::istreambuf_iterator<char>(ifs.rdbuf()),
     std::istreambuf_iterator<char>());
 }
 
-fn void SetFileContents(filename: const std::string &, start: string::iterator,
+fn inline SetFileContents(filename: const string&, start: string::iterator,
     end: string::iterator) {
-  var ofs: std::ofstream;
+  var ofs: std::ofstream(filename.c_str(), std::ios::binary);
   std::copy(start, end, std::ostream_iterator<char>(ofs));
 }
 

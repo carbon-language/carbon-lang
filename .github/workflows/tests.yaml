@@ -15,7 +15,7 @@ on:
       - '!LICENSE'
       - '!CODEOWNERS'
       - '!.git*'
-  pull_request:
+  pull_request_target:
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -33,11 +33,16 @@ jobs:
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Create environment variables
-        run: |
-          echo "BAZEL_DISK_CACHE_PATH=$HOME/.cache/carbon-lang-build-cache" >> $GITHUB_ENV
+      # Checkout the pull request head or the branch.
+      - name: Checkout pull request
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: true
 
-      - name: Checkout
+      - name: Checkout branch
+        if: github.event_name != 'pull_request_target'
         uses: actions/checkout@v2
         with:
           submodules: true
@@ -99,73 +104,32 @@ jobs:
           which clang-format
           clang-format --version
 
-      # Make the date available to subsequent steps.
-      - name: Get date
-        id: date
-        shell: bash
+      # Extract our access key for our build cache.
+      - name: Extract access key
+        env:
+          GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
         run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+          echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
+            | base64 -d > $HOME/gcp-builds-service-account.json
 
-      # Preserve and restore the Bazel cache across builds.
-      - name: Cache Bazel build data
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.BAZEL_DISK_CACHE_PATH }}
-          # The `bazel-1` string here and below in the key acts as a counter
-          # that can be incremented to rebase the cache in the event of
-          # persistent corruption or other rare bug. The `-2-` prefix to the
-          # date can be incremented when adding new targets or updating this
-          # configuration and a new cache should be created but there is no
-          # reason to discard prior caches.
-          key: |
-            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-2-${{ steps.date.outputs.date }}
-          # When we get a cache miss, try finding the most recent previous day's
-          # cache to start.
-          restore-keys: |
-            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-
-
-      # Reset all the access-times for the bazel disk cache to 1984. We really
-      # just need a time far in the past to ensure even with `relatime` or
-      # similar, the filesystem will track how much of the disk cache is
-      # actually still *used* in the course of the build. This lets us GC
-      # anything unused before potentially creating a new cache entry.
-      - name: Reset Bazel disk cache atimes
+      # Add our bazel configuration and print basic info to ease debugging.
+      - name: Configure Bazel and print info
         run: |
-          mkdir -p ${{ env.BAZEL_DISK_CACHE_PATH }}
-          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -exec touch -a -t 198401010000 '{}' '+'
+          cat >user.bazelrc <<EOF
+          # Enable remote cache for our CI.
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-${{ matrix.os }}
+          build --google_credentials=$HOME/gcp-builds-service-account.json
 
-      # Print Bazel diagnostics to make debugging easier.
-      - name: Print Bazel info
-        run: |
+          # General build options.
+          build --verbose_failures
+          test --test_output=errors
+          EOF
           bazelisk info
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
-        run: |
-          bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
-            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
-            //...:all
+        run: bazelisk build -c ${{ matrix.build_mode }} //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
-        run: |
-          bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
-            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
-            --verbose_failures //...:all
-
-      # We manually shut down the Bazel server to make sure the cached files
-      # don't interact with it.
-      - name: Shutdown Bazel
-        run: |
-          bazelisk shutdown
-
-      # Since we reset the `atime`s of the disk cache to ancient history,
-      # everything that ended up accessed by the build and test should have a
-      # recent `atime`. Delete any files whose `atime` is more than 7 days old.
-      # We print some statistics to try to help with any debugging later on.
-      - name: Remove unused disk cache files
-        run: |
-          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f | wc -l
-          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -atime +7 | wc -l
-          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -atime +7 -delete
+        run: bazelisk test -c ${{ matrix.build_mode }} //...:all

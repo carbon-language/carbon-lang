@@ -9,15 +9,14 @@ namespace Carbon {
 const Expression* ParenContents::AsExpression(int line_number) const {
   if (fields_.size() == 1 && fields_.front().name == "" &&
       has_trailing_comma_ == HasTrailingComma::No) {
-    return fields_.front().expression;
+    return new Expression(*fields_.front().expression);
   } else {
     return AsTuple(line_number);
   }
 }
 
 const Expression* ParenContents::AsTuple(int line_number) const {
-  return Expression::MakeTuple(line_number,
-                               new std::vector<FieldInitializer>(fields_));
+  return Expression::MakeTupleLiteral(line_number, fields_);
 }
 
 }  // namespace Carbon

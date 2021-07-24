@@ -7,6 +7,7 @@
 
 #include <set>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/dictionary.h"
@@ -15,8 +16,6 @@
 namespace Carbon {
 
 using TypeEnv = Dictionary<std::string, const Value*>;
-
-void PrintTypeEnv(TypeEnv types);
 
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
@@ -45,9 +44,9 @@ auto TypeCheckStmt(const Statement*, TypeEnv, Env, Value const*&)
 auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;
 
+auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
+                     const Env& values) -> Declaration;
 auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext;
-
-void PrintErrorString(const std::string& s);
 
 }  // namespace Carbon
 

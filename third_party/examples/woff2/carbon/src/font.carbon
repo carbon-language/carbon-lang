@@ -10,8 +10,8 @@
 #ifndef WOFF2_FONT_H_
 #define WOFF2_FONT_H_
 
-#include <cstddef>
 #include <cinttypes>
+#include <cstddef>
 #include <map>
 #include <vector>
 
@@ -63,42 +63,42 @@ struct FontCollection {
 // Parses the font from the given data. Returns false on parsing failure or
 // buffer overflow. The font is valid only so long the input data pointer is
 // valid. Does NOT support collections.
-fn ReadFont(data: const uint8_t *, len: size_t, font: woff2::Font *) -> bool;
+fn ReadFont(data: const uint8_t*, len: size_t, font: Font*) -> bool;
 
 // Parses the font from the given data. Returns false on parsing failure or
 // buffer overflow. The font is valid only so long the input data pointer is
 // valid. Supports collections.
-fn ReadFontCollection(data: const uint8_t *, len: size_t, fonts: woff2::FontCollection *) -> bool;
+fn ReadFontCollection(data: const uint8_t*, len: size_t, fonts: FontCollection*) -> bool;
 
 // Returns the file size of the font.
-fn FontFileSize(font: const woff2::Font &) -> size_t;
-fn FontCollectionFileSize(font: const woff2::FontCollection &) -> size_t;
+fn FontFileSize(font: const Font&) -> size_t;
+fn FontCollectionFileSize(font: const FontCollection&) -> size_t;
 
 // Writes the font into the specified dst buffer. The dst_size should be the
 // same as returned by FontFileSize(). Returns false upon buffer overflow (which
 // should not happen if dst_size was computed by FontFileSize()).
-fn WriteFont(font: const woff2::Font &, dst: uint8_t *, dst_size: size_t) -> bool;
+fn WriteFont(font: const Font&, dst: uint8_t*, dst_size: size_t) -> bool;
 // Write the font at a specific offset
-fn WriteFont(font: const woff2::Font &, offset: size_t *, dst: uint8_t *, dst_size: size_t) -> bool;
+fn WriteFont(font: const Font&, offset: size_t*, dst: uint8_t*, dst_size: size_t) -> bool;
 
-fn WriteFontCollection(font_collection: const woff2::FontCollection &, dst: uint8_t *,
+fn WriteFontCollection(font_collection: const FontCollection&, dst: uint8_t*,
                          dst_size: size_t) -> bool;
 
 // Returns the number of glyphs in the font.
 // NOTE: Currently this works only for TrueType-flavored fonts, will return
 // zero for CFF-flavored fonts.
-fn NumGlyphs(font: const woff2::Font &) -> int;
+fn NumGlyphs(font: const Font&) -> int;
 
 // Returns the index format of the font
-fn IndexFormat(font: const woff2::Font &) -> int;
+fn IndexFormat(font: const Font&) -> int;
 
 // Sets *glyph_data and *glyph_size to point to the location of the glyph data
 // with the given index. Returns false if the glyph is not found.
-fn GetGlyphData(font: const woff2::Font &, glyph_index: int,
-                  glyph_data: const uint8_t **, glyph_size: size_t *) -> bool;
+fn GetGlyphData(font: const Font&, glyph_index: int,
+                  glyph_data: const uint8_t**, glyph_size: size_t*) -> bool;
 
 // Removes the digital signature (DSIG) table
-fn RemoveDigitalSignature(font: woff2::Font *) -> bool;
+fn RemoveDigitalSignature(font: Font*) -> bool;
 
 } // namespace woff2
 

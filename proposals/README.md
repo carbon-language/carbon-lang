@@ -55,8 +55,13 @@ request:
 -   [0438 - Functions](p0438.md)
 -   [0444 - GitHub Discussions](p0444.md)
 -   [0447 - Generics terminology](p0447.md)
+-   [0524 - Generics overview](p0524.md)
 -   [0538 - `return` with no argument](p0538.md)
+-   [0540 - Remove `Void`](p0540.md)
 -   [0555 - Operator precedence](p0555.md)
 -   [0561 - Basic structs (v2)](p0561.md)
+-   [0601 - Operator tokens](p0601.md)
+-   [0618 - var ordering](p0618.md)
+-   [0623 - Require braces](p0623.md)
 
 <!-- endproposals -->

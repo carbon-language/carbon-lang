@@ -4,73 +4,67 @@
 
 #include "executable_semantics/ast/statement.h"
 
-#include <iostream>
-
 #include "common/check.h"
 
 namespace Carbon {
 
-const Expression* Statement::GetExpression() const {
-  CHECK(tag == StatementKind::ExpressionStatement);
-  return u.exp;
+auto Statement::GetExpressionStatement() const -> const ExpressionStatement& {
+  return std::get<ExpressionStatement>(value);
 }
 
-Assignment Statement::GetAssign() const {
-  CHECK(tag == StatementKind::Assign);
-  return u.assign;
+auto Statement::GetAssign() const -> const Assign& {
+  return std::get<Assign>(value);
 }
 
-VariableDefinition Statement::GetVariableDefinition() const {
-  CHECK(tag == StatementKind::VariableDefinition);
-  return u.variable_definition;
+auto Statement::GetVariableDefinition() const -> const VariableDefinition& {
+  return std::get<VariableDefinition>(value);
 }
 
-IfStatement Statement::GetIf() const {
-  CHECK(tag == StatementKind::If);
-  return u.if_stmt;
+auto Statement::GetIf() const -> const If& { return std::get<If>(value); }
+
+auto Statement::GetReturn() const -> const Return& {
+  return std::get<Return>(value);
 }
 
-const Expression* Statement::GetReturn() const {
-  CHECK(tag == StatementKind::Return);
-  return u.return_stmt;
+auto Statement::GetSequence() const -> const Sequence& {
+  return std::get<Sequence>(value);
 }
 
-Sequence Statement::GetSequence() const {
-  CHECK(tag == StatementKind::Sequence);
-  return u.sequence;
+auto Statement::GetBlock() const -> const Block& {
+  return std::get<Block>(value);
 }
 
-Block Statement::GetBlock() const {
-  CHECK(tag == StatementKind::Block);
-  return u.block;
+auto Statement::GetWhile() const -> const While& {
+  return std::get<While>(value);
 }
 
-While Statement::GetWhile() const {
-  CHECK(tag == StatementKind::While);
-  return u.while_stmt;
+auto Statement::GetBreak() const -> const Break& {
+  return std::get<Break>(value);
 }
 
-Match Statement::GetMatch() const {
-  CHECK(tag == StatementKind::Match);
-  return u.match_stmt;
+auto Statement::GetContinue() const -> const Continue& {
+  return std::get<Continue>(value);
 }
 
-Continuation Statement::GetContinuation() const {
-  CHECK(tag == StatementKind::Continuation);
-  return u.continuation;
+auto Statement::GetMatch() const -> const Match& {
+  return std::get<Match>(value);
 }
 
-Run Statement::GetRun() const {
-  CHECK(tag == StatementKind::Run);
-  return u.run;
+auto Statement::GetContinuation() const -> const Continuation& {
+  return std::get<Continuation>(value);
 }
 
-auto Statement::MakeExpStmt(int line_num, const Expression* exp)
+auto Statement::GetRun() const -> const Run& { return std::get<Run>(value); }
+
+auto Statement::GetAwait() const -> const Await& {
+  return std::get<Await>(value);
+}
+
+auto Statement::MakeExpressionStatement(int line_num, const Expression* exp)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::ExpressionStatement;
-  s->u.exp = exp;
+  s->value = ExpressionStatement({.exp = exp});
   return s;
 }
 
@@ -78,19 +72,16 @@ auto Statement::MakeAssign(int line_num, const Expression* lhs,
                            const Expression* rhs) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Assign;
-  s->u.assign.lhs = lhs;
-  s->u.assign.rhs = rhs;
+  s->value = Assign({.lhs = lhs, .rhs = rhs});
   return s;
 }
 
-auto Statement::MakeVarDef(int line_num, const Expression* pat,
-                           const Expression* init) -> const Statement* {
+auto Statement::MakeVariableDefinition(int line_num, const Expression* pat,
+                                       const Expression* init)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::VariableDefinition;
-  s->u.variable_definition.pat = pat;
-  s->u.variable_definition.init = init;
+  s->value = VariableDefinition({.pat = pat, .init = init});
   return s;
 }
 
@@ -99,10 +90,7 @@ auto Statement::MakeIf(int line_num, const Expression* cond,
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::If;
-  s->u.if_stmt.cond = cond;
-  s->u.if_stmt.then_stmt = then_stmt;
-  s->u.if_stmt.else_stmt = else_stmt;
+  s->value = If({.cond = cond, .then_stmt = then_stmt, .else_stmt = else_stmt});
   return s;
 }
 
@@ -110,23 +98,21 @@ auto Statement::MakeWhile(int line_num, const Expression* cond,
                           const Statement* body) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::While;
-  s->u.while_stmt.cond = cond;
-  s->u.while_stmt.body = body;
+  s->value = While({.cond = cond, .body = body});
   return s;
 }
 
 auto Statement::MakeBreak(int line_num) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Break;
+  s->value = Break();
   return s;
 }
 
 auto Statement::MakeContinue(int line_num) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Continue;
+  s->value = Continue();
   return s;
 }
 
@@ -134,18 +120,15 @@ auto Statement::MakeReturn(int line_num, const Expression* e)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Return;
-  s->u.return_stmt = e;
+  s->value = Return({.exp = e});
   return s;
 }
 
-auto Statement::MakeSeq(int line_num, const Statement* s1, const Statement* s2)
-    -> const Statement* {
+auto Statement::MakeSequence(int line_num, const Statement* s1,
+                             const Statement* s2) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Sequence;
-  s->u.sequence.stmt = s1;
-  s->u.sequence.next = s2;
+  s->value = Sequence({.stmt = s1, .next = s2});
   return s;
 }
 
@@ -153,8 +136,7 @@ auto Statement::MakeBlock(int line_num, const Statement* stmt)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Block;
-  s->u.block.stmt = stmt;
+  s->value = Block({.stmt = stmt});
   return s;
 }
 
@@ -164,9 +146,7 @@ auto Statement::MakeMatch(
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->tag = StatementKind::Match;
-  s->u.match_stmt.exp = exp;
-  s->u.match_stmt.clauses = clauses;
+  s->value = Match({.exp = exp, .clauses = clauses});
   return s;
 }
 
@@ -175,144 +155,126 @@ auto Statement::MakeMatch(
 auto Statement::MakeContinuation(int line_num,
                                  std::string continuation_variable,
                                  const Statement* body) -> const Statement* {
-  auto* continuation = new Statement();
-  continuation->line_num = line_num;
-  continuation->tag = StatementKind::Continuation;
-  continuation->u.continuation.continuation_variable =
-      new std::string(continuation_variable);
-  continuation->u.continuation.body = body;
-  return continuation;
+  auto* s = new Statement();
+  s->line_num = line_num;
+  s->value =
+      Continuation({.continuation_variable = std::move(continuation_variable),
+                    .body = body});
+  return s;
 }
 
 // Returns an AST node for a run statement give its line number and argument.
 auto Statement::MakeRun(int line_num, const Expression* argument)
     -> const Statement* {
-  auto* run = new Statement();
-  run->line_num = line_num;
-  run->tag = StatementKind::Run;
-  run->u.run.argument = argument;
-  return run;
+  auto* s = new Statement();
+  s->line_num = line_num;
+  s->value = Run({.argument = argument});
+  return s;
 }
 
 // Returns an AST node for an await statement give its line number.
 auto Statement::MakeAwait(int line_num) -> const Statement* {
-  auto* await = new Statement();
-  await->line_num = line_num;
-  await->tag = StatementKind::Await;
-  return await;
+  auto* s = new Statement();
+  s->line_num = line_num;
+  s->value = Await();
+  return s;
 }
 
-void PrintStatement(const Statement* s, int depth) {
-  if (!s) {
-    return;
-  }
+void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   if (depth == 0) {
-    std::cout << " ... ";
+    out << " ... ";
     return;
   }
-  switch (s->tag) {
+  switch (tag()) {
     case StatementKind::Match:
-      std::cout << "match (";
-      PrintExp(s->GetMatch().exp);
-      std::cout << ") {";
+      out << "match (" << *GetMatch().exp << ") {";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
-        for (auto& clause : *s->GetMatch().clauses) {
-          std::cout << "case ";
-          PrintExp(clause.first);
-          std::cout << " =>" << std::endl;
-          PrintStatement(clause.second, depth - 1);
-          std::cout << std::endl;
+        out << "\n";
+        for (auto& clause : *GetMatch().clauses) {
+          out << "case " << *clause.first << " =>\n";
+          clause.second->PrintDepth(depth - 1, out);
+          out << "\n";
         }
       } else {
-        std::cout << "...";
+        out << "...";
       }
-      std::cout << "}";
+      out << "}";
       break;
     case StatementKind::While:
-      std::cout << "while (";
-      PrintExp(s->GetWhile().cond);
-      std::cout << ")" << std::endl;
-      PrintStatement(s->GetWhile().body, depth - 1);
+      out << "while (" << *GetWhile().cond << ")\n";
+      GetWhile().body->PrintDepth(depth - 1, out);
       break;
     case StatementKind::Break:
-      std::cout << "break;";
+      out << "break;";
       break;
     case StatementKind::Continue:
-      std::cout << "continue;";
+      out << "continue;";
       break;
     case StatementKind::VariableDefinition:
-      std::cout << "var ";
-      PrintExp(s->GetVariableDefinition().pat);
-      std::cout << " = ";
-      PrintExp(s->GetVariableDefinition().init);
-      std::cout << ";";
+      out << "var " << *GetVariableDefinition().pat << " = "
+          << *GetVariableDefinition().init << ";";
       break;
     case StatementKind::ExpressionStatement:
-      PrintExp(s->GetExpression());
-      std::cout << ";";
+      out << *GetExpressionStatement().exp << ";";
       break;
     case StatementKind::Assign:
-      PrintExp(s->GetAssign().lhs);
-      std::cout << " = ";
-      PrintExp(s->GetAssign().rhs);
-      std::cout << ";";
+      out << *GetAssign().lhs << " = " << *GetAssign().rhs << ";";
       break;
     case StatementKind::If:
-      std::cout << "if (";
-      PrintExp(s->GetIf().cond);
-      std::cout << ")" << std::endl;
-      PrintStatement(s->GetIf().then_stmt, depth - 1);
-      std::cout << std::endl << "else" << std::endl;
-      PrintStatement(s->GetIf().else_stmt, depth - 1);
+      out << "if (" << *GetIf().cond << ")\n";
+      GetIf().then_stmt->PrintDepth(depth - 1, out);
+      if (GetIf().else_stmt) {
+        out << "\nelse\n";
+        GetIf().else_stmt->PrintDepth(depth - 1, out);
+      }
       break;
     case StatementKind::Return:
-      std::cout << "return ";
-      PrintExp(s->GetReturn());
-      std::cout << ";";
+      out << "return " << *GetReturn().exp << ";";
       break;
     case StatementKind::Sequence:
-      PrintStatement(s->GetSequence().stmt, depth);
+      GetSequence().stmt->PrintDepth(depth, out);
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       } else {
-        std::cout << " ";
+        out << " ";
       }
-      PrintStatement(s->GetSequence().next, depth - 1);
+      if (GetSequence().next) {
+        GetSequence().next->PrintDepth(depth - 1, out);
+      }
       break;
     case StatementKind::Block:
-      std::cout << "{";
+      out << "{";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
-      PrintStatement(s->GetBlock().stmt, depth);
-      if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+      if (GetBlock().stmt) {
+        GetBlock().stmt->PrintDepth(depth, out);
+        if (depth < 0 || depth > 1) {
+          out << "\n";
+        }
       }
-      std::cout << "}";
+      out << "}";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
       break;
     case StatementKind::Continuation:
-      std::cout << "continuation "
-                << *s->GetContinuation().continuation_variable << " ";
+      out << "continuation " << GetContinuation().continuation_variable << " ";
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
-      PrintStatement(s->GetContinuation().body, depth - 1);
+      GetContinuation().body->PrintDepth(depth - 1, out);
       if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
+        out << "\n";
       }
       break;
     case StatementKind::Run:
-      std::cout << "run ";
-      PrintExp(s->GetRun().argument);
-      std::cout << ";";
+      out << "run " << *GetRun().argument << ";";
       break;
     case StatementKind::Await:
-      std::cout << "await;";
+      out << "await;";
       break;
   }
 }
+
 }  // namespace Carbon

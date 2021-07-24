@@ -16,10 +16,10 @@ namespace woff2 {
 // Adds the transformed versions of the glyf and loca tables to the font. The
 // transformed loca table has zero length. The tag of the transformed tables is
 // derived from the original tag by flipping the MSBs of every byte.
-fn TransformGlyfAndLocaTables(font: woff2::Font *) -> bool;
+fn TransformGlyfAndLocaTables(font: Font*) -> bool;
 
 // Apply transformation to hmtx table if applicable for this font.
-fn TransformHmtxTable(font: woff2::Font *) -> bool;
+fn TransformHmtxTable(font: Font*) -> bool;
 
 } // namespace woff2
 

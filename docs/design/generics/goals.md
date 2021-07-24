@@ -68,8 +68,8 @@ support templates in Carbon beyond interoperability with C++ templates.
 
 Generic functions and generic types will all take some "generic parameters",
 which will frequently be types, and in some cases will be
-[implicit or inferred](terminology.md#implicit-parameter) from the types of the
-values of explicit parameters.
+[deduced](terminology.md#deduced-parameter) from the types of the values of
+explicit parameters.
 
 If a generic parameter is a type, the generic function's signature can specify
 constraints that the caller's type must satisfy. For example, a resizable array
@@ -645,9 +645,9 @@ when recursion creates an infinite collection of types, such as in
 or:
 
 ```carbon
-fn Sort[Comparable T](List(T) list) -> List(T) {
+fn Sort[T:! Comparable](list: List(T)) -> List(T) {
   if (list.size() == 1) return list;
-  var List(List(T)) chunks = FormChunks(list, sqrt(list.size()));
+  var chunks: List(List(T)) = FormChunks(list, sqrt(list.size()));
   chunks = chunks.ApplyToEach(Sort);
   chunks = Sort(chunks);
   return MergeSortedListOfSortedLists(chunks);

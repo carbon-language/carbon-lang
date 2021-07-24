@@ -10,8 +10,8 @@
 #ifndef WOFF2_GLYPH_H_
 #define WOFF2_GLYPH_H_
 
-#include <cstddef>
 #include <cinttypes>
+#include <cstddef>
 #include <vector>
 
 namespace woff2 {
@@ -51,12 +51,12 @@ class Glyph {
 // Parses the glyph from the given data. Returns false on parsing failure or
 // buffer overflow. The glyph is valid only so long the input data pointer is
 // valid.
-fn ReadGlyph(data: const uint8_t *, len: size_t, glyph: woff2::Glyph *) -> bool;
+fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool;
 
 // Stores the glyph into the specified dst buffer. The *dst_size is the buffer
 // size on entry and is set to the actual (unpadded) stored size on exit.
 // Returns false on buffer overflow.
-fn StoreGlyph(glyph: const woff2::Glyph &, dst: uint8_t *, dst_size: size_t *) -> bool;
+fn StoreGlyph(glyph: const Glyph&, dst: uint8_t*, dst_size: size_t*) -> bool;
 
 } // namespace woff2
 
