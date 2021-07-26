@@ -18,18 +18,17 @@ import sys
 _TESTDATA = "./testdata"
 _TEST_LIST_BZL = "./test_list.bzl"
 
-_TEST_LIST_HEADER = '''
+_TEST_LIST_HEADER = """
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Auto-generated list of tests. Run `./tests.py --update_list` to update."""
+\"\"\"Auto-generated list of tests. Run `./tests.py --update_list` to update.\"\"\"
 
 TEST_LIST = [
-'''
-
-_TEST_LIST_FOOTER = """]
 """
+
+_TEST_LIST_FOOTER = "]\n"
 
 
 def _parse_args(args=None):
