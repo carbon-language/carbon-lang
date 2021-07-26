@@ -1052,7 +1052,8 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(Action::MakeStatementAction(Statement::MakeReturn(
-          stmt->line_num, Expression::MakeTupleLiteral(stmt->line_num, {}))));
+          stmt->line_num,
+          Expression::MakeReturnExpression(stmt->line_num, nullptr))));
       todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(

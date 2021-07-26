@@ -139,7 +139,7 @@ struct TypeTypeLiteral {
 };
 
 struct ReturnExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::TypeTypeLiteral;
+  static constexpr ExpressionKind Kind = ExpressionKind::ReturnExpression;
 
   enum class ReturnKind {
     // For example, `return 3;` explicitly returns `3`.

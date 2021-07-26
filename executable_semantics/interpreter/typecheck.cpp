@@ -49,7 +49,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::FunctionType:
       return Expression::MakeFunctionTypeLiteral(
           0, ReifyType(t->GetFunctionType().param, line_num),
-          ReifyType(t->GetFunctionType().ret, line_num));
+          Expression::MakeReturnExpression(
+              line_num, ReifyType(t->GetFunctionType().ret, line_num)));
     case ValKind::TupleValue: {
       std::vector<FieldInitializer> args;
       for (const TupleElement& field : t->GetTupleValue().elements) {
@@ -538,7 +539,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           auto rt = InterpExp(values, e->GetFunctionTypeLiteral().return_type);
           auto new_e = Expression::MakeFunctionTypeLiteral(
               e->line_num, ReifyType(pt, e->line_num),
-              ReifyType(rt, e->line_num));
+              Expression::MakeReturnExpression(e->line_num,
+                                               ReifyType(rt, e->line_num)));
           return TCResult(new_e, Value::MakeTypeType(), types);
         }
         case TCContext::PatternContext: {
@@ -549,7 +551,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                            param_res.types, values, nullptr, context);
           auto new_e = Expression::MakeFunctionTypeLiteral(
               e->line_num, ReifyType(param_res.type, e->line_num),
-              ReifyType(ret_res.type, e->line_num));
+              Expression::MakeReturnExpression(
+                  e->line_num, ReifyType(ret_res.type, e->line_num)));
           return TCResult(new_e, Value::MakeTypeType(), ret_res.types);
         }
       }
@@ -689,7 +692,10 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
-      return TCStatement(Statement::MakeReturn(s->line_num, res.exp), types);
+      return TCStatement(
+          Statement::MakeReturn(s->line_num, Expression::MakeReturnExpression(
+                                                 s->line_num, res.exp)),
+          types);
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
@@ -722,8 +728,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      return Statement::MakeReturn(line_num,
-                                   Expression::MakeTupleLiteral(line_num, {}));
+      return Statement::MakeReturn(
+          line_num, Expression::MakeReturnExpression(line_num, nullptr));
     } else {
       llvm::errs()
           << "control-flow reaches end of non-void function without a return\n";
@@ -778,8 +784,9 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       if (void_return) {
         return Statement::MakeSequence(
             stmt->line_num, stmt,
-            Statement::MakeReturn(stmt->line_num, Expression::MakeTupleLiteral(
-                                                      stmt->line_num, {})));
+            Statement::MakeReturn(
+                stmt->line_num,
+                Expression::MakeReturnExpression(stmt->line_num, nullptr)));
       } else {
         llvm::errs()
             << stmt->line_num

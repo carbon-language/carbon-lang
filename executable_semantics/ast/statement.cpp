@@ -118,7 +118,8 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
 
 auto Statement::MakeReturn(int line_num, const Expression* exp)
     -> const Statement* {
-  CHECK(exp->tag() == ExpressionKind::ReturnExpression);
+  CHECK(exp->tag() == ExpressionKind::ReturnExpression)
+      << "Expected a ReturnExpression, got: " << *exp;
   auto* s = new Statement();
   s->line_num = line_num;
   s->value = Return({.exp = std::move(exp)});
