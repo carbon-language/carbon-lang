@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Carbon leads](#carbon-leads)
     -   [When to write a proposal](#when-to-write-a-proposal)
     -   [Proposal PRs](#proposal-prs)
+        -   [What goes in the proposal document](#what-goes-in-the-proposal-document)
         -   [Open questions](#open-questions)
     -   [Review and RFC on proposal PRs](#review-and-rfc-on-proposal-prs)
     -   [Blocking issues](#blocking-issues)
@@ -254,8 +255,11 @@ a pull request instead go through the full evolution process.
 A proposal PR should use the `proposal` label, have a descriptive title, and
 easily understood initial summary comment. Authors and leads are encouraged to
 edit both as necessary to ensure they give the best high-level understanding of
-the proposal possible. The proposals should then use the
-[template file](/proposals/template.md) to describe itself fully.
+the proposal possible.
+
+A proposal PR will include a "P-numbered" _proposal document_,
+`proposals/pNNNN.md`, where `NNNN` is the pull request number. This file should
+be based on the [proposal template file](/proposals/template.md).
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
@@ -263,11 +267,38 @@ community's engagement in it. Beyond the above structure, try to use
 or [BLUF](<https://en.wikipedia.org/wiki/BLUF_(communication)>) writing style to
 help readers rapidly skim the material.
 
-Proposal PRs will often lead to related changes to the rest of the Carbon
-project. These changes may be added to the proposal PR itself, they may be done
-in other PRs that are referenced for context, or they may be stand-alone changes
-that are implemented through a series of future PRs to the rest of the project.
-All of these options are fine.
+#### What goes in the proposal document
+
+The purpose of the proposal document is to present the case for deciding to
+adopt the proposal. Any information that feeds into making that decision, and
+that should not be maintained as part of our living design documentation,
+belongs in the proposal document. This includes background material to introduce
+the problem, comparisons to any alternative designs that were considered and any
+other current proposals in the same area, records of informal polls taken to
+determine community preferences, and rationale for the decision based on the
+project's goals.
+
+The proposal PR can contain related changes to the Carbon project, such as
+updates to the design documentation. Those changes form part of the proposal,
+and need not be additionally described in the proposal document beyond a mention
+in the "Proposal" section that such changes exist. For example:
+
+```md
+## Proposal
+
+See the proposed changes to the design documents.
+```
+
+Readers of proposals are expected to consult the PR or the git commit that
+merged the PR in order to understand the proposed changes.
+
+The author of a proposal is not required to include changes to the design
+documentation as part of a proposal, and it may in some cases be preferable to
+decouple the proposal process from updating the design. When accepted, the
+proposal would then be implemented through a series of future PRs to the rest of
+the project, and the proposal document should describe what is being proposed in
+enough detail to validate that those future PRs properly implement the proposed
+direction.
 
 #### Open questions
 
