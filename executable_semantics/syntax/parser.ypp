@@ -414,10 +414,11 @@ function_definition:
     { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $7); }
 | FN identifier deduced_params tuple DBLARROW expression ";"
     {
+      auto return_exp = Carbon::Expression::MakeReturnExpression(yylineno, $6);
       $$ = Carbon::FunctionDefinition(
                yylineno, $2, $3, $4,
                Carbon::Expression::MakeAutoTypeLiteral(yylineno),
-               Carbon::Statement::MakeReturn(yylineno, Carbon::Expression::MakeReturnExpression(yylineno, $6)));
+               Carbon::Statement::MakeReturn(yylineno, return_exp));
     }
 ;
 function_declaration:
