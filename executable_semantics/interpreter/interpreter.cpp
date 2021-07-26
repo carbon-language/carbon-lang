@@ -19,6 +19,7 @@
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -32,10 +33,10 @@ void Step();
 //
 
 void PrintEnv(Env values, llvm::raw_ostream& out) {
+  llvm::ListSeparator sep;
   for (const auto& [name, address] : values) {
-    out << name << ": ";
+    out << sep << name << ": ";
     state->heap.PrintAddress(address, out);
-    out << ", ";
   }
 }
 
@@ -44,13 +45,9 @@ void PrintEnv(Env values, llvm::raw_ostream& out) {
 //
 
 void PrintStack(const Stack<Frame*>& ls, llvm::raw_ostream& out) {
-  auto it = ls.begin();
-  while (it != ls.end()) {
-    out << **it;
-    ++it;
-    if (it != ls.end()) {
-      out << " :: ";
-    }
+  llvm::ListSeparator sep(" :: ");
+  for (const auto& frame : ls) {
+    out << sep << *frame;
   }
 }
 
@@ -110,7 +107,14 @@ void InitEnv(const Declaration& d, Env* env) {
     case DeclarationKind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           d.GetFunctionDeclaration().definition;
-      auto pt = InterpExp(*env, func_def.param_pattern);
+      Env new_env = *env;
+      // Bring the deduced parameters into scope.
+      for (const auto& deduced : func_def.deduced_parameters) {
+        Address a =
+            state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
+        new_env.Set(deduced.name, a);
+      }
+      auto pt = InterpExp(new_env, func_def.param_pattern);
       auto f = Value::MakeFunctionValue(func_def.name, pt, func_def.body);
       Address a = state->heap.AllocateValue(f);
       env->Set(func_def.name, a);
@@ -721,7 +725,7 @@ void StepExp() {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         const Value* v =
-            Value::MakeFunctionType(act->results[0], act->results[1]);
+            Value::MakeFunctionType({}, act->results[0], act->results[1]);
         frame->todo.Pop(1);
         frame->todo.Push(Action::MakeValAction(v));
       }

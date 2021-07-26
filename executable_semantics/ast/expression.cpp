@@ -5,6 +5,7 @@
 #include "executable_semantics/ast/expression.h"
 
 #include "executable_semantics/common/error.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -220,12 +221,9 @@ static void PrintOp(llvm::raw_ostream& out, Operator op) {
 
 static void PrintFields(llvm::raw_ostream& out,
                         const std::vector<FieldInitializer>& fields) {
-  int i = 0;
-  for (auto iter = fields.begin(); iter != fields.end(); ++iter, ++i) {
-    if (i != 0) {
-      out << ", ";
-    }
-    out << iter->name << " = " << *iter->expression;
+  llvm::ListSeparator sep;
+  for (const auto& field : fields) {
+    out << sep << field.name << " = " << field.expression;
   }
 }
 

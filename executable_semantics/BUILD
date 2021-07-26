@@ -36,6 +36,15 @@ EXAMPLES = [
     "fun5",
     "fun6_fail_type",
     "funptr1",
+    "generic_function1",
+    "generic_function2",
+    "generic_function3",
+    "generic_function_apply",
+    "generic_function_fail1",
+    "generic_function_fail2",
+    "generic_function_fail3",
+    "generic_function_swap",
+    "generic_function_tuple_map",
     "global_variable1",
     "global_variable2",
     "global_variable3",
@@ -101,6 +110,10 @@ EXAMPLES = [
         ":executable_semantics",
         "testdata/%s.carbon" % e,
     ],
+    env = {
+        # TODO(#580): Remove this when leaks are fixed.
+        "ASAN_OPTIONS": "detect_leaks=0",
+    },
     golden = "testdata/%s.golden" % e,
 ) for e in EXAMPLES]
 
@@ -114,6 +127,10 @@ EXAMPLES = [
         ":executable_semantics",
         "testdata/%s.carbon" % e,
     ],
+    env = {
+        # TODO(#580): Remove this when leaks are fixed.
+        "ASAN_OPTIONS": "detect_leaks=0",
+    },
     golden = "testdata/%s.golden" % e,
     golden_is_subset = True,
 ) for e in EXAMPLES]

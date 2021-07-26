@@ -5,6 +5,7 @@
 #include "executable_semantics/interpreter/heap.h"
 
 #include "executable_semantics/common/error.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -48,9 +49,10 @@ void Heap::Deallocate(const Address& address) {
 }
 
 void Heap::Print(llvm::raw_ostream& out) const {
+  llvm::ListSeparator sep;
   for (size_t i = 0; i < values_.size(); ++i) {
+    out << sep;
     PrintAddress(Address(i), out);
-    out << ", ";
   }
 }
 
