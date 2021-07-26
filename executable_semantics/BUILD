@@ -7,6 +7,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/testing:golden_test.bzl", "golden_test")
+load("test_list.bzl", "TEST_LIST")
 
 cc_binary(
     name = "executable_semantics",
@@ -17,88 +18,6 @@ cc_binary(
         "@llvm-project//llvm:Support",
     ],
 )
-
-EXAMPLES = [
-    "assignment_copy1",
-    "assignment_copy2",
-    "block1",
-    "block2",
-    "break1",
-    "choice1",
-    "continue1",
-    "fun_named_params",
-    "fun_named_params2",
-    "fun_recur",
-    "fun1",
-    "fun2",
-    "fun3",
-    "fun4",
-    "fun5",
-    "fun6_fail_type",
-    "funptr1",
-    "generic_function1",
-    "generic_function2",
-    "generic_function3",
-    "generic_function_apply",
-    "generic_function_fail1",
-    "generic_function_fail2",
-    "generic_function_fail3",
-    "generic_function_swap",
-    "generic_function_tuple_map",
-    "global_variable1",
-    "global_variable2",
-    "global_variable3",
-    "global_variable4",
-    "global_variable5",
-    "global_variable6",
-    "global_variable7",
-    "global_variable8",
-    "ignored_parameter",
-    "if1",
-    "if2",
-    "if3",
-    "invalid_char",
-    "match_any_int",
-    "match_int_default",
-    "match_int",
-    "match_placeholder",
-    "match_type",
-    "next",
-    "pattern_init",
-    "pattern_variable_fail",
-    "placeholder_variable",
-    "record1",
-    "star",
-    "struct1",
-    "struct2",
-    "struct3",
-    "tuple_assign",
-    "tuple_equality",
-    "tuple_equality2",
-    "tuple_equality3",
-    "tuple_match",
-    "tuple_match2",
-    "tuple_match3",
-    "tuple1",
-    "tuple2",
-    "tuple3",
-    "tuple4",
-    "tuple5",
-    "type_compute",
-    "type_compute2",
-    "type_compute3",
-    "while1",
-    "zero",
-    "experimental_continuation1",
-    "experimental_continuation2",
-    "experimental_continuation3",
-    "experimental_continuation4",
-    "experimental_continuation5",
-    "experimental_continuation6",
-    "experimental_continuation7",
-    "experimental_continuation8",
-    "experimental_continuation9",
-]
 
 [golden_test(
     name = "%s_test" % e,
@@ -112,7 +31,13 @@ EXAMPLES = [
         "ASAN_OPTIONS": "detect_leaks=0",
     },
     golden = "testdata/%s.golden" % e,
-) for e in EXAMPLES]
+) for e in TEST_LIST]
+
+# Convenience suite for running golden tests.
+test_suite(
+    name = "golden_tests",
+    tests = [":%s_test" % e for e in TEST_LIST],
+)
 
 # Test --trace by expecting golden output to be a *subset* of trace output. Note
 # the normal test must be used to update golden files.
@@ -130,4 +55,10 @@ EXAMPLES = [
     },
     golden = "testdata/%s.golden" % e,
     golden_is_subset = True,
-) for e in EXAMPLES]
+) for e in TEST_LIST]
+
+# Convenience suite for running trace tests.
+test_suite(
+    name = "trace_tests",
+    tests = [":%s_trace_test" % e for e in TEST_LIST],
+)
