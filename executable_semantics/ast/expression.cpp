@@ -4,166 +4,163 @@
 
 #include "executable_semantics/ast/expression.h"
 
-#include <iostream>
+#include "executable_semantics/common/error.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
-auto Expression::GetVariable() const -> const Variable& {
-  return std::get<Variable>(value);
+auto Expression::GetIdentifierExpression() const
+    -> const IdentifierExpression& {
+  return std::get<IdentifierExpression>(value);
 }
 
-auto Expression::GetFieldAccess() const -> const FieldAccess& {
-  return std::get<FieldAccess>(value);
+auto Expression::GetFieldAccessExpression() const
+    -> const FieldAccessExpression& {
+  return std::get<FieldAccessExpression>(value);
 }
 
-auto Expression::GetIndex() const -> const Index& {
-  return std::get<Index>(value);
+auto Expression::GetIndexExpression() const -> const IndexExpression& {
+  return std::get<IndexExpression>(value);
 }
 
-auto Expression::GetPatternVariable() const -> const PatternVariable& {
-  return std::get<PatternVariable>(value);
+auto Expression::GetBindingExpression() const -> const BindingExpression& {
+  return std::get<BindingExpression>(value);
 }
 
-auto Expression::GetInteger() const -> int {
+auto Expression::GetIntLiteral() const -> int {
   return std::get<IntLiteral>(value).value;
 }
 
-auto Expression::GetBoolean() const -> bool {
+auto Expression::GetBoolLiteral() const -> bool {
   return std::get<BoolLiteral>(value).value;
 }
 
-auto Expression::GetTuple() const -> const Tuple& {
-  return std::get<Tuple>(value);
+auto Expression::GetTupleLiteral() const -> const TupleLiteral& {
+  return std::get<TupleLiteral>(value);
 }
 
-auto Expression::GetPrimitiveOperator() const -> const PrimitiveOperator& {
-  return std::get<PrimitiveOperator>(value);
+auto Expression::GetPrimitiveOperatorExpression() const
+    -> const PrimitiveOperatorExpression& {
+  return std::get<PrimitiveOperatorExpression>(value);
 }
 
-auto Expression::GetCall() const -> const Call& {
-  return std::get<Call>(value);
+auto Expression::GetCallExpression() const -> const CallExpression& {
+  return std::get<CallExpression>(value);
 }
 
-auto Expression::GetFunctionType() const -> const FunctionType& {
-  return std::get<FunctionType>(value);
+auto Expression::GetFunctionTypeLiteral() const -> const FunctionTypeLiteral& {
+  return std::get<FunctionTypeLiteral>(value);
 }
 
-auto Expression::MakeTypeType(int line_num) -> const Expression* {
+auto Expression::MakeTypeTypeLiteral(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = TypeT();
+  t->value = TypeTypeLiteral();
   return t;
 }
 
-auto Expression::MakeIntType(int line_num) -> const Expression* {
+auto Expression::MakeIntTypeLiteral(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = IntT();
+  t->value = IntTypeLiteral();
   return t;
 }
 
-auto Expression::MakeBoolType(int line_num) -> const Expression* {
+auto Expression::MakeBoolTypeLiteral(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = BoolT();
+  t->value = BoolTypeLiteral();
   return t;
 }
 
-auto Expression::MakeAutoType(int line_num) -> const Expression* {
+auto Expression::MakeAutoTypeLiteral(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = AutoT();
+  t->value = AutoTypeLiteral();
   return t;
 }
 
 // Returns a Continuation type AST node at the given source location.
-auto Expression::MakeContinuationType(int line_num) -> const Expression* {
+auto Expression::MakeContinuationTypeLiteral(int line_num)
+    -> const Expression* {
   auto* type = new Expression();
   type->line_num = line_num;
-  type->value = ContinuationT();
+  type->value = ContinuationTypeLiteral();
   return type;
 }
 
-auto Expression::MakeFunType(int line_num, const Expression* param,
-                             const Expression* ret) -> const Expression* {
+auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
+                                         const Expression* ret)
+    -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = FunctionType({.parameter = param, .return_type = ret});
+  t->value = FunctionTypeLiteral({.parameter = param, .return_type = ret});
   return t;
 }
 
-auto Expression::MakeVar(int line_num, std::string var) -> const Expression* {
+auto Expression::MakeIdentifierExpression(int line_num, std::string var)
+    -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value = Variable({.name = std::move(var)});
+  v->value = IdentifierExpression({.name = std::move(var)});
   return v;
 }
 
-auto Expression::MakeVarPat(int line_num, std::string var,
-                            const Expression* type) -> const Expression* {
+auto Expression::MakeBindingExpression(int line_num,
+                                       std::optional<std::string> var,
+                                       const Expression* type)
+    -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value = PatternVariable({.name = std::move(var), .type = type});
+  v->value = BindingExpression({.name = std::move(var), .type = type});
   return v;
 }
 
-auto Expression::MakeInt(int line_num, int i) -> const Expression* {
+auto Expression::MakeIntLiteral(int line_num, int i) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->value = IntLiteral({.value = i});
   return e;
 }
 
-auto Expression::MakeBool(int line_num, bool b) -> const Expression* {
+auto Expression::MakeBoolLiteral(int line_num, bool b) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->value = BoolLiteral({.value = b});
   return e;
 }
 
-auto Expression::MakeOp(int line_num, enum Operator op,
-                        std::vector<const Expression*> args)
+auto Expression::MakePrimitiveOperatorExpression(
+    int line_num, enum Operator op, std::vector<const Expression*> args)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = std::move(args)});
+  e->value =
+      PrimitiveOperatorExpression({.op = op, .arguments = std::move(args)});
   return e;
 }
 
-auto Expression::MakeUnOp(int line_num, enum Operator op, const Expression* arg)
+auto Expression::MakeCallExpression(int line_num, const Expression* fun,
+                                    const Expression* arg)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = {arg}});
+  e->value = CallExpression({.function = fun, .argument = arg});
   return e;
 }
 
-auto Expression::MakeBinOp(int line_num, enum Operator op,
-                           const Expression* arg1, const Expression* arg2)
+auto Expression::MakeFieldAccessExpression(int line_num, const Expression* exp,
+                                           std::string field)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = {arg1, arg2}});
+  e->value =
+      FieldAccessExpression({.aggregate = exp, .field = std::move(field)});
   return e;
 }
 
-auto Expression::MakeCall(int line_num, const Expression* fun,
-                          const Expression* arg) -> const Expression* {
-  auto* e = new Expression();
-  e->line_num = line_num;
-  e->value = Call({.function = fun, .argument = arg});
-  return e;
-}
-
-auto Expression::MakeGetField(int line_num, const Expression* exp,
-                              std::string field) -> const Expression* {
-  auto* e = new Expression();
-  e->line_num = line_num;
-  e->value = FieldAccess({.aggregate = exp, .field = std::move(field)});
-  return e;
-}
-
-auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer> args)
+auto Expression::MakeTupleLiteral(int line_num,
+                                  std::vector<FieldInitializer> args)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
@@ -172,10 +169,9 @@ auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer> args)
   for (auto& arg : args) {
     if (arg.name == "") {
       if (seen_named_member) {
-        std::cerr << line_num
-                  << ": positional members must come before named members"
-                  << std::endl;
-        exit(-1);
+        FatalUserError()
+            << line_num
+            << ": positional members must come before named members";
       }
       arg.name = std::to_string(i);
       ++i;
@@ -183,143 +179,131 @@ auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer> args)
       seen_named_member = true;
     }
   }
-  e->value = Tuple({.fields = args});
+  e->value = TupleLiteral({.fields = args});
   return e;
 }
 
-auto Expression::MakeIndex(int line_num, const Expression* exp,
-                           const Expression* i) -> const Expression* {
+auto Expression::MakeIndexExpression(int line_num, const Expression* exp,
+                                     const Expression* i) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = Index({.aggregate = exp, .offset = i});
+  e->value = IndexExpression({.aggregate = exp, .offset = i});
   return e;
 }
 
-static void PrintOp(Operator op) {
+static void PrintOp(llvm::raw_ostream& out, Operator op) {
   switch (op) {
     case Operator::Add:
-      std::cout << "+";
+      out << "+";
       break;
     case Operator::Neg:
     case Operator::Sub:
-      std::cout << "-";
+      out << "-";
       break;
     case Operator::Mul:
     case Operator::Deref:
     case Operator::Ptr:
-      std::cout << "*";
+      out << "*";
       break;
     case Operator::Not:
-      std::cout << "not";
+      out << "not";
       break;
     case Operator::And:
-      std::cout << "and";
+      out << "and";
       break;
     case Operator::Or:
-      std::cout << "or";
+      out << "or";
       break;
     case Operator::Eq:
-      std::cout << "==";
+      out << "==";
       break;
   }
 }
 
-static void PrintFields(const std::vector<FieldInitializer>& fields) {
-  int i = 0;
-  for (auto iter = fields.begin(); iter != fields.end(); ++iter, ++i) {
-    if (i != 0) {
-      std::cout << ", ";
-    }
-    std::cout << iter->name << " = ";
-    PrintExp(iter->expression);
+static void PrintFields(llvm::raw_ostream& out,
+                        const std::vector<FieldInitializer>& fields) {
+  llvm::ListSeparator sep;
+  for (const auto& field : fields) {
+    out << sep << field.name << " = " << field.expression;
   }
 }
 
-void PrintExp(const Expression* e) {
-  switch (e->tag()) {
-    case ExpressionKind::Index:
-      PrintExp(e->GetIndex().aggregate);
-      std::cout << "[";
-      PrintExp(e->GetIndex().offset);
-      std::cout << "]";
+void Expression::Print(llvm::raw_ostream& out) const {
+  switch (tag()) {
+    case ExpressionKind::IndexExpression:
+      out << *GetIndexExpression().aggregate << "["
+          << *GetIndexExpression().offset << "]";
       break;
-    case ExpressionKind::GetField:
-      PrintExp(e->GetFieldAccess().aggregate);
-      std::cout << ".";
-      std::cout << e->GetFieldAccess().field;
+    case ExpressionKind::FieldAccessExpression:
+      out << *GetFieldAccessExpression().aggregate << "."
+          << GetFieldAccessExpression().field;
       break;
-    case ExpressionKind::Tuple:
-      std::cout << "(";
-      PrintFields(e->GetTuple().fields);
-      std::cout << ")";
+    case ExpressionKind::TupleLiteral:
+      out << "(";
+      PrintFields(out, GetTupleLiteral().fields);
+      out << ")";
       break;
-    case ExpressionKind::Integer:
-      std::cout << e->GetInteger();
+    case ExpressionKind::IntLiteral:
+      out << GetIntLiteral();
       break;
-    case ExpressionKind::Boolean:
-      std::cout << std::boolalpha;
-      std::cout << e->GetBoolean();
+    case ExpressionKind::BoolLiteral:
+      out << (GetBoolLiteral() ? "true" : "false");
       break;
-    case ExpressionKind::PrimitiveOp: {
-      std::cout << "(";
-      PrimitiveOperator op = e->GetPrimitiveOperator();
+    case ExpressionKind::PrimitiveOperatorExpression: {
+      out << "(";
+      PrimitiveOperatorExpression op = GetPrimitiveOperatorExpression();
       if (op.arguments.size() == 0) {
-        PrintOp(op.op);
+        PrintOp(out, op.op);
       } else if (op.arguments.size() == 1) {
-        PrintOp(op.op);
-        std::cout << " ";
-        auto iter = op.arguments.begin();
-        PrintExp(*iter);
+        PrintOp(out, op.op);
+        out << " " << *op.arguments[0];
       } else if (op.arguments.size() == 2) {
-        auto iter = op.arguments.begin();
-        PrintExp(*iter);
-        std::cout << " ";
-        PrintOp(op.op);
-        std::cout << " ";
-        ++iter;
-        PrintExp(*iter);
+        out << *op.arguments[0] << " ";
+        PrintOp(out, op.op);
+        out << " " << *op.arguments[1];
       }
-      std::cout << ")";
+      out << ")";
       break;
     }
-    case ExpressionKind::Variable:
-      std::cout << e->GetVariable().name;
+    case ExpressionKind::IdentifierExpression:
+      out << GetIdentifierExpression().name;
       break;
-    case ExpressionKind::PatternVariable:
-      PrintExp(e->GetPatternVariable().type);
-      std::cout << ": ";
-      std::cout << e->GetPatternVariable().name;
-      break;
-    case ExpressionKind::Call:
-      PrintExp(e->GetCall().function);
-      if (e->GetCall().argument->tag() == ExpressionKind::Tuple) {
-        PrintExp(e->GetCall().argument);
+    case ExpressionKind::BindingExpression: {
+      const BindingExpression& binding = GetBindingExpression();
+      if (binding.name.has_value()) {
+        out << *binding.name;
       } else {
-        std::cout << "(";
-        PrintExp(e->GetCall().argument);
-        std::cout << ")";
+        out << "_";
+      }
+      out << ": " << *binding.type;
+      break;
+    }
+    case ExpressionKind::CallExpression:
+      out << *GetCallExpression().function;
+      if (GetCallExpression().argument->tag() == ExpressionKind::TupleLiteral) {
+        out << *GetCallExpression().argument;
+      } else {
+        out << "(" << *GetCallExpression().argument << ")";
       }
       break;
-    case ExpressionKind::BoolT:
-      std::cout << "Bool";
+    case ExpressionKind::BoolTypeLiteral:
+      out << "Bool";
       break;
-    case ExpressionKind::IntT:
-      std::cout << "Int";
+    case ExpressionKind::IntTypeLiteral:
+      out << "Int";
       break;
-    case ExpressionKind::TypeT:
-      std::cout << "Type";
+    case ExpressionKind::TypeTypeLiteral:
+      out << "Type";
       break;
-    case ExpressionKind::AutoT:
-      std::cout << "auto";
+    case ExpressionKind::AutoTypeLiteral:
+      out << "auto";
       break;
-    case ExpressionKind::ContinuationT:
-      std::cout << "Continuation";
+    case ExpressionKind::ContinuationTypeLiteral:
+      out << "Continuation";
       break;
-    case ExpressionKind::FunctionT:
-      std::cout << "fn ";
-      PrintExp(e->GetFunctionType().parameter);
-      std::cout << " -> ";
-      PrintExp(e->GetFunctionType().return_type);
+    case ExpressionKind::FunctionTypeLiteral:
+      out << "fn " << *GetFunctionTypeLiteral().parameter << " -> "
+          << *GetFunctionTypeLiteral().return_type;
       break;
   }
 }

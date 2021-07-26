@@ -11,6 +11,7 @@ cc_binary(
     srcs = ["main.cpp"],
     deps = [
         ":fn_inserter",
+        ":for_range",
         ":var_decl",
         "@llvm-project//clang:tooling",
     ],
@@ -19,7 +20,10 @@ cc_binary(
 cc_library(
     name = "matcher",
     srcs = ["matcher.cpp"],
-    hdrs = ["matcher.h"],
+    hdrs = [
+        "matcher.h",
+        "matcher_manager.h",
+    ],
     deps = [
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling_core",
@@ -29,9 +33,9 @@ cc_library(
 cc_library(
     name = "matcher_test_base",
     testonly = 1,
-    srcs = ["matcher_test_base.cpp"],
     hdrs = ["matcher_test_base.h"],
     deps = [
+        ":matcher",
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling",
         "@llvm-project//llvm:gmock",
@@ -53,6 +57,24 @@ cc_test(
     srcs = ["fn_inserter_test.cpp"],
     deps = [
         ":fn_inserter",
+        ":matcher_test_base",
+        "@llvm-project//clang:tooling",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "for_range",
+    srcs = ["for_range.cpp"],
+    hdrs = ["for_range.h"],
+    deps = [":matcher"],
+)
+
+cc_test(
+    name = "for_range_test",
+    srcs = ["for_range_test.cpp"],
+    deps = [
+        ":for_range",
         ":matcher_test_base",
         "@llvm-project//clang:tooling",
         "@llvm-project//llvm:gtest_main",

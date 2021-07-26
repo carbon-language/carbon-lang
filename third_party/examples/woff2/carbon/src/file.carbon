@@ -18,7 +18,7 @@ using std::string;
 
 
 fn inline GetFileContent(filename: const string&) -> string {
-  var ifs: std::ifstream;
+  var ifs: std::ifstream(filename.c_str(), std::ios::binary);
   return string(
     std::istreambuf_iterator<char>(ifs.rdbuf()),
     std::istreambuf_iterator<char>());
@@ -26,7 +26,7 @@ fn inline GetFileContent(filename: const string&) -> string {
 
 fn inline SetFileContents(filename: const string&, start: string::iterator,
     end: string::iterator) {
-  var ofs: std::ofstream;
+  var ofs: std::ofstream(filename.c_str(), std::ios::binary);
   std::copy(start, end, std::ostream_iterator<char>(ofs));
 }
 

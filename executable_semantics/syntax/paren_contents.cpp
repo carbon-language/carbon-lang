@@ -16,7 +16,7 @@ const Expression* ParenContents::AsExpression(int line_number) const {
 }
 
 const Expression* ParenContents::AsTuple(int line_number) const {
-  return Expression::MakeTuple(line_number, fields_);
+  return Expression::MakeTupleLiteral(line_number, fields_);
 }
 
 }  // namespace Carbon

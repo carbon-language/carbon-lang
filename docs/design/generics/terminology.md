@@ -65,12 +65,13 @@ generic, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
     "&lt;name>`:` &lt;type>" syntax (or "&lt;value>").
--   **Generic parameters** are temporarily designated using a `$` between the
-    type and the name (so it is "&lt;name>`:$` &lt;type>"). However, this is a
-    placeholder syntax, subject to change. Some possibilities that have been
-    suggested are: `:!`, `:@`, `:#`, and `::`.
--   **Template parameters** are temporarily designated using "&lt;name>`:$$`
-    &lt;type>", for similar reasons.
+-   **Generic parameters** are designated using `:!` between the name and the
+    type (so it is "&lt;name>`:!` &lt;type>").
+-   **Template parameters** are designated using "`template` &lt;name>`:!`
+    &lt;type>".
+
+The syntax for generic and template parameters was decided in
+[questions-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
 Expected difference between generics and templates:
 
@@ -180,7 +181,7 @@ For example, let's say we have some overloaded function called `F` that has two
 overloads:
 
 ```
-fn F[T:$$ Type](x: T*) -> T;
+fn F[template T:! Type](x: T*) -> T;
 fn F(x: Int) -> Bool;
 ```
 
@@ -256,9 +257,9 @@ Note that function signatures can typically be rewritten to avoid using deduced
 parameters:
 
 ```
-fn F[T:$$ Type](value: T);
+fn F[template T:! Type](value: T);
 // is equivalent to:
-fn F(value: (T:$$ Type));
+fn F(value: (template T:! Type));
 ```
 
 See more [here](overview.md#deduced-parameters).
@@ -524,9 +525,9 @@ say it is a type parameter; if it is an output, we say it is an associated type.
 Type parameter example:
 
 ```
-interface Stack(ElementType:$ Type)
-  fn Push(this: Self*, value: ElementType);
-  fn Pop(this: Self*) -> ElementType;
+interface Stack(ElementType:! Type)
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
 }
 ```
 
@@ -534,9 +535,9 @@ Associated type example:
 
 ```
 interface Stack {
-  var ElementType:$ Type;
-  fn Push(this: Self*, value: ElementType);
-  fn Pop(this: Self*) -> ElementType;
+  let ElementType: Type;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
 }
 ```
 
@@ -550,18 +551,18 @@ interface Iterator { ... }
 interface Container {
   // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
-  var IteratorType:$ Iterator;
+  let IteratorType: Iterator;
   ...
-  fn Insert(this: Self*, position: IteratorType, value: ElementType);
+  fn Insert[addr me: Self*](position: IteratorType, value: ElementType);
 }
-struct ListIterator(ElementType:$ Type) {
+struct ListIterator(ElementType:! Type) {
   ...
   impl Iterator;
 }
-struct List(ElementType:$ Type) {
+struct List(ElementType:! Type) {
   // Iterator type is determined by the container type.
-  var IteratorType:$ Iterator = ListIterator(ElementType);
-  fn Insert(this: Self*, position: IteratorType, value: ElementType) {
+  let IteratorType: Iterator = ListIterator(ElementType);
+  fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
     ...
   }
   impl Container;

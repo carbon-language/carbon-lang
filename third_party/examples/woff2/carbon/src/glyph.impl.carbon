@@ -10,35 +10,36 @@
 
 #include <cstdlib>
 #include <limits>
+
 #include "./buffer.h"
 #include "./store_bytes.h"
 
 namespace woff2 {
 
-let kFLAG_ONCURVE: const int32_t;
-let kFLAG_XSHORT: const int32_t;
-let kFLAG_YSHORT: const int32_t;
-let kFLAG_REPEAT: const int32_t;
-let kFLAG_XREPEATSIGN: const int32_t;
-let kFLAG_YREPEATSIGN: const int32_t;
-let kFLAG_ARG_1_AND_2_ARE_WORDS: const int32_t;
-let kFLAG_WE_HAVE_A_SCALE: const int32_t;
-let kFLAG_MORE_COMPONENTS: const int32_t;
-let kFLAG_WE_HAVE_AN_X_AND_Y_SCALE: const int32_t;
-let kFLAG_WE_HAVE_A_TWO_BY_TWO: const int32_t;
-let kFLAG_WE_HAVE_INSTRUCTIONS: const int32_t;
+let kFLAG_ONCURVE: const int32_t = 1;
+let kFLAG_XSHORT: const int32_t = 1 << 1;
+let kFLAG_YSHORT: const int32_t = 1 << 2;
+let kFLAG_REPEAT: const int32_t = 1 << 3;
+let kFLAG_XREPEATSIGN: const int32_t = 1 << 4;
+let kFLAG_YREPEATSIGN: const int32_t = 1 << 5;
+let kFLAG_ARG_1_AND_2_ARE_WORDS: const int32_t = 1 << 0;
+let kFLAG_WE_HAVE_A_SCALE: const int32_t = 1 << 3;
+let kFLAG_MORE_COMPONENTS: const int32_t = 1 << 5;
+let kFLAG_WE_HAVE_AN_X_AND_Y_SCALE: const int32_t = 1 << 6;
+let kFLAG_WE_HAVE_A_TWO_BY_TWO: const int32_t = 1 << 7;
+let kFLAG_WE_HAVE_INSTRUCTIONS: const int32_t = 1 << 8;
 
 fn ReadCompositeGlyphData(buffer: Buffer*, glyph: Glyph*) -> bool {
   glyph->have_instructions = false;
   glyph->composite_data = buffer->buffer() + buffer->offset();
-  var start_offset: size_t;
-  var flags: uint16_t;
+  var start_offset: size_t = buffer->offset();
+  var flags: uint16_t = kFLAG_MORE_COMPONENTS;
   while (flags & kFLAG_MORE_COMPONENTS) {
     if (!buffer->ReadU16(&flags)) {
       return FONT_COMPRESSION_FAILURE();
     }
     glyph->have_instructions |= (flags & kFLAG_WE_HAVE_INSTRUCTIONS) != 0;
-    var arg_size: size_t;  // glyph index
+    var arg_size: size_t = 2;  // glyph index
     if (flags & kFLAG_ARG_1_AND_2_ARE_WORDS) {
       arg_size += 4;
     } else {
@@ -63,7 +64,7 @@ fn ReadCompositeGlyphData(buffer: Buffer*, glyph: Glyph*) -> bool {
 }
 
 fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool {
-  var buffer: Buffer;
+  var buffer: Buffer(data, len);
 
   var num_contours: int16_t;
   if (!buffer.ReadS16(&num_contours)) {
@@ -88,13 +89,13 @@ fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool {
     glyph->contours.resize(num_contours);
 
     // Read the number of points per contour.
-    var last_point_index: uint16_t;
-    for (var i: int; i < num_contours; ++i) {
+    var last_point_index: uint16_t = 0;
+    for (var i: int = 0; i < num_contours; ++i) {
       var point_index: uint16_t;
       if (!buffer.ReadU16(&point_index)) {
         return FONT_COMPRESSION_FAILURE();
       }
-      var num_points: uint16_t;
+      var num_points: uint16_t = point_index - last_point_index + (i == 0 ? 1 : 0);
       glyph->contours[i].resize(num_points);
       last_point_index = point_index;
     }
@@ -109,13 +110,13 @@ fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool {
     }
 
     // Read the run-length coded flags.
-    var flags: std::vector<std::vector<uint8_t> >;
+    var flags: std::vector<std::vector<uint8_t> >(num_contours);
     {
-      var flag: uint8_t;
-      var flag_repeat: uint8_t;
-      for (var i: int; i < num_contours; ++i) {
+      var flag: uint8_t = 0;
+      var flag_repeat: uint8_t = 0;
+      for (var i: int = 0; i < num_contours; ++i) {
         flags[i].resize(glyph->contours[i].size());
-        for (var j: size_t; j < glyph->contours[i].size(); ++j) {
+        for (var j: size_t = 0; j < glyph->contours[i].size(); ++j) {
           if (flag_repeat == 0) {
             if (!buffer.ReadU8(&flag)) {
               return FONT_COMPRESSION_FAILURE();
@@ -135,21 +136,21 @@ fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool {
     }
 
     // Read the x coordinates.
-    var prev_x: int;
-    for (var i: int; i < num_contours; ++i) {
-      for (var j: size_t; j < glyph->contours[i].size(); ++j) {
-        var flag: uint8_t;
+    var prev_x: int = 0;
+    for (var i: int = 0; i < num_contours; ++i) {
+      for (var j: size_t = 0; j < glyph->contours[i].size(); ++j) {
+        var flag: uint8_t = flags[i][j];
         if (flag & kFLAG_XSHORT) {
           // single byte x-delta coord value
           var x_delta: uint8_t;
           if (!buffer.ReadU8(&x_delta)) {
             return FONT_COMPRESSION_FAILURE();
           }
-          var sign: int;
+          var sign: int = (flag & kFLAG_XREPEATSIGN) ? 1 : -1;
           glyph->contours[i][j].x = prev_x + sign * x_delta;
         } else {
           // double byte x-delta coord value
-          var x_delta: int16_t;
+          var x_delta: int16_t = 0;
           if (!(flag & kFLAG_XREPEATSIGN)) {
             if (!buffer.ReadS16(&x_delta)) {
               return FONT_COMPRESSION_FAILURE();
@@ -162,21 +163,21 @@ fn ReadGlyph(data: const uint8_t*, len: size_t, glyph: Glyph*) -> bool {
     }
 
     // Read the y coordinates.
-    var prev_y: int;
-    for (var i: int; i < num_contours; ++i) {
-      for (var j: size_t; j < glyph->contours[i].size(); ++j) {
-        var flag: uint8_t;
+    var prev_y: int = 0;
+    for (var i: int = 0; i < num_contours; ++i) {
+      for (var j: size_t = 0; j < glyph->contours[i].size(); ++j) {
+        var flag: uint8_t = flags[i][j];
         if (flag & kFLAG_YSHORT) {
           // single byte y-delta coord value
           var y_delta: uint8_t;
           if (!buffer.ReadU8(&y_delta)) {
             return FONT_COMPRESSION_FAILURE();
           }
-          var sign: int;
+          var sign: int = (flag & kFLAG_YREPEATSIGN) ? 1 : -1;
           glyph->contours[i][j].y = prev_y + sign * y_delta;
         } else {
           // double byte y-delta coord value
-          var y_delta: int16_t;
+          var y_delta: int16_t = 0;
           if (!(flag & kFLAG_YREPEATSIGN)) {
             if (!buffer.ReadS16(&y_delta)) {
               return FONT_COMPRESSION_FAILURE();
@@ -225,8 +226,8 @@ fn StoreInstructions(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) {
 }
 
 fn StoreEndPtsOfContours(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) -> bool {
-  var end_point: int;
-  for (const auto& contour : glyph.contours) {
+  var end_point: int = -1;
+  for (const auto& contour  in  glyph.contours) {
     end_point += contour.size();
     if (contour.size() > std::numeric_limits<uint16_t>::max() ||
         end_point > std::numeric_limits<uint16_t>::max()) {
@@ -239,19 +240,19 @@ fn StoreEndPtsOfContours(glyph: const Glyph&, offset: size_t*, dst: uint8_t*) ->
 
 fn StorePoints(glyph: const Glyph&, offset: size_t*,
                  dst: uint8_t*, dst_size: size_t) -> bool {
-  var last_flag: int;
-  var repeat_count: int;
-  var last_x: int;
-  var last_y: int;
-  var x_bytes: size_t;
-  var y_bytes: size_t;
+  var last_flag: int = -1;
+  var repeat_count: int = 0;
+  var last_x: int = 0;
+  var last_y: int = 0;
+  var x_bytes: size_t = 0;
+  var y_bytes: size_t = 0;
 
   // Store the flags and calculate the total size of the x and y coordinates.
-  for (const auto& contour : glyph.contours) {
-    for (const auto& point : contour) {
-      var flag: int;
-      var dx: int;
-      var dy: int;
+  for (const auto& contour  in  glyph.contours) {
+    for (const auto& point  in  contour) {
+      var flag: int = point.on_curve ? kFLAG_ONCURVE : 0;
+      var dx: int = point.x - last_x;
+      var dy: int = point.y - last_y;
       if (dx == 0) {
         flag |= kFLAG_XREPEATSIGN;
       } else if (dx > -256 && dx < 256) {
@@ -301,14 +302,14 @@ fn StorePoints(glyph: const Glyph&, offset: size_t*,
   }
 
   // Store the x and y coordinates.
-  var x_offset: size_t;
-  var y_offset: size_t;
+  var x_offset: size_t = *offset;
+  var y_offset: size_t = *offset + x_bytes;
   last_x = 0;
   last_y = 0;
-  for (const auto& contour : glyph.contours) {
-    for (const auto& point : contour) {
-      var dx: int;
-      var dy: int;
+  for (const auto& contour  in  glyph.contours) {
+    for (const auto& point  in  contour) {
+      var dx: int = point.x - last_x;
+      var dy: int = point.y - last_y;
       if (dx == 0) {
         // pass
       } else if (dx > -256 && dx < 256) {
@@ -334,7 +335,7 @@ fn StorePoints(glyph: const Glyph&, offset: size_t*,
 }  // namespace
 
 fn StoreGlyph(glyph: const Glyph&, dst: uint8_t*, dst_size: size_t*) -> bool {
-  var offset: size_t;
+  var offset: size_t = 0;
   if (glyph.composite_data_size > 0) {
     // Composite glyph.
     if (*dst_size < ((10ULL + glyph.composite_data_size) +

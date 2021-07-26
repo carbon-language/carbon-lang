@@ -12,13 +12,15 @@ namespace Carbon {
 // Inserts `fn` for functions and methods.
 class FnInserter : public Matcher {
  public:
-  explicit FnInserter(std::map<std::string, Replacements>& in_replacements,
-                      MatchFinder* finder);
+  using Matcher::Matcher;
+  void Run() override;
+};
 
-  void run(const MatchFinder::MatchResult& result) override;
-
- private:
-  static constexpr char Label[] = "FnInserter";
+class FnInserterFactory : public MatcherFactoryBase<FnInserter> {
+ public:
+  void AddMatcher(
+      clang::ast_matchers::MatchFinder* finder,
+      clang::ast_matchers::MatchFinder::MatchCallback* callback) override;
 };
 
 }  // namespace Carbon

@@ -17,6 +17,8 @@ cc_library(
         ":function_definition",
         ":member",
         ":struct_definition",
+        "//common:ostream",
+        "//executable_semantics/interpreter:address",
         "//executable_semantics/interpreter:containers",
     ],
 )
@@ -25,7 +27,11 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
-    deps = ["//common:indirect_value"],
+    deps = [
+        "//common:indirect_value",
+        "//common:ostream",
+        "//executable_semantics/common:error",
+    ],
 )
 
 cc_library(
@@ -42,7 +48,10 @@ cc_library(
     name = "member",
     srcs = ["member.cpp"],
     hdrs = ["member.h"],
-    deps = [":expression"],
+    deps = [
+        ":expression",
+        "//common:ostream",
+    ],
 )
 
 cc_library(
@@ -52,11 +61,15 @@ cc_library(
     deps = [
         ":expression",
         "//common:check",
+        "//common:ostream",
     ],
 )
 
 cc_library(
     name = "struct_definition",
     hdrs = ["struct_definition.h"],
-    deps = [":member"],
+    deps = [
+        ":member",
+        "//common:ostream",
+    ],
 )
