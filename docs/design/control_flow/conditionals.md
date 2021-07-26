@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Alternatives considered](#alternatives-considered)
--   [Relevant proposals](#relevant-proposals)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -76,7 +76,7 @@ This code will:
 -   [Optional parentheses](/proposals/p0623.md#optional-parentheses)
 -   [`elif`](/proposals/p0623.md#elif)
 
-## Relevant proposals
+## References
 
 -   `if` and `else`
     [#285](https://github.com/carbon-language/carbon-lang/pull/285)
