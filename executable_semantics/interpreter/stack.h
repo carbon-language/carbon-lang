@@ -72,7 +72,8 @@ struct Stack {
   std::vector<T> elements;
 };
 
-// Explicitly enable CTAD
+// Explicitly enable CTAD to silence warnings.
+// TODO: consider removing this (and perhaps the associated constructor).
 template <typename T>
 Stack(T x) -> Stack<T>;
 
