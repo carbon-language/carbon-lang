@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Alternatives considered](#alternatives-considered)
 -   [Relevant proposals](#relevant-proposals)
 
 <!-- tocstop -->
@@ -69,9 +70,15 @@ This code will:
             -   When `False`, print `Vegetable!` and resume execution at
                 `fruit.Eat()`.
 
+## Alternatives considered
+
+-   [Optional braces](/proposals/p0623.md#optional-braces)
+-   [Optional parentheses](/proposals/p0623.md#optional-parentheses)
+-   [`elif`](/proposals/p0623.md#elif)
+
 ## Relevant proposals
 
-Most discussion of design choices and alternatives may be found in relevant
-proposals.
-
--   [`if` and `else`](/proposals/p0285.md)
+-   `if` and `else`
+    [#285](https://github.com/carbon-language/carbon-lang/pull/285)
+-   Require braces
+    [#623](https://github.com/carbon-language/carbon-lang/pull/623)
