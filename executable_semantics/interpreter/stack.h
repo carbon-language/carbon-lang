@@ -72,6 +72,11 @@ struct Stack {
   std::vector<T> elements;
 };
 
+// Explicitly enable CTAD to silence warnings.
+// TODO: consider removing this (and perhaps the associated constructor).
+template <typename T>
+Stack(T x) -> Stack<T>;
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_INTERPRETER_CONS_LIST_H_
