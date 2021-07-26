@@ -23,12 +23,14 @@ _TEST_LIST_HEADER = """
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-\"\"\"Auto-generated list of tests. Run `./tests.py --update_list` to update.\"\"\"
+\"""Auto-generated list of tests. Run `./tests.py --update_list` to update.\"""
 
 TEST_LIST = [
 """
 
-_TEST_LIST_FOOTER = "]\n"
+_TEST_LIST_FOOTER = """
+]
+"""
 
 
 def _parse_args(args=None):
@@ -73,7 +75,7 @@ def _update_list():
         if test not in goldens:
             print("Creating empty golden '%s.golden' for test." % test)
             open(os.path.join(_TESTDATA, "%s.golden" % test), "w").close()
-    test_list += _TEST_LIST_FOOTER
+    test_list += _TEST_LIST_FOOTER.lstrip("\n")
     bzl_content = open(_TEST_LIST_BZL).read()
     if bzl_content != test_list:
         print("Updating test_list.bzl")
@@ -92,7 +94,7 @@ def _update_list():
 
 
 def _update_golden(test):
-    """Updates golden files by running executable_semantics."""
+    """Updates the golden file for `test` by running executable_semantics."""
     # TODO(#580): Remove this when leaks are fixed.
     env = os.environ.copy()
     env["ASAN_OPTIONS"] = "detect_leaks=0"
