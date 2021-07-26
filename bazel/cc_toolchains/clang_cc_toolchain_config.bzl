@@ -124,6 +124,8 @@ def _impl(ctx):
                             "-Wextra",
                             "-Wthread-safety",
                             "-Wself-assign",
+                            "-Wimplicit-fallthrough",
+                            "-Wctad-maybe-unsupported",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
                             # We use partial sets of designated initializers in
