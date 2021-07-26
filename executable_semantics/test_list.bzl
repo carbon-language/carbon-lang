@@ -59,6 +59,7 @@ TEST_LIST = [
     "match_placeholder",
     "match_type",
     "next",
+    "no_match",
     "pattern_init",
     "pattern_variable_fail",
     "placeholder_variable",
