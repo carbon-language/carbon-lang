@@ -6,40 +6,43 @@
 
 namespace Carbon {
 
+static const char UserErrorMessage[] = "ERROR: ";
+static const char CompilationErrorMessage[] = "COMPILATION ERROR: ";
+static const char RuntimeErrorMessage[] = "RUNTIME ERROR: ";
+
+ErrorInternal::ExitingStream::~ExitingStream() {
+  llvm::errs() << "\n";
+  exit(-1);
+}
+
 ErrorInternal::ExitingStream FatalUserError(ErrorLine none) {
-  auto stream = ErrorInternal::ExitingStream();
-  stream << "ERROR: ";
-  return stream;
+  llvm::errs() << UserErrorMessage;
+  return ErrorInternal::ExitingStream();
 }
 
 ErrorInternal::ExitingStream FatalUserError(int line_num) {
-  auto stream = FatalUserError(ErrorLine::None);
-  stream << line_num << ": ";
-  return stream;
+  llvm::errs() << UserErrorMessage << line_num << ": ";
+  return ErrorInternal::ExitingStream();
 }
 
 ErrorInternal::ExitingStream FatalCompilationError(ErrorLine none) {
-  auto stream = ErrorInternal::ExitingStream();
-  stream << "COMPILATION ERROR: ";
-  return stream;
+  llvm::errs() << CompilationErrorMessage;
+  return ErrorInternal::ExitingStream();
 }
 
 ErrorInternal::ExitingStream FatalCompilationError(int line_num) {
-  auto stream = FatalCompilationError(ErrorLine::None);
-  stream << line_num << ": ";
-  return stream;
+  llvm::errs() << CompilationErrorMessage << line_num << ": ";
+  return ErrorInternal::ExitingStream();
 }
 
 ErrorInternal::ExitingStream FatalRuntimeError(ErrorLine none) {
-  auto stream = ErrorInternal::ExitingStream();
-  stream << "RUNTIME ERROR: ";
-  return stream;
+  llvm::errs() << RuntimeErrorMessage;
+  return ErrorInternal::ExitingStream();
 }
 
 ErrorInternal::ExitingStream FatalRuntimeError(int line_num) {
-  auto stream = FatalRuntimeError(ErrorLine::None);
-  stream << line_num << ": ";
-  return stream;
+  llvm::errs() << RuntimeErrorMessage << line_num << ": ";
+  return ErrorInternal::ExitingStream();
 }
 
 }  // namespace Carbon

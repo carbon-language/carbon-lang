@@ -13,14 +13,18 @@ namespace Carbon {
 
 namespace ErrorInternal {
 
-// An error-printing stream that exits on destruction.
+// An error-printing stream that exits on destruction. This relies on NRVO so
+// that the destructor only executes once, exiting after all messages have been
+// streamed.
 class ExitingStream {
  public:
+  ExitingStream() = default;
+  ExitingStream(ExitingStream&&) = default;
+  ExitingStream(const ExitingStream&) = delete;
+  ExitingStream& operator=(const ExitingStream&) = delete;
+
   // Ends the error with a newline and exits.
-  LLVM_ATTRIBUTE_NORETURN virtual ~ExitingStream() {
-    llvm::errs() << "\n";
-    exit(-1);
-  }
+  LLVM_ATTRIBUTE_NORETURN virtual ~ExitingStream();
 
   // Forward output to llvm::errs.
   template <typename T>
