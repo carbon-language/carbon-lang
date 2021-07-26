@@ -35,8 +35,8 @@ jobs:
             find active work. If this PR should remain active or becomes active
             again, please reopen it.
 
-            This PR was closed because there has been no new activity in the 14
-            days since the `no activity` label was added.
+            This PR was closed and archived because there has been no new
+            activity in the 14 days since the `no activity` label was added.
           stale-issue-label: 'no activity'
           stale-pr-label: 'no activity'
           exempt-issue-labels: 'long term'
