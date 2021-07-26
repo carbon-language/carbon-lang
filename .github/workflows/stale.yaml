@@ -40,3 +40,4 @@ jobs:
           days-before-stale: 90
           days-before-close: 14
           days-before-issue-close: -1
+          operations-per-run: 100
