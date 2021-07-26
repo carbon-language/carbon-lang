@@ -28,6 +28,7 @@ cc_library(
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
     deps = [
+        "//common:check",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:error",
@@ -55,20 +56,11 @@ cc_library(
 )
 
 cc_library(
-    name = "return_expression",
-    hdrs = ["return_expression.h"],
-    deps = [
-        ":expression",
-    ],
-)
-
-cc_library(
     name = "statement",
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
     deps = [
         ":expression",
-        ":return_expression",
         "//common:check",
         "//common:ostream",
     ],

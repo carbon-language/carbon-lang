@@ -9,7 +9,6 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/return_expression.h"
 
 namespace Carbon {
 
@@ -58,7 +57,7 @@ struct If {
 
 struct Return {
   static constexpr StatementKind Kind = StatementKind::Return;
-  ReturnExpression exp;
+  const Expression* exp;
 };
 
 struct Sequence {
@@ -119,7 +118,8 @@ struct Statement {
   static auto MakeIf(int line_num, const Expression* cond,
                      const Statement* then_stmt, const Statement* else_stmt)
       -> const Statement*;
-  static auto MakeReturn(int line_num, ReturnExpression e) -> const Statement*;
+  static auto MakeReturn(int line_num, const Expression* exp)
+      -> const Statement*;
   static auto MakeSequence(int line_num, const Statement* s1,
                            const Statement* s2) -> const Statement*;
   static auto MakeBlock(int line_num, const Statement* s) -> const Statement*;

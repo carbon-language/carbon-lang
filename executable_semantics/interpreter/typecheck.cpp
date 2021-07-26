@@ -564,6 +564,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       return TCResult(e, Value::MakeTypeType(), types);
     case ExpressionKind::ContinuationTypeLiteral:
       return TCResult(e, Value::MakeTypeType(), types);
+    case ExpressionKind::ReturnExpression:
+      return TypeCheckExp(e->GetReturnExpression().exp, types, values, expected,
+                          context);
   }
 }
 

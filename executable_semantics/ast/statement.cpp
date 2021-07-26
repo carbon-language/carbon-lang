@@ -116,11 +116,12 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
   return s;
 }
 
-auto Statement::MakeReturn(int line_num, ReturnExpression e)
+auto Statement::MakeReturn(int line_num, const Expression* exp)
     -> const Statement* {
+  CHECK(exp->tag() == ExpressionKind::ReturnExpression);
   auto* s = new Statement();
   s->line_num = line_num;
-  s->value = Return({.exp = std::move(e)});
+  s->value = Return({.exp = std::move(exp)});
   return s;
 }
 
@@ -228,16 +229,10 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
         GetIf().else_stmt->PrintDepth(depth - 1, out);
       }
       break;
-    case StatementKind::Return:
-      switch (GetReturn().exp.kind) {
-        case ReturnExpression::Kind::Explicit:
-          out << "return " << *GetReturn().exp.exp << ";";
-          break;
-        case ReturnExpression::Kind::Implicit:
-          out << "return;";
-          break;
-      }
+    case StatementKind::Return: {
+      out << "return " << *GetReturn().exp << ";";
       break;
+    }
     case StatementKind::Sequence:
       GetSequence().stmt->PrintDepth(depth, out);
       if (depth < 0 || depth > 1) {

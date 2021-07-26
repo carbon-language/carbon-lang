@@ -4,6 +4,7 @@
 
 #include "executable_semantics/ast/expression.h"
 
+#include "common/check.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -52,6 +53,10 @@ auto Expression::GetFunctionTypeLiteral() const -> const FunctionTypeLiteral& {
   return std::get<FunctionTypeLiteral>(value);
 }
 
+auto Expression::GetReturnExpression() const -> const ReturnExpression& {
+  return std::get<ReturnExpression>(value);
+}
+
 auto Expression::MakeTypeTypeLiteral(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
@@ -90,8 +95,9 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
 }
 
 auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                         ReturnExpression ret)
+                                         const Expression* ret)
     -> const Expression* {
+  CHECK(ret->tag() == ExpressionKind::ReturnExpression);
   auto* t = new Expression();
   t->line_num = line_num;
   t->value = FunctionTypeLiteral({.parameter = param, .return_type = ret});
@@ -188,6 +194,21 @@ auto Expression::MakeIndexExpression(int line_num, const Expression* exp,
   auto* e = new Expression();
   e->line_num = line_num;
   e->value = IndexExpression({.aggregate = exp, .offset = i});
+  return e;
+}
+
+auto Expression::MakeReturnExpression(int line_num, const Expression* exp)
+    -> const Expression* {
+  auto* e = new Expression();
+  e->line_num = line_num;
+  if (exp == nullptr) {
+    e->value = ReturnExpression(
+        {.kind = ReturnExpression::ReturnKind::Implicit,
+         .exp = Carbon::Expression::MakeTupleLiteral(line_num, {})});
+  } else {
+    e->value = ReturnExpression(
+        {.kind = ReturnExpression::ReturnKind::Explicit, .exp = exp});
+  }
   return e;
 }
 
@@ -305,6 +326,15 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "fn " << *GetFunctionTypeLiteral().parameter << " -> "
           << *GetFunctionTypeLiteral().return_type;
       break;
+    case ExpressionKind::ReturnExpression:
+      switch (GetReturnExpression().kind) {
+        case ReturnExpression::ReturnKind::Explicit:
+          out << *GetReturnExpression().exp;
+          break;
+        case ReturnExpression::ReturnKind::Implicit:
+          // Print nothing.
+          break;
+      }
   }
 }
 

@@ -519,7 +519,8 @@ void StepLvalue() {
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::BindingExpression: {
+    case ExpressionKind::BindingExpression:
+    case ExpressionKind::ReturnExpression: {
       llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
       exit(-1);
     }
@@ -755,6 +756,13 @@ void StepExp() {
       const Value* v = Value::MakeContinuationType();
       frame->todo.Pop(1);
       frame->todo.Push(Action::MakeValAction(v));
+      break;
+    }
+    case ExpressionKind::ReturnExpression: {
+      CHECK(act->pos == 0);
+      frame->todo.Pop(1);
+      frame->todo.Push(
+          Action::MakeExpressionAction(exp->GetReturnExpression().exp));
       break;
     }
   }  // switch (exp->tag)
