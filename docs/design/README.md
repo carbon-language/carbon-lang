@@ -79,6 +79,8 @@ design to support the following audiences:
     for a project compared to other existing languages.
 -   People working on the evolution of the Carbon language who wish to
     understanding the rationale and motivation for existing design decisions.
+-   People working on a specification or implementation of the Carbon language
+    who need a detailed understanding of the intended design.
 -   People writing Carbon code who wish to understand why the language rules are
     the way they are.
 

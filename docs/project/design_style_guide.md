@@ -36,9 +36,9 @@ documentation.
 ## Linking
 
 -   Links to issues and to complete proposals should use the text `#nnnn`, where
-    `nnnn` is the issue number, and should link to the issue or pull request on
-    GitHub. It can be helpful to mention the proposal title. For example,
-    `[#123](https://github.com/carbon-language/carbon-lang/pull/123): Widget painting`.
+    `nnnn` is the issue number, optionally followed by the proposal title, and
+    should link to the issue or pull request on GitHub. For example,
+    `[#123: widget painting](https://github.com/carbon-language/carbon-lang/pull/123)`.
 -   Links to specific sections of a proposal should link to the repository copy
     of the proposal file, using the section title or other appropriate link
     text. For example,
@@ -46,8 +46,8 @@ documentation.
 
 ## Document structure
 
-Each document within the language design should be divided into the following
-sections, with suitable level-two (`##`) headings:
+Documents within the language design should usually be divided into the
+following sections, with suitable level-two (`##`) headings:
 
 -   **Table of contents** (auto-generated)
 -   **TODO** (optional)
@@ -90,8 +90,8 @@ For example:
 
 ```md
 -   [Wikipedia example page](https://en.wikipedia.org/wiki/Wikipedia:Example)
--   Proposal [#123](https://github.com/carbon-language/carbon-lang/pull/123):
-    widget painting.
+-   Proposal
+    [#123: widget painting](https://github.com/carbon-language/carbon-lang/pull/123).
 ```
 
 Links to related parts of the design should be included inline, where relevant,
