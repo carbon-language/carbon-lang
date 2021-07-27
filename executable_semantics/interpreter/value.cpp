@@ -532,7 +532,7 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
           return false;
         }
         if (not TypeEqual(t1->GetTupleValue().elements[i].value,
-                       t2->GetTupleValue().elements[i].value)) {
+                          t2->GetTupleValue().elements[i].value)) {
           return false;
         }
       }

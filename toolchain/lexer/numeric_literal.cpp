@@ -123,7 +123,8 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
     // followed by an alphanumeric character. This '+' or '-' cannot be an
     // operator because a literal cannot end in a lowercase letter.
     if ((c == '+' or c == '-') and seen_potential_exponent and
-        result.exponent == i - 1 and i + 1 != n and IsAlnum(source_text[i + 1])) {
+        result.exponent == i - 1 and i + 1 != n and
+        IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
       assert(not seen_plus_minus and "should only consume one + or -");

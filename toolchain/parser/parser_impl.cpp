@@ -214,7 +214,8 @@ auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
   assert(NextTokenIs(kind) and "The current token is the wrong kind!");
   TokenizedBuffer::Token t = *position;
   ++position;
-  assert(position != end and "Reached end of tokens without finding EOF token.");
+  assert(position != end and
+         "Reached end of tokens without finding EOF token.");
   return t;
 }
 
@@ -551,7 +552,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   if (NextTokenIs(TokenKind::OpenCurlyBrace())) {
     ParseCodeBlock();
   } else if (not ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
-                                      ParseNodeKind::DeclarationEnd())) {
+                                         ParseNodeKind::DeclarationEnd())) {
     emitter.EmitError<ExpectedFunctionBodyOrSemi>(*position);
     if (tokens.GetLine(*position) == tokens.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
@@ -755,9 +756,10 @@ static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
 // This is conservatively correct, and will never incorrectly return `false`,
 // but can incorrectly return `true`.
 static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
-  return not kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
-                        TokenKind::CloseSquareBracket(), TokenKind::Comma(),
-                        TokenKind::Semi(), TokenKind::Colon()});
+  return not kind.IsOneOf({TokenKind::CloseParen(),
+                           TokenKind::CloseCurlyBrace(),
+                           TokenKind::CloseSquareBracket(), TokenKind::Comma(),
+                           TokenKind::Semi(), TokenKind::Colon()});
 }
 
 auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {

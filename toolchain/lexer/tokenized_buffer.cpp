@@ -386,7 +386,8 @@ class TokenizedBuffer::Lexer {
       open_groups.pop_back();
       token_emitter.EmitError<MismatchedClosing>(opening_token);
 
-      assert(not buffer.Tokens().empty() and "Must have a prior opening token!");
+      assert(not buffer.Tokens().empty() and
+             "Must have a prior opening token!");
       Token prev_token = buffer.Tokens().end()[-1];
 
       // TODO: do a smarter backwards scan for where to put the closing

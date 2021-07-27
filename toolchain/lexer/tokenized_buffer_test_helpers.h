@@ -131,7 +131,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
 
     assert(not expected.string_contents or
            expected.kind == TokenKind::StringLiteral());
-    if (expected.string_contents and actual_kind == TokenKind::StringLiteral()) {
+    if (expected.string_contents and
+        actual_kind == TokenKind::StringLiteral()) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {
         *result_listener << "\nToken " << index << " has contents `"

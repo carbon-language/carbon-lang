@@ -94,7 +94,8 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
 
     const ExpectedNode& expected_node = *expected_node_stack.pop_back_val();
 
-    if (not MatchExpectedNode(tree, n, postorder_index, expected_node, output)) {
+    if (not MatchExpectedNode(tree, n, postorder_index, expected_node,
+                              output)) {
       matches = false;
     }
 

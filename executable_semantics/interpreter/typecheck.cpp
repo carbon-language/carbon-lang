@@ -321,7 +321,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         exit(-1);
       }
       if (expected and e->GetTupleLiteral().fields.size() !=
-                          expected->GetTupleValue().elements.size()) {
+                           expected->GetTupleValue().elements.size()) {
         llvm::errs() << e->line_num
                      << ": compilation error, tuples of different length\n";
         exit(-1);
