@@ -854,7 +854,7 @@ void StepStmt() {
             clause_num = (act->pos - 1) / 2;
             if (clause_num ==
                 static_cast<int>(stmt->GetMatch().clauses->size())) {
-              frame->todo.Pop(2);
+              frame->todo.Pop(1);
             }
           }
         }
