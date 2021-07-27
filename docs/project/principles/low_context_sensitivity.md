@@ -54,43 +54,87 @@ understood and act in unsurprising ways.
 If that next step is to loosen restrictions, that is generally easier to do
 while maintaining compatibility with existing code than adding new restrictions.
 
-**Question:** A way in which context could be less expensive is if the stakes
-are low. That is if a mistake in understanding is unlikely to lead to a bug or
-cause a misunderstanding in the semantics of code.
+### Mitigations of context sensitive costs
 
-A specific example of this is when the compiler can detect mistakes.
+There are several ways that the potential costs of context sensitive code can be
+mitigated. These techniques can and should be leveraged to help minimize and
+mitigate the contextual costs of Carbon features, and in some cases may provide
+a path to a feature that would otherwise be prohibitively costly.
 
-It is also possible to mitigate some of the costs of context outlined above:
+#### Visual aids
 
--   When the context only affects the _validity_ of code, not its meaning, the
-    developer can avoid paying the full cost by relying on the compiler to check
-    and verify the code's correctness. For example, contextually valid syntax is
-    relatively common and inexpensive, but we should avoid reusing the same
-    syntax with different meanings in other contexts.
--   Use lexical or syntactic structures that visually reinforce the context or
-    aid the reader in the expensive aspects. For example, representing contexts
-    with indentation, or IDE highlighting of matching parentheses and braces.
-    These visual hints make it easier for developers to notice contextual
-    elements.
+A direct way to reduce contextual costs is through lexical and syntactic
+structures that form visual aids. These can both reinforce what the context is
+and aid the reader in the expensive aspect of navigating the context. For
+example, representing contexts with indentation, or IDE highlighting of matching
+parentheses and braces. These visual hints make it easier for developers to
+notice contextual elements.
 
-**Background:** See
-[this post on language ergonomics in the Rust blog](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
+#### Contextual _validity_ rather than _meaning_
 
-An example of this situation in Rust is that the same syntax is used for a move
-and a copy of the value in a variable. Those cases are distinguished by whether
-the type implements a specific trait, which may not be readily ascertained. The
-compiler verifies that the code never uses a variable that is no longer valid
-due to having been moved from, which is expected to catch the problems that
-could arise from this difference. Otherwise the semantic difference between a
-move and a copy is considered in Rust to be low-enough stakes for there to be no
-need to signal that difference in the code.
+When the context only affects the _validity_ of code, but not its meaning, the
+costs are significantly reduced. Understanding the meaning or behavior of the
+code doesn't require context, and a developer can easily rely on the compiler to
+check the validity. A simple example of this is contextually valid syntax. Such
+syntax is relatively common and inexpensive, but we should avoid reusing the
+same syntax with different meanings in other contexts because that shifts the
+contextual information toward impacting the meaning of code.
+
+#### Reduced cost of mistakes
+
+Another mitigation for the costs of context sensitive code is when the cost of a
+mistake due to the context is low. Some simple examples:
+
+-   Context sensitivity in comments are less expensive in general than in code.
+-   Places where the general meaning is clear, developers can safely and
+    reliably work with that general understanding, and the context only provides
+    a minor refinement.
+
+Another way the costs of mistakes can be reduced is when the compiler can
+reliably detect them. This is the fundamental idea behind statically
+type-checked languages: the compiler enforcement reduces the contextual cost of
+knowing what the types are. How early and effectively the compiler can detect
+the mistakes also plays a role in reducing this cost, which is part of the value
+proposition for [definition-checked generics](#todo-link).
+
+A particularly interesting example of this situation in Rust is that the same
+syntax is used for a move and a copy of the value in a variable. Those cases are
+distinguished by whether the type implements a specific trait, which may not be
+readily ascertained. The compiler verifies that the code never uses a variable
+that is no longer valid due to having been moved from, which is expected to
+catch the problems that could arise from this difference. Otherwise the semantic
+difference between a move and a copy is considered in Rust to be low-enough
+stakes for there to be no need to signal that difference in the code. For more
+background on this area in Rust specifically, see
+[this post on language ergonomics](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
 
 ## Applications of the principle
 
-Adding an import or reodering imports should never change behavior of existing
+There are many parts of Carbon that could potentially be analyzed through this
+lens, and we can't enumerate them all here. This section focuses on several
+examples to help illustrate how the principle is likely to be relevant to
+Carbon. They focus on either cases that showcase the principle in effect or
+cases which make challenging tradeoffs of the costs in the principle.
+
+### Imports and namespaces
+
+TODO(chandlerc): Tweak the flow of this section and link it into the
+code-org-and-namespaces section. Maybe add some back references there too.
+
+Adding an import or reordering imports should never change behavior of existing
 code. This means you don't have to look through all imports to understand how
 code behaves. This is also important for tooling, which should not have to worry
 about unwanted side effects when adding an import.
+
+This principle argues against "using namespace" or "wildcard imports" mechanisms
+that merge the names from one namespace into another. They introduce ambiguity
+in where a name is coming from.
+
+It argues against having a large block of code inside a namespace declaration,
+where you have to search for the beginning of the block to see what namespace
+you are in.
+
+### Name shadowing
 
 We should limit how names can be reused with shadowing rules, so the meaning of
 a name doesn't change in surprising ways between scopes. Further, if you find a
@@ -98,6 +142,8 @@ matching declaration you don't have to keep searching to see if there is another
 that hides the one you found. This both expands the context you have to
 consider, and is an opportunity to make a mistake identifying the correct
 context, potentially leading to misunderstanding of the code.
+
+### Flow-sensitive typing
 
 This principle is an argument against
 [flow-sensitive typing](https://en.wikipedia.org/wiki/Flow-sensitive_typing),
@@ -138,6 +184,8 @@ flow-sensitive typing in Carbon, it would have to overcome a large hurdle. We
 would only want a flow-sensitive feature if it delivered sufficiently large
 usability, consistency, or expressivity gains.
 
+### Coherence of names and generics
+
 The
 [one-definition rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
 in C++ says that there should be only one definition for a name in a program,
@@ -150,13 +198,7 @@ where types have a single implementation of an interface. And this should be
 enforced by the compiler, using rules like
 [Rust's orphan rules](https://github.com/Ixrec/rust-orphan-rules#what-are-the-orphan-rules).
 
-This principle argues against "using namespace" or "wildcard imports" mechanisms
-that merge the names from one namespace into another. They introduce ambiguity
-in where a name is coming from.
-
-It argues against having a large block of code inside a namespace declaration,
-where you have to search for the beginning of the block to see what namespace
-you are in.
+### Performance
 
 Since
 [Carbon's number one goal is performance](/docs/project/goals.md#performance-critical-software),
