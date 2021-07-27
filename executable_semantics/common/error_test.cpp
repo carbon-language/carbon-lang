@@ -9,21 +9,21 @@
 namespace Carbon {
 namespace {
 
-TEST(ErrorTest, FATAL_USER_ERROR) {
+TEST(ErrorTest, FatalUserError) {
   ASSERT_DEATH({ FATAL_RUNTIME_ERROR_NO_LINE() << "test"; }, "ERROR: test\n");
 }
 
-TEST(ErrorTest, FATAL_RUNTIME_ERROR) {
+TEST(ErrorTest, FatalRuntimeError) {
   ASSERT_DEATH({ FATAL_RUNTIME_ERROR_NO_LINE() << "test"; },
                "RUNTIME ERROR: test\n");
 }
 
-TEST(ErrorTest, FATAL_COMPILATION_ERROR) {
+TEST(ErrorTest, FatalCompilationError) {
   ASSERT_DEATH({ FATAL_COMPILATION_ERROR_NO_LINE() << "test"; },
                "COMPILATION ERROR: test\n");
 }
 
-TEST(ErrorTest, FATAL_USER_ERRORLine) {
+TEST(ErrorTest, FatalUserErrorLine) {
   ASSERT_DEATH({ FATAL_USER_ERROR(1) << "test"; }, "ERROR: 1: test\n");
 }
 
