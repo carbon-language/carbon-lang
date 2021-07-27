@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: 'Close stale issues and PRs'
+name: 'Triage inactive issues and PRs'
 on:
   schedule:
     - cron: '30 1 * * *'
@@ -16,19 +16,19 @@ jobs:
           stale-issue-message: >
             We triage inactive PRs and issues in order to make it easier to find
             active work. If this issue should remain active or becomes active
-            again, please comment or remove the `no activity` label. The `long
+            again, please comment or remove the `inactive` label. The `long
             term` label can also be added for issues which are expected to take
             time.
 
-            This issue is labeled `no activity` because the last activity was
-            over 90 days ago.
+            This issue is labeled `inactive` because the last activity was over
+            90 days ago.
           stale-pr-message: >
             We triage inactive PRs and issues in order to make it easier to find
             active work. If this PR should remain active, please comment or
-            remove the `no activity` label.
+            remove the `inactive` label.
 
-            This PR is labeled `no activity` because the last activity was over
-            90 days ago. This PR will be closed and archived after 14 additional
+            This PR is labeled `inactive` because the last activity was over 90
+            days ago. This PR will be closed and archived after 14 additional
             days without activity.
           close-pr-message: >
             We triage inactive PRs and issues in order to make it easier to find
@@ -36,9 +36,9 @@ jobs:
             again, please reopen it.
 
             This PR was closed and archived because there has been no new
-            activity in the 14 days since the `no activity` label was added.
-          stale-issue-label: 'no activity'
-          stale-pr-label: 'no activity'
+            activity in the 14 days since the `inactive` label was added.
+          stale-issue-label: 'inactive'
+          stale-pr-label: 'inactive'
           exempt-issue-labels: 'long term'
           days-before-stale: 90
           days-before-close: 14
