@@ -28,18 +28,16 @@ of context needed to read and understand code.
 
 Context can be expensive in different ways, for example:
 
--   It can be _large_. This means you would have to look through a lot of lines
-    of code to resolve an ambiguity.
--   It can be _far_. Context in another package is more expensive than in
-    another file in the same library which is in turn more expensive than in the
-    same file. Context in the same declaration or definition is cheap and should
-    be assumed to be freely available.
--   It can be _unpredictable_. If you can easily predict where to look for a
-    piece of contextual information then it is much less expensive than having
-    to search all of your code, or worse imports.
--   It can be _subtle_. The concern here is how easy it is to make a mistake
-    finding the correct context, or cases where the contextual clues are easy to
-    miss or mistake.
+-   It can be _large_: it might require looking through a lot of lines of code
+    to find all of the relevant contextual information.
+-   It can be _distant_: the farther away from the current declaration or
+    definition, the more expensive it is to find contextual information. This
+    can scale from a separate definition in the same file, to a separate file,
+    or even to a separate package.
+-   It can be _unpredictable_: it might require careful searching of large
+    bodies of code to locate the contextual information if its location cannot
+    be predicted.
+-   It can be _subtle_: the contextual clues might be easily missed or mistaken.
 
 Code that isn't context sensitive is easier to copy or move between contexts,
 like files or functions. It is code that needs fewer changes when it is
