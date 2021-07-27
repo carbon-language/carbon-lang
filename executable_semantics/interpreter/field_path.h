@@ -50,6 +50,8 @@ class FieldPath {
     }
   }
 
+  auto DebugString() const -> std::string;
+
  private:
   // The representation of FieldPath describes how to locate a Value within
   // another Value, so its implementation details are tied to the implementation

@@ -22,6 +22,7 @@ cc_library(
 
 cc_library(
     name = "address",
+    srcs = ["address.cpp"],
     hdrs = ["address.h"],
     deps = [
         ":field_path",
@@ -43,6 +44,7 @@ cc_library(
 
 cc_library(
     name = "field_path",
+    srcs = ["field_path.cpp"],
     hdrs = ["field_path.h"],
     deps = ["//common:ostream"],
 )

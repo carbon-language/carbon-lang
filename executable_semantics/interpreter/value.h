@@ -242,6 +242,7 @@ struct Value {
                 int line_num) const -> const Value*;
 
   void Print(llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 
  private:
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,

@@ -277,4 +277,8 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   }
 }
 
+auto Statement::DebugString() const -> std::string {
+  return Carbon::DebugString(*this);
+}
+
 }  // namespace Carbon

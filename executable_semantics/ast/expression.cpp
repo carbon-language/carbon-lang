@@ -6,6 +6,7 @@
 
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -306,6 +307,10 @@ void Expression::Print(llvm::raw_ostream& out) const {
           << *GetFunctionTypeLiteral().return_type;
       break;
   }
+}
+
+auto Expression::DebugString() const -> std::string {
+  return Carbon::DebugString(*this);
 }
 
 }  // namespace Carbon

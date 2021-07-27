@@ -444,6 +444,10 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto Value::DebugString() const -> std::string {
+  return Carbon::DebugString(*this);
+}
+
 auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag()) {
     case ValKind::TupleValue: {

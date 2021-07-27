@@ -56,6 +56,7 @@ struct Action {
   auto GetValAction() const -> const ValAction&;
 
   void Print(llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 
   inline auto tag() const -> ActionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

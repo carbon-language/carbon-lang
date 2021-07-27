@@ -42,6 +42,8 @@ class Heap {
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
 
+  auto DebugString() const -> std::string;
+
  private:
   // Signal an error if the address is no longer alive.
   void CheckAlive(const Address& address, int line_num);

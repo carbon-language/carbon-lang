@@ -31,4 +31,8 @@ void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
   }
 }
 
+auto FunctionDefinition::DebugString() const -> std::string {
+  return Carbon::DebugString(*this);
+}
+
 }  // namespace Carbon

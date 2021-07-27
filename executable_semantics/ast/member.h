@@ -27,6 +27,7 @@ struct Member {
   auto GetFieldMember() const -> const FieldMember&;
 
   void Print(llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 
   inline auto tag() const -> MemberKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

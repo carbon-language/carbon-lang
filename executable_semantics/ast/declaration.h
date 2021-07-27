@@ -84,6 +84,7 @@ class Declaration {
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
   void Print(llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 
   inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

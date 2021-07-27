@@ -51,6 +51,7 @@ struct Frame {
       : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 
   void Print(llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 };
 
 }  // namespace Carbon

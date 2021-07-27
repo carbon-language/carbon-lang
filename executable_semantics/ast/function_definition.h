@@ -33,6 +33,7 @@ struct FunctionDefinition {
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 
   int line_num;
   std::string name;

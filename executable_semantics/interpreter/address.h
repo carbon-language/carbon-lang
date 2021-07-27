@@ -42,6 +42,8 @@ class Address {
     out << "Address(" << index << ")" << field_path;
   }
 
+  auto DebugString() const -> std::string;
+
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.
   auto SubobjectAddress(std::string field_name) const -> Address {

@@ -179,6 +179,7 @@ struct Expression {
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
 
   void Print(llvm::raw_ostream& out) const;
+  auto DebugString() const -> std::string;
 
   inline auto tag() const -> ExpressionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
