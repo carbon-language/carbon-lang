@@ -62,8 +62,16 @@ A specific example of this is when the compiler can detect mistakes.
 
 It is also possible to mitigate some of the costs of context outlined above:
 
--   When the context only affects the _validity_ of code, not its meaning, the developer can avoid paying the full cost by relying on the compiler to check and verify the code's correctness. For example, contextually valid syntax is relatively common and inexpensive, but we should avoid reusing the same syntax with different meanings in other contexts.
--   Use lexical or syntactic structures that visually reinforce the context or aid the reader in the expensive aspects. For example, representing contexts with indentation, or IDE highlighting of matching parentheses and braces. These visual hints make it easier for developers to notice contextual elements.
+-   When the context only affects the _validity_ of code, not its meaning, the
+    developer can avoid paying the full cost by relying on the compiler to check
+    and verify the code's correctness. For example, contextually valid syntax is
+    relatively common and inexpensive, but we should avoid reusing the same
+    syntax with different meanings in other contexts.
+-   Use lexical or syntactic structures that visually reinforce the context or
+    aid the reader in the expensive aspects. For example, representing contexts
+    with indentation, or IDE highlighting of matching parentheses and braces.
+    These visual hints make it easier for developers to notice contextual
+    elements.
 
 **Background:** See
 [this post on language ergonomics in the Rust blog](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
