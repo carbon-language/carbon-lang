@@ -41,7 +41,6 @@ enum class ExpressionKind {
   TupleLiteral,
   TypeTypeLiteral,
   IdentifierExpression,
-  ReturnExpression,
 };
 
 enum class Operator {
@@ -114,7 +113,7 @@ struct CallExpression {
 struct FunctionTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
-  const Expression* return_type;
+  std::optional<const Expression*> return_type;
 };
 
 struct AutoTypeLiteral {
@@ -136,22 +135,6 @@ struct ContinuationTypeLiteral {
 
 struct TypeTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::TypeTypeLiteral;
-};
-
-struct ReturnExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::ReturnExpression;
-
-  enum class ReturnKind {
-    // For example, `return 3;` explicitly returns `3`.
-    Explicit,
-    // For example, `return;` implicitly returns `()`.
-    Implicit,
-  };
-
-  // Indicates the expression kind used by the return.
-  ReturnKind kind;
-  // The expression for the return.
-  const Expression* exp;
 };
 
 struct Expression {
@@ -178,11 +161,15 @@ struct Expression {
   static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
   static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
   static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                      const Expression* ret)
+                                      std::optional<const Expression*> ret)
       -> const Expression*;
   static auto MakeAutoTypeLiteral(int line_num) -> const Expression*;
   static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeReturnExpression(int line_num, const Expression* exp)
+
+  // Given an optional expression, makes an expression that will default to a ()
+  // tuple literal if the optional is empty.
+  static auto MakeDefaultedReturn(int line_num,
+                                  std::optional<const Expression*> exp)
       -> const Expression*;
 
   auto GetIdentifierExpression() const -> const IdentifierExpression&;
@@ -196,7 +183,6 @@ struct Expression {
       -> const PrimitiveOperatorExpression&;
   auto GetCallExpression() const -> const CallExpression&;
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
-  auto GetReturnExpression() const -> const ReturnExpression&;
 
   void Print(llvm::raw_ostream& out) const;
 
@@ -211,7 +197,7 @@ struct Expression {
                BindingExpression, IntLiteral, BoolLiteral, TupleLiteral,
                PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
                AutoTypeLiteral, BoolTypeLiteral, IntTypeLiteral,
-               ContinuationTypeLiteral, TypeTypeLiteral, ReturnExpression>
+               ContinuationTypeLiteral, TypeTypeLiteral>
       value;
 };
 

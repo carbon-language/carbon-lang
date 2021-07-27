@@ -519,8 +519,7 @@ void StepLvalue() {
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::BindingExpression:
-    case ExpressionKind::ReturnExpression: {
+    case ExpressionKind::BindingExpression: {
       llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
       exit(-1);
     }
@@ -738,8 +737,9 @@ void StepExp() {
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(
-            exp->GetFunctionTypeLiteral().return_type));
+        frame->todo.Push(
+            Action::MakeExpressionAction(Expression::MakeDefaultedReturn(
+                exp->line_num, exp->GetFunctionTypeLiteral().return_type)));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -756,13 +756,6 @@ void StepExp() {
       const Value* v = Value::MakeContinuationType();
       frame->todo.Pop(1);
       frame->todo.Push(Action::MakeValAction(v));
-      break;
-    }
-    case ExpressionKind::ReturnExpression: {
-      CHECK(act->pos == 0);
-      frame->todo.Pop(1);
-      frame->todo.Push(
-          Action::MakeExpressionAction(exp->GetReturnExpression().exp));
       break;
     }
   }  // switch (exp->tag)
@@ -1021,7 +1014,9 @@ void StepStmt() {
       if (act->pos == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        frame->todo.Push(Action::MakeExpressionAction(stmt->GetReturn().exp));
+        frame->todo.Push(
+            Action::MakeExpressionAction(Expression::MakeDefaultedReturn(
+                stmt->line_num, stmt->GetReturn().exp)));
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -1051,9 +1046,8 @@ void StepStmt() {
       Stack<Scope*> scopes;
       scopes.Push(scope);
       Stack<Action*> todo;
-      todo.Push(Action::MakeStatementAction(Statement::MakeReturn(
-          stmt->line_num,
-          Expression::MakeReturnExpression(stmt->line_num, nullptr))));
+      todo.Push(Action::MakeStatementAction(
+          Statement::MakeReturn(stmt->line_num, std::nullopt)));
       todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(

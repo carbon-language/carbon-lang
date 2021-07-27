@@ -96,14 +96,14 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <std::list<Carbon::Declaration>> declaration_list
 %type <const Carbon::Statement*> statement
 %type <const Carbon::Statement*> optional_else
-%type <const Carbon::Expression*> return_expression
+%type <std::optional<const Carbon::Expression*>> return_expression
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
 %type <Carbon::GenericBinding> generic_binding
 %type <std::vector<Carbon::GenericBinding>> deduced_params
 %type <std::vector<Carbon::GenericBinding>> deduced_param_list
 %type <const Carbon::Expression*> pattern
-%type <const Carbon::Expression*> return_type
+%type <std::optional<const Carbon::Expression*>> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
@@ -367,9 +367,9 @@ optional_else:
 ;
 return_expression:
   // Empty
-    { $$ = Carbon::Expression::MakeReturnExpression(yylineno, nullptr); }
+    { $$ = std::nullopt; }
 | expression
-    { $$ = Carbon::Expression::MakeReturnExpression(yylineno, $1); }
+    { $$ = $1; }
 ;
 statement_list:
   // Empty
@@ -379,9 +379,9 @@ statement_list:
 ;
 return_type:
   // Empty
-    { $$ = Carbon::Expression::MakeReturnExpression(yylineno, nullptr); }
+    { $$ = std::nullopt; }
 | ARROW expression %prec FNARROW
-    { $$ = Carbon::Expression::MakeReturnExpression(yylineno, $2); }
+    { $$ = $2; }
 ;
 generic_binding:
   identifier ":!" expression
@@ -414,11 +414,10 @@ function_definition:
     { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $7); }
 | FN identifier deduced_params tuple DBLARROW expression ";"
     {
-      auto return_exp = Carbon::Expression::MakeReturnExpression(yylineno, $6);
       $$ = Carbon::FunctionDefinition(
                yylineno, $2, $3, $4,
                Carbon::Expression::MakeAutoTypeLiteral(yylineno),
-               Carbon::Statement::MakeReturn(yylineno, return_exp));
+               Carbon::Statement::MakeReturn(yylineno, $6));
     }
 ;
 function_declaration:
