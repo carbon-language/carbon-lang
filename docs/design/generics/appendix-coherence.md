@@ -16,9 +16,10 @@ This document explains the rationale for choosing to make
 
 -   [Approach taken: coherence](#approach-taken-coherence)
 -   [The "Hashtable Problem"](#the-hashtable-problem)
--   [Incoherence means context sensitivity](#incoherence-means-context-sensitivity)
--   [Rejected alternative: dynamic implementation binding](#rejected-alternative-dynamic-implementation-binding)
--   [Rejected alternative: manual conflict resolution](#rejected-alternative-manual-conflict-resolution)
+-   [Rejected alternative: incoherence](#rejected-alternative-incoherence)
+    -   [Incoherence means context sensitivity](#incoherence-means-context-sensitivity)
+    -   [Rejected variation: dynamic implementation binding](#rejected-variation-dynamic-implementation-binding)
+    -   [Rejected variation: manual conflict resolution](#rejected-variation-manual-conflict-resolution)
 
 <!-- tocstop -->
 
@@ -136,7 +137,9 @@ discusses the hashtable problem in the context of Haskell, and
 [this 2011 Rust followup](https://mail.mozilla.org/pipermail/rust-dev/2011-December/001036.html)
 discusses how to detect problems at compile time.
 
-## Incoherence means context sensitivity
+## Rejected alternative: incoherence
+
+### Incoherence means context sensitivity
 
 The undesirable result of incoherence is that the interpretation of source code
 changes based on imports. In particular, imagine there is a function call that
@@ -152,7 +155,7 @@ differently depending on which of those two libraries are imported:
 Furthermore, this means that the behavior of a file can depend on an import even
 if nothing from that package is referenced explicitly.
 
-## Rejected alternative: dynamic implementation binding
+### Rejected variation: dynamic implementation binding
 
 One possible approach would be to bind interface implementations to a value at
 the point it was created. In [the example above](#the-hashtable-problem), the
@@ -182,7 +185,7 @@ its [goals](/project/goals.md). That being said, this could be a feature added
 later as opt-in behavior to either allow users to reduce code size or support
 use cases that require dynamic dispatch.
 
-## Rejected alternative: manual conflict resolution
+### Rejected variation: manual conflict resolution
 
 Carbon could alternatively provide some kind of manual disambiguation syntax to
 resolve problems where they arise. The problems with this approach have been
