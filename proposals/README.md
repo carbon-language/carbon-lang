@@ -62,5 +62,6 @@ request:
 -   [0601 - Operator tokens](p0601.md)
 -   [0618 - var ordering](p0618.md)
 -   [0623 - Require braces](p0623.md)
+-   [0680 - And, or, not](p0680.md)
 
 <!-- endproposals -->
