@@ -4,10 +4,29 @@
 
 #include "executable_semantics/ast/expression.h"
 
+#include <optional>
+
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
+
+auto AsExpression(int line_number,
+                  const ParenContents<Expression>& paren_contents)
+    -> const Expression* {
+  std::optional<const Expression*> single_term = paren_contents.SingleTerm();
+  if (single_term.has_value()) {
+    return *single_term;
+  } else {
+    return AsTuple(line_number, paren_contents);
+  }
+}
+
+auto AsTuple(int line_number, const ParenContents<Expression>& paren_contents)
+    -> const Expression* {
+  return Expression::MakeTupleLiteral(
+      line_number, paren_contents.TupleElements<FieldInitializer>(line_number));
+}
 
 auto Expression::GetIdentifierExpression() const
     -> const IdentifierExpression& {
@@ -21,10 +40,6 @@ auto Expression::GetFieldAccessExpression() const
 
 auto Expression::GetIndexExpression() const -> const IndexExpression& {
   return std::get<IndexExpression>(value);
-}
-
-auto Expression::GetBindingExpression() const -> const BindingExpression& {
-  return std::get<BindingExpression>(value);
 }
 
 auto Expression::GetIntLiteral() const -> int {
@@ -73,13 +88,6 @@ auto Expression::MakeBoolTypeLiteral(int line_num) -> const Expression* {
   return t;
 }
 
-auto Expression::MakeAutoTypeLiteral(int line_num) -> const Expression* {
-  auto* t = new Expression();
-  t->line_num = line_num;
-  t->value = AutoTypeLiteral();
-  return t;
-}
-
 // Returns a Continuation type AST node at the given source location.
 auto Expression::MakeContinuationTypeLiteral(int line_num)
     -> const Expression* {
@@ -103,16 +111,6 @@ auto Expression::MakeIdentifierExpression(int line_num, std::string var)
   auto* v = new Expression();
   v->line_num = line_num;
   v->value = IdentifierExpression({.name = std::move(var)});
-  return v;
-}
-
-auto Expression::MakeBindingExpression(int line_num,
-                                       std::optional<std::string> var,
-                                       const Expression* type)
-    -> const Expression* {
-  auto* v = new Expression();
-  v->line_num = line_num;
-  v->value = BindingExpression({.name = std::move(var), .type = type});
   return v;
 }
 
@@ -164,21 +162,7 @@ auto Expression::MakeTupleLiteral(int line_num,
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  int i = 0;
-  bool seen_named_member = false;
-  for (auto& arg : args) {
-    if (arg.name == "") {
-      if (seen_named_member) {
-        FATAL_USER_ERROR(line_num)
-            << "positional members must come before named members";
-      }
-      arg.name = std::to_string(i);
-      ++i;
-    } else {
-      seen_named_member = true;
-    }
-  }
-  e->value = TupleLiteral({.fields = args});
+  e->value = TupleLiteral({.fields = std::move(args)});
   return e;
 }
 
@@ -267,16 +251,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::IdentifierExpression:
       out << GetIdentifierExpression().name;
       break;
-    case ExpressionKind::BindingExpression: {
-      const BindingExpression& binding = GetBindingExpression();
-      if (binding.name.has_value()) {
-        out << *binding.name;
-      } else {
-        out << "_";
-      }
-      out << ": " << *binding.type;
-      break;
-    }
     case ExpressionKind::CallExpression:
       out << *GetCallExpression().function;
       if (GetCallExpression().argument->tag() == ExpressionKind::TupleLiteral) {
@@ -293,9 +267,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::TypeTypeLiteral:
       out << "Type";
-      break;
-    case ExpressionKind::AutoTypeLiteral:
-      out << "auto";
       break;
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";

@@ -49,6 +49,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <list>
+#include <vector>
 
 #include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
@@ -59,7 +60,9 @@
 
 #include "executable_semantics/ast/abstract_syntax_tree.h"
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/syntax/paren_contents.h"
 
 namespace Carbon {
@@ -94,21 +97,28 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <Carbon::GenericBinding> generic_binding
 %type <std::vector<Carbon::GenericBinding>> deduced_params
 %type <std::vector<Carbon::GenericBinding>> deduced_param_list
-%type <const Carbon::Expression*> pattern
+%type <const Carbon::Pattern*> pattern
+%type <const Carbon::Pattern*> non_expression_pattern
 %type <const Carbon::Expression*> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
-%type <Carbon::Member*> variable_declaration
+%type <const Carbon::BindingPattern*> variable_declaration
 %type <Carbon::Member*> member
 %type <std::list<Carbon::Member*>> member_list
-%type <Carbon::FieldInitializer> field_initializer
-%type <Carbon::ParenContents> paren_contents
-%type <std::vector<Carbon::FieldInitializer>> paren_contents_without_trailing_comma
+%type <Carbon::ParenContents<Carbon::Expression>::Element> paren_expression_element
+%type <Carbon::ParenContents<Carbon::Expression>> paren_expression_contents
+%type <Carbon::ParenContents<Carbon::Expression>> paren_expression_contents_without_trailing_comma
+%type <const Carbon::Pattern*> paren_pattern
+%type <const Carbon::TuplePattern*> tuple_pattern
+%type <const Carbon::TuplePattern*> maybe_empty_tuple_pattern
+%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_contents
+%type <Carbon::ParenContents<Carbon::Pattern>::Element> paren_pattern_element
+%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_contents_without_trailing_comma
 %type <std::pair<std::string, const Carbon::Expression*>> alternative
 %type <std::list<std::pair<std::string, const Carbon::Expression*>>> alternative_list
-%type <std::pair<const Carbon::Expression*, const Carbon::Statement*>*> clause
-%type <std::list<std::pair<const Carbon::Expression*, const Carbon::Statement*>>*> clause_list
+%type <std::pair<const Carbon::Pattern*, const Carbon::Statement*>*> clause
+%type <std::list<std::pair<const Carbon::Pattern*, const Carbon::Statement*>>*> clause_list
 %token END_OF_FILE 0
 %token AND
 %token OR
@@ -192,14 +202,6 @@ void yy::parser::error(const location_type&, const std::string& message) {
 input: declaration_list
     { parsed_program = $1; }
 ;
-pattern:
-  expression
-    { $$ = $1; }
-;
-binding_lhs:
-  identifier { $$ = $1; }
-| UNDERSCORE { $$ = std::nullopt; }
-;
 expression:
   identifier
     { $$ = Carbon::Expression::MakeIdentifierExpression(yylineno, $1); }
@@ -207,10 +209,6 @@ expression:
     { $$ = Carbon::Expression::MakeFieldAccessExpression(yylineno, $1, $2); }
 | expression "[" expression "]"
     { $$ = Carbon::Expression::MakeIndexExpression(yylineno, $1, $3); }
-| binding_lhs ":" expression
-    {
-      $$ = Carbon::Expression::MakeBindingExpression(yylineno, $1, $3);
-    }
 | integer_literal
     { $$ = Carbon::Expression::MakeIntLiteral(yylineno, $1); }
 | TRUE
@@ -223,8 +221,6 @@ expression:
     { $$ = Carbon::Expression::MakeBoolTypeLiteral(yylineno); }
 | TYPE
     { $$ = Carbon::Expression::MakeTypeTypeLiteral(yylineno); }
-| AUTO
-    { $$ = Carbon::Expression::MakeAutoTypeLiteral(yylineno); }
 | CONTINUATION_TYPE
     { $$ = Carbon::Expression::MakeContinuationTypeLiteral(yylineno); }
 | paren_expression { $$ = $1; }
@@ -271,55 +267,134 @@ expression:
 ;
 designator: "." identifier { $$ = $2; }
 ;
-paren_expression: "(" paren_contents ")"
-    { $$ = $2.AsExpression(yylineno); }
+paren_expression: "(" paren_expression_contents ")"
+    { $$ = Carbon::AsExpression(yylineno, $2); }
 ;
-tuple: "(" paren_contents ")"
-    { $$ = $2.AsTuple(yylineno); }
+tuple: "(" paren_expression_contents ")"
+    { $$ = Carbon::AsTuple(yylineno, $2); }
 ;
-field_initializer:
-  pattern
-    { $$ = Carbon::FieldInitializer({"", $1}); }
-| designator "=" pattern
-    { $$ = Carbon::FieldInitializer({$1, $3}); }
+paren_expression_element:
+  expression
+    { $$ = {.name = std::nullopt, .term = $1}; }
+| designator "=" expression
+    { $$ = {.name = $1, .term = $3}; }
 ;
-paren_contents:
+paren_expression_contents:
   // Empty
-    { $$ = Carbon::ParenContents(); }
-| paren_contents_without_trailing_comma
-    {
-      $$ = Carbon::ParenContents($1,
-                                 Carbon::ParenContents::HasTrailingComma::No);
-    }
-| paren_contents_without_trailing_comma ","
-    {
-      $$ = Carbon::ParenContents($1,
-                                 Carbon::ParenContents::HasTrailingComma::Yes);
-    }
-;
-paren_contents_without_trailing_comma:
-  field_initializer
-    { $$ = {$1}; }
-| paren_contents_without_trailing_comma "," field_initializer
+    { $$ = {.elements = {}, .has_trailing_comma = false}; }
+| paren_expression_contents_without_trailing_comma
+    { $$ = $1; }
+| paren_expression_contents_without_trailing_comma ","
     {
       $$ = $1;
-      $$.push_back($3);
+      $$.has_trailing_comma = true;
     }
+;
+paren_expression_contents_without_trailing_comma:
+  paren_expression_element
+    { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
+| paren_expression_contents_without_trailing_comma "," paren_expression_element
+    {
+      $$ = $1;
+      $$.elements.push_back($3);
+    }
+;
+
+// In many cases, using `pattern` recursively will result in ambiguities.
+// When that happens, it's necessary to factor out two separate productions,
+// one for when the sub-pattern is an expression, and one for when it is not.
+// To facilitate this, non-terminals besides `pattern` whose names contain
+// `pattern` are structured to be disjoint from `expression`, unless otherwise
+// specified.
+pattern:
+  non_expression_pattern
+    { $$ = $1; }
+| expression
+    { $$ = new Carbon::ExpressionPattern($1); }
+;
+non_expression_pattern:
+  AUTO
+    { $$ = new Carbon::AutoPattern(yylineno); }
+| binding_lhs ":" pattern
+    { $$ = new Carbon::BindingPattern(yylineno, $1, $3); }
+| paren_pattern
+    { $$ = $1; }
+| expression tuple_pattern
+    { $$ = new Carbon::AlternativePattern(yylineno, $1, $2); }
+;
+binding_lhs:
+  identifier { $$ = $1; }
+| UNDERSCORE { $$ = std::nullopt; }
+;
+paren_pattern: "(" paren_pattern_contents ")"
+    { $$ = Carbon::AsPattern(yylineno, $2); }
+;
+paren_pattern_contents:
+  paren_pattern_contents_without_trailing_comma
+    { $$ = $1; }
+| paren_pattern_contents_without_trailing_comma ","
+    {
+      $$ = $1;
+      $$.has_trailing_comma = true;
+    }
+;
+// paren_pattern is analogous to paren_expression, but in order to avoid
+// ambiguities, it must be disjoint from paren_expression, meaning it must
+// contain at least one non_expression_pattern. The structure of this rule
+// is very different from the corresponding expression rule because is has to
+// enforce that requirement.
+paren_pattern_contents_without_trailing_comma:
+  paren_pattern_element
+    { $$ = {.elements = {$1}, .has_trailing_comma = false }; }
+| paren_expression_contents_without_trailing_comma "," paren_pattern_element
+    {
+      $$ = Carbon::ParenExpressionToParenPattern($1);
+      $$.elements.push_back($3);
+    }
+| paren_pattern_contents_without_trailing_comma "," paren_expression_element
+    {
+      $$ = $1;
+      $$.elements.push_back({.name = $3.name, .term = new Carbon::ExpressionPattern($3.term)});
+    }
+| paren_pattern_contents_without_trailing_comma "," paren_pattern_element
+    {
+      $$ = $1;
+      $$.elements.push_back($3);
+    }
+;
+paren_pattern_element:
+  non_expression_pattern
+    { $$ = {.name = std::nullopt, .term = $1}; }
+| designator "=" non_expression_pattern
+    { $$ = {.name = $1, .term = $3}; }
+;
+tuple_pattern:
+  "(" paren_pattern_contents ")"
+    { $$ = Carbon::AsTuplePattern(yylineno, $2); }
+;
+// Unlike most `pattern` nonterminals, this one overlaps with `expression`,
+// so it should be used only when prior context (such as an introducer)
+// rules out the possibility of an `expression` at this point.
+maybe_empty_tuple_pattern:
+  "(" ")"
+    { $$ = new Carbon::TuplePattern(yylineno, {}); }
+| tuple_pattern
+    { $$ = $1; }
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>($2, $4); }
+    { $$ = new std::pair<const Carbon::Pattern*, const Carbon::Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = Carbon::Expression::MakeBindingExpression(
-          yylineno, "_", Carbon::Expression::MakeAutoTypeLiteral(yylineno));
-      $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>(vp, $3);
+      auto vp = new Carbon::BindingPattern(
+          yylineno, std::nullopt, new Carbon::AutoPattern(yylineno));
+      $$ = new std::pair<const Carbon::Pattern*, const Carbon::Statement*>(vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
-      $$ = new std::list<std::pair<const Carbon::Expression*, const Carbon::Statement*>>();
+      $$ = new std::list<std::pair<const Carbon::Pattern*, const Carbon::Statement*>>();
     }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
@@ -407,25 +482,30 @@ deduced_params:
     { $$ = $2; }
 ;
 function_definition:
-  FN identifier deduced_params tuple return_type block
-    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $6); }
-| FN identifier deduced_params tuple DBLARROW expression ";"
+  FN identifier deduced_params maybe_empty_tuple_pattern return_type block
+    {
+      $$ = Carbon::FunctionDefinition(
+        yylineno, $2, $3, $4, new Carbon::ExpressionPattern($5), $6);
+    }
+| FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
     {
       $$ = Carbon::FunctionDefinition(
                yylineno, $2, $3, $4,
-               Carbon::Expression::MakeAutoTypeLiteral(yylineno),
+               new Carbon::AutoPattern(yylineno),
                Carbon::Statement::MakeReturn(yylineno, $6));
     }
 ;
 function_declaration:
-  FN identifier  deduced_params tuple return_type ";"
-    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, 0); }
+  FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
+    {
+      $$ = Carbon::FunctionDefinition(
+        yylineno, $2, $3, $4, new Carbon::ExpressionPattern($5), 0); }
 ;
-variable_declaration: identifier ":" expression
-    { $$ = Carbon::Member::MakeFieldMember(yylineno, $1, $3); }
+variable_declaration: identifier ":" pattern
+    { $$ = new Carbon::BindingPattern(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
-    { $$ = $2; }
+    { $$ = Carbon::Member::MakeFieldMember(yylineno, $2); }
 ;
 member_list:
   // Empty
@@ -468,8 +548,7 @@ declaration:
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = Carbon::Declaration::MakeVariableDeclaration(
-          yylineno, $2->GetFieldMember().name, $2->GetFieldMember().type, $4);
+      $$ = Carbon::Declaration::MakeVariableDeclaration(yylineno, $2, $4);
     }
 ;
 declaration_list:

@@ -76,7 +76,7 @@ auto Statement::MakeAssign(int line_num, const Expression* lhs,
   return s;
 }
 
-auto Statement::MakeVariableDefinition(int line_num, const Expression* pat,
+auto Statement::MakeVariableDefinition(int line_num, const Pattern* pat,
                                        const Expression* init)
     -> const Statement* {
   auto* s = new Statement();
@@ -142,7 +142,7 @@ auto Statement::MakeBlock(int line_num, const Statement* stmt)
 
 auto Statement::MakeMatch(
     int line_num, const Expression* exp,
-    std::list<std::pair<const Expression*, const Statement*>>* clauses)
+    std::list<std::pair<const Pattern*, const Statement*>>* clauses)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;

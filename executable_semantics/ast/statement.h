@@ -9,6 +9,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
 
 namespace Carbon {
 
@@ -44,7 +45,7 @@ struct Assign {
 
 struct VariableDefinition {
   static constexpr StatementKind Kind = StatementKind::VariableDefinition;
-  const Expression* pat;
+  const Pattern* pat;
   const Expression* init;
 };
 
@@ -88,7 +89,7 @@ struct Continue {
 struct Match {
   static constexpr StatementKind Kind = StatementKind::Match;
   const Expression* exp;
-  std::list<std::pair<const Expression*, const Statement*>>* clauses;
+  std::list<std::pair<const Pattern*, const Statement*>>* clauses;
 };
 
 struct Continuation {
@@ -112,7 +113,7 @@ struct Statement {
       -> const Statement*;
   static auto MakeAssign(int line_num, const Expression* lhs,
                          const Expression* rhs) -> const Statement*;
-  static auto MakeVariableDefinition(int line_num, const Expression* pat,
+  static auto MakeVariableDefinition(int line_num, const Pattern* pat,
                                      const Expression* init)
       -> const Statement*;
   static auto MakeIf(int line_num, const Expression* cond,
@@ -128,7 +129,7 @@ struct Statement {
   static auto MakeContinue(int line_num) -> const Statement*;
   static auto MakeMatch(
       int line_num, const Expression* exp,
-      std::list<std::pair<const Expression*, const Statement*>>* clauses)
+      std::list<std::pair<const Pattern*, const Statement*>>* clauses)
       -> const Statement*;
   // Returns an AST node for a continuation statement give its line number and
   // contituent parts.
