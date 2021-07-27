@@ -11,7 +11,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Principle](#principle)
+    -   [Mitigations of context sensitive costs](#mitigations-of-context-sensitive-costs)
+        -   [Visual aids](#visual-aids)
+        -   [Contextual _validity_ rather than _meaning_](#contextual-_validity_-rather-than-_meaning_)
+        -   [Reduced cost of mistakes](#reduced-cost-of-mistakes)
 -   [Applications of the principle](#applications-of-the-principle)
+    -   [Imports and namespaces](#imports-and-namespaces)
+    -   [Name shadowing](#name-shadowing)
+    -   [Flow-sensitive typing](#flow-sensitive-typing)
+    -   [Coherence of names and generics](#coherence-of-names-and-generics)
+    -   [Performance](#performance)
 
 <!-- tocstop -->
 
