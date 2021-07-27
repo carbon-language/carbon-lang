@@ -5,6 +5,8 @@
 fn main() -> Int {
   if (0 == 1) {
     return 1;
+  } else if (0 == 2) {
+    return 2;
   } else {
     return 0;
   }
