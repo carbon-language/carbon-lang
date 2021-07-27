@@ -48,8 +48,8 @@ In general, we should start with more restrictive constructs that limit
 ambiguity and see if we can make them work. If we find those restrictions are
 burdensome, we will then have more information to inform the next step. Ideally
 we would address those use cases with simple tools that solve multiple problems.
-The goal is to make a bunch of orthogonal mechanisms, that each are easy to
-understand and act in unsurprising ways.
+The goal is to make a bunch of orthogonal mechanisms, each of which are easily
+understood and act in unsurprising ways.
 
 If that next step is to loosen restrictions, that is generally easier to do
 while maintaining compatibility with existing code than adding new restrictions.
@@ -60,10 +60,10 @@ cause a misunderstanding in the semantics of code.
 
 A specific example of this is when the compiler can detect mistakes.
 
-**Question:** In the Rust world, they accept context that would be potentially
-expensive in some cases where the compiler can verify that what is written is
-correct. How much do we want to allow that? Context affecting meaning is much
-more concerning than context affecting validity that the compiler can check.
+It is also possible to mitigate some of the costs of context outlined above:
+
+-   When the context only affects the _validity_ of code, not its meaning, the developer can avoid paying the full cost by relying on the compiler to check and verify the code's correctness. For example, contextually valid syntax is relatively common and inexpensive, but we should avoid reusing the same syntax with different meanings in other contexts.
+-   Use lexical or syntactic structures that visually reinforce the context or aid the reader in the expensive aspects. For example, representing contexts with indentation, or IDE highlighting of matching parentheses and braces. These visual hints make it easier for developers to notice contextual elements.
 
 **Background:** See
 [this post on language ergonomics in the Rust blog](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
