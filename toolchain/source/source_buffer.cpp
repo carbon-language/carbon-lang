@@ -78,7 +78,7 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
   }
 
   buffer.text_ = llvm::StringRef(static_cast<const char*>(mapped_text), size);
-  assert(!buffer.text_.empty() &&
+  assert(!buffer.text_.empty() and
          "Must not have an empty text when we have mapped data from a file!");
   return {std::move(buffer)};
 }
@@ -89,13 +89,13 @@ SourceBuffer::~SourceBuffer() {
     return;
   }
 
-  if (!text_.empty()) {
+  if (not text_.empty()) {
     errno = 0;
     int result =
         munmap(const_cast<void*>(static_cast<const void*>(text_.data())),
                text_.size());
     (void)result;
-    assert(result != -1 && "Unmapping text failed!");
+    assert(result != -1 and "Unmapping text failed!");
   }
 }
 

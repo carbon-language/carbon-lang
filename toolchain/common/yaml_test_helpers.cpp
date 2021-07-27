@@ -9,7 +9,7 @@
 namespace Carbon::Testing::Yaml {
 
 static auto Parse(llvm::yaml::Node* node) -> Value {
-  if (!node) {
+  if (not node) {
     return Value{ErrorValue()};
   }
 

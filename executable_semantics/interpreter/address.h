@@ -30,7 +30,7 @@ class Address {
   }
 
   friend auto operator!=(const Address& lhs, const Address& rhs) -> bool {
-    return !(lhs == rhs);
+    return not(lhs == rhs);
   }
 
   // Prints a human-readable representation of `a` to `out`.

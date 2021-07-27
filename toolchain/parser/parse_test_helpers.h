@@ -83,7 +83,7 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   for (const ExpectedNode& en : expected_nodes) {
     expected_node_stack.push_back(&en);
   }
-  while (!expected_node_stack.empty()) {
+  while (not expected_node_stack.empty()) {
     if (nodes_it == nodes_end) {
       // We'll check the size outside the loop.
       break;
@@ -94,12 +94,12 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
 
     const ExpectedNode& expected_node = *expected_node_stack.pop_back_val();
 
-    if (!MatchExpectedNode(tree, n, postorder_index, expected_node, output)) {
+    if (not MatchExpectedNode(tree, n, postorder_index, expected_node, output)) {
       matches = false;
     }
 
     if (expected_node.skip_subtree) {
-      assert(expected_node.children.empty() &&
+      assert(expected_node.children.empty() and
              "Must not skip an expected subtree while specifying expected "
              "children!");
       nodes_it = llvm::reverse(tree.Postorder(n)).end();
@@ -136,13 +136,13 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   // subtrees. Instead, we need to check that we successfully processed all of
   // the actual tree and consumed all of the expected tree.
   if (nodes_it != nodes_end) {
-    assert(expected_node_stack.empty() &&
+    assert(expected_node_stack.empty() and
            "If we have unmatched nodes in the input tree, should only finish "
            "having fully processed expected tree.");
     output << "\nFinished processing expected nodes and there are still "
            << (nodes_end - nodes_it) << " unexpected nodes.";
     matches = false;
-  } else if (!expected_node_stack.empty()) {
+  } else if (not expected_node_stack.empty()) {
     output << "\nProcessed all " << (nodes_end - nodes_begin)
            << " nodes and still have " << expected_node_stack.size()
            << " expected nodes that were unmatched.";
@@ -172,7 +172,7 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
     expected_node_stack.push_back({&expected_node, 0});
   }
 
-  while (!expected_node_stack.empty()) {
+  while (not expected_node_stack.empty()) {
     const ExpectedNode& expected_node = *expected_node_stack.back().first;
     int depth = expected_node_stack.back().second;
     expected_node_stack.pop_back();
@@ -180,7 +180,7 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
       output << "  ";
     }
     output << "{kind: '" << expected_node.kind.GetName().str() << "'";
-    if (!expected_node.text.empty()) {
+    if (not expected_node.text.empty()) {
       output << ", text: '" << expected_node.text << "'";
     }
     if (expected_node.has_error) {
@@ -190,8 +190,8 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
       output << ", skip_subtree: yes";
     }
 
-    if (!expected_node.children.empty()) {
-      assert(!expected_node.skip_subtree &&
+    if (not expected_node.children.empty()) {
+      assert(not expected_node.skip_subtree and
              "Must not have children and skip a subtree!");
       output << ", children: [\n";
       for (const ExpectedNode& child_expected_node :
@@ -206,8 +206,8 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
     // be the last sibling of its parent, and we'll need to close any parents as
     // we pop up.
     output << "}";
-    if (!expected_node_stack.empty()) {
-      assert(depth >= expected_node_stack.back().second &&
+    if (not expected_node_stack.empty()) {
+      assert(depth >= expected_node_stack.back().second and
              "Cannot have an increase in depth on a leaf node!");
       // The distance we need to pop is the difference in depth.
       int pop_depth = depth - expected_node_stack.back().second;
@@ -247,7 +247,7 @@ inline auto ExpectedNodesMatcher::MatchExpectedNode(
   }
 
   llvm::StringRef node_text = tree.GetNodeText(n);
-  if (!expected_node.text.empty() && node_text != expected_node.text) {
+  if (not expected_node.text.empty() and node_text != expected_node.text) {
     output << "\nParse node (postorder index #" << postorder_index
            << ") is spelled '" << node_text.str() << "', expected '"
            << expected_node.text << "'.";

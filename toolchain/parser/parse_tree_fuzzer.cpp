@@ -55,7 +55,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // In the absence of parse errors, we should have exactly as many nodes as
   // tokens.
-  assert(tree.Size() == tokens.Size() && "Unexpected number of tree nodes!");
+  assert(tree.Size() == tokens.Size() and "Unexpected number of tree nodes!");
 
   return 0;
 }

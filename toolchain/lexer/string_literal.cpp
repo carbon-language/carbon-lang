@@ -79,15 +79,15 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
 static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
     -> llvm::StringRef {
   llvm::StringRef remaining = source_text;
-  if (!remaining.consume_front(R"(""")")) {
+  if (not remaining.consume_front(R"(""")")) {
     return llvm::StringRef();
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
   remaining = remaining.drop_until(
-      [](char c) { return c == '"' || c == '#' || c == '\n'; });
-  if (!remaining.consume_front("\n")) {
+      [](char c) { return c == '"' or c == '#' or c == '\n'; });
+  if (not remaining.consume_front("\n")) {
     return llvm::StringRef();
   }
 
@@ -110,11 +110,11 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
 
   llvm::StringRef multi_line_prefix =
       TakeMultiLineStringLiteralPrefix(source_text);
-  bool multi_line = !multi_line_prefix.empty();
+  bool multi_line = not multi_line_prefix.empty();
   if (multi_line) {
     source_text = source_text.drop_front(multi_line_prefix.size());
     terminator = R"(""")";
-  } else if (!source_text.consume_front("\"")) {
+  } else if (not source_text.consume_front("\"")) {
     return llvm::None;
   }
 
@@ -125,7 +125,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
 
   const char* content_begin = source_text.begin();
   const char* content_end = content_begin;
-  while (!source_text.consume_front(terminator)) {
+  while (not source_text.consume_front(terminator)) {
     // Let LexError figure out how to recover from an unterminated string
     // literal.
     if (source_text.empty()) {
@@ -139,7 +139,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     // escape sequence. This can be a newline in a multi-line string literal.
     // This relies on multi-character escape sequences not containing an
     // embedded and unescaped terminator or newline.
-    if (!multi_line && source_text.startswith("\n")) {
+    if (not multi_line and source_text.startswith("\n")) {
       return llvm::None;
     }
     source_text = source_text.substr(1);
@@ -161,7 +161,7 @@ static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
       int indent_start = i + 1;
       return text.substr(indent_start, indent_end - indent_start);
     }
-    if (!IsSpace(text[i])) {
+    if (not IsSpace(text[i])) {
       indent_end = i;
     }
   }
@@ -191,12 +191,12 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         std::string& result) -> bool {
   unsigned code_point;
-  if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
+  if (digits.getAsInteger(16, code_point) or code_point > 0x10FFFF) {
     emitter.EmitError<UnicodeEscapeTooLarge>(digits.begin());
     return false;
   }
 
-  if (code_point >= 0xD800 && code_point < 0xE000) {
+  if (code_point >= 0xD800 and code_point < 0xE000) {
     emitter.EmitError<UnicodeEscapeSurrogate>(digits.begin());
     return false;
   }
@@ -224,7 +224,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> void {
-  assert(!content.empty() && "should have escaped closing delimiter");
+  assert(not content.empty() and "should have escaped closing delimiter");
   char first = content.front();
   content = content.drop_front(1);
 
@@ -249,13 +249,13 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
       return;
     case '0':
       result += '\0';
-      if (!content.empty() && IsDecimalDigit(content.front())) {
+      if (not content.empty() and IsDecimalDigit(content.front())) {
         emitter.EmitError<DecimalEscapeSequence>(content.begin());
         return;
       }
       return;
     case 'x':
-      if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
+      if (content.size() >= 2 and IsUpperHexDigit(content[0]) and
           IsUpperHexDigit(content[1])) {
         result +=
             static_cast<char>(llvm::hexFromNibbles(content[0], content[1]));
@@ -269,8 +269,8 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
       if (remaining.consume_front("{")) {
         llvm::StringRef digits = remaining.take_while(IsUpperHexDigit);
         remaining = remaining.drop_front(digits.size());
-        if (!digits.empty() && remaining.consume_front("}")) {
-          if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
+        if (not digits.empty() and remaining.consume_front("}")) {
+          if (not ExpandUnicodeEscapeSequence(emitter, digits, result)) {
             break;
           }
           content = remaining;
@@ -307,10 +307,10 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
     // Every non-empty line (that contains anything other than horizontal
     // whitespace) is required to start with the string's indent. For error
     // recovery, remove all leading whitespace if the indent doesn't match.
-    if (!contents.consume_front(indent)) {
+    if (not contents.consume_front(indent)) {
       const char* line_start = contents.begin();
       contents = contents.drop_while(IsHorizontalWhitespace);
-      if (!contents.startswith("\n")) {
+      if (not contents.startswith("\n")) {
         emitter.EmitError<MismatchedIndentInString>(line_start);
       }
     }
@@ -328,7 +328,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (contents.consume_front("\n")) {
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
-        while (!result.empty() && result.back() != '\n' &&
+        while (not result.empty() and result.back() != '\n' and
                IsSpace(result.back())) {
           result.pop_back();
         }
@@ -337,7 +337,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         break;
       }
 
-      if (!contents.consume_front(escape)) {
+      if (not contents.consume_front(escape)) {
         // This is not an escape sequence, just a raw `\`.
         result += contents.front();
         contents = contents.drop_front(1);

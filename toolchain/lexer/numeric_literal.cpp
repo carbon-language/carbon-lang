@@ -47,7 +47,7 @@ struct IrregularDigitSeparators {
   int radix;
 
   auto Format() -> std::string {
-    assert((radix == 10 || radix == 16) && "unexpected radix");
+    assert((radix == 10 or radix == 16) and "unexpected radix");
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
@@ -85,7 +85,7 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedNumericLiteral> {
   LexedNumericLiteral result;
 
-  if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
+  if (source_text.empty() or not IsDecimalDigit(source_text.front())) {
     return llvm::None;
   }
 
@@ -101,8 +101,8 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
   int i = 1, n = source_text.size();
   for (; i != n; ++i) {
     char c = source_text[i];
-    if (IsAlnum(c) || c == '_') {
-      if (IsLower(c) && seen_radix_point && !seen_plus_minus) {
+    if (IsAlnum(c) or c == '_') {
+      if (IsLower(c) and seen_radix_point and not seen_plus_minus) {
         result.exponent = i;
         seen_potential_exponent = true;
       }
@@ -111,8 +111,8 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
 
     // Exactly one `.` can be part of the literal, but only if it's followed by
     // an alphanumeric character.
-    if (c == '.' && i + 1 != n && IsAlnum(source_text[i + 1]) &&
-        !seen_radix_point) {
+    if (c == '.' and i + 1 != n and IsAlnum(source_text[i + 1]) and
+        not seen_radix_point) {
       result.radix_point = i;
       seen_radix_point = true;
       continue;
@@ -122,11 +122,11 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
     // letter (which will be 'e' or 'p' or part of an invalid literal) and
     // followed by an alphanumeric character. This '+' or '-' cannot be an
     // operator because a literal cannot end in a lowercase letter.
-    if ((c == '+' || c == '-') && seen_potential_exponent &&
-        result.exponent == i - 1 && i + 1 != n && IsAlnum(source_text[i + 1])) {
+    if ((c == '+' or c == '-') and seen_potential_exponent and
+        result.exponent == i - 1 and i + 1 != n and IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
-      assert(!seen_plus_minus && "should only consume one + or -");
+      assert(not seen_plus_minus and "should only consume one + or -");
       seen_plus_minus = true;
       continue;
     }
@@ -135,10 +135,10 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
   }
 
   result.text = source_text.substr(0, i);
-  if (!seen_radix_point) {
+  if (not seen_radix_point) {
     result.radix_point = i;
   }
-  if (!seen_potential_exponent) {
+  if (not seen_potential_exponent) {
     result.exponent = i;
   }
 
@@ -227,7 +227,7 @@ LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
                                    literal.exponent - literal.radix_point - 1);
 
   exponent_part = literal.text.substr(literal.exponent + 1);
-  if (!exponent_part.consume_front("+")) {
+  if (not exponent_part.consume_front("+")) {
     exponent_is_negative = exponent_part.consume_front("-");
   }
 }
@@ -235,7 +235,7 @@ LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
 // Check that the numeric literal token is syntactically valid and meaningful,
 // and diagnose if not.
 auto LexedNumericLiteral::Parser::Check() -> bool {
-  return CheckLeadingZero() && CheckIntPart() && CheckFractionalPart() &&
+  return CheckLeadingZero() and CheckIntPart() and CheckFractionalPart() and
          CheckExponentPart();
 }
 
@@ -254,7 +254,7 @@ static auto ParseInteger(llvm::StringRef digits, int radix, bool needs_cleaning)
     cleaned.reserve(digits.size());
     std::remove_copy_if(digits.begin(), digits.end(),
                         std::back_inserter(cleaned),
-                        [](char c) { return c == '_' || c == '.'; });
+                        [](char c) { return c == '_' or c == '.'; });
     digits = cleaned;
   }
 
@@ -275,14 +275,14 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
   // Compute the effective exponent from the specified exponent, if any,
   // and the position of the radix point.
   llvm::APInt exponent(64, 0);
-  if (!exponent_part.empty()) {
+  if (not exponent_part.empty()) {
     exponent = ParseInteger(exponent_part, 10, exponent_needs_cleaning);
 
     // The exponent is a signed integer, and the number we just parsed is
     // non-negative, so ensure we have a wide enough representation to
     // include a sign bit. Also make sure the exponent isn't too narrow so
     // the calculation below can't lose information through overflow.
-    if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
+    if (exponent.isSignBitSet() or exponent.getBitWidth() < 64) {
       exponent = exponent.zext(std::max(64u, exponent.getBitWidth() + 1));
     }
     if (exponent_is_negative) {
@@ -296,7 +296,7 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
     excess_exponent *= 4;
   }
   exponent -= excess_exponent;
-  if (exponent_is_negative && !exponent.isNegative()) {
+  if (exponent_is_negative and not exponent.isNegative()) {
     // We overflowed. Note that we can only overflow by a little, and only
     // from negative to positive, because exponent is at least 64 bits wide
     // and excess_exponent is bounded above by four times the size of the
@@ -313,7 +313,7 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 auto LexedNumericLiteral::Parser::CheckDigitSequence(
     llvm::StringRef text, int radix, bool allow_digit_separators)
     -> CheckDigitSequenceResult {
-  assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
+  assert((radix == 2 or radix == 10 or radix == 16) and "unknown radix");
 
   std::bitset<256> valid_digits;
   if (radix == 2) {
@@ -341,7 +341,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
     if (c == '_') {
       // A digit separator cannot appear at the start of a digit sequence,
       // next to another digit separator, or at the end.
-      if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
+      if (not allow_digit_separators or i == 0 or text[i - 1] == '_' or
           i + 1 == n) {
         emitter.EmitError<InvalidDigitSeparator>(text.begin() + i);
       }
@@ -371,7 +371,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 // correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
-  assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
+  assert(std::count(text.begin(), text.end(), '_') == num_digit_separators and
          "given wrong number of digit separators");
 
   if (radix == 2) {
@@ -380,7 +380,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     return;
   }
 
-  assert((radix == 10 || radix == 16) &&
+  assert((radix == 10 or radix == 16) and
          "unexpected radix for digit separator checks");
 
   auto diagnose_irregular_digit_separators = [&]() {
@@ -410,7 +410,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
-  if (radix == 10 && int_part.startswith("0") && int_part != "0") {
+  if (radix == 10 and int_part.startswith("0") and int_part != "0") {
     emitter.EmitError<UnknownBaseSpecifier>(int_part.begin());
     return false;
   }
@@ -469,7 +469,7 @@ auto LexedNumericLiteral::ComputeValue(
     DiagnosticEmitter<const char*>& emitter) const -> Value {
   Parser parser(emitter, *this);
 
-  if (!parser.Check()) {
+  if (not parser.Check()) {
     return UnrecoverableError();
   }
 

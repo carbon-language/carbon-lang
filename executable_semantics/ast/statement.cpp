@@ -188,7 +188,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   switch (tag()) {
     case StatementKind::Match:
       out << "match (" << *GetMatch().exp << ") {";
-      if (depth < 0 || depth > 1) {
+      if (depth < 0 or depth > 1) {
         out << "\n";
         for (auto& clause : *GetMatch().clauses) {
           out << "case " << *clause.first << " =>\n";
@@ -233,7 +233,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       break;
     case StatementKind::Sequence:
       GetSequence().stmt->PrintDepth(depth, out);
-      if (depth < 0 || depth > 1) {
+      if (depth < 0 or depth > 1) {
         out << "\n";
       } else {
         out << " ";
@@ -244,27 +244,27 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       break;
     case StatementKind::Block:
       out << "{";
-      if (depth < 0 || depth > 1) {
+      if (depth < 0 or depth > 1) {
         out << "\n";
       }
       if (GetBlock().stmt) {
         GetBlock().stmt->PrintDepth(depth, out);
-        if (depth < 0 || depth > 1) {
+        if (depth < 0 or depth > 1) {
           out << "\n";
         }
       }
       out << "}";
-      if (depth < 0 || depth > 1) {
+      if (depth < 0 or depth > 1) {
         out << "\n";
       }
       break;
     case StatementKind::Continuation:
       out << "continuation " << GetContinuation().continuation_variable << " ";
-      if (depth < 0 || depth > 1) {
+      if (depth < 0 or depth > 1) {
         out << "\n";
       }
       GetContinuation().body->PrintDepth(depth - 1, out);
-      if (depth < 0 || depth > 1) {
+      if (depth < 0 or depth > 1) {
         out << "\n";
       }
       break;

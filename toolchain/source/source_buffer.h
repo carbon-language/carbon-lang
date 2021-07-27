@@ -52,7 +52,7 @@ class SourceBuffer {
         is_string_rep_(arg.is_string_rep_) {
     // The easy case in when we don't need to transfer an allocated string
     // representation.
-    if (!arg.is_string_rep_) {
+    if (not arg.is_string_rep_) {
       // Take ownership of a non-string representation by clearing its text.
       arg.text_ = llvm::StringRef();
       return;

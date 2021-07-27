@@ -36,7 +36,7 @@ struct ExpectedToken {
     if (expected.indent_column != -1) {
       output << ", indent: " << expected.indent_column;
     }
-    if (!expected.text.empty()) {
+    if (not expected.text.empty()) {
       output << ", spelling: '" << expected.text.str() << "'";
     }
     if (expected.string_contents) {
@@ -87,14 +87,14 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     }
 
     int actual_line = buffer.GetLineNumber(token);
-    if (expected.line != -1 && actual_line != expected.line) {
+    if (expected.line != -1 and actual_line != expected.line) {
       *result_listener << "\nToken " << index << " is at line " << actual_line
                        << ", expected " << expected.line << ".";
       matches = false;
     }
 
     int actual_column = buffer.GetColumnNumber(token);
-    if (expected.column != -1 && actual_column != expected.column) {
+    if (expected.column != -1 and actual_column != expected.column) {
       *result_listener << "\nToken " << index << " is at column "
                        << actual_column << ", expected " << expected.column
                        << ".";
@@ -103,7 +103,7 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
 
     int actual_indent_column =
         buffer.GetIndentColumnNumber(buffer.GetLine(token));
-    if (expected.indent_column != -1 &&
+    if (expected.indent_column != -1 and
         actual_indent_column != expected.indent_column) {
       *result_listener << "\nToken " << index << " has column indent "
                        << actual_indent_column << ", expected "
@@ -122,16 +122,16 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     }
 
     llvm::StringRef actual_text = buffer.GetTokenText(token);
-    if (!expected.text.empty() && actual_text != expected.text) {
+    if (not expected.text.empty() and actual_text != expected.text) {
       *result_listener << "\nToken " << index << " has spelling `"
                        << actual_text.str() << "`, expected `"
                        << expected.text.str() << "`.";
       matches = false;
     }
 
-    assert(!expected.string_contents ||
+    assert(not expected.string_contents or
            expected.kind == TokenKind::StringLiteral());
-    if (expected.string_contents && actual_kind == TokenKind::StringLiteral()) {
+    if (expected.string_contents and actual_kind == TokenKind::StringLiteral()) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {
         *result_listener << "\nToken " << index << " has contents `"

@@ -103,7 +103,7 @@ struct OperatorPriorityTable {
         for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
           if (table[a][b] == OperatorPriority::LeftFirst) {
             for (int8_t c = 0; c != NumPrecedenceLevels; ++c) {
-              if (table[b][c] == OperatorPriority::LeftFirst &&
+              if (table[b][c] == OperatorPriority::LeftFirst and
                   table[a][c] != OperatorPriority::LeftFirst) {
                 table[a][c] = OperatorPriority::LeftFirst;
                 changed = true;
@@ -163,13 +163,13 @@ struct OperatorPriorityTable {
   constexpr void ConsistencyCheck() {
     for (int8_t level = 0; level != NumPrecedenceLevels; ++level) {
       if (level != Highest) {
-        if (table[Highest][level] != OperatorPriority::LeftFirst ||
+        if (table[Highest][level] != OperatorPriority::LeftFirst or
             table[level][Highest] != OperatorPriority::RightFirst) {
           throw "Highest is not highest priority";
         }
       }
       if (level != Lowest) {
-        if (table[Lowest][level] != OperatorPriority::RightFirst ||
+        if (table[Lowest][level] != OperatorPriority::RightFirst or
             table[level][Lowest] != OperatorPriority::LeftFirst) {
           throw "Lowest is not lowest priority";
         }

@@ -32,7 +32,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   // creating the vector of those won't work. We limit this to 2^20 arguments
   // total.
   int num_args;
-  if (!Read(data, size, num_args) || num_args < 0 || num_args > (1 << 20)) {
+  if (not Read(data, size, num_args) or num_args < 0 or num_args > (1 << 20)) {
     return 0;
   }
 
@@ -42,7 +42,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   size_t arg_length_sum = 0;
   llvm::SmallVector<int, 16> arg_lengths(num_args);
   for (int& arg_length : arg_lengths) {
-    if (!Read(data, size, arg_length) || arg_length < 0) {
+    if (not Read(data, size, arg_length) or arg_length < 0) {
       return 0;
     }
     arg_length_sum += arg_length;
@@ -70,7 +70,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::raw_string_ostream error_stream(error_text);
   llvm::raw_null_ostream output_stream;
   Driver d(output_stream, error_stream);
-  if (!d.RunFullCommand(args)) {
+  if (not d.RunFullCommand(args)) {
     error_stream.flush();
     if (error_text.find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";

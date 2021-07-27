@@ -43,20 +43,20 @@ inline auto IsAlnum(char c) -> bool { return llvm::isAlnum(c); }
 // Note that lowercase 'a'..'f' are currently not considered hexadecimal digits
 // in any context.
 inline auto IsUpperHexDigit(char c) -> bool {
-  return ('0' <= c && c <= '9') || ('A' <= c && c <= 'F');
+  return ('0' <= c and c <= '9') or ('A' <= c and c <= 'F');
 }
 
 // Is this a lowercase letter?
 //
 // Lowercase letters in numeric literals can be followed by `+` or `-` to
 // extend the literal.
-inline auto IsLower(char c) -> bool { return 'a' <= c && c <= 'z'; }
+inline auto IsLower(char c) -> bool { return 'a' <= c and c <= 'z'; }
 
 // Is this character considered to be horizontal whitespace?
 //
 // Such characters can appear in the indentation of a line.
 inline auto IsHorizontalWhitespace(char c) -> bool {
-  return c == ' ' || c == '\t';
+  return c == ' ' or c == '\t';
 }
 
 // Is this character considered to be vertical whitespace?
@@ -69,7 +69,7 @@ inline auto IsVerticalWhitespace(char c) -> bool { return c == '\n'; }
 // Changes here will need matching changes in
 // `TokenizedBuffer::Lexer::SkipWhitespace`.
 inline auto IsSpace(char c) -> bool {
-  return IsHorizontalWhitespace(c) || IsVerticalWhitespace(c);
+  return IsHorizontalWhitespace(c) or IsVerticalWhitespace(c);
 }
 
 }  // namespace Carbon

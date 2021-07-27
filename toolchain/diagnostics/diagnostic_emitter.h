@@ -131,7 +131,7 @@ class DiagnosticEmitter {
 inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   struct Consumer : DiagnosticConsumer {
     auto HandleDiagnostic(const Diagnostic& d) -> void override {
-      if (!d.location.file_name.empty()) {
+      if (not d.location.file_name.empty()) {
         llvm::errs() << d.location.file_name << ":" << d.location.line_number
                      << ":" << d.location.column_number << ": ";
       }

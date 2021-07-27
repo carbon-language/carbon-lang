@@ -19,7 +19,7 @@ namespace Carbon {
 
 void ExpectType(int line_num, const std::string& context, const Value* expected,
                 const Value* actual) {
-  if (!TypeEqual(expected, actual)) {
+  if (not TypeEqual(expected, actual)) {
     FatalUserError() << line_num << ": type error in " << context << "\n"
                      << "expected: " << *expected << "\n"
                      << "actual: " << *actual;
@@ -85,7 +85,7 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
     case ValKind::VariableType: {
       std::optional<const Value*> d =
           deduced.Get(param->GetVariableType().name);
-      if (!d) {
+      if (not d) {
         deduced.Set(param->GetVariableType().name, arg);
       } else {
         ExpectType(line_num, "argument deduction", *d, arg);
@@ -170,7 +170,7 @@ auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
   switch (type->tag()) {
     case ValKind::VariableType: {
       std::optional<const Value*> t = dict.Get(type->GetVariableType().name);
-      if (!t) {
+      if (not t) {
         return type;
       } else {
         return *t;
@@ -315,12 +315,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       std::vector<FieldInitializer> new_args;
       std::vector<TupleElement> arg_types;
       auto new_types = types;
-      if (expected && expected->tag() != ValKind::TupleValue) {
+      if (expected and expected->tag() != ValKind::TupleValue) {
         llvm::errs() << e->line_num
                      << ": compilation error, didn't expect a tuple\n";
         exit(-1);
       }
-      if (expected && e->GetTupleLiteral().fields.size() !=
+      if (expected and e->GetTupleLiteral().fields.size() !=
                           expected->GetTupleValue().elements.size()) {
         llvm::errs() << e->line_num
                      << ": compilation error, tuples of different length\n";
@@ -330,7 +330,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       for (auto arg = e->GetTupleLiteral().fields.begin();
            arg != e->GetTupleLiteral().fields.end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
-        if (expected && expected->tag() == ValKind::TupleValue) {
+        if (expected and expected->tag() == ValKind::TupleValue) {
           if (expected->GetTupleValue().elements[i].name != arg->name) {
             llvm::errs()
                 << e->line_num
@@ -504,7 +504,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             for (auto& deduced_param : fun_t->GetFunctionType().deduced) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
-              if (!deduced_args.Get(deduced_param.name)) {
+              if (not deduced_args.Get(deduced_param.name)) {
                 std::cerr << e->line_num
                           << ": error, could not deduce type argument for type "
                              "parameter "
@@ -586,7 +586,7 @@ auto TypecheckCase(const Value* expected, const Expression* pat,
 // the first return statement.
 auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
                    const Value*& ret_type) -> TCStatement {
-  if (!s) {
+  if (not s) {
     return TCStatement(s, types);
   }
   switch (s->tag()) {
@@ -717,7 +717,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
 
 auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
-  if (!stmt) {
+  if (not stmt) {
     if (void_return) {
       return Statement::MakeReturn(line_num,
                                    Expression::MakeTupleLiteral(line_num, {}));

@@ -17,7 +17,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
   auto token = LexedNumericLiteral::Lex(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
-  if (!token) {
+  if (not token) {
     // Lexically not a numeric literal.
     return 0;
   }

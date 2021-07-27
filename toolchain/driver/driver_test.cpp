@@ -36,7 +36,7 @@ class RawTestOstream : public llvm::raw_ostream {
  public:
   ~RawTestOstream() override {
     flush();
-    if (!buffer.empty()) {
+    if (not buffer.empty()) {
       ADD_FAILURE() << "Unchecked output:\n" << buffer;
     }
   }

@@ -32,9 +32,9 @@ struct Stack {
 
   // Removes and returns the top element of the stack.
   //
-  // - Requires: !this->IsEmpty()
+  // - Requires: not this->IsEmpty()
   auto Pop() -> T {
-    CHECK(!IsEmpty()) << "Can't pop from empty stack.";
+    CHECK(not IsEmpty()) << "Can't pop from empty stack.";
     auto r = std::move(elements.back());
     elements.pop_back();
     return r;
@@ -42,7 +42,7 @@ struct Stack {
 
   // Removes the top `n` elements of the stack.
   //
-  // - Requires: n >= 0 && n <= Count()
+  // - Requires: n >= 0 and n <= Count()
   void Pop(int n) {
     CHECK(n >= 0) << "Negative pop count disallowed.";
     CHECK(static_cast<size_t>(n) <= elements.size())
@@ -52,9 +52,9 @@ struct Stack {
 
   // Returns the top element of the stack.
   //
-  // - Requires: !this->IsEmpty()
+  // - Requires: not this->IsEmpty()
   auto Top() const -> T {
-    CHECK(!IsEmpty()) << "Empty stack has no Top().";
+    CHECK(not IsEmpty()) << "Empty stack has no Top().";
     return elements.back();
   }
 

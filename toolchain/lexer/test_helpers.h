@@ -26,7 +26,7 @@ class SingleTokenDiagnosticTranslator
       : token(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
-    assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) &&
+    assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) and
            "invalid diagnostic location");
     llvm::StringRef prefix = token.take_front(pos - token.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');

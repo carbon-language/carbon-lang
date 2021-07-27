@@ -90,7 +90,7 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
       if (t2 == nullptr) {
         return false;
       }
-      if (!TypeEqual(iter1.second, t2)) {
+      if (not TypeEqual(iter1.second, t2)) {
         return false;
       }
     }
@@ -515,7 +515,7 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       return TypeEqual(t1->GetPointerType().type, t2->GetPointerType().type);
     case ValKind::FunctionType:
       return TypeEqual(t1->GetFunctionType().param,
-                       t2->GetFunctionType().param) &&
+                       t2->GetFunctionType().param) and
              TypeEqual(t1->GetFunctionType().ret, t2->GetFunctionType().ret);
     case ValKind::StructType:
       return t1->GetStructType().name == t2->GetStructType().name;
@@ -531,7 +531,7 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
             t2->GetTupleValue().elements[i].name) {
           return false;
         }
-        if (!TypeEqual(t1->GetTupleValue().elements[i].value,
+        if (not TypeEqual(t1->GetTupleValue().elements[i].value,
                        t2->GetTupleValue().elements[i].value)) {
           return false;
         }
@@ -568,7 +568,7 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
     if (iter == ts2.end()) {
       return false;
     }
-    if (!ValueEqual(element.value, iter->value, line_num)) {
+    if (not ValueEqual(element.value, iter->value, line_num)) {
       return false;
     }
   }

@@ -75,7 +75,7 @@ operand_start [(A-Za-z0-9_"]
   // state.
   # define YY_USER_ACTION \
       context.current_token_position.columns(yyleng); \
-      if (YY_START == AFTER_WHITESPACE || \
+      if (YY_START == AFTER_WHITESPACE or \
           YY_START == AFTER_OPERAND) { \
         BEGIN(INITIAL); \
       }

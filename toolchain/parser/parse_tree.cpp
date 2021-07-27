@@ -86,7 +86,7 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     node_stack.push_back({n, 0});
   }
 
-  while (!node_stack.empty()) {
+  while (not node_stack.empty()) {
     Node n;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
@@ -117,12 +117,12 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     }
 
     // This node is finished, so close it up.
-    assert(n_impl.subtree_size == 1 &&
+    assert(n_impl.subtree_size == 1 and
            "Subtree size must always be a positive integer!");
     output << "}";
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
-    assert(next_depth <= depth && "Cannot have the next depth increase!");
+    assert(next_depth <= depth and "Cannot have the next depth increase!");
     for (int close_children_count : llvm::seq(0, depth - next_depth)) {
       (void)close_children_count;
       output << "]}";
@@ -141,7 +141,7 @@ auto ParseTree::Verify() const -> bool {
   for (Node n : llvm::reverse(Postorder())) {
     auto& n_impl = node_impls[n.GetIndex()];
 
-    if (n_impl.has_error && !has_errors) {
+    if (n_impl.has_error and not has_errors) {
       llvm::errs()
           << "Node #" << n.GetIndex()
           << " has errors, but the tree is not marked as having any.\n";
@@ -149,7 +149,7 @@ auto ParseTree::Verify() const -> bool {
     }
 
     if (n_impl.subtree_size > 1) {
-      if (!ancestors.empty()) {
+      if (not ancestors.empty()) {
         auto parent_n = ancestors.back();
         auto& parent_n_impl = node_impls[parent_n.GetIndex()];
         int end_index = n.GetIndex() - n_impl.subtree_size;
@@ -178,7 +178,7 @@ auto ParseTree::Verify() const -> bool {
     // We're going to pop off some levels of the tree. Check each ancestor to
     // make sure the offsets are correct.
     int next_index = n.GetIndex() - 1;
-    while (!ancestors.empty()) {
+    while (not ancestors.empty()) {
       ParseTree::Node parent_n = ancestors.back();
       if ((parent_n.GetIndex() -
            node_impls[parent_n.GetIndex()].subtree_size) != next_index) {
@@ -187,7 +187,7 @@ auto ParseTree::Verify() const -> bool {
       ancestors.pop_back();
     }
   }
-  if (!ancestors.empty()) {
+  if (not ancestors.empty()) {
     llvm::errs()
         << "Finished walking the parse tree and there are still ancestors:\n";
     for (Node ancestor_n : ancestors) {

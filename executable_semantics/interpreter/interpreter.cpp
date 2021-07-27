@@ -59,7 +59,7 @@ void PrintState(llvm::raw_ostream& out) {
   out << "{\nstack: ";
   PrintStack(state->stack, out);
   out << "\nheap: " << state->heap;
-  if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
+  if (not state->stack.IsEmpty() and not state->stack.Top()->scopes.IsEmpty()) {
     out << "\nvalues: ";
     PrintEnv(CurrentEnv(state), out);
   }
@@ -81,12 +81,12 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
       return Value::MakeIntValue(args[0]->GetIntValue() *
                                  args[1]->GetIntValue());
     case Operator::Not:
-      return Value::MakeBoolValue(!args[0]->GetBoolValue());
+      return Value::MakeBoolValue(not args[0]->GetBoolValue());
     case Operator::And:
-      return Value::MakeBoolValue(args[0]->GetBoolValue() &&
+      return Value::MakeBoolValue(args[0]->GetBoolValue() and
                                   args[1]->GetBoolValue());
     case Operator::Or:
-      return Value::MakeBoolValue(args[0]->GetBoolValue() ||
+      return Value::MakeBoolValue(args[0]->GetBoolValue() or
                                   args[1]->GetBoolValue());
     case Operator::Eq:
       return Value::MakeBoolValue(ValueEqual(args[0], args[1], line_num));
@@ -185,7 +185,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       std::optional<Env> matches =
           PatternMatch(operas[0]->GetFunctionValue().param, operas[1], globals,
                        &params, line_num);
-      if (!matches) {
+      if (not matches) {
         llvm::errs()
             << "internal error in call_function, pattern match failed\n";
         exit(-1);
@@ -224,7 +224,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
 void DeallocateScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
-    if (!a) {
+    if (not a) {
       llvm::errs() << "internal error in DeallocateScope\n";
       exit(-1);
     }
@@ -233,7 +233,7 @@ void DeallocateScope(int line_num, Scope* scope) {
 }
 
 void DeallocateLocals(int line_num, Frame* frame) {
-  while (!frame->scopes.IsEmpty()) {
+  while (not frame->scopes.IsEmpty()) {
     DeallocateScope(line_num, frame->scopes.Top());
     frame->scopes.Pop();
   }
@@ -292,7 +292,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             }
             std::optional<Env> matches = PatternMatch(
                 pattern_element.value, value_field, values, vars, line_num);
-            if (!matches) {
+            if (not matches) {
               return std::nullopt;
             }
             values = *matches;
@@ -309,7 +309,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
       switch (v->tag()) {
         case ValKind::AlternativeValue: {
           if (p->GetAlternativeValue().choice_name !=
-                  v->GetAlternativeValue().choice_name ||
+                  v->GetAlternativeValue().choice_name or
               p->GetAlternativeValue().alt_name !=
                   v->GetAlternativeValue().alt_name) {
             return std::nullopt;
@@ -317,7 +317,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           std::optional<Env> matches = PatternMatch(
               p->GetAlternativeValue().argument,
               v->GetAlternativeValue().argument, values, vars, line_num);
-          if (!matches) {
+          if (not matches) {
             return std::nullopt;
           }
           return *matches;
@@ -335,7 +335,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           std::optional<Env> matches =
               PatternMatch(p->GetFunctionType().param,
                            v->GetFunctionType().param, values, vars, line_num);
-          if (!matches) {
+          if (not matches) {
             return std::nullopt;
           }
           return PatternMatch(p->GetFunctionType().ret,
@@ -395,7 +395,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       switch (val->tag()) {
         case ValKind::AlternativeValue: {
           if (pat->GetAlternativeValue().choice_name !=
-                  val->GetAlternativeValue().choice_name ||
+                  val->GetAlternativeValue().choice_name or
               pat->GetAlternativeValue().alt_name !=
                   val->GetAlternativeValue().alt_name) {
             llvm::errs() << "internal error in pattern assignment\n";
@@ -415,7 +415,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       break;
     }
     default:
-      if (!ValueEqual(pat, val, line_num)) {
+      if (not ValueEqual(pat, val, line_num)) {
         llvm::errs() << "internal error in pattern assignment\n";
         exit(-1);
       }
@@ -437,7 +437,7 @@ void StepLvalue() {
       // -> { {E(x) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
-      if (!pointer) {
+      if (not pointer) {
         llvm::errs() << exp->line_num << ": could not find `"
                      << exp->GetIdentifierExpression().name << "`\n";
         exit(-1);
@@ -635,7 +635,7 @@ void StepExp() {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
-      if (!pointer) {
+      if (not pointer) {
         llvm::errs() << exp->line_num << ": could not find `"
                      << exp->GetIdentifierExpression().name << "`\n";
         exit(-1);
@@ -885,7 +885,7 @@ void StepStmt() {
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       frame->todo.Pop(1);
-      while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
+      while (not frame->todo.IsEmpty() and not IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
           DeallocateScope(stmt->line_num, frame->scopes.Top());
           frame->scopes.Pop(1);
@@ -899,7 +899,7 @@ void StepStmt() {
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       frame->todo.Pop(1);
-      while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
+      while (not frame->todo.IsEmpty() and not IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
           DeallocateScope(stmt->line_num, frame->scopes.Top());
           frame->scopes.Pop(1);
@@ -946,7 +946,7 @@ void StepStmt() {
         std::optional<Env> matches =
             PatternMatch(p, v, frame->scopes.Top()->values,
                          &frame->scopes.Top()->locals, stmt->line_num);
-        if (!matches) {
+        if (not matches) {
           llvm::errs()
               << stmt->line_num
               << ": internal error in variable definition, match failed\n";
@@ -1147,7 +1147,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
     PrintState(llvm::outs());
   }
 
-  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
+  while (state->stack.Count() > 1 or state->stack.Top()->todo.Count() > 1 or
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
     if (tracing_output) {
@@ -1165,7 +1165,7 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
+  while (state->stack.Count() > 1 or state->stack.Top()->todo.Count() > 1 or
          state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
     Step();
   }
