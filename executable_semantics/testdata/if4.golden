@@ -1,0 +1,2 @@
+executable_semantics/testdata/if4.carbon:7: syntax error, unexpected RETURN, expecting {
+EXIT CODE: 255

@@ -51,6 +51,7 @@ TEST_LIST = [
     "if1",
     "if2",
     "if3",
+    "if4",
     "ignored_parameter",
     "invalid_char",
     "match_any_int",

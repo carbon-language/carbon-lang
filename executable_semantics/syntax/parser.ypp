@@ -37,17 +37,8 @@
 // "inout" parameter passed to both the parser and the lexer.
 %param {Carbon::ParseAndLexContext& context}
 
-// The following shift-reduce conflicts are expected; any others should be
-// treated as errors:
-// - The "dangling else" ambiguity: `if (b) if (c) x = 1; else x = 2;`
-//   could parse as either `if (b) { if (c) x = 1; else x = 2;}` or
-//   `if (b) { if (c) x = 1; } else x = 2;`. Following C++, we want Carbon
-//   to choose the first option. Resolving this by restructuring the grammar
-//   would make it harder to read, and resolving it by assigning precedence to
-//   `if` and `else` could mask other ambiguities, especially if we allow
-//   `if`/`else` in expressions, so we allow Bison to resolve it through its
-//   default behavior of preferring to shift rather than reduce.
-%expect 1
+// No shift-reduce conflicts are expected.
+%expect 0
 
 // -----------------------------------------------------------------------------
 
@@ -95,7 +86,9 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <Carbon::FunctionDefinition> function_definition
 %type <std::list<Carbon::Declaration>> declaration_list
 %type <const Carbon::Statement*> statement
+%type <const Carbon::Statement*> if_statement
 %type <const Carbon::Statement*> optional_else
+%type <const Carbon::Statement*> block
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
 %type <Carbon::GenericBinding> generic_binding
@@ -338,9 +331,9 @@ statement:
     { $$ = Carbon::Statement::MakeVariableDefinition(yylineno, $2, $4); }
 | expression ";"
     { $$ = Carbon::Statement::MakeExpressionStatement(yylineno, $1); }
-| IF "(" expression ")" statement optional_else
-    { $$ = Carbon::Statement::MakeIf(yylineno, $3, $5, $6); }
-| WHILE "(" expression ")" statement
+| if_statement
+    { $$ = $1; }
+| WHILE "(" expression ")" block
     { $$ = Carbon::Statement::MakeWhile(yylineno, $3, $5); }
 | BREAK ";"
     { $$ = Carbon::Statement::MakeBreak(yylineno); }
@@ -348,8 +341,8 @@ statement:
     { $$ = Carbon::Statement::MakeContinue(yylineno); }
 | RETURN expression ";"
     { $$ = Carbon::Statement::MakeReturn(yylineno, $2); }
-| "{" statement_list "}"
-    { $$ = Carbon::Statement::MakeBlock(yylineno, $2); }
+| block
+    { $$ = $1; }
 | MATCH "(" expression ")" "{" clause_list "}"
     { $$ = Carbon::Statement::MakeMatch(yylineno, $3, $6); }
 | CONTINUATION identifier statement
@@ -359,16 +352,27 @@ statement:
 | AWAIT ";"
     { $$ = Carbon::Statement::MakeAwait(yylineno); }
 ;
+if_statement:
+  IF "(" expression ")" block optional_else
+    { $$ = Carbon::Statement::MakeIf(yylineno, $3, $5, $6); }
+;
 optional_else:
   // Empty
     { $$ = 0; }
-| ELSE statement { $$ = $2; }
+| ELSE if_statement
+    { $$ = $2; }
+| ELSE block
+    { $$ = $2; }
 ;
 statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
     { $$ = Carbon::Statement::MakeSequence(yylineno, $1, $2); }
+;
+block:
+  "{" statement_list "}"
+    { $$ = Carbon::Statement::MakeBlock(yylineno, $2); }
 ;
 return_type:
   // Empty
@@ -403,8 +407,8 @@ deduced_params:
     { $$ = $2; }
 ;
 function_definition:
-  FN identifier deduced_params tuple return_type "{" statement_list "}"
-    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $7); }
+  FN identifier deduced_params tuple return_type block
+    { $$ = Carbon::FunctionDefinition(yylineno, $2, $3, $4, $5, $6); }
 | FN identifier deduced_params tuple DBLARROW expression ";"
     {
       $$ = Carbon::FunctionDefinition(
