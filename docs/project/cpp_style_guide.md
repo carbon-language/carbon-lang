@@ -135,6 +135,8 @@ these.
         necessary to create a scope for a variable.
     -   Always break the line immediately after an open brace except for empty
         loop bodies.
+-   Use the keywords `and`, `or`, and `not` instead of the operators `&&`, `||`,
+    and `!`.
 
 ### Copyable and movable types
 
