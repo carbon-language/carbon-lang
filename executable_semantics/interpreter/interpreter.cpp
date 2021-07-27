@@ -212,7 +212,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       break;
     }
     default:
-      FatalRuntimeError(line_num)
+      FATAL_RUNTIME_ERROR(line_num)
           << "in call, expected a function, not " << *operas[0];
   }
 }
@@ -270,7 +270,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         case ValKind::TupleValue: {
           if (p->GetTupleValue().elements.size() !=
               v->GetTupleValue().elements.size()) {
-            FatalRuntimeError(line_num)
+            FATAL_RUNTIME_ERROR(line_num)
                 << "arity mismatch in tuple pattern match";
           }
           for (const TupleElement& pattern_element :
@@ -278,7 +278,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             const Value* value_field =
                 v->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              FatalRuntimeError(line_num)
+              FATAL_RUNTIME_ERROR(line_num)
                   << "field " << pattern_element.name << "not in " << *v;
             }
             std::optional<Env> matches = PatternMatch(
@@ -356,7 +356,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
         case ValKind::TupleValue: {
           if (pat->GetTupleValue().elements.size() !=
               val->GetTupleValue().elements.size()) {
-            FatalRuntimeError(line_num)
+            FATAL_RUNTIME_ERROR(line_num)
                 << "arity mismatch in tuple pattern match";
           }
           for (const TupleElement& pattern_element :
@@ -364,7 +364,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             const Value* value_field =
                 val->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              FatalRuntimeError(line_num)
+              FATAL_RUNTIME_ERROR(line_num)
                   << "field " << pattern_element.name << "not in " << *val;
             }
             PatternAssignment(pattern_element.value, value_field, line_num);
@@ -423,7 +423,7 @@ void StepLvalue() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        FatalRuntimeError(exp->line_num)
+        FATAL_RUNTIME_ERROR(exp->line_num)
             << ": could not find `" << exp->GetIdentifierExpression().name
             << "`";
       }
@@ -505,7 +505,7 @@ void StepLvalue() {
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::BindingExpression: {
-      FatalRuntimeError(ErrorLine::None)
+      FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << *exp;
     }
   }
@@ -554,7 +554,7 @@ void StepExp() {
             std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
-              FatalRuntimeError(ErrorLine::None)
+              FATAL_RUNTIME_ERROR_NO_LINE()
                   << "field " << f << " not in " << *tuple;
             }
             frame->todo.Pop(1);
@@ -562,7 +562,7 @@ void StepExp() {
             break;
           }
           default:
-            FatalRuntimeError(ErrorLine::None)
+            FATAL_RUNTIME_ERROR_NO_LINE()
                 << "expected a tuple in field access, not " << *tuple;
         }
       }
@@ -617,7 +617,7 @@ void StepExp() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        FatalRuntimeError(exp->line_num)
+        FATAL_RUNTIME_ERROR(exp->line_num)
             << ": could not find `" << exp->GetIdentifierExpression().name
             << "`";
       }
@@ -1079,7 +1079,7 @@ void StepStmt() {
 void Step() {
   Frame* frame = state->stack.Top();
   if (frame->todo.IsEmpty()) {
-    FatalRuntimeError(ErrorLine::None)
+    FATAL_RUNTIME_ERROR_NO_LINE()
         << "fell off end of function " << frame->name << " without `return`";
   }
 

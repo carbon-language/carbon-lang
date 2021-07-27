@@ -34,8 +34,9 @@ void Heap::Write(const Address& a, const Value* v, int line_num) {
 
 void Heap::CheckAlive(const Address& address, int line_num) {
   if (!alive_[address.index]) {
-    FatalRuntimeError(line_num) << ": undefined behavior: access to dead value "
-                                << *values_[address.index];
+    FATAL_RUNTIME_ERROR(line_num)
+        << ": undefined behavior: access to dead value "
+        << *values_[address.index];
   }
 }
 
@@ -44,7 +45,7 @@ void Heap::Deallocate(const Address& address) {
   if (alive_[address.index]) {
     alive_[address.index] = false;
   } else {
-    FatalRuntimeError(ErrorLine::None) << "deallocating an already dead value";
+    FATAL_RUNTIME_ERROR_NO_LINE() << "deallocating an already dead value";
   }
 }
 

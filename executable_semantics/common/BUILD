@@ -6,7 +6,6 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
     name = "error",
-    srcs = ["error.cpp"],
     hdrs = ["error.h"],
     deps = [
         "@llvm-project//llvm:Support",

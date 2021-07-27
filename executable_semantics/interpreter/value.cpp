@@ -265,20 +265,21 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       const Value* field =
           v->GetStructValue().inits->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        FatalRuntimeError(line_num) << "member " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(line_num) << "member " << f << " not in " << *v;
       }
       return field;
     }
     case ValKind::TupleValue: {
       const Value* field = v->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        FatalRuntimeError(line_num) << "field " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(line_num) << "field " << f << " not in " << *v;
       }
       return field;
     }
     case ValKind::ChoiceType: {
       if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
-        FatalRuntimeError(line_num) << "alternative " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(line_num)
+            << "alternative " << f << " not in " << *v;
       }
       return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
     }
@@ -320,7 +321,7 @@ auto SetFieldImpl(const Value* value,
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
-        FatalRuntimeError(line_num)
+        FATAL_RUNTIME_ERROR(line_num)
             << "field " << *path_begin << " not in " << *value;
       }
       it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,

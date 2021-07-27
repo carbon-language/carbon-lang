@@ -9,25 +9,25 @@
 namespace Carbon {
 namespace {
 
-TEST(ErrorTest, FatalUserError) {
-  ASSERT_DEATH({ FatalUserError(ErrorLine::None) << "test"; }, "ERROR: test\n");
+TEST(ErrorTest, FATAL_USER_ERROR) {
+  ASSERT_DEATH({ FATAL_RUNTIME_ERROR_NO_LINE() << "test"; }, "ERROR: test\n");
 }
 
-TEST(ErrorTest, FatalRuntimeError) {
-  ASSERT_DEATH({ FatalRuntimeError(ErrorLine::None) << "test"; },
+TEST(ErrorTest, FATAL_RUNTIME_ERROR) {
+  ASSERT_DEATH({ FATAL_RUNTIME_ERROR_NO_LINE() << "test"; },
                "RUNTIME ERROR: test\n");
 }
 
-TEST(ErrorTest, FatalCompilationError) {
-  ASSERT_DEATH({ FatalCompilationError(ErrorLine::None) << "test"; },
+TEST(ErrorTest, FATAL_COMPILATION_ERROR) {
+  ASSERT_DEATH({ FATAL_COMPILATION_ERROR_NO_LINE() << "test"; },
                "COMPILATION ERROR: test\n");
 }
 
-TEST(ErrorTest, FatalUserErrorLine) {
-  ASSERT_DEATH({ FatalUserError(1) << "test"; }, "ERROR: 1: test\n");
+TEST(ErrorTest, FATAL_USER_ERRORLine) {
+  ASSERT_DEATH({ FATAL_USER_ERROR(1) << "test"; }, "ERROR: 1: test\n");
 }
 
-auto NoReturnRequired() -> int { FatalUserError(ErrorLine::None) << "test"; }
+auto NoReturnRequired() -> int { FATAL_USER_ERROR_NO_LINE() << "test"; }
 
 TEST(ErrorTest, NoReturnRequired) {
   ASSERT_DEATH({ NoReturnRequired(); }, "ERROR: test\n");
