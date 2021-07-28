@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Principle](#principle)
-    -   [Mitigations of context sensitive costs](#mitigations-of-context-sensitive-costs)
+    -   [Mitigations of context-sensitive costs](#mitigations-of-context-sensitive-costs)
         -   [Visual aids](#visual-aids)
         -   [Contextual _validity_ rather than _meaning_](#contextual-_validity_-rather-than-_meaning_)
         -   [Reduced cost of mistakes](#reduced-cost-of-mistakes)
@@ -84,10 +84,10 @@ notice contextual elements.
 When the context only affects the _validity_ of code, but not its meaning, the
 costs are significantly reduced. Understanding the meaning or behavior of the
 code doesn't require context, and a developer can easily rely on the compiler to
-check the validity. A simple example of this is contextually valid syntax. Such
-syntax is relatively common and inexpensive, but we should avoid reusing the
-same syntax with different meanings in other contexts because that shifts the
-contextual information toward impacting the meaning of code.
+check the validity. A simple example of this is contextually valid syntax, which
+is relatively common and inexpensive. However, reusing the same syntax with
+different contexts _with different meanings_ shifts the contextual information
+from simple validity to impacting the meaning of code.
 
 #### Reduced cost of mistakes
 
@@ -99,23 +99,34 @@ mistake due to the context is low. Some simple examples:
     reliably work with that general understanding, and the context only provides
     a minor refinement.
 
+##### Compiler-checked context
+
 Another way the costs of mistakes can be reduced is when the compiler can
 reliably detect them. This is the fundamental idea behind statically
 type-checked languages: the compiler enforcement reduces the contextual cost of
 knowing what the types are. How early and effectively the compiler can detect
 the mistakes also plays a role in reducing this cost, which is part of the value
-proposition for [definition-checked generics](#todo-link).
+proposition for
+[definition-checked](/docs/design/generics/terminology.md#definition-checking)
+generics.
 
-A particularly interesting example of this situation in Rust is that the same
-syntax is used for a move and a copy of the value in a variable. Those cases are
-distinguished by whether the type implements a specific trait, which may not be
-readily ascertained. The compiler verifies that the code never uses a variable
-that is no longer valid due to having been moved from, which is expected to
-catch the problems that could arise from this difference. Otherwise the semantic
-difference between a move and a copy is considered in Rust to be low-enough
-stakes for there to be no need to signal that difference in the code. For more
-background on this area in Rust specifically, see
-[this post on language ergonomics](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
+An example of this situation in Rust is that the same syntax is used for a move
+and a copy of the value in a variable. Those cases are distinguished by whether
+the type implements a specific trait, which may not be readily ascertained. The
+compiler verifies that the code never uses a variable that is no longer valid
+due to having been moved from, which is expected to catch the problems that
+could arise from this difference. Otherwise the semantic difference between a
+move and a copy is considered in Rust to be low-enough stakes for there to be no
+need to signal that difference in the code.
+
+However, the reasoning that makes this example a good design on balance for Rust
+doesn't necessarily apply to Carbon. The compiler is checking to prevent
+_errors_, but it can't reliably check for unpredictable _performance_. Given
+Carbon's priorities, that might make this level of contextual information still
+too expensive.
+
+More background on this area of Rust specifically is presented in
+[their blog post on language ergonomics](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html).
 
 ## Applications of the principle
 
@@ -127,21 +138,29 @@ cases which make challenging tradeoffs of the costs in the principle.
 
 ### Imports and namespaces
 
-TODO(chandlerc): Tweak the flow of this section and link it into the
-code-org-and-namespaces section. Maybe add some back references there too.
+There are several parts of the way
+[imports](/docs/design/code_and_name_organization/#imports) and
+[namespaces](/docs/design/code_and_name_organization/#namespaces) are designed
+in Carbon that reflect applications of this principle:
 
-Adding an import or reordering imports should never change behavior of existing
-code. This means you don't have to look through all imports to understand how
-code behaves. This is also important for tooling, which should not have to worry
-about unwanted side effects when adding an import.
+-   Adding an import or reordering imports should never change behavior of
+    existing code. This means the reader doesn't have to look through all the
+    imports to understand how code behaves. This is also important for tooling,
+    which should not have to worry about unwanted side effects when adding or
+    sorting imports.
 
-This principle argues against "using namespace" or "wildcard imports" mechanisms
-that merge the names from one namespace into another. They introduce ambiguity
-in where a name is coming from.
+-   Carbon doesn't provide an analogy to C++'s
+    [`using namespace`](https://en.cppreference.com/w/cpp/language/namespace#Using-directives)
+    or a
+    ["wildcard imports" mechanisms](/docs/design/code_and_name_organization/#broader-imports-either-all-names-or-arbitrary-code)
+    that merge the names from one namespace into another. Either would introduce
+    ambiguity in where a name is coming from, making the code more
+    context-sensitive.
 
-It argues against having a large block of code inside a namespace declaration,
-where you have to search for the beginning of the block to see what namespace
-you are in.
+-   Carbon doesn't support large blocks of code
+    [inside a namespace declaration](/docs/design/code_and_name_organization/#scoped-namespaces),
+    where the reader would have to search for the beginning of the block to see
+    what namespace applies.
 
 ### Name shadowing
 
@@ -195,13 +214,15 @@ usability, consistency, or expressivity gains.
 
 ### Coherence of names and generics
 
-The
-[one-definition rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
-in C++ says that there should be only one definition for a name in a program,
-but there is no way for the compiler to enforce it. As a result you can get
-mysterious inconsistent behavior. In Carbon, namespaces should be local to
-packages so that it is possible to check that names have a single definition by
-checking each package independently. Similarly, Carbon generics should have
+Carbon [packages](/docs/design/code_and_name_organization/#packages) are
+designed to ensure all declared names belong to exactly one package and the
+compiler can enforcement Carbon's equivalent
+[one-definition rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule).
+This avoids an issue in C++ where the ODR is not reliably checked by the
+compiler, which can leave the correctness of programs dependent on both distant
+and subtle contextual information.
+
+Similarly, Carbon generics should have
 [coherence, like Rust](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence),
 where types have a single implementation of an interface. And this should be
 enforced by the compiler, using rules like
@@ -213,12 +234,13 @@ Since
 [Carbon's number one goal is performance](/docs/project/goals.md#performance-critical-software),
 it is important that the performance characteristics of code be predictable and
 readily determined by readers. This argues that those characteristics should not
-depend on expensive context. In contrast, in C++, the performance cost of a
-`dynamic_cast` depends on the relationship between the source and target types.
-A cast from a base to a derived class will be significantly cheaper than a cast
-to a sibling. Similarly, virtual inheritance will add cost to ordinary looking
-method calls and implicit conversions, even with single inheritance. When
-combined with multiple inheritance, the vtable pointer for an object can be set
-over and over during construction. Carbon should avoid features with hidden
-costs, particularly when they scale based on subtle aspects of the context where
-those features are used.
+depend on expensive context. For example, Carbon should not provide a
+`dynamic_cast` facility with the same capabilities of C++'s where distant
+aspects of the inheritance structure can cause surprising performance
+differences. Similarly, Carbon should try to ensure normal looking method calls
+and data member access don't have the surprising performance costs caused by
+virtual inheritance in C++.
+
+More generally, Carbon should avoid features with hidden costs, particularly
+when they scale based on subtle aspects of the context where those features are
+used.
