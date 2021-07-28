@@ -46,25 +46,20 @@ BOLT heavily uses LLVM libraries, and by design, it is built as one of LLVM
 tools. The build process is not much different from a regular LLVM build.
 The following instructions are assuming that you are running under Linux.
 
-Start with cloning LLVM and BOLT repos:
+Start with cloning BOLT repo:
 
 ```
-> git clone https://github.com/llvm-mirror/llvm llvm
-> cd llvm/tools
-> git checkout -b llvm-bolt f137ed238db11440f03083b1c88b7ffc0f4af65e
 > git clone https://github.com/facebookincubator/BOLT llvm-bolt
-> cd ..
-> patch -p 1 < tools/llvm-bolt/llvm.patch
 ```
 
 Proceed to a normal LLVM build using a compiler with C++11 support (for GCC
 use version 4.9 or later):
 
 ```
-> cd ..
+> cd llvm-bolt
 > mkdir build
 > cd build
-> cmake -G Ninja ../llvm -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON
+> cmake -G Ninja ../llvm -DLLVM_ENABLE_PROJECTS="bolt" -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON
 > ninja
 ```
 
