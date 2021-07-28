@@ -608,10 +608,14 @@ initialization?
 -   When initializing to a literal value, is a temporary containing the literal
     value constructed first or are the fields initialized directly? The latter
     approach supports types that can't be moved or copied, such as mutex.
--   What is the ordering of construction and initialization, particularly when
-    the literal used to initialize has fields in a different order than the
-    variable?
 -   Perhaps some operations are _not_ ordered with respect to each other?
+
+When initializing or assigning, the order of fields is determined from the
+target on the left side of the `=`. This rule has a couple of benefits:
+
+-   This handles fields missing from the initializer when the fields on the left
+    struct/class have defaults.
+-   This matches what we expect for classes with encapsulation more generally.
 
 ### Operations performed field-wise
 
