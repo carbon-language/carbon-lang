@@ -231,8 +231,10 @@ Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
 
-**References:** The interface implementation syntax was decided in
-[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+**References:** This interface implementation syntax was accepted in
+[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
+particular, see
+[the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
 
 ### Facet type
 
@@ -322,9 +324,6 @@ struct GameBoard {
 }
 ```
 
-**Note:** The interface implementation syntax was decided in
-[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
-
 **Open question:** Should we have some syntax for the case where you want both
 names to be given the same implementation? It seems like that might be a common
 case, but we won't really know if this is an important case until we get more
@@ -369,7 +368,9 @@ external impl Point2 as Vector {
 ```
 
 **References:** The external interface implementation syntax was decided in
-[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
+particular, see
+[the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
 
 The `external impl` statement is allowed to be defined in a different library
 from `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that
