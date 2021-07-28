@@ -860,7 +860,9 @@ be given a default definition but may be overridden. Interface implementations
 may only be partially provided by a mixin. Mixin methods will need to be able to
 convert between pointers to the mixin type and the main type.
 
-Mixins also complicate how constructors work.
+Open questions include whether a mixin is its own type that is a member of the
+containing type, and whether mixins are templated on the containing type. Mixins
+also complicate how constructors work.
 
 ### Non-virtual inheritance
 
