@@ -14,6 +14,7 @@
 #include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
@@ -185,11 +186,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       std::optional<Env> matches =
           PatternMatch(operas[0]->GetFunctionValue().param, operas[1], globals,
                        &params, line_num);
-      if (!matches) {
-        llvm::errs()
-            << "internal error in call_function, pattern match failed\n";
-        exit(-1);
-      }
+      CHECK(matches) << "internal error in call_function, pattern match failed";
       // Create the new frame and push it on the stack
       auto* scope = new Scope(*matches, params);
       auto* frame = new Frame(operas[0]->GetFunctionValue().name, Stack(scope),
@@ -215,19 +212,15 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       break;
     }
     default:
-      llvm::errs() << line_num << ": in call, expected a function, not "
-                   << *operas[0] << "\n";
-      exit(-1);
+      FATAL_RUNTIME_ERROR(line_num)
+          << "in call, expected a function, not " << *operas[0];
   }
 }
 
 void DeallocateScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
-    if (!a) {
-      llvm::errs() << "internal error in DeallocateScope\n";
-      exit(-1);
-    }
+    CHECK(a);
     state->heap.Deallocate(*a);
   }
 }
@@ -277,18 +270,16 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         case ValKind::TupleValue: {
           if (p->GetTupleValue().elements.size() !=
               v->GetTupleValue().elements.size()) {
-            llvm::errs()
-                << "runtime error: arity mismatch in tuple pattern match\n";
-            exit(-1);
+            FATAL_RUNTIME_ERROR(line_num)
+                << "arity mismatch in tuple pattern match";
           }
           for (const TupleElement& pattern_element :
                p->GetTupleValue().elements) {
             const Value* value_field =
                 v->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              llvm::errs() << "runtime error: field " << pattern_element.name
-                           << "not in " << *v << "\n";
-              exit(-1);
+              FATAL_RUNTIME_ERROR(line_num)
+                  << "field " << pattern_element.name << "not in " << *v;
             }
             std::optional<Env> matches = PatternMatch(
                 pattern_element.value, value_field, values, vars, line_num);
@@ -365,18 +356,16 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
         case ValKind::TupleValue: {
           if (pat->GetTupleValue().elements.size() !=
               val->GetTupleValue().elements.size()) {
-            llvm::errs()
-                << "runtime error: arity mismatch in tuple pattern match\n";
-            exit(-1);
+            FATAL_RUNTIME_ERROR(line_num)
+                << "arity mismatch in tuple pattern match";
           }
           for (const TupleElement& pattern_element :
                pat->GetTupleValue().elements) {
             const Value* value_field =
                 val->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              llvm::errs() << "runtime error: field " << pattern_element.name
-                           << "not in " << *val << "\n";
-              exit(-1);
+              FATAL_RUNTIME_ERROR(line_num)
+                  << "field " << pattern_element.name << "not in " << *val;
             }
             PatternAssignment(pattern_element.value, value_field, line_num);
           }
@@ -394,13 +383,11 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
     case ValKind::AlternativeValue: {
       switch (val->tag()) {
         case ValKind::AlternativeValue: {
-          if (pat->GetAlternativeValue().choice_name !=
-                  val->GetAlternativeValue().choice_name ||
-              pat->GetAlternativeValue().alt_name !=
-                  val->GetAlternativeValue().alt_name) {
-            llvm::errs() << "internal error in pattern assignment\n";
-            exit(-1);
-          }
+          CHECK(pat->GetAlternativeValue().choice_name ==
+                    val->GetAlternativeValue().choice_name &&
+                pat->GetAlternativeValue().alt_name ==
+                    val->GetAlternativeValue().alt_name)
+              << "internal error in pattern assignment";
           PatternAssignment(pat->GetAlternativeValue().argument,
                             val->GetAlternativeValue().argument, line_num);
           break;
@@ -415,10 +402,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       break;
     }
     default:
-      if (!ValueEqual(pat, val, line_num)) {
-        llvm::errs() << "internal error in pattern assignment\n";
-        exit(-1);
-      }
+      CHECK(ValueEqual(pat, val, line_num))
+          << "internal error in pattern assignment";
   }
 }
 
@@ -438,9 +423,9 @@ void StepLvalue() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        llvm::errs() << exp->line_num << ": could not find `"
-                     << exp->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(exp->line_num)
+            << ": could not find `" << exp->GetIdentifierExpression().name
+            << "`";
       }
       const Value* v = Value::MakePointerValue(*pointer);
       frame->todo.Pop();
@@ -520,8 +505,8 @@ void StepLvalue() {
     case ExpressionKind::AutoTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::BindingExpression: {
-      llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
-      exit(-1);
+      FATAL_RUNTIME_ERROR_NO_LINE()
+          << "Can't treat expression as lvalue: " << *exp;
     }
   }
 }
@@ -569,20 +554,16 @@ void StepExp() {
             std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
-              llvm::errs() << "runtime error, field " << f << " not in "
-                           << *tuple << "\n";
-              exit(-1);
+              FATAL_RUNTIME_ERROR_NO_LINE()
+                  << "field " << f << " not in " << *tuple;
             }
             frame->todo.Pop(1);
             frame->todo.Push(Action::MakeValAction(field));
             break;
           }
           default:
-            llvm::errs()
-                << "runtime type error, expected a tuple in field access, "
-                   "not "
-                << *tuple << "\n";
-            exit(-1);
+            FATAL_RUNTIME_ERROR_NO_LINE()
+                << "expected a tuple in field access, not " << *tuple;
         }
       }
       break;
@@ -636,9 +617,9 @@ void StepExp() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        llvm::errs() << exp->line_num << ": could not find `"
-                     << exp->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(exp->line_num)
+            << ": could not find `" << exp->GetIdentifierExpression().name
+            << "`";
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
@@ -946,12 +927,9 @@ void StepStmt() {
         std::optional<Env> matches =
             PatternMatch(p, v, frame->scopes.Top()->values,
                          &frame->scopes.Top()->locals, stmt->line_num);
-        if (!matches) {
-          llvm::errs()
-              << stmt->line_num
-              << ": internal error in variable definition, match failed\n";
-          exit(-1);
-        }
+        CHECK(matches)
+            << stmt->line_num
+            << ": internal error in variable definition, match failed";
         frame->scopes.Top()->values = *matches;
         frame->todo.Pop(1);
       }
@@ -1101,9 +1079,8 @@ void StepStmt() {
 void Step() {
   Frame* frame = state->stack.Top();
   if (frame->todo.IsEmpty()) {
-    llvm::errs() << "runtime error: fell off end of function " << frame->name
-                 << " without `return`\n";
-    exit(-1);
+    FATAL_RUNTIME_ERROR_NO_LINE()
+        << "fell off end of function " << frame->name << " without `return`";
   }
 
   Action* act = frame->todo.Top();
