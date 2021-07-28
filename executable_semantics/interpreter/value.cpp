@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
@@ -264,24 +265,21 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       const Value* field =
           v->GetStructValue().inits->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        llvm::errs() << "runtime error, member " << f << " not in " << *v
-                     << "\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(line_num) << "member " << f << " not in " << *v;
       }
       return field;
     }
     case ValKind::TupleValue: {
       const Value* field = v->GetTupleValue().FindField(f);
       if (field == nullptr) {
-        llvm::errs() << "field " << f << " not in " << *v << "\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(line_num) << "field " << f << " not in " << *v;
       }
       return field;
     }
     case ValKind::ChoiceType: {
       if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
-        llvm::errs() << "alternative " << f << " not in " << *v << "\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(line_num)
+            << "alternative " << f << " not in " << *v;
       }
       return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
     }
@@ -323,8 +321,8 @@ auto SetFieldImpl(const Value* value,
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
-        llvm::errs() << "field " << *path_begin << " not in " << *value << "\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(line_num)
+            << "field " << *path_begin << " not in " << *value;
       }
       it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
                                line_num);
