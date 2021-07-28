@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn f(x: Int) -> Int {
-  if (x == 0)
+  if (x == 0) {
     return x;
-  else
+  } else {
     return f(x - 1);
+  }
 }
 
 fn main() -> Int {
