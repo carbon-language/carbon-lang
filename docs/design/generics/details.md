@@ -367,8 +367,6 @@ external impl Point2 as Vector {
 
 **Note:** The external interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
-Additional context for alternatives considered are in
-[an appendix](appendix-impl-syntax.md).
 
 The `external impl` statement is allowed to be defined in a different library
 from `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that
