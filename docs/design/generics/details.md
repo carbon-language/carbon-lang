@@ -178,13 +178,13 @@ interface Vector {
 }
 ```
 
-The syntax here is intended to match how the same members would be defined in a
-type. Each declaration in the interface defines an _associated item_ (same
+The syntax here is to match how the same members would be defined in a type.
+Each declaration in the interface defines an _associated item_ (same
 [terminology as Rust](https://doc.rust-lang.org/reference/items/associated-items.html)).
 In this example, `Vector` has two associated methods, `Add` and `Scale`.
 
-TODO: Link to `struct` method syntax once submitted and/or
-[question-for-leads issue #494 deciding method syntax](https://github.com/carbon-language/carbon-lang/issues/494).
+**References:** Method syntax for types was decided in
+[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 
 An interface defines a type-of-type, that is a type whose values are types. The
 values of an interface are specifically
@@ -230,6 +230,9 @@ var p2: Point = (.x = 2.0, .y = 4.0);
 Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
+
+**References:** The interface implementation syntax was decided in
+[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 
 ### Facet type
 
@@ -365,7 +368,7 @@ external impl Point2 as Vector {
 }
 ```
 
-**Note:** The external interface implementation syntax was decided in
+**References:** The external interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 
 The `external impl` statement is allowed to be defined in a different library
@@ -563,6 +566,9 @@ var a2: Point2 = (.x = 1.0, .y = 2.0);
 var w2: Point2 = (.x = 3.0, .y = 4.0);
 var v3: Point2 = AddAndScaleGeneric(a, w, 2.5);
 ```
+
+**References:** The `:!` syntax was accepted in
+[proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
 
 ### Model
 
