@@ -14,6 +14,7 @@
 #include "executable_semantics/ast/struct_definition.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
