@@ -309,8 +309,4 @@ void Expression::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto Expression::DebugString() const -> std::string {
-  return Carbon::DebugString(*this);
-}
-
 }  // namespace Carbon

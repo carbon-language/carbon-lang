@@ -17,6 +17,7 @@
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/field_path.h"
 #include "executable_semantics/interpreter/stack.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -242,7 +243,7 @@ struct Value {
                 int line_num) const -> const Value*;
 
   void Print(llvm::raw_ostream& out) const;
-  auto DebugString() const -> std::string;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
 
  private:
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,

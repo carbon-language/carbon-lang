@@ -15,8 +15,4 @@ void Frame::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
-auto Frame::DebugString() const -> std::string {
-  return Carbon::DebugString(*this);
-}
-
 }  // namespace Carbon

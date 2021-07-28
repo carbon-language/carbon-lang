@@ -9,6 +9,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -165,7 +166,7 @@ struct Statement {
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  auto DebugString() const -> std::string;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
 
   inline auto tag() const -> StatementKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

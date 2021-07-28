@@ -98,8 +98,4 @@ void Declaration::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto Declaration::DebugString() const -> std::string {
-  return Carbon::DebugString(*this);
-}
-
 }  // namespace Carbon

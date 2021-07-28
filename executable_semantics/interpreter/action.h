@@ -12,6 +12,7 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -56,7 +57,7 @@ struct Action {
   auto GetValAction() const -> const ValAction&;
 
   void Print(llvm::raw_ostream& out) const;
-  auto DebugString() const -> std::string;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
 
   inline auto tag() const -> ActionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

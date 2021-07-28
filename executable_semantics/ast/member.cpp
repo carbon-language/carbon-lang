@@ -27,8 +27,4 @@ void Member::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto Member::DebugString() const -> std::string {
-  return Carbon::DebugString(*this);
-}
-
 }  // namespace Carbon

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -50,7 +51,7 @@ class FieldPath {
     }
   }
 
-  auto DebugString() const -> std::string;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
 
  private:
   // The representation of FieldPath describes how to locate a Value within

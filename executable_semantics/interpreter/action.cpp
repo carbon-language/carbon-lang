@@ -86,10 +86,6 @@ void Action::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto Action::DebugString() const -> std::string {
-  return Carbon::DebugString(*this);
-}
-
 void Action::PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out) {
   llvm::ListSeparator sep(" :: ");
   for (const auto& action : ls) {

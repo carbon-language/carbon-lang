@@ -57,10 +57,6 @@ void Heap::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto Heap::DebugString() const -> std::string {
-  return Carbon::DebugString(*this);
-}
-
 void Heap::PrintAddress(const Address& a, llvm::raw_ostream& out) const {
   if (!alive_[a.index]) {
     out << "!!";

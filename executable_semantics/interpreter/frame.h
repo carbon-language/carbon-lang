@@ -13,6 +13,7 @@
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/stack.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -51,7 +52,7 @@ struct Frame {
       : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 
   void Print(llvm::raw_ostream& out) const;
-  auto DebugString() const -> std::string;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
 };
 
 }  // namespace Carbon

@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/interpreter/field_path.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -42,7 +43,7 @@ class Address {
     out << "Address(" << index << ")" << field_path;
   }
 
-  auto DebugString() const -> std::string;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.
