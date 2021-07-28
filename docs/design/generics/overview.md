@@ -114,9 +114,6 @@ function.
 
 This ability to generalize makes `SortVector` a _generic_.
 
-**NOTE:** The `:!` syntax was decided in
-[question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
-
 ### Interfaces
 
 The `SortVector` function requires a definition of `Comparable`, with the goal
@@ -154,9 +151,6 @@ interface Comparable {
   fn Less[me: Self](that: Self) -> Bool;
 }
 ```
-
-**Note:** The method syntax was decided in
-[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 
 Interfaces describe functionality, but not data; no variables may be declared in
 an interface.
@@ -211,10 +205,6 @@ external impl Song as Comparable {
   fn Less[me: Self](that: Self) -> Bool { ... }
 }
 ```
-
-**Note:** The interface implementation syntax was decided in
-[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
-TODO: move these syntax issues to details and link.
 
 Implementations may be defined within the struct definition itself or
 externally. External implementations may be defined in the library defining the
