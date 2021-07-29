@@ -4,8 +4,8 @@
 
 #include "executable_semantics/common/arena.h"
 
-namespace Carbon::ArenaInternal {
+namespace Carbon {
 
-llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaEntry>>> arena;
+llvm::ManagedStatic<Arena> global_arena;
 
-}  // namespace Carbon::ArenaInternal
+}  // namespace Carbon
