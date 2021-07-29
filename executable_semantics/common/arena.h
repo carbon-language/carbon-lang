@@ -42,7 +42,7 @@ extern llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaEntry>>> arena;
 
 // Allocates an object in the arena, returning a pointer to it.
 template <typename T, typename... Args>
-static auto ArenaNew(Args&... args) -> T* {
+static auto ArenaNew(Args&&... args) -> T* {
   auto smart_ptr = std::make_unique<ArenaInternal::ArenaEntryTyped<T>>(
       std::forward<Args>(args)...);
   T* raw_ptr = smart_ptr->Instance();
