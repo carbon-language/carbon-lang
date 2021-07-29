@@ -26,9 +26,10 @@ template <typename T>
 class ArenaEntryTyped : public ArenaEntry {
  public:
   template <typename... Args>
-  ArenaEntryTyped(Args&... args) : instance(std::forward<Args>(args)...) {}
+  explicit ArenaEntryTyped(Args&... args)
+      : instance(std::forward<Args>(args)...) {}
 
-  T* Instance() { return &instance; }
+  auto Instance() -> T* { return &instance; }
 
  private:
   T instance;
@@ -41,7 +42,7 @@ extern llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaEntry>>> arena;
 
 // Allocates an object in the arena, returning a pointer to it.
 template <typename T, typename... Args>
-static T* ArenaNew(Args&... args) {
+static auto ArenaNew(Args&... args) -> T* {
   auto smart_ptr = std::make_unique<ArenaInternal::ArenaEntryTyped<T>>(
       std::forward<Args>(args)...);
   T* raw_ptr = smart_ptr->Instance();
