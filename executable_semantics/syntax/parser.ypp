@@ -107,14 +107,14 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <Carbon::Member*> member
 %type <std::list<Carbon::Member*>> member_list
 %type <Carbon::ParenContents<Carbon::Expression>::Element> paren_expression_element
+%type <Carbon::ParenContents<Carbon::Expression>> paren_expression_base
 %type <Carbon::ParenContents<Carbon::Expression>> paren_expression_contents
-%type <Carbon::ParenContents<Carbon::Expression>> paren_expression_contents_without_trailing_comma
 %type <const Carbon::Pattern*> paren_pattern
 %type <const Carbon::TuplePattern*> tuple_pattern
 %type <const Carbon::TuplePattern*> maybe_empty_tuple_pattern
-%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_contents
+%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_base
 %type <Carbon::ParenContents<Carbon::Pattern>::Element> paren_pattern_element
-%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_contents_without_trailing_comma
+%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_contents
 %type <std::pair<std::string, const Carbon::Expression*>> alternative
 %type <std::list<std::pair<std::string, const Carbon::Expression*>>> alternative_list
 %type <std::pair<const Carbon::Pattern*, const Carbon::Statement*>*> clause
@@ -267,11 +267,11 @@ expression:
 ;
 designator: "." identifier { $$ = $2; }
 ;
-paren_expression: "(" paren_expression_contents ")"
-    { $$ = Carbon::AsExpression(yylineno, $2); }
+paren_expression: paren_expression_base
+    { $$ = Carbon::AsExpression(yylineno, $1); }
 ;
-tuple: "(" paren_expression_contents ")"
-    { $$ = Carbon::AsTuple(yylineno, $2); }
+tuple: paren_expression_base
+    { $$ = Carbon::AsTuple(yylineno, $1); }
 ;
 paren_expression_element:
   expression
@@ -279,21 +279,21 @@ paren_expression_element:
 | designator "=" expression
     { $$ = {.name = $1, .term = $3}; }
 ;
-paren_expression_contents:
-  // Empty
+paren_expression_base:
+  "(" ")"
     { $$ = {.elements = {}, .has_trailing_comma = false}; }
-| paren_expression_contents_without_trailing_comma
-    { $$ = $1; }
-| paren_expression_contents_without_trailing_comma ","
+| "(" paren_expression_contents ")"
+    { $$ = $2; }
+| "(" paren_expression_contents "," ")"
     {
-      $$ = $1;
+      $$ = $2;
       $$.has_trailing_comma = true;
     }
 ;
-paren_expression_contents_without_trailing_comma:
+paren_expression_contents:
   paren_expression_element
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents_without_trailing_comma "," paren_expression_element
+| paren_expression_contents "," paren_expression_element
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -326,15 +326,15 @@ binding_lhs:
   identifier { $$ = $1; }
 | UNDERSCORE { $$ = std::nullopt; }
 ;
-paren_pattern: "(" paren_pattern_contents ")"
-    { $$ = Carbon::AsPattern(yylineno, $2); }
+paren_pattern: paren_pattern_base
+    { $$ = Carbon::AsPattern(yylineno, $1); }
 ;
-paren_pattern_contents:
-  paren_pattern_contents_without_trailing_comma
-    { $$ = $1; }
-| paren_pattern_contents_without_trailing_comma ","
+paren_pattern_base:
+  "(" paren_pattern_contents ")"
+    { $$ = $2; }
+| "(" paren_pattern_contents "," ")"
     {
-      $$ = $1;
+      $$ = $2;
       $$.has_trailing_comma = true;
     }
 ;
@@ -343,20 +343,20 @@ paren_pattern_contents:
 // contain at least one non_expression_pattern. The structure of this rule
 // is very different from the corresponding expression rule because is has to
 // enforce that requirement.
-paren_pattern_contents_without_trailing_comma:
+paren_pattern_contents:
   paren_pattern_element
     { $$ = {.elements = {$1}, .has_trailing_comma = false }; }
-| paren_expression_contents_without_trailing_comma "," paren_pattern_element
+| paren_expression_contents "," paren_pattern_element
     {
       $$ = Carbon::ParenExpressionToParenPattern($1);
       $$.elements.push_back($3);
     }
-| paren_pattern_contents_without_trailing_comma "," paren_expression_element
+| paren_pattern_contents "," paren_expression_element
     {
       $$ = $1;
       $$.elements.push_back({.name = $3.name, .term = new Carbon::ExpressionPattern($3.term)});
     }
-| paren_pattern_contents_without_trailing_comma "," paren_pattern_element
+| paren_pattern_contents "," paren_pattern_element
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -368,9 +368,8 @@ paren_pattern_element:
 | designator "=" non_expression_pattern
     { $$ = {.name = $1, .term = $3}; }
 ;
-tuple_pattern:
-  "(" paren_pattern_contents ")"
-    { $$ = Carbon::AsTuplePattern(yylineno, $2); }
+tuple_pattern: paren_pattern_base
+    { $$ = Carbon::AsTuplePattern(yylineno, $1); }
 ;
 // Unlike most `pattern` nonterminals, this one overlaps with `expression`,
 // so it should be used only when prior context (such as an introducer)

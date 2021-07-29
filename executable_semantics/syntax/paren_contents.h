@@ -40,7 +40,7 @@ struct ParenContents {
   //
   // TODO: Find a way to deduce TupleElement from Term.
   template <typename TupleElement>
-  auto TupleElements(int line_number) const -> std::vector<TupleElement>;
+  auto TupleElements(int line_num) const -> std::vector<TupleElement>;
 
   std::vector<Element> elements;
   bool has_trailing_comma;
@@ -60,7 +60,7 @@ auto ParenContents<Term>::SingleTerm() const -> std::optional<const Term*> {
 
 template <typename Term>
 template <typename TupleElement>
-auto ParenContents<Term>::TupleElements(int line_number) const
+auto ParenContents<Term>::TupleElements(int line_num) const
     -> std::vector<TupleElement> {
   std::vector<TupleElement> result;
   int i = 0;
@@ -71,7 +71,7 @@ auto ParenContents<Term>::TupleElements(int line_number) const
       result.push_back(TupleElement(*element.name, element.term));
     } else {
       if (seen_named_member) {
-        FATAL_USER_ERROR(line_number)
+        FATAL_USER_ERROR(line_num)
             << "positional members must come before named members";
       }
       result.push_back(TupleElement(std::to_string(i), element.term));

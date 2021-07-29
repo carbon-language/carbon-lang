@@ -5,10 +5,13 @@
 #include "executable_semantics/ast/expression.h"
 
 #include "executable_semantics/syntax/paren_contents.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace Carbon {
 namespace {
+
+using testing::IsEmpty;
 
 TEST(ExpressionTest, EmptyAsExpression) {
   ParenContents<Expression> contents = {.elements = {},
@@ -16,7 +19,7 @@ TEST(ExpressionTest, EmptyAsExpression) {
   const Expression* expression = AsExpression(/*line_num=*/1, contents);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::TupleLiteral);
-  EXPECT_EQ(expression->GetTupleLiteral().fields.size(), 0);
+  EXPECT_THAT(expression->GetTupleLiteral().fields, IsEmpty());
 }
 
 TEST(ExpressionTest, EmptyAsTuple) {

@@ -77,10 +77,10 @@ auto AsTuplePattern(int line_num, const ParenContents<Pattern>& paren_contents)
       line_num, paren_contents.TupleElements<TuplePattern::Field>(line_num));
 }
 
-AlternativePattern::AlternativePattern(int line_number,
+AlternativePattern::AlternativePattern(int line_num,
                                        const Expression* alternative,
                                        const TuplePattern* arguments)
-    : Pattern(Kind::AlternativePattern, line_number), arguments(arguments) {
+    : Pattern(Kind::AlternativePattern, line_num), arguments(arguments) {
   if (alternative->tag() != ExpressionKind::FieldAccessExpression) {
     FATAL_USER_ERROR(alternative->line_num)
         << "Alternative pattern must have the form of a field access.\n";

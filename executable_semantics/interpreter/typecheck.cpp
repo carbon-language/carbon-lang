@@ -538,24 +538,24 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
         exit(-1);
       }
       for (size_t i = 0; i < tuple.Fields().size(); ++i) {
-        const Value* field_expected = nullptr;
+        const TuplePattern::Field& field = tuple.Fields()[i];
+        const Value* expected_field_type = nullptr;
         if (expected != nullptr) {
-          if (expected->GetTupleValue().elements[i].name !=
-              tuple.Fields()[i].name) {
+          const TupleElement& expected_element =
+              expected->GetTupleValue().elements[i];
+          if (expected_element.name != field.name) {
             FATAL_COMPILATION_ERROR(tuple.LineNumber())
                 << "field names do not match, expected "
-                << expected->GetTupleValue().elements[i].name << " but got "
-                << tuple.Fields()[i].name;
+                << expected_element.name << " but got " << field.name;
           }
-          field_expected = expected->GetTupleValue().elements[i].value;
+          expected_field_type = expected_element.value;
         }
-        auto field_result = TypeCheckPattern(tuple.Fields()[i].pattern,
-                                             new_types, values, field_expected);
+        auto field_result = TypeCheckPattern(field.pattern, new_types, values,
+                                             expected_field_type);
         new_types = field_result.types;
         new_fields.push_back(
-            TuplePattern::Field(tuple.Fields()[i].name, field_result.pattern));
-        field_types.push_back(
-            {.name = tuple.Fields()[i].name, .value = field_result.type});
+            TuplePattern::Field(field.name, field_result.pattern));
+        field_types.push_back({.name = field.name, .value = field_result.type});
       }
       auto new_tuple = new TuplePattern(tuple.LineNumber(), new_fields);
       auto tuple_t = Value::MakeTupleValue(std::move(field_types));

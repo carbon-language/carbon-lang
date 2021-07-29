@@ -755,7 +755,7 @@ void StepPattern() {
     case Pattern::Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*pattern);
       if (act->pos == 0) {
-        if (tuple.Fields().size() == 0) {
+        if (tuple.Fields().empty()) {
           frame->todo.Pop(1);
           frame->todo.Push(Action::MakeValAction(Value::MakeTupleValue({})));
         } else {

@@ -6,6 +6,7 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/syntax/paren_contents.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "llvm/Support/Casting.h"
 
@@ -14,20 +15,21 @@ namespace {
 
 using llvm::cast;
 using llvm::isa;
+using testing::IsEmpty;
 
 TEST(PatternTest, EmptyAsPattern) {
   ParenContents<Pattern> contents = {.elements = {},
                                      .has_trailing_comma = false};
-  const Pattern* pattern = AsPattern(/*line_number=*/1, contents);
+  const Pattern* pattern = AsPattern(/*line_num=*/1, contents);
   EXPECT_EQ(pattern->LineNumber(), 1);
   ASSERT_TRUE(isa<TuplePattern>(pattern));
-  EXPECT_EQ(cast<TuplePattern>(pattern)->Fields().size(), 0);
+  EXPECT_THAT(cast<TuplePattern>(pattern)->Fields(), IsEmpty());
 }
 
 TEST(PatternTest, EmptyAsTuplePattern) {
   ParenContents<Pattern> contents = {.elements = {},
                                      .has_trailing_comma = false};
-  const TuplePattern* tuple = AsTuplePattern(/*line_number=*/1, contents);
+  const TuplePattern* tuple = AsTuplePattern(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->LineNumber(), 1);
   EXPECT_EQ(tuple->Fields().size(), 0);
 }
@@ -36,15 +38,15 @@ TEST(PatternTest, UnaryNoCommaAsPattern) {
   // Equivalent to a code fragment like
   // ```
   // (
-  //   42
+  //   auto
   // )
   // ```
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/2)}},
+                    .term = new AutoPattern(/*line_num=*/2)}},
       .has_trailing_comma = false};
 
-  const Pattern* pattern = AsPattern(/*line_number=*/1, contents);
+  const Pattern* pattern = AsPattern(/*line_num=*/1, contents);
   EXPECT_EQ(pattern->LineNumber(), 2);
   ASSERT_TRUE(isa<AutoPattern>(pattern));
 }
@@ -52,10 +54,10 @@ TEST(PatternTest, UnaryNoCommaAsPattern) {
 TEST(PatternTest, UnaryNoCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/2)}},
+                    .term = new AutoPattern(/*line_num=*/2)}},
       .has_trailing_comma = false};
 
-  const TuplePattern* tuple = AsTuplePattern(/*line_number=*/1, contents);
+  const TuplePattern* tuple = AsTuplePattern(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->LineNumber(), 1);
   const std::vector<TuplePattern::Field>& fields = tuple->Fields();
   ASSERT_EQ(fields.size(), 1);
@@ -66,10 +68,10 @@ TEST(PatternTest, UnaryNoCommaAsTuplePattern) {
 TEST(PatternTest, UnaryWithCommaAsPattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/2)}},
+                    .term = new AutoPattern(/*line_num=*/2)}},
       .has_trailing_comma = true};
 
-  const Pattern* pattern = AsPattern(/*line_number=*/1, contents);
+  const Pattern* pattern = AsPattern(/*line_num=*/1, contents);
   EXPECT_EQ(pattern->LineNumber(), 1);
   ASSERT_TRUE(isa<TuplePattern>(pattern));
   const std::vector<TuplePattern::Field>& fields =
@@ -82,10 +84,10 @@ TEST(PatternTest, UnaryWithCommaAsPattern) {
 TEST(PatternTest, UnaryWithCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/2)}},
+                    .term = new AutoPattern(/*line_num=*/2)}},
       .has_trailing_comma = true};
 
-  const TuplePattern* tuple = AsTuplePattern(/*line_number=*/1, contents);
+  const TuplePattern* tuple = AsTuplePattern(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->LineNumber(), 1);
   const std::vector<TuplePattern::Field>& fields = tuple->Fields();
   EXPECT_EQ(fields[0].name, "0");
@@ -95,12 +97,12 @@ TEST(PatternTest, UnaryWithCommaAsTuplePattern) {
 TEST(PatternTest, BinaryAsPattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/2)},
+                    .term = new AutoPattern(/*line_num=*/2)},
                    {.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/3)}},
+                    .term = new AutoPattern(/*line_num=*/3)}},
       .has_trailing_comma = true};
 
-  const Pattern* pattern = AsPattern(/*line_number=*/1, contents);
+  const Pattern* pattern = AsPattern(/*line_num=*/1, contents);
   EXPECT_EQ(pattern->LineNumber(), 1);
   ASSERT_TRUE(isa<TuplePattern>(pattern));
   const std::vector<TuplePattern::Field>& fields =
@@ -115,12 +117,12 @@ TEST(PatternTest, BinaryAsPattern) {
 TEST(PatternTest, BinaryAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/2)},
+                    .term = new AutoPattern(/*line_num=*/2)},
                    {.name = std::nullopt,
-                    .term = new AutoPattern(/*line_number=*/3)}},
+                    .term = new AutoPattern(/*line_num=*/3)}},
       .has_trailing_comma = true};
 
-  const TuplePattern* tuple = AsTuplePattern(/*line_number=*/1, contents);
+  const TuplePattern* tuple = AsTuplePattern(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->LineNumber(), 1);
   const std::vector<TuplePattern::Field>& fields = tuple->Fields();
   ASSERT_EQ(fields.size(), 2);
