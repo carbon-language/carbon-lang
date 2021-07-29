@@ -37,6 +37,7 @@ extern llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaPtr>>> arena;
 
 }  // namespace ArenaInternal
 
+// Allocates an object in the arena, returning a pointer to it.
 template <typename T, typename... Args>
 static T* ArenaNew(Args&... args) {
   T* ptr = new T(std::forward<Args>(args)...);
