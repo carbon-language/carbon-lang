@@ -65,8 +65,11 @@ language are well explained, justified, and reviewed by the community.
     [the template](/proposals/template.md).
 
 -   Proposal PRs start out in draft mode. When proposal PRs are ready, click on
-    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
-    in GitHub.
+    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review),
+    and change the
+    [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
+    to "RFC". The project column should be available as a dropdown under
+    "Projects" on the PR.
 
     -   This will result in a Carbon lead being assigned to review the PR.
 
@@ -129,7 +132,10 @@ issues for longer discussion:
 
 -   When ready, click on
     ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
-    in GitHub.
+    in GitHub, and change the
+    [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
+    to "RFC". The project column should be available as a dropdown under
+    "Projects" on the PR.
 
     -   This will result in the PR being assigned to an individual for review.
 
