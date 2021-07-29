@@ -20,6 +20,7 @@ cc_library(
         "//common:ostream",
         "//executable_semantics/interpreter:address",
         "//executable_semantics/interpreter:containers",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -32,6 +33,7 @@ cc_library(
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -42,6 +44,7 @@ cc_library(
     deps = [
         ":expression",
         ":statement",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -52,6 +55,7 @@ cc_library(
     deps = [
         ":expression",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -63,6 +67,7 @@ cc_library(
         ":expression",
         "//common:check",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -72,5 +77,6 @@ cc_library(
     deps = [
         ":member",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
