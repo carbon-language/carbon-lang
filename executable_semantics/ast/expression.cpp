@@ -6,6 +6,7 @@
 
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
