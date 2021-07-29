@@ -6,6 +6,6 @@
 
 namespace Carbon::ArenaInternal {
 
-llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaPtr>>> arena;
+llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaEntry>>> arena;
 
 }  // namespace Carbon::ArenaInternal

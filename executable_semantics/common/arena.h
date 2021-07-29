@@ -16,33 +16,37 @@ namespace ArenaInternal {
 
 // Virtualizes arena entries so that a single vector can contain many types,
 // avoiding templated statics.
-class ArenaPtr {
+class ArenaEntry {
  public:
-  virtual ~ArenaPtr() = default;
+  virtual ~ArenaEntry() = default;
 };
 
 // Templated destruction of a pointer.
 template <typename T>
-class ArenaPtrTyped : public ArenaPtr {
+class ArenaEntryTyped : public ArenaEntry {
  public:
-  ArenaPtrTyped(T* raw_ptr) : ptr(raw_ptr) {}
+  template <typename... Args>
+  ArenaEntryTyped(Args&... args) : instance(std::forward<Args>(args)...) {}
+
+  T* Instance() { return &instance; }
 
  private:
-  std::unique_ptr<T> ptr;
+  T instance;
 };
 
 // Manages allocations in an arena for destruction at shutdown.
-extern llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaPtr>>> arena;
+extern llvm::ManagedStatic<std::vector<std::unique_ptr<ArenaEntry>>> arena;
 
 }  // namespace ArenaInternal
 
 // Allocates an object in the arena, returning a pointer to it.
 template <typename T, typename... Args>
 static T* ArenaNew(Args&... args) {
-  T* ptr = new T(std::forward<Args>(args)...);
-  ArenaInternal::arena->push_back(
-      std::make_unique<ArenaInternal::ArenaPtrTyped<T>>(ptr));
-  return ptr;
+  auto smart_ptr = std::make_unique<ArenaInternal::ArenaEntryTyped<T>>(
+      std::forward<Args>(args)...);
+  T* raw_ptr = smart_ptr->Instance();
+  ArenaInternal::arena->push_back(std::move(smart_ptr));
+  return raw_ptr;
 }
 
 }  // namespace Carbon
