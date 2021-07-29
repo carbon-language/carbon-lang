@@ -40,7 +40,7 @@ Context can be expensive in different ways, for example:
 
 -   It can be _large_: it might require looking through a lot of lines of code
     to find all of the relevant contextual information.
--   It can be _distant_: the farther away from the current declaration or
+-   It can be _distant_: the further away from the current declaration or
     definition, the more expensive it is to find contextual information. This
     can scale from a separate definition in the same file, to a separate file,
     or even to a separate package.
