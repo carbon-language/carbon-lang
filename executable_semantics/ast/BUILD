@@ -30,6 +30,7 @@ cc_library(
     deps = [
         "//common:indirect_value",
         "//common:ostream",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
     ],
 )

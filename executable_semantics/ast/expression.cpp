@@ -4,6 +4,7 @@
 
 #include "executable_semantics/ast/expression.h"
 
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -53,28 +54,28 @@ auto Expression::GetFunctionTypeLiteral() const -> const FunctionTypeLiteral& {
 }
 
 auto Expression::MakeTypeTypeLiteral(int line_num) -> const Expression* {
-  auto* t = new Expression();
+  auto* t = ArenaNew<Expression>();
   t->line_num = line_num;
   t->value = TypeTypeLiteral();
   return t;
 }
 
 auto Expression::MakeIntTypeLiteral(int line_num) -> const Expression* {
-  auto* t = new Expression();
+  auto* t = ArenaNew<Expression>();
   t->line_num = line_num;
   t->value = IntTypeLiteral();
   return t;
 }
 
 auto Expression::MakeBoolTypeLiteral(int line_num) -> const Expression* {
-  auto* t = new Expression();
+  auto* t = ArenaNew<Expression>();
   t->line_num = line_num;
   t->value = BoolTypeLiteral();
   return t;
 }
 
 auto Expression::MakeAutoTypeLiteral(int line_num) -> const Expression* {
-  auto* t = new Expression();
+  auto* t = ArenaNew<Expression>();
   t->line_num = line_num;
   t->value = AutoTypeLiteral();
   return t;
@@ -83,7 +84,7 @@ auto Expression::MakeAutoTypeLiteral(int line_num) -> const Expression* {
 // Returns a Continuation type AST node at the given source location.
 auto Expression::MakeContinuationTypeLiteral(int line_num)
     -> const Expression* {
-  auto* type = new Expression();
+  auto* type = ArenaNew<Expression>();
   type->line_num = line_num;
   type->value = ContinuationTypeLiteral();
   return type;
@@ -92,7 +93,7 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
 auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
                                          const Expression* ret)
     -> const Expression* {
-  auto* t = new Expression();
+  auto* t = ArenaNew<Expression>();
   t->line_num = line_num;
   t->value = FunctionTypeLiteral({.parameter = param, .return_type = ret});
   return t;
@@ -100,7 +101,7 @@ auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
 
 auto Expression::MakeIdentifierExpression(int line_num, std::string var)
     -> const Expression* {
-  auto* v = new Expression();
+  auto* v = ArenaNew<Expression>();
   v->line_num = line_num;
   v->value = IdentifierExpression({.name = std::move(var)});
   return v;
@@ -110,21 +111,21 @@ auto Expression::MakeBindingExpression(int line_num,
                                        std::optional<std::string> var,
                                        const Expression* type)
     -> const Expression* {
-  auto* v = new Expression();
+  auto* v = ArenaNew<Expression>();
   v->line_num = line_num;
   v->value = BindingExpression({.name = std::move(var), .type = type});
   return v;
 }
 
 auto Expression::MakeIntLiteral(int line_num, int i) -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   e->value = IntLiteral({.value = i});
   return e;
 }
 
 auto Expression::MakeBoolLiteral(int line_num, bool b) -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   e->value = BoolLiteral({.value = b});
   return e;
@@ -133,7 +134,7 @@ auto Expression::MakeBoolLiteral(int line_num, bool b) -> const Expression* {
 auto Expression::MakePrimitiveOperatorExpression(
     int line_num, enum Operator op, std::vector<const Expression*> args)
     -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   e->value =
       PrimitiveOperatorExpression({.op = op, .arguments = std::move(args)});
@@ -143,7 +144,7 @@ auto Expression::MakePrimitiveOperatorExpression(
 auto Expression::MakeCallExpression(int line_num, const Expression* fun,
                                     const Expression* arg)
     -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   e->value = CallExpression({.function = fun, .argument = arg});
   return e;
@@ -152,7 +153,7 @@ auto Expression::MakeCallExpression(int line_num, const Expression* fun,
 auto Expression::MakeFieldAccessExpression(int line_num, const Expression* exp,
                                            std::string field)
     -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   e->value =
       FieldAccessExpression({.aggregate = exp, .field = std::move(field)});
@@ -162,7 +163,7 @@ auto Expression::MakeFieldAccessExpression(int line_num, const Expression* exp,
 auto Expression::MakeTupleLiteral(int line_num,
                                   std::vector<FieldInitializer> args)
     -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   int i = 0;
   bool seen_named_member = false;
@@ -184,7 +185,7 @@ auto Expression::MakeTupleLiteral(int line_num,
 
 auto Expression::MakeIndexExpression(int line_num, const Expression* exp,
                                      const Expression* i) -> const Expression* {
-  auto* e = new Expression();
+  auto* e = ArenaNew<Expression>();
   e->line_num = line_num;
   e->value = IndexExpression({.aggregate = exp, .offset = i});
   return e;
