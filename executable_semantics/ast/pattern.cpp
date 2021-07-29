@@ -83,7 +83,7 @@ AlternativePattern::AlternativePattern(int line_number,
     : Pattern(Kind::AlternativePattern, line_number), arguments(arguments) {
   if (alternative->tag() != ExpressionKind::FieldAccessExpression) {
     FATAL_USER_ERROR(alternative->line_num)
-        << "Alternative pattern must have the form of a field access.\n";
+        << "Alternative pattern must have the form of a field access.";
   }
   const auto& field_access = alternative->GetFieldAccessExpression();
   choice_type = field_access.aggregate;
