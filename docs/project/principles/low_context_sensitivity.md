@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Principle](#principle)
-    -   [Mitigations of context sensitive costs](#mitigations-of-context-sensitive-costs)
+    -   [Mitigations of context-sensitive costs](#mitigations-of-context-sensitive-costs)
         -   [Visual aids](#visual-aids)
         -   [Contextual _validity_ rather than _meaning_](#contextual-_validity_-rather-than-_meaning_)
         -   [Reduced cost of mistakes](#reduced-cost-of-mistakes)
@@ -64,9 +64,9 @@ understood and act in unsurprising ways.
 If that next step is to loosen restrictions, that is generally easier to do
 while maintaining compatibility with existing code than adding new restrictions.
 
-### Mitigations of context sensitive costs
+### Mitigations of context-sensitive costs
 
-There are several ways that the potential costs of context sensitive code can be
+There are several ways that the potential costs of context-sensitive code can be
 mitigated. These techniques can and should be leveraged to help minimize and
 mitigate the contextual costs of Carbon features, and in some cases may provide
 a path to a feature that would otherwise be prohibitively costly.
@@ -92,10 +92,10 @@ from simple validity to impacting the meaning of code.
 
 #### Reduced cost of mistakes
 
-Another mitigation for the costs of context sensitive code is when the cost of a
+Another mitigation for the costs of context-sensitive code is when the cost of a
 mistake due to the context is low. Some simple examples:
 
--   Context sensitivity in comments are less expensive in general than in code.
+-   Context-sensitivity in comments is less expensive in general than in code.
 -   Places where the general meaning is clear, developers can safely and
     reliably work with that general understanding, and the context only provides
     a minor refinement.
