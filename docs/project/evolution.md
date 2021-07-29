@@ -141,6 +141,11 @@ issues for longer discussion:
 
     -   This will also send the proposal as a broad RFC to the community.
 
+    -   While setting the "RFC" project column will also add the "RFC" label,
+        the reverse is not true. Unfortunately, this is currently a limit of
+        GitHub automation. Similarly, Adding the "RFC" project column currently
+        does not set "Ready for review".
+
 -   Address comments where you can and they make sense.
 
 -   If you don't see an obvious way to address comments, that's OK.
