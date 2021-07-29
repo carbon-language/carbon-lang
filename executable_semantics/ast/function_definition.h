@@ -8,6 +8,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -33,6 +34,7 @@ struct FunctionDefinition {
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   int line_num;
   std::string name;
