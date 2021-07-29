@@ -469,7 +469,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
 
 // Equivalent to TypeCheckExp, but operates on Patterns instead of Expressions.
 // `expected` is the type that this pattern is expected to have, if the
-//    surrounding context gives us that information. Otherwise, it is null.
+// surrounding context gives us that information. Otherwise, it is null.
 auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
                       const Value* expected) -> TCPattern {
   if (tracing_output) {
@@ -491,7 +491,6 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
           if (expected == nullptr) {
             FATAL_COMPILATION_ERROR(binding.LineNumber())
                 << "auto not allowed here";
-            exit(-1);
           } else {
             type = expected;
           }
@@ -512,7 +511,6 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
         case Pattern::Kind::AlternativePattern:
           FATAL_COMPILATION_ERROR(binding.LineNumber())
               << "Unsupported type pattern";
-          exit(-1);
       }
       auto new_p = new BindingPattern(
           binding.LineNumber(), binding.Name(),
@@ -529,13 +527,11 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
       auto new_types = types;
       if (expected && expected->tag() != ValKind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->LineNumber()) << "didn't expect a tuple";
-        exit(-1);
       }
       if (expected &&
           tuple.Fields().size() != expected->GetTupleValue().elements.size()) {
         FATAL_COMPILATION_ERROR(tuple.LineNumber())
             << "tuples of different length";
-        exit(-1);
       }
       for (size_t i = 0; i < tuple.Fields().size(); ++i) {
         const TuplePattern::Field& field = tuple.Fields()[i];
@@ -579,7 +575,6 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
         FATAL_COMPILATION_ERROR(alternative.LineNumber())
             << "'" << alternative.AlternativeName()
             << "' is not an alternative of " << choice_type;
-        exit(-1);
       }
       TCPattern arg_results = TypeCheckPattern(alternative.Arguments(), types,
                                                values, parameter_types);
@@ -868,16 +863,14 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
       case MemberKind::FieldMember: {
         const BindingPattern* binding = m->GetFieldMember().binding;
         if (!binding->Name().has_value()) {
-          llvm::errs() << binding->LineNumber()
-                       << ": Struct members must have names";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(binding->LineNumber())
+              << ": Struct members must have names";
         }
         const Expression* type_expression =
             dyn_cast<ExpressionPattern>(binding->Type())->Expression();
         if (type_expression == nullptr) {
-          llvm::errs() << binding->LineNumber()
-                       << ": Struct members must have explicit types";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(binding->LineNumber())
+              << ": Struct members must have explicit types";
         }
         auto type = InterpExp(ct_top, type_expression);
         fields.push_back(std::make_pair(*binding->Name(), type));
@@ -899,9 +892,8 @@ static auto GetName(const Declaration& d) -> const std::string& {
     case DeclarationKind::VariableDeclaration: {
       const BindingPattern* binding = d.GetVariableDeclaration().binding;
       if (!binding->Name().has_value()) {
-        llvm::errs() << binding->LineNumber()
-                     << ": Top-level variable declarations must have names";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(binding->LineNumber())
+            << ": Top-level variable declarations must have names";
       }
       return *binding->Name();
     }
@@ -945,9 +937,8 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
           dyn_cast<ExpressionPattern>(var.binding->Type())->Expression();
       if (type == nullptr) {
         // TODO: consider adding support for `auto`
-        llvm::errs() << var.source_location
-                     << ": Type of a top-level variable must be an expression.";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(var.source_location)
+            << ": Type of a top-level variable must be an expression.";
       }
       const Value* declared_type = InterpExp(values, type);
       ExpectType(var.source_location, "initializer of variable", declared_type,

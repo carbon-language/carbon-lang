@@ -46,7 +46,7 @@ struct ParenContents {
   bool has_trailing_comma;
 };
 
-// Implementation details only below here
+// Implementation details only below here.
 
 template <typename Term>
 auto ParenContents<Term>::SingleTerm() const -> std::optional<const Term*> {
