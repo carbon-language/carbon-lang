@@ -166,7 +166,7 @@ struct Statement {
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> StatementKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

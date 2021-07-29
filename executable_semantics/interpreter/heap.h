@@ -43,7 +43,7 @@ class Heap {
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
 
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   // Signal an error if the address is no longer alive.

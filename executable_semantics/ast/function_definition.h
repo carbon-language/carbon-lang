@@ -34,7 +34,7 @@ struct FunctionDefinition {
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   int line_num;
   std::string name;

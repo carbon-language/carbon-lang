@@ -85,7 +85,7 @@ class Declaration {
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

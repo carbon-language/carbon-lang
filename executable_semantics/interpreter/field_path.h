@@ -51,7 +51,7 @@ class FieldPath {
     }
   }
 
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   // The representation of FieldPath describes how to locate a Value within

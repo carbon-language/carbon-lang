@@ -43,7 +43,7 @@ class Address {
     out << "Address(" << index << ")" << field_path;
   }
 
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.

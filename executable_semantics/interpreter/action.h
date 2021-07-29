@@ -57,7 +57,7 @@ struct Action {
   auto GetValAction() const -> const ValAction&;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> ActionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

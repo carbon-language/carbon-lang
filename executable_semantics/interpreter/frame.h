@@ -52,7 +52,7 @@ struct Frame {
       : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 };
 
 }  // namespace Carbon

@@ -243,7 +243,7 @@ struct Value {
                 int line_num) const -> const Value*;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::outs()); }
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   std::variant<IntValue, FunctionValue, PointerValue, BoolValue, StructValue,
