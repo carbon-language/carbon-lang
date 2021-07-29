@@ -21,8 +21,7 @@ class ArenaPtr {
   virtual ~ArenaPtr() = default;
 };
 
-// Templated destruction of a pointer through the smart pointer. This avoids
-// per-type arenas.
+// Templated destruction of a pointer.
 template <typename T>
 class ArenaPtrTyped : public ArenaPtr {
  public:
