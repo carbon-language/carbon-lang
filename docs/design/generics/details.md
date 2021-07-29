@@ -200,9 +200,9 @@ means that types explicitly describe how they implement interfaces. An
 ["impl"](terminology.md#impls-implementations-of-interfaces) defines how one
 interface is implemented for a type. Every associated item is given a
 definition. Different types satisfying `Vector` can have different definitions
-for `Add` and `Scale`, so we say their definitions are associated with what type
-is implementing `Vector`. The `impl` defines what is associated with the type
-for that interface.
+for `Add` and `Scale`, so we say their definitions are _associated_ with what
+type is implementing `Vector`. The `impl` defines what is associated with the
+type for that interface.
 
 Impls may be defined inline inside the type definition:
 
@@ -230,6 +230,11 @@ var p2: Point = (.x = 2.0, .y = 4.0);
 Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
+
+**Comparison with other languages:** Rust defines implementations lexically
+outside of the `struct` definition. This Carbon approach means that a type's API
+is described by declarations inside the `struct` definition and doesn't change
+afterwards.
 
 **References:** This interface implementation syntax was accepted in
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
@@ -448,12 +453,14 @@ arising from name collisions between interfaces. It has a few downsides though:
     declarations that affect name lookup.
 
 **Comparison with other languages:** Both Rust and Swift support external
-implementation. The concept of doing this as an "extension" of the original type
-is more similar to
-[Swift](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277),
-but, unlike Swift, we don't allow a type's API to be modified outside its
-definition. In Rust, all implementations are external as in
-[this example](https://doc.rust-lang.org/rust-by-example/trait.html).
+implementation.
+[Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
+does this as an "extension" of the original type. In Rust, all implementations
+are external as in
+[this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
+Swift and Rust, we don't allow a type's API to be modified outside its
+definition. So in Carbon a type's API is consistent no matter what is imported,
+unlike Swift and Rust.
 
 ### Qualified member names
 
