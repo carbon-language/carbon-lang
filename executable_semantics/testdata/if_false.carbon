@@ -3,13 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> Int {
-  var x: Int = 2;
-  while (true) {
-    if (x == 0) {
-      break;
-    } else {
-      x = x - 1;
-    }
+  if (0 == 1) {
+    return 1;
   }
-  return x;
+
+  return 0;
 }

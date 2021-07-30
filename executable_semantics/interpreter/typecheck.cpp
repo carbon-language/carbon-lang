@@ -20,18 +20,18 @@ namespace Carbon {
 void ExpectType(int line_num, const std::string& context, const Value* expected,
                 const Value* actual) {
   if (!TypeEqual(expected, actual)) {
-    FatalUserError() << line_num << ": type error in " << context << "\n"
-                     << "expected: " << *expected << "\n"
-                     << "actual: " << *actual;
+    FATAL_COMPILATION_ERROR(line_num) << "type error in " << context << "\n"
+                                      << "expected: " << *expected << "\n"
+                                      << "actual: " << *actual;
   }
 }
 
 void ExpectPointerType(int line_num, const std::string& context,
                        const Value* actual) {
   if (actual->tag() != ValKind::PointerType) {
-    FatalUserError() << line_num << ": type error in " << context << "\n"
-                     << "expected a pointer type\n"
-                     << "actual: " << *actual;
+    FATAL_COMPILATION_ERROR(line_num) << "type error in " << context << "\n"
+                                      << "expected a pointer type\n"
+                                      << "actual: " << *actual;
   }
 }
 
@@ -258,20 +258,13 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
   switch (e->tag()) {
     case ExpressionKind::BindingExpression: {
       if (context != TCContext::PatternContext) {
-        llvm::errs()
-            << e->line_num
-            << ": compilation error, pattern variables are only allowed in "
-               "pattern context"
-            << "\n";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(e->line_num)
+            << "pattern variables are only allowed in pattern context";
       }
       auto t = InterpExp(values, e->GetBindingExpression().type);
       if (t->tag() == ValKind::AutoType) {
         if (expected == nullptr) {
-          llvm::errs() << e->line_num
-                       << ": compilation error, auto not allowed here"
-                       << "\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num) << " auto not allowed here";
         } else {
           t = expected;
         }
@@ -297,18 +290,15 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           std::string f = std::to_string(i);
           const Value* field_t = t->GetTupleValue().FindField(f);
           if (field_t == nullptr) {
-            llvm::errs() << e->line_num << ": compilation error, field " << f
-                         << " is not in the tuple " << *t << "\n";
-            exit(-1);
+            FATAL_COMPILATION_ERROR(e->line_num)
+                << "field " << f << " is not in the tuple " << *t;
           }
           auto new_e = Expression::MakeIndexExpression(
               e->line_num, res.exp, Expression::MakeIntLiteral(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
         }
         default:
-          llvm::errs() << e->line_num
-                       << ": compilation error, expected a tuple\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num) << "expected a tuple";
       }
     }
     case ExpressionKind::TupleLiteral: {
@@ -316,15 +306,11 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       std::vector<TupleElement> arg_types;
       auto new_types = types;
       if (expected && expected->tag() != ValKind::TupleValue) {
-        llvm::errs() << e->line_num
-                     << ": compilation error, didn't expect a tuple\n";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(e->line_num) << "didn't expect a tuple";
       }
       if (expected && e->GetTupleLiteral().fields.size() !=
                           expected->GetTupleValue().elements.size()) {
-        llvm::errs() << e->line_num
-                     << ": compilation error, tuples of different length\n";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(e->line_num) << "tuples of different length";
       }
       int i = 0;
       for (auto arg = e->GetTupleLiteral().fields.begin();
@@ -332,12 +318,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         const Value* arg_expected = nullptr;
         if (expected && expected->tag() == ValKind::TupleValue) {
           if (expected->GetTupleValue().elements[i].name != arg->name) {
-            llvm::errs()
-                << e->line_num
-                << ": compilation error, field names do not match, expected "
+            FATAL_COMPILATION_ERROR(e->line_num)
+                << "field names do not match, expected "
                 << expected->GetTupleValue().elements[i].name << " but got "
-                << arg->name << "\n";
-            exit(-1);
+                << arg->name;
           }
           arg_expected = expected->GetTupleValue().elements[i].value;
         }
@@ -373,11 +357,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
               return TCResult(new_e, method.second, res.types);
             }
           }
-          llvm::errs() << e->line_num << ": compilation error, struct "
-                       << t->GetStructType().name
-                       << " does not have a field named "
-                       << e->GetFieldAccessExpression().field << "\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num)
+              << "struct " << t->GetStructType().name
+              << " does not have a field named "
+              << e->GetFieldAccessExpression().field;
         case ValKind::TupleValue:
           for (const TupleElement& field : t->GetTupleValue().elements) {
             if (e->GetFieldAccessExpression().field == field.name) {
@@ -386,11 +369,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
               return TCResult(new_e, field.value, res.types);
             }
           }
-          llvm::errs() << e->line_num << ": compilation error, struct "
-                       << t->GetStructType().name
-                       << " does not have a field named "
-                       << e->GetFieldAccessExpression().field << "\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num)
+              << "struct " << t->GetStructType().name
+              << " does not have a field named "
+              << e->GetFieldAccessExpression().field;
         case ValKind::ChoiceType:
           for (auto vt = t->GetChoiceType().alternatives.begin();
                vt != t->GetChoiceType().alternatives.end(); ++vt) {
@@ -401,18 +383,15 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
               return TCResult(new_e, fun_ty, res.types);
             }
           }
-          llvm::errs() << e->line_num << ": compilation error, struct "
-                       << t->GetStructType().name
-                       << " does not have a field named "
-                       << e->GetFieldAccessExpression().field << "\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num)
+              << "struct " << t->GetStructType().name
+              << " does not have a field named "
+              << e->GetFieldAccessExpression().field;
 
         default:
-          llvm::errs()
-              << e->line_num
-              << ": compilation error in field access, expected a struct\n"
-              << *e << "\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num)
+              << "field access, expected a struct\n"
+              << *e;
       }
     }
     case ExpressionKind::IdentifierExpression: {
@@ -421,9 +400,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       if (type) {
         return TCResult(e, *type, types);
       } else {
-        llvm::errs() << e->line_num << ": could not find `"
-                     << e->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(e->line_num)
+            << "could not find `" << e->GetIdentifierExpression().name << "`";
       }
     }
     case ExpressionKind::IntLiteral:
@@ -522,10 +500,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           return TCResult(new_e, return_type, arg_res.types);
         }
         default: {
-          llvm::errs() << e->line_num
-                       << ": compilation error in call, expected a function\n"
-                       << *e << "\n";
-          exit(-1);
+          FATAL_COMPILATION_ERROR(e->line_num)
+              << "in call, expected a function\n"
+              << *e;
         }
       }
       break;
@@ -723,9 +700,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     if (void_return) {
       return Statement::MakeReturn(line_num, ReturnDetail(line_num));
     } else {
-      llvm::errs()
-          << "control-flow reaches end of non-void function without a return\n";
-      exit(-1);
+      FATAL_COMPILATION_ERROR(line_num)
+          << "control-flow reaches end of non-void function without a return";
     }
   }
   switch (stmt->tag()) {
@@ -779,11 +755,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
             Statement::MakeReturn(stmt->line_num,
                                   ReturnDetail(stmt->line_num)));
       } else {
-        llvm::errs()
-            << stmt->line_num
-            << ": control-flow reaches end of non-void function without a "
-               "return\n";
-        exit(-1);
+        FATAL_COMPILATION_ERROR(stmt->line_num)
+            << "control-flow reaches end of non-void function without a return";
       }
   }
 }
@@ -973,8 +946,8 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
   }
 
   if (found_main == false) {
-    llvm::errs() << "error, program must contain a function named `main`\n";
-    exit(-1);
+    FATAL_COMPILATION_ERROR_NO_LINE()
+        << "program must contain a function named `main`";
   }
   return tops;
 }

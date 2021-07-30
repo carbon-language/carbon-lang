@@ -1,4 +1,4 @@
-ERROR: 6: type error in addition(1)
+COMPILATION ERROR: 6: type error in addition(1)
 expected: Int
 actual: T
 EXIT CODE: 255
