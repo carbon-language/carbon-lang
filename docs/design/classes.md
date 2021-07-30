@@ -1,4 +1,4 @@
-# Structs
+# Classes
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -25,14 +25,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview-1)
 -   [Members](#members)
     -   [Data members have an order](#data-members-have-an-order)
--   [Anonymous structs](#anonymous-structs)
+-   [Struct types](#struct-types)
     -   [Literals](#literals)
     -   [Type expression](#type-expression)
     -   [Option parameters](#option-parameters)
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Future work](#future-work)
-    -   [Nominal struct types](#nominal-struct-types)
+    -   [Nominal class types](#nominal-class-types)
     -   [Construction](#construction)
     -   [Member type](#member-type)
     -   [Self](#self)
@@ -54,22 +54,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-A Carbon `struct` is a user-defined
+A Carbon `class` is a user-defined
 [record type](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
-is the primary mechanism for users to define new types in Carbon. A `struct` has
+is the primary mechanism for users to define new types in Carbon. A `class` has
 members that are referenced by their names, in contrast to a
 [Carbon tuple](tuples.md) which defines a
 [product type](https://en.wikipedia.org/wiki/Product_type) whose members are
 referenced positionally.
 
-Carbon supports both named, or "nominal", and unnamed, or "anonymous", struct
-types. Nominal struct types are all distinct, but anonymous types are equal if
-they have the same list of members. Anonymous struct literals may be used to
-initialize or assign values to named struct variables.
+Carbon supports both named, or "nominal", and unnamed, anonymous, or
+"structural", class types. Nominal class types are all distinct, but structural
+types are equal if they have the same list of members. Structural class literals
+may be used to initialize or assign values to nominal class variables.
 
 ## Use cases
 
-The use cases for structs include both cases motivated by C++ interop, and cases
+The use cases for classes include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
 **This design currently only attempts to address the "data classes" use case.**
@@ -90,7 +90,7 @@ Properties:
 
 -   Operations like copy, move, destroy, unformed, and so on are defined
     field-wise.
--   Anonymous structs types and literals should match data class semantics.
+-   Anonymous classes types and literals should match data class semantics.
 
 Expected in idiomatic Carbon-only code.
 
@@ -491,15 +491,15 @@ they are declared in. This affects the layout of those fields in memory, and the
 order that the fields are destroyed when a value goes out of scope or is
 deallocated.
 
-## Anonymous structs
+## Struct types
 
-Anonymous structs are convenient for defining [data classes](#data-classes) in
-an ad-hoc manner. They would commonly be used:
+_Structural data classes_, or _struct types_, are convenient for defining
+[data classes](#data-classes) in an ad-hoc manner. They would commonly be used:
 
 -   as the return type of a function that returns multiple values and wants
     those values to have names so a [tuple](tuples.md) is inappropriate
 -   as a parameter to a function holding options with default values
--   as an initializer for other `struct` variables or values
+-   as an initializer for other `class` variables or values
 -   as a type parameter to a container
 
 **Future work:** We intend to support nominal [data classes](#data-classes) as
@@ -507,7 +507,8 @@ well.
 
 ### Literals
 
-Anonymous struct literals are written using this syntax:
+_Structural data class literals_, or _struct literals_, are written using this
+syntax:
 
 ```
 var kvpair: auto = {.key = "the", .value = 27};
@@ -524,7 +525,7 @@ This produces a struct value with two fields:
 statements, Carbon will adopt some combination of:
 
 -   looking ahead after a `{` to see if it is followed by `.name`;
--   not allowing a literal struct at the beginning of a statement;
+-   not allowing a struct literal at the beginning of a statement;
 -   only allowing `{` to introduce a compound statement in contexts introduced
     by a keyword where they are required, like requiring `{ ... }` around the
     cases of an `if...else` statement.
@@ -535,28 +536,23 @@ The type of `kvpair` in the last example would be represented by this
 expression:
 
 ```
-struct {.key: String, .value: Int}
+{.key: String, .value: Int}
 ```
 
 This syntax is intended to parallel the literal syntax, and so uses commas (`,`)
 to separate fields instead of a semicolon (`;`) terminator. This choice also
 reflects the expected use inline in function signature declarations.
 
-Anonymous structs may only have data members, so the type declaration is just a
-list of field names, types, and optional defaults.
+Struct types may only have data members, so the type declaration is just a list
+of field names, types, and optional defaults.
 
 ```
-var with_defaults: struct {.x: Int = 0, .y: Int = 0} = {.y = 2};
+var with_defaults: {.x: Int = 0, .y: Int = 0} = {.y = 2};
 Assert(with_defaults.x == 0);
 Assert(with_defaults.y == 2);
 ```
 
-Note that the type syntax uses an introducer to distinguish type declarations
-from struct literals. This is in contrast with what we do for tuples, where we
-can say the type of a tuple is the tuple of the types. That policy wouldn't give
-a good option for defining field defaults in `struct` types.
-
-The result of an anonymous struct expression is an immutable type value.
+The result of a struct type expression is an immutable type value.
 
 ### Option parameters
 
@@ -565,7 +561,7 @@ Consider this function declaration:
 ```
 fn SortIntVector(
     v: Vector(Int)*,
-    options: struct {.stable: Bool = false, .descending: Bool = false} = {});
+    options: {.stable: Bool = false, .descending: Bool = false} = {});
 ```
 
 The `options` parameter defaults to `{}` which will result in the default value
@@ -586,12 +582,12 @@ SortIntVector(&v, {.stable = true, .descending = true});
 
 ### Assignment and initialization
 
-When initializing or assigning a struct variable to an anonymous struct value on
-the right hand side, the order of the fields does not have to match, just the
-names.
+When initializing or assigning a variable with a data class such as a struct
+type to a struct value on the right hand side, the order of the fields does not
+have to match, just the names.
 
 ```
-var different_order: struct {.x: Int, .y: Int} = {.y = 2, .x = 3};
+var different_order: {.x: Int, .y: Int} = {.y = 2, .x = 3};
 Assert(different_order.x == 3);
 Assert(different_order.y == 2);
 
@@ -614,17 +610,17 @@ When initializing or assigning, the order of fields is determined from the
 target on the left side of the `=`. This rule has a couple of benefits:
 
 -   This handles fields missing from the initializer when the fields on the left
-    struct/class have defaults.
+    type have defaults.
 -   This matches what we expect for classes with encapsulation more generally.
 
 ### Operations performed field-wise
 
-Generally speaking, the operations that are available on an anonymous struct
-value are dependent on those operations being available for all the types of the
-fields.
+Generally speaking, the operations that are available on a data class value,
+such as a value with a struct type, are dependent on those operations being
+available for all the types of the fields.
 
-For example, an anonymous struct values may be compared for equality if it is
-supported for every member:
+For example, two values of the same data class type may be compared for equality
+if equality is supported for every member of the type:
 
 ```
 var p: auto = {.x = 2, .y = 3};
@@ -632,12 +628,12 @@ Assert(p == {.x = 2, .y = 3});
 Assert(p != {.x = 2, .y = 4});
 ```
 
-Similarly, an anonymous struct has an unformed state if all its members do.
-Treatment of unformed state follows
+Similarly, a data class has an unformed state if all its members do. Treatment
+of unformed state follows
 [#257](https://github.com/carbon-language/carbon-lang/pull/257).
 
-Ordering comparisons like `<` and `<=` are defined on an anonymous struct type
-if all its field types support it, using
+Ordering comparisons like `<` and `<=` are defined on a data class type if all
+its field types support it, using
 [lexicographical order](https://en.wikipedia.org/wiki/Lexicographic_order).
 
 ```
@@ -654,7 +650,7 @@ Assert({.x = 2, .y = 3} < {.y = 4, .x = 5});
 Destruction is performed field-wise in reverse order.
 
 Extending user-defined operations on the fields to an operation on an entire
-anonymous struct is [future work](#interfaces-implemented-for-data-classes).
+data class is [future work](#interfaces-implemented-for-data-classes).
 
 ## Future work
 
@@ -662,13 +658,13 @@ This includes features that need to be designed, questions to answer, and a
 description of the provisional syntax in use until these decisions have been
 made.
 
-### Nominal struct types
+### Nominal class types
 
-The declarations for nominal `struct` types will have a different format.
+The declarations for nominal class types will have a different format.
 Provisionally we have been using something like this:
 
 ```
-struct TextLabel {
+class TextLabel {
   var x: Int;
   var y: Int;
 
@@ -682,8 +678,8 @@ It is an open question, though, how we will address the
 
 ### Construction
 
-There are a variety of options for constructing `struct` values, we might choose
-to support, including initializing from anonymous struct values:
+There are a variety of options for constructing class values, we might choose to
+support, including initializing from struct values:
 
 ```
 var p1: Point2D = {.x = 1, .y = 2};
@@ -694,11 +690,11 @@ var p4: auto = Point2D(1, 2);
 
 ### Member type
 
-Additional types may be defined in the scope of a `struct` definition.
+Additional types may be defined in the scope of a class definition.
 
 ```
-struct StringCounts {
-  struct Node {
+class StringCounts {
+  class Node {
     var key: String;
     var count: Int;
   }
@@ -711,12 +707,12 @@ The inner type is a member of the type, and is given the name
 
 ### Self
 
-A `struct` definition may provisionally include references to its own name in
+A `class` definition may provisionally include references to its own name in
 limited ways, similar to an incomplete type. What is allowed and forbidden is an
 open question.
 
 ```
-struct IntListNode {
+class IntListNode {
   var data: Int;
   var next: IntListNode*;
 }
@@ -726,7 +722,7 @@ An equivalent definition of `IntListNode`, since `Self` is an alias for the
 current type, is:
 
 ```
-struct IntListNode {
+class IntListNode {
   var data: Int;
   var next: Self*;
 }
@@ -735,8 +731,8 @@ struct IntListNode {
 `Self` refers to the innermost type declaration:
 
 ```
-struct IntList {
-  struct IntListNode {
+class IntList {
+  class IntListNode {
     var data: Int;
     var next: Self*;
   }
@@ -749,7 +745,7 @@ struct IntList {
 Other type constants can provisionally be defined using a `let` declaration:
 
 ```
-struct MyStruct {
+class MyClass {
   let Pi: Float32 = 3.141592653589793;
   let IndexType: Type = Int;
 }
@@ -766,7 +762,7 @@ There are definite questions about this syntax:
 
 A future proposal will incorporate
 [method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
-declaration, definition, and calling into structs. The syntax for declaring
+declaration, definition, and calling into classes. The syntax for declaring
 methods has been decided in
 [question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 Summarizing that issue:
@@ -782,7 +778,7 @@ body members will be accessed through the `me` parameter.
 
 ### Destructuring, pattern matching, and extract
 
-It is an open question how we might destructure or match `struct` values.
+It is an open question how we might destructure or match class values.
 
 ```
 var (key: String, value: Int) = {.key = "k", .value = 42};
@@ -800,7 +796,7 @@ Some discussion on this topic has occurred in:
 
 ### Access control
 
-We will need some way of controlling access to the members of structs. By
+We will need some way of controlling access to the members of classes. By
 default, all members are fully publicly accessible, as decided in
 [issue #665](https://github.com/carbon-language/carbon-lang/issues/665).
 
@@ -819,9 +815,9 @@ implementing corresponding interfaces, see
 
 Carbon will need ways of saying:
 
--   this `struct` type has a virtual method table
--   this `struct` type extends a base type
--   this `struct` type is "final" and may not be extended further
+-   this `class` type has a virtual method table
+-   this `class` type extends a base type
+-   this `class` type is "final" and may not be extended further
 -   this method is "virtual" and may be overridden in descendents
 -   this method is "pure virtual" or "abstract" and must be overridden in
     descendants
@@ -889,9 +885,9 @@ This open question is being considered in
 
 ### Memory layout
 
-Carbon will need some way for users to specify the memory layout of `struct`
-types, such as controlling the packing and alignment for the whole type or
-individual members.
+Carbon will need some way for users to specify the memory layout of class types,
+such as controlling the packing and alignment for the whole type or individual
+members.
 
 ### No `static` variables
 
@@ -929,8 +925,8 @@ support assigning or modifying computed properties, such as using `+=`.
 
 ### Interfaces implemented for data classes
 
-We should define a way for defining implementations of interfaces for anonymous
-structs. To satisfy coherence, these implementations would have to be defined in
+We should define a way for defining implementations of interfaces for struct
+types. To satisfy coherence, these implementations would have to be defined in
 the library with the interface definition. The syntax might look like:
 
 ```
@@ -938,7 +934,7 @@ interface ConstructWidgetFrom {
   fn Construct(Self) -> Widget;
 }
 
-external impl struct {.kind: WidgetKind, .size: Int}
+external impl {.kind: WidgetKind, .size: Int}
     as ConstructWidgetFrom { ... }
 ```
 
