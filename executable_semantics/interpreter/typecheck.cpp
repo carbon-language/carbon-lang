@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
@@ -571,8 +572,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto res = TypeCheckExp(s->GetMatch().exp, types, values, nullptr,
                               TCContext::ValueContext);
       auto res_type = res.type;
-      auto new_clauses =
-          new std::list<std::pair<const Expression*, const Statement*>>();
+      auto new_clauses = global_arena->New<
+          std::list<std::pair<const Expression*, const Statement*>>>();
       for (auto& clause : *s->GetMatch().clauses) {
         new_clauses->push_back(TypecheckCase(
             res_type, clause.first, clause.second, types, values, ret_type));
@@ -705,8 +706,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
   }
   switch (stmt->tag()) {
     case StatementKind::Match: {
-      auto new_clauses =
-          new std::list<std::pair<const Expression*, const Statement*>>();
+      auto new_clauses = global_arena->New<
+          std::list<std::pair<const Expression*, const Statement*>>>();
       for (auto i = stmt->GetMatch().clauses->begin();
            i != stmt->GetMatch().clauses->end(); ++i) {
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
@@ -786,9 +787,9 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(f->line_num, f->name, f->deduced_parameters,
-                                f->param_pattern,
-                                ReifyType(return_type, f->line_num), body);
+  return global_arena->New<FunctionDefinition>(
+      f->line_num, f->name, f->deduced_parameters, f->param_pattern,
+      ReifyType(return_type, f->line_num), body);
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)

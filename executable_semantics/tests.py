@@ -95,9 +95,6 @@ def _update_list():
 
 def _update_golden(test):
     """Updates the golden file for `test` by running executable_semantics."""
-    # TODO(#580): Remove this when leaks are fixed.
-    env = os.environ.copy()
-    env["ASAN_OPTIONS"] = "detect_leaks=0"
     # Invoke the test update directly in order to allow parallel execution
     # (`bazel run` will serialize).
     p = subprocess.run(
@@ -108,7 +105,6 @@ def _update_golden(test):
             + "./testdata/%s.carbon" % test,
             "--update",
         ],
-        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )

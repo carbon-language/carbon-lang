@@ -37,7 +37,7 @@ class Arena {
   class ArenaEntryTyped : public ArenaEntry {
    public:
     template <typename... Args>
-    explicit ArenaEntryTyped(Args&... args)
+    explicit ArenaEntryTyped(Args&&... args)
         : instance(std::forward<Args>(args)...) {}
 
     auto Instance() -> T* { return &instance; }

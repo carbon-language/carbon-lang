@@ -55,6 +55,7 @@ cc_library(
     deps = [
         ":expression",
         "//common:ostream",
+        "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -67,6 +68,7 @@ cc_library(
         ":expression",
         "//common:check",
         "//common:ostream",
+        "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
 )

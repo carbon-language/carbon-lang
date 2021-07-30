@@ -10,6 +10,7 @@
 #include <optional>
 #include <string>
 
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/list_node.h"
 
 namespace Carbon {
@@ -37,7 +38,8 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = new ListNode<std::pair<K, V>>(std::make_pair(k, v), head);
+    head = global_arena->New<ListNode<std::pair<K, V>>>(std::make_pair(k, v),
+                                                        head);
   }
 
   typedef ListNodeIterator<std::pair<K, V>> Iterator;

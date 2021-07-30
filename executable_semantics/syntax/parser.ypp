@@ -60,6 +60,7 @@
 #include "executable_semantics/ast/abstract_syntax_tree.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/syntax/paren_contents.h"
 
 namespace Carbon {
@@ -79,8 +80,8 @@ void yy::parser::error(const location_type&, const std::string& message) {
 }  // %code
 
 %token <int> integer_literal
-%token <char*> identifier
-%type <char*> designator
+%token <std::string> identifier
+%type <std::string> designator
 %type <Carbon::Declaration> declaration
 %type <Carbon::FunctionDefinition> function_declaration
 %type <Carbon::FunctionDefinition> function_definition
@@ -308,18 +309,23 @@ paren_contents_without_trailing_comma:
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>($2, $4); }
+    { $$ = Carbon::global_arena->New<
+          std::pair<const Carbon::Expression*, const Carbon::Statement*>>(
+              $2, $4); }
 | DEFAULT DBLARROW statement
     {
       auto vp = Carbon::Expression::MakeBindingExpression(
           yylineno, "_", Carbon::Expression::MakeAutoTypeLiteral(yylineno));
-      $$ = new std::pair<const Carbon::Expression*, const Carbon::Statement*>(vp, $3);
+      $$ = Carbon::global_arena->New<
+          std::pair<const Carbon::Expression*, const Carbon::Statement*>>(
+              vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
-      $$ = new std::list<std::pair<const Carbon::Expression*, const Carbon::Statement*>>();
+      $$ = Carbon::global_arena->New<std::list<
+          std::pair<const Carbon::Expression*, const Carbon::Statement*>>>();
     }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }

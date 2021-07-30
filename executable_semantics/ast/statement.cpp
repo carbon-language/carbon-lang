@@ -5,6 +5,7 @@
 #include "executable_semantics/ast/statement.h"
 
 #include "common/check.h"
+#include "executable_semantics/common/arena.h"
 
 namespace Carbon {
 
@@ -62,7 +63,7 @@ auto Statement::GetAwait() const -> const Await& {
 
 auto Statement::MakeExpressionStatement(int line_num, const Expression* exp)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = ExpressionStatement({.exp = exp});
   return s;
@@ -70,7 +71,7 @@ auto Statement::MakeExpressionStatement(int line_num, const Expression* exp)
 
 auto Statement::MakeAssign(int line_num, const Expression* lhs,
                            const Expression* rhs) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Assign({.lhs = lhs, .rhs = rhs});
   return s;
@@ -79,7 +80,7 @@ auto Statement::MakeAssign(int line_num, const Expression* lhs,
 auto Statement::MakeVariableDefinition(int line_num, const Expression* pat,
                                        const Expression* init)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = VariableDefinition({.pat = pat, .init = init});
   return s;
@@ -88,7 +89,7 @@ auto Statement::MakeVariableDefinition(int line_num, const Expression* pat,
 auto Statement::MakeIf(int line_num, const Expression* cond,
                        const Statement* then_stmt, const Statement* else_stmt)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = If({.cond = cond, .then_stmt = then_stmt, .else_stmt = else_stmt});
   return s;
@@ -96,21 +97,21 @@ auto Statement::MakeIf(int line_num, const Expression* cond,
 
 auto Statement::MakeWhile(int line_num, const Expression* cond,
                           const Statement* body) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = While({.cond = cond, .body = body});
   return s;
 }
 
 auto Statement::MakeBreak(int line_num) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Break();
   return s;
 }
 
 auto Statement::MakeContinue(int line_num) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Continue();
   return s;
@@ -118,7 +119,7 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
 
 auto Statement::MakeReturn(int line_num, const Expression* e)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Return({.exp = e});
   return s;
@@ -126,7 +127,7 @@ auto Statement::MakeReturn(int line_num, const Expression* e)
 
 auto Statement::MakeSequence(int line_num, const Statement* s1,
                              const Statement* s2) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Sequence({.stmt = s1, .next = s2});
   return s;
@@ -134,7 +135,7 @@ auto Statement::MakeSequence(int line_num, const Statement* s1,
 
 auto Statement::MakeBlock(int line_num, const Statement* stmt)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Block({.stmt = stmt});
   return s;
@@ -144,7 +145,7 @@ auto Statement::MakeMatch(
     int line_num, const Expression* exp,
     std::list<std::pair<const Expression*, const Statement*>>* clauses)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Match({.exp = exp, .clauses = clauses});
   return s;
@@ -155,7 +156,7 @@ auto Statement::MakeMatch(
 auto Statement::MakeContinuation(int line_num,
                                  std::string continuation_variable,
                                  const Statement* body) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value =
       Continuation({.continuation_variable = std::move(continuation_variable),
@@ -166,7 +167,7 @@ auto Statement::MakeContinuation(int line_num,
 // Returns an AST node for a run statement give its line number and argument.
 auto Statement::MakeRun(int line_num, const Expression* argument)
     -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Run({.argument = argument});
   return s;
@@ -174,7 +175,7 @@ auto Statement::MakeRun(int line_num, const Expression* argument)
 
 // Returns an AST node for an await statement give its line number.
 auto Statement::MakeAwait(int line_num) -> const Statement* {
-  auto* s = new Statement();
+  auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   s->value = Await();
   return s;
