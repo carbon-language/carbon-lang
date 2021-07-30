@@ -44,7 +44,7 @@ are subject to full instantiation -- other parameters will be type checked and
 bound early to the extent possible. For example:
 
 ```
-struct Stack(Type$$ T) {
+class Stack(Type$$ T) {
   var Array(T) storage;
 
   fn Push(T value);

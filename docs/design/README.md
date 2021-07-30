@@ -41,7 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Pointers and references](#pointers-and-references)
         -   [Arrays and slices](#arrays-and-slices)
     -   [User-defined types](#user-defined-types)
-        -   [Structs](#structs)
+        -   [Classes](#classes)
             -   [Allocation, construction, and destruction](#allocation-construction-and-destruction)
             -   [Assignment, copying, and moving](#assignment-copying-and-moving)
             -   [Comparison](#comparison)
@@ -151,14 +151,14 @@ cleaned up during evolution.
 Name paths in Carbon always start with the package name. Additional namespaces
 may be specified as desired.
 
-For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
+For example, this code declares a class `Geometry.Shapes.Flat.Circle` in a
 library `Geometry/OneSide`:
 
 ```carbon
 package Geometry library("OneSide") namespace Shapes;
 
 namespace Flat;
-struct Flat.Circle { ... }
+class Flat.Circle { ... }
 ```
 
 This type can be used from another package:
@@ -468,7 +468,7 @@ fn Sum(a: Int, b: Int) -> Int {
 ## Types
 
 > References: [Primitive types](primitive_types.md), [tuples](tuples.md), and
-> [structs](structs.md)
+> [classes](classes.md)
 >
 > **TODO:** References need to be evolved.
 
@@ -576,17 +576,17 @@ fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
 
 ### User-defined types
 
-#### Structs
+#### Classes
 
-> References: [Structs](structs.md)
+> References: [Classes](classes.md)
 
-`struct`s are a way for users to define their own data strutures or named
+`class`es are a way for users to define their own data strutures or named
 product types.
 
 For example:
 
 ```carbon
-struct Widget {
+class Widget {
   var x: Int;
   var y: Int;
   var z: Int;
@@ -607,8 +607,8 @@ Breaking apart `Widget`:
 
 ##### Assignment, copying, and moving
 
-You may use an anonymous struct literal to assign or initialize a `struct`
-variable.
+You may use a _structural data class literal_, also known as a _struct literal_,
+to assign or initialize a variable with a `class` type.
 
 ```carbon
 var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
@@ -773,7 +773,7 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-struct Stack(T:$$ Type) {
+class Stack(T:$$ Type) {
   var storage: Array(T);
 
   fn Push(value: T);
