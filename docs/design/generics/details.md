@@ -3468,6 +3468,9 @@ constraints in a couple of different ways:
     example say this `impl` can only be used if that type satisfies an
     interface.
 
+This follows the approach for expressing
+[constraints in other contexts](#constraints).
+
 **Example:** [Interface constraint] Here we implement the `Printable` interface
 for arrays of `N` elements of `Printable` type `T`, generically for `N`.
 
@@ -3479,7 +3482,7 @@ interface Printable {
 }
 struct FixedArray(T:! Type, N:! Int) { ... }
 
-// By saying "Printable:! T" instead of "Type:! T" here, we constrain
+// By saying "T:! Printable" instead of "T:! Type" here, we constrain
 // T to be Printable for this impl.
 external impl FixedArray(T:! Printable, N:! Int) as Printable {
   fn Print[addr me: Self*]() -> String {
@@ -3519,7 +3522,8 @@ context), and is easier to learn.
 **Note:** This conditional interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 Additional context for alternatives considered are in
-[an appendix](appendix-impl-syntax.md).
+[an appendix](appendix-impl-syntax.md). FIXME: Address these questions in a
+proposal doc.
 
 **Example:** [Same-type constraint] We implement interface `Foo(T)` for
 `Pair(T, U)` when `T` and `U` are the same. Using external impl we can write
@@ -3578,7 +3582,13 @@ struct FixedArray(T:! Type, N:! Int) {
 
 Also known as "blanket `impl`s", these are when you have an `impl` definition
 that is parameterized so it applies to more than a single type and interface
-combination.
+combination. These are in many ways similar to implementations with
+[conditional conformance](#conditional-conformance), with two differences:
+
+-   Since they apply to more than one type they must always be defined as
+    [external impls](#external-impl).
+-   Since multiple blanket `impl`s could apply to a particular type and
+    interface combination, we need rules to resolve those cases of overlap.
 
 FIXME: This section should be rewritten to be about parameterized `impl` in
 general, not just templated. For example, the
@@ -3767,6 +3777,12 @@ Is this acceptable? Do we want to add some restrictions to avoid this problem?
 Is that something we want to require? This would allow us to relax the
 restriction of the previous implication for items that may not be specialized.
 
+**Open question:** Rust doesn't let you define an impl for type `Bar(Baz)` in
+the library with `Baz` unless the library defining `Bar(T)` marks the type as
+"fundamental", in effect promising not to introduce a blanket impl of `Bar(T)`
+that could conflicts. What restrictions should we have to balance the
+flexibility to use different blanket impls with allowing evolution?
+
 **Future Work:** Rust's
 [specialization rules](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#the-default-keyword)
 allow you to omit definitions in the more specific implementation, using the
@@ -3782,6 +3798,22 @@ implementations.
 
 **Comparison with other languages:** See
 [Rust's rules for deciding which impl is more specific](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#defining-the-precedence-rules).
+
+Note that specialization is both tricky and important. Rust started out without
+specialization rules and now is taking a long time to stabilize the feature.
+
+-   The
+    [Rust impl specialization proposal](https://rust-lang.github.io/rfcs/1210-impl-specialization.html)
+    was accepted in June 2015
+-   The
+    [first PR implementing specialization in Rust](https://github.com/rust-lang/rust/pull/30652)
+    was proposed in December 2015 and merged in March 2016.
+-   As of July 2021,
+    [specialization is still not in stable Rust](https://github.com/rust-lang/rust/pull/30652),
+    and lots of work and open questions remain.
+
+Some of this might be simplified in Carbon if we can avoid compatibility
+concerns, but it is still a quite difficult problem.
 
 ## Other constraints as type-of-types
 
