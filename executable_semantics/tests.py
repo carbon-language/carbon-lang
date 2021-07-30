@@ -60,7 +60,11 @@ def _update_list():
     # Get the list of tests and goldens from the filesystem.
     tests = set()
     goldens = set()
-    for f in os.listdir(_TESTDATA):
+    ls_files = subprocess.check_output(["git", "ls-files", _TESTDATA]).decode(
+        "utf-8"
+    )
+    for path in ls_files.splitlines():
+        f = os.path.basename(path)
         basename, ext = os.path.splitext(f)
         if ext == ".carbon":
             tests.add(basename)
