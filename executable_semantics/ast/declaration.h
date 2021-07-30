@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/struct_definition.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -87,6 +88,7 @@ class Declaration {
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

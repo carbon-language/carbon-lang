@@ -12,6 +12,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/syntax/paren_contents.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -178,6 +179,7 @@ struct Expression {
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> ExpressionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
