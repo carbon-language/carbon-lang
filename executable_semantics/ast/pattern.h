@@ -126,12 +126,14 @@ class TuplePattern : public Pattern {
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto AsPattern(int line_num, const ParenContents<Pattern>& paren_contents)
+auto PatternFromParenContents(int line_num,
+                              const ParenContents<Pattern>& paren_contents)
     -> const Pattern*;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
-auto AsTuplePattern(int line_num, const ParenContents<Pattern>& paren_contents)
+auto TuplePatternFromParenContents(int line_num,
+                                   const ParenContents<Pattern>& paren_contents)
     -> const TuplePattern*;
 
 // Converts `contents` to ParenContents<Pattern> by replacing each Expression

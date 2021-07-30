@@ -11,17 +11,19 @@
 
 namespace Carbon {
 
-auto AsExpression(int line_num, const ParenContents<Expression>& paren_contents)
+auto ExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
     -> const Expression* {
   std::optional<const Expression*> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return AsTuple(line_num, paren_contents);
+    return TupleExpressionFromParenContents(line_num, paren_contents);
   }
 }
 
-auto AsTuple(int line_num, const ParenContents<Expression>& paren_contents)
+auto TupleExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
     -> const Expression* {
   return Expression::MakeTupleLiteral(
       line_num, paren_contents.TupleElements<FieldInitializer>(line_num));

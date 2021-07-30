@@ -21,12 +21,14 @@ class Pattern;
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto AsExpression(int line_num, const ParenContents<Expression>& paren_contents)
+auto ExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
     -> const Expression*;
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // forming a tuple.
-auto AsTuple(int line_num, const ParenContents<Expression>& paren_contents)
+auto TupleExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
     -> const Expression*;
 
 // A FieldInitializer represents the initialization of a single tuple field.

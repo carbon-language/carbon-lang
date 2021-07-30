@@ -268,10 +268,10 @@ expression:
 designator: "." identifier { $$ = $2; }
 ;
 paren_expression: paren_expression_base
-    { $$ = Carbon::AsExpression(yylineno, $1); }
+    { $$ = Carbon::ExpressionFromParenContents(yylineno, $1); }
 ;
 tuple: paren_expression_base
-    { $$ = Carbon::AsTuple(yylineno, $1); }
+    { $$ = Carbon::TupleExpressionFromParenContents(yylineno, $1); }
 ;
 paren_expression_element:
   expression
@@ -327,7 +327,7 @@ binding_lhs:
 | UNDERSCORE { $$ = std::nullopt; }
 ;
 paren_pattern: paren_pattern_base
-    { $$ = Carbon::AsPattern(yylineno, $1); }
+    { $$ = Carbon::PatternFromParenContents(yylineno, $1); }
 ;
 paren_pattern_base:
   "(" paren_pattern_contents ")"
@@ -369,7 +369,7 @@ paren_pattern_element:
     { $$ = {.name = $1, .term = $3}; }
 ;
 tuple_pattern: paren_pattern_base
-    { $$ = Carbon::AsTuplePattern(yylineno, $1); }
+    { $$ = Carbon::TuplePatternFromParenContents(yylineno, $1); }
 ;
 // Unlike most `pattern` nonterminals, this one overlaps with `expression`,
 // so it should be used only when prior context (such as an introducer)

@@ -4,6 +4,8 @@
 
 #include "executable_semantics/ast/expression.h"
 
+#include <string>
+
 #include "executable_semantics/syntax/paren_contents.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -11,12 +13,21 @@
 namespace Carbon {
 namespace {
 
+using testing::ElementsAre;
 using testing::IsEmpty;
+
+// Matches a FieldInitializer named `name` whose `expression` is an
+// `IntLiteral`
+MATCHER_P(IntFieldNamed, name, "") {
+  return arg.name == std::string(name) &&
+         arg.expression->tag() == ExpressionKind::IntLiteral;
+}
 
 TEST(ExpressionTest, EmptyAsExpression) {
   ParenContents<Expression> contents = {.elements = {},
                                         .has_trailing_comma = false};
-  const Expression* expression = AsExpression(/*line_num=*/1, contents);
+  const Expression* expression =
+      ExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::TupleLiteral);
   EXPECT_THAT(expression->GetTupleLiteral().fields, IsEmpty());
@@ -25,10 +36,11 @@ TEST(ExpressionTest, EmptyAsExpression) {
 TEST(ExpressionTest, EmptyAsTuple) {
   ParenContents<Expression> contents = {.elements = {},
                                         .has_trailing_comma = false};
-  const Expression* tuple = AsTuple(/*line_num=*/1, contents);
+  const Expression* tuple =
+      TupleExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::TupleLiteral);
-  EXPECT_EQ(tuple->GetTupleLiteral().fields.size(), 0);
+  EXPECT_THAT(tuple->GetTupleLiteral().fields, IsEmpty());
 }
 
 TEST(ExpressionTest, UnaryNoCommaAsExpression) {
@@ -43,7 +55,8 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
                     .term = Expression::MakeIntLiteral(/*line_num=*/2, 42)}},
       .has_trailing_comma = false};
 
-  const Expression* expression = AsExpression(/*line_num=*/1, contents);
+  const Expression* expression =
+      ExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(expression->line_num, 2);
   ASSERT_EQ(expression->tag(), ExpressionKind::IntLiteral);
 }
@@ -54,13 +67,11 @@ TEST(ExpressionTest, UnaryNoCommaAsTuple) {
                     .term = Expression::MakeIntLiteral(/*line_num=*/2, 42)}},
       .has_trailing_comma = false};
 
-  const Expression* tuple = AsTuple(/*line_num=*/1, contents);
+  const Expression* tuple =
+      TupleExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::TupleLiteral);
-  std::vector<FieldInitializer> fields = tuple->GetTupleLiteral().fields;
-  ASSERT_EQ(fields.size(), 1);
-  EXPECT_EQ(fields[0].name, "0");
-  EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::IntLiteral);
+  EXPECT_THAT(tuple->GetTupleLiteral().fields, ElementsAre(IntFieldNamed("0")));
 }
 
 TEST(ExpressionTest, UnaryWithCommaAsExpression) {
@@ -69,13 +80,12 @@ TEST(ExpressionTest, UnaryWithCommaAsExpression) {
                     .term = Expression::MakeIntLiteral(/*line_num=*/2, 42)}},
       .has_trailing_comma = true};
 
-  const Expression* expression = AsExpression(/*line_num=*/1, contents);
+  const Expression* expression =
+      ExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::TupleLiteral);
-  std::vector<FieldInitializer> fields = expression->GetTupleLiteral().fields;
-  ASSERT_EQ(fields.size(), 1);
-  EXPECT_EQ(fields[0].name, "0");
-  EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::IntLiteral);
+  EXPECT_THAT(expression->GetTupleLiteral().fields,
+              ElementsAre(IntFieldNamed("0")));
 }
 
 TEST(ExpressionTest, UnaryWithCommaAsTuple) {
@@ -84,13 +94,11 @@ TEST(ExpressionTest, UnaryWithCommaAsTuple) {
                     .term = Expression::MakeIntLiteral(/*line_num=*/2, 42)}},
       .has_trailing_comma = true};
 
-  const Expression* tuple = AsTuple(/*line_num=*/1, contents);
+  const Expression* tuple =
+      TupleExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::TupleLiteral);
-  std::vector<FieldInitializer> fields = tuple->GetTupleLiteral().fields;
-  ASSERT_EQ(fields.size(), 1);
-  EXPECT_EQ(fields[0].name, "0");
-  EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::IntLiteral);
+  EXPECT_THAT(tuple->GetTupleLiteral().fields, ElementsAre(IntFieldNamed("0")));
 }
 
 TEST(ExpressionTest, BinaryAsExpression) {
@@ -101,15 +109,12 @@ TEST(ExpressionTest, BinaryAsExpression) {
                     .term = Expression::MakeIntLiteral(/*line_num=*/3, 42)}},
       .has_trailing_comma = true};
 
-  const Expression* expression = AsExpression(/*line_num=*/1, contents);
+  const Expression* expression =
+      ExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::TupleLiteral);
-  std::vector<FieldInitializer> fields = expression->GetTupleLiteral().fields;
-  ASSERT_EQ(fields.size(), 2);
-  EXPECT_EQ(fields[0].name, "0");
-  EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::IntLiteral);
-  EXPECT_EQ(fields[1].name, "1");
-  EXPECT_EQ(fields[1].expression->tag(), ExpressionKind::IntLiteral);
+  EXPECT_THAT(expression->GetTupleLiteral().fields,
+              ElementsAre(IntFieldNamed("0"), IntFieldNamed("1")));
 }
 
 TEST(ExpressionTest, BinaryAsTuple) {
@@ -120,15 +125,12 @@ TEST(ExpressionTest, BinaryAsTuple) {
                     .term = Expression::MakeIntLiteral(/*line_num=*/3, 42)}},
       .has_trailing_comma = true};
 
-  const Expression* tuple = AsTuple(/*line_num=*/1, contents);
+  const Expression* tuple =
+      TupleExpressionFromParenContents(/*line_num=*/1, contents);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::TupleLiteral);
-  std::vector<FieldInitializer> fields = tuple->GetTupleLiteral().fields;
-  ASSERT_EQ(fields.size(), 2);
-  EXPECT_EQ(fields[0].name, "0");
-  EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::IntLiteral);
-  EXPECT_EQ(fields[1].name, "1");
-  EXPECT_EQ(fields[1].expression->tag(), ExpressionKind::IntLiteral);
+  EXPECT_THAT(tuple->GetTupleLiteral().fields,
+              ElementsAre(IntFieldNamed("0"), IntFieldNamed("1")));
 }
 
 }  // namespace

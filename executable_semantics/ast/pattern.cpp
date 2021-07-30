@@ -61,17 +61,19 @@ TuplePattern::TuplePattern(const Expression* tuple_literal)
   }
 }
 
-auto AsPattern(int line_num, const ParenContents<Pattern>& paren_contents)
+auto PatternFromParenContents(int line_num,
+                              const ParenContents<Pattern>& paren_contents)
     -> const Pattern* {
   std::optional<const Pattern*> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return AsTuplePattern(line_num, paren_contents);
+    return TuplePatternFromParenContents(line_num, paren_contents);
   }
 }
 
-auto AsTuplePattern(int line_num, const ParenContents<Pattern>& paren_contents)
+auto TuplePatternFromParenContents(int line_num,
+                                   const ParenContents<Pattern>& paren_contents)
     -> const TuplePattern* {
   return new TuplePattern(
       line_num, paren_contents.TupleElements<TuplePattern::Field>(line_num));
