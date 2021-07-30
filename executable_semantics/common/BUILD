@@ -5,6 +5,15 @@
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
+    name = "arena",
+    srcs = ["arena.cpp"],
+    hdrs = ["arena.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "error",
     hdrs = ["error.h"],
     deps = [
