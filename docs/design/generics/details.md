@@ -3300,7 +3300,7 @@ determine canonical types.
 
 **Note:** This algorithm still works with the `.Self` feature from the
 ["recursive constraints" section](#recursive-constraints). For example, the
-expression `var Y` means `Y.X:! A(.X = .Self) == Y` and so the `.Self` on the
+expression `var Y:! A(.X = .Self)` means `Y.X == Y` and so the `.Self` on the
 right-side represents a shorter and earlier type expression. This precludes
 introducing a loop and so is safe.
 
