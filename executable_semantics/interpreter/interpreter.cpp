@@ -20,6 +20,9 @@
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Casting.h"
+
+using llvm::cast;
 
 namespace Carbon {
 
@@ -114,7 +117,7 @@ void InitEnv(const Declaration& d, Env* env) {
             state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      auto pt = InterpExp(new_env, func_def.param_pattern);
+      auto pt = InterpPattern(new_env, func_def.param_pattern);
       auto f = Value::MakeFunctionValue(func_def.name, pt, func_def.body);
       Address a = state->heap.AllocateValue(f);
       env->Set(func_def.name, a);
@@ -128,9 +131,11 @@ void InitEnv(const Declaration& d, Env* env) {
       for (const Member* m : struct_def.members) {
         switch (m->tag()) {
           case MemberKind::FieldMember: {
-            const auto& field = m->GetFieldMember();
-            auto t = InterpExp(Env(), field.type);
-            fields.push_back(make_pair(field.name, t));
+            const BindingPattern* binding = m->GetFieldMember().binding;
+            const Expression* type_expression =
+                cast<ExpressionPattern>(binding->Type())->Expression();
+            auto type = InterpExp(Env(), type_expression);
+            fields.push_back(make_pair(*binding->Name(), type));
             break;
           }
         }
@@ -161,7 +166,7 @@ void InitEnv(const Declaration& d, Env* env) {
       // result of evaluating the initializer.
       auto v = InterpExp(*env, var.initializer);
       Address a = state->heap.AllocateValue(v);
-      env->Set(var.name, a);
+      env->Set(*var.binding->Name(), a);
       break;
     }
   }
@@ -502,9 +507,7 @@ void StepLvalue() {
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::AutoTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::BindingExpression: {
+    case ExpressionKind::ContinuationTypeLiteral: {
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << *exp;
     }
@@ -521,19 +524,6 @@ void StepExp() {
     llvm::outs() << "--- step exp " << *exp << " --->\n";
   }
   switch (exp->tag()) {
-    case ExpressionKind::BindingExpression: {
-      if (act->pos == 0) {
-        frame->todo.Push(
-            Action::MakeExpressionAction(exp->GetBindingExpression().type));
-        act->pos++;
-      } else {
-        auto v = Value::MakeBindingPlaceholderValue(
-            exp->GetBindingExpression().name, act->results[0]);
-        frame->todo.Pop(1);
-        frame->todo.Push(Action::MakeValAction(v));
-      }
-      break;
-    }
     case ExpressionKind::IndexExpression: {
       if (act->pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -696,13 +686,6 @@ void StepExp() {
       frame->todo.Push(Action::MakeValAction(v));
       break;
     }
-    case ExpressionKind::AutoTypeLiteral: {
-      CHECK(act->pos == 0);
-      const Value* v = Value::MakeAutoType();
-      frame->todo.Pop(1);
-      frame->todo.Push(Action::MakeValAction(v));
-      break;
-    }
     case ExpressionKind::TypeTypeLiteral: {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeTypeType();
@@ -739,6 +722,91 @@ void StepExp() {
       break;
     }
   }  // switch (exp->tag)
+}
+
+void StepPattern() {
+  Frame* frame = state->stack.Top();
+  Action* act = frame->todo.Top();
+  const Pattern* pattern = act->GetPatternAction().pattern;
+  if (tracing_output) {
+    llvm::outs() << "--- step pattern " << *pattern << " --->\n";
+  }
+  switch (pattern->Tag()) {
+    case Pattern::Kind::AutoPattern: {
+      CHECK(act->pos == 0);
+      const Value* v = Value::MakeAutoType();
+      frame->todo.Pop(1);
+      frame->todo.Push(Action::MakeValAction(v));
+      break;
+    }
+    case Pattern::Kind::BindingPattern: {
+      const auto& binding = cast<BindingPattern>(*pattern);
+      if (act->pos == 0) {
+        frame->todo.Push(Action::MakePatternAction(binding.Type()));
+        act->pos++;
+      } else {
+        auto v =
+            Value::MakeBindingPlaceholderValue(binding.Name(), act->results[0]);
+        frame->todo.Pop(1);
+        frame->todo.Push(Action::MakeValAction(v));
+      }
+      break;
+    }
+    case Pattern::Kind::TuplePattern: {
+      const auto& tuple = cast<TuplePattern>(*pattern);
+      if (act->pos == 0) {
+        if (tuple.Fields().empty()) {
+          frame->todo.Pop(1);
+          frame->todo.Push(Action::MakeValAction(Value::MakeTupleValue({})));
+        } else {
+          const Pattern* p1 = tuple.Fields()[0].pattern;
+          frame->todo.Push(Action::MakePatternAction(p1));
+          act->pos++;
+        }
+      } else if (act->pos != static_cast<int>(tuple.Fields().size())) {
+        //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
+        //    H}
+        // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
+        // H}
+        const Pattern* elt = tuple.Fields()[act->pos].pattern;
+        frame->todo.Push(Action::MakePatternAction(elt));
+        act->pos++;
+      } else {
+        std::vector<TupleElement> elements;
+        for (size_t i = 0; i < tuple.Fields().size(); ++i) {
+          elements.push_back(
+              {.name = tuple.Fields()[i].name, .value = act->results[i]});
+        }
+        const Value* tuple_value = Value::MakeTupleValue(std::move(elements));
+        frame->todo.Pop(1);
+        frame->todo.Push(Action::MakeValAction(tuple_value));
+      }
+      break;
+    }
+    case Pattern::Kind::AlternativePattern: {
+      const auto& alternative = cast<AlternativePattern>(*pattern);
+      if (act->pos == 0) {
+        frame->todo.Push(
+            Action::MakeExpressionAction(alternative.ChoiceType()));
+        act->pos++;
+      } else if (act->pos == 1) {
+        frame->todo.Push(Action::MakePatternAction(alternative.Arguments()));
+        act->pos++;
+      } else {
+        CHECK(act->pos == 2);
+        const auto& choice_type = act->results[0]->GetChoiceType();
+        frame->todo.Pop(1);
+        frame->todo.Push(Action::MakeValAction(Value::MakeAlternativeValue(
+            alternative.AlternativeName(), choice_type.name, act->results[1])));
+      }
+      break;
+    }
+    case Pattern::Kind::ExpressionPattern:
+      frame->todo.Pop(1);
+      frame->todo.Push(Action::MakeExpressionAction(
+          cast<ExpressionPattern>(pattern)->Expression()));
+      break;
+  }
 }
 
 auto IsWhileAct(Action* act) -> bool {
@@ -810,7 +878,7 @@ void StepStmt() {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          frame->todo.Push(Action::MakeExpressionAction(c->first));
+          frame->todo.Push(Action::MakePatternAction(c->first));
           act->pos++;
         } else {  // try to match
           auto v = act->results[0];
@@ -916,7 +984,7 @@ void StepStmt() {
         act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(
-            Action::MakeExpressionAction(stmt->GetVariableDefinition().pat));
+            Action::MakePatternAction(stmt->GetVariableDefinition().pat));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
@@ -1098,6 +1166,9 @@ void Step() {
     case ActionKind::ExpressionAction:
       StepExp();
       break;
+    case ActionKind::PatternAction:
+      StepPattern();
+      break;
     case ActionKind::StatementAction:
       StepStmt();
       break;
@@ -1141,6 +1212,21 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto todo = Stack(Action::MakeExpressionAction(e));
   auto* scope = new Scope(values, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
+  state->stack = Stack(frame);
+
+  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
+         state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
+    Step();
+  }
+  const Value* v = state->stack.Top()->todo.Top()->GetValAction().val;
+  return v;
+}
+
+// Interpret a pattern at compile-time.
+auto InterpPattern(Env values, const Pattern* p) -> const Value* {
+  auto todo = Stack(Action::MakePatternAction(p));
+  auto* scope = new Scope(values, std::list<std::string>());
+  auto* frame = new Frame("InterpPattern", Stack(scope), todo);
   state->stack = Stack(frame);
 
   while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||

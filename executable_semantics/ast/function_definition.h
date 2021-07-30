@@ -7,6 +7,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "llvm/Support/Compiler.h"
 
@@ -23,8 +24,8 @@ struct FunctionDefinition {
   FunctionDefinition() = default;
   FunctionDefinition(int line_num, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     const Expression* param_pattern, ReturnInfo return_type,
-                     const Statement* body)
+                     const TuplePattern* param_pattern,
+                     const Pattern* return_type, const Statement* body)
       : line_num(line_num),
         name(std::move(name)),
         deduced_parameters(deduced_params),
@@ -39,8 +40,8 @@ struct FunctionDefinition {
   int line_num;
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
-  const Expression* param_pattern;
-  ReturnInfo return_type;
+  const TuplePattern* param_pattern;
+  const Pattern* return_type;
   const Statement* body;
 };
 

@@ -60,7 +60,6 @@ TEST_LIST = [
     "match_int",
     "match_int_default",
     "match_placeholder",
-    "match_type",
     "next",
     "no_match",
     "pattern_init",
