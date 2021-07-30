@@ -1444,7 +1444,7 @@ interface Printable {
 interface Comparable {
   fn Less[me: Self](that: Self) -> Bool;
 }
-struct Song {
+class Song {
   impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter SongByTitle for Song {
@@ -1535,7 +1535,7 @@ parameterized type. Consider three compatible types, all of which implement
 `Hashable`:
 
 ```
-struct Song {
+class Song {
   impl as Hashable { ... }
   impl as Printable { ... }
 }
@@ -1575,7 +1575,7 @@ starts from the original type's existing API by using the `extends` keyword
 instead of `for`:
 
 ```
-struct Song {
+class Song {
   impl as Hashable { ... }
   impl as Printable { ... }
 }
@@ -1670,7 +1670,7 @@ adapter ComparableFromDifferenceFn
     }
   }
 }
-struct IntWrapper {
+class IntWrapper {
   var x: Int;
   fn Difference(this: Self, that: Self) {
     return that.x - this.x;
@@ -1708,7 +1708,7 @@ Implementations of `NSpacePoint` for different types might have different values
 for `N`:
 
 ```
-struct Point2D {
+class Point2D {
   impl as NSpacePoint {
     let N: Int = 2;
     fn Get[addr me: Self*](i: Int) -> Float64 { ... }
@@ -1717,7 +1717,7 @@ struct Point2D {
   }
 }
 
-struct Point3D {
+class Point3D {
   impl as NSpacePoint {
     let N: Int = 3;
     fn Get[addr me: Self*](i: Int) -> Float64 { ... }
@@ -1762,7 +1762,7 @@ interface DeserializeFromString {
   fn Deserialize(serialized: String) -> Self;
 }
 
-struct MySerializableType {
+class MySerializableType {
   var i: Int;
 
   impl as DeserializeFromString {
@@ -1809,8 +1809,8 @@ of `StackAssociatedType` must also define. For example, maybe `DynamicArray`
 implements `StackAssociatedType`:
 
 ```
-struct DynamicArray(T:! Type) {
-  struct IteratorType { ... }
+class DynamicArray(T:! Type) {
+  class IteratorType { ... }
   fn Begin[addr me: Self*]() -> IteratorType;
   fn End[addr me: Self*]() -> IteratorType;
   fn Insert[addr me: Self*](pos: IteratorType, value: T);
@@ -1884,7 +1884,7 @@ For the above example, this would mean figuring out `ElementType == T` from
 context:
 
 ```
-struct DynamicArray(T:! Type) {
+class DynamicArray(T:! Type) {
   // ...
 
   impl as StackAssociatedType {
@@ -1912,7 +1912,7 @@ interface Has2OverloadsWithDefaults {
   fn F[me: Self](x: T, y: T.ElementType) { ... }
 }
 
-struct S {
+class S {
   impl as Has2OverloadsWithDefaults {
      // Unclear if T == DynamicArray(Int) or
      // T == DynamicArray(DynamicArray(Int)).
@@ -1947,11 +1947,11 @@ interface Container {
 is represented by:
 
 ```
-struct Iterator(Self:! Type) {
+class Iterator(Self:! Type) {
   var Advance: fnty(this: Self*);
   ...
 }
-struct Container(Self:! Type) {
+class Container(Self:! Type) {
   // Representation type for the iterator.
   let IteratorType: Type;
   // Witness that IteratorType implements Iterator.
@@ -1986,7 +1986,7 @@ Then `StackParameterized(Fruit)` and `StackParameterized(Veggie)` would be
 considered different interfaces, with distinct implementations.
 
 ```
-struct Produce {
+class Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
   impl as StackParameterized(Fruit) {
@@ -2052,7 +2052,7 @@ interface EquatableWith(T:! Type) {
   fn Equals[me: Self](that: T) -> Bool;
   ...
 }
-struct Complex {
+class Complex {
   var real: Float64;
   var imag: Float64;
   // Can implement this interface more than once as long as it has different
@@ -2080,7 +2080,7 @@ that the interface parameters will always be different. For example:
 interface Map(FromType:! Type, ToType:! Type) {
   fn Map[addr me: Self*](needle: FromType) -> Optional(ToType);
 }
-struct Bijection(FromType:! Type, ToType:! Type) {
+class Bijection(FromType:! Type, ToType:! Type) {
   impl as Map(FromType, ToType) { ... }
   impl as Map(ToType, FromType) { ... }
 }
@@ -2093,7 +2093,7 @@ contain the `impl` for the reverse map lookup, instead of implementing the `Map`
 interface twice:
 
 ```
-struct Bijection(FromType:! Type, ToType:! Type) {
+class Bijection(FromType:! Type, ToType:! Type) {
   impl as Map(FromType, ToType) { ... }
 }
 adapter ReverseLookup(FromType:! Type, ToType:! Type)
@@ -2205,7 +2205,7 @@ in:
 fn F[V:! D](v: V) where ... { ... }
 
 // Constraints on a type parameter:
-struct S(T:! B) where ... { ... }
+class S(T:! B) where ... { ... }
 
 // Constraints on an interface parameter:
 interface A(T:! B) where ... {
@@ -2741,7 +2741,7 @@ TODO: This use case was part of the
 
 ```
 // Some parametized type.
-struct Vector(T:! Type) { ... }
+class Vector(T:! Type) { ... }
 
 // Parameterized type implements interface only for some arguments.
 external impl Vector(String) as Printable { ... }
@@ -2926,7 +2926,7 @@ The `KeyType` in these declarations does not satisfy the requirements of
 others like `Sized`, `EqualityComparable`, `Movable`, and so on.
 
 ```
-struct HashMap(
+class HashMap(
     KeyType:! Hashable & Sized & EqualityComparable & Movable,
     ...) { ... }
 ```
@@ -2983,7 +2983,7 @@ And additional restrictions on those types depend on the definition of `Bar`.
 For example, this definition
 
 ```
-struct Bar(A:! Type, B:! ComparableWith(A)) { ... }
+class Bar(A:! Type, B:! ComparableWith(A)) { ... }
 ```
 
 would imply that all the type arguments to `I` would have to be comparable with
@@ -3476,7 +3476,7 @@ First, showing this with an [`external impl`](#external-impl):
 interface Printable {
   fn Print[addr me: Self*]() -> String;
 }
-struct FixedArray(T:! Type, N:! Int) { ... }
+class FixedArray(T:! Type, N:! Int) { ... }
 
 // By saying "T:! Printable" instead of "T:! Type" here, we constrain
 // T to be Printable for this impl.
@@ -3495,11 +3495,11 @@ external impl FixedArray(T:! Printable, N:! Int) as Printable {
 }
 ```
 
-To define these `impl`s inline in a `struct` definition, include a more-specific
+To define these `impl`s inline in a `class` definition, include a more-specific
 type between the `impl` and `as` keywords.
 
 ```
-struct FixedArray(T:! Type, N:! Int) {
+class FixedArray(T:! Type, N:! Int) {
   // A few different syntax possibilities here:
   impl FixedArray(P:! Printable, N2:! Int) as Printable { ... }
   impl FixedArray(P:! Printable, N) as Printable { ... }
@@ -3527,7 +3527,7 @@ this either directly, or using deduced parameters in square brackets.
 
 ```
 interface Foo(T:! Type) { ... }
-struct Pair(T:! Type, U:! Type) { ... }
+class Pair(T:! Type, U:! Type) { ... }
 external impl Pair(T:! Type, T) as Foo(T) { ... }
 
 // Alternatively:
@@ -3537,7 +3537,7 @@ external impl Pair[T:! Type](T, T) as Foo(T) { ... }
 You may also define the `impl` inline:
 
 ```
-struct Pair(T:! Type, U:! Type) {
+class Pair(T:! Type, U:! Type) {
   impl Pair(T, T) as Foo(T) { ... }
 }
 ```
@@ -3566,7 +3566,7 @@ interfaces. We will likely instead just use a more specific type in place of
 cases.
 
 ```
-struct FixedArray(T:! Type, N:! Int) {
+class FixedArray(T:! Type, N:! Int) {
   // ...
   fn *) Print[me: FixedArray[P:! Printable](P, N]() { ... }
 }
@@ -3703,7 +3703,7 @@ interface, as in this example:
 interface EquatableWith(T:! Type) { ... }
 // Types can implement parameterized interfaces more than once as long as the
 // templated arguments differ.
-struct Complex {
+class Complex {
   var r: Float64;
   var i: Float64;
   impl as EquatableWith(Complex) { ... }
@@ -3858,7 +3858,7 @@ the same way as the type `U`.
 For example, if we have a type `HashSet(T)`:
 
 ```
-struct HashSet(T:! Hashable) { ... }
+class HashSet(T:! Hashable) { ... }
 ```
 
 Then `HashSet(T)` may be cast to `HashSet(U)` if
@@ -3892,7 +3892,7 @@ fn CombinedLess[T:! Type](a: T, b: T,
 Used as:
 
 ```
-struct Song { ... }
+class Song { ... }
 adapter SongByArtist for Song { impl as Comparable { ... } }
 adapter SongByTitle for Song { impl as Comparable { ... } }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
@@ -3957,7 +3957,7 @@ What is the size of a type?
 -   It could be fully known and fixed at compile time -- this is true of
     primitive types (`Int32`, `Float64`, etc.) most other concrete types (for
     example most FIXME
-    [structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
+    [classes](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
 -   It could be known generically. This means that it will be known at codegen
     time, but not at type-checking time.
 -   It could be dynamic. For example, it could be a FIXME
@@ -3987,7 +3987,7 @@ Example:
 interface Foo {
   impl as DefaultConstructible;  // See "interface requiring other interfaces".
 }
-struct Bar {  // Structs are "sized" by default.
+class Bar {  // Classes are "sized" by default.
   impl as Foo;
 }
 fn F[T: Foo](x: T*) {  // T is unsized.
@@ -4062,7 +4062,7 @@ they have in common is using a runtime/dynamic type value (using
 `InterfaceName:! type_name`, with a `!`). In the first case,
 [we make the type parameter to a function dynamic](#runtime-type-parameters). In
 the second case,
-[we use a dynamic type value as a field in a struct](#runtime-type-fields). In
+[we use a dynamic type value as a field in a class](#runtime-type-fields). In
 both cases, we have a name bound to a runtime type value, which is modeled by a
 [dynamic-dispatch witness table](terminology.md#dynamic-dispatch-witness-table)
 instead of the
@@ -4165,11 +4165,11 @@ Example:
 interface Printable {
   fn Print[addr me: Self*]();
 }
-struct AnInt {
+class AnInt {
   var x: Int;
   impl as Printable { fn Print[addr me: Self*]() { PrintInt(this->x); } }
 }
-struct AString {
+class AString {
   var x: String;
   impl as Printable { fn Print[addr me: Self*]() { PrintString(this->x); } }
 }
@@ -4268,8 +4268,8 @@ TODO
 ```
 // Note: InterfaceType is essentially "TypeOfTypeOfType".
 // It allows `TT` to be any interface or type-of-type.
-struct DynPtr(template TT:! InterfaceType) {
-  struct DynPtrImpl {
+class DynPtr(template TT:! InterfaceType) {
+  class DynPtrImpl {
     private t: TT;
     // The type of `p` is really `t*` instead of `Void*`.
     private p: Void*;
@@ -4365,7 +4365,7 @@ copying if `T` does.
 
 ```
 // Boxed is sized and movable even if T is not.
-struct Boxed(T:! Type,
+class Boxed(T:! Type,
              // May be able to add more constraints on AllocatorType (like
              // sized & movable) so we could make it a generic argument?
              template AllocatorType:! AllocatorInterface = DefaultAllocatorType) {
@@ -4411,7 +4411,7 @@ Like `Boxed(T)`, it owns that pointer.
 TODO
 
 ```
-struct DynBoxed(template TT:! InterfaceType,
+class DynBoxed(template TT:! InterfaceType,
                 template AllocatorInterface:! AllocatorType = DefaultAllocatorType) {
   private var p: DynTT*;
   private var allocator: AllocatorType;
@@ -4504,7 +4504,7 @@ interface Foo { fn F[addr me: Self*](); }
 fn UseBoxed[T:! Foo, BoxType:! MaybeBoxed(.T=T)](x: BoxType) {
   x->F();  // Possible indirection is visible
 }
-struct Bar { impl as Foo { ... } }
+class Bar { impl as Foo { ... } }
 var y: DynBoxed(Foo) = new Bar(...);
 UseBoxed(y);
 // DontBox might not be needed, if Bar meets the requirements to use the
@@ -4672,7 +4672,7 @@ The problem is that the name lookup rules might pick different a different
 we had a `Song` type with two slightly different `Print` definitions:
 
 ```
-struct Song {
+class Song {
   // ...
   impl as ConvertibleToString {
     fn ToString[me: Self]() -> String { ... }
@@ -4824,7 +4824,7 @@ Examples of things we might want to express:
     a type `U` and returns a type that implements `QueueInterface(U)`:
 
 ```
-struct PriorityQueue(
+class PriorityQueue(
     Type:! T, QueueLike:! fnty (U:! Type)->QueueInterface(U)) {
   ...
 }
