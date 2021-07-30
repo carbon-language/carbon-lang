@@ -1187,7 +1187,7 @@ interface ConvertibleTo(T:! Type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  var AssociatedType:! Type;
+  leet AssociatedType: Type;
   extends ConvertibleTo(AssociatedType);
 }
 ```
@@ -1348,7 +1348,7 @@ the capabilities of the iterator being passed in:
 
 ```
 interface ForwardIterator {
-  var Element:! Type;
+  let Element: Type;
   fn Advance[addr me: Self*]();
   fn Get[me: Self]() -> Element;
 }
@@ -1684,10 +1684,9 @@ struct IntWrapper {
 
 In addition to associated methods, we allow other kinds of associated items. For
 consistency, we use the same syntax to describe a constant in an interface as in
-a type without assigning a value. Since these are compile-time constants with
-unknown value until compile time, they use the generic `:!` syntax. For example,
-a fixed-dimensional point type could have the dimension as an associated
-constant.
+a type without assigning a value. As constants, they are declared using the
+`let` introducer. For example, a fixed-dimensional point type could have the
+dimension as an associated constant.
 
 ```
 interface NSpacePoint {
@@ -2357,7 +2356,7 @@ interface Container {
   // Argument passing:
   var IteratorType:! Iterator(.ElementType = ElementType);
   // versus `where` clause:
-  var IteratorType where IteratorType.ElementType:! Iterator == ElementType;
+  var IteratorType:! Iterator where IteratorType.ElementType == ElementType;
   ...
 }
 ```
@@ -2610,7 +2609,7 @@ interface HasEqualPair {
 
 // versus `where` clause:
 interface HasEqualPair {
-  var P where P.Left:! PairInterface == P.Right;
+  var P:! PairInterface where P.Left == P.Right;
 }
 ```
 
@@ -2661,11 +2660,11 @@ interface HasEqualContainers {
 fn EqualContainers[CT1:! Container, CT2:! Container]
     (c1: CT1*, c2: CT2*) -> Bool
     where CT1.ElementType == CT2.ElementType,
-          CT1.ElementType as HasEquality;
+          CT1.ElementType is HasEquality;
 
 interface HasEqualContainers {
-  var CT1 where CT1.ElementType as HasEquality:! Container;
-  var CT2 where CT1.ElementType:! Container == CT2.ElementType,
+  var CT1:! Container where CT1.ElementType is HasEquality;
+  var CT2:! Container where CT1.ElementType == CT2.ElementType;
 }
 ```
 
@@ -2822,11 +2821,11 @@ interface Container {
   // Argument passing:
   var SliceType:! Container(.ElementType = ElementType, .SliceType = .Self);
   // versus `where` clause
-  var SliceType where SliceType.ElementType:! Container == ElementType,
+  var SliceType:! Container where SliceType.ElementType == ElementType,
                                   Slicetype.SliceType == SliceType;
 
-  fn GetSlice[addr me: Self*](start: IteratorType,
-                                    IteratorType: end) -> SliceType;
+  fn GetSlice[addr me: Self*]
+      (start: IteratorType, end: IteratorType) -> SliceType;
 }
 ```
 
@@ -3352,8 +3351,8 @@ Consider an interface with one associate type that has `where` constraints:
 interface Foo {
   // Some associated types
   var A:! ...;
-  var B where B.X:! Z == ..., B.Y == ...;
-  var ...:! C
+  var B:! Z where B.X == ..., B.Y == ...;
+  var C:! ...;
 }
 ```
 
@@ -3362,10 +3361,10 @@ argument passing form:
 
 | `where` form                   | argument passing form   |
 | ------------------------------ | ----------------------- |
-| `var B where B.X:! Z == A`     | `var Z(.X = A):! B`     |
-| `var B where B.X:! Z == A.T.U` | `var Z(.X = A.T.U):! B` |
-| `var B where B.X:! Z == Self`  | `var Z(.X = Self):! B`  |
-| `var B where B.X:! Z == B`     | `var Z(.X = .Self):! B` |
+| `var B:! Z where B.X == A`     | `var Z(.X = A):! B`     |
+| `var B:! Z where B.X == A.T.U` | `var Z(.X = A.T.U):! B` |
+| `var B:! Z where B.X == Self`  | `var Z(.X = Self):! B`  |
+| `var B:! Z where B.X == B`     | `var Z(.X = .Self):! B` |
 
 Note that the second example would not be allowed if `A.T.U` had type `Foo`, to
 avoid non-terminating recursion.
@@ -3374,12 +3373,12 @@ These forms of `where` clauses are forbidden:
 
 | Example forbidden `where` form           | Rule                                     |
 | ---------------------------------------- | ---------------------------------------- |
-| `var B where B:! Z == ...`               | must have a dot on left of `==`          |
-| `var B where B.X.Y:! Z == ...`           | must have a single dot on left of `==`   |
-| `var B where A.X:! Z == ...`             | `A` ≠ `B` on left of `==`                |
-| `var B where B.X:! Z == ..., B.X == ...` | no two constraints on same member        |
-| `var B where B.X:! Z == B.Y`             | right side can't refer to members of `B` |
-| `var B where B.X:! Z == C`               | no forward reference                     |
+| `var B:! Z where B == ...`               | must have a dot on left of `==`          |
+| `var B:! Z where B.X.Y == ...`           | must have a single dot on left of `==`   |
+| `var B:! Z where A.X == ...`             | `A` ≠ `B` on left of `==`                |
+| `var B:! Z where B.X == ..., B.X == ...` | no two constraints on same member        |
+| `var B:! Z where B.X == B.Y`             | right side can't refer to members of `B` |
+| `var B:! Z where B.X == C`               | no forward reference                     |
 
 There is some room to rewrite other `where` expressions into allowed argument
 passing forms. One simple example is allowing the two sides of the `==` in one
@@ -3387,7 +3386,7 @@ of the allowed forms to be swapped, but more complicated rewrites may be
 possible. For example,
 
 ```
-var B where B.X:! Z == B.Y;
+var B:! Z where B.X == B.Y;
 ```
 
 might be rewritten to:
@@ -3402,7 +3401,7 @@ constraints on both `B.X` and `B.Y`. Similarly,
 
 ```
 var A:! ...;
-var B where B:! Z == A.T.U
+var B:! Z where B == A.T.U
 ```
 
 might be rewritten as:
