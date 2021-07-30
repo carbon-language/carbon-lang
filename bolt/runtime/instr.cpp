@@ -90,6 +90,8 @@ extern bool __bolt_instr_no_counters_clear;
 extern bool __bolt_instr_wait_forks;
 // Filename to dump data to
 extern char __bolt_instr_filename[];
+// Instumented binary file path
+extern char __bolt_instr_binpath[];
 // If true, append current PID to the fdata filename when creating it so
 // different invocations of the same program can be differentiated.
 extern bool __bolt_instr_use_pid;
@@ -596,6 +598,9 @@ static char *getBinaryPath() {
   const char DirPath[] = "/proc/self/map_files/";
   static char TargetPath[NameMax] = {};
   char Buf[BufSize];
+
+  if (__bolt_instr_binpath[0] != '\0')
+    return __bolt_instr_binpath;
 
   if (TargetPath[0] != '\0')
     return TargetPath;

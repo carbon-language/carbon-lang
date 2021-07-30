@@ -27,6 +27,12 @@ cl::opt<std::string> InstrumentationFilename(
              "/tmp/prof.fdata)"),
     cl::init("/tmp/prof.fdata"), cl::Optional, cl::cat(BoltInstrCategory));
 
+cl::opt<std::string> InstrumentationBinpath(
+    "instrumentation-binpath",
+    cl::desc("path to instumented binary in case if /proc/self/map_files "
+             "is not accessible due to access restriction issues"),
+    cl::Optional, cl::cat(BoltInstrCategory));
+
 cl::opt<bool> InstrumentationFileAppendPID(
     "instrumentation-file-append-pid",
     cl::desc("append PID to saved profile file name (default: false)"),

@@ -25,6 +25,7 @@ extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<bool> InstrumentationFileAppendPID;
 extern cl::opt<std::string> InstrumentationFilename;
+extern cl::opt<std::string> InstrumentationBinpath;
 extern cl::opt<uint32_t> InstrumentationSleepTime;
 extern cl::opt<bool> InstrumentationNoCountersClear;
 extern cl::opt<bool> InstrumentationWaitForks;
@@ -178,6 +179,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                Summary->IndCallTargetDescriptions.size());
   emitIntValue("__bolt_instr_num_funcs", Summary->FunctionDescriptions.size());
   emitString("__bolt_instr_filename", opts::InstrumentationFilename);
+  emitString("__bolt_instr_binpath", opts::InstrumentationBinpath);
   emitIntValue("__bolt_instr_use_pid", !!opts::InstrumentationFileAppendPID, 1);
 
   if (BC.isMachO()) {
