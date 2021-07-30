@@ -678,7 +678,7 @@ struct TextLabel {
 
 It is an open question, though, how we will address the
 [different use cases](#use-cases). For example, we might mark
-[data classes](#data-classes) with a `impl DataClass {}` line.
+[data classes](#data-classes) with an `impl Data {}` line.
 
 ### Construction
 
@@ -945,10 +945,13 @@ external impl struct {.kind: WidgetKind, .size: Int}
 In addition, we should define a way for interfaces to define templated blanket
 implementations for [data classes](#data-classes) more generally. These
 implementations will typically subject to the criteria that all the data fields
-of the type must implement the interface. For this we will need a type-of-type
-for capturing that criteria, maybe something like
-`DataClassFieldsImplement(MyInterface)`. The templated implementation will need
-some way of iterating through the fields so it can perform operations fieldwise.
+of the type must implement the interface. An example use case would be to say
+that a data class is serializable if all of its fields were. For this we will
+need a type-of-type for capturing that criteria, maybe something like
+`DataFieldsImplement(MyInterface)`. The templated implementation will need some
+way of iterating through the fields so it can perform operations fieldwise. This
+feature should also implement the interfaces for any tuples whose fields satisfy
+the criteria.
 
 It is an open question how define implementations for binary operators. For
 example, if `Int` is comparable to `Float32`, then `{.x = 3, .y = 2.72}` should
