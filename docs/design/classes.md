@@ -494,7 +494,9 @@ deallocated.
 ## Struct types
 
 _Structural data classes_, or _struct types_, are convenient for defining
-[data classes](#data-classes) in an ad-hoc manner. They would commonly be used:
+[data classes](#data-classes) in an ad-hoc manner. Note that struct types are
+examples of _data class types_, but we expect later to support more ways to
+define data class types. They would commonly be used:
 
 -   as the return type of a function that returns multiple values and wants
     those values to have names so a [tuple](tuples.md) is inappropriate
