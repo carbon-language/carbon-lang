@@ -598,7 +598,8 @@ defining a witness table type like:
 
 ```
 struct Vector {
-  // Self is the representation type.
+  // Self is the representation type, which is only
+  // known at compile time.
   var Self:! Type;
   // `fnty` is **placeholder** syntax for a "function type",
   // so `Add` is a function that takes two `Self` parameters
@@ -1137,7 +1138,7 @@ interface ConvertibleTo(T:! Type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  var AssociatedType:! Type;
+  let AssociatedType: Type;
   extends ConvertibleTo(AssociatedType);
 }
 ```
@@ -1298,7 +1299,7 @@ the capabilities of the iterator being passed in:
 
 ```
 interface ForwardIterator {
-  var Element:! Type;
+  let Element: Type;
   fn Advance[addr me: Self*]();
   fn Get[me: Self]() -> Element;
 }
