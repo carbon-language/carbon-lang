@@ -10,8 +10,11 @@
 #include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/syntax_helpers.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/InitLLVM.h"
 
 int main(int argc, char* argv[]) {
+  llvm::InitLLVM(argc, argv);
+
   // Printing to stderr should flush stdout. This is most noticeable when stderr
   // is piped to stdout.
   llvm::errs().tie(&llvm::outs());
