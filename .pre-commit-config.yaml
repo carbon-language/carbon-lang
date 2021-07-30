@@ -86,6 +86,14 @@ repos:
         exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
+      - id: executable-semantics-tests
+        name: Update list of executable_semantics tests
+        description: Updates executable_semantics/test_list.bzl
+        entry: executable_semantics/tests.py
+        language: python
+        files: ^executable_semantics/(test_list.bzl|testdata/.*\.carbon)$
+        pass_filenames: false
+        args: ['--update_list']
       - id: proposal-list
         name: Update list of proposals
         description: Updates the list of proposals in proposals/README.md

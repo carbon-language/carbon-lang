@@ -15,8 +15,9 @@ import re
 import subprocess
 import sys
 
-_TESTDATA = "./testdata"
-_TEST_LIST_BZL = "./test_list.bzl"
+_BINDIR = "./bazel-bin/executable_semantics"
+_TESTDATA = "executable_semantics/testdata"
+_TEST_LIST_BZL = "executable_semantics/test_list.bzl"
 
 _TEST_LIST_HEADER = """
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -102,10 +103,9 @@ def _update_golden(test):
     # (`bazel run` will serialize).
     p = subprocess.run(
         [
-            "../bazel-bin/executable_semantics/%s_test" % test,
-            "./testdata/%s.golden" % test,
-            "../bazel-bin/executable_semantics/executable_semantics "
-            + "./testdata/%s.carbon" % test,
+            "%s/%s_test" % (_BINDIR, test),
+            "%s/%s.golden" % (_TESTDATA, test),
+            "%s/executable_semantics %s/%s.carbon" % (_BINDIR, _TESTDATA, test),
             "--update",
         ],
         env=env,
@@ -144,6 +144,9 @@ def _update_goldens():
 
 
 def main():
+    # Go to the repository root so that paths will match bazel's view.
+    os.chdir(os.path.join(os.path.dirname(__file__), ".."))
+
     parsed_args = _parse_args()
     if parsed_args.update_all or parsed_args.update_list:
         _update_list()
