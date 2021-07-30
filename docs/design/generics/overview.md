@@ -191,7 +191,7 @@ The `interface` keyword is used to define a
 need to explicitly implement them, using an `impl` block, such as here:
 
 ```
-struct Song {
+class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
@@ -216,13 +216,12 @@ external impl Song as Comparable {
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 TODO: move these syntax issues to details and link.
 
-Implementations may be defined within the struct definition itself or
-externally. External implementations may be defined in the library defining the
-interface.
+Implementations may be defined within the class definition itself or externally.
+External implementations may be defined in the library defining the interface.
 
 #### Qualified and unqualified access
 
-The methods of an interface implemented within the struct definition may be
+The methods of an interface implemented within the class definition may be
 called with the unqualified syntax. All methods of implemented interfaces may be
 called with the qualified syntax, whether they are defined internally or
 externally.
@@ -366,7 +365,7 @@ A type may implement the parent interface implicitly by implementing all the
 methods in the child implementation.
 
 ```
-struct Key {
+class Key {
   // ...
   impl as Hashable {
     fn IsEqual[me: Key](that: Key) -> Bool { ... }
@@ -451,7 +450,7 @@ type-of-type.
 For example: If there were a class `CDCover` defined this way:
 
 ```
-struct CDCover  {
+class CDCover  {
   impl as Printable {
     ...
   }
