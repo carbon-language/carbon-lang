@@ -9,6 +9,12 @@
 
 namespace Carbon {
 
+ReturnDetail::ReturnDetail(int line_num)
+    : is_implicit(true), exp(Expression::MakeTupleLiteral(line_num, {})) {}
+
+ReturnDetail::ReturnDetail(const Expression* exp)
+    : is_implicit(false), exp(exp) {}
+
 auto Expression::GetIdentifierExpression() const
     -> const IdentifierExpression& {
   return std::get<IdentifierExpression>(value);
@@ -90,11 +96,12 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
 }
 
 auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                         std::optional<const Expression*> ret)
+                                         ReturnDetail ret)
     -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
-  t->value = FunctionTypeLiteral({.parameter = param, .return_type = ret});
+  t->value =
+      FunctionTypeLiteral({.parameter = param, .return_type = std::move(ret)});
   return t;
 }
 
@@ -189,15 +196,6 @@ auto Expression::MakeIndexExpression(int line_num, const Expression* exp,
   e->line_num = line_num;
   e->value = IndexExpression({.aggregate = exp, .offset = i});
   return e;
-}
-
-auto Expression::MakeDefaultedReturn(int line_num,
-                                     std::optional<const Expression*> exp)
-    -> const Expression* {
-  if (exp != std::nullopt) {
-    return *exp;
-  }
-  return MakeTupleLiteral(line_num, {});
 }
 
 static void PrintOp(llvm::raw_ostream& out, Operator op) {
@@ -312,7 +310,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::FunctionTypeLiteral:
       out << "fn " << *GetFunctionTypeLiteral().parameter << " -> "
-          << *GetFunctionTypeLiteral().return_type;
+          << *GetFunctionTypeLiteral().return_type.exp;
       break;
   }
 }

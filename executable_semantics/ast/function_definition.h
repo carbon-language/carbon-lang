@@ -23,13 +23,12 @@ struct FunctionDefinition {
   FunctionDefinition(int line_num, std::string name,
                      std::vector<GenericBinding> deduced_params,
                      const Expression* param_pattern,
-                     std::optional<const Expression*> return_type,
-                     const Statement* body)
+                     Carbon::ReturnDetail return_type, const Statement* body)
       : line_num(line_num),
         name(std::move(name)),
         deduced_parameters(deduced_params),
         param_pattern(param_pattern),
-        return_type(return_type),
+        return_type(std::move(return_type)),
         body(body) {}
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
@@ -39,7 +38,7 @@ struct FunctionDefinition {
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
   const Expression* param_pattern;
-  std::optional<const Expression*> return_type;
+  Carbon::ReturnDetail return_type;
   const Statement* body;
 };
 

@@ -737,9 +737,8 @@ void StepExp() {
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            Action::MakeExpressionAction(Expression::MakeDefaultedReturn(
-                exp->line_num, exp->GetFunctionTypeLiteral().return_type)));
+        frame->todo.Push(Action::MakeExpressionAction(
+            exp->GetFunctionTypeLiteral().return_type.exp));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -1015,8 +1014,7 @@ void StepStmt() {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         frame->todo.Push(
-            Action::MakeExpressionAction(Expression::MakeDefaultedReturn(
-                stmt->line_num, stmt->GetReturn().exp)));
+            Action::MakeExpressionAction(stmt->GetReturn().ret.exp));
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -1047,7 +1045,7 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(Action::MakeStatementAction(
-          Statement::MakeReturn(stmt->line_num, std::nullopt)));
+          Statement::MakeReturn(stmt->line_num, ReturnDetail(stmt->line_num))));
       todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(

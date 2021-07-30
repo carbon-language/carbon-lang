@@ -116,11 +116,10 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
   return s;
 }
 
-auto Statement::MakeReturn(int line_num, std::optional<const Expression*> exp)
-    -> const Statement* {
+auto Statement::MakeReturn(int line_num, ReturnDetail ret) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->value = Return({.exp = exp});
+  s->value = Return({.ret = std::move(ret)});
   return s;
 }
 
@@ -229,10 +228,10 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     case StatementKind::Return:
-      if (GetReturn().exp == std::nullopt) {
+      if (GetReturn().ret.is_implicit) {
         out << "return;";
       } else {
-        out << "return " << *GetReturn().exp << ";";
+        out << "return " << *GetReturn().ret.exp << ";";
       }
       break;
     case StatementKind::Sequence:

@@ -58,6 +58,23 @@ enum class Operator {
 
 struct Expression;
 
+// Provides the detail of a return's expression, where it may be either
+// implicitly `()` or an explicit expression.
+struct ReturnDetail {
+  // Default constructor for FunctionDefinition.
+  ReturnDetail() : ReturnDetail(-1) {}
+  // An implicit return.
+  explicit ReturnDetail(int line_num);
+  // An explicit return.
+  explicit ReturnDetail(const Expression* exp);
+
+  // True if the expression was implicitly constructed.
+  bool is_implicit;
+
+  // The expression to use for the return.
+  const Expression* exp;
+};
+
 struct IdentifierExpression {
   static constexpr ExpressionKind Kind = ExpressionKind::IdentifierExpression;
   std::string name;
@@ -113,7 +130,7 @@ struct CallExpression {
 struct FunctionTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
-  std::optional<const Expression*> return_type;
+  ReturnDetail return_type;
 };
 
 struct AutoTypeLiteral {
@@ -161,16 +178,9 @@ struct Expression {
   static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
   static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
   static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                      std::optional<const Expression*> ret)
-      -> const Expression*;
+                                      ReturnDetail ret) -> const Expression*;
   static auto MakeAutoTypeLiteral(int line_num) -> const Expression*;
   static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
-
-  // Given an optional expression, makes an expression that will default to a ()
-  // tuple literal if the optional is empty.
-  static auto MakeDefaultedReturn(int line_num,
-                                  std::optional<const Expression*> exp)
-      -> const Expression*;
 
   auto GetIdentifierExpression() const -> const IdentifierExpression&;
   auto GetFieldAccessExpression() const -> const FieldAccessExpression&;

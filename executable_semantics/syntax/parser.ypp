@@ -96,14 +96,14 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <std::list<Carbon::Declaration>> declaration_list
 %type <const Carbon::Statement*> statement
 %type <const Carbon::Statement*> optional_else
-%type <std::optional<const Carbon::Expression*>> return_expression
+%type <Carbon::ReturnDetail> return_expression
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
 %type <Carbon::GenericBinding> generic_binding
 %type <std::vector<Carbon::GenericBinding>> deduced_params
 %type <std::vector<Carbon::GenericBinding>> deduced_param_list
 %type <const Carbon::Expression*> pattern
-%type <std::optional<const Carbon::Expression*>> return_type
+%type <Carbon::ReturnDetail> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
@@ -367,9 +367,9 @@ optional_else:
 ;
 return_expression:
   // Empty
-    { $$ = std::nullopt; }
+    { $$ = Carbon::ReturnDetail(yylineno); }
 | expression
-    { $$ = $1; }
+    { $$ = Carbon::ReturnDetail($1); }
 ;
 statement_list:
   // Empty
@@ -379,9 +379,9 @@ statement_list:
 ;
 return_type:
   // Empty
-    { $$ = std::nullopt; }
+    { $$ = Carbon::ReturnDetail(yylineno); }
 | ARROW expression %prec FNARROW
-    { $$ = $2; }
+    { $$ = Carbon::ReturnDetail($2); }
 ;
 generic_binding:
   identifier ":!" expression
@@ -416,8 +416,10 @@ function_definition:
     {
       $$ = Carbon::FunctionDefinition(
                yylineno, $2, $3, $4,
-               Carbon::Expression::MakeAutoTypeLiteral(yylineno),
-               Carbon::Statement::MakeReturn(yylineno, $6));
+               Carbon::ReturnDetail(
+                   Carbon::Expression::MakeAutoTypeLiteral(yylineno)),
+               Carbon::Statement::MakeReturn(
+                   yylineno, Carbon::ReturnDetail($6)));
     }
 ;
 function_declaration:

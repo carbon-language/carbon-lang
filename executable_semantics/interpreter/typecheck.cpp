@@ -49,7 +49,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::FunctionType:
       return Expression::MakeFunctionTypeLiteral(
           0, ReifyType(t->GetFunctionType().param, line_num),
-          ReifyType(t->GetFunctionType().ret, line_num));
+          ReturnDetail(ReifyType(t->GetFunctionType().ret, line_num)));
     case ValKind::TupleValue: {
       std::vector<FieldInitializer> args;
       for (const TupleElement& field : t->GetTupleValue().elements) {
@@ -535,25 +535,22 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         case TCContext::ValueContext:
         case TCContext::TypeContext: {
           auto pt = InterpExp(values, e->GetFunctionTypeLiteral().parameter);
-          auto rt = InterpExp(
-              values,
-              Expression::MakeDefaultedReturn(
-                  e->line_num, e->GetFunctionTypeLiteral().return_type));
+          auto rt =
+              InterpExp(values, e->GetFunctionTypeLiteral().return_type.exp);
           auto new_e = Expression::MakeFunctionTypeLiteral(
               e->line_num, ReifyType(pt, e->line_num),
-              ReifyType(rt, e->line_num));
+              ReturnDetail(ReifyType(rt, e->line_num)));
           return TCResult(new_e, Value::MakeTypeType(), types);
         }
         case TCContext::PatternContext: {
           auto param_res = TypeCheckExp(e->GetFunctionTypeLiteral().parameter,
                                         types, values, nullptr, context);
-          auto ret_res = TypeCheckExp(
-              Expression::MakeDefaultedReturn(
-                  e->line_num, e->GetFunctionTypeLiteral().return_type),
-              param_res.types, values, nullptr, context);
+          auto ret_res =
+              TypeCheckExp(e->GetFunctionTypeLiteral().return_type.exp,
+                           param_res.types, values, nullptr, context);
           auto new_e = Expression::MakeFunctionTypeLiteral(
               e->line_num, ReifyType(param_res.type, e->line_num),
-              ReifyType(ret_res.type, e->line_num));
+              ReturnDetail(ReifyType(ret_res.type, e->line_num)));
           return TCResult(new_e, Value::MakeTypeType(), ret_res.types);
         }
       }
@@ -680,9 +677,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, types);
     }
     case StatementKind::Return: {
-      auto res = TypeCheckExp(
-          Expression::MakeDefaultedReturn(s->line_num, s->GetReturn().exp),
-          types, values, nullptr, TCContext::ValueContext);
+      auto res = TypeCheckExp(s->GetReturn().ret.exp, types, values, nullptr,
+                              TCContext::ValueContext);
       if (ret_type->tag() == ValKind::AutoType) {
         // The following infers the return type from the first 'return'
         // statement. This will get more difficult with subtyping, when we
@@ -691,7 +687,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
-      return TCStatement(Statement::MakeReturn(s->line_num, res.exp), types);
+      return TCStatement(
+          Statement::MakeReturn(s->line_num, ReturnDetail(res.exp)), types);
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
@@ -724,7 +721,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      return Statement::MakeReturn(line_num, std::nullopt);
+      return Statement::MakeReturn(line_num, ReturnDetail(line_num));
     } else {
       llvm::errs()
           << "control-flow reaches end of non-void function without a return\n";
@@ -779,7 +776,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       if (void_return) {
         return Statement::MakeSequence(
             stmt->line_num, stmt,
-            Statement::MakeReturn(stmt->line_num, std::nullopt));
+            Statement::MakeReturn(stmt->line_num,
+                                  ReturnDetail(stmt->line_num)));
       } else {
         llvm::errs()
             << stmt->line_num
@@ -807,8 +805,7 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto param_res = TypeCheckExp(f->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
   // Evaluate the return type expression
-  auto return_type = InterpExp(
-      values, Expression::MakeDefaultedReturn(f->line_num, f->return_type));
+  auto return_type = InterpExp(values, f->return_type.exp);
   if (f->name == "main") {
     ExpectType(f->line_num, "return type of `main`", Value::MakeIntType(),
                return_type);
@@ -817,9 +814,9 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(f->line_num, f->name, f->deduced_parameters,
-                                f->param_pattern,
-                                ReifyType(return_type, f->line_num), body);
+  return new FunctionDefinition(
+      f->line_num, f->name, f->deduced_parameters, f->param_pattern,
+      ReturnDetail(ReifyType(return_type, f->line_num)), body);
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
@@ -835,12 +832,10 @@ auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
   auto param_res = TypeCheckExp(fun_def->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
   // Evaluate the return type expression
-  auto ret = InterpExp(values, Expression::MakeDefaultedReturn(
-                                   fun_def->line_num, fun_def->return_type));
+  auto ret = InterpExp(values, fun_def->return_type.exp);
   if (ret->tag() == ValKind::AutoType) {
     auto f = TypeCheckFunDef(fun_def, types, values);
-    ret = InterpExp(
-        values, Expression::MakeDefaultedReturn(f->line_num, f->return_type));
+    ret = InterpExp(values, f->return_type.exp);
   }
   return Value::MakeFunctionType(fun_def->deduced_parameters, param_res.type,
                                  ret);
