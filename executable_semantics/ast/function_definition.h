@@ -23,8 +23,8 @@ struct FunctionDefinition {
   FunctionDefinition() = default;
   FunctionDefinition(int line_num, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     const Expression* param_pattern,
-                     Carbon::ReturnDetail return_type, const Statement* body)
+                     const Expression* param_pattern, ReturnInfo return_type,
+                     const Statement* body)
       : line_num(line_num),
         name(std::move(name)),
         deduced_parameters(deduced_params),
@@ -40,7 +40,7 @@ struct FunctionDefinition {
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
   const Expression* param_pattern;
-  Carbon::ReturnDetail return_type;
+  ReturnInfo return_type;
   const Statement* body;
 };
 

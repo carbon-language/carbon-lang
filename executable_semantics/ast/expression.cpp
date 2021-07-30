@@ -10,11 +10,10 @@
 
 namespace Carbon {
 
-ReturnDetail::ReturnDetail(int line_num)
+ReturnInfo::ReturnInfo(int line_num)
     : is_implicit(true), exp(Expression::MakeTupleLiteral(line_num, {})) {}
 
-ReturnDetail::ReturnDetail(const Expression* exp)
-    : is_implicit(false), exp(exp) {}
+ReturnInfo::ReturnInfo(const Expression* exp) : is_implicit(false), exp(exp) {}
 
 auto Expression::GetIdentifierExpression() const
     -> const IdentifierExpression& {
@@ -97,8 +96,7 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
 }
 
 auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                         ReturnDetail ret)
-    -> const Expression* {
+                                         ReturnInfo ret) -> const Expression* {
   auto* t = new Expression();
   t->line_num = line_num;
   t->value =

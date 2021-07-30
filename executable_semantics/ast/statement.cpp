@@ -116,7 +116,7 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
   return s;
 }
 
-auto Statement::MakeReturn(int line_num, ReturnDetail ret) -> const Statement* {
+auto Statement::MakeReturn(int line_num, ReturnInfo ret) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->value = Return({.ret = std::move(ret)});
