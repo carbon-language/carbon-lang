@@ -35,14 +35,13 @@ auto Declaration::MakeChoiceDeclaration(
   return d;
 }
 
-auto Declaration::MakeVariableDeclaration(int source_location, std::string name,
-                                          const Expression* type,
+auto Declaration::MakeVariableDeclaration(int source_location,
+                                          const BindingPattern* binding,
                                           const Expression* initializer)
     -> const Declaration {
   Declaration d;
   d.value = VariableDeclaration({.source_location = source_location,
-                                 .name = std::move(name),
-                                 .type = type,
+                                 .binding = binding,
                                  .initializer = initializer});
   return d;
 }
@@ -91,8 +90,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = GetVariableDeclaration();
-      out << "var " << *var.type << " : " << var.name << " = "
-          << *var.initializer << "\n";
+      out << "var " << *var.binding << " = " << *var.initializer << "\n";
       break;
     }
   }
