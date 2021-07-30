@@ -207,7 +207,7 @@ type for that interface.
 Impls may be defined inline inside the type definition:
 
 ```
-struct Point {
+class Point {
   var x: Double;
   var y: Double;
   impl as Vector {
@@ -232,8 +232,8 @@ Assert(p1.Add(p1) == p2);
 ```
 
 **Comparison with other languages:** Rust defines implementations lexically
-outside of the `struct` definition. This Carbon approach means that a type's API
-is described by declarations inside the `struct` definition and doesn't change
+outside of the `class` definition. This Carbon approach means that a type's API
+is described by declarations inside the `class` definition and doesn't change
 afterwards.
 
 **References:** This interface implementation syntax was accepted in
@@ -298,7 +298,7 @@ To implement more than one interface when defining a type, simply include an
 `impl` block per interface.
 
 ```
-struct Point {
+class Point {
   var x: Double;
   var y: Double;
   impl as Vector {
@@ -316,7 +316,7 @@ API for `Point`. This means you can't implement two interfaces that have a name
 in common.
 
 ```
-struct GameBoard {
+class GameBoard {
   impl as Drawable {
     fn Draw[me: Self]() { ... }
   }
@@ -335,7 +335,7 @@ case, but we won't really know if this is an important case until we get more
 experience.
 
 ```
-struct Player {
+class Player {
   var name: String;
   impl as Icon {
     fn Name[me: Self]() -> String { return this.name; }
@@ -356,7 +356,7 @@ Interfaces may also be implemented for a type externally, by using the
 `external impl` construct which takes the name of an existing type:
 
 ```
-struct Point2 {
+class Point2 {
   var x: Double;
   var y: Double;
 }
@@ -419,7 +419,7 @@ A syntax for reusing method implementations allows us to do this selectively
 when needed:
 
 ```
-struct Point3 {
+class Point3 {
   var x: Double;
   var y: Double;
   fn Add[me: Self](b: Self) -> Self {
@@ -597,7 +597,7 @@ For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
 
 ```
-struct Vector {
+class Vector {
   // Self is the representation type, which is only
   // known at compile time.
   var Self:! Type;
@@ -656,7 +656,7 @@ accessing the capability.
 
 Interfaces are ["nominal"](terminology.md#nominal-interfaces), which means their
 name is significant. So two interfaces with the same body definition but
-different names are different, just like two structs with the same definition
+different names are different, just like two classes with the same definition
 but different names are considered different types. For example, lets say we
 define another interface, say `LegoFish`, with the same `Add` and `Scale` method
 signatures. Implementing `Vector` would not imply an implementation of
@@ -770,7 +770,7 @@ Then a type implementing `I` would have `impl as I` with definitions for `X`,
 `Y`, and `Z`, as in:
 
 ```
-struct ImplementsI {
+class ImplementsI {
   // ...
   impl as I {
     X { ... }
@@ -793,7 +793,7 @@ structural interface S {
 would match any type with definitions for `X`, `Y`, and `Z` directly:
 
 ```
-struct ImplementsS {
+class ImplementsS {
   // ...
   X { ... }
   Y { ... }
@@ -871,7 +871,7 @@ fn PrintThenDraw[T:! Printable & Renderable](x: T) {
   x.Draw();  // Same as `x.(Renderable.Draw)();`.
 }
 
-struct Sprite {
+class Sprite {
   // ...
   impl as Printable {
     fn Print[me: Self]() { ... }
@@ -1019,7 +1019,7 @@ def DoAdvanceAndEquals[T:! Iterable](x: T) {
   x.(Equatable.Equals)(x);
 }
 
-struct Iota {
+class Iota {
   impl as Iterable { fn Advance[me: Self]() { ... } }
   impl as Equatable { fn Equals[me: Self](that: Self) -> Bool { ... } }
 }
@@ -1055,7 +1055,7 @@ as well. In the case of `Hashable` above, this includes all the members of
 `Equatable`, obviating the need to implement `Equatable` itself:
 
 ```
-struct Song {
+class Song {
   impl as Hashable {
     fn Hash[me: Self]() -> UInt64 { ... }
     fn Equals[me: Self](that: Self) -> Bool { ... }
@@ -1180,7 +1180,7 @@ requires. That condition is sufficient to allow a type to `impl` the structural
 interface:
 
 ```
-struct Song {
+class Song {
   impl as Combined {
     fn Play[me: Self]() { ... }
     fn Run[me: Self]() { ... }
@@ -1191,7 +1191,7 @@ struct Song {
 This is equivalent to implementing the required interfaces directly:
 
 ```
-struct Song {
+class Song {
   impl as Media {
     fn Play[me: Self]() { ... }
   }
@@ -1233,7 +1233,7 @@ We need to specify what happens how a graph type would implement both
 interface.
 
 ```
-struct MyEdgeListIncidenceGraph {
+class MyEdgeListIncidenceGraph {
   impl as IncidenceGraph { ... }
   impl as EdgeListGraph { ... }
 }
@@ -1247,7 +1247,7 @@ though could be defined in the `impl` block of `IncidenceGraph`,
     implements none of them.
 
 ```
-struct MyEdgeListIncidenceGraph {
+class MyEdgeListIncidenceGraph {
   impl as IncidenceGraph {
     fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
     fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
@@ -1264,7 +1264,7 @@ struct MyEdgeListIncidenceGraph {
     between them, but with no overlap.
 
 ```
-struct MyEdgeListIncidenceGraph {
+class MyEdgeListIncidenceGraph {
   impl as IncidenceGraph {
     fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
     fn OutEdges[addr me: Self*](u: VertexDescriptor)
@@ -1280,7 +1280,7 @@ struct MyEdgeListIncidenceGraph {
 -   We explicitly implement `Graph`.
 
 ```
-struct MyEdgeListIncidenceGraph {
+class MyEdgeListIncidenceGraph {
   impl as Graph {
     fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
     fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
@@ -1346,7 +1346,7 @@ Now consider a type with a generic type parameter, like a hash map type:
 
 ```
 interface Hashable { ... }
-struct HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
+class HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
 ```
 
 If we write something like `HashMap(String, Int)` the type we actually get is:
