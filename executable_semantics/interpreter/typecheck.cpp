@@ -864,13 +864,13 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
         const BindingPattern* binding = m->GetFieldMember().binding;
         if (!binding->Name().has_value()) {
           FATAL_COMPILATION_ERROR(binding->LineNumber())
-              << ": Struct members must have names";
+              << "Struct members must have names";
         }
         const Expression* type_expression =
             dyn_cast<ExpressionPattern>(binding->Type())->Expression();
         if (type_expression == nullptr) {
           FATAL_COMPILATION_ERROR(binding->LineNumber())
-              << ": Struct members must have explicit types";
+              << "Struct members must have explicit types";
         }
         auto type = InterpExp(ct_top, type_expression);
         fields.push_back(std::make_pair(*binding->Name(), type));
@@ -893,7 +893,7 @@ static auto GetName(const Declaration& d) -> const std::string& {
       const BindingPattern* binding = d.GetVariableDeclaration().binding;
       if (!binding->Name().has_value()) {
         FATAL_COMPILATION_ERROR(binding->LineNumber())
-            << ": Top-level variable declarations must have names";
+            << "Top-level variable declarations must have names";
       }
       return *binding->Name();
     }
@@ -938,7 +938,7 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
       if (type == nullptr) {
         // TODO: consider adding support for `auto`
         FATAL_COMPILATION_ERROR(var.source_location)
-            << ": Type of a top-level variable must be an expression.";
+            << "Type of a top-level variable must be an expression.";
       }
       const Value* declared_type = InterpExp(values, type);
       ExpectType(var.source_location, "initializer of variable", declared_type,
