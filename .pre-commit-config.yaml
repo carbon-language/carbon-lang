@@ -93,7 +93,7 @@ repos:
         language: python
         files: ^executable_semantics/(test_list.bzl|testdata/.*\.carbon)$
         pass_filenames: false
-        args: ['--update_list']
+        args: ['--update_list', '--use_git_ls_files']
       - id: proposal-list
         name: Update list of proposals
         description: Updates the list of proposals in proposals/README.md

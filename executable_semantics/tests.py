@@ -51,17 +51,30 @@ def _parse_args(args=None):
     group.add_argument(
         "--update_list", action="store_true", help="Updates test_list.bzl."
     )
+    parser.add_argument(
+        "--use_git_ls_files",
+        action="store_true",
+        help="Uses `git ls-files` when gathering files for --update_list.",
+    )
     parsed_args = parser.parse_args(args=args)
+    if parsed_args.use_git_ls_files and not (
+        parsed_args.update_list or parsed_args.update_all
+    ):
+        parser.error("--use_git_ls_files requires --update_list")
     return parsed_args
 
 
-def _update_list():
+def _update_list(use_git_state):
     """Updates test_list.bzl."""
     # Get the list of tests and goldens from the filesystem.
     tests = set()
     goldens = set()
-    ls_files = subprocess.check_output(["git", "ls-files", _TESTDATA])
-    for path in ls_files.decode("utf-8").splitlines():
+    if use_git_state:
+        ls_files = subprocess.check_output(["git", "ls-files", _TESTDATA])
+        files = ls_files.decode("utf-8").splitlines()
+    else:
+        files = list(os.listdir(_TESTDATA))
+    for path in files:
         f = os.path.basename(path)
         basename, ext = os.path.splitext(f)
         if ext == ".carbon":
@@ -151,7 +164,7 @@ def main():
 
     parsed_args = _parse_args()
     if parsed_args.update_all or parsed_args.update_list:
-        _update_list()
+        _update_list(parsed_args.use_git_ls_files)
     if parsed_args.update_all or parsed_args.update_goldens:
         _update_goldens()
 
