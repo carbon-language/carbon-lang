@@ -188,7 +188,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
           PatternMatch(operas[0]->GetFunctionValue().param, operas[1], globals,
                        &params, line_num);
       CHECK(matches) << "internal error in call_function, pattern match failed";
-      // Create the new Frame and push it on the stack
+      // Create the new frame and push it on the stack
       auto* scope = global_arena->New<Scope>(*matches, params);
       auto* frame = global_arena->New<Frame>(
           operas[0]->GetFunctionValue().name, Stack(scope),
