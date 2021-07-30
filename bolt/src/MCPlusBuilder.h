@@ -157,6 +157,10 @@ protected:
   /// Names of non-standard annotations.
   SmallVector<std::string, 8> AnnotationNames;
 
+  /// Allocate the TailCall annotation value. Clients of the target-specific
+  /// MCPlusBuilder classes must use convert/lower/create* interfaces instead.
+  void setTailCall(MCInst &Inst);
+
 public:
   class InstructionIterator
     : public std::iterator<std::bidirectional_iterator_tag, MCInst> {
@@ -1000,10 +1004,7 @@ public:
   }
 
   /// Return true if the instruction is a tail call.
-  virtual bool isTailCall(const MCInst &Inst) const {
-    llvm_unreachable("not implemented");
-    return false;
-  }
+  bool isTailCall(const MCInst &Inst) const;
 
   /// Return true if the instruction is a call with an exception handling info.
   virtual bool isInvoke(const MCInst &Inst) const {

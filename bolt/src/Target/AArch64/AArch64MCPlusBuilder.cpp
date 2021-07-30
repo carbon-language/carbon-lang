@@ -741,32 +741,23 @@ public:
     return 28;
   }
 
-  bool isTailCall(const MCInst &Inst) const override {
-    auto IsTCOrErr = tryGetAnnotationAs<bool>(Inst, "TC");
-    if (IsTCOrErr)
-      return *IsTCOrErr;
-    if (getConditionalTailCall(Inst))
-      return true;
-    return false;
-  }
-
   bool createTailCall(MCInst &Inst, const MCSymbol *Target,
                       MCContext *Ctx) override {
     Inst.setOpcode(AArch64::B);
     Inst.addOperand(MCOperand::createExpr(getTargetExprFor(
         Inst, MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
         *Ctx, 0)));
-    addAnnotation(Inst, "TC", true);
+    setTailCall(Inst);
     return true;
   }
 
   bool convertJmpToTailCall(MCInst &Inst) override {
-    addAnnotation(Inst, "TC", true);
+    setTailCall(Inst);
     return true;
   }
 
   bool convertTailCallToJmp(MCInst &Inst) override {
-    removeAnnotation(Inst, "TC");
+    removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
     removeAnnotation(Inst, "Offset");
     if (getConditionalTailCall(Inst))
       unsetConditionalTailCall(Inst);
@@ -774,7 +765,7 @@ public:
   }
 
   bool lowerTailCall(MCInst &Inst) override {
-    removeAnnotation(Inst, "TC");
+    removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
     if (getConditionalTailCall(Inst))
       unsetConditionalTailCall(Inst);
     return true;

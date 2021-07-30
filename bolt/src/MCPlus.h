@@ -56,6 +56,7 @@ public:
     kEHAction,            /// Action for exception handler.
     kGnuArgsSize,         /// GNU args size.
     kJumpTable,           /// Jump Table.
+    kTailCall,            /// Tail call.
     kConditionalTailCall, /// CTC.
     kGeneric              /// First generic annotation.
   };

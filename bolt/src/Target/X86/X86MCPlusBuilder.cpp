@@ -1977,17 +1977,6 @@ public:
     return Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg();
   }
 
-  bool isTailCall(const MCInst &Inst) const override {
-    auto IsTCOrErr = tryGetAnnotationAs<bool>(Inst, "TC");
-    if (IsTCOrErr)
-      return *IsTCOrErr;
-
-    if (getConditionalTailCall(Inst))
-      return true;
-
-    return false;
-  }
-
   bool requiresAlignedAddress(const MCInst &Inst) const override {
     const MCInstrDesc &Desc = Info->get(Inst.getOpcode());
     for (unsigned int I = 0; I < Desc.getNumOperands(); ++I) {
@@ -2026,7 +2015,7 @@ public:
     }
 
     Inst.setOpcode(NewOpcode);
-    addAnnotation(Inst, "TC", true);
+    setTailCall(Inst);
     return true;
   }
 
@@ -2047,7 +2036,7 @@ public:
     }
 
     Inst.setOpcode(NewOpcode);
-    removeAnnotation(Inst, "TC");
+    removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
     removeAnnotation(Inst, "Offset");
     return true;
   }
@@ -2069,7 +2058,7 @@ public:
     }
 
     Inst.setOpcode(NewOpcode);
-    removeAnnotation(Inst, "TC");
+    removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
     return true;
   }
 
@@ -2108,7 +2097,7 @@ public:
   void convertIndirectCallToLoad(MCInst &Inst, MCPhysReg Reg) override {
     bool IsTailCall = isTailCall(Inst);
     if (IsTailCall)
-      removeAnnotation(Inst, "TC");
+      removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
     if (Inst.getOpcode() == X86::CALL64m ||
         (Inst.getOpcode() == X86::JMP32m && IsTailCall)) {
       Inst.setOpcode(X86::MOV64rm);
@@ -2175,7 +2164,7 @@ public:
   bool lowerTailCall(MCInst &Inst) override {
     if (Inst.getOpcode() == X86::JMP_4 && isTailCall(Inst)) {
       Inst.setOpcode(X86::JMP_1);
-      removeAnnotation(Inst, "TC");
+      removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
       return true;
     }
     return false;
@@ -2976,7 +2965,7 @@ public:
                                 *Ctx)));
     Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
     if (IsTailCall)
-      addAnnotation(Inst, "TC", true);
+      setTailCall(Inst);
     return true;
   }
 
@@ -2985,7 +2974,7 @@ public:
     Inst.setOpcode(X86::JMP_4);
     Inst.addOperand(MCOperand::createExpr(
         MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
-    addAnnotation(Inst, "TC", true);
+    setTailCall(Inst);
     return true;
   }
 
@@ -3517,7 +3506,7 @@ public:
           }
         }
         if (IsTailCall)
-          addAnnotation(CallOrJmp, "TC", true);
+          setTailCall(CallOrJmp);
 
         if (CallOrJmp.getOpcode() == X86::CALL64r ||
             CallOrJmp.getOpcode() == X86::CALL64pcrel32) {
