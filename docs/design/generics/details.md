@@ -1818,7 +1818,7 @@ struct DynamicArray(T:! Type) {
 
   impl as StackAssociatedType {
     // Set the associated type `ElementType` to `T`.
-    alias ElementType = T;
+    let ElementType = T;
     fn Push[addr me: Self*](value: ElementType) {
       this->Insert(this->End(), value);
     }
@@ -1841,7 +1841,7 @@ struct DynamicArray(T:! Type) {
 of `StackAssociatedType.ElementType`?
 
 ```
-alias ElementType = T;
+let ElementType = T;
 ```
 
 or:
@@ -1849,10 +1849,6 @@ or:
 ```
 let ElementType: Type = T;
 ```
-
-Note that the resolution of
-[question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565)
-may affect the answer to this question.
 
 The definition of the `StackAssociatedType` is sufficient for writing a generic
 function that operates on anything implementing that interface, for example:
@@ -1892,7 +1888,7 @@ struct DynamicArray(T:! Type) {
   // ...
 
   impl as StackAssociatedType {
-    // Not needed: alias ElementType = T;
+    // Not needed: let ElementType = T;
     fn Push[addr me: Self*](value: T) { ... }
     fn Pop[addr me: Self*]() -> T { ... }
     fn IsEmpty[addr me: Self*]() -> Bool { ... }
@@ -2173,8 +2169,8 @@ TODO: Fix this up a lot
 
 -   In a declaration of a function, type, interface, or impl.
 -   Within the body of an interface definition.
--   Naming a new type-of-type that represents the constraint (typically an
-    `alias` or `structural interface` definition).
+-   Naming a new type-of-type that represents the constraint (typically a `let`
+    or `structural interface` definition).
 
 To handle this last use case, we expand the kinds of requirements that
 type-of-types can have from just interface requirements to also include the
@@ -2326,13 +2322,13 @@ To name such a constraint:
 
 ```
 // Argument passing:
-alias Point2DInterface = NSpacePoint(.N = 2);
+let Point2DInterface = NSpacePoint(.N = 2);
 structural interface Point2DInteface {
   extends NSpacePoint(.N = 2);
 }
 
 // versus `where` clause:
-alias Point2DInterface = NSpacePoint where Point2D.N == 2;
+let Point2DInterface = NSpacePoint where Point2D.N == 2;
 structural interface Point2DInterface {
   extends NSpacePoint where NSpacePoint.N == 2;
 }
@@ -2381,18 +2377,18 @@ fn SumIntStack[T:! Stack](s: T*) -> Int where T.ElementType == Int {
 }
 ```
 
-To name these sorts of constraints, we could use `alias` statements or
+To name these sorts of constraints, we could use `let` statements or
 `structural interface` definitions.
 
 ```
 // Argument passing:
-alias IntStack = Stack(.ElementType = Int);
+let IntStack = Stack(.ElementType = Int);
 structural interface IntStack {
   extends Stack(.ElementType = Int);
 }
 
 // versus `where` clause:
-alias IntStack = Stack where IntStack.ElementType == Int;
+let IntStack = Stack where IntStack.ElementType == Int;
 structural interface IntStack {
   extends Stack where Stack.ElementType == Int;
 }
@@ -2441,7 +2437,7 @@ interface HyperPointInterface {
 or naming this kind of constraint:
 
 ```
-alias HyperPoint = NSpacePoint where Point2Or3.N > 3;
+let HyperPoint = NSpacePoint where Point2Or3.N > 3;
 structural interface HyperPoint {
   extends NSpacePoint where NSpacePoint.N > 3;
 }
@@ -2558,11 +2554,11 @@ fn F[ContainerType:! ContainerInterface](c: ContainerType)
 fn F[ContainerType:! RandomAccessContainer](c: ContainerType);
 
 // Argument passing:
-alias RandomAccessContainer =
+let RandomAccessContainer =
     [IterType:! RandomAccessIterator]
     ContainerInterface(.IteratorType=IterType);
 // versus `where` clause:
-alias RandomAccessContainer = ContainerInterface
+let RandomAccessContainer = ContainerInterface
     where RandomAccessContainer.IteratorType is RandomAccessIterator;
 ```
 
@@ -2622,7 +2618,7 @@ only match types that had a type member named `T`.
 
 ```
 // Argument passing:
-alias EqualPair = [let T: Type]
+let EqualPair = [let T: Type]
     PairInterface(.Left = T, .Right = T);
 structural interface EqualPair {
   [let T: Type];
@@ -2630,7 +2626,7 @@ structural interface EqualPair {
 }
 
 // versus `where` clause:
-alias EqualPair = PairInterface
+let EqualPair = PairInterface
     where EqualPair.Left == EqualPair.Right;
 structural interface EqualPair {
   extends PairInterface
@@ -2834,21 +2830,21 @@ Naming these constraints:
 
 ```
 // Argument passing
-alias RealAbs = HasAbs(.MagnitudeType = .Self);
+let RealAbs = HasAbs(.MagnitudeType = .Self);
 structural interface RealAbs {
   extends HasAbs(.MagnitudeType = Self);
 }
-alias ContainerIsSlice = Container(.SliceType = .Self);
+let ContainerIsSlice = Container(.SliceType = .Self);
 structural interface ContainerIsSlice {
   extends Container(.SliceType = Self);
 }
 
 // versus `where` clause
-alias RealAbs = HasAbs where RealAbs.MagnitudeType == RealAbs;
+let RealAbs = HasAbs where RealAbs.MagnitudeType == RealAbs;
 structural interface RealAbs {
   extends HasAbs where HasAbs.MagnitudeType == Self;
 }
-alias ContainerIsSlice = Container
+let ContainerIsSlice = Container
     where ContainerIsSlice.SliceType == ContainerIsSlice;
 structural interface ContainerIsSlice {
   extends Container where Container.SliceType == Self;
@@ -3942,7 +3938,7 @@ adapter ThenCompare(T:! Type,
   }
 }
 
-alias SongByArtistThenTitle = ThenCompare(Song, (SongByArtist, SongByTitle));
+let SongByArtistThenTitle = ThenCompare(Song, (SongByArtist, SongByTitle));
 var song: Song = ...;
 var song2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
 assert((song as SongByArtistThenTitle).Compare(song2) == CaompareResult.Less);
@@ -4309,15 +4305,15 @@ interface Deref {
 
 // Implementation of Deref() for DynPtr(TT).
 external impl DynPtr(template TT:! InterfaceType) as Deref {
-  alias DerefT = DynPtr(TT).DynPtrImpl as TT;
+  let DerefT = DynPtr(TT).DynPtrImpl as TT;
   // or equivalently:
-  alias DerefT = DynPtr(TT).T;
+  let DerefT = DynPtr(TT).T;
   ...
 }
 
 // Implementation of Deref for T*.
 external impl (T:! Type)* as Deref {
-  alias DerefT = T;
+  let DerefT = T;
   fn Deref[me: T*]() -> T* { return this; }
 }
 ```
