@@ -938,6 +938,39 @@ TEST_F(ParseTreeTest, Return) {
            MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, Tuples) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    var x: (i32, i32) = (1, 2);
+    var y: ((), (), ());
+  )");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  auto empty_tuple = MatchTupleLiteral(MatchTupleLiteralEnd());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchVariableDeclaration(
+               MatchPatternBinding(MatchDeclaredName("x"), ":",
+                                   MatchTupleLiteral(MatchLiteral("i32"),
+                                                     MatchTupleLiteralComma(),
+                                                     MatchLiteral("i32"),
+                                                     MatchTupleLiteralEnd())),
+               MatchVariableInitializer(MatchTupleLiteral(
+                   MatchLiteral("1"), MatchTupleLiteralComma(),
+                   MatchLiteral("2"), MatchTupleLiteralEnd())),
+               MatchDeclarationEnd()),
+           MatchVariableDeclaration(
+               MatchPatternBinding(
+                   MatchDeclaredName("y"), ":",
+                   MatchTupleLiteral(empty_tuple, MatchTupleLiteralComma(),
+                                     empty_tuple, MatchTupleLiteralComma(),
+                                     empty_tuple, MatchTupleLiteralEnd())),
+               MatchDeclarationEnd()),
+           MatchFileEnd()}));
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);

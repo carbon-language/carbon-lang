@@ -138,7 +138,8 @@ class ParseTree::Parser {
   template <typename ListElementParser, typename ListCompletionHandler>
   auto ParseParenList(ListElementParser list_element_parser,
                       ParseNodeKind comma_kind,
-                      ListCompletionHandler list_handler)
+                      ListCompletionHandler list_handler,
+                      bool allow_trailing_comma = false)
       -> llvm::Optional<Node>;
 
   // Parses a single function parameter declaration.
