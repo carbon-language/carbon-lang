@@ -22,8 +22,8 @@ void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
     out << "]";
   }
   out << *param_pattern;
-  if (!return_type.is_implicit) {
-    out << " -> " << *return_type.exp;
+  if (!is_return_type_implicit) {
+    out << " -> " << *return_type;
   }
   if (body) {
     out << " {\n";

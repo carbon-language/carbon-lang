@@ -75,23 +75,6 @@ enum class Operator {
 
 struct Expression;
 
-// Provides the detail of a return's expression, where it may be either
-// implicitly `()` or an explicit expression.
-struct ReturnInfo {
-  // Default constructor for FunctionDefinition.
-  ReturnInfo() : ReturnInfo(-1) {}
-  // An implicit return.
-  explicit ReturnInfo(int line_num);
-  // An explicit return.
-  explicit ReturnInfo(const Expression* exp);
-
-  // True if the expression was implicitly constructed.
-  bool is_implicit;
-
-  // The expression to use for the return.
-  const Expression* exp;
-};
-
 struct IdentifierExpression {
   static constexpr ExpressionKind Kind = ExpressionKind::IdentifierExpression;
   std::string name;
@@ -140,7 +123,8 @@ struct CallExpression {
 struct FunctionTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
-  ReturnInfo return_type;
+  const Expression* return_type;
+  bool is_return_type_implicit;
 };
 
 struct BoolTypeLiteral {
@@ -179,8 +163,10 @@ struct Expression {
   static auto MakeTypeTypeLiteral(int line_num) -> const Expression*;
   static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
   static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                      ReturnInfo ret) -> const Expression*;
+  static auto MakeFunctionTypeLiteral(int line_num, const Expression* parameter,
+                                      const Expression* return_type,
+                                      bool is_return_type_implicit)
+      -> const Expression*;
   static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
 
   auto GetIdentifierExpression() const -> const IdentifierExpression&;

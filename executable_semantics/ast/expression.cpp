@@ -13,11 +13,6 @@
 
 namespace Carbon {
 
-ReturnInfo::ReturnInfo(int line_num)
-    : is_implicit(true), exp(Expression::MakeTupleLiteral(line_num, {})) {}
-
-ReturnInfo::ReturnInfo(const Expression* exp) : is_implicit(false), exp(exp) {}
-
 auto ExpressionFromParenContents(
     int line_num, const ParenContents<Expression>& paren_contents)
     -> const Expression* {
@@ -105,12 +100,17 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
   return type;
 }
 
-auto Expression::MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                         ReturnInfo ret) -> const Expression* {
+auto Expression::MakeFunctionTypeLiteral(int line_num,
+                                         const Expression* parameter,
+                                         const Expression* return_type,
+                                         bool is_return_type_implicit)
+    -> const Expression* {
   auto* t = global_arena->New<Expression>();
   t->line_num = line_num;
   t->value =
-      FunctionTypeLiteral({.parameter = param, .return_type = std::move(ret)});
+      FunctionTypeLiteral({.parameter = parameter,
+                           .return_type = return_type,
+                           .is_return_type_implicit = is_return_type_implicit});
   return t;
 }
 
@@ -281,7 +281,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::FunctionTypeLiteral:
       out << "fn " << *GetFunctionTypeLiteral().parameter << " -> "
-          << *GetFunctionTypeLiteral().return_type.exp;
+          << *GetFunctionTypeLiteral().return_type;
       break;
   }
 }

@@ -116,10 +116,15 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
   return s;
 }
 
-auto Statement::MakeReturn(int line_num, ReturnInfo ret) -> const Statement* {
+auto Statement::MakeReturn(int line_num, const Expression* exp,
+                           bool is_exp_implicit) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
-  s->value = Return({.ret = std::move(ret)});
+  if (exp == nullptr) {
+    CHECK(is_exp_implicit);
+    exp = Expression::MakeTupleLiteral(line_num, {});
+  }
+  s->value = Return({.exp = exp, .is_exp_implicit = is_exp_implicit});
   return s;
 }
 
@@ -228,10 +233,10 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     case StatementKind::Return:
-      if (GetReturn().ret.is_implicit) {
+      if (GetReturn().is_exp_implicit) {
         out << "return;";
       } else {
-        out << "return " << *GetReturn().ret.exp << ";";
+        out << "return " << *GetReturn().exp << ";";
       }
       break;
     case StatementKind::Sequence:
