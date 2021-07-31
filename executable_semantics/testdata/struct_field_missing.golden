@@ -1,2 +1,4 @@
-COMPILATION ERROR: 11: tuples of different length
+COMPILATION ERROR: 11: type error in call
+expected: (x = Int, y = Int)
+actual: (x = Int)
 EXIT CODE: 255
