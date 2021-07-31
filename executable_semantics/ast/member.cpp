@@ -8,11 +8,11 @@
 
 namespace Carbon {
 
-auto Member::MakeFieldMember(int line_num, std::string name,
-                             const Expression* type) -> Member* {
+auto Member::MakeFieldMember(int line_num, const BindingPattern* binding)
+    -> Member* {
   auto m = global_arena->New<Member>();
   m->line_num = line_num;
-  m->value = FieldMember({.name = std::move(name), .type = type});
+  m->value = FieldMember({.binding = binding});
   return m;
 }
 
@@ -24,7 +24,7 @@ void Member::Print(llvm::raw_ostream& out) const {
   switch (tag()) {
     case MemberKind::FieldMember:
       const auto& field = GetFieldMember();
-      out << "var " << field.name << " : " << *field.type << ";\n";
+      out << "var " << field.binding << ";\n";
       break;
   }
 }

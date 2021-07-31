@@ -11,6 +11,8 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/heap.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -35,6 +37,7 @@ void PrintEnv(Env values);
 
 auto InterpProgram(std::list<Declaration>* fs) -> int;
 auto InterpExp(Env values, const Expression* e) -> const Value*;
+auto InterpPattern(Env values, const Pattern* p) -> const Value*;
 
 }  // namespace Carbon
 

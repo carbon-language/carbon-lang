@@ -30,6 +30,12 @@ auto Action::MakeExpressionAction(const Expression* e) -> Action* {
   return act;
 }
 
+auto Action::MakePatternAction(const Pattern* p) -> Action* {
+  auto* act = global_arena->New<Action>();
+  act->value = PatternAction({.pattern = p});
+  return act;
+}
+
 auto Action::MakeStatementAction(const Statement* s) -> Action* {
   auto* act = global_arena->New<Action>();
   act->value = StatementAction({.stmt = s});
@@ -50,6 +56,10 @@ auto Action::GetExpressionAction() const -> const ExpressionAction& {
   return std::get<ExpressionAction>(value);
 }
 
+auto Action::GetPatternAction() const -> const PatternAction& {
+  return std::get<PatternAction>(value);
+}
+
 auto Action::GetStatementAction() const -> const StatementAction& {
   return std::get<StatementAction>(value);
 }
@@ -65,6 +75,9 @@ void Action::Print(llvm::raw_ostream& out) const {
       break;
     case ActionKind::ExpressionAction:
       out << *GetExpressionAction().exp;
+      break;
+    case ActionKind::PatternAction:
+      out << *GetPatternAction().pattern;
       break;
     case ActionKind::StatementAction:
       GetStatementAction().stmt->PrintDepth(1, out);
