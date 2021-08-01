@@ -457,15 +457,15 @@ Beyond simple tuples, Carbon of course allows defining
 [record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
 is the primary mechanism for users to extend the Carbon type system and
 fundamentally is deeply rooted in C++ and its history (C and Simula). We simply
-call them `struct`s rather than other terms as it is both familiar to existing
-programmers and accurately captures their essence: they are a mechanism for
-structuring data.
+call them _classes_ rather than other terms as that is both familiar to existing
+programmers and accurately captures their essence: they define the types of
+objects with (optional) support for methods, encapsulation, and so on.
 
-A `struct` type defines the interpretation of the bytes of a `struct` value,
+A class type defines the interpretation of the bytes of a value of that type,
 including the size, data members, and layout. It defines the operations that may
-be performed on those values, including what methods may be called on a `struct`
-value. A `struct` type may directly have constant members. The type itself is a
-compile-time constant value.
+be performed on those values, including what methods may be called. A class type
+may directly have constant members. The type itself is a compile-time immutable
+constant value.
 
 ## Members
 
@@ -494,15 +494,18 @@ deallocated.
 ## Struct types
 
 _Structural data classes_, or _struct types_, are convenient for defining
-[data classes](#data-classes) in an ad-hoc manner. Note that struct types are
-examples of _data class types_, but we expect later to support more ways to
-define data class types. They would commonly be used:
+[data classes](#data-classes) in an ad-hoc manner. They would commonly be used:
 
 -   as the return type of a function that returns multiple values and wants
     those values to have names so a [tuple](tuples.md) is inappropriate
 -   as a parameter to a function holding options with default values
 -   as an initializer for other `class` variables or values
 -   as a type parameter to a container
+
+Note that struct types are examples of _data class types_ and are still classes,
+but we expect later to support more ways to define data class types. Also note
+that there is no `struct` keyword, "struct" is just convenient shorthand
+terminology for a structural data class.
 
 **Future work:** We intend to support nominal [data classes](#data-classes) as
 well.
@@ -554,7 +557,7 @@ Assert(with_defaults.x == 0);
 Assert(with_defaults.y == 2);
 ```
 
-The result of a struct type expression is an immutable type value.
+The result of a struct type expression is an immutable compile-time type value.
 
 ### Option parameters
 
