@@ -60,6 +60,11 @@ struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
       "Unrecognized declaration introducer.";
 };
 
+struct ExpectedCodeBlock : SimpleDiagnostic<ExpectedCodeBlock> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message = "Expected braced code block.";
+};
+
 struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected expression.";
@@ -480,8 +485,16 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
   return params.hasValue();
 }
 
-auto ParseTree::Parser::ParseCodeBlock() -> Node {
-  TokenizedBuffer::Token open_curly = Consume(TokenKind::OpenCurlyBrace());
+auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
+  llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
+      ConsumeIf(TokenKind::OpenCurlyBrace());
+  if (!maybe_open_curly) {
+    // Recover by parsing a single statement.
+    emitter.EmitError<ExpectedCodeBlock>(*position);
+    return ParseStatement();
+  }
+  TokenizedBuffer::Token open_curly = *maybe_open_curly;
+
   auto start = GetSubtreeStartPosition();
 
   bool has_errors = false;
@@ -549,7 +562,9 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
   // See if we should parse a definition which is represented as a code block.
   if (NextTokenIs(TokenKind::OpenCurlyBrace())) {
-    ParseCodeBlock();
+    if (!ParseCodeBlock()) {
+      return add_error_function_node();
+    }
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd())) {
     emitter.EmitError<ExpectedFunctionBodyOrSemi>(*position);
@@ -978,11 +993,15 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   auto if_token = Consume(TokenKind::IfKeyword());
   auto cond = ParseParenCondition(TokenKind::IfKeyword());
-  auto then_case = ParseStatement();
+  auto then_case = ParseCodeBlock();
   bool else_has_errors = false;
   if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
                               ParseNodeKind::IfStatementElse())) {
-    else_has_errors = !ParseStatement();
+    // 'else if' is permitted as a special case.
+    if (NextTokenIs(TokenKind::IfKeyword()))
+      else_has_errors = !ParseIfStatement();
+    else
+      else_has_errors = !ParseCodeBlock();
   }
   return AddNode(ParseNodeKind::IfStatement(), if_token, start,
                  /*has_error=*/!cond || !then_case || else_has_errors);
@@ -992,7 +1011,7 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   auto while_token = Consume(TokenKind::WhileKeyword());
   auto cond = ParseParenCondition(TokenKind::WhileKeyword());
-  auto body = ParseStatement();
+  auto body = ParseCodeBlock();
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
                  /*has_error=*/!cond || !body);
 }
@@ -1045,9 +1064,6 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
     case TokenKind::ReturnKeyword():
       return ParseKeywordStatement(ParseNodeKind::ReturnStatement(),
                                    KeywordStatementArgument::Optional);
-
-    case TokenKind::OpenCurlyBrace():
-      return ParseCodeBlock();
 
     default:
       // A statement with no introducer token can only be an expression
