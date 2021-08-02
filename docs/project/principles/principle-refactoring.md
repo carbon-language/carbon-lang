@@ -40,7 +40,7 @@ Moving code:
 
 - As much as possible, dependencies on the context for defining the semantics of
   code in a function should be explicit rather than implicit.
-- Code should depend only minimally on its context. Ideally all you would only
+- Code should depend only minimally on its context. Ideally you would only
   have to import any referenced names in order to move code within a library.
   Moving code to another library would involve also updating callers or leaving
   an alias (ideally marked "deprecated") behind.
