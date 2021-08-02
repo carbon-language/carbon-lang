@@ -25,12 +25,14 @@ struct FunctionDefinition {
   FunctionDefinition(int line_num, std::string name,
                      std::vector<GenericBinding> deduced_params,
                      const TuplePattern* param_pattern,
-                     const Pattern* return_type, const Statement* body)
+                     const Pattern* return_type, bool is_omitted_return_type,
+                     const Statement* body)
       : line_num(line_num),
         name(std::move(name)),
         deduced_parameters(deduced_params),
         param_pattern(param_pattern),
         return_type(return_type),
+        is_omitted_return_type(is_omitted_return_type),
         body(body) {}
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
@@ -42,6 +44,7 @@ struct FunctionDefinition {
   std::vector<GenericBinding> deduced_parameters;
   const TuplePattern* param_pattern;
   const Pattern* return_type;
+  bool is_omitted_return_type;
   const Statement* body;
 };
 
