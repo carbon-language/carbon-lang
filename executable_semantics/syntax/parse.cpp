@@ -30,7 +30,7 @@ auto parse(const std::string& input_file_name)
   std::optional<AST> parsed_input = std::nullopt;
   ParseAndLexContext context(input_file_name);
 
-  auto parser = yy::parser(parsed_input, context);
+  auto parser = yy::parser(parsed_input, context, &*global_arena);
   if (tracing_output) {
     parser.set_debug_level(1);
   }
