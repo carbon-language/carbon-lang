@@ -124,6 +124,7 @@ struct FunctionTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
   const Expression* return_type;
+  bool is_omitted_return_type;
 };
 
 struct BoolTypeLiteral {
@@ -162,8 +163,9 @@ struct Expression {
   static auto MakeTypeTypeLiteral(int line_num) -> const Expression*;
   static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
   static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                      const Expression* ret)
+  static auto MakeFunctionTypeLiteral(int line_num, const Expression* parameter,
+                                      const Expression* return_type,
+                                      bool is_omitted_return_type)
       -> const Expression*;
   static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
 

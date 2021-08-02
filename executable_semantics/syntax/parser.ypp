@@ -92,6 +92,7 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <const Carbon::Statement*> statement
 %type <const Carbon::Statement*> if_statement
 %type <const Carbon::Statement*> optional_else
+%type <std::pair<const Carbon::Expression*, bool>> return_expression
 %type <const Carbon::Statement*> block
 %type <const Carbon::Statement*> statement_list
 %type <const Carbon::Expression*> expression
@@ -100,7 +101,7 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %type <std::vector<Carbon::GenericBinding>> deduced_param_list
 %type <const Carbon::Pattern*> pattern
 %type <const Carbon::Pattern*> non_expression_pattern
-%type <const Carbon::Expression*> return_type
+%type <std::pair<const Carbon::Expression*, bool>> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
@@ -264,7 +265,8 @@ expression:
     { $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
         yylineno, Carbon::Operator::Ptr, {$1}); }
 | FNTY tuple return_type
-    { $$ = Carbon::Expression::MakeFunctionTypeLiteral(yylineno, $2, $3); }
+    { $$ = Carbon::Expression::MakeFunctionTypeLiteral(
+        yylineno, $2, $3.first, $3.second); }
 ;
 designator: "." identifier { $$ = $2; }
 ;
@@ -415,8 +417,8 @@ statement:
     { $$ = Carbon::Statement::MakeBreak(yylineno); }
 | CONTINUE ";"
     { $$ = Carbon::Statement::MakeContinue(yylineno); }
-| RETURN expression ";"
-    { $$ = Carbon::Statement::MakeReturn(yylineno, $2); }
+| RETURN return_expression ";"
+    { $$ = Carbon::Statement::MakeReturn(yylineno, $2.first, $2.second); }
 | block
     { $$ = $1; }
 | MATCH "(" expression ")" "{" clause_list "}"
@@ -440,6 +442,12 @@ optional_else:
 | ELSE block
     { $$ = $2; }
 ;
+return_expression:
+  // Empty
+    { $$ = {Carbon::Expression::MakeTupleLiteral(yylineno, {}), true}; }
+| expression
+    { $$ = {$1, false}; }
+;
 statement_list:
   // Empty
     { $$ = 0; }
@@ -452,9 +460,9 @@ block:
 ;
 return_type:
   // Empty
-    { $$ = Carbon::Expression::MakeTupleLiteral(yylineno, {}); }
+    { $$ = {Carbon::Expression::MakeTupleLiteral(yylineno, {}), true}; }
 | ARROW expression %prec FNARROW
-    { $$ = $2; }
+    { $$ = {$2, false}; }
 ;
 generic_binding:
   identifier ":!" expression
@@ -486,21 +494,25 @@ function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
       $$ = Carbon::FunctionDefinition(
-        yylineno, $2, $3, $4, Carbon::global_arena->New<Carbon::ExpressionPattern>($5), $6);
+          yylineno, $2, $3, $4,
+          Carbon::global_arena->New<Carbon::ExpressionPattern>($5.first),
+          $5.second, $6);
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
     {
       $$ = Carbon::FunctionDefinition(
-               yylineno, $2, $3, $4,
-               Carbon::global_arena->New<Carbon::AutoPattern>(yylineno),
-               Carbon::Statement::MakeReturn(yylineno, $6));
+          yylineno, $2, $3, $4,
+          Carbon::global_arena->New<Carbon::AutoPattern>(yylineno), true,
+          Carbon::Statement::MakeReturn(yylineno, $6, false));
     }
 ;
 function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
     {
       $$ = Carbon::FunctionDefinition(
-        yylineno, $2, $3, $4, Carbon::global_arena->New<Carbon::ExpressionPattern>($5), 0); }
+          yylineno, $2, $3, $4,
+          Carbon::global_arena->New<Carbon::ExpressionPattern>($5.first),
+          $5.second, nullptr); }
 ;
 variable_declaration: identifier ":" pattern
     { $$ = Carbon::global_arena->New<Carbon::BindingPattern>(yylineno, $1, $3); }

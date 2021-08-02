@@ -56,7 +56,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::FunctionType:
       return Expression::MakeFunctionTypeLiteral(
           0, ReifyType(t->GetFunctionType().param, line_num),
-          ReifyType(t->GetFunctionType().ret, line_num));
+          ReifyType(t->GetFunctionType().ret, line_num),
+          /*is_omitted_return_type=*/false);
     case ValKind::TupleValue: {
       std::vector<FieldInitializer> args;
       for (const TupleElement& field : t->GetTupleValue().elements) {
@@ -454,7 +455,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
       auto pt = InterpExp(values, e->GetFunctionTypeLiteral().parameter);
       auto rt = InterpExp(values, e->GetFunctionTypeLiteral().return_type);
       auto new_e = Expression::MakeFunctionTypeLiteral(
-          e->line_num, ReifyType(pt, e->line_num), ReifyType(rt, e->line_num));
+          e->line_num, ReifyType(pt, e->line_num), ReifyType(rt, e->line_num),
+          /*is_omitted_return_type=*/false);
       return TCExpression(new_e, Value::MakeTypeType(), types);
     }
     case ExpressionKind::IntTypeLiteral:
@@ -710,7 +712,9 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
-      return TCStatement(Statement::MakeReturn(s->line_num, res.exp), types);
+      return TCStatement(Statement::MakeReturn(s->line_num, res.exp,
+                                               s->GetReturn().is_omitted_exp),
+                         types);
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
@@ -742,8 +746,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      return Statement::MakeReturn(line_num,
-                                   Expression::MakeTupleLiteral(line_num, {}));
+      return Statement::MakeReturn(line_num, nullptr,
+                                   /*is_omitted_exp=*/true);
     } else {
       FATAL_COMPILATION_ERROR(line_num)
           << "control-flow reaches end of non-void function without a return";
@@ -798,8 +802,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       if (void_return) {
         return Statement::MakeSequence(
             stmt->line_num, stmt,
-            Statement::MakeReturn(stmt->line_num, Expression::MakeTupleLiteral(
-                                                      stmt->line_num, {})));
+            Statement::MakeReturn(line_num, nullptr,
+                                  /*is_omitted_exp=*/true));
       } else {
         FATAL_COMPILATION_ERROR(stmt->line_num)
             << "control-flow reaches end of non-void function without a return";
@@ -835,7 +839,7 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   return global_arena->New<FunctionDefinition>(
       f->line_num, f->name, f->deduced_parameters, f->param_pattern,
       global_arena->New<ExpressionPattern>(ReifyType(return_type, f->line_num)),
-      body);
+      /*is_omitted_return_type=*/false, body);
 }
 
 auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
