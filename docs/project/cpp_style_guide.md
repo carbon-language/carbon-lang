@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Baseline](#baseline)
 -   [Carbon-local guidance](#carbon-local-guidance)
     -   [General naming rules](#general-naming-rules)
+        -   [Properties](#properties)
     -   [File names](#file-names)
     -   [Syntax and formatting](#syntax-and-formatting)
     -   [Copyable and movable types](#copyable-and-movable-types)
@@ -54,8 +55,9 @@ serves to simplify it.
 
 -   Known, compile-time constants use `UpperCamelCase`, referencing Proper
     Nouns.
-    -   This includes namespaces, type names, functions, member functions,
-        template parameters, `constexpr` variables, enumerators, etc.
+    -   This includes namespaces, type names, functions, member functions
+        (except as noted below), template parameters, `constexpr` variables,
+        enumerators, etc.
     -   Note that virtual member functions should be named with
         `UpperCamelCase`. The distinction between a virtual function and a
         non-virtual function should be invisible, especially at the call site,
@@ -63,7 +65,35 @@ serves to simplify it.
         freely change that without updating the name.
 -   All other names use `snake_case`, including function parameters, and
     non-constant local and member variables.
-    -   Notably, don't use the `_` suffix for member variable names.
+    -   Notably, don't use the `_` suffix for member variable names, except as
+        noted below.
+
+#### Properties
+
+Under our style rules, classes cannot have public data members, but it is
+sometimes useful to describe a class's behavior in terms of certain data
+members, and even provide access to them by way of methods. For these purposes,
+it doesn't matter whether those data members actually exist, so long as the
+object behaves as if they exist. We'll call these notional data members
+"properties". Many languages have native support for properties, and we would
+like to explore providing such a feature in Carbon. To that end, we have special
+naming rules that allow C++ classes to emulate the interface they might have in
+a language with native property support:
+
+Properties, like all other data members, should have `snake_case` names.
+
+A member function can have the same name as a property, including the
+`snake_case` spelling, if it functions as a read-only accessor for that
+property. Such a member function must conform to the expectations that users
+have for accessors. In particular:
+
+-   It must be a pure function of state that's owned by the object.
+-   The costs of calling it must be comparable to the costs of directly
+    accessing an equivalent data member.
+
+If a data member directly stores the value of a property, it should have the
+same name as the property, with a `_` suffix to avoid name collisions with the
+accessor.
 
 ### File names
 
