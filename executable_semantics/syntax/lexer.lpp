@@ -178,10 +178,7 @@ operator and its operand, leading to three more cases:
 
 {identifier} {
   BEGIN(AFTER_OPERAND);
-  int n = strlen(yytext);
-  auto r = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
-  strncpy(r, yytext, n + 1);
-  return yy::parser::make_identifier(r, context.current_token_position);
+  return yy::parser::make_identifier(yytext, context.current_token_position);
 }
 
 {integer_literal} {

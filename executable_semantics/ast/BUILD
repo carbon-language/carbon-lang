@@ -42,10 +42,6 @@ cc_library(
 cc_test(
     name = "expression_test",
     srcs = ["expression_test.cpp"],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
     deps = [
         ":expression",
         "//executable_semantics/syntax:paren_contents",
@@ -82,6 +78,7 @@ cc_library(
     deps = [
         ":expression",
         "//common:ostream",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "@llvm-project//llvm:Support",
     ],
@@ -90,10 +87,6 @@ cc_library(
 cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
     deps = [
         ":pattern",
         "//executable_semantics/syntax:paren_contents",
@@ -112,6 +105,7 @@ cc_library(
         ":pattern",
         "//common:check",
         "//common:ostream",
+        "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
 )
