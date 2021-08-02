@@ -90,53 +90,53 @@ operand_start [(A-Za-z0-9_"]
   context.current_token_position.step();
 %}
 
-{AND}      { return yy::parser::make_AND(context.current_token_position); }
-{ARROW}    { return yy::parser::make_ARROW(context.current_token_position); }
-{AUTO}     { return yy::parser::make_AUTO(context.current_token_position); }
-{BOOL}     { return yy::parser::make_BOOL(context.current_token_position); }
-{BREAK}    { return yy::parser::make_BREAK(context.current_token_position); }
-{CASE}     { return yy::parser::make_CASE(context.current_token_position); }
-{CHOICE}   { return yy::parser::make_CHOICE(context.current_token_position); }
-{CONTINUE} { return yy::parser::make_CONTINUE(context.current_token_position); }
-{DBLARROW} { return yy::parser::make_DBLARROW(context.current_token_position); }
-{DEFAULT}  { return yy::parser::make_DEFAULT(context.current_token_position); }
-{ELSE}     { return yy::parser::make_ELSE(context.current_token_position); }
-"=="       { return yy::parser::make_EQUAL_EQUAL(context.current_token_position); }
-{FALSE}    { return yy::parser::make_FALSE(context.current_token_position); }
-{FN}       { return yy::parser::make_FN(context.current_token_position); }
-{FNTY}     { return yy::parser::make_FNTY(context.current_token_position); }
-{IF}       { return yy::parser::make_IF(context.current_token_position); }
-{INT}      { return yy::parser::make_INT(context.current_token_position); }
-{MATCH}    { return yy::parser::make_MATCH(context.current_token_position); }
-{NOT}      { return yy::parser::make_NOT(context.current_token_position); }
-{OR}       { return yy::parser::make_OR(context.current_token_position); }
-{RETURN}   { return yy::parser::make_RETURN(context.current_token_position); }
-{STRUCT}   { return yy::parser::make_STRUCT(context.current_token_position); }
-{TRUE}     { return yy::parser::make_TRUE(context.current_token_position); }
-{TYPE}     { return yy::parser::make_TYPE(context.current_token_position); }
-{VAR}      { return yy::parser::make_VAR(context.current_token_position); }
-{WHILE}    { return yy::parser::make_WHILE(context.current_token_position); }
-{CONTINUATION_TYPE} { return yy::parser::make_CONTINUATION_TYPE(context.current_token_position); }
-{CONTINUATION}    { return yy::parser::make_CONTINUATION(context.current_token_position); }
-{RUN}      { return yy::parser::make_RUN(context.current_token_position); }
-{AWAIT}    { return yy::parser::make_AWAIT(context.current_token_position); }
-{UNDERSCORE}      { return yy::parser::make_UNDERSCORE(context.current_token_position); }
+{AND}      { return Carbon::Parser::make_AND(context.current_token_position); }
+{ARROW}    { return Carbon::Parser::make_ARROW(context.current_token_position); }
+{AUTO}     { return Carbon::Parser::make_AUTO(context.current_token_position); }
+{BOOL}     { return Carbon::Parser::make_BOOL(context.current_token_position); }
+{BREAK}    { return Carbon::Parser::make_BREAK(context.current_token_position); }
+{CASE}     { return Carbon::Parser::make_CASE(context.current_token_position); }
+{CHOICE}   { return Carbon::Parser::make_CHOICE(context.current_token_position); }
+{CONTINUE} { return Carbon::Parser::make_CONTINUE(context.current_token_position); }
+{DBLARROW} { return Carbon::Parser::make_DBLARROW(context.current_token_position); }
+{DEFAULT}  { return Carbon::Parser::make_DEFAULT(context.current_token_position); }
+{ELSE}     { return Carbon::Parser::make_ELSE(context.current_token_position); }
+"=="       { return Carbon::Parser::make_EQUAL_EQUAL(context.current_token_position); }
+{FALSE}    { return Carbon::Parser::make_FALSE(context.current_token_position); }
+{FN}       { return Carbon::Parser::make_FN(context.current_token_position); }
+{FNTY}     { return Carbon::Parser::make_FNTY(context.current_token_position); }
+{IF}       { return Carbon::Parser::make_IF(context.current_token_position); }
+{INT}      { return Carbon::Parser::make_INT(context.current_token_position); }
+{MATCH}    { return Carbon::Parser::make_MATCH(context.current_token_position); }
+{NOT}      { return Carbon::Parser::make_NOT(context.current_token_position); }
+{OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
+{RETURN}   { return Carbon::Parser::make_RETURN(context.current_token_position); }
+{STRUCT}   { return Carbon::Parser::make_STRUCT(context.current_token_position); }
+{TRUE}     { return Carbon::Parser::make_TRUE(context.current_token_position); }
+{TYPE}     { return Carbon::Parser::make_TYPE(context.current_token_position); }
+{VAR}      { return Carbon::Parser::make_VAR(context.current_token_position); }
+{WHILE}    { return Carbon::Parser::make_WHILE(context.current_token_position); }
+{CONTINUATION_TYPE} { return Carbon::Parser::make_CONTINUATION_TYPE(context.current_token_position); }
+{CONTINUATION}    { return Carbon::Parser::make_CONTINUATION(context.current_token_position); }
+{RUN}      { return Carbon::Parser::make_RUN(context.current_token_position); }
+{AWAIT}    { return Carbon::Parser::make_AWAIT(context.current_token_position); }
+{UNDERSCORE}      { return Carbon::Parser::make_UNDERSCORE(context.current_token_position); }
 
-"=" return yy::parser::make_EQUAL(context.current_token_position);
-"-" return yy::parser::make_MINUS(context.current_token_position);
-"+" return yy::parser::make_PLUS(context.current_token_position);
-"/" return yy::parser::make_SLASH(context.current_token_position);
-"(" return yy::parser::make_LEFT_PARENTHESIS(context.current_token_position);
-")" { BEGIN(AFTER_OPERAND); return yy::parser::make_RIGHT_PARENTHESIS(context.current_token_position); }
-"{" return yy::parser::make_LEFT_CURLY_BRACE(context.current_token_position);
-"}" { BEGIN(AFTER_OPERAND); return yy::parser::make_RIGHT_CURLY_BRACE(context.current_token_position); }
-"[" return yy::parser::make_LEFT_SQUARE_BRACKET(context.current_token_position);
-"]" { BEGIN(AFTER_OPERAND); return yy::parser::make_RIGHT_SQUARE_BRACKET(context.current_token_position); }
-"." return yy::parser::make_PERIOD(context.current_token_position);
-"," return yy::parser::make_COMMA(context.current_token_position);
-";" return yy::parser::make_SEMICOLON(context.current_token_position);
-":!" return yy::parser::make_COLON_BANG(context.current_token_position);
-":" return yy::parser::make_COLON(context.current_token_position);
+"=" return Carbon::Parser::make_EQUAL(context.current_token_position);
+"-" return Carbon::Parser::make_MINUS(context.current_token_position);
+"+" return Carbon::Parser::make_PLUS(context.current_token_position);
+"/" return Carbon::Parser::make_SLASH(context.current_token_position);
+"(" return Carbon::Parser::make_LEFT_PARENTHESIS(context.current_token_position);
+")" { BEGIN(AFTER_OPERAND); return Carbon::Parser::make_RIGHT_PARENTHESIS(context.current_token_position); }
+"{" return Carbon::Parser::make_LEFT_CURLY_BRACE(context.current_token_position);
+"}" { BEGIN(AFTER_OPERAND); return Carbon::Parser::make_RIGHT_CURLY_BRACE(context.current_token_position); }
+"[" return Carbon::Parser::make_LEFT_SQUARE_BRACKET(context.current_token_position);
+"]" { BEGIN(AFTER_OPERAND); return Carbon::Parser::make_RIGHT_SQUARE_BRACKET(context.current_token_position); }
+"." return Carbon::Parser::make_PERIOD(context.current_token_position);
+"," return Carbon::Parser::make_COMMA(context.current_token_position);
+";" return Carbon::Parser::make_SEMICOLON(context.current_token_position);
+":!" return Carbon::Parser::make_COLON_BANG(context.current_token_position);
+":" return Carbon::Parser::make_COLON(context.current_token_position);
 
  /*
 For a `*` operator, we look at whitespace and local context to determine the
@@ -160,31 +160,31 @@ operator and its operand, leading to three more cases:
 */
 <AFTER_WHITESPACE>"*"{whitespace}+ /*case 1*/ {
   BEGIN(AFTER_WHITESPACE);
-  return yy::parser::make_BINARY_STAR(context.current_token_position);
+  return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
 }
 <AFTER_OPERAND>"*"/{operand_start} /*case 2*/ {
-  return yy::parser::make_BINARY_STAR(context.current_token_position);
+  return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
 }
 <AFTER_WHITESPACE>"*" /*case 3*/ {
-  return yy::parser::make_PREFIX_STAR(context.current_token_position);
+  return Carbon::Parser::make_PREFIX_STAR(context.current_token_position);
 }
 <INITIAL,AFTER_OPERAND>"*"{whitespace}+ /*case 4*/ {
   BEGIN(AFTER_WHITESPACE);
-  return yy::parser::make_POSTFIX_STAR(context.current_token_position);
+  return Carbon::Parser::make_POSTFIX_STAR(context.current_token_position);
 }
 <INITIAL,AFTER_OPERAND>"*" /*case 5*/ {
-  return yy::parser::make_UNARY_STAR(context.current_token_position);
+  return Carbon::Parser::make_UNARY_STAR(context.current_token_position);
 }
 
 {identifier} {
   BEGIN(AFTER_OPERAND);
-  return yy::parser::make_identifier(yytext, context.current_token_position);
+  return Carbon::Parser::make_identifier(yytext, context.current_token_position);
 }
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
   auto r = atof(yytext);
-  return yy::parser::make_integer_literal(r, context.current_token_position);
+  return Carbon::Parser::make_integer_literal(r, context.current_token_position);
 }
 
 {ONE_LINE_COMMENT} {
@@ -221,7 +221,7 @@ operator and its operand, leading to three more cases:
 
 <<EOF>>    {
   // A more modern Bison would give us make_EOF.
-  return yy::parser::make_END_OF_FILE(context.current_token_position);
+  return Carbon::Parser::make_END_OF_FILE(context.current_token_position);
 }
 
 %%
