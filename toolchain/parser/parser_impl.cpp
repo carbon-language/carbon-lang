@@ -678,6 +678,9 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
     case TokenKind::IntegerLiteral():
     case TokenKind::RealLiteral():
     case TokenKind::StringLiteral():
+    case TokenKind::IntegerTypeLiteral():
+    case TokenKind::UnsignedIntegerTypeLiteral():
+    case TokenKind::FloatingPointTypeLiteral():
       kind = ParseNodeKind::Literal();
       break;
 
