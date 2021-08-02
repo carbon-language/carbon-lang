@@ -4,11 +4,13 @@
 
 #include "executable_semantics/ast/member.h"
 
+#include "executable_semantics/common/arena.h"
+
 namespace Carbon {
 
 auto Member::MakeFieldMember(int line_num, const BindingPattern* binding)
     -> Member* {
-  auto m = new Member();
+  auto m = global_arena->New<Member>();
   m->line_num = line_num;
   m->value = FieldMember({.binding = binding});
   return m;
