@@ -60,7 +60,7 @@ struct If {
 struct Return {
   static constexpr StatementKind Kind = StatementKind::Return;
   const Expression* exp;
-  bool is_exp_implicit;
+  bool is_omitted_exp;
 };
 
 struct Sequence {
@@ -122,7 +122,7 @@ struct Statement {
                      const Statement* then_stmt, const Statement* else_stmt)
       -> const Statement*;
   static auto MakeReturn(int line_num, const Expression* exp,
-                         bool is_exp_implicit) -> const Statement*;
+                         bool is_omitted_exp) -> const Statement*;
   static auto MakeSequence(int line_num, const Statement* s1,
                            const Statement* s2) -> const Statement*;
   static auto MakeBlock(int line_num, const Statement* s) -> const Statement*;

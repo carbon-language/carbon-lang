@@ -118,14 +118,14 @@ auto Statement::MakeContinue(int line_num) -> const Statement* {
 }
 
 auto Statement::MakeReturn(int line_num, const Expression* exp,
-                           bool is_exp_implicit) -> const Statement* {
+                           bool is_omitted_exp) -> const Statement* {
   auto* s = global_arena->New<Statement>();
   s->line_num = line_num;
   if (exp == nullptr) {
-    CHECK(is_exp_implicit);
+    CHECK(is_omitted_exp);
     exp = Expression::MakeTupleLiteral(line_num, {});
   }
-  s->value = Return({.exp = exp, .is_exp_implicit = is_exp_implicit});
+  s->value = Return({.exp = exp, .is_omitted_exp = is_omitted_exp});
   return s;
 }
 
@@ -234,7 +234,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     case StatementKind::Return:
-      if (GetReturn().is_exp_implicit) {
+      if (GetReturn().is_omitted_exp) {
         out << "return;";
       } else {
         out << "return " << *GetReturn().exp << ";";

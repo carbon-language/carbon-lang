@@ -103,14 +103,14 @@ auto Expression::MakeContinuationTypeLiteral(int line_num)
 auto Expression::MakeFunctionTypeLiteral(int line_num,
                                          const Expression* parameter,
                                          const Expression* return_type,
-                                         bool is_return_type_implicit)
+                                         bool is_omitted_return_type)
     -> const Expression* {
   auto* t = global_arena->New<Expression>();
   t->line_num = line_num;
   t->value =
       FunctionTypeLiteral({.parameter = parameter,
                            .return_type = return_type,
-                           .is_return_type_implicit = is_return_type_implicit});
+                           .is_omitted_return_type = is_omitted_return_type});
   return t;
 }
 

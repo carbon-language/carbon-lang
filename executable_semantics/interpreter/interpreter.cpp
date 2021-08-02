@@ -1095,7 +1095,7 @@ void StepStmt() {
       Stack<Action*> todo;
       todo.Push(Action::MakeStatementAction(
           Statement::MakeReturn(stmt->line_num, nullptr,
-                                /*is_exp_implicit=*/true)));
+                                /*is_omitted_exp=*/true)));
       todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
       Frame* continuation_frame =
           global_arena->New<Frame>("__continuation", scopes, todo);
