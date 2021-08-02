@@ -373,7 +373,12 @@ class TokenizedBuffer::Lexer {
   // literal and if so form the corresponding token.
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int column)
       -> LexResult {
-    if (!(word.size() >= 2 && word[1] >= '1' && word[1] <= '9')) {
+    if (word.size() < 2) {
+      // Too short to form one of these tokens.
+      return LexResult::NoMatch();
+    }
+    if (!('1' <= word[1] && word[1] <= '9')) {
+      // Doesn't start with a valid initial digit.
       return LexResult::NoMatch();
     }
 
