@@ -12,6 +12,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
@@ -514,9 +515,10 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
           FATAL_COMPILATION_ERROR(binding.LineNumber())
               << "Unsupported type pattern";
       }
-      auto new_p = new BindingPattern(
+      auto new_p = global_arena->New<BindingPattern>(
           binding.LineNumber(), binding.Name(),
-          new ExpressionPattern(ReifyType(type, binding.LineNumber())));
+          global_arena->New<ExpressionPattern>(
+              ReifyType(type, binding.LineNumber())));
       if (binding.Name().has_value()) {
         types.Set(*binding.Name(), type);
       }
@@ -555,7 +557,8 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
             TuplePattern::Field(field.name, field_result.pattern));
         field_types.push_back({.name = field.name, .value = field_result.type});
       }
-      auto new_tuple = new TuplePattern(tuple.LineNumber(), new_fields);
+      auto new_tuple =
+          global_arena->New<TuplePattern>(tuple.LineNumber(), new_fields);
       auto tuple_t = Value::MakeTupleValue(std::move(field_types));
       return {.pattern = new_tuple, .type = tuple_t, .types = new_types};
     }
@@ -580,7 +583,7 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
       }
       TCPattern arg_results = TypeCheckPattern(alternative.Arguments(), types,
                                                values, parameter_types);
-      return {.pattern = new AlternativePattern(
+      return {.pattern = global_arena->New<AlternativePattern>(
                   alternative.LineNumber(),
                   ReifyType(choice_type, alternative.LineNumber()),
                   alternative.AlternativeName(),
@@ -591,7 +594,7 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
     case Pattern::Kind::ExpressionPattern: {
       TCExpression result =
           TypeCheckExp(cast<ExpressionPattern>(p)->Expression(), types, values);
-      return {.pattern = new ExpressionPattern(result.exp),
+      return {.pattern = global_arena->New<ExpressionPattern>(result.exp),
               .type = result.type,
               .types = result.types};
     }
@@ -624,7 +627,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto res = TypeCheckExp(s->GetMatch().exp, types, values);
       auto res_type = res.type;
       auto new_clauses =
-          new std::list<std::pair<const Pattern*, const Statement*>>();
+          global_arena
+              ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
       for (auto& clause : *s->GetMatch().clauses) {
         new_clauses->push_back(TypecheckCase(
             res_type, clause.first, clause.second, types, values, ret_type));
@@ -752,7 +756,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
   switch (stmt->tag()) {
     case StatementKind::Match: {
       auto new_clauses =
-          new std::list<std::pair<const Pattern*, const Statement*>>();
+          global_arena
+              ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
       for (auto i = stmt->GetMatch().clauses->begin();
            i != stmt->GetMatch().clauses->end(); ++i) {
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
@@ -831,9 +836,9 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
   bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
-  return new FunctionDefinition(
+  return global_arena->New<FunctionDefinition>(
       f->line_num, f->name, f->deduced_parameters, f->param_pattern,
-      new ExpressionPattern(ReifyType(return_type, f->line_num)),
+      global_arena->New<ExpressionPattern>(ReifyType(return_type, f->line_num)),
       /*is_return_type_implicit=*/false, body);
 }
 

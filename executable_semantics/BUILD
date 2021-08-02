@@ -26,10 +26,6 @@ cc_binary(
         ":executable_semantics",
         "testdata/%s.carbon" % e,
     ],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
     golden = "testdata/%s.golden" % e,
 ) for e in TEST_LIST]
 
@@ -49,10 +45,6 @@ test_suite(
         ":executable_semantics",
         "testdata/%s.carbon" % e,
     ],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
     golden = "testdata/%s.golden" % e,
     golden_is_subset = True,
 ) for e in TEST_LIST]

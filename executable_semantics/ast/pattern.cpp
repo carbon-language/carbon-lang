@@ -8,6 +8,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -57,7 +58,8 @@ TuplePattern::TuplePattern(const Expression* tuple_literal)
     : Pattern(Kind::TuplePattern, tuple_literal->line_num) {
   const auto& tuple = tuple_literal->GetTupleLiteral();
   for (const FieldInitializer& init : tuple.fields) {
-    fields.push_back(Field(init.name, new ExpressionPattern(init.expression)));
+    fields.push_back(Field(
+        init.name, global_arena->New<ExpressionPattern>(init.expression)));
   }
 }
 
@@ -75,7 +77,7 @@ auto PatternFromParenContents(int line_num,
 auto TuplePatternFromParenContents(int line_num,
                                    const ParenContents<Pattern>& paren_contents)
     -> const TuplePattern* {
-  return new TuplePattern(
+  return global_arena->New<TuplePattern>(
       line_num, paren_contents.TupleElements<TuplePattern::Field>(line_num));
 }
 
@@ -98,7 +100,8 @@ auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
       .elements = {}, .has_trailing_comma = contents.has_trailing_comma};
   for (const auto& element : contents.elements) {
     result.elements.push_back(
-        {.name = element.name, .term = new ExpressionPattern(element.term)});
+        {.name = element.name,
+         .term = global_arena->New<ExpressionPattern>(element.term)});
   }
   return result;
 }

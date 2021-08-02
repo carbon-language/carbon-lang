@@ -12,37 +12,38 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
 auto Action::MakeLValAction(const Expression* e) -> Action* {
-  auto* act = new Action();
+  auto* act = global_arena->New<Action>();
   act->value = LValAction({.exp = e});
   return act;
 }
 
 auto Action::MakeExpressionAction(const Expression* e) -> Action* {
-  auto* act = new Action();
+  auto* act = global_arena->New<Action>();
   act->value = ExpressionAction({.exp = e});
   return act;
 }
 
 auto Action::MakePatternAction(const Pattern* p) -> Action* {
-  auto* act = new Action();
+  auto* act = global_arena->New<Action>();
   act->value = PatternAction({.pattern = p});
   return act;
 }
 
 auto Action::MakeStatementAction(const Statement* s) -> Action* {
-  auto* act = new Action();
+  auto* act = global_arena->New<Action>();
   act->value = StatementAction({.stmt = s});
   return act;
 }
 
 auto Action::MakeValAction(const Value* v) -> Action* {
-  auto* act = new Action();
+  auto* act = global_arena->New<Action>();
   act->value = ValAction({.val = v});
   return act;
 }

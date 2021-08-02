@@ -5,6 +5,7 @@
 #include "executable_semantics/syntax/syntax_helpers.h"
 
 #include "common/ostream.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/typecheck.h"
@@ -19,7 +20,7 @@ void ExecProgram(std::list<Declaration>* fs) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
-  state = new State();  // Compile-time state.
+  state = global_arena->New<State>();  // Compile-time state.
   TypeCheckContext p = TopLevel(fs);
   TypeEnv top = p.types;
   Env ct_top = p.values;

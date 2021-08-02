@@ -354,28 +354,6 @@ TEST_F(ParseTreeTest, BasicFunctionDefinition) {
                          MatchFileEnd()}));
 }
 
-TEST_F(ParseTreeTest, FunctionDefinitionWithNestedBlocks) {
-  TokenizedBuffer tokens = GetTokenizedBuffer(
-      "fn F() {\n"
-      "  {\n"
-      "    {{}}\n"
-      "  }\n"
-      "}");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
-  EXPECT_FALSE(tree.HasErrors());
-  EXPECT_THAT(
-      tree, MatchParseTreeNodes(
-                {MatchFunctionDeclaration(
-                     MatchDeclaredName("F"), MatchParameters(),
-                     MatchCodeBlock(
-                         MatchCodeBlock(
-                             MatchCodeBlock(MatchCodeBlock(MatchCodeBlockEnd()),
-                                            MatchCodeBlockEnd()),
-                             MatchCodeBlockEnd()),
-                         MatchCodeBlockEnd())),
-                 MatchFileEnd()}));
-}
-
 TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInStatements) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
@@ -391,26 +369,6 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInStatements) {
                              MatchCodeBlock(HasError, MatchNameReference("bar"),
                                             MatchCodeBlockEnd())),
                          MatchFileEnd()}));
-}
-
-TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInNestedBlock) {
-  TokenizedBuffer tokens = GetTokenizedBuffer(
-      "fn F() {\n"
-      "  {bar}\n"
-      "}");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
-  // Note: this might become valid depending on the expression syntax. This test
-  // shouldn't be taken as a sign it should remain invalid.
-  EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree,
-              MatchParseTreeNodes(
-                  {MatchFunctionDeclaration(
-                       MatchDeclaredName("F"), MatchParameters(),
-                       MatchCodeBlock(
-                           MatchCodeBlock(HasError, MatchNameReference("bar"),
-                                          MatchCodeBlockEnd()),
-                           MatchCodeBlockEnd())),
-                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDefinitionWithFunctionCall) {
@@ -675,13 +633,53 @@ TEST_F(ParseTreeTest, VariableDeclarations) {
 TEST_F(ParseTreeTest, IfNoElse) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
+      "  if (a) {\n"
+      "    if (b) {\n"
+      "      if (c) {\n"
+      "        d;\n"
+      "      }\n"
+      "    }\n"
+      "  }\n"
+      "}");
+  ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+  ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_FALSE(error_tracker.SeenError());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchIfStatement(
+               MatchCondition(MatchNameReference("a"), MatchConditionEnd()),
+               MatchCodeBlock(
+                   MatchIfStatement(
+                       MatchCondition(MatchNameReference("b"),
+                                      MatchConditionEnd()),
+                       MatchCodeBlock(
+                           MatchIfStatement(
+                               MatchCondition(MatchNameReference("c"),
+                                              MatchConditionEnd()),
+                               MatchCodeBlock(MatchExpressionStatement(
+                                                  MatchNameReference("d")),
+                                              MatchCodeBlockEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchCodeBlockEnd()))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, IfNoElseUnbraced) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
       "  if (a)\n"
       "    if (b)\n"
       "      if (c)\n"
       "        d;\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+  ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+  // The missing braces are invalid, but we should be able to recover.
   EXPECT_FALSE(tree.HasErrors());
+  EXPECT_TRUE(error_tracker.SeenError());
 
   EXPECT_THAT(
       tree,
@@ -700,6 +698,74 @@ TEST_F(ParseTreeTest, IfNoElse) {
 TEST_F(ParseTreeTest, IfElse) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
+      "  if (a) {\n"
+      "    if (b) {\n"
+      "      c;\n"
+      "    } else {\n"
+      "      d;\n"
+      "    }\n"
+      "  } else {\n"
+      "    e;\n"
+      "  }\n"
+      "  if (x) { G(1); }\n"
+      "  else if (x) { G(2); }\n"
+      "  else { G(3); }\n"
+      "}");
+  ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+  ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_FALSE(error_tracker.SeenError());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(
+               MatchIfStatement(
+                   MatchCondition(MatchNameReference("a"), MatchConditionEnd()),
+                   MatchCodeBlock(
+                       MatchIfStatement(
+                           MatchCondition(MatchNameReference("b"),
+                                          MatchConditionEnd()),
+                           MatchCodeBlock(MatchExpressionStatement(
+                                              MatchNameReference("c")),
+                                          MatchCodeBlockEnd()),
+                           MatchIfStatementElse(),
+                           MatchCodeBlock(MatchExpressionStatement(
+                                              MatchNameReference("d")),
+                                          MatchCodeBlockEnd())),
+                       MatchCodeBlockEnd()),
+                   MatchIfStatementElse(),
+                   MatchCodeBlock(
+                       MatchExpressionStatement(MatchNameReference("e")),
+                       MatchCodeBlockEnd())),
+               MatchIfStatement(
+                   MatchCondition(MatchNameReference("x"), MatchConditionEnd()),
+                   MatchCodeBlock(
+                       MatchExpressionStatement(MatchCallExpression(
+                           MatchNameReference("G"), MatchLiteral("1"),
+                           MatchCallExpressionEnd())),
+                       MatchCodeBlockEnd()),
+                   MatchIfStatementElse(),
+                   MatchIfStatement(
+                       MatchCondition(MatchNameReference("x"),
+                                      MatchConditionEnd()),
+                       MatchCodeBlock(
+                           MatchExpressionStatement(MatchCallExpression(
+                               MatchNameReference("G"), MatchLiteral("2"),
+                               MatchCallExpressionEnd())),
+                           MatchCodeBlockEnd()),
+                       MatchIfStatementElse(),
+                       MatchCodeBlock(
+                           MatchExpressionStatement(MatchCallExpression(
+                               MatchNameReference("G"), MatchLiteral("3"),
+                               MatchCallExpressionEnd())),
+                           MatchCodeBlockEnd())))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, IfElseUnbraced) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
       "  if (a)\n"
       "    if (b)\n"
       "      c;\n"
@@ -711,8 +777,11 @@ TEST_F(ParseTreeTest, IfElse) {
       "  else if (x) { G(2); }\n"
       "  else { G(3); }\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+  ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+  // The missing braces are invalid, but we should be able to recover.
   EXPECT_FALSE(tree.HasErrors());
+  EXPECT_TRUE(error_tracker.SeenError());
 
   EXPECT_THAT(
       tree,
@@ -786,13 +855,17 @@ TEST_F(ParseTreeTest, WhileBreakContinue) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
       "  while (a) {\n"
-      "    if (b)\n"
+      "    if (b) {\n"
       "      break;\n"
-      "    if (c)\n"
+      "    }\n"
+      "    if (c) {\n"
       "      continue;\n"
+      "    }\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+  ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   EXPECT_FALSE(tree.HasErrors());
+  EXPECT_FALSE(error_tracker.SeenError());
 
   EXPECT_THAT(
       tree,
@@ -800,22 +873,46 @@ TEST_F(ParseTreeTest, WhileBreakContinue) {
           {MatchFunctionWithBody(MatchWhileStatement(
                MatchCondition(MatchNameReference("a"), MatchConditionEnd()),
                MatchCodeBlock(
-                   MatchIfStatement(MatchCondition(MatchNameReference("b"),
-                                                   MatchConditionEnd()),
-                                    MatchBreakStatement(MatchStatementEnd())),
                    MatchIfStatement(
-                       MatchCondition(MatchNameReference("c"),
+                       MatchCondition(MatchNameReference("b"),
                                       MatchConditionEnd()),
-                       MatchContinueStatement(MatchStatementEnd())),
+                       MatchCodeBlock(MatchBreakStatement(MatchStatementEnd()),
+                                      MatchCodeBlockEnd())),
+                   MatchIfStatement(MatchCondition(MatchNameReference("c"),
+                                                   MatchConditionEnd()),
+                                    MatchCodeBlock(MatchContinueStatement(
+                                                       MatchStatementEnd()),
+                                                   MatchCodeBlockEnd())),
                    MatchCodeBlockEnd()))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, WhileUnbraced) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  while (a) \n"
+      "    break;\n"
+      "}");
+  ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+  ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_TRUE(error_tracker.SeenError());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchWhileStatement(
+               MatchCondition(MatchNameReference("a"), MatchConditionEnd()),
+               MatchBreakStatement(MatchStatementEnd()))),
            MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, Return) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
-      "  if (c)\n"
+      "  if (c) {\n"
       "    return;\n"
+      "  }\n"
       "}\n"
       "fn G(x: Int) -> Int {\n"
       "  return x;\n"
@@ -828,7 +925,8 @@ TEST_F(ParseTreeTest, Return) {
       MatchParseTreeNodes(
           {MatchFunctionWithBody(MatchIfStatement(
                MatchCondition(MatchNameReference("c"), MatchConditionEnd()),
-               MatchReturnStatement(MatchStatementEnd()))),
+               MatchCodeBlock(MatchReturnStatement(MatchStatementEnd()),
+                              MatchCodeBlockEnd()))),
            MatchFunctionDeclaration(
                MatchDeclaredName(),
                MatchParameters(MatchPatternBinding(MatchDeclaredName("x"), ":",

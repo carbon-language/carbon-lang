@@ -14,6 +14,7 @@
 #include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/action.h"
@@ -193,10 +194,11 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
                        &params, line_num);
       CHECK(matches) << "internal error in call_function, pattern match failed";
       // Create the new frame and push it on the stack
-      auto* scope = new Scope(*matches, params);
-      auto* frame = new Frame(operas[0]->GetFunctionValue().name, Stack(scope),
-                              Stack(Action::MakeStatementAction(
-                                  operas[0]->GetFunctionValue().body)));
+      auto* scope = global_arena->New<Scope>(*matches, params);
+      auto* frame = global_arena->New<Frame>(
+          operas[0]->GetFunctionValue().name, Stack(scope),
+          Stack(
+              Action::MakeStatementAction(operas[0]->GetFunctionValue().body)));
       state->stack.Push(frame);
       break;
     }
@@ -888,7 +890,7 @@ void StepStmt() {
           std::optional<Env> matches =
               PatternMatch(pat, v, values, &vars, stmt->line_num);
           if (matches) {  // we have a match, start the body
-            auto* new_scope = new Scope(*matches, vars);
+            auto* new_scope = global_arena->New<Scope>(*matches, vars);
             frame->scopes.Push(new_scope);
             const Statement* body_block =
                 Statement::MakeBlock(stmt->line_num, c->second);
@@ -959,7 +961,8 @@ void StepStmt() {
     case StatementKind::Block: {
       if (act->pos == 0) {
         if (stmt->GetBlock().stmt) {
-          auto* scope = new Scope(CurrentEnv(state), {});
+          auto* scope = global_arena->New<Scope>(CurrentEnv(state),
+                                                 std::list<std::string>());
           frame->scopes.Push(scope);
           frame->todo.Push(Action::MakeStatementAction(stmt->GetBlock().stmt));
           act->pos++;
@@ -1085,7 +1088,8 @@ void StepStmt() {
       CHECK(act->pos == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
-      Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+      Scope* scope =
+          global_arena->New<Scope>(CurrentEnv(state), std::list<std::string>());
       Stack<Scope*> scopes;
       scopes.Push(scope);
       Stack<Action*> todo;
@@ -1093,7 +1097,8 @@ void StepStmt() {
           Statement::MakeReturn(stmt->line_num, nullptr,
                                 /*is_exp_implicit=*/true)));
       todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
-      Frame* continuation_frame = new Frame("__continuation", scopes, todo);
+      Frame* continuation_frame =
+          global_arena->New<Frame>("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
           Value::MakeContinuationValue({continuation_frame}));
       // Store the continuation's address in the frame.
@@ -1177,7 +1182,7 @@ void Step() {
 
 // Interpret the whole porogram.
 auto InterpProgram(std::list<Declaration>* fs) -> int {
-  state = new State();  // Runtime state.
+  state = global_arena->New<State>();  // Runtime state.
   if (tracing_output) {
     llvm::outs() << "********** initializing globals **********\n";
   }
@@ -1187,8 +1192,8 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   const Expression* call_main = Expression::MakeCallExpression(
       0, Expression::MakeIdentifierExpression(0, "main"), arg);
   auto todo = Stack(Action::MakeExpressionAction(call_main));
-  auto* scope = new Scope(globals, std::list<std::string>());
-  auto* frame = new Frame("top", Stack(scope), todo);
+  auto* scope = global_arena->New<Scope>(globals, std::list<std::string>());
+  auto* frame = global_arena->New<Frame>("top", Stack(scope), todo);
   state->stack = Stack(frame);
 
   if (tracing_output) {
@@ -1210,8 +1215,8 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 // Interpret an expression at compile-time.
 auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto todo = Stack(Action::MakeExpressionAction(e));
-  auto* scope = new Scope(values, std::list<std::string>());
-  auto* frame = new Frame("InterpExp", Stack(scope), todo);
+  auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
+  auto* frame = global_arena->New<Frame>("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);
 
   while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
@@ -1225,8 +1230,8 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
 // Interpret a pattern at compile-time.
 auto InterpPattern(Env values, const Pattern* p) -> const Value* {
   auto todo = Stack(Action::MakePatternAction(p));
-  auto* scope = new Scope(values, std::list<std::string>());
-  auto* frame = new Frame("InterpPattern", Stack(scope), todo);
+  auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
+  auto* frame = global_arena->New<Frame>("InterpPattern", Stack(scope), todo);
   state->stack = Stack(frame);
 
   while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||

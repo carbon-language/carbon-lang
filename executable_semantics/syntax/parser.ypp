@@ -63,6 +63,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/syntax/paren_contents.h"
 
 namespace Carbon {
@@ -82,8 +83,8 @@ void yy::parser::error(const location_type&, const std::string& message) {
 }  // %code
 
 %token <int> integer_literal
-%token <char*> identifier
-%type <char*> designator
+%token <std::string> identifier
+%type <std::string> designator
 %type <Carbon::Declaration> declaration
 %type <Carbon::FunctionDefinition> function_declaration
 %type <Carbon::FunctionDefinition> function_definition
@@ -312,17 +313,17 @@ pattern:
   non_expression_pattern
     { $$ = $1; }
 | expression
-    { $$ = new Carbon::ExpressionPattern($1); }
+    { $$ = Carbon::global_arena->New<Carbon::ExpressionPattern>($1); }
 ;
 non_expression_pattern:
   AUTO
-    { $$ = new Carbon::AutoPattern(yylineno); }
+    { $$ = Carbon::global_arena->New<Carbon::AutoPattern>(yylineno); }
 | binding_lhs ":" pattern
-    { $$ = new Carbon::BindingPattern(yylineno, $1, $3); }
+    { $$ = Carbon::global_arena->New<Carbon::BindingPattern>(yylineno, $1, $3); }
 | paren_pattern
     { $$ = $1; }
 | expression tuple_pattern
-    { $$ = new Carbon::AlternativePattern(yylineno, $1, $2); }
+    { $$ = Carbon::global_arena->New<Carbon::AlternativePattern>(yylineno, $1, $2); }
 ;
 binding_lhs:
   identifier { $$ = $1; }
@@ -356,7 +357,7 @@ paren_pattern_contents:
 | paren_pattern_contents "," paren_expression_element
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name, .term = new Carbon::ExpressionPattern($3.term)});
+      $$.elements.push_back({.name = $3.name, .term = Carbon::global_arena->New<Carbon::ExpressionPattern>($3.term)});
     }
 | paren_pattern_contents "," paren_pattern_element
     {
@@ -378,24 +379,25 @@ tuple_pattern: paren_pattern_base
 // rules out the possibility of an `expression` at this point.
 maybe_empty_tuple_pattern:
   "(" ")"
-    { $$ = new Carbon::TuplePattern(yylineno, {}); }
+    { $$ = Carbon::global_arena->New<Carbon::TuplePattern>(yylineno, std::vector<Carbon::TuplePattern::Field>()); }
 | tuple_pattern
     { $$ = $1; }
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new std::pair<const Carbon::Pattern*, const Carbon::Statement*>($2, $4); }
+    { $$ = Carbon::global_arena->New<std::pair<const Carbon::Pattern*, const Carbon::Statement*>>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = new Carbon::BindingPattern(
-          yylineno, std::nullopt, new Carbon::AutoPattern(yylineno));
-      $$ = new std::pair<const Carbon::Pattern*, const Carbon::Statement*>(vp, $3);
+      auto vp = Carbon::global_arena->New<Carbon::BindingPattern>(
+          yylineno, std::nullopt, Carbon::global_arena->New<Carbon::AutoPattern>(yylineno));
+      $$ = Carbon::global_arena->New<std::pair<const Carbon::Pattern*, const Carbon::Statement*>>(vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
-      $$ = new std::list<std::pair<const Carbon::Pattern*, const Carbon::Statement*>>();
+      $$ = Carbon::global_arena->New<std::list<
+          std::pair<const Carbon::Pattern*, const Carbon::Statement*>>>();
     }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
@@ -492,13 +494,15 @@ function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
       $$ = Carbon::FunctionDefinition(
-          yylineno, $2, $3, $4, new Carbon::ExpressionPattern($5.first),
+          yylineno, $2, $3, $4,
+          Carbon::global_arena->New<Carbon::ExpressionPattern>($5.first),
           $5.second, $6);
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
     {
       $$ = Carbon::FunctionDefinition(
-          yylineno, $2, $3, $4, new Carbon::AutoPattern(yylineno), true,
+          yylineno, $2, $3, $4,
+          Carbon::global_arena->New<Carbon::AutoPattern>(yylineno), true,
           Carbon::Statement::MakeReturn(yylineno, $6, false));
     }
 ;
@@ -506,11 +510,12 @@ function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
     {
       $$ = Carbon::FunctionDefinition(
-          yylineno, $2, $3, $4, new Carbon::ExpressionPattern($5.first),
+          yylineno, $2, $3, $4,
+          Carbon::global_arena->New<Carbon::ExpressionPattern>($5.first),
           $5.second, nullptr); }
 ;
 variable_declaration: identifier ":" pattern
-    { $$ = new Carbon::BindingPattern(yylineno, $1, $3); }
+    { $$ = Carbon::global_arena->New<Carbon::BindingPattern>(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
     { $$ = Carbon::Member::MakeFieldMember(yylineno, $2); }

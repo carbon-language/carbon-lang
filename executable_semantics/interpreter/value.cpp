@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -111,47 +112,47 @@ auto TupleValue::FindField(const std::string& name) const -> const Value* {
 }
 
 auto Value::MakeIntValue(int i) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = IntValue({.value = i});
   return v;
 }
 
 auto Value::MakeBoolValue(bool b) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = BoolValue({.value = b});
   return v;
 }
 
 auto Value::MakeFunctionValue(std::string name, const Value* param,
                               const Statement* body) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value =
       FunctionValue({.name = std::move(name), .param = param, .body = body});
   return v;
 }
 
 auto Value::MakePointerValue(Address addr) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = PointerValue({.value = addr});
   return v;
 }
 
 auto Value::MakeStructValue(const Value* type, const Value* inits)
     -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = StructValue({.type = type, .inits = inits});
   return v;
 }
 
 auto Value::MakeTupleValue(std::vector<TupleElement> elements) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = TupleValue({.elements = std::move(elements)});
   return v;
 }
 
 auto Value::MakeAlternativeValue(std::string alt_name, std::string choice_name,
                                  const Value* argument) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = AlternativeValue({.alt_name = std::move(alt_name),
                                .choice_name = std::move(choice_name),
                                .argument = argument});
@@ -161,7 +162,7 @@ auto Value::MakeAlternativeValue(std::string alt_name, std::string choice_name,
 auto Value::MakeAlternativeConstructorValue(std::string alt_name,
                                             std::string choice_name)
     -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = AlternativeConstructorValue(
       {.alt_name = std::move(alt_name), .choice_name = std::move(choice_name)});
   return v;
@@ -170,45 +171,45 @@ auto Value::MakeAlternativeConstructorValue(std::string alt_name,
 // Return a first-class continuation represented a fragment
 // of the stack.
 auto Value::MakeContinuationValue(std::vector<Frame*> stack) -> Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = ContinuationValue({.stack = std::move(stack)});
   return v;
 }
 
 auto Value::MakeBindingPlaceholderValue(std::optional<std::string> name,
                                         const Value* type) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = BindingPlaceholderValue({.name = std::move(name), .type = type});
   return v;
 }
 
 auto Value::MakeIntType() -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = IntType();
   return v;
 }
 
 auto Value::MakeBoolType() -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = BoolType();
   return v;
 }
 
 auto Value::MakeTypeType() -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = TypeType();
   return v;
 }
 
 // Return a Continuation type.
 auto Value::MakeContinuationType() -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = ContinuationType();
   return v;
 }
 
 auto Value::MakeAutoType() -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = AutoType();
   return v;
 }
@@ -216,21 +217,21 @@ auto Value::MakeAutoType() -> const Value* {
 auto Value::MakeFunctionType(std::vector<GenericBinding> deduced_params,
                              const Value* param, const Value* ret)
     -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = FunctionType(
       {.deduced = std::move(deduced_params), .param = param, .ret = ret});
   return v;
 }
 
 auto Value::MakePointerType(const Value* type) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = PointerType({.type = type});
   return v;
 }
 
 auto Value::MakeStructType(std::string name, VarValues fields,
                            VarValues methods) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = StructType({.name = std::move(name),
                          .fields = std::move(fields),
                          .methods = std::move(methods)});
@@ -238,20 +239,20 @@ auto Value::MakeStructType(std::string name, VarValues fields,
 }
 
 auto Value::MakeUnitTypeVal() -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = TupleValue({.elements = {}});
   return v;
 }
 
 auto Value::MakeChoiceType(std::string name, VarValues alts) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value =
       ChoiceType({.name = std::move(name), .alternatives = std::move(alts)});
   return v;
 }
 
 auto Value::MakeVariableType(std::string name) -> const Value* {
-  auto* v = new Value();
+  auto* v = global_arena->New<Value>();
   v->value = VariableType({.name = std::move(name)});
   return v;
 }
