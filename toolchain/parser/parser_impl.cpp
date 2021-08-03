@@ -54,6 +54,24 @@ struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
       "Expected parameter declaration.";
 };
 
+struct ExpectedStructField : SimpleDiagnostic<ExpectedStructField> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected `field: type` or `.field = value`.";
+};
+
+struct ExpectedStructFieldName : SimpleDiagnostic<ExpectedStructFieldName> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected field name in struct type.";
+};
+
+struct ExpectedFieldDesignator : SimpleDiagnostic<ExpectedFieldDesignator> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected `.field = value`.";
+};
+
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
@@ -118,7 +136,13 @@ struct ExpectedIdentifierAfterDot
 struct UnexpectedTokenAfterListElement
     : SimpleDiagnostic<UnexpectedTokenAfterListElement> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message = "Expected `,` or `)`.";
+  static constexpr const char* Message = "Expected `,` or `{0}`.";
+
+  TokenKind close;
+
+  auto Format() -> std::string {
+    return llvm::formatv(Message, close.GetFixedSpelling()).str();
+  }
 };
 
 struct BinaryOperatorRequiresWhitespace
@@ -387,57 +411,57 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
 }
 
 template <typename ListElementParser, typename ListCompletionHandler>
-auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
-                                       ParseNodeKind comma_kind,
-                                       ListCompletionHandler list_handler,
-                                       bool allow_trailing_comma)
+auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
+                                  ListElementParser list_element_parser,
+                                  ParseNodeKind comma_kind,
+                                  ListCompletionHandler list_handler,
+                                  bool allow_trailing_comma)
     -> llvm::Optional<Node> {
   // `(` element-list[opt] `)`
   //
   // element-list ::= element
   //              ::= element `,` element-list
-  TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
+  TokenizedBuffer::Token open_paren = Consume(open);
 
   bool has_errors = false;
   bool any_commas = false;
   int64_t num_elements = 0;
 
   // Parse elements, if any are specified.
-  if (!NextTokenIs(TokenKind::CloseParen())) {
+  if (!NextTokenIs(close)) {
     while (true) {
       bool element_error = !list_element_parser();
       has_errors |= element_error;
       ++num_elements;
 
-      if (!NextTokenIsOneOf({TokenKind::CloseParen(), TokenKind::Comma()})) {
+      if (!NextTokenIsOneOf({close, TokenKind::Comma()})) {
         if (!element_error) {
-          emitter.EmitError<UnexpectedTokenAfterListElement>(*position);
+          emitter.EmitError<UnexpectedTokenAfterListElement>(*position,
+                                                             {.close = close});
         }
         has_errors = true;
 
-        auto end_of_element =
-            FindNextOf({TokenKind::Comma(), TokenKind::CloseParen()});
+        auto end_of_element = FindNextOf({TokenKind::Comma(), close});
         // The lexer guarantees that parentheses are balanced.
         assert(end_of_element && "missing matching `)` for `(`");
         SkipTo(*end_of_element);
       }
 
-      if (NextTokenIs(TokenKind::CloseParen())) {
+      if (NextTokenIs(close)) {
         break;
       }
 
       AddLeafNode(comma_kind, Consume(TokenKind::Comma()));
       any_commas = true;
 
-      if (allow_trailing_comma && NextTokenIs(TokenKind::CloseParen())) {
+      if (allow_trailing_comma && NextTokenIs(close)) {
         break;
       }
     }
   }
 
   bool is_single_item = num_elements == 1 && !any_commas;
-  return list_handler(open_paren, is_single_item,
-                      Consume(TokenKind::CloseParen()), has_errors);
+  return list_handler(open_paren, is_single_item, Consume(close), has_errors);
 }
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
@@ -460,6 +484,10 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
 
     case PatternKind::Variable:
       emitter.EmitError<ExpectedVariableName>(*position);
+      break;
+
+    case PatternKind::StructField:
+      emitter.EmitError<ExpectedStructFieldName>(*position);
       break;
   }
 
@@ -683,6 +711,86 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
       /*allow_trailing_comma=*/true);
 }
 
+auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
+  // braced-expression ::= `{` [field-value-list] `}`
+  //                   ::= `{` field-list `}`
+  // field-value-list ::= field-value
+  //                  ::= field-value `,` field-value-list
+  // field-value ::= `.` identifier `=` expression
+  // field-list ::= field
+  //            ::= field `,` field-list
+  // field ::= identifier `:` type [field-initializer]
+  // field-initializer ::= `=` expression
+  //
+  // Note that `{` `}` is the first form (an empty struct), but that an empty
+  // struct value also behaves as an empty struct type.
+  auto start = GetSubtreeStartPosition();
+  enum Kind { Unknown, Value, Type } kind = Unknown;
+  bool diagnosed_first_field = false;
+  return ParseList(
+      TokenKind::OpenCurlyBrace(), TokenKind::CloseCurlyBrace(),
+      [&]() -> llvm::Optional<Node> {
+        auto start_elem = GetSubtreeStartPosition();
+
+        // If we've not seen any field or field value yet, or we've only seen
+        // syntactically-invalid attempts, work out which kind of struct
+        // literal we have based on whether we see `.` or identifier ':'.
+        if (kind == Unknown) {
+          if (NextTokenIs(TokenKind::Identifier()) &&
+              tokens.GetKind(*(position + 1)) == TokenKind::Colon()) {
+            kind = Type;
+          } else if (NextTokenIs(TokenKind::Period())) {
+            kind = Value;
+          } else {
+            if (!diagnosed_first_field) {
+              emitter.EmitError<ExpectedStructField>(*position);
+              diagnosed_first_field = true;
+            }
+            return llvm::None;
+          }
+        }
+
+        // For a type, parse a field.
+        if (kind == Type) {
+          auto pattern = ParsePattern(PatternKind::StructField);
+          if (pattern) {
+            if (auto equal_token = ConsumeIf(TokenKind::Equal())) {
+              auto init = ParseExpression();
+              AddNode(ParseNodeKind::StructFieldInitializer(), *equal_token,
+                      start_elem, /*has_error=*/!init);
+            }
+          }
+          return pattern;
+        }
+
+        // For a value struct literal, parse a designator and a value.
+        assert(kind == Value);
+        if (!NextTokenIs(TokenKind::Period())) {
+          emitter.EmitError<ExpectedFieldDesignator>(*position);
+          return llvm::None;
+        }
+        auto designator = ParseDesignatorExpression(
+            GetSubtreeStartPosition(), ParseNodeKind::StructFieldDesignator(),
+            /*has_errors=*/false);
+        auto equal_token = ConsumeIf(TokenKind::Equal());
+        if (!equal_token) {
+          emitter.EmitError<ExpectedFieldDesignator>(*position);
+          return llvm::None;
+        }
+        auto value = ParseExpression();
+        return AddNode(ParseNodeKind::StructField(), *equal_token, start_elem,
+                       /*has_error=*/!designator || !value);
+      },
+      ParseNodeKind::StructComma(),
+      [&](TokenizedBuffer::Token open_brace, bool is_single_item,
+          TokenizedBuffer::Token close_brace, bool has_errors) {
+        AddLeafNode(ParseNodeKind::StructEnd(), close_brace);
+        return AddNode(kind == Type ? ParseNodeKind::StructType()
+                                    : ParseNodeKind::StructLiteral(),
+                       open_brace, start, has_errors);
+      });
+}
+
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
   llvm::Optional<ParseNodeKind> kind;
   switch (NextTokenKind()) {
@@ -702,6 +810,9 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
     case TokenKind::OpenParen():
       return ParseParenExpression();
 
+    case TokenKind::OpenCurlyBrace():
+      return ParseBraceExpression();
+
     default:
       emitter.EmitError<ExpectedExpression>(*position);
       return llvm::None;
@@ -711,6 +822,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
+                                                  ParseNodeKind kind,
                                                   bool has_errors)
     -> llvm::Optional<Node> {
   // `.` identifier
@@ -727,7 +839,7 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
     }
     has_errors = true;
   }
-  return AddNode(ParseNodeKind::DesignatorExpression(), dot, start, has_errors);
+  return AddNode(kind, dot, start, has_errors);
 }
 
 auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
@@ -753,7 +865,8 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
   while (true) {
     switch (NextTokenKind()) {
       case TokenKind::Period():
-        expression = ParseDesignatorExpression(start, !expression);
+        expression = ParseDesignatorExpression(
+            start, ParseNodeKind::DesignatorExpression(), !expression);
         break;
 
       case TokenKind::OpenParen():
