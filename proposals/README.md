@@ -63,5 +63,6 @@ request:
 -   [0618 - var ordering](p0618.md)
 -   [0623 - Require braces](p0623.md)
 -   [0646 - Low context-sensitivity principle](p0646.md)
+-   [0701 - Nominal classes and methods](p0701.md)
 
 <!-- endproposals -->
