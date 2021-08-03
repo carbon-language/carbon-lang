@@ -64,7 +64,7 @@ referenced positionally.
 
 Carbon supports both named, or "nominal", and unnamed, anonymous, or
 "structural", class types. Nominal class types are all distinct, but structural
-types are equal if they have the same list of members. Structural class literals
+types are equal if they have the same sequence of member types and names. Structural class literals
 may be used to initialize or assign values to nominal class variables.
 
 ## Use cases
@@ -145,7 +145,7 @@ include:
     [_vtable_](https://en.wikipedia.org/wiki/Virtual_method_table), as the first
     data member of the object. This allows methods to be
     [_virtual_](https://en.wikipedia.org/wiki/Virtual_function) and have a
-    derived-type-specific implementation, an "override", that is used even when
+    derived-type-specific implementation, an _override_, that is used even when
     invoking the method on a pointer to a base type.
 -   Non-virtual methods implemented on a base type should be applicable to all
     derived types. In general, derived types should not attempt to overload or
@@ -453,10 +453,9 @@ See how other languages tackle this problem:
 
 ## Overview
 
-Beyond simple tuples, Carbon of course allows defining
+Beyond tuples, Carbon allows defining
 [record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
-is the primary mechanism for users to extend the Carbon type system and
-fundamentally is deeply rooted in C++ and its history (C and Simula). We simply
+is the primary mechanism for users to extend the Carbon type system and is deeply rooted in C++ and its history (C and Simula). We
 call them _classes_ rather than other terms as that is both familiar to existing
 programmers and accurately captures their essence: they define the types of
 objects with (optional) support for methods, encapsulation, and so on.
@@ -469,7 +468,7 @@ constant value.
 
 ## Members
 
-The members of a `struct` are named, and are accessed with the `.` notation. For
+The members of a class are named, and are accessed with the `.` notation. For
 example:
 
 ```
@@ -486,7 +485,7 @@ is more appropriate.
 
 ### Data members have an order
 
-The data members of a struct, or "fields", have an order that matches the order
+The data members of a class, or _fields_, have an order that matches the order
 they are declared in. This affects the layout of those fields in memory, and the
 order that the fields are destroyed when a value goes out of scope or is
 deallocated.
@@ -890,7 +889,7 @@ This open question is being considered in
 
 ### Memory layout
 
-Carbon will need some way for users to specify the memory layout of class types,
+Carbon will need some way for users to specify the memory layout of class types beyond simple ordering of fields,
 such as controlling the packing and alignment for the whole type or individual
 members.
 
