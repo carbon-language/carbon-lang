@@ -680,7 +680,7 @@ class TextLabel {
 
 It is an open question, though, how we will address the
 [different use cases](#use-cases). For example, we might mark
-[data classes](#data-classes) with an `impl Data {}` line.
+[data classes](#data-classes) with an `impl as Data {}` line.
 
 ### Construction
 
