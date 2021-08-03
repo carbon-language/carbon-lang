@@ -83,12 +83,12 @@ notice contextual elements.
 #### Contextual _validity_ rather than _meaning_
 
 When the context only affects the _validity_ of code, but not its meaning, the
-costs are significantly reduced. In that case, understanding the meaning or behavior of the
-code doesn't require context, and a developer can easily rely on the compiler to
-check the validity. A simple example of this is contextually valid syntax, which
-is relatively common and inexpensive. However, reusing the same syntax with
-different contexts _with different meanings_ shifts the contextual information
-from simple validity to impacting the meaning of code.
+costs are significantly reduced. In that case, understanding the meaning or
+behavior of the code doesn't require context, and a developer can easily rely on
+the compiler to check the validity. A simple example of this is contextually
+valid syntax, which is relatively common and inexpensive. However, reusing the
+same syntax with different contexts _with different meanings_ shifts the
+contextual information from simple validity to impacting the meaning of code.
 
 #### Reduced cost of mistakes
 
