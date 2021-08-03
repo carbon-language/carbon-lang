@@ -64,8 +64,9 @@ referenced positionally.
 
 Carbon supports both named, or "nominal", and unnamed, anonymous, or
 "structural", class types. Nominal class types are all distinct, but structural
-types are equal if they have the same sequence of member types and names. Structural class literals
-may be used to initialize or assign values to nominal class variables.
+types are equal if they have the same sequence of member types and names.
+Structural class literals may be used to initialize or assign values to nominal
+class variables.
 
 ## Use cases
 
@@ -455,10 +456,11 @@ See how other languages tackle this problem:
 
 Beyond tuples, Carbon allows defining
 [record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
-is the primary mechanism for users to extend the Carbon type system and is deeply rooted in C++ and its history (C and Simula). We
-call them _classes_ rather than other terms as that is both familiar to existing
-programmers and accurately captures their essence: they define the types of
-objects with (optional) support for methods, encapsulation, and so on.
+is the primary mechanism for users to extend the Carbon type system and is
+deeply rooted in C++ and its history (C and Simula). We call them _classes_
+rather than other terms as that is both familiar to existing programmers and
+accurately captures their essence: they define the types of objects with
+(optional) support for methods, encapsulation, and so on.
 
 A class type defines the interpretation of the bytes of a value of that type,
 including the size, data members, and layout. It defines the operations that may
@@ -889,9 +891,9 @@ This open question is being considered in
 
 ### Memory layout
 
-Carbon will need some way for users to specify the memory layout of class types beyond simple ordering of fields,
-such as controlling the packing and alignment for the whole type or individual
-members.
+Carbon will need some way for users to specify the memory layout of class types
+beyond simple ordering of fields, such as controlling the packing and alignment
+for the whole type or individual members.
 
 ### No `static` variables
 
