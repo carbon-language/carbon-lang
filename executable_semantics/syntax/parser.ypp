@@ -19,6 +19,10 @@
 // ‘make_YYEOF’, for the end of input.
 %define api.token.constructor
 
+// Generate the parser as `::Carbon::Parser`.
+%define api.namespace { Carbon }
+%define api.parser.class { Parser }
+
 // Make parse error messages more detailed
 %define parse.error verbose
 
@@ -32,10 +36,10 @@
 // thus available to its methods.
 
 // "out" parameter passed to the parser, where the AST is written.
-%parse-param {std::optional<Carbon::AST>& parsed_program}
+%parse-param {std::optional<AST>& parsed_program}
 
 // "inout" parameter passed to both the parser and the lexer.
-%param {Carbon::ParseAndLexContext& context}
+%param {ParseAndLexContext& context}
 
 // No shift-reduce conflicts are expected.
 %expect 0
@@ -76,7 +80,7 @@ class ParseAndLexContext;
 
 extern int yylineno;
 
-void yy::parser::error(const location_type&, const std::string& message) {
+void Carbon::Parser::error(const location_type&, const std::string& message) {
   context.PrintDiagnostic(message, yylineno);
 }
 
@@ -85,42 +89,42 @@ void yy::parser::error(const location_type&, const std::string& message) {
 %token <int> integer_literal
 %token <std::string> identifier
 %type <std::string> designator
-%type <Carbon::Declaration> declaration
-%type <Carbon::FunctionDefinition> function_declaration
-%type <Carbon::FunctionDefinition> function_definition
-%type <std::list<Carbon::Declaration>> declaration_list
-%type <const Carbon::Statement*> statement
-%type <const Carbon::Statement*> if_statement
-%type <const Carbon::Statement*> optional_else
-%type <std::pair<const Carbon::Expression*, bool>> return_expression
-%type <const Carbon::Statement*> block
-%type <const Carbon::Statement*> statement_list
-%type <const Carbon::Expression*> expression
-%type <Carbon::GenericBinding> generic_binding
-%type <std::vector<Carbon::GenericBinding>> deduced_params
-%type <std::vector<Carbon::GenericBinding>> deduced_param_list
-%type <const Carbon::Pattern*> pattern
-%type <const Carbon::Pattern*> non_expression_pattern
-%type <std::pair<const Carbon::Expression*, bool>> return_type
-%type <const Carbon::Expression*> paren_expression
-%type <const Carbon::Expression*> tuple
+%type <Declaration> declaration
+%type <FunctionDefinition> function_declaration
+%type <FunctionDefinition> function_definition
+%type <std::list<Declaration>> declaration_list
+%type <const Statement*> statement
+%type <const Statement*> if_statement
+%type <const Statement*> optional_else
+%type <std::pair<const Expression*, bool>> return_expression
+%type <const Statement*> block
+%type <const Statement*> statement_list
+%type <const Expression*> expression
+%type <GenericBinding> generic_binding
+%type <std::vector<GenericBinding>> deduced_params
+%type <std::vector<GenericBinding>> deduced_param_list
+%type <const Pattern*> pattern
+%type <const Pattern*> non_expression_pattern
+%type <std::pair<const Expression*, bool>> return_type
+%type <const Expression*> paren_expression
+%type <const Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
-%type <const Carbon::BindingPattern*> variable_declaration
-%type <Carbon::Member*> member
-%type <std::list<Carbon::Member*>> member_list
-%type <Carbon::ParenContents<Carbon::Expression>::Element> paren_expression_element
-%type <Carbon::ParenContents<Carbon::Expression>> paren_expression_base
-%type <Carbon::ParenContents<Carbon::Expression>> paren_expression_contents
-%type <const Carbon::Pattern*> paren_pattern
-%type <const Carbon::TuplePattern*> tuple_pattern
-%type <const Carbon::TuplePattern*> maybe_empty_tuple_pattern
-%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_base
-%type <Carbon::ParenContents<Carbon::Pattern>::Element> paren_pattern_element
-%type <Carbon::ParenContents<Carbon::Pattern>> paren_pattern_contents
-%type <std::pair<std::string, const Carbon::Expression*>> alternative
-%type <std::list<std::pair<std::string, const Carbon::Expression*>>> alternative_list
-%type <std::pair<const Carbon::Pattern*, const Carbon::Statement*>*> clause
-%type <std::list<std::pair<const Carbon::Pattern*, const Carbon::Statement*>>*> clause_list
+%type <const BindingPattern*> variable_declaration
+%type <Member*> member
+%type <std::list<Member*>> member_list
+%type <ParenContents<Expression>::Element> paren_expression_element
+%type <ParenContents<Expression>> paren_expression_base
+%type <ParenContents<Expression>> paren_expression_contents
+%type <const Pattern*> paren_pattern
+%type <const TuplePattern*> tuple_pattern
+%type <const TuplePattern*> maybe_empty_tuple_pattern
+%type <ParenContents<Pattern>> paren_pattern_base
+%type <ParenContents<Pattern>::Element> paren_pattern_element
+%type <ParenContents<Pattern>> paren_pattern_contents
+%type <std::pair<std::string, const Expression*>> alternative
+%type <std::list<std::pair<std::string, const Expression*>>> alternative_list
+%type <std::pair<const Pattern*, const Statement*>*> clause
+%type <std::list<std::pair<const Pattern*, const Statement*>>*> clause_list
 %token END_OF_FILE 0
 %token AND
 %token OR
@@ -207,93 +211,93 @@ input:
 ;
 expression:
   identifier
-    { $$ = Carbon::Expression::MakeIdentifierExpression(yylineno, $1); }
+    { $$ = Expression::MakeIdentifierExpression(yylineno, $1); }
 | expression designator
-    { $$ = Carbon::Expression::MakeFieldAccessExpression(yylineno, $1, $2); }
+    { $$ = Expression::MakeFieldAccessExpression(yylineno, $1, $2); }
 | expression "[" expression "]"
-    { $$ = Carbon::Expression::MakeIndexExpression(yylineno, $1, $3); }
+    { $$ = Expression::MakeIndexExpression(yylineno, $1, $3); }
 | integer_literal
-    { $$ = Carbon::Expression::MakeIntLiteral(yylineno, $1); }
+    { $$ = Expression::MakeIntLiteral(yylineno, $1); }
 | TRUE
-    { $$ = Carbon::Expression::MakeBoolLiteral(yylineno, true); }
+    { $$ = Expression::MakeBoolLiteral(yylineno, true); }
 | FALSE
-    { $$ = Carbon::Expression::MakeBoolLiteral(yylineno, false); }
+    { $$ = Expression::MakeBoolLiteral(yylineno, false); }
 | INT
-    { $$ = Carbon::Expression::MakeIntTypeLiteral(yylineno); }
+    { $$ = Expression::MakeIntTypeLiteral(yylineno); }
 | BOOL
-    { $$ = Carbon::Expression::MakeBoolTypeLiteral(yylineno); }
+    { $$ = Expression::MakeBoolTypeLiteral(yylineno); }
 | TYPE
-    { $$ = Carbon::Expression::MakeTypeTypeLiteral(yylineno); }
+    { $$ = Expression::MakeTypeTypeLiteral(yylineno); }
 | CONTINUATION_TYPE
-    { $$ = Carbon::Expression::MakeContinuationTypeLiteral(yylineno); }
+    { $$ = Expression::MakeContinuationTypeLiteral(yylineno); }
 | paren_expression
     { $$ = $1; }
 | expression EQUAL_EQUAL expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Eq, {$1, $3});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Eq,
+                                                       {$1, $3});
     }
 | expression "+" expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Add, {$1, $3});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Add,
+                                                       {$1, $3});
     }
 | expression "-" expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Sub, {$1, $3});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Sub,
+                                                       {$1, $3});
     }
 | expression BINARY_STAR expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Mul, {$1, $3});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Mul,
+                                                       {$1, $3});
     }
 | expression AND expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::And, {$1, $3});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::And,
+                                                       {$1, $3});
     }
 | expression OR expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Or, {$1, $3});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Or,
+                                                       {$1, $3});
     }
 | NOT expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Not, {$2});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Not,
+                                                       {$2});
     }
 | "-" expression %prec UNARY_MINUS
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Neg, {$2});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Neg,
+                                                       {$2});
     }
 | PREFIX_STAR expression
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Deref, {$2});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno,
+                                                       Operator::Deref, {$2});
     }
 | UNARY_STAR expression %prec PREFIX_STAR
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Deref, {$2});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno,
+                                                       Operator::Deref, {$2});
     }
 | expression tuple
-    { $$ = Carbon::Expression::MakeCallExpression(yylineno, $1, $2); }
+    { $$ = Expression::MakeCallExpression(yylineno, $1, $2); }
 | expression POSTFIX_STAR
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Ptr, {$1});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Ptr,
+                                                       {$1});
     }
 | expression UNARY_STAR
     {
-      $$ = Carbon::Expression::MakePrimitiveOperatorExpression(
-          yylineno, Carbon::Operator::Ptr, {$1});
+      $$ = Expression::MakePrimitiveOperatorExpression(yylineno, Operator::Ptr,
+                                                       {$1});
     }
 | FNTY tuple return_type
     {
-      $$ = Carbon::Expression::MakeFunctionTypeLiteral(yylineno, $2, $3.first,
-                                                       $3.second);
+      $$ = Expression::MakeFunctionTypeLiteral(yylineno, $2, $3.first,
+                                               $3.second);
     }
 ;
 designator:
@@ -302,11 +306,11 @@ designator:
 ;
 paren_expression:
   paren_expression_base
-    { $$ = Carbon::ExpressionFromParenContents(yylineno, $1); }
+    { $$ = ExpressionFromParenContents(yylineno, $1); }
 ;
 tuple:
   paren_expression_base
-    { $$ = Carbon::TupleExpressionFromParenContents(yylineno, $1); }
+    { $$ = TupleExpressionFromParenContents(yylineno, $1); }
 ;
 paren_expression_element:
   expression
@@ -345,22 +349,17 @@ pattern:
   non_expression_pattern
     { $$ = $1; }
 | expression
-    { $$ = Carbon::global_arena->New<Carbon::ExpressionPattern>($1); }
+    { $$ = global_arena->New<ExpressionPattern>($1); }
 ;
 non_expression_pattern:
   AUTO
-    { $$ = Carbon::global_arena->New<Carbon::AutoPattern>(yylineno); }
+    { $$ = global_arena->New<AutoPattern>(yylineno); }
 | binding_lhs ":" pattern
-    {
-      $$ = Carbon::global_arena->New<Carbon::BindingPattern>(yylineno, $1, $3);
-    }
+    { $$ = global_arena->New<BindingPattern>(yylineno, $1, $3); }
 | paren_pattern
     { $$ = $1; }
 | expression tuple_pattern
-    {
-      $$ = Carbon::global_arena->New<Carbon::AlternativePattern>(yylineno, $1,
-                                                                 $2);
-    }
+    { $$ = global_arena->New<AlternativePattern>(yylineno, $1, $2); }
 ;
 binding_lhs:
   identifier
@@ -370,7 +369,7 @@ binding_lhs:
 ;
 paren_pattern:
   paren_pattern_base
-    { $$ = Carbon::PatternFromParenContents(yylineno, $1); }
+    { $$ = PatternFromParenContents(yylineno, $1); }
 ;
 paren_pattern_base:
   "(" paren_pattern_contents ")"
@@ -391,7 +390,7 @@ paren_pattern_contents:
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
 | paren_expression_contents "," paren_pattern_element
     {
-      $$ = Carbon::ParenExpressionToParenPattern($1);
+      $$ = ParenExpressionToParenPattern($1);
       $$.elements.push_back($3);
     }
 | paren_pattern_contents "," paren_expression_element
@@ -399,8 +398,7 @@ paren_pattern_contents:
       $$ = $1;
       $$.elements.push_back(
           {.name = $3.name,
-           .term =
-               Carbon::global_arena->New<Carbon::ExpressionPattern>($3.term)});
+           .term = global_arena->New<ExpressionPattern>($3.term)});
     }
 | paren_pattern_contents "," paren_pattern_element
     {
@@ -416,7 +414,7 @@ paren_pattern_element:
 ;
 tuple_pattern:
   paren_pattern_base
-    { $$ = Carbon::TuplePatternFromParenContents(yylineno, $1); }
+    { $$ = TuplePatternFromParenContents(yylineno, $1); }
 ;
 // Unlike most `pattern` nonterminals, this one overlaps with `expression`,
 // so it should be used only when prior context (such as an introducer)
@@ -424,8 +422,8 @@ tuple_pattern:
 maybe_empty_tuple_pattern:
   "(" ")"
     {
-      $$ = Carbon::global_arena->New<Carbon::TuplePattern>(
-          yylineno, std::vector<Carbon::TuplePattern::Field>());
+      $$ = global_arena->New<TuplePattern>(yylineno,
+                                           std::vector<TuplePattern::Field>());
     }
 | tuple_pattern
     { $$ = $1; }
@@ -433,23 +431,22 @@ maybe_empty_tuple_pattern:
 clause:
   CASE pattern DBLARROW statement
     {
-      $$ = Carbon::global_arena->New<
-          std::pair<const Carbon::Pattern*, const Carbon::Statement*>>($2, $4);
+      $$ = global_arena->New<std::pair<const Pattern*, const Statement*>>($2,
+                                                                          $4);
     }
 | DEFAULT DBLARROW statement
     {
-      auto vp = Carbon::global_arena -> New<Carbon::BindingPattern>(
-                    yylineno, std::nullopt,
-                    Carbon::global_arena->New<Carbon::AutoPattern>(yylineno));
-      $$ = Carbon::global_arena->New<
-          std::pair<const Carbon::Pattern*, const Carbon::Statement*>>(vp, $3);
+      auto vp = global_arena->New<BindingPattern>(
+          yylineno, std::nullopt, global_arena->New<AutoPattern>(yylineno));
+      $$ = global_arena->New<std::pair<const Pattern*, const Statement*>>(vp,
+                                                                          $3);
     }
 ;
 clause_list:
   // Empty
     {
-      $$ = Carbon::global_arena->New<std::list<
-          std::pair<const Carbon::Pattern*, const Carbon::Statement*>>>();
+      $$ = global_arena
+               ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
     }
 | clause clause_list
     {
@@ -459,35 +456,35 @@ clause_list:
 ;
 statement:
   expression "=" expression ";"
-    { $$ = Carbon::Statement::MakeAssign(yylineno, $1, $3); }
+    { $$ = Statement::MakeAssign(yylineno, $1, $3); }
 | VAR pattern "=" expression ";"
-    { $$ = Carbon::Statement::MakeVariableDefinition(yylineno, $2, $4); }
+    { $$ = Statement::MakeVariableDefinition(yylineno, $2, $4); }
 | expression ";"
-    { $$ = Carbon::Statement::MakeExpressionStatement(yylineno, $1); }
+    { $$ = Statement::MakeExpressionStatement(yylineno, $1); }
 | if_statement
     { $$ = $1; }
 | WHILE "(" expression ")" block
-    { $$ = Carbon::Statement::MakeWhile(yylineno, $3, $5); }
+    { $$ = Statement::MakeWhile(yylineno, $3, $5); }
 | BREAK ";"
-    { $$ = Carbon::Statement::MakeBreak(yylineno); }
+    { $$ = Statement::MakeBreak(yylineno); }
 | CONTINUE ";"
-    { $$ = Carbon::Statement::MakeContinue(yylineno); }
+    { $$ = Statement::MakeContinue(yylineno); }
 | RETURN return_expression ";"
-    { $$ = Carbon::Statement::MakeReturn(yylineno, $2.first, $2.second); }
+    { $$ = Statement::MakeReturn(yylineno, $2.first, $2.second); }
 | block
     { $$ = $1; }
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = Carbon::Statement::MakeMatch(yylineno, $3, $6); }
+    { $$ = Statement::MakeMatch(yylineno, $3, $6); }
 | CONTINUATION identifier statement
-    { $$ = Carbon::Statement::MakeContinuation(yylineno, $2, $3); }
+    { $$ = Statement::MakeContinuation(yylineno, $2, $3); }
 | RUN expression ";"
-    { $$ = Carbon::Statement::MakeRun(yylineno, $2); }
+    { $$ = Statement::MakeRun(yylineno, $2); }
 | AWAIT ";"
-    { $$ = Carbon::Statement::MakeAwait(yylineno); }
+    { $$ = Statement::MakeAwait(yylineno); }
 ;
 if_statement:
   IF "(" expression ")" block optional_else
-    { $$ = Carbon::Statement::MakeIf(yylineno, $3, $5, $6); }
+    { $$ = Statement::MakeIf(yylineno, $3, $5, $6); }
 ;
 optional_else:
   // Empty
@@ -499,7 +496,7 @@ optional_else:
 ;
 return_expression:
   // Empty
-    { $$ = {Carbon::Expression::MakeTupleLiteral(yylineno, {}), true}; }
+    { $$ = {Expression::MakeTupleLiteral(yylineno, {}), true}; }
 | expression
     { $$ = {$1, false}; }
 ;
@@ -507,28 +504,28 @@ statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
-    { $$ = Carbon::Statement::MakeSequence(yylineno, $1, $2); }
+    { $$ = Statement::MakeSequence(yylineno, $1, $2); }
 ;
 block:
   "{" statement_list "}"
-    { $$ = Carbon::Statement::MakeBlock(yylineno, $2); }
+    { $$ = Statement::MakeBlock(yylineno, $2); }
 ;
 return_type:
   // Empty
-    { $$ = {Carbon::Expression::MakeTupleLiteral(yylineno, {}), true}; }
+    { $$ = {Expression::MakeTupleLiteral(yylineno, {}), true}; }
 | ARROW expression %prec FNARROW
     { $$ = {$2, false}; }
 ;
 generic_binding:
   identifier ":!" expression
-    { $$ = Carbon::GenericBinding({.name = std::move($1), .type = $3}); }
+    { $$ = GenericBinding({.name = std::move($1), .type = $3}); }
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<Carbon::GenericBinding>(); }
+    { $$ = std::vector<GenericBinding>(); }
 | generic_binding
     {
-      $$ = std::vector<Carbon::GenericBinding>();
+      $$ = std::vector<GenericBinding>();
       $$.push_back($1);
     }
 | generic_binding "," deduced_param_list
@@ -539,48 +536,43 @@ deduced_param_list:
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<Carbon::GenericBinding>(); }
+    { $$ = std::vector<GenericBinding>(); }
 | "[" deduced_param_list "]"
     { $$ = $2; }
 ;
 function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
-      $$ = Carbon::FunctionDefinition(
-          yylineno, $2, $3, $4,
-          Carbon::global_arena->New<Carbon::ExpressionPattern>($5.first),
-          $5.second, $6);
+      $$ = FunctionDefinition(yylineno, $2, $3, $4,
+                              global_arena->New<ExpressionPattern>($5.first),
+                              $5.second, $6);
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
     {
-      $$ = Carbon::FunctionDefinition(
-          yylineno, $2, $3, $4,
-          Carbon::global_arena->New<Carbon::AutoPattern>(yylineno), true,
-          Carbon::Statement::MakeReturn(yylineno, $6, false));
+      $$ = FunctionDefinition(yylineno, $2, $3, $4,
+                              global_arena->New<AutoPattern>(yylineno), true,
+                              Statement::MakeReturn(yylineno, $6, false));
     }
 ;
 function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
     {
-      $$ = Carbon::FunctionDefinition(
-          yylineno, $2, $3, $4,
-          Carbon::global_arena->New<Carbon::ExpressionPattern>($5.first),
-          $5.second, nullptr);
+      $$ = FunctionDefinition(yylineno, $2, $3, $4,
+                              global_arena->New<ExpressionPattern>($5.first),
+                              $5.second, nullptr);
     }
 ;
 variable_declaration:
   identifier ":" pattern
-    {
-      $$ = Carbon::global_arena->New<Carbon::BindingPattern>(yylineno, $1, $3);
-    }
+    { $$ = global_arena->New<BindingPattern>(yylineno, $1, $3); }
 ;
 member:
   VAR variable_declaration ";"
-    { $$ = Carbon::Member::MakeFieldMember(yylineno, $2); }
+    { $$ = Member::MakeFieldMember(yylineno, $2); }
 ;
 member_list:
   // Empty
-    { $$ = std::list<Carbon::Member*>(); }
+    { $$ = std::list<Member*>(); }
 | member member_list
     {
       $$ = $2;
@@ -589,19 +581,19 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = std::pair<std::string, const Carbon::Expression*>($1, $2); }
+    { $$ = std::pair<std::string, const Expression*>($1, $2); }
 | identifier
     {
-      $$ = std::pair<std::string, const Carbon::Expression*>(
-          $1, Carbon::Expression::MakeTupleLiteral(yylineno, {}));
+      $$ = std::pair<std::string, const Expression*>(
+          $1, Expression::MakeTupleLiteral(yylineno, {}));
     }
 ;
 alternative_list:
   // Empty
-    { $$ = std::list<std::pair<std::string, const Carbon::Expression*>>(); }
+    { $$ = std::list<std::pair<std::string, const Expression*>>(); }
 | alternative
     {
-      $$ = std::list<std::pair<std::string, const Carbon::Expression*>>();
+      $$ = std::list<std::pair<std::string, const Expression*>>();
       $$.push_front($1);
     }
 | alternative "," alternative_list
@@ -612,19 +604,19 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
+    { $$ = Declaration::MakeFunctionDeclaration(std::move($1)); }
 | function_declaration
-    { $$ = Carbon::Declaration::MakeFunctionDeclaration(std::move($1)); }
+    { $$ = Declaration::MakeFunctionDeclaration(std::move($1)); }
 | STRUCT identifier "{" member_list "}"
-    { $$ = Carbon::Declaration::MakeStructDeclaration(yylineno, $2, $4); }
+    { $$ = Declaration::MakeStructDeclaration(yylineno, $2, $4); }
 | CHOICE identifier "{" alternative_list "}"
-    { $$ = Carbon::Declaration::MakeChoiceDeclaration(yylineno, $2, $4); }
+    { $$ = Declaration::MakeChoiceDeclaration(yylineno, $2, $4); }
 | VAR variable_declaration "=" expression ";"
-    { $$ = Carbon::Declaration::MakeVariableDeclaration(yylineno, $2, $4); }
+    { $$ = Declaration::MakeVariableDeclaration(yylineno, $2, $4); }
 ;
 declaration_list:
   // Empty
-    { $$ = std::list<Carbon::Declaration>(); }
+    { $$ = std::list<Declaration>(); }
 | declaration declaration_list
     {
       $$ = $2;

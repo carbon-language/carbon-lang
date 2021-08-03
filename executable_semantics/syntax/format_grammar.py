@@ -33,7 +33,15 @@ def main():
     # TODO: Switch to `BasedOnStyle: InheritParentConfig`
     # (https://reviews.llvm.org/D93844) once releases support it.
     format_config = open(".clang-format").readlines()
-    base_style = ", ".join([x.strip() for x in format_config if x[0].isalpha()])
+    base_style = ", ".join(
+        [
+            x.strip()
+            for x in format_config
+            if x[0].isalpha()
+            # Allow single-line blocks for short rules.
+            and not x.startswith("AllowShortBlocksOnASingleLine:")
+        ]
+    )
 
     content = open(_YPP_FILE).read()
 
@@ -55,34 +63,26 @@ def main():
         re.MULTILINE,
     ):
         formatted = ["%s:" % rule_name.strip()]
-        sep = " "
         while True:
             # Consume rules one-by-one from rule_blocks.
             m = re.match(
-                r"^((?:.|\n)*?)\s{((?:.|\n)*?)}\s*(|\|(?:.|\n)*)$", rule_blocks
+                r"^((?:.|\n)*?)\s({(?:.|\n)*?})\s*(|\|(?:.|\n)*)$", rule_blocks
             )
             if not m:
                 break
             rule_blocks = m[3]
 
+            # When the name has a |, assume indents are correct. Otherwise, add
+            # the indent.
             name = m[1].strip()
-            if name.startswith("|"):
-                name = name.lstrip("| ")
-            formatted.append("%s %s" % (sep, name))
+            if not name.startswith("|"):
+                name = "  " + name
+            formatted.append(name)
 
-            formatted_code = _format(m[2].strip(), base_style, cols=74)
-            if len(formatted_code) < 72 and "\n" not in formatted_code:
-                formatted.append("    { %s }" % formatted_code)
-            else:
-                formatted.extend(
-                    [
-                        "    {",
-                        textwrap.indent(formatted_code, "      "),
-                        "    }",
-                    ]
-                )
-
-            sep = "|"
+            # Code is indented by 4 spaces, so it's wrapped to 76 columns.
+            # Braces are part of code to get better format results.
+            formatted_code = _format(m[2].strip(), base_style, cols=76)
+            formatted.append(textwrap.indent(formatted_code, " " * 4))
         assert not rule_blocks, rule_blocks
         formatted.extend([";", ""])
         # Write back the fully formatted rule.
