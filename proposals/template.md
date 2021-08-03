@@ -6,29 +6,37 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-**_PLEASE_ DO NOT SHARE OUTSIDE CARBON FORUMS**
-
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+<!-- toc -->
 
 ## Table of contents
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+-   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+-   [Problem](#problem)
+-   [Background](#background)
+-   [Proposal](#proposal)
+-   [Details](#details)
+-   [Rationale based on Carbon's goals](#rationale-based-on-carbons-goals)
+-   [Alternatives considered](#alternatives-considered)
+
+<!-- tocstop -->
 
 ## TODO: Initial proposal setup
 
-1. Create a GitHub pull request, to get a pull request number.
-   - Add the `proposal` and `WIP` labels to the pull request.
-2. Name this file `/proposals/p####.md`, where `####` should be the pull request
-   number.
-3. Update the title of the proposal (the `TODO` on line 1).
-4. Update the link to the pull request (the `####` on line 11).
-5. Delete this section.
+> TIP: Run `./scripts/new_proposal.py "TITLE"` to do new proposal setup.
+
+1. Copy this template to `new.md`, and create a commit.
+2. Create a GitHub pull request, to get a pull request number.
+    - Add the `proposal` and `WIP` labels to the pull request.
+3. Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
+   request number.
+4. Update the title of the proposal (the `TODO` on line 1).
+5. Update the link to the pull request (the `####` on line 11).
+6. Delete this section.
 
 TODOs indicate where content should be updated for a proposal. See
-[Carbon Governance and Evolution](https://github.com/carbon-language/carbon-lang/blob/master/docs/project/evolution.md)
-for more details.
+[Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
 
 ## Problem
 
@@ -48,6 +56,13 @@ will that in fact solve it?
 ## Details
 
 TODO: Fully explain the details of the proposed solution.
+
+## Rationale based on Carbon's goals
+
+TODO: How does this proposal effectively advance Carbon's goals? Rather than
+re-stating the full motivation, this should connect that motivation back to
+Carbon's stated goals for the project or language. This may evolve during
+review.
 
 ## Alternatives considered
 

@@ -1,6 +1,0 @@
----
-title: "Page Not Found"
-search: exclude
----  
-
-Sorry, but the page you were trying to view does not exist. Try searching for it or looking at the URL to see if it looks correct.

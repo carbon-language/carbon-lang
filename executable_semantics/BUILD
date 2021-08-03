@@ -1,0 +1,53 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("//bazel/testing:golden_test.bzl", "golden_test")
+load("test_list.bzl", "TEST_LIST")
+
+cc_binary(
+    name = "executable_semantics",
+    srcs = ["main.cpp"],
+    deps = [
+        "//executable_semantics/common:tracing_flag",
+        "//executable_semantics/syntax",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+[golden_test(
+    name = "%s_test" % e,
+    cmd = "'$(location executable_semantics) $(location testdata/%s.carbon)'" % e,
+    data = [
+        ":executable_semantics",
+        "testdata/%s.carbon" % e,
+    ],
+    golden = "testdata/%s.golden" % e,
+) for e in TEST_LIST]
+
+# Convenience suite for running golden tests.
+test_suite(
+    name = "golden_tests",
+    tests = [":%s_test" % e for e in TEST_LIST],
+)
+
+# Test --trace by expecting golden output to be a *subset* of trace output. Note
+# the normal test must be used to update golden files.
+[golden_test(
+    name = "%s_trace_test" % e,
+    cmd = "'$(location executable_semantics) --trace " +
+          "$(location testdata/%s.carbon)'" % e,
+    data = [
+        ":executable_semantics",
+        "testdata/%s.carbon" % e,
+    ],
+    golden = "testdata/%s.golden" % e,
+    golden_is_subset = True,
+) for e in TEST_LIST]
+
+# Convenience suite for running trace tests.
+test_suite(
+    name = "trace_tests",
+    tests = [":%s_trace_test" % e for e in TEST_LIST],
+)

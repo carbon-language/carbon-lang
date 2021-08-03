@@ -1,0 +1,23 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Most of the repository consists of implementation code or other supporting
+# material for the implementation of Carbon. Rather than enumerate these, we
+# default them to implementation team ownership, which will be overridden by
+# later lines.
+*                   @carbon-language/implementation-team
+/*                  @carbon-language/implementation-team
+
+# Carbon leads own the core language and project documentation. The
+# implementation team has access for small (non-evolution) edits.
+/*.md               @carbon-language/carbon-leads @carbon-language/implementation-team
+/docs/              @carbon-language/carbon-leads @carbon-language/implementation-team
+
+# Carbon leads should review proposals and license changes.
+/proposals/         @carbon-language/carbon-leads
+/LICENSE            @carbon-language/carbon-leads
+
+# Carbon leads own ACLs. This is last to prevent other rules from accidentally
+# overriding it.
+CODEOWNERS          @carbon-language/carbon-leads

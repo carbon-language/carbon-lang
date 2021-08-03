@@ -1,0 +1,67 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Update label from project card
+
+on:
+  project_card:
+    types: [moved]
+
+# To get project IDs: https://docs.github.com/en/graphql/overview/explorer
+# {
+#   repository(name: "carbon-lang", owner: "carbon-language") {
+#     projects(first: 10) {
+#       nodes {
+#         name
+#         databaseId
+#       }
+#     }
+#   }
+# }
+
+jobs:
+  update-project-card-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label proposals
+        uses: Matticusau/projectcard-autolabel@v1.0.0
+        # Only run on proposals.
+        if:
+          github.event.project_card.project_url ==
+          'https://api.github.com/projects/11995172'
+        with:
+          # Label casing must match precisely for removal to work.
+          autolabel-config: >
+            [
+              {"column": "draft",
+               "add_labels": ["proposal"],
+               "remove_labels": ["RFC",
+                                 "decision: accepted",
+                                 "decision: deferred",
+                                 "decision: declined"]},
+              {"column": "RFC",
+               "add_labels": ["proposal", "RFC"],
+               "remove_labels": ["decision: accepted",
+                                 "decision: deferred",
+                                 "decision: declined"]},
+              {"column": "Accepted",
+               "add_labels": ["proposal", "decision: accepted"],
+               "remove_labels": ["RFC",
+                                 "decision: deferred",
+                                 "decision: declined"]},
+              {"column": "Deferred",
+               "add_labels": ["proposal", "decision: deferred"],
+               "remove_labels": ["RFC",
+                                 "decision: accepted",
+                                 "decision: declined"]},
+              {"column": "Declined",
+               "add_labels": ["proposal", "decision: declined"],
+               "remove_labels": ["RFC",
+                                 "decision: accepted",
+                                 "decision: deferred"]}]
+          # I tried making the project filter work, but when I tried to put the
+          # project into the filter the action stopped matching, so I used the
+          # `if` instead.
+          projectfilter-config: '{"include": ["*"]}'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

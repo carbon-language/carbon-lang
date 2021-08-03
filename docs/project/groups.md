@@ -11,21 +11,22 @@ tracking.
 
 We use a mix of:
 
-- Groups to assist contacting key contributors on appropriate systems:
-  - **GitHub teams**
-  - **Discourse Forums groups**
-  - **Discord Chat roles**
-- **Google groups**, usually as Google Drive ACLs. We generally won't use these
-  as contact lists, unless specifically mentioned. Please prefer Discourse
-  Forums.
+-   Groups to assist contacting key contributors on appropriate systems:
+    -   **GitHub teams**
+    -   **Discord roles**
+-   **Google groups**, usually as Google Drive ACLs. We generally won't use
+    these as contact lists, unless specifically mentioned. Please prefer other
+    community forums.
 
 ## All contributors
 
-- [GitHub organization](https://github.com/orgs/carbon-language/people)
-- [Discourse Forums account](https://forums.carbon-lang.dev)
-- [Discord Chat access](https://discord.com/app)
-- [Google group](https://groups.google.com/g/carbon-lang-contributors): Grants
-  Google Drive access.
+-   [GitHub organization](https://github.com/orgs/carbon-language/people)
+    -   [GitHub team: Contributors with label access](https://github.com/orgs/carbon-language/teams/contributors-with-label-access):
+        Mirrors the GitHub organization for write access.
+        [Manually updated](/github/update_label_access.py).
+-   [Discord access](https://discord.com/app)
+-   [Google group](https://groups.google.com/g/carbon-lang-contributors): Grants
+    Google Drive access.
 
 ## Team-specific access
 
@@ -34,27 +35,30 @@ when somebody joins the respective team.
 
 ### Admins
 
-- [GitHub owners](https://github.com/orgs/carbon-language/people?query=role%3Aowner)
-- [Discourse Forums group](https://forums.carbon-lang.dev/g/admins)
-- Discord Chat role: admin
+-   [GitHub owners](https://github.com/orgs/carbon-language/people?query=role%3Aowner)
+-   Discord role: admin
+
+### Carbon leads
+
+-   [GitHub team](https://github.com/orgs/carbon-language/teams/carbon-leads)
+-   Discord role: carbon-leads
 
 ### Conduct team
 
 For most purposes, the Core team should be contacted about conduct issues.
 
-- [Google group](https://groups.google.com/g/carbon-lang-conduct-team):
-  Primarily a contact list.
+-   [Google group](https://groups.google.com/g/carbon-lang-conduct-team):
+    Primarily a contact list.
 
-### Core team
+### Implementation team
 
-- [GitHub team](https://github.com/orgs/carbon-language/teams/core-team)
-- [Discourse Forums group](https://forums.carbon-lang.dev/g/core_team)
-- Discord Chat role: core-team
+This team is responsible for development of Carbon's primary, reference
+implementation and toolchain. It also oversees other related implementation work
+within the Carbon project, from tooling of the language spec to test suites.
+There may be some overlap with [admins](#admins) -- any issue can be resolved by
+escalating to the [Carbon leads](#carbon-leads). Notably, this team is _not_
+responsible for the _design_ of the language itself, only for its
+implementation.
 
-### Review managers
-
-- [GitHub team](https://github.com/orgs/carbon-language/teams/review-managers)
-- [Discourse Forums group](https://forums.carbon-lang.dev/g/review_managers)
-- Discord Chat role: review-managers
-- [Google group](https://groups.google.com/g/carbon-lang-review-managers):
-  Grants Google Drive access.
+-   [Github team](https://github.com/orgs/carbon-language/teams/implementation-team)
+-   Discord role: implementation-team

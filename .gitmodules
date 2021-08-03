@@ -1,0 +1,20 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+[submodule "third_party/llvm-bazel"]
+	path = third_party/llvm-bazel
+	url = https://github.com/google/llvm-bazel.git
+	fetchRecurseSubmodules = false
+[submodule "third_party/llvm-project"]
+	path = third_party/llvm-project
+	url = https://github.com/llvm/llvm-project.git
+[submodule "third_party/examples/brotli/original"]
+	path = third_party/examples/brotli/original
+	url = https://github.com/google/brotli
+	shallow = true
+[submodule "third_party/examples/woff2/original"]
+	path = third_party/examples/woff2/original
+	url = https://github.com/google/woff2
+	shallow = true
+	fetchRecurseSubmodules = false

@@ -1,0 +1,135 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: test
+
+on:
+  push:
+    branches: [trunk]
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
+  pull_request_target:
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_mode: [fastbuild, opt]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # Checkout the pull request head or the branch.
+      - name: Checkout pull request
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: true
+
+      - name: Checkout branch
+        if: github.event_name != 'pull_request_target'
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      # Setup Python and related tools.
+      - uses: actions/setup-python@v2
+        with:
+          # Match the min version listed in docs/project/contribution_tools.md
+          python-version: '3.6'
+
+      # On macOS we need Go and to use it to install Bazelisk.
+      - uses: actions/setup-go@v2
+        if: matrix.os == 'macos-latest'
+      - name: Install bazelisk
+        if: matrix.os == 'macos-latest'
+        run: |
+          go get github.com/bazelbuild/bazelisk
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      # Setup to the latest LLVM and Clang release on Linux runners.
+      #
+      # Ideally we would use the pre-installed versions in the image, but the
+      # debian packages for LLVM-12 are broken due to several bugs:
+      # https://bugs.llvm.org/show_bug.cgi?id=43604
+      # https://bugs.llvm.org/show_bug.cgi?id=46321
+      #
+      # For now, we rely on Homebrew to manage installing a correctly built
+      # toolchain. We also take some care to be as resilient as possible to
+      # issues fetching and installing the toolchain.
+      - name: Setup LLVM and Clang on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          brew update
+          brew install --force-bottle --only-dependencies llvm
+          brew install --force-bottle --force --verbose llvm
+          brew info llvm
+          brew config
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # Just add the Homebrew installed LLVM to the path on macOS, the image has
+      # LLVM-12 pre-installed.
+      - name: Setup LLVM and Clang on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # Print the various tool paths and versions to help in debugging.
+      - name: Print tool debugging info
+        run: |
+          echo $PATH
+          which bazelisk
+          bazelisk --version
+          which python
+          python --version
+          which clang
+          clang --version
+          which clang++
+          clang++ --version
+          which clang-format
+          clang-format --version
+
+      # Extract our access key for our build cache.
+      - name: Extract access key
+        env:
+          GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
+            | base64 -d > $HOME/gcp-builds-service-account.json
+
+      # Add our bazel configuration and print basic info to ease debugging.
+      - name: Configure Bazel and print info
+        run: |
+          cat >user.bazelrc <<EOF
+          # Enable remote cache for our CI.
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-${{ matrix.os }}
+          build --google_credentials=$HOME/gcp-builds-service-account.json
+
+          # General build options.
+          build --verbose_failures
+          test --test_output=errors
+          EOF
+          bazelisk info
+
+      # Build all targets first to isolate build failures.
+      - name: Build (${{ matrix.build_mode }})
+        run: bazelisk build -c ${{ matrix.build_mode }} //...:all
+
+      # Run all test targets.
+      - name: Test (${{ matrix.build_mode }})
+        run: bazelisk test -c ${{ matrix.build_mode }} //...:all

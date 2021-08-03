@@ -1,0 +1,16 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Use clang-tidy to standardize syntax. This configuration focuses on
+# modernizations, not casing-related choices, in order to avoid changes which
+# would affect non-migrated callers.
+
+---
+Checks:
+  -*, bugprone-*, -bugprone-reserved-identifier, google-*,
+  -google-readability-todo, misc-definitions-in-headers, misc-misplaced-const,
+  misc-redundant-expression, misc-static-assert,
+  misc-unconventional-assign-operator, misc-uniqueptr-reset-release,
+  misc-unused-*, modernize-*, -modernize-avoid-c-arrays, performance-*,
+  readability-braces-around-statements

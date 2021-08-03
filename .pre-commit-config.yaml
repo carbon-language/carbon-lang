@@ -1,0 +1,132 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Update versions with:
+#   pre-commit autoupdate --freeze
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+default_language_version:
+  python: python3 # Defaults to python2, so override it.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 38b88246ccc552bffaaf54259d064beeee434539 # frozen: v4.0.1
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-symlinks
+        exclude: |
+          (?x)^(
+              website/jekyll/site/_includes|
+              bazel-(clang-toolchain|execroot)
+          )$
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: trailing-whitespace
+        exclude: '^(.*/testdata/.*\.golden)$'
+  - repo: https://github.com/google/pre-commit-tool-hooks
+    rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
+    hooks:
+      - id: check-copyright
+        args:
+          - --copyright
+          - |+
+            Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+            Exceptions. See /LICENSE for license information.
+            SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+          - --custom_format
+          - '\.carbon$'
+          - ''
+          - '// '
+          - ''
+          - --custom_format
+          - '\.lpp$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.ypp$'
+          - ''
+          - '// '
+          - ''
+          - --custom_format
+          - '\.l$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.y$'
+          - '/*'
+          - ''
+          - '*/'
+        exclude: |
+          (?x)^(
+              .bazelversion|
+              compile_flags.txt|
+              third_party/examples/.*/compile_flags.carbon.txt|
+              website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|
+              .*\.def|
+              .*\.svg|
+              .*/testdata/.*\.golden
+          )$
+      - id: check-google-doc-style
+      - id: markdown-toc
+  - repo: https://github.com/codespell-project/codespell
+    rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
+    hooks:
+      - id: codespell
+        args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
+        exclude: '^website/jekyll/Gemfile.lock$'
+  - repo: local
+    hooks:
+      - id: executable-semantics-tests
+        name: Update list of executable_semantics tests
+        description: Updates executable_semantics/test_list.bzl
+        entry: executable_semantics/tests.py
+        language: python
+        files: ^executable_semantics/(test_list.bzl|testdata/.*\.carbon)$
+        pass_filenames: false
+        args: ['--update_list', '--use_git_ls_files']
+      - id: proposal-list
+        name: Update list of proposals
+        description: Updates the list of proposals in proposals/README.md
+        entry: proposals/scripts/update_proposal_list.py
+        language: python
+        files: ^proposals/(README|p.*)\.md$
+        pass_filenames: false
+  # Formatters should be run late so that they can re-format any prior changes.
+  - repo: https://github.com/psf/black
+    rev: 93c10bf9ebccf8d7cc686b0b9579f2e5e41c5328 # frozen: 21.6b0
+    hooks:
+      - id: black
+  - repo: https://github.com/jlebar/pre-commit-hooks.git
+    rev: 07a539b8db43298f124ace23c90b4b871911b8c4
+    hooks:
+      - id: bazel-buildifier
+      - id: clang-format-whole-file
+        types: [c++]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: bc48c541add1551be726f23c4294c773442341cb # frozen: v2.3.2
+    hooks:
+      - id: prettier
+        exclude: ^website/jekyll/theme/
+  # Run linters last, as formatters and other checks may fix issues.
+  - repo: https://gitlab.com/PyCQA/flake8
+    rev: dcd740bc0ebaf2b3d43e59a0060d157c97de13f3 # frozen: 3.9.2
+    hooks:
+      - id: flake8
+
+# Most third-party code is in submodules; local commits are excluded here.
+# We fully exclude fuzzer corpus directories as they are generated binary data.
+exclude: |
+  (?x)^(
+      third_party/examples/.*/carbon/.*|
+      .*/fuzzer_corpus/.*
+  )$
