@@ -80,7 +80,7 @@ def main():
             formatted.append(name)
 
             # Code is indented by 4 spaces, so it's wrapped to 76 columns.
-            # Braces are part of code to get better format results.
+            # The wrapping braces are part of code to get better format results.
             formatted_code = _format(m[2].strip(), base_style, cols=76)
             formatted.append(textwrap.indent(formatted_code, " " * 4))
         assert not rule_blocks, rule_blocks
