@@ -68,8 +68,7 @@ struct ExpectedStructFieldName : SimpleDiagnostic<ExpectedStructFieldName> {
 
 struct ExpectedFieldDesignator : SimpleDiagnostic<ExpectedFieldDesignator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected `.field = value`.";
+  static constexpr llvm::StringLiteral Message = "Expected `.field = value`.";
 };
 
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {

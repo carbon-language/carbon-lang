@@ -1023,18 +1023,18 @@ TEST_F(ParseTreeTest, Structs) {
 
 TEST_F(ParseTreeTest, StructErrors) {
   llvm::StringLiteral testcases[] = {
-    "var x: {i32} = {};",
-    "var x: {a} = {};",
-    "var x: {a:} = {};",
-    "var x: {a: i32, .b = 0} = {};",
-    "var x: {.} = {};",
-    "var x: {.a} = {};",
-    "var x: {.a: i32} = {};",
-    "var x: {.a =} = {};",
-    "var x: {.a = 0, b: i32} = {};",
-    "var x: {,} = {};",
-    "var x: {.a = 0,} = {};",
-    "var x: {a: i32,} = {};",
+      "var x: {i32} = {};",
+      "var x: {a} = {};",
+      "var x: {a:} = {};",
+      "var x: {a: i32, .b = 0} = {};",
+      "var x: {.} = {};",
+      "var x: {.a} = {};",
+      "var x: {.a: i32} = {};",
+      "var x: {.a =} = {};",
+      "var x: {.a = 0, b: i32} = {};",
+      "var x: {,} = {};",
+      "var x: {.a = 0,} = {};",
+      "var x: {a: i32,} = {};",
   };
 
   for (llvm::StringLiteral testcase : testcases) {
