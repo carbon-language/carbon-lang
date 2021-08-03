@@ -10,7 +10,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Overview](#overview)
 -   [Context and disclaimer](#context-and-disclaimer)
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
@@ -42,7 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Pointers and references](#pointers-and-references)
         -   [Arrays and slices](#arrays-and-slices)
     -   [User-defined types](#user-defined-types)
-        -   [Structs](#structs)
+        -   [Classes](#classes)
             -   [Allocation, construction, and destruction](#allocation-construction-and-destruction)
             -   [Assignment, copying, and moving](#assignment-copying-and-moving)
             -   [Comparison](#comparison)
@@ -68,24 +67,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
 
 <!-- tocstop -->
-
-## Overview
-
-This documentation describes the design of the Carbon language, and the
-rationale for that design. The goal is to provide sufficient coverage of the
-design to support the following audiences:
-
--   People who wish to determine whether Carbon would be the right choice to use
-    for a project compared to other existing languages.
--   People working on the evolution of the Carbon language who wish to
-    understanding the rationale and motivation for existing design decisions.
--   People working on a specification or implementation of the Carbon language
-    who need a detailed understanding of the intended design.
--   People writing Carbon code who wish to understand why the language rules are
-    the way they are.
-
-For Carbon developers, documentation that is more suitable for learning the
-language will be made available separately.
 
 ## Context and disclaimer
 
@@ -170,14 +151,14 @@ cleaned up during evolution.
 Name paths in Carbon always start with the package name. Additional namespaces
 may be specified as desired.
 
-For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
+For example, this code declares a class `Geometry.Shapes.Flat.Circle` in a
 library `Geometry/OneSide`:
 
 ```carbon
 package Geometry library("OneSide") namespace Shapes;
 
 namespace Flat;
-struct Flat.Circle { ... }
+class Flat.Circle { ... }
 ```
 
 This type can be used from another package:
@@ -487,7 +468,7 @@ fn Sum(a: Int, b: Int) -> Int {
 ## Types
 
 > References: [Primitive types](primitive_types.md), [tuples](tuples.md), and
-> [structs](structs.md)
+> [classes](classes.md)
 >
 > **TODO:** References need to be evolved.
 
@@ -595,19 +576,17 @@ fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
 
 ### User-defined types
 
-#### Structs
+#### Classes
 
-> References: [Structs](structs.md)
->
-> **TODO:** References need to be evolved.
+> References: [Classes](classes.md)
 
-`struct`s are a way for users to define their own data strutures or named
+`class`es are a way for users to define their own data strutures or named
 product types.
 
 For example:
 
 ```carbon
-struct Widget {
+class Widget {
   var x: Int;
   var y: Int;
   var z: Int;
@@ -622,50 +601,26 @@ Breaking apart `Widget`:
 -   `Widget` has one `String` member: `payload`.
 -   Given an instance `dial`, a member can be referenced with `dial.paylod`.
 
-More advanced `struct`s may be created:
-
-```carbon
-struct AdvancedWidget {
-  // Do a thing!
-  fn DoSomething(self: AdvancedWidget, x: Int, y: Int);
-
-  // A nested type.
-  struct Nestedtype {
-    // ...
-  }
-
-  private var x: Int;
-  private var y: Int;
-}
-
-fn Foo(thing: AdvancedWidget) {
-  thing.DoSomething(1, 2);
-}
-```
-
-Breaking apart `AdvancedWidget`:
-
--   `AdvancedWidget` has a public object method `DoSomething`.
-    -   `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to
-        it, and there is no automatic scoping - `self` must be specified as the
-        first input. The `self` name is also a keyword that explains how to
-        invoke this method on an object.
-    -   `DoSomething` accepts `AdvancedWidget` _by value_, which is easily
-        expressed here along with other constraints on the object parameter.
--   `AdvancedWidget` has two private data members: `x` and `y`.
-    -   Private methods and data members are restricted to use by
-        `AdvancedWidget` only, providing a layer of easy validation of the most
-        basic interface constraints.
--   `Nestedtype` is a nested type, and can be accessed as
-    `AdvancedWidget.Nestedtype`.
-
 ##### Allocation, construction, and destruction
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
 ##### Assignment, copying, and moving
 
-> **TODO:** Needs a feature design and a high level summary provided inline.
+You may use a _structural data class literal_, also known as a _struct literal_,
+to assign or initialize a variable with a `class` type.
+
+```carbon
+var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
+sprocket = {.x = 2, .y = 1, .z = 0, .payload = "Bounce"};
+```
+
+You may also copy one struct into another of the same type.
+
+```carbon
+var thingy: Widget = sprocket;
+sprocket = thingy;
+```
 
 ##### Comparison
 
@@ -818,7 +773,7 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-struct Stack(T:$$ Type) {
+class Stack(T:$$ Type) {
   var storage: Array(T);
 
   fn Push(value: T);
