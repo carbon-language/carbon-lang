@@ -25,7 +25,7 @@ class ParseAndLexContext {
   auto PrintDiagnostic(const std::string& message, int line_number) -> void;
 
   // The source range of the token being (or just) lex'd.
-  yy::location current_token_position;
+  location current_token_position;
 
  private:
   // A path to the file processed, relative to the current working directory
@@ -37,7 +37,7 @@ class ParseAndLexContext {
 
 // Gives flex the yylex prototype we want.
 #define YY_DECL \
-  yy::parser::symbol_type yylex(Carbon::ParseAndLexContext& context)
+  Carbon::Parser::symbol_type yylex(Carbon::ParseAndLexContext& context)
 
 // Declares yylex for the parser's sake.
 YY_DECL;
