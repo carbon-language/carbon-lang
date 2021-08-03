@@ -916,6 +916,10 @@ implications:
     of writing all the boilerplate to create an
     [encapsulated type](#encapsulated-types) preemptively to allow future
     evolution.
+-   It would let you take a variable away and put a property in its place with
+    no other code changes. The number one use for this is so you can put a
+    breakpoint in the property code, then later go back to public variable once
+    you understand who was misbehaving.
 -   We should have some guidance for when to use a computed property instead of
     a function with no arguments. One possible criteria is when it is a pure
     function of the state of the object and executes in an amount of time
