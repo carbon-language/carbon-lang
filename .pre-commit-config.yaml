@@ -86,7 +86,7 @@ repos:
         exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
-      - id: executable-semantics-format-grammer
+      - id: executable-semantics-format-grammar
         name: Format the executable_semantics grammar file
         entry: executable_semantics/syntax/format_grammar.py
         language: python
