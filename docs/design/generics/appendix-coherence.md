@@ -153,7 +153,10 @@ differently depending on which of those two libraries are imported:
     on which it is.
 
 Furthermore, this means that the behavior of a file can depend on an import even
-if nothing from that package is referenced explicitly.
+if nothing from that package is referenced explicitly. In general, Carbon is
+[avoiding this sort of context sensitivity](/docs/project/principles/low_context_sensitivity.md).
+This context sensitivity would make moving code between files when refactoring
+more difficult and less safe.
 
 ### Rejected variation: dynamic implementation binding
 
@@ -203,9 +206,3 @@ either:
     like
     [dynamic implementation binding](#rejected-alternative-dynamic-implementation-binding)
     (though perhaps with a monomorphization cost instead of a runtime cost).
-
-In general, Carbon is
-[avoiding this sort of context sensitivity](https://docs.google.com/document/d/1dLpEmUbE2_JQZ-pRNgEDnw6VuH4FXfURSYej6nPV6m0/edit#).
-TODO: update to [this link](/docs/project/principles/low_context_sensitivity.md)
-once [proposal #646](https://github.com/carbon-language/carbon-lang/pull/646) is
-submitted.
