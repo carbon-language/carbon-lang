@@ -970,6 +970,82 @@ TEST_F(ParseTreeTest, Tuples) {
            MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, Structs) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    var x: {a: i32, b: i32} = {.a = 1, .b = 2};
+    var y: {} = {};
+    var z: {c: i32 = 0} = {};
+  )");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchVariableDeclaration(
+               MatchPatternBinding(
+                   MatchDeclaredName("x"), ":",
+                   MatchStructType(
+                       MatchPatternBinding(MatchDeclaredName("a"), ":",
+                                           MatchLiteral("i32")),
+                       MatchStructComma(),
+                       MatchPatternBinding(MatchDeclaredName("b"), ":",
+                                           MatchLiteral("i32")),
+                       MatchStructEnd())),
+               MatchVariableInitializer(MatchStructLiteral(
+                   MatchStructFieldValue(
+                       MatchStructFieldDesignator(MatchDesignatedName("a")),
+                       MatchLiteral("1")),
+                   MatchStructComma(),
+                   MatchStructFieldValue(
+                       MatchStructFieldDesignator(MatchDesignatedName("b")),
+                       MatchLiteral("2")),
+                   MatchStructEnd())),
+               MatchDeclarationEnd()),
+           MatchVariableDeclaration(
+               MatchPatternBinding(MatchDeclaredName("y"), ":",
+                                   MatchStructLiteral(MatchStructEnd())),
+               MatchVariableInitializer(MatchStructLiteral(MatchStructEnd())),
+               MatchDeclarationEnd()),
+           MatchVariableDeclaration(
+               MatchPatternBinding(
+                   MatchDeclaredName("z"), ":",
+                   MatchStructType(
+                       MatchStructFieldDefaultInitializer(
+                           MatchPatternBinding(MatchDeclaredName("c"), ":",
+                                               MatchLiteral("i32")),
+                           MatchLiteral("0")),
+                       MatchStructEnd())),
+               MatchVariableInitializer(MatchStructLiteral(MatchStructEnd())),
+               MatchDeclarationEnd()),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, StructErrors) {
+  llvm::StringLiteral testcases[] = {
+    "var x: {i32} = {};",
+    "var x: {a} = {};",
+    "var x: {a:} = {};",
+    "var x: {a: i32, .b = 0} = {};",
+    "var x: {.} = {};",
+    "var x: {.a} = {};",
+    "var x: {.a: i32} = {};",
+    "var x: {.a =} = {};",
+    "var x: {.a = 0, b: i32} = {};",
+    "var x: {,} = {};",
+    "var x: {.a = 0,} = {};",
+    "var x: {a: i32,} = {};",
+  };
+
+  for (llvm::StringLiteral testcase : testcases) {
+    TokenizedBuffer tokens = GetTokenizedBuffer(testcase);
+    ErrorTrackingDiagnosticConsumer error_tracker(consumer);
+    ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+    EXPECT_TRUE(tree.HasErrors());
+    EXPECT_TRUE(error_tracker.SeenError());
+  }
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);

@@ -756,8 +756,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
           if (pattern) {
             if (auto equal_token = ConsumeIf(TokenKind::Equal())) {
               auto init = ParseExpression();
-              AddNode(ParseNodeKind::StructFieldInitializer(), *equal_token,
-                      start_elem, /*has_error=*/!init);
+              AddNode(ParseNodeKind::StructFieldDefaultInitializer(),
+                      *equal_token, start_elem, /*has_error=*/!init);
             }
           }
           return pattern;
@@ -778,8 +778,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
           return llvm::None;
         }
         auto value = ParseExpression();
-        return AddNode(ParseNodeKind::StructField(), *equal_token, start_elem,
-                       /*has_error=*/!designator || !value);
+        return AddNode(ParseNodeKind::StructFieldValue(), *equal_token,
+                       start_elem, /*has_error=*/!designator || !value);
       },
       ParseNodeKind::StructComma(),
       [&](TokenizedBuffer::Token open_brace, bool is_single_item,
