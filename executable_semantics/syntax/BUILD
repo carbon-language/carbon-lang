@@ -29,32 +29,21 @@ cc_library(
     ],
     deps = [
         ":paren_contents",
-        "//executable_semantics:tracing_flag",
+        "//common:check",
+        "//common:ostream",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
+        "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
+        "//executable_semantics/interpreter:typecheck",
     ],
 )
 
 cc_library(
     name = "paren_contents",
-    srcs = ["paren_contents.cpp"],
     hdrs = ["paren_contents.h"],
-    deps = ["//executable_semantics/ast:expression"],
-)
-
-cc_test(
-    name = "paren_contents_test",
-    srcs = ["paren_contents_test.cpp"],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
-    deps = [
-        ":paren_contents",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
-    ],
 )
 
 genrule(
@@ -66,6 +55,7 @@ genrule(
     ],
     cmd = "M4=$(M4) $(BISON) " +
           "--output=$(location parser.cpp) " +
+          "--report=state " +
           "--defines=$(location parser.h) " +
           "$(location parser.ypp)",
     toolchains = [

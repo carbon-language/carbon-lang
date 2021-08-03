@@ -60,6 +60,11 @@ struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
       "Unrecognized declaration introducer.";
 };
 
+struct ExpectedCodeBlock : SimpleDiagnostic<ExpectedCodeBlock> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message = "Expected braced code block.";
+};
+
 struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected expression.";
@@ -384,7 +389,8 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
 template <typename ListElementParser, typename ListCompletionHandler>
 auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
                                        ParseNodeKind comma_kind,
-                                       ListCompletionHandler list_handler)
+                                       ListCompletionHandler list_handler,
+                                       bool allow_trailing_comma)
     -> llvm::Optional<Node> {
   // `(` element-list[opt] `)`
   //
@@ -393,12 +399,15 @@ auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
   TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
 
   bool has_errors = false;
+  bool any_commas = false;
+  int64_t num_elements = 0;
 
   // Parse elements, if any are specified.
   if (!NextTokenIs(TokenKind::CloseParen())) {
     while (true) {
       bool element_error = !list_element_parser();
       has_errors |= element_error;
+      ++num_elements;
 
       if (!NextTokenIsOneOf({TokenKind::CloseParen(), TokenKind::Comma()})) {
         if (!element_error) {
@@ -418,10 +427,17 @@ auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
       }
 
       AddLeafNode(comma_kind, Consume(TokenKind::Comma()));
+      any_commas = true;
+
+      if (allow_trailing_comma && NextTokenIs(TokenKind::CloseParen())) {
+        break;
+      }
     }
   }
 
-  return list_handler(open_paren, Consume(TokenKind::CloseParen()), has_errors);
+  bool is_single_item = num_elements == 1 && !any_commas;
+  return list_handler(open_paren, is_single_item,
+                      Consume(TokenKind::CloseParen()), has_errors);
 }
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
@@ -460,8 +476,8 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
   auto params = ParseParenList(
       [&] { return ParseFunctionParameter(); },
       ParseNodeKind::ParameterListComma(),
-      [&](TokenizedBuffer::Token open_paren, TokenizedBuffer::Token close_paren,
-          bool has_errors) {
+      [&](TokenizedBuffer::Token open_paren, bool is_single_item,
+          TokenizedBuffer::Token close_paren, bool has_errors) {
         AddLeafNode(ParseNodeKind::ParameterListEnd(), close_paren);
         return AddNode(ParseNodeKind::ParameterList(), open_paren, start,
                        has_errors);
@@ -480,8 +496,16 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
   return params.hasValue();
 }
 
-auto ParseTree::Parser::ParseCodeBlock() -> Node {
-  TokenizedBuffer::Token open_curly = Consume(TokenKind::OpenCurlyBrace());
+auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
+  llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
+      ConsumeIf(TokenKind::OpenCurlyBrace());
+  if (!maybe_open_curly) {
+    // Recover by parsing a single statement.
+    emitter.EmitError<ExpectedCodeBlock>(*position);
+    return ParseStatement();
+  }
+  TokenizedBuffer::Token open_curly = *maybe_open_curly;
+
   auto start = GetSubtreeStartPosition();
 
   bool has_errors = false;
@@ -549,7 +573,9 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
   // See if we should parse a definition which is represented as a code block.
   if (NextTokenIs(TokenKind::OpenCurlyBrace())) {
-    ParseCodeBlock();
+    if (!ParseCodeBlock()) {
+      return add_error_function_node();
+    }
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd())) {
     emitter.EmitError<ExpectedFunctionBodyOrSemi>(*position);
@@ -636,21 +662,25 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
-  // `(` expression `)`
+  // parenthesized-expression ::= `(` expression `)`
+  // tuple-literal ::= `(` `)`
+  //               ::= `(` expression `,` [expression-list [`,`]] `)`
+  //
+  // Parse the union of these, `(` [expression-list [`,`]] `)`, and work out
+  // whether it's a tuple or a parenthesized expression afterwards.
   auto start = GetSubtreeStartPosition();
-  TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
-
-  // TODO: If the next token is a close paren, build an empty tuple literal.
-
-  auto expr = ParseExpression();
-
-  // TODO: If the next token is a comma, build a tuple literal.
-
-  auto close_paren =
-      ParseCloseParen(open_paren, ParseNodeKind::ParenExpressionEnd());
-
-  return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
-                 /*has_error=*/!expr || !close_paren);
+  return ParseParenList(
+      [&] { return ParseExpression(); }, ParseNodeKind::TupleLiteralComma(),
+      [&](TokenizedBuffer::Token open_paren, bool is_single_item,
+          TokenizedBuffer::Token close_paren, bool has_arg_errors) {
+        AddLeafNode(is_single_item ? ParseNodeKind::ParenExpressionEnd()
+                                   : ParseNodeKind::TupleLiteralEnd(),
+                    close_paren);
+        return AddNode(is_single_item ? ParseNodeKind::ParenExpression()
+                                      : ParseNodeKind::TupleLiteral(),
+                       open_paren, start, has_arg_errors);
+      },
+      /*allow_trailing_comma=*/true);
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
@@ -663,6 +693,9 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
     case TokenKind::IntegerLiteral():
     case TokenKind::RealLiteral():
     case TokenKind::StringLiteral():
+    case TokenKind::IntegerTypeLiteral():
+    case TokenKind::UnsignedIntegerTypeLiteral():
+    case TokenKind::FloatingPointTypeLiteral():
       kind = ParseNodeKind::Literal();
       break;
 
@@ -705,8 +738,8 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
   //                 ::= expression `,` expression-list
   return ParseParenList(
       [&] { return ParseExpression(); }, ParseNodeKind::CallExpressionComma(),
-      [&](TokenizedBuffer::Token open_paren, TokenizedBuffer::Token close_paren,
-          bool has_arg_errors) {
+      [&](TokenizedBuffer::Token open_paren, bool is_single_item,
+          TokenizedBuffer::Token close_paren, bool has_arg_errors) {
         AddLeafNode(ParseNodeKind::CallExpressionEnd(), close_paren);
         return AddNode(ParseNodeKind::CallExpression(), open_paren, start,
                        has_errors || has_arg_errors);
@@ -978,11 +1011,15 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   auto if_token = Consume(TokenKind::IfKeyword());
   auto cond = ParseParenCondition(TokenKind::IfKeyword());
-  auto then_case = ParseStatement();
+  auto then_case = ParseCodeBlock();
   bool else_has_errors = false;
   if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
                               ParseNodeKind::IfStatementElse())) {
-    else_has_errors = !ParseStatement();
+    // 'else if' is permitted as a special case.
+    if (NextTokenIs(TokenKind::IfKeyword()))
+      else_has_errors = !ParseIfStatement();
+    else
+      else_has_errors = !ParseCodeBlock();
   }
   return AddNode(ParseNodeKind::IfStatement(), if_token, start,
                  /*has_error=*/!cond || !then_case || else_has_errors);
@@ -992,7 +1029,7 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   auto while_token = Consume(TokenKind::WhileKeyword());
   auto cond = ParseParenCondition(TokenKind::WhileKeyword());
-  auto body = ParseStatement();
+  auto body = ParseCodeBlock();
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
                  /*has_error=*/!cond || !body);
 }
@@ -1045,9 +1082,6 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
     case TokenKind::ReturnKeyword():
       return ParseKeywordStatement(ParseNodeKind::ReturnStatement(),
                                    KeywordStatementArgument::Optional);
-
-    case TokenKind::OpenCurlyBrace():
-      return ParseCodeBlock();
 
     default:
       // A statement with no introducer token can only be an expression

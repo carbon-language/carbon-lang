@@ -138,7 +138,8 @@ class ParseTree::Parser {
   template <typename ListElementParser, typename ListCompletionHandler>
   auto ParseParenList(ListElementParser list_element_parser,
                       ParseNodeKind comma_kind,
-                      ListCompletionHandler list_handler)
+                      ListCompletionHandler list_handler,
+                      bool allow_trailing_comma = false)
       -> llvm::Optional<Node>;
 
   // Parses a single function parameter declaration.
@@ -153,7 +154,7 @@ class ParseTree::Parser {
   //
   // These can form the definition for a function or be nested within a function
   // definition. These contain variable declarations and statements.
-  auto ParseCodeBlock() -> Node;
+  auto ParseCodeBlock() -> llvm::Optional<Node>;
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.

@@ -36,3 +36,11 @@ cc_test(
         "@llvm-project//llvm:gtest_main",
     ],
 )
+
+cc_library(
+    name = "ostream",
+    hdrs = ["ostream.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)

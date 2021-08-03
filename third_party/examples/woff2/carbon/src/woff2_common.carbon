@@ -9,9 +9,8 @@
 #ifndef WOFF2_WOFF2_COMMON_H_
 #define WOFF2_WOFF2_COMMON_H_
 
-#include <cstddef>
 #include <cinttypes>
-
+#include <cstddef>
 #include <string>
 
 namespace woff2 {

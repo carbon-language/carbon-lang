@@ -2,14 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_TRACING_FLAG_H_
-#define EXECUTABLE_SEMANTICS_TRACING_FLAG_H_
+#include "executable_semantics/common/arena.h"
 
 namespace Carbon {
 
-// Program option to enable/disable tracing.
-extern bool tracing_output;
+llvm::ManagedStatic<Arena> global_arena;
 
 }  // namespace Carbon
-
-#endif  // EXECUTABLE_SEMANTICS_TRACING_FLAG_H_

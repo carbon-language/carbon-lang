@@ -2,9 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn main() -> Int {
-  if (0 == 1)
-    return 1;
+#include "executable_semantics/common/tracing_flag.h"
 
-  return 0;
-}
+namespace Carbon {
+
+bool tracing_output = false;
+
+}  // namespace Carbon

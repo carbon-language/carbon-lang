@@ -10,8 +10,8 @@
 #ifndef WOFF2_GLYPH_H_
 #define WOFF2_GLYPH_H_
 
-#include <cstddef>
 #include <cinttypes>
+#include <cstddef>
 #include <vector>
 
 namespace woff2 {

@@ -5,10 +5,11 @@
 fn main() -> Int {
   var x: Int = 2;
   while (true) {
-    if (x == 0)
+    if (x == 0) {
       break;
-    else
+    } else {
       x = x - 1;
+    }
   }
   return x;
 }

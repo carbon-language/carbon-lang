@@ -8,20 +8,19 @@
 #include <list>
 #include <string>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
+#include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/struct_definition.h"
+#include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
-
-namespace yy {
-class parser;
-}
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 struct Value;
 
-using Address = unsigned int;
 using TypeEnv = Dictionary<std::string, const Value*>;
 using Env = Dictionary<std::string, Address>;
 
@@ -32,146 +31,73 @@ struct TypeCheckContext {
   Env values;
 };
 
-// An existential AST declaration satisfying the Declaration concept.
-class Declaration {
- public:  // ValueSemantic concept API.
-  Declaration(const Declaration& other) = default;
-  Declaration& operator=(const Declaration& other) = default;
-
-  // Constructs an instance equivalent to `d`, where `Model` satisfies the
-  // Declaration concept.
-  template <class Model>
-  Declaration(Model d) : box(std::make_shared<Boxed<Model>>(d)) {}
-
- public:  // Declaration concept API, in addition to ValueSemantic.
-  void Print() const { box->Print(); }
-  auto Name() const -> std::string { return box->Name(); }
-
-  // Signals a type error if the declaration is not well typed,
-  // otherwise returns this declaration with annotated types.
-  //
-  // - Parameter env: types of run-time names.
-  // - Paraemter ct_env: values of compile-time names.
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
-    return box->TypeChecked(env, ct_env);
-  }
-  // Add an entry in the runtime global symbol table for this declaration.
-  void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
-  // Add an entry in the compile time global symbol tables for this declaration.
-  auto TopLevel(TypeCheckContext& e) const -> void { return box->TopLevel(e); }
-
- private:
-  // A base class that erases the type of a `Boxed<Content>`, where `Content`
-  // satisfies the Declaration concept.
-  struct Box {
-   protected:
-    Box() {}
-
-   public:
-    Box(const Box& other) = delete;
-    Box& operator=(const Box& other) = delete;
-
-    virtual ~Box() {}
-    virtual auto Print() const -> void = 0;
-    virtual auto Name() const -> std::string = 0;
-    virtual auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration = 0;
-    virtual auto InitGlobals(Env& globals) const -> void = 0;
-    virtual auto TopLevel(TypeCheckContext&) const -> void = 0;
-  };
-
-  // The derived class that holds an instance of `Content` satisfying the
-  // Declaration concept.
-  template <class Content>
-  struct Boxed final : Box {
-    const Content content;
-    explicit Boxed(Content content) : Box(), content(content) {}
-
-    auto Print() const -> void override { return content.Print(); }
-    auto Name() const -> std::string override { return content.Name(); }
-    auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration override {
-      return content.TypeChecked(env, ct_env);
-    }
-    auto InitGlobals(Env& globals) const -> void override {
-      content.InitGlobals(globals);
-    }
-    auto TopLevel(TypeCheckContext& e) const -> void override {
-      content.TopLevel(e);
-    }
-  };
-
-  // Constructs an instance in a "partially formed" state, which can only be
-  // assigned to or destroyed.
-  Declaration() = default;
-
-  // Give Bison access to the default constructor.
-  friend class yy::parser;
-
-  // Note: the pointee is const as long as we have no mutating methods. When
-  std::shared_ptr<const Box> box;
+enum class DeclarationKind {
+  FunctionDeclaration,
+  StructDeclaration,
+  ChoiceDeclaration,
+  VariableDeclaration,
 };
 
 struct FunctionDeclaration {
+  static constexpr DeclarationKind Kind = DeclarationKind::FunctionDeclaration;
   FunctionDefinition definition;
-  explicit FunctionDeclaration(FunctionDefinition definition)
-      : definition(std::move(definition)) {}
-
-  auto Print() const -> void;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  auto InitGlobals(Env& globals) const -> void;
-  auto TopLevel(TypeCheckContext&) const -> void;
 };
 
 struct StructDeclaration {
+  static constexpr DeclarationKind Kind = DeclarationKind::StructDeclaration;
   StructDefinition definition;
-  StructDeclaration(int line_num, std::string name, std::list<Member*>* members)
-      : definition{line_num, new std::string(name), members} {}
-
-  void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
-  auto TopLevel(TypeCheckContext&) const -> void;
 };
 
 struct ChoiceDeclaration {
+  static constexpr DeclarationKind Kind = DeclarationKind::ChoiceDeclaration;
   int line_num;
   std::string name;
   std::list<std::pair<std::string, const Expression*>> alternatives;
-
-  ChoiceDeclaration(
-      int line_num, std::string name,
-      std::list<std::pair<std::string, const Expression*>> alternatives)
-      : line_num(line_num), name(name), alternatives(std::move(alternatives)) {}
-
-  void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
-  auto TopLevel(TypeCheckContext&) const -> void;
 };
 
 // Global variable definition implements the Declaration concept.
-class VariableDeclaration {
- public:
-  VariableDeclaration(int source_location, std::string name,
-                      const Expression* type, const Expression* initializer)
-      : source_location(source_location),
-        name(name),
-        type(type),
-        initializer(initializer) {}
+struct VariableDeclaration {
+  static constexpr DeclarationKind Kind = DeclarationKind::VariableDeclaration;
+  int source_location;
+  // TODO: split this into a non-optional name and a type, initialized by
+  // a constructor that takes a BindingPattern and handles errors like a
+  // missing name.
+  const BindingPattern* binding;
+  const Expression* initializer;
+};
 
-  void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
-  auto TopLevel(TypeCheckContext&) const -> void;
+class Declaration {
+ public:
+  static auto MakeFunctionDeclaration(FunctionDefinition definition)
+      -> const Declaration;
+  static auto MakeStructDeclaration(int line_num, std::string name,
+                                    std::list<Member*> members)
+      -> const Declaration;
+  static auto MakeChoiceDeclaration(
+      int line_num, std::string name,
+      std::list<std::pair<std::string, const Expression*>> alternatives)
+      -> const Declaration;
+  static auto MakeVariableDeclaration(int source_location,
+                                      const BindingPattern* binding,
+                                      const Expression* initializer)
+      -> const Declaration;
+
+  auto GetFunctionDeclaration() const -> const FunctionDeclaration&;
+  auto GetStructDeclaration() const -> const StructDeclaration&;
+  auto GetChoiceDeclaration() const -> const ChoiceDeclaration&;
+  auto GetVariableDeclaration() const -> const VariableDeclaration&;
+
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  inline auto tag() const -> DeclarationKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
 
  private:
-  int source_location;
-  std::string name;
-  const Expression* type;
-  const Expression* initializer;
+  std::variant<FunctionDeclaration, StructDeclaration, ChoiceDeclaration,
+               VariableDeclaration>
+      value;
 };
 
 }  // namespace Carbon
