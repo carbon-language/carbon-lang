@@ -28,6 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Struct types](#struct-types)
     -   [Literals](#literals)
     -   [Type expression](#type-expression)
+    -   [Option parameters](#option-parameters)
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Future work](#future-work)
@@ -37,10 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Self](#self)
     -   [Let](#let)
     -   [Methods](#methods)
-    -   [Optional named parameters](#optional-named-parameters)
-        -   [Field defaults for struct types](#field-defaults-for-struct-types)
-        -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
-        -   [Discussion](#discussion)
+    -   [Destructuring, pattern matching, and extract](#destructuring-pattern-matching-and-extract)
     -   [Access control](#access-control)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
@@ -490,8 +488,8 @@ is more appropriate.
 ### Data members have an order
 
 The data members of a class, or _fields_, have an order that matches the order
-they are declared in. This determines the order of those fields in memory, and
-the order that the fields are destroyed when a value goes out of scope or is
+they are declared in. This affects the layout of those fields in memory, and the
+order that the fields are destroyed when a value goes out of scope or is
 deallocated.
 
 ## Struct types
@@ -501,6 +499,7 @@ _Structural data classes_, or _struct types_, are convenient for defining
 
 -   as the return type of a function that returns multiple values and wants
     those values to have names so a [tuple](tuples.md) is inappropriate
+-   as a parameter to a function holding options with default values
 -   as an initializer for other `class` variables or values
 -   as a type parameter to a container
 
@@ -528,12 +527,6 @@ This produces a struct value with two fields:
 -   The second field is named "`value`" and has the value `27`. The type of the
     field is set to the type of the value, and so is `Int`.
 
-Note: A comma `,` may optionally be included after the last field:
-
-```
-var kvpair: auto = {.key = "the", .value = 27,};
-```
-
 **Open question:** To keep the literal syntax from being ambiguous with compound
 statements, Carbon will adopt some combination of:
 
@@ -557,17 +550,41 @@ to separate fields instead of a semicolon (`;`) terminator. This choice also
 reflects the expected use inline in function signature declarations.
 
 Struct types may only have data members, so the type declaration is just a list
-of field names and types. The result of a struct type expression is an immutable
-compile-time type value.
-
-Note: Like with struct literal expressions, a comma `,` may optionally be
-included after the last field:
+of field names, types, and optional defaults.
 
 ```
-{.key: String, .value: Int,}
+var with_defaults: {.x: Int = 0, .y: Int = 0} = {.y = 2};
+Assert(with_defaults.x == 0);
+Assert(with_defaults.y == 2);
 ```
 
-Also note that `{}` represents both the empty struct literal and its type.
+The result of a struct type expression is an immutable compile-time type value.
+
+### Option parameters
+
+Consider this function declaration:
+
+```
+fn SortIntVector(
+    v: Vector(Int)*,
+    options: {.stable: Bool = false, .descending: Bool = false} = {});
+```
+
+The `options` parameter defaults to `{}` which will result in the default value
+for every field. So all of these calls are legal:
+
+```
+var v: Vector(Int) = ...;
+// Uses defaults of `.stable` and `.descending` equal to `false`.
+SortIntVector(&v);
+SortIntVector(&v, {});
+// Sets `.stable` option to `true`.
+SortIntVector(&v, {.stable = true});
+// Sets `.descending` option to `true`.
+SortIntVector(&v, {.descending = true});
+// Sets both `.stable` and `.descending` options to `true`.
+SortIntVector(&v, {.stable = true, .descending = true});
+```
 
 ### Assignment and initialization
 
@@ -579,6 +596,9 @@ have to match, just the names.
 var different_order: {.x: Int, .y: Int} = {.y = 2, .x = 3};
 Assert(different_order.x == 3);
 Assert(different_order.y == 2);
+
+// Applicable for arguments as well.
+SortIntVector(&v, {.descending = true, .stable = true});
 ```
 
 **Open question:** What operations and in what order happen for assignment and
@@ -593,8 +613,11 @@ initialization?
 -   Perhaps some operations are _not_ ordered with respect to each other?
 
 When initializing or assigning, the order of fields is determined from the
-target on the left side of the `=`. This rule matches what we expect for classes
-with encapsulation more generally.
+target on the left side of the `=`. This rule has a couple of benefits:
+
+-   This handles fields missing from the initializer when the fields on the left
+    type have defaults.
+-   This matches what we expect for classes with encapsulation more generally.
 
 ### Operations performed field-wise
 
@@ -615,19 +638,19 @@ Similarly, a data class has an unformed state if all its members do. Treatment
 of unformed state follows
 [#257](https://github.com/carbon-language/carbon-lang/pull/257).
 
-`==` and `!=` are defined on a data class type if all its field types support
-it:
+Ordering comparisons like `<` and `<=` are defined on a data class type if all
+its field types support it, using
+[lexicographical order](https://en.wikipedia.org/wiki/Lexicographic_order).
 
 ```
-Assert({.x = 2, .y = 4} != {.x = 5, .y = 3});
+Assert({.x = 2, .y = 4} < {.x = 5, .y = 3});
 ```
 
-**Open question:** Which other comparisons are supported is the subject of
-[question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
+Comparisons between values with fields in different orders are forbidden.
 
 ```
 // Illegal
-Assert({.x = 2, .y = 3} != {.y = 4, .x = 5});
+Assert({.x = 2, .y = 3} < {.y = 4, .x = 5});
 ```
 
 Destruction is performed field-wise in reverse order.
@@ -759,75 +782,15 @@ Summarizing that issue:
 We do not expect to have implicit member access in methods, so inside the method
 body members will be accessed through the `me` parameter.
 
-### Optional named parameters
+### Destructuring, pattern matching, and extract
 
-Structs are being considered as a possible mechanism for implementing optional
-named parameters. We have three main candidate approaches: allowing struct types
-to have field defaults, having dedicated support for destructuring struct values
-in pattern contexts, or having a dedicated optional named parameter syntax.
-
-#### Field defaults for struct types
-
-If struct types could have field defaults, you could write a function
-declaration with all of the optional parameters in an option struct:
+It is an open question how we might destructure or match class values.
 
 ```
-fn SortIntVector(
-    v: Vector(Int)*,
-    options: {.stable: Bool = false,
-              .descending: Bool = false} = {}) {
-  // Code using `options.stable` and `options.descending`.
-}
-
-// Uses defaults of `.stable` and `.descending` equal to `false`.
-SortIntVector(&v);
-SortIntVector(&v, {});
-// Sets `.stable` option to `true`.
-SortIntVector(&v, {.stable = true});
-// Sets `.descending` option to `true`.
-SortIntVector(&v, {.descending = true});
-// Sets both `.stable` and `.descending` options to `true`.
-SortIntVector(&v, {.stable = true, .descending = true});
-// Order can be different for arguments as well.
-SortIntVector(&v, {.descending = true, .stable = true});
-```
-
-#### Destructuring in pattern matching
-
-We might instead support destructuring struct patterns with defaults:
-
-```
-fn SortIntVector(
-    v: Vector(Int)*,
-    {stable: Bool = false, descending: Bool = false}) {
-  // Code using `stable` and `descending`.
-}
-```
-
-This would allow the same syntax at the call site, but avoids
-[some concerns with field defaults](https://github.com/carbon-language/carbon-lang/pull/561#discussion_r683856715)
-and allows some other use cases such as destructuring return values.
-
-#### Discussion
-
-We might support destructuring directly:
-
-```
-var {key: String, value: Int} = ReturnKeyValue();
-```
-
-or by way of a mechanism that converts a struct into a tuple:
-
-```
+var (key: String, value: Int) = {.key = "k", .value = 42};
 var (key: String, value: Int) =
-    ReturnKeyValue().extract(.key, .value);
-// or maybe:
-var (key: String, value: Int) =
-    ReturnKeyValue()[(.key, .value)];
+   {.key = "k", .value = 42}.extract(.key, .value);
 ```
-
-Similarly we might support optional named parameters directly instead of by way
-of struct types.
 
 Some discussion on this topic has occurred in:
 
