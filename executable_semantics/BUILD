@@ -2,9 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# TODO(https://github.com/carbon-language/carbon-lang/issues/266):
-# Migrate bison/flex usage to a more hermetic bazel build.
-
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/testing:golden_test.bzl", "golden_test")
 load("test_list.bzl", "TEST_LIST")
@@ -26,10 +23,6 @@ cc_binary(
         ":executable_semantics",
         "testdata/%s.carbon" % e,
     ],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
     golden = "testdata/%s.golden" % e,
 ) for e in TEST_LIST]
 
@@ -49,10 +42,6 @@ test_suite(
         ":executable_semantics",
         "testdata/%s.carbon" % e,
     ],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
     golden = "testdata/%s.golden" % e,
     golden_is_subset = True,
 ) for e in TEST_LIST]

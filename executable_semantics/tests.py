@@ -15,8 +15,9 @@ import re
 import subprocess
 import sys
 
-_TESTDATA = "./testdata"
-_TEST_LIST_BZL = "./test_list.bzl"
+_BINDIR = "./bazel-bin/executable_semantics"
+_TESTDATA = "executable_semantics/testdata"
+_TEST_LIST_BZL = "executable_semantics/test_list.bzl"
 
 _TEST_LIST_HEADER = """
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -50,16 +51,31 @@ def _parse_args(args=None):
     group.add_argument(
         "--update_list", action="store_true", help="Updates test_list.bzl."
     )
+    parser.add_argument(
+        "--use_git_ls_files",
+        action="store_true",
+        help="Uses `git ls-files` when gathering files for --update_list.",
+    )
     parsed_args = parser.parse_args(args=args)
+    if parsed_args.use_git_ls_files and not (
+        parsed_args.update_list or parsed_args.update_all
+    ):
+        parser.error("--use_git_ls_files requires --update_list")
     return parsed_args
 
 
-def _update_list():
+def _update_list(use_git_state):
     """Updates test_list.bzl."""
     # Get the list of tests and goldens from the filesystem.
     tests = set()
     goldens = set()
-    for f in os.listdir(_TESTDATA):
+    if use_git_state:
+        ls_files = subprocess.check_output(["git", "ls-files", _TESTDATA])
+        files = ls_files.decode("utf-8").splitlines()
+    else:
+        files = list(os.listdir(_TESTDATA))
+    for path in files:
+        f = os.path.basename(path)
         basename, ext = os.path.splitext(f)
         if ext == ".carbon":
             tests.add(basename)
@@ -95,20 +111,15 @@ def _update_list():
 
 def _update_golden(test):
     """Updates the golden file for `test` by running executable_semantics."""
-    # TODO(#580): Remove this when leaks are fixed.
-    env = os.environ.copy()
-    env["ASAN_OPTIONS"] = "detect_leaks=0"
     # Invoke the test update directly in order to allow parallel execution
     # (`bazel run` will serialize).
     p = subprocess.run(
         [
-            "../bazel-bin/executable_semantics/%s_test" % test,
-            "./testdata/%s.golden" % test,
-            "../bazel-bin/executable_semantics/executable_semantics "
-            + "./testdata/%s.carbon" % test,
+            "%s/%s_test" % (_BINDIR, test),
+            "%s/%s.golden" % (_TESTDATA, test),
+            "%s/executable_semantics %s/%s.carbon" % (_BINDIR, _TESTDATA, test),
             "--update",
         ],
-        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -144,9 +155,12 @@ def _update_goldens():
 
 
 def main():
+    # Go to the repository root so that paths will match bazel's view.
+    os.chdir(os.path.join(os.path.dirname(__file__), ".."))
+
     parsed_args = _parse_args()
     if parsed_args.update_all or parsed_args.update_list:
-        _update_list()
+        _update_list(parsed_args.use_git_ls_files)
     if parsed_args.update_all or parsed_args.update_goldens:
         _update_goldens()
 

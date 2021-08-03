@@ -1,2 +1,4 @@
-10: compilation error, tuples of different length
+COMPILATION ERROR: 10: type error in call
+expected: (0 = Int, 1 = Int)
+actual: (0 = (0 = Int, 1 = Int))
 EXIT CODE: 255

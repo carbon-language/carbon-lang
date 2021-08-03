@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -41,6 +42,8 @@ class Heap {
 
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
+
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   // Signal an error if the address is no longer alive.
