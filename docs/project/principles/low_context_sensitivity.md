@@ -83,7 +83,7 @@ notice contextual elements.
 #### Contextual _validity_ rather than _meaning_
 
 When the context only affects the _validity_ of code, but not its meaning, the
-costs are significantly reduced. Understanding the meaning or behavior of the
+costs are significantly reduced. In that case, understanding the meaning or behavior of the
 code doesn't require context, and a developer can easily rely on the compiler to
 check the validity. A simple example of this is contextually valid syntax, which
 is relatively common and inexpensive. However, reusing the same syntax with
@@ -96,7 +96,7 @@ Another mitigation for the costs of context-sensitive code is when the cost of a
 mistake due to the context is low. Some simple examples:
 
 -   Context-sensitivity in comments is less expensive in general than in code.
--   Places where the general meaning is clear, developers can safely and
+-   In places where the general meaning is clear, developers can safely and
     reliably work with that general understanding, and the context only provides
     a minor refinement.
 
