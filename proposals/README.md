@@ -62,5 +62,6 @@ request:
 -   [0601 - Operator tokens](p0601.md)
 -   [0618 - var ordering](p0618.md)
 -   [0623 - Require braces](p0623.md)
+-   [0646 - Low context-sensitivity principle](p0646.md)
 
 <!-- endproposals -->
