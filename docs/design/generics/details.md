@@ -35,7 +35,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
-    -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
+    -   [Application: Defining an impl for use by other types](#application-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
     -   [Associated functions](#associated-functions)
 -   [Associated types](#associated-types)
@@ -1461,23 +1461,6 @@ adapter FormattedSongByTitle for Song {
 }
 ```
 
-**Open question:** As an alternative to:
-
-```
-impl as Printable = FormattedSong as Printable;
-```
-
-we could allow users to write:
-
-```
-impl as Printable = FormattedSong;
-```
-
-This would remove ceremony that the compiler doesn't need. The concern is
-whether it makes sense or is a category error. In this example, is
-`FormattedSong`, a type, a suitable value to provide when asking for a
-`Printable` implementation?
-
 This allows us to provide implementations of new interfaces (as in
 `SongByTitle`), provide different implementations of the same interface (as in
 `FormattedSong`), or mix and match implementations from other compatible types
@@ -1520,12 +1503,31 @@ adapter SongByTitle for Song {
 }
 ```
 
+**Open question:** As an alternative to:
+
+```
+impl as Printable = FormattedSong as Printable;
+```
+
+we could allow users to write:
+
+```
+impl as Printable = FormattedSong;
+```
+
+This would remove ceremony that the compiler doesn't need. The concern is
+whether it makes sense or is a category error. In this example, is
+`FormattedSong`, a type, a suitable value to provide when asking for a
+`Printable` implementation?
+
 **Comparison with other languages:** This matches the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding coherence
 problems, see
 [here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
 and
 [here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
+Rust's mechanism doesn't directly support reusing implementations, though some
+of that is provided by macros defined in libraries.
 
 ### Adapter compatibility
 
@@ -1650,7 +1652,7 @@ units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`. We should have some way of restricting the casts between a type
 and an adapter to address this use case.
 
-### Example: Defining an impl for use by other types
+### Application: Defining an impl for use by other types
 
 Let's say we want to provide a possible implementation of an interface for use
 by types for which that implementation would be appropriate. We can do that by
@@ -1702,7 +1704,7 @@ interface NSpacePoint {
 
 **Note:**
 [Question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565)
-considers the syntax for associated constants.
+discussed but did not decide the syntax for associated constants.
 
 Implementations of `NSpacePoint` for different types might have different values
 for `N`:
@@ -1752,6 +1754,9 @@ fn ExtractPoint[PointT:! NSpacePoint](
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
+**Aside:** In general, `let` fields will only have compile-time and not runtime
+storage associated with them.
+
 ### Associated functions
 
 To be consistent with normal function declaration syntax, function constants are
@@ -1779,9 +1784,6 @@ fn Deserialize(T:! DeserializeFromString, serialized: String) -> T {
 }
 var y: MySerializableType = Deserialize(MySerializableType, "4");
 ```
-
-**Aside:** In general, any field declared as "generic" (using the `:!` syntax),
-will only have compile-time and not runtime storage associated with it.
 
 ## Associated types
 
@@ -1818,6 +1820,7 @@ class DynamicArray(T:! Type) {
 
   impl as StackAssociatedType {
     // Set the associated type `ElementType` to `T`.
+    // Note: open syntax question
     let ElementType = T;
     fn Push[addr me: Self*](value: ElementType) {
       this->Insert(this->End(), value);
@@ -1931,7 +1934,8 @@ type inference, which they otherwise avoided. They
 
 ### Model
 
-The associated type can be modeled by a witness table field in the interface.
+The associated type can be modeled by a witness table field in the interface's
+witness table.
 
 ```
 interface Iterator {
@@ -2124,20 +2128,17 @@ parameters could be inferred like associated types are. See
 
 ### Impl lookup
 
-FIXME: More in depth discussion of coherence, possibly including the links from
-[this thread](https://github.com/carbon-language/carbon-lang/pull/24#discussion_r603497457).
-[JSiek is interested](https://discord.com/channels/655572317891461132/708431657849585705/827165506443673610).
-Include [this thread](https://forums.swift.org/t/scoped-conformances/37159) as
-an alternative considered.
-
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That `impl` must be defined in the same library that defines
-the interface or one of the names needed by the type. That is, the `impl` must
-be defined with one of `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We
-further require anything looking up this `impl` to import the _definitions_ of
-all of those names. Seeing a forward declaration of these names is insufficient,
-since you can presumably see forward declarations without seeing an `impl` with
-the definition. This accomplishes a few goals:
+`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
+defined in some library that must be imported in any code that looks up whether
+that interface is implemented for that type. This requires that `impl` is
+defined in the same library that defines the interface or one of the names
+needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
+`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
+this `impl` to import the _definitions_ of all of those names. Seeing a forward
+declaration of these names is insufficient, since you can presumably see forward
+declarations without seeing an `impl` with the definition. This accomplishes a
+few goals:
 
 -   The compiler can check that there is only one definition of any `impl` that
     is actually used, avoiding
@@ -2145,8 +2146,8 @@ the definition. This accomplishes a few goals:
     problems.
 -   Every attempt to use an `impl` will see the exact same `impl`, making the
     interpretation and semantics of code consistent no matter its context, in
-    accordance with the FIXME
-    [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
+    accordance with the
+    [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
 -   Allowing the `impl` to be defined with either the interface or the type
     addresses the
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
@@ -2155,11 +2156,16 @@ Note that [the rules for specialization](#lookup-resolution-and-specialization)
 do allow there to be more than one `impl` to be defined for a type, as long as
 one can unambiguously be picked as most specific.
 
+**References:** Implementation coherence is
+[defined in terminology](terminology.md#coherence), is
+[a goal for Carbon](goals.md#coherence). More detail can be found in
+[this appendix with the rationale and alternatives considered](appendix-coherence.md).
+
 ### Parameterized structural interfaces
 
 We should also allow the [structural interface](#structural-interfaces)
 construct to support parameters. Parameters would work the same way as for
-regular (nominal/non-structural) interfaces.
+regular, that is nominal or non-structural, interfaces.
 
 ## Constraints
 
