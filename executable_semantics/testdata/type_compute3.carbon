@@ -6,10 +6,10 @@ fn Id(t: Type) => t;
 
 // Test non-trivial type expression in parameter type.
 
-fn f(x: Id(Int)) -> Int {
+fn f(x: Id(i32)) -> i32 {
   return x;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return f(0);
 }

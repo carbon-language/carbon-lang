@@ -4,8 +4,8 @@
 
 // Test type checking of global variable. Error expected.
 
-var flag: Int = true;
+var flag: i32 = true;
 
-fn main() -> Int {
+fn main() -> i32 {
   return 0;
 }

@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn main() -> Int {
+fn main() -> i32 {
   var t: auto = 5;
   match (t) {
-    case x: Int =>
+    case x: i32 =>
       return x - 5;
   }
 }

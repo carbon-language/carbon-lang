@@ -4,12 +4,12 @@
 
 // Test a global variable depending on a function.
 
-fn f() -> Int {
+fn f() -> i32 {
   return 0;
 }
 
-var y: Int = f();
+var y: i32 = f();
 
-fn main() -> Int {
+fn main() -> i32 {
   return y;
 }

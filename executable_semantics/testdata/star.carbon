@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 // Never actually called, so this only tests typechecking and semantic analysis.
-fn F(n: Int, p: Int*, q: Int***) -> Int* {
-  var a: Int = n * *p;
-  var b: Int = a*n;
+fn F(n: i32, p: i32*, q: i32***) -> i32* {
+  var a: i32 = n * *p;
+  var b: i32 = a*n;
   *p = b*(*p);
   **q = p;
   return **q;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return 0;
 }

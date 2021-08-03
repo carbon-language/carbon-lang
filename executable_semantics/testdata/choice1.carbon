@@ -2,38 +2,38 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-choice Ints {
+choice i32s {
   None,
-  One(Int),
-  Two(Int,Int)
+  One(i32),
+  Two(i32,i32)
 }
 
-fn main() -> Int {
-  var x: auto = Ints.None();
-  var y: auto = Ints.One(42);
+fn main() -> i32 {
+  var x: auto = i32s.None();
+  var y: auto = i32s.One(42);
   var n: auto = 0;
   match (y) {
-    case Ints.None =>
+    case i32s.None =>
       n = n + 2;
-    case Ints.One(x: auto) =>
+    case i32s.One(x: auto) =>
       n = x + 1 - 42;
-    case Ints.Two(a: auto, b: auto) =>
+    case i32s.Two(a: auto, b: auto) =>
       n = 2;
   }
   match (x) {
-    case Ints.One(x: auto) =>
+    case i32s.One(x: auto) =>
       n = x + 2;
-    case Ints.None() =>
+    case i32s.None() =>
       n = n - 1;
-    case Ints.Two(x: auto, y: auto) =>
+    case i32s.Two(x: auto, y: auto) =>
       n = 5;
   }
   return n;
 }
 
 // Test some alternate syntaxes
-choice MoreInts {
+choice Morei32s {
   None(),
-  One(Int),
-  Two(Int,Int),
+  One(i32),
+  Two(i32,i32),
 }

@@ -4,8 +4,8 @@
 
 // Test that creating a continuation doesn't do anything.
 
-fn main() -> Int {
-  var x: Int = 0;
+fn main() -> i32 {
+  var x: i32 = 0;
   __continuation k {
     x = x + 1;
   }

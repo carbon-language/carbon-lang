@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn f(x: Int, y: Int) -> Int { return x + y; }
+fn f(x: i32, y: i32) -> i32 { return x + y; }
 
-fn main() -> Int {
-  var xy: (Int, Int) = (1, 2);
+fn main() -> i32 {
+  var xy: (i32, i32) = (1, 2);
   // should fail to type-check
   return f(xy);
 }

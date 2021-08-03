@@ -7,11 +7,11 @@
 // happens before the variable `x` is created, so each continuation
 // creates a different `x`.
 
-var y: Int = 0;
+var y: i32 = 0;
 
-fn main() -> Int {
+fn main() -> i32 {
   __continuation k1 {
-    var x: Int = 0;
+    var x: i32 = 0;
     x = x + 1;
     __await;
     y = x;

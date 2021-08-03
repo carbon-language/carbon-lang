@@ -396,7 +396,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "Bool";
       break;
     case ValKind::IntType:
-      out << "Int";
+      out << "i32";
       break;
     case ValKind::TypeType:
       out << "Type";

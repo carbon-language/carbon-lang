@@ -5,10 +5,10 @@
 // Test that a global variable may not depend on a later global.
 // Error expected.
 
-var x: Int = y;
+var x: i32 = y;
 
-var y: Int = 0;
+var y: i32 = 0;
 
-fn main() -> Int {
+fn main() -> i32 {
   return x;
 }
