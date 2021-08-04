@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -49,6 +50,8 @@ class FieldPath {
       out << "." << component;
     }
   }
+
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   // The representation of FieldPath describes how to locate a Value within

@@ -21,7 +21,10 @@ void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
     }
     out << "]";
   }
-  out << *param_pattern << " -> " << *return_type;
+  out << *param_pattern;
+  if (!is_omitted_return_type) {
+    out << " -> " << *return_type;
+  }
   if (body) {
     out << " {\n";
     body->PrintDepth(depth, out);

@@ -16,10 +16,12 @@ cc_library(
     deps = [
         ":function_definition",
         ":member",
+        ":pattern",
         ":struct_definition",
         "//common:ostream",
         "//executable_semantics/interpreter:address",
         "//executable_semantics/interpreter:containers",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -30,7 +32,21 @@ cc_library(
     deps = [
         "//common:indirect_value",
         "//common:ostream",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
+        "//executable_semantics/syntax:paren_contents",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "expression_test",
+    srcs = ["expression_test.cpp"],
+    deps = [
+        ":expression",
+        "//executable_semantics/syntax:paren_contents",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -41,6 +57,7 @@ cc_library(
     deps = [
         ":expression",
         ":statement",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -49,8 +66,33 @@ cc_library(
     srcs = ["member.cpp"],
     hdrs = ["member.h"],
     deps = [
+        ":pattern",
+        "//common:ostream",
+    ],
+)
+
+cc_library(
+    name = "pattern",
+    srcs = ["pattern.cpp"],
+    hdrs = ["pattern.h"],
+    deps = [
         ":expression",
         "//common:ostream",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "pattern_test",
+    srcs = ["pattern_test.cpp"],
+    deps = [
+        ":pattern",
+        "//executable_semantics/syntax:paren_contents",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -60,8 +102,11 @@ cc_library(
     hdrs = ["statement.h"],
     deps = [
         ":expression",
+        ":pattern",
         "//common:check",
         "//common:ostream",
+        "//executable_semantics/common:arena",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -71,5 +116,6 @@ cc_library(
     deps = [
         ":member",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )

@@ -1,0 +1,46 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: 'Triage inactive issues and PRs'
+on:
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          stale-issue-message: >
+            We triage inactive PRs and issues in order to make it easier to find
+            active work. If this issue should remain active or becomes active
+            again, please comment or remove the `inactive` label. The `long
+            term` label can also be added for issues which are expected to take
+            time.
+
+            This issue is labeled `inactive` because the last activity was over
+            90 days ago.
+          stale-pr-message: >
+            We triage inactive PRs and issues in order to make it easier to find
+            active work. If this PR should remain active, please comment or
+            remove the `inactive` label.
+
+            This PR is labeled `inactive` because the last activity was over 90
+            days ago. This PR will be closed and archived after 14 additional
+            days without activity.
+          close-pr-message: >
+            We triage inactive PRs and issues in order to make it easier to find
+            active work. If this PR should remain active or becomes active
+            again, please reopen it.
+
+            This PR was closed and archived because there has been no new
+            activity in the 14 days since the `inactive` label was added.
+          stale-issue-label: 'inactive'
+          stale-pr-label: 'inactive'
+          exempt-issue-labels: 'long term'
+          days-before-stale: 90
+          days-before-close: 14
+          days-before-issue-close: -1
+          operations-per-run: 100

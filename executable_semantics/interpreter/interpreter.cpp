@@ -14,11 +14,16 @@
 #include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/arena.h"
+#include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Casting.h"
+
+using llvm::cast;
 
 namespace Carbon {
 
@@ -113,7 +118,7 @@ void InitEnv(const Declaration& d, Env* env) {
             state->heap.AllocateValue(Value::MakeVariableType(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      auto pt = InterpExp(new_env, func_def.param_pattern);
+      auto pt = InterpPattern(new_env, func_def.param_pattern);
       auto f = Value::MakeFunctionValue(func_def.name, pt, func_def.body);
       Address a = state->heap.AllocateValue(f);
       env->Set(func_def.name, a);
@@ -127,9 +132,11 @@ void InitEnv(const Declaration& d, Env* env) {
       for (const Member* m : struct_def.members) {
         switch (m->tag()) {
           case MemberKind::FieldMember: {
-            const auto& field = m->GetFieldMember();
-            auto t = InterpExp(Env(), field.type);
-            fields.push_back(make_pair(field.name, t));
+            const BindingPattern* binding = m->GetFieldMember().binding;
+            const Expression* type_expression =
+                cast<ExpressionPattern>(binding->Type())->Expression();
+            auto type = InterpExp(Env(), type_expression);
+            fields.push_back(make_pair(*binding->Name(), type));
             break;
           }
         }
@@ -160,7 +167,7 @@ void InitEnv(const Declaration& d, Env* env) {
       // result of evaluating the initializer.
       auto v = InterpExp(*env, var.initializer);
       Address a = state->heap.AllocateValue(v);
-      env->Set(var.name, a);
+      env->Set(*var.binding->Name(), a);
       break;
     }
   }
@@ -185,16 +192,13 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       std::optional<Env> matches =
           PatternMatch(operas[0]->GetFunctionValue().param, operas[1], globals,
                        &params, line_num);
-      if (!matches) {
-        llvm::errs()
-            << "internal error in call_function, pattern match failed\n";
-        exit(-1);
-      }
+      CHECK(matches) << "internal error in call_function, pattern match failed";
       // Create the new frame and push it on the stack
-      auto* scope = new Scope(*matches, params);
-      auto* frame = new Frame(operas[0]->GetFunctionValue().name, Stack(scope),
-                              Stack(Action::MakeStatementAction(
-                                  operas[0]->GetFunctionValue().body)));
+      auto* scope = global_arena->New<Scope>(*matches, params);
+      auto* frame = global_arena->New<Frame>(
+          operas[0]->GetFunctionValue().name, Stack(scope),
+          Stack(
+              Action::MakeStatementAction(operas[0]->GetFunctionValue().body)));
       state->stack.Push(frame);
       break;
     }
@@ -215,19 +219,15 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       break;
     }
     default:
-      llvm::errs() << line_num << ": in call, expected a function, not "
-                   << *operas[0] << "\n";
-      exit(-1);
+      FATAL_RUNTIME_ERROR(line_num)
+          << "in call, expected a function, not " << *operas[0];
   }
 }
 
 void DeallocateScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
-    if (!a) {
-      llvm::errs() << "internal error in DeallocateScope\n";
-      exit(-1);
-    }
+    CHECK(a);
     state->heap.Deallocate(*a);
   }
 }
@@ -277,18 +277,16 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         case ValKind::TupleValue: {
           if (p->GetTupleValue().elements.size() !=
               v->GetTupleValue().elements.size()) {
-            llvm::errs()
-                << "runtime error: arity mismatch in tuple pattern match\n";
-            exit(-1);
+            FATAL_RUNTIME_ERROR(line_num)
+                << "arity mismatch in tuple pattern match";
           }
           for (const TupleElement& pattern_element :
                p->GetTupleValue().elements) {
             const Value* value_field =
                 v->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              llvm::errs() << "runtime error: field " << pattern_element.name
-                           << "not in " << *v << "\n";
-              exit(-1);
+              FATAL_RUNTIME_ERROR(line_num)
+                  << "field " << pattern_element.name << "not in " << *v;
             }
             std::optional<Env> matches = PatternMatch(
                 pattern_element.value, value_field, values, vars, line_num);
@@ -365,18 +363,16 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
         case ValKind::TupleValue: {
           if (pat->GetTupleValue().elements.size() !=
               val->GetTupleValue().elements.size()) {
-            llvm::errs()
-                << "runtime error: arity mismatch in tuple pattern match\n";
-            exit(-1);
+            FATAL_RUNTIME_ERROR(line_num)
+                << "arity mismatch in tuple pattern match";
           }
           for (const TupleElement& pattern_element :
                pat->GetTupleValue().elements) {
             const Value* value_field =
                 val->GetTupleValue().FindField(pattern_element.name);
             if (value_field == nullptr) {
-              llvm::errs() << "runtime error: field " << pattern_element.name
-                           << "not in " << *val << "\n";
-              exit(-1);
+              FATAL_RUNTIME_ERROR(line_num)
+                  << "field " << pattern_element.name << "not in " << *val;
             }
             PatternAssignment(pattern_element.value, value_field, line_num);
           }
@@ -394,13 +390,11 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
     case ValKind::AlternativeValue: {
       switch (val->tag()) {
         case ValKind::AlternativeValue: {
-          if (pat->GetAlternativeValue().choice_name !=
-                  val->GetAlternativeValue().choice_name ||
-              pat->GetAlternativeValue().alt_name !=
-                  val->GetAlternativeValue().alt_name) {
-            llvm::errs() << "internal error in pattern assignment\n";
-            exit(-1);
-          }
+          CHECK(pat->GetAlternativeValue().choice_name ==
+                    val->GetAlternativeValue().choice_name &&
+                pat->GetAlternativeValue().alt_name ==
+                    val->GetAlternativeValue().alt_name)
+              << "internal error in pattern assignment";
           PatternAssignment(pat->GetAlternativeValue().argument,
                             val->GetAlternativeValue().argument, line_num);
           break;
@@ -415,10 +409,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       break;
     }
     default:
-      if (!ValueEqual(pat, val, line_num)) {
-        llvm::errs() << "internal error in pattern assignment\n";
-        exit(-1);
-      }
+      CHECK(ValueEqual(pat, val, line_num))
+          << "internal error in pattern assignment";
   }
 }
 
@@ -438,9 +430,9 @@ void StepLvalue() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        llvm::errs() << exp->line_num << ": could not find `"
-                     << exp->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(exp->line_num)
+            << ": could not find `" << exp->GetIdentifierExpression().name
+            << "`";
       }
       const Value* v = Value::MakePointerValue(*pointer);
       frame->todo.Pop();
@@ -517,11 +509,9 @@ void StepLvalue() {
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::AutoTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
-    case ExpressionKind::BindingExpression: {
-      llvm::errs() << "Can't treat expression as lvalue: " << *exp << "\n";
-      exit(-1);
+    case ExpressionKind::ContinuationTypeLiteral: {
+      FATAL_RUNTIME_ERROR_NO_LINE()
+          << "Can't treat expression as lvalue: " << *exp;
     }
   }
 }
@@ -536,19 +526,6 @@ void StepExp() {
     llvm::outs() << "--- step exp " << *exp << " --->\n";
   }
   switch (exp->tag()) {
-    case ExpressionKind::BindingExpression: {
-      if (act->pos == 0) {
-        frame->todo.Push(
-            Action::MakeExpressionAction(exp->GetBindingExpression().type));
-        act->pos++;
-      } else {
-        auto v = Value::MakeBindingPlaceholderValue(
-            exp->GetBindingExpression().name, act->results[0]);
-        frame->todo.Pop(1);
-        frame->todo.Push(Action::MakeValAction(v));
-      }
-      break;
-    }
     case ExpressionKind::IndexExpression: {
       if (act->pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -569,20 +546,16 @@ void StepExp() {
             std::string f = std::to_string(act->results[1]->GetIntValue());
             const Value* field = tuple->GetTupleValue().FindField(f);
             if (field == nullptr) {
-              llvm::errs() << "runtime error, field " << f << " not in "
-                           << *tuple << "\n";
-              exit(-1);
+              FATAL_RUNTIME_ERROR_NO_LINE()
+                  << "field " << f << " not in " << *tuple;
             }
             frame->todo.Pop(1);
             frame->todo.Push(Action::MakeValAction(field));
             break;
           }
           default:
-            llvm::errs()
-                << "runtime type error, expected a tuple in field access, "
-                   "not "
-                << *tuple << "\n";
-            exit(-1);
+            FATAL_RUNTIME_ERROR_NO_LINE()
+                << "expected a tuple in field access, not " << *tuple;
         }
       }
       break;
@@ -636,9 +609,9 @@ void StepExp() {
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
-        llvm::errs() << exp->line_num << ": could not find `"
-                     << exp->GetIdentifierExpression().name << "`\n";
-        exit(-1);
+        FATAL_RUNTIME_ERROR(exp->line_num)
+            << ": could not find `" << exp->GetIdentifierExpression().name
+            << "`";
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
@@ -715,13 +688,6 @@ void StepExp() {
       frame->todo.Push(Action::MakeValAction(v));
       break;
     }
-    case ExpressionKind::AutoTypeLiteral: {
-      CHECK(act->pos == 0);
-      const Value* v = Value::MakeAutoType();
-      frame->todo.Pop(1);
-      frame->todo.Push(Action::MakeValAction(v));
-      break;
-    }
     case ExpressionKind::TypeTypeLiteral: {
       CHECK(act->pos == 0);
       const Value* v = Value::MakeTypeType();
@@ -758,6 +724,91 @@ void StepExp() {
       break;
     }
   }  // switch (exp->tag)
+}
+
+void StepPattern() {
+  Frame* frame = state->stack.Top();
+  Action* act = frame->todo.Top();
+  const Pattern* pattern = act->GetPatternAction().pattern;
+  if (tracing_output) {
+    llvm::outs() << "--- step pattern " << *pattern << " --->\n";
+  }
+  switch (pattern->Tag()) {
+    case Pattern::Kind::AutoPattern: {
+      CHECK(act->pos == 0);
+      const Value* v = Value::MakeAutoType();
+      frame->todo.Pop(1);
+      frame->todo.Push(Action::MakeValAction(v));
+      break;
+    }
+    case Pattern::Kind::BindingPattern: {
+      const auto& binding = cast<BindingPattern>(*pattern);
+      if (act->pos == 0) {
+        frame->todo.Push(Action::MakePatternAction(binding.Type()));
+        act->pos++;
+      } else {
+        auto v =
+            Value::MakeBindingPlaceholderValue(binding.Name(), act->results[0]);
+        frame->todo.Pop(1);
+        frame->todo.Push(Action::MakeValAction(v));
+      }
+      break;
+    }
+    case Pattern::Kind::TuplePattern: {
+      const auto& tuple = cast<TuplePattern>(*pattern);
+      if (act->pos == 0) {
+        if (tuple.Fields().empty()) {
+          frame->todo.Pop(1);
+          frame->todo.Push(Action::MakeValAction(Value::MakeTupleValue({})));
+        } else {
+          const Pattern* p1 = tuple.Fields()[0].pattern;
+          frame->todo.Push(Action::MakePatternAction(p1));
+          act->pos++;
+        }
+      } else if (act->pos != static_cast<int>(tuple.Fields().size())) {
+        //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
+        //    H}
+        // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
+        // H}
+        const Pattern* elt = tuple.Fields()[act->pos].pattern;
+        frame->todo.Push(Action::MakePatternAction(elt));
+        act->pos++;
+      } else {
+        std::vector<TupleElement> elements;
+        for (size_t i = 0; i < tuple.Fields().size(); ++i) {
+          elements.push_back(
+              {.name = tuple.Fields()[i].name, .value = act->results[i]});
+        }
+        const Value* tuple_value = Value::MakeTupleValue(std::move(elements));
+        frame->todo.Pop(1);
+        frame->todo.Push(Action::MakeValAction(tuple_value));
+      }
+      break;
+    }
+    case Pattern::Kind::AlternativePattern: {
+      const auto& alternative = cast<AlternativePattern>(*pattern);
+      if (act->pos == 0) {
+        frame->todo.Push(
+            Action::MakeExpressionAction(alternative.ChoiceType()));
+        act->pos++;
+      } else if (act->pos == 1) {
+        frame->todo.Push(Action::MakePatternAction(alternative.Arguments()));
+        act->pos++;
+      } else {
+        CHECK(act->pos == 2);
+        const auto& choice_type = act->results[0]->GetChoiceType();
+        frame->todo.Pop(1);
+        frame->todo.Push(Action::MakeValAction(Value::MakeAlternativeValue(
+            alternative.AlternativeName(), choice_type.name, act->results[1])));
+      }
+      break;
+    }
+    case Pattern::Kind::ExpressionPattern:
+      frame->todo.Pop(1);
+      frame->todo.Push(Action::MakeExpressionAction(
+          cast<ExpressionPattern>(pattern)->Expression()));
+      break;
+  }
 }
 
 auto IsWhileAct(Action* act) -> bool {
@@ -829,7 +880,7 @@ void StepStmt() {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          frame->todo.Push(Action::MakeExpressionAction(c->first));
+          frame->todo.Push(Action::MakePatternAction(c->first));
           act->pos++;
         } else {  // try to match
           auto v = act->results[0];
@@ -839,7 +890,7 @@ void StepStmt() {
           std::optional<Env> matches =
               PatternMatch(pat, v, values, &vars, stmt->line_num);
           if (matches) {  // we have a match, start the body
-            auto* new_scope = new Scope(*matches, vars);
+            auto* new_scope = global_arena->New<Scope>(*matches, vars);
             frame->scopes.Push(new_scope);
             const Statement* body_block =
                 Statement::MakeBlock(stmt->line_num, c->second);
@@ -854,7 +905,7 @@ void StepStmt() {
             clause_num = (act->pos - 1) / 2;
             if (clause_num ==
                 static_cast<int>(stmt->GetMatch().clauses->size())) {
-              frame->todo.Pop(2);
+              frame->todo.Pop(1);
             }
           }
         }
@@ -910,7 +961,8 @@ void StepStmt() {
     case StatementKind::Block: {
       if (act->pos == 0) {
         if (stmt->GetBlock().stmt) {
-          auto* scope = new Scope(CurrentEnv(state), {});
+          auto* scope = global_arena->New<Scope>(CurrentEnv(state),
+                                                 std::list<std::string>());
           frame->scopes.Push(scope);
           frame->todo.Push(Action::MakeStatementAction(stmt->GetBlock().stmt));
           act->pos++;
@@ -935,7 +987,7 @@ void StepStmt() {
         act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(
-            Action::MakeExpressionAction(stmt->GetVariableDefinition().pat));
+            Action::MakePatternAction(stmt->GetVariableDefinition().pat));
         act->pos++;
       } else if (act->pos == 2) {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
@@ -946,12 +998,9 @@ void StepStmt() {
         std::optional<Env> matches =
             PatternMatch(p, v, frame->scopes.Top()->values,
                          &frame->scopes.Top()->locals, stmt->line_num);
-        if (!matches) {
-          llvm::errs()
-              << stmt->line_num
-              << ": internal error in variable definition, match failed\n";
-          exit(-1);
-        }
+        CHECK(matches)
+            << stmt->line_num
+            << ": internal error in variable definition, match failed";
         frame->scopes.Top()->values = *matches;
         frame->todo.Pop(1);
       }
@@ -1039,14 +1088,17 @@ void StepStmt() {
       CHECK(act->pos == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
-      Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+      Scope* scope =
+          global_arena->New<Scope>(CurrentEnv(state), std::list<std::string>());
       Stack<Scope*> scopes;
       scopes.Push(scope);
       Stack<Action*> todo;
-      todo.Push(Action::MakeStatementAction(Statement::MakeReturn(
-          stmt->line_num, Expression::MakeTupleLiteral(stmt->line_num, {}))));
+      todo.Push(Action::MakeStatementAction(
+          Statement::MakeReturn(stmt->line_num, nullptr,
+                                /*is_omitted_exp=*/true)));
       todo.Push(Action::MakeStatementAction(stmt->GetContinuation().body));
-      Frame* continuation_frame = new Frame("__continuation", scopes, todo);
+      Frame* continuation_frame =
+          global_arena->New<Frame>("__continuation", scopes, todo);
       Address continuation_address = state->heap.AllocateValue(
           Value::MakeContinuationValue({continuation_frame}));
       // Store the continuation's address in the frame.
@@ -1101,9 +1153,8 @@ void StepStmt() {
 void Step() {
   Frame* frame = state->stack.Top();
   if (frame->todo.IsEmpty()) {
-    llvm::errs() << "runtime error: fell off end of function " << frame->name
-                 << " without `return`\n";
-    exit(-1);
+    FATAL_RUNTIME_ERROR_NO_LINE()
+        << "fell off end of function " << frame->name << " without `return`";
   }
 
   Action* act = frame->todo.Top();
@@ -1120,6 +1171,9 @@ void Step() {
     case ActionKind::ExpressionAction:
       StepExp();
       break;
+    case ActionKind::PatternAction:
+      StepPattern();
+      break;
     case ActionKind::StatementAction:
       StepStmt();
       break;
@@ -1128,7 +1182,7 @@ void Step() {
 
 // Interpret the whole porogram.
 auto InterpProgram(std::list<Declaration>* fs) -> int {
-  state = new State();  // Runtime state.
+  state = global_arena->New<State>();  // Runtime state.
   if (tracing_output) {
     llvm::outs() << "********** initializing globals **********\n";
   }
@@ -1138,8 +1192,8 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   const Expression* call_main = Expression::MakeCallExpression(
       0, Expression::MakeIdentifierExpression(0, "main"), arg);
   auto todo = Stack(Action::MakeExpressionAction(call_main));
-  auto* scope = new Scope(globals, std::list<std::string>());
-  auto* frame = new Frame("top", Stack(scope), todo);
+  auto* scope = global_arena->New<Scope>(globals, std::list<std::string>());
+  auto* frame = global_arena->New<Frame>("top", Stack(scope), todo);
   state->stack = Stack(frame);
 
   if (tracing_output) {
@@ -1161,8 +1215,23 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 // Interpret an expression at compile-time.
 auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto todo = Stack(Action::MakeExpressionAction(e));
-  auto* scope = new Scope(values, std::list<std::string>());
-  auto* frame = new Frame("InterpExp", Stack(scope), todo);
+  auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
+  auto* frame = global_arena->New<Frame>("InterpExp", Stack(scope), todo);
+  state->stack = Stack(frame);
+
+  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
+         state->stack.Top()->todo.Top()->tag() != ActionKind::ValAction) {
+    Step();
+  }
+  const Value* v = state->stack.Top()->todo.Top()->GetValAction().val;
+  return v;
+}
+
+// Interpret a pattern at compile-time.
+auto InterpPattern(Env values, const Pattern* p) -> const Value* {
+  auto todo = Stack(Action::MakePatternAction(p));
+  auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
+  auto* frame = global_arena->New<Frame>("InterpPattern", Stack(scope), todo);
   state->stack = Stack(frame);
 
   while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||

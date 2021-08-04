@@ -11,9 +11,11 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
+#include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/struct_definition.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/dictionary.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -57,8 +59,10 @@ struct ChoiceDeclaration {
 struct VariableDeclaration {
   static constexpr DeclarationKind Kind = DeclarationKind::VariableDeclaration;
   int source_location;
-  std::string name;
-  const Expression* type;
+  // TODO: split this into a non-optional name and a type, initialized by
+  // a constructor that takes a BindingPattern and handles errors like a
+  // missing name.
+  const BindingPattern* binding;
   const Expression* initializer;
 };
 
@@ -73,8 +77,8 @@ class Declaration {
       int line_num, std::string name,
       std::list<std::pair<std::string, const Expression*>> alternatives)
       -> const Declaration;
-  static auto MakeVariableDeclaration(int source_location, std::string name,
-                                      const Expression* type,
+  static auto MakeVariableDeclaration(int source_location,
+                                      const BindingPattern* binding,
                                       const Expression* initializer)
       -> const Declaration;
 
@@ -84,6 +88,7 @@ class Declaration {
   auto GetVariableDeclaration() const -> const VariableDeclaration&;
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> DeclarationKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

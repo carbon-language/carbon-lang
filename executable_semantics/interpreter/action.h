@@ -9,15 +9,18 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 enum class ActionKind {
   LValAction,
   ExpressionAction,
+  PatternAction,
   StatementAction,
   ValAction,
 };
@@ -30,6 +33,11 @@ struct LValAction {
 struct ExpressionAction {
   static constexpr ActionKind Kind = ActionKind::ExpressionAction;
   const Expression* exp;
+};
+
+struct PatternAction {
+  static constexpr ActionKind Kind = ActionKind::PatternAction;
+  const Pattern* pattern;
 };
 
 struct StatementAction {
@@ -45,6 +53,7 @@ struct ValAction {
 struct Action {
   static auto MakeLValAction(const Expression* e) -> Action*;
   static auto MakeExpressionAction(const Expression* e) -> Action*;
+  static auto MakePatternAction(const Pattern* p) -> Action*;
   static auto MakeStatementAction(const Statement* s) -> Action*;
   static auto MakeValAction(const Value* v) -> Action*;
 
@@ -52,10 +61,12 @@ struct Action {
 
   auto GetLValAction() const -> const LValAction&;
   auto GetExpressionAction() const -> const ExpressionAction&;
+  auto GetPatternAction() const -> const PatternAction&;
   auto GetStatementAction() const -> const StatementAction&;
   auto GetValAction() const -> const ValAction&;
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> ActionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
@@ -73,7 +84,9 @@ struct Action {
   std::vector<const Value*> results;
 
  private:
-  std::variant<LValAction, ExpressionAction, StatementAction, ValAction> value;
+  std::variant<LValAction, ExpressionAction, PatternAction, StatementAction,
+               ValAction>
+      value;
 };
 
 }  // namespace Carbon

@@ -9,6 +9,8 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -44,7 +46,7 @@ struct Assign {
 
 struct VariableDefinition {
   static constexpr StatementKind Kind = StatementKind::VariableDefinition;
-  const Expression* pat;
+  const Pattern* pat;
   const Expression* init;
 };
 
@@ -58,6 +60,7 @@ struct If {
 struct Return {
   static constexpr StatementKind Kind = StatementKind::Return;
   const Expression* exp;
+  bool is_omitted_exp;
 };
 
 struct Sequence {
@@ -88,7 +91,7 @@ struct Continue {
 struct Match {
   static constexpr StatementKind Kind = StatementKind::Match;
   const Expression* exp;
-  std::list<std::pair<const Expression*, const Statement*>>* clauses;
+  std::list<std::pair<const Pattern*, const Statement*>>* clauses;
 };
 
 struct Continuation {
@@ -112,13 +115,14 @@ struct Statement {
       -> const Statement*;
   static auto MakeAssign(int line_num, const Expression* lhs,
                          const Expression* rhs) -> const Statement*;
-  static auto MakeVariableDefinition(int line_num, const Expression* pat,
+  static auto MakeVariableDefinition(int line_num, const Pattern* pat,
                                      const Expression* init)
       -> const Statement*;
   static auto MakeIf(int line_num, const Expression* cond,
                      const Statement* then_stmt, const Statement* else_stmt)
       -> const Statement*;
-  static auto MakeReturn(int line_num, const Expression* e) -> const Statement*;
+  static auto MakeReturn(int line_num, const Expression* exp,
+                         bool is_omitted_exp) -> const Statement*;
   static auto MakeSequence(int line_num, const Statement* s1,
                            const Statement* s2) -> const Statement*;
   static auto MakeBlock(int line_num, const Statement* s) -> const Statement*;
@@ -128,7 +132,7 @@ struct Statement {
   static auto MakeContinue(int line_num) -> const Statement*;
   static auto MakeMatch(
       int line_num, const Expression* exp,
-      std::list<std::pair<const Expression*, const Statement*>>* clauses)
+      std::list<std::pair<const Pattern*, const Statement*>>* clauses)
       -> const Statement*;
   // Returns an AST node for a continuation statement give its line number and
   // contituent parts.
@@ -163,7 +167,9 @@ struct Statement {
   auto GetRun() const -> const Run&;
   auto GetAwait() const -> const Await&;
 
+  void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> StatementKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);

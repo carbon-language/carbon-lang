@@ -1,2 +1,2 @@
-7: compilation error, pattern variables are only allowed in pattern context
+executable_semantics/testdata/pattern_variable_fail.carbon:7: syntax error, unexpected :
 EXIT CODE: 255

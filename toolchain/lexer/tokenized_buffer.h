@@ -293,6 +293,10 @@ class TokenizedBuffer {
   // Returns the value of a `StringLiteral()` token.
   [[nodiscard]] auto GetStringLiteral(Token token) const -> llvm::StringRef;
 
+  // Returns the size specified in a `*TypeLiteral()` token.
+  [[nodiscard]] auto GetTypeLiteralSize(Token token) const
+      -> const llvm::APInt&;
+
   // Returns the closing token matched with the given opening token.
   //
   // The given token must be an opening token kind.
@@ -453,7 +457,8 @@ class TokenizedBuffer {
 
   llvm::SmallVector<IdentifierInfo, 16> identifier_infos;
 
-  // Storage for integers that form part of the value of a numeric literal.
+  // Storage for integers that form part of the value of a numeric or type
+  // literal.
   llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
 
   llvm::SmallVector<std::string, 16> literal_string_storage;

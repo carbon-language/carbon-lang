@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/heap.h"
 
+#include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
@@ -33,9 +34,9 @@ void Heap::Write(const Address& a, const Value* v, int line_num) {
 
 void Heap::CheckAlive(const Address& address, int line_num) {
   if (!alive_[address.index]) {
-    llvm::errs() << line_num << ": undefined behavior: access to dead value "
-                 << *values_[address.index] << "\n";
-    exit(-1);
+    FATAL_RUNTIME_ERROR(line_num)
+        << ": undefined behavior: access to dead value "
+        << *values_[address.index];
   }
 }
 
@@ -44,8 +45,7 @@ void Heap::Deallocate(const Address& address) {
   if (alive_[address.index]) {
     alive_[address.index] = false;
   } else {
-    llvm::errs() << "runtime error, deallocating an already dead value\n";
-    exit(-1);
+    FATAL_RUNTIME_ERROR_NO_LINE() << "deallocating an already dead value";
   }
 }
 
