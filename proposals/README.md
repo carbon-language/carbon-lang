@@ -64,5 +64,6 @@ request:
 -   [0623 - Require braces](p0623.md)
 -   [0646 - Low context-sensitivity principle](p0646.md)
 -   [0680 - And, or, not](p0680.md)
+-   [0702 - Comparison operators](p0702.md)
 
 <!-- endproposals -->
