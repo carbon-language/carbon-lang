@@ -39,9 +39,9 @@ class ExitingStream {
 //   FATAL_USER_ERROR(line_num) << "Line is bad!";
 //   FATAL_USER_ERROR_NO_LINE() << "Application is bad!";
 //
-// Where possible, try to identify the error as a compilation error or runtime
-// error. The generic user error option is provided as a fallback for cases that
-// don't fit either of those classifications.
+// Where possible, try to identify the error as a compilation, internal, or
+// runtime error. The generic user error option is provided as a fallback for
+// cases that don't fit those classifications.
 
 #define FATAL_USER_ERROR_NO_LINE() \
   Carbon::ErrorInternal::ExitingStream() << "ERROR: "
