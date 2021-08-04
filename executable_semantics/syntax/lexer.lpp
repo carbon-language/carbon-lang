@@ -214,9 +214,8 @@ operator and its operand, leading to three more cases:
     // "Reading a token: ".
     std::cerr << std::endl;
   }
-  std::cerr << context.current_token_position << ": invalid character '\\x"
-            << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file." << std::endl;
-  std::exit(1);
+  FATAL_COMPILATION_ERROR(yylineno) << ": invalid character '\\x"
+            << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file.";
 }
 
 <<EOF>>    {

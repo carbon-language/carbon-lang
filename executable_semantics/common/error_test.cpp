@@ -23,6 +23,11 @@ TEST(ErrorTest, FatalCompilationError) {
                "COMPILATION ERROR: test\n");
 }
 
+TEST(ErrorTest, FatalInternalError) {
+  ASSERT_DEATH({ FATAL_INTERNAL_ERROR_NO_LINE() << "test"; },
+               "INTERNAL ERROR: test\n");
+}
+
 TEST(ErrorTest, FatalUserErrorLine) {
   ASSERT_DEATH({ FATAL_USER_ERROR(1) << "test"; }, "ERROR: 1: test\n");
 }

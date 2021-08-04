@@ -285,8 +285,8 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       return Value::MakeAlternativeConstructorValue(f, v->GetChoiceType().name);
     }
     default:
-      llvm::errs() << "field access not allowed for value " << *v << "\n";
-      exit(-1);
+      FATAL_INTERNAL_ERROR(line_num)
+          << "field access not allowed for value " << *v;
   }
 }
 
@@ -330,8 +330,8 @@ auto SetFieldImpl(const Value* value,
       return Value::MakeTupleValue(elements);
     }
     default:
-      llvm::errs() << "field access not allowed for value " << *value << "\n";
-      exit(-1);
+      FATAL_INTERNAL_ERROR(line_num)
+          << "field access not allowed for value " << *value;
   }
 }
 
@@ -545,10 +545,10 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::VariableType:
       return t1->GetVariableType().name == t2->GetVariableType().name;
     default:
-      llvm::errs() << "TypeEqual used to compare non-type values\n"
-                   << *t1 << "\n"
-                   << *t2 << "\n";
-      exit(-1);
+      FATAL_INTERNAL_ERROR_NO_LINE()
+          << "TypeEqual used to compare non-type values\n"
+          << *t1 << "\n"
+          << *t2;
   }
 }
 
@@ -609,8 +609,8 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::BindingPlaceholderValue:
     case ValKind::AlternativeConstructorValue:
     case ValKind::ContinuationValue:
-      llvm::errs() << "ValueEqual does not support this kind of value.\n";
-      exit(-1);
+      FATAL_INTERNAL_ERROR(line_num)
+          << "ValueEqual does not support this kind of value: " << *v1;
   }
 }
 

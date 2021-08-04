@@ -98,8 +98,7 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Ptr:
       return Value::MakePointerType(args[0]);
     case Operator::Deref:
-      llvm::errs() << line_num << ": dereference not implemented yet\n";
-      exit(-1);
+      FATAL_INTERNAL_ERROR(line_num) << "dereference not implemented yet\n";
   }
 }
 
@@ -298,10 +297,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return values;
         }
         default:
-          llvm::errs()
-              << "internal error, expected a tuple value in pattern, not " << *v
-              << "\n";
-          exit(-1);
+          FATAL_INTERNAL_ERROR_NO_LINE()
+              << "expected a tuple value in pattern, not " << *v;
       }
     case ValKind::AlternativeValue:
       switch (v->tag()) {
@@ -321,11 +318,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return *matches;
         }
         default:
-          llvm::errs()
-              << "internal error, expected a choice alternative in pattern, "
-                 "not "
-              << *v << "\n";
-          exit(-1);
+          FATAL_INTERNAL_ERROR_NO_LINE()
+              << "expected a choice alternative in pattern, not " << *v;
       }
     case ValKind::FunctionType:
       switch (v->tag()) {
@@ -379,11 +373,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          llvm::errs()
-              << "internal error, expected a tuple value on right-hand-side, "
-                 "not "
-              << *val << "\n";
-          exit(-1);
+          FATAL_INTERNAL_ERROR_NO_LINE()
+              << "expected a tuple value on right-hand-side, not " << *val;
       }
       break;
     }
@@ -400,11 +391,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          llvm::errs()
-              << "internal error, expected an alternative in left-hand-side, "
-                 "not "
-              << *val << "\n";
-          exit(-1);
+          FATAL_INTERNAL_ERROR_NO_LINE()
+              << "expected an alternative in left-hand-side, not " << *val;
       }
       break;
     }
@@ -670,8 +658,8 @@ void StepExp() {
         frame->todo.Pop(1);
         CallFunction(exp->line_num, act->results, state);
       } else {
-        llvm::errs() << "internal error in handle_value with Call\n";
-        exit(-1);
+        FATAL_INTERNAL_ERROR_NO_LINE()
+            << "in handle_value with Call pos " << act->pos;
       }
       break;
     case ExpressionKind::IntTypeLiteral: {

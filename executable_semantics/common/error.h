@@ -43,18 +43,25 @@ class ExitingStream {
 // error. The generic user error option is provided as a fallback for cases that
 // don't fit either of those classifications.
 
-#define FATAL_USER_ERROR_NO_LINE() ErrorInternal::ExitingStream() << "ERROR: "
+#define FATAL_USER_ERROR_NO_LINE() \
+  Carbon::ErrorInternal::ExitingStream() << "ERROR: "
 
 #define FATAL_USER_ERROR(line) FATAL_USER_ERROR_NO_LINE() << line << ": "
 
 #define FATAL_COMPILATION_ERROR_NO_LINE() \
-  ErrorInternal::ExitingStream() << "COMPILATION ERROR: "
+  Carbon::ErrorInternal::ExitingStream() << "COMPILATION ERROR: "
 
 #define FATAL_COMPILATION_ERROR(line) \
   FATAL_COMPILATION_ERROR_NO_LINE() << line << ": "
 
+#define FATAL_INTERNAL_ERROR_NO_LINE() \
+  Carbon::ErrorInternal::ExitingStream() << "INTERNAL ERROR: "
+
+#define FATAL_INTERNAL_ERROR(line) \
+  FATAL_INTERNAL_ERROR_NO_LINE() << line << ": "
+
 #define FATAL_RUNTIME_ERROR_NO_LINE() \
-  ErrorInternal::ExitingStream() << "RUNTIME ERROR: "
+  Carbon::ErrorInternal::ExitingStream() << "RUNTIME ERROR: "
 
 #define FATAL_RUNTIME_ERROR(line) FATAL_RUNTIME_ERROR_NO_LINE() << line << ": "
 
