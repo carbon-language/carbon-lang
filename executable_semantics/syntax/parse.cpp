@@ -4,8 +4,6 @@
 
 #include "executable_semantics/syntax/parse.h"
 
-#include <iostream>
-
 #include "common/check.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"

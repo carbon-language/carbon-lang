@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 %{
 #include <cstdlib>
-#include <iostream>
 
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
@@ -212,7 +211,7 @@ operator and its operand, leading to three more cases:
   if (Carbon::tracing_output) {
     // Print a newline because tracing prints an incomplete line
     // "Reading a token: ".
-    std::cerr << std::endl;
+    llvm::errs() << "\n";
   }
   FATAL_COMPILATION_ERROR(yylineno) << ": invalid character '\\x"
             << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file.";

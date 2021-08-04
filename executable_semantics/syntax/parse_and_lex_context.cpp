@@ -4,9 +4,6 @@
 
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 
-#include <cstring>
-#include <iostream>
-
 // Writes a syntax error diagnostic, containing message, for the input file at
 // the given line, to standard error.
 auto Carbon::ParseAndLexContext::PrintDiagnostic(const std::string& message,
