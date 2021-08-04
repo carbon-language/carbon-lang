@@ -580,8 +580,8 @@ fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
 
 > References: [Classes](classes.md)
 
-`class`es are a way for users to define their own data strutures or named
-product types.
+Classes are a way for users to define their own data strutures or named product
+types.
 
 For example:
 
@@ -608,7 +608,7 @@ Breaking apart `Widget`:
 ##### Assignment, copying, and moving
 
 You may use a _structural data class literal_, also known as a _struct literal_,
-to assign or initialize a variable with a `class` type.
+to assign or initialize a variable with a class type.
 
 ```carbon
 var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
