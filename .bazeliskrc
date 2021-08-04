@@ -1,6 +1,0 @@
-# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-# Exceptions. See /LICENSE for license information.
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-# TODO: Return to a released version as soon as M1 macOS is supported.
-USE_BAZEL_VERSION=latest
