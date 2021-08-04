@@ -3574,7 +3574,7 @@ cases.
 ```
 class FixedArray(T:! Type, N:! Int) {
   // ...
-  fn *) Print[me: FixedArray[P:! Printable](P, N]() { ... }
+  fn Print[me: FixedArray(P:! Printable, N)]() { ... }
 }
 
 // FixedArray(T, N) has a `Print()` method if `T` is `Printable`.
