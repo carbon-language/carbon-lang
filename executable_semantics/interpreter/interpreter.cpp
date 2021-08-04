@@ -419,8 +419,7 @@ void StepLvalue() {
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
         FATAL_RUNTIME_ERROR(exp->line_num)
-            << ": could not find `" << exp->GetIdentifierExpression().name
-            << "`";
+            << "could not find `" << exp->GetIdentifierExpression().name << "`";
       }
       const Value* v = Value::MakePointerValue(*pointer);
       frame->todo.Pop();
@@ -598,8 +597,7 @@ void StepExp() {
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
         FATAL_RUNTIME_ERROR(exp->line_num)
-            << ": could not find `" << exp->GetIdentifierExpression().name
-            << "`";
+            << "could not find `" << exp->GetIdentifierExpression().name << "`";
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);

@@ -213,7 +213,7 @@ operator and its operand, leading to three more cases:
     // "Reading a token: ".
     llvm::errs() << "\n";
   }
-  FATAL_COMPILATION_ERROR(yylineno) << ": invalid character '\\x"
+  FATAL_COMPILATION_ERROR(yylineno) << "invalid character '\\x"
             << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file.";
 }
 
