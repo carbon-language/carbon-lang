@@ -5,9 +5,9 @@
 // Test matching of a tuple inside a tuple.
 
 fn main() -> Int {
-  var auto t = ((1,2),(3,4));
+  var t: auto = ((1,2),(3,4));
   match (t) {
-    case ((auto a, auto b), auto c) =>
+    case ((a: auto, b: auto), c: auto) =>
       return a - b + c[0] - c[1] + 2;
   }
 }

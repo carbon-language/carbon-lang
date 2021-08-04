@@ -21,6 +21,7 @@ cc_toolchain_suite(
     name = "bazel_cc_toolchain",
     toolchains = {
         "darwin": ":cc-compiler-darwin",
+        "darwin_arm64": ":cc-compiler-darwin-arm64",
         "k8": ":cc-compiler-k8",
     },
 )
@@ -63,4 +64,24 @@ cc_toolchain(
 cc_toolchain_config(
     name = "local-darwin",
     target_cpu = "darwin",
+)
+
+cc_toolchain(
+    name = "cc-compiler-darwin-arm64",
+    all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
+    compiler_files = ":empty",
+    dwp_files = ":empty",
+    linker_files = ":empty",
+    objcopy_files = ":empty",
+    strip_files = ":empty",
+    supports_param_files = 1,
+    toolchain_config = ":local-darwin-arm64",
+    toolchain_identifier = "local-darwin-arm64",
+)
+
+cc_toolchain_config(
+    name = "local-darwin-arm64",
+    target_cpu = "darwin_arm64",
 )

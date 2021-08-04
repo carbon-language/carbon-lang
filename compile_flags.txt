@@ -76,11 +76,7 @@ bazel-execroot/external/llvm-project/llvm/utils/unittest/googletest/include
 -isystem
 bazel-bin/external/llvm-project/llvm/utils/unittest/googletest/include
 -std=c++17
--nostdinc++
--isystem
-bazel-clang-toolchain/include/c++/v1
--isystem
-bazel-clang-toolchain/lib/clang/12.0.0/include
+-stdlib=libc++
 -no-canonical-prefixes
 -Wno-builtin-macro-redefined
 -D__DATE__="redacted"

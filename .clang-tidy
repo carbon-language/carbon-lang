@@ -4,11 +4,12 @@
 
 ---
 Checks:
-  -*, bugprone-*, google-*, -google-readability-todo,
-  misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
-  misc-static-assert, misc-unconventional-assign-operator,
-  misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
-  -modernize-avoid-c-arrays, performance-*,
+  -*, bugprone-*, -bugprone-narrowing-conversions, google-*,
+  -google-readability-todo, misc-definitions-in-headers, misc-misplaced-const,
+  misc-redundant-expression, misc-static-assert,
+  misc-unconventional-assign-operator, misc-uniqueptr-reset-release,
+  misc-unused-*, modernize-*, -modernize-avoid-c-arrays,
+  -modernize-use-default-member-init, -modernize-use-emplace, performance-*,
   readability-braces-around-statements, readability-identifier-naming
 WarningsAsErrors: true
 CheckOptions:

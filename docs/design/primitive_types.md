@@ -37,7 +37,6 @@ modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. These will be made
 available through the [prelude package](README.md#name-lookup-for-common-types).
 
--   `Void` - a type with only one possible value: empty.
 -   `Bool` - a boolean type with two possible values: `True` and `False`.
 -   `Int` and `UInt` - signed and unsigned 64-bit integer types.
     -   Standard sizes are available, both signed and unsigned, including

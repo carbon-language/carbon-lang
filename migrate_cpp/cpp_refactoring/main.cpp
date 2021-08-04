@@ -5,19 +5,40 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "migrate_cpp/cpp_refactoring/fn_inserter.h"
+#include "migrate_cpp/cpp_refactoring/for_range.h"
+#include "migrate_cpp/cpp_refactoring/matcher_manager.h"
+#include "migrate_cpp/cpp_refactoring/var_decl.h"
 
-namespace cam = ::clang::ast_matchers;
-namespace ct = ::clang::tooling;
+using clang::tooling::RefactoringTool;
+
+// Initialize the files in replacements. Matcher will restrict replacements to
+// initialized files.
+static void InitReplacements(RefactoringTool* tool) {
+  clang::FileManager& files = tool->getFiles();
+  Carbon::Matcher::ReplacementMap& repl = tool->getReplacements();
+  for (const std::string& path : tool->getSourcePaths()) {
+    llvm::ErrorOr<const clang::FileEntry*> file = files.getFile(path);
+    if (file.getError()) {
+      llvm::report_fatal_error("Error accessing `" + path +
+                               "`: " + file.getError().message() + "\n");
+    }
+    repl.insert({files.getCanonicalName(*file).str(), {}});
+  }
+}
 
 auto main(int argc, const char** argv) -> int {
   llvm::cl::OptionCategory category("C++ refactoring options");
-  ct::CommonOptionsParser op(argc, argv, category);
-  ct::RefactoringTool tool(op.getCompilations(), op.getSourcePathList());
+  auto parser =
+      clang::tooling::CommonOptionsParser::create(argc, argv, category);
+  RefactoringTool tool(parser->getCompilations(), parser->getSourcePathList());
+  InitReplacements(&tool);
 
   // Set up AST matcher callbacks.
-  cam::MatchFinder finder;
-  Carbon::FnInserter fn_inserter(tool.getReplacements(), &finder);
+  Carbon::MatcherManager matchers(&tool.getReplacements());
+  matchers.Register(std::make_unique<Carbon::FnInserterFactory>());
+  matchers.Register(std::make_unique<Carbon::ForRangeFactory>());
+  matchers.Register(std::make_unique<Carbon::VarDeclFactory>());
 
   return tool.runAndSave(
-      clang::tooling::newFrontendActionFactory(&finder).get());
+      clang::tooling::newFrontendActionFactory(matchers.GetFinder()).get());
 }

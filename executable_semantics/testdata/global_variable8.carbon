@@ -5,9 +5,9 @@
 // Test that a global variable may not depend on a later global.
 // Error expected.
 
-var Int x = y;
+var x: Int = y;
 
-var Int y = 0;
+var y: Int = 0;
 
 fn main() -> Int {
   return x;

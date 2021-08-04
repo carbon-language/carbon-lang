@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn add1(Int x) -> Int {
+fn add1(x: Int) -> Int {
   return x + 1;
 }
 
 fn main() -> Int {
-  var (fnty(Int)->Int) f = add1;
+  var f: fnty(Int)->Int = add1;
   return f(-1);
 }

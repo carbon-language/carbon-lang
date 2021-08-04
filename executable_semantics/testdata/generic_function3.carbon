@@ -1,0 +1,11 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+fn snd[T:! Type](x: Int, y: T) -> T {
+  return y;
+}
+
+fn main() -> Int {
+  return snd(0, 1);
+}

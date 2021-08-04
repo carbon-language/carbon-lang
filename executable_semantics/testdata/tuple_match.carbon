@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> Int {
-  var auto t = (5, 2);
+  var t: auto = (5, 2);
   match (t) {
-    case (auto a, auto b) =>
+    case (a: auto, b: auto) =>
       return a + b - 7;
   }
 }

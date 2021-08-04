@@ -39,13 +39,9 @@
 -D__STDC_CONSTANT_MACROS
 -DGTEST_USE_OWN_TR1_TUPLE=1
 -std=c++17
--nostdinc++
+-stdlib=libc++
 -I../../brotli/original/c/include
 -Iinclude
--isystem
-../../../../bazel-clang-toolchain/include/c++/v1
--isystem
-../../../../bazel-clang-toolchain/lib/clang/12.0.0/include
 -no-canonical-prefixes
 -Wno-builtin-macro-redefined
 -D__DATE__="redacted"

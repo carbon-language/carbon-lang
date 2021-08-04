@@ -10,7 +10,6 @@ py_binary(
     data = [
         ":clang_tidy.yaml",
         "//migrate_cpp/cpp_refactoring",
-        "@bootstrap_clang_toolchain//:bin/clang-tidy",
     ],
     python_version = "PY3",
 )

@@ -7,6 +7,7 @@
 
 #include <set>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/dictionary.h"
@@ -16,15 +17,17 @@ namespace Carbon {
 
 using TypeEnv = Dictionary<std::string, const Value*>;
 
-void PrintTypeEnv(TypeEnv types);
-
-enum class TCContext { ValueContext, PatternContext, TypeContext };
-
-struct TCResult {
-  TCResult(const Expression* e, const Value* t, TypeEnv types)
+struct TCExpression {
+  TCExpression(const Expression* e, const Value* t, TypeEnv types)
       : exp(e), type(t), types(types) {}
 
   const Expression* exp;
+  const Value* type;
+  TypeEnv types;
+};
+
+struct TCPattern {
+  const Pattern* pattern;
   const Value* type;
   TypeEnv types;
 };
@@ -36,8 +39,10 @@ struct TCStatement {
   TypeEnv types;
 };
 
-auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
-                  const Value* expected, TCContext context) -> TCResult;
+auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
+    -> TCExpression;
+auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
+                      const Value* expected) -> TCPattern;
 
 auto TypeCheckStmt(const Statement*, TypeEnv, Env, Value const*&)
     -> TCStatement;
@@ -45,9 +50,9 @@ auto TypeCheckStmt(const Statement*, TypeEnv, Env, Value const*&)
 auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;
 
+auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
+                     const Env& values) -> Declaration;
 auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext;
-
-void PrintErrorString(const std::string& s);
 
 }  // namespace Carbon
 

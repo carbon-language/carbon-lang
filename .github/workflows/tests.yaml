@@ -15,7 +15,7 @@ on:
       - '!LICENSE'
       - '!CODEOWNERS'
       - '!.git*'
-  pull_request:
+  pull_request_target:
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -33,12 +33,16 @@ jobs:
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Create environment variables
-        run: |
-          echo "BAZEL_OUTPUT_BASE_PATH=$HOME/.cache/bazel-output-base" >> $GITHUB_ENV
-          echo "BAZEL=bazelisk --output_base=$HOME/.cache/bazel-output-base" >> $GITHUB_ENV
+      # Checkout the pull request head or the branch.
+      - name: Checkout pull request
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: true
 
-      - name: Checkout
+      - name: Checkout branch
+        if: github.event_name != 'pull_request_target'
         uses: actions/checkout@v2
         with:
           submodules: true
@@ -58,77 +62,74 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Print the various tool versions to help in debugging.
-      - name: Print tool versions
+      # Setup to the latest LLVM and Clang release on Linux runners.
+      #
+      # Ideally we would use the pre-installed versions in the image, but the
+      # debian packages for LLVM-12 are broken due to several bugs:
+      # https://bugs.llvm.org/show_bug.cgi?id=43604
+      # https://bugs.llvm.org/show_bug.cgi?id=46321
+      #
+      # For now, we rely on Homebrew to manage installing a correctly built
+      # toolchain. We also take some care to be as resilient as possible to
+      # issues fetching and installing the toolchain.
+      - name: Setup LLVM and Clang on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
         run: |
+          brew update
+          brew install --force-bottle --only-dependencies llvm
+          brew install --force-bottle --force --verbose llvm
+          brew info llvm
+          brew config
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # Just add the Homebrew installed LLVM to the path on macOS, the image has
+      # LLVM-12 pre-installed.
+      - name: Setup LLVM and Clang on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # Print the various tool paths and versions to help in debugging.
+      - name: Print tool debugging info
+        run: |
+          echo $PATH
+          which bazelisk
           bazelisk --version
+          which python
           python --version
+          which clang
+          clang --version
+          which clang++
+          clang++ --version
+          which clang-format
+          clang-format --version
 
-      # Make the date available to subsequent steps.
-      - name: Get date
-        id: date
-        shell: bash
+      # Extract our access key for our build cache.
+      - name: Extract access key
+        env:
+          GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
         run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+          echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
+            | base64 -d > $HOME/gcp-builds-service-account.json
 
-      # Preserve and restore the Bazel cache across builds.
-      #
-      # These cached entries are keyed on this file (which configures the
-      # command and other inputs) as well as the date. Because Bazel is
-      # hermetic, it doesn't matter if we get a "stale" entry here, but it makes
-      # the cache less efficient. So we use the date to get a fresh baseline
-      # cache once per day. We include this file so that changing the build
-      # structure itself returns us to a clean state. We can also increment the
-      # counter in this comment to forcibly rotate this hash in the event we get
-      # a corrupted cache that breaks Bazel. This is a risk because we very
-      # selectively prune directories out of the internals of the Bazel output
-      # base to reduce the storage of the cache. At any point, this might break
-      # invariants and require us to clear our caches. There is no way to
-      # actually delete them and so instead we can simply bump the counter here.
-      #
-      # Current cache version: 1
-      - name: Cache Bazel build data
-        uses: actions/cache@v2
-        with:
-          # We exclude the install symlink so that Bazel reconnects to the
-          # current installation. This helps repair any damage done by other
-          # exclusions as well. Then we exclude the `external` tree because
-          # those are all downloaded and rapidly rebuilt, so no benefit from
-          # downloading them with the cached state.
-          path: |
-            ${{ env.BAZEL_OUTPUT_BASE_PATH }}
-            !${{ env.BAZEL_OUTPUT_BASE_PATH }}/install
-            !${{ env.BAZEL_OUTPUT_BASE_PATH }}/external
-          key: |
-            bazel-${{ matrix.os }}-${{ matrix.build_mode }}-${{ hashFiles('.github/workflows/tests.yaml')
-            }}-${{ steps.date.outputs.date }}
-          # When we get a cache miss, try finding the most recent previous day's
-          # cache to start.
-          restore-keys: |
-            bazel-${{ matrix.os }}-${{ matrix.build_mode }}-${{ hashFiles('.github/workflows/tests.yaml')
-            }}-
-
-      # Print Bazel diagnostics to make debugging easier.
-      - name: Print Bazel info
+      # Add our bazel configuration and print basic info to ease debugging.
+      - name: Configure Bazel and print info
         run: |
-          ${{ env.BAZEL }} info
+          cat >user.bazelrc <<EOF
+          # Enable remote cache for our CI.
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-${{ matrix.os }}
+          build --google_credentials=$HOME/gcp-builds-service-account.json
+
+          # General build options.
+          build --verbose_failures
+          test --test_output=errors
+          EOF
+          bazelisk info
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
-        run: |
-          ${{ env.BAZEL }} build -c ${{ matrix.build_mode }} --verbose_failures \
-            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
-            //...:all
+        run: bazelisk build -c ${{ matrix.build_mode }} //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
-        run: |
-          ${{ env.BAZEL }} test -c ${{ matrix.build_mode }} --test_output errors \
-            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
-            --verbose_failures //...:all
-
-      # We manually shut down the Bazel server to make sure the cached files
-      # don't interact with it.
-      - name: Shutdown Bazel
-        run: |
-          ${{ env.BAZEL }} shutdown
+        run: bazelisk test -c ${{ matrix.build_mode }} //...:all

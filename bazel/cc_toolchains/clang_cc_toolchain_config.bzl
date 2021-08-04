@@ -119,10 +119,13 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
+                            "-Werror",
                             "-Wall",
                             "-Wextra",
                             "-Wthread-safety",
                             "-Wself-assign",
+                            "-Wimplicit-fallthrough",
+                            "-Wctad-maybe-unsupported",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
                             # We use partial sets of designated initializers in
@@ -272,6 +275,8 @@ def _impl(ctx):
             actions = codegen_compile_actions,
             flag_groups = [flag_group(flags = [
                 "-O1",
+                "-mllvm",
+                "-fast-isel",
             ])],
         )],
     )
@@ -444,10 +449,14 @@ def _impl(ctx):
                 # We don't need the recovery behavior of UBSan as we expect
                 # builds to be clean. Not recoverying is a bit cheaper.
                 "-fno-sanitize-recover=undefined",
+                # Don't embed the full path name for files. This limits the size
+                # and combined with line numbers is unlikely to result in many
+                # ambiguities.
+                "-fsanitize-undefined-strip-path-components=-1",
                 # Force some expensive UBSan checks to the cheaper trap mode.
                 # The dedicated debugging message is unlikely to be critical for
                 # these.
-                "-fsanitize-trap=alignment,null,return,unreachable",
+                "-fsanitize-trap=alignment,bool,null,return,unreachable",
                 # Needed due to clang AST issues, such as in
                 # clang/AST/Redeclarable.h line 199.
                 "-fno-sanitize=vptr",
@@ -484,17 +493,24 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-fuse-ld=lld",
-                            "-Wl,-no-as-needed",
-                            # Force the C++ standard library to be statically
-                            # linked. This works even with libc++ despite the
-                            # name, however we have to manually link the ABI
-                            # library and libunwind.
+                            "-stdlib=libc++",
+                            "-unwindlib=libunwind",
+                            # Force the C++ standard library and runtime
+                            # libraries to be statically linked. This works even
+                            # with libc++ and libunwind despite the names,
+                            # provided libc++ is built with two CMake options:
+                            # - `-DCMAKE_POSITION_INDEPENDENT_CODE=ON`
+                            # - `-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY`
+                            # These are both required because of PR43604
+                            # (impacting at least Debian packages of libc++) and
+                            # PR46321 (impacting most other packages).
+                            # We recommend using Homebrew's LLVM install on
+                            # Linux.
                             "-static-libstdc++",
-                            # Force static linking with libc++abi as well.
-                            "-l:libc++abi.a",
+                            "-static-libgcc",
                             # Link with Clang's runtime library. This is always
                             # linked statically.
-                            #"-rtlib=compiler-rt",
+                            "-rtlib=compiler-rt",
                             # Explicitly add LLVM libs to the search path to
                             # preempt the detected GCC installation's library
                             # paths. Those might have a system installed libc++
@@ -734,10 +750,10 @@ def _impl(ctx):
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
-    if (ctx.attr.target_cpu == "k8"):
+    if ctx.attr.target_cpu == "k8":
         features += [linux_flags_feature]
         sysroot = None
-    elif (ctx.attr.target_cpu == "darwin"):
+    elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")

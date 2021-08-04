@@ -7,27 +7,41 @@
 
 #include <string>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 enum class MemberKind { FieldMember };
 
-struct Member {
-  int line_num;
-  MemberKind tag;
-  union {
-    struct {
-      std::string* name;
-      const Expression* type;
-    } field;
-  } u;
+struct FieldMember {
+  static constexpr MemberKind Kind = MemberKind::FieldMember;
+  // TODO: split this into a non-optional name and a type, initialized by
+  // a constructor that takes a BindingPattern and handles errors like a
+  // missing name.
+  const BindingPattern* binding;
 };
 
-auto MakeField(int line_num, std::string name, const Expression* type)
-    -> Member*;
+struct Member {
+  static auto MakeFieldMember(int line_num, const BindingPattern* binding)
+      -> Member*;
 
-void PrintMember(Member* m);
+  auto GetFieldMember() const -> const FieldMember&;
+
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  inline auto tag() const -> MemberKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
+  int line_num;
+
+ private:
+  std::variant<FieldMember> value;
+};
 
 }  // namespace Carbon
 

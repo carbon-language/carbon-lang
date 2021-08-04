@@ -5,16 +5,39 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <optional>
 #include <string>
+#include <variant>
 #include <vector>
+
+#include "common/ostream.h"
+#include "executable_semantics/syntax/paren_contents.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 struct Expression;
+class Pattern;
+
+// Converts paren_contents to an Expression, interpreting the parentheses as
+// grouping if their contents permit that interpretation, or as forming a
+// tuple otherwise.
+auto ExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
+    -> const Expression*;
+
+// Converts paren_contents to an Expression, interpreting the parentheses as
+// forming a tuple.
+auto TupleExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
+    -> const Expression*;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {
-  // The field name. For a positional field, this may be empty.
+  FieldInitializer(std::string name, const Expression* expression)
+      : name(std::move(name)), expression(expression) {}
+
+  // The field name. Cannot be empty.
   std::string name;
 
   // The expression that initializes the field.
@@ -22,132 +45,158 @@ struct FieldInitializer {
 };
 
 enum class ExpressionKind {
-  AutoT,
-  BoolT,
-  Boolean,
-  Call,
-  FunctionT,
-  GetField,
-  Index,
-  IntT,
-  ContinuationT,  // The type of a continuation value.
-  Integer,
-  PatternVariable,
-  PrimitiveOp,
-  Tuple,
-  TypeT,
-  Variable,
+  BoolTypeLiteral,
+  BoolLiteral,
+  CallExpression,
+  FunctionTypeLiteral,
+  FieldAccessExpression,
+  IndexExpression,
+  IntTypeLiteral,
+  ContinuationTypeLiteral,  // The type of a continuation value.
+  IntLiteral,
+  PrimitiveOperatorExpression,
+  TupleLiteral,
+  TypeTypeLiteral,
+  IdentifierExpression,
 };
 
 enum class Operator {
   Add,
   And,
+  Deref,
   Eq,
+  Mul,
   Neg,
   Not,
   Or,
   Sub,
+  Ptr,
 };
 
 struct Expression;
 
-struct Variable {
-  std::string* name;
+struct IdentifierExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::IdentifierExpression;
+  std::string name;
 };
 
-struct FieldAccess {
+struct FieldAccessExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::FieldAccessExpression;
   const Expression* aggregate;
-  std::string* field;
+  std::string field;
 };
 
-struct Index {
+struct IndexExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::IndexExpression;
   const Expression* aggregate;
   const Expression* offset;
 };
 
-struct PatternVariable {
-  std::string* name;
-  const Expression* type;
+struct IntLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::IntLiteral;
+  int value;
 };
 
-struct Tuple {
-  std::vector<FieldInitializer>* fields;
+struct BoolLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::BoolLiteral;
+  bool value;
 };
 
-struct PrimitiveOperator {
+struct TupleLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::TupleLiteral;
+  std::vector<FieldInitializer> fields;
+};
+
+struct PrimitiveOperatorExpression {
+  static constexpr ExpressionKind Kind =
+      ExpressionKind::PrimitiveOperatorExpression;
   Operator op;
-  std::vector<const Expression*>* arguments;
+  std::vector<const Expression*> arguments;
 };
 
-struct Call {
+struct CallExpression {
+  static constexpr ExpressionKind Kind = ExpressionKind::CallExpression;
   const Expression* function;
   const Expression* argument;
 };
 
-struct FunctionType {
+struct FunctionTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
   const Expression* return_type;
+  bool is_omitted_return_type;
+};
+
+struct BoolTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::BoolTypeLiteral;
+};
+
+struct IntTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::IntTypeLiteral;
+};
+
+struct ContinuationTypeLiteral {
+  static constexpr ExpressionKind Kind =
+      ExpressionKind::ContinuationTypeLiteral;
+};
+
+struct TypeTypeLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::TypeTypeLiteral;
 };
 
 struct Expression {
+  static auto MakeIdentifierExpression(int line_num, std::string var)
+      -> const Expression*;
+  static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
+  static auto MakeBoolLiteral(int line_num, bool b) -> const Expression*;
+  static auto MakePrimitiveOperatorExpression(
+      int line_num, Operator op, std::vector<const Expression*> args)
+      -> const Expression*;
+  static auto MakeCallExpression(int line_num, const Expression* fun,
+                                 const Expression* arg) -> const Expression*;
+  static auto MakeFieldAccessExpression(int line_num, const Expression* exp,
+                                        std::string field) -> const Expression*;
+  static auto MakeTupleLiteral(int line_num, std::vector<FieldInitializer> args)
+      -> const Expression*;
+  static auto MakeIndexExpression(int line_num, const Expression* exp,
+                                  const Expression* i) -> const Expression*;
+  static auto MakeTypeTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
+  static auto MakeFunctionTypeLiteral(int line_num, const Expression* parameter,
+                                      const Expression* return_type,
+                                      bool is_omitted_return_type)
+      -> const Expression*;
+  static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
+
+  auto GetIdentifierExpression() const -> const IdentifierExpression&;
+  auto GetFieldAccessExpression() const -> const FieldAccessExpression&;
+  auto GetIndexExpression() const -> const IndexExpression&;
+  auto GetIntLiteral() const -> int;
+  auto GetBoolLiteral() const -> bool;
+  auto GetTupleLiteral() const -> const TupleLiteral&;
+  auto GetPrimitiveOperatorExpression() const
+      -> const PrimitiveOperatorExpression&;
+  auto GetCallExpression() const -> const CallExpression&;
+  auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
+
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  inline auto tag() const -> ExpressionKind {
+    return std::visit([](const auto& t) { return t.Kind; }, value);
+  }
+
   int line_num;
-  ExpressionKind tag;
-
-  static auto MakeVar(int line_num, std::string var) -> const Expression*;
-  static auto MakeVarPat(int line_num, std::string var, const Expression* type)
-      -> const Expression*;
-  static auto MakeInt(int line_num, int i) -> const Expression*;
-  static auto MakeBool(int line_num, bool b) -> const Expression*;
-  static auto MakeOp(int line_num, Operator op,
-                     std::vector<const Expression*>* args) -> const Expression*;
-  static auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
-      -> const Expression*;
-  static auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
-                        const Expression* arg2) -> const Expression*;
-  static auto MakeCall(int line_num, const Expression* fun,
-                       const Expression* arg) -> const Expression*;
-  static auto MakeGetField(int line_num, const Expression* exp,
-                           std::string field) -> const Expression*;
-  static auto MakeTuple(int line_num, std::vector<FieldInitializer>* args)
-      -> const Expression*;
-  static auto MakeUnit(int line_num) -> const Expression*;
-  static auto MakeIndex(int line_num, const Expression* exp,
-                        const Expression* i) -> const Expression*;
-  static auto MakeTypeType(int line_num) -> const Expression*;
-  static auto MakeIntType(int line_num) -> const Expression*;
-  static auto MakeBoolType(int line_num) -> const Expression*;
-  static auto MakeFunType(int line_num, const Expression* param,
-                          const Expression* ret) -> const Expression*;
-  static auto MakeAutoType(int line_num) -> const Expression*;
-  static auto MakeContinuationType(int line_num) -> const Expression*;
-
-  Variable GetVariable() const;
-  FieldAccess GetFieldAccess() const;
-  Index GetIndex() const;
-  PatternVariable GetPatternVariable() const;
-  int GetInteger() const;
-  bool GetBoolean() const;
-  Tuple GetTuple() const;
-  PrimitiveOperator GetPrimitiveOperator() const;
-  Call GetCall() const;
-  FunctionType GetFunctionType() const;
 
  private:
-  union {
-    Variable variable;
-    FieldAccess get_field;
-    Index index;
-    PatternVariable pattern_variable;
-    int integer;
-    bool boolean;
-    Tuple tuple;
-    PrimitiveOperator primitive_op;
-    Call call;
-    FunctionType function_type;
-  } u;
+  std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,
+               IntLiteral, BoolLiteral, TupleLiteral,
+               PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
+               BoolTypeLiteral, IntTypeLiteral, ContinuationTypeLiteral,
+               TypeTypeLiteral>
+      value;
 };
-
-void PrintExp(const Expression* exp);
 
 }  // namespace Carbon
 

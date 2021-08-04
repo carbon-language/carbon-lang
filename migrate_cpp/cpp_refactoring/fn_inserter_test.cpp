@@ -9,12 +9,7 @@
 namespace Carbon {
 namespace {
 
-class FnInserterTest : public MatcherTestBase {
- protected:
-  FnInserterTest() : fn_inserter(replacements, &finder) {}
-
-  Carbon::FnInserter fn_inserter;
-};
+class FnInserterTest : public MatcherTestBase<FnInserterFactory> {};
 
 TEST_F(FnInserterTest, TrailingReturn) {
   constexpr char Before[] = "auto A() -> int;";
@@ -23,21 +18,18 @@ TEST_F(FnInserterTest, TrailingReturn) {
 }
 
 TEST_F(FnInserterTest, Inline) {
-  // TODO: Need to re-lex tokens, this should probably be "fn inline" for now.
   constexpr char Before[] = "inline auto A() -> int;";
-  constexpr char After[] = "fn auto A() -> int;";
+  constexpr char After[] = "fn inline A() -> int;";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(FnInserterTest, Void) {
-  // TODO: void needs to be handled.
   constexpr char Before[] = "void A();";
-  ExpectReplacement(Before, Before);
+  constexpr char After[] = "fn A();";
+  ExpectReplacement(Before, After);
 }
 
 TEST_F(FnInserterTest, Methods) {
-  // TODO: void needs to be handled.
-  // TODO: Need to re-lex tokens, this should probably be "fn virtual" for now.
   constexpr char Before[] = R"cpp(
     class Shape {
      public:
@@ -54,25 +46,40 @@ TEST_F(FnInserterTest, Methods) {
      private:
       double radius_;
     };
+
+    void Shape::Draw() {}
   )cpp";
   constexpr char After[] = R"(
     class Shape {
      public:
-      virtual void Draw() = 0;
-      fn auto NumSides() -> int = 0;
+      fn virtual Draw() = 0;
+      fn virtual NumSides() -> int = 0;
     };
 
     class Circle : public Shape {
      public:
-      void Draw() override;
+      fn Draw() override;
       fn NumSides() -> int override;
       fn Radius() -> double { return radius_; }
 
      private:
       double radius_;
     };
+
+    fn Shape::Draw() {}
   )";
   ExpectReplacement(Before, After);
+}
+
+TEST_F(FnInserterTest, ConstructorDestructor) {
+  constexpr char Before[] = R"cpp(
+    class Shape {
+     public:
+      Shape() {}
+      ~Shape() {}
+    };
+  )cpp";
+  ExpectReplacement(Before, Before);
 }
 
 TEST_F(FnInserterTest, LegacyReturn) {

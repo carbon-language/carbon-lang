@@ -17,6 +17,30 @@ def _run(repository_ctx, cmd):
 
     return exec_result
 
+def _detect_system_clang(repository_ctx):
+    """Detects whether the system-provided clang can be used.
+
+    Returns a tuple of (is_clang, environment).
+    """
+
+    # If the user provides an explicit `CC` environment variable, use that as
+    # the compiler. This should point at the `clang` executable to use.
+    cc = repository_ctx.os.environ.get("CC")
+    if cc:
+        version_output = _run(repository_ctx, [cc, "--version"]).stdout
+        if not "clang" in version_output:
+            fail("The `CC` environment variable is not a Clang compiler.")
+        return repository_ctx.path(cc)
+
+    # Try looking on the path. We check for the specific versioned name and then the normal name.
+    system_clang = repository_ctx.which("clang-12")
+    if not system_clang:
+        system_clang = repository_ctx.which("clang")
+        if not system_clang:
+            fail("Unable to find a `clang` executable on the system path.")
+
+    return system_clang
+
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
     output = _run(
@@ -88,15 +112,14 @@ def _configure_clang_toolchain_impl(repository_ctx):
         "cc_toolchain_config.bzl",
     )
 
-    # Run the bootstrapped clang to detect relevant features for the toolchain.
-    clang = repository_ctx.path(repository_ctx.attr.clang)
-    if clang.basename != "clang":
-        fail("The provided Clang binary must be `clang`, but is `%s` (%s)" %
-             (clang.basename, str(clang)))
+    # Find a Clang C++ compiler, and where it lives. We need to walk symlinks
+    # here as the other LLVM tools may not be symlinked into the PATH even if
+    # `clang` is. We also insist on finding the basename of `clang++` as that is
+    # important for C vs. C++ compiles.
+    clang = _detect_system_clang(repository_ctx)
+    clang = clang.realpath.dirname.get_child("clang++")
 
-    # Adjust this to the "clang++" binary to ensure we get the correct behavior
-    # when configuring it.
-    clang = repository_ctx.path(str(clang) + "++")
+    # Compute the various directories used by Clang.
     resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
@@ -124,6 +147,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
 configure_clang_toolchain = repository_rule(
     implementation = _configure_clang_toolchain_impl,
     configure = True,
+    local = True,
     attrs = {
         "_clang_toolchain_build": attr.label(
             default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
@@ -141,11 +165,6 @@ configure_clang_toolchain = repository_rule(
             ),
             allow_single_file = True,
         ),
-        # This must point at the `clang` binary inside a full LLVM toolchain
-        # installation.
-        "clang": attr.label(
-            allow_single_file = True,
-            mandatory = True,
-        ),
     },
+    environ = ["CC"],
 )

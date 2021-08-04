@@ -4,9 +4,9 @@
 
 // Test overshadowing of global variable.
 
-var Int x = 1;
+var x: Int = 1;
 
-fn identity(Int x) {
+fn identity(x: Int) {
   return x;
 }
 

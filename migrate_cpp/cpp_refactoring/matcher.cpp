@@ -4,35 +4,42 @@
 
 #include "migrate_cpp/cpp_refactoring/matcher.h"
 
-namespace ct = ::clang::tooling;
+#include "clang/Basic/SourceManager.h"
 
 namespace Carbon {
 
-void Matcher::AddReplacement(const clang::SourceManager& sm,
-                             clang::CharSourceRange range,
+void Matcher::AddReplacement(clang::CharSourceRange range,
                              llvm::StringRef replacement_text) {
   if (!range.isValid()) {
-    llvm::errs() << "Invalid range: " << range.getAsRange().printToString(sm)
-                 << "\n";
+    // Invalid range.
     return;
   }
-  if (sm.getDecomposedLoc(range.getBegin()).first !=
-      sm.getDecomposedLoc(range.getEnd()).first) {
-    llvm::errs() << "Range spans macro expansions: "
-                 << range.getAsRange().printToString(sm) << "\n";
+  const auto& source_manager = GetSourceManager();
+  if (source_manager.getDecomposedLoc(range.getBegin()).first !=
+      source_manager.getDecomposedLoc(range.getEnd()).first) {
+    // Range spans macro expansions.
     return;
   }
-  if (sm.getFileID(range.getBegin()) != sm.getFileID(range.getEnd())) {
-    llvm::errs() << "Range spans files: "
-                 << range.getAsRange().printToString(sm) << "\n";
+  if (source_manager.getFileID(range.getBegin()) !=
+      source_manager.getFileID(range.getEnd())) {
+    // Range spans files.
     return;
   }
 
-  auto rep = ct::Replacement(sm, sm.getExpansionRange(range), replacement_text);
-  auto err = (*replacements)[std::string(rep.getFilePath())].add(rep);
+  auto rep = clang::tooling::Replacement(
+      source_manager, source_manager.getExpansionRange(range),
+      replacement_text);
+  auto entry = replacements->find(std::string(rep.getFilePath()));
+  if (entry == replacements->end()) {
+    // The replacement was in a file which isn't being updated, such as a system
+    // header.
+    return;
+  }
+
+  llvm::Error err = entry->second.add(rep);
   if (err) {
-    llvm::report_fatal_error("Error with replacement `" + rep.toString() +
-                             "`: " + llvm::toString(std::move(err)) + "\n");
+    llvm::errs() << "Error with replacement `" << rep.toString()
+                 << "`: " << llvm::toString(std::move(err)) << "\n";
   }
 }
 

@@ -4,26 +4,27 @@
 
 #include "executable_semantics/ast/member.h"
 
-#include <iostream>
+#include "executable_semantics/common/arena.h"
 
 namespace Carbon {
 
-auto MakeField(int line_num, std::string name, const Expression* type)
+auto Member::MakeFieldMember(int line_num, const BindingPattern* binding)
     -> Member* {
-  auto m = new Member();
+  auto m = global_arena->New<Member>();
   m->line_num = line_num;
-  m->tag = MemberKind::FieldMember;
-  m->u.field.name = new std::string(std::move(name));
-  m->u.field.type = type;
+  m->value = FieldMember({.binding = binding});
   return m;
 }
 
-void PrintMember(Member* m) {
-  switch (m->tag) {
+auto Member::GetFieldMember() const -> const FieldMember& {
+  return std::get<FieldMember>(value);
+}
+
+void Member::Print(llvm::raw_ostream& out) const {
+  switch (tag()) {
     case MemberKind::FieldMember:
-      std::cout << "var " << *m->u.field.name << " : ";
-      PrintExp(m->u.field.type);
-      std::cout << ";" << std::endl;
+      const auto& field = GetFieldMember();
+      out << "var " << field.binding << ";\n";
       break;
   }
 }
