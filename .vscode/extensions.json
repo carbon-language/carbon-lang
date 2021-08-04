@@ -4,7 +4,6 @@
     "daohong-emilio.yash",
     "esbenp.prettier-vscode",
     "llvm-vs-code-extensions.vscode-clangd",
-    "ms-python.python",
-    "ms-vscode.cpptools"
+    "ms-python.python"
   ]
 }
