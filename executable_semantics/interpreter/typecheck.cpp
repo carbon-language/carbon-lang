@@ -296,9 +296,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
           TypeCheckExp(e->GetFieldAccessExpression().aggregate, types, values);
       auto t = res.type;
       switch (t->Tag()) {
-        case Value::Kind::StructType:
+        case Value::Kind::StructType: {
+          const auto& t_struct = cast<StructType>(*t);
           // Search for a field
-          for (auto& field : cast<StructType>(*t).Fields()) {
+          for (auto& field : t_struct.Fields()) {
             if (e->GetFieldAccessExpression().field == field.first) {
               const Expression* new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
@@ -306,7 +307,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
             }
           }
           // Search for a method
-          for (auto& method : cast<StructType>(*t).Methods()) {
+          for (auto& method : t_struct.Methods()) {
             if (e->GetFieldAccessExpression().field == method.first) {
               const Expression* new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
@@ -314,11 +315,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
             }
           }
           FATAL_COMPILATION_ERROR(e->line_num)
-              << "struct " << cast<StructType>(*t).Name()
-              << " does not have a field named "
+              << "struct " << t_struct.Name() << " does not have a field named "
               << e->GetFieldAccessExpression().field;
-        case Value::Kind::TupleValue:
-          for (const TupleElement& field : cast<TupleValue>(*t).Elements()) {
+        }
+        case Value::Kind::TupleValue: {
+          const auto& tup = cast<TupleValue>(*t);
+          for (const TupleElement& field : tup.Elements()) {
             if (e->GetFieldAccessExpression().field == field.name) {
               auto new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
@@ -326,25 +328,24 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
             }
           }
           FATAL_COMPILATION_ERROR(e->line_num)
-              << "struct " << cast<StructType>(*t).Name()
-              << " does not have a field named "
+              << "tuple " << tup << " does not have a field named "
               << e->GetFieldAccessExpression().field;
-        case Value::Kind::ChoiceType:
-          for (auto vt = cast<ChoiceType>(*t).Alternatives().begin();
-               vt != cast<ChoiceType>(*t).Alternatives().end(); ++vt) {
-            if (e->GetFieldAccessExpression().field == vt->first) {
+        }
+        case Value::Kind::ChoiceType: {
+          const auto& choice = cast<ChoiceType>(*t);
+          for (const auto& vt : choice.Alternatives()) {
+            if (e->GetFieldAccessExpression().field == vt.first) {
               const Expression* new_e = Expression::MakeFieldAccessExpression(
                   e->line_num, res.exp, e->GetFieldAccessExpression().field);
               auto fun_ty = global_arena->New<FunctionType>(
-                  std::vector<GenericBinding>(), vt->second, t);
+                  std::vector<GenericBinding>(), vt.second, t);
               return TCExpression(new_e, fun_ty, res.types);
             }
           }
           FATAL_COMPILATION_ERROR(e->line_num)
-              << "struct " << cast<StructType>(*t).Name()
-              << " does not have a field named "
+              << "choice " << choice.Name() << " does not have a field named "
               << e->GetFieldAccessExpression().field;
-
+        }
         default:
           FATAL_COMPILATION_ERROR(e->line_num)
               << "field access, expected a struct\n"

@@ -279,7 +279,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           const auto& v_tup = cast<TupleValue>(*v);
           if (p_tup.Elements().size() != v_tup.Elements().size()) {
             FATAL_RUNTIME_ERROR(line_num)
-                << "arity mismatch in tuple pattern match";
+                << "arity mismatch in tuple pattern match:\n  pattern: "
+                << p_tup << "\n  value: " << v_tup;
           }
           for (const TupleElement& pattern_element : p_tup.Elements()) {
             const Value* value_field = v_tup.FindField(pattern_element.name);
@@ -362,7 +363,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           const auto& val_tup = cast<TupleValue>(*val);
           if (pat_tup.Elements().size() != val_tup.Elements().size()) {
             FATAL_RUNTIME_ERROR(line_num)
-                << "arity mismatch in tuple pattern match";
+                << "arity mismatch in tuple pattern assignment:\n  pattern: "
+                << pat_tup << "\n  value: " << val_tup;
           }
           for (const TupleElement& pattern_element : pat_tup.Elements()) {
             const Value* value_field = val_tup.FindField(pattern_element.name);

@@ -311,7 +311,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
   switch (t1->Tag()) {
     case Value::Kind::PointerType:
-      return cast<PointerType>(*t1).Type() == cast<PointerType>(*t2).Type();
+      return TypeEqual(cast<PointerType>(*t1).Type(),
+                       cast<PointerType>(*t2).Type());
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
