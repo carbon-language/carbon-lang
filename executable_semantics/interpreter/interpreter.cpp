@@ -98,7 +98,7 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Ptr:
       return Value::MakePointerType(args[0]);
     case Operator::Deref:
-      FATAL_INTERNAL_ERROR(line_num) << "dereference not implemented yet\n";
+      FATAL_INTERNAL_ERROR(line_num) << "dereference not implemented yet";
   }
 }
 
