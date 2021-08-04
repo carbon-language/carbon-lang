@@ -225,10 +225,9 @@ expression:
     { $$ = Expression::MakeBoolLiteral(yylineno, false); }
 | sized_type_literal
     {
-      CHECK($1[0] == 'i') << "Only i32 is supported for now: " << $1;
       int val;
       CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
-      CHECK(val == 32)  << "Only i32 is supported for now: " << $1;
+      CHECK($1[0] == 'i' && val == 32)  << "Only i32 is supported for now: " << $1;
       $$ = Expression::MakeIntTypeLiteral(yylineno);
     }
 | BOOL
