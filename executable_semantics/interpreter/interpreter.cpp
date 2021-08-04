@@ -278,6 +278,9 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
           if (p_tup.Elements().size() != v_tup.Elements().size()) {
+            CHECK(false)
+                << "arity mismatch in tuple pattern match:\n  pattern: "
+                << p_tup << "\n  value: " << v_tup;
             FATAL_RUNTIME_ERROR(line_num)
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
@@ -309,7 +312,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           const auto& p_alt = cast<AlternativeValue>(*p);
           const auto& v_alt = cast<AlternativeValue>(*v);
           if (p_alt.ChoiceName() != v_alt.ChoiceName() ||
-              p_alt.AltName() != p_alt.AltName()) {
+              p_alt.AltName() != v_alt.AltName()) {
             return std::nullopt;
           }
           std::optional<Env> matches = PatternMatch(
