@@ -233,6 +233,9 @@ class AlternativeValue : public Value {
 // A function value.
 class TupleValue : public Value {
  public:
+  // An empty tuple, also known as the unit type.
+  TupleValue() : TupleValue(std::vector<TupleElement>()) {}
+
   explicit TupleValue(std::vector<TupleElement> elements)
       : Value(Kind::TupleValue), elements(std::move(elements)) {}
 
