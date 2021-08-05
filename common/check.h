@@ -29,7 +29,7 @@ class ExitingStream {
 
   // Prints a stack traces.
   ExitingStream& print_stack() {
-    separator = true;
+    llvm::sys::PrintStackTrace(llvm::errs());
     return *this;
   }
 
@@ -60,14 +60,15 @@ class ExitingStream {
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";
 #define CHECK(condition)                                                      \
-  (!(condition)) && (Carbon::ExitingStream() << "CHECK failure: " #condition) \
-                        .add_separator()
+  (!(condition)) &&                                                           \
+      (Carbon::ExitingStream().print_stack() << "CHECK failure: " #condition) \
+          .add_separator()
 
 // This is similar to CHECK, but is unconditional.
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL() Carbon::ExitingStream() << "FATAL: "
+#define FATAL() Carbon::ExitingStream().print_stack() << "FATAL: "
 
 }  // namespace Carbon
 

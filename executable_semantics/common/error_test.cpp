@@ -25,7 +25,7 @@ TEST(ErrorTest, FatalCompilationError) {
 }
 
 TEST(ErrorTest, FatalInternalError) {
-  ASSERT_DEATH({ FATAL_INTERNAL_ERROR(3) << "test"; }, "^FATAL: 3: test\n");
+  ASSERT_DEATH({ FATAL_INTERNAL_ERROR(3) << "test"; }, "\nFATAL: 3: test\n");
 }
 
 TEST(ErrorTest, FatalProgramErrorLine) {
