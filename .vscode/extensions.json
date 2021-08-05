@@ -1,9 +1,9 @@
 {
   "recommendations": [
     "bazelbuild.vscode-bazel",
+    "daohong-emilio.yash",
     "esbenp.prettier-vscode",
-    "ms-python.python",
-    "ms-vscode.cpptools",
-    "shd101wyy.markdown-preview-enhanced"
+    "llvm-vs-code-extensions.vscode-clangd",
+    "ms-python.python"
   ]
 }
