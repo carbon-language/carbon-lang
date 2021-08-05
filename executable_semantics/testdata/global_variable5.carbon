@@ -4,12 +4,12 @@
 
 // Test overshadowing of global variable.
 
-var x: Int = 1;
+var x: i32 = 1;
 
-fn identity(x: Int) {
+fn identity(x: i32) {
   return x;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return identity(0);
 }

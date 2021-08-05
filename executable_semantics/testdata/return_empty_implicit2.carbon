@@ -6,7 +6,7 @@ fn F() {
   return;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   F();
   return 0;
 }

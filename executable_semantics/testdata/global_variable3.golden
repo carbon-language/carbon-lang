@@ -1,4 +1,4 @@
 COMPILATION ERROR: 7: type error in initializer of variable
-expected: Int
+expected: i32
 actual: Bool
 EXIT CODE: 255

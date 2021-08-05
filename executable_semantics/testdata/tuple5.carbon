@@ -4,7 +4,7 @@
 
 // Test the that field order matters for tuples.
 
-fn main() -> Int {
-  var t: (.x = Int, .y = Int) = (.y = 2, .x = 3);
+fn main() -> i32 {
+  var t: (.x = i32, .y = i32) = (.y = 2, .x = 3);
   return 0;
 }

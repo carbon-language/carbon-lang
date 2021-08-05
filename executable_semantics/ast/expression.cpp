@@ -271,7 +271,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "Bool";
       break;
     case ExpressionKind::IntTypeLiteral:
-      out << "Int";
+      out << "i32";
       break;
     case ExpressionKind::TypeTypeLiteral:
       out << "Type";

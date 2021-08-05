@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 struct Point {
-  var x: Int;
-  var y: Int;
+  var x: i32;
+  var y: i32;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   var p: auto = Point(.x = 1, .y = 2);
   return p.y - p.x - 1;
 }

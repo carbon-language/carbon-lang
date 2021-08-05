@@ -4,10 +4,10 @@
 
 // Test a global variable depending on another global.
 
-var x: Int = 0;
+var x: i32 = 0;
 
-var y: Int = x;
+var y: i32 = x;
 
-fn main() -> Int {
+fn main() -> i32 {
   return y;
 }

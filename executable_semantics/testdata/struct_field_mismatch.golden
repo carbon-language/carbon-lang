@@ -1,4 +1,4 @@
 COMPILATION ERROR: 11: type error in call
-expected: (x = Int, y = Int)
-actual: (x = Int, z = Int)
+expected: (x = i32, y = i32)
+actual: (x = i32, z = i32)
 EXIT CODE: 255
