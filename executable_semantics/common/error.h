@@ -13,16 +13,17 @@ namespace Carbon {
 // with user input.
 //
 // For example:
-//   FATAL_USER_ERROR(line_num) << "Line is bad!";
-//   FATAL_USER_ERROR_NO_LINE() << "Application is bad!";
+//   FATAL_PROGRAM_ERROR(line_num) << "Line is bad!";
+//   FATAL_PROGRAM_ERROR_NO_LINE() << "Application is bad!";
 //
 // Where possible, try to identify the error as a compilation, internal, or
-// runtime error. The generic user error option is provided as a fallback for
+// runtime error. The generic program error option is provided as a fallback for
 // cases that don't fit those classifications.
 
-#define FATAL_USER_ERROR_NO_LINE() Carbon::ExitingStream() << "ERROR: "
+#define FATAL_PROGRAM_ERROR_NO_LINE() \
+  Carbon::ExitingStream() << "PROGRAM ERROR: "
 
-#define FATAL_USER_ERROR(line) FATAL_USER_ERROR_NO_LINE() << line << ": "
+#define FATAL_PROGRAM_ERROR(line) FATAL_PROGRAM_ERROR_NO_LINE() << line << ": "
 
 #define FATAL_COMPILATION_ERROR_NO_LINE() \
   Carbon::ExitingStream() << "COMPILATION ERROR: "
