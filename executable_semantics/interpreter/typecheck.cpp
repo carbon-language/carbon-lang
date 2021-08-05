@@ -891,9 +891,9 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
   VarValues fields;
   VarValues methods;
   for (const Member* m : sd->members) {
-    switch (m->tag()) {
-      case MemberKind::FieldMember: {
-        const BindingPattern* binding = m->GetFieldMember().binding;
+    switch (m->Tag()) {
+      case Member::Kind::FieldMember: {
+        const BindingPattern* binding = cast<FieldMember>(*m).Binding();
         if (!binding->Name().has_value()) {
           FATAL_COMPILATION_ERROR(binding->LineNumber())
               << "Struct members must have names";
@@ -944,8 +944,8 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
       const StructDefinition& struct_def = d.GetStructDeclaration().definition;
       std::list<Member*> fields;
       for (Member* m : struct_def.members) {
-        switch (m->tag()) {
-          case MemberKind::FieldMember:
+        switch (m->Tag()) {
+          case Member::Kind::FieldMember:
             // TODO: Interpret the type expression and store the result.
             fields.push_back(m);
             break;
