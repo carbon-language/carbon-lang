@@ -5,8 +5,8 @@
 // Test pausing a continuation with `__await` and restarting it with
 // `__run`.
 
-fn main() -> Int {
-  var x: Int = 0;
+fn main() -> i32 {
+  var x: i32 = 0;
   __continuation k {
     x = x + 1;
     __await;

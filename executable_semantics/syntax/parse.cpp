@@ -23,14 +23,14 @@ auto parse(const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   yyin = fopen(input_file_name.c_str(), "r");
   if (yyin == nullptr) {
-    FatalUserError() << "Error opening '" << input_file_name
-                     << "': " << std::strerror(errno);
+    FATAL_USER_ERROR_NO_LINE() << "Error opening '" << input_file_name
+                               << "': " << std::strerror(errno);
   }
 
   std::optional<AST> parsed_input = std::nullopt;
   ParseAndLexContext context(input_file_name);
 
-  auto parser = yy::parser(parsed_input, context);
+  auto parser = Parser(parsed_input, context);
   if (tracing_output) {
     parser.set_debug_level(1);
   }

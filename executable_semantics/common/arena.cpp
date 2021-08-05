@@ -2,9 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn main() -> Int {
-  if (1 == 1)
-    return 0;
+#include "executable_semantics/common/arena.h"
 
-  return 1;
-}
+namespace Carbon {
+
+llvm::ManagedStatic<Arena> global_arena;
+
+}  // namespace Carbon

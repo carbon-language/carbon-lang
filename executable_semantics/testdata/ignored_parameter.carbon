@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn ReturnSecond(_: Int, x: Int) -> Int {
+fn ReturnSecond(_: i32, x: i32) -> i32 {
   return x;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return ReturnSecond(1, 0);
 }

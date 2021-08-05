@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
 -   [Context and disclaimer](#context-and-disclaimer)
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
@@ -67,6 +68,24 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
 
 <!-- tocstop -->
+
+## Overview
+
+This documentation describes the design of the Carbon language, and the
+rationale for that design. The goal is to provide sufficient coverage of the
+design to support the following audiences:
+
+-   People who wish to determine whether Carbon would be the right choice to use
+    for a project compared to other existing languages.
+-   People working on the evolution of the Carbon language who wish to
+    understanding the rationale and motivation for existing design decisions.
+-   People working on a specification or implementation of the Carbon language
+    who need a detailed understanding of the intended design.
+-   People writing Carbon code who wish to understand why the language rules are
+    the way they are.
+
+For Carbon developers, documentation that is more suitable for learning the
+language will be made available separately.
 
 ## Context and disclaimer
 

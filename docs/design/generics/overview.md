@@ -101,10 +101,10 @@ You might have one generic function that could sort any array with comparable
 elements:
 
 ```
-fn SortVector(T:$ Comparable, a: Vector(T)*) { ... }
+fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `$` to indicate that the parameter named `T` is generic.
+The syntax above adds a `!` to indicate that the parameter named `T` is generic.
 
 Given an `Int32` vector `iv`, `SortVector(Int32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -113,9 +113,6 @@ sort any vector containing comparable elements using this single `SortVector`
 function.
 
 This ability to generalize makes `SortVector` a _generic_.
-
-**NOTE:** The `:$` syntax is a placeholder. The syntax is being decided in
-[question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
 ### Interfaces
 
@@ -154,9 +151,6 @@ interface Comparable {
   fn Less[me: Self](that: Self) -> Bool;
 }
 ```
-
-**Note:** The method syntax was decided in
-[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 
 Interfaces describe functionality, but not data; no variables may be declared in
 an interface.
@@ -212,12 +206,9 @@ external impl Song as Comparable {
 }
 ```
 
-**Note:** The interface implementation syntax was decided in
-[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
-TODO: move these syntax issues to details and link.
-
-Implementations may be defined within the class definition itself or externally.
-External implementations may be defined in the library defining the interface.
+Implementations may be defined within the class definition itself or
+externally. External implementations may be defined in the library defining the
+interface.
 
 #### Qualified and unqualified access
 
@@ -271,7 +262,7 @@ already included in the type of the second argument. To eliminate the argument
 at the call site, use a _deduced parameter_.
 
 ```
-fn SortVectorDeduced[T:$ Comparable](a: Vector(T)*) { ... }
+fn SortVectorDeduced[T:! Comparable](a: Vector(T)*) { ... }
 ```
 
 The `T` parameter is defined in square brackets before the explicit parameter
@@ -294,7 +285,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[T:$ Type, U:$ Type](x: T) -> U { ... }
+fn Illegal[T:! Type, U:! Type](x: T) -> U { ... }
 ```
 
 #### Generic type parameters
@@ -303,7 +294,7 @@ A function with a generic type parameter can have the same function body as an
 unparameterized one.
 
 ```
-fn PrintIt[T:$ Printable](p: T*) {
+fn PrintIt[T:! Printable](p: T*) {
   p->Print();
 }
 
@@ -395,7 +386,7 @@ interface EndOfGame {
   fn Draw[addr me: Self*]();
 }
 
-fn F[T:$ Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
+fn F[T:! Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
   game_state->SetWinner(1);
   return game_state->Center();
 }
@@ -405,7 +396,7 @@ Names with conflicts can be accessed using the
 [qualified syntax](#qualified-and-unqualified-access).
 
 ```
-fn BothDraws[T:$ Renderable & EndOfGame](game_state: T*) {
+fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
   game_state->(Renderable.Draw)();
   game_state->(GameState.Draw)();
 }
@@ -428,7 +419,7 @@ structural interface Combined {
   alias SetWinner = EndOfGame.SetWinner;
 }
 
-fn CallItAll[T:$ Combined](game_state: T*, int winner) {
+fn CallItAll[T:! Combined](game_state: T*, int winner) {
   if (winner > 0) {
     game_state->SetWinner(winner);
   } else {
@@ -460,7 +451,7 @@ class CDCover  {
 it can be passed to this `PrintIt` function:
 
 ```
-fn PrintIt[T:$ Printable](p: T*) {
+fn PrintIt[T:! Printable](p: T*) {
   p->Print();
 }
 ```

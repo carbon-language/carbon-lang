@@ -11,14 +11,33 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/syntax/paren_contents.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 struct Expression;
+class Pattern;
+
+// Converts paren_contents to an Expression, interpreting the parentheses as
+// grouping if their contents permit that interpretation, or as forming a
+// tuple otherwise.
+auto ExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
+    -> const Expression*;
+
+// Converts paren_contents to an Expression, interpreting the parentheses as
+// forming a tuple.
+auto TupleExpressionFromParenContents(
+    int line_num, const ParenContents<Expression>& paren_contents)
+    -> const Expression*;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {
-  // The field name. For a positional field, this may be empty.
+  FieldInitializer(std::string name, const Expression* expression)
+      : name(std::move(name)), expression(expression) {}
+
+  // The field name. Cannot be empty.
   std::string name;
 
   // The expression that initializes the field.
@@ -26,7 +45,6 @@ struct FieldInitializer {
 };
 
 enum class ExpressionKind {
-  AutoTypeLiteral,
   BoolTypeLiteral,
   BoolLiteral,
   CallExpression,
@@ -36,7 +54,6 @@ enum class ExpressionKind {
   IntTypeLiteral,
   ContinuationTypeLiteral,  // The type of a continuation value.
   IntLiteral,
-  BindingExpression,
   PrimitiveOperatorExpression,
   TupleLiteral,
   TypeTypeLiteral,
@@ -75,13 +92,6 @@ struct IndexExpression {
   const Expression* offset;
 };
 
-struct BindingExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::BindingExpression;
-  // nullopt represents the `_` placeholder.
-  std::optional<std::string> name;
-  const Expression* type;
-};
-
 struct IntLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::IntLiteral;
   int value;
@@ -114,10 +124,7 @@ struct FunctionTypeLiteral {
   static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
   const Expression* parameter;
   const Expression* return_type;
-};
-
-struct AutoTypeLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::AutoTypeLiteral;
+  bool is_omitted_return_type;
 };
 
 struct BoolTypeLiteral {
@@ -140,10 +147,6 @@ struct TypeTypeLiteral {
 struct Expression {
   static auto MakeIdentifierExpression(int line_num, std::string var)
       -> const Expression*;
-  static auto MakeBindingExpression(int line_num,
-                                    std::optional<std::string> var,
-                                    const Expression* type)
-      -> const Expression*;
   static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
   static auto MakeBoolLiteral(int line_num, bool b) -> const Expression*;
   static auto MakePrimitiveOperatorExpression(
@@ -160,16 +163,15 @@ struct Expression {
   static auto MakeTypeTypeLiteral(int line_num) -> const Expression*;
   static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
   static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeFunctionTypeLiteral(int line_num, const Expression* param,
-                                      const Expression* ret)
+  static auto MakeFunctionTypeLiteral(int line_num, const Expression* parameter,
+                                      const Expression* return_type,
+                                      bool is_omitted_return_type)
       -> const Expression*;
-  static auto MakeAutoTypeLiteral(int line_num) -> const Expression*;
   static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
 
   auto GetIdentifierExpression() const -> const IdentifierExpression&;
   auto GetFieldAccessExpression() const -> const FieldAccessExpression&;
   auto GetIndexExpression() const -> const IndexExpression&;
-  auto GetBindingExpression() const -> const BindingExpression&;
   auto GetIntLiteral() const -> int;
   auto GetBoolLiteral() const -> bool;
   auto GetTupleLiteral() const -> const TupleLiteral&;
@@ -179,6 +181,7 @@ struct Expression {
   auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   inline auto tag() const -> ExpressionKind {
     return std::visit([](const auto& t) { return t.Kind; }, value);
@@ -188,10 +191,10 @@ struct Expression {
 
  private:
   std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,
-               BindingExpression, IntLiteral, BoolLiteral, TupleLiteral,
+               IntLiteral, BoolLiteral, TupleLiteral,
                PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
-               AutoTypeLiteral, BoolTypeLiteral, IntTypeLiteral,
-               ContinuationTypeLiteral, TypeTypeLiteral>
+               BoolTypeLiteral, IntTypeLiteral, ContinuationTypeLiteral,
+               TypeTypeLiteral>
       value;
 };
 

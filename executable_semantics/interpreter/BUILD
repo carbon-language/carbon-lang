@@ -17,6 +17,8 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:arena",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -26,6 +28,7 @@ cc_library(
     deps = [
         ":field_path",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -44,7 +47,10 @@ cc_library(
 cc_library(
     name = "field_path",
     hdrs = ["field_path.h"],
-    deps = ["//common:ostream"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
@@ -56,6 +62,7 @@ cc_library(
         ":address",
         ":containers",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -67,6 +74,7 @@ cc_library(
         ":address",
         ":value",
         "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -90,7 +98,9 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:tracing_flag",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -105,7 +115,9 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:tracing_flag",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -120,5 +132,8 @@ cc_library(
         "//common:ostream",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
+        "@llvm-project//llvm:Support",
     ],
 )

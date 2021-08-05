@@ -6,7 +6,7 @@ fn Id(t: Type) => t;
 
 // Test non-trivial type expression in variable declaration statement.
 
-fn main() -> Int {
-  var x: Id(Int) = 0;
+fn main() -> i32 {
+  var x: Id(i32) = 0;
   return x;
 }

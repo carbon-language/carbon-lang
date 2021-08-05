@@ -6,7 +6,7 @@ fn apply[T:! Type, U:! Type](f: fnty (T) -> U, x: T) -> U {
   return f(x);
 }
 
-fn positive(x: Bool) -> Int {
+fn positive(x: Bool) -> i32 {
   if (x) {
     return 2;
   } else {
@@ -14,6 +14,6 @@ fn positive(x: Bool) -> Int {
   }
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return apply(positive, false);
 }

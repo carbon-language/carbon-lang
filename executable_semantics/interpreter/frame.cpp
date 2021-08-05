@@ -4,8 +4,7 @@
 
 #include "executable_semantics/interpreter/frame.h"
 
-#include <ostream>
-
+#include "common/ostream.h"
 #include "executable_semantics/interpreter/action.h"
 
 namespace Carbon {

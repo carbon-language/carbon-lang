@@ -6,12 +6,12 @@
 // This makes sure that when the value in `x` dies,
 // it does not cause the value in `a` to also die.
 
-fn f(x: Int) -> Int {
+fn f(x: i32) -> i32 {
   return 0;
 }
 
-fn main() -> Int {
-  var a: Int = 0; var b: Int = 1;
+fn main() -> i32 {
+  var a: i32 = 0; var b: i32 = 1;
   f(a);
   b = a;
   return b;

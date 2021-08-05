@@ -33,6 +33,7 @@ cc_library(
         "//common:ostream",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
@@ -42,23 +43,7 @@ cc_library(
 
 cc_library(
     name = "paren_contents",
-    srcs = ["paren_contents.cpp"],
     hdrs = ["paren_contents.h"],
-    deps = ["//executable_semantics/ast:expression"],
-)
-
-cc_test(
-    name = "paren_contents_test",
-    srcs = ["paren_contents_test.cpp"],
-    env = {
-        # TODO(#580): Remove this when leaks are fixed.
-        "ASAN_OPTIONS": "detect_leaks=0",
-    },
-    deps = [
-        ":paren_contents",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
-    ],
 )
 
 genrule(

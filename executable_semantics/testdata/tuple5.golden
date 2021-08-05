@@ -1,4 +1,4 @@
-ERROR: 8: type error in pattern variable
-expected: (x = Int, y = Int)
-actual: (y = Int, x = Int)
+COMPILATION ERROR: 8: type error in pattern variable
+expected: (x = i32, y = i32)
+actual: (y = i32, x = i32)
 EXIT CODE: 255

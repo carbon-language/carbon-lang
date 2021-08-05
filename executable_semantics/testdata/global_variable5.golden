@@ -1,4 +1,4 @@
-ERROR: 10: type error in return
+COMPILATION ERROR: 10: type error in return
 expected: ()
-actual: Int
+actual: i32
 EXIT CODE: 255

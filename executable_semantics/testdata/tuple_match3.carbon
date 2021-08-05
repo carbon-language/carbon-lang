@@ -4,7 +4,7 @@
 
 // Test matching of a tuple inside a tuple.
 
-fn main() -> Int {
+fn main() -> i32 {
   var t: auto = ((1,2),(3,4));
   match (t) {
     case ((a: auto, b: auto), c: auto) =>
