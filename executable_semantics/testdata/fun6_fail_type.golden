@@ -1,4 +1,4 @@
 COMPILATION ERROR: 10: type error in call
-expected: (0 = Int, 1 = Int)
-actual: (0 = (0 = Int, 1 = Int))
+expected: (0 = i32, 1 = i32)
+actual: (0 = (0 = i32, 1 = i32))
 EXIT CODE: 255

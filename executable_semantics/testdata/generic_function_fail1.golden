@@ -1,4 +1,4 @@
 COMPILATION ERROR: 10: type error in argument deduction
-expected: Int
+expected: i32
 actual: Bool
 EXIT CODE: 255

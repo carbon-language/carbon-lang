@@ -54,8 +54,10 @@
 #include <list>
 #include <vector>
 
+#include "common/check.h"
 #include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
+#include "llvm/ADT/StringExtras.h"
 }  // %code top
 
 %code requires {
@@ -87,6 +89,7 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 
 %token <int> integer_literal
 %token <std::string> identifier
+%token <std::string> sized_type_literal
 %type <std::string> designator
 %type <Declaration> declaration
 %type <FunctionDefinition> function_declaration
@@ -128,7 +131,6 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %token AND
 %token OR
 %token NOT
-%token INT
 %token BOOL
 %token TYPE
 %token FN
@@ -220,8 +222,13 @@ expression:
     { $$ = Expression::MakeBoolLiteral(yylineno, true); }
 | FALSE
     { $$ = Expression::MakeBoolLiteral(yylineno, false); }
-| INT
-    { $$ = Expression::MakeIntTypeLiteral(yylineno); }
+| sized_type_literal
+    {
+      int val;
+      CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
+      CHECK($1[0] == 'i' && val == 32)  << "Only i32 is supported for now: " << $1;
+      $$ = Expression::MakeIntTypeLiteral(yylineno);
+    }
 | BOOL
     { $$ = Expression::MakeBoolTypeLiteral(yylineno); }
 | TYPE

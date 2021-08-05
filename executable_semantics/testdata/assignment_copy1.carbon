@@ -4,10 +4,10 @@
 
 // Test that assignment performs a copy and does not create an alias.
 
-fn main() -> Int {
-  var x: Int = -1;
+fn main() -> i32 {
+  var x: i32 = -1;
   {
-     var y: Int = 0;
+     var y: i32 = 0;
      x = y;
      // y dies here
   }

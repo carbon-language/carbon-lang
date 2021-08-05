@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn main() -> Int {
-  var t1: (Int,) = (5,);
-  var t2: (Int, Int) = (2, 3,);
+fn main() -> i32 {
+  var t1: (i32,) = (5,);
+  var t2: (i32, i32) = (2, 3,);
   return t1[0] - t2[0] - t2[1];
 }

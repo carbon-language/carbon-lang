@@ -7,14 +7,14 @@
 // is dangerous and can happen inside continuations.
 
 fn capture() -> __Continuation {
-  var x: Int = 1;
+  var x: i32 = 1;
   __continuation k {
-    var y: Int = x;
+    var y: i32 = x;
   }
   return k;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   var k: __Continuation = capture();
   __run k; // error, lifetime of x is over
   return 0;

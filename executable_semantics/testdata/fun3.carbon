@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 // Test multiple arguments
-fn f(x: Int, y: Int) -> Int {
+fn f(x: i32, y: i32) -> i32 {
   return x + y;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return f(2,3) - 5;
 }

@@ -4,9 +4,9 @@
 
 // Test mutation of a global variable.
 
-var zero: Int = 1;
+var zero: i32 = 1;
 
-fn main() -> Int {
+fn main() -> i32 {
   zero = 0;
   return zero;
 }
