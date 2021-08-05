@@ -638,19 +638,18 @@ Similarly, a data class has an unformed state if all its members do. Treatment
 of unformed state follows
 [#257](https://github.com/carbon-language/carbon-lang/pull/257).
 
-Ordering comparisons like `<` and `<=` are defined on a data class type if all
-its field types support it, using
-[lexicographical order](https://en.wikipedia.org/wiki/Lexicographic_order).
+`==` and `!=` are defined on a data class type if all
+its field types support it:
 
 ```
-Assert({.x = 2, .y = 4} < {.x = 5, .y = 3});
+Assert({.x = 2, .y = 4} != {.x = 5, .y = 3});
 ```
 
 Comparisons between values with fields in different orders are forbidden.
 
 ```
 // Illegal
-Assert({.x = 2, .y = 3} < {.y = 4, .x = 5});
+Assert({.x = 2, .y = 3} != {.y = 4, .x = 5});
 ```
 
 Destruction is performed field-wise in reverse order.
