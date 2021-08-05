@@ -19,7 +19,7 @@
 
 namespace Carbon {
 
-struct Value;
+class Value;
 
 using TypeEnv = Dictionary<std::string, const Value*>;
 using Env = Dictionary<std::string, Address>;

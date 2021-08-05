@@ -103,7 +103,7 @@ repos:
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 93c10bf9ebccf8d7cc686b0b9579f2e5e41c5328 # frozen: 21.6b0
+    rev: e3000ace2fd1fcb1c181bb7a8285f1f976bcbdc7 # frozen: 21.7b0
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
