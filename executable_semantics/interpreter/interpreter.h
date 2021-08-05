@@ -35,7 +35,7 @@ void PrintEnv(Env values);
 
 /***** Interpreters *****/
 
-auto InterpProgram(std::list<Declaration>* fs) -> int;
+auto InterpProgram(const std::list<const Declaration*>& fs) -> int;
 auto InterpExp(Env values, const Expression* e) -> const Value*;
 auto InterpPattern(Env values, const Pattern* p) -> const Value*;
 

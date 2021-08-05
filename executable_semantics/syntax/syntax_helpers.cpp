@@ -12,11 +12,11 @@
 
 namespace Carbon {
 
-void ExecProgram(std::list<Declaration>* fs) {
+void ExecProgram(const std::list<const Declaration*>& fs) {
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
-    for (const auto& decl : *fs) {
-      llvm::outs() << decl;
+    for (const auto* decl : fs) {
+      llvm::outs() << *decl;
     }
     llvm::outs() << "********** type checking **********\n";
   }
@@ -24,19 +24,19 @@ void ExecProgram(std::list<Declaration>* fs) {
   TypeCheckContext p = TopLevel(fs);
   TypeEnv top = p.types;
   Env ct_top = p.values;
-  std::list<Declaration> new_decls;
-  for (const auto& decl : *fs) {
-    new_decls.push_back(MakeTypeChecked(decl, top, ct_top));
+  std::list<const Declaration*> new_decls;
+  for (const auto* decl : fs) {
+    new_decls.push_back(MakeTypeChecked(*decl, top, ct_top));
   }
   if (tracing_output) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
-    for (const auto& decl : new_decls) {
-      llvm::outs() << decl;
+    for (const auto* decl : new_decls) {
+      llvm::outs() << *decl;
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = InterpProgram(&new_decls);
+  int result = InterpProgram(new_decls);
   llvm::outs() << "result: " << result << "\n";
 }
 
