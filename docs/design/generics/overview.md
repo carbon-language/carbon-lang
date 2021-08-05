@@ -206,9 +206,8 @@ external impl Song as Comparable {
 }
 ```
 
-Implementations may be defined within the class definition itself or
-externally. External implementations may be defined in the library defining the
-interface.
+Implementations may be defined within the class definition itself or externally.
+External implementations may be defined in the library defining the interface.
 
 #### Qualified and unqualified access
 
