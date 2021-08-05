@@ -253,6 +253,7 @@ class TupleValue : public Value {
 // A binding placeholder value.
 class BindingPlaceholderValue : public Value {
  public:
+  // nullopt represents the `_` placeholder.
   BindingPlaceholderValue(std::optional<std::string> name, const Value* type)
       : Value(Kind::BindingPlaceholderValue),
         name(std::move(name)),
@@ -266,7 +267,6 @@ class BindingPlaceholderValue : public Value {
   auto Type() const -> const Value* { return type; }
 
  private:
-  // nullopt represents the `_` placeholder
   std::optional<std::string> name;
   const Value* type;
 };

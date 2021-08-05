@@ -278,9 +278,6 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
           if (p_tup.Elements().size() != v_tup.Elements().size()) {
-            CHECK(false)
-                << "arity mismatch in tuple pattern match:\n  pattern: "
-                << p_tup << "\n  value: " << v_tup;
             FATAL_RUNTIME_ERROR(line_num)
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
