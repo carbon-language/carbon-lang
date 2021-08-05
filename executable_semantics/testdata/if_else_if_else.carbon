@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn main() -> Int {
+fn main() -> i32 {
   if (0 == 1) {
     return 1;
   } else if (0 == 2) {

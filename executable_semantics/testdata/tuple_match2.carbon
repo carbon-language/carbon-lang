@@ -4,7 +4,7 @@
 
 // Test matching with a mixture of positional and named fields.
 
-fn main() -> Int {
+fn main() -> i32 {
   var t: auto = (2, .x = 5);
   match (t) {
     case (a: auto, .x = b: auto) =>

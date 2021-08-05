@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn id[T:! Type](x: Int) -> Int {
+fn id[T:! Type](x: i32) -> i32 {
   return x;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return id(0);
 }

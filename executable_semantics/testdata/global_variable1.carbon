@@ -4,8 +4,8 @@
 
 // Test global variable initialization and read.
 
-var zero: Int = 0;
+var zero: i32 = 0;
 
-fn main() -> Int {
+fn main() -> i32 {
   return zero;
 }

@@ -5,13 +5,13 @@
 // Test that mutations to a global variable in one function is visible
 // in another function.
 
-var flag: Int = 1;
+var flag: i32 = 1;
 
 fn flipFlag() -> () {
   flag = 0;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   flipFlag();
   return flag;
 }

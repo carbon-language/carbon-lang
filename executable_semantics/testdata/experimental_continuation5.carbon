@@ -4,10 +4,10 @@
 
 // Test access to block-scoped variables upon resuming a continuation.
 
-fn main() -> Int {
-  var y: Int = 0;
+fn main() -> i32 {
+  var y: i32 = 0;
   __continuation k {
-    var x: Int = 0;
+    var x: i32 = 0;
     x = x + 1;
     __await;
     x = x + 2;

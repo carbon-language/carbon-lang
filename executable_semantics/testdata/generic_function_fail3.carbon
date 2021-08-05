@@ -6,6 +6,6 @@ fn id[T:! Type](x: T) -> T {
   return x + 0;
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   return id(0);
 }

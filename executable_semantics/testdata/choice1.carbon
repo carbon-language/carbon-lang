@@ -4,11 +4,11 @@
 
 choice Ints {
   None,
-  One(Int),
-  Two(Int,Int)
+  One(i32),
+  Two(i32,i32)
 }
 
-fn main() -> Int {
+fn main() -> i32 {
   var x: auto = Ints.None();
   var y: auto = Ints.One(42);
   var n: auto = 0;
@@ -34,6 +34,6 @@ fn main() -> Int {
 // Test some alternate syntaxes
 choice MoreInts {
   None(),
-  One(Int),
-  Two(Int,Int),
+  One(i32),
+  Two(i32,i32),
 }
