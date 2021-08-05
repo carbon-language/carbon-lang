@@ -234,7 +234,10 @@ class AlternativeValue : public Value {
 class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
-  TupleValue() : TupleValue(std::vector<TupleElement>()) {}
+  static const TupleValue& Empty() {
+    static const TupleValue empty = TupleValue(std::vector<TupleElement>());
+    return empty;
+  }
 
   explicit TupleValue(std::vector<TupleElement> elements)
       : Value(Kind::TupleValue), elements(std::move(elements)) {}
