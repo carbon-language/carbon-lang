@@ -638,14 +638,15 @@ Similarly, a data class has an unformed state if all its members do. Treatment
 of unformed state follows
 [#257](https://github.com/carbon-language/carbon-lang/pull/257).
 
-`==` and `!=` are defined on a data class type if all
-its field types support it:
+`==` and `!=` are defined on a data class type if all its field types support
+it:
 
 ```
 Assert({.x = 2, .y = 4} != {.x = 5, .y = 3});
 ```
 
-Comparisons between values with fields in different orders are forbidden.
+**Open question:** Which other comparisons are supported is the subject of
+[question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
 
 ```
 // Illegal
