@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn f(x: Int, .d = y: Int) => x + y;
+fn f(x: i32, .d = y: i32) => x + y;
 
-fn main() -> Int {
+fn main() -> i32 {
   return f(1, .d = 2) - 3;
 }

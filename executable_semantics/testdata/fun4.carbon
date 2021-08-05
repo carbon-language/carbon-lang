@@ -5,7 +5,7 @@
 // Test empty parameters and return type
 fn f() { }
 
-fn main() -> Int {
+fn main() -> i32 {
   f();
   return 0;
 }

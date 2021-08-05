@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #include <cstdlib>
 #include <iostream>
 
+#include "common/check.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "llvm/ADT/StringExtras.h"
@@ -45,7 +46,6 @@ FALSE             "false"
 FN                "fn"
 FNTY              "fnty"
 IF                "if"
-INT               "Int"
 MATCH             "match"
 NOT               "not"
 OR                "or"
@@ -62,6 +62,7 @@ AWAIT             "__await"
 UNDERSCORE        "_"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
+sized_type_literal [iuf][1-9][0-9]*
 integer_literal   [0-9]+
 horizontal_whitespace [ \t\r]
 whitespace [ \t\r\n]
@@ -106,7 +107,6 @@ operand_start [(A-Za-z0-9_"]
 {FN}       { return Carbon::Parser::make_FN(context.current_token_position); }
 {FNTY}     { return Carbon::Parser::make_FNTY(context.current_token_position); }
 {IF}       { return Carbon::Parser::make_IF(context.current_token_position); }
-{INT}      { return Carbon::Parser::make_INT(context.current_token_position); }
 {MATCH}    { return Carbon::Parser::make_MATCH(context.current_token_position); }
 {NOT}      { return Carbon::Parser::make_NOT(context.current_token_position); }
 {OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
@@ -121,6 +121,8 @@ operand_start [(A-Za-z0-9_"]
 {RUN}      { return Carbon::Parser::make_RUN(context.current_token_position); }
 {AWAIT}    { return Carbon::Parser::make_AWAIT(context.current_token_position); }
 {UNDERSCORE}      { return Carbon::Parser::make_UNDERSCORE(context.current_token_position); }
+
+{sized_type_literal} { return Carbon::Parser::make_sized_type_literal(yytext, context.current_token_position); }
 
 "=" return Carbon::Parser::make_EQUAL(context.current_token_position);
 "-" return Carbon::Parser::make_MINUS(context.current_token_position);
@@ -183,8 +185,9 @@ operator and its operand, leading to three more cases:
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
-  auto r = atof(yytext);
-  return Carbon::Parser::make_integer_literal(r, context.current_token_position);
+  int val;
+  CHECK(llvm::to_integer(yytext, val));
+  return Carbon::Parser::make_integer_literal(val, context.current_token_position);
 }
 
 {ONE_LINE_COMMENT} {
