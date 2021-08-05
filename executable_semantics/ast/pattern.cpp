@@ -55,9 +55,9 @@ void Pattern::Print(llvm::raw_ostream& out) const {
 }
 
 TuplePattern::TuplePattern(const Expression* tuple_literal)
-    : Pattern(Kind::TuplePattern, tuple_literal->line_num) {
-  const auto& tuple = tuple_literal->GetTupleLiteral();
-  for (const FieldInitializer& init : tuple.fields) {
+    : Pattern(Kind::TuplePattern, tuple_literal->LineNumber()) {
+  const auto& tuple = cast<TupleLiteral>(*tuple_literal);
+  for (const FieldInitializer& init : tuple.Fields()) {
     fields.push_back(Field(
         init.name, global_arena->New<ExpressionPattern>(init.expression)));
   }
@@ -85,13 +85,13 @@ AlternativePattern::AlternativePattern(int line_num,
                                        const Expression* alternative,
                                        const TuplePattern* arguments)
     : Pattern(Kind::AlternativePattern, line_num), arguments(arguments) {
-  if (alternative->tag() != ExpressionKind::FieldAccessExpression) {
-    FATAL_USER_ERROR(alternative->line_num)
+  if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
+    FATAL_USER_ERROR(alternative->LineNumber())
         << "Alternative pattern must have the form of a field access.";
   }
-  const auto& field_access = alternative->GetFieldAccessExpression();
-  choice_type = field_access.aggregate;
-  alternative_name = field_access.field;
+  const auto& field_access = cast<FieldAccessExpression>(*alternative);
+  choice_type = field_access.Aggregate();
+  alternative_name = field_access.Field();
 }
 
 auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)

@@ -123,7 +123,7 @@ auto Statement::MakeReturn(int line_num, const Expression* exp,
   s->line_num = line_num;
   if (exp == nullptr) {
     CHECK(is_omitted_exp);
-    exp = Expression::MakeTupleLiteral(line_num, {});
+    exp = global_arena->New<TupleLiteral>(line_num);
   }
   s->value = Return({.exp = exp, .is_omitted_exp = is_omitted_exp});
   return s;
