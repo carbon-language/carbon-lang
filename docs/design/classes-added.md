@@ -194,6 +194,10 @@ FIXME: Interaction with deduced generic parameters.
 
 FIXME
 
+### Name lookup in method definitions
+
+FIXME
+
 ### Nominal data classes
 
 We will mark [data classes](#data-classes) with an `impl as Data {}` line.
