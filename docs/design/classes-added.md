@@ -8,22 +8,37 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Nominal class types
 
-The declarations for nominal class types will have a different format.
+The declarations for nominal class types will have:
+
+-   `class` introducer
+-   the name of the class
+-   in the future, we will have optional modifiers for inheritance
+-   `{`, an open curly brace
+-   a sequence of declarations
+-   `}`, a close curly brace
+
+Declarations should generally match declarations that can be declared in other
+contexts, for example variables:
 
 ```
 class TextLabel {
-  var x: Int;
-  var y: Int;
+  var x: i32;
+  var y: i32;
 
-  var text: String;
+  var text: String = "default";
 }
 ```
 
+The main difference here is that `"default"` is a default instead of an
+initializer, and will be ignored if another value is supplied for that field
+when constructing a value.
+
 ### Forward declaration
 
-To support circular references between class types, we allow forward declaration
-of types. A type that is forward declared is considered incomplete until the end
-of a definition with the same name.
+To support circular references between class types, we allow
+[forward declaration](https://en.wikipedia.org/wiki/Forward_declaration) of
+types. A type that is forward declared is considered incomplete until the end of
+a definition with the same name.
 
 ```
 class GraphNode;
@@ -34,13 +49,12 @@ class GraphEdge {
 }
 
 class GraphNode {
-  var edges: Vector(GraphEdge);
+  var edges: Vector(GraphEdge*);
 }
 ```
 
 **Open question:** What is specifically allowed and forbidden with an incomplete
-type, either from a forward declaration or referencing a type inside its
-definition, has not yet been decided.
+type has not yet been decided.
 
 ### Self
 
@@ -50,7 +64,7 @@ end of its definition is reached.
 
 ```
 class IntListNode {
-  var data: Int;
+  var data: i32;
   var next: IntListNode*;
 }
 ```
@@ -60,7 +74,7 @@ current type, is:
 
 ```
 class IntListNode {
-  var data: Int;
+  var data: i32;
   var next: Self*;
 }
 ```
@@ -70,7 +84,7 @@ class IntListNode {
 ```
 class IntList {
   class IntListNode {
-    var data: Int;
+    var data: i32;
     var next: Self*;
   }
   var first: IntListNode*;
@@ -83,27 +97,60 @@ Any function with access to all the data fields of a class can construct one by
 converting a [struct value](#struct-types) to the class type:
 
 ```
-var p1: Point2D = {.x = 1, .y = 2};
-var p2: auto = {.x = 1, .y = 2} as Point2D;
+var tl1: TextLabel = {.x = 1, .y = 2};
+var tl2: auto = {.x = 1, .y = 2} as TextLabel;
 ```
 
 ### Associated functions
 
-FIXME
+An associated function is like a
+[C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+and is defined like a function at file scope. It is a member of the type, and
+may be called without an object instance. The most common use is for constructor
+functions.
+
+```
+class TextLabel {
+  fn CreateCentered(t: String) -> Self {
+    return {
+        .x = ScreenWidth() / 2,
+        .y = ScreenHeight() / 2,
+        .text = t
+    };
+  }
+
+  var x: i32;
+  var y: i32;
+
+  var text: String = "default";
+}
+```
+
+Associated functions may be accessed as either a member of the type or any
+instance.
+
+```
+var c1 = TextLabel.CreateCentered("label");
+var c2 = c1.CreateCentered("second");
+```
 
 ### Methods
 
+[Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
+declarations are distinguished from other
+[function declarations](#associated-functions) by having a `me` parameter in
+square brackets `[`...`]` before the explicit parameter list in parens
+`(`...`)`.
+
 FIXME
 
-A future proposal will incorporate
-[method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
 declaration, definition, and calling into classes. The syntax for declaring
 methods has been decided in
 [question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 Summarizing that issue:
 
--   Accessors are written: `fn Diameter[me: Self]() -> Float { ... }`
--   Mutators are written: `fn Expand[addr me: Self*](distance: Float) { ... }`
+-   Accessors are written: `fn Diameter[me: Self]() -> f32 { ... }`
+-   Mutators are written: `fn Expand[addr me: Self*](distance: f32) { ... }`
 -   Associated functions that don't take a receiver at all, like
     [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
     are written: `fn Create() -> Self { ... }`
@@ -111,14 +158,18 @@ Summarizing that issue:
 We do not expect to have implicit member access in methods, so inside the method
 body members will be accessed through the `me` parameter.
 
+### Name lookup in method definitions
+
+FIXME
+
 ### Nominal data classes
 
 We will mark [data classes](#data-classes) with an `impl as Data {}` line.
 
 ```
 class TextLabel {
-  var x: Int;
-  var y: Int;
+  var x: i32;
+  var y: i32;
 
   var text: String;
 
@@ -139,7 +190,7 @@ Additional types may be defined in the scope of a class definition.
 class StringCounts {
   class Node {
     var key: String;
-    var count: Int;
+    var count: i32;
   }
   var counts: Vector(Node);
 }
@@ -154,8 +205,8 @@ Other type constants can be defined using a `let` declaration:
 
 ```
 class MyClass {
-  let Pi: Float32 = 3.141592653589793;
-  let IndexType: Type = Int;
+  let Pi: f32 = 3.141592653589793;
+  let IndexType: Type = i32;
 }
 ```
 
