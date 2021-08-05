@@ -2038,7 +2038,7 @@ explicit parameters.
 ```
 fn PeekAtTopOfStackParameterized
     [T:! Type, StackType:! StackParameterized(T)]
-    (s: StackType*, T) -> T { ... }
+    (s: StackType*, _: type_of(T)) -> T { ... }
 
 var produce: Produce = ...;
 var top_fruit: Fruit =
@@ -2046,6 +2046,28 @@ var top_fruit: Fruit =
 var top_veggie: Veggie =
     PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
+
+The pattern `_: type_of(T)` will only match `T` since `T` is a type so
+`type_of(T)` returns a single-value type-of-type. Using that pattern in the
+explicit parameter list allows us to make `T` available earlier in the
+declaration so it can be passed as the argument to the parameterized interface
+`StackParameterized`.
+
+**Open question:** Perhaps `type_of` should be spelled `singleton_type_of` or
+`single_value_type_of`, and only take a type argument?
+
+> **Alternative considered:** We could also allow value patterns without a `:`,
+> as in:
+>
+> ```
+> fn PeekAtTopOfStackParameterized
+>     [T:! Type, StackType:! StackParameterized(T)]
+>     (s: StackType*, T) -> T { ... }
+> ```
+>
+> However, we don't want to allow value patterns more generally so we can reject
+> declarations like `fn F(Int)` when users almost certainly meant
+> `fn F(i: Int)`.
 
 This approach is useful for the `ComparableTo(T)` interface, where a type might
 be comparable with multiple other types, and in fact interfaces for
