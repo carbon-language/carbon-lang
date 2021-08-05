@@ -63,5 +63,7 @@ request:
 -   [0618 - var ordering](p0618.md)
 -   [0623 - Require braces](p0623.md)
 -   [0646 - Low context-sensitivity principle](p0646.md)
+-   [0676 - `:!` generic syntax](p0676.md)
+-   [0680 - And, or, not](p0680.md)
 
 <!-- endproposals -->
