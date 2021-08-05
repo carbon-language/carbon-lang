@@ -132,6 +132,17 @@ def _update_golden(test):
 
 def _update_goldens():
     """Runs bazel to update golden files."""
+    # This should typically be called through pyenv due to the shebang. However,
+    # pyenv then modifies the PATH, which affects build caching. In order to
+    # mimic the calling environment for bazel, this strips out PATH entries
+    # which pyenv likely added.
+    env = os.environ.copy()
+    stripped_path = []
+    for x in env["PATH"].split(":"):
+        if not ("/Cellar/pyenv/" in x or "/.pyenv/versions/" in x):
+            stripped_path.append(x)
+    env["PATH"] = ":".join(stripped_path)
+
     # Load tests from the bzl file. This isn't done through os.listdir because
     # building new tests requires --update_list.
     bzl_content = open(_TEST_LIST_BZL).read()
@@ -140,15 +151,18 @@ def _update_goldens():
     # Build all tests at once in order to allow parallel updates.
     print("Building tests...")
     subprocess.check_call(
-        ["bazel", "build", "//executable_semantics:golden_tests"]
+        [
+            "bazel",
+            "build",
+            "//executable_semantics:golden_tests",
+        ],
+        env=env,
     )
 
     print("Updating %d goldens..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
-        results = [exec.submit(lambda: _update_golden(test)) for test in tests]
-    # Propagate exceptions.
-    for result in results:
-        result.result()
+        # list() iterates to propagate exceptions.
+        list([exec.map(_update_golden, tests)])
     # Each golden indicates progress with a dot without a newline, so put a
     # newline to wrap.
     print("\nUpdated goldens.")
