@@ -297,8 +297,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return values;
         }
         default:
-          FATAL_INTERNAL_ERROR_NO_LINE()
-              << "expected a tuple value in pattern, not " << *v;
+          FATAL() << "expected a tuple value in pattern, not " << *v;
       }
     case Value::Kind::AlternativeValue:
       switch (v->Tag()) {
@@ -317,8 +316,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return *matches;
         }
         default:
-          FATAL_INTERNAL_ERROR_NO_LINE()
-              << "expected a choice alternative in pattern, not " << *v;
+          FATAL() << "expected a choice alternative in pattern, not " << *v;
       }
     case Value::Kind::FunctionType:
       switch (v->Tag()) {
@@ -371,8 +369,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          FATAL_INTERNAL_ERROR_NO_LINE()
-              << "expected a tuple value on right-hand-side, not " << *val;
+          FATAL() << "expected a tuple value on right-hand-side, not " << *val;
       }
       break;
     }
@@ -388,8 +385,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          FATAL_INTERNAL_ERROR_NO_LINE()
-              << "expected an alternative in left-hand-side, not " << *val;
+          FATAL() << "expected an alternative in left-hand-side, not " << *val;
       }
       break;
     }
@@ -656,8 +652,7 @@ void StepExp() {
         frame->todo.Pop(1);
         CallFunction(exp->line_num, act->results, state);
       } else {
-        FATAL_INTERNAL_ERROR_NO_LINE()
-            << "in handle_value with Call pos " << act->pos;
+        FATAL() << "in handle_value with Call pos " << act->pos;
       }
       break;
     case ExpressionKind::IntTypeLiteral: {

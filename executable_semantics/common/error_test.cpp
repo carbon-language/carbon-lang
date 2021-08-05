@@ -24,18 +24,11 @@ TEST(ErrorTest, FatalCompilationError) {
 }
 
 TEST(ErrorTest, FatalInternalError) {
-  ASSERT_DEATH({ FATAL_INTERNAL_ERROR_NO_LINE() << "test"; },
-               "INTERNAL ERROR: test\n");
+  ASSERT_DEATH({ FATAL_INTERNAL_ERROR(3) << "test"; }, "FATAL: 3: test\n");
 }
 
 TEST(ErrorTest, FatalUserErrorLine) {
   ASSERT_DEATH({ FATAL_USER_ERROR(1) << "test"; }, "ERROR: 1: test\n");
-}
-
-auto NoReturnRequired() -> int { FATAL_USER_ERROR_NO_LINE() << "test"; }
-
-TEST(ErrorTest, NoReturnRequired) {
-  ASSERT_DEATH({ NoReturnRequired(); }, "ERROR: test\n");
 }
 
 }  // namespace

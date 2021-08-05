@@ -224,8 +224,7 @@ auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-      FATAL_INTERNAL_ERROR_NO_LINE()
-          << "In Substitute: expected type, not value " << *type;
+      FATAL() << "In Substitute: expected type, not value " << *type;
   }
 }
 

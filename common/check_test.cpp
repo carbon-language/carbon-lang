@@ -35,4 +35,14 @@ TEST(CheckTest, CheckOutputForms) {
   CHECK(true) << msg << str << i << 0;
 }
 
+TEST(CheckTest, Fatal) {
+  ASSERT_DEATH({ FATAL() << "msg"; }, "FATAL: msg");
+}
+
+auto NoReturnRequired() -> int { FATAL() << "msg"; }
+
+TEST(ErrorTest, NoReturnRequired) {
+  ASSERT_DEATH({ NoReturnRequired(); }, "FATAL: msg\n");
+}
+
 }  // namespace Carbon

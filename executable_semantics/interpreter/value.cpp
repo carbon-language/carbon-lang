@@ -345,10 +345,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case Value::Kind::VariableType:
       return cast<VariableType>(*t1).Name() == cast<VariableType>(*t2).Name();
     default:
-      FATAL_INTERNAL_ERROR_NO_LINE()
-          << "TypeEqual used to compare non-type values\n"
-          << *t1 << "\n"
-          << *t2;
+      FATAL() << "TypeEqual used to compare non-type values\n"
+              << *t1 << "\n"
+              << *t2;
   }
 }
 
