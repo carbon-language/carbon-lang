@@ -188,6 +188,8 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 
 FIXME: Meaning of `addr`
 
+FIXME: Interaction with deduced generic parameters.
+
 #### Name lookup in method definitions
 
 FIXME
