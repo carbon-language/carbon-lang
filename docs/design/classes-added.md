@@ -210,16 +210,42 @@ class MyClass {
 }
 ```
 
+These do not affect the storage of instances of that class.
+
 **Open question:** Should these use the `:!` generic syntax decided in
 [issue #565](https://github.com/carbon-language/carbon-lang/issues/565)?
 
 ### Alias
 
-FIXME
+You may declare aliases of the names of class members. This is to allow them to
+be renamed in multiple steps or support alternate names.
+
+```
+class StringPair {
+  var key: String;
+  var value: String;
+  alias first = key;
+  alias second = value;
+}
+
+var sp1: StringPair = {.key = "K", .value = "1"};
+var sp2: StringPair = {.first = "K", .second = "2"};
+Assert(sp1.first == sp2.key);
+Assert(&sp1.first == &sp1.key);
+```
 
 ### Access control
 
-FIXME
+FIXME:
+
+-   `private`: just accessible to members of the class, like C++
+-   `internal`: works within the library + tests, does not provide linkage, does
+    not export symbols through an `import` boundary; if accessed through a
+    template or an inlined function body, needs to be `private` instead
+    (probably based on the compiler telling you that you need to)
+-   `friend`: works just within a package, does not introduce a new name
+
+LATER: `protected`, maybe `package`
 
 We will need some way of controlling access to the members of classes. By
 default, all members are fully publicly accessible, as decided in
