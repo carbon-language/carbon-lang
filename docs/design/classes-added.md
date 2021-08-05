@@ -18,7 +18,8 @@ The declarations for nominal class types will have:
 -   `}`, a close curly brace
 
 Declarations should generally match declarations that can be declared in other
-contexts, for example variables:
+contexts, for example variable declarations with `var` will define
+[instance variables](https://en.wikipedia.org/wiki/Instance_variable):
 
 ```
 class TextLabel {
@@ -99,39 +100,51 @@ converting a [struct value](#struct-types) to the class type:
 ```
 var tl1: TextLabel = {.x = 1, .y = 2};
 var tl2: auto = {.x = 1, .y = 2} as TextLabel;
+
+Assert(tl1.x == tl2.x);
+
+fn ReturnsATextLabel() -> TextLabel {
+  return {.x = 1, .y = 2};
+}
+var tl3: TextLabel = ReturnsATextLabel();
+
+fn AcceptsATextLabel(tl: TextLabel) -> i32 {
+  return tl.x + tl.y;
+}
+Assert(AcceptsATextLabel({.x = 2, .y = 4}) == 6);
 ```
 
 ### Associated functions
 
 An associated function is like a
 [C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
-and is defined like a function at file scope. It is a member of the type, and
-may be called without an object instance. The most common use is for constructor
+and is declared like a function at file scope. The declaration can include a
+definition of the function body, or that definition can be provided out of line
+after the class definition is finished. The most common use is for constructor
 functions.
 
 ```
-class TextLabel {
-  fn CreateCentered(t: String) -> Self {
-    return {
-        .x = ScreenWidth() / 2,
-        .y = ScreenHeight() / 2,
-        .text = t
-    };
+class Point {
+  fn Origin() -> Self {
+    return {.x = 0, .y = 0};
   }
+  fn CreateCentered() -> Self;
 
   var x: i32;
   var y: i32;
+}
 
-  var text: String = "default";
+fn Point.CreateCentered() -> Self {
+  return {.x = ScreenWidth() / 2, .y = ScreenHeight() / 2};
 }
 ```
 
-Associated functions may be accessed as either a member of the type or any
-instance.
+Associated functions are members of the type, and may be accessed as using dot
+`.` member access either the type or any instance.
 
 ```
-var c1 = TextLabel.CreateCentered("label");
-var c2 = c1.CreateCentered("second");
+var p1: Point = Point.Origin();
+var p2: Point = p1.CreateCentered();
 ```
 
 ### Methods
@@ -140,25 +153,42 @@ var c2 = c1.CreateCentered("second");
 declarations are distinguished from other
 [function declarations](#associated-functions) by having a `me` parameter in
 square brackets `[`...`]` before the explicit parameter list in parens
-`(`...`)`.
+`(`...`)`. There is no implicit member access in methods, so inside the method
+body members are accessed through the `me` parameter. Methods may be written
+lexically inline or after the class declaration.
 
-FIXME
+```carbon
+class Circle {
+  fn Diameter[me: Self]() -> f32 {
+    return me.radius * 2;
+  }
+  fn Expand[addr me: Self*](distance: f32);
 
-declaration, definition, and calling into classes. The syntax for declaring
-methods has been decided in
-[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
-Summarizing that issue:
+  var center: Point;
+  var radius: f32;
+}
 
--   Accessors are written: `fn Diameter[me: Self]() -> f32 { ... }`
--   Mutators are written: `fn Expand[addr me: Self*](distance: f32) { ... }`
--   Associated functions that don't take a receiver at all, like
-    [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
-    are written: `fn Create() -> Self { ... }`
+fn Circle.Expand[addr me: Self*](distance: f32) {
+  me->radius += distance;
+}
 
-We do not expect to have implicit member access in methods, so inside the method
-body members will be accessed through the `me` parameter.
+var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
+Assert(Math.Abs(c.Diameter() - 3.0) < 0.001);
+c.Expand(0.5);
+Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
+```
 
-### Name lookup in method definitions
+-   Methods are called using using the dot `.` member syntax, `c.Diameter()` and
+    `c.Expand(`...`)`.
+-   `Diameter` computes and returns the diameter of the circle without modifying
+    the `Circle` instance. This is signified using `[me: Self]` in the method
+    declaration.
+-   `c.Expand(...)` does modify the value of `c`. This is signified using
+    `[addr me: Self*]` in the method declaration.
+
+FIXME: Meaning of `addr`
+
+#### Name lookup in method definitions
 
 FIXME
 
