@@ -42,8 +42,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Arrays and slices](#arrays-and-slices)
     -   [User-defined types](#user-defined-types)
         -   [Classes](#classes)
+            -   [Assignment, copying](#assignment-copying)
+            -   [Member access](#member-access)
+            -   [Methods](#methods)
             -   [Allocation, construction, and destruction](#allocation-construction-and-destruction)
-            -   [Assignment, copying, and moving](#assignment-copying-and-moving)
+            -   [Moving](#moving)
             -   [Comparison](#comparison)
             -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
             -   [Inline type composition](#inline-type-composition)
@@ -580,8 +583,7 @@ fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
 
 > References: [Classes](classes.md)
 
-`class`es are a way for users to define their own data strutures or named
-product types.
+Classes are a way for users to define their own data strutures or record types.
 
 For example:
 
@@ -601,14 +603,10 @@ Breaking apart `Widget`:
 -   `Widget` has one `String` member: `payload`.
 -   Given an instance `dial`, a member can be referenced with `dial.paylod`.
 
-##### Allocation, construction, and destruction
-
-> **TODO:** Needs a feature design and a high level summary provided inline.
-
-##### Assignment, copying, and moving
+##### Assignment, copying
 
 You may use a _structural data class literal_, also known as a _struct literal_,
-to assign or initialize a variable with a `class` type.
+to assign or initialize a variable with a class type.
 
 ```carbon
 var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
@@ -621,6 +619,67 @@ You may also copy one struct into another of the same type.
 var thingy: Widget = sprocket;
 sprocket = thingy;
 ```
+
+##### Member access
+
+The data members of a variable with a class type may be accessed using dot `.`
+notation:
+
+```carbon
+Assert(sprocket.x == thingy.x);
+```
+
+##### Methods
+
+Class type definitions can include methods:
+
+```carbon
+class Point {
+  fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
+    var dx: i32 = x2 - me.x;
+    var dy: i32 = y2 - me.y;
+    return Math.Sqrt(dx * dx - dy * dy);
+  }
+  fn Offset[addr me: Self*](dx: i32, dy: i32);
+
+  var x: i32;
+  var y: i32;
+}
+
+fn Point.Offset[addr me: Self*](dx: i32, dy: i32) {
+  me->x += dx;
+  me->y += dy;
+}
+
+var origin: Point = {.x = 0, .y = 0};
+Assert(Math.Abs(origin.Distance(3, 4) - 5.0) < 0.001);
+origin.Offset(3, 4);
+Assert(origin.Distance(3, 4) == 0.0);
+```
+
+This defines a `Point` class type with two integer data members `x` and `y` and
+two methods `Distance` and `Offset`:
+
+-   Methods are defined as functions with a `me` parameter inside square
+    brackets `[`...`]` before the regular explicit parameter list in parens
+    `(`...`)`.
+-   Methods are called using using the member syntax, `origin.Distance(`...`)`
+    and `origin.Offset(`...`)`.
+-   `Distance` computes and returns the distance to another point, without
+    modifying the `Point`. This is signified using `[me: Self]` in the method
+    declaration.
+-   `origin.Offset(...)` does modify the value of `origin`. This is signified
+    using `[addr me: Self*]` in the method declaration.
+-   Methods may be declared lexically inline like `Distance`, or lexically out
+    of line like `Offset`.
+
+##### Allocation, construction, and destruction
+
+> **TODO:** Needs a feature design and a high level summary provided inline.
+
+##### Moving
+
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
 ##### Comparison
 
