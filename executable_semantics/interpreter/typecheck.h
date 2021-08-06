@@ -51,8 +51,8 @@ auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;
 
 auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
-                     const Env& values) -> Declaration;
-auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext;
+                     const Env& values) -> const Declaration*;
+auto TopLevel(const std::list<const Declaration*>& fs) -> TypeCheckContext;
 
 }  // namespace Carbon
 
