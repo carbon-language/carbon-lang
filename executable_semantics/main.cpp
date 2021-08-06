@@ -39,5 +39,5 @@ int main(int argc, char* argv[]) {
   }
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(&std::get<Carbon::AST>(ast_or_error));
+  Carbon::ExecProgram(std::get<Carbon::AST>(ast_or_error));
 }
