@@ -4,8 +4,6 @@
 
 #include "executable_semantics/syntax/parse.h"
 
-#include <iostream>
-
 #include "common/check.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
@@ -23,8 +21,8 @@ auto parse(const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   yyin = fopen(input_file_name.c_str(), "r");
   if (yyin == nullptr) {
-    FATAL_USER_ERROR_NO_LINE() << "Error opening '" << input_file_name
-                               << "': " << std::strerror(errno);
+    FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
+                                  << "': " << std::strerror(errno);
   }
 
   std::optional<AST> parsed_input = std::nullopt;
