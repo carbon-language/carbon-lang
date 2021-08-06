@@ -15,75 +15,28 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Casting.h"
 
 namespace Carbon {
 
-auto Action::MakeLValAction(const Expression* e) -> Action* {
-  auto* act = global_arena->New<Action>();
-  act->value = LValAction({.exp = e});
-  return act;
-}
-
-auto Action::MakeExpressionAction(const Expression* e) -> Action* {
-  auto* act = global_arena->New<Action>();
-  act->value = ExpressionAction({.exp = e});
-  return act;
-}
-
-auto Action::MakePatternAction(const Pattern* p) -> Action* {
-  auto* act = global_arena->New<Action>();
-  act->value = PatternAction({.pattern = p});
-  return act;
-}
-
-auto Action::MakeStatementAction(const Statement* s) -> Action* {
-  auto* act = global_arena->New<Action>();
-  act->value = StatementAction({.stmt = s});
-  return act;
-}
-
-auto Action::MakeValAction(const Value* v) -> Action* {
-  auto* act = global_arena->New<Action>();
-  act->value = ValAction({.val = v});
-  return act;
-}
-
-auto Action::GetLValAction() const -> const LValAction& {
-  return std::get<LValAction>(value);
-}
-
-auto Action::GetExpressionAction() const -> const ExpressionAction& {
-  return std::get<ExpressionAction>(value);
-}
-
-auto Action::GetPatternAction() const -> const PatternAction& {
-  return std::get<PatternAction>(value);
-}
-
-auto Action::GetStatementAction() const -> const StatementAction& {
-  return std::get<StatementAction>(value);
-}
-
-auto Action::GetValAction() const -> const ValAction& {
-  return std::get<ValAction>(value);
-}
+using llvm::cast;
 
 void Action::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
-    case ActionKind::LValAction:
-      out << *GetLValAction().exp;
+  switch (Tag()) {
+    case Action::Kind::LValAction:
+      out << *cast<LValAction>(*this).Exp();
       break;
-    case ActionKind::ExpressionAction:
-      out << *GetExpressionAction().exp;
+    case Action::Kind::ExpressionAction:
+      out << *cast<ExpressionAction>(*this).Exp();
       break;
-    case ActionKind::PatternAction:
-      out << *GetPatternAction().pattern;
+    case Action::Kind::PatternAction:
+      out << *cast<PatternAction>(*this).Pat();
       break;
-    case ActionKind::StatementAction:
-      GetStatementAction().stmt->PrintDepth(1, out);
+    case Action::Kind::StatementAction:
+      cast<StatementAction>(*this).Stmt()->PrintDepth(1, out);
       break;
-    case ActionKind::ValAction:
-      out << *GetValAction().val;
+    case Action::Kind::ValAction:
+      out << *cast<ValAction>(*this).Val();
       break;
   }
   out << "<" << pos << ">";
