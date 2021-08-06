@@ -1,2 +1,2 @@
-10: error, could not deduce type argument for type parameter T
+COMPILATION ERROR: 10: could not deduce type argument for type parameter T
 EXIT CODE: 255

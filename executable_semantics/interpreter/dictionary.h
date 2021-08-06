@@ -5,7 +5,6 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_DICTIONARY_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_DICTIONARY_H_
 
-#include <iostream>
 #include <list>
 #include <optional>
 #include <string>
