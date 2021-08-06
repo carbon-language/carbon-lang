@@ -64,7 +64,8 @@ class ExitingStream {
       (Carbon::ExitingStream().print_stack() << "CHECK failure: " #condition) \
           .add_separator()
 
-// This is similar to CHECK, but is unconditional.
+// This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
+// than CHECK(false) because it avoids confusion about control flow.
 //
 // For example:
 //   FATAL() << "Unreachable!";
