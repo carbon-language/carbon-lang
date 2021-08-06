@@ -42,6 +42,7 @@ class Pattern {
   auto LineNumber() const -> int { return line_num; }
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  protected:
   // Constructs a Pattern representing syntax at the given line number.

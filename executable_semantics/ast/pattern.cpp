@@ -86,7 +86,7 @@ AlternativePattern::AlternativePattern(int line_num,
                                        const TuplePattern* arguments)
     : Pattern(Kind::AlternativePattern, line_num), arguments(arguments) {
   if (alternative->tag() != ExpressionKind::FieldAccessExpression) {
-    FATAL_USER_ERROR(alternative->line_num)
+    FATAL_PROGRAM_ERROR(alternative->line_num)
         << "Alternative pattern must have the form of a field access.";
   }
   const auto& field_access = alternative->GetFieldAccessExpression();
