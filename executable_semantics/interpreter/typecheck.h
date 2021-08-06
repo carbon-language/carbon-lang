@@ -44,11 +44,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
 auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
                       const Value* expected) -> TCPattern;
 
-auto TypeCheckStmt(const Statement*, TypeEnv, Env, Value const*&)
+auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
+                   const Value*& ret_type, bool is_omitted_ret_type)
     -> TCStatement;
-
-auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
-    -> struct FunctionDefinition*;
 
 auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
                      const Env& values) -> Declaration;

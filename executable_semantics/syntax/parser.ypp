@@ -510,10 +510,12 @@ function_definition:
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
     {
+      // The return type is not considered "omitted" because it's automatic from
+      // the expression.
       $$ = FunctionDefinition(
           yylineno, $2, $3, $4,
           global_arena->New<AutoPattern>(yylineno), true,
-          Statement::MakeReturn(yylineno, $6, false));
+          Statement::MakeReturn(yylineno, $6, true));
     }
 ;
 function_declaration:
