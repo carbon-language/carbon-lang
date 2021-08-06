@@ -14,92 +14,220 @@
 
 namespace Carbon {
 
-enum class StatementKind {
-  ExpressionStatement,
-  Assign,
-  VariableDefinition,
-  If,
-  Return,
-  Sequence,
-  Block,
-  While,
-  Break,
-  Continue,
-  Match,
-  Continuation,  // Create a first-class continuation.
-  Run,           // Run a continuation to the next await or until it finishes..
-  Await,         // Pause execution of the continuation.
-};
+class Statement {
+ public:
+  enum class Kind {
+    ExpressionStatement,
+    Assign,
+    VariableDefinition,
+    If,
+    Return,
+    Sequence,
+    Block,
+    While,
+    Break,
+    Continue,
+    Match,
+    Continuation,  // Create a first-class continuation.
+    Run,           // Run a continuation to the next await or until it finishes.
+    Await,         // Pause execution of the continuation.
+  };
 
-struct Statement {
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto Tag() const -> Kind { return tag; }
+
+  auto LineNumber() const -> int { return line_num; }
+
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  inline auto tag() const -> StatementKind {
-    return std::visit([](const auto& t) { return t.Kind; }, value);
-  }
+ protected:
+  // Constructs an Statement representing syntax at the given line number.
+  // `tag` must be the enumerator corresponding to the most-derived type being
+  // constructed.
+  Statement(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
 
+ private:
+  const Kind tag;
   int line_num;
 };
 
-struct ExpressionStatement {
-  static constexpr StatementKind Kind = StatementKind::ExpressionStatement;
+class ExpressionStatement : public Statement {
+ public:
+  explicit ExpressionStatement(int line_num, const Expression* exp)
+      : Statement(Kind::ExpressionStatement, line_num), exp(exp) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::ExpressionStatement;
+  }
+
+  auto Exp() const -> const Expression* { return exp; }
+
+ private:
   const Expression* exp;
 };
 
-struct Assign {
-  static constexpr StatementKind Kind = StatementKind::Assign;
+class Assign : public Statement {
+ public:
+  explicit Assign(int line_num, const Expression* lhs, const Expression* rhs)
+      : Statement(Kind::Assign, line_num), lhs(lhs), rhs(rhs) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Assign;
+  }
+
+  auto Lhs() const -> const Expression* { return lhs; }
+  auto Rhs() const -> const Expression* { return rhs; }
+
+ private:
   const Expression* lhs;
   const Expression* rhs;
 };
 
-struct VariableDefinition {
-  static constexpr StatementKind Kind = StatementKind::VariableDefinition;
+class VariableDefinition : public Statement {
+ public:
+  explicit VariableDefinition(int line_num, const Pattern* pat,
+                              const Expression* init)
+      : Statement(Kind::VariableDefinition, line_num), pat(pat), init(init) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::VariableDefinition;
+  }
+
+  auto Pat() const -> const Pattern* { return pat; }
+  auto Init() const -> const Expression* { return init; }
+
+ private:
   const Pattern* pat;
   const Expression* init;
 };
 
-struct If {
-  static constexpr StatementKind Kind = StatementKind::If;
+class If : public Statement {
+ public:
+  explicit If(int line_num, const Expression* cond, const Statement* then_stmt,
+              const Statement* else_stmt)
+      : Statement(Kind::If, line_num),
+        cond(cond),
+        then_stmt(then_stmt),
+        else_stmt(else_stmt) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::If;
+  }
+
+  auto Cond() const -> const Expression* { return cond; }
+  auto ThenStmt() const -> const Statement* { return then_stmt; }
+  auto ElseStmt() const -> const Statement* { return else_stmt; }
+
+ private:
   const Expression* cond;
   const Statement* then_stmt;
   const Statement* else_stmt;
 };
 
-struct Return {
-  static constexpr StatementKind Kind = StatementKind::Return;
+class Return : public Statement {
+ public:
+  explicit Return(int line_num, const Expression* exp, bool is_omitted_exp);
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Return;
+  }
+
+  auto Exp() const -> const Expression* { return exp; }
+  auto IsOmittedExp() const -> bool { return is_omitted_exp; }
+
+ private:
   const Expression* exp;
   bool is_omitted_exp;
 };
 
-struct Sequence {
-  static constexpr StatementKind Kind = StatementKind::Sequence;
+class Sequence : public Statement {
+ public:
+  explicit Sequence(int line_num, const Statement* stmt, const Statement* next)
+      : Statement(Kind::Sequence, line_num), stmt(stmt), next(next) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Sequence;
+  }
+
+  auto Stmt() const -> const Statement* { return stmt; }
+  auto Next() const -> const Statement* { return next; }
+
+ private:
   const Statement* stmt;
   const Statement* next;
 };
 
-struct Block {
-  static constexpr StatementKind Kind = StatementKind::Block;
+class Block : public Statement {
+ public:
+  explicit Block(int line_num, const Statement* stmt)
+      : Statement(Kind::Block, line_num), stmt(stmt) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Block;
+  }
+
+  auto Stmt() const -> const Statement* { return stmt; }
+
+ private:
   const Statement* stmt;
 };
 
-struct While {
-  static constexpr StatementKind Kind = StatementKind::While;
+class While : public Statement {
+ public:
+  explicit While(int line_num, const Expression* cond, const Statement* body)
+      : Statement(Kind::While, line_num), cond(cond), body(body) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::While;
+  }
+
+  auto Cond() const -> const Expression* { return cond; }
+  auto Body() const -> const Statement* { return body; }
+
+ private:
   const Expression* cond;
   const Statement* body;
 };
 
-struct Break {
-  static constexpr StatementKind Kind = StatementKind::Break;
+class Break : public Statement {
+ public:
+  explicit Break(int line_num) : Statement(Kind::Break, line_num) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Break;
+  }
 };
 
-struct Continue {
-  static constexpr StatementKind Kind = StatementKind::Continue;
+class Continue : public Statement {
+ public:
+  explicit Continue(int line_num) : Statement(Kind::Continue, line_num) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Continue;
+  }
 };
 
-struct Match {
-  static constexpr StatementKind Kind = StatementKind::Match;
+class Match : public Statement {
+ public:
+  explicit Match(
+      int line_num, const Expression* exp,
+      std::list<std::pair<const Pattern*, const Statement*>>* clauses)
+      : Statement(Kind::Match, line_num), exp(exp), clauses(clauses) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Match;
+  }
+
+  auto Exp() const -> const Expression* { return exp; }
+  auto Clauses() const
+      -> const std::list<std::pair<const Pattern*, const Statement*>>* {
+    return clauses;
+  }
+
+ private:
   const Expression* exp;
   std::list<std::pair<const Pattern*, const Statement*>>* clauses;
 };
@@ -109,8 +237,24 @@ struct Match {
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-struct Continuation {
-  static constexpr StatementKind Kind = StatementKind::Continuation;
+class Continuation : public Statement {
+ public:
+  explicit Continuation(int line_num, std::string continuation_variable,
+                        const Statement* body)
+      : Statement(Kind::Continuation, line_num),
+        continuation_variable(std::move(continuation_variable)),
+        body(body) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Continuation;
+  }
+
+  auto ContinuationVariable() const -> const std::string& {
+    return continuation_variable;
+  }
+  auto Body() const -> const Statement* { return body; }
+
+ private:
   std::string continuation_variable;
   const Statement* body;
 };
@@ -118,16 +262,31 @@ struct Continuation {
 // A run statement.
 //
 //     __run <argument>;
-struct Run {
-  static constexpr StatementKind Kind = StatementKind::Run;
+class Run : public Statement {
+ public:
+  explicit Run(int line_num, const Expression* argument)
+      : Statement(Kind::Run, line_num), argument(argument) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Run;
+  }
+
+  auto Argument() const -> const Expression* { return argument; }
+
+ private:
   const Expression* argument;
 };
 
 // An await statement.
 //
 //    __await;
-struct Await {
-  static constexpr StatementKind Kind = StatementKind::Await;
+class Await : public Statement {
+ public:
+  explicit Await(int line_num) : Statement(Kind::Await, line_num) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->Tag() == Kind::Await;
+  }
 };
 
 }  // namespace Carbon
