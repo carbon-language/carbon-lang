@@ -190,7 +190,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
   switch (operas[0]->Tag()) {
     case Value::Kind::FunctionValue: {
       const auto& fn = cast<FunctionValue>(*operas[0]);
-      // Bind.Arguments() to parameters
+      // Bind arguments to parameters
       std::list<std::string> params;
       std::optional<Env> matches =
           PatternMatch(fn.Param(), operas[1], globals, &params, line_num);
