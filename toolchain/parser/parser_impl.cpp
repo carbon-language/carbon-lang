@@ -724,7 +724,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
   // Note that `{` `}` is the first form (an empty struct), but that an empty
   // struct value also behaves as an empty struct type.
   auto start = GetSubtreeStartPosition();
-  enum Kind { Unknown, Value, Type } kind = Unknown;
+  enum Kind { Unknown, Value, Type };
+  Kind kind = Unknown;
   bool diagnosed_first_field = false;
   return ParseList(
       TokenKind::OpenCurlyBrace(), TokenKind::CloseCurlyBrace(),
