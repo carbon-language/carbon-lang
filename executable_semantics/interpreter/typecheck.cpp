@@ -731,7 +731,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       if (ret.is_omitted_exp != is_omitted_ret_type) {
         FATAL_COMPILATION_ERROR(s->line_num)
             << *s << " should" << (is_omitted_ret_type ? " not" : "")
-            << " provide a return value, to match the function's declaration.";
+            << " provide a return value, to match the function's signature.";
       }
       return TCStatement(
           Statement::MakeReturn(s->line_num, res.exp, ret.is_omitted_exp),

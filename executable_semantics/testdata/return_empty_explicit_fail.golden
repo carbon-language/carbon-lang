@@ -1,2 +1,2 @@
-COMPILATION ERROR: 6: return (); should not provide a return value, to match the function's declaration.
+COMPILATION ERROR: 6: return (); should not provide a return value, to match the function's signature.
 EXIT CODE: 255
