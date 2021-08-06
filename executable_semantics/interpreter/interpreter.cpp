@@ -132,9 +132,9 @@ void InitEnv(const Declaration& d, Env* env) {
       VarValues fields;
       VarValues methods;
       for (const Member* m : struct_def.members) {
-        switch (m->tag()) {
-          case MemberKind::FieldMember: {
-            const BindingPattern* binding = m->GetFieldMember().binding;
+        switch (m->Tag()) {
+          case Member::Kind::FieldMember: {
+            const BindingPattern* binding = cast<FieldMember>(*m).Binding();
             const Expression* type_expression =
                 cast<ExpressionPattern>(binding->Type())->Expression();
             auto type = InterpExp(Env(), type_expression);

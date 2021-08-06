@@ -24,8 +24,8 @@ using llvm::dyn_cast;
 
 namespace Carbon {
 
-void ExpectType(int line_num, const std::string& context, const Value* expected,
-                const Value* actual) {
+static void ExpectType(int line_num, const std::string& context,
+                       const Value* expected, const Value* actual) {
   if (!TypeEqual(expected, actual)) {
     FATAL_COMPILATION_ERROR(line_num) << "type error in " << context << "\n"
                                       << "expected: " << *expected << "\n"
@@ -33,8 +33,8 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
   }
 }
 
-void ExpectPointerType(int line_num, const std::string& context,
-                       const Value* actual) {
+static void ExpectPointerType(int line_num, const std::string& context,
+                              const Value* actual) {
   if (actual->Tag() != Value::Kind::PointerType) {
     FATAL_COMPILATION_ERROR(line_num) << "type error in " << context << "\n"
                                       << "expected a pointer type\n"
@@ -43,7 +43,7 @@ void ExpectPointerType(int line_num, const std::string& context,
 }
 
 // Reify type to type expression.
-auto ReifyType(const Value* t, int line_num) -> const Expression* {
+static auto ReifyType(const Value* t, int line_num) -> const Expression* {
   switch (t->Tag()) {
     case Value::Kind::IntType:
       return global_arena->New<IntTypeLiteral>(0);
@@ -93,8 +93,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 // inside the argument type.
 // The `deduced` parameter is an accumulator, that is, it holds the
 // results so-far.
-auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
-                       const Value* arg) -> TypeEnv {
+static auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
+                              const Value* arg) -> TypeEnv {
   switch (param->Tag()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
@@ -176,7 +176,7 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
   }
 }
 
-auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
+static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
   switch (type->Tag()) {
     case Value::Kind::VariableType: {
       std::optional<const Value*> t =
@@ -618,12 +618,13 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
   }
 }
 
-auto TypecheckCase(const Value* expected, const Pattern* pat,
-                   const Statement* body, TypeEnv types, Env values,
-                   const Value*& ret_type)
+static auto TypecheckCase(const Value* expected, const Pattern* pat,
+                          const Statement* body, TypeEnv types, Env values,
+                          const Value*& ret_type, bool is_omitted_ret_type)
     -> std::pair<const Pattern*, const Statement*> {
   auto pat_res = TypeCheckPattern(pat, types, values, expected);
-  auto res = TypeCheckStmt(body, pat_res.types, values, ret_type);
+  auto res =
+      TypeCheckStmt(body, pat_res.types, values, ret_type, is_omitted_ret_type);
   return std::make_pair(pat, res.stmt);
 }
 
@@ -635,7 +636,8 @@ auto TypecheckCase(const Value* expected, const Pattern* pat,
 // If the return type is "auto", then the return type is inferred from
 // the first return statement.
 auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
-                   const Value*& ret_type) -> TCStatement {
+                   const Value*& ret_type, bool is_omitted_ret_type)
+    -> TCStatement {
   if (!s) {
     return TCStatement(s, types);
   }
@@ -647,8 +649,9 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
           global_arena
               ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
       for (auto& clause : *s->GetMatch().clauses) {
-        new_clauses->push_back(TypecheckCase(
-            res_type, clause.first, clause.second, types, values, ret_type));
+        new_clauses->push_back(TypecheckCase(res_type, clause.first,
+                                             clause.second, types, values,
+                                             ret_type, is_omitted_ret_type));
       }
       const Statement* new_s =
           Statement::MakeMatch(s->line_num, res.exp, new_clauses);
@@ -658,8 +661,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto cnd_res = TypeCheckExp(s->GetWhile().cond, types, values);
       ExpectType(s->line_num, "condition of `while`",
                  global_arena->New<BoolType>(), cnd_res.type);
-      auto body_res =
-          TypeCheckStmt(s->GetWhile().body, types, values, ret_type);
+      auto body_res = TypeCheckStmt(s->GetWhile().body, types, values, ret_type,
+                                    is_omitted_ret_type);
       auto new_s =
           Statement::MakeWhile(s->line_num, cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, types);
@@ -668,8 +671,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
     case StatementKind::Continue:
       return TCStatement(s, types);
     case StatementKind::Block: {
-      auto stmt_res =
-          TypeCheckStmt(s->GetBlock().stmt, types, values, ret_type);
+      auto stmt_res = TypeCheckStmt(s->GetBlock().stmt, types, values, ret_type,
+                                    is_omitted_ret_type);
       return TCStatement(Statement::MakeBlock(s->line_num, stmt_res.stmt),
                          types);
     }
@@ -683,11 +686,11 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::Sequence: {
-      auto stmt_res =
-          TypeCheckStmt(s->GetSequence().stmt, types, values, ret_type);
+      auto stmt_res = TypeCheckStmt(s->GetSequence().stmt, types, values,
+                                    ret_type, is_omitted_ret_type);
       auto types2 = stmt_res.types;
-      auto next_res =
-          TypeCheckStmt(s->GetSequence().next, types2, values, ret_type);
+      auto next_res = TypeCheckStmt(s->GetSequence().next, types2, values,
+                                    ret_type, is_omitted_ret_type);
       auto types3 = next_res.types;
       return TCStatement(
           Statement::MakeSequence(s->line_num, stmt_res.stmt, next_res.stmt),
@@ -711,16 +714,17 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto cnd_res = TypeCheckExp(s->GetIf().cond, types, values);
       ExpectType(s->line_num, "condition of `if`",
                  global_arena->New<BoolType>(), cnd_res.type);
-      auto thn_res =
-          TypeCheckStmt(s->GetIf().then_stmt, types, values, ret_type);
-      auto els_res =
-          TypeCheckStmt(s->GetIf().else_stmt, types, values, ret_type);
+      auto thn_res = TypeCheckStmt(s->GetIf().then_stmt, types, values,
+                                   ret_type, is_omitted_ret_type);
+      auto els_res = TypeCheckStmt(s->GetIf().else_stmt, types, values,
+                                   ret_type, is_omitted_ret_type);
       auto new_s = Statement::MakeIf(s->line_num, cnd_res.exp, thn_res.stmt,
                                      els_res.stmt);
       return TCStatement(new_s, types);
     }
     case StatementKind::Return: {
-      auto res = TypeCheckExp(s->GetReturn().exp, types, values);
+      const auto& ret = s->GetReturn();
+      auto res = TypeCheckExp(ret.exp, types, values);
       if (ret_type->Tag() == Value::Kind::AutoType) {
         // The following infers the return type from the first 'return'
         // statement. This will get more difficult with subtyping, when we
@@ -729,13 +733,19 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
-      return TCStatement(Statement::MakeReturn(s->line_num, res.exp,
-                                               s->GetReturn().is_omitted_exp),
-                         types);
+      if (ret.is_omitted_exp != is_omitted_ret_type) {
+        FATAL_COMPILATION_ERROR(s->line_num)
+            << *s << " should" << (is_omitted_ret_type ? " not" : "")
+            << " provide a return value, to match the function's signature.";
+      }
+      return TCStatement(
+          Statement::MakeReturn(s->line_num, res.exp, ret.is_omitted_exp),
+          types);
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
-          TypeCheckStmt(s->GetContinuation().body, types, values, ret_type);
+          TypeCheckStmt(s->GetContinuation().body, types, values, ret_type,
+                        is_omitted_ret_type);
       const Statement* new_continuation = Statement::MakeContinuation(
           s->line_num, s->GetContinuation().continuation_variable,
           body_result.stmt);
@@ -759,15 +769,16 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
   }  // switch
 }
 
-auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
-    -> const Statement* {
+static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
+                                int line_num) -> const Statement* {
   if (!stmt) {
-    if (void_return) {
+    if (omitted_ret_type) {
       return Statement::MakeReturn(line_num, nullptr,
                                    /*is_omitted_exp=*/true);
     } else {
       FATAL_COMPILATION_ERROR(line_num)
-          << "control-flow reaches end of non-void function without a return";
+          << "control-flow reaches end of function that provides a `->` return "
+             "type without reaching a return statement";
     }
   }
   switch (stmt->tag()) {
@@ -777,7 +788,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
               ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
       for (auto i = stmt->GetMatch().clauses->begin();
            i != stmt->GetMatch().clauses->end(); ++i) {
-        auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
+        auto s =
+            CheckOrEnsureReturn(i->second, omitted_ret_type, stmt->line_num);
         new_clauses->push_back(std::make_pair(i->first, s));
       }
       return Statement::MakeMatch(stmt->line_num, stmt->GetMatch().exp,
@@ -785,14 +797,15 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     }
     case StatementKind::Block:
       return Statement::MakeBlock(
-          stmt->line_num, CheckOrEnsureReturn(stmt->GetBlock().stmt,
-                                              void_return, stmt->line_num));
+          stmt->line_num,
+          CheckOrEnsureReturn(stmt->GetBlock().stmt, omitted_ret_type,
+                              stmt->line_num));
     case StatementKind::If:
       return Statement::MakeIf(
           stmt->line_num, stmt->GetIf().cond,
-          CheckOrEnsureReturn(stmt->GetIf().then_stmt, void_return,
+          CheckOrEnsureReturn(stmt->GetIf().then_stmt, omitted_ret_type,
                               stmt->line_num),
-          CheckOrEnsureReturn(stmt->GetIf().else_stmt, void_return,
+          CheckOrEnsureReturn(stmt->GetIf().else_stmt, omitted_ret_type,
                               stmt->line_num));
     case StatementKind::Return:
       return stmt;
@@ -800,10 +813,10 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
       if (stmt->GetSequence().next) {
         return Statement::MakeSequence(
             stmt->line_num, stmt->GetSequence().stmt,
-            CheckOrEnsureReturn(stmt->GetSequence().next, void_return,
+            CheckOrEnsureReturn(stmt->GetSequence().next, omitted_ret_type,
                                 stmt->line_num));
       } else {
-        return CheckOrEnsureReturn(stmt->GetSequence().stmt, void_return,
+        return CheckOrEnsureReturn(stmt->GetSequence().stmt, omitted_ret_type,
                                    stmt->line_num);
       }
     case StatementKind::Continuation:
@@ -816,14 +829,15 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
-      if (void_return) {
+      if (omitted_ret_type) {
         return Statement::MakeSequence(
             stmt->line_num, stmt,
             Statement::MakeReturn(line_num, nullptr,
                                   /*is_omitted_exp=*/true));
       } else {
         FATAL_COMPILATION_ERROR(stmt->line_num)
-            << "control-flow reaches end of non-void function without a return";
+            << "control-flow reaches end of function that provides a `->` "
+               "return type without reaching a return statement";
       }
   }
 }
@@ -832,8 +846,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
 // a function.
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
-auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
-    -> struct FunctionDefinition* {
+static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
+                            Env values) -> struct FunctionDefinition* {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
@@ -850,17 +864,18 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
                global_arena->New<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
-  auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
-  bool void_return = TypeEqual(return_type, &TupleValue::Empty());
-  auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
+  auto res = TypeCheckStmt(f->body, param_res.types, values, return_type,
+                           f->is_omitted_return_type);
+  auto body =
+      CheckOrEnsureReturn(res.stmt, f->is_omitted_return_type, f->line_num);
   return global_arena->New<FunctionDefinition>(
       f->line_num, f->name, f->deduced_parameters, f->param_pattern,
       global_arena->New<ExpressionPattern>(ReifyType(return_type, f->line_num)),
       /*is_omitted_return_type=*/false, body);
 }
 
-auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
-    -> const Value* {
+static auto TypeOfFunDef(TypeEnv types, Env values,
+                         const FunctionDefinition* fun_def) -> const Value* {
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
@@ -881,14 +896,14 @@ auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
                                          param_res.type, ret);
 }
 
-auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
-    -> const Value* {
+static auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/,
+                            Env ct_top) -> const Value* {
   VarValues fields;
   VarValues methods;
   for (const Member* m : sd->members) {
-    switch (m->tag()) {
-      case MemberKind::FieldMember: {
-        const BindingPattern* binding = m->GetFieldMember().binding;
+    switch (m->Tag()) {
+      case Member::Kind::FieldMember: {
+        const BindingPattern* binding = cast<FieldMember>(*m).Binding();
         if (!binding->Name().has_value()) {
           FATAL_COMPILATION_ERROR(binding->LineNumber())
               << "Struct members must have names";
@@ -940,8 +955,8 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
           cast<StructDeclaration>(d).Definition();
       std::list<Member*> fields;
       for (Member* m : struct_def.members) {
-        switch (m->tag()) {
-          case MemberKind::FieldMember:
+        switch (m->Tag()) {
+          case Member::Kind::FieldMember:
             // TODO: Interpret the type expression and store the result.
             fields.push_back(m);
             break;
