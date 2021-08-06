@@ -71,7 +71,7 @@ auto ParenContents<Term>::TupleElements(int line_num) const
       result.push_back(TupleElement(*element.name, element.term));
     } else {
       if (seen_named_member) {
-        FATAL_USER_ERROR(line_num)
+        FATAL_PROGRAM_ERROR(line_num)
             << "positional members must come before named members";
       }
       result.push_back(TupleElement(std::to_string(i), element.term));

@@ -99,8 +99,7 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Ptr:
       return global_arena->New<PointerType>(args[0]);
     case Operator::Deref:
-      llvm::errs() << line_num << ": dereference not implemented yet\n";
-      exit(-1);
+      FATAL() << "dereference not implemented yet";
   }
 }
 
@@ -300,10 +299,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return values;
         }
         default:
-          llvm::errs()
-              << "internal error, expected a tuple value in pattern, not " << *v
-              << "\n";
-          exit(-1);
+          FATAL() << "expected a tuple value in pattern, not " << *v;
       }
     case Value::Kind::AlternativeValue:
       switch (v->Tag()) {
@@ -322,11 +318,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
           return *matches;
         }
         default:
-          llvm::errs()
-              << "internal error, expected a choice alternative in pattern, "
-                 "not "
-              << *v << "\n";
-          exit(-1);
+          FATAL() << "expected a choice alternative in pattern, not " << *v;
       }
     case Value::Kind::FunctionType:
       switch (v->Tag()) {
@@ -379,11 +371,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          llvm::errs()
-              << "internal error, expected a tuple value on right-hand-side, "
-                 "not "
-              << *val << "\n";
-          exit(-1);
+          FATAL() << "expected a tuple value on right-hand-side, not " << *val;
       }
       break;
     }
@@ -399,11 +387,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           break;
         }
         default:
-          llvm::errs()
-              << "internal error, expected an alternative in left-hand-side, "
-                 "not "
-              << *val << "\n";
-          exit(-1);
+          FATAL() << "expected an alternative in left-hand-side, not " << *val;
       }
       break;
     }
@@ -430,8 +414,7 @@ void StepLvalue() {
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
         FATAL_RUNTIME_ERROR(exp->line_num)
-            << ": could not find `" << exp->GetIdentifierExpression().name
-            << "`";
+            << "could not find `" << exp->GetIdentifierExpression().name << "`";
       }
       const Value* v = global_arena->New<PointerValue>(*pointer);
       frame->todo.Pop();
@@ -613,8 +596,7 @@ void StepExp() {
           CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
       if (!pointer) {
         FATAL_RUNTIME_ERROR(exp->line_num)
-            << ": could not find `" << exp->GetIdentifierExpression().name
-            << "`";
+            << "could not find `" << exp->GetIdentifierExpression().name << "`";
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
@@ -673,8 +655,7 @@ void StepExp() {
         frame->todo.Pop(1);
         CallFunction(exp->line_num, act->Results(), state);
       } else {
-        llvm::errs() << "internal error in handle_value with Call\n";
-        exit(-1);
+        FATAL() << "in handle_value with Call pos " << act->Pos();
       }
       break;
     case ExpressionKind::IntTypeLiteral: {
@@ -763,8 +744,7 @@ void StepPattern() {
       if (act->Pos() == 0) {
         if (tuple.Fields().empty()) {
           frame->todo.Pop(1);
-          frame->todo.Push(global_arena->New<ValAction>(
-              global_arena->New<TupleValue>(std::vector<TupleElement>())));
+          frame->todo.Push(global_arena->New<ValAction>(&TupleValue::Empty()));
         } else {
           const Pattern* p1 = tuple.Fields()[0].pattern;
           frame->todo.Push(global_arena->New<PatternAction>(p1));

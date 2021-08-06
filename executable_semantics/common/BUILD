@@ -17,7 +17,7 @@ cc_library(
     name = "error",
     hdrs = ["error.h"],
     deps = [
-        "@llvm-project//llvm:Support",
+        "//common:check",
     ],
 )
 
