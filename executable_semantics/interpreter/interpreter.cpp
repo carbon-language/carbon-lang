@@ -759,8 +759,7 @@ void StepPattern() {
       if (act->pos == 0) {
         if (tuple.Fields().empty()) {
           frame->todo.Pop(1);
-          frame->todo.Push(Action::MakeValAction(
-              global_arena->New<TupleValue>(std::vector<TupleElement>())));
+          frame->todo.Push(Action::MakeValAction(&TupleValue::Empty()));
         } else {
           const Pattern* p1 = tuple.Fields()[0].pattern;
           frame->todo.Push(Action::MakePatternAction(p1));
