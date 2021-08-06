@@ -136,6 +136,9 @@ def _update_goldens():
     # pyenv then modifies the PATH, which affects build caching. In order to
     # mimic the calling environment for bazel, this strips out PATH entries
     # which pyenv likely added.
+    # TODO: remove this when/if we're able to add
+    # `--incompatible_strict_action_env=true` to the project .bazelrc, because
+    # that will cause Bazel to ignore PATH.
     env = os.environ.copy()
     stripped_path = []
     for x in env["PATH"].split(":"):
