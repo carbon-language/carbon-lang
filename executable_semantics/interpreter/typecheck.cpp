@@ -24,8 +24,8 @@ using llvm::dyn_cast;
 
 namespace Carbon {
 
-void ExpectType(int line_num, const std::string& context, const Value* expected,
-                const Value* actual) {
+static void ExpectType(int line_num, const std::string& context,
+                       const Value* expected, const Value* actual) {
   if (!TypeEqual(expected, actual)) {
     FATAL_COMPILATION_ERROR(line_num) << "type error in " << context << "\n"
                                       << "expected: " << *expected << "\n"
@@ -33,8 +33,8 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
   }
 }
 
-void ExpectPointerType(int line_num, const std::string& context,
-                       const Value* actual) {
+static void ExpectPointerType(int line_num, const std::string& context,
+                              const Value* actual) {
   if (actual->Tag() != Value::Kind::PointerType) {
     FATAL_COMPILATION_ERROR(line_num) << "type error in " << context << "\n"
                                       << "expected a pointer type\n"
@@ -43,7 +43,7 @@ void ExpectPointerType(int line_num, const std::string& context,
 }
 
 // Reify type to type expression.
-auto ReifyType(const Value* t, int line_num) -> const Expression* {
+static auto ReifyType(const Value* t, int line_num) -> const Expression* {
   switch (t->Tag()) {
     case Value::Kind::IntType:
       return Expression::MakeIntTypeLiteral(0);
@@ -92,8 +92,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 // inside the argument type.
 // The `deduced` parameter is an accumulator, that is, it holds the
 // results so-far.
-auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
-                       const Value* arg) -> TypeEnv {
+static auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
+                              const Value* arg) -> TypeEnv {
   switch (param->Tag()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
@@ -175,7 +175,7 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
   }
 }
 
-auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
+static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
   switch (type->Tag()) {
     case Value::Kind::VariableType: {
       std::optional<const Value*> t =
@@ -764,8 +764,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
   }  // switch
 }
 
-auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
-                         int line_num) -> const Statement* {
+static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
+                                int line_num) -> const Statement* {
   if (!stmt) {
     if (omitted_ret_type) {
       return Statement::MakeReturn(line_num, nullptr,
@@ -869,8 +869,8 @@ static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
       /*is_omitted_return_type=*/false, body);
 }
 
-auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
-    -> const Value* {
+static auto TypeOfFunDef(TypeEnv types, Env values,
+                         const FunctionDefinition* fun_def) -> const Value* {
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
@@ -891,8 +891,8 @@ auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
                                          param_res.type, ret);
 }
 
-auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
-    -> const Value* {
+static auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/,
+                            Env ct_top) -> const Value* {
   VarValues fields;
   VarValues methods;
   for (const Member* m : sd->members) {
