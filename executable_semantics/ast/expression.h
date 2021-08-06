@@ -16,8 +16,43 @@
 
 namespace Carbon {
 
-struct Expression;
-class Pattern;
+class Expression {
+ public:
+  enum class Kind {
+    BoolTypeLiteral,
+    BoolLiteral,
+    CallExpression,
+    FunctionTypeLiteral,
+    FieldAccessExpression,
+    IndexExpression,
+    IntTypeLiteral,
+    ContinuationTypeLiteral,  // The type of a continuation value.
+    IntLiteral,
+    PrimitiveOperatorExpression,
+    TupleLiteral,
+    TypeTypeLiteral,
+    IdentifierExpression,
+  };
+
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto Tag() const -> Kind { return tag; }
+
+  auto LineNumber() const -> int { return line_num; }
+
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+ protected:
+  // Constructs an Expression representing syntax at the given line number.
+  // `tag` must be the enumerator corresponding to the most-derived type being
+  // constructed.
+  Expression(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
+
+ private:
+  const Kind tag;
+  int line_num;
+};
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
@@ -44,22 +79,6 @@ struct FieldInitializer {
   const Expression* expression;
 };
 
-enum class ExpressionKind {
-  BoolTypeLiteral,
-  BoolLiteral,
-  CallExpression,
-  FunctionTypeLiteral,
-  FieldAccessExpression,
-  IndexExpression,
-  IntTypeLiteral,
-  ContinuationTypeLiteral,  // The type of a continuation value.
-  IntLiteral,
-  PrimitiveOperatorExpression,
-  TupleLiteral,
-  TypeTypeLiteral,
-  IdentifierExpression,
-};
-
 enum class Operator {
   Add,
   And,
@@ -73,129 +92,213 @@ enum class Operator {
   Ptr,
 };
 
-struct Expression;
+class IdentifierExpression : public Expression {
+ public:
+  explicit IdentifierExpression(int line_num, std::string name)
+      : Expression(Kind::IdentifierExpression, line_num),
+        name(std::move(name)) {}
 
-struct IdentifierExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::IdentifierExpression;
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::IdentifierExpression;
+  }
+
+  auto Name() const -> const std::string& { return name; }
+
+ private:
   std::string name;
 };
 
-struct FieldAccessExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::FieldAccessExpression;
+class FieldAccessExpression : public Expression {
+ public:
+  explicit FieldAccessExpression(int line_num, const Expression* aggregate,
+                                 std::string field)
+      : Expression(Kind::FieldAccessExpression, line_num),
+        aggregate(aggregate),
+        field(std::move(field)) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::FieldAccessExpression;
+  }
+
+  auto Aggregate() const -> const Expression* { return aggregate; }
+  auto Field() const -> const std::string& { return field; }
+
+ private:
   const Expression* aggregate;
   std::string field;
 };
 
-struct IndexExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::IndexExpression;
+class IndexExpression : public Expression {
+ public:
+  explicit IndexExpression(int line_num, const Expression* aggregate,
+                           const Expression* offset)
+      : Expression(Kind::IndexExpression, line_num),
+        aggregate(aggregate),
+        offset(offset) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::IndexExpression;
+  }
+
+  auto Aggregate() const -> const Expression* { return aggregate; }
+  auto Offset() const -> const Expression* { return offset; }
+
+ private:
   const Expression* aggregate;
   const Expression* offset;
 };
 
-struct IntLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::IntLiteral;
-  int value;
+class IntLiteral : public Expression {
+ public:
+  explicit IntLiteral(int line_num, int val)
+      : Expression(Kind::IntLiteral, line_num), val(val) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::IntLiteral;
+  }
+
+  auto Val() const -> int { return val; }
+
+ private:
+  int val;
 };
 
-struct BoolLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::BoolLiteral;
-  bool value;
+class BoolLiteral : public Expression {
+ public:
+  explicit BoolLiteral(int line_num, bool val)
+      : Expression(Kind::BoolLiteral, line_num), val(val) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::BoolLiteral;
+  }
+
+  auto Val() const -> bool { return val; }
+
+ private:
+  bool val;
 };
 
-struct TupleLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::TupleLiteral;
+class TupleLiteral : public Expression {
+ public:
+  explicit TupleLiteral(int line_num) : TupleLiteral(line_num, {}) {}
+
+  explicit TupleLiteral(int line_num, std::vector<FieldInitializer> fields)
+      : Expression(Kind::TupleLiteral, line_num), fields(std::move(fields)) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::TupleLiteral;
+  }
+
+  auto Fields() const -> const std::vector<FieldInitializer>& { return fields; }
+
+ private:
   std::vector<FieldInitializer> fields;
 };
 
-struct PrimitiveOperatorExpression {
-  static constexpr ExpressionKind Kind =
-      ExpressionKind::PrimitiveOperatorExpression;
+class PrimitiveOperatorExpression : public Expression {
+ public:
+  explicit PrimitiveOperatorExpression(int line_num, Operator op,
+                                       std::vector<const Expression*> arguments)
+      : Expression(Kind::PrimitiveOperatorExpression, line_num),
+        op(op),
+        arguments(std::move(arguments)) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::PrimitiveOperatorExpression;
+  }
+
+  auto Op() const -> Operator { return op; }
+  auto Arguments() const -> const std::vector<const Expression*>& {
+    return arguments;
+  }
+
+ private:
   Operator op;
   std::vector<const Expression*> arguments;
 };
 
-struct CallExpression {
-  static constexpr ExpressionKind Kind = ExpressionKind::CallExpression;
+class CallExpression : public Expression {
+ public:
+  explicit CallExpression(int line_num, const Expression* function,
+                          const Expression* argument)
+      : Expression(Kind::CallExpression, line_num),
+        function(function),
+        argument(argument) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::CallExpression;
+  }
+
+  auto Function() const -> const Expression* { return function; }
+  auto Argument() const -> const Expression* { return argument; }
+
+ private:
   const Expression* function;
   const Expression* argument;
 };
 
-struct FunctionTypeLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::FunctionTypeLiteral;
+class FunctionTypeLiteral : public Expression {
+ public:
+  explicit FunctionTypeLiteral(int line_num, const Expression* parameter,
+                               const Expression* return_type,
+                               bool is_omitted_return_type)
+      : Expression(Kind::FunctionTypeLiteral, line_num),
+        parameter(parameter),
+        return_type(return_type),
+        is_omitted_return_type(is_omitted_return_type) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::FunctionTypeLiteral;
+  }
+
+  auto Parameter() const -> const Expression* { return parameter; }
+  auto ReturnType() const -> const Expression* { return return_type; }
+  auto IsOmittedReturnType() const -> bool { return is_omitted_return_type; }
+
+ private:
   const Expression* parameter;
   const Expression* return_type;
   bool is_omitted_return_type;
 };
 
-struct BoolTypeLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::BoolTypeLiteral;
-};
+class BoolTypeLiteral : public Expression {
+ public:
+  explicit BoolTypeLiteral(int line_num)
+      : Expression(Kind::BoolTypeLiteral, line_num) {}
 
-struct IntTypeLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::IntTypeLiteral;
-};
-
-struct ContinuationTypeLiteral {
-  static constexpr ExpressionKind Kind =
-      ExpressionKind::ContinuationTypeLiteral;
-};
-
-struct TypeTypeLiteral {
-  static constexpr ExpressionKind Kind = ExpressionKind::TypeTypeLiteral;
-};
-
-struct Expression {
-  static auto MakeIdentifierExpression(int line_num, std::string var)
-      -> const Expression*;
-  static auto MakeIntLiteral(int line_num, int i) -> const Expression*;
-  static auto MakeBoolLiteral(int line_num, bool b) -> const Expression*;
-  static auto MakePrimitiveOperatorExpression(
-      int line_num, Operator op, std::vector<const Expression*> args)
-      -> const Expression*;
-  static auto MakeCallExpression(int line_num, const Expression* fun,
-                                 const Expression* arg) -> const Expression*;
-  static auto MakeFieldAccessExpression(int line_num, const Expression* exp,
-                                        std::string field) -> const Expression*;
-  static auto MakeTupleLiteral(int line_num, std::vector<FieldInitializer> args)
-      -> const Expression*;
-  static auto MakeIndexExpression(int line_num, const Expression* exp,
-                                  const Expression* i) -> const Expression*;
-  static auto MakeTypeTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeIntTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeBoolTypeLiteral(int line_num) -> const Expression*;
-  static auto MakeFunctionTypeLiteral(int line_num, const Expression* parameter,
-                                      const Expression* return_type,
-                                      bool is_omitted_return_type)
-      -> const Expression*;
-  static auto MakeContinuationTypeLiteral(int line_num) -> const Expression*;
-
-  auto GetIdentifierExpression() const -> const IdentifierExpression&;
-  auto GetFieldAccessExpression() const -> const FieldAccessExpression&;
-  auto GetIndexExpression() const -> const IndexExpression&;
-  auto GetIntLiteral() const -> int;
-  auto GetBoolLiteral() const -> bool;
-  auto GetTupleLiteral() const -> const TupleLiteral&;
-  auto GetPrimitiveOperatorExpression() const
-      -> const PrimitiveOperatorExpression&;
-  auto GetCallExpression() const -> const CallExpression&;
-  auto GetFunctionTypeLiteral() const -> const FunctionTypeLiteral&;
-
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
-  inline auto tag() const -> ExpressionKind {
-    return std::visit([](const auto& t) { return t.Kind; }, value);
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::BoolTypeLiteral;
   }
+};
 
-  int line_num;
+class IntTypeLiteral : public Expression {
+ public:
+  explicit IntTypeLiteral(int line_num)
+      : Expression(Kind::IntTypeLiteral, line_num) {}
 
- private:
-  std::variant<IdentifierExpression, FieldAccessExpression, IndexExpression,
-               IntLiteral, BoolLiteral, TupleLiteral,
-               PrimitiveOperatorExpression, CallExpression, FunctionTypeLiteral,
-               BoolTypeLiteral, IntTypeLiteral, ContinuationTypeLiteral,
-               TypeTypeLiteral>
-      value;
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::IntTypeLiteral;
+  }
+};
+
+class ContinuationTypeLiteral : public Expression {
+ public:
+  explicit ContinuationTypeLiteral(int line_num)
+      : Expression(Kind::ContinuationTypeLiteral, line_num) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::ContinuationTypeLiteral;
+  }
+};
+
+class TypeTypeLiteral : public Expression {
+ public:
+  explicit TypeTypeLiteral(int line_num)
+      : Expression(Kind::TypeTypeLiteral, line_num) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::TypeTypeLiteral;
+  }
 };
 
 }  // namespace Carbon

@@ -111,7 +111,7 @@ class TuplePattern : public Pattern {
   // Converts tuple_literal to a TuplePattern, by wrapping each field in an
   // ExpressionPattern.
   //
-  // REQUIRES: tuple_literal->Tag() == ExpressionKind::TupleLiteral
+  // REQUIRES: tuple_literal->Tag() == Expression::Kind::TupleLiteral
   explicit TuplePattern(const Expression* tuple_literal);
 
   static auto classof(const Pattern* pattern) -> bool {
@@ -182,7 +182,7 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   ExpressionPattern(const Expression* expression)
-      : Pattern(Kind::ExpressionPattern, expression->line_num),
+      : Pattern(Kind::ExpressionPattern, expression->LineNumber()),
         expression(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {
