@@ -530,7 +530,7 @@ variable_declaration: identifier ":" pattern
     { $$ = global_arena->New<BindingPattern>(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
-    { $$ = Member::MakeFieldMember(yylineno, $2); }
+    { $$ = global_arena->New<FieldMember>(yylineno, $2); }
 ;
 member_list:
   // Empty
