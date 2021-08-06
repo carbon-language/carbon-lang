@@ -30,7 +30,15 @@ class Action {
   Action(const Value&) = delete;
   Action& operator=(const Value&) = delete;
 
+  // The position or state of the action. Starts at 0 and goes up to the number
+  // of subexpressions.
+  //
+  // pos indicates how many of the entries in the following `results` vector
+  // will be filled in the next time this action is active.
+  // For each i < pos, results[i] contains a pointer to a Value.
   auto Pos() const -> int { return pos; }
+
+  // Results from a subexpression.
   auto Results() const -> const std::vector<const Value*>& { return results; }
 
   void IncrementPos() { ++pos; }
@@ -57,15 +65,7 @@ class Action {
   explicit Action(Kind tag) : tag(tag) {}
 
  private:
-  // The position or state of the action. Starts at 0 and goes up to the number
-  // of subexpressions.
-  //
-  // pos indicates how many of the entries in the following `results` vector
-  // will be filled in the next time this action is active.
-  // For each i < pos, results[i] contains a pointer to a Value.
   int pos = 0;
-
-  // Results from a subexpression.
   std::vector<const Value*> results;
 
   const Kind tag;
