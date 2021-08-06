@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/syntax/paren_contents.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -52,9 +53,9 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
   //   42
   // )
   // ```
-  auto term = std::make_unique<IntLiteral>(/*line_num=*/2, 42);
   ParenContents<Expression> contents = {
-      .elements = {{.name = std::nullopt, .term = term.get()}},
+      .elements = {{.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/2, 42)}},
       .has_trailing_comma = false};
 
   const Expression* expression =
@@ -64,9 +65,9 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
 }
 
 TEST(ExpressionTest, UnaryNoCommaAsTuple) {
-  auto term = std::make_unique<IntLiteral>(/*line_num=*/2, 42);
   ParenContents<Expression> contents = {
-      .elements = {{.name = std::nullopt, .term = term.get()}},
+      .elements = {{.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/2, 42)}},
       .has_trailing_comma = false};
 
   const Expression* tuple =
@@ -78,9 +79,9 @@ TEST(ExpressionTest, UnaryNoCommaAsTuple) {
 }
 
 TEST(ExpressionTest, UnaryWithCommaAsExpression) {
-  auto term = std::make_unique<IntLiteral>(/*line_num=*/2, 42);
   ParenContents<Expression> contents = {
-      .elements = {{.name = std::nullopt, .term = term.get()}},
+      .elements = {{.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/2, 42)}},
       .has_trailing_comma = true};
 
   const Expression* expression =
@@ -92,9 +93,9 @@ TEST(ExpressionTest, UnaryWithCommaAsExpression) {
 }
 
 TEST(ExpressionTest, UnaryWithCommaAsTuple) {
-  auto term = std::make_unique<IntLiteral>(/*line_num=*/2, 42);
   ParenContents<Expression> contents = {
-      .elements = {{.name = std::nullopt, .term = term.get()}},
+      .elements = {{.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/2, 42)}},
       .has_trailing_comma = true};
 
   const Expression* tuple =
@@ -106,11 +107,11 @@ TEST(ExpressionTest, UnaryWithCommaAsTuple) {
 }
 
 TEST(ExpressionTest, BinaryAsExpression) {
-  auto term1 = std::make_unique<IntLiteral>(/*line_num=*/2, 42);
-  auto term2 = std::make_unique<IntLiteral>(/*line_num=*/3, 42);
   ParenContents<Expression> contents = {
-      .elements = {{.name = std::nullopt, .term = term1.get()},
-                   {.name = std::nullopt, .term = term2.get()}},
+      .elements = {{.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/2, 42)},
+                   {.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/3, 42)}},
       .has_trailing_comma = true};
 
   const Expression* expression =
@@ -122,11 +123,11 @@ TEST(ExpressionTest, BinaryAsExpression) {
 }
 
 TEST(ExpressionTest, BinaryAsTuple) {
-  auto term1 = std::make_unique<IntLiteral>(/*line_num=*/2, 42);
-  auto term2 = std::make_unique<IntLiteral>(/*line_num=*/3, 42);
   ParenContents<Expression> contents = {
-      .elements = {{.name = std::nullopt, .term = term1.get()},
-                   {.name = std::nullopt, .term = term2.get()}},
+      .elements = {{.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/2, 42)},
+                   {.name = std::nullopt,
+                    .term = global_arena->New<IntLiteral>(/*line_num=*/3, 42)}},
       .has_trailing_comma = true};
 
   const Expression* tuple =
