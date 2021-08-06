@@ -107,10 +107,10 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
 static Env globals;
 
 void InitEnv(const Declaration& d, Env* env) {
-  switch (d.tag()) {
-    case DeclarationKind::FunctionDeclaration: {
+  switch (d.Tag()) {
+    case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
-          d.GetFunctionDeclaration().definition;
+          cast<FunctionDeclaration>(d).Definition();
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters) {
@@ -126,8 +126,9 @@ void InitEnv(const Declaration& d, Env* env) {
       break;
     }
 
-    case DeclarationKind::StructDeclaration: {
-      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
+    case Declaration::Kind::StructDeclaration: {
+      const StructDefinition& struct_def =
+          cast<StructDeclaration>(d).Definition();
       VarValues fields;
       VarValues methods;
       for (const Member* m : struct_def.members) {
@@ -149,34 +150,34 @@ void InitEnv(const Declaration& d, Env* env) {
       break;
     }
 
-    case DeclarationKind::ChoiceDeclaration: {
-      const auto& choice = d.GetChoiceDeclaration();
+    case Declaration::Kind::ChoiceDeclaration: {
+      const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
-      for (const auto& [name, signature] : choice.alternatives) {
+      for (const auto& [name, signature] : choice.Alternatives()) {
         auto t = InterpExp(Env(), signature);
         alts.push_back(make_pair(name, t));
       }
-      auto ct = global_arena->New<ChoiceType>(choice.name, std::move(alts));
+      auto ct = global_arena->New<ChoiceType>(choice.Name(), std::move(alts));
       auto a = state->heap.AllocateValue(ct);
-      env->Set(choice.name, a);
+      env->Set(choice.Name(), a);
       break;
     }
 
-    case DeclarationKind::VariableDeclaration: {
-      const auto& var = d.GetVariableDeclaration();
+    case Declaration::Kind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(d);
       // Adds an entry in `globals` mapping the variable's name to the
       // result of evaluating the initializer.
-      auto v = InterpExp(*env, var.initializer);
+      auto v = InterpExp(*env, var.Initializer());
       Address a = state->heap.AllocateValue(v);
-      env->Set(*var.binding->Name(), a);
+      env->Set(*var.Binding()->Name(), a);
       break;
     }
   }
 }
 
-static void InitGlobals(std::list<Declaration>* fs) {
-  for (auto const& d : *fs) {
-    InitEnv(d, &globals);
+static void InitGlobals(const std::list<const Declaration*>& fs) {
+  for (const auto* d : fs) {
+    InitEnv(*d, &globals);
   }
 }
 
@@ -1182,7 +1183,7 @@ void Step() {
 }
 
 // Interpret the whole porogram.
-auto InterpProgram(std::list<Declaration>* fs) -> int {
+auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
   state = global_arena->New<State>();  // Runtime state.
   if (tracing_output) {
     llvm::outs() << "********** initializing globals **********\n";
