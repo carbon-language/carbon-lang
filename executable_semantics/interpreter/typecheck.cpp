@@ -905,15 +905,15 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
-  switch (d.tag()) {
-    case DeclarationKind::FunctionDeclaration:
-      return d.GetFunctionDeclaration().definition.name;
-    case DeclarationKind::StructDeclaration:
-      return d.GetStructDeclaration().definition.name;
-    case DeclarationKind::ChoiceDeclaration:
-      return d.GetChoiceDeclaration().name;
-    case DeclarationKind::VariableDeclaration: {
-      const BindingPattern* binding = d.GetVariableDeclaration().binding;
+  switch (d.Tag()) {
+    case Declaration::Kind::FunctionDeclaration:
+      return cast<FunctionDeclaration>(d).Definition().name;
+    case Declaration::Kind::StructDeclaration:
+      return cast<StructDeclaration>(d).Definition().name;
+    case Declaration::Kind::ChoiceDeclaration:
+      return cast<ChoiceDeclaration>(d).Name();
+    case Declaration::Kind::VariableDeclaration: {
+      const BindingPattern* binding = cast<VariableDeclaration>(d).Binding();
       if (!binding->Name().has_value()) {
         FATAL_COMPILATION_ERROR(binding->LineNumber())
             << "Top-level variable declarations must have names";
@@ -924,14 +924,15 @@ static auto GetName(const Declaration& d) -> const std::string& {
 }
 
 auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
-                     const Env& values) -> Declaration {
-  switch (d.tag()) {
-    case DeclarationKind::FunctionDeclaration:
-      return Declaration::MakeFunctionDeclaration(*TypeCheckFunDef(
-          &d.GetFunctionDeclaration().definition, types, values));
+                     const Env& values) -> const Declaration* {
+  switch (d.Tag()) {
+    case Declaration::Kind::FunctionDeclaration:
+      return global_arena->New<FunctionDeclaration>(*TypeCheckFunDef(
+          &cast<FunctionDeclaration>(d).Definition(), types, values));
 
-    case DeclarationKind::StructDeclaration: {
-      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
+    case Declaration::Kind::StructDeclaration: {
+      const StructDefinition& struct_def =
+          cast<StructDeclaration>(d).Definition();
       std::list<Member*> fields;
       for (Member* m : struct_def.members) {
         switch (m->Tag()) {
@@ -941,49 +942,50 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
             break;
         }
       }
-      return Declaration::MakeStructDeclaration(
+      return global_arena->New<StructDeclaration>(
           struct_def.line_num, struct_def.name, std::move(fields));
     }
 
-    case DeclarationKind::ChoiceDeclaration:
+    case Declaration::Kind::ChoiceDeclaration:
       // TODO
-      return d;
+      return &d;
 
-    case DeclarationKind::VariableDeclaration: {
-      const auto& var = d.GetVariableDeclaration();
+    case Declaration::Kind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(d);
       // Signals a type error if the initializing expression does not have
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
       TCExpression type_checked_initializer =
-          TypeCheckExp(var.initializer, types, values);
+          TypeCheckExp(var.Initializer(), types, values);
       const Expression* type =
-          dyn_cast<ExpressionPattern>(var.binding->Type())->Expression();
+          dyn_cast<ExpressionPattern>(var.Binding()->Type())->Expression();
       if (type == nullptr) {
         // TODO: consider adding support for `auto`
-        FATAL_COMPILATION_ERROR(var.source_location)
+        FATAL_COMPILATION_ERROR(var.LineNumber())
             << "Type of a top-level variable must be an expression.";
       }
       const Value* declared_type = InterpExp(values, type);
-      ExpectType(var.source_location, "initializer of variable", declared_type,
+      ExpectType(var.LineNumber(), "initializer of variable", declared_type,
                  type_checked_initializer.type);
-      return d;
+      return &d;
     }
   }
 }
 
 static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
-  switch (d.tag()) {
-    case DeclarationKind::FunctionDeclaration: {
+  switch (d.Tag()) {
+    case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
-          d.GetFunctionDeclaration().definition;
+          cast<FunctionDeclaration>(d).Definition();
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
       tops->types.Set(func_def.name, t);
       InitEnv(d, &tops->values);
       break;
     }
 
-    case DeclarationKind::StructDeclaration: {
-      const StructDefinition& struct_def = d.GetStructDeclaration().definition;
+    case Declaration::Kind::StructDeclaration: {
+      const StructDefinition& struct_def =
+          cast<StructDeclaration>(d).Definition();
       auto st = TypeOfStructDef(&struct_def, tops->types, tops->values);
       Address a = state->heap.AllocateValue(st);
       tops->values.Set(struct_def.name, a);  // Is this obsolete?
@@ -999,42 +1001,42 @@ static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
       break;
     }
 
-    case DeclarationKind::ChoiceDeclaration: {
-      const auto& choice = d.GetChoiceDeclaration();
+    case Declaration::Kind::ChoiceDeclaration: {
+      const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
-      for (const auto& [name, signature] : choice.alternatives) {
+      for (const auto& [name, signature] : choice.Alternatives()) {
         auto t = InterpExp(tops->values, signature);
         alts.push_back(std::make_pair(name, t));
       }
-      auto ct = global_arena->New<ChoiceType>(choice.name, std::move(alts));
+      auto ct = global_arena->New<ChoiceType>(choice.Name(), std::move(alts));
       Address a = state->heap.AllocateValue(ct);
-      tops->values.Set(choice.name, a);  // Is this obsolete?
-      tops->types.Set(choice.name, ct);
+      tops->values.Set(choice.Name(), a);  // Is this obsolete?
+      tops->types.Set(choice.Name(), ct);
       break;
     }
 
-    case DeclarationKind::VariableDeclaration: {
-      const auto& var = d.GetVariableDeclaration();
+    case Declaration::Kind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       const Expression* type =
-          cast<ExpressionPattern>(var.binding->Type())->Expression();
+          cast<ExpressionPattern>(var.Binding()->Type())->Expression();
       const Value* declared_type = InterpExp(tops->values, type);
-      tops->types.Set(*var.binding->Name(), declared_type);
+      tops->types.Set(*var.Binding()->Name(), declared_type);
       break;
     }
   }
 }
 
-auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
+auto TopLevel(const std::list<const Declaration*>& fs) -> TypeCheckContext {
   TypeCheckContext tops;
   bool found_main = false;
 
-  for (auto const& d : *fs) {
-    if (GetName(d) == "main") {
+  for (auto const& d : fs) {
+    if (GetName(*d) == "main") {
       found_main = true;
     }
-    TopLevel(d, &tops);
+    TopLevel(*d, &tops);
   }
 
   if (found_main == false) {
