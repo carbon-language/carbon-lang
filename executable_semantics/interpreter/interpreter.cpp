@@ -243,12 +243,12 @@ void DeallocateLocals(int line_num, Frame* frame) {
 void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
-  const auto& tup_lit = exp->GetTupleLiteral();
-  CHECK(act->Results().size() == tup_lit.fields.size());
+  const auto& tup_lit = cast<TupleLiteral>(*exp);
+  CHECK(act->Results().size() == tup_lit.Fields().size());
   std::vector<TupleElement> elements;
   for (size_t i = 0; i < act->Results().size(); ++i) {
     elements.push_back(
-        {.name = tup_lit.fields[i].name, .value = act->Results()[i]});
+        {.name = tup_lit.Fields()[i].name, .value = act->Results()[i]});
   }
 
   const Value* tv = global_arena->New<TupleValue>(std::move(elements));
@@ -407,50 +407,51 @@ void StepLvalue() {
   if (tracing_output) {
     llvm::outs() << "--- step lvalue " << *exp << " --->\n";
   }
-  switch (exp->tag()) {
-    case ExpressionKind::IdentifierExpression: {
+  switch (exp->Tag()) {
+    case Expression::Kind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
+          CurrentEnv(state).Get(cast<IdentifierExpression>(*exp).Name());
       if (!pointer) {
-        FATAL_RUNTIME_ERROR(exp->line_num)
-            << "could not find `" << exp->GetIdentifierExpression().name << "`";
+        FATAL_RUNTIME_ERROR(exp->LineNumber())
+            << "could not find `" << cast<IdentifierExpression>(*exp).Name()
+            << "`";
       }
       const Value* v = global_arena->New<PointerValue>(*pointer);
       frame->todo.Pop();
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;
     }
-    case ExpressionKind::FieldAccessExpression: {
+    case Expression::Kind::FieldAccessExpression: {
       if (act->Pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<LValAction>(
-            exp->GetFieldAccessExpression().aggregate));
+            cast<FieldAccessExpression>(*exp).Aggregate()));
         act->IncrementPos();
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address aggregate = cast<PointerValue>(*act->Results()[0]).Val();
-        Address field =
-            aggregate.SubobjectAddress(exp->GetFieldAccessExpression().field);
+        Address field = aggregate.SubobjectAddress(
+            cast<FieldAccessExpression>(*exp).Field());
         frame->todo.Pop(1);
         frame->todo.Push(global_arena->New<ValAction>(
             global_arena->New<PointerValue>(field)));
       }
       break;
     }
-    case ExpressionKind::IndexExpression: {
+    case Expression::Kind::IndexExpression: {
       if (act->Pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<LValAction>(exp->GetIndexExpression().aggregate));
+        frame->todo.Push(global_arena->New<LValAction>(
+            cast<IndexExpression>(*exp).Aggregate()));
         act->IncrementPos();
       } else if (act->Pos() == 1) {
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetIndexExpression().offset));
+            cast<IndexExpression>(*exp).Offset()));
         act->IncrementPos();
       } else if (act->Pos() == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
@@ -465,21 +466,21 @@ void StepLvalue() {
       }
       break;
     }
-    case ExpressionKind::TupleLiteral: {
+    case Expression::Kind::TupleLiteral: {
       if (act->Pos() == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = exp->GetTupleLiteral().fields[0].expression;
+        const Expression* e1 = cast<TupleLiteral>(*exp).Fields()[0].expression;
         frame->todo.Push(global_arena->New<LValAction>(e1));
         act->IncrementPos();
       } else if (act->Pos() !=
-                 static_cast<int>(exp->GetTupleLiteral().fields.size())) {
+                 static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         const Expression* elt =
-            exp->GetTupleLiteral().fields[act->Pos()].expression;
+            cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
         frame->todo.Push(global_arena->New<LValAction>(elt));
         act->IncrementPos();
       } else {
@@ -487,15 +488,15 @@ void StepLvalue() {
       }
       break;
     }
-    case ExpressionKind::IntLiteral:
-    case ExpressionKind::BoolLiteral:
-    case ExpressionKind::CallExpression:
-    case ExpressionKind::PrimitiveOperatorExpression:
-    case ExpressionKind::IntTypeLiteral:
-    case ExpressionKind::BoolTypeLiteral:
-    case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral: {
+    case Expression::Kind::IntLiteral:
+    case Expression::Kind::BoolLiteral:
+    case Expression::Kind::CallExpression:
+    case Expression::Kind::PrimitiveOperatorExpression:
+    case Expression::Kind::IntTypeLiteral:
+    case Expression::Kind::BoolTypeLiteral:
+    case Expression::Kind::TypeTypeLiteral:
+    case Expression::Kind::FunctionTypeLiteral:
+    case Expression::Kind::ContinuationTypeLiteral: {
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << *exp;
     }
@@ -511,17 +512,17 @@ void StepExp() {
   if (tracing_output) {
     llvm::outs() << "--- step exp " << *exp << " --->\n";
   }
-  switch (exp->tag()) {
-    case ExpressionKind::IndexExpression: {
+  switch (exp->Tag()) {
+    case Expression::Kind::IndexExpression: {
       if (act->Pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetIndexExpression().aggregate));
+            cast<IndexExpression>(*exp).Aggregate()));
         act->IncrementPos();
       } else if (act->Pos() == 1) {
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetIndexExpression().offset));
+            cast<IndexExpression>(*exp).Offset()));
         act->IncrementPos();
       } else if (act->Pos() == 2) {
         auto tuple = act->Results()[0];
@@ -547,25 +548,26 @@ void StepExp() {
       }
       break;
     }
-    case ExpressionKind::TupleLiteral: {
+    case Expression::Kind::TupleLiteral: {
       if (act->Pos() == 0) {
-        if (exp->GetTupleLiteral().fields.size() > 0) {
+        if (cast<TupleLiteral>(*exp).Fields().size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-          const Expression* e1 = exp->GetTupleLiteral().fields[0].expression;
+          const Expression* e1 =
+              cast<TupleLiteral>(*exp).Fields()[0].expression;
           frame->todo.Push(global_arena->New<ExpressionAction>(e1));
           act->IncrementPos();
         } else {
           CreateTuple(frame, act, exp);
         }
       } else if (act->Pos() !=
-                 static_cast<int>(exp->GetTupleLiteral().fields.size())) {
+                 static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         const Expression* elt =
-            exp->GetTupleLiteral().fields[act->Pos()].expression;
+            cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
         frame->todo.Push(global_arena->New<ExpressionAction>(elt));
         act->IncrementPos();
       } else {
@@ -573,123 +575,122 @@ void StepExp() {
       }
       break;
     }
-    case ExpressionKind::FieldAccessExpression: {
+    case Expression::Kind::FieldAccessExpression: {
+      const auto& access = cast<FieldAccessExpression>(*exp);
       if (act->Pos() == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetFieldAccessExpression().aggregate));
+        frame->todo.Push(
+            global_arena->New<ExpressionAction>(access.Aggregate()));
         act->IncrementPos();
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
         const Value* element = act->Results()[0]->GetField(
-            FieldPath(exp->GetFieldAccessExpression().field), exp->line_num);
+            FieldPath(access.Field()), exp->LineNumber());
         frame->todo.Pop(1);
         frame->todo.Push(global_arena->New<ValAction>(element));
       }
       break;
     }
-    case ExpressionKind::IdentifierExpression: {
+    case Expression::Kind::IdentifierExpression: {
       CHECK(act->Pos() == 0);
+      const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      std::optional<Address> pointer =
-          CurrentEnv(state).Get(exp->GetIdentifierExpression().name);
+      std::optional<Address> pointer = CurrentEnv(state).Get(ident.Name());
       if (!pointer) {
-        FATAL_RUNTIME_ERROR(exp->line_num)
-            << "could not find `" << exp->GetIdentifierExpression().name << "`";
+        FATAL_RUNTIME_ERROR(exp->LineNumber())
+            << "could not find `" << ident.Name() << "`";
       }
-      const Value* pointee = state->heap.Read(*pointer, exp->line_num);
+      const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(pointee));
       break;
     }
-    case ExpressionKind::IntLiteral:
+    case Expression::Kind::IntLiteral:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(
-          global_arena->New<IntValue>(exp->GetIntLiteral())));
+          global_arena->New<IntValue>(cast<IntLiteral>(*exp).Val())));
       break;
-    case ExpressionKind::BoolLiteral:
+    case Expression::Kind::BoolLiteral:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(
-          global_arena->New<BoolValue>(exp->GetBoolLiteral())));
+          global_arena->New<BoolValue>(cast<BoolLiteral>(*exp).Val())));
       break;
-    case ExpressionKind::PrimitiveOperatorExpression:
-      if (act->Pos() !=
-          static_cast<int>(
-              exp->GetPrimitiveOperatorExpression().arguments.size())) {
+    case Expression::Kind::PrimitiveOperatorExpression: {
+      const auto& op = cast<PrimitiveOperatorExpression>(*exp);
+      if (act->Pos() != static_cast<int>(op.Arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        const Expression* arg =
-            exp->GetPrimitiveOperatorExpression().arguments[act->Pos()];
+        const Expression* arg = op.Arguments()[act->Pos()];
         frame->todo.Push(global_arena->New<ExpressionAction>(arg));
         act->IncrementPos();
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        const Value* v = EvalPrim(exp->GetPrimitiveOperatorExpression().op,
-                                  act->Results(), exp->line_num);
+        const Value* v = EvalPrim(op.Op(), act->Results(), exp->LineNumber());
         frame->todo.Pop(1);
         frame->todo.Push(global_arena->New<ValAction>(v));
       }
       break;
-    case ExpressionKind::CallExpression:
+    }
+    case Expression::Kind::CallExpression:
       if (act->Pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetCallExpression().function));
+            cast<CallExpression>(*exp).Function()));
         act->IncrementPos();
       } else if (act->Pos() == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetCallExpression().argument));
+            cast<CallExpression>(*exp).Argument()));
         act->IncrementPos();
       } else if (act->Pos() == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         frame->todo.Pop(1);
-        CallFunction(exp->line_num, act->Results(), state);
+        CallFunction(exp->LineNumber(), act->Results(), state);
       } else {
         FATAL() << "in handle_value with Call pos " << act->Pos();
       }
       break;
-    case ExpressionKind::IntTypeLiteral: {
+    case Expression::Kind::IntTypeLiteral: {
       CHECK(act->Pos() == 0);
       const Value* v = global_arena->New<IntType>();
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;
     }
-    case ExpressionKind::BoolTypeLiteral: {
+    case Expression::Kind::BoolTypeLiteral: {
       CHECK(act->Pos() == 0);
       const Value* v = global_arena->New<BoolType>();
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;
     }
-    case ExpressionKind::TypeTypeLiteral: {
+    case Expression::Kind::TypeTypeLiteral: {
       CHECK(act->Pos() == 0);
       const Value* v = global_arena->New<TypeType>();
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;
     }
-    case ExpressionKind::FunctionTypeLiteral: {
+    case Expression::Kind::FunctionTypeLiteral: {
       if (act->Pos() == 0) {
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetFunctionTypeLiteral().parameter));
+            cast<FunctionTypeLiteral>(*exp).Parameter()));
         act->IncrementPos();
       } else if (act->Pos() == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            exp->GetFunctionTypeLiteral().return_type));
+            cast<FunctionTypeLiteral>(*exp).ReturnType()));
         act->IncrementPos();
       } else if (act->Pos() == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -702,14 +703,14 @@ void StepExp() {
       }
       break;
     }
-    case ExpressionKind::ContinuationTypeLiteral: {
+    case Expression::Kind::ContinuationTypeLiteral: {
       CHECK(act->Pos() == 0);
       const Value* v = global_arena->New<ContinuationType>();
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;
     }
-  }  // switch (exp->tag)
+  }  // switch (exp->Tag)
 }
 
 void StepPattern() {
@@ -1124,7 +1125,7 @@ void StepStmt() {
         Action* ignore_result = global_arena->New<StatementAction>(
             Statement::MakeExpressionStatement(
                 stmt->line_num,
-                Expression::MakeTupleLiteral(stmt->line_num, {})));
+                global_arena->New<TupleLiteral>(stmt->line_num)));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
         const std::vector<Frame*>& continuation_vector =
@@ -1190,9 +1191,9 @@ auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg = Expression::MakeTupleLiteral(0, {});
-  const Expression* call_main = Expression::MakeCallExpression(
-      0, Expression::MakeIdentifierExpression(0, "main"), arg);
+  const Expression* arg = global_arena->New<TupleLiteral>(0);
+  const Expression* call_main = global_arena->New<CallExpression>(
+      0, global_arena->New<IdentifierExpression>(0, "main"), arg);
   auto todo = Stack<Action*>(global_arena->New<ExpressionAction>(call_main));
   auto* scope = global_arena->New<Scope>(globals, std::list<std::string>());
   auto* frame = global_arena->New<Frame>("top", Stack(scope), todo);
