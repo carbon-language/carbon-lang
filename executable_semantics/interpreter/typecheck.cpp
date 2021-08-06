@@ -83,8 +83,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return global_arena->New<IdentifierExpression>(
           0, cast<VariableType>(*t).Name());
     default:
-      llvm::errs() << line_num << ": expected a type, not " << *t << "\n";
-      exit(-1);
+      FATAL() << "expected a type, not " << *t;
   }
 }
 
@@ -118,10 +117,9 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
       }
       for (size_t i = 0; i < param_tup.Elements().size(); ++i) {
         if (param_tup.Elements()[i].name != arg_tup.Elements()[i].name) {
-          std::cerr << line_num << ": mismatch in tuple names, "
-                    << param_tup.Elements()[i].name
-                    << " != " << arg_tup.Elements()[i].name << std::endl;
-          exit(-1);
+          FATAL_COMPILATION_ERROR(line_num)
+              << "mismatch in tuple names, " << param_tup.Elements()[i].name
+              << " != " << arg_tup.Elements()[i].name;
         }
         deduced =
             ArgumentDeduction(line_num, deduced, param_tup.Elements()[i].value,
@@ -174,10 +172,7 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-      llvm::errs() << line_num
-                   << ": internal error in ArgumentDeduction: expected type, "
-                   << "not value " << *param << "\n";
-      exit(-1);
+      FATAL() << "In ArgumentDeduction: expected type, not value " << *param;
   }
 }
 
@@ -229,9 +224,7 @@ auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-      llvm::errs() << "internal error in Substitute: expected type, "
-                   << "not value " << *type << "\n";
-      exit(-1);
+      FATAL() << "In Substitute: expected type, not value " << *type;
   }
 }
 
@@ -450,11 +443,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
               if (!deduced_args.Get(deduced_param.name)) {
-                std::cerr << e->LineNumber()
-                          << ": error, could not deduce type argument for type "
-                             "parameter "
-                          << deduced_param.name << std::endl;
-                exit(-1);
+                FATAL_COMPILATION_ERROR(e->LineNumber())
+                    << "could not deduce type argument for type parameter "
+                    << deduced_param.name;
               }
             }
             parameter_type = Substitute(deduced_args, parameter_type);
@@ -860,8 +851,7 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     // TODO: Check that main doesn't have any parameters.
   }
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
-  bool void_return = TypeEqual(
-      return_type, global_arena->New<TupleValue>(std::vector<TupleElement>()));
+  bool void_return = TypeEqual(return_type, &TupleValue::Empty());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
   return global_arena->New<FunctionDefinition>(
       f->line_num, f->name, f->deduced_parameters, f->param_pattern,

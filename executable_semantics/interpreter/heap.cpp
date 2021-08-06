@@ -34,9 +34,8 @@ void Heap::Write(const Address& a, const Value* v, int line_num) {
 
 void Heap::CheckAlive(const Address& address, int line_num) {
   if (!alive_[address.index]) {
-    FATAL_RUNTIME_ERROR(line_num)
-        << ": undefined behavior: access to dead value "
-        << *values_[address.index];
+    FATAL_RUNTIME_ERROR(line_num) << "undefined behavior: access to dead value "
+                                  << *values_[address.index];
   }
 }
 

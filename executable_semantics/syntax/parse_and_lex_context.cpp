@@ -4,9 +4,6 @@
 
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 
-#include <cstring>
-#include <iostream>
-
 // Writes a syntax error diagnostic, containing message, for the input file at
 // the given line, to standard error.
 auto Carbon::ParseAndLexContext::PrintDiagnostic(const std::string& message,
@@ -14,7 +11,5 @@ auto Carbon::ParseAndLexContext::PrintDiagnostic(const std::string& message,
   // TODO: Do we really want this to be fatal?  It makes the comment and the
   // name a lie, and renders some of the other yyparse() result propagation code
   // moot.
-  std::cerr << input_file_name << ":" << line_num << ": " << message
-            << std::endl;
-  exit(-1);
+  FATAL_COMPILATION_ERROR(line_num) << message;
 }

@@ -81,8 +81,7 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       return global_arena->New<AlternativeConstructorValue>(f, choice.Name());
     }
     default:
-      llvm::errs() << "field access not allowed for value " << *v << "\n";
-      exit(-1);
+      FATAL() << "field access not allowed for value " << *v;
   }
 }
 
@@ -126,8 +125,7 @@ auto SetFieldImpl(const Value* value,
       return global_arena->New<TupleValue>(elements);
     }
     default:
-      llvm::errs() << "field access not allowed for value " << *value << "\n";
-      exit(-1);
+      FATAL() << "field access not allowed for value " << *value;
   }
 }
 
@@ -345,10 +343,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case Value::Kind::VariableType:
       return cast<VariableType>(*t1).Name() == cast<VariableType>(*t2).Name();
     default:
-      llvm::errs() << "TypeEqual used to compare non-type values\n"
-                   << *t1 << "\n"
-                   << *t2 << "\n";
-      exit(-1);
+      FATAL() << "TypeEqual used to compare non-type values\n"
+              << *t1 << "\n"
+              << *t2;
   }
 }
 
@@ -393,7 +390,6 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
                               cast<TupleValue>(*v2).Elements(), line_num);
-    default:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -403,14 +399,14 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
       return TypeEqual(v1, v2);
     case Value::Kind::StructValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-      llvm::errs() << "ValueEqual does not support this kind of value.\n";
-      exit(-1);
+      FATAL() << "ValueEqual does not support this kind of value: " << *v1;
   }
 }
 
