@@ -81,8 +81,7 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
       return global_arena->New<AlternativeConstructorValue>(f, choice.Name());
     }
     default:
-      FATAL_INTERNAL_ERROR(line_num)
-          << "field access not allowed for value " << *v;
+      FATAL() << "field access not allowed for value " << *v;
   }
 }
 
@@ -126,8 +125,7 @@ auto SetFieldImpl(const Value* value,
       return global_arena->New<TupleValue>(elements);
     }
     default:
-      FATAL_INTERNAL_ERROR(line_num)
-          << "field access not allowed for value " << *value;
+      FATAL() << "field access not allowed for value " << *value;
   }
 }
 
@@ -392,7 +390,6 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
                               cast<TupleValue>(*v2).Elements(), line_num);
-    default:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -402,14 +399,14 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
       return TypeEqual(v1, v2);
     case Value::Kind::StructValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-      FATAL_INTERNAL_ERROR(line_num)
-          << "ValueEqual does not support this kind of value: " << *v1;
+      FATAL() << "ValueEqual does not support this kind of value: " << *v1;
   }
 }
 

@@ -99,7 +99,7 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Ptr:
       return global_arena->New<PointerType>(args[0]);
     case Operator::Deref:
-      FATAL_INTERNAL_ERROR(line_num) << "dereference not implemented yet";
+      FATAL() << "dereference not implemented yet";
   }
 }
 

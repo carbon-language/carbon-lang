@@ -16,9 +16,10 @@ namespace Carbon {
 //   FATAL_PROGRAM_ERROR(line_num) << "Line is bad!";
 //   FATAL_PROGRAM_ERROR_NO_LINE() << "Application is bad!";
 //
-// Where possible, try to identify the error as a compilation, internal, or
-// runtime error. The generic program error option is provided as a fallback for
-// cases that don't fit those classifications.
+// Where possible, try to identify the error as a compilation or
+// runtime error. Use CHECK/FATAL for internal errors. The generic program error
+// option is provided as a fallback for cases that don't fit those
+// classifications.
 
 #define FATAL_PROGRAM_ERROR_NO_LINE() \
   Carbon::ExitingStream() << "PROGRAM ERROR: "
@@ -30,10 +31,6 @@ namespace Carbon {
 
 #define FATAL_COMPILATION_ERROR(line) \
   FATAL_COMPILATION_ERROR_NO_LINE() << line << ": "
-
-// CHECK() and FATAL() may also be used directly; this is a convenience for
-// adding a line number.
-#define FATAL_INTERNAL_ERROR(line) FATAL() << line << ": "
 
 #define FATAL_RUNTIME_ERROR_NO_LINE() \
   Carbon::ExitingStream() << "RUNTIME ERROR: "

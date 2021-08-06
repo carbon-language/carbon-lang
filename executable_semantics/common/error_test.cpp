@@ -24,10 +24,6 @@ TEST(ErrorTest, FatalCompilationError) {
                "^COMPILATION ERROR: test\n");
 }
 
-TEST(ErrorTest, FatalInternalError) {
-  ASSERT_DEATH({ FATAL_INTERNAL_ERROR(3) << "test"; }, "\nFATAL: 3: test\n");
-}
-
 TEST(ErrorTest, FatalProgramErrorLine) {
   ASSERT_DEATH({ FATAL_PROGRAM_ERROR(1) << "test"; },
                "^PROGRAM ERROR: 1: test\n");

@@ -82,7 +82,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakeIdentifierExpression(
           0, cast<VariableType>(*t).Name());
     default:
-      FATAL_INTERNAL_ERROR(line_num) << "expected a type, not " << *t;
+      FATAL() << "expected a type, not " << *t;
   }
 }
 
@@ -171,8 +171,7 @@ auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-      FATAL_INTERNAL_ERROR(line_num)
-          << "In ArgumentDeduction: expected type, not value " << *param;
+      FATAL() << "In ArgumentDeduction: expected type, not value " << *param;
   }
 }
 
