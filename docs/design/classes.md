@@ -528,6 +528,12 @@ This produces a struct value with two fields:
 -   The second field is named "`value`" and has the value `27`. The type of the
     field is set to the type of the value, and so is `Int`.
 
+Note: A comma may optionally be included before the closing curly brace `}`:
+
+```
+var kvpair: auto = {.key = "the", .value = 27,};
+```
+
 **Open question:** To keep the literal syntax from being ambiguous with compound
 statements, Carbon will adopt some combination of:
 
@@ -553,6 +559,13 @@ reflects the expected use inline in function signature declarations.
 Struct types may only have data members, so the type declaration is just a list
 of field names and types. The result of a struct type expression is an immutable
 compile-time type value.
+
+Note: Like with struct literal expressions, a comma may optionally be included
+before the closing curly brace `}`:
+
+```
+{.key: String, .value: Int,}
+```
 
 ### Assignment and initialization
 
