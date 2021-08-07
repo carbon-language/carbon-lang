@@ -56,7 +56,7 @@ class Statement {
 
 class ExpressionStatement : public Statement {
  public:
-  explicit ExpressionStatement(int line_num, const Expression* exp)
+  ExpressionStatement(int line_num, const Expression* exp)
       : Statement(Kind::ExpressionStatement, line_num), exp(exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -71,7 +71,7 @@ class ExpressionStatement : public Statement {
 
 class Assign : public Statement {
  public:
-  explicit Assign(int line_num, const Expression* lhs, const Expression* rhs)
+  Assign(int line_num, const Expression* lhs, const Expression* rhs)
       : Statement(Kind::Assign, line_num), lhs(lhs), rhs(rhs) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -88,8 +88,7 @@ class Assign : public Statement {
 
 class VariableDefinition : public Statement {
  public:
-  explicit VariableDefinition(int line_num, const Pattern* pat,
-                              const Expression* init)
+  VariableDefinition(int line_num, const Pattern* pat, const Expression* init)
       : Statement(Kind::VariableDefinition, line_num), pat(pat), init(init) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -106,8 +105,8 @@ class VariableDefinition : public Statement {
 
 class If : public Statement {
  public:
-  explicit If(int line_num, const Expression* cond, const Statement* then_stmt,
-              const Statement* else_stmt)
+  If(int line_num, const Expression* cond, const Statement* then_stmt,
+     const Statement* else_stmt)
       : Statement(Kind::If, line_num),
         cond(cond),
         then_stmt(then_stmt),
@@ -129,7 +128,7 @@ class If : public Statement {
 
 class Return : public Statement {
  public:
-  explicit Return(int line_num, const Expression* exp, bool is_omitted_exp);
+  Return(int line_num, const Expression* exp, bool is_omitted_exp);
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Return;
@@ -145,7 +144,7 @@ class Return : public Statement {
 
 class Sequence : public Statement {
  public:
-  explicit Sequence(int line_num, const Statement* stmt, const Statement* next)
+  Sequence(int line_num, const Statement* stmt, const Statement* next)
       : Statement(Kind::Sequence, line_num), stmt(stmt), next(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -162,7 +161,7 @@ class Sequence : public Statement {
 
 class Block : public Statement {
  public:
-  explicit Block(int line_num, const Statement* stmt)
+  Block(int line_num, const Statement* stmt)
       : Statement(Kind::Block, line_num), stmt(stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -177,7 +176,7 @@ class Block : public Statement {
 
 class While : public Statement {
  public:
-  explicit While(int line_num, const Expression* cond, const Statement* body)
+  While(int line_num, const Expression* cond, const Statement* body)
       : Statement(Kind::While, line_num), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -212,9 +211,8 @@ class Continue : public Statement {
 
 class Match : public Statement {
  public:
-  explicit Match(
-      int line_num, const Expression* exp,
-      std::list<std::pair<const Pattern*, const Statement*>>* clauses)
+  Match(int line_num, const Expression* exp,
+        std::list<std::pair<const Pattern*, const Statement*>>* clauses)
       : Statement(Kind::Match, line_num), exp(exp), clauses(clauses) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -239,8 +237,8 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
-  explicit Continuation(int line_num, std::string continuation_variable,
-                        const Statement* body)
+  Continuation(int line_num, std::string continuation_variable,
+               const Statement* body)
       : Statement(Kind::Continuation, line_num),
         continuation_variable(std::move(continuation_variable)),
         body(body) {}
@@ -264,7 +262,7 @@ class Continuation : public Statement {
 //     __run <argument>;
 class Run : public Statement {
  public:
-  explicit Run(int line_num, const Expression* argument)
+  Run(int line_num, const Expression* argument)
       : Statement(Kind::Run, line_num), argument(argument) {}
 
   static auto classof(const Statement* stmt) -> bool {
