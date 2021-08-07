@@ -490,8 +490,8 @@ is more appropriate.
 ### Data members have an order
 
 The data members of a class, or _fields_, have an order that matches the order
-they are declared in. This determines the order of those fields in memory, and the
-order that the fields are destroyed when a value goes out of scope or is
+they are declared in. This determines the order of those fields in memory, and
+the order that the fields are destroyed when a value goes out of scope or is
 deallocated.
 
 ## Struct types
@@ -566,6 +566,8 @@ before the closing curly brace `}`:
 ```
 {.key: String, .value: Int,}
 ```
+
+Also note that `{}` represents both the empty struct literal and its type.
 
 ### Assignment and initialization
 
