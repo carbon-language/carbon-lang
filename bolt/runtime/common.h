@@ -492,6 +492,27 @@ public:
   }
 };
 
+/// RAII wrapper for Mutex
+class TryLock {
+  Mutex &M;
+  bool Locked = false;
+
+public:
+  TryLock(Mutex &M) : M(M) {
+    int Retry = 100;
+    while (--Retry && !M.acquire())
+      ;
+    if (Retry)
+      Locked = true;
+  }
+  bool isLocked() { return Locked; }
+
+  ~TryLock() {
+    if (isLocked())
+      M.release();
+  }
+};
+
 inline uint64_t alignTo(uint64_t Value, uint64_t Align) {
   return (Value + Align - 1) / Align * Align;
 }

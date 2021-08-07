@@ -240,6 +240,9 @@ void operator delete(void *Ptr, BumpPtrAllocator &A) { A.deallocate(Ptr); }
 
 namespace {
 
+// Disable instrumentation optimizations that sacrifice profile accuracy
+extern "C" bool __bolt_instr_conservative;
+
 /// Basic key-val atom stored in our hash
 struct SimpleHashTableEntryBase {
   uint64_t Key;
@@ -272,10 +275,14 @@ public:
   /// avoid storing a pointer to it as part of this table (remember there is one
   /// hash for each indirect call site, so we wan't to minimize our footprint).
   MapEntry &get(uint64_t Key, BumpPtrAllocator &Alloc) {
+    if (!__bolt_instr_conservative) {
+      TryLock L(M);
+      if (!L.isLocked())
+        return NoEntry;
+      return getOrAllocEntry(Key, Alloc);
+    }
     Lock L(M);
-    if (TableRoot)
-      return getEntry(TableRoot, Key, Key, Alloc, 0);
-    return firstAllocation(Key, Alloc);
+    return getOrAllocEntry(Key, Alloc);
   }
 
   /// Traverses all elements in the table
@@ -293,6 +300,7 @@ private:
   constexpr static uint64_t FollowUpTableMarker = 0x8000000000000000ull;
 
   MapEntry *TableRoot{nullptr};
+  MapEntry NoEntry;
   Mutex M;
 
   template <typename... Args>
@@ -354,6 +362,12 @@ private:
     NextLevelTbl[CurEntrySelector] = Entry;
     Entry.Key = reinterpret_cast<uint64_t>(NextLevelTbl) | FollowUpTableMarker;
     return getEntry(NextLevelTbl, Key, Remainder, Alloc, CurLevel + 1);
+  }
+
+  MapEntry &getOrAllocEntry(uint64_t Key, BumpPtrAllocator &Alloc) {
+    if (TableRoot)
+      return getEntry(TableRoot, Key, Key, Alloc, 0);
+    return firstAllocation(Key, Alloc);
   }
 };
 

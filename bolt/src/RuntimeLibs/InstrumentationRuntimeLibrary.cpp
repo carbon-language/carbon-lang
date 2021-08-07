@@ -24,6 +24,7 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<bool> InstrumentationFileAppendPID;
+extern cl::opt<bool> ConservativeInstrumentation;
 extern cl::opt<std::string> InstrumentationFilename;
 extern cl::opt<std::string> InstrumentationBinpath;
 extern cl::opt<uint32_t> InstrumentationSleepTime;
@@ -169,6 +170,8 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   emitIntValue("__bolt_instr_sleep_time", opts::InstrumentationSleepTime);
   emitIntValue("__bolt_instr_no_counters_clear",
                !!opts::InstrumentationNoCountersClear, 1);
+  emitIntValue("__bolt_instr_conservative", !!opts::ConservativeInstrumentation,
+               1);
   emitIntValue("__bolt_instr_wait_forks", !!opts::InstrumentationWaitForks, 1);
   emitIntValue("__bolt_num_counters", Summary->Counters.size());
   emitValue(Summary->IndCallCounterFuncPtr, nullptr);

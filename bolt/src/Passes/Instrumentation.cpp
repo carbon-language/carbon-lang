@@ -43,9 +43,8 @@ cl::opt<bool> InstrumentationFileAppendPID(
 
 cl::opt<bool> ConservativeInstrumentation(
     "conservative-instrumentation",
-    cl::desc(
-        "don't trust our CFG and disable spanning trees and any counter "
-        "inference, put a counter everywhere (for debugging, default: false)"),
+    cl::desc("disable instrumentation optimizations that sacrifice profile "
+             "accuracy (for debugging, default: false)"),
     cl::init(false), cl::Optional, cl::cat(BoltInstrCategory));
 
 cl::opt<uint32_t> InstrumentationSleepTime(
