@@ -263,7 +263,6 @@ class ParseTree::Parser {
   enum class PatternKind {
     Parameter,
     Variable,
-    StructField,
   };
 
   // Parses a pattern.

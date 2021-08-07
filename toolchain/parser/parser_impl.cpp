@@ -54,21 +54,27 @@ struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
       "Expected parameter declaration.";
 };
 
-struct ExpectedStructField : SimpleDiagnostic<ExpectedStructField> {
+struct ExpectedStructLiteralField
+    : SimpleDiagnostic<ExpectedStructLiteralField> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected `field: type` or `.field = value`.";
-};
 
-struct ExpectedStructFieldName : SimpleDiagnostic<ExpectedStructFieldName> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected field name in struct type.";
-};
+  bool can_be_type;
+  bool can_be_value;
 
-struct ExpectedFieldDesignator : SimpleDiagnostic<ExpectedFieldDesignator> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message = "Expected `.field = value`.";
+  auto Format() -> std::string {
+    std::string result = "Expected ";
+    if (can_be_type) {
+      result += "`.field: type`";
+    }
+    if (can_be_type && can_be_value) {
+      result += " or ";
+    }
+    if (can_be_value) {
+      result += "`.field = value`";
+    }
+    result += ".";
+    return result;
+  }
 };
 
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
@@ -484,10 +490,6 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
     case PatternKind::Variable:
       emitter.EmitError<ExpectedVariableName>(*position);
       break;
-
-    case PatternKind::StructField:
-      emitter.EmitError<ExpectedStructFieldName>(*position);
-      break;
   }
 
   return llvm::None;
@@ -712,80 +714,63 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
 
 auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
   // braced-expression ::= `{` [field-value-list] `}`
-  //                   ::= `{` field-list `}`
+  //                   ::= `{` field-type-list `}`
   // field-value-list ::= field-value
   //                  ::= field-value `,` field-value-list
   // field-value ::= `.` identifier `=` expression
-  // field-list ::= field
-  //            ::= field `,` field-list
-  // field ::= identifier `:` type [field-initializer]
-  // field-initializer ::= `=` expression
+  // field-type-list ::= field-type
+  //                 ::= field-type `,` field-type-list
+  // field-type ::= `.` identifier `:` type
   //
   // Note that `{` `}` is the first form (an empty struct), but that an empty
   // struct value also behaves as an empty struct type.
   auto start = GetSubtreeStartPosition();
   enum Kind { Unknown, Value, Type };
   Kind kind = Unknown;
-  bool diagnosed_first_field = false;
   return ParseList(
       TokenKind::OpenCurlyBrace(), TokenKind::CloseCurlyBrace(),
       [&]() -> llvm::Optional<Node> {
         auto start_elem = GetSubtreeStartPosition();
 
-        // If we've not seen any field or field value yet, or we've only seen
-        // syntactically-invalid attempts, work out which kind of struct
-        // literal we have based on whether we see `.` or identifier ':'.
-        if (kind == Unknown) {
-          if (NextTokenIs(TokenKind::Identifier()) &&
-              tokens.GetKind(*(position + 1)) == TokenKind::Colon()) {
-            kind = Type;
-          } else if (NextTokenIs(TokenKind::Period())) {
-            kind = Value;
-          } else {
-            if (!diagnosed_first_field) {
-              emitter.EmitError<ExpectedStructField>(*position);
-              diagnosed_first_field = true;
-            }
-            return llvm::None;
-          }
-        }
-
-        // For a type, parse a field.
-        if (kind == Type) {
-          auto pattern = ParsePattern(PatternKind::StructField);
-          if (pattern) {
-            if (auto equal_token = ConsumeIf(TokenKind::Equal())) {
-              auto init = ParseExpression();
-              AddNode(ParseNodeKind::StructFieldDefaultInitializer(),
-                      *equal_token, start_elem, /*has_error=*/!init);
-            }
-          }
-          return pattern;
-        }
-
-        // For a value struct literal, parse a designator and a value.
-        assert(kind == Value);
-        if (!NextTokenIs(TokenKind::Period())) {
-          emitter.EmitError<ExpectedFieldDesignator>(*position);
+        auto diagnose_invalid_syntax = [&] {
+          emitter.EmitError<ExpectedStructLiteralField>(
+              *position,
+              {.can_be_type = kind != Value, .can_be_value = kind != Type});
           return llvm::None;
+        };
+
+        if (!NextTokenIs(TokenKind::Period())) {
+          return diagnose_invalid_syntax();
         }
         auto designator = ParseDesignatorExpression(
-            GetSubtreeStartPosition(), ParseNodeKind::StructFieldDesignator(),
+            start_elem, ParseNodeKind::StructFieldDesignator(),
             /*has_errors=*/false);
-        auto equal_token = ConsumeIf(TokenKind::Equal());
-        if (!equal_token) {
-          emitter.EmitError<ExpectedFieldDesignator>(*position);
-          return llvm::None;
+
+        // Work out the kind of this element
+        Kind elem_kind =
+            (NextTokenIs(TokenKind::Equal())
+                 ? Value
+                 : NextTokenIs(TokenKind::Colon()) ? Type : Unknown);
+        if (elem_kind == Unknown || (kind != Unknown && elem_kind != kind)) {
+          return diagnose_invalid_syntax();
         }
-        auto value = ParseExpression();
-        return AddNode(ParseNodeKind::StructFieldValue(), *equal_token,
-                       start_elem, /*has_error=*/!designator || !value);
+        kind = elem_kind;
+
+        // Struct type fields and value fields use the same grammar except that
+        // one has a `:` separator and the other has an `=` separator.
+        auto equal_or_colon_token =
+            Consume(kind == Type ? TokenKind::Colon() : TokenKind::Equal());
+        auto type_or_value = ParseExpression();
+        return AddNode(kind == Type ? ParseNodeKind::StructFieldType()
+                                    : ParseNodeKind::StructFieldValue(),
+                       equal_or_colon_token, start_elem,
+                       /*has_error=*/!designator || !type_or_value);
       },
       ParseNodeKind::StructComma(),
       [&](TokenizedBuffer::Token open_brace, bool is_single_item,
           TokenizedBuffer::Token close_brace, bool has_errors) {
         AddLeafNode(ParseNodeKind::StructEnd(), close_brace);
-        return AddNode(kind == Type ? ParseNodeKind::StructType()
+        return AddNode(kind == Type ? ParseNodeKind::StructTypeLiteral()
                                     : ParseNodeKind::StructLiteral(),
                        open_brace, start, has_errors);
       });

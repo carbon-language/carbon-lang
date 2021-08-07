@@ -972,9 +972,8 @@ TEST_F(ParseTreeTest, Tuples) {
 
 TEST_F(ParseTreeTest, Structs) {
   TokenizedBuffer tokens = GetTokenizedBuffer(R"(
-    var x: {a: i32, b: i32} = {.a = 1, .b = 2};
+    var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
     var y: {} = {};
-    var z: {c: i32 = 0} = {};
   )");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
@@ -985,37 +984,28 @@ TEST_F(ParseTreeTest, Structs) {
           {MatchVariableDeclaration(
                MatchPatternBinding(
                    MatchDeclaredName("x"), ":",
-                   MatchStructType(
-                       MatchPatternBinding(MatchDeclaredName("a"), ":",
-                                           MatchLiteral("i32")),
+                   MatchStructTypeLiteral(
+                       MatchStructFieldType(MatchStructFieldDesignator(
+                                                ".", MatchDesignatedName("a")),
+                                            ":", MatchLiteral("i32")),
                        MatchStructComma(),
-                       MatchPatternBinding(MatchDeclaredName("b"), ":",
-                                           MatchLiteral("i32")),
+                       MatchStructFieldType(MatchStructFieldDesignator(
+                                                ".", MatchDesignatedName("b")),
+                                            ":", MatchLiteral("i32")),
                        MatchStructEnd())),
                MatchVariableInitializer(MatchStructLiteral(
-                   MatchStructFieldValue(
-                       MatchStructFieldDesignator(MatchDesignatedName("a")),
-                       MatchLiteral("1")),
+                   MatchStructFieldValue(MatchStructFieldDesignator(
+                                             ".", MatchDesignatedName("a")),
+                                         "=", MatchLiteral("1")),
                    MatchStructComma(),
-                   MatchStructFieldValue(
-                       MatchStructFieldDesignator(MatchDesignatedName("b")),
-                       MatchLiteral("2")),
+                   MatchStructFieldValue(MatchStructFieldDesignator(
+                                             ".", MatchDesignatedName("b")),
+                                         "=", MatchLiteral("2")),
                    MatchStructEnd())),
                MatchDeclarationEnd()),
            MatchVariableDeclaration(
                MatchPatternBinding(MatchDeclaredName("y"), ":",
                                    MatchStructLiteral(MatchStructEnd())),
-               MatchVariableInitializer(MatchStructLiteral(MatchStructEnd())),
-               MatchDeclarationEnd()),
-           MatchVariableDeclaration(
-               MatchPatternBinding(
-                   MatchDeclaredName("z"), ":",
-                   MatchStructType(
-                       MatchStructFieldDefaultInitializer(
-                           MatchPatternBinding(MatchDeclaredName("c"), ":",
-                                               MatchLiteral("i32")),
-                           MatchLiteral("0")),
-                       MatchStructEnd())),
                MatchVariableInitializer(MatchStructLiteral(MatchStructEnd())),
                MatchDeclarationEnd()),
            MatchFileEnd()}));
@@ -1026,15 +1016,16 @@ TEST_F(ParseTreeTest, StructErrors) {
       "var x: {i32} = {};",
       "var x: {a} = {};",
       "var x: {a:} = {};",
-      "var x: {a: i32, .b = 0} = {};",
+      "var x: {a=} = {};",
       "var x: {.} = {};",
       "var x: {.a} = {};",
-      "var x: {.a: i32} = {};",
-      "var x: {.a =} = {};",
+      "var x: {.a:} = {};",
+      "var x: {.a=} = {};",
+      "var x: {.a: i32, .b = 0} = {};",
       "var x: {.a = 0, b: i32} = {};",
       "var x: {,} = {};",
+      "var x: {.a: i32,} = {};",
       "var x: {.a = 0,} = {};",
-      "var x: {a: i32,} = {};",
   };
 
   for (llvm::StringLiteral testcase : testcases) {
