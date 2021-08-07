@@ -78,7 +78,7 @@ Well, since we want to let `T` be any type implementing the
 type-of-types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
-pass in `T` explicitly, it can be an
+pass in `T` explicitly, so it can be an
 [deduced argument](terminology.md#deduced-parameter) (also see
 [deduced argument](overview.md#deduced-parameters) in the Generics overview
 doc). Basically, the user passes in a value for `val`, and the type of `val`
@@ -93,7 +93,7 @@ the type argument. For more on this, see [the model section](#model) below.
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
 [type's size](#sized-types-and-type-of-types) (represented by an integer
-constant member of the type) is an optional member of an interface and its
+constant member of the type) could be a member of an interface and its
 implementation. There are a few cases why we would include another interface
 implementation as a member:
 
@@ -147,7 +147,7 @@ properties:
     qualified syntax is available whether or not the implementation is defined
     as `external`.
 -   If other interfaces are implemented for `Song`, they are also implemented
-    for `Song as ConvertibleToString` as well. The only thing that changes when
+    for `Song as ConvertibleToString`. The only thing that changes when
     casting a `Song` `w` to `Song as ConvertibleToString` are the names that are
     accessible without using the qualification syntax.
 
@@ -313,7 +313,7 @@ class Point {
 
 In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
 API for `Point`. This means you can't implement two interfaces that have a name
-in common.
+in common (unless you use an `external impl` for one or both, as described below).
 
 ```
 class GameBoard {
@@ -536,7 +536,7 @@ acts like we called this non-generic function, found by setting `T` to
 
 ```
 fn AddAndScaleForPointAsVector(
-      Point as Vector: a, b: Point as Vector, s: Double)
+      a: Point as Vector, b: Point as Vector, s: Double)
       -> Point as Vector {
   return a.Add(b).Scale(s);
 }
@@ -613,7 +613,7 @@ The [impl of Vector for Point](#implementing-interfaces) would be a value of
 this type:
 
 ```
-var VectorForPoint: Vector  = (
+var VectorForPoint: Vector  = {
     .Self = Point,
     // `lambda` is **placeholder** syntax for defining a
     // function value.
@@ -623,7 +623,7 @@ var VectorForPoint: Vector  = (
     .Scale = lambda(a: Point, v: Double) -> Point {
       return Point(.x = a.x * v, .y = a.y * v);
     },
-);
+};
 ```
 
 Finally we can define a generic function and call it, like
@@ -632,15 +632,15 @@ witness table an explicit argument to the function:
 
 ```
 fn AddAndScaleGeneric
-    (impl:! Vector, a: impl.Self, b: impl.Self, s: Double) -> impl.Self {
-  return impl.Scale(impl.Add(a, b), s);
+    (t:! Vector, a: t.Self, b: t.Self, s: Double) -> t.Self {
+  return t.Scale(t.Add(a, b), s);
 }
 // Point implements Vector.
 var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
 ```
 
 The rule is that generic arguments (declared using `:!`) are passed at compile
-time, so the actual value of the `impl` argument here can be used to generate
+time, so the actual value of the `t` argument here can be used to generate
 the code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 [static-dispatch witness table](terminology.md#static-dispatch-witness-table).
 
@@ -753,7 +753,7 @@ type." This is consistent with the
 In general we should support the same kinds of declarations in a
 `structural interface` definitions as in an `interface`. Generally speaking
 declarations in one kind of interface make sense in the other, and there is an
-anology between them. If an `interface` `I` has (non-`alias`) declarations `X`,
+analogy between them. If an `interface` `I` has (non-`alias`) declarations `X`,
 `Y`, and `Z`, like so:
 
 ```
@@ -1228,7 +1228,7 @@ interface EdgeListGraph {
 }
 ```
 
-We need to specify what happens how a graph type would implement both
+We need to specify what happens when a graph type implements both
 `IncidenceGraph` and `EdgeListGraph`, since both interfaces extend the `Graph`
 interface.
 
