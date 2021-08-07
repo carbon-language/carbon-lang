@@ -490,7 +490,7 @@ is more appropriate.
 ### Data members have an order
 
 The data members of a class, or _fields_, have an order that matches the order
-they are declared in. This affects the layout of those fields in memory, and the
+they are declared in. This determines the order of those fields in memory, and the
 order that the fields are destroyed when a value goes out of scope or is
 deallocated.
 
