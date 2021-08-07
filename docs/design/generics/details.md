@@ -147,8 +147,8 @@ properties:
     qualified syntax is available whether or not the implementation is defined
     as `external`.
 -   If other interfaces are implemented for `Song`, they are also implemented
-    for `Song as ConvertibleToString`. The only thing that changes when
-    casting a `Song` `w` to `Song as ConvertibleToString` are the names that are
+    for `Song as ConvertibleToString`. The only thing that changes when casting
+    a `Song` `w` to `Song as ConvertibleToString` are the names that are
     accessible without using the qualification syntax.
 
 We define these facet types (alternatively, interface implementations) either
@@ -313,7 +313,8 @@ class Point {
 
 In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
 API for `Point`. This means you can't implement two interfaces that have a name
-in common (unless you use an `external impl` for one or both, as described below).
+in common (unless you use an `external impl` for one or both, as described
+below).
 
 ```
 class GameBoard {
@@ -640,8 +641,8 @@ var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
 ```
 
 The rule is that generic arguments (declared using `:!`) are passed at compile
-time, so the actual value of the `t` argument here can be used to generate
-the code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
+time, so the actual value of the `t` argument here can be used to generate the
+code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 [static-dispatch witness table](terminology.md#static-dispatch-witness-table).
 
 ## Interfaces recap
