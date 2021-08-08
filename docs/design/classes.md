@@ -528,7 +528,7 @@ This produces a struct value with two fields:
 -   The second field is named "`value`" and has the value `27`. The type of the
     field is set to the type of the value, and so is `Int`.
 
-Note: A comma may optionally be included before the closing curly brace `}`:
+Note: A comma `,` may optionally be included after the last field:
 
 ```
 var kvpair: auto = {.key = "the", .value = 27,};
@@ -560,8 +560,8 @@ Struct types may only have data members, so the type declaration is just a list
 of field names and types. The result of a struct type expression is an immutable
 compile-time type value.
 
-Note: Like with struct literal expressions, a comma may optionally be included
-before the closing curly brace `}`:
+Note: Like with struct literal expressions, a comma `,` may optionally be
+included after the last field:
 
 ```
 {.key: String, .value: Int,}
