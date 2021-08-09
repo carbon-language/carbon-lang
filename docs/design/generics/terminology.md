@@ -555,11 +555,11 @@ interface Container {
   ...
   fn Insert[addr me: Self*](position: IteratorType, value: ElementType);
 }
-struct ListIterator(ElementType:! Type) {
+class ListIterator(ElementType:! Type) {
   ...
   impl Iterator;
 }
-struct List(ElementType:! Type) {
+class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
   let IteratorType: Iterator = ListIterator(ElementType);
   fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
