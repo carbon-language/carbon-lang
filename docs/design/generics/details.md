@@ -150,7 +150,9 @@ properties:
 -   If other interfaces are implemented for `Song`, they are also implemented
     for `Song as ConvertibleToString`. The only thing that changes when casting
     a `Song` `w` to `Song as ConvertibleToString` are the names that are
-    accessible without using the qualification syntax.
+    accessible without using the qualification syntax. A
+    `Song as ConvertibleToString` value can likewise be cast to a `Song`; a
+    `Song` acts just like another facet type for these purposes.
 
 We define these facet types (alternatively, interface implementations) either
 with the type, with the interface, or somewhere else where Carbon can be
