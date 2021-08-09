@@ -1326,31 +1326,28 @@ could be used to provide different implementations of an algorithm depending on
 the capabilities of the iterator being passed in:
 
 ```
-interface ForwardIterator {
-  let Element: Type;
+interface ForwardIntIterator {
   fn Advance[addr me: Self*]();
-  fn Get[me: Self]() -> Element;
+  fn Get[me: Self]() -> Int;
 }
-interface BidirectionalIterator {
-  extends ForwardIterator;
+interface BidirectionalIntIterator {
+  extends ForwardIntIterator;
   fn Back[addr me: Self*]();
 }
-interface RandomAccessIterator {
-  extends BidirectionalIterator;
+interface RandomAccessIntIterator {
+  extends BidirectionalIntIterator;
   fn Skip[addr me: Self*](offset: Int);
   fn Difference[me: Self](that: Self) -> Int;
 }
 
-fn SearchInSortedList
-    [T:! Comparable, IterT:! ForwardIterator(.Element = T)]
-    (begin: IterT, end: IterT, needle: T) -> Bool {
+fn SearchInSortedList[IterT:! ForwardIntIterator]
+    (begin: IterT, end: IterT, needle: Int) -> Bool {
   ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
-fn SearchInSortedList
-    [T:! Comparable, IterT:! RandomAccessIterator(.Element = T)]
-    (begin: IterT, end: IterT, needle: T) -> Bool {
+fn SearchInSortedList[IterT:! RandomAccessIntIterator]
+    (begin: IterT, end: IterT, needle: Int) -> Bool {
   ... // does binary search
 }
 ```
