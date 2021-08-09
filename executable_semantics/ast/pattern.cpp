@@ -37,19 +37,19 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << "(";
       llvm::ListSeparator sep;
       for (const TuplePattern::Field& field : tuple.Fields()) {
-        out << sep << field.name << " = " << field.pattern;
+        out << sep << field.name << " = " << *field.pattern;
       }
       out << ")";
       break;
     }
     case Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*this);
-      out << alternative.ChoiceType() << "." << alternative.AlternativeName()
-          << alternative.Arguments();
+      out << *alternative.ChoiceType() << "." << alternative.AlternativeName()
+          << *alternative.Arguments();
       break;
     }
     case Kind::ExpressionPattern:
-      out << cast<ExpressionPattern>(*this).Expression();
+      out << *cast<ExpressionPattern>(*this).Expression();
       break;
   }
 }

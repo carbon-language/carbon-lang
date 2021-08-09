@@ -1,0 +1,2 @@
+COMPILATION ERROR: 13: Invalid escaping in string: "str\x"
+EXIT CODE: 255

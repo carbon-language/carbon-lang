@@ -60,6 +60,14 @@ auto CurrentEnv(State* state) -> Env {
   return frame->scopes.Top()->values;
 }
 
+static auto GetFromEnv(int line_num, const std::string& name) -> Address {
+  std::optional<Address> pointer = CurrentEnv(state).Get(name);
+  if (!pointer) {
+    FATAL_RUNTIME_ERROR(line_num) << "could not find `" << name << "`";
+  }
+  return *pointer;
+}
+
 void PrintState(llvm::raw_ostream& out) {
   out << "{\nstack: ";
   PrintStack(state->stack, out);
@@ -108,6 +116,7 @@ static Env globals;
 
 void InitEnv(const Declaration& d, Env* env) {
   switch (d.Tag()) {
+    case Declaration::Kind::BuiltinFunctionDeclaration:
     case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           cast<FunctionDeclaration>(d).Definition();
@@ -411,14 +420,9 @@ void StepLvalue() {
     case Expression::Kind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      std::optional<Address> pointer =
-          CurrentEnv(state).Get(cast<IdentifierExpression>(*exp).Name());
-      if (!pointer) {
-        FATAL_RUNTIME_ERROR(exp->LineNumber())
-            << "could not find `" << cast<IdentifierExpression>(*exp).Name()
-            << "`";
-      }
-      const Value* v = global_arena->New<PointerValue>(*pointer);
+      Address pointer = GetFromEnv(exp->LineNumber(),
+                                   cast<IdentifierExpression>(*exp).Name());
+      const Value* v = global_arena->New<PointerValue>(pointer);
       frame->todo.Pop();
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;
@@ -496,10 +500,12 @@ void StepLvalue() {
     case Expression::Kind::BoolTypeLiteral:
     case Expression::Kind::TypeTypeLiteral:
     case Expression::Kind::FunctionTypeLiteral:
-    case Expression::Kind::ContinuationTypeLiteral: {
+    case Expression::Kind::ContinuationTypeLiteral:
+    case Expression::Kind::StringLiteral:
+    case Expression::Kind::StringTypeLiteral:
+    case Expression::Kind::BuiltinFunctionBody:
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << *exp;
-    }
   }
 }
 
@@ -597,11 +603,8 @@ void StepExp() {
       CHECK(act->Pos() == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      std::optional<Address> pointer = CurrentEnv(state).Get(ident.Name());
-      if (!pointer) {
-        FATAL_RUNTIME_ERROR(exp->LineNumber())
-            << "could not find `" << ident.Name() << "`";
-      }
+      std::optional<Address> pointer =
+          GetFromEnv(exp->LineNumber(), ident.Name());
       const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(pointee));
@@ -660,6 +663,23 @@ void StepExp() {
         FATAL() << "in handle_value with Call pos " << act->Pos();
       }
       break;
+    case Expression::Kind::BuiltinFunctionBody:
+      CHECK(act->Pos() == 0);
+      // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
+      frame->todo.Pop(1);
+      switch (cast<BuiltinFunctionBody>(*exp).Builtin()) {
+        case BuiltinFunctionBody::BuiltinKind::Print:
+          std::optional<Address> pointer =
+              GetFromEnv(exp->LineNumber(), "format_str");
+          const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
+          CHECK(pointee->Tag() == Value::Kind::StringValue);
+          // TODO: This could eventually use something like llvm::formatv.
+          llvm::outs() << cast<StringValue>(*pointee).Val();
+          frame->todo.Push(global_arena->New<ValAction>(&TupleValue::Empty()));
+          break;
+      }
+      break;
+
     case Expression::Kind::IntTypeLiteral: {
       CHECK(act->Pos() == 0);
       const Value* v = global_arena->New<IntType>();
@@ -706,6 +726,20 @@ void StepExp() {
     case Expression::Kind::ContinuationTypeLiteral: {
       CHECK(act->Pos() == 0);
       const Value* v = global_arena->New<ContinuationType>();
+      frame->todo.Pop(1);
+      frame->todo.Push(global_arena->New<ValAction>(v));
+      break;
+    }
+    case Expression::Kind::StringLiteral:
+      CHECK(act->Pos() == 0);
+      // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
+      frame->todo.Pop(1);
+      frame->todo.Push(global_arena->New<ValAction>(
+          global_arena->New<StringValue>(cast<StringLiteral>(*exp).Val())));
+      break;
+    case Expression::Kind::StringTypeLiteral: {
+      CHECK(act->Pos() == 0);
+      const Value* v = global_arena->New<StringType>();
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(v));
       break;

@@ -16,7 +16,7 @@
 namespace Carbon {
 
 // Runs the top-level declaration list.
-void ExecProgram(const std::list<const Declaration*>& fs);
+void ExecProgram(std::list<const Declaration*> fs);
 
 }  // namespace Carbon
 

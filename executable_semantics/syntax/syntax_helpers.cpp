@@ -12,7 +12,30 @@
 
 namespace Carbon {
 
-void ExecProgram(const std::list<const Declaration*>& fs) {
+// Adds builtins, currently only print(). Note print() is experimental, not
+// standardized, but is made available for printing state in tests.
+static void AddBuiltins(std::list<const Declaration*>* fs) {
+  std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
+      "0", global_arena->New<BindingPattern>(
+               -1, "format_str",
+               global_arena->New<ExpressionPattern>(
+                   global_arena->New<StringTypeLiteral>(-1))))};
+  auto* print_return =
+      Statement::MakeReturn(-1,
+                            global_arena->New<BuiltinFunctionBody>(
+                                BuiltinFunctionBody::BuiltinKind::Print),
+                            false);
+  auto* print = global_arena->New<BuiltinFunctionDeclaration>(
+      FunctionDefinition(-1, "print", std::vector<GenericBinding>(),
+                         global_arena->New<TuplePattern>(-1, print_fields),
+                         global_arena->New<ExpressionPattern>(
+                             global_arena->New<TupleLiteral>(-1)),
+                         /*is_omitted_return_type=*/false, print_return));
+  fs->insert(fs->begin(), print);
+}
+
+void ExecProgram(std::list<const Declaration*> fs) {
+  AddBuiltins(&fs);
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
     for (const auto* decl : fs) {

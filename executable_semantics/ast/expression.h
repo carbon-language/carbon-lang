@@ -29,9 +29,12 @@ class Expression {
     ContinuationTypeLiteral,  // The type of a continuation value.
     IntLiteral,
     PrimitiveOperatorExpression,
+    StringLiteral,
+    StringTypeLiteral,
     TupleLiteral,
     TypeTypeLiteral,
     IdentifierExpression,
+    BuiltinFunctionBody,
   };
 
   // Returns the enumerator corresponding to the most-derived type of this
@@ -178,6 +181,31 @@ class BoolLiteral : public Expression {
   bool val;
 };
 
+class StringLiteral : public Expression {
+ public:
+  explicit StringLiteral(int line_num, std::string val)
+      : Expression(Kind::StringLiteral, line_num), val(std::move(val)) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::StringLiteral;
+  }
+
+  auto Val() const -> const std::string& { return val; }
+
+ private:
+  std::string val;
+};
+
+class StringTypeLiteral : public Expression {
+ public:
+  explicit StringTypeLiteral(int line_num)
+      : Expression(Kind::StringTypeLiteral, line_num) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::StringTypeLiteral;
+  }
+};
+
 class TupleLiteral : public Expression {
  public:
   explicit TupleLiteral(int line_num) : TupleLiteral(line_num, {}) {}
@@ -299,6 +327,25 @@ class TypeTypeLiteral : public Expression {
   static auto classof(const Expression* exp) -> bool {
     return exp->Tag() == Kind::TypeTypeLiteral;
   }
+};
+
+class BuiltinFunctionBody : public Expression {
+ public:
+  enum class BuiltinKind {
+    Print,
+  };
+
+  explicit BuiltinFunctionBody(BuiltinKind builtin)
+      : Expression(Kind::BuiltinFunctionBody, -1), builtin(builtin) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::BuiltinFunctionBody;
+  }
+
+  auto Builtin() const -> BuiltinKind { return builtin; }
+
+ private:
+  BuiltinKind builtin;
 };
 
 }  // namespace Carbon
