@@ -1305,7 +1305,7 @@ class MyEdgeListIncidenceGraph {
 }
 ```
 
--   We explicitly implement `Graph`.
+-   Explicitly implementing `Graph`.
 
 ```
 class MyEdgeListIncidenceGraph {
@@ -1317,6 +1317,24 @@ class MyEdgeListIncidenceGraph {
   impl as EdgeListGraph { ... }
 }
 ```
+
+-   Implementing `Graph` externally.
+
+```
+class MyEdgeListIncidenceGraph {
+  impl as IncidenceGraph { ... }
+  impl as EdgeListGraph { ... }
+}
+external impl as Graph {
+  fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+  fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+}
+```
+
+This last point means that there are situations where we can only detect a
+missing method definition by the end of the file. This doesn't delay other
+aspects of semantic checking, which will just assume that these methods will
+eventually be provided.
 
 ### Use case: overload resolution
 
