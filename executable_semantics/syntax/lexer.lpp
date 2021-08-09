@@ -198,6 +198,11 @@ operator and its operand, leading to three more cases:
   CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
+    if (Carbon::tracing_output) {
+      // Print a newline because tracing prints an incomplete line
+      // "Reading a token: ".
+      llvm::errs() << "\n";
+    }
     FATAL_COMPILATION_ERROR(yylineno)
         << "Invalid escaping in string: " << yytext;
   }
