@@ -139,9 +139,11 @@ properties:
 -   Carbon will implicitly cast values from type `Song` to type
     `Song as ConvertibleToString` when calling a function that can only accept
     types of type `ConvertibleToString`.
--   Typically, `Song` would also have definitions for the methods of
-    `ConvertibleToString`, such as `ToString`, unless the implementation of
-    `ConvertibleToString` for `Song` was defined as `external`.
+-   In the normal case where the implementation of `ConvertibleToString` for
+    `Song` is not defined as `external`, every member of
+    `Song as ConvertibleToString` is also a member of `Song`. This includes
+    members of `ConvertibleToString` that are not explicitly named in the `impl`
+    definition but have defaults.
 -   You may access the `ToString` function for a `Song` value `w` by writing a
     _qualified_ function call, like `w.(ConvertibleToString.ToString)()`. The
     same effect may be aceived by casting, as in
