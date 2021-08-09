@@ -1147,7 +1147,7 @@ interface PreferredConversion {
 #### `extends` and `impl` with structural interfaces
 
 The `extends` declaration makes sense with the same meaning inside a
-[`structural interface`](#structural-interfaces), and should also be supported.
+[`structural interface`](#structural-interfaces), and so is also supported.
 
 ```
 interface Media {
@@ -1205,6 +1205,30 @@ class Song {
 This is just like you get an implementation of `Equatable` by implementing
 `Hashable` when `Hashable` extends `Equatable`. This provides a tool useful for
 [evolution](#evolution).
+
+Conversely, an `interface` can extend a `structural interface`:
+
+```
+interface MovieCodec {
+  extends Combined;
+
+  fn Load[addr me: Self*](filename: String);
+}
+```
+
+This gives `MovieCodec` the same requirements and names as `Combined`, and so is
+equivalent to:
+
+```
+interface MovieCodec {
+  impl as Media;
+  alias Play = Media.Play;
+  impl as Job;
+  alias Run = Job.Run;
+
+  fn Load[addr me: Self*](filename: String);
+}
+```
 
 #### Diamond dependency issue
 
