@@ -143,9 +143,10 @@ properties:
     `ConvertibleToString`, such as `ToString`, unless the implementation of
     `ConvertibleToString` for `Song` was defined as `external`.
 -   You may access the `ToString` function for a `Song` value `w` by writing a
-    _qualified_ function call, like `w.(ConvertibleToString.ToString)()`. This
-    qualified syntax is available whether or not the implementation is defined
-    as `external`.
+    _qualified_ function call, like `w.(ConvertibleToString.ToString)()`. The
+    same effect may be aceived by casting, as in
+    `(w as (Song as ConvertibleToString)).ToString()`. This qualified syntax is
+    available whether or not the implementation is defined as `external`.
 -   If other interfaces are implemented for `Song`, they are also implemented
     for `Song as ConvertibleToString`. The only thing that changes when casting
     a `Song` `w` to `Song as ConvertibleToString` are the names that are
