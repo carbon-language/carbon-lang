@@ -355,6 +355,12 @@ public:
     return Analysis->isConditionalBranch(Inst);
   }
 
+  /// Returns true if Inst is a condtional move instruction
+  virtual bool isConditionalMove(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   virtual bool isUnconditionalBranch(const MCInst &Inst) const {
     return Analysis->isUnconditionalBranch(Inst);
   }
@@ -465,6 +471,11 @@ public:
   }
 
   virtual bool isPrefix(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isRep(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -972,6 +983,20 @@ public:
     return false;
   }
 
+  // Replace Register in Inst with Imm. Returns true if successful
+  virtual bool replaceRegWithImm(MCInst &Inst, unsigned Register,
+                                 int64_t Imm) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  // Replace ToReplace in Inst with ReplaceWith. Returns true if successful
+  virtual bool replaceRegWithReg(MCInst &Inst, unsigned ToReplace,
+                                 unsigned ReplaceWith) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// Add \p NewImm to the current immediate operand of \p Inst. If it is a
   /// memory accessing instruction, this immediate is the memory address
   /// displacement. Otherwise, the target operand is the first immediate
@@ -1139,6 +1164,11 @@ public:
     llvm_unreachable("not implemented");
   }
 
+  /// Set of Registers used by the Rep instruction
+  virtual void getRepRegs(BitVector &Regs) const {
+    llvm_unreachable("not implemented");
+  }
+
   /// Return the register width in bytes (1, 2, 4 or 8)
   virtual uint8_t getRegSize(MCPhysReg Reg) const;
 
@@ -1181,6 +1211,10 @@ public:
   /// Set of all registers being read by this instruction -- includes aliases
   /// but only if they are strictly smaller than the actual reg
   virtual void getUsedRegs(const MCInst &Inst, BitVector &Regs) const;
+
+  /// Set of all src registers -- includes aliases but
+  /// only if they are strictly smaller than the actual reg
+  virtual void getSrcRegs(const MCInst &Inst, BitVector &Regs) const;
 
   /// Return true if this instruction defines the specified physical
   /// register either explicitly or implicitly.

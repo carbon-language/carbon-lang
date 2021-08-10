@@ -436,6 +436,10 @@ public:
     return false;
   }
 
+  bool isRep(const MCInst &Inst) const override {
+    return Inst.getFlags() == X86::IP_HAS_REPEAT;
+  }
+
   bool deleteREPPrefix(MCInst &Inst) const override {
     if (Inst.getFlags() == X86::IP_HAS_REPEAT) {
       Inst.setFlags(0);
@@ -1169,6 +1173,10 @@ public:
     Regs |= getAliases(X86::RCX);
   }
 
+  void getRepRegs(BitVector &Regs) const override {
+    Regs |= getAliases(X86::RCX);
+  }
+
   MCPhysReg getAliasSized(MCPhysReg Reg, uint8_t Size) const override {
     switch (Reg) {
       case X86::RAX: case X86::EAX: case X86::AX: case X86::AL: case X86::AH:
@@ -1207,7 +1215,19 @@ public:
           case 2: return X86::CX;        case 1: return X86::CL;
           default: llvm_unreachable("Unexpected size");
         }
-      case X86::R8: case X86::R8D: case X86::R8W: case X86::R8B:
+      case X86::RSP: case X86::ESP: case X86::SP: case X86::SPL:
+        switch (Size) {
+          case 8: return X86::RSP;       case 4: return X86::ESP;
+          case 2: return X86::SP;        case 1: return X86::SPL;
+          default: llvm_unreachable("Unexpected size");
+        }
+      case X86::RBP: case X86::EBP: case X86::BP: case X86::BPL:
+        switch (Size) {
+          case 8: return X86::RBP;       case 4: return X86::EBP;
+          case 2: return X86::BP;        case 1: return X86::BPL;
+          default: llvm_unreachable("Unexpected size");
+        }
+    case X86::R8: case X86::R8D: case X86::R8W: case X86::R8B:
         switch (Size) {
           case 8: return X86::R8;        case 4: return X86::R8D;
           case 2: return X86::R8W;       case 1: return X86::R8B;
@@ -2938,6 +2958,248 @@ public:
     return true;
   }
 
+  bool replaceRegWithImm(MCInst &Inst, unsigned Register,
+                         int64_t Imm) const override {
+
+    enum CheckSignExt : uint8_t {
+      NOCHECK = 0,
+      CHECK8,
+      CHECK32,
+    };
+
+    using CheckList = std::vector<std::pair<CheckSignExt, unsigned>>;
+    struct InstInfo {
+      // Size in bytes that Inst loads from memory.
+      uint8_t DataSize;
+
+      // True when the target operand has to be duplicated because the opcode
+      // expects a LHS operand.
+      bool HasLHS;
+
+      // List of checks and corresponding opcodes to be used. We try to use the
+      // smallest possible immediate value when various sizes are available,
+      // hence we may need to check whether a larger constant fits in a smaller
+      // immediate.
+      CheckList Checks;
+    };
+
+    InstInfo I;
+
+    switch (Inst.getOpcode()) {
+    default: {
+      switch (getPushSize(Inst)) {
+
+      case 2: I = {2, false, {{CHECK8, X86::PUSH16i8}, {NOCHECK, X86::PUSHi16}}}; break;
+      case 4: I = {4, false, {{CHECK8, X86::PUSH32i8}, {NOCHECK, X86::PUSHi32}}}; break;
+      case 8: I = {8, false, {{CHECK8, X86::PUSH64i8},
+                              {CHECK32, X86::PUSH64i32},
+                              {NOCHECK, Inst.getOpcode()}}}; break;
+      default: return false;
+      }
+      break;
+    }
+
+    // MOV
+    case X86::MOV8rr:       I = {1, false, {{NOCHECK, X86::MOV8ri}}}; break;
+    case X86::MOV16rr:      I = {2, false, {{NOCHECK, X86::MOV16ri}}}; break;
+    case X86::MOV32rr:      I = {4, false, {{NOCHECK, X86::MOV32ri}}}; break;
+    case X86::MOV64rr:      I = {8, false, {{CHECK32, X86::MOV64ri32},
+                                            {NOCHECK, X86::MOV64ri}}}; break;
+
+    case X86::MOV8mr:       I = {1, false, {{NOCHECK, X86::MOV8mi}}}; break;
+    case X86::MOV16mr:      I = {2, false, {{NOCHECK, X86::MOV16mi}}}; break;
+    case X86::MOV32mr:      I = {4, false, {{NOCHECK, X86::MOV32mi}}}; break;
+    case X86::MOV64mr:      I = {8, false, {{CHECK32, X86::MOV64mi32},
+                                            {NOCHECK, X86::MOV64mr}}}; break;
+
+    // MOVZX
+    case X86::MOVZX16rr8:   I = {1, false, {{NOCHECK, X86::MOV16ri}}}; break;
+    case X86::MOVZX32rr8:   I = {1, false, {{NOCHECK, X86::MOV32ri}}}; break;
+    case X86::MOVZX32rr16:  I = {2, false, {{NOCHECK, X86::MOV32ri}}}; break;
+
+    // CMP
+    case X86::CMP8rr:       I = {1, false, {{NOCHECK, X86::CMP8ri}}}; break;
+    case X86::CMP16rr:      I = {2, false, {{CHECK8, X86::CMP16ri8},
+                                            {NOCHECK, X86::CMP16ri}}}; break;
+    case X86::CMP32rr:      I = {4, false, {{CHECK8, X86::CMP32ri8},
+                                            {NOCHECK, X86::CMP32ri}}}; break;
+    case X86::CMP64rr:      I = {8, false, {{CHECK8, X86::CMP64ri8},
+                                            {CHECK32, X86::CMP64ri32},
+                                            {NOCHECK, X86::CMP64rr}}}; break;
+
+    // TEST
+    case X86::TEST8rr:      I = {1, false, {{NOCHECK, X86::TEST8ri}}}; break;
+    case X86::TEST16rr:     I = {2, false, {{NOCHECK, X86::TEST16ri}}}; break;
+    case X86::TEST32rr:     I = {4, false, {{NOCHECK, X86::TEST32ri}}}; break;
+    case X86::TEST64rr:     I = {8, false, {{CHECK32, X86::TEST64ri32},
+                                            {NOCHECK, X86::TEST64rr}}}; break;
+
+    // ADD
+    case X86::ADD8rr:       I = {1, true, {{NOCHECK, X86::ADD8ri}}}; break;
+    case X86::ADD16rr:      I = {2, true, {{CHECK8, X86::ADD16ri8},
+                                           {NOCHECK, X86::ADD16ri}}}; break;
+    case X86::ADD32rr:      I = {4, true, {{CHECK8, X86::ADD32ri8},
+                                           {NOCHECK, X86::ADD32ri}}}; break;
+    case X86::ADD64rr:      I = {8, true, {{CHECK8, X86::ADD64ri8},
+                                           {CHECK32, X86::ADD64ri32},
+                                           {NOCHECK, X86::ADD64rr}}}; break;
+
+    // SUB
+    case X86::SUB8rr:       I = {1, true, {{NOCHECK, X86::SUB8ri}}}; break;
+    case X86::SUB16rr:      I = {2, true, {{CHECK8, X86::SUB16ri8},
+                                           {NOCHECK, X86::SUB16ri}}}; break;
+    case X86::SUB32rr:      I = {4, true, {{CHECK8, X86::SUB32ri8},
+                                           {NOCHECK, X86::SUB32ri}}}; break;
+    case X86::SUB64rr:      I = {8, true, {{CHECK8, X86::SUB64ri8},
+                                           {CHECK32, X86::SUB64ri32},
+                                           {NOCHECK, X86::SUB64rr}}}; break;
+
+    // AND
+    case X86::AND8rr:       I = {1, true, {{NOCHECK, X86::AND8ri}}}; break;
+    case X86::AND16rr:      I = {2, true, {{CHECK8, X86::AND16ri8},
+                                           {NOCHECK, X86::AND16ri}}}; break;
+    case X86::AND32rr:      I = {4, true, {{CHECK8, X86::AND32ri8},
+                                           {NOCHECK, X86::AND32ri}}}; break;
+    case X86::AND64rr:      I = {8, true, {{CHECK8, X86::AND64ri8},
+                                           {CHECK32, X86::AND64ri32},
+                                           {NOCHECK, X86::AND64rr}}}; break;
+
+    // OR
+    case X86::OR8rr:        I = {1, true, {{NOCHECK, X86::OR8ri}}}; break;
+    case X86::OR16rr:       I = {2, true, {{CHECK8, X86::OR16ri8},
+                                           {NOCHECK, X86::OR16ri}}}; break;
+    case X86::OR32rr:       I = {4, true, {{CHECK8, X86::OR32ri8},
+                                           {NOCHECK, X86::OR32ri}}}; break;
+    case X86::OR64rr:       I = {8, true, {{CHECK8, X86::OR64ri8},
+                                           {CHECK32, X86::OR64ri32},
+                                           {NOCHECK, X86::OR64rr}}}; break;
+
+    // XOR
+    case X86::XOR8rr:       I = {1, true, {{NOCHECK, X86::XOR8ri}}}; break;
+    case X86::XOR16rr:      I = {2, true, {{CHECK8, X86::XOR16ri8},
+                                           {NOCHECK, X86::XOR16ri}}}; break;
+    case X86::XOR32rr:      I = {4, true, {{CHECK8, X86::XOR32ri8},
+                                           {NOCHECK, X86::XOR32ri}}}; break;
+    case X86::XOR64rr:      I = {8, true, {{CHECK8, X86::XOR64ri8},
+                                           {CHECK32, X86::XOR64ri32},
+                                           {NOCHECK, X86::XOR64rr}}}; break;
+    }
+
+    // Compute the new opcode.
+    unsigned NewOpcode = 0;
+    for (const std::pair<CheckSignExt, unsigned> &Check : I.Checks) {
+      NewOpcode = Check.second;
+      if (Check.first == NOCHECK)
+        break;
+      if (Check.first == CHECK8 && Imm >= std::numeric_limits<int8_t>::min() &&
+          Imm <= std::numeric_limits<int8_t>::max())
+        break;
+      if (Check.first == CHECK32 &&
+          Imm >= std::numeric_limits<int32_t>::min() &&
+          Imm <= std::numeric_limits<int32_t>::max())
+        break;
+    }
+    if (NewOpcode == Inst.getOpcode())
+      return false;
+
+    const MCInstrDesc &InstDesc = Info->get(Inst.getOpcode());
+
+    unsigned NumFound = 0;
+    for (unsigned Index = InstDesc.getNumDefs() + (I.HasLHS ? 1 : 0),
+                  E = InstDesc.getNumOperands(); Index != E; ++Index) {
+      if (Inst.getOperand(Index).isReg() &&
+          Inst.getOperand(Index).getReg() == Register)
+        NumFound++;
+    }
+
+    if (NumFound != 1)
+      return false;
+
+    // Iterate backwards to replace the src register before the src/dest
+    // register as in AND, ADD, and SUB Only iterate through src operands that
+    // arent also dest operands
+    for (unsigned Index = InstDesc.getNumOperands() - 1,
+                  E = InstDesc.getNumDefs() + (I.HasLHS ? 0 : -1);
+         Index != E; --Index) {
+      if (!Inst.getOperand(Index).isReg() ||
+          Inst.getOperand(Index).getReg() != Register)
+        continue;
+      MCOperand NewOperand = MCOperand::createImm(Imm);
+      Inst.getOperand(Index) = NewOperand;
+      break;
+    }
+
+    Inst.setOpcode(NewOpcode);
+
+    return true;
+  }
+
+  bool replaceRegWithReg(MCInst &Inst, unsigned ToReplace,
+                         unsigned ReplaceWith) const override {
+
+    // Get the HasLHS value so that iteration can be done
+    bool HasLHS;
+    if (isAND(Inst.getOpcode()) || isADD(Inst.getOpcode()) || isSUB(Inst)) {
+      HasLHS = true;
+    } else if (isPop(Inst) || isPush(Inst) || isCMP(Inst.getOpcode()) ||
+               isTEST(Inst.getOpcode())) {
+      HasLHS = false;
+    } else {
+      switch (Inst.getOpcode()) {
+      case X86::MOV8rr:
+      case X86::MOV8rm:
+      case X86::MOV8mr:
+      case X86::MOV8ri:
+      case X86::MOV16rr:
+      case X86::MOV16rm:
+      case X86::MOV16mr:
+      case X86::MOV16ri:
+      case X86::MOV32rr:
+      case X86::MOV32rm:
+      case X86::MOV32mr:
+      case X86::MOV32ri:
+      case X86::MOV64rr:
+      case X86::MOV64rm:
+      case X86::MOV64mr:
+      case X86::MOV64ri:
+      case X86::MOVZX16rr8:
+      case X86::MOVZX32rr8:
+      case X86::MOVZX32rr16:
+      case X86::MOVSX32rm8:
+      case X86::MOVSX32rr8:
+      case X86::MOVSX64rm32:
+      case X86::LEA64r:
+        HasLHS = false;
+        break;
+      default:
+        return false;
+      }
+    }
+
+    const MCInstrDesc &InstDesc = Info->get(Inst.getOpcode());
+
+    bool FoundOne = false;
+
+    // Iterate only through src operands that arent also dest operands
+    for (unsigned Index = InstDesc.getNumDefs() + (HasLHS ? 1 : 0),
+                  E = InstDesc.getNumOperands();
+         Index != E; ++Index) {
+      BitVector RegAliases = getAliases(ToReplace, true);
+      if (!Inst.getOperand(Index).isReg() ||
+          !RegAliases.test(Inst.getOperand(Index).getReg()))
+        continue;
+      // Resize register if needed
+      unsigned SizedReplaceWith = getAliasSized(
+          ReplaceWith, getRegSize(Inst.getOperand(Index).getReg()));
+      MCOperand NewOperand = MCOperand::createReg(SizedReplaceWith);
+      Inst.getOperand(Index) = NewOperand;
+      FoundOne = true;
+    }
+
+    // Return true if at least one operand was replaced
+    return FoundOne;
+  }
+
   bool createUncondBranch(MCInst &Inst, const MCSymbol *TBB,
                           MCContext *Ctx) const override {
     Inst.setOpcode(X86::JMP_1);
@@ -3079,6 +3341,12 @@ public:
     Inst.addOperand(MCOperand::createExpr(
         MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
     Seq.emplace_back(Inst);
+  }
+
+  bool isConditionalMove(const MCInst &Inst) const override {
+    unsigned OpCode = Inst.getOpcode();
+    return (OpCode == X86::CMOV16rr || OpCode == X86::CMOV32rr ||
+            OpCode == X86::CMOV64rr);
   }
 
   bool isBranchOnMem(const MCInst &Inst) const override {

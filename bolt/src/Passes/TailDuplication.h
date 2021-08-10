@@ -57,12 +57,42 @@ class TailDuplication : public BinaryFunctionPass {
   /// Record the execution count of all blocks.
   uint64_t AllBlocksDynamicCount = 0;
 
+  /// Record the number of instructions deleted because of propagation
+  uint64_t StaticInstructionDeletionCount = 0;
+
+  /// Record the number of instructions deleted because of propagation
+  uint64_t DynamicInstructionDeletionCount = 0;
+
+  /// Sets Regs with the caller saved registers
+  void getCallerSavedRegs(const MCInst &Inst, BitVector &Regs,
+                          BinaryContext &BC) const;
+
+  /// Returns true if Reg is possibly overwritten by Inst
+  bool regIsPossiblyOverwritten(const MCInst &Inst, unsigned Reg,
+                                BinaryContext &BC) const;
+
+  /// Returns true if Reg is definitely overwritten by Inst
+  bool regIsDefinitelyOverwritten(const MCInst &Inst, unsigned Reg,
+                                  BinaryContext &BC) const;
+
+  /// Returns true if Reg is used by Inst
+  bool regIsUsed(const MCInst &Inst, unsigned Reg, BinaryContext &BC) const;
+
+  /// Returns true if Reg is overwritten before its used by StartBB's sucessors
+  bool isOverwrittenBeforeUsed(BinaryBasicBlock &StartBB, unsigned Reg) const;
+
+  /// Constant and Copy Propagate for the block formed by OriginalBB and
+  /// BlocksToPropagate
+  void
+  constantAndCopyPropagate(BinaryBasicBlock &OriginalBB,
+                           std::vector<BinaryBasicBlock *> &BlocksToPropagate);
+
   /// True if Succ is in the same cache line as BB (approximately)
   bool isInCacheLine(const BinaryBasicBlock &BB,
                      const BinaryBasicBlock &Succ) const;
 
   /// Duplicates BlocksToDuplicate and places them after BB.
-  void
+  std::vector<BinaryBasicBlock *>
   tailDuplicate(BinaryBasicBlock &BB,
                 const std::vector<BinaryBasicBlock *> &BlocksToDuplicate) const;
 

@@ -41,6 +41,179 @@ static cl::opt<unsigned> TailDuplicationMaximumDuplication(
 
 namespace llvm {
 namespace bolt {
+void TailDuplication::getCallerSavedRegs(const MCInst &Inst, BitVector &Regs,
+                                         BinaryContext &BC) const {
+  if (!BC.MIB->isCall(Inst))
+    return;
+  BitVector CallRegs = BitVector(BC.MRI->getNumRegs(), false);
+  BC.MIB->getCalleeSavedRegs(CallRegs);
+  CallRegs.flip();
+  Regs |= CallRegs;
+}
+
+bool TailDuplication::regIsPossiblyOverwritten(const MCInst &Inst, unsigned Reg,
+                                               BinaryContext &BC) const {
+  BitVector WrittenRegs = BitVector(BC.MRI->getNumRegs(), false);
+  BC.MIB->getWrittenRegs(Inst, WrittenRegs);
+  getCallerSavedRegs(Inst, WrittenRegs, BC);
+  if (BC.MIB->isRep(Inst))
+    BC.MIB->getRepRegs(WrittenRegs);
+  WrittenRegs &= BC.MIB->getAliases(Reg, false);
+  return WrittenRegs.any();
+}
+
+bool TailDuplication::regIsDefinitelyOverwritten(const MCInst &Inst,
+                                                 unsigned Reg,
+                                                 BinaryContext &BC) const {
+  BitVector WrittenRegs = BitVector(BC.MRI->getNumRegs(), false);
+  BC.MIB->getWrittenRegs(Inst, WrittenRegs);
+  getCallerSavedRegs(Inst, WrittenRegs, BC);
+  if (BC.MIB->isRep(Inst))
+    BC.MIB->getRepRegs(WrittenRegs);
+  return (!regIsUsed(Inst, Reg, BC) && WrittenRegs.test(Reg) &&
+          !BC.MIB->isConditionalMove(Inst));
+}
+
+bool TailDuplication::regIsUsed(const MCInst &Inst, unsigned Reg,
+                                BinaryContext &BC) const {
+  BitVector SrcRegs = BitVector(BC.MRI->getNumRegs(), false);
+  BC.MIB->getSrcRegs(Inst, SrcRegs);
+  SrcRegs &= BC.MIB->getAliases(Reg, true);
+  return SrcRegs.any();
+}
+
+bool TailDuplication::isOverwrittenBeforeUsed(BinaryBasicBlock &StartBB,
+                                              unsigned Reg) const {
+  BinaryFunction *BF = StartBB.getFunction();
+  BinaryContext &BC = BF->getBinaryContext();
+  std::queue<BinaryBasicBlock *> Q;
+  for (auto Itr = StartBB.succ_begin(); Itr != StartBB.succ_end(); ++Itr) {
+    BinaryBasicBlock *NextBB = *Itr;
+    Q.push(NextBB);
+  }
+  std::set<BinaryBasicBlock *> Visited;
+  // Breadth first search through successive blocks and see if Reg is ever used
+  // before its overwritten
+  while (Q.size() > 0) {
+    BinaryBasicBlock *CurrBB = Q.front();
+    Q.pop();
+    if (Visited.count(CurrBB))
+      continue;
+    Visited.insert(CurrBB);
+    bool Overwritten = false;
+    for (auto Itr = CurrBB->begin(); Itr != CurrBB->end(); ++Itr) {
+      MCInst &Inst = *Itr;
+      if (regIsUsed(Inst, Reg, BC))
+        return false;
+      if (regIsDefinitelyOverwritten(Inst, Reg, BC)) {
+        Overwritten = true;
+        break;
+      }
+    }
+    if (Overwritten)
+      continue;
+    for (auto Itr = CurrBB->succ_begin(); Itr != CurrBB->succ_end(); ++Itr) {
+      BinaryBasicBlock *NextBB = *Itr;
+      Q.push(NextBB);
+    }
+  }
+  return true;
+}
+
+void TailDuplication::constantAndCopyPropagate(
+    BinaryBasicBlock &OriginalBB,
+    std::vector<BinaryBasicBlock *> &BlocksToPropagate) {
+  BinaryFunction *BF = OriginalBB.getFunction();
+  BinaryContext &BC = BF->getBinaryContext();
+
+  BlocksToPropagate.insert(BlocksToPropagate.begin(), &OriginalBB);
+  // Iterate through the original instructions to find one to propagate
+  for (auto Itr = OriginalBB.begin(); Itr != OriginalBB.end(); ++Itr) {
+    MCInst &OriginalInst = *Itr;
+    // It must be a non conditional
+    if (BC.MIB->isConditionalMove(OriginalInst))
+      continue;
+
+    // Move immediate or move register
+    if ((!BC.MII->get(OriginalInst.getOpcode()).isMoveImmediate() ||
+         !OriginalInst.getOperand(1).isImm()) &&
+        (!BC.MII->get(OriginalInst.getOpcode()).isMoveReg() ||
+         !OriginalInst.getOperand(1).isReg()))
+      continue;
+
+    // True if this is constant propagation and not copy propagation
+    bool ConstantProp = BC.MII->get(OriginalInst.getOpcode()).isMoveImmediate();
+    // The Register to replaced
+    unsigned Reg = OriginalInst.getOperand(0).getReg();
+    // True if the register to replace was replaced everywhere it was used
+    bool ReplacedEverywhere = true;
+    // True if the register was definitely overwritten
+    bool Overwritten = false;
+    // True if the register to replace and the register to replace with (for
+    // copy propagation) has not been overwritten and is still usable
+    bool RegsActive = true;
+
+    // Iterate through successor blocks and through their instructions
+    for (BinaryBasicBlock *NextBB : BlocksToPropagate) {
+      for (auto PropagateItr =
+               ((NextBB == &OriginalBB) ? Itr + 1 : NextBB->begin());
+           PropagateItr < NextBB->end(); ++PropagateItr) {
+        MCInst &PropagateInst = *PropagateItr;
+        if (regIsUsed(PropagateInst, Reg, BC)) {
+          bool Replaced = false;
+          // If both registers are active for copy propagation or the register
+          // to replace is active for constant propagation
+          if (RegsActive) {
+            // Set Replaced and so ReplacedEverwhere to false if it cannot be
+            // replaced (no replacing that opcode, Register is src and dest)
+            if (ConstantProp) {
+              Replaced = BC.MIB->replaceRegWithImm(
+                  PropagateInst, Reg, OriginalInst.getOperand(1).getImm());
+            } else {
+              Replaced = BC.MIB->replaceRegWithReg(
+                  PropagateInst, Reg, OriginalInst.getOperand(1).getReg());
+            }
+          }
+          ReplacedEverywhere = ReplacedEverywhere && Replaced;
+        }
+        // For copy propagation, make sure no propagation happens after the
+        // register to replace with is overwritten
+        if (!ConstantProp &&
+            regIsPossiblyOverwritten(PropagateInst,
+                                     OriginalInst.getOperand(1).getReg(), BC)) {
+          RegsActive = false;
+        }
+        // Make sure no propagation happens after the register to replace is
+        // overwritten
+        if (regIsPossiblyOverwritten(PropagateInst, Reg, BC)) {
+          RegsActive = false;
+        }
+        // Record if the register to replace is overwritten
+        if (regIsDefinitelyOverwritten(PropagateInst, Reg, BC)) {
+          Overwritten = true;
+          break;
+        }
+      }
+      if (Overwritten)
+        break;
+    }
+
+    // If the register was replaced everwhere and it was overwritten in either
+    // one of the iterated through blocks or one of the successor blocks, delete
+    // the original move instruction
+    if (ReplacedEverywhere &&
+        (Overwritten ||
+         isOverwrittenBeforeUsed(
+             *BlocksToPropagate[BlocksToPropagate.size() - 1], Reg))) {
+      // If both registers are active for copy propagation or the register
+      // to replace is active for constant propagation
+      StaticInstructionDeletionCount++;
+      DynamicInstructionDeletionCount += OriginalBB.getExecutionCount();
+      Itr = std::prev(OriginalBB.eraseInstruction(Itr));
+    }
+  }
+}
+
 bool TailDuplication::isInCacheLine(const BinaryBasicBlock &BB,
                                     const BinaryBasicBlock &Succ) const {
   if (&BB == &Succ)
@@ -123,7 +296,7 @@ TailDuplication::aggressiveCodeToDuplicate(BinaryBasicBlock &BB) const {
   return BlocksToDuplicate;
 }
 
-void TailDuplication::tailDuplicate(
+std::vector<BinaryBasicBlock *> TailDuplication::tailDuplicate(
     BinaryBasicBlock &BB,
     const std::vector<BinaryBasicBlock *> &BlocksToDuplicate) const {
   BinaryFunction *BF = BB.getFunction();
@@ -149,6 +322,7 @@ void TailDuplication::tailDuplicate(
   LastDuplicatedBB->removeSuccessor(LastDuplicatedBB->getSuccessor());
 
   std::vector<std::unique_ptr<BinaryBasicBlock>> DuplicatedBlocks;
+  std::vector<BinaryBasicBlock *> DuplicatedBlocksToReturn;
 
   for (BinaryBasicBlock *CurrBB : BlocksToDuplicate) {
     DuplicatedBlocks.emplace_back(
@@ -160,6 +334,8 @@ void TailDuplication::tailDuplicate(
     NewBB->setExecutionCount(
         std::max((uint64_t)1, CurrBB->getExecutionCount()));
     LastDuplicatedBB->addSuccessor(NewBB, LastBI);
+
+    DuplicatedBlocksToReturn.push_back(NewBB);
 
     // As long as its not the first block, adjust both original and duplicated
     // to what they should be
@@ -183,6 +359,8 @@ void TailDuplication::tailDuplicate(
   LastDuplicatedBB->adjustExecutionCount(ExecutionCountRatio);
 
   BF->insertBasicBlocks(&BB, std::move(DuplicatedBlocks));
+
+  return DuplicatedBlocksToReturn;
 }
 
 void TailDuplication::runOnFunction(BinaryFunction &Function) {
@@ -222,7 +400,15 @@ void TailDuplication::runOnFunction(BinaryFunction &Function) {
     if (BlocksToDuplicate.size() > 0) {
       PossibleDuplications++;
       PossibleDuplicationsDynamicCount += BB->getExecutionCount();
-      tailDuplicate(*BB, BlocksToDuplicate);
+      std::vector<BinaryBasicBlock *> DuplicatedBlocks =
+          tailDuplicate(*BB, BlocksToDuplicate);
+      constantAndCopyPropagate(*BB, DuplicatedBlocks);
+      BinaryBasicBlock *FirstBB = BlocksToDuplicate[0];
+      if (FirstBB->pred_size() == 1) {
+        BinaryBasicBlock *PredBB = *FirstBB->pred_begin();
+        if (PredBB->succ_size() == 1)
+          constantAndCopyPropagate(*PredBB, BlocksToDuplicate);
+      }
     }
   }
 }
@@ -230,6 +416,8 @@ void TailDuplication::runOnFunction(BinaryFunction &Function) {
 void TailDuplication::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction &Function = It.second;
+    if (Function.isIgnored())
+      continue;
     runOnFunction(Function);
   }
 
@@ -247,6 +435,10 @@ void TailDuplication::runOnFunctions(BinaryContext &BC) {
          << format("%.1f", ((float)PossibleDuplicationsDynamicCount * 100.0f) /
                                AllBlocksDynamicCount)
          << "%\n";
+  outs() << "BOLT-INFO: tail duplication static propagation deletions: "
+         << StaticInstructionDeletionCount << "\n";
+  outs() << "BOLT-INFO: tail duplication dynamic propagation deletions: "
+         << DynamicInstructionDeletionCount << "\n"; //
 }
 
 } // end namespace bolt

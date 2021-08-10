@@ -369,6 +369,42 @@ void MCPlusBuilder::getUsedRegs(const MCInst &Inst, BitVector &Regs) const {
   }
 }
 
+void MCPlusBuilder::getSrcRegs(const MCInst &Inst, BitVector &Regs) const {
+  if (isPrefix(Inst) || isCFI(Inst))
+    return;
+
+  if (isCall(Inst)) {
+    BitVector CallRegs = BitVector(Regs.size(), false);
+    getCalleeSavedRegs(CallRegs);
+    CallRegs.flip();
+    Regs |= CallRegs;
+    return;
+  }
+
+  if (isReturn(Inst)) {
+    getDefaultLiveOut(Regs);
+    return;
+  }
+
+  if (isRep(Inst)) {
+    getRepRegs(Regs);
+  }
+
+  const MCInstrDesc &InstInfo = Info->get(Inst.getOpcode());
+
+  const MCPhysReg *ImplicitUses = InstInfo.getImplicitUses();
+  for (unsigned I = 0, E = InstInfo.getNumImplicitUses(); I != E; ++I) {
+    Regs |= getAliases(ImplicitUses[I], /*OnlySmaller=*/true);
+  }
+
+  for (unsigned I = InstInfo.getNumDefs(), E = InstInfo.getNumOperands();
+       I != E; ++I) {
+    if (!Inst.getOperand(I).isReg())
+      continue;
+    Regs |= getAliases(Inst.getOperand(I).getReg(), /*OnlySmaller=*/true);
+  }
+}
+
 bool MCPlusBuilder::hasDefOfPhysReg(const MCInst &MI, unsigned Reg) const {
   const MCInstrDesc &InstInfo = Info->get(MI.getOpcode());
   return InstInfo.hasDefOfPhysReg(MI, Reg, *RegInfo);
