@@ -43,7 +43,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Imports from other languages](#imports-from-other-languages)
     -   [Imports from URLs](#imports-from-urls)
     -   [Test file type](#test-file-type)
--   [Alternatives](#alternatives)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -794,40 +794,40 @@ import Carbon library "Utilities"
 Similar to `api` and `impl`, we may eventually want a type like `test`. This
 should be part of a larger testing plan.
 
-## Alternatives
+## Alternatives considered
 
 -   Packages
-    -   [Name paths for package names](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Referring to the package as `package`](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Remove the `library` keyword from `package` and `import`](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Rename package concept](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [No association between the file system path and library/namespace](https://github.com/carbon-language/carbon-lang/pull/107)
+    -   [Name paths for package names](/proposals/p0107.md#name-paths-for-package-names)
+    -   [Referring to the package as `package`](/proposals/p0107.md#referring-to-the-package-as-package)
+    -   [Remove the `library` keyword from `package` and `import`](/proposals/p0107.md#remove-the-library-keyword-from-package-and-import)
+    -   [Rename package concept](/proposals/p0107.md#rename-package-concept)
+    -   [No association between the file system path and library/namespace](/proposals/p0107.md#no-association-between-the-file-system-path-and-librarynamespace)
 -   Libraries
-    -   [Allow exporting namespaces](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Allow importing implementation files from within the same library](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Alternative library separators and shorthand](https://github.com/carbon-language/carbon-lang/pull/107)
-        -   [Single-word libraries](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Collapse API and implementation file concepts](https://github.com/carbon-language/carbon-lang/pull/107)
-        -   [Automatically generating the API separation](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Collapse file and library concepts](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Collapse the library concept into packages](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Collapse the package concept into libraries](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Different file type labels](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Function-like syntax](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Inlining from implementation files](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Library-private access controls](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Managing API versus implementation in libraries](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Multiple API files](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Name paths as library names](https://github.com/carbon-language/carbon-lang/pull/107)
+    -   [Allow exporting namespaces](/proposals/p0107.md#allow-exporting-namespaces)
+    -   [Allow importing implementation files from within the same library](/proposals/p0107.md#allow-importing-implementation-files-from-within-the-same-library)
+    -   [Alternative library separators and shorthand](/proposals/p0107.md#alternative-library-separators-and-shorthand)
+        -   [Single-word libraries](/proposals/p0107.md#single-word-libraries)
+    -   [Collapse API and implementation file concepts](/proposals/p0107.md#collapse-api-and-implementation-file-concepts)
+        -   [Automatically generating the API separation](/proposals/p0107.md#automatically-generating-the-api-separation)
+    -   [Collapse file and library concepts](/proposals/p0107.md#collapse-file-and-library-concepts)
+    -   [Collapse the library concept into packages](/proposals/p0107.md#collapse-the-library-concept-into-packages)
+    -   [Collapse the package concept into libraries](/proposals/p0107.md#collapse-the-package-concept-into-libraries)
+    -   [Different file type labels](/proposals/p0107.md#different-file-type-labels)
+    -   [Function-like syntax](/proposals/p0107.md#function-like-syntax)
+    -   [Inlining from implementation files](/proposals/p0107.md#inlining-from-implementation-files)
+    -   [Library-private access controls](/proposals/p0107.md#library-private-access-controls)
+    -   [Managing API versus implementation in libraries](/proposals/p0107.md#managing-api-versus-implementation-in-libraries)
+    -   [Multiple API files](/proposals/p0107.md#multiple-api-files)
+    -   [Name paths as library names](/proposals/p0107.md#name-paths-as-library-names)
 -   Imports
-    -   [Block imports](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Block imports of libraries of a single package](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Broader imports, either all names or arbitrary code](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Direct name imports](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Optional package names](https://github.com/carbon-language/carbon-lang/pull/107)
+    -   [Block imports](/proposals/p0107.md#block-imports)
+    -   [Block imports of libraries of a single package](/proposals/p0107.md#block-imports-of-libraries-of-a-single-package)
+    -   [Broader imports, either all names or arbitrary code](/proposals/p0107.md#broader-imports-either-all-names-or-arbitrary-code)
+    -   [Direct name imports](/proposals/p0107.md#direct-name-imports)
+    -   [Optional package names](/proposals/p0107.md#optional-package-names)
 -   Namespaces
-    -   [File-level namespaces](https://github.com/carbon-language/carbon-lang/pull/107)
-    -   [Scoped namespaces](https://github.com/carbon-language/carbon-lang/pull/107)
+    -   [File-level namespaces](/proposals/p0107.md#file-level-namespaces)
+    -   [Scoped namespaces](/proposals/p0107.md#scoped-namespaces)
 
 ## References
 
