@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Returning empty tuples](#returning-empty-tuples)
     -   [`returned var`](#returned-var)
     -   [`return` and initialization](#return-and-initialization)
--   [Relevant proposals](#relevant-proposals)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -165,8 +165,18 @@ avoid copies.
 > featuers and therefore they are never "optimizations" or done implicitly or
 > optionally.
 
-## Relevant proposals
+# Alternatives considered
 
--   [Initialization of memory and variables](/proposals/p0257.md)
--   [Syntax: `return`](/proposals/p0415.md)
--   [`return` with no argument](/proposals/p0538.md)
+-   [Implicit or expression returns](/proposals/p0415.md#implicit-or-expression-returns)
+-   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
+-   [Retain the C++ rule](/proposals/p0538.md#retain-the-c-rule)
+-   [Fully divorce functions and procedures](/proposals/p0538.md#fully-divorce-functions-and-procedures)
+
+## References
+
+-   Proposal
+    [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+-   Proposal
+    [#415: Syntax: `return`](https://github.com/carbon-language/carbon-lang/pull/415)
+-   Proposal
+    [#538: `return` with no argument](https://github.com/carbon-language/carbon-lang/pull/538)
