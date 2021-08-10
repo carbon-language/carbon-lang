@@ -665,7 +665,8 @@ class TextLabel {
 
 The main difference here is that `"default"` is a default instead of an
 initializer, and will be ignored if another value is supplied for that field
-when constructing a value.
+when constructing a value. Defaults must be constants whose value can be
+determined at compile time.
 
 ### Forward declaration
 
@@ -747,6 +748,10 @@ fn AcceptsATextLabel(tl: TextLabel) -> i32 {
 Assert(AcceptsATextLabel({.x = 2, .y = 4}) == 6);
 ```
 
+Note that a nominal class, unlike a [struct type](#type-expression), can define
+default values for fields, and so may be initialized with a
+[struct value](#literals) that omits some or all of those fields.
+
 ### Associated functions
 
 An associated function is like a
@@ -822,7 +827,7 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 The pattern '`addr` _patt_' means "first take the address of the argument, which
 must be an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
-then match _patt_ against it".
+then match pattern _patt_ against it".
 
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
