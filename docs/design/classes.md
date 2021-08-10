@@ -979,8 +979,8 @@ specify the [linkage](<https://en.wikipedia.org/wiki/Linkage_(software)>):
 -   `private.external` gives the member external linkage, allowing it to be used
     in inline methods and templates.
 
-Normally `private` will give the member internal linkage unless it needs to be
-external because it is used in an inline method or template.
+`private` will give the member internal linkage unless it needs to be external
+because it is used in an inline method or template.
 
 **Future work:** We will add support for `protected` access when inheritance is
 added to this design. We will also define a convenient way for tests that belong
