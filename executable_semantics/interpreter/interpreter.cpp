@@ -805,8 +805,8 @@ void StepPattern() {
 auto IsWhileAct(Action* act) -> bool {
   switch (act->Tag()) {
     case Action::Kind::StatementAction:
-      switch (cast<StatementAction>(*act).Stmt()->tag()) {
-        case StatementKind::While:
+      switch (cast<StatementAction>(*act).Stmt()->Tag()) {
+        case Statement::Kind::While:
           return true;
         default:
           return false;
@@ -819,8 +819,8 @@ auto IsWhileAct(Action* act) -> bool {
 auto IsBlockAct(Action* act) -> bool {
   switch (act->Tag()) {
     case Action::Kind::StatementAction:
-      switch (cast<StatementAction>(*act).Stmt()->tag()) {
-        case StatementKind::Block:
+      switch (cast<StatementAction>(*act).Stmt()->Tag()) {
+        case Statement::Kind::Block:
           return true;
         default:
           return false;
@@ -842,13 +842,13 @@ void StepStmt() {
     stmt->PrintDepth(1, llvm::outs());
     llvm::outs() << " --->\n";
   }
-  switch (stmt->tag()) {
-    case StatementKind::Match:
+  switch (stmt->Tag()) {
+    case Statement::Kind::Match:
       if (act->Pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->todo.Push(
-            global_arena->New<ExpressionAction>(stmt->GetMatch().exp));
+            global_arena->New<ExpressionAction>(cast<Match>(*stmt).Exp()));
         act->IncrementPos();
       } else {
         // Regarding act->Pos():
@@ -861,11 +861,12 @@ void StepStmt() {
         // * 2: the pattern for clause 1
         // * ...
         auto clause_num = (act->Pos() - 1) / 2;
-        if (clause_num >= static_cast<int>(stmt->GetMatch().clauses->size())) {
+        if (clause_num >=
+            static_cast<int>(cast<Match>(*stmt).Clauses()->size())) {
           frame->todo.Pop(1);
           break;
         }
-        auto c = stmt->GetMatch().clauses->begin();
+        auto c = cast<Match>(*stmt).Clauses()->begin();
         std::advance(c, clause_num);
 
         if (act->Pos() % 2 == 1) {
@@ -880,12 +881,12 @@ void StepStmt() {
           auto values = CurrentEnv(state);
           std::list<std::string> vars;
           std::optional<Env> matches =
-              PatternMatch(pat, v, values, &vars, stmt->line_num);
+              PatternMatch(pat, v, values, &vars, stmt->LineNumber());
           if (matches) {  // we have a match, start the body
             auto* new_scope = global_arena->New<Scope>(*matches, vars);
             frame->scopes.Push(new_scope);
             const Statement* body_block =
-                Statement::MakeBlock(stmt->line_num, c->second);
+                global_arena->New<Block>(stmt->LineNumber(), c->second);
             Action* body_act = global_arena->New<StatementAction>(body_block);
             body_act->IncrementPos();
             frame->todo.Pop(1);
@@ -896,26 +897,26 @@ void StepStmt() {
             act->IncrementPos();
             clause_num = (act->Pos() - 1) / 2;
             if (clause_num ==
-                static_cast<int>(stmt->GetMatch().clauses->size())) {
+                static_cast<int>(cast<Match>(*stmt).Clauses()->size())) {
               frame->todo.Pop(1);
             }
           }
         }
       }
       break;
-    case StatementKind::While:
+    case Statement::Kind::While:
       if (act->Pos() == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         frame->todo.Push(
-            global_arena->New<ExpressionAction>(stmt->GetWhile().cond));
+            global_arena->New<ExpressionAction>(cast<While>(*stmt).Cond()));
         act->IncrementPos();
       } else if (cast<BoolValue>(*act->Results()[0]).Val()) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
         frame->todo.Top()->Clear();
         frame->todo.Push(
-            global_arena->New<StatementAction>(stmt->GetWhile().body));
+            global_arena->New<StatementAction>(cast<While>(*stmt).Body()));
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { C, E, F } :: S, H}
@@ -923,41 +924,41 @@ void StepStmt() {
         frame->todo.Pop(1);
       }
       break;
-    case StatementKind::Break:
+    case Statement::Kind::Break:
       CHECK(act->Pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       frame->todo.Pop(1);
       while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
-          DeallocateScope(stmt->line_num, frame->scopes.Top());
+          DeallocateScope(stmt->LineNumber(), frame->scopes.Top());
           frame->scopes.Pop(1);
         }
         frame->todo.Pop(1);
       }
       frame->todo.Pop(1);
       break;
-    case StatementKind::Continue:
+    case Statement::Kind::Continue:
       CHECK(act->Pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       frame->todo.Pop(1);
       while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
-          DeallocateScope(stmt->line_num, frame->scopes.Top());
+          DeallocateScope(stmt->LineNumber(), frame->scopes.Top());
           frame->scopes.Pop(1);
         }
         frame->todo.Pop(1);
       }
       break;
-    case StatementKind::Block: {
+    case Statement::Kind::Block: {
       if (act->Pos() == 0) {
-        if (stmt->GetBlock().stmt) {
+        if (cast<Block>(*stmt).Stmt()) {
           auto* scope = global_arena->New<Scope>(CurrentEnv(state),
                                                  std::list<std::string>());
           frame->scopes.Push(scope);
           frame->todo.Push(
-              global_arena->New<StatementAction>(stmt->GetBlock().stmt));
+              global_arena->New<StatementAction>(cast<Block>(*stmt).Stmt()));
           act->IncrementPos();
           act->IncrementPos();
         } else {
@@ -965,22 +966,22 @@ void StepStmt() {
         }
       } else {
         Scope* scope = frame->scopes.Top();
-        DeallocateScope(stmt->line_num, scope);
+        DeallocateScope(stmt->LineNumber(), scope);
         frame->scopes.Pop(1);
         frame->todo.Pop(1);
       }
       break;
     }
-    case StatementKind::VariableDefinition:
+    case Statement::Kind::VariableDefinition:
       if (act->Pos() == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            stmt->GetVariableDefinition().init));
+            cast<VariableDefinition>(*stmt).Init()));
         act->IncrementPos();
       } else if (act->Pos() == 1) {
         frame->todo.Push(global_arena->New<PatternAction>(
-            stmt->GetVariableDefinition().pat));
+            cast<VariableDefinition>(*stmt).Pat()));
         act->IncrementPos();
       } else if (act->Pos() == 2) {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
@@ -990,52 +991,53 @@ void StepStmt() {
 
         std::optional<Env> matches =
             PatternMatch(p, v, frame->scopes.Top()->values,
-                         &frame->scopes.Top()->locals, stmt->line_num);
+                         &frame->scopes.Top()->locals, stmt->LineNumber());
         CHECK(matches)
-            << stmt->line_num
+            << stmt->LineNumber()
             << ": internal error in variable definition, match failed";
         frame->scopes.Top()->values = *matches;
         frame->todo.Pop(1);
       }
       break;
-    case StatementKind::ExpressionStatement:
+    case Statement::Kind::ExpressionStatement:
       if (act->Pos() == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
         frame->todo.Push(global_arena->New<ExpressionAction>(
-            stmt->GetExpressionStatement().exp));
+            cast<ExpressionStatement>(*stmt).Exp()));
         act->IncrementPos();
       } else {
         frame->todo.Pop(1);
       }
       break;
-    case StatementKind::Assign:
+    case Statement::Kind::Assign:
       if (act->Pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<LValAction>(stmt->GetAssign().lhs));
+        frame->todo.Push(
+            global_arena->New<LValAction>(cast<Assign>(*stmt).Lhs()));
         act->IncrementPos();
       } else if (act->Pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
         frame->todo.Push(
-            global_arena->New<ExpressionAction>(stmt->GetAssign().rhs));
+            global_arena->New<ExpressionAction>(cast<Assign>(*stmt).Rhs()));
         act->IncrementPos();
       } else if (act->Pos() == 2) {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
         auto pat = act->Results()[0];
         auto val = act->Results()[1];
-        PatternAssignment(pat, val, stmt->line_num);
+        PatternAssignment(pat, val, stmt->LineNumber());
         frame->todo.Pop(1);
       }
       break;
-    case StatementKind::If:
+    case Statement::Kind::If:
       if (act->Pos() == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         frame->todo.Push(
-            global_arena->New<ExpressionAction>(stmt->GetIf().cond));
+            global_arena->New<ExpressionAction>(cast<If>(*stmt).Cond()));
         act->IncrementPos();
       } else if (cast<BoolValue>(*act->Results()[0]).Val()) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
@@ -1043,48 +1045,48 @@ void StepStmt() {
         // -> { { then_stmt :: C, E, F } :: S, H}
         frame->todo.Pop(1);
         frame->todo.Push(
-            global_arena->New<StatementAction>(stmt->GetIf().then_stmt));
-      } else if (stmt->GetIf().else_stmt) {
+            global_arena->New<StatementAction>(cast<If>(*stmt).ThenStmt()));
+      } else if (cast<If>(*stmt).ElseStmt()) {
         //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
         frame->todo.Pop(1);
         frame->todo.Push(
-            global_arena->New<StatementAction>(stmt->GetIf().else_stmt));
+            global_arena->New<StatementAction>(cast<If>(*stmt).ElseStmt()));
       } else {
         frame->todo.Pop(1);
       }
       break;
-    case StatementKind::Return:
+    case Statement::Kind::Return:
       if (act->Pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         frame->todo.Push(
-            global_arena->New<ExpressionAction>(stmt->GetReturn().exp));
+            global_arena->New<ExpressionAction>(cast<Return>(*stmt).Exp()));
         act->IncrementPos();
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        const Value* ret_val = CopyVal(act->Results()[0], stmt->line_num);
-        DeallocateLocals(stmt->line_num, frame);
+        const Value* ret_val = CopyVal(act->Results()[0], stmt->LineNumber());
+        DeallocateLocals(stmt->LineNumber(), frame);
         state->stack.Pop(1);
         frame = state->stack.Top();
         frame->todo.Push(global_arena->New<ValAction>(ret_val));
       }
       break;
-    case StatementKind::Sequence:
+    case Statement::Kind::Sequence:
       CHECK(act->Pos() == 0);
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      if (stmt->GetSequence().next) {
+      if (cast<Sequence>(*stmt).Next()) {
         frame->todo.Push(
-            global_arena->New<StatementAction>(stmt->GetSequence().next));
+            global_arena->New<StatementAction>(cast<Sequence>(*stmt).Next()));
       }
       frame->todo.Push(
-          global_arena->New<StatementAction>(stmt->GetSequence().stmt));
+          global_arena->New<StatementAction>(cast<Sequence>(*stmt).Stmt()));
       break;
-    case StatementKind::Continuation: {
+    case Statement::Kind::Continuation: {
       CHECK(act->Pos() == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
@@ -1094,10 +1096,10 @@ void StepStmt() {
       scopes.Push(scope);
       Stack<Action*> todo;
       todo.Push(global_arena->New<StatementAction>(
-          Statement::MakeReturn(stmt->line_num, nullptr,
-                                /*is_omitted_exp=*/true)));
+          global_arena->New<Return>(stmt->LineNumber(), nullptr,
+                                    /*is_omitted_exp=*/true)));
       todo.Push(
-          global_arena->New<StatementAction>(stmt->GetContinuation().body));
+          global_arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
       Frame* continuation_frame =
           global_arena->New<Frame>("__continuation", scopes, todo);
       Address continuation_address =
@@ -1107,25 +1109,26 @@ void StepStmt() {
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
       frame->scopes.Top()->values.Set(
-          stmt->GetContinuation().continuation_variable, continuation_address);
+          cast<Continuation>(*stmt).ContinuationVariable(),
+          continuation_address);
       // Pop the continuation statement.
       frame->todo.Pop();
       break;
     }
-    case StatementKind::Run:
+    case Statement::Kind::Run:
       if (act->Pos() == 0) {
         // Evaluate the argument of the run statement.
         frame->todo.Push(
-            global_arena->New<ExpressionAction>(stmt->GetRun().argument));
+            global_arena->New<ExpressionAction>(cast<Run>(*stmt).Argument()));
         act->IncrementPos();
       } else {
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
         Action* ignore_result = global_arena->New<StatementAction>(
-            Statement::MakeExpressionStatement(
-                stmt->line_num,
-                global_arena->New<TupleLiteral>(stmt->line_num)));
+            global_arena->New<ExpressionStatement>(
+                stmt->LineNumber(),
+                global_arena->New<TupleLiteral>(stmt->LineNumber())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
         const std::vector<Frame*>& continuation_vector =
@@ -1136,7 +1139,7 @@ void StepStmt() {
         }
       }
       break;
-    case StatementKind::Await:
+    case Statement::Kind::Await:
       CHECK(act->Pos() == 0);
       // Pause the current continuation
       frame->todo.Pop();
@@ -1147,7 +1150,7 @@ void StepStmt() {
       // Update the continuation with the paused stack.
       state->heap.Write(*paused.back()->continuation,
                         global_arena->New<ContinuationValue>(paused),
-                        stmt->line_num);
+                        stmt->LineNumber());
       break;
   }
 }
