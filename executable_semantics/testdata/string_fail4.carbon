@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> i32 {
-  var s: auto = "Hello world!\n";
-  Print(s);
+  Print("str\01");
   return 0;
 }

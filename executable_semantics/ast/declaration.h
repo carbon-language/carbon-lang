@@ -73,19 +73,14 @@ class Declaration {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(FunctionDefinition definition)
-      : FunctionDeclaration(Kind::FunctionDeclaration, definition) {}
+      : Declaration(Kind::FunctionDeclaration, definition.line_num),
+        definition(std::move(definition)) {}
 
   static auto classof(const Declaration* decl) -> bool {
     return decl->Tag() == Kind::FunctionDeclaration;
   }
 
   auto Definition() const -> const FunctionDefinition& { return definition; }
-
- protected:
-  // Supports inheritance of FunctionDeclaration for builtins.
-  FunctionDeclaration(Kind kind, FunctionDefinition definition)
-      : Declaration(kind, definition.line_num),
-        definition(std::move(definition)) {}
 
  private:
   FunctionDefinition definition;

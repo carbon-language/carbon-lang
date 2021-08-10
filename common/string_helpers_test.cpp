@@ -36,6 +36,8 @@ TEST(UnescapeStringLiteral, Invalid) {
   EXPECT_THAT(UnescapeStringLiteral("\\xA"), Eq(std::nullopt));
   // Needs uppercase hex.
   EXPECT_THAT(UnescapeStringLiteral("\\xaa"), Eq(std::nullopt));
+  // Reserved.
+  EXPECT_THAT(UnescapeStringLiteral("\\00"), Eq(std::nullopt));
 }
 
 TEST(UnescapeStringLiteral, Nul) {

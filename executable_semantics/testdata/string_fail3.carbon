@@ -2,13 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn CompareStr(s: String) -> i32 {
-  if (s == "str") {
-    return 0;
-  }
-  return 1;
-}
-
 fn main() -> i32 {
-  return CompareStr("str\xaa");
+  Print("str\xaa");
+  return 0;
 }

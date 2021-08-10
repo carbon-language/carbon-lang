@@ -60,6 +60,7 @@ auto CurrentEnv(State* state) -> Env {
   return frame->scopes.Top()->values;
 }
 
+// Returns the given name from the environment, printing an error if not found.
 static auto GetFromEnv(int line_num, const std::string& name) -> Address {
   std::optional<Address> pointer = CurrentEnv(state).Get(name);
   if (!pointer) {
@@ -502,7 +503,7 @@ void StepLvalue() {
     case Expression::Kind::ContinuationTypeLiteral:
     case Expression::Kind::StringLiteral:
     case Expression::Kind::StringTypeLiteral:
-    case Expression::Kind::BuiltinFunctionBody:
+    case Expression::Kind::IntrinsicExpression:
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << *exp;
   }
@@ -602,9 +603,8 @@ void StepExp() {
       CHECK(act->Pos() == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address pointer =
-          GetFromEnv(exp->LineNumber(), ident.Name());
-      const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
+      Address pointer = GetFromEnv(exp->LineNumber(), ident.Name());
+      const Value* pointee = state->heap.Read(pointer, exp->LineNumber());
       frame->todo.Pop(1);
       frame->todo.Push(global_arena->New<ValAction>(pointee));
       break;
@@ -662,15 +662,14 @@ void StepExp() {
         FATAL() << "in handle_value with Call pos " << act->Pos();
       }
       break;
-    case Expression::Kind::BuiltinFunctionBody:
+    case Expression::Kind::IntrinsicExpression:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      switch (cast<BuiltinFunctionBody>(*exp).Builtin()) {
-        case BuiltinFunctionBody::BuiltinKind::Print:
-          Address pointer =
-              GetFromEnv(exp->LineNumber(), "format_str");
-          const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
+      switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
+        case IntrinsicExpression::IntrinsicKind::Print:
+          Address pointer = GetFromEnv(exp->LineNumber(), "format_str");
+          const Value* pointee = state->heap.Read(pointer, exp->LineNumber());
           CHECK(pointee->Tag() == Value::Kind::StringValue);
           // TODO: This could eventually use something like llvm::formatv.
           llvm::outs() << cast<StringValue>(*pointee).Val();

@@ -492,9 +492,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
     }
     case Expression::Kind::StringLiteral:
       return TCExpression(e, global_arena->New<StringType>(), types);
-    case Expression::Kind::BuiltinFunctionBody:
-      switch (cast<BuiltinFunctionBody>(*e).Builtin()) {
-        case BuiltinFunctionBody::BuiltinKind::Print:
+    case Expression::Kind::IntrinsicExpression:
+      switch (cast<IntrinsicExpression>(*e).Intrinsic()) {
+        case IntrinsicExpression::IntrinsicKind::Print:
           return TCExpression(e, &TupleValue::Empty(), types);
       }
     case Expression::Kind::IntTypeLiteral:

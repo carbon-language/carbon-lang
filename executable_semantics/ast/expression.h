@@ -34,7 +34,7 @@ class Expression {
     TupleLiteral,
     TypeTypeLiteral,
     IdentifierExpression,
-    BuiltinFunctionBody,
+    IntrinsicExpression,
   };
 
   // Returns the enumerator corresponding to the most-derived type of this
@@ -329,23 +329,23 @@ class TypeTypeLiteral : public Expression {
   }
 };
 
-class BuiltinFunctionBody : public Expression {
+class IntrinsicExpression : public Expression {
  public:
-  enum class BuiltinKind {
+  enum class IntrinsicKind {
     Print,
   };
 
-  explicit BuiltinFunctionBody(BuiltinKind builtin)
-      : Expression(Kind::BuiltinFunctionBody, -1), builtin(builtin) {}
+  explicit IntrinsicExpression(IntrinsicKind intrinsic)
+      : Expression(Kind::IntrinsicExpression, -1), intrinsic(intrinsic) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->Tag() == Kind::BuiltinFunctionBody;
+    return exp->Tag() == Kind::IntrinsicExpression;
   }
 
-  auto Builtin() const -> BuiltinKind { return builtin; }
+  auto Intrinsic() const -> IntrinsicKind { return intrinsic; }
 
  private:
-  BuiltinKind builtin;
+  IntrinsicKind intrinsic;
 };
 
 }  // namespace Carbon

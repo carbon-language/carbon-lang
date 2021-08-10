@@ -50,6 +50,7 @@ cc_library(
     srcs = ["string_helpers.cpp"],
     hdrs = ["string_helpers.h"],
     deps = [
+        ":check",
         "@llvm-project//llvm:Support",
     ],
 )

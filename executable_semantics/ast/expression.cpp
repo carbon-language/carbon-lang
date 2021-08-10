@@ -148,10 +148,10 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "fn " << *fn.Parameter() << " -> " << *fn.ReturnType();
       break;
     }
-    case Expression::Kind::BuiltinFunctionBody:
+    case Expression::Kind::IntrinsicExpression:
       out << "builtin_body(";
-      switch (cast<BuiltinFunctionBody>(*this).Builtin()) {
-        case BuiltinFunctionBody::BuiltinKind::Print:
+      switch (cast<IntrinsicExpression>(*this).Intrinsic()) {
+        case IntrinsicExpression::IntrinsicKind::Print:
           out << "print";
       }
       out << ")";

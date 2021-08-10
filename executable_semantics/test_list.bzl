@@ -81,6 +81,8 @@ TEST_LIST = [
     "string_fail1",
     "string_fail2",
     "string_fail3",
+    "string_fail4",
+    "string_fail5",
     "struct1",
     "struct2",
     "struct3",

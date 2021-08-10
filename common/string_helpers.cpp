@@ -4,6 +4,9 @@
 
 #include "common/string_helpers.h"
 
+#include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
+
 namespace Carbon {
 
 // Carbon only takes uppercase hex input.
@@ -21,57 +24,63 @@ auto UnescapeStringLiteral(llvm::StringRef source)
     -> std::optional<std::string> {
   std::string ret;
   ret.reserve(source.size());
-  for (size_t i = 0; i < source.size(); ++i) {
+  size_t i = 0;
+  while (i < source.size()) {
     char c = source[i];
-    if (c != '\\') {
+    if (c == '\\') {
+      ++i;
+      if (i == source.size()) {
+        return std::nullopt;
+      }
+      switch (source[i]) {
+        case 'n':
+          ret.push_back('\n');
+          break;
+        case 'r':
+          ret.push_back('\r');
+          break;
+        case 't':
+          ret.push_back('\t');
+          break;
+        case '0':
+          if (i + 1 < source.size() && llvm::isDigit(source[i + 1])) {
+            // \0[0-9] is reserved.
+            return std::nullopt;
+          }
+          ret.push_back('\0');
+          break;
+        case '"':
+          ret.push_back('"');
+          break;
+        case '\'':
+          ret.push_back('\'');
+          break;
+        case '\\':
+          ret.push_back('\\');
+          break;
+        case 'x': {
+          i += 2;
+          if (i >= source.size()) {
+            return std::nullopt;
+          }
+          std::optional<char> c1 = FromHex(source[i - 1]);
+          std::optional<char> c2 = FromHex(source[i]);
+          if (c1 == std::nullopt || c2 == std::nullopt) {
+            return std::nullopt;
+          }
+          ret.push_back(16 * *c1 + *c2);
+          break;
+        }
+        case 'u':
+          FATAL() << "\\u is not yet supported in string literals";
+        default:
+          // Unsupported.
+          return std::nullopt;
+      }
+    } else {
       ret.push_back(c);
-      continue;
     }
     ++i;
-    if (i == source.size()) {
-      return std::nullopt;
-    }
-    switch (source[i]) {
-      case 'n':
-        ret.push_back('\n');
-        break;
-      case 'r':
-        ret.push_back('\r');
-        break;
-      case 't':
-        ret.push_back('\t');
-        break;
-      case '0':
-        ret.push_back('\0');
-        break;
-      case '"':
-        ret.push_back('"');
-        break;
-      case '\'':
-        ret.push_back('\'');
-        break;
-      case '\\':
-        ret.push_back('\\');
-        break;
-      case 'x': {
-        i += 2;
-        if (i >= source.size()) {
-          return std::nullopt;
-        }
-        std::optional<char> c1 = FromHex(source[i - 1]);
-        std::optional<char> c2 = FromHex(source[i]);
-        if (c1 == std::nullopt || c2 == std::nullopt) {
-          return std::nullopt;
-        }
-        ret.push_back(16 * *c1 + *c2);
-        break;
-      }
-      case 'u':
-        FATAL() << "\\u is not yet supported in string literals";
-      default:
-        // Unsupported.
-        return std::nullopt;
-    }
   }
   return ret;
 }

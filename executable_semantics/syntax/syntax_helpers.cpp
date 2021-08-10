@@ -4,6 +4,7 @@
 
 #include "executable_semantics/syntax/syntax_helpers.h"
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/tracing_flag.h"
@@ -14,7 +15,7 @@ namespace Carbon {
 
 // Adds builtins, currently only print(). Note print() is experimental, not
 // standardized, but is made available for printing state in tests.
-static void AddBuiltins(std::list<const Declaration*>* fs) {
+static void AddIntrinsics(std::list<const Declaration*>* fs) {
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
       "0", global_arena->New<BindingPattern>(
                -1, "format_str",
@@ -22,11 +23,11 @@ static void AddBuiltins(std::list<const Declaration*>* fs) {
                    global_arena->New<StringTypeLiteral>(-1))))};
   auto* print_return =
       global_arena->New<Return>(-1,
-                                global_arena->New<BuiltinFunctionBody>(
-                                    BuiltinFunctionBody::BuiltinKind::Print),
+                                global_arena->New<IntrinsicExpression>(
+                                    IntrinsicExpression::IntrinsicKind::Print),
                                 false);
   auto* print = global_arena->New<FunctionDeclaration>(FunctionDefinition(
-      -1, "print", std::vector<GenericBinding>(),
+      -1, "Print", std::vector<GenericBinding>(),
       global_arena->New<TuplePattern>(-1, print_fields),
       global_arena->New<ExpressionPattern>(global_arena->New<TupleLiteral>(-1)),
       /*is_omitted_return_type=*/false, print_return));
@@ -34,7 +35,7 @@ static void AddBuiltins(std::list<const Declaration*>* fs) {
 }
 
 void ExecProgram(std::list<const Declaration*> fs) {
-  AddBuiltins(&fs);
+  AddIntrinsics(&fs);
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
     for (const auto* decl : fs) {
