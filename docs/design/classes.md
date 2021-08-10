@@ -820,13 +820,65 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   `c.Expand(...)` does modify the value of `c`. This is signified using
     `[addr me: Self*]` in the method declaration.
 
-FIXME: Meaning of `addr`
+The pattern '`addr` _patt_' means "first take the address of the argument, which
+must be an
+[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
+then match _patt_ against it".
 
-FIXME: Interaction with deduced generic parameters.
+If the method declaration also includes
+[deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
+the `me` parameter must be in the same list in square brackets `[`...`]`. The
+`me` parameter may appear in any position in that list, as long as it appears
+after any names needed to describe its type.
 
 #### Name lookup in method definitions
 
-FIXME
+When defining a method lexically inline, we need to delay type checking until
+the definition of the current type is complete. This means that member lookup is
+also delayed. That means that you can reference `me.F()` in a lexically inline
+method definition even before the declaration of `F` in that class definition.
+However, unqualified names still need to be declared before.
+
+```carbon
+class Point {
+  fn Distance[me: Self]() -> f32 {
+    // Allowed: look up of `x` and `y` delayed until
+    // `type_of(me) == Self` is complete.
+    return Math.Sqrt(me.x * me.x + me.y * me.y);
+  }
+
+  fn CreatePolar(r: f32, theta: f32) -> Point {
+    // Forbidden: unqualified name used before declaration.
+    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
+    // Allowed: look up of `Create` delayed until `Point` is complete.
+    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+    // Allowed: look up of `Create` delayed until `Self` is complete.
+    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  }
+
+  fn Create(x: f32, y: f32) -> Point {
+    // Allowed: checking that conversion of `{.x: f32, .y: f32}`
+    // to `Point` is delayed until `Point` is complete.
+    return {.x = x, .y = y};
+  }
+
+  fn CreateXEqualsY(xy: f32) -> Point {
+    // Allowed: `Create` is declared earlier.
+    return Create(xy, xy);
+  }
+
+  fn Angle[me: Self]() -> f32;
+
+  var x: f32;
+  var y: f32;
+}
+
+fn Point.Angle[me: Self]() -> f32 {
+  // Allowed: `Point` type is complete,
+  // function is checked immediately.
+  return Math.ATan2(me.y, me.x);
+}
+```
 
 ### Nominal data classes
 
