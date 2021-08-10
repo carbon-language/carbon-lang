@@ -602,7 +602,7 @@ void StepExp() {
       CHECK(act->Pos() == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      std::optional<Address> pointer =
+      Address pointer =
           GetFromEnv(exp->LineNumber(), ident.Name());
       const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
       frame->todo.Pop(1);
@@ -668,7 +668,7 @@ void StepExp() {
       frame->todo.Pop(1);
       switch (cast<BuiltinFunctionBody>(*exp).Builtin()) {
         case BuiltinFunctionBody::BuiltinKind::Print:
-          std::optional<Address> pointer =
+          Address pointer =
               GetFromEnv(exp->LineNumber(), "format_str");
           const Value* pointee = state->heap.Read(*pointer, exp->LineNumber());
           CHECK(pointee->Tag() == Value::Kind::StringValue);
