@@ -41,6 +41,9 @@ auto UnescapeStringLiteral(llvm::StringRef source)
       case 't':
         ret.push_back('\t');
         break;
+      case '0':
+        ret.push_back('\0');
+        break;
       case '"':
         ret.push_back('"');
         break;
@@ -49,9 +52,6 @@ auto UnescapeStringLiteral(llvm::StringRef source)
         break;
       case '\\':
         ret.push_back('\\');
-        break;
-      case '\0':
-        ret.push_back('\0');
         break;
       case 'x': {
         i += 2;

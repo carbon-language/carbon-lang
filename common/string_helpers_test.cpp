@@ -15,7 +15,7 @@ using ::testing::Optional;
 namespace Carbon {
 namespace {
 
-TEST(UnescapeStringLiteral, Behavior) {
+TEST(UnescapeStringLiteral, Valid) {
   EXPECT_THAT(UnescapeStringLiteral("test"), Optional(Eq("test")));
   EXPECT_THAT(UnescapeStringLiteral("test\n"), Optional(Eq("test\n")));
   EXPECT_THAT(UnescapeStringLiteral("test\\n"), Optional(Eq("test\n")));
@@ -23,7 +23,9 @@ TEST(UnescapeStringLiteral, Behavior) {
   EXPECT_THAT(UnescapeStringLiteral("test\\\\n"), Optional(Eq("test\\n")));
   EXPECT_THAT(UnescapeStringLiteral("\\xAA"), Optional(Eq("\xAA")));
   EXPECT_THAT(UnescapeStringLiteral("\\x12"), Optional(Eq("\x12")));
+}
 
+TEST(UnescapeStringLiteral, Invalid) {
   // Missing char after `\`.
   EXPECT_THAT(UnescapeStringLiteral("a\\"), Eq(std::nullopt));
   // Not a supported escape.
@@ -34,6 +36,16 @@ TEST(UnescapeStringLiteral, Behavior) {
   EXPECT_THAT(UnescapeStringLiteral("\\xA"), Eq(std::nullopt));
   // Needs uppercase hex.
   EXPECT_THAT(UnescapeStringLiteral("\\xaa"), Eq(std::nullopt));
+}
+
+TEST(UnescapeStringLiteral, Nul) {
+  std::optional<std::string> str = UnescapeStringLiteral("a\\0b");
+  ASSERT_NE(str, std::nullopt);
+  EXPECT_THAT(str->size(), Eq(3));
+  EXPECT_THAT(strlen(str->c_str()), Eq(1));
+  EXPECT_THAT((*str)[0], Eq('a'));
+  EXPECT_THAT((*str)[1], Eq('\0'));
+  EXPECT_THAT((*str)[2], Eq('b'));
 }
 
 }  // namespace
