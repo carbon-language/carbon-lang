@@ -831,5 +831,5 @@ should be part of a larger testing plan.
 
 ## References
 
--   Code and name organization
-    [#107](https://github.com/carbon-language/carbon-lang/pull/107)
+-   Proposal
+    [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
