@@ -80,8 +80,9 @@ class variables.
 The use cases for classes include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
-**This design currently only attempts to address the "data classes" use case.**
-Addressing the other use cases is future work.
+**This design currently only attempts to address the "data classes" and
+"encapsulated types without inheritance" use cases.** Addressing the other use
+cases is future work.
 
 ### Data classes
 
@@ -135,8 +136,7 @@ We expect two kinds of methods on these types: public methods defining the API
 for accessing and manipulating values of the type, and private helper methods
 used as an implementation detail of the public methods.
 
-These types are expected in idiomatic Carbon-only code. Extending this design to
-support these types is future work.
+These types are expected in idiomatic Carbon-only code.
 
 #### With inheritance and subtyping
 
@@ -514,8 +514,7 @@ but we expect later to support more ways to define data class types. Also note
 that there is no `struct` keyword, "struct" is just convenient shorthand
 terminology for a structural data class.
 
-**Future work:** We intend to support nominal [data classes](#data-classes) as
-well.
+[Nominal data classes](#nominal-data-classes) are also supported by Carbon.
 
 ### Literals
 
@@ -880,6 +879,9 @@ fn Point.Angle[me: Self]() -> f32 {
 }
 ```
 
+**Note:** The details of name lookup are still being decided in issue
+[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472).
+
 ### Nominal data classes
 
 We will mark [data classes](#data-classes) with an `impl as Data {}` line.
@@ -954,24 +956,79 @@ Assert(&sp1.first == &sp1.key);
 
 ### Access control
 
-FIXME:
+By default, all members of a class are fully publicly accessible. Access can be
+restricted by adding a keyword, called an
+[access modifier](https://en.wikipedia.org/wiki/Access_modifiers), prior to the
+declaration.
 
--   `private`: just accessible to members of the class, like C++
--   `internal`: works within the library + tests, does not provide linkage, does
-    not export symbols through an `import` boundary; if accessed through a
-    template or an inlined function body, needs to be `private` instead
-    (probably based on the compiler telling you that you need to)
--   `friend`: works just within a package, does not introduce a new name
+```carbon
+class Point {
+  fn Distance[me: Self]() -> f32;
+  // These are only accessible to members of `Point`.
+  private var x: f32;
+  private var y: f32;
+}
+```
 
-LATER: `protected`, maybe `package`
+As in C++, `private` means only accessible to members of the class. Carbon has
+two other access modifiers that restrict access to members of the class and also
+specify the [linkage](<https://en.wikipedia.org/wiki/Linkage_(software)>):
 
-We will need some way of controlling access to the members of classes. By
-default, all members are fully publicly accessible, as decided in
-[issue #665](https://github.com/carbon-language/carbon-lang/issues/665).
+-   `private.internal` gives the member internal linkage, improving build
+    scalability.
+-   `private.external` gives the member external linkage, allowing it to be used
+    in inline methods and templates.
 
-The set of access control options Carbon will support is an open question. Swift
-and C++ (especially w/ modules) provide a lot of options and a pretty wide space
-to explore here.
+Normally `private` will give the member internal linkage unless it needs to be
+external because it is used in an inline method or template.
+
+**Future work:** We will add support for `protected` access when inheritance is
+added to this design. We will also define a convenient way for tests that belong
+to the same library to get access to private members.
+
+**Open questions:** Using `private` to mean "restricted to this class" matches
+C++. Other languages support restricting to different scopes:
+
+-   Swift supports "restrict to this module" and "restrict to this file".
+-   Rust supports "restrict to this module and any children of this module", as
+    well as "restrict to this crate", "restrict to parent module", and "restrict
+    to a specific ancestor module".
+
+**Comparison to other languages:** C++, Rust, and Swift all make class members
+private by default. C++ offers the `struct` keyword that makes members public by
+default.
+
+**Rationale:** Carbon makes members public by default for a few reasons:
+
+-   The readability of public members is the most important, since we expect
+    most readers to be concerned with the public API of a type.
+-   The members that are most commonly private are the data fields, which have
+    relatively less complicated definitions that suffer less from the extra
+    annotation.
+
+Additionally, there is precedent for this approach in modern object-oriented
+languages such as
+[Kotlin](https://kotlinlang.org/docs/visibility-modifiers.html) and
+[Python](https://docs.python.org/3/tutorial/classes.html), both of which are
+well regarded for their usability.
+
+Keywords controlling visibility are attached to individual declarations instead
+of C++'s approach of labels controlling the visibility for all following
+declarations to
+[reduce context sensitivity](/docs/project/principles/low_context_sensitivity.md).
+This matches
+[Rust](https://doc.rust-lang.org/reference/visibility-and-privacy.html),
+[Swift](https://docs.swift.org/swift-book/LanguageGuide/AccessControl.html),
+[Java](http://rosettacode.org/wiki/Classes#Java),
+[C#](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/access-modifiers),
+and [D](https://wiki.dlang.org/Access_specifiers_and_visibility).
+
+**References:** Proposal
+[#561: Basic classes](https://github.com/carbon-language/carbon-lang/pull/561)
+included the decision that
+[members default to publicly accessible](/proposals/p0561.md#access-control)
+originally asked in issue
+[#665](https://github.com/carbon-language/carbon-lang/issues/665).
 
 ## Future work
 
