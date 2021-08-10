@@ -946,7 +946,6 @@ static auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/,
 
 static auto GetName(const Declaration& d) -> const std::string& {
   switch (d.Tag()) {
-    case Declaration::Kind::BuiltinFunctionDeclaration:
     case Declaration::Kind::FunctionDeclaration:
       return cast<FunctionDeclaration>(d).Definition().name;
     case Declaration::Kind::StructDeclaration:
@@ -967,7 +966,6 @@ static auto GetName(const Declaration& d) -> const std::string& {
 auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
                      const Env& values) -> const Declaration* {
   switch (d.Tag()) {
-    case Declaration::Kind::BuiltinFunctionDeclaration:
     case Declaration::Kind::FunctionDeclaration:
       return global_arena->New<FunctionDeclaration>(*TypeCheckFunDef(
           &cast<FunctionDeclaration>(d).Definition(), types, values));
@@ -1016,7 +1014,6 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
 
 static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
   switch (d.Tag()) {
-    case Declaration::Kind::BuiltinFunctionDeclaration:
     case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           cast<FunctionDeclaration>(d).Definition();

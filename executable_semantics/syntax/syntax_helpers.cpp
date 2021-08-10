@@ -25,12 +25,11 @@ static void AddBuiltins(std::list<const Declaration*>* fs) {
                             global_arena->New<BuiltinFunctionBody>(
                                 BuiltinFunctionBody::BuiltinKind::Print),
                             false);
-  auto* print = global_arena->New<BuiltinFunctionDeclaration>(
-      FunctionDefinition(-1, "print", std::vector<GenericBinding>(),
-                         global_arena->New<TuplePattern>(-1, print_fields),
-                         global_arena->New<ExpressionPattern>(
-                             global_arena->New<TupleLiteral>(-1)),
-                         /*is_omitted_return_type=*/false, print_return));
+  auto* print = global_arena->New<FunctionDeclaration>(FunctionDefinition(
+      -1, "print", std::vector<GenericBinding>(),
+      global_arena->New<TuplePattern>(-1, print_fields),
+      global_arena->New<ExpressionPattern>(global_arena->New<TupleLiteral>(-1)),
+      /*is_omitted_return_type=*/false, print_return));
   fs->insert(fs->begin(), print);
 }
 

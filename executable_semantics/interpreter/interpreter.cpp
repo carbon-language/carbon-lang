@@ -116,7 +116,6 @@ static Env globals;
 
 void InitEnv(const Declaration& d, Env* env) {
   switch (d.Tag()) {
-    case Declaration::Kind::BuiltinFunctionDeclaration:
     case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           cast<FunctionDeclaration>(d).Definition();

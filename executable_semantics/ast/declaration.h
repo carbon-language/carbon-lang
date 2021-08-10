@@ -42,7 +42,6 @@ struct TypeCheckContext {
 class Declaration {
  public:
   enum class Kind {
-    BuiltinFunctionDeclaration,
     FunctionDeclaration,
     StructDeclaration,
     ChoiceDeclaration,
@@ -77,13 +76,7 @@ class FunctionDeclaration : public Declaration {
       : FunctionDeclaration(Kind::FunctionDeclaration, definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    switch (decl->Tag()) {
-      case Kind::FunctionDeclaration:
-      case Kind::BuiltinFunctionDeclaration:
-        return true;
-      default:
-        return false;
-    }
+    return decl->Tag() == Kind::FunctionDeclaration;
   }
 
   auto Definition() const -> const FunctionDefinition& { return definition; }
@@ -96,16 +89,6 @@ class FunctionDeclaration : public Declaration {
 
  private:
   FunctionDefinition definition;
-};
-
-class BuiltinFunctionDeclaration : public FunctionDeclaration {
- public:
-  BuiltinFunctionDeclaration(FunctionDefinition definition)
-      : FunctionDeclaration(Kind::BuiltinFunctionDeclaration, definition) {}
-
-  static auto classof(const Declaration* decl) -> bool {
-    return decl->Tag() == Kind::BuiltinFunctionDeclaration;
-  }
 };
 
 class StructDeclaration : public Declaration {

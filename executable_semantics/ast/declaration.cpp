@@ -12,7 +12,6 @@ using llvm::cast;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (Tag()) {
-    case Kind::BuiltinFunctionDeclaration:
     case Kind::FunctionDeclaration:
       out << cast<FunctionDeclaration>(*this).Definition();
       break;
