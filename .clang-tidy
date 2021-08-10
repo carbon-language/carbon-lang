@@ -31,3 +31,7 @@ CheckOptions:
   - { key: readability-identifier-naming.VariableCase, value: lower_case }
   - { key: readability-identifier-naming.ParameterCase, value: lower_case }
   - { key: readability-identifier-naming.ClassMemberCase, value: lower_case }
+  - {
+      key: readability-identifier-naming.MethodIgnoredRegexp,
+      value: '^classof$',
+    }
