@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 The `return` statement ends the flow of execution within a
 [function](../functions.md), returning execution to the caller. Its syntax is:
 
-> `return` _[ expression ];_
+> `return` _[ expression ]_ `;`
 
 If the function returns a value to the caller, that value is provided by an
 expression in the return statement. For example:
