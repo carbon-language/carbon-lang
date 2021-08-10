@@ -51,23 +51,19 @@ files to NFC as necessary.
 
 ## References
 
--   Proposals:
+-   Proposal
+    [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
 
-    -   `Unicode source files
-        [#142](https://github.com/carbon-language/carbon-lang/pull/142)
+-   [Unicode](https://www.unicode.org/versions/latest/) is a universal character
+    encoding, maintained by the
+    [Unicode Consortium](https://home.unicode.org/basic-info/overview/). It is
+    the canonical encoding used for textual information interchange across all
+    modern technology.
 
--   Unicode:
+    Carbon is based on Unicode 13.0, which is currently the latest version of
+    the Unicode standard. Newer versions will be considered for adoption as they
+    are released.
 
-    -   [Unicode](https://www.unicode.org/versions/latest/) is a universal
-        character encoding, maintained by the
-        [Unicode Consortium](https://home.unicode.org/basic-info/overview/). It
-        is the canonical encoding used for textual information interchange
-        across all modern technology.
+-   [Unicode Standard Annex #15: Unicode Normalization Forms](https://www.unicode.org/reports/tr15/tr15-50.html)
 
-        Carbon is based on Unicode 13.0, which is currently the latest version
-        of the Unicode standard. Newer versions will be considered for adoption
-        as they are released.
-
-    -   [Unicode Standard Annex #15: Unicode Normalization Forms](https://www.unicode.org/reports/tr15/tr15-50.html)
-
-    -   [wikipedia article on Unicode normal forms](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms)
+-   [wikipedia article on Unicode normal forms](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms)
