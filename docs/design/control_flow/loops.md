@@ -11,10 +11,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [`while`](#while)
--   [`for`](#for)
--   [`break`](#break)
--   [`continue`](#continue)
+-   [Details](#details)
+    -   [`while`](#while)
+    -   [`for`](#for)
+    -   [`break`](#break)
+    -   [`continue`](#continue)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -25,7 +26,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Carbon provides loops using the `while` and `for` statements. Within a loop, the
 `break` and `continue` statements can be used for flow control.
 
-## `while`
+## Details
+
+### `while`
 
 `while` statements loop for as long as the passed expression returns `True`.
 Syntax is:
@@ -43,7 +46,7 @@ while (x < 3) {
 Print("Done!");
 ```
 
-## `for`
+### `for`
 
 `for` statements support range-based looping, typically over containers. Syntax
 is:
@@ -60,7 +63,7 @@ for (var name: String in names) {
 
 `PrintNames()` prints each `String` in the `names` `List` in iteration order.
 
-## `break`
+### `break`
 
 The `break` statement immediately ends a `while` or `for` loop. Execution will
 resume at the end of the loop's scope. Syntax is:
@@ -80,7 +83,7 @@ for (var step: Step in steps) {
 }
 ```
 
-## `continue`
+### `continue`
 
 The `continue` statement immediately goes to the next loop of a `while` or
 `for`. In a `while`, execution continues with the `while` expression. Syntax is:
