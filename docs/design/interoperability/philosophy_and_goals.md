@@ -463,5 +463,5 @@ interoperability.
 
 ## References
 
--   C++ interoperability goals
-    [#175](https://github.com/carbon-language/carbon-lang/pull/175)
+-   Proposal
+    [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
