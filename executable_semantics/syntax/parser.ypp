@@ -414,35 +414,35 @@ clause_list:
 ;
 statement:
   expression "=" expression ";"
-    { $$ = Statement::MakeAssign(yylineno, $1, $3); }
+    { $$ = global_arena->New<Assign>(yylineno, $1, $3); }
 | VAR pattern "=" expression ";"
-    { $$ = Statement::MakeVariableDefinition(yylineno, $2, $4); }
+    { $$ = global_arena->New<VariableDefinition>(yylineno, $2, $4); }
 | expression ";"
-    { $$ = Statement::MakeExpressionStatement(yylineno, $1); }
+    { $$ = global_arena->New<ExpressionStatement>(yylineno, $1); }
 | if_statement
     { $$ = $1; }
 | WHILE "(" expression ")" block
-    { $$ = Statement::MakeWhile(yylineno, $3, $5); }
+    { $$ = global_arena->New<While>(yylineno, $3, $5); }
 | BREAK ";"
-    { $$ = Statement::MakeBreak(yylineno); }
+    { $$ = global_arena->New<Break>(yylineno); }
 | CONTINUE ";"
-    { $$ = Statement::MakeContinue(yylineno); }
+    { $$ = global_arena->New<Continue>(yylineno); }
 | RETURN return_expression ";"
-    { $$ = Statement::MakeReturn(yylineno, $2.first, $2.second); }
+    { $$ = global_arena->New<Return>(yylineno, $2.first, $2.second); }
 | block
     { $$ = $1; }
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = Statement::MakeMatch(yylineno, $3, $6); }
+    { $$ = global_arena->New<Match>(yylineno, $3, $6); }
 | CONTINUATION identifier statement
-    { $$ = Statement::MakeContinuation(yylineno, $2, $3); }
+    { $$ = global_arena->New<Continuation>(yylineno, $2, $3); }
 | RUN expression ";"
-    { $$ = Statement::MakeRun(yylineno, $2); }
+    { $$ = global_arena->New<Run>(yylineno, $2); }
 | AWAIT ";"
-    { $$ = Statement::MakeAwait(yylineno); }
+    { $$ = global_arena->New<Await>(yylineno); }
 ;
 if_statement:
   IF "(" expression ")" block optional_else
-    { $$ = Statement::MakeIf(yylineno, $3, $5, $6); }
+    { $$ = global_arena->New<If>(yylineno, $3, $5, $6); }
 ;
 optional_else:
   // Empty
@@ -462,11 +462,11 @@ statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
-    { $$ = Statement::MakeSequence(yylineno, $1, $2); }
+    { $$ = global_arena->New<Sequence>(yylineno, $1, $2); }
 ;
 block:
   "{" statement_list "}"
-    { $$ = Statement::MakeBlock(yylineno, $2); }
+    { $$ = global_arena->New<Block>(yylineno, $2); }
 ;
 return_type:
   // Empty
@@ -515,7 +515,7 @@ function_definition:
       $$ = FunctionDefinition(
           yylineno, $2, $3, $4,
           global_arena->New<AutoPattern>(yylineno), true,
-          Statement::MakeReturn(yylineno, $6, true));
+          global_arena->New<Return>(yylineno, $6, true));
     }
 ;
 function_declaration:

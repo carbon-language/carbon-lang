@@ -641,128 +641,135 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
   if (!s) {
     return TCStatement(s, types);
   }
-  switch (s->tag()) {
-    case StatementKind::Match: {
-      auto res = TypeCheckExp(s->GetMatch().exp, types, values);
+  switch (s->Tag()) {
+    case Statement::Kind::Match: {
+      const auto& match = cast<Match>(*s);
+      auto res = TypeCheckExp(match.Exp(), types, values);
       auto res_type = res.type;
       auto new_clauses =
           global_arena
               ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
-      for (auto& clause : *s->GetMatch().clauses) {
+      for (auto& clause : *match.Clauses()) {
         new_clauses->push_back(TypecheckCase(res_type, clause.first,
                                              clause.second, types, values,
                                              ret_type, is_omitted_ret_type));
       }
       const Statement* new_s =
-          Statement::MakeMatch(s->line_num, res.exp, new_clauses);
+          global_arena->New<Match>(s->LineNumber(), res.exp, new_clauses);
       return TCStatement(new_s, types);
     }
-    case StatementKind::While: {
-      auto cnd_res = TypeCheckExp(s->GetWhile().cond, types, values);
-      ExpectType(s->line_num, "condition of `while`",
+    case Statement::Kind::While: {
+      const auto& while_stmt = cast<While>(*s);
+      auto cnd_res = TypeCheckExp(while_stmt.Cond(), types, values);
+      ExpectType(s->LineNumber(), "condition of `while`",
                  global_arena->New<BoolType>(), cnd_res.type);
-      auto body_res = TypeCheckStmt(s->GetWhile().body, types, values, ret_type,
+      auto body_res = TypeCheckStmt(while_stmt.Body(), types, values, ret_type,
                                     is_omitted_ret_type);
       auto new_s =
-          Statement::MakeWhile(s->line_num, cnd_res.exp, body_res.stmt);
+          global_arena->New<While>(s->LineNumber(), cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, types);
     }
-    case StatementKind::Break:
-    case StatementKind::Continue:
+    case Statement::Kind::Break:
+    case Statement::Kind::Continue:
       return TCStatement(s, types);
-    case StatementKind::Block: {
-      auto stmt_res = TypeCheckStmt(s->GetBlock().stmt, types, values, ret_type,
-                                    is_omitted_ret_type);
-      return TCStatement(Statement::MakeBlock(s->line_num, stmt_res.stmt),
-                         types);
-    }
-    case StatementKind::VariableDefinition: {
-      auto res = TypeCheckExp(s->GetVariableDefinition().init, types, values);
-      const Value* rhs_ty = res.type;
-      auto lhs_res = TypeCheckPattern(s->GetVariableDefinition().pat, types,
-                                      values, rhs_ty);
-      const Statement* new_s = Statement::MakeVariableDefinition(
-          s->line_num, s->GetVariableDefinition().pat, res.exp);
-      return TCStatement(new_s, lhs_res.types);
-    }
-    case StatementKind::Sequence: {
-      auto stmt_res = TypeCheckStmt(s->GetSequence().stmt, types, values,
+    case Statement::Kind::Block: {
+      auto stmt_res = TypeCheckStmt(cast<Block>(*s).Stmt(), types, values,
                                     ret_type, is_omitted_ret_type);
-      auto types2 = stmt_res.types;
-      auto next_res = TypeCheckStmt(s->GetSequence().next, types2, values,
-                                    ret_type, is_omitted_ret_type);
-      auto types3 = next_res.types;
       return TCStatement(
-          Statement::MakeSequence(s->line_num, stmt_res.stmt, next_res.stmt),
-          types3);
+          global_arena->New<Block>(s->LineNumber(), stmt_res.stmt), types);
     }
-    case StatementKind::Assign: {
-      auto rhs_res = TypeCheckExp(s->GetAssign().rhs, types, values);
-      auto rhs_t = rhs_res.type;
-      auto lhs_res = TypeCheckExp(s->GetAssign().lhs, types, values);
-      auto lhs_t = lhs_res.type;
-      ExpectType(s->line_num, "assign", lhs_t, rhs_t);
-      auto new_s = Statement::MakeAssign(s->line_num, lhs_res.exp, rhs_res.exp);
+    case Statement::Kind::VariableDefinition: {
+      const auto& var = cast<VariableDefinition>(*s);
+      auto res = TypeCheckExp(var.Init(), types, values);
+      const Value* rhs_ty = res.type;
+      auto lhs_res = TypeCheckPattern(var.Pat(), types, values, rhs_ty);
+      const Statement* new_s = global_arena->New<VariableDefinition>(
+          s->LineNumber(), var.Pat(), res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
-    case StatementKind::ExpressionStatement: {
-      auto res = TypeCheckExp(s->GetExpressionStatement().exp, types, values);
-      auto new_s = Statement::MakeExpressionStatement(s->line_num, res.exp);
+    case Statement::Kind::Sequence: {
+      const auto& seq = cast<Sequence>(*s);
+      auto stmt_res = TypeCheckStmt(seq.Stmt(), types, values, ret_type,
+                                    is_omitted_ret_type);
+      auto types2 = stmt_res.types;
+      auto next_res = TypeCheckStmt(seq.Next(), types2, values, ret_type,
+                                    is_omitted_ret_type);
+      auto types3 = next_res.types;
+      return TCStatement(global_arena->New<Sequence>(
+                             s->LineNumber(), stmt_res.stmt, next_res.stmt),
+                         types3);
+    }
+    case Statement::Kind::Assign: {
+      const auto& assign = cast<Assign>(*s);
+      auto rhs_res = TypeCheckExp(assign.Rhs(), types, values);
+      auto rhs_t = rhs_res.type;
+      auto lhs_res = TypeCheckExp(assign.Lhs(), types, values);
+      auto lhs_t = lhs_res.type;
+      ExpectType(s->LineNumber(), "assign", lhs_t, rhs_t);
+      auto new_s =
+          global_arena->New<Assign>(s->LineNumber(), lhs_res.exp, rhs_res.exp);
+      return TCStatement(new_s, lhs_res.types);
+    }
+    case Statement::Kind::ExpressionStatement: {
+      auto res =
+          TypeCheckExp(cast<ExpressionStatement>(*s).Exp(), types, values);
+      auto new_s =
+          global_arena->New<ExpressionStatement>(s->LineNumber(), res.exp);
       return TCStatement(new_s, types);
     }
-    case StatementKind::If: {
-      auto cnd_res = TypeCheckExp(s->GetIf().cond, types, values);
-      ExpectType(s->line_num, "condition of `if`",
+    case Statement::Kind::If: {
+      const auto& if_stmt = cast<If>(*s);
+      auto cnd_res = TypeCheckExp(if_stmt.Cond(), types, values);
+      ExpectType(s->LineNumber(), "condition of `if`",
                  global_arena->New<BoolType>(), cnd_res.type);
-      auto thn_res = TypeCheckStmt(s->GetIf().then_stmt, types, values,
-                                   ret_type, is_omitted_ret_type);
-      auto els_res = TypeCheckStmt(s->GetIf().else_stmt, types, values,
-                                   ret_type, is_omitted_ret_type);
-      auto new_s = Statement::MakeIf(s->line_num, cnd_res.exp, thn_res.stmt,
-                                     els_res.stmt);
+      auto then_res = TypeCheckStmt(if_stmt.ThenStmt(), types, values, ret_type,
+                                    is_omitted_ret_type);
+      auto else_res = TypeCheckStmt(if_stmt.ElseStmt(), types, values, ret_type,
+                                    is_omitted_ret_type);
+      auto new_s = global_arena->New<If>(s->LineNumber(), cnd_res.exp,
+                                         then_res.stmt, else_res.stmt);
       return TCStatement(new_s, types);
     }
-    case StatementKind::Return: {
-      const auto& ret = s->GetReturn();
-      auto res = TypeCheckExp(ret.exp, types, values);
+    case Statement::Kind::Return: {
+      const auto& ret = cast<Return>(*s);
+      auto res = TypeCheckExp(ret.Exp(), types, values);
       if (ret_type->Tag() == Value::Kind::AutoType) {
         // The following infers the return type from the first 'return'
         // statement. This will get more difficult with subtyping, when we
         // should infer the least-upper bound of all the 'return' statements.
         ret_type = res.type;
       } else {
-        ExpectType(s->line_num, "return", ret_type, res.type);
+        ExpectType(s->LineNumber(), "return", ret_type, res.type);
       }
-      if (ret.is_omitted_exp != is_omitted_ret_type) {
-        FATAL_COMPILATION_ERROR(s->line_num)
+      if (ret.IsOmittedExp() != is_omitted_ret_type) {
+        FATAL_COMPILATION_ERROR(s->LineNumber())
             << *s << " should" << (is_omitted_ret_type ? " not" : "")
             << " provide a return value, to match the function's signature.";
       }
-      return TCStatement(
-          Statement::MakeReturn(s->line_num, res.exp, ret.is_omitted_exp),
-          types);
+      return TCStatement(global_arena->New<Return>(s->LineNumber(), res.exp,
+                                                   ret.IsOmittedExp()),
+                         types);
     }
-    case StatementKind::Continuation: {
-      TCStatement body_result =
-          TypeCheckStmt(s->GetContinuation().body, types, values, ret_type,
-                        is_omitted_ret_type);
-      const Statement* new_continuation = Statement::MakeContinuation(
-          s->line_num, s->GetContinuation().continuation_variable,
-          body_result.stmt);
-      types.Set(s->GetContinuation().continuation_variable,
+    case Statement::Kind::Continuation: {
+      const auto& cont = cast<Continuation>(*s);
+      TCStatement body_result = TypeCheckStmt(cont.Body(), types, values,
+                                              ret_type, is_omitted_ret_type);
+      const Statement* new_continuation = global_arena->New<Continuation>(
+          s->LineNumber(), cont.ContinuationVariable(), body_result.stmt);
+      types.Set(cont.ContinuationVariable(),
                 global_arena->New<ContinuationType>());
       return TCStatement(new_continuation, types);
     }
-    case StatementKind::Run: {
+    case Statement::Kind::Run: {
       TCExpression argument_result =
-          TypeCheckExp(s->GetRun().argument, types, values);
-      ExpectType(s->line_num, "argument of `run`",
+          TypeCheckExp(cast<Run>(*s).Argument(), types, values);
+      ExpectType(s->LineNumber(), "argument of `run`",
                  global_arena->New<ContinuationType>(), argument_result.type);
       const Statement* new_run =
-          Statement::MakeRun(s->line_num, argument_result.exp);
+          global_arena->New<Run>(s->LineNumber(), argument_result.exp);
       return TCStatement(new_run, types);
     }
-    case StatementKind::Await: {
+    case Statement::Kind::Await: {
       // nothing to do here
       return TCStatement(s, types);
     }
@@ -773,69 +780,73 @@ static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
                                 int line_num) -> const Statement* {
   if (!stmt) {
     if (omitted_ret_type) {
-      return Statement::MakeReturn(line_num, nullptr,
-                                   /*is_omitted_exp=*/true);
+      return global_arena->New<Return>(line_num, nullptr,
+                                       /*is_omitted_exp=*/true);
     } else {
       FATAL_COMPILATION_ERROR(line_num)
           << "control-flow reaches end of function that provides a `->` return "
              "type without reaching a return statement";
     }
   }
-  switch (stmt->tag()) {
-    case StatementKind::Match: {
+  switch (stmt->Tag()) {
+    case Statement::Kind::Match: {
+      const auto& match = cast<Match>(*stmt);
       auto new_clauses =
           global_arena
               ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
-      for (auto i = stmt->GetMatch().clauses->begin();
-           i != stmt->GetMatch().clauses->end(); ++i) {
-        auto s =
-            CheckOrEnsureReturn(i->second, omitted_ret_type, stmt->line_num);
-        new_clauses->push_back(std::make_pair(i->first, s));
+      for (const auto& clause : *match.Clauses()) {
+        auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
+                                     stmt->LineNumber());
+        new_clauses->push_back(std::make_pair(clause.first, s));
       }
-      return Statement::MakeMatch(stmt->line_num, stmt->GetMatch().exp,
-                                  new_clauses);
+      return global_arena->New<Match>(stmt->LineNumber(), match.Exp(),
+                                      new_clauses);
     }
-    case StatementKind::Block:
-      return Statement::MakeBlock(
-          stmt->line_num,
-          CheckOrEnsureReturn(stmt->GetBlock().stmt, omitted_ret_type,
-                              stmt->line_num));
-    case StatementKind::If:
-      return Statement::MakeIf(
-          stmt->line_num, stmt->GetIf().cond,
-          CheckOrEnsureReturn(stmt->GetIf().then_stmt, omitted_ret_type,
-                              stmt->line_num),
-          CheckOrEnsureReturn(stmt->GetIf().else_stmt, omitted_ret_type,
-                              stmt->line_num));
-    case StatementKind::Return:
+    case Statement::Kind::Block:
+      return global_arena->New<Block>(
+          stmt->LineNumber(),
+          CheckOrEnsureReturn(cast<Block>(*stmt).Stmt(), omitted_ret_type,
+                              stmt->LineNumber()));
+    case Statement::Kind::If: {
+      const auto& if_stmt = cast<If>(*stmt);
+      return global_arena->New<If>(
+          stmt->LineNumber(), if_stmt.Cond(),
+          CheckOrEnsureReturn(if_stmt.ThenStmt(), omitted_ret_type,
+                              stmt->LineNumber()),
+          CheckOrEnsureReturn(if_stmt.ElseStmt(), omitted_ret_type,
+                              stmt->LineNumber()));
+    }
+    case Statement::Kind::Return:
       return stmt;
-    case StatementKind::Sequence:
-      if (stmt->GetSequence().next) {
-        return Statement::MakeSequence(
-            stmt->line_num, stmt->GetSequence().stmt,
-            CheckOrEnsureReturn(stmt->GetSequence().next, omitted_ret_type,
-                                stmt->line_num));
+    case Statement::Kind::Sequence: {
+      const auto& seq = cast<Sequence>(*stmt);
+      if (seq.Next()) {
+        return global_arena->New<Sequence>(
+            stmt->LineNumber(), seq.Stmt(),
+            CheckOrEnsureReturn(seq.Next(), omitted_ret_type,
+                                stmt->LineNumber()));
       } else {
-        return CheckOrEnsureReturn(stmt->GetSequence().stmt, omitted_ret_type,
-                                   stmt->line_num);
+        return CheckOrEnsureReturn(seq.Stmt(), omitted_ret_type,
+                                   stmt->LineNumber());
       }
-    case StatementKind::Continuation:
-    case StatementKind::Run:
-    case StatementKind::Await:
+    }
+    case Statement::Kind::Continuation:
+    case Statement::Kind::Run:
+    case Statement::Kind::Await:
       return stmt;
-    case StatementKind::Assign:
-    case StatementKind::ExpressionStatement:
-    case StatementKind::While:
-    case StatementKind::Break:
-    case StatementKind::Continue:
-    case StatementKind::VariableDefinition:
+    case Statement::Kind::Assign:
+    case Statement::Kind::ExpressionStatement:
+    case Statement::Kind::While:
+    case Statement::Kind::Break:
+    case Statement::Kind::Continue:
+    case Statement::Kind::VariableDefinition:
       if (omitted_ret_type) {
-        return Statement::MakeSequence(
-            stmt->line_num, stmt,
-            Statement::MakeReturn(line_num, nullptr,
-                                  /*is_omitted_exp=*/true));
+        return global_arena->New<Sequence>(
+            stmt->LineNumber(), stmt,
+            global_arena->New<Return>(line_num, nullptr,
+                                      /*is_omitted_exp=*/true));
       } else {
-        FATAL_COMPILATION_ERROR(stmt->line_num)
+        FATAL_COMPILATION_ERROR(stmt->LineNumber())
             << "control-flow reaches end of function that provides a `->` "
                "return type without reaching a return statement";
       }
