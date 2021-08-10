@@ -843,45 +843,45 @@ also delayed. That means that you can reference `me.F()` in a lexically inline
 method definition even before the declaration of `F` in that class definition.
 However, unqualified names still need to be declared before.
 
-```carbon
-class Point {
-  fn Distance[me: Self]() -> f32 {
-    // Allowed: look up of `x` and `y` delayed until
-    // `type_of(me) == Self` is complete.
-    return Math.Sqrt(me.x * me.x + me.y * me.y);
-  }
+```diff
+ class Point {
+   fn Distance[me: Self]() -> f32 {
+     // Allowed: look up of `x` and `y` delayed until
+     // `type_of(me) == Self` is complete.
++    return Math.Sqrt(me.x * me.x + me.y * me.y);
+   }
 
-  fn CreatePolar(r: f32, theta: f32) -> Point {
-    // Forbidden: unqualified name used before declaration.
-    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
-    // Allowed: look up of `Create` delayed until `Point` is complete.
-    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
-    // Allowed: look up of `Create` delayed until `Self` is complete.
-    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
-  }
+   fn CreatePolar(r: f32, theta: f32) -> Point {
+     // Forbidden: unqualified name used before declaration.
+-    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
+     // Allowed: look up of `Create` delayed until `Point` is complete.
++    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+     // Allowed: look up of `Create` delayed until `Self` is complete.
++    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+   }
 
-  fn Create(x: f32, y: f32) -> Point {
-    // Allowed: checking that conversion of `{.x: f32, .y: f32}`
-    // to `Point` is delayed until `Point` is complete.
-    return {.x = x, .y = y};
-  }
+   fn Create(x: f32, y: f32) -> Point {
+     // Allowed: checking that conversion of `{.x: f32, .y: f32}`
+     // to `Point` is delayed until `Point` is complete.
++    return {.x = x, .y = y};
+   }
 
-  fn CreateXEqualsY(xy: f32) -> Point {
-    // Allowed: `Create` is declared earlier.
-    return Create(xy, xy);
-  }
+   fn CreateXEqualsY(xy: f32) -> Point {
+     // Allowed: `Create` is declared earlier.
++    return Create(xy, xy);
+   }
 
-  fn Angle[me: Self]() -> f32;
+   fn Angle[me: Self]() -> f32;
 
-  var x: f32;
-  var y: f32;
-}
+   var x: f32;
+   var y: f32;
+ }
 
-fn Point.Angle[me: Self]() -> f32 {
-  // Allowed: `Point` type is complete,
-  // function is checked immediately.
-  return Math.ATan2(me.y, me.x);
-}
+ fn Point.Angle[me: Self]() -> f32 {
+   // Allowed: `Point` type is complete,
+   // function is checked immediately.
++  return Math.ATan2(me.y, me.x);
+ }
 ```
 
 **Note:** The details of name lookup are still being decided in issue
