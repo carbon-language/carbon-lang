@@ -146,7 +146,7 @@ properties:
     definition but have defaults.
 -   You may access the `ToString` function for a `Song` value `w` by writing a
     _qualified_ function call, like `w.(ConvertibleToString.ToString)()`. The
-    same effect may be aceived by casting, as in
+    same effect may be achieved by casting, as in
     `(w as (Song as ConvertibleToString)).ToString()`. This qualified syntax is
     available whether or not the implementation is defined as `external`.
 -   If other interfaces are implemented for `Song`, they are also implemented
