@@ -66,4 +66,4 @@ files to NFC as necessary.
 
 -   [Unicode Standard Annex #15: Unicode Normalization Forms](https://www.unicode.org/reports/tr15/tr15-50.html)
 
--   [Normal forms on Wikipedia Unicode equivalence page](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms)
+-   [Normal forms in Wikipedia Unicode equivalence page](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms)
