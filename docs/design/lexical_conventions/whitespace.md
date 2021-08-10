@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -40,3 +41,8 @@ characters with Unicode property `Pattern_White_Space`, which is currently these
 
 The quantity and kind of whitespace separating tokens is ignored except where
 otherwise specified.
+
+## References
+
+-   Proposal
+    [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
