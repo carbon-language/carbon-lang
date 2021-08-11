@@ -35,9 +35,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Self](#self)
     -   [Construction](#construction)
         -   [Assignment](#assignment)
-    -   [Nested functions](#nested-functions)
-    -   [Methods](#methods)
-        -   [Name lookup in method definitions](#name-lookup-in-method-definitions)
+    -   [Member functions](#member-functions)
+        -   [Class functions](#class-functions)
+        -   [Methods](#methods)
+        -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
     -   [Nominal data classes](#nominal-data-classes)
     -   [Nested type](#nested-type)
     -   [Let](#let)
@@ -780,9 +781,14 @@ tl = {.x = 5, .y = 6} as TextLabel;
 Assert(tl.text == "default");
 ```
 
-### Nested functions
+### Member functions
 
-An nested function is like a
+Member functions can either be class functions or methods. Class functions are
+members of the type, while methods can only be called on instances.
+
+#### Class functions
+
+A class function is like a
 [C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
@@ -805,7 +811,7 @@ fn Point.CreateCentered() -> Self {
 }
 ```
 
-Nested functions are members of the type, and may be accessed as using dot `.`
+Class functions are members of the type, and may be accessed as using dot `.`
 member access either the type or any instance.
 
 ```
@@ -813,11 +819,11 @@ var p1: Point = Point.Origin();
 var p2: Point = p1.CreateCentered();
 ```
 
-### Methods
+#### Methods
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
 declarations are distinguished from other
-[nested function declarations](#nested-functions) by having a `me` parameter in
+[class function declarations](#class-functions) by having a `me` parameter in
 square brackets `[`...`]` before the explicit parameter list in parens
 `(`...`)`. There is no implicit member access in methods, so inside the method
 body members are accessed through the `me` parameter. Methods may be written
@@ -863,15 +869,15 @@ the `me` parameter must be in the same list in square brackets `[`...`]`. The
 `me` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
 
-#### Name lookup in method definitions
+#### Name lookup in member function definitions
 
-When defining a method lexically inline, we need to delay type checking until
-the definition of the current type is complete. This means that member lookup is
-also delayed. That means that you can reference `me.F()` in a lexically inline
-method definition even before the declaration of `F` in that class definition.
-However, unqualified names still need to be declared before.
+When defining a member function lexically inline, we need to delay type checking
+until the definition of the current type is complete. This means that member
+lookup is also delayed. That means that you can reference `me.F()` in a
+lexically inline method definition even before the declaration of `F` in that
+class definition. However, unqualified names still need to be declared before.
 
-```diff
+```
 class Point {
   fn Distance[me: Self]() -> f32 {
     // ✅ Allowed: look up of `x` and `y` delayed until
