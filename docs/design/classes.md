@@ -765,7 +765,7 @@ var tl: TextLabel = {.x = 1, .y = 2};
 Assert(tl.text == "default");
 
 // Allowed: assigns all fields
-tl = {.x = 3, .y = 4, .text = "new"};
+✅ tl = {.x = 3, .y = 4, .text = "new"};
 
 // Forbidden: should tl.text == "default" or "new"?
 ❌ tl = {.x = 5, .y = 6};
@@ -775,7 +775,7 @@ tl = {.x = 3, .y = 4, .text = "new"};
 //    using default for field `text`.
 // 2. tl is assigned to a TextLabel, which has values for all
 //    fields.
-tl = {.x = 5, .y = 6} as TextLabel;
+✅ tl = {.x = 5, .y = 6} as TextLabel;
 Assert(tl.text == "default");
 ```
 
@@ -875,27 +875,27 @@ class Point {
   fn Distance[me: Self]() -> f32 {
     // Allowed: look up of `x` and `y` delayed until
     // `type_of(me) == Self` is complete.
-    return Math.Sqrt(me.x * me.x + me.y * me.y);
+    ✅ return Math.Sqrt(me.x * me.x + me.y * me.y);
   }
 
   fn CreatePolar(r: f32, theta: f32) -> Point {
     // Forbidden: unqualified name used before declaration.
     ❌ return Create(r * Math.Cos(theta), r * Math.Sin(theta));
     // Allowed: look up of `Create` delayed until `Point` is complete.
-    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+    ✅ return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
     // Allowed: look up of `Create` delayed until `Self` is complete.
-    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+    ✅ return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
   }
 
   fn Create(x: f32, y: f32) -> Point {
     // Allowed: checking that conversion of `{.x: f32, .y: f32}`
     // to `Point` is delayed until `Point` is complete.
-    return {.x = x, .y = y};
+    ✅ return {.x = x, .y = y};
   }
 
   fn CreateXEqualsY(xy: f32) -> Point {
     // Allowed: `Create` is declared earlier.
-    return Create(xy, xy);
+    ✅ return Create(xy, xy);
   }
 
   fn Angle[me: Self]() -> f32;
@@ -907,7 +907,7 @@ class Point {
 fn Point.Angle[me: Self]() -> f32 {
   // Allowed: `Point` type is complete,
   // function is checked immediately.
-  return Math.ATan2(me.y, me.x);
+  ✅ return Math.ATan2(me.y, me.x);
 }
 ```
 
