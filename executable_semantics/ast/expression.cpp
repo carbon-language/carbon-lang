@@ -149,7 +149,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Expression::Kind::IntrinsicExpression:
-      out << "builtin_body(";
+      out << "intrinsic_expression(";
       switch (cast<IntrinsicExpression>(*this).Intrinsic()) {
         case IntrinsicExpression::IntrinsicKind::Print:
           out << "print";
