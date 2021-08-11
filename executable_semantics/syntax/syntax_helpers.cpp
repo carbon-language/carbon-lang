@@ -13,7 +13,7 @@
 
 namespace Carbon {
 
-// Adds builtins, currently only print(). Note print() is experimental, not
+// Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
 static void AddIntrinsics(std::list<const Declaration*>* fs) {
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
