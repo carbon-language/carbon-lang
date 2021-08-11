@@ -35,11 +35,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Self](#self)
     -   [Construction](#construction)
         -   [Assignment](#assignment)
-    -   [Associated functions](#associated-functions)
+    -   [Nested functions](#nested-functions)
     -   [Methods](#methods)
         -   [Name lookup in method definitions](#name-lookup-in-method-definitions)
     -   [Nominal data classes](#nominal-data-classes)
-    -   [Member type](#member-type)
+    -   [Nested type](#nested-type)
     -   [Let](#let)
     -   [Alias](#alias)
     -   [Private access](#private-access)
@@ -780,9 +780,9 @@ tl = {.x = 5, .y = 6} as TextLabel;
 Assert(tl.text == "default");
 ```
 
-### Associated functions
+### Nested functions
 
-An associated function is like a
+An nested function is like a
 [C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
@@ -805,8 +805,8 @@ fn Point.CreateCentered() -> Self {
 }
 ```
 
-Associated functions are members of the type, and may be accessed as using dot
-`.` member access either the type or any instance.
+Nested functions are members of the type, and may be accessed as using dot `.`
+member access either the type or any instance.
 
 ```
 var p1: Point = Point.Origin();
@@ -817,7 +817,7 @@ var p2: Point = p1.CreateCentered();
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
 declarations are distinguished from other
-[function declarations](#associated-functions) by having a `me` parameter in
+[nested function declarations](#nested-functions) by having a `me` parameter in
 square brackets `[`...`]` before the explicit parameter list in parens
 `(`...`)`. There is no implicit member access in methods, so inside the method
 body members are accessed through the `me` parameter. Methods may be written
@@ -939,7 +939,7 @@ class TextLabel {
 The fields of data classes must all be public. That line will add
 [field-wise implementations and operations of all interfaces that a struct with the same fields would get by default](#operations-performed-field-wise).
 
-### Member type
+### Nested type
 
 Additional types may be defined in the scope of a class definition.
 
