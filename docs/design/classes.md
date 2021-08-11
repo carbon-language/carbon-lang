@@ -1058,6 +1058,7 @@ This matches
 [Swift](https://docs.swift.org/swift-book/LanguageGuide/AccessControl.html),
 [Java](http://rosettacode.org/wiki/Classes#Java),
 [C#](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/access-modifiers),
+[Kotlin](https://kotlinlang.org/docs/visibility-modifiers.html#classes-and-interfaces),
 and [D](https://wiki.dlang.org/Access_specifiers_and_visibility).
 
 **References:** Proposal
