@@ -40,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Methods](#methods)
         -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
     -   [Nominal data classes](#nominal-data-classes)
-    -   [Nested type](#nested-type)
+    -   [Member type](#member-type)
     -   [Let](#let)
     -   [Alias](#alias)
     -   [Private access](#private-access)
@@ -948,7 +948,7 @@ The fields of data classes must all be public. That line will add
 **References:** Rationale for this approach is given in proposal
 [#722](/proposals/p0722.md#nominal-data-class).
 
-### Nested type
+### Member type
 
 Additional types may be defined in the scope of a class definition.
 
