@@ -687,7 +687,7 @@ two methods `Distance` and `Offset`:
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[me: Self]` in the method
     declaration.
--   `origin.Offset(...)` does modify the value of `origin`. This is signified
+-   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
     using `[addr me: Self*]` in the method declaration.
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.

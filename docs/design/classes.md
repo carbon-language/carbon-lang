@@ -758,7 +758,7 @@ An associated function is like a
 [C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
-after the class definition is finished. The most common use is for constructor
+after the class definition is finished. A common use is for constructor
 functions.
 
 ```
@@ -821,7 +821,7 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   `Diameter` computes and returns the diameter of the circle without modifying
     the `Circle` instance. This is signified using `[me: Self]` in the method
     declaration.
--   `c.Expand(...)` does modify the value of `c`. This is signified using
+-   `c.Expand(`...`)` does modify the value of `c`. This is signified using
     `[addr me: Self*]` in the method declaration.
 
 The pattern '`addr` _patt_' means "first take the address of the argument, which
