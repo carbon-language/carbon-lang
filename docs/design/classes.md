@@ -878,11 +878,15 @@ class Point {
     ✅ return Math.Sqrt(me.x * me.x + me.y * me.y);
   }
 
-  fn CreatePolar(r: f32, theta: f32) -> Point {
+  fn CreatePolarInvalid(r: f32, theta: f32) -> Point {
     // Forbidden: unqualified name used before declaration.
     ❌ return Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  }
+  fn CreatePolarValid1(r: f32, theta: f32) -> Point {
     // Allowed: look up of `Create` delayed until `Point` is complete.
     ✅ return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  }
+  fn CreatePolarValid2(r: f32, theta: f32) -> Point {
     // Allowed: look up of `Create` delayed until `Self` is complete.
     ✅ return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
   }
