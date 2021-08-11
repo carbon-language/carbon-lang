@@ -939,6 +939,9 @@ class TextLabel {
 The fields of data classes must all be public. That line will add
 [field-wise implementations and operations of all interfaces that a struct with the same fields would get by default](#operations-performed-field-wise).
 
+**References:** Rationale for this approach is given in proposal
+[#722](/proposals/p0722.md#nominal-data-class).
+
 ### Nested type
 
 Additional types may be defined in the scope of a class definition.
