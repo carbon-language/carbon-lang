@@ -1710,6 +1710,9 @@ interface NSpacePoint {
 [Question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565)
 discussed but did not decide the syntax for associated constants.
 
+**Open question:** Should this be spelled with an `:!` like generic values, to
+indicate this is a compile-time value, as in `let N:! Int;`?
+
 Implementations of `NSpacePoint` for different types might have different values
 for `N`:
 
@@ -1855,6 +1858,12 @@ or:
 
 ```
 let ElementType: Type = T;
+```
+
+or:
+
+```
+let ElementType:! Type = T;
 ```
 
 The definition of the `StackAssociatedType` is sufficient for writing a generic
