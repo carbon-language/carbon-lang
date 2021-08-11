@@ -62,24 +62,24 @@ class Expression {
 // tuple otherwise.
 auto ExpressionFromParenContents(
     int line_num, const ParenContents<Expression>& paren_contents)
-    -> const Expression*;
+    -> Ptr<const Expression>;
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // forming a tuple.
 auto TupleExpressionFromParenContents(
     int line_num, const ParenContents<Expression>& paren_contents)
-    -> const Expression*;
+    -> Ptr<const Expression>;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {
-  FieldInitializer(std::string name, const Expression* expression)
+  FieldInitializer(std::string name, Ptr<const Expression> expression)
       : name(std::move(name)), expression(expression) {}
 
   // The field name. Cannot be empty.
   std::string name;
 
   // The expression that initializes the field.
-  const Expression* expression;
+  Ptr<const Expression> expression;
 };
 
 enum class Operator {
@@ -113,7 +113,7 @@ class IdentifierExpression : public Expression {
 
 class FieldAccessExpression : public Expression {
  public:
-  explicit FieldAccessExpression(int line_num, const Expression* aggregate,
+  explicit FieldAccessExpression(int line_num, Ptr<const Expression> aggregate,
                                  std::string field)
       : Expression(Kind::FieldAccessExpression, line_num),
         aggregate(aggregate),
@@ -123,17 +123,17 @@ class FieldAccessExpression : public Expression {
     return exp->Tag() == Kind::FieldAccessExpression;
   }
 
-  auto Aggregate() const -> const Expression* { return aggregate; }
+  auto Aggregate() const -> const Expression& { return *aggregate; }
   auto Field() const -> const std::string& { return field; }
 
  private:
-  const Expression* aggregate;
+  Ptr<const Expression> aggregate;
   std::string field;
 };
 
 class IndexExpression : public Expression {
  public:
-  explicit IndexExpression(int line_num, const Expression* aggregate,
+  explicit IndexExpression(int line_num, Ptr<const Expression> aggregate,
                            const Expression* offset)
       : Expression(Kind::IndexExpression, line_num),
         aggregate(aggregate),
@@ -143,12 +143,12 @@ class IndexExpression : public Expression {
     return exp->Tag() == Kind::IndexExpression;
   }
 
-  auto Aggregate() const -> const Expression* { return aggregate; }
-  auto Offset() const -> const Expression* { return offset; }
+  auto Aggregate() const -> const Expression& { return *aggregate; }
+  auto Offset() const -> const Expression& { return *offset; }
 
  private:
-  const Expression* aggregate;
-  const Expression* offset;
+  Ptr<const Expression> aggregate;
+  Ptr<const Expression> offset;
 };
 
 class IntLiteral : public Expression {
@@ -225,8 +225,8 @@ class TupleLiteral : public Expression {
 
 class PrimitiveOperatorExpression : public Expression {
  public:
-  explicit PrimitiveOperatorExpression(int line_num, Operator op,
-                                       std::vector<const Expression*> arguments)
+  explicit PrimitiveOperatorExpression(
+      int line_num, Operator op, std::vector<Ptr<const Expression>> arguments)
       : Expression(Kind::PrimitiveOperatorExpression, line_num),
         op(op),
         arguments(std::move(arguments)) {}
@@ -236,18 +236,18 @@ class PrimitiveOperatorExpression : public Expression {
   }
 
   auto Op() const -> Operator { return op; }
-  auto Arguments() const -> const std::vector<const Expression*>& {
+  auto Arguments() const -> const std::vector<Ptr<const Expression>>& {
     return arguments;
   }
 
  private:
   Operator op;
-  std::vector<const Expression*> arguments;
+  std::vector<Ptr<const Expression>> arguments;
 };
 
 class CallExpression : public Expression {
  public:
-  explicit CallExpression(int line_num, const Expression* function,
+  explicit CallExpression(int line_num, Ptr<const Expression> function,
                           const Expression* argument)
       : Expression(Kind::CallExpression, line_num),
         function(function),
@@ -257,17 +257,17 @@ class CallExpression : public Expression {
     return exp->Tag() == Kind::CallExpression;
   }
 
-  auto Function() const -> const Expression* { return function; }
-  auto Argument() const -> const Expression* { return argument; }
+  auto Function() const -> const Expression& { return *function; }
+  auto Argument() const -> const Expression& { return *argument; }
 
  private:
-  const Expression* function;
-  const Expression* argument;
+  Ptr<const Expression> function;
+  Ptr<const Expression> argument;
 };
 
 class FunctionTypeLiteral : public Expression {
  public:
-  explicit FunctionTypeLiteral(int line_num, const Expression* parameter,
+  explicit FunctionTypeLiteral(int line_num, Ptr<const Expression> parameter,
                                const Expression* return_type,
                                bool is_omitted_return_type)
       : Expression(Kind::FunctionTypeLiteral, line_num),
@@ -279,13 +279,13 @@ class FunctionTypeLiteral : public Expression {
     return exp->Tag() == Kind::FunctionTypeLiteral;
   }
 
-  auto Parameter() const -> const Expression* { return parameter; }
-  auto ReturnType() const -> const Expression* { return return_type; }
+  auto Parameter() const -> const Expression& { return *parameter; }
+  auto ReturnType() const -> const Expression& { return *return_type; }
   auto IsOmittedReturnType() const -> bool { return is_omitted_return_type; }
 
  private:
-  const Expression* parameter;
-  const Expression* return_type;
+  Ptr<const Expression> parameter;
+  Ptr<const Expression> return_type;
   bool is_omitted_return_type;
 };
 

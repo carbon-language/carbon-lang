@@ -18,8 +18,9 @@ using llvm::cast;
 
 auto ExpressionFromParenContents(
     int line_num, const ParenContents<Expression>& paren_contents)
-    -> const Expression* {
-  std::optional<const Expression*> single_term = paren_contents.SingleTerm();
+    -> Ptr<const Expression> {
+  std::optional<Ptr<const Expression>> single_term =
+      paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
@@ -29,7 +30,7 @@ auto ExpressionFromParenContents(
 
 auto TupleExpressionFromParenContents(
     int line_num, const ParenContents<Expression>& paren_contents)
-    -> const Expression* {
+    -> Ptr<const Expression> {
   return global_arena->New<TupleLiteral>(
       line_num, paren_contents.TupleElements<FieldInitializer>(line_num));
 }
@@ -75,12 +76,12 @@ void Expression::Print(llvm::raw_ostream& out) const {
   switch (Tag()) {
     case Expression::Kind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
-      out << *index.Aggregate() << "[" << *index.Offset() << "]";
+      out << index.Aggregate() << "[" << index.Offset() << "]";
       break;
     }
     case Expression::Kind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*this);
-      out << *access.Aggregate() << "." << access.Field();
+      out << access.Aggregate() << "." << access.Field();
       break;
     }
     case Expression::Kind::TupleLiteral:
@@ -115,11 +116,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case Expression::Kind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
-      out << *call.Function();
-      if (call.Argument()->Tag() == Expression::Kind::TupleLiteral) {
-        out << *call.Argument();
+      out << call.Function();
+      if (call.Argument().Tag() == Expression::Kind::TupleLiteral) {
+        out << call.Argument();
       } else {
-        out << "(" << *call.Argument() << ")";
+        out << "(" << call.Argument() << ")";
       }
       break;
     }
@@ -145,7 +146,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case Expression::Kind::FunctionTypeLiteral: {
       const auto& fn = cast<FunctionTypeLiteral>(*this);
-      out << "fn " << *fn.Parameter() << " -> " << *fn.ReturnType();
+      out << "fn " << fn.Parameter() << " -> " << fn.ReturnType();
       break;
     }
     case Expression::Kind::IntrinsicExpression:

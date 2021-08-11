@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 
+#include "executable_semantics/common/ptr.h"
 #include "llvm/Support/ManagedStatic.h"
 
 namespace Carbon {
@@ -16,12 +17,12 @@ class Arena {
  public:
   // Allocates an object in the arena, returning a pointer to it.
   template <typename T, typename... Args>
-  auto New(Args&&... args) -> T* {
+  auto New(Args&&... args) -> Ptr<T> {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
     T* raw_ptr = smart_ptr->Instance();
     arena.push_back(std::move(smart_ptr));
-    return raw_ptr;
+    return Ptr<T>(raw_ptr);
   }
 
  private:

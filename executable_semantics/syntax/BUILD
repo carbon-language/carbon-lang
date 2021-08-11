@@ -45,6 +45,7 @@ cc_library(
 cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
+    deps = ["//executable_semantics/common:ptr"],
 )
 
 genrule(

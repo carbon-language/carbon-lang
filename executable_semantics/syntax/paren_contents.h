@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "executable_semantics/common/error.h"
+#include "executable_semantics/common/ptr.h"
 
 namespace Carbon {
 
@@ -27,13 +28,13 @@ template <typename Term>
 struct ParenContents {
   struct Element {
     std::optional<std::string> name;
-    const Term* term;
+    Ptr<const Term> term;
   };
 
   // If this object represents a single term, with no name and no trailing
   // comma, this method returns that term. This typically means the parentheses
   // can be interpreted as grouping.
-  auto SingleTerm() const -> std::optional<const Term*>;
+  auto SingleTerm() const -> std::optional<Ptr<const Term>>;
 
   // Converts `elements` to std::vector<TupleElement>. TupleElement must
   // have a constructor that takes a std::string and a const Term*.
@@ -49,7 +50,7 @@ struct ParenContents {
 // Implementation details only below here.
 
 template <typename Term>
-auto ParenContents<Term>::SingleTerm() const -> std::optional<const Term*> {
+auto ParenContents<Term>::SingleTerm() const -> std::optional<Ptr<const Term>> {
   if (elements.size() == 1 && !elements.front().name.has_value() &&
       !has_trailing_comma) {
     return elements.front().term;
