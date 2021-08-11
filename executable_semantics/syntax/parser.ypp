@@ -93,8 +93,8 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %token <std::string> string_literal
 %type <std::string> designator
 %type <const Declaration*> declaration
-%type <FunctionDefinition> function_declaration
-%type <FunctionDefinition> function_definition
+%type <const FunctionDefinition*> function_declaration
+%type <const FunctionDefinition*> function_definition
 %type <std::list<const Declaration*>> declaration_list
 %type <const Statement*> statement
 %type <const Statement*> if_statement
@@ -509,7 +509,7 @@ deduced_params:
 function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
-      $$ = FunctionDefinition(
+      $$ = global_arena->New<FunctionDefinition>(
           yylineno, $2, $3, $4,
           global_arena->New<ExpressionPattern>($5.first),
           $5.second, $6);
@@ -518,7 +518,7 @@ function_definition:
     {
       // The return type is not considered "omitted" because it's automatic from
       // the expression.
-      $$ = FunctionDefinition(
+      $$ = global_arena->New<FunctionDefinition>(
           yylineno, $2, $3, $4,
           global_arena->New<AutoPattern>(yylineno), true,
           global_arena->New<Return>(yylineno, $6, true));
@@ -527,7 +527,7 @@ function_definition:
 function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
     {
-      $$ = FunctionDefinition(
+      $$ = global_arena->New<FunctionDefinition>(
           yylineno, $2, $3, $4,
           global_arena->New<ExpressionPattern>($5.first),
           $5.second, nullptr); }
@@ -566,9 +566,9 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = global_arena->New<FunctionDeclaration>(std::move($1)); }
+    { $$ = global_arena->New<FunctionDeclaration>($1); }
 | function_declaration
-    { $$ = global_arena->New<FunctionDeclaration>(std::move($1)); }
+    { $$ = global_arena->New<FunctionDeclaration>($1); }
 | STRUCT identifier "{" member_list "}"
     {
       $$ = global_arena->New<StructDeclaration>(yylineno, $2, $4);

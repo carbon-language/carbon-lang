@@ -978,7 +978,7 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
                      const Env& values) -> const Declaration* {
   switch (d.Tag()) {
     case Declaration::Kind::FunctionDeclaration:
-      return global_arena->New<FunctionDeclaration>(*TypeCheckFunDef(
+      return global_arena->New<FunctionDeclaration>(TypeCheckFunDef(
           &cast<FunctionDeclaration>(d).Definition(), types, values));
 
     case Declaration::Kind::StructDeclaration: {
