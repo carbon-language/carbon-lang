@@ -517,6 +517,17 @@ parameter. Functions may accept types implementing `Equatable(i32)` or
 `Equatable(f32)`. Functions can't accept types implementing `Equatable(T)` in
 general, without some other parameter that can determine `T`.
 
+```
+// ✅ This is allowed, since the `T` parameter is determined by the `v`
+// parameter.
+fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
+    -> Optional(i32);
+
+// ❌ This is forbidden, since `U` could implement `Equatable` multiple
+// times, there is no way to determine the value for `T`.
+fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
+```
+
 ## Future work
 
 -   Be able to have non-type generic parameters like the `UInt` size of an array
