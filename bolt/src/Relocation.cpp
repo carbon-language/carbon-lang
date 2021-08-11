@@ -156,7 +156,7 @@ uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
     uint64_t LowBits = (Contents >> 29) & 0x3;
     uint64_t HighBits = (Contents >> 5) & 0x7ffff;
     Contents = LowBits | (HighBits << 2);
-    Contents = static_cast<int64_t>(PC) + SignExtend64<32>(Contents << 12);
+    Contents = static_cast<int64_t>(PC) + SignExtend64<33>(Contents << 12);
     Contents &= ~0xfffUll;
     return Contents;
   }
