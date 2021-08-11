@@ -44,3 +44,23 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_library(
+    name = "string_helpers",
+    srcs = ["string_helpers.cpp"],
+    hdrs = ["string_helpers.h"],
+    deps = [
+        ":check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "string_helpers_test",
+    srcs = ["string_helpers_test.cpp"],
+    deps = [
+        ":string_helpers",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)

@@ -48,10 +48,12 @@ class Value {
     StructType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
-    VariableType,      // e.g. generic type parameters
+    VariableType,      // e.g., generic type parameters.
     BindingPlaceholderValue,
     AlternativeConstructorValue,
-    ContinuationValue  // A first-class continuation value.
+    ContinuationValue,  // A first-class continuation value.
+    StringType,
+    StringValue,
   };
 
   Value(const Value&) = delete;
@@ -440,6 +442,32 @@ class ContinuationValue : public Value {
 
  private:
   std::vector<Frame*> stack;
+};
+
+// The String type.
+class StringType : public Value {
+ public:
+  StringType() : Value(Kind::StringType) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->Tag() == Kind::StringType;
+  }
+};
+
+// A string value.
+class StringValue : public Value {
+ public:
+  explicit StringValue(std::string val)
+      : Value(Kind::StringValue), val(std::move(val)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->Tag() == Kind::StringValue;
+  }
+
+  auto Val() const -> const std::string& { return val; }
+
+ private:
+  std::string val;
 };
 
 auto CopyVal(const Value* val, int line_num) -> const Value*;

@@ -236,6 +236,14 @@ void Value::Print(llvm::raw_ostream& out) const {
       // TODO: Find a way to print useful information about the continuation
       // without creating a dependency cycle.
       break;
+    case Value::Kind::StringType:
+      out << "String";
+      break;
+    case Value::Kind::StringValue:
+      out << "\"";
+      out.write_escaped(cast<StringValue>(*this).Val());
+      out << "\"";
+      break;
   }
 }
 
@@ -293,6 +301,10 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return global_arena->New<AutoType>();
     case Value::Kind::ContinuationType:
       return global_arena->New<ContinuationType>();
+    case Value::Kind::StringType:
+      return global_arena->New<StringType>();
+    case Value::Kind::StringValue:
+      return global_arena->New<StringValue>(cast<StringValue>(*val).Val());
     case Value::Kind::VariableType:
     case Value::Kind::StructType:
     case Value::Kind::ChoiceType:
@@ -339,6 +351,7 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case Value::Kind::BoolType:
     case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
+    case Value::Kind::StringType:
       return true;
     case Value::Kind::VariableType:
       return cast<VariableType>(*t1).Name() == cast<VariableType>(*t2).Name();
@@ -390,6 +403,8 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
                               cast<TupleValue>(*v2).Elements(), line_num);
+    case Value::Kind::StringValue:
+      return cast<StringValue>(*v1).Val() == cast<StringValue>(*v2).Val();
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -400,6 +415,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
+    case Value::Kind::StringType:
       return TypeEqual(v1, v2);
     case Value::Kind::StructValue:
     case Value::Kind::AlternativeValue:
