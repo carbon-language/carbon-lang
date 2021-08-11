@@ -44,6 +44,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Alias](#alias)
     -   [Access control](#access-control)
 -   [Future work](#future-work)
+    -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
         -   [Field defaults for struct types](#field-defaults-for-struct-types)
         -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
@@ -1071,6 +1072,10 @@ originally asked in issue
 This includes features that need to be designed, questions to answer, and a
 description of the provisional syntax in use until these decisions have been
 made.
+
+### Struct literal shortcut
+
+We could allow you to write `{x, y}` as a short hand for `{.x = x, .y = y}`.
 
 ### Optional named parameters
 
