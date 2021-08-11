@@ -56,14 +56,14 @@ This syntax also could also be used inline inside a `struct` definition for
 conditional conformance use cases:
 
 ```
-struct FixedArray(T:$ Type, N:$ Int) {
+struct FixedArray(T:! Type, N:! Int) {
   // A few different syntax possibilities here:
-  extend FixedArray(P:$ Printable, N2:$ Int) { impl as Printable { ... } }
-  extend FixedArray(P:$ Printable, N) { impl as Printable { ... } }
-  extend[P:$ Printable] FixedArray(P, N) { impl as Printable { ... } }
+  extend FixedArray(P:! Printable, N2:! Int) { impl as Printable { ... } }
+  extend FixedArray(P:! Printable, N) { impl as Printable { ... } }
+  extend[P:! Printable] FixedArray(P, N) { impl as Printable { ... } }
 }
 
-struct Pair(T:$ Type, U:$ Type) {
+struct Pair(T:! Type, U:! Type) {
   extend Pair(T, T) { impl as Foo(T) { ... } }
 }
 ```
@@ -77,15 +77,15 @@ external conditional conformance:
     `impl` keyword, and an `if` clause to add constraints:
 
 ```
-struct FixedArray(T:$ Type, N:$ Int) {
-  impl as [U:$ Printable] Printable if T == U {
+struct FixedArray(T:! Type, N:! Int) {
+  impl as [U:! Printable] Printable if T == U {
     // Here `T` and `U` have the same value and so you can freely
     // cast between them. The difference is that you can call the
     // `Print` method on values of type `U`.
   }
 }
 
-struct Pair(T:$ Type, U:$ Type) {
+struct Pair(T:! Type, U:! Type) {
   impl as Foo(T) if T == U {
     // Can cast between `Pair(T, U)` and `Pair(T, T)` since `T == U`.
   }
@@ -96,15 +96,15 @@ struct Pair(T:$ Type, U:$ Type) {
     This might look like (though it introduces another level of indentation):
 
 ```
-struct FixedArray(T:$ Type, N:$ Int) {
-  @if let Printable:$ P = T {
+struct FixedArray(T:! Type, N:! Int) {
+  @if let P:! Printable = T {
     impl as Printable { ... }
   }
 }
 
-interface Foo(T:$ Type) { ... }
-struct Pair(T:$ Type, U:$ Type) {
-  @if let Pair(P:$ T, T) = Self {
+interface Foo(T:! Type) { ... }
+struct Pair(T:! Type, U:! Type) {
+  @if let Pair(T, T) = Self {
     impl as Foo(T) { ... }
   }
 }
@@ -118,13 +118,13 @@ for a type come from its `struct` definition:
     (as long as it is in the same library).
 
 ```
-struct FixedArray(T:$ Type, N:$ Int) { ... }
-extend FixedArray(P:$ Printable, N:$ Int) internal {
+struct FixedArray(T:! Type, N:! Int) { ... }
+extend FixedArray(P:! Printable, N:! Int) internal {
   impl as Printable { ... }
 }
 
-struct Pair(T:$ Type, U:$ Type) { ... }
-extend Pair(T:$ Type, T) internal { ... }
+struct Pair(T:! Type, U:! Type) { ... }
+extend Pair(T:! Type, T) internal { ... }
 ```
 
 Lastly, we could adopt a "flow sensitive" approach, where the meaning of names
@@ -132,7 +132,7 @@ can change in an inner scope. This would allow the `if` conditions that govern
 when an `impl` is used to affect the types in that `impl`'s definition:
 
 ```
-struct FixedArray(T:$ Type, N:$ Int) {
+struct FixedArray(T:! Type, N:! Int) {
   impl as Printable if (T implements Printable) {
     // Inside this scope, `T` has type `Printable` instead of `Type`.
   }

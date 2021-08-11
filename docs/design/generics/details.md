@@ -1349,7 +1349,7 @@ the capabilities of the iterator being passed in:
 
 ```
 interface ForwardIterator {
-  let Element: Type;
+  let Element:! Type;
   fn Advance[addr me: Self*]();
   fn Get[me: Self]() -> Element;
 }
@@ -1693,7 +1693,7 @@ dimension as an associated constant.
 
 ```
 interface NSpacePoint {
-  let N: Int;
+  let N:! Int;
   // The following require: 0 <= i < N.
   fn Get[addr me: Self*](i: Int) -> Float64;
   fn Set[addr me: Self*](i: Int, value: Float64);
@@ -1712,7 +1712,7 @@ for `N`:
 ```
 class Point2D {
   impl as NSpacePoint {
-    let N: Int = 2;
+    let N:! Int = 2;
     fn Get[addr me: Self*](i: Int) -> Float64 { ... }
     fn Set[addr me: Self*](i: Int, value: Float64) { ... }
     fn SetAll[addr me: Self*](value: Array(Float64, 2)) { ... }
@@ -1721,7 +1721,7 @@ class Point2D {
 
 class Point3D {
   impl as NSpacePoint {
-    let N: Int = 3;
+    let N:! Int = 3;
     fn Get[addr me: Self*](i: Int) -> Float64 { ... }
     fn Set[addr me: Self*](i: Int, value: Float64) { ... }
     fn SetAll[addr me: Self*](value: Array(Float64, 3)) { ... }
@@ -1797,7 +1797,7 @@ will provide a type under a specific name. For example:
 
 ```
 interface StackAssociatedType {
-  let ElementType: Type;
+  let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
   fn IsEmpty[addr me: Self*]() -> Bool;
@@ -1850,7 +1850,7 @@ let ElementType = T;
 or:
 
 ```
-let ElementType: Type = T;
+let ElementType:! Type = T;
 ```
 
 The definition of the `StackAssociatedType` is sufficient for writing a generic
@@ -1910,7 +1910,7 @@ be clear how they should match up, as in this example:
 
 ```
 interface Has2OverloadsWithDefaults {
-  let T: StackAssociatedType;
+  let T:! StackAssociatedType;
   fn F[me: Self](x: DynamicArray(T), y: T) { ... }
   fn F[me: Self](x: T, y: T.ElementType) { ... }
 }
@@ -1943,7 +1943,7 @@ interface Iterator {
 }
 
 interface Container {
-  let IteratorType: Iterator;
+  let IteratorType:! Iterator;
   fn Begin[addr me: Self*]() -> IteratorType;
 }
 ```
@@ -1957,7 +1957,7 @@ class Iterator(Self:! Type) {
 }
 class Container(Self:! Type) {
   // Representation type for the iterator.
-  let IteratorType: Type;
+  let IteratorType:! Type;
   // Witness that IteratorType implements Iterator.
   var iterator_impl: Iterator(IteratorType)*;
 
@@ -2238,7 +2238,7 @@ class S(T:! B) where ... { ... }
 // Constraints on an interface parameter:
 interface A(T:! B) where ... {
   // Constraints on an associated type or constant:
-  let U: C where ...;
+  let U:! C where ...;
   // Constraints on a method:
   fn G[me: Self, V:! D](v: V) where ...;
 }
@@ -2373,15 +2373,15 @@ to the `ElementType` of a `Container` interface as follows:
 
 ```
 interface Iterator {
-  let ElementType: Type;
+  let ElementType:! Type;
   ...
 }
 interface Container {
-  let ElementType: Type;
+  let ElementType:! Type;
   // Argument passing:
-  let IteratorType: Iterator(.ElementType = ElementType);
+  let IteratorType:! Iterator(.ElementType = ElementType);
   // versus `where` clause:
-  let IteratorType: Iterator where IteratorType.ElementType == ElementType;
+  let IteratorType:! Iterator where IteratorType.ElementType == ElementType;
   ...
 }
 ```
@@ -2457,7 +2457,7 @@ The same syntax would be used in an interface definition:
 
 ```
 interface HyperPointInterface {
-  let N: Int where N > 3;
+  let N:! Int where N > 3;
   fn Get[addr me: Self*](i: Int) -> Float64;
 }
 ```
@@ -2527,7 +2527,7 @@ interface Iterator {
   ...
 }
 interface Container {
-  let IteratorType: Iterator;
+  let IteratorType:! Iterator;
   fn Begin[addr me: Self*]() -> IteratorType;
   ...
 }
@@ -2551,7 +2551,7 @@ Given these definitions (omitting `ElementType` for brevity):
 ```
 interface IteratorInterface { ... }
 interface ContainerInterface {
-  let IteratorType: IteratorInterface;
+  let IteratorType:! IteratorInterface;
   ...
 }
 interface RandomAccessIterator {
@@ -2606,8 +2606,8 @@ fn F[R:! Type, L:! MutipliesBy(R)](x: L, y: R) {
 
 ```
 interface PairInterface {
-  let Left: Type;
-  let Right: Type;
+  let Left:! Type;
+  let Right:! Type;
 }
 
 // Argument passing:
@@ -2628,13 +2628,13 @@ represent the constraint.
 ```
 // Argument passing:
 interface HasEqualPair {
-  [let T: Type];
-  let P: PairInterface(.Left = T, .Right = T);
+  [let T:! Type];
+  let P:! PairInterface(.Left = T, .Right = T);
 }
 
 // versus `where` clause:
 interface HasEqualPair {
-  let P: PairInterface where P.Left == P.Right;
+  let P:! PairInterface where P.Left == P.Right;
 }
 ```
 
@@ -2646,10 +2646,10 @@ only match types that had a type member named `T`.
 
 ```
 // Argument passing:
-let EqualPair = [let T: Type]
+let EqualPair = [let T:! Type]
     PairInterface(.Left = T, .Right = T);
 structural interface EqualPair {
-  [let T: Type];
+  [let T:! Type];
   extends PairInterface(.Left = T, .Right = T);
 }
 
@@ -2676,9 +2676,9 @@ fn EqualContainers[ET:! HasEquality,
     (c1: CT1*, c2: CT2*) -> Bool;
 
 interface HasEqualContainers {
-  [let ET: HasEquality];
-  let CT1: Container(.ElementType = ET);
-  let CT2: Container(.ElementType = ET);
+  [let ET:! HasEquality];
+  let CT1:! Container(.ElementType = ET);
+  let CT2:! Container(.ElementType = ET);
 }
 
 // versus `where` clause:
@@ -2688,8 +2688,8 @@ fn EqualContainers[CT1:! Container, CT2:! Container]
           CT1.ElementType is HasEquality;
 
 interface HasEqualContainers {
-  let CT1: Container where CT1.ElementType is HasEquality;
-  let CT2: Container where CT1.ElementType == CT2.ElementType;
+  let CT1:! Container where CT1.ElementType is HasEquality;
+  let CT2:! Container where CT1.ElementType == CT2.ElementType;
 }
 ```
 
@@ -2792,7 +2792,7 @@ encode the return type:
 ```
 interface HasAbs {
   extends Numeric;
-  let MagnitudeType: Numeric;
+  let MagnitudeType:! Numeric;
   fn Abs[me: Self]() -> MagnitudeType;
 }
 ```
@@ -2841,12 +2841,12 @@ Interface definition:
 
 ```
 interface Container {
-  let ElementType: Type;
+  let ElementType:! Type;
 
   // Argument passing:
-  let SliceType: Container(.ElementType = ElementType, .SliceType = .Self);
+  let SliceType:! Container(.ElementType = ElementType, .SliceType = .Self);
   // versus `where` clause
-  let SliceType: Container where SliceType.ElementType == ElementType,
+  let SliceType:! Container where SliceType.ElementType == ElementType,
                                  Slicetype.SliceType == SliceType;
 
   fn GetSlice[addr me: Self*]
@@ -2891,12 +2891,12 @@ definition:
 
 ```
 interface Container {
-  let ElementType: Type;
+  let ElementType:! Type;
 
   structural interface ContainerIsSlice {
     extends Container where Container.SliceType == Self;
   }
-  let SliceType: ContainerIsSlice(.ElementType = ElementType);
+  let SliceType:! ContainerIsSlice(.ElementType = ElementType);
 
   fn GetSlice[addr me: Self*](start: IteratorType,
                                     IteratorType: end) -> SliceType;
@@ -2998,8 +2998,8 @@ fn PrintValueOrDefault[KeyType:! Printable & auto,
 
 ```
 interface I(A:! Type, B:! Type, C:! Type, D:! Type, E:! Type) {
-  let SwapType: I(B, A, C, D, E);
-  let CycleType: I(B, C, D, E, A);
+  let SwapType:! I(B, A, C, D, E);
+  let CycleType:! I(B, C, D, E, A);
   fn LookUp(hm: HashMap(D, E)*) -> E;
   fn Foo(x: Bar(A, B));
 }
@@ -3063,7 +3063,7 @@ interface BidirectionalIterator {
 }
 
 interface ForwardContainer {
-  let IteratorType: ForwardIterator;
+  let IteratorType:! ForwardIterator;
   fn Begin[addr me: Self*]() -> IteratorType;
   fn End[addr me: Self*]() -> IteratorType;
   // ...
@@ -3081,7 +3081,7 @@ interface BidirectionalContainer {
   // `IteratorType`. The `[...]` mean this new name is
   // only used as a constraint, and is not part of the
   // `BidirectionalContainer` API.
-  [let Extended: BidirectionalIterator];
+  [let Extended:! BidirectionalIterator];
   extends ForwardContainer(.IteratorType = Extended);
 }
 ```
@@ -3115,7 +3115,7 @@ declarations in an interface, as in:
 interface BidirectionalContainer {
   extends ForwardContainer {
     // Redeclaration of `IteratorType` with a more specific bound.
-    let IteratorType: BidirectionalIterator;
+    let IteratorType:! BidirectionalIterator;
   }
 }
 ```
@@ -3208,11 +3208,11 @@ set to the canonical type for whatever it is an alias for. For example:
 ```
 interface A {
   // `W` is canonical.
-  let W: A;
+  let W:! A;
   // `U` is not canonical, is equal to `W.W`.
   alias U = W.W;
   // `T` is canonical, but `T.Y` is not.
-  let T: B(.Y = Self);
+  let T:! B(.Y = Self);
 }
 ```
 
@@ -3221,10 +3221,10 @@ with `V.`.
 
 ```
 interface B {
-  let S: A;
-  let Y: A(.W = S);
-  let X: A;
-  let R: B(.X = S);
+  let S:! A;
+  let Y:! A(.W = S);
+  let X:! A;
+  let R:! B(.X = S);
 }
 ```
 
@@ -3246,8 +3246,8 @@ associated type bound is the same interface recursively. The bad case is:
 
 ```
 interface Broken {
-  let Q: Broken;
-  let R: Broken(.R = Q.R.R);
+  let Q:! Broken;
+  let R:! Broken(.R = Q.R.R);
 }
 
 fn F[T:! Broken](x: T) {
@@ -3285,10 +3285,10 @@ The fix for this situation is to introduce new deduced associated types:
 
 ```
 interface Fixed {
-  [let RR: Fixed];
-  [let QR: Fixed(.R = RR)];
-  let Q: Fixed(.R = QR);
-  let R: Fixed(.R = RR);
+  [let RR:! Fixed];
+  [let QR:! Fixed(.R = RR)];
+  let Q:! Fixed(.R = QR);
+  let R:! Fixed(.R = RR);
 }
 
 fn F[T:! Fixed](x: T) {
@@ -3325,7 +3325,7 @@ determine canonical types.
 
 **Note:** This algorithm still works with the `.Self` feature from the
 ["recursive constraints" section](#recursive-constraints). For example, the
-expression `let Y: A(.X = .Self)` means `Y.X == Y` and so the `.Self` on the
+expression `let Y:! A(.X = .Self)` means `Y.X == Y` and so the `.Self` on the
 right-side represents a shorter and earlier type expression. This precludes
 introducing a loop and so is safe.
 
@@ -3334,8 +3334,8 @@ would like to allow items in an interface to reference each other, as in:
 
 ```
 interface D {
-  let E: A(.W = V);
-  let V: A(.W = E);
+  let E:! A(.W = V);
+  let V:! A(.W = E);
 }
 ```
 
@@ -3347,8 +3347,8 @@ constructors involved:
 
 ```
 interface Graph {
-  let Edges: A(.W = Vector(Verts));
-  let Verts: A(.W = Vector(Edges));
+  let Edges:! A(.W = Vector(Verts));
+  let Verts:! A(.W = Vector(Edges));
 }
 ```
 
@@ -3375,35 +3375,35 @@ Consider an interface with one associate type that has `where` constraints:
 ```
 interface Foo {
   // Some associated types
-  let A: ...;
-  let B: Z where B.X == ..., B.Y == ...;
-  let C: ...;
+  let A:! ...;
+  let B:! Z where B.X == ..., B.Y == ...;
+  let C:! ...;
 }
 ```
 
 These forms of `where` clauses are allowed because we can rewrite them into the
 argument passing form:
 
-| `where` form                  | argument passing form  |
-| ----------------------------- | ---------------------- |
-| `let B: Z where B.X == A`     | `let Z(.X = A): B`     |
-| `let B: Z where B.X == A.T.U` | `let Z(.X = A.T.U): B` |
-| `let B: Z where B.X == Self`  | `let Z(.X = Self): B`  |
-| `let B: Z where B.X == B`     | `let Z(.X = .Self): B` |
+| `where` form                   | argument passing form   |
+| ------------------------------ | ----------------------- |
+| `let B:! Z where B.X == A`     | `let Z(.X = A):! B`     |
+| `let B:! Z where B.X == A.T.U` | `let Z(.X = A.T.U):! B` |
+| `let B:! Z where B.X == Self`  | `let Z(.X = Self):! B`  |
+| `let B:! Z where B.X == B`     | `let Z(.X = .Self):! B` |
 
 Note that the second example would not be allowed if `A.T.U` had type `Foo`, to
 avoid non-terminating recursion.
 
 These forms of `where` clauses are forbidden:
 
-| Example forbidden `where` form          | Rule                                     |
-| --------------------------------------- | ---------------------------------------- |
-| `let B: Z where B == ...`               | must have a dot on left of `==`          |
-| `let B: Z where B.X.Y == ...`           | must have a single dot on left of `==`   |
-| `let B: Z where A.X == ...`             | `A` ≠ `B` on left of `==`                |
-| `let B: Z where B.X == ..., B.X == ...` | no two constraints on same member        |
-| `let B: Z where B.X == B.Y`             | right side can't refer to members of `B` |
-| `let B: Z where B.X == C`               | no forward reference                     |
+| Example forbidden `where` form           | Rule                                     |
+| ---------------------------------------- | ---------------------------------------- |
+| `let B:! Z where B == ...`               | must have a dot on left of `==`          |
+| `let B:! Z where B.X.Y == ...`           | must have a single dot on left of `==`   |
+| `let B:! Z where A.X == ...`             | `A` ≠ `B` on left of `==`                |
+| `let B:! Z where B.X == ..., B.X == ...` | no two constraints on same member        |
+| `let B:! Z where B.X == B.Y`             | right side can't refer to members of `B` |
+| `let B:! Z where B.X == C`               | no forward reference                     |
 
 There is some room to rewrite other `where` expressions into allowed argument
 passing forms. One simple example is allowing the two sides of the `==` in one
@@ -3411,28 +3411,28 @@ of the allowed forms to be swapped, but more complicated rewrites may be
 possible. For example,
 
 ```
-let B: Z where B.X == B.Y;
+let B:! Z where B.X == B.Y;
 ```
 
 might be rewritten to:
 
 ```
-[let XY: ...];
-let B: Z(.X = XY, .Y = XY);
+[let XY:! ...];
+let B:! Z(.X = XY, .Y = XY);
 ```
 
 except it may be tricky in general to find a type for `XY` that satisfies the
 constraints on both `B.X` and `B.Y`. Similarly,
 
 ```
-let A: ...;
-let B: Z where B == A.T.U
+let A:! ...;
+let B:! Z where B == A.T.U
 ```
 
 might be rewritten as:
 
 ```
-let A: ...;
+let A:! ...;
 alias B = A.T.U;
 ```
 
@@ -3441,9 +3441,9 @@ case, we need to find a type-of-type `Z2` that represents the intersection of
 the two type constraints and a different rewrite:
 
 ```
-let Z2: B
-[let AT: ...(.U = B)];
-let A: ...(.T = AT);
+let Z2:! B
+[let AT:! ...(.U = B)];
+let A:! ...(.T = AT);
 ```
 
 **Note:** It would be great if the
@@ -4310,7 +4310,7 @@ class DynPtr(template TT:! InterfaceType) {
       // or equivalently, this->t.F(this->p as (this->t)*, ...).
     }
   }
-  let T: TT = (DynPtrImpl as TT);
+  let T:! TT = (DynPtrImpl as TT);
   private impl_: DynPtrImpl;
   impl as Deref(T) {
     fn Deref[me: Self]() -> T* { return &this->impl_; }
@@ -4329,7 +4329,7 @@ interface `Deref` that both `DynPtr` and `T*` implement:
 ```
 // Types implementing `Deref` act like a pointer to associated type `DerefT`.
 interface Deref {
-  let DerefT: Type;
+  let DerefT:! Type;
   // This is used for the `->` and `*` dereferencing operators.
   fn Deref[me: Self]() -> DerefT*;
 }
@@ -4618,7 +4618,7 @@ implementation of the indexing operator (operator `[]`), by way of
 interface RandomAccessContainer {
   extends Container {
     // Extension of the associated type `IteratorType` from `Container`.
-    let IteratorType: RandomAccessIterator;
+    let IteratorType:! RandomAccessIterator;
   }
   // Either `impl` or `extends` here, depending if you want
   // `RandomAccessContainer`'s API to include these names.
@@ -4812,7 +4812,7 @@ type.
 ```
 interface Addable(Right:! Type = Self) {
   // Assuming we allow defaults for associated types.
-  let AddResult: Type = Self;
+  let AddResult:! Type = Self;
   fn Add(lhs: Self, rhs: Right) -> AddResult;
 }
 ```
