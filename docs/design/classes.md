@@ -34,6 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Forward declaration](#forward-declaration)
     -   [Self](#self)
     -   [Construction](#construction)
+        -   [Assignment](#assignment)
     -   [Associated functions](#associated-functions)
     -   [Methods](#methods)
         -   [Name lookup in method definitions](#name-lookup-in-method-definitions)
@@ -751,6 +752,32 @@ Assert(AcceptsATextLabel({.x = 2, .y = 4}) == 6);
 Note that a nominal class, unlike a [struct type](#type-expression), can define
 default values for fields, and so may be initialized with a
 [struct value](#literals) that omits some or all of those fields.
+
+#### Assignment
+
+Field defaults are only used when initializing a new value, not assigning to an
+existing variable. When assigning, values for all the fields must be specified.
+This avoids ambiguity about whether to use the default value or the previous
+value for a field.
+
+```
+var tl: TextLabel = {.x = 1, .y = 2};
+Assert(tl.text == "default");
+
+// Allowed: assigns all fields
+tl = {.x = 3, .y = 4, .text = "new"};
+
+// Forbidden: should tl.text == "default" or "new"?
+tl = {.x = 5, .y = 6};
+
+// Allowed: This statement is evaluated in two steps:
+// 1. {.x = 5, .y = 6} is converted into a new TextLabel value,
+//    using default for field `text`.
+// 2. tl is assigned to a TextLabel, which has values for all
+//    fields.
+tl = {.x = 5, .y = 6} as TextLabel;
+Assert(tl.text == "default");
+```
 
 ### Associated functions
 
