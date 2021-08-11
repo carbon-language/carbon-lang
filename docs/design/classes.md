@@ -42,7 +42,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Member type](#member-type)
     -   [Let](#let)
     -   [Alias](#alias)
-    -   [Access control](#access-control)
+    -   [Private access](#private-access)
 -   [Future work](#future-work)
     -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
@@ -991,7 +991,7 @@ Assert(sp1.first == sp2.key);
 Assert(&sp1.first == &sp1.key);
 ```
 
-### Access control
+### Private access
 
 By default, all members of a class are fully publicly accessible. Access can be
 restricted by adding a keyword, called an
@@ -1007,21 +1007,16 @@ class Point {
 }
 ```
 
-As in C++, `private` means only accessible to members of the class. Carbon has
-two other access modifiers that restrict access to members of the class and also
-specify the [linkage](<https://en.wikipedia.org/wiki/Linkage_(software)>):
-
--   `private.internal` gives the member internal linkage, improving build
-    scalability.
--   `private.external` gives the member external linkage, allowing it to be used
-    in inline methods and templates.
-
-`private` will give the member internal linkage unless it needs to be external
-because it is used in an inline method or template.
+As in C++, `private` means only accessible to members of the class.
 
 **Future work:** We will add support for `protected` access when inheritance is
 added to this design. We will also define a convenient way for tests that belong
 to the same library to get access to private members.
+
+**Future work:** `private` will give the member internal linkage unless it needs
+to be external because it is used in an inline method or template. We may in the
+future
+[add a way to specify internal linkage explicitly](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier).
 
 **Open questions:** Using `private` to mean "restricted to this class" matches
 C++. Other languages support restricting to different scopes:
