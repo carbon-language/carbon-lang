@@ -1153,7 +1153,7 @@ interface ConvertibleTo(T:! Type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  let AssociatedType: Type;
+  let AssociatedType:! Type;
   extends ConvertibleTo(AssociatedType);
 }
 ```
@@ -1697,7 +1697,7 @@ dimension as an associated constant.
 
 ```
 interface NSpacePoint {
-  let N: Int;
+  let N:! Int;
   // The following require: 0 <= i < N.
   fn Get[addr me: Self*](i: Int) -> Float64;
   fn Set[addr me: Self*](i: Int, value: Float64);
@@ -1706,20 +1706,13 @@ interface NSpacePoint {
 }
 ```
 
-**Note:**
-[Question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565)
-discussed but did not decide the syntax for associated constants.
-
-**Open question:** Should this be spelled with an `:!` like generic values, to
-indicate this is a compile-time value, as in `let N:! Int;`?
-
 Implementations of `NSpacePoint` for different types might have different values
 for `N`:
 
 ```
 class Point2D {
   impl as NSpacePoint {
-    let N: Int = 2;
+    let N:! Int = 2;
     fn Get[addr me: Self*](i: Int) -> Float64 { ... }
     fn Set[addr me: Self*](i: Int, value: Float64) { ... }
     fn SetAll[addr me: Self*](value: Array(Float64, 2)) { ... }
@@ -1728,7 +1721,7 @@ class Point2D {
 
 class Point3D {
   impl as NSpacePoint {
-    let N: Int = 3;
+    let N:! Int = 3;
     fn Get[addr me: Self*](i: Int) -> Float64 { ... }
     fn Set[addr me: Self*](i: Int, value: Float64) { ... }
     fn SetAll[addr me: Self*](value: Array(Float64, 3)) { ... }
@@ -1804,7 +1797,7 @@ will provide a type under a specific name. For example:
 
 ```
 interface StackAssociatedType {
-  let ElementType: Type;
+  let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
   fn IsEmpty[addr me: Self*]() -> Bool;
@@ -1852,12 +1845,6 @@ of `StackAssociatedType.ElementType`?
 
 ```
 let ElementType = T;
-```
-
-or:
-
-```
-let ElementType: Type = T;
 ```
 
 or:
@@ -1923,7 +1910,7 @@ be clear how they should match up, as in this example:
 
 ```
 interface Has2OverloadsWithDefaults {
-  let T: StackAssociatedType;
+  let T:! StackAssociatedType;
   fn F[me: Self](x: DynamicArray(T), y: T) { ... }
   fn F[me: Self](x: T, y: T.ElementType) { ... }
 }
@@ -1956,7 +1943,7 @@ interface Iterator {
 }
 
 interface Container {
-  let IteratorType: Iterator;
+  let IteratorType:! Iterator;
   fn Begin[addr me: Self*]() -> IteratorType;
 }
 ```
@@ -1970,7 +1957,7 @@ class Iterator(Self:! Type) {
 }
 class Container(Self:! Type) {
   // Representation type for the iterator.
-  let IteratorType: Type;
+  let IteratorType:! Type;
   // Witness that IteratorType implements Iterator.
   var iterator_impl: Iterator(IteratorType)*;
 

@@ -509,7 +509,7 @@ types:
 
 ```
 interface Stack {
-  let ElementType: Movable;
+  let ElementType:! Movable;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
   fn IsEmpty[addr me: Self*]() -> Bool;

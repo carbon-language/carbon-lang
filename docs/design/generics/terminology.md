@@ -535,7 +535,7 @@ Associated type example:
 
 ```
 interface Stack {
-  let ElementType: Type;
+  let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
 }
@@ -551,21 +551,21 @@ interface Iterator { ... }
 interface Container {
   // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
-  let IteratorType: Iterator;
+  let IteratorType:! Iterator;
   ...
   fn Insert[addr me: Self*](position: IteratorType, value: ElementType);
 }
 class ListIterator(ElementType:! Type) {
   ...
-  impl Iterator;
+  impl as Iterator;
 }
 class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
-  let IteratorType: Iterator = ListIterator(ElementType);
+  let IteratorType:! Iterator = ListIterator(ElementType);
   fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
     ...
   }
-  impl Container;
+  impl as Container;
 }
 ```
 
