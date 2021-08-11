@@ -768,7 +768,7 @@ Assert(tl.text == "default");
 tl = {.x = 3, .y = 4, .text = "new"};
 
 // Forbidden: should tl.text == "default" or "new"?
-tl = {.x = 5, .y = 6};
+❌ tl = {.x = 5, .y = 6};
 
 // Allowed: This statement is evaluated in two steps:
 // 1. {.x = 5, .y = 6} is converted into a new TextLabel value,
@@ -880,7 +880,7 @@ class Point {
 
   fn CreatePolar(r: f32, theta: f32) -> Point {
     // Forbidden: unqualified name used before declaration.
-    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
+    ❌ return Create(r * Math.Cos(theta), r * Math.Sin(theta));
     // Allowed: look up of `Create` delayed until `Point` is complete.
     return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
     // Allowed: look up of `Create` delayed until `Self` is complete.
