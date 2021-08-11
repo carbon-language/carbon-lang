@@ -2056,19 +2056,6 @@ declaration so it can be passed as the argument to the parameterized interface
 **Open question:** Perhaps `type_of` should be spelled `singleton_type_of` or
 `single_value_type_of`, and only take a type argument?
 
-> **Alternative considered:** We could also allow value patterns without a `:`,
-> as in:
->
-> ```
-> fn PeekAtTopOfStackParameterized
->     [T:! Type, StackType:! StackParameterized(T)]
->     (s: StackType*, T) -> T { ... }
-> ```
->
-> However, we don't want to allow value patterns more generally so we can reject
-> declarations like `fn F(Int)` when users almost certainly meant
-> `fn F(i: Int)`.
-
 This approach is useful for the `ComparableTo(T)` interface, where a type might
 be comparable with multiple other types, and in fact interfaces for
 [operator overloads](#operator-overloading) more generally. Example:
@@ -2140,13 +2127,6 @@ both interface type parameters and associated types. The difference is that
 interface parameters are "inputs" since they _determine_ which `impl` to use,
 and associated types are "outputs" since they are determined _by_ the `impl`,
 but play no role in selecting the `impl`.
-
-**Rejected alternative:** We considered and then rejected the idea that we would
-have two kinds of parameters. "Multi" parameters would work as described above.
-"Deducible" type parameters would only allow one implementation of an interface,
-not one per interface & type parameter combination. These deducible type
-parameters could be inferred like associated types are. See
-[the detailed rationale](appendix-deduced-interface-params.md)
 
 ### Impl lookup
 
