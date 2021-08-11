@@ -16,5 +16,6 @@ feature of Carbon:
     direction.
 -   [Terminology](terminology.md) - A glossary establishing common terminology
     for describing the design.
--   ~~Detailed design~~ - not implemented yet
+-   [Detailed design](details.md) - In depth description of how generic type
+    parameters work.
 -   ~~Rejected alternatives~~ - not implemented yet

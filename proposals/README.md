@@ -58,6 +58,7 @@ request:
 -   [0524 - Generics overview](p0524.md)
 -   [0538 - `return` with no argument](p0538.md)
 -   [0540 - Remove `Void`](p0540.md)
+-   [0553 - Generics details part 1](p0553.md)
 -   [0555 - Operator precedence](p0555.md)
 -   [0561 - Basic classes: use cases, struct literals, struct types, and future work](p0561.md)
 -   [0601 - Operator tokens](p0601.md)
