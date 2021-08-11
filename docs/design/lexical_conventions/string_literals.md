@@ -165,12 +165,12 @@ Within a string literal, the following escape sequences are recognized:
 | `\'`          | U+0027 APOSTROPHE (`'`)                                  |
 | `\\`          | U+005C REVERSE SOLIDUS (`\`)                             |
 | `\0`          | Code unit with value 0                                   |
-| `\0D`         | Invalid                                                  |
+| `\0D`         | Invalid, reserved for evolution                          |
 | `\xHH`        | Code unit with value HH<sub>16</sub>                     |
 | `\u{HHHH...}` | Unicode code point U+HHHH...                             |
 | `\<newline>`  | No string literal content produced (block literals only) |
 
-Hex characters must be uppercase (`\xAA`, not `\xaa`).
+Hex characters (`H`) must be uppercase (`\xAA`, not `\xaa`).
 
 This includes all C++ escape sequences except:
 
@@ -300,8 +300,8 @@ of additional `"`s later in the same line:
 // The contents of this string start and end with exactly two "s.
 var String: ambig1 = #"""This is a raw string literal starting with """#;
 
-// This string is a block raw string literal with file-type 'This',
-// whose contents start with "is a ".
+// This string is a raw block string literal with file-type 'This', whose
+// contents start with "is a ".
 var String: ambig2 = #"""This
   is a block string literal with file type 'This', first character 'i',
   and last character 'X': X\#
