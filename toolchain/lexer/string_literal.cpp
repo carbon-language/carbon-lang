@@ -317,7 +317,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
     // Process the contents of the line.
     while (true) {
-      auto end_of_regular_text = contents.find_first_of("\n\\");
+      auto end_of_regular_text = contents.find_first_of("\n\t\\");
       result += contents.substr(0, end_of_regular_text);
       contents = contents.substr(end_of_regular_text);
 

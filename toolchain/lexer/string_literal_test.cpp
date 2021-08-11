@@ -100,7 +100,10 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       R"(#"""
       """)",
       R"(" \
-      ")",
+      ")",     "\"\n\"",
+      // TODO: Tabs aren't allowed in strings.
+      //"\"\t\"",
+      //"\"\"\"\n\t\n\"\"\"",
   };
 
   for (llvm::StringLiteral test : invalid) {
