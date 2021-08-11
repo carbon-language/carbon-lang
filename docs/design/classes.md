@@ -822,12 +822,12 @@ var p2: Point = p1.CreateCentered();
 #### Methods
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
-declarations are distinguished from other
-[class function declarations](#class-functions) by having a `me` parameter in
-square brackets `[`...`]` before the explicit parameter list in parens
-`(`...`)`. There is no implicit member access in methods, so inside the method
-body members are accessed through the `me` parameter. Methods may be written
-lexically inline or after the class declaration.
+declarations are distinguished from [class function](#class-functions)
+declarations by having a `me` parameter in square brackets `[`...`]` before the
+explicit parameter list in parens `(`...`)`. There is no implicit member access
+in methods, so inside the method body members are accessed through the `me`
+parameter. Methods may be written lexically inline or after the class
+declaration.
 
 ```carbon
 class Circle {
