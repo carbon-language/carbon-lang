@@ -871,11 +871,12 @@ after any names needed to describe its type.
 
 #### Name lookup in member function definitions
 
-When defining a member function lexically inline, we need to delay type checking
-until the definition of the current type is complete. This means that member
-lookup is also delayed. That means that you can reference `me.F()` in a
-lexically inline method definition even before the declaration of `F` in that
-class definition. However, unqualified names still need to be declared before.
+When defining a member function lexically inline, we delay type checking of the
+function body until the definition of the current type is complete. This means
+that member lookup is also delayed. That means that you can reference `me.F()`
+in a lexically inline method definition even before the declaration of `F` in
+that class definition. However, unqualified names still need to be declared
+before.
 
 ```
 class Point {
@@ -971,15 +972,13 @@ Other type constants can be defined using a `let` declaration:
 
 ```
 class MyClass {
-  let Pi: f32 = 3.141592653589793;
-  let IndexType: Type = i32;
+  let Pi:! f32 = 3.141592653589793;
+  let IndexType:! Type = i32;
 }
 ```
 
-These do not affect the storage of instances of that class.
-
-**Open question:** Should these use the `:!` generic syntax decided in
-[issue #565](https://github.com/carbon-language/carbon-lang/issues/565)?
+The `:!` indicates that this is defining a compile-time constant, and so does
+not affect the storage of instances of that class.
 
 ### Alias
 
