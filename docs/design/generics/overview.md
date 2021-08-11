@@ -470,22 +470,42 @@ At that point, two erasures occur:
 
 ### Adapting types
 
-FIXME: A "newtype" mechanism called "adapting types" may be provided to create
-new types that are compatible with existing types but with different interface
-implementations. This could be used to add or replace implementations, or define
-implementations for reuse.
+Carbon has a mechanism called "adapting types" to create new types that are
+compatible with existing types but with different interface implementations.
+This could be used to add or replace implementations, or define implementations
+for reuse.
+
+In this example, we have multiple ways of sorting a collection of `Song` values.
+
+```
+class Song { ... }
+
+adapter SongByArtist extends Song {
+  impl as Comparable { ... }
+}
+
+adapter SongByTitle extends Song {
+  impl as Comparable { ... }
+}
+```
+
+Values of type `Song` may be cast to `SongByArtist` or `SongByTitle` to get a
+specific sort order.
 
 ### Type parameters
 
-FIXME: Associated types and interface parameters will be provided to allow
-function signatures to vary with the implementing type. The biggest difference
-between these is that associated types ("output types") may be deduced from a
-type, and types can implement the same interface multiple times with different
-interface parameters ("input types").
+Associated types and interface parameters allow function signatures to vary with
+the implementing type. The biggest difference between these is that associated
+types ("output types") may be deduced from a type, and types can implement the
+same interface multiple times with different interface parameters ("input
+types").
 
 #### Associated types
 
-FIXME
+Expect type parameters to be associated types by default. Since associated types
+may be deduced, they are more convenient to use. Imagine we have a `Stack`
+interface. Different types implementing `Stack` will have different element
+types:
 
 ```
 interface Stack {
@@ -501,9 +521,20 @@ implement `Stack` give `ElementType` a specific value of some type implementing
 `Movable`. Functions that accept a type implementing `Stack` can deduce the
 `ElementType` from the stack type.
 
+```
+// ✅ This is allowed, since the type of the stack will determine
+// `ElementType`.
+fn PeekAtTopOfStack[StackType:! Stack](s: StackType*)
+    -> StackType.ElementType;
+```
+
 #### Parameterized interfaces
 
-FIXME
+Parameterized interfaces are commonly associated with overloaded operators.
+Imagine we have an interface for determining if two values are equivalent, and
+we want to allow those types to be different. An element in a hash map might
+have type `Pair(String, i64)` that implements both `Equatable(String)` and
+`Equatable(Pair(String, i64))`.
 
 ```
 interface Equatable(T:! Type) {
@@ -515,16 +546,17 @@ interface Equatable(T:! Type) {
 multiple times as long as each time it is with a different value of the `T`
 parameter. Functions may accept types implementing `Equatable(i32)` or
 `Equatable(f32)`. Functions can't accept types implementing `Equatable(T)` in
-general, without some other parameter that can determine `T`.
+general, unless some other parameter determines `T`.
 
 ```
-// ✅ This is allowed, since the `T` parameter is determined by the `v`
-// parameter.
+// ✅ This is allowed, since the value of `T` is determined by the
+// `v` parameter.
 fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
     -> Optional(i32);
 
-// ❌ This is forbidden, since `U` could implement `Equatable` multiple
-// times, there is no way to determine the value for `T`.
+// ❌ This is forbidden. Since `U` could implement `Equatable`
+// multiple times, there is no way to determine the value for `T`.
+// Contrast with `PeekAtTopOfStack` in the associated type example.
 fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 ```
 
