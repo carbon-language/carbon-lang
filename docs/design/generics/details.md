@@ -3835,6 +3835,9 @@ specialization rules and now is taking a long time to stabilize the feature.
 -   As of July 2021,
     [specialization is still not in stable Rust](https://github.com/rust-lang/rust/pull/30652),
     and lots of work and open questions remain.
+-   Using the newtype pattern in Rust can cause the compiler to not use an
+    efficient specialization,
+    [hurting performance](https://blog.polybdenum.com/2021/08/09/when-zero-cost-abstractions-aren-t-zero-cost.html).
 
 Some of this might be simplified in Carbon if we can avoid compatibility
 concerns, but it is still a quite difficult problem.
