@@ -90,6 +90,7 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %token <int> integer_literal
 %token <std::string> identifier
 %token <std::string> sized_type_literal
+%token <std::string> string_literal
 %type <std::string> designator
 %type <const Declaration*> declaration
 %type <FunctionDefinition> function_declaration
@@ -131,6 +132,7 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %token AND
 %token OR
 %token NOT
+%token STRING
 %token BOOL
 %token TYPE
 %token FN
@@ -218,6 +220,8 @@ expression:
     { $$ = global_arena->New<IndexExpression>(yylineno, $1, $3); }
 | integer_literal
     { $$ = global_arena->New<IntLiteral>(yylineno, $1); }
+| string_literal
+    { $$ = global_arena->New<StringLiteral>(yylineno, $1); }
 | TRUE
     { $$ = global_arena->New<BoolLiteral>(yylineno, true); }
 | FALSE
@@ -229,6 +233,8 @@ expression:
       CHECK($1[0] == 'i' && val == 32)  << "Only i32 is supported for now: " << $1;
       $$ = global_arena->New<IntTypeLiteral>(yylineno);
     }
+| STRING
+    { $$ = global_arena->New<StringTypeLiteral>(yylineno); }
 | BOOL
     { $$ = global_arena->New<BoolTypeLiteral>(yylineno); }
 | TYPE

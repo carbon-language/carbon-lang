@@ -67,7 +67,7 @@ static void PrintFields(llvm::raw_ostream& out,
                         const std::vector<FieldInitializer>& fields) {
   llvm::ListSeparator sep;
   for (const auto& field : fields) {
-    out << sep << field.name << " = " << field.expression;
+    out << sep << field.name << " = " << *field.expression;
   }
 }
 
@@ -129,6 +129,14 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case Expression::Kind::IntTypeLiteral:
       out << "i32";
       break;
+    case Expression::Kind::StringLiteral:
+      out << "\"";
+      out.write_escaped(cast<StringLiteral>(*this).Val());
+      out << "\"";
+      break;
+    case Expression::Kind::StringTypeLiteral:
+      out << "String";
+      break;
     case Expression::Kind::TypeTypeLiteral:
       out << "Type";
       break;
@@ -140,6 +148,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "fn " << *fn.Parameter() << " -> " << *fn.ReturnType();
       break;
     }
+    case Expression::Kind::IntrinsicExpression:
+      out << "intrinsic_expression(";
+      switch (cast<IntrinsicExpression>(*this).Intrinsic()) {
+        case IntrinsicExpression::IntrinsicKind::Print:
+          out << "print";
+      }
+      out << ")";
   }
 }
 

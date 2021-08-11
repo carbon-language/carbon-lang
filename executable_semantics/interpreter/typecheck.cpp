@@ -82,7 +82,19 @@ static auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case Value::Kind::VariableType:
       return global_arena->New<IdentifierExpression>(
           0, cast<VariableType>(*t).Name());
-    default:
+    case Value::Kind::StringType:
+      return global_arena->New<StringTypeLiteral>(0);
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::AutoType:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::IntValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::StructValue:
       FATAL() << "expected a type, not " << *t;
   }
 }
@@ -158,10 +170,10 @@ static auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
     case Value::Kind::ChoiceType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
-    case Value::Kind::TypeType: {
+    case Value::Kind::TypeType:
+    case Value::Kind::StringType:
       ExpectType(line_num, "argument deduction", param, arg);
       return deduced;
-    }
     // The rest of these cases should never happen.
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
@@ -172,6 +184,7 @@ static auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
       FATAL() << "In ArgumentDeduction: expected type, not value " << *param;
   }
 }
@@ -213,6 +226,7 @@ static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
     case Value::Kind::StructType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
+    case Value::Kind::StringType:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::IntValue:
@@ -224,6 +238,7 @@ static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
       FATAL() << "In Substitute: expected type, not value " << *type;
   }
 }
@@ -475,12 +490,17 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
           /*is_omitted_return_type=*/false);
       return TCExpression(new_e, global_arena->New<TypeType>(), types);
     }
+    case Expression::Kind::StringLiteral:
+      return TCExpression(e, global_arena->New<StringType>(), types);
+    case Expression::Kind::IntrinsicExpression:
+      switch (cast<IntrinsicExpression>(*e).Intrinsic()) {
+        case IntrinsicExpression::IntrinsicKind::Print:
+          return TCExpression(e, &TupleValue::Empty(), types);
+      }
     case Expression::Kind::IntTypeLiteral:
-      return TCExpression(e, global_arena->New<TypeType>(), types);
     case Expression::Kind::BoolTypeLiteral:
-      return TCExpression(e, global_arena->New<TypeType>(), types);
+    case Expression::Kind::StringTypeLiteral:
     case Expression::Kind::TypeTypeLiteral:
-      return TCExpression(e, global_arena->New<TypeType>(), types);
     case Expression::Kind::ContinuationTypeLiteral:
       return TCExpression(e, global_arena->New<TypeType>(), types);
   }
