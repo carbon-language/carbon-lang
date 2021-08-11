@@ -487,9 +487,35 @@ interface parameters ("input types").
 
 FIXME
 
+```
+interface Stack {
+  let ElementType: Movable;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> Bool;
+}
+```
+
+`ElementType` is an associated type of the interface `Stack`. Types that
+implement `Stack` give `ElementType` a specific value of some type implementing
+`Movable`. Functions that accept a type implementing `Stack` can deduce the
+`ElementType` from the stack type.
+
 #### Parameterized interfaces
 
 FIXME
+
+```
+interface Equatable(T:! Type) {
+  fn IsEqual[me: Self](compare_to: T) -> Bool;
+}
+```
+
+`T` is a parameter to interface `Equatable`. A type can implement `Equatable`
+multiple times as long as each time it is with a different value of the `T`
+parameter. Functions may accept types implementing `Equatable(i32)` or
+`Equatable(f32)`. Functions can't accept types implementing `Equatable(T)` in
+general, without some other parameter that can determine `T`.
 
 ## Future work
 
