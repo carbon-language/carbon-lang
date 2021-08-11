@@ -29,6 +29,10 @@ pointers to other design documents that dive deeper into individual topics.
     -   [Combining interfaces](#combining-interfaces)
         -   [Structural interfaces](#structural-interfaces)
         -   [Type erasure](#type-erasure)
+    -   [Adapting types](#adapting-types)
+    -   [Type parameters](#type-parameters)
+        -   [Associated types](#associated-types)
+        -   [Parameterized interfaces](#parameterized-interfaces)
 -   [Future work](#future-work)
 
 <!-- tocstop -->
@@ -464,19 +468,33 @@ At that point, two erasures occur:
     of `PrintIt` you can cast a `CDCover as Printable` value back to `CDCover`.
     Inside of `PrintIt`, you can't cast `p` or `T` back to `CDCover`.
 
+### Adapting types
+
+FIXME: A "newtype" mechanism called "adapting types" may be provided to create
+new types that are compatible with existing types but with different interface
+implementations. This could be used to add or replace implementations, or define
+implementations for reuse.
+
+### Type parameters
+
+FIXME: Associated types and interface parameters will be provided to allow
+function signatures to vary with the implementing type. The biggest difference
+between these is that associated types ("output types") may be deduced from a
+type, and types can implement the same interface multiple times with different
+interface parameters ("input types").
+
+#### Associated types
+
+FIXME
+
+#### Parameterized interfaces
+
+FIXME
+
 ## Future work
 
 -   Be able to have non-type generic parameters like the `UInt` size of an array
     or tuple.
--   A "newtype" mechanism called "adapting types" may be provided to create new
-    types that are compatible with existing types but with different interface
-    implementations. This could be used to add or replace implementations, or
-    define implementations for reuse.
--   Associated types and interface parameters will be provided to allow function
-    signatures to vary with the implementing type. The biggest difference
-    between these is that associated types ("output types") may be deduced from
-    a type, and types can implement the same interface multiple times with
-    different interface parameters ("input types").
 -   Other kinds of constraints will be finalized.
 -   Implementations can be parameterized to apply to multiple types. These
     implementations would be restricted to various conditions are true for the
