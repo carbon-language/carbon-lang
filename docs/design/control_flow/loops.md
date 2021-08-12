@@ -33,7 +33,7 @@ Carbon provides loops using the `while` and `for` statements. Within a loop, the
 `while` statements loop for as long as the passed expression returns `True`.
 Syntax is:
 
-> `while (`_boolean expression_ `) {` _statements_ `}`
+> `while (` _boolean expression_ `) {` _statements_ `}`
 
 For example, this prints `0`, `1`, `2`, then `Done!`:
 
