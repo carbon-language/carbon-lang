@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
     -   [Nominal interfaces](#nominal-interfaces)
+-   [Associated item](#associated-item)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
@@ -39,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Template specialization](#template-specialization)
     -   [Generic specialization](#generic-specialization)
 -   [Conditional conformance](#conditional-conformance)
--   [Interface type parameters versus associated types](#interface-type-parameters-versus-associated-types)
+-   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
 -   [Type-of-type](#type-of-type)
 
@@ -51,7 +52,7 @@ Generally speaking, when we talk about either templates or a generics system, we
 are talking about generalizing some language construct by adding a parameter to
 it. Language constructs here primarily would include functions and types, but we
 may want to support parameterizing other language constructs like
-[interfaces](#interface-type-parameters-versus-associated-types).
+[interfaces](#interface-type-parameters-and-associated-types).
 
 This parameter broadens the scope of the language construct on an axis defined
 by that parameter, for example it could define a family of functions instead of
@@ -296,14 +297,28 @@ We use the "structural" versus "nominal" terminology as a generalization of the
 same terms being used in a
 [subtyping context](https://en.wikipedia.org/wiki/Subtyping#Subtyping_schemes).
 
+## Associated item
+
+An associated item is a requirement in an interface that a type's implementation
+of the interface must satisfy by having a matching member. A requirement that
+the type define a value for a member constant is called an _associated
+constant_, and similarly an _associated function_ or _associated type_.
+
+Different types can satisfy an interface with different definitions for the
+member. So we say their definitions are _associated_ with what type is
+implementing the interface. An [impl](#impls-implementations-of-interfaces)
+defines what is associated with the type for that interface.
+
+This terminology is also used by
+[Rust](https://doc.rust-lang.org/reference/items/associated-items.html).
+
 ## Impls: Implementations of interfaces
 
 An _impl_ is an implementation of an interface for a specific type. It is the
 place where the function bodies are defined, values for associated types, etc.
-are given. A given generics programming model may support default impls, named
-impls, or both. Impls are mostly associated with nominal interfaces; structural
-interfaces define conformance implicitly instead of by requiring an impl to be
-defined.
+are given. Impls are needed for [nominal interfaces](#nominal-interfaces);
+[structural interfaces](#structural-interfaces) define conformance implicitly
+instead of by requiring an impl to be defined.
 
 ## Compatible types
 
@@ -514,13 +529,14 @@ that it always supports, but satisfies additional interfaces under some
 conditions on the type argument. For example: `Array(T)` might implement
 `Comparable` if `T` itself implements `Comparable`, using lexicographical order.
 
-## Interface type parameters versus associated types
+## Interface type parameters and associated types
 
 Let's say you have an interface defining a container. Different containers will
 contain different types of values, and the container API will have to refer to
 that "element type" when defining the signature of methods like "insert" or
 "find". If that element type is a parameter (input) to the interface type, we
 say it is a type parameter; if it is an output, we say it is an associated type.
+An associated type is a kind of [associated item](#associated-item).
 
 Type parameter example:
 
@@ -573,11 +589,11 @@ Since type parameters are directly under the user's control, it is easier to
 express things like "this type parameter is the same for all these interfaces",
 and other type constraints.
 
-If you have an interface with type parameters, there is a question of whether a
-type can have multiple impls for different combinations of type parameters, or
-if you can only have a single impl (in which case you can directly infer the
-type parameters given just a type implementing the interface). You can always
-infer associated types.
+If you have an interface with type parameters, a type can have multiple impls
+for different combinations of type parameters. As a result, type parameters may
+not be inferred. Given the interface type parameters, there can only be a single
+implementation of the interface, which determines the values for all associated
+types. So associated types may be inferred.
 
 ## Type constraints
 

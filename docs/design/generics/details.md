@@ -192,13 +192,11 @@ interface Vector {
 }
 ```
 
-The syntax here is to match how the same members would be defined in a type.
-Each declaration in the interface defines an _associated item_ (same
-[terminology as Rust](https://doc.rust-lang.org/reference/items/associated-items.html)).
-In this example, `Vector` has two associated methods, `Add` and `Scale`.
-
-**References:** Method syntax for types was decided in
-[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
+The syntax here is to match
+[how the same members would be defined in a type](/docs/design/classes.md#methods).
+Each declaration in the interface defines an
+[associated item](terminology.md#associated-item). In this example, `Vector` has
+two associated methods, `Add` and `Scale`.
 
 An interface defines a type-of-type, that is a type whose values are types. The
 values of an interface are specifically
@@ -1689,11 +1687,12 @@ class IntWrapper {
 
 ## Associated constants
 
-In addition to associated methods, we allow other kinds of associated items. For
-consistency, we use the same syntax to describe a constant in an interface as in
-a type without assigning a value. As constants, they are declared using the
-`let` introducer. For example, a fixed-dimensional point type could have the
-dimension as an associated constant.
+In addition to associated methods, we allow other kinds of
+[associated items](terminology.md#associated-item). For consistency, we use the
+same syntax to describe a constant in an interface as in a type without
+assigning a value. As constants, they are declared using the `let` introducer.
+For example, a fixed-dimensional point type could have the dimension as an
+associated constant.
 
 ```
 interface NSpacePoint {
@@ -1754,13 +1753,13 @@ fn ExtractPoint[PointT:! NSpacePoint](
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
-**Aside:** In general, `let` fields will only have compile-time and not runtime
-storage associated with them.
+**Aside:** In general, the use of `:!` here means these `let` declarations will
+only have compile-time and not runtime storage associated with them.
 
 ### Associated functions
 
-To be consistent with normal function declaration syntax, function constants are
-written:
+To be consistent with normal function declaration syntax, associated function
+are written:
 
 ```
 interface DeserializeFromString {
@@ -1787,13 +1786,14 @@ var y: MySerializableType = Deserialize(MySerializableType, "4");
 
 ## Associated types
 
-Associated types are associated constants that happen to be types. These are
-particularly interesting since they can be used in the signatures of associated
-methods or functions, to allow the signatures of methods to vary from
-implementation to implementation. We already have one example of this: the
-`Self` type discussed [above in the "Interfaces" section](#interfaces). For
-other cases, we can say that the interface declares that each implementation
-will provide a type under a specific name. For example:
+Associated types are [associated items](terminology.md#associated-item) that
+happen to be types. These are particularly interesting since they can be used in
+the signatures of associated methods or functions, to allow the signatures of
+methods to vary from implementation to implementation. We already have one
+example of this: the `Self` type discussed
+[above in the "Interfaces" section](#interfaces). For other cases, we can say
+that the interface declares that each implementation will provide a type under a
+specific name. For example:
 
 ```
 interface StackAssociatedType {
@@ -1872,7 +1872,7 @@ Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
 For context, see
-["Interface type parameters versus associated types" in the generics terminology document](terminology.md#interface-type-parameters-versus-associated-types).
+["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-type-parameters-versus-associated-types).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
