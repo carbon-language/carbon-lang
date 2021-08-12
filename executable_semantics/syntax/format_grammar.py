@@ -48,20 +48,22 @@ def _clang_format(code, base_style, cols):
     return output.decode("utf-8")
 
 
-def _find_string_end(content, i):
+def _find_string_end(content, start):
     """Returns the end of a string, skipping escapes."""
+    i = start
     while i < len(content):
         c = content[i]
         if c == "\\":
-            i += 2
+            i += 1
         elif c == '"':
             return i
         i += 1
-    exit("failed to find end of string")
+    exit("failed to find end of string: %s" % content[start : start + 20])
 
 
-def _find_brace_end(content, has_percent, i):
+def _find_brace_end(content, has_percent, start):
     """Returns the end of a braced section, skipping escapes."""
+    i = start
     while i < len(content):
         c = content[i]
         if c == "":
@@ -71,7 +73,7 @@ def _find_brace_end(content, has_percent, i):
         elif c == "}" and (not has_percent or content[i - 1] == "%"):
             return i
         i += 1
-    exit("failed to find end of brace")
+    exit("failed to find end of brace: %s" % content[start : start + 20])
 
 
 def _parse_code_segments(content):
@@ -91,6 +93,9 @@ def _parse_code_segments(content):
         if c == '"':
             # Skip over strings.
             i = _find_string_end(content, i + 1)
+        elif c == "\\":
+            # Skip over escapes.
+            i += 1
         elif c == "{":
             # lexer.lpp uses %{ %} for code, so detect it here.
             has_percent = content[i - 1] == "%"

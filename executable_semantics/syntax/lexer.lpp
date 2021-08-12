@@ -68,7 +68,7 @@ integer_literal   [0-9]+
 string_literal    \"([^\\\"\n]|\\.)*\"
 horizontal_whitespace [ \t\r]
 whitespace [ \t\r\n]
-operand_start [(A-Za-z0-9_"]
+operand_start [(A-Za-z0-9_\"]
 
 %{
   // This macro is expanded immediately before each action specified below.
