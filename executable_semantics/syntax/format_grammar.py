@@ -20,9 +20,14 @@ _FILES = (
     "executable_semantics/syntax/lexer.lpp",
 )
 
+# Columns to format to.
+_COLS = 80
+
+# An arbitrary separator to use when formatting multiple code segments.
+_FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
 
 # Information about a code segment for formatting.
-Code = collections.namedtuple(
+_Code = collections.namedtuple(
     "Code",
     [
         "content",
@@ -119,7 +124,7 @@ def _parse_code_segments(content):
 
                 # Record the code segment.
                 segments.append(
-                    Code(
+                    _Code(
                         braced_content,
                         i - line_offset + 1,
                         close_brace_indent,
@@ -142,7 +147,6 @@ def _format_code_segments(base_style, segments, code_segments):
     Formatting is done in groups, divided by indent because that affects code
     formatting.
     """
-    _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
     # Iterate through code segments, formatting them in groups.
     for close_brace_indent, segment_indices in code_segments.items():
         format_input = _FORMAT_SEPARATOR.join(
@@ -150,7 +154,7 @@ def _format_code_segments(base_style, segments, code_segments):
         )
         code_indent = close_brace_indent + 2
         formatted_block = _clang_format(
-            format_input, base_style, 80 - code_indent
+            format_input, base_style, _COLS - code_indent
         )
         formatted_segments = formatted_block.split(_FORMAT_SEPARATOR)
         assert len(formatted_segments) == len(
@@ -164,7 +168,7 @@ def _format_code_segments(base_style, segments, code_segments):
             # The '4' here is from the `{  }` wrapper that is otherwise added.
             if (
                 code.has_percent
-                or code.brace_offset + len(formatted) + 4 > 80
+                or code.brace_offset + len(formatted) + 4 > _COLS
                 or "\n" in formatted
             ):
                 close_percent = ""
