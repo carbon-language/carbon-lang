@@ -60,20 +60,16 @@ def _find_string_end(content, i):
     exit("failed to find end of string")
 
 
-def _find_brace_end(content, i):
+def _find_brace_end(content, has_percent, i):
     """Returns the end of a braced section, skipping escapes."""
     while i < len(content):
         c = content[i]
         if c == "":
             i += 2
         elif c == "{":
-            i, _ = _find_brace_end(content, i + 1)
-        elif c == "}":
-            return i, False
-        elif c == "%" and i + 1 < len(content) and content[i + 1] == "}":
-            # %{ %} is used in lpp.
-            return i + 1, True
-
+            i = _find_brace_end(content, False, i + 1)
+        elif c == "}" and (not has_percent or content[i - 1] == "%"):
+            return i
         i += 1
     exit("failed to find end of brace")
 
@@ -96,8 +92,9 @@ def _parse_code_segments(content):
             # Skip over strings.
             i = _find_string_end(content, i + 1)
         elif c == "{":
+            has_percent = content[i - 1] == "%"
             # Find the end of the braced section.
-            (end, has_percent) = _find_brace_end(content, i + 1)
+            end = _find_brace_end(content, has_percent, i + 1)
 
             # Determine the braced content, stripping the % and whitespace.
             braced_content = content[i + 1 : end]
