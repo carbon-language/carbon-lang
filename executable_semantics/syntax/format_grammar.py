@@ -92,6 +92,7 @@ def _parse_code_segments(content):
             # Skip over strings.
             i = _find_string_end(content, i + 1)
         elif c == "{":
+            # lexer.lpp uses %{ %} for code, so detect it here.
             has_percent = content[i - 1] == "%"
             # Find the end of the braced section.
             end = _find_brace_end(content, has_percent, i + 1)
