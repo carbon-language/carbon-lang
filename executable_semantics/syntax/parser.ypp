@@ -47,17 +47,17 @@
 // -----------------------------------------------------------------------------
 
 %code top {
-    #include <algorithm>
-    #include <cstdarg>
-    #include <cstdio>
-    #include <cstdlib>
-    #include <list>
-    #include <vector>
+  #include <algorithm>
+  #include <cstdarg>
+  #include <cstdio>
+  #include <cstdlib>
+  #include <list>
+  #include <vector>
 
-    #include "common/check.h"
-    #include "executable_semantics/syntax/parse_and_lex_context.h"
-    #include "executable_semantics/syntax/syntax_helpers.h"
-    #include "llvm/ADT/StringExtras.h"
+  #include "common/check.h"
+  #include "executable_semantics/syntax/parse_and_lex_context.h"
+  #include "executable_semantics/syntax/syntax_helpers.h"
+  #include "llvm/ADT/StringExtras.h"
 }  // %code top
 
 %code requires {
@@ -78,12 +78,11 @@ class ParseAndLexContext;
 }  // %code requires
 
 %code {
-    extern int yylineno;
+  extern int yylineno;
 
-    void Carbon::Parser::error(const location_type&,
-                               const std::string& message) {
-      context.PrintDiagnostic(message, yylineno);
-    }
+  void Carbon::Parser::error(const location_type&, const std::string& message) {
+    context.PrintDiagnostic(message, yylineno);
+  }
 }  // %code
 
 %token <int> integer_literal

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Formats parser.ypp with clang-format."""
+"""Formats parser.ypp and lexer.lpp with clang-format."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -28,7 +28,6 @@ Code = collections.namedtuple(
         "content",
         "brace_offset",
         "close_brace_indent",
-        "code_indent",
         "has_percent",
     ],
 )
@@ -79,7 +78,7 @@ def _parse_code_segments(content):
 
     The return is a tuple of `(segments, code_segments)`, where `segments` is a
     list of both `str` and `Code`, while `code_segments` is a `dict` mapping
-    `code_indent` to a list of indices for where `Code` objects are in
+    `close_brace_indent` to a list of indices for where `Code` objects are in
     `segments`.
     """
     i = 0
@@ -115,10 +114,8 @@ def _parse_code_segments(content):
                 line_offset = content.rfind("\n", 0, i)
                 if content[line_offset + 1 : i].isspace():
                     close_brace_indent = i - line_offset - 1
-                    code_indent = close_brace_indent + 2
                 else:
                     close_brace_indent = 0
-                    code_indent = 4
 
                 # Record the code segment.
                 segments.append(
@@ -126,13 +123,12 @@ def _parse_code_segments(content):
                         braced_content,
                         i - line_offset + 1,
                         close_brace_indent,
-                        code_indent,
                         has_percent,
                     )
                 )
-                if code_indent not in code_segments:
-                    code_segments[code_indent] = []
-                code_segments[code_indent].append(len(segments) - 1)
+                if close_brace_indent not in code_segments:
+                    code_segments[close_brace_indent] = []
+                code_segments[close_brace_indent].append(len(segments) - 1)
                 i = end
                 segment_start = i + 1
         i += 1
@@ -148,10 +144,11 @@ def _format_code_segments(base_style, segments, code_segments):
     """
     _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
     # Iterate through code segments, formatting them in groups.
-    for code_indent, segment_indices in code_segments.items():
+    for close_brace_indent, segment_indices in code_segments.items():
         format_input = _FORMAT_SEPARATOR.join(
             [segments[i].content for i in segment_indices]
         )
+        code_indent = close_brace_indent + 2
         formatted_block = _clang_format(
             format_input, base_style, 80 - code_indent
         )
@@ -174,7 +171,7 @@ def _format_code_segments(base_style, segments, code_segments):
                 if code.has_percent:
                     close_percent = "%"
                 segments[segment_index] = "{\n%s\n%s%s}" % (
-                    textwrap.indent(formatted, " " * code.code_indent),
+                    textwrap.indent(formatted, " " * code_indent),
                     " " * code.close_brace_indent,
                     close_percent,
                 )

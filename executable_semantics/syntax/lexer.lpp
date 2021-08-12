@@ -5,13 +5,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 */
 
 %{
-    #include <cstdlib>
+  #include <cstdlib>
 
-    #include "common/check.h"
-    #include "common/string_helpers.h"
-    #include "executable_semantics/common/tracing_flag.h"
-    #include "executable_semantics/syntax/parse_and_lex_context.h"
-    #include "llvm/ADT/StringExtras.h"
+  #include "common/check.h"
+  #include "common/string_helpers.h"
+  #include "executable_semantics/common/tracing_flag.h"
+  #include "executable_semantics/syntax/parse_and_lex_context.h"
+  #include "llvm/ADT/StringExtras.h"
 %}
 
 /* Turn off legacy bits we don't need */
@@ -71,119 +71,118 @@ whitespace [ \t\r\n]
 operand_start [(A-Za-z0-9_"]
 
 %{
-    // This macro is expanded immediately before each action specified below.
-    //
-    // Advances the current token position by yyleng columns without changing
-    // the line number, and takes us out of the after-whitespace / after-operand
-    // state.
-    #define YY_USER_ACTION                                             \
-      context.current_token_position.columns(yyleng);                  \
-      if (YY_START == AFTER_WHITESPACE || YY_START == AFTER_OPERAND) { \
-        BEGIN(INITIAL);                                                \
-      }
+  // This macro is expanded immediately before each action specified below.
+  //
+  // Advances the current token position by yyleng columns without changing
+  // the line number, and takes us out of the after-whitespace / after-operand
+  // state.
+  #define YY_USER_ACTION                                             \
+    context.current_token_position.columns(yyleng);                  \
+    if (YY_START == AFTER_WHITESPACE || YY_START == AFTER_OPERAND) { \
+      BEGIN(INITIAL);                                                \
+    }
 %}
 
 %%
 
 %{
-    // Code run each time yylex is called.
+  // Code run each time yylex is called.
 
-    // Begin with an empty token span starting where its previous end was.
-    context.current_token_position.step();
+  // Begin with an empty token span starting where its previous end was.
+  context.current_token_position.step();
 %}
 
 {AND}      {
-    return Carbon::Parser::make_AND(context.current_token_position);
+  return Carbon::Parser::make_AND(context.current_token_position);
 }
 {ARROW}    {
-    return Carbon::Parser::make_ARROW(context.current_token_position);
+  return Carbon::Parser::make_ARROW(context.current_token_position);
 }
 {AUTO}     {
-    return Carbon::Parser::make_AUTO(context.current_token_position);
+  return Carbon::Parser::make_AUTO(context.current_token_position);
 }
 {BOOL}     {
-    return Carbon::Parser::make_BOOL(context.current_token_position);
+  return Carbon::Parser::make_BOOL(context.current_token_position);
 }
 {BREAK}    {
-    return Carbon::Parser::make_BREAK(context.current_token_position);
+  return Carbon::Parser::make_BREAK(context.current_token_position);
 }
 {CASE}     {
-    return Carbon::Parser::make_CASE(context.current_token_position);
+  return Carbon::Parser::make_CASE(context.current_token_position);
 }
 {CHOICE}   {
-    return Carbon::Parser::make_CHOICE(context.current_token_position);
+  return Carbon::Parser::make_CHOICE(context.current_token_position);
 }
 {CONTINUE} {
-    return Carbon::Parser::make_CONTINUE(context.current_token_position);
+  return Carbon::Parser::make_CONTINUE(context.current_token_position);
 }
 {DBLARROW} {
-    return Carbon::Parser::make_DBLARROW(context.current_token_position);
+  return Carbon::Parser::make_DBLARROW(context.current_token_position);
 }
 {DEFAULT}  {
-    return Carbon::Parser::make_DEFAULT(context.current_token_position);
+  return Carbon::Parser::make_DEFAULT(context.current_token_position);
 }
 {ELSE}     {
-    return Carbon::Parser::make_ELSE(context.current_token_position);
+  return Carbon::Parser::make_ELSE(context.current_token_position);
 }
 "=="       {
-    return Carbon::Parser::make_EQUAL_EQUAL(context.current_token_position);
+  return Carbon::Parser::make_EQUAL_EQUAL(context.current_token_position);
 }
 {FALSE}    {
-    return Carbon::Parser::make_FALSE(context.current_token_position);
+  return Carbon::Parser::make_FALSE(context.current_token_position);
 }
 {FN}       { return Carbon::Parser::make_FN(context.current_token_position); }
 {FNTY}     {
-    return Carbon::Parser::make_FNTY(context.current_token_position);
+  return Carbon::Parser::make_FNTY(context.current_token_position);
 }
 {IF}       { return Carbon::Parser::make_IF(context.current_token_position); }
 {MATCH}    {
-    return Carbon::Parser::make_MATCH(context.current_token_position);
+  return Carbon::Parser::make_MATCH(context.current_token_position);
 }
 {NOT}      {
-    return Carbon::Parser::make_NOT(context.current_token_position);
+  return Carbon::Parser::make_NOT(context.current_token_position);
 }
 {OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
 {RETURN}   {
-    return Carbon::Parser::make_RETURN(context.current_token_position);
+  return Carbon::Parser::make_RETURN(context.current_token_position);
 }
 {STRUCT}   {
-    return Carbon::Parser::make_STRUCT(context.current_token_position);
+  return Carbon::Parser::make_STRUCT(context.current_token_position);
 }
 {TRUE}     {
-    return Carbon::Parser::make_TRUE(context.current_token_position);
+  return Carbon::Parser::make_TRUE(context.current_token_position);
 }
 {TYPE}     {
-    return Carbon::Parser::make_TYPE(context.current_token_position);
+  return Carbon::Parser::make_TYPE(context.current_token_position);
 }
 {VAR}      {
-    return Carbon::Parser::make_VAR(context.current_token_position);
+  return Carbon::Parser::make_VAR(context.current_token_position);
 }
 {WHILE}    {
-    return Carbon::Parser::make_WHILE(context.current_token_position);
+  return Carbon::Parser::make_WHILE(context.current_token_position);
 }
 {CONTINUATION_TYPE} {
-    return Carbon::Parser::make_CONTINUATION_TYPE(
-        context.current_token_position);
+  return Carbon::Parser::make_CONTINUATION_TYPE(context.current_token_position);
 }
 {CONTINUATION}    {
-    return Carbon::Parser::make_CONTINUATION(context.current_token_position);
+  return Carbon::Parser::make_CONTINUATION(context.current_token_position);
 }
 {RUN}      {
-    return Carbon::Parser::make_RUN(context.current_token_position);
+  return Carbon::Parser::make_RUN(context.current_token_position);
 }
 {AWAIT}    {
-    return Carbon::Parser::make_AWAIT(context.current_token_position);
+  return Carbon::Parser::make_AWAIT(context.current_token_position);
 }
 {UNDERSCORE}      {
-    return Carbon::Parser::make_UNDERSCORE(context.current_token_position);
+  return Carbon::Parser::make_UNDERSCORE(context.current_token_position);
 }
 {STRING}   {
-    return Carbon::Parser::make_STRING(context.current_token_position);
+  return Carbon::Parser::make_STRING(context.current_token_position);
 }
 
 {sized_type_literal} {
-    return Carbon::Parser::make_sized_type_literal(
-        yytext, context.current_token_position);
+  return Carbon::Parser::make_sized_type_literal(
+      yytext, context.current_token_position);
 }
 
 "=" return Carbon::Parser::make_EQUAL(context.current_token_position);
@@ -192,21 +191,19 @@ operand_start [(A-Za-z0-9_"]
 "/" return Carbon::Parser::make_SLASH(context.current_token_position);
 "(" return Carbon::Parser::make_LEFT_PARENTHESIS(context.current_token_position);
 ")" {
-    BEGIN(AFTER_OPERAND);
-    return Carbon::Parser::make_RIGHT_PARENTHESIS(
-        context.current_token_position);
+  BEGIN(AFTER_OPERAND);
+  return Carbon::Parser::make_RIGHT_PARENTHESIS(context.current_token_position);
 }
 "{" return Carbon::Parser::make_LEFT_CURLY_BRACE(context.current_token_position);
 "}" {
-    BEGIN(AFTER_OPERAND);
-    return Carbon::Parser::make_RIGHT_CURLY_BRACE(
-        context.current_token_position);
+  BEGIN(AFTER_OPERAND);
+  return Carbon::Parser::make_RIGHT_CURLY_BRACE(context.current_token_position);
 }
 "[" return Carbon::Parser::make_LEFT_SQUARE_BRACKET(context.current_token_position);
 "]" {
-    BEGIN(AFTER_OPERAND);
-    return Carbon::Parser::make_RIGHT_SQUARE_BRACKET(
-        context.current_token_position);
+  BEGIN(AFTER_OPERAND);
+  return Carbon::Parser::make_RIGHT_SQUARE_BRACKET(
+      context.current_token_position);
 }
 "." return Carbon::Parser::make_PERIOD(context.current_token_position);
 "," return Carbon::Parser::make_COMMA(context.current_token_position);
@@ -235,87 +232,87 @@ operator and its operand, leading to three more cases:
     postfix.
 */
 <AFTER_WHITESPACE>"*"{whitespace}+ /*case 1*/ {
-    BEGIN(AFTER_WHITESPACE);
-    return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
+  BEGIN(AFTER_WHITESPACE);
+  return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
 }
 <AFTER_OPERAND>"*"/{operand_start} /*case 2*/ {
-    return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
+  return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
 }
 <AFTER_WHITESPACE>"*" /*case 3*/ {
-    return Carbon::Parser::make_PREFIX_STAR(context.current_token_position);
+  return Carbon::Parser::make_PREFIX_STAR(context.current_token_position);
 }
 <INITIAL,AFTER_OPERAND>"*"{whitespace}+ /*case 4*/ {
-    BEGIN(AFTER_WHITESPACE);
-    return Carbon::Parser::make_POSTFIX_STAR(context.current_token_position);
+  BEGIN(AFTER_WHITESPACE);
+  return Carbon::Parser::make_POSTFIX_STAR(context.current_token_position);
 }
 <INITIAL,AFTER_OPERAND>"*" /*case 5*/ {
-    return Carbon::Parser::make_UNARY_STAR(context.current_token_position);
+  return Carbon::Parser::make_UNARY_STAR(context.current_token_position);
 }
 
 {identifier} {
-    BEGIN(AFTER_OPERAND);
-    return Carbon::Parser::make_identifier(yytext,
-                                           context.current_token_position);
+  BEGIN(AFTER_OPERAND);
+  return Carbon::Parser::make_identifier(yytext,
+                                         context.current_token_position);
 }
 
 {integer_literal} {
-    BEGIN(AFTER_OPERAND);
-    int val;
-    CHECK(llvm::to_integer(yytext, val));
-    return Carbon::Parser::make_integer_literal(val,
-                                                context.current_token_position);
+  BEGIN(AFTER_OPERAND);
+  int val;
+  CHECK(llvm::to_integer(yytext, val));
+  return Carbon::Parser::make_integer_literal(val,
+                                              context.current_token_position);
 }
 
 {string_literal} {
-    llvm::StringRef str(yytext);
-    CHECK(str.consume_front("\"") && str.consume_back("\""));
-    std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
-    if (unescaped == std::nullopt) {
-      if (Carbon::tracing_output) {
-        // Print a newline because tracing prints an incomplete line
-        // "Reading a token: ".
-        llvm::errs() << "\n";
-      }
-      FATAL_COMPILATION_ERROR(yylineno)
-          << "Invalid escaping in string: " << yytext;
-    }
-    return Carbon::Parser::make_string_literal(*unescaped,
-                                               context.current_token_position);
-}
-
-{ONE_LINE_COMMENT} {
-    // Advance end by 1 line, resetting the column to zero.
-    context.current_token_position.lines(1);
-    // Make the span empty by setting start to end.
-    context.current_token_position.step();
-}
-
-{horizontal_whitespace}+ {
-    // Make the span empty by setting start to end.
-    context.current_token_position.step();
-    BEGIN(AFTER_WHITESPACE);
-}
-
-\n+ {
-    // Advance end by yyleng lines, resetting the column to zero.
-    context.current_token_position.lines(yyleng);
-    // Make the span empty by setting start to end.
-    context.current_token_position.step();
-    BEGIN(AFTER_WHITESPACE);
-}
-
-. {
+  llvm::StringRef str(yytext);
+  CHECK(str.consume_front("\"") && str.consume_back("\""));
+  std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
+  if (unescaped == std::nullopt) {
     if (Carbon::tracing_output) {
       // Print a newline because tracing prints an incomplete line
       // "Reading a token: ".
       llvm::errs() << "\n";
     }
     FATAL_COMPILATION_ERROR(yylineno)
-        << "invalid character '\\x" << llvm::toHex(llvm::StringRef(yytext, 1))
-        << "' in source file.";
+        << "Invalid escaping in string: " << yytext;
+  }
+  return Carbon::Parser::make_string_literal(*unescaped,
+                                             context.current_token_position);
+}
+
+{ONE_LINE_COMMENT} {
+  // Advance end by 1 line, resetting the column to zero.
+  context.current_token_position.lines(1);
+  // Make the span empty by setting start to end.
+  context.current_token_position.step();
+}
+
+{horizontal_whitespace}+ {
+  // Make the span empty by setting start to end.
+  context.current_token_position.step();
+  BEGIN(AFTER_WHITESPACE);
+}
+
+\n+ {
+  // Advance end by yyleng lines, resetting the column to zero.
+  context.current_token_position.lines(yyleng);
+  // Make the span empty by setting start to end.
+  context.current_token_position.step();
+  BEGIN(AFTER_WHITESPACE);
+}
+
+. {
+  if (Carbon::tracing_output) {
+    // Print a newline because tracing prints an incomplete line
+    // "Reading a token: ".
+    llvm::errs() << "\n";
+  }
+  FATAL_COMPILATION_ERROR(yylineno)
+      << "invalid character '\\x" << llvm::toHex(llvm::StringRef(yytext, 1))
+      << "' in source file.";
 }
 
 <<EOF>>    {
-    // A more modern Bison would give us make_EOF.
-    return Carbon::Parser::make_END_OF_FILE(context.current_token_position);
+  // A more modern Bison would give us make_EOF.
+  return Carbon::Parser::make_END_OF_FILE(context.current_token_position);
 }
