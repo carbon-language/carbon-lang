@@ -2980,13 +2980,6 @@ void RewriteInstance::runOptimizationPasses() {
 
 namespace {
 
-template <typename T>
-std::vector<T> singletonSet(T t) {
-  std::vector<T> Vec;
-  Vec.push_back(std::move(t));
-  return Vec;
-}
-
 class BOLTSymbolResolver : public JITSymbolResolver {
   BinaryContext &BC;
   RuntimeDyld &RTDyld;
