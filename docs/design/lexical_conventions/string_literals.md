@@ -81,7 +81,10 @@ var raw_newline: String = "#line one\#nline two"#;
 
 A _simple string literal_ is formed of a sequence of:
 
--   Characters other than `\`, `"`, tabs, and vertical whitespace.
+-   Characters other than `\` and `"`.
+    -   Only space characters (U+0020) are valid whitespace in a string literal.
+        Other whitespace, including tabs and newlines, are disallowed but may
+        parse as part of the string for error purposes.
 -   [Escape sequences](#escape-sequences).
     -   Each escape sequence is replaced with the corresponding character
         sequence or code unit sequence.
