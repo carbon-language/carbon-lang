@@ -142,10 +142,9 @@ respective condition:
 ## Caveats
 
 The proposal provides a syntax that is deliberately close to that used both by
-C++ and many other languages, so it should feel familiar to software engineers.
-However, it selects a reasonably minimal subset of the syntaxes. This minimal
-approach provides benefits directly in line with the goal that Carbon code
-should be
+C++ and many other languages, so it should feel familiar to developers. However,
+it selects a reasonably minimal subset of the syntaxes. This minimal approach
+provides benefits directly in line with the goal that Carbon code should be
 [easy to read, understand, and write](../docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
 
 -   Reduces unnecessary choices for programmers.
