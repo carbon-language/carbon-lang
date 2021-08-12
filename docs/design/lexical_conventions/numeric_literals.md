@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Real number literals](#real-number-literals)
         -   [Ties](#ties)
     -   [Digit separators](#digit-separators)
+-   [Caveats](#caveats)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -137,6 +138,26 @@ respective condition:
     `2_147.483648e12_345` or `0x1_00CA.FEF00Dp+24`
 -   For binary literals, digit separators can appear between any two digits. For
     example, `0b1_000_101_11`.
+
+## Caveats
+
+The proposal provides a syntax that is deliberately close to that used both by
+C++ and many other languages, so it should feel familiar to software engineers.
+However, it selects a reasonably minimal subset of the syntaxes. This minimal
+approach provides benefits directly in line with the goal that Carbon code
+should be
+[easy to read, understand, and write](../docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
+
+-   Reduces unnecessary choices for programmers.
+-   Simplifies the syntax rules of the language.
+-   Improves consistency of written Carbon code.
+
+That said, it still provides sufficient variations to address important use
+cases for the goal of not leaving room for a lower level language:
+
+-   Hexadecimal and binary integer literals.
+-   Scientific notation floating point literals.
+-   Hexadecimal (scientific) floating point literals.
 
 ## Alternatives considered
 
