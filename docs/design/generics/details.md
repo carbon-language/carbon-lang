@@ -37,7 +37,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
     -   [Application: Defining an impl for use by other types](#application-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
-    -   [Associated functions](#associated-functions)
+    -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
     -   [Inferring associated types](#inferring-associated-types)
     -   [Model](#model-1)
@@ -1756,10 +1756,11 @@ fn ExtractPoint[PointT:! NSpacePoint](
 **Aside:** In general, the use of `:!` here means these `let` declarations will
 only have compile-time and not runtime storage associated with them.
 
-### Associated functions
+### Associated class functions
 
-To be consistent with normal function declaration syntax, associated function
-are written:
+To be consistent with normal
+[class function](/docs/design/classes.md#class-functions) declaration syntax,
+associated class functions are written:
 
 ```
 interface DeserializeFromString {
@@ -1783,6 +1784,13 @@ fn Deserialize(T:! DeserializeFromString, serialized: String) -> T {
 }
 var y: MySerializableType = Deserialize(MySerializableType, "4");
 ```
+
+This is instead of declaring an associated constant using `let` with a function
+type.
+
+Together associated methods and associated class functions are called
+_associated functions_, much like together methods and class functions are
+called [member functions](/docs/design/classes.md#member-functions).
 
 ## Associated types
 
