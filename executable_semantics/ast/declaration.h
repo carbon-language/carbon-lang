@@ -72,18 +72,18 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(FunctionDefinition definition)
-      : Declaration(Kind::FunctionDeclaration, definition.line_num),
-        definition(std::move(definition)) {}
+  FunctionDeclaration(const FunctionDefinition* definition)
+      : Declaration(Kind::FunctionDeclaration, definition->line_num),
+        definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
     return decl->Tag() == Kind::FunctionDeclaration;
   }
 
-  auto Definition() const -> const FunctionDefinition& { return definition; }
+  auto Definition() const -> const FunctionDefinition& { return *definition; }
 
  private:
-  FunctionDefinition definition;
+  const FunctionDefinition* definition;
 };
 
 class StructDeclaration : public Declaration {
