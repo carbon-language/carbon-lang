@@ -1004,7 +1004,8 @@ Assert(&sp1.first == &sp1.key);
 By default, all members of a class are fully publicly accessible. Access can be
 restricted by adding a keyword, called an
 [access modifier](https://en.wikipedia.org/wiki/Access_modifiers), prior to the
-declaration.
+declaration. Access modifiers are how Carbon supports
+[encapsulation](#encapsulated-types).
 
 ```carbon
 class Point {
