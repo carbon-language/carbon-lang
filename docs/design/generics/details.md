@@ -1879,6 +1879,24 @@ var my_array: DynamicArray(Int) = (1, 2, 3);
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
+Associated types can also be implemented using a
+[member type](/docs/design/classes.md#member-type).
+
+```
+interface Container {
+  let IteratorType:! Iterator;
+  ...
+}
+
+class DynamicArray(T:! Type) {
+  ...
+  impl as Container {
+    class IteratorType { ... }
+    ...
+  }
+}
+```
+
 For context, see
 ["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-type-parameters-versus-associated-types).
 
