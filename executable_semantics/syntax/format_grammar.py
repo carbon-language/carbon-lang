@@ -115,12 +115,11 @@ def _parse_code_segments(content):
                 segments.append(content[segment_start:i])
 
                 # If the brace is the first character on its line, use its
-                # indent when wrapping. Otherwise, indent code by 4.
+                # indent when wrapping.
+                close_brace_indent = 0
                 line_offset = content.rfind("\n", 0, i)
                 if content[line_offset + 1 : i].isspace():
                     close_brace_indent = i - line_offset - 1
-                else:
-                    close_brace_indent = 0
 
                 # Record the code segment.
                 segments.append(
