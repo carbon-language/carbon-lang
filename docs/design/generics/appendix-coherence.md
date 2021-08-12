@@ -16,6 +16,7 @@ This document explains the rationale for choosing to make
 
 -   [Approach taken: coherence](#approach-taken-coherence)
 -   [The "Hashtable Problem"](#the-hashtable-problem)
+-   [Rejected alternative: no orphan rule](#rejected-alternative-no-orphan-rule)
 -   [Rejected alternative: incoherence](#rejected-alternative-incoherence)
     -   [Incoherence means context sensitivity](#incoherence-means-context-sensitivity)
     -   [Rejected variation: dynamic implementation binding](#rejected-variation-dynamic-implementation-binding)
@@ -136,6 +137,22 @@ function from `SongHashArtistAndTitle` which returns a different hash value for
 discusses the hashtable problem in the context of Haskell, and
 [this 2011 Rust followup](https://mail.mozilla.org/pipermail/rust-dev/2011-December/001036.html)
 discusses how to detect problems at compile time.
+
+## Rejected alternative: no orphan rule
+
+In Swift an implementation of an interface, or a "protocol" as it is called in
+Swift, can be provided in any module. As long as any module provides an
+implementation, that implementation is
+[used globally throughout the program](https://stackoverflow.com/questions/48762971/swift-protocol-conformance-by-extension-between-frameworks).
+
+In Swift, since some protocol implementations can come from the runtime
+environment provided by the operating system, multiple implementations for a
+protocol can arise as a runtime warning. When this happens, Swift picks one
+implementation arbitrarily.
+
+In Carbon, we could make this a build time error. However, there would be
+nothing preventing two independent libraries from providing conflicting
+implementations. Furthermore, the error would only be diagnosed at link time.
 
 ## Rejected alternative: incoherence
 
