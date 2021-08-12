@@ -83,13 +83,13 @@ A _simple string literal_ is formed of a sequence of:
 
 -   Characters other than `\` and `"`.
     -   Only space characters (U+0020) are valid whitespace in a string literal.
-        Other whitespace, including tabs and newlines, are disallowed but may
-        parse as part of the string for error purposes.
+        Other whitespace, including tabs and newlines, are disallowed but parse
+        as part of the string for error purposes.
 -   [Escape sequences](#escape-sequences).
     -   Each escape sequence is replaced with the corresponding character
         sequence or code unit sequence.
-    -   Similarly to whitespace, invalid escape sequences such as `\z` may parse
-        as part of the string.
+    -   Similarly to whitespace, invalid escape sequences such as `\z` parse as
+        part of the string.
 
 This sequence is enclosed in `"`s. For example, this is a simple string literal:
 
