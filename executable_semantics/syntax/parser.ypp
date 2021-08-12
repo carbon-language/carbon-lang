@@ -36,10 +36,10 @@
 // thus available to its methods.
 
 // "out" parameter passed to the parser, where the AST is written.
-%parse-param { std::optional<AST>& parsed_program }
+%parse-param {std::optional<AST>& parsed_program}
 
 // "inout" parameter passed to both the parser and the lexer.
-%param { ParseAndLexContext& context }
+%param {ParseAndLexContext& context}
 
 // No shift-reduce conflicts are expected.
 %expect 0
@@ -61,19 +61,20 @@
 }  // %code top
 
 %code requires {
-    #include <optional>
+#include <optional>
 
-    #include "executable_semantics/ast/abstract_syntax_tree.h"
-    #include "executable_semantics/ast/declaration.h"
-    #include "executable_semantics/ast/expression.h"
-    #include "executable_semantics/ast/function_definition.h"
-    #include "executable_semantics/ast/pattern.h"
-    #include "executable_semantics/common/arena.h"
-    #include "executable_semantics/syntax/paren_contents.h"
+#include "executable_semantics/ast/abstract_syntax_tree.h"
+#include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/common/arena.h"
+#include "executable_semantics/syntax/paren_contents.h"
 
-    namespace Carbon {
-    class ParseAndLexContext;
-    }  // namespace Carbon
+namespace Carbon {
+class ParseAndLexContext;
+}  // namespace Carbon
+
 }  // %code requires
 
 %code {
