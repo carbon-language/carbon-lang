@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Carbon supports both simple literals that are single-line using one double
-quotation mark (`"`) and block that are multi-line using three double quotation
+quotation mark (`"`) and block literals that are multi-line using three double quotation
 marks (`"""`). A block string literal may have a file type indicator after the
 first `"""`; this does not affect the string itself, but may assist other
 tooling. For example:
@@ -58,7 +58,7 @@ preceding lines. As a consequence, in the above `code_block` example, only
 each.
 
 Escape sequences introduced by a backslash (`\`) and are used to express special
-byte sequences, such as `\n` for newline. Raw string literals are additionally
+character or code unit sequences, such as `\n` for a newline character. Raw string literals are additionally
 delimited with one or more `#`; these require an equal number of hash symbols
 (`#`) after the `\` to indicate an escape sequence. Raw string literals are used
 to more easily write literal `\`s in strings. Both simple and block string
