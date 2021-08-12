@@ -964,7 +964,8 @@ class StringCounts {
 ```
 
 The inner type is a member of the type, and is given the name
-`StringCounts.Node`.
+`StringCounts.Node`. This case is called a _member class_ since the type is a
+class, but other kinds of type declarations, like choice types, are allowed.
 
 ### Let
 
