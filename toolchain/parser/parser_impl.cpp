@@ -748,7 +748,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         if (!designator) {
           auto recovery_pos = FindNextOf(
               {TokenKind::Equal(), TokenKind::Colon(), TokenKind::Comma()});
-          if (!recovery_pos || tokens.GetKind(*recovery_pos) == TokenKind::Comma()) {
+          if (!recovery_pos ||
+              tokens.GetKind(*recovery_pos) == TokenKind::Comma()) {
             return llvm::None;
           }
           SkipTo(*recovery_pos);

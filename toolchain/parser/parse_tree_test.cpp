@@ -1020,14 +1020,12 @@ TEST_F(ParseTreeTest, Structs) {
                        MatchStructFieldType(MatchStructFieldDesignator(
                                                 ".", MatchDesignatedName("n")),
                                             ":", MatchLiteral("i32")),
-                       MatchStructComma(),
-                       MatchStructEnd())),
+                       MatchStructComma(), MatchStructEnd())),
                MatchVariableInitializer(MatchStructLiteral(
                    MatchStructFieldValue(MatchStructFieldDesignator(
                                              ".", MatchDesignatedName("n")),
                                          "=", MatchLiteral("4")),
-                   MatchStructComma(),
-                   MatchStructEnd())),
+                   MatchStructComma(), MatchStructEnd())),
                MatchDeclarationEnd()),
            MatchFileEnd()}));
 }
