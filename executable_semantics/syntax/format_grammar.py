@@ -192,6 +192,7 @@ def _format_file(path, base_style):
 
 
 def main():
+    """See the file comment."""
     # Go to the repository root so that paths will match bazel's view.
     os.chdir(os.path.join(os.path.dirname(__file__), "../.."))
 
