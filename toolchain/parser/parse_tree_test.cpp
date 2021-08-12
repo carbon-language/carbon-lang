@@ -978,6 +978,7 @@ TEST_F(ParseTreeTest, Structs) {
   TokenizedBuffer tokens = GetTokenizedBuffer(R"(
     var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
     var y: {} = {};
+    var z: {.n: i32,} = {.n = 4,};
   )");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
@@ -1012,6 +1013,22 @@ TEST_F(ParseTreeTest, Structs) {
                                    MatchStructLiteral(MatchStructEnd())),
                MatchVariableInitializer(MatchStructLiteral(MatchStructEnd())),
                MatchDeclarationEnd()),
+           MatchVariableDeclaration(
+               MatchPatternBinding(
+                   MatchDeclaredName("z"), ":",
+                   MatchStructTypeLiteral(
+                       MatchStructFieldType(MatchStructFieldDesignator(
+                                                ".", MatchDesignatedName("n")),
+                                            ":", MatchLiteral("i32")),
+                       MatchStructComma(),
+                       MatchStructEnd())),
+               MatchVariableInitializer(MatchStructLiteral(
+                   MatchStructFieldValue(MatchStructFieldDesignator(
+                                             ".", MatchDesignatedName("n")),
+                                         "=", MatchLiteral("4")),
+                   MatchStructComma(),
+                   MatchStructEnd())),
+               MatchDeclarationEnd()),
            MatchFileEnd()}));
 }
 
@@ -1044,14 +1061,13 @@ TEST_F(ParseTreeTest, StructErrors) {
        DiagnosticMessage("Expected `.field = value`.")},
       {"var x: {,} = {};",
        DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
-      {"var x: {.a: i32,} = {};",
+      {"var x: {.a: i32,,} = {};",
        DiagnosticMessage("Expected `.field: type`.")},
-      {"var x: {.a = 0,} = {};",
+      {"var x: {.a = 0,,} = {};",
        DiagnosticMessage("Expected `.field = value`.")},
   };
 
   for (Testcase testcase : testcases) {
-    llvm::errs() << "\nTestcase: " << testcase.input << "\n";
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
     EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));

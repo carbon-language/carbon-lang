@@ -715,10 +715,10 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
 auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
   // braced-expression ::= `{` [field-value-list] `}`
   //                   ::= `{` field-type-list `}`
-  // field-value-list ::= field-value
+  // field-value-list ::= field-value [`,`]
   //                  ::= field-value `,` field-value-list
   // field-value ::= `.` identifier `=` expression
-  // field-type-list ::= field-type
+  // field-type-list ::= field-type [`,`]
   //                 ::= field-type `,` field-type-list
   // field-type ::= `.` identifier `:` type
   //
@@ -781,7 +781,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         return AddNode(kind == Type ? ParseNodeKind::StructTypeLiteral()
                                     : ParseNodeKind::StructLiteral(),
                        open_brace, start, has_errors);
-      });
+      },
+      /*allow_trailing_comma=*/true);
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
