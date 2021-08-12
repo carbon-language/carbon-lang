@@ -12,6 +12,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
@@ -19,11 +20,13 @@
 namespace Carbon {
 namespace {
 
+using Carbon::Testing::DiagnosticMessage;
 using Carbon::Testing::ExpectedNode;
 using Carbon::Testing::MatchParseTreeNodes;
 using namespace Carbon::Testing::NodeMatchers;
 using ::testing::ElementsAre;
 using ::testing::Eq;
+using ::testing::HasSubstr;
 using ::testing::Ne;
 using ::testing::NotNull;
 using ::testing::StrEq;
@@ -405,10 +408,11 @@ TEST_F(ParseTreeTest, InvalidDesignators) {
                              MatchExpressionStatement(
                                  MatchDesignatorExpression(
                                      MatchNameReference("a"), ".", HasError),
-                                 ";"),
+                                 HasError, ";"),
                              MatchExpressionStatement(
                                  MatchDesignatorExpression(
-                                     MatchNameReference("a"), ".", HasError),
+                                     MatchNameReference("a"), ".",
+                                     MatchDesignatedName("fn", HasError)),
                                  ";"),
                              MatchExpressionStatement(
                                  MatchDesignatorExpression(
@@ -1012,28 +1016,47 @@ TEST_F(ParseTreeTest, Structs) {
 }
 
 TEST_F(ParseTreeTest, StructErrors) {
-  llvm::StringLiteral testcases[] = {
-      "var x: {i32} = {};",
-      "var x: {a} = {};",
-      "var x: {a:} = {};",
-      "var x: {a=} = {};",
-      "var x: {.} = {};",
-      "var x: {.a} = {};",
-      "var x: {.a:} = {};",
-      "var x: {.a=} = {};",
-      "var x: {.a: i32, .b = 0} = {};",
-      "var x: {.a = 0, b: i32} = {};",
-      "var x: {,} = {};",
-      "var x: {.a: i32,} = {};",
-      "var x: {.a = 0,} = {};",
+  struct Testcase {
+    llvm::StringLiteral input;
+    ::testing::Matcher<const Diagnostic&> diag_matcher;
+  };
+  Testcase testcases[] = {
+      {"var x: {i32} = {};",
+       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {a} = {};",
+       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {a:} = {};",
+       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {a=} = {};",
+       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {.} = {};", DiagnosticMessage("Expected identifier after `.`.")},
+      {"var x: {.\"hello\" = 0, .y = 4} = {};",
+       DiagnosticMessage("Expected identifier after `.`.")},
+      {"var x: {.\"hello\": i32, .y: i32} = {};",
+       DiagnosticMessage("Expected identifier after `.`.")},
+      {"var x: {.a} = {};",
+       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {.a:} = {};", DiagnosticMessage("Expected expression.")},
+      {"var x: {.a=} = {};", DiagnosticMessage("Expected expression.")},
+      {"var x: {.a: i32, .b = 0} = {};",
+       DiagnosticMessage("Expected `.field: type`.")},
+      {"var x: {.a = 0, b: i32} = {};",
+       DiagnosticMessage("Expected `.field = value`.")},
+      {"var x: {,} = {};",
+       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {.a: i32,} = {};",
+       DiagnosticMessage("Expected `.field: type`.")},
+      {"var x: {.a = 0,} = {};",
+       DiagnosticMessage("Expected `.field = value`.")},
   };
 
-  for (llvm::StringLiteral testcase : testcases) {
-    TokenizedBuffer tokens = GetTokenizedBuffer(testcase);
-    ErrorTrackingDiagnosticConsumer error_tracker(consumer);
-    ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+  for (Testcase testcase : testcases) {
+    llvm::errs() << "\nTestcase: " << testcase.input << "\n";
+    TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
+    Testing::MockDiagnosticConsumer consumer;
+    EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
+    ParseTree tree = ParseTree::Parse(tokens, consumer);
     EXPECT_TRUE(tree.HasErrors());
-    EXPECT_TRUE(error_tracker.SeenError());
   }
 }
 

@@ -745,6 +745,14 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         auto designator = ParseDesignatorExpression(
             start_elem, ParseNodeKind::StructFieldDesignator(),
             /*has_errors=*/false);
+        if (!designator) {
+          auto recovery_pos = FindNextOf(
+              {TokenKind::Equal(), TokenKind::Colon(), TokenKind::Comma()});
+          if (!recovery_pos || tokens.GetKind(*recovery_pos) == TokenKind::Comma()) {
+            return llvm::None;
+          }
+          SkipTo(*recovery_pos);
+        }
 
         // Work out the kind of this element
         Kind elem_kind =
@@ -820,11 +828,16 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
     if (NextTokenKind().IsKeyword()) {
-      Consume(NextTokenKind());
+      name = Consume(NextTokenKind());
+      auto name_node = AddLeafNode(ParseNodeKind::DesignatedName(), *name);
+      MarkNodeError(name_node);
+    } else {
+      has_errors = true;
     }
-    has_errors = true;
   }
-  return AddNode(kind, dot, start, has_errors);
+
+  Node result = AddNode(kind, dot, start, has_errors);
+  return name ? result : llvm::Optional<Node>();
 }
 
 auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
