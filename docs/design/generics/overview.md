@@ -494,11 +494,11 @@ specific sort order.
 
 ### Type parameters
 
-Associated types and interface parameters allow function signatures to vary with
-the implementing type. The biggest difference between these is that associated
-types ("output types") may be deduced from a type, and types can implement the
-same interface multiple times with different interface parameters ("input
-types").
+[Associated types and interface parameters](terminology.md#interface-type-parameters-and-associated-types)
+allow function signatures to vary with the implementing type. The biggest
+difference between these is that associated types ("output types") may be
+deduced from a type, and types can implement the same interface multiple times
+with different interface parameters ("input types").
 
 #### Associated types
 
