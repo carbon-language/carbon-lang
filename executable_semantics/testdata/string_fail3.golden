@@ -1,0 +1,2 @@
+COMPILATION ERROR: 6: Invalid escaping in string: "str\xaa"
+EXIT CODE: 255
