@@ -9,6 +9,7 @@
 #include <map>
 #include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "common/check.h"
@@ -20,10 +21,12 @@
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
+using llvm::dyn_cast;
 
 namespace Carbon {
 
@@ -190,51 +193,7 @@ static void InitGlobals(const std::list<const Declaration*>& fs) {
   }
 }
 
-//    { S, H} -> { { C, E, F} :: S, H}
-// where C is the body of the function,
-//       E is the environment (functions + parameters + locals)
-//       F is the function
-void CallFunction(int line_num, std::vector<const Value*> operas,
-                  State* state) {
-  switch (operas[0]->Tag()) {
-    case Value::Kind::FunctionValue: {
-      const auto& fn = cast<FunctionValue>(*operas[0]);
-      // Bind arguments to parameters
-      std::list<std::string> params;
-      std::optional<Env> matches =
-          PatternMatch(fn.Param(), operas[1], globals, &params, line_num);
-      CHECK(matches) << "internal error in call_function, pattern match failed";
-      // Create the new frame and push it on the stack
-      auto* scope = global_arena->New<Scope>(*matches, params);
-      auto* frame = global_arena->New<Frame>(
-          fn.Name(), Stack(scope),
-          Stack<Action*>(global_arena->New<StatementAction>(fn.Body())));
-      state->stack.Push(frame);
-      break;
-    }
-    case Value::Kind::StructType: {
-      const Value* arg = CopyVal(operas[1], line_num);
-      const Value* sv = global_arena->New<StructValue>(operas[0], arg);
-      Frame* frame = state->stack.Top();
-      frame->todo.Push(global_arena->New<ValAction>(sv));
-      break;
-    }
-    case Value::Kind::AlternativeConstructorValue: {
-      const auto& alt = cast<AlternativeConstructorValue>(*operas[0]);
-      const Value* arg = CopyVal(operas[1], line_num);
-      const Value* av = global_arena->New<AlternativeValue>(
-          alt.AltName(), alt.ChoiceName(), arg);
-      Frame* frame = state->stack.Top();
-      frame->todo.Push(global_arena->New<ValAction>(av));
-      break;
-    }
-    default:
-      FATAL_RUNTIME_ERROR(line_num)
-          << "in call, expected a function, not " << *operas[0];
-  }
-}
-
-void DeallocateScope(int line_num, Scope* scope) {
+void DeallocateScope(Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
     CHECK(a);
@@ -242,14 +201,14 @@ void DeallocateScope(int line_num, Scope* scope) {
   }
 }
 
-void DeallocateLocals(int line_num, Frame* frame) {
+void DeallocateLocals(Frame* frame) {
   while (!frame->scopes.IsEmpty()) {
-    DeallocateScope(line_num, frame->scopes.Top());
+    DeallocateScope(frame->scopes.Top());
     frame->scopes.Pop();
   }
 }
 
-void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
+const Value* CreateTuple(Action* act, const Expression* exp) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   const auto& tup_lit = cast<TupleLiteral>(*exp);
@@ -260,9 +219,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
         {.name = tup_lit.Fields()[i].name, .value = act->Results()[i]});
   }
 
-  const Value* tv = global_arena->New<TupleValue>(std::move(elements));
-  frame->todo.Pop(1);
-  frame->todo.Push(global_arena->New<ValAction>(tv));
+  return global_arena->New<TupleValue>(std::move(elements));
 }
 
 // Returns an updated environment that includes the bindings of
@@ -407,11 +364,71 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   }
 }
 
-// State transitions for lvalues.
+// State transition functions
+//
+// The `Step*` family of functions implement state transitions in the
+// interpreter by executing a step of the Action at the top of the todo stack,
+// and then returning a Transition that specifies how `state.stack` should be
+// updated. `Transition` is a variant of several "transition types" representing
+// the different kinds of state transition.
 
-void StepLvalue() {
-  Frame* frame = state->stack.Top();
-  Action* act = frame->todo.Top();
+// Transition type which indicates that the current Action is now done.
+struct Done {
+  // The value computed by the Action. Should always be null for Statement
+  // Actions, and never null for any other kind of Action.
+  const Value* result = nullptr;
+};
+
+// Transition type which spawns a new Action on the todo stack above the current
+// Action, and increments the current Action's position counter.
+struct Spawn {
+  Action* child;
+};
+
+// Transition type which spawns a new Action that replaces the current action
+// on the todo stack.
+struct Delegate {
+  Action* delegate;
+};
+
+// Transition type which keeps the current Action at the top of the stack,
+// and increments its position counter.
+struct RunAgain {};
+
+// Transition type which unwinds the `todo` and `scopes` stacks until it
+// reaches a specified Action lower in the stack.
+struct UnwindTo {
+  const Action* new_top;
+};
+
+// Transition type which unwinds the entire current stack frame, and returns
+// a specified value to the caller.
+struct UnwindFunctionCall {
+  const Value* return_val;
+};
+
+// Transition type which removes the current action from the top of the todo
+// stack, then creates a new stack frame which calls the specified function
+// with the specified arguments.
+struct CallFunction {
+  const FunctionValue* function;
+  const Value* args;
+  int line_num;
+};
+
+// Transition type which does nothing.
+//
+// TODO(geoffromer): This is a temporary placeholder during refactoring. All
+// uses of this type should be replaced with meaningful transitions.
+struct ManualTransition {};
+
+using Transition =
+    std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo, UnwindFunctionCall,
+                 CallFunction, ManualTransition>;
+
+// State transitions for lvalues.
+Transition StepLvalue() {
+  Action* act = state->stack.Top()->todo.Top();
   const Expression* exp = cast<LValAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step lvalue " << *exp << " --->\n";
@@ -423,60 +440,49 @@ void StepLvalue() {
       Address pointer = GetFromEnv(exp->LineNumber(),
                                    cast<IdentifierExpression>(*exp).Name());
       const Value* v = global_arena->New<PointerValue>(pointer);
-      frame->todo.Pop();
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{v};
     }
     case Expression::Kind::FieldAccessExpression: {
       if (act->Pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<LValAction>(
-            cast<FieldAccessExpression>(*exp).Aggregate()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<LValAction>(
+            cast<FieldAccessExpression>(*exp).Aggregate())};
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address aggregate = cast<PointerValue>(*act->Results()[0]).Val();
         Address field = aggregate.SubobjectAddress(
             cast<FieldAccessExpression>(*exp).Field());
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(
-            global_arena->New<PointerValue>(field)));
+        return Done{global_arena->New<PointerValue>(field)};
       }
-      break;
     }
     case Expression::Kind::IndexExpression: {
       if (act->Pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<LValAction>(
-            cast<IndexExpression>(*exp).Aggregate()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<LValAction>(
+            cast<IndexExpression>(*exp).Aggregate())};
+
       } else if (act->Pos() == 1) {
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<IndexExpression>(*exp).Offset()));
-        act->IncrementPos();
-      } else if (act->Pos() == 2) {
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<IndexExpression>(*exp).Offset())};
+      } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address aggregate = cast<PointerValue>(*act->Results()[0]).Val();
         std::string f =
             std::to_string(cast<IntValue>(*act->Results()[1]).Val());
         Address field = aggregate.SubobjectAddress(f);
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(
-            global_arena->New<PointerValue>(field)));
+        return Done{global_arena->New<PointerValue>(field)};
       }
-      break;
     }
     case Expression::Kind::TupleLiteral: {
       if (act->Pos() == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
         const Expression* e1 = cast<TupleLiteral>(*exp).Fields()[0].expression;
-        frame->todo.Push(global_arena->New<LValAction>(e1));
-        act->IncrementPos();
+        return Spawn{global_arena->New<LValAction>(e1)};
       } else if (act->Pos() !=
                  static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
@@ -485,12 +491,10 @@ void StepLvalue() {
         // H}
         const Expression* elt =
             cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
-        frame->todo.Push(global_arena->New<LValAction>(elt));
-        act->IncrementPos();
+        return Spawn{global_arena->New<LValAction>(elt)};
       } else {
-        CreateTuple(frame, act, exp);
+        return Done{CreateTuple(act, exp)};
       }
-      break;
     }
     case Expression::Kind::IntLiteral:
     case Expression::Kind::BoolLiteral:
@@ -510,10 +514,8 @@ void StepLvalue() {
 }
 
 // State transitions for expressions.
-
-void StepExp() {
-  Frame* frame = state->stack.Top();
-  Action* act = frame->todo.Top();
+Transition StepExp() {
+  Action* act = state->stack.Top()->todo.Top();
   const Expression* exp = cast<ExpressionAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step exp " << *exp << " --->\n";
@@ -523,36 +525,28 @@ void StepExp() {
       if (act->Pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<IndexExpression>(*exp).Aggregate()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<IndexExpression>(*exp).Aggregate())};
       } else if (act->Pos() == 1) {
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<IndexExpression>(*exp).Offset()));
-        act->IncrementPos();
-      } else if (act->Pos() == 2) {
-        auto tuple = act->Results()[0];
-        switch (tuple->Tag()) {
-          case Value::Kind::TupleValue: {
-            //    { { v :: [][i] :: C, E, F} :: S, H}
-            // -> { { v_i :: C, E, F} : S, H}
-            std::string f =
-                std::to_string(cast<IntValue>(*act->Results()[1]).Val());
-            const Value* field = cast<TupleValue>(*tuple).FindField(f);
-            if (field == nullptr) {
-              FATAL_RUNTIME_ERROR_NO_LINE()
-                  << "field " << f << " not in " << *tuple;
-            }
-            frame->todo.Pop(1);
-            frame->todo.Push(global_arena->New<ValAction>(field));
-            break;
-          }
-          default:
-            FATAL_RUNTIME_ERROR_NO_LINE()
-                << "expected a tuple in field access, not " << *tuple;
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<IndexExpression>(*exp).Offset())};
+      } else {
+        //    { { v :: [][i] :: C, E, F} :: S, H}
+        // -> { { v_i :: C, E, F} : S, H}
+        auto* tuple = dyn_cast<TupleValue>(act->Results()[0]);
+        if (tuple == nullptr) {
+          FATAL_RUNTIME_ERROR_NO_LINE()
+              << "expected a tuple in field access, not " << *tuple;
         }
+        std::string f =
+            std::to_string(cast<IntValue>(*act->Results()[1]).Val());
+        const Value* field = tuple->FindField(f);
+        if (field == nullptr) {
+          FATAL_RUNTIME_ERROR_NO_LINE()
+              << "field " << f << " not in " << *tuple;
+        }
+        return Done{field};
       }
-      break;
     }
     case Expression::Kind::TupleLiteral: {
       if (act->Pos() == 0) {
@@ -561,10 +555,9 @@ void StepExp() {
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
           const Expression* e1 =
               cast<TupleLiteral>(*exp).Fields()[0].expression;
-          frame->todo.Push(global_arena->New<ExpressionAction>(e1));
-          act->IncrementPos();
+          return Spawn{global_arena->New<ExpressionAction>(e1)};
         } else {
-          CreateTuple(frame, act, exp);
+          return Done{CreateTuple(act, exp)};
         }
       } else if (act->Pos() !=
                  static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
@@ -574,98 +567,93 @@ void StepExp() {
         // H}
         const Expression* elt =
             cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
-        frame->todo.Push(global_arena->New<ExpressionAction>(elt));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(elt)};
       } else {
-        CreateTuple(frame, act, exp);
+        return Done{CreateTuple(act, exp)};
       }
-      break;
     }
     case Expression::Kind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*exp);
       if (act->Pos() == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(access.Aggregate()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(access.Aggregate())};
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        const Value* element = act->Results()[0]->GetField(
-            FieldPath(access.Field()), exp->LineNumber());
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(element));
+        return Done{act->Results()[0]->GetField(FieldPath(access.Field()),
+                                                exp->LineNumber())};
       }
-      break;
     }
     case Expression::Kind::IdentifierExpression: {
       CHECK(act->Pos() == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       Address pointer = GetFromEnv(exp->LineNumber(), ident.Name());
-      const Value* pointee = state->heap.Read(pointer, exp->LineNumber());
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(pointee));
-      break;
+      return Done{state->heap.Read(pointer, exp->LineNumber())};
     }
     case Expression::Kind::IntLiteral:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(
-          global_arena->New<IntValue>(cast<IntLiteral>(*exp).Val())));
-      break;
+      return Done{global_arena->New<IntValue>(cast<IntLiteral>(*exp).Val())};
     case Expression::Kind::BoolLiteral:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(
-          global_arena->New<BoolValue>(cast<BoolLiteral>(*exp).Val())));
-      break;
+      return Done{global_arena->New<BoolValue>(cast<BoolLiteral>(*exp).Val())};
     case Expression::Kind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(*exp);
       if (act->Pos() != static_cast<int>(op.Arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         const Expression* arg = op.Arguments()[act->Pos()];
-        frame->todo.Push(global_arena->New<ExpressionAction>(arg));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(arg)};
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        const Value* v = EvalPrim(op.Op(), act->Results(), exp->LineNumber());
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(v));
+        return Done{EvalPrim(op.Op(), act->Results(), exp->LineNumber())};
       }
-      break;
     }
     case Expression::Kind::CallExpression:
       if (act->Pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<CallExpression>(*exp).Function()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<CallExpression>(*exp).Function())};
       } else if (act->Pos() == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<CallExpression>(*exp).Argument()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<CallExpression>(*exp).Argument())};
       } else if (act->Pos() == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
-        frame->todo.Pop(1);
-        CallFunction(exp->LineNumber(), act->Results(), state);
+        switch (act->Results()[0]->Tag()) {
+          case Value::Kind::StructType: {
+            const Value* arg = CopyVal(act->Results()[1], exp->LineNumber());
+            return Done{global_arena->New<StructValue>(act->Results()[0], arg)};
+          }
+          case Value::Kind::AlternativeConstructorValue: {
+            const auto& alt =
+                cast<AlternativeConstructorValue>(*act->Results()[0]);
+            const Value* arg = CopyVal(act->Results()[1], exp->LineNumber());
+            return Done{global_arena->New<AlternativeValue>(
+                alt.AltName(), alt.ChoiceName(), arg)};
+          }
+          case Value::Kind::FunctionValue:
+            return CallFunction{
+                .function = cast<FunctionValue>(act->Results()[0]),
+                .args = act->Results()[1],
+                .line_num = exp->LineNumber()};
+          default:
+            FATAL_RUNTIME_ERROR(exp->LineNumber())
+                << "in call, expected a function, not " << *act->Results()[0];
+        }
       } else {
         FATAL() << "in handle_value with Call pos " << act->Pos();
       }
-      break;
     case Expression::Kind::IntrinsicExpression:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      frame->todo.Pop(1);
       switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
         case IntrinsicExpression::IntrinsicKind::Print:
           Address pointer = GetFromEnv(exp->LineNumber(), "format_str");
@@ -673,81 +661,56 @@ void StepExp() {
           CHECK(pointee->Tag() == Value::Kind::StringValue);
           // TODO: This could eventually use something like llvm::formatv.
           llvm::outs() << cast<StringValue>(*pointee).Val();
-          frame->todo.Push(global_arena->New<ValAction>(&TupleValue::Empty()));
-          break;
+          return Done{&TupleValue::Empty()};
       }
-      break;
 
     case Expression::Kind::IntTypeLiteral: {
       CHECK(act->Pos() == 0);
-      const Value* v = global_arena->New<IntType>();
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{global_arena->New<IntType>()};
     }
     case Expression::Kind::BoolTypeLiteral: {
       CHECK(act->Pos() == 0);
-      const Value* v = global_arena->New<BoolType>();
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{global_arena->New<BoolType>()};
     }
     case Expression::Kind::TypeTypeLiteral: {
       CHECK(act->Pos() == 0);
-      const Value* v = global_arena->New<TypeType>();
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{global_arena->New<TypeType>()};
     }
     case Expression::Kind::FunctionTypeLiteral: {
       if (act->Pos() == 0) {
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<FunctionTypeLiteral>(*exp).Parameter()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<FunctionTypeLiteral>(*exp).Parameter())};
       } else if (act->Pos() == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<FunctionTypeLiteral>(*exp).ReturnType()));
-        act->IncrementPos();
-      } else if (act->Pos() == 2) {
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<FunctionTypeLiteral>(*exp).ReturnType())};
+      } else {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        const Value* v = global_arena->New<FunctionType>(
+        return Done{global_arena->New<FunctionType>(
             std::vector<GenericBinding>(), act->Results()[0],
-            act->Results()[1]);
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(v));
+            act->Results()[1])};
       }
-      break;
     }
     case Expression::Kind::ContinuationTypeLiteral: {
       CHECK(act->Pos() == 0);
-      const Value* v = global_arena->New<ContinuationType>();
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{global_arena->New<ContinuationType>()};
     }
     case Expression::Kind::StringLiteral:
       CHECK(act->Pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(
-          global_arena->New<StringValue>(cast<StringLiteral>(*exp).Val())));
-      break;
+      return Done{
+          global_arena->New<StringValue>(cast<StringLiteral>(*exp).Val())};
     case Expression::Kind::StringTypeLiteral: {
       CHECK(act->Pos() == 0);
-      const Value* v = global_arena->New<StringType>();
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{global_arena->New<StringType>()};
     }
   }  // switch (exp->Tag)
 }
 
-void StepPattern() {
-  Frame* frame = state->stack.Top();
-  Action* act = frame->todo.Top();
+Transition StepPattern() {
+  Action* act = state->stack.Top()->todo.Top();
   const Pattern* pattern = cast<PatternAction>(*act).Pat();
   if (tracing_output) {
     llvm::outs() << "--- step pattern " << *pattern << " --->\n";
@@ -755,34 +718,25 @@ void StepPattern() {
   switch (pattern->Tag()) {
     case Pattern::Kind::AutoPattern: {
       CHECK(act->Pos() == 0);
-      const Value* v = global_arena->New<AutoType>();
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ValAction>(v));
-      break;
+      return Done{global_arena->New<AutoType>()};
     }
     case Pattern::Kind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*pattern);
       if (act->Pos() == 0) {
-        frame->todo.Push(global_arena->New<PatternAction>(binding.Type()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<PatternAction>(binding.Type())};
       } else {
-        auto v = global_arena->New<BindingPlaceholderValue>(binding.Name(),
-                                                            act->Results()[0]);
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(v));
+        return Done{global_arena->New<BindingPlaceholderValue>(
+            binding.Name(), act->Results()[0])};
       }
-      break;
     }
     case Pattern::Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*pattern);
       if (act->Pos() == 0) {
         if (tuple.Fields().empty()) {
-          frame->todo.Pop(1);
-          frame->todo.Push(global_arena->New<ValAction>(&TupleValue::Empty()));
+          return Done{&TupleValue::Empty()};
         } else {
           const Pattern* p1 = tuple.Fields()[0].pattern;
-          frame->todo.Push(global_arena->New<PatternAction>(p1));
-          act->IncrementPos();
+          return Spawn{(global_arena->New<PatternAction>(p1))};
         }
       } else if (act->Pos() != static_cast<int>(tuple.Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
@@ -790,47 +744,34 @@ void StepPattern() {
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         const Pattern* elt = tuple.Fields()[act->Pos()].pattern;
-        frame->todo.Push(global_arena->New<PatternAction>(elt));
-        act->IncrementPos();
+        return Spawn{global_arena->New<PatternAction>(elt)};
       } else {
         std::vector<TupleElement> elements;
         for (size_t i = 0; i < tuple.Fields().size(); ++i) {
           elements.push_back(
               {.name = tuple.Fields()[i].name, .value = act->Results()[i]});
         }
-        const Value* tuple_value =
-            global_arena->New<TupleValue>(std::move(elements));
-        frame->todo.Pop(1);
-        frame->todo.Push(global_arena->New<ValAction>(tuple_value));
+        return Done{global_arena->New<TupleValue>(std::move(elements))};
       }
-      break;
     }
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*pattern);
       if (act->Pos() == 0) {
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(alternative.ChoiceType()));
-        act->IncrementPos();
+        return Spawn{
+            global_arena->New<ExpressionAction>(alternative.ChoiceType())};
       } else if (act->Pos() == 1) {
-        frame->todo.Push(
-            global_arena->New<PatternAction>(alternative.Arguments()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<PatternAction>(alternative.Arguments())};
       } else {
         CHECK(act->Pos() == 2);
         const auto& choice_type = cast<ChoiceType>(*act->Results()[0]);
-        frame->todo.Pop(1);
-        frame->todo.Push(
-            global_arena->New<ValAction>(global_arena->New<AlternativeValue>(
-                alternative.AlternativeName(), choice_type.Name(),
-                act->Results()[1])));
+        return Done{global_arena->New<AlternativeValue>(
+            alternative.AlternativeName(), choice_type.Name(),
+            act->Results()[1])};
       }
-      break;
     }
     case Pattern::Kind::ExpressionPattern:
-      frame->todo.Pop(1);
-      frame->todo.Push(global_arena->New<ExpressionAction>(
-          cast<ExpressionPattern>(pattern)->Expression()));
-      break;
+      return Delegate{global_arena->New<ExpressionAction>(
+          cast<ExpressionPattern>(pattern)->Expression())};
   }
 }
 
@@ -863,8 +804,7 @@ auto IsBlockAct(Action* act) -> bool {
 }
 
 // State transitions for statements.
-
-void StepStmt() {
+Transition StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   const Statement* stmt = cast<StatementAction>(*act).Stmt();
@@ -879,9 +819,8 @@ void StepStmt() {
       if (act->Pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(cast<Match>(*stmt).Exp()));
-        act->IncrementPos();
+        return Spawn{
+            global_arena->New<ExpressionAction>(cast<Match>(*stmt).Exp())};
       } else {
         // Regarding act->Pos():
         // * odd: start interpreting the pattern of a clause
@@ -895,8 +834,7 @@ void StepStmt() {
         auto clause_num = (act->Pos() - 1) / 2;
         if (clause_num >=
             static_cast<int>(cast<Match>(*stmt).Clauses()->size())) {
-          frame->todo.Pop(1);
-          break;
+          return Done{};
         }
         auto c = cast<Match>(*stmt).Clauses()->begin();
         std::advance(c, clause_num);
@@ -905,8 +843,7 @@ void StepStmt() {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          frame->todo.Push(global_arena->New<PatternAction>(c->first));
-          act->IncrementPos();
+          return Spawn{global_arena->New<PatternAction>(c->first)};
         } else {  // try to match
           auto v = act->Results()[0];
           auto pat = act->Results()[clause_num + 1];
@@ -924,98 +861,88 @@ void StepStmt() {
             frame->todo.Pop(1);
             frame->todo.Push(body_act);
             frame->todo.Push(global_arena->New<StatementAction>(c->second));
+            return ManualTransition{};
           } else {
             // this case did not match, moving on
-            act->IncrementPos();
-            clause_num = (act->Pos() - 1) / 2;
-            if (clause_num ==
+            int next_clause_num = act->Pos() / 2;
+            if (next_clause_num ==
                 static_cast<int>(cast<Match>(*stmt).Clauses()->size())) {
-              frame->todo.Pop(1);
+              return Done{};
             }
+            return RunAgain{};
           }
         }
       }
-      break;
     case Statement::Kind::While:
-      if (act->Pos() == 0) {
+      if (act->Pos() % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(cast<While>(*stmt).Cond()));
-        act->IncrementPos();
-      } else if (cast<BoolValue>(*act->Results()[0]).Val()) {
+        act->Clear();
+        return Spawn{
+            global_arena->New<ExpressionAction>(cast<While>(*stmt).Cond())};
+      } else if (cast<BoolValue>(*act->Results().back()).Val()) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-        frame->todo.Top()->Clear();
-        frame->todo.Push(
-            global_arena->New<StatementAction>(cast<While>(*stmt).Body()));
+        return Spawn{
+            global_arena->New<StatementAction>(cast<While>(*stmt).Body())};
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { C, E, F } :: S, H}
-        frame->todo.Top()->Clear();
-        frame->todo.Pop(1);
+        return Done{};
       }
-      break;
-    case Statement::Kind::Break:
+    case Statement::Kind::Break: {
       CHECK(act->Pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      frame->todo.Pop(1);
-      while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
-        if (IsBlockAct(frame->todo.Top())) {
-          DeallocateScope(stmt->LineNumber(), frame->scopes.Top());
-          frame->scopes.Pop(1);
-        }
-        frame->todo.Pop(1);
+      auto it =
+          std::find_if(frame->todo.begin(), frame->todo.end(), &IsWhileAct);
+      if (it == frame->todo.end()) {
+        FATAL_RUNTIME_ERROR(stmt->LineNumber())
+            << "`break` not inside `while` statement";
       }
-      frame->todo.Pop(1);
-      break;
-    case Statement::Kind::Continue:
+      ++it;
+      return UnwindTo{*it};
+    }
+    case Statement::Kind::Continue: {
       CHECK(act->Pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      frame->todo.Pop(1);
-      while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
-        if (IsBlockAct(frame->todo.Top())) {
-          DeallocateScope(stmt->LineNumber(), frame->scopes.Top());
-          frame->scopes.Pop(1);
-        }
-        frame->todo.Pop(1);
+      auto it =
+          std::find_if(frame->todo.begin(), frame->todo.end(), &IsWhileAct);
+      if (it == frame->todo.end()) {
+        FATAL_RUNTIME_ERROR(stmt->LineNumber())
+            << "`continue` not inside `while` statement";
       }
-      break;
+      return UnwindTo{*it};
+    }
     case Statement::Kind::Block: {
       if (act->Pos() == 0) {
-        if (cast<Block>(*stmt).Stmt()) {
+        const Block& block = cast<Block>(*stmt);
+        if (block.Stmt() != nullptr) {
           auto* scope = global_arena->New<Scope>(CurrentEnv(state),
                                                  std::list<std::string>());
           frame->scopes.Push(scope);
-          frame->todo.Push(
-              global_arena->New<StatementAction>(cast<Block>(*stmt).Stmt()));
-          act->IncrementPos();
-          act->IncrementPos();
+          return Spawn{global_arena->New<StatementAction>(block.Stmt())};
         } else {
-          frame->todo.Pop();
+          return Done{};
         }
       } else {
         Scope* scope = frame->scopes.Top();
-        DeallocateScope(stmt->LineNumber(), scope);
+        DeallocateScope(scope);
         frame->scopes.Pop(1);
-        frame->todo.Pop(1);
+        return Done{};
       }
-      break;
     }
     case Statement::Kind::VariableDefinition:
       if (act->Pos() == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<VariableDefinition>(*stmt).Init()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<VariableDefinition>(*stmt).Init())};
       } else if (act->Pos() == 1) {
-        frame->todo.Push(global_arena->New<PatternAction>(
-            cast<VariableDefinition>(*stmt).Pat()));
-        act->IncrementPos();
-      } else if (act->Pos() == 2) {
+        return Spawn{global_arena->New<PatternAction>(
+            cast<VariableDefinition>(*stmt).Pat())};
+      } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
         const Value* v = act->Results()[0];
@@ -1028,97 +955,85 @@ void StepStmt() {
             << stmt->LineNumber()
             << ": internal error in variable definition, match failed";
         frame->scopes.Top()->values = *matches;
-        frame->todo.Pop(1);
+        return Done{};
       }
-      break;
     case Statement::Kind::ExpressionStatement:
       if (act->Pos() == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
-        frame->todo.Push(global_arena->New<ExpressionAction>(
-            cast<ExpressionStatement>(*stmt).Exp()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<ExpressionAction>(
+            cast<ExpressionStatement>(*stmt).Exp())};
       } else {
-        frame->todo.Pop(1);
+        return Done{};
       }
-      break;
     case Statement::Kind::Assign:
       if (act->Pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<LValAction>(cast<Assign>(*stmt).Lhs()));
-        act->IncrementPos();
+        return Spawn{global_arena->New<LValAction>(cast<Assign>(*stmt).Lhs())};
       } else if (act->Pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(cast<Assign>(*stmt).Rhs()));
-        act->IncrementPos();
-      } else if (act->Pos() == 2) {
+        return Spawn{
+            global_arena->New<ExpressionAction>(cast<Assign>(*stmt).Rhs())};
+      } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
         auto pat = act->Results()[0];
         auto val = act->Results()[1];
         PatternAssignment(pat, val, stmt->LineNumber());
-        frame->todo.Pop(1);
+        return Done{};
       }
-      break;
     case Statement::Kind::If:
       if (act->Pos() == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(cast<If>(*stmt).Cond()));
-        act->IncrementPos();
+        return Spawn{
+            global_arena->New<ExpressionAction>(cast<If>(*stmt).Cond())};
       } else if (cast<BoolValue>(*act->Results()[0]).Val()) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { then_stmt :: C, E, F } :: S, H}
-        frame->todo.Pop(1);
-        frame->todo.Push(
-            global_arena->New<StatementAction>(cast<If>(*stmt).ThenStmt()));
+        return Delegate{
+            global_arena->New<StatementAction>(cast<If>(*stmt).ThenStmt())};
       } else if (cast<If>(*stmt).ElseStmt()) {
         //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
-        frame->todo.Pop(1);
-        frame->todo.Push(
-            global_arena->New<StatementAction>(cast<If>(*stmt).ElseStmt()));
+        return Delegate{
+            global_arena->New<StatementAction>(cast<If>(*stmt).ElseStmt())};
       } else {
-        frame->todo.Pop(1);
+        return Done{};
       }
-      break;
     case Statement::Kind::Return:
       if (act->Pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(cast<Return>(*stmt).Exp()));
-        act->IncrementPos();
+        return Spawn{
+            global_arena->New<ExpressionAction>(cast<Return>(*stmt).Exp())};
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
         const Value* ret_val = CopyVal(act->Results()[0], stmt->LineNumber());
-        DeallocateLocals(stmt->LineNumber(), frame);
-        state->stack.Pop(1);
-        frame = state->stack.Top();
-        frame->todo.Push(global_arena->New<ValAction>(ret_val));
+        return UnwindFunctionCall{ret_val};
       }
-      break;
-    case Statement::Kind::Sequence:
-      CHECK(act->Pos() == 0);
+    case Statement::Kind::Sequence: {
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
-      frame->todo.Pop(1);
-      if (cast<Sequence>(*stmt).Next()) {
-        frame->todo.Push(
-            global_arena->New<StatementAction>(cast<Sequence>(*stmt).Next()));
+      const Sequence& seq = cast<Sequence>(*stmt);
+      if (act->Pos() == 0) {
+        return Spawn{global_arena->New<StatementAction>(seq.Stmt())};
+      } else {
+        if (seq.Next() != nullptr) {
+          return Delegate{
+              global_arena->New<StatementAction>(cast<Sequence>(*stmt).Next())};
+        } else {
+          return Done{};
+        }
       }
-      frame->todo.Push(
-          global_arena->New<StatementAction>(cast<Sequence>(*stmt).Stmt()));
-      break;
+    }
     case Statement::Kind::Continuation: {
+      // FIXME
       CHECK(act->Pos() == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
@@ -1145,15 +1060,15 @@ void StepStmt() {
           continuation_address);
       // Pop the continuation statement.
       frame->todo.Pop();
-      break;
+      return ManualTransition{};
     }
     case Statement::Kind::Run:
       if (act->Pos() == 0) {
         // Evaluate the argument of the run statement.
-        frame->todo.Push(
-            global_arena->New<ExpressionAction>(cast<Run>(*stmt).Argument()));
-        act->IncrementPos();
+        return Spawn{
+            global_arena->New<ExpressionAction>(cast<Run>(*stmt).Argument())};
       } else {
+        // FIXME
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
@@ -1170,8 +1085,9 @@ void StepStmt() {
           state->stack.Push(*frame_iter);
         }
       }
-      break;
+      return ManualTransition{};
     case Statement::Kind::Await:
+      // FIXME
       CHECK(act->Pos() == 0);
       // Pause the current continuation
       frame->todo.Pop();
@@ -1183,9 +1099,83 @@ void StepStmt() {
       state->heap.Write(*paused.back()->continuation,
                         global_arena->New<ContinuationValue>(paused),
                         stmt->LineNumber());
-      break;
+      return ManualTransition{};
   }
 }
+
+// Visitor which implements the behavior associated with each transition type.
+struct DoTransition {
+  void operator()(const Done& done) {
+    Frame* frame = state->stack.Top();
+    if (frame->todo.Top()->Tag() != Action::Kind::StatementAction) {
+      CHECK(done.result != nullptr);
+      frame->todo.Pop();
+      if (frame->todo.IsEmpty()) {
+        state->program_value = done.result;
+      } else {
+        frame->todo.Top()->AddResult(done.result);
+      }
+    } else {
+      CHECK(done.result == nullptr);
+      frame->todo.Pop();
+    }
+  }
+
+  void operator()(const Spawn& spawn) {
+    Frame* frame = state->stack.Top();
+    frame->todo.Top()->IncrementPos();
+    frame->todo.Push(spawn.child);
+  }
+
+  void operator()(const Delegate& delegate) {
+    Frame* frame = state->stack.Top();
+    frame->todo.Pop();
+    frame->todo.Push(delegate.delegate);
+  }
+
+  void operator()(const RunAgain&) {
+    state->stack.Top()->todo.Top()->IncrementPos();
+  }
+
+  void operator()(const UnwindTo& unwind_to) {
+    Frame* frame = state->stack.Top();
+    while (frame->todo.Top() != unwind_to.new_top) {
+      if (IsBlockAct(frame->todo.Top())) {
+        DeallocateScope(frame->scopes.Top());
+        frame->scopes.Pop();
+      }
+      frame->todo.Pop();
+    }
+  }
+
+  void operator()(const UnwindFunctionCall& unwind) {
+    DeallocateLocals(state->stack.Top());
+    state->stack.Pop();
+    if (state->stack.Top()->todo.IsEmpty()) {
+      state->program_value = unwind.return_val;
+    } else {
+      state->stack.Top()->todo.Top()->AddResult(unwind.return_val);
+    }
+  }
+
+  void operator()(const CallFunction& call) {
+    state->stack.Top()->todo.Pop();
+    std::list<std::string> params;
+    std::optional<Env> matches = PatternMatch(call.function->Param(), call.args,
+                                              globals, &params, call.line_num);
+    CHECK(matches.has_value())
+        << "internal error in call_function, pattern match failed";
+    // Create the new frame and push it on the stack
+    auto* scope = global_arena->New<Scope>(*matches, params);
+    auto* frame = global_arena->New<Frame>(
+        call.function->Name(), Stack(scope),
+        Stack<Action*>(
+            global_arena->New<StatementAction>(call.function->Body())));
+    state->stack.Push(frame);
+  }
+
+  void operator()(const ManualTransition&) {}
+};
 
 // State transition.
 void Step() {
@@ -1197,23 +1187,17 @@ void Step() {
 
   Action* act = frame->todo.Top();
   switch (act->Tag()) {
-    case Action::Kind::ValAction: {
-      const ValAction& val_act = cast<ValAction>(*frame->todo.Pop());
-      Action* act = frame->todo.Top();
-      act->AddResult(val_act.Val());
-      break;
-    }
     case Action::Kind::LValAction:
-      StepLvalue();
+      std::visit(DoTransition(), StepLvalue());
       break;
     case Action::Kind::ExpressionAction:
-      StepExp();
+      std::visit(DoTransition(), StepExp());
       break;
     case Action::Kind::PatternAction:
-      StepPattern();
+      std::visit(DoTransition(), StepPattern());
       break;
     case Action::Kind::StatementAction:
-      StepStmt();
+      std::visit(DoTransition(), StepStmt());
       break;
   }  // switch
 }
@@ -1239,43 +1223,47 @@ auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
     PrintState(llvm::outs());
   }
 
-  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
-         state->stack.Top()->todo.Top()->Tag() != Action::Kind::ValAction) {
+  while (state->stack.Count() > 1 || !state->stack.Top()->todo.IsEmpty()) {
     Step();
     if (tracing_output) {
       PrintState(llvm::outs());
     }
   }
-  const Value* v = cast<ValAction>(*state->stack.Top()->todo.Top()).Val();
-  return cast<IntValue>(*v).Val();
+  return cast<IntValue>(*state->program_value).Val();
 }
 
 // Interpret an expression at compile-time.
 auto InterpExp(Env values, const Expression* e) -> const Value* {
+  CHECK(state->program_value == nullptr);
+  auto program_value_guard =
+      llvm::make_scope_exit([] { state->program_value = nullptr; });
   auto todo = Stack<Action*>(global_arena->New<ExpressionAction>(e));
   auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
   auto* frame = global_arena->New<Frame>("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
-         state->stack.Top()->todo.Top()->Tag() != Action::Kind::ValAction) {
+  while (state->stack.Count() > 1 || !state->stack.Top()->todo.IsEmpty()) {
     Step();
   }
-  return cast<ValAction>(*state->stack.Top()->todo.Top()).Val();
+  CHECK(state->program_value != nullptr);
+  return state->program_value;
 }
 
 // Interpret a pattern at compile-time.
 auto InterpPattern(Env values, const Pattern* p) -> const Value* {
+  CHECK(state->program_value == nullptr);
+  auto program_value_guard =
+      llvm::make_scope_exit([] { state->program_value = nullptr; });
   auto todo = Stack<Action*>(global_arena->New<PatternAction>(p));
   auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
   auto* frame = global_arena->New<Frame>("InterpPattern", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  while (state->stack.Count() > 1 || state->stack.Top()->todo.Count() > 1 ||
-         state->stack.Top()->todo.Top()->Tag() != Action::Kind::ValAction) {
+  while (state->stack.Count() > 1 || !state->stack.Top()->todo.IsEmpty()) {
     Step();
   }
-  return cast<ValAction>(*state->stack.Top()->todo.Top()).Val();
+  CHECK(state->program_value != nullptr);
+  return state->program_value;
 }
 
 }  // namespace Carbon

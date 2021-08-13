@@ -25,6 +25,7 @@ using Env = Dictionary<std::string, Address>;
 struct State {
   Stack<Frame*> stack;
   Heap heap;
+  const Value* program_value = nullptr;
 };
 
 extern State* state;
