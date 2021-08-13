@@ -25,8 +25,7 @@ class Arena {
     return Ptr<T>(raw_ptr);
   }
 
-  // TODO: Remove. This is only to help findability during migration. If we want
-  // a non-migration form, it should probably be `get()` or similar.
+  // TODO: Remove. This is only to help findability during migration.
   template <typename T, typename... Args>
   auto RawNew(Args&&... args) -> T* {
     auto smart_ptr =
