@@ -677,9 +677,8 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       const auto& match = cast<Match>(*s);
       auto res = TypeCheckExp(match.Exp(), types, values);
       auto res_type = res.type;
-      auto new_clauses =
-          global_arena
-              ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
+      auto new_clauses = global_arena->RawNew<
+          std::list<std::pair<const Pattern*, const Statement*>>>();
       for (auto& clause : *match.Clauses()) {
         new_clauses->push_back(TypecheckCase(res_type, clause.first,
                                              clause.second, types, values,
@@ -823,9 +822,8 @@ static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
       const auto& match = cast<Match>(*stmt);
-      auto new_clauses =
-          global_arena
-              ->New<std::list<std::pair<const Pattern*, const Statement*>>>();
+      auto new_clauses = global_arena->RawNew<
+          std::list<std::pair<const Pattern*, const Statement*>>>();
       for (const auto& clause : *match.Clauses()) {
         auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
                                      stmt->LineNumber());
