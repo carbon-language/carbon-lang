@@ -1600,7 +1600,7 @@ The result would be `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
-**Open question:** We may need additional mechanisms for changing the API in the
+**Future work:** We may need additional mechanisms for changing the API in the
 adapter. For example, to resolve conflicts we might want to be able to move the
 implementation of a specific interface into an [external impl](#external-impl).
 
@@ -1643,7 +1643,7 @@ CompareLib.Sort((song,));
 
 ### Adapter with stricter invariants
 
-**Open question:** Rust also uses the newtype idiom to create types with
+**Future work:** Rust also uses the newtype idiom to create types with
 additional invariants or other information encoded in the type
 ([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
 [2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
@@ -1861,6 +1861,9 @@ or:
 let ElementType:! Type = T;
 ```
 
+This question is being decided in issue
+[#739: Associated type syntax](https://github.com/carbon-language/carbon-lang/issues/739).
+
 The definition of the `StackAssociatedType` is sufficient for writing a generic
 function that operates on anything implementing that interface, for example:
 
@@ -1925,7 +1928,8 @@ class DynamicArray(T:! Type) {
 }
 ```
 
-Should we do the same thing in Carbon?
+Should we do the same thing in Carbon? This question is being decided in issue
+[#739: Associated type syntax](https://github.com/carbon-language/carbon-lang/issues/739).
 
 One benefit is that it allows an interface to evolve by adding an associated
 type, without having to then modify all implementations of that interface.
