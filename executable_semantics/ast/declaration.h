@@ -13,23 +13,9 @@
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/struct_definition.h"
-#include "executable_semantics/interpreter/address.h"
-#include "executable_semantics/interpreter/dictionary.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
-
-class Value;
-
-using TypeEnv = Dictionary<std::string, const Value*>;
-using Env = Dictionary<std::string, Address>;
-
-struct TypeCheckContext {
-  // Symbol table mapping names of runtime entities to their type.
-  TypeEnv types;
-  // Symbol table mapping names of compile time entities to their value.
-  Env values;
-};
 
 // Abstract base class of all AST nodes representing patterns.
 //
