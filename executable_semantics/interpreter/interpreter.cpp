@@ -1033,7 +1033,6 @@ Transition StepStmt() {
       }
     }
     case Statement::Kind::Continuation: {
-      // FIXME
       CHECK(act->Pos() == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
@@ -1068,7 +1067,6 @@ Transition StepStmt() {
         return Spawn{
             global_arena->New<ExpressionAction>(cast<Run>(*stmt).Argument())};
       } else {
-        // FIXME
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
@@ -1084,10 +1082,9 @@ Transition StepStmt() {
              frame_iter != continuation_vector.rend(); ++frame_iter) {
           state->stack.Push(*frame_iter);
         }
+        return ManualTransition{};
       }
-      return ManualTransition{};
     case Statement::Kind::Await:
-      // FIXME
       CHECK(act->Pos() == 0);
       // Pause the current continuation
       frame->todo.Pop();
@@ -1229,14 +1226,14 @@ auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
       PrintState(llvm::outs());
     }
   }
-  return cast<IntValue>(*state->program_value).Val();
+  return cast<IntValue>(**state->program_value).Val();
 }
 
 // Interpret an expression at compile-time.
 auto InterpExp(Env values, const Expression* e) -> const Value* {
-  CHECK(state->program_value == nullptr);
+  CHECK(state->program_value == std::nullopt);
   auto program_value_guard =
-      llvm::make_scope_exit([] { state->program_value = nullptr; });
+      llvm::make_scope_exit([] { state->program_value = std::nullopt; });
   auto todo = Stack<Action*>(global_arena->New<ExpressionAction>(e));
   auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
   auto* frame = global_arena->New<Frame>("InterpExp", Stack(scope), todo);
@@ -1245,15 +1242,15 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
   while (state->stack.Count() > 1 || !state->stack.Top()->todo.IsEmpty()) {
     Step();
   }
-  CHECK(state->program_value != nullptr);
-  return state->program_value;
+  CHECK(state->program_value != std::nullopt);
+  return *state->program_value;
 }
 
 // Interpret a pattern at compile-time.
 auto InterpPattern(Env values, const Pattern* p) -> const Value* {
-  CHECK(state->program_value == nullptr);
+  CHECK(state->program_value == std::nullopt);
   auto program_value_guard =
-      llvm::make_scope_exit([] { state->program_value = nullptr; });
+      llvm::make_scope_exit([] { state->program_value = std::nullopt; });
   auto todo = Stack<Action*>(global_arena->New<PatternAction>(p));
   auto* scope = global_arena->New<Scope>(values, std::list<std::string>());
   auto* frame = global_arena->New<Frame>("InterpPattern", Stack(scope), todo);
@@ -1262,8 +1259,8 @@ auto InterpPattern(Env values, const Pattern* p) -> const Value* {
   while (state->stack.Count() > 1 || !state->stack.Top()->todo.IsEmpty()) {
     Step();
   }
-  CHECK(state->program_value != nullptr);
-  return state->program_value;
+  CHECK(state->program_value != std::nullopt);
+  return *state->program_value;
 }
 
 }  // namespace Carbon

@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
 
 #include <list>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -25,7 +26,7 @@ using Env = Dictionary<std::string, Address>;
 struct State {
   Stack<Frame*> stack;
   Heap heap;
-  const Value* program_value = nullptr;
+  std::optional<const Value*> program_value;
 };
 
 extern State* state;
