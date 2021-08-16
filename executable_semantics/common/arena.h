@@ -20,9 +20,9 @@ class Arena {
   auto New(Args&&... args) -> Ptr<T> {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
-    T* ptr = smart_ptr->Instance();
+    Ptr<T> ptr = smart_ptr->Instance();
     arena.push_back(std::move(smart_ptr));
-    return ptr;
+    return std::move(ptr);
   }
 
   // TODO: Remove. This is only to help findability during migration.
