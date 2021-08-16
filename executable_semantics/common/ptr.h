@@ -18,7 +18,8 @@ class Ptr {
  public:
   explicit Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
 
-  template <typename OtherT>
+  template <typename OtherT, typename std::enable_if<std::is_convertible<
+                                 T*, OtherT*>::value>::type* = nullptr>
   Ptr(Ptr<OtherT> other) {
     return Ptr<OtherT>(other.ptr);
   }
