@@ -17,20 +17,21 @@ template <typename T>
 class Ptr {
  public:
   explicit Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
-  Ptr(std::nullptr_t) = delete;
 
+  template <typename OtherT>
+  Ptr(Ptr<OtherT> other) {
+    return Ptr<OtherT>(other.ptr);
+  }
+
+  Ptr(std::nullptr_t) = delete;
   Ptr(const Ptr& other) = default;
+
   Ptr& operator=(const Ptr& rhs) = default;
 
   auto operator*() const -> T& { return *ptr; }
   auto operator->() const -> T* { return ptr; }
 
-  template <typename OtherT>
-  operator Ptr<OtherT>() const {
-    return Ptr<OtherT>(ptr);
-  }
-
-T* Get() const { return ptr; }
+  T* Get() const { return ptr; }
 
  private:
   T* ptr;
