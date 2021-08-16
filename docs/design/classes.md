@@ -946,6 +946,10 @@ class TextLabel {
 The fields of data classes must all be public. That line will add
 [field-wise implementations and operations of all interfaces that a struct with the same fields would get by default](#operations-performed-field-wise).
 
+The word `Data` here refers to an empty interface in the Carbon prologue. That
+interface would then be part of our
+[strategy for defining how other interfaces are implemented for data classes](#interfaces-implemented-for-data-classes).
+
 **References:** Rationale for this approach is given in proposal
 [#722](/proposals/p0722.md#nominal-data-class).
 
