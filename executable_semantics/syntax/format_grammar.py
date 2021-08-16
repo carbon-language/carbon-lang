@@ -10,9 +10,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import os
 import subprocess
+import sys
 import textwrap
-import collections
-
+from dataclasses import dataclass
+from typing import cast
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 # Files to format.
 _FILES = (
@@ -26,19 +31,24 @@ _COLS = 80
 # An arbitrary separator to use when formatting multiple code segments.
 _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
 
-# Information about a code segment for formatting.
-_Code = collections.namedtuple(
-    "Code",
-    [
-        "content",
-        "brace_offset",
-        "close_brace_indent",
-        "has_percent",
-    ],
-)
+
+@dataclass
+class _CppCode:
+    """Information about a code segment for formatting."""
+
+    # The index into all segments of the code segment.
+    segment_index: int
+    # The code content with braces stripped.
+    content: str
+    # The indent of the open brace.
+    open_brace_indent: int
+    # The indent of the close brace.
+    close_brace_indent: int
+    # Whether to write `%}` or `}`.
+    has_percent: bool
 
 
-def _clang_format(code, base_style, cols):
+def _clang_format(code: str, base_style: str, cols: int) -> str:
     """Calls clang-format to format the given code."""
     style = "--style={%s, ColumnLimit: %d}" % (base_style, cols)
     output = subprocess.check_output(
@@ -48,7 +58,7 @@ def _clang_format(code, base_style, cols):
     return output.decode("utf-8")
 
 
-def _find_string_end(content, start):
+def _find_string_end(content: str, start: int) -> int:
     """Returns the end of a string, skipping escapes."""
     i = start
     while i < len(content):
@@ -61,13 +71,17 @@ def _find_string_end(content, start):
     exit("failed to find end of string: %s" % content[start : start + 20])
 
 
-def _find_brace_end(content, has_percent, start):
-    """Returns the end of a braced section, skipping escapes."""
+def _find_brace_end(content: str, has_percent: bool, start: int) -> int:
+    """Returns the end of a braced section, skipping escapes.
+
+    If has_percent, expect `%}` instead of `}`.
+    """
     i = start
     while i < len(content):
         c = content[i]
-        if c == "":
-            i += 2
+        if c == '"':
+            # Skip over strings.
+            i = _find_string_end(content, i + 1)
         elif c == "{":
             i = _find_brace_end(content, False, i + 1)
         elif c == "}" and (not has_percent or content[i - 1] == "%"):
@@ -76,18 +90,19 @@ def _find_brace_end(content, has_percent, start):
     exit("failed to find end of brace: %s" % content[start : start + 20])
 
 
-def _parse_code_segments(content):
+def _parse_cpp_segments(
+    content: str,
+) -> Tuple[List[Optional[str]], Dict[int, List[_CppCode]]]:
     """Returns text and code segments.
 
-    The return is a tuple of `(segments, code_segments)`, where `segments` is a
-    list of both `str` and `Code`, while `code_segments` is a `dict` mapping
-    `close_brace_indent` to a list of indices for where `Code` objects are in
-    `segments`.
+    Returns a tuple `(text_segments, code_segments)`. text_segments is a list
+    version of the input content, with None where code goes. cpp_segments groups
+    _CppCode objects by their close_brace_indent.
     """
     i = 0
     segment_start = 0
-    segments = []
-    code_segments = {}
+    text_segments: List[Optional[str]] = []
+    cpp_segments: Dict[int, List[_CppCode]] = {}
     while i < len(content):
         c = content[i]
         if c == '"':
@@ -114,8 +129,10 @@ def _parse_code_segments(content):
                 # Keep treating it as text.
                 i = end
             else:
-                # Code has been found. First, record the text segment.
-                segments.append(content[segment_start:i])
+                # Code has been found. First, record the text segment; then,
+                # indicate the non-text segment.
+                text_segments.append(content[segment_start:i])
+                text_segments.append(None)
 
                 # If the brace is the first character on its line, use its
                 # indent when wrapping.
@@ -125,72 +142,87 @@ def _parse_code_segments(content):
                     close_brace_indent = i - line_offset - 1
 
                 # Record the code segment.
-                segments.append(
-                    _Code(
+                if close_brace_indent not in cpp_segments:
+                    cpp_segments[close_brace_indent] = []
+                cpp_segments[close_brace_indent].append(
+                    _CppCode(
+                        len(text_segments) - 1,
                         braced_content,
                         i - line_offset + 1,
                         close_brace_indent,
                         has_percent,
                     )
                 )
-                if close_brace_indent not in code_segments:
-                    code_segments[close_brace_indent] = []
-                code_segments[close_brace_indent].append(len(segments) - 1)
+
+                # Increment cursors.
                 i = end
                 segment_start = i + 1
         i += 1
-    segments.append(content[segment_start])
-    return segments, code_segments
+    text_segments.append(content[segment_start])
+    return text_segments, cpp_segments
 
 
-def _format_code_segments(base_style, segments, code_segments):
-    """Does the actual code formatting.
+def _format_cpp_segments(
+    base_style: str,
+    text_segments: List[Optional[str]],
+    cpp_segments: Dict[int, List[_CppCode]],
+):
+    """Does the actual C++ code formatting.
 
     Formatting is done in groups, divided by indent because that affects code
     formatting.
     """
     # Iterate through code segments, formatting them in groups.
-    for close_brace_indent, segment_indices in code_segments.items():
+    for close_brace_indent, code_list in cpp_segments.items():
         format_input = _FORMAT_SEPARATOR.join(
-            [segments[i].content for i in segment_indices]
+            [code.content for code in code_list]
         )
         code_indent = close_brace_indent + 2
         formatted_block = _clang_format(
             format_input, base_style, _COLS - code_indent
         )
         formatted_segments = formatted_block.split(_FORMAT_SEPARATOR)
-        assert len(formatted_segments) == len(
-            segment_indices
-        ), formatted_segments
+
+        # If there's a mismatch in lengths, error with the formatted output to
+        # help determine what was wrong with input.
+        if len(code_list) != len(formatted_segments):
+            sys.stderr.write(formatted_block)
+            exit(
+                (
+                    "Unexpected formatting error (likely bad input): wanted %d "
+                    "segments, got %d (see above code)"
+                )
+                % (len(code_list), len(formatted_segments))
+            )
 
         for i in range(len(formatted_segments)):
-            segment_index = segment_indices[i]
-            code = segments[segment_index]
+            code = code_list[i]
             formatted = formatted_segments[i]
             # The '4' here is from the `{  }` wrapper that is otherwise added.
             if (
                 code.has_percent
-                or code.brace_offset + len(formatted) + 4 > _COLS
+                or code.open_brace_indent + len(formatted) + 4 > _COLS
                 or "\n" in formatted
             ):
                 close_percent = ""
                 if code.has_percent:
                     close_percent = "%"
-                segments[segment_index] = "{\n%s\n%s%s}" % (
+                text_segments[code.segment_index] = "{\n%s\n%s%s}" % (
                     textwrap.indent(formatted, " " * code_indent),
                     " " * code.close_brace_indent,
                     close_percent,
                 )
             else:
-                segments[segment_index] = "{ %s }" % formatted
+                text_segments[code.segment_index] = "{ %s }" % formatted
 
 
-def _format_file(path, base_style):
+def _format_file(path: str, base_style: str):
     """Formats a file, writing the result."""
     content = open(path).read()
-    segments, code_segments = _parse_code_segments(content)
-    _format_code_segments(base_style, segments, code_segments)
-    open(path, "w").write("".join(segments))
+    text_segments, cpp_segments = _parse_cpp_segments(content)
+    _format_cpp_segments(base_style, text_segments, cpp_segments)
+    assert None not in text_segments
+    open(path, "w").write("".join(cast(List[str], text_segments)))
 
 
 def main():
