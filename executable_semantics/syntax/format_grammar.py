@@ -68,6 +68,8 @@ def _find_brace_end(content, has_percent, start):
         c = content[i]
         if c == "":
             i += 2
+        elif c == '"':
+            i = _find_string_end(content, i)
         elif c == "{":
             i = _find_brace_end(content, False, i + 1)
         elif c == "}" and (not has_percent or content[i - 1] == "%"):
@@ -117,7 +119,7 @@ def _parse_code_segments(content):
                 # Code has been found. First, record the text segment.
                 segments.append(content[segment_start:i])
 
-                # If the brace is the first character on its line, use its
+                # If the opening brace is the first character on its line, use its
                 # indent when wrapping.
                 close_brace_indent = 0
                 line_offset = content.rfind("\n", 0, i)
