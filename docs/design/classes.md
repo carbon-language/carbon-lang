@@ -757,6 +757,9 @@ default values for fields, and so may be initialized with a
 
 #### Assignment
 
+Assignment to a struct value is also allowed in a function with access to all
+the data fields of a class.
+
 Field defaults are only used when initializing a new value, not assigning to an
 existing variable. When assigning, values for all the fields must be specified.
 This avoids ambiguity about whether to use the default value or the previous
