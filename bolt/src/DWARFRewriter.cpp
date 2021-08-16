@@ -83,7 +83,7 @@ static cl::opt<std::string> DwarfOutputPath(
     cl::init(""), cl::cat(BoltCategory));
 
 static cl::opt<bool>
-    WriteDWP("write-out-dwp",
+    WriteDWP("write-dwp",
              cl::desc("output a single dwarf package file (dwp) instead of "
                       "multiple non-relocatable dwarf object files (dwo)."),
              cl::init(false), cl::cat(BoltCategory));
@@ -957,13 +957,25 @@ patchDebugData(std::string &Storage, const SectionRef &Section,
 
 void DWARFRewriter::writeDWP(
     std::unordered_map<uint64_t, std::string> &DWOIdToName) {
-  std::string CompDir =
-      opts::DwarfOutputPath.empty() ? "." : opts::DwarfOutputPath.c_str();
-  auto FullPath = CompDir.append("/").append(opts::OutputFilename);
-  FullPath.append(".dwp");
+  SmallString<0> OutputNameStr;
+  StringRef OutputName;
+  if (opts::DwarfOutputPath.empty()) {
+    OutputName =
+        Twine(opts::OutputFilename).concat(".dwp").toStringRef(OutputNameStr);
+  } else {
+    StringRef ExeFileName = llvm::sys::path::filename(opts::OutputFilename);
+    OutputName = Twine(opts::DwarfOutputPath)
+                     .concat("/")
+                     .concat(ExeFileName)
+                     .concat(".dwp")
+                     .toStringRef(OutputNameStr);
+    errs() << "BOLT-WARNING: dwarf-output-path is in effect and .dwp file will "
+              "possibly be written to another location that is not the same as "
+              "the executable\n";
+  }
   std::error_code EC;
   std::unique_ptr<ToolOutputFile> Out =
-      std::make_unique<ToolOutputFile>(FullPath, EC, sys::fs::OF_None);
+      std::make_unique<ToolOutputFile>(OutputName, EC, sys::fs::OF_None);
 
   const object::ObjectFile *File = BC.DwCtx->getDWARFObj().getFile();
   std::unique_ptr<BinaryContext> TmpBC = createDwarfOnlyBC(*File);

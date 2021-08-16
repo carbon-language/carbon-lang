@@ -1,16 +1,33 @@
+# Checks debug fission support in BOLT
+
 # REQUIRES: system-linux
 
-# RUN: mkdir -p %t.dir && cd %t.dir
-# RUN: cp %S/Inputs/debug-fission-simple.s debug-fission-simple.s
-# RUN: cp %S/Inputs/debug-fission-script.txt debug-fission-script.txt
-# RUN: llvm-mc -g -filetype=obj -triple x86_64-unknown-unknown --split-dwarf-file=debug-fission-simple.dwo \
-# RUN:   ./debug-fission-simple.s -o ./debug-fission-simple.o
-# RUN: %host_cxx %cxxflags -g -Wl,--gc-sections,-q,-nostdlib -Wl,--undefined=_Z6_startv -nostartfiles -Wl,--script=debug-fission-script.txt ./debug-fission-simple.o -o out.exe
-# RUN: llvm-bolt out.exe --reorder-blocks=reverse -update-debug-sections -dwarf-output-path=%t.dir -o out.bolt
-# RUN: llvm-dwarfdump --show-form --verbose --debug-info %t.dir/debug-fission-simple.dwo0.dwo | grep DW_FORM_GNU_addr_index | FileCheck %s --check-prefix=CHECK-ADDR-INDEX
-# RUN: llvm-dwarfdump --show-form --verbose --debug-addr out.bolt | FileCheck %s --check-prefix=CHECK-ADDR-SEC
-# RUN: llvm-bolt out.exe --reorder-blocks=reverse -update-debug-sections -dwarf-output-path=%t.dir -o out.bolt -write-out-dwp=true
-# RUN: llvm-dwarfdump --show-form --verbose --debug-info out.bolt.dwp | FileCheck %s --check-prefix=CHECK-DWP-DEBUG
+# RUN: llvm-mc -g \
+# RUN:   --filetype=obj \
+# RUN:   --triple x86_64-unknown-unknown \
+# RUN:   --split-dwarf-file=debug-fission-simple.dwo \
+# RUN:   %p/Inputs/debug-fission-simple.s \
+# RUN:   -o %t.o
+# RUN: %host_cxx %cxxflags -g \
+# RUN:   -Wl,--gc-sections,-q,-nostdlib \
+# RUN:   -Wl,--undefined=_Z6_startv \
+# RUN:   -nostartfiles \
+# RUN:   -Wl,--script=%p/Inputs/debug-fission-script.txt \
+# RUN:   %t.o -o %t.exe
+# RUN: llvm-bolt %t.exe \
+# RUN:   --reorder-blocks=reverse \
+# RUN:   --update-debug-sections \
+# RUN:   --dwarf-output-path=%T \
+# RUN:   -o %t.bolt.1.exe
+# RUN: llvm-dwarfdump --show-form --verbose \
+# RUN:   --debug-info \
+# RUN:   %T/debug-fission-simple.dwo0.dwo \
+# RUN:   | grep DW_FORM_GNU_addr_index \
+# RUN:   | FileCheck %s --check-prefix=CHECK-ADDR-INDEX
+# RUN: llvm-dwarfdump --show-form --verbose \
+# RUN:   --debug-addr \
+# RUN:   %t.bolt.1.exe \
+# RUN:   | FileCheck %s --check-prefix=CHECK-ADDR-SEC
 
 # CHECK-ADDR-INDEX: DW_AT_low_pc [DW_FORM_GNU_addr_index]	(indexed (00000001)
 # CHECK-ADDR-INDEX: DW_AT_low_pc [DW_FORM_GNU_addr_index]	(indexed (00000002)
@@ -23,6 +40,10 @@
 # CHECK-ADDR-SEC: 0x0000000000000000
 # CHECK-ADDR-SEC: 0x0000000000a00040
 
+# RUN: llvm-bolt %t.exe --reorder-blocks=reverse -update-debug-sections \
+# RUN:   -dwarf-output-path=%T -o %t.bolt.2.exe --write-dwp=true
+# RUN: llvm-dwarfdump --show-form --verbose --debug-info %t.bolt.2.exe.dwp \
+# RUN:   | FileCheck %s --check-prefix=CHECK-DWP-DEBUG
 
 # CHECK-DWP-DEBUG: DW_TAG_compile_unit [1] *
 # CHECK-DWP-DEBUG:  DW_AT_producer [DW_FORM_GNU_str_index]  (indexed (0000000a) string = "clang version 13.0.0")
