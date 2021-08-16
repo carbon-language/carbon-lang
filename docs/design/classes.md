@@ -1004,6 +1004,9 @@ Assert(sp1.first == sp2.key);
 Assert(&sp1.first == &sp1.key);
 ```
 
+**Future work:** This needs to be connected to the broader design of aliases,
+once that lands.
+
 ### Private access
 
 By default, all members of a class are fully publicly accessible. Access can be
