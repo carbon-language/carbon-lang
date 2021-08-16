@@ -25,8 +25,8 @@ class Ptr {
   }
 
   Ptr(std::nullptr_t) = delete;
-  Ptr(const Ptr& other) = default;
 
+  Ptr(const Ptr& other) = default;
   Ptr& operator=(const Ptr& rhs) = default;
 
   auto operator*() const -> T& { return *ptr; }
