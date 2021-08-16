@@ -67,6 +67,6 @@ request:
 -   [0646 - Low context-sensitivity principle](p0646.md)
 -   [0676 - `:!` generic syntax](p0676.md)
 -   [0680 - And, or, not](p0680.md)
--   [0752 - api file default public](p0752.md)
+-   [0752 - `api` file default-`public`](p0752.md)
 
 <!-- endproposals -->

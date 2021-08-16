@@ -338,28 +338,27 @@ for separate compilation.
 
 #### Exporting entities from an API file
 
-In order to actually be part of a library's API, entities must both be in the
-API file and explicitly marked as an API. This is done using the `api` keyword,
-which is only allowed in the API file. For example:
+Entities in the API file are part of the library's API by default. They may be
+marked as `private` to indicate they should only be visible to other parts of
+the library.
 
 ```carbon
 package Geometry library "Shapes" api;
 
-// Circle is marked as an API, and will be available to other libraries as
-// Geometry.Circle.
-api struct Circle { ... }
+// Circle is an API, and will be available to other libraries as
+ Geometry.Circle.
+struct Circle { ... }
 
-// CircleHelper is not marked as an API, and so will not be available to other
-// libraries.
-fn CircleHelper(Circle circle) { ... }
+// CircleHelper is private, and so will not be available to other libraries.
+private fn CircleHelper(Circle circle) { ... }
 
 // Only entities in namespaces should be marked as an API, not the namespace
 // itself.
 namespace Operations;
 
-// Operations.GetCircumference is marked as an API, and will be available to
+// Operations.GetCircumference is an API, and will be available to
 // other libraries as Geometry.Operations.GetCircumference.
-api fn Operations.GetCircumference(Circle circle) { ... }
+fn Operations.GetCircumference(Circle circle) { ... }
 ```
 
 This means that an API file can contain all implementation code for a library.
@@ -373,7 +372,8 @@ However, separate implementation files are still desirable for a few reasons:
 -   From a code maintenance perspective, having smaller files can make a library
     more maintainable.
 
-Use of the `api` keyword is not allowed within files marked as `impl`.
+Entities in an `impl` file are implicitly `private`. The `private` keyword is
+invalid in `impl` files because it would be redundant.
 
 #### Granularity of libraries
 
@@ -403,7 +403,7 @@ package Checksums library "Sha" api;
 
 namespaces Sha256;
 
-api fn Sha256.HexDigest(Bytes data) -> String { ... }
+fn Sha256.HexDigest(Bytes data) -> String { ... }
 ```
 
 Calling code may look like:
@@ -433,7 +433,7 @@ import IDENTIFIER (library NAME_PATH)?;
 ```
 
 An import declares a package entity named after the imported package, and makes
-`api`-tagged entities from the imported library through it. The full name path
+API entities from the imported library available through it. The full name path
 is a concatenation of the names of the package entity, any namespace entities
 applied, and the final entity addressed. Child namespaces or entities may be
 [aliased](/docs/design/aliases.md) if desired.
@@ -443,7 +443,7 @@ For example, given a library:
 ```carbon
 package Math api;
 namespace Trigonometry;
-api fn Trigonometry.Sin(...);
+fn Trigonometry.Sin(...);
 ```
 
 Calling code would import it and use it like:
@@ -570,12 +570,12 @@ server for open source packages. Conflicts can also be addressed by renaming one
 of the packages, either at the source, or as a local modification.
 
 We do need to address the case of package names conflicting with other entity
-names. It's possible that a pre-existing `api` entity will conflict with a new
-import, and that the `api` is infeasible to rename due to existing callers.
-Alternately, the `api` entity may be using an idiomatic name that it would
-contradict naming conventions to rename. In either case, this conflict may exist
-in a single file without otherwise affecting users of the API. This will be
-addressed by [name lookup](/docs/design/name_lookup.md).
+names. It's possible that a pre-existing entity will conflict with a new import,
+and that renaming the entity is infeasible to rename due to existing callers.
+Alternately, the entity may be using an idiomatic name that it would contradict
+naming conventions to rename. In either case, this conflict may exist in a
+single file without otherwise affecting users of the API. This will be addressed
+by [name lookup](/docs/design/name_lookup.md).
 
 ### Potential refactorings
 
@@ -812,6 +812,7 @@ should be part of a larger testing plan.
     -   [Collapse file and library concepts](/proposals/p0107.md#collapse-file-and-library-concepts)
     -   [Collapse the library concept into packages](/proposals/p0107.md#collapse-the-library-concept-into-packages)
     -   [Collapse the package concept into libraries](/proposals/p0107.md#collapse-the-package-concept-into-libraries)
+    -   [Default private](/proposals/p0752.md#default-private)
     -   [Different file type labels](/proposals/p0107.md#different-file-type-labels)
     -   [Function-like syntax](/proposals/p0107.md#function-like-syntax)
     -   [Inlining from implementation files](/proposals/p0107.md#inlining-from-implementation-files)
