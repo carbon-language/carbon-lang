@@ -134,8 +134,8 @@ def _parse_cpp_segments(
                 text_segments.append(content[segment_start:i])
                 text_segments.append(None)
 
-                # If the brace is the first character on its line, use its
-                # indent when wrapping.
+                # If the opening brace is the first character on its line, use
+                # its indent when wrapping.
                 close_brace_indent = 0
                 line_offset = content.rfind("\n", 0, i)
                 if content[line_offset + 1 : i].isspace():
