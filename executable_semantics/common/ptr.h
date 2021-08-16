@@ -18,15 +18,15 @@ class Ptr {
  public:
   explicit Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
 
-  template <typename OtherT, typename std::enable_if<std::is_convertible<
-                                 T*, OtherT*>::value>::type* = nullptr>
+  template <typename OtherT, std::enable_if_t<std::is_convertible_v<
+                                 OtherT*, T*>>* = nullptr>
   Ptr(Ptr<OtherT> other) {
     return Ptr<OtherT>(other.ptr);
   }
 
   Ptr(std::nullptr_t) = delete;
-  Ptr(const Ptr& other) = default;
 
+  Ptr(const Ptr& other) = default;
   Ptr& operator=(const Ptr& rhs) = default;
 
   auto operator*() const -> T& { return *ptr; }
