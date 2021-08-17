@@ -5,8 +5,8 @@
 #include "executable_semantics/ast/pattern.h"
 
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/syntax/paren_contents.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "llvm/Support/Casting.h"
