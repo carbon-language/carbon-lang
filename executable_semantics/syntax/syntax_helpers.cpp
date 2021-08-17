@@ -26,11 +26,13 @@ static void AddIntrinsics(std::list<const Declaration*>* fs) {
                                 global_arena->New<IntrinsicExpression>(
                                     IntrinsicExpression::IntrinsicKind::Print),
                                 false);
-  auto* print = global_arena->New<FunctionDeclaration>(FunctionDefinition(
-      -1, "Print", std::vector<GenericBinding>(),
-      global_arena->New<TuplePattern>(-1, print_fields),
-      global_arena->New<ExpressionPattern>(global_arena->New<TupleLiteral>(-1)),
-      /*is_omitted_return_type=*/false, print_return));
+  auto* print = global_arena->New<FunctionDeclaration>(
+      global_arena->New<FunctionDefinition>(
+          -1, "Print", std::vector<GenericBinding>(),
+          global_arena->New<TuplePattern>(-1, print_fields),
+          global_arena->New<ExpressionPattern>(
+              global_arena->New<TupleLiteral>(-1)),
+          /*is_omitted_return_type=*/false, print_return));
   fs->insert(fs->begin(), print);
 }
 

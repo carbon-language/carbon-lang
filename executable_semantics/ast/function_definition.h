@@ -21,7 +21,6 @@ struct GenericBinding {
 };
 
 struct FunctionDefinition {
-  FunctionDefinition() = default;
   FunctionDefinition(int line_num, std::string name,
                      std::vector<GenericBinding> deduced_params,
                      const TuplePattern* param_pattern,

@@ -39,6 +39,13 @@ struct TCStatement {
   TypeEnv types;
 };
 
+struct TypeCheckContext {
+  // Symbol table mapping names of runtime entities to their type.
+  TypeEnv types;
+  // Symbol table mapping names of compile time entities to their value.
+  Env values;
+};
+
 auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
     -> TCExpression;
 auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,

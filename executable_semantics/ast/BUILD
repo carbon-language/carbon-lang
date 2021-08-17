@@ -19,8 +19,6 @@ cc_library(
         ":pattern",
         ":struct_definition",
         "//common:ostream",
-        "//executable_semantics/interpreter:address",
-        "//executable_semantics/interpreter:containers",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -13,23 +13,9 @@
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/struct_definition.h"
-#include "executable_semantics/interpreter/address.h"
-#include "executable_semantics/interpreter/dictionary.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
-
-class Value;
-
-using TypeEnv = Dictionary<std::string, const Value*>;
-using Env = Dictionary<std::string, Address>;
-
-struct TypeCheckContext {
-  // Symbol table mapping names of runtime entities to their type.
-  TypeEnv types;
-  // Symbol table mapping names of compile time entities to their value.
-  Env values;
-};
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -72,18 +58,18 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(FunctionDefinition definition)
-      : Declaration(Kind::FunctionDeclaration, definition.line_num),
-        definition(std::move(definition)) {}
+  FunctionDeclaration(const FunctionDefinition* definition)
+      : Declaration(Kind::FunctionDeclaration, definition->line_num),
+        definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
     return decl->Tag() == Kind::FunctionDeclaration;
   }
 
-  auto Definition() const -> const FunctionDefinition& { return definition; }
+  auto Definition() const -> const FunctionDefinition& { return *definition; }
 
  private:
-  FunctionDefinition definition;
+  const FunctionDefinition* definition;
 };
 
 class StructDeclaration : public Declaration {
