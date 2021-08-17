@@ -22,7 +22,7 @@ class Arena {
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
     Ptr<T> ptr = smart_ptr->Instance();
     arena.push_back(std::move(smart_ptr));
-    return std::move(ptr);
+    return ptr;
   }
 
   // TODO: Remove. This is only to help findability during migration.
