@@ -29,8 +29,6 @@ namespace Carbon {
 
 State* state = nullptr;
 
-auto PatternMatch(const Value* pat, const Value* val, int line_num)
-    -> std::optional<Env>;
 void Step();
 //
 // Auxiliary Functions
@@ -291,19 +289,20 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
           if (p_tup.Elements().size() != v_tup.Elements().size()) {
-            FATAL_RUNTIME_ERROR(line_num)
+            FATAL_PROGRAM_ERROR(line_num)
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
           }
           Env values;
-          for (const TupleElement& pattern_element : p_tup.Elements()) {
-            const Value* value_field = v_tup.FindField(pattern_element.name);
-            if (value_field == nullptr) {
-              FATAL_RUNTIME_ERROR(line_num)
-                  << "field " << pattern_element.name << "not in " << *v;
+          for (size_t i = 0; i < p_tup.Elements().size(); ++i) {
+            if (p_tup.Elements()[i].name != v_tup.Elements()[i].name) {
+              FATAL_PROGRAM_ERROR(line_num)
+                  << "Tuple field name '" << v_tup.Elements()[i].name
+                  << "' does not match pattern field name '"
+                  << p_tup.Elements()[i].name << "'";
             }
-            std::optional<Env> matches =
-                PatternMatch(pattern_element.value, value_field, line_num);
+            std::optional<Env> matches = PatternMatch(
+                p_tup.Elements()[i].value, v_tup.Elements()[i].value, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -354,6 +353,10 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
         default:
           return std::nullopt;
       }
+    case Value::Kind::AutoType:
+      // `auto` matches any type, without binding any new names. We rely
+      // on the typechecker to ensure that `v` is a type.
+      return Env();
     default:
       if (ValueEqual(p, v, line_num)) {
         return Env();
