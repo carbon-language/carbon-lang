@@ -78,7 +78,8 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
         FATAL_RUNTIME_ERROR(line_num)
             << "alternative " << f << " not in " << *v;
       }
-      return global_arena->New<AlternativeConstructorValue>(f, choice.Name());
+      return global_arena->RawNew<AlternativeConstructorValue>(f,
+                                                               choice.Name());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -122,7 +123,7 @@ auto SetFieldImpl(const Value* value,
       }
       it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
                                line_num);
-      return global_arena->New<TupleValue>(elements);
+      return global_arena->RawNew<TupleValue>(elements);
     }
     default:
       FATAL() << "field access not allowed for value " << *value;
@@ -255,56 +256,56 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
         elements.push_back(
             {.name = element.name, .value = CopyVal(element.value, line_num)});
       }
-      return global_arena->New<TupleValue>(std::move(elements));
+      return global_arena->RawNew<TupleValue>(std::move(elements));
     }
     case Value::Kind::AlternativeValue: {
       const auto& alt = cast<AlternativeValue>(*val);
       const Value* arg = CopyVal(alt.Argument(), line_num);
-      return global_arena->New<AlternativeValue>(alt.AltName(),
-                                                 alt.ChoiceName(), arg);
+      return global_arena->RawNew<AlternativeValue>(alt.AltName(),
+                                                    alt.ChoiceName(), arg);
     }
     case Value::Kind::StructValue: {
       const auto& s = cast<StructValue>(*val);
       const Value* inits = CopyVal(s.Inits(), line_num);
-      return global_arena->New<StructValue>(s.Type(), inits);
+      return global_arena->RawNew<StructValue>(s.Type(), inits);
     }
     case Value::Kind::IntValue:
-      return global_arena->New<IntValue>(cast<IntValue>(*val).Val());
+      return global_arena->RawNew<IntValue>(cast<IntValue>(*val).Val());
     case Value::Kind::BoolValue:
-      return global_arena->New<BoolValue>(cast<BoolValue>(*val).Val());
+      return global_arena->RawNew<BoolValue>(cast<BoolValue>(*val).Val());
     case Value::Kind::FunctionValue: {
       const auto& fn_value = cast<FunctionValue>(*val);
-      return global_arena->New<FunctionValue>(fn_value.Name(), fn_value.Param(),
-                                              fn_value.Body());
+      return global_arena->RawNew<FunctionValue>(
+          fn_value.Name(), fn_value.Param(), fn_value.Body());
     }
     case Value::Kind::PointerValue:
-      return global_arena->New<PointerValue>(cast<PointerValue>(*val).Val());
+      return global_arena->RawNew<PointerValue>(cast<PointerValue>(*val).Val());
     case Value::Kind::ContinuationValue:
       // Copying a continuation is "shallow".
       return val;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*val);
-      return global_arena->New<FunctionType>(fn_type.Deduced(),
-                                             CopyVal(fn_type.Param(), line_num),
-                                             CopyVal(fn_type.Ret(), line_num));
+      return global_arena->RawNew<FunctionType>(
+          fn_type.Deduced(), CopyVal(fn_type.Param(), line_num),
+          CopyVal(fn_type.Ret(), line_num));
     }
     case Value::Kind::PointerType:
-      return global_arena->New<PointerType>(
+      return global_arena->RawNew<PointerType>(
           CopyVal(cast<PointerType>(*val).Type(), line_num));
     case Value::Kind::IntType:
-      return global_arena->New<IntType>();
+      return global_arena->RawNew<IntType>();
     case Value::Kind::BoolType:
-      return global_arena->New<BoolType>();
+      return global_arena->RawNew<BoolType>();
     case Value::Kind::TypeType:
-      return global_arena->New<TypeType>();
+      return global_arena->RawNew<TypeType>();
     case Value::Kind::AutoType:
-      return global_arena->New<AutoType>();
+      return global_arena->RawNew<AutoType>();
     case Value::Kind::ContinuationType:
-      return global_arena->New<ContinuationType>();
+      return global_arena->RawNew<ContinuationType>();
     case Value::Kind::StringType:
-      return global_arena->New<StringType>();
+      return global_arena->RawNew<StringType>();
     case Value::Kind::StringValue:
-      return global_arena->New<StringValue>(cast<StringValue>(*val).Val());
+      return global_arena->RawNew<StringValue>(cast<StringValue>(*val).Val());
     case Value::Kind::VariableType:
     case Value::Kind::StructType:
     case Value::Kind::ChoiceType:
