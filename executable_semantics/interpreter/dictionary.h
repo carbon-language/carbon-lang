@@ -5,12 +5,10 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_DICTIONARY_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_DICTIONARY_H_
 
-#include <list>
+#include <iterator>
 #include <optional>
-#include <string>
 
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/interpreter/list_node.h"
 
 namespace Carbon {
 
@@ -19,6 +17,48 @@ namespace Carbon {
 template <class K, class V>
 class Dictionary {
  public:
+  using ValueType = std::pair<K, V>;
+
+  struct Node {
+    Node(ValueType e, Node* n) : curr(e), next(n) {}
+
+    const ValueType curr;
+    Node* const next;
+
+    // Node cells are part of a "persistent data structure" and are thus
+    // immutable.
+    Node& operator=(const Node&) = delete;
+    Node& operator=(Node&&) = delete;
+  };
+
+  // A forward iterator over elements of a `Node` list.
+  struct Iterator {
+    using value_type = ValueType;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const ValueType*;
+    using reference = const ValueType&;
+    using iterator_category = std::forward_iterator_tag;
+
+    Iterator(Node* x) : p(x) {}
+    Iterator(const Iterator& iter) : p(iter.p) {}
+    Iterator& operator++() {
+      p = p->next;
+      return *this;
+    }
+    Iterator operator++(int) {
+      Iterator tmp(*this);
+      operator++();
+      return tmp;
+    }
+    bool operator==(const Iterator& rhs) const { return p == rhs.p; }
+    bool operator!=(const Iterator& rhs) const { return p != rhs.p; }
+    const ValueType& operator*() { return p->curr; }
+    const ValueType* operator->() { return &p->curr; }
+
+   private:
+    Node* p;
+  };
+
   // Create an empty dictionary.
   Dictionary() { head = nullptr; }
 
@@ -37,11 +77,8 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = global_arena->New<ListNode<std::pair<K, V>>>(std::make_pair(k, v),
-                                                        head);
+    head = global_arena->New<Node>(std::make_pair(k, v), head);
   }
-
-  typedef ListNodeIterator<std::pair<K, V>> Iterator;
 
   // The position of the first element of the dictionary
   // or `end()` if the dictionary is empty.
@@ -51,9 +88,7 @@ class Dictionary {
   auto end() const -> Iterator { return Iterator(nullptr); }
 
  private:
-  Dictionary(ListNode<std::pair<K, V>>* h) : head(h) {}
-
-  ListNode<std::pair<K, V>>* head;
+  Node* head;
 };
 
 }  // namespace Carbon
