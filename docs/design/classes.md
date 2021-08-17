@@ -758,12 +758,8 @@ default values for fields, and so may be initialized with a
 #### Assignment
 
 Assignment to a struct value is also allowed in a function with access to all
-the data fields of a class.
-
-Field defaults are only used when initializing a new value, not assigning to an
-existing variable. When assigning, values for all the fields must be specified.
-This avoids ambiguity about whether to use the default value or the previous
-value for a field.
+the data fields of a class. Assignment always overwrites all of the field
+members.
 
 ```
 var tl: TextLabel = {.x = 1, .y = 2};
@@ -772,16 +768,23 @@ Assert(tl.text == "default");
 // ✅ Allowed: assigns all fields
 tl = {.x = 3, .y = 4, .text = "new"};
 
-// ❌ Forbidden: should tl.text == "default" or "new"?
-tl = {.x = 5, .y = 6};
-
 // ✅ Allowed: This statement is evaluated in two steps:
 // 1. {.x = 5, .y = 6} is converted into a new TextLabel value,
 //    using default for field `text`.
 // 2. tl is assigned to a TextLabel, which has values for all
 //    fields.
-tl = {.x = 5, .y = 6} as TextLabel;
+tl = {.x = 5, .y = 6};
 Assert(tl.text == "default");
+```
+
+**Open question:** This behavior might be surprising because there is an
+ambiguity about whether to use the default value or the previous value for a
+field. We could require all fields to be specified when assigning, and only use
+field defaults when initializing a new value.
+
+```
+// ❌ Forbidden: should tl.text == "default" or "new"?
+tl = {.x = 5, .y = 6};
 ```
 
 ### Member functions
@@ -913,15 +916,23 @@ class Point {
     return Create(xy, xy);
   }
 
+  fn CreateXAxis(x: f32) -> Point;
+
   fn Angle[me: Self]() -> f32;
 
   var x: f32;
   var y: f32;
 }
 
+fn Point.CreateXAxis(x: f32) -> Point;
+  // ✅ Allowed: `Point` type is complete.
+  // Members of `Point` like `Create` are in scope.
+  return Create(x, 0);
+}
+
 fn Point.Angle[me: Self]() -> f32 {
-  // ✅ Allowed: `Point` type is complete,
-  // function is checked immediately.
+  // ✅ Allowed: `Point` type is complete.
+  // Function is checked immediately.
   return Math.ATan2(me.y, me.x);
 }
 ```
