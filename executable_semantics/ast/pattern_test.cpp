@@ -52,7 +52,7 @@ TEST(PatternTest, UnaryNoCommaAsPattern) {
   // ```
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/2)}},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/2)}},
       .has_trailing_comma = false};
 
   const Pattern* pattern = PatternFromParenContents(/*line_num=*/1, contents);
@@ -63,7 +63,7 @@ TEST(PatternTest, UnaryNoCommaAsPattern) {
 TEST(PatternTest, UnaryNoCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/2)}},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/2)}},
       .has_trailing_comma = false};
 
   const TuplePattern* tuple =
@@ -75,7 +75,7 @@ TEST(PatternTest, UnaryNoCommaAsTuplePattern) {
 TEST(PatternTest, UnaryWithCommaAsPattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/2)}},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/2)}},
       .has_trailing_comma = true};
 
   const Pattern* pattern = PatternFromParenContents(/*line_num=*/1, contents);
@@ -88,7 +88,7 @@ TEST(PatternTest, UnaryWithCommaAsPattern) {
 TEST(PatternTest, UnaryWithCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/2)}},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/2)}},
       .has_trailing_comma = true};
 
   const TuplePattern* tuple =
@@ -100,9 +100,9 @@ TEST(PatternTest, UnaryWithCommaAsTuplePattern) {
 TEST(PatternTest, BinaryAsPattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/2)},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/2)},
                    {.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/3)}},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/3)}},
       .has_trailing_comma = true};
 
   const Pattern* pattern = PatternFromParenContents(/*line_num=*/1, contents);
@@ -115,9 +115,9 @@ TEST(PatternTest, BinaryAsPattern) {
 TEST(PatternTest, BinaryAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/2)},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/2)},
                    {.name = std::nullopt,
-                    .term = global_arena->New<AutoPattern>(/*line_num=*/3)}},
+                    .term = global_arena->RawNew<AutoPattern>(/*line_num=*/3)}},
       .has_trailing_comma = true};
 
   const TuplePattern* tuple =

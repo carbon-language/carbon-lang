@@ -213,75 +213,75 @@ input: declaration_list
 ;
 expression:
   identifier
-    { $$ = global_arena->New<IdentifierExpression>(yylineno, $1); }
+    { $$ = global_arena->RawNew<IdentifierExpression>(yylineno, $1); }
 | expression designator
-    { $$ = global_arena->New<FieldAccessExpression>(yylineno, $1, $2); }
+    { $$ = global_arena->RawNew<FieldAccessExpression>(yylineno, $1, $2); }
 | expression "[" expression "]"
-    { $$ = global_arena->New<IndexExpression>(yylineno, $1, $3); }
+    { $$ = global_arena->RawNew<IndexExpression>(yylineno, $1, $3); }
 | integer_literal
-    { $$ = global_arena->New<IntLiteral>(yylineno, $1); }
+    { $$ = global_arena->RawNew<IntLiteral>(yylineno, $1); }
 | string_literal
-    { $$ = global_arena->New<StringLiteral>(yylineno, $1); }
+    { $$ = global_arena->RawNew<StringLiteral>(yylineno, $1); }
 | TRUE
-    { $$ = global_arena->New<BoolLiteral>(yylineno, true); }
+    { $$ = global_arena->RawNew<BoolLiteral>(yylineno, true); }
 | FALSE
-    { $$ = global_arena->New<BoolLiteral>(yylineno, false); }
+    { $$ = global_arena->RawNew<BoolLiteral>(yylineno, false); }
 | sized_type_literal
     {
       int val;
       CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
       CHECK($1[0] == 'i' && val == 32)  << "Only i32 is supported for now: " << $1;
-      $$ = global_arena->New<IntTypeLiteral>(yylineno);
+      $$ = global_arena->RawNew<IntTypeLiteral>(yylineno);
     }
 | STRING
-    { $$ = global_arena->New<StringTypeLiteral>(yylineno); }
+    { $$ = global_arena->RawNew<StringTypeLiteral>(yylineno); }
 | BOOL
-    { $$ = global_arena->New<BoolTypeLiteral>(yylineno); }
+    { $$ = global_arena->RawNew<BoolTypeLiteral>(yylineno); }
 | TYPE
-    { $$ = global_arena->New<TypeTypeLiteral>(yylineno); }
+    { $$ = global_arena->RawNew<TypeTypeLiteral>(yylineno); }
 | CONTINUATION_TYPE
-    { $$ = global_arena->New<ContinuationTypeLiteral>(yylineno); }
+    { $$ = global_arena->RawNew<ContinuationTypeLiteral>(yylineno); }
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Eq, std::vector<const Expression*>({$1, $3})); }
 | expression "+" expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Add, std::vector<const Expression*>({$1, $3})); }
 | expression "-" expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Sub, std::vector<const Expression*>({$1, $3})); }
 | expression BINARY_STAR expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Mul, std::vector<const Expression*>({$1, $3})); }
 | expression AND expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::And, std::vector<const Expression*>({$1, $3})); }
 | expression OR expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Or, std::vector<const Expression*>({$1, $3})); }
 | NOT expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Not, std::vector<const Expression*>({$2})); }
 | "-" expression %prec UNARY_MINUS
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Neg, std::vector<const Expression*>({$2})); }
 | PREFIX_STAR expression
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Deref, std::vector<const Expression*>({$2})); }
 | UNARY_STAR expression %prec PREFIX_STAR
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Deref, std::vector<const Expression*>({$2})); }
 | expression tuple
-    { $$ = global_arena->New<CallExpression>(yylineno, $1, $2); }
+    { $$ = global_arena->RawNew<CallExpression>(yylineno, $1, $2); }
 | expression POSTFIX_STAR
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Ptr, std::vector<const Expression*>({$1})); }
 | expression UNARY_STAR
-    { $$ = global_arena->New<PrimitiveOperatorExpression>(
+    { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Ptr, std::vector<const Expression*>({$1})); }
 | FNTY tuple return_type
-    { $$ = global_arena->New<FunctionTypeLiteral>(
+    { $$ = global_arena->RawNew<FunctionTypeLiteral>(
         yylineno, $2, $3.first, $3.second); }
 ;
 designator: "." identifier { $$ = $2; }
@@ -329,17 +329,17 @@ pattern:
   non_expression_pattern
     { $$ = $1; }
 | expression
-    { $$ = global_arena->New<ExpressionPattern>($1); }
+    { $$ = global_arena->RawNew<ExpressionPattern>($1); }
 ;
 non_expression_pattern:
   AUTO
-    { $$ = global_arena->New<AutoPattern>(yylineno); }
+    { $$ = global_arena->RawNew<AutoPattern>(yylineno); }
 | binding_lhs ":" pattern
-    { $$ = global_arena->New<BindingPattern>(yylineno, $1, $3); }
+    { $$ = global_arena->RawNew<BindingPattern>(yylineno, $1, $3); }
 | paren_pattern
     { $$ = $1; }
 | expression tuple_pattern
-    { $$ = global_arena->New<AlternativePattern>(yylineno, $1, $2); }
+    { $$ = global_arena->RawNew<AlternativePattern>(yylineno, $1, $2); }
 ;
 binding_lhs:
   identifier { $$ = $1; }
@@ -373,7 +373,7 @@ paren_pattern_contents:
 | paren_pattern_contents "," paren_expression_element
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name, .term = global_arena->New<ExpressionPattern>($3.term)});
+      $$.elements.push_back({.name = $3.name, .term = global_arena->RawNew<ExpressionPattern>($3.term)});
     }
 | paren_pattern_contents "," paren_pattern_element
     {
@@ -395,24 +395,24 @@ tuple_pattern: paren_pattern_base
 // rules out the possibility of an `expression` at this point.
 maybe_empty_tuple_pattern:
   "(" ")"
-    { $$ = global_arena->New<TuplePattern>(yylineno, std::vector<TuplePattern::Field>()); }
+    { $$ = global_arena->RawNew<TuplePattern>(yylineno, std::vector<TuplePattern::Field>()); }
 | tuple_pattern
     { $$ = $1; }
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = global_arena->New<std::pair<const Pattern*, const Statement*>>($2, $4); }
+    { $$ = global_arena->RawNew<std::pair<const Pattern*, const Statement*>>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = global_arena->New<BindingPattern>(
-          yylineno, std::nullopt, global_arena->New<AutoPattern>(yylineno));
-      $$ = global_arena->New<std::pair<const Pattern*, const Statement*>>(vp, $3);
+      auto vp = global_arena->RawNew<BindingPattern>(
+          yylineno, std::nullopt, global_arena->RawNew<AutoPattern>(yylineno));
+      $$ = global_arena->RawNew<std::pair<const Pattern*, const Statement*>>(vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
-      $$ = global_arena->New<std::list<
+      $$ = global_arena->RawNew<std::list<
           std::pair<const Pattern*, const Statement*>>>();
     }
 | clause clause_list
@@ -420,35 +420,35 @@ clause_list:
 ;
 statement:
   expression "=" expression ";"
-    { $$ = global_arena->New<Assign>(yylineno, $1, $3); }
+    { $$ = global_arena->RawNew<Assign>(yylineno, $1, $3); }
 | VAR pattern "=" expression ";"
-    { $$ = global_arena->New<VariableDefinition>(yylineno, $2, $4); }
+    { $$ = global_arena->RawNew<VariableDefinition>(yylineno, $2, $4); }
 | expression ";"
-    { $$ = global_arena->New<ExpressionStatement>(yylineno, $1); }
+    { $$ = global_arena->RawNew<ExpressionStatement>(yylineno, $1); }
 | if_statement
     { $$ = $1; }
 | WHILE "(" expression ")" block
-    { $$ = global_arena->New<While>(yylineno, $3, $5); }
+    { $$ = global_arena->RawNew<While>(yylineno, $3, $5); }
 | BREAK ";"
-    { $$ = global_arena->New<Break>(yylineno); }
+    { $$ = global_arena->RawNew<Break>(yylineno); }
 | CONTINUE ";"
-    { $$ = global_arena->New<Continue>(yylineno); }
+    { $$ = global_arena->RawNew<Continue>(yylineno); }
 | RETURN return_expression ";"
-    { $$ = global_arena->New<Return>(yylineno, $2.first, $2.second); }
+    { $$ = global_arena->RawNew<Return>(yylineno, $2.first, $2.second); }
 | block
     { $$ = $1; }
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = global_arena->New<Match>(yylineno, $3, $6); }
+    { $$ = global_arena->RawNew<Match>(yylineno, $3, $6); }
 | CONTINUATION identifier statement
-    { $$ = global_arena->New<Continuation>(yylineno, $2, $3); }
+    { $$ = global_arena->RawNew<Continuation>(yylineno, $2, $3); }
 | RUN expression ";"
-    { $$ = global_arena->New<Run>(yylineno, $2); }
+    { $$ = global_arena->RawNew<Run>(yylineno, $2); }
 | AWAIT ";"
-    { $$ = global_arena->New<Await>(yylineno); }
+    { $$ = global_arena->RawNew<Await>(yylineno); }
 ;
 if_statement:
   IF "(" expression ")" block optional_else
-    { $$ = global_arena->New<If>(yylineno, $3, $5, $6); }
+    { $$ = global_arena->RawNew<If>(yylineno, $3, $5, $6); }
 ;
 optional_else:
   // Empty
@@ -460,7 +460,7 @@ optional_else:
 ;
 return_expression:
   // Empty
-    { $$ = {global_arena->New<TupleLiteral>(yylineno), true}; }
+    { $$ = {global_arena->RawNew<TupleLiteral>(yylineno), true}; }
 | expression
     { $$ = {$1, false}; }
 ;
@@ -468,15 +468,15 @@ statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
-    { $$ = global_arena->New<Sequence>(yylineno, $1, $2); }
+    { $$ = global_arena->RawNew<Sequence>(yylineno, $1, $2); }
 ;
 block:
   "{" statement_list "}"
-    { $$ = global_arena->New<Block>(yylineno, $2); }
+    { $$ = global_arena->RawNew<Block>(yylineno, $2); }
 ;
 return_type:
   // Empty
-    { $$ = {global_arena->New<TupleLiteral>(yylineno), true}; }
+    { $$ = {global_arena->RawNew<TupleLiteral>(yylineno), true}; }
 | ARROW expression %prec FNARROW
     { $$ = {$2, false}; }
 ;
@@ -509,34 +509,34 @@ deduced_params:
 function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
-      $$ = global_arena->New<FunctionDefinition>(
+      $$ = global_arena->RawNew<FunctionDefinition>(
           yylineno, $2, $3, $4,
-          global_arena->New<ExpressionPattern>($5.first),
+          global_arena->RawNew<ExpressionPattern>($5.first),
           $5.second, $6);
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
     {
       // The return type is not considered "omitted" because it's automatic from
       // the expression.
-      $$ = global_arena->New<FunctionDefinition>(
+      $$ = global_arena->RawNew<FunctionDefinition>(
           yylineno, $2, $3, $4,
-          global_arena->New<AutoPattern>(yylineno), true,
-          global_arena->New<Return>(yylineno, $6, true));
+          global_arena->RawNew<AutoPattern>(yylineno), true,
+          global_arena->RawNew<Return>(yylineno, $6, true));
     }
 ;
 function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
     {
-      $$ = global_arena->New<FunctionDefinition>(
+      $$ = global_arena->RawNew<FunctionDefinition>(
           yylineno, $2, $3, $4,
-          global_arena->New<ExpressionPattern>($5.first),
+          global_arena->RawNew<ExpressionPattern>($5.first),
           $5.second, nullptr); }
 ;
 variable_declaration: identifier ":" pattern
-    { $$ = global_arena->New<BindingPattern>(yylineno, $1, $3); }
+    { $$ = global_arena->RawNew<BindingPattern>(yylineno, $1, $3); }
 ;
 member: VAR variable_declaration ";"
-    { $$ = global_arena->New<FieldMember>(yylineno, $2); }
+    { $$ = global_arena->RawNew<FieldMember>(yylineno, $2); }
 ;
 member_list:
   // Empty
@@ -550,7 +550,7 @@ alternative:
 | identifier
     {
       $$ = std::pair<std::string, const Expression*>(
-          $1, global_arena->New<TupleLiteral>(yylineno));
+          $1, global_arena->RawNew<TupleLiteral>(yylineno));
     }
 ;
 alternative_list:
@@ -566,20 +566,20 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = global_arena->New<FunctionDeclaration>($1); }
+    { $$ = global_arena->RawNew<FunctionDeclaration>($1); }
 | function_declaration
-    { $$ = global_arena->New<FunctionDeclaration>($1); }
+    { $$ = global_arena->RawNew<FunctionDeclaration>($1); }
 | STRUCT identifier "{" member_list "}"
     {
-      $$ = global_arena->New<StructDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->RawNew<StructDeclaration>(yylineno, $2, $4);
     }
 | CHOICE identifier "{" alternative_list "}"
     {
-      $$ = global_arena->New<ChoiceDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->RawNew<ChoiceDeclaration>(yylineno, $2, $4);
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = global_arena->New<VariableDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->RawNew<VariableDeclaration>(yylineno, $2, $4);
     }
 ;
 declaration_list:
