@@ -20,9 +20,7 @@ class Ptr {
 
   template <typename OtherT,
             std::enable_if_t<std::is_convertible_v<OtherT*, T*>>* = nullptr>
-  Ptr(Ptr<OtherT> other) {
-    return Ptr<OtherT>(other.ptr);
-  }
+  Ptr(Ptr<OtherT> other) : ptr(other.Get()) {}
 
   Ptr(std::nullptr_t) = delete;
 
