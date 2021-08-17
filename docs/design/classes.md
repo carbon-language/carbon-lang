@@ -879,16 +879,17 @@ after any names needed to describe its type.
 
 When defining a member function lexically inline, we delay type checking of the
 function body until the definition of the current type is complete. This means
-that member lookup is also delayed. That means that you can reference `me.F()`
+that name lookup *for members of objects* is also delayed. That means that you can reference `me.F()`
 in a lexically inline method definition even before the declaration of `F` in
-that class definition. However, unqualified names still need to be declared
-before.
+that class definition. However, other names still need to be declared
+before they are used. This includes unqualified names, names within namespaces,
+and names *for members of types*.
 
 ```
 class Point {
   fn Distance[me: Self]() -> f32 {
-    // ✅ Allowed: look up of `x` and `y` delayed until
-    // `type_of(me) == Self` is complete.
+    // ✅ Allowed: `x` and `y` are names for members of an object,
+    // and so lookup is delayed until `type_of(me) == Self` is complete.
     return Math.Sqrt(me.x * me.x + me.y * me.y);
   }
 
@@ -897,11 +898,11 @@ class Point {
     return Create(r * Math.Cos(theta), r * Math.Sin(theta));
   }
   fn CreatePolarValid1(r: f32, theta: f32) -> Point {
-    // ✅ Allowed: look up of `Create` delayed until `Point` is complete.
+    // ❌ Forbidden: `Create` is not yet declared.
     return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
   }
   fn CreatePolarValid2(r: f32, theta: f32) -> Point {
-    // ✅ Allowed: look up of `Create` delayed until `Self` is complete.
+    // ❌ Forbidden: `Create` is not yet declared.
     return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
   }
 
