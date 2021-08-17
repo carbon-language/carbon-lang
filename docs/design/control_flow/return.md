@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Returning empty tuples](#returning-empty-tuples)
     -   [`returned var`](#returned-var)
     -   [`return` and initialization](#return-and-initialization)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -165,7 +166,7 @@ avoid copies.
 > featuers and therefore they are never "optimizations" or done implicitly or
 > optionally.
 
-# Alternatives considered
+## Alternatives considered
 
 -   [Implicit or expression returns](/proposals/p0415.md#implicit-or-expression-returns)
 -   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
