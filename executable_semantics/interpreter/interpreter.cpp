@@ -29,8 +29,8 @@ namespace Carbon {
 
 State* state = nullptr;
 
-auto PatternMatch(const Value* pat, const Value* val, Env,
-                  std::list<std::string>*, int) -> std::optional<Env>;
+auto PatternMatch(const Value* pat, const Value* val, int line_num)
+    -> std::optional<Env>;
 void Step();
 //
 // Auxiliary Functions
@@ -201,12 +201,17 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     case Value::Kind::FunctionValue: {
       const auto& fn = cast<FunctionValue>(*operas[0]);
       // Bind arguments to parameters
-      std::list<std::string> params;
       std::optional<Env> matches =
-          PatternMatch(fn.Param(), operas[1], globals, &params, line_num);
+          PatternMatch(fn.Param(), operas[1], line_num);
       CHECK(matches) << "internal error in call_function, pattern match failed";
       // Create the new frame and push it on the stack
-      auto* scope = global_arena->RawNew<Scope>(*matches, params);
+      Env values = globals;
+      std::list<std::string> params;
+      for (const auto& [name, value] : *matches) {
+        values.Set(name, value);
+        params.push_back(name);
+      }
+      auto* scope = global_arena->RawNew<Scope>(values, params);
       auto* frame = global_arena->RawNew<Frame>(
           fn.Name(), Stack(scope),
           Stack<Action*>(global_arena->RawNew<StatementAction>(fn.Body())));
@@ -266,20 +271,16 @@ void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
   frame->todo.Push(global_arena->RawNew<ValAction>(tv));
 }
 
-// Returns an updated environment that includes the bindings of
-//    pattern variables to their matched values, if matching succeeds.
-//
-// The names of the pattern variables are added to the vars parameter.
-// Returns nullopt if the value doesn't match the pattern.
-auto PatternMatch(const Value* p, const Value* v, Env values,
-                  std::list<std::string>* vars, int line_num)
+// Attempts to match `v` against the pattern `p`. If matching succeeds, returns
+// the bindings of pattern variables to their matched values.
+auto PatternMatch(const Value* p, const Value* v, int line_num)
     -> std::optional<Env> {
   switch (p->Tag()) {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
+      Env values;
       if (placeholder.Name().has_value()) {
         Address a = state->heap.AllocateValue(CopyVal(v, line_num));
-        vars->push_back(*placeholder.Name());
         values.Set(*placeholder.Name(), a);
       }
       return values;
@@ -294,18 +295,21 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
           }
+          Env values;
           for (const TupleElement& pattern_element : p_tup.Elements()) {
             const Value* value_field = v_tup.FindField(pattern_element.name);
             if (value_field == nullptr) {
               FATAL_RUNTIME_ERROR(line_num)
                   << "field " << pattern_element.name << "not in " << *v;
             }
-            std::optional<Env> matches = PatternMatch(
-                pattern_element.value, value_field, values, vars, line_num);
+            std::optional<Env> matches =
+                PatternMatch(pattern_element.value, value_field, line_num);
             if (!matches) {
               return std::nullopt;
             }
-            values = *matches;
+            for (const auto& [name, value] : *matches) {
+              values.Set(name, value);
+            }
           }  // for
           return values;
         }
@@ -321,12 +325,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
               p_alt.AltName() != v_alt.AltName()) {
             return std::nullopt;
           }
-          std::optional<Env> matches = PatternMatch(
-              p_alt.Argument(), v_alt.Argument(), values, vars, line_num);
-          if (!matches) {
-            return std::nullopt;
-          }
-          return *matches;
+          return PatternMatch(p_alt.Argument(), v_alt.Argument(), line_num);
         }
         default:
           FATAL() << "expected a choice alternative in pattern, not " << *v;
@@ -336,19 +335,28 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
         case Value::Kind::FunctionType: {
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
-          std::optional<Env> matches =
-              PatternMatch(p_fn.Param(), v_fn.Param(), values, vars, line_num);
-          if (!matches) {
+          std::optional<Env> param_matches =
+              PatternMatch(p_fn.Param(), v_fn.Param(), line_num);
+          if (!param_matches) {
             return std::nullopt;
           }
-          return PatternMatch(p_fn.Ret(), v_fn.Ret(), *matches, vars, line_num);
+          std::optional<Env> ret_matches =
+              PatternMatch(p_fn.Ret(), v_fn.Ret(), line_num);
+          if (!ret_matches) {
+            return std::nullopt;
+          }
+          Env values = *param_matches;
+          for (const auto& [name, value] : *ret_matches) {
+            values.Set(name, value);
+          }
+          return values;
         }
         default:
           return std::nullopt;
       }
     default:
       if (ValueEqual(p, v, line_num)) {
-        return values;
+        return Env();
       } else {
         return std::nullopt;
       }
@@ -913,12 +921,15 @@ void StepStmt() {
         } else {  // try to match
           auto v = act->Results()[0];
           auto pat = act->Results()[clause_num + 1];
-          auto values = CurrentEnv(state);
-          std::list<std::string> vars;
-          std::optional<Env> matches =
-              PatternMatch(pat, v, values, &vars, stmt->LineNumber());
+          std::optional<Env> matches = PatternMatch(pat, v, stmt->LineNumber());
           if (matches) {  // we have a match, start the body
-            auto* new_scope = global_arena->RawNew<Scope>(*matches, vars);
+            Env values = CurrentEnv(state);
+            std::list<std::string> vars;
+            for (const auto& [name, value] : *matches) {
+              values.Set(name, value);
+              vars.push_back(name);
+            }
+            auto* new_scope = global_arena->RawNew<Scope>(values, vars);
             frame->scopes.Push(new_scope);
             const Statement* body_block =
                 global_arena->RawNew<Block>(stmt->LineNumber(), c->second);
@@ -1025,13 +1036,14 @@ void StepStmt() {
         const Value* v = act->Results()[0];
         const Value* p = act->Results()[1];
 
-        std::optional<Env> matches =
-            PatternMatch(p, v, frame->scopes.Top()->values,
-                         &frame->scopes.Top()->locals, stmt->LineNumber());
+        std::optional<Env> matches = PatternMatch(p, v, stmt->LineNumber());
         CHECK(matches)
             << stmt->LineNumber()
             << ": internal error in variable definition, match failed";
-        frame->scopes.Top()->values = *matches;
+        for (const auto& [name, value] : *matches) {
+          frame->scopes.Top()->values.Set(name, value);
+          frame->scopes.Top()->locals.push_back(name);
+        }
         frame->todo.Pop(1);
       }
       break;
