@@ -583,6 +583,11 @@ public:
     return false;
   }
 
+  virtual bool isPacked(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// If non-zero, this is used to fill the executable space with instructions
   /// that will trap. Defaults to 0.
   virtual unsigned getTrapFillValue() const { return 0; }
@@ -1568,6 +1573,27 @@ public:
   /// Returns true on success.
   virtual bool reverseBranchCondition(MCInst &Inst, const MCSymbol *TBB,
                                       MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool replaceBranchCondition(MCInst &Inst, const MCSymbol *TBB,
+                                      MCContext *Ctx, unsigned CC) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual unsigned getInvertedCondCode(unsigned CC) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual unsigned getCondCodesLogicalOr(unsigned CC1, unsigned CC2) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isValidCondCode(unsigned CC) const {
     llvm_unreachable("not implemented");
     return false;
   }

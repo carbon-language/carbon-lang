@@ -38,6 +38,7 @@ add_llvm_library(LLVMBOLTPasses
   StackReachingUses.cpp
   StokeInfo.cpp
   TailDuplication.cpp
+  ThreeWayBranch.cpp
   ValidateInternalCalls.cpp
   VeneerElimination.cpp
   RetpolineInsertion.cpp

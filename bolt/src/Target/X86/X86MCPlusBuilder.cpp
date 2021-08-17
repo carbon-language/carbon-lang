@@ -111,28 +111,6 @@ unsigned getShortArithOpcode(unsigned Opcode) {
   }
 }
 
-unsigned getInvertedCondCode(unsigned CC) {
-  switch (CC) {
-  default: return X86::COND_INVALID;
-  case X86::COND_E:  return X86::COND_NE;
-  case X86::COND_NE: return X86::COND_E;
-  case X86::COND_L:  return X86::COND_GE;
-  case X86::COND_LE: return X86::COND_G;
-  case X86::COND_G:  return X86::COND_LE;
-  case X86::COND_GE: return X86::COND_L;
-  case X86::COND_B:  return X86::COND_AE;
-  case X86::COND_BE: return X86::COND_A;
-  case X86::COND_A:  return X86::COND_BE;
-  case X86::COND_AE: return X86::COND_B;
-  case X86::COND_S:  return X86::COND_NS;
-  case X86::COND_NS: return X86::COND_S;
-  case X86::COND_P:  return X86::COND_NP;
-  case X86::COND_NP: return X86::COND_P;
-  case X86::COND_O:  return X86::COND_NO;
-  case X86::COND_NO: return X86::COND_O;
-  }
-}
-
 bool isADD(unsigned Opcode) {
   switch (Opcode) {
   default:
@@ -422,6 +400,86 @@ public:
     }
   }
 
+  unsigned getInvertedCondCode(unsigned CC) const override {
+    switch (CC) {
+    default: return X86::COND_INVALID;
+    case X86::COND_E:  return X86::COND_NE;
+    case X86::COND_NE: return X86::COND_E;
+    case X86::COND_L:  return X86::COND_GE;
+    case X86::COND_LE: return X86::COND_G;
+    case X86::COND_G:  return X86::COND_LE;
+    case X86::COND_GE: return X86::COND_L;
+    case X86::COND_B:  return X86::COND_AE;
+    case X86::COND_BE: return X86::COND_A;
+    case X86::COND_A:  return X86::COND_BE;
+    case X86::COND_AE: return X86::COND_B;
+    case X86::COND_S:  return X86::COND_NS;
+    case X86::COND_NS: return X86::COND_S;
+    case X86::COND_P:  return X86::COND_NP;
+    case X86::COND_NP: return X86::COND_P;
+    case X86::COND_O:  return X86::COND_NO;
+    case X86::COND_NO: return X86::COND_O;
+    }
+  }
+
+  unsigned getCondCodesLogicalOr(unsigned CC1, unsigned CC2) const override {
+    enum DecodedCondCode : uint8_t {
+      DCC_EQUAL = 0x1,
+      DCC_GREATER = 0x2,
+      DCC_LESSER = 0x4,
+      DCC_GREATER_OR_LESSER = 0x6,
+      DCC_UNSIGNED = 0x8,
+      DCC_SIGNED = 0x10,
+      DCC_INVALID = 0x20,
+    };
+
+    auto decodeCondCode = [&](unsigned CC) -> uint8_t {
+      switch (CC) {
+      default: return DCC_INVALID;
+      case X86::COND_E: return DCC_EQUAL;
+      case X86::COND_NE: return DCC_GREATER | DCC_LESSER;
+      case X86::COND_L: return DCC_LESSER | DCC_SIGNED;
+      case X86::COND_LE: return DCC_EQUAL | DCC_LESSER | DCC_SIGNED;
+      case X86::COND_G: return DCC_GREATER | DCC_SIGNED;
+      case X86::COND_GE: return DCC_GREATER | DCC_EQUAL | DCC_SIGNED;
+      case X86::COND_B: return DCC_LESSER | DCC_UNSIGNED;
+      case X86::COND_BE: return DCC_EQUAL | DCC_LESSER | DCC_UNSIGNED;
+      case X86::COND_A: return DCC_GREATER | DCC_UNSIGNED;
+      case X86::COND_AE: return DCC_GREATER | DCC_EQUAL | DCC_UNSIGNED;
+      }
+    };
+
+    uint8_t DCC = decodeCondCode(CC1) | decodeCondCode(CC2);
+
+    if (DCC & DCC_INVALID)
+      return X86::COND_INVALID;
+
+    if (DCC & DCC_SIGNED && DCC & DCC_UNSIGNED)
+      return X86::COND_INVALID;
+
+    switch (DCC) {
+      default: return X86::COND_INVALID;
+      case DCC_EQUAL | DCC_LESSER | DCC_SIGNED: return X86::COND_LE;
+      case DCC_EQUAL | DCC_LESSER | DCC_UNSIGNED: return X86::COND_BE;
+      case DCC_EQUAL | DCC_GREATER | DCC_SIGNED: return X86::COND_GE;
+      case DCC_EQUAL | DCC_GREATER | DCC_UNSIGNED: return X86::COND_AE;
+      case DCC_GREATER | DCC_LESSER | DCC_SIGNED: return X86::COND_NE;
+      case DCC_GREATER | DCC_LESSER | DCC_UNSIGNED: return X86::COND_NE;
+      case DCC_GREATER | DCC_LESSER: return X86::COND_NE;
+      case DCC_EQUAL | DCC_SIGNED: return X86::COND_E;
+      case DCC_EQUAL | DCC_UNSIGNED: return X86::COND_E;
+      case DCC_EQUAL: return X86::COND_E;
+      case DCC_LESSER | DCC_SIGNED: return X86::COND_L;
+      case DCC_LESSER | DCC_UNSIGNED: return X86::COND_B;
+      case DCC_GREATER | DCC_SIGNED: return X86::COND_G;
+      case DCC_GREATER | DCC_UNSIGNED: return X86::COND_A;
+    }
+  }
+
+  bool isValidCondCode(unsigned CC) const override {
+    return (CC != X86::COND_INVALID);
+  }
+
   bool isBreakpoint(const MCInst &Inst) const override {
     return Inst.getOpcode() == X86::INT3;
   }
@@ -652,6 +710,11 @@ public:
     }
     return (Inst.getOperand(0).getReg() ==
             Inst.getOperand(2).getReg());
+  }
+
+  bool isPacked(const MCInst &Inst) const override {
+    const MCInstrDesc &Desc = Info->get(Inst.getOpcode());
+    return (Desc.TSFlags & X86II::OpPrefixMask) == X86II::PD;
   }
 
   unsigned getTrapFillValue() const override { return 0xCC; }
@@ -3247,6 +3310,16 @@ public:
     unsigned InvCC = getInvertedCondCode(getCondCode(Inst));
     assert(InvCC != X86::COND_INVALID && "invalid branch instruction");
     Inst.getOperand(Info->get(Inst.getOpcode()).NumOperands - 1).setImm(InvCC);
+    Inst.getOperand(0) = MCOperand::createExpr(
+        MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx));
+    return true;
+  }
+
+  bool replaceBranchCondition(MCInst &Inst, const MCSymbol *TBB, MCContext *Ctx,
+                              unsigned CC) const override {
+    if (CC == X86::COND_INVALID)
+      return false;
+    Inst.getOperand(Info->get(Inst.getOpcode()).NumOperands - 1).setImm(CC);
     Inst.getOperand(0) = MCOperand::createExpr(
         MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx));
     return true;

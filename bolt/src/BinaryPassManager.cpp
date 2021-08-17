@@ -29,6 +29,7 @@
 #include "Passes/SplitFunctions.h"
 #include "Passes/StokeInfo.h"
 #include "Passes/TailDuplication.h"
+#include "Passes/ThreeWayBranch.h"
 #include "Passes/ValidateInternalCalls.h"
 #include "Passes/VeneerElimination.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -82,6 +83,11 @@ static cl::opt<bool> TailDuplicationFlag(
     "tail-duplication",
     cl::desc("duplicate unconditional branches that cross a cache line"),
     cl::ZeroOrMore, cl::ReallyHidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool> ThreeWayBranchFlag("three-way-branch",
+                                        cl::desc("reorder three way branches"),
+                                        cl::ZeroOrMore, cl::ReallyHidden,
+                                        cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintJTFootprintReduction("print-after-jt-footprint-reduction",
@@ -445,6 +451,9 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
                        opts::ICF);
 
   Manager.registerPass(std::make_unique<PLTCall>(PrintPLT));
+
+  Manager.registerPass(std::make_unique<ThreeWayBranch>(),
+                       opts::ThreeWayBranchFlag);
 
   Manager.registerPass(std::make_unique<ReorderBasicBlocks>(PrintReordered));
 
