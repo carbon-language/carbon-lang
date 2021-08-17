@@ -17,9 +17,9 @@ namespace Carbon {
 template <class K, class V>
 class Dictionary {
  public:
-  using ValueType = std::pair<K, V>;
-
   struct Node {
+    using ValueType = std::pair<K, V>;
+
     Node(ValueType e, Node* n) : curr(e), next(n) {}
 
     const ValueType curr;
@@ -33,10 +33,10 @@ class Dictionary {
 
   // A forward iterator over elements of a `Node` list.
   struct Iterator {
-    using value_type = ValueType;
+    using value_type = typename Node::ValueType;
     using difference_type = std::ptrdiff_t;
-    using pointer = const ValueType*;
-    using reference = const ValueType&;
+    using pointer = const value_type*;
+    using reference = const value_type&;
     using iterator_category = std::forward_iterator_tag;
 
     Iterator(Node* x) : p(x) {}
@@ -52,8 +52,8 @@ class Dictionary {
     }
     bool operator==(const Iterator& rhs) const { return p == rhs.p; }
     bool operator!=(const Iterator& rhs) const { return p != rhs.p; }
-    const ValueType& operator*() { return p->curr; }
-    const ValueType* operator->() { return &p->curr; }
+    const value_type& operator*() { return p->curr; }
+    const value_type* operator->() { return &p->curr; }
 
    private:
     Node* p;
@@ -77,7 +77,7 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = global_arena->New<Node>(std::make_pair(k, v), head);
+    head = global_arena->RawNew<Node>(std::make_pair(k, v), head);
   }
 
   // The position of the first element of the dictionary

@@ -132,7 +132,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
 
 Return::Return(int line_num, const Expression* exp, bool is_omitted_exp)
     : Statement(Kind::Return, line_num),
-      exp(exp != nullptr ? exp : global_arena->New<TupleLiteral>(line_num)),
+      exp(exp != nullptr ? exp : global_arena->RawNew<TupleLiteral>(line_num)),
       is_omitted_exp(is_omitted_exp) {
   CHECK(exp != nullptr || is_omitted_exp);
 }

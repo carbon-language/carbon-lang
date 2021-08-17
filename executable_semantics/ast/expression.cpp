@@ -30,7 +30,7 @@ auto ExpressionFromParenContents(
 auto TupleExpressionFromParenContents(
     int line_num, const ParenContents<Expression>& paren_contents)
     -> const Expression* {
-  return global_arena->New<TupleLiteral>(
+  return global_arena->RawNew<TupleLiteral>(
       line_num, paren_contents.TupleElements<FieldInitializer>(line_num));
 }
 
