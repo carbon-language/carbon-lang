@@ -11,7 +11,7 @@ cc_library(
     srcs = ["action.cpp"],
     hdrs = ["action.h"],
     deps = [
-        ":containers",
+        ":stack",
         ":value",
         "//common:ostream",
         "//executable_semantics/ast:expression",
@@ -33,15 +33,9 @@ cc_library(
 )
 
 cc_library(
-    name = "containers",
-    srcs = [
-        "list_node.h",
-    ],
-    hdrs = [
-        "dictionary.h",
-        "stack.h",
-    ],
-    deps = ["//common:check"],
+    name = "dictionary",
+    hdrs = ["dictionary.h"],
+    deps = ["//executable_semantics/common:arena"],
 )
 
 cc_library(
@@ -60,7 +54,8 @@ cc_library(
     deps = [
         ":action",
         ":address",
-        ":containers",
+        ":dictionary",
+        ":stack",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -89,7 +84,6 @@ cc_library(
     deps = [
         ":action",
         ":address",
-        ":containers",
         ":frame",
         ":heap",
         ":value",
@@ -105,11 +99,17 @@ cc_library(
 )
 
 cc_library(
+    name = "stack",
+    hdrs = ["stack.h"],
+    deps = ["//common:check"],
+)
+
+cc_library(
     name = "typecheck",
     srcs = ["typecheck.cpp"],
     hdrs = ["typecheck.h"],
     deps = [
-        ":containers",
+        ":dictionary",
         ":interpreter",
         "//common:ostream",
         "//executable_semantics/ast:expression",
@@ -127,8 +127,8 @@ cc_library(
     hdrs = ["value.h"],
     deps = [
         ":address",
-        ":containers",
         ":field_path",
+        ":stack",
         "//common:ostream",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",

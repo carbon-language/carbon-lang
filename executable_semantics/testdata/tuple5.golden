@@ -1,4 +1,2 @@
-COMPILATION ERROR: 8: type error in pattern variable
-expected: (x = i32, y = i32)
-actual: (y = i32, x = i32)
+PROGRAM ERROR: 8: Tuple field name 'y' does not match pattern field name 'x'
 EXIT CODE: 255
