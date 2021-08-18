@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "common/check.h"
-#include "executable_semantics/interpreter/list_node.h"
 
 namespace Carbon {
 
