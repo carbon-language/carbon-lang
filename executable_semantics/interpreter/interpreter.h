@@ -31,7 +31,7 @@ extern State* state;
 
 void InitEnv(const Declaration& d, Env* env);
 void PrintStack(const Stack<Frame*>& ls, llvm::raw_ostream& out);
-void PrintEnv(Env values);
+void PrintEnv(Env values, llvm::raw_ostream& out);
 
 /***** Interpreters *****/
 
