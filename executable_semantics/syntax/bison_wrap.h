@@ -27,7 +27,9 @@ class BisonWrap {
   // initialized.
   operator T() const {
     CHECK(val);
-    return std::move(*val);
+    T ret = std::move(*val);
+    val = std::nullopt;
+    return ret;
   }
 
  private:
