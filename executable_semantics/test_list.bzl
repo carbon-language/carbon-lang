@@ -105,6 +105,7 @@ TEST_LIST = [
     "type_compute",
     "type_compute2",
     "type_compute3",
+    "type_match",
     "while1",
     "zero",
 ]

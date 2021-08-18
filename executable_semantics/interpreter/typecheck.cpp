@@ -552,32 +552,20 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
     }
     case Pattern::Kind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*p);
-      const Value* type;
-      switch (binding.Type()->Tag()) {
-        case Pattern::Kind::AutoPattern: {
-          if (expected == nullptr) {
-            FATAL_COMPILATION_ERROR(binding.LineNumber())
-                << "auto not allowed here";
-          } else {
-            type = expected;
-          }
-          break;
+      TCPattern binding_type_result =
+          TypeCheckPattern(binding.Type(), types, values, nullptr);
+      const Value* type = InterpPattern(values, binding_type_result.pattern);
+      if (expected != nullptr) {
+        std::optional<Env> values =
+            PatternMatch(type, expected, binding.Type()->LineNumber());
+        if (values == std::nullopt) {
+          FATAL_COMPILATION_ERROR(binding.Type()->LineNumber())
+              << "Type pattern '" << *type << "' does not match actual type '"
+              << *expected << "'";
         }
-        case Pattern::Kind::ExpressionPattern: {
-          type = InterpExp(
-              values, cast<ExpressionPattern>(binding.Type())->Expression());
-          CHECK(type->Tag() != Value::Kind::AutoType);
-          if (expected != nullptr) {
-            ExpectType(binding.LineNumber(), "pattern variable", type,
-                       expected);
-          }
-          break;
-        }
-        case Pattern::Kind::TuplePattern:
-        case Pattern::Kind::BindingPattern:
-        case Pattern::Kind::AlternativePattern:
-          FATAL_COMPILATION_ERROR(binding.LineNumber())
-              << "Unsupported type pattern";
+        CHECK(values->begin() == values->end())
+            << "Name bindings within type patterns are unsupported";
+        type = expected;
       }
       auto new_p = global_arena->RawNew<BindingPattern>(
           binding.LineNumber(), binding.Name(),
@@ -908,8 +896,8 @@ static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
-    Address a = state->heap.AllocateValue(
-        global_arena->RawNew<VariableType>(deduced.name));
+    types.Set(deduced.name, global_arena->RawNew<VariableType>(deduced.name));
+    Address a = state->heap.AllocateValue(*types.Get(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
@@ -937,8 +925,8 @@ static auto TypeOfFunDef(TypeEnv types, Env values,
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
-    Address a = state->heap.AllocateValue(
-        global_arena->RawNew<VariableType>(deduced.name));
+    types.Set(deduced.name, global_arena->RawNew<VariableType>(deduced.name));
+    Address a = state->heap.AllocateValue(*types.Get(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
