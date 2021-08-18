@@ -26,7 +26,7 @@ class BisonWrap {
   // Support transparent conversion to the wrapped type, erroring if not
   // initialized.
   operator T() {
-    CHECK(val);
+    CHECK(val.has_value());
     T ret = std::move(*val);
     val.reset();
     return ret;
