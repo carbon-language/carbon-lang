@@ -35,6 +35,11 @@ void PrintEnv(Env values, llvm::raw_ostream& out);
 
 /***** Interpreters *****/
 
+// Attempts to match `v` against the pattern `p`. If matching succeeds, returns
+// the bindings of pattern variables to their matched values.
+auto PatternMatch(const Value* p, const Value* v, int line_num)
+    -> std::optional<Env>;
+
 auto InterpProgram(const std::list<const Declaration*>& fs) -> int;
 auto InterpExp(Env values, const Expression* e) -> const Value*;
 auto InterpPattern(Env values, const Pattern* p) -> const Value*;
