@@ -2229,7 +2229,7 @@ We would attach `where` clauses to individual declarations, following Rust, as
 in:
 
 ```
-// Constraints on a function:
+// Constraints on function parameters:
 fn F[V:! D](v: V) where ... { ... }
 
 // Constraints on a type parameter:
