@@ -41,6 +41,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "ptr_test",
+    srcs = ["ptr_test.cpp"],
+    deps = [
+        ":ptr",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
 cc_library(
     name = "tracing_flag",
     srcs = ["tracing_flag.cpp"],

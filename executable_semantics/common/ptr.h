@@ -16,6 +16,8 @@ namespace Carbon {
 template <typename T>
 class Ptr {
  public:
+  Ptr() = default;
+  
   explicit Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
 
   template <typename OtherT,
