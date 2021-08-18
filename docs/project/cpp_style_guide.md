@@ -65,8 +65,7 @@ serves to simplify it.
         freely change that without updating the name.
 -   All other names use `snake_case`, including function parameters, and
     non-constant local and member variables.
-    -   Notably, don't use the `_` suffix for member variable names, except as
-        noted below.
+    -   Private member variables should have a trailing `_`.
 
 #### Properties
 
@@ -80,20 +79,17 @@ like to explore providing such a feature in Carbon. To that end, we have special
 naming rules that allow C++ classes to emulate the interface they might have in
 a language with native property support:
 
-Properties, like all other data members, should have `snake_case` names.
-
-A member function can have the same name as a property, including the
-`snake_case` spelling, if it functions as a read-only accessor for that
-property. Such a member function must conform to the expectations that users
-have for accessors. In particular:
-
--   It must be a pure function of state that's owned by the object.
--   The costs of calling it must be comparable to the costs of directly
-    accessing an equivalent data member.
-
-If a data member directly stores the value of a property, it should have the
-same name as the property, with a `_` suffix to avoid name collisions with the
-accessor.
+-   Properties, like all other data members, should have `snake_case` names.
+-   A member function can have the same name as a property, including the
+    `snake_case` spelling, if it functions as a read-only accessor for that
+    property. Such a member function must conform to the expectations that users
+    have for accessors. In particular, it must be a pure function of state
+    that's owned by the object, and the costs of calling it must be comparable
+    to the costs of directly accessing an equivalent data member.
+-   If a data member directly stores the value of a property, it should have the
+    same name as the property, plus a trailing `_` as with all other data
+    members. Conversely, a data member that shares a name with a property must
+    provide backing storage for that property.
 
 ### File names
 
