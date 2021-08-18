@@ -17,9 +17,6 @@ namespace Carbon {
 template <typename T>
 class BisonWrap {
  public:
-  // The default constructor leaves the value unset.
-  BisonWrap() {}
-
   // Assigning a value initializes the wrapper.
   BisonWrap& operator=(T&& rhs) {
     val = std::move(rhs);
