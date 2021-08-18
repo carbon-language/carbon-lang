@@ -25,10 +25,10 @@ class BisonWrap {
 
   // Support transparent conversion to the wrapped type, erroring if not
   // initialized.
-  operator T() const {
+  operator T() {
     CHECK(val);
     T ret = std::move(*val);
-    val = std::nullopt;
+    val.reset();
     return ret;
   }
 
