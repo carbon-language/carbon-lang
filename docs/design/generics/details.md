@@ -39,7 +39,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
-    -   [Inferring associated types](#inferring-associated-types)
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
@@ -1828,8 +1827,7 @@ class DynamicArray(T:! Type) {
 
   impl as StackAssociatedType {
     // Set the associated type `ElementType` to `T`.
-    // Note: open syntax question
-    let ElementType = T;
+    let ElementType:! Type = T;
     fn Push[addr me: Self*](value: ElementType) {
       this->Insert(this->End(), value);
     }
@@ -1848,21 +1846,11 @@ class DynamicArray(T:! Type) {
 }
 ```
 
-**Open question:** What syntax should `DynamicArray(T)` use to specify the value
-of `StackAssociatedType.ElementType`?
-
-```
-let ElementType = T;
-```
-
-or:
-
-```
-let ElementType:! Type = T;
-```
-
-This question is being decided in issue
-[#739: Associated type syntax](https://github.com/carbon-language/carbon-lang/issues/739).
+**Alternatives considered:** See
+[other syntax options considered for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
+In particular, it was deemed that
+[Swift's approach of inferring the associated type from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
+was unneeded complexity.
 
 The definition of the `StackAssociatedType` is sufficient for writing a generic
 function that operates on anything implementing that interface, for example:
@@ -1907,60 +1895,6 @@ For context, see
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
-
-### Inferring associated types
-
-**Open question:**
-[Swift allows the value of an associated type to be omitted when it can be determined from the method signatures in the implementation](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190).
-For the above example, this would mean figuring out `ElementType == T` from
-context:
-
-```
-class DynamicArray(T:! Type) {
-  // ...
-
-  impl as StackAssociatedType {
-    // Not needed: let ElementType = T;
-    fn Push[addr me: Self*](value: T) { ... }
-    fn Pop[addr me: Self*]() -> T { ... }
-    fn IsEmpty[addr me: Self*]() -> Bool { ... }
-  }
-}
-```
-
-Should we do the same thing in Carbon? This question is being decided in issue
-[#739: Associated type syntax](https://github.com/carbon-language/carbon-lang/issues/739).
-
-One benefit is that it allows an interface to evolve by adding an associated
-type, without having to then modify all implementations of that interface.
-
-One concern is this might be a little more complicated in the presence of method
-overloads with [default implementations](interface-defaults), since it might not
-be clear how they should match up, as in this example:
-
-```
-interface Has2OverloadsWithDefaults {
-  let T:! StackAssociatedType;
-  fn F[me: Self](x: DynamicArray(T), y: T) { ... }
-  fn F[me: Self](x: T, y: T.ElementType) { ... }
-}
-
-class S {
-  impl as Has2OverloadsWithDefaults {
-     // Unclear if T == DynamicArray(Int) or
-     // T == DynamicArray(DynamicArray(Int)).
-     fn F[me: Self](
-         x: DynamicArray(DynamicArray(Int)),
-         y: DynamicArray(Int)) { ... }
-  }
-}
-```
-
-Not to say this can't be resolved, but it does add complexity.
-[Swift considered](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#associated-type-inference)
-removing this feature because it was the one thing in Swift that required global
-type inference, which they otherwise avoided. They
-[ultimately decided to keep the feature](https://github.com/apple/swift-evolution/blob/main/proposals/0108-remove-assoctype-inference.md).
 
 ### Model
 
