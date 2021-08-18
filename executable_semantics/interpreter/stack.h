@@ -22,8 +22,6 @@ struct Stack {
   Stack() = default;
 
   // Creates an instance containing just `x`.
-  // TODO: consider removing this. It's somewhat unconventional, and the
-  // callsite readability is debatable.
   explicit Stack(T x) : Stack() { Push(std::move(x)); }
 
   // Pushes `x` onto the top of the stack.
