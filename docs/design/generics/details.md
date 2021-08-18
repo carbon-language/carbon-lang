@@ -2886,7 +2886,7 @@ allow you to define the `Container` interface above, since the named constraint
 refers to `Container` in its definition.
 
 **Rejected alternative:** To use this `structural interface` trick to define
-`Container`, you'd have to allow the it do be defined inline in the `Container`
+`Container`, you'd have to allow it to be defined inline in the `Container`
 definition:
 
 ```
@@ -2905,7 +2905,7 @@ interface Container {
 
 **Rejected alternative:** If we were to write variable declarations with the
 name first instead of the type, we could use that name inside the type
-declaration, HasAbs(.MagnitudeType:! as in `T = T)`.
+declaration, as in `T:! HasAbs(.MagnitudeType = T)`.
 
 #### Type inequality
 
@@ -3072,7 +3072,7 @@ interface ForwardContainer {
 ```
 
 To define `BidirectionalContainer`, we need to use a
-[type bound constraint](#type-bounds) on `IteratorType. Using the argument
+[type bound constraint](#type-bounds) on `IteratorType`. Using the argument
 passing approach, you would use an deduced associated type:
 
 ```
@@ -3189,18 +3189,18 @@ This is because these can all be given distinct types freely, only their
 associated types can be constrained to be equal to some other type. In this
 example, this means that the types `Z` and `V` are both canonical. The second
 rule comes from there being no forward references in declarations, and no
-impliict type equality constraints:
+implicit type equality constraints:
 
 > No declaration can affect type equality for any declaration to its left.
 
 This means that the canonical types for type expressions starting with `Z.` are
-completely determined by the declaration `A:! Z`. Furthermore, since the set of
+completely determined by the declaration `Z:! A`. Furthermore, since the set of
 type expressions starting with `Z.` might be infinite, we adopt the lazy
 strategy of only evaluating expressions that are needed for something explicitly
 mentioned.
 
-We do need to evaluate `Z.W` though for the `B(.Y = Z, .X = Z.W):! V`
-expression. This is an easy case, though since `A:! Z` doesn't include any
+We do need to evaluate `Z.W` though for the `V:! B(.Y = Z, .X = Z.W)`
+expression. This is an easy case, though since `Z:! A` doesn't include any
 assignments to any associated types. In this case, the associated types of `A`
 are all canonical. An alias defined in `A` would of course not be, it would be
 set to the canonical type for whatever it is an alias for. For example:
@@ -3339,11 +3339,12 @@ interface D {
 }
 ```
 
-In this case `D.E.W == D.F` and `D.F.W == D.E` and we would need some way of
-deciding which were canonical (probably `D.E` and `D.F`). This would have to be
-restricted to cases where the expression on the right has no `.` to avoid cycles
-or type expression that grow without bound. Another concern is if there are type
-constructors involved:
+This example may come up for graphs where `E` is the edge type and `V` is the
+vertex type. In this case `D.E.W == D.V` and `D.V.W == D.E` and we would need
+some way of deciding which were canonical (probably `D.E` and `D.V`). This would
+have to be restricted to cases where the expression on the right has no `.` to
+avoid cycles or type expression that grow without bound. Another concern is if
+there are type constructors involved:
 
 ```
 interface Graph {
