@@ -269,8 +269,6 @@ void CreateTuple(Frame* frame, Action* act, const Expression* exp) {
   frame->todo.Push(global_arena->RawNew<ValAction>(tv));
 }
 
-// Attempts to match `v` against the pattern `p`. If matching succeeds, returns
-// the bindings of pattern variables to their matched values.
 auto PatternMatch(const Value* p, const Value* v, int line_num)
     -> std::optional<Env> {
   switch (p->Tag()) {

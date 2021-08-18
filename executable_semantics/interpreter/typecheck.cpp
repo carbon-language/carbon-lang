@@ -545,7 +545,7 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
         if (values == std::nullopt) {
           FATAL_COMPILATION_ERROR(binding.Type()->LineNumber())
               << "Type pattern '" << *type << "' does not match actual type '"
-              << *expected << "'\n";
+              << *expected << "'";
         }
         CHECK(values->begin() == values->end())
             << "Name bindings within type patterns are unsupported";
