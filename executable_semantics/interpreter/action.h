@@ -54,7 +54,7 @@ class Action {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  static void PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out);
+  static void PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out);
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }

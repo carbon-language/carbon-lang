@@ -23,7 +23,7 @@ namespace Carbon {
 using Env = Dictionary<std::string, Address>;
 
 struct State {
-  Stack<Frame*> stack;
+  Stack<Ptr<Frame>> stack;
   Heap heap;
 };
 
