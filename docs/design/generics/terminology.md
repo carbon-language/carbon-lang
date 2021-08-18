@@ -304,8 +304,8 @@ of the interface must satisfy by having a matching member. A requirement that
 the type define a value for a member constant is called an _associated
 constant_, and similarly an _associated function_ or _associated type_.
 
-Different types can satisfy an interface with different definitions for the
-member. So we say their definitions are _associated_ with what type is
+Different types can satisfy an interface with different definitions for a given
+member. These definitions are _associated_ with what type is
 implementing the interface. An [impl](#impls-implementations-of-interfaces)
 defines what is associated with the type for that interface.
 
@@ -531,7 +531,7 @@ conditions on the type argument. For example: `Array(T)` might implement
 
 ## Interface type parameters and associated types
 
-Let's say you have an interface defining a container. Different containers will
+Imagine an interface defining a container. Different containers will
 contain different types of values, and the container API will have to refer to
 that "element type" when defining the signature of methods like "insert" or
 "find". If that element type is a parameter (input) to the interface type, we

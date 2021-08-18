@@ -503,7 +503,7 @@ with different interface parameters ("input types").
 #### Associated types
 
 Expect type parameters to be associated types by default. Since associated types
-may be deduced, they are more convenient to use. Imagine we have a `Stack`
+may be deduced, they are more convenient to use. Imagine a `Stack`
 interface. Different types implementing `Stack` will have different element
 types:
 
@@ -531,7 +531,7 @@ fn PeekAtTopOfStack[StackType:! Stack](s: StackType*)
 #### Parameterized interfaces
 
 Parameterized interfaces are commonly associated with overloaded operators.
-Imagine we have an interface for determining if two values are equivalent, and
+Imagine an interface for determining if two values are equivalent that allows those types to be different.
 we want to allow those types to be different. An element in a hash map might
 have type `Pair(String, i64)` that implements both `Equatable(String)` and
 `Equatable(Pair(String, i64))`.
