@@ -20,7 +20,7 @@ namespace Carbon {
 using Env = Dictionary<std::string, Address>;
 
 struct Scope {
-  Scope(Env values) : Scope(values, std::list<std::string>()) {}
+  explicit Scope(Env values) : Scope(values, std::list<std::string>()) {}
   Scope(Env values, std::list<std::string> l)
       : values(values), locals(std::move(l)) {}
 

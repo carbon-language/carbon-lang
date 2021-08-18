@@ -1240,8 +1240,7 @@ auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
       0, global_arena->RawNew<IdentifierExpression>(0, "main"), arg);
   auto todo =
       Stack<Ptr<Action>>(global_arena->New<ExpressionAction>(call_main));
-  auto scopes = Stack<Ptr<Scope>>(
-      global_arena->New<Scope>(globals, std::list<std::string>()));
+  auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(globals));
   state->stack =
       Stack<Ptr<Frame>>(global_arena->New<Frame>("top", scopes, todo));
 
@@ -1264,8 +1263,7 @@ auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
 // Interpret an expression at compile-time.
 auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto todo = Stack<Ptr<Action>>(global_arena->New<ExpressionAction>(e));
-  auto scopes = Stack<Ptr<Scope>>(
-      global_arena->New<Scope>(values, std::list<std::string>()));
+  auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(values));
   state->stack =
       Stack<Ptr<Frame>>(global_arena->New<Frame>("InterpExp", scopes, todo));
 
