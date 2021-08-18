@@ -17,12 +17,20 @@
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
 using llvm::dyn_cast;
 
 namespace Carbon {
+
+void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
+  llvm::ListSeparator sep;
+  for (const auto& [name, type] : types) {
+    out << sep << name << ": " << *type;
+  }
+}
 
 static void ExpectType(int line_num, const std::string& context,
                        const Value* expected, const Value* actual) {
@@ -259,7 +267,11 @@ static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
 auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
     -> TCExpression {
   if (tracing_output) {
-    llvm::outs() << "checking expression " << *e << "\n";
+    llvm::outs() << "checking expression " << *e << "\ntypes: ";
+    PrintTypeEnv(types, llvm::outs());
+    llvm::outs() << "\nvalues: ";
+    PrintEnv(values, llvm::outs());
+    llvm::outs() << "\n";
   }
   switch (e->Tag()) {
     case Expression::Kind::IndexExpression: {
@@ -522,11 +534,15 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
 auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
                       const Value* expected) -> TCPattern {
   if (tracing_output) {
-    llvm::outs() << "checking pattern, ";
+    llvm::outs() << "checking pattern " << *p;
     if (expected) {
-      llvm::outs() << "expecting " << *expected;
+      llvm::outs() << ", expecting " << *expected;
     }
-    llvm::outs() << ", " << *p << "\n";
+    llvm::outs() << "\ntypes: ";
+    PrintTypeEnv(types, llvm::outs());
+    llvm::outs() << "\nvalues: ";
+    PrintEnv(values, llvm::outs());
+    llvm::outs() << "\n";
   }
   switch (p->Tag()) {
     case Pattern::Kind::AutoPattern: {
