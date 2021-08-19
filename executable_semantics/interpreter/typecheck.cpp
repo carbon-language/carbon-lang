@@ -76,9 +76,9 @@ static auto ReifyType(const Value* t, int line_num) -> const Expression* {
       }
       return global_arena->RawNew<TupleLiteral>(0, args);
     }
-    case Value::Kind::StructType:
+    case Value::Kind::ClassType:
       return global_arena->RawNew<IdentifierExpression>(
-          0, cast<StructType>(*t).Name());
+          0, cast<ClassType>(*t).Name());
     case Value::Kind::ChoiceType:
       return global_arena->RawNew<IdentifierExpression>(
           0, cast<ChoiceType>(*t).Name());
@@ -174,7 +174,7 @@ static auto ArgumentDeduction(int line_num, TypeEnv deduced, const Value* param,
     }
     // For the following cases, we check for type equality.
     case Value::Kind::ContinuationType:
-    case Value::Kind::StructType:
+    case Value::Kind::ClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -231,7 +231,7 @@ static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
-    case Value::Kind::StructType:
+    case Value::Kind::ClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
@@ -316,10 +316,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
       auto res = TypeCheckExp(access.Aggregate(), types, values);
       auto t = res.type;
       switch (t->Tag()) {
-        case Value::Kind::StructType: {
-          const auto& t_struct = cast<StructType>(*t);
+        case Value::Kind::ClassType: {
+          const auto& t_class = cast<ClassType>(*t);
           // Search for a field
-          for (auto& field : t_struct.Fields()) {
+          for (auto& field : t_class.Fields()) {
             if (access.Field() == field.first) {
               const Expression* new_e =
                   global_arena->RawNew<FieldAccessExpression>(
@@ -328,7 +328,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
             }
           }
           // Search for a method
-          for (auto& method : t_struct.Methods()) {
+          for (auto& method : t_class.Methods()) {
             if (access.Field() == method.first) {
               const Expression* new_e =
                   global_arena->RawNew<FieldAccessExpression>(
@@ -337,7 +337,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
             }
           }
           FATAL_COMPILATION_ERROR(e->LineNumber())
-              << "struct " << t_struct.Name() << " does not have a field named "
+              << "class " << t_class.Name() << " does not have a field named "
               << access.Field();
         }
         case Value::Kind::TupleValue: {
@@ -942,8 +942,8 @@ static auto TypeOfFunDef(TypeEnv types, Env values,
                                             param_res.type, ret);
 }
 
-static auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/,
-                            Env ct_top) -> const Value* {
+static auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
+                           Env ct_top) -> const Value* {
   VarValues fields;
   VarValues methods;
   for (const Member* m : sd->members) {
@@ -966,16 +966,16 @@ static auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/,
       }
     }
   }
-  return global_arena->RawNew<StructType>(sd->name, std::move(fields),
-                                          std::move(methods));
+  return global_arena->RawNew<ClassType>(sd->name, std::move(fields),
+                                         std::move(methods));
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
   switch (d.Tag()) {
     case Declaration::Kind::FunctionDeclaration:
       return cast<FunctionDeclaration>(d).Definition().name;
-    case Declaration::Kind::StructDeclaration:
-      return cast<StructDeclaration>(d).Definition().name;
+    case Declaration::Kind::ClassDeclaration:
+      return cast<ClassDeclaration>(d).Definition().name;
     case Declaration::Kind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(d).Name();
     case Declaration::Kind::VariableDeclaration: {
@@ -996,11 +996,11 @@ auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
       return global_arena->New<FunctionDeclaration>(TypeCheckFunDef(
           &cast<FunctionDeclaration>(*d).Definition(), types, values));
 
-    case Declaration::Kind::StructDeclaration: {
-      const StructDefinition& struct_def =
-          cast<StructDeclaration>(*d).Definition();
+    case Declaration::Kind::ClassDeclaration: {
+      const ClassDefinition& class_def =
+          cast<ClassDeclaration>(*d).Definition();
       std::list<Member*> fields;
-      for (Member* m : struct_def.members) {
+      for (Member* m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember:
             // TODO: Interpret the type expression and store the result.
@@ -1008,8 +1008,8 @@ auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
             break;
         }
       }
-      return global_arena->New<StructDeclaration>(
-          struct_def.line_num, struct_def.name, std::move(fields));
+      return global_arena->New<ClassDeclaration>(
+          class_def.line_num, class_def.name, std::move(fields));
     }
 
     case Declaration::Kind::ChoiceDeclaration:
@@ -1049,21 +1049,20 @@ static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
       break;
     }
 
-    case Declaration::Kind::StructDeclaration: {
-      const StructDefinition& struct_def =
-          cast<StructDeclaration>(d).Definition();
-      auto st = TypeOfStructDef(&struct_def, tops->types, tops->values);
+    case Declaration::Kind::ClassDeclaration: {
+      const ClassDefinition& class_def = cast<ClassDeclaration>(d).Definition();
+      auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
       Address a = state->heap.AllocateValue(st);
-      tops->values.Set(struct_def.name, a);  // Is this obsolete?
+      tops->values.Set(class_def.name, a);  // Is this obsolete?
       std::vector<TupleElement> field_types;
       for (const auto& [field_name, field_value] :
-           cast<StructType>(*st).Fields()) {
+           cast<ClassType>(*st).Fields()) {
         field_types.push_back({.name = field_name, .value = field_value});
       }
       auto fun_ty = global_arena->RawNew<FunctionType>(
           std::vector<GenericBinding>(),
           global_arena->RawNew<TupleValue>(std::move(field_types)), st);
-      tops->types.Set(struct_def.name, fun_ty);
+      tops->types.Set(class_def.name, fun_ty);
       break;
     }
 
