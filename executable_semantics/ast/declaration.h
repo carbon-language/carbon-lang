@@ -9,27 +9,13 @@
 #include <string>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/class_definition.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/ast/struct_definition.h"
-#include "executable_semantics/interpreter/address.h"
-#include "executable_semantics/interpreter/dictionary.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
-
-class Value;
-
-using TypeEnv = Dictionary<std::string, const Value*>;
-using Env = Dictionary<std::string, Address>;
-
-struct TypeCheckContext {
-  // Symbol table mapping names of runtime entities to their type.
-  TypeEnv types;
-  // Symbol table mapping names of compile time entities to their value.
-  Env values;
-};
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -43,7 +29,7 @@ class Declaration {
  public:
   enum class Kind {
     FunctionDeclaration,
-    StructDeclaration,
+    ClassDeclaration,
     ChoiceDeclaration,
     VariableDeclaration,
   };
@@ -86,22 +72,22 @@ class FunctionDeclaration : public Declaration {
   const FunctionDefinition* definition;
 };
 
-class StructDeclaration : public Declaration {
+class ClassDeclaration : public Declaration {
  public:
-  StructDeclaration(int line_num, std::string name, std::list<Member*> members)
-      : Declaration(Kind::StructDeclaration, line_num),
+  ClassDeclaration(int line_num, std::string name, std::list<Member*> members)
+      : Declaration(Kind::ClassDeclaration, line_num),
         definition({.line_num = line_num,
                     .name = std::move(name),
                     .members = std::move(members)}) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->Tag() == Kind::StructDeclaration;
+    return decl->Tag() == Kind::ClassDeclaration;
   }
 
-  auto Definition() const -> const StructDefinition& { return definition; }
+  auto Definition() const -> const ClassDefinition& { return definition; }
 
  private:
-  StructDefinition definition;
+  ClassDefinition definition;
 };
 
 class ChoiceDeclaration : public Declaration {

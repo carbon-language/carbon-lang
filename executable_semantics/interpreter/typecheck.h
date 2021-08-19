@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/common/ptr.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
@@ -39,6 +40,13 @@ struct TCStatement {
   TypeEnv types;
 };
 
+struct TypeCheckContext {
+  // Symbol table mapping names of runtime entities to their type.
+  TypeEnv types;
+  // Symbol table mapping names of compile time entities to their value.
+  Env values;
+};
+
 auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
     -> TCExpression;
 auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
@@ -48,9 +56,9 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
                    const Value*& ret_type, bool is_omitted_ret_type)
     -> TCStatement;
 
-auto MakeTypeChecked(const Declaration& decl, const TypeEnv& types,
-                     const Env& values) -> const Declaration*;
-auto TopLevel(const std::list<const Declaration*>& fs) -> TypeCheckContext;
+auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
+                     const Env& values) -> Ptr<const Declaration>;
+auto TopLevel(const std::list<Ptr<const Declaration>>& fs) -> TypeCheckContext;
 
 }  // namespace Carbon
 

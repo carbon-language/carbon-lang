@@ -12,11 +12,12 @@
 #include <list>
 
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/common/ptr.h"
 
 namespace Carbon {
 
 // Runs the top-level declaration list.
-void ExecProgram(std::list<const Declaration*> fs);
+void ExecProgram(std::list<Ptr<const Declaration>> fs);
 
 }  // namespace Carbon
 

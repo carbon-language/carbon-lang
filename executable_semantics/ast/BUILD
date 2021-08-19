@@ -14,13 +14,12 @@ cc_library(
         "declaration.h",
     ],
     deps = [
+        ":class_definition",
         ":function_definition",
         ":member",
         ":pattern",
-        ":struct_definition",
         "//common:ostream",
-        "//executable_semantics/interpreter:address",
-        "//executable_semantics/interpreter:containers",
+        "//executable_semantics/common:ptr",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -30,11 +29,11 @@ cc_library(
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
     deps = [
+        ":paren_contents",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
-        "//executable_semantics/syntax:paren_contents",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -44,7 +43,7 @@ cc_test(
     srcs = ["expression_test.cpp"],
     deps = [
         ":expression",
-        "//executable_semantics/syntax:paren_contents",
+        ":paren_contents",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
     ],
@@ -72,6 +71,11 @@ cc_library(
 )
 
 cc_library(
+    name = "paren_contents",
+    hdrs = ["paren_contents.h"],
+)
+
+cc_library(
     name = "pattern",
     srcs = ["pattern.cpp"],
     hdrs = ["pattern.h"],
@@ -88,8 +92,8 @@ cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
+        ":paren_contents",
         ":pattern",
-        "//executable_semantics/syntax:paren_contents",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
@@ -111,8 +115,8 @@ cc_library(
 )
 
 cc_library(
-    name = "struct_definition",
-    hdrs = ["struct_definition.h"],
+    name = "class_definition",
+    hdrs = ["class_definition.h"],
     deps = [
         ":member",
         "//common:ostream",

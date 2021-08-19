@@ -4,7 +4,13 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
-package(default_visibility = ["//executable_semantics:__subpackages__"])
+package(default_visibility = ["//executable_semantics:__pkg__"])
+
+cc_library(
+    name = "bison_wrap",
+    hdrs = ["bison_wrap.h"],
+    deps = ["//common:check"],
+)
 
 cc_library(
     name = "syntax",
@@ -28,23 +34,19 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
-        ":paren_contents",
+        ":bison_wrap",
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:paren_contents",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
         "//executable_semantics/interpreter:typecheck",
     ],
-)
-
-cc_library(
-    name = "paren_contents",
-    hdrs = ["paren_contents.h"],
 )
 
 genrule(
