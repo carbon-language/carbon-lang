@@ -12,7 +12,7 @@
 
 namespace Carbon {
 
-struct StructDefinition {
+struct ClassDefinition {
   int line_num;
   std::string name;
   std::list<Member*> members;

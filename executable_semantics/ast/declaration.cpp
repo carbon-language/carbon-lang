@@ -16,11 +16,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << cast<FunctionDeclaration>(*this).Definition();
       break;
 
-    case Kind::StructDeclaration: {
-      const StructDefinition& struct_def =
-          cast<StructDeclaration>(*this).Definition();
-      out << "struct " << struct_def.name << " {\n";
-      for (Member* m : struct_def.members) {
+    case Kind::ClassDeclaration: {
+      const ClassDefinition& class_def =
+          cast<ClassDeclaration>(*this).Definition();
+      out << "class " << class_def.name << " {\n";
+      for (Member* m : class_def.members) {
         out << *m;
       }
       out << "}\n";

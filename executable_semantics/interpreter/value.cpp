@@ -163,7 +163,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::StructValue: {
       const auto& s = cast<StructValue>(*this);
-      out << cast<StructType>(*s.Type()).Name() << *s.Inits();
+      out << cast<ClassType>(*s.Type()).Name() << *s.Inits();
       break;
     }
     case Value::Kind::TupleValue: {
@@ -223,8 +223,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << *fn_type.Param() << " -> " << *fn_type.Ret();
       break;
     }
-    case Value::Kind::StructType:
-      out << "struct " << cast<StructType>(*this).Name();
+    case Value::Kind::ClassType:
+      out << "struct " << cast<ClassType>(*this).Name();
       break;
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).Name();
@@ -307,7 +307,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case Value::Kind::StringValue:
       return global_arena->RawNew<StringValue>(cast<StringValue>(*val).Val());
     case Value::Kind::VariableType:
-    case Value::Kind::StructType:
+    case Value::Kind::ClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
@@ -330,8 +330,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       return TypeEqual(fn1.Param(), fn2.Param()) &&
              TypeEqual(fn1.Ret(), fn2.Ret());
     }
-    case Value::Kind::StructType:
-      return cast<StructType>(*t1).Name() == cast<StructType>(*t2).Name();
+    case Value::Kind::ClassType:
+      return cast<ClassType>(*t1).Name() == cast<ClassType>(*t2).Name();
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).Name() == cast<ChoiceType>(*t2).Name();
     case Value::Kind::TupleValue: {
@@ -412,7 +412,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
-    case Value::Kind::StructType:
+    case Value::Kind::ClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
