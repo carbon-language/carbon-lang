@@ -23,7 +23,7 @@ namespace Carbon {
 using Env = Dictionary<std::string, Address>;
 
 struct State {
-  Stack<Frame*> stack;
+  Stack<Ptr<Frame>> stack;
   Heap heap;
 };
 
@@ -40,7 +40,7 @@ void PrintEnv(Env values, llvm::raw_ostream& out);
 auto PatternMatch(const Value* p, const Value* v, int line_num)
     -> std::optional<Env>;
 
-auto InterpProgram(const std::list<const Declaration*>& fs) -> int;
+auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int;
 auto InterpExp(Env values, const Expression* e) -> const Value*;
 auto InterpPattern(Env values, const Pattern* p) -> const Value*;
 

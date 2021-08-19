@@ -69,6 +69,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/common/arena.h"
+#include "executable_semantics/common/ptr.h"
 #include "executable_semantics/ast/paren_contents.h"
 
 namespace Carbon {
@@ -95,7 +96,7 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <const Declaration*> declaration
 %type <const FunctionDefinition*> function_declaration
 %type <const FunctionDefinition*> function_definition
-%type <std::list<const Declaration*>> declaration_list
+%type <std::list<Ptr<const Declaration>>> declaration_list
 %type <const Statement*> statement
 %type <const Statement*> if_statement
 %type <const Statement*> optional_else
@@ -584,11 +585,11 @@ declaration:
 ;
 declaration_list:
   // Empty
-    { $$ = std::list<const Declaration*>(); }
+    { $$ = std::list<Ptr<const Declaration>>(); }
 | declaration declaration_list
     {
       $$ = $2;
-      $$.push_front($1);
+      $$.push_front(Ptr<const Declaration>($1));
     }
 ;
 %%

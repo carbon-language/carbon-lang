@@ -22,8 +22,6 @@ struct Stack {
   Stack() = default;
 
   // Creates an instance containing just `x`.
-  // TODO: consider removing this. It's somewhat unconventional, and the
-  // callsite readability is debatable.
   explicit Stack(T x) : Stack() { Push(std::move(x)); }
 
   // Pushes `x` onto the top of the stack.
@@ -46,7 +44,7 @@ struct Stack {
     CHECK(n >= 0) << "Negative pop count disallowed.";
     CHECK(static_cast<size_t>(n) <= elements.size())
         << "Can only pop as many elements as stack has.";
-    elements.resize(elements.size() - n);
+    elements.erase(elements.end() - n, elements.end());
   }
 
   // Returns the top element of the stack.
@@ -70,11 +68,6 @@ struct Stack {
  private:
   std::vector<T> elements;
 };
-
-// Explicitly enable CTAD to silence warnings.
-// TODO: consider removing this (and perhaps the associated constructor).
-template <typename T>
-Stack(T x) -> Stack<T>;
 
 }  // namespace Carbon
 

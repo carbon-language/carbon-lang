@@ -14,6 +14,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/common/ptr.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/field_path.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -431,17 +432,17 @@ class VariableType : public Value {
 // A first-class continuation representation of a fragment of the stack.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(std::vector<Frame*> stack)
+  explicit ContinuationValue(std::vector<Ptr<Frame>> stack)
       : Value(Kind::ContinuationValue), stack(std::move(stack)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->Tag() == Kind::ContinuationValue;
   }
 
-  auto Stack() const -> const std::vector<Frame*>& { return stack; }
+  auto Stack() const -> const std::vector<Ptr<Frame>>& { return stack; }
 
  private:
-  std::vector<Frame*> stack;
+  std::vector<Ptr<Frame>> stack;
 };
 
 // The String type.
