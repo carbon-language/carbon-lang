@@ -36,7 +36,7 @@ _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
 class _CppCode:
     """Information about a code segment for formatting."""
 
-    # The index into all segments of the code segment.
+    # The index of the code segment in the list of all segments.
     segment_index: int
     # The code content with braces stripped.
     content: str
