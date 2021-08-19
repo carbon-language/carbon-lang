@@ -51,7 +51,7 @@ NOT               "not"
 OR                "or"
 RETURN            "return"
 STRING            "String"
-STRUCT            "struct"
+CLASS             "class"
 TRUE              "true"
 TYPE              "Type"
 VAR               "var"
@@ -100,6 +100,7 @@ operand_start [(A-Za-z0-9_"]
 {BREAK}    { return Carbon::Parser::make_BREAK(context.current_token_position); }
 {CASE}     { return Carbon::Parser::make_CASE(context.current_token_position); }
 {CHOICE}   { return Carbon::Parser::make_CHOICE(context.current_token_position); }
+{CLASS}    { return Carbon::Parser::make_CLASS(context.current_token_position); }
 {CONTINUE} { return Carbon::Parser::make_CONTINUE(context.current_token_position); }
 {DBLARROW} { return Carbon::Parser::make_DBLARROW(context.current_token_position); }
 {DEFAULT}  { return Carbon::Parser::make_DEFAULT(context.current_token_position); }
@@ -113,7 +114,6 @@ operand_start [(A-Za-z0-9_"]
 {NOT}      { return Carbon::Parser::make_NOT(context.current_token_position); }
 {OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
 {RETURN}   { return Carbon::Parser::make_RETURN(context.current_token_position); }
-{STRUCT}   { return Carbon::Parser::make_STRUCT(context.current_token_position); }
 {TRUE}     { return Carbon::Parser::make_TRUE(context.current_token_position); }
 {TYPE}     { return Carbon::Parser::make_TYPE(context.current_token_position); }
 {VAR}      { return Carbon::Parser::make_VAR(context.current_token_position); }

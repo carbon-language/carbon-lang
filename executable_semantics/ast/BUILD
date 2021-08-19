@@ -14,10 +14,10 @@ cc_library(
         "declaration.h",
     ],
     deps = [
+        ":class_definition",
         ":function_definition",
         ":member",
         ":pattern",
-        ":struct_definition",
         "//common:ostream",
         "//executable_semantics/common:ptr",
         "@llvm-project//llvm:Support",
@@ -115,8 +115,8 @@ cc_library(
 )
 
 cc_library(
-    name = "struct_definition",
-    hdrs = ["struct_definition.h"],
+    name = "class_definition",
+    hdrs = ["class_definition.h"],
     deps = [
         ":member",
         "//common:ostream",

@@ -133,12 +133,11 @@ void InitEnv(const Declaration& d, Env* env) {
       break;
     }
 
-    case Declaration::Kind::StructDeclaration: {
-      const StructDefinition& struct_def =
-          cast<StructDeclaration>(d).Definition();
+    case Declaration::Kind::ClassDeclaration: {
+      const ClassDefinition& class_def = cast<ClassDeclaration>(d).Definition();
       VarValues fields;
       VarValues methods;
-      for (const Member* m : struct_def.members) {
+      for (const Member* m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember: {
             const BindingPattern* binding = cast<FieldMember>(*m).Binding();
@@ -150,10 +149,10 @@ void InitEnv(const Declaration& d, Env* env) {
           }
         }
       }
-      auto st = global_arena->RawNew<StructType>(
-          struct_def.name, std::move(fields), std::move(methods));
+      auto st = global_arena->RawNew<ClassType>(
+          class_def.name, std::move(fields), std::move(methods));
       auto a = state->heap.AllocateValue(st);
-      env->Set(struct_def.name, a);
+      env->Set(class_def.name, a);
       break;
     }
 
@@ -216,7 +215,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       state->stack.Push(frame);
       break;
     }
-    case Value::Kind::StructType: {
+    case Value::Kind::ClassType: {
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* sv = global_arena->RawNew<StructValue>(operas[0], arg);
       Ptr<Frame> frame = state->stack.Top();

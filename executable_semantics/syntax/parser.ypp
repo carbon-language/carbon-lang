@@ -155,7 +155,7 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %token RETURN
 %token TRUE
 %token FALSE
-%token STRUCT
+%token CLASS
 %token CHOICE
 %token MATCH
 %token CASE
@@ -571,9 +571,9 @@ declaration:
     { $$ = global_arena->New<FunctionDeclaration>($1); }
 | function_declaration
     { $$ = global_arena->New<FunctionDeclaration>($1); }
-| STRUCT identifier "{" member_list "}"
+| CLASS identifier "{" member_list "}"
     {
-      $$ = global_arena->New<StructDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->New<ClassDeclaration>(yylineno, $2, $4);
     }
 | CHOICE identifier "{" alternative_list "}"
     {
