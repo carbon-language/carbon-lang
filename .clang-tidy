@@ -18,7 +18,6 @@ CheckOptions:
       key: readability-identifier-naming.ConstexprVariableCase,
       value: CamelCase,
     }
-  - { key: readability-identifier-naming.FunctionCase, value: CamelCase }
   - { key: readability-identifier-naming.NamespaceCase, value: CamelCase }
   - { key: readability-identifier-naming.StructCase, value: CamelCase }
   - {
