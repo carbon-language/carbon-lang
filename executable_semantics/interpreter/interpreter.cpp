@@ -183,8 +183,8 @@ void InitEnv(const Declaration& d, Env* env) {
   }
 }
 
-static void InitGlobals(const std::list<const Declaration*>& fs) {
-  for (const auto* d : fs) {
+static void InitGlobals(const std::list<Ptr<const Declaration>>& fs) {
+  for (const auto d : fs) {
     InitEnv(*d, &globals);
   }
 }
@@ -1236,7 +1236,7 @@ void Step() {
 }
 
 // Interpret the whole porogram.
-auto InterpProgram(const std::list<const Declaration*>& fs) -> int {
+auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int {
   state = global_arena->RawNew<State>();  // Runtime state.
   if (tracing_output) {
     llvm::outs() << "********** initializing globals **********\n";

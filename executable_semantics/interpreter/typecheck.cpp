@@ -989,16 +989,16 @@ static auto GetName(const Declaration& d) -> const std::string& {
   }
 }
 
-auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
-                     const Env& values) -> const Declaration* {
-  switch (d.Tag()) {
+auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
+                     const Env& values) -> Ptr<const Declaration> {
+  switch (d->Tag()) {
     case Declaration::Kind::FunctionDeclaration:
-      return global_arena->RawNew<FunctionDeclaration>(TypeCheckFunDef(
-          &cast<FunctionDeclaration>(d).Definition(), types, values));
+      return global_arena->New<FunctionDeclaration>(TypeCheckFunDef(
+          &cast<FunctionDeclaration>(*d).Definition(), types, values));
 
     case Declaration::Kind::StructDeclaration: {
       const StructDefinition& struct_def =
-          cast<StructDeclaration>(d).Definition();
+          cast<StructDeclaration>(*d).Definition();
       std::list<Member*> fields;
       for (Member* m : struct_def.members) {
         switch (m->Tag()) {
@@ -1008,16 +1008,16 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
             break;
         }
       }
-      return global_arena->RawNew<StructDeclaration>(
+      return global_arena->New<StructDeclaration>(
           struct_def.line_num, struct_def.name, std::move(fields));
     }
 
     case Declaration::Kind::ChoiceDeclaration:
       // TODO
-      return &d;
+      return d;
 
     case Declaration::Kind::VariableDeclaration: {
-      const auto& var = cast<VariableDeclaration>(d);
+      const auto& var = cast<VariableDeclaration>(*d);
       // Signals a type error if the initializing expression does not have
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
@@ -1033,7 +1033,7 @@ auto MakeTypeChecked(const Declaration& d, const TypeEnv& types,
       const Value* declared_type = InterpExp(values, type);
       ExpectType(var.LineNumber(), "initializer of variable", declared_type,
                  type_checked_initializer.type);
-      return &d;
+      return d;
     }
   }
 }
@@ -1095,7 +1095,7 @@ static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
   }
 }
 
-auto TopLevel(const std::list<const Declaration*>& fs) -> TypeCheckContext {
+auto TopLevel(const std::list<Ptr<const Declaration>>& fs) -> TypeCheckContext {
   TypeCheckContext tops;
   bool found_main = false;
 
