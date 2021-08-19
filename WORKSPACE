@@ -29,6 +29,9 @@ pip_install(
 # Python mypy rules
 ###############################################################################
 
+# NOTE: https://github.com/bazelbuild/bazel/issues/4948 tracks bazel supporting
+# typing directly. If it's added, we will probably want to switch.
+
 # Add mypy
 mypy_integration_version = "0.2.0"
 
