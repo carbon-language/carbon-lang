@@ -3183,7 +3183,7 @@ From these rules, we derive rules about which type expressions are canonical.
 The first rule is:
 
 > For purposes of type checking a function, the names of types declared in the
-> function declaration to the right of the `:!` are all canonical.
+> function declaration to the left of the `:!` are all canonical.
 
 This is because these can all be given distinct types freely, only their
 associated types can be constrained to be equal to some other type. In this
