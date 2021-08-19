@@ -45,7 +45,7 @@ class Value {
     FunctionType,
     PointerType,
     AutoType,
-    StructType,
+    ClassType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -360,16 +360,16 @@ class AutoType : public Value {
 };
 
 // A struct type.
-class StructType : public Value {
+class ClassType : public Value {
  public:
-  StructType(std::string name, VarValues fields, VarValues methods)
-      : Value(Kind::StructType),
+  ClassType(std::string name, VarValues fields, VarValues methods)
+      : Value(Kind::ClassType),
         name(std::move(name)),
         fields(std::move(fields)),
         methods(std::move(methods)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->Tag() == Kind::StructType;
+    return value->Tag() == Kind::ClassType;
   }
 
   auto Name() const -> const std::string& { return name; }
