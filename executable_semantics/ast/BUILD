@@ -19,6 +19,7 @@ cc_library(
         ":pattern",
         ":struct_definition",
         "//common:ostream",
+        "//executable_semantics/common:ptr",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -15,7 +15,7 @@ namespace Carbon {
 
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
-static void AddIntrinsics(std::list<const Declaration*>* fs) {
+static void AddIntrinsics(std::list<Ptr<const Declaration>>* fs) {
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
       "0", global_arena->RawNew<BindingPattern>(
                -1, "format_str",
@@ -26,7 +26,7 @@ static void AddIntrinsics(std::list<const Declaration*>* fs) {
       global_arena->RawNew<IntrinsicExpression>(
           IntrinsicExpression::IntrinsicKind::Print),
       false);
-  auto* print = global_arena->RawNew<FunctionDeclaration>(
+  auto print = global_arena->New<FunctionDeclaration>(
       global_arena->RawNew<FunctionDefinition>(
           -1, "Print", std::vector<GenericBinding>(),
           global_arena->RawNew<TuplePattern>(-1, print_fields),
@@ -36,11 +36,11 @@ static void AddIntrinsics(std::list<const Declaration*>* fs) {
   fs->insert(fs->begin(), print);
 }
 
-void ExecProgram(std::list<const Declaration*> fs) {
+void ExecProgram(std::list<Ptr<const Declaration>> fs) {
   AddIntrinsics(&fs);
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
-    for (const auto* decl : fs) {
+    for (const auto decl : fs) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** type checking **********\n";
@@ -49,14 +49,14 @@ void ExecProgram(std::list<const Declaration*> fs) {
   TypeCheckContext p = TopLevel(fs);
   TypeEnv top = p.types;
   Env ct_top = p.values;
-  std::list<const Declaration*> new_decls;
-  for (const auto* decl : fs) {
-    new_decls.push_back(MakeTypeChecked(*decl, top, ct_top));
+  std::list<Ptr<const Declaration>> new_decls;
+  for (const auto decl : fs) {
+    new_decls.push_back(MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
-    for (const auto* decl : new_decls) {
+    for (const auto decl : new_decls) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** starting execution **********\n";
