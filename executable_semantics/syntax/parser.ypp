@@ -71,6 +71,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/ptr.h"
 #include "executable_semantics/ast/paren_contents.h"
+#include "executable_semantics/syntax/bison_wrap.h"
 
 namespace Carbon {
 class ParseAndLexContext;
@@ -93,7 +94,7 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
-%type <const Declaration*> declaration
+%type <BisonWrap<Ptr<const Declaration>>> declaration
 %type <const FunctionDefinition*> function_declaration
 %type <const FunctionDefinition*> function_definition
 %type <std::list<Ptr<const Declaration>>> declaration_list
@@ -567,20 +568,20 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = global_arena->RawNew<FunctionDeclaration>($1); }
+    { $$ = global_arena->New<FunctionDeclaration>($1); }
 | function_declaration
-    { $$ = global_arena->RawNew<FunctionDeclaration>($1); }
+    { $$ = global_arena->New<FunctionDeclaration>($1); }
 | CLASS identifier "{" member_list "}"
     {
-      $$ = global_arena->RawNew<ClassDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->New<ClassDeclaration>(yylineno, $2, $4);
     }
 | CHOICE identifier "{" alternative_list "}"
     {
-      $$ = global_arena->RawNew<ChoiceDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->New<ChoiceDeclaration>(yylineno, $2, $4);
     }
 | VAR variable_declaration "=" expression ";"
     {
-      $$ = global_arena->RawNew<VariableDeclaration>(yylineno, $2, $4);
+      $$ = global_arena->New<VariableDeclaration>(yylineno, $2, $4);
     }
 ;
 declaration_list:
