@@ -2,9 +2,6 @@
 
 """Figure out comments on a GitHub PR."""
 
-# Allows types to reference themselves in type hints.
-from __future__ import annotations
-
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
@@ -123,7 +120,7 @@ class _Comment(object):
         self.body = body
 
     @staticmethod
-    def from_raw_comment(raw_comment: Dict) -> _Comment:
+    def from_raw_comment(raw_comment: Dict) -> "_Comment":
         """Creates the comment from a raw comment dict."""
         return _Comment(
             raw_comment["author"]["login"],
@@ -178,7 +175,7 @@ class _PRComment(_Comment):
         )
         self.url = raw_comment["url"]
 
-    def __lt__(self, other: _PRComment) -> bool:
+    def __lt__(self, other: "_PRComment") -> bool:
         return self.timestamp < other.timestamp
 
     def format(self, long: bool) -> str:
@@ -233,7 +230,7 @@ class _Thread(object):
                 )
             )
 
-    def __lt__(self, other: _Thread) -> bool:
+    def __lt__(self, other: "_Thread") -> bool:
         """Sort threads by line then timestamp."""
         if self.line != other.line:
             return bool(self.line < other.line)
