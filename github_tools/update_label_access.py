@@ -12,12 +12,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+from typing import List, Optional, Set
 
 # https://github.com/PyGithub/PyGithub
 # GraphQL is preferred, but falling back to pygithub for unsupported mutations.
-import github
+import github  # type: ignore
 
-from carbon.github_tools import github_helpers
+from github_tools import github_helpers
 
 # The organization to mirror members from.
 _ORG = "carbon-language"
@@ -65,14 +66,14 @@ query {
 _TEAM_MEMBER_PATH = ("organization", "team", "members")
 
 
-def _parse_args(args=None):
+def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     github_helpers.add_access_token_arg(parser, "admin:org, repo")
     return parser.parse_args(args=args)
 
 
-def _load_org_members(client):
+def _load_org_members(client: github_helpers.Client) -> Set[str]:
     """Loads org members."""
     print("Loading %s..." % _ORG)
     org_members = set()
@@ -94,7 +95,7 @@ def _load_org_members(client):
     return org_members
 
 
-def _load_team_members(client):
+def _load_team_members(client: github_helpers.Client) -> Set[str]:
     """Load team members."""
     print("Loading %s..." % _TEAM)
     team_members = set()
@@ -106,7 +107,9 @@ def _load_team_members(client):
     return team_members
 
 
-def _update_team(gh, org_members, team_members):
+def _update_team(
+    gh: github.Github, org_members: Set[str], team_members: Set[str]
+) -> None:
     """Updates the team if needed.
 
     This switches to pygithub because GraphQL lacks equivalent mutation support.
@@ -125,7 +128,7 @@ def _update_team(gh, org_members, team_members):
             gh_team.remove_membership(gh.get_user(member))
 
 
-def main():
+def main() -> None:
     parsed_args = _parse_args()
     print("Connecting...")
     client = github_helpers.Client(parsed_args)

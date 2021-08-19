@@ -2,7 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Python dependencies, consumed by /WORKSPACE.
---pre
-gql
-PyGitHub
+# Empty BUILD file to allow access to Bazel extensions.

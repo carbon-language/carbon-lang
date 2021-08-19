@@ -6,6 +6,10 @@ workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+###############################################################################
+# Python rules
+###############################################################################
+
 # Add Bazel's python rules and set up pip.
 http_archive(
     name = "rules_python",
@@ -21,10 +25,51 @@ pip_install(
     requirements = "//github_tools:requirements.txt",
 )
 
+###############################################################################
+# Python mypy rules
+###############################################################################
+
+# Add mypy
+mypy_integration_version = "0.2.0"
+
+http_archive(
+    name = "mypy_integration",
+    sha256 = "621df076709dc72809add1f5fe187b213fee5f9b92e39eb33851ab13487bd67d",
+    strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
+    urls = [
+        "https://github.com/thundergolfer/bazel-mypy-integration/archive/refs/tags/%s.tar.gz" % mypy_integration_version,
+    ],
+)
+
+load(
+    "@mypy_integration//repositories:repositories.bzl",
+    mypy_integration_repositories = "repositories",
+)
+
+mypy_integration_repositories()
+
+load("@mypy_integration//:config.bzl", "mypy_configuration")
+
+mypy_configuration("//bazel/mypy:mypy.ini")
+
+load("@mypy_integration//repositories:deps.bzl", mypy_integration_deps = "deps")
+
+mypy_integration_deps(
+    mypy_requirements_file = "//bazel/mypy:version.txt",
+)
+
+###############################################################################
+# C++ rules
+###############################################################################
+
 # Configure the bootstrapped Clang and LLVM toolchain for Bazel.
 load("//bazel/cc_toolchains:clang_configuration.bzl", "configure_clang_toolchain")
 
 configure_clang_toolchain(name = "bazel_cc_toolchain")
+
+###############################################################################
+# LLVM libraries
+###############################################################################
 
 local_repository(
     name = "llvm_bazel",
@@ -52,6 +97,10 @@ load("@llvm_bazel//:zlib.bzl", "llvm_zlib_system")
 
 # We require successful detection and use of a system zlib library.
 llvm_zlib_system(name = "llvm_zlib")
+
+###############################################################################
+# Flex/Bison rules
+###############################################################################
 
 # TODO(chandlerc): Replace this with an upstream release once the pull request
 # with our needed functionality lands:
@@ -106,6 +155,10 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 # When building Bison, disable all compiler warnings as we can't realistically
 # fix them anyways.
 bison_register_toolchains(extra_copts = ["-w"])
+
+###############################################################################
+# Example conversion repositories
+###############################################################################
 
 local_repository(
     name = "brotli",

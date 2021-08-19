@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Python dependencies, consumed by /WORKSPACE.
---pre
-gql
-PyGitHub
+# Synced with:
+# https://github.com/thundergolfer/bazel-mypy-integration/blob/master/third_party/requirements.txt
+mypy==0.790
