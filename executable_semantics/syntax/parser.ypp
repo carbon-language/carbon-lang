@@ -129,43 +129,59 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <std::list<std::pair<std::string, const Expression*>>> alternative_list
 %type <std::pair<const Pattern*, const Statement*>*> clause
 %type <std::list<std::pair<const Pattern*, const Statement*>>*> clause_list
-%token END_OF_FILE 0
-%token AND
-%token OR
-%token NOT
-%token STRING
-%token BOOL
-%token TYPE
-%token FN
-%token FNTY
-%token ARROW "->"
-%token FNARROW "-> in return type"
-%token VAR
-%token EQUAL_EQUAL
-%token IF
-%token ELSE
-%token WHILE
-%token CONTINUATION_TYPE
-%token CONTINUATION
-%token RUN
-%token AWAIT
-%token BREAK
-%token CONTINUE
-%token RETURN
-%token TRUE
-%token FALSE
-%token CLASS
-%token CHOICE
-%token MATCH
-%token CASE
-%token DBLARROW "=>"
-%token DEFAULT
-%token AUTO
-%token UNDERSCORE
+
 %token
-  EQUAL  "="
-  MINUS  "-"
-  PLUS   "+"
+  // Most tokens have their spelling defined in lexer.lpp.
+  AND
+  ARROW
+  AUTO
+  AWAIT
+  BOOL
+  BREAK
+  CASE
+  CHOICE
+  CLASS
+  COLON
+  COLON_BANG
+  COMMA
+  CONTINUATION
+  CONTINUATION_TYPE
+  CONTINUE
+  DEFAULT
+  DOUBLE_ARROW
+  ELSE
+  EQUAL
+  EQUAL_EQUAL
+  FALSE
+  FN
+  FNTY
+  IF
+  LEFT_CURLY_BRACE
+  LEFT_PARENTHESIS
+  LEFT_SQUARE_BRACKET
+  MATCH
+  MINUS
+  NOT
+  OR
+  PERIOD
+  PLUS
+  RETURN
+  RIGHT_CURLY_BRACE
+  RIGHT_PARENTHESIS
+  RIGHT_SQUARE_BRACKET
+  RUN
+  SEMICOLON
+  SLASH
+  STRING
+  TRUE
+  TYPE
+  UNDERSCORE
+  VAR
+  WHILE
+  // Used to track EOF.
+  END_OF_FILE 0
+  // Only used for precedence.
+  FNARROW "-> in return type"
   // The lexer determines the arity and fixity of each `*` based on whitespace
   // and adjacent tokens. UNARY_STAR indicates that the operator is unary but
   // could be either prefix or postfix.
@@ -173,26 +189,14 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
   PREFIX_STAR "prefix *"
   POSTFIX_STAR "postfix *"
   BINARY_STAR "binary *"
-  SLASH  "/"
-  LEFT_PARENTHESIS "("
-  RIGHT_PARENTHESIS ")"
-  LEFT_CURLY_BRACE "{"
-  RIGHT_CURLY_BRACE "}"
-  LEFT_SQUARE_BRACKET "["
-  RIGHT_SQUARE_BRACKET "]"
-  PERIOD "."
-  COMMA ","
-  SEMICOLON ";"
-  COLON_BANG ":!"
-  COLON ":"
 ;
 
 %precedence FNARROW
-%precedence "{" "}"
-%precedence ":!" ":" "," DBLARROW
+%precedence LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+%precedence COLON_BANG COLON COMMA DOUBLE_ARROW
 %left OR AND
 %nonassoc EQUAL_EQUAL
-%left "+" "-"
+%left PLUS MINUS
 %left BINARY_STAR
 %precedence NOT UNARY_MINUS PREFIX_STAR
 // We need to give the `UNARY_STAR` token a precedence, rather than overriding
@@ -203,8 +207,13 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 // is the final token of a rule, it must be a postfix usage, so we give it the
 // same precedence as POSTFIX_STAR.
 %precedence POSTFIX_STAR UNARY_STAR
-%left "." ARROW
-%precedence "(" ")" "[" "]"
+%left PERIOD ARROW
+%precedence
+  LEFT_PARENTHESIS
+  RIGHT_PARENTHESIS
+  LEFT_SQUARE_BRACKET
+  RIGHT_SQUARE_BRACKET
+;
 
 %start input
 %locations
@@ -217,7 +226,7 @@ expression:
     { $$ = global_arena->RawNew<IdentifierExpression>(yylineno, $1); }
 | expression designator
     { $$ = global_arena->RawNew<FieldAccessExpression>(yylineno, $1, $2); }
-| expression "[" expression "]"
+| expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
     { $$ = global_arena->RawNew<IndexExpression>(yylineno, $1, $3); }
 | integer_literal
     { $$ = global_arena->RawNew<IntLiteral>(yylineno, $1); }
@@ -246,10 +255,10 @@ expression:
 | expression EQUAL_EQUAL expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Eq, std::vector<const Expression*>({$1, $3})); }
-| expression "+" expression
+| expression PLUS expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Add, std::vector<const Expression*>({$1, $3})); }
-| expression "-" expression
+| expression MINUS expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Sub, std::vector<const Expression*>({$1, $3})); }
 | expression BINARY_STAR expression
@@ -264,7 +273,7 @@ expression:
 | NOT expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Not, std::vector<const Expression*>({$2})); }
-| "-" expression %prec UNARY_MINUS
+| MINUS expression %prec UNARY_MINUS
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
         yylineno, Operator::Neg, std::vector<const Expression*>({$2})); }
 | PREFIX_STAR expression
@@ -285,7 +294,7 @@ expression:
     { $$ = global_arena->RawNew<FunctionTypeLiteral>(
         yylineno, $2, $3.first, $3.second); }
 ;
-designator: "." identifier { $$ = $2; }
+designator: PERIOD identifier { $$ = $2; }
 ;
 paren_expression: paren_expression_base
     { $$ = ExpressionFromParenContents(yylineno, $1); }
@@ -296,15 +305,15 @@ tuple: paren_expression_base
 paren_expression_element:
   expression
     { $$ = {.name = std::nullopt, .term = $1}; }
-| designator "=" expression
+| designator EQUAL expression
     { $$ = {.name = $1, .term = $3}; }
 ;
 paren_expression_base:
-  "(" ")"
+  LEFT_PARENTHESIS RIGHT_PARENTHESIS
     { $$ = {.elements = {}, .has_trailing_comma = false}; }
-| "(" paren_expression_contents ")"
+| LEFT_PARENTHESIS paren_expression_contents RIGHT_PARENTHESIS
     { $$ = $2; }
-| "(" paren_expression_contents "," ")"
+| LEFT_PARENTHESIS paren_expression_contents COMMA RIGHT_PARENTHESIS
     {
       $$ = $2;
       $$.has_trailing_comma = true;
@@ -313,7 +322,7 @@ paren_expression_base:
 paren_expression_contents:
   paren_expression_element
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents "," paren_expression_element
+| paren_expression_contents COMMA paren_expression_element
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -335,7 +344,7 @@ pattern:
 non_expression_pattern:
   AUTO
     { $$ = global_arena->RawNew<AutoPattern>(yylineno); }
-| binding_lhs ":" pattern
+| binding_lhs COLON pattern
     { $$ = global_arena->RawNew<BindingPattern>(yylineno, $1, $3); }
 | paren_pattern
     { $$ = $1; }
@@ -350,9 +359,9 @@ paren_pattern: paren_pattern_base
     { $$ = PatternFromParenContents(yylineno, $1); }
 ;
 paren_pattern_base:
-  "(" paren_pattern_contents ")"
+  LEFT_PARENTHESIS paren_pattern_contents RIGHT_PARENTHESIS
     { $$ = $2; }
-| "(" paren_pattern_contents "," ")"
+| LEFT_PARENTHESIS paren_pattern_contents COMMA RIGHT_PARENTHESIS
     {
       $$ = $2;
       $$.has_trailing_comma = true;
@@ -366,17 +375,17 @@ paren_pattern_base:
 paren_pattern_contents:
   paren_pattern_element
     { $$ = {.elements = {$1}, .has_trailing_comma = false }; }
-| paren_expression_contents "," paren_pattern_element
+| paren_expression_contents COMMA paren_pattern_element
     {
       $$ = ParenExpressionToParenPattern($1);
       $$.elements.push_back($3);
     }
-| paren_pattern_contents "," paren_expression_element
+| paren_pattern_contents COMMA paren_expression_element
     {
       $$ = $1;
       $$.elements.push_back({.name = $3.name, .term = global_arena->RawNew<ExpressionPattern>($3.term)});
     }
-| paren_pattern_contents "," paren_pattern_element
+| paren_pattern_contents COMMA paren_pattern_element
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -385,7 +394,7 @@ paren_pattern_contents:
 paren_pattern_element:
   non_expression_pattern
     { $$ = {.name = std::nullopt, .term = $1}; }
-| designator "=" non_expression_pattern
+| designator EQUAL non_expression_pattern
     { $$ = {.name = $1, .term = $3}; }
 ;
 tuple_pattern: paren_pattern_base
@@ -395,15 +404,15 @@ tuple_pattern: paren_pattern_base
 // so it should be used only when prior context (such as an introducer)
 // rules out the possibility of an `expression` at this point.
 maybe_empty_tuple_pattern:
-  "(" ")"
+  LEFT_PARENTHESIS RIGHT_PARENTHESIS
     { $$ = global_arena->RawNew<TuplePattern>(yylineno, std::vector<TuplePattern::Field>()); }
 | tuple_pattern
     { $$ = $1; }
 ;
 clause:
-  CASE pattern DBLARROW statement
+  CASE pattern DOUBLE_ARROW statement
     { $$ = global_arena->RawNew<std::pair<const Pattern*, const Statement*>>($2, $4); }
-| DEFAULT DBLARROW statement
+| DEFAULT DOUBLE_ARROW statement
     {
       auto vp = global_arena->RawNew<BindingPattern>(
           yylineno, std::nullopt, global_arena->RawNew<AutoPattern>(yylineno));
@@ -420,35 +429,36 @@ clause_list:
     { $$ = $2; $$->push_front(*$1); }
 ;
 statement:
-  expression "=" expression ";"
+  expression EQUAL expression SEMICOLON
     { $$ = global_arena->RawNew<Assign>(yylineno, $1, $3); }
-| VAR pattern "=" expression ";"
+| VAR pattern EQUAL expression SEMICOLON
     { $$ = global_arena->RawNew<VariableDefinition>(yylineno, $2, $4); }
-| expression ";"
+| expression SEMICOLON
     { $$ = global_arena->RawNew<ExpressionStatement>(yylineno, $1); }
 | if_statement
     { $$ = $1; }
-| WHILE "(" expression ")" block
+| WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block
     { $$ = global_arena->RawNew<While>(yylineno, $3, $5); }
-| BREAK ";"
+| BREAK SEMICOLON
     { $$ = global_arena->RawNew<Break>(yylineno); }
-| CONTINUE ";"
+| CONTINUE SEMICOLON
     { $$ = global_arena->RawNew<Continue>(yylineno); }
-| RETURN return_expression ";"
+| RETURN return_expression SEMICOLON
     { $$ = global_arena->RawNew<Return>(yylineno, $2.first, $2.second); }
 | block
     { $$ = $1; }
-| MATCH "(" expression ")" "{" clause_list "}"
+| MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
+  clause_list RIGHT_CURLY_BRACE
     { $$ = global_arena->RawNew<Match>(yylineno, $3, $6); }
 | CONTINUATION identifier statement
     { $$ = global_arena->RawNew<Continuation>(yylineno, $2, $3); }
-| RUN expression ";"
+| RUN expression SEMICOLON
     { $$ = global_arena->RawNew<Run>(yylineno, $2); }
-| AWAIT ";"
+| AWAIT SEMICOLON
     { $$ = global_arena->RawNew<Await>(yylineno); }
 ;
 if_statement:
-  IF "(" expression ")" block optional_else
+  IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block optional_else
     { $$ = global_arena->RawNew<If>(yylineno, $3, $5, $6); }
 ;
 optional_else:
@@ -472,7 +482,7 @@ statement_list:
     { $$ = global_arena->RawNew<Sequence>(yylineno, $1, $2); }
 ;
 block:
-  "{" statement_list "}"
+  LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
     { $$ = global_arena->RawNew<Block>(yylineno, $2); }
 ;
 return_type:
@@ -482,7 +492,7 @@ return_type:
     { $$ = {$2, false}; }
 ;
 generic_binding:
-  identifier ":!" expression
+  identifier COLON_BANG expression
     {
       $$ = GenericBinding({.name = std::move($1), .type = $3});
     }
@@ -495,7 +505,7 @@ deduced_param_list:
       $$ = std::vector<GenericBinding>();
       $$.push_back($1);
     }
-| generic_binding "," deduced_param_list
+| generic_binding COMMA deduced_param_list
     {
       $$ = $3;
       $$.push_back($1);
@@ -504,7 +514,7 @@ deduced_param_list:
 deduced_params:
   // Empty
     { $$ = std::vector<GenericBinding>(); }
-| "[" deduced_param_list "]"
+| LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
 function_definition:
@@ -515,7 +525,8 @@ function_definition:
           global_arena->RawNew<ExpressionPattern>($5.first),
           $5.second, $6);
     }
-| FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
+| FN identifier deduced_params maybe_empty_tuple_pattern DOUBLE_ARROW expression
+  SEMICOLON
     {
       // The return type is not considered "omitted" because it's automatic from
       // the expression.
@@ -526,17 +537,17 @@ function_definition:
     }
 ;
 function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
+  FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
     {
       $$ = global_arena->RawNew<FunctionDefinition>(
           yylineno, $2, $3, $4,
           global_arena->RawNew<ExpressionPattern>($5.first),
           $5.second, nullptr); }
 ;
-variable_declaration: identifier ":" pattern
+variable_declaration: identifier COLON pattern
     { $$ = global_arena->RawNew<BindingPattern>(yylineno, $1, $3); }
 ;
-member: VAR variable_declaration ";"
+member: VAR variable_declaration SEMICOLON
     { $$ = global_arena->RawNew<FieldMember>(yylineno, $2); }
 ;
 member_list:
@@ -562,7 +573,7 @@ alternative_list:
       $$ = std::list<std::pair<std::string, const Expression*>>();
       $$.push_front($1);
     }
-| alternative "," alternative_list
+| alternative COMMA alternative_list
     { $$ = std::move($3); $$.push_front($1); }
 ;
 declaration:
@@ -570,15 +581,15 @@ declaration:
     { $$ = global_arena->RawNew<FunctionDeclaration>($1); }
 | function_declaration
     { $$ = global_arena->RawNew<FunctionDeclaration>($1); }
-| CLASS identifier "{" member_list "}"
+| CLASS identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE
     {
       $$ = global_arena->RawNew<ClassDeclaration>(yylineno, $2, $4);
     }
-| CHOICE identifier "{" alternative_list "}"
+| CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     {
       $$ = global_arena->RawNew<ChoiceDeclaration>(yylineno, $2, $4);
     }
-| VAR variable_declaration "=" expression ";"
+| VAR variable_declaration EQUAL expression SEMICOLON
     {
       $$ = global_arena->RawNew<VariableDeclaration>(yylineno, $2, $4);
     }
