@@ -32,6 +32,9 @@ class Ptr {
 
   T* Get() const { return ptr; }
 
+  friend auto operator==(Ptr lhs, Ptr rhs) { return lhs.ptr == rhs.ptr; }
+  friend auto operator!=(Ptr lhs, Ptr rhs) { return lhs.ptr != rhs.ptr; }
+
  private:
   T* ptr;
 };

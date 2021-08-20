@@ -1141,8 +1141,7 @@ struct DoTransition {
 
   void operator()(const UnwindTo& unwind_to) {
     Ptr<Frame> frame = state->stack.Top();
-    // TODO: drop .Get() calls once `Ptr` has comparison operators
-    while (frame->todo.Top().Get() != unwind_to.new_top.Get()) {
+    while (frame->todo.Top() != unwind_to.new_top) {
       if (IsBlockAct(frame->todo.Top())) {
         DeallocateScope(frame->scopes.Top());
         frame->scopes.Pop();
