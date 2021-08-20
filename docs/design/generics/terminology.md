@@ -541,7 +541,7 @@ associated type is a kind of [associated item](#associated-item).
 Type parameter example:
 
 ```
-interface Stack(ElementType:! Type)
+interface StackTP(ElementType:! Type)
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
 }
@@ -550,7 +550,7 @@ interface Stack(ElementType:! Type)
 Associated type example:
 
 ```
-interface Stack {
+interface StackAT {
   let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
@@ -594,6 +594,57 @@ for different combinations of type parameters. As a result, type parameters may
 not be deduced in a function call. However, if the interface parameters are
 specified, a type can only have a single implementation of the given interface.
 This unique implementation choice determines the values of associated types.
+
+For example, we might have an interface that says how to perform addition with
+another type:
+
+```
+interface Addable(T:! Type) {
+  let ResultType:! Type;
+  fn Add[me: Self](rhs: T) -> ResultType;
+}
+```
+
+An `i32` value might support addition with `i32`, `u16`, and `f64` values.
+
+```
+impl i32 as Addable(i32) {
+  let ResultType:! Type = i32;
+  // ...
+}
+impl i32 as Addable(u16) {
+  let ResultType:! Type = i32;
+  // ...
+}
+impl i32 as Addable(f64) {
+  let ResultType:! Type = f64;
+  // ...
+}
+```
+
+To write a generic function requiring a parameter to be `Addable`, there needs
+to be some way to determine the type to add to:
+
+```
+// ✅ This is allowed, since the value of `T` is determined by the
+// `y` parameter.
+fn DoAdd[T:! Type, U:! Addable(T)](x: U, y: T) -> U.ResultType {
+  return x.Add(y);
+}
+
+// ❌ This is forbidden, can't uniquely determine `T`.
+fn CompileError[T:! Type, U:! Addable(T)](x: U) -> T;
+```
+
+Once the interface parameter can be determined, that determines the values for
+associated types, such as `ResultType` in the example. As always, calls with
+types for which no implementation exists will be rejected at the call site:
+
+```
+// ❌ This is forbidden, no implementation of `Addable(Orange)`
+// for `Apple`.
+DoAdd(apple, orange);
+```
 
 ## Type constraints
 

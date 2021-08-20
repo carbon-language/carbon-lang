@@ -1476,7 +1476,7 @@ This allows us to provide implementations of new interfaces (as in
     explicitly cast between them, but there is no implicit casting between these
     types (unlike between a type and one of its facet types / impls).
 -   For the purposes of generics, we only need to support adding interface
-    implementations. But this `adapter` feature could be used more generally, 
+    implementations. But this `adapter` feature could be used more generally,
     such as to add methods.
 
 Inside an adapter, the `Self` type matches the adapter. Members of the original
