@@ -305,9 +305,9 @@ the type define a value for a member constant is called an _associated
 constant_, and similarly an _associated function_ or _associated type_.
 
 Different types can satisfy an interface with different definitions for a given
-member. These definitions are _associated_ with what type is
-implementing the interface. An [impl](#impls-implementations-of-interfaces)
-defines what is associated with the type for that interface.
+member. These definitions are _associated_ with what type is implementing the
+interface. An [impl](#impls-implementations-of-interfaces) defines what is
+associated with the type for that interface.
 
 This terminology is also used by
 [Rust](https://doc.rust-lang.org/reference/items/associated-items.html).
@@ -531,12 +531,12 @@ conditions on the type argument. For example: `Array(T)` might implement
 
 ## Interface type parameters and associated types
 
-Imagine an interface defining a container. Different containers will
-contain different types of values, and the container API will have to refer to
-that "element type" when defining the signature of methods like "insert" or
-"find". If that element type is a parameter (input) to the interface type, we
-say it is a type parameter; if it is an output, we say it is an associated type.
-An associated type is a kind of [associated item](#associated-item).
+Imagine an interface defining a container. Different containers will contain
+different types of values, and the container API will have to refer to that
+"element type" when defining the signature of methods like "insert" or "find".
+If that element type is a parameter (input) to the interface type, we say it is
+a type parameter; if it is an output, we say it is an associated type. An
+associated type is a kind of [associated item](#associated-item).
 
 Type parameter example:
 
@@ -591,9 +591,9 @@ and other type constraints.
 
 If you have an interface with type parameters, a type can have multiple impls
 for different combinations of type parameters. As a result, type parameters may
-not be inferred. Given the interface type parameters, there can only be a single
-implementation of the interface, which determines the values for all associated
-types. So associated types may be inferred.
+not be deduced in a function call. However, if the interface parameters are
+specified, a type can only have a single implementation of the given interface.
+This unique implementation choice determines the values of associated types.
 
 ## Type constraints
 
