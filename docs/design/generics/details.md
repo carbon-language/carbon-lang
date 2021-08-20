@@ -2265,8 +2265,7 @@ Disadvantages:
     code becomes fuzzy and unpredictable.
 -   Awkward to produce type-of-types that have specified values for all
     associated types for use with `DynPtr` and `DynBox`.
--   Can introduce some inconsistency/redundancy with how interface parameters
-    are specified.
+-   Some inconsistency with how interface parameters are specified.
 -   Adds a redundant way of expressing some constraints.
 
 #### Argument passing
@@ -2276,7 +2275,7 @@ requires that anything that might be constrained be able to be specified as an
 input. In particular, this means the associated types of an interface can be
 specified as optional named arguments.
 
-In this approach, the constraints come before the thing being constrainted.
+In this approach, the constraints come before the thing being constrained.
 
 Rust supports using this syntax to set associated types to specific values. This
 is particularly used for the case of
