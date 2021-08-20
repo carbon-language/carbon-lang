@@ -40,9 +40,10 @@ class _CppCode:
     segment_index: int
     # The code content with braces stripped.
     content: str
-    # The indent of the open brace.
-    open_brace_indent: int
-    # The indent of the close brace.
+    # The column of the open brace in the original line.
+    open_brace_column: int
+    # The generated indent of the close brace when the formatted output is
+    # multi-line.
     close_brace_indent: int
     # Whether to write `%}` or `}`.
     has_percent: bool
@@ -201,7 +202,7 @@ def _format_cpp_segments(
             # The '4' here is from the `{  }` wrapper that is otherwise added.
             if (
                 code.has_percent
-                or code.open_brace_indent + len(formatted) + 4 > _COLS
+                or code.open_brace_column + len(formatted) + 4 > _COLS
                 or "\n" in formatted
             ):
                 close_percent = ""
