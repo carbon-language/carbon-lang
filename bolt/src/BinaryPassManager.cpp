@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPassManager.h"
+#include "Passes/ADRRelaxationPass.h"
 #include "Passes/Aligner.h"
 #include "Passes/AllocCombiner.h"
 #include "Passes/FrameOptimizer.h"
@@ -415,8 +416,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
                        opts::ICF);
 
   if (BC.isAArch64())
-      Manager.registerPass(
-          std::make_unique<VeneerElimination>(PrintVeneerElimination));
+    Manager.registerPass(
+        std::make_unique<VeneerElimination>(PrintVeneerElimination));
 
   Manager.registerPass(
       std::make_unique<SpecializeMemcpy1>(NeverPrint, opts::SpecializeMemcpy1),
@@ -521,11 +522,14 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   if (BC.HasRelocations)
     Manager.registerPass(std::make_unique<PatchEntries>());
 
-  // Tighten branches according to offset differences between branch and
-  // targets. No extra instructions after this pass, otherwise we may have
-  // relocations out of range and crash during linking.
-  if (BC.isAArch64())
+  if (BC.isAArch64()) {
+    Manager.registerPass(std::make_unique<ADRRelaxationPass>());
+
+    // Tighten branches according to offset differences between branch and
+    // targets. No extra instructions after this pass, otherwise we may have
+    // relocations out of range and crash during linking.
     Manager.registerPass(std::make_unique<LongJmpPass>(PrintLongJmp));
+  }
 
   // This pass turns tail calls into jumps which makes them invisible to
   // function reordering. It's unsafe to use any CFG or instruction analysis

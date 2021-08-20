@@ -66,6 +66,15 @@ public:
     return Inst.getOpcode() == AArch64::ADR;
   }
 
+  void getADRReg(const MCInst &Inst, MCPhysReg &RegName) const override {
+    assert((isADR(Inst) || isADRP(Inst)) && "Not an ADR instruction");
+    assert(MCPlus::getNumPrimeOperands(Inst) != 0 &&
+           "No operands for ADR instruction");
+    assert(Inst.getOperand(0).isReg() &&
+           "Unexpected operand in ADR instruction");
+    RegName = Inst.getOperand(0).getReg();
+  }
+
   bool isTB(const MCInst &Inst) const {
     return (Inst.getOpcode() == AArch64::TBNZW ||
             Inst.getOpcode() == AArch64::TBNZX ||
@@ -312,12 +321,17 @@ public:
   const MCExpr *getTargetExprFor(MCInst &Inst, const MCExpr *Expr,
                                  MCContext &Ctx,
                                  uint64_t RelType) const override {
-    if (RelType == ELF::R_AARCH64_ADR_GOT_PAGE ||
-        RelType == ELF::R_AARCH64_TLSDESC_ADR_PAGE21) {
+
+    if (isADR(Inst) || RelType == ELF::R_AARCH64_ADR_PREL_LO21 ||
+        RelType == ELF::R_AARCH64_TLSDESC_ADR_PREL21) {
+      return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS, Ctx);
+    } else if (isADRP(Inst) || RelType == ELF::R_AARCH64_ADR_PREL_PG_HI21 ||
+               RelType == ELF::R_AARCH64_ADR_PREL_PG_HI21_NC ||
+               RelType == ELF::R_AARCH64_TLSDESC_ADR_PAGE21 ||
+               RelType == ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 ||
+               RelType == ELF::R_AARCH64_ADR_GOT_PAGE) {
       // Never emit a GOT reloc, we handled this in
       // RewriteInstance::readRelocations().
-      return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_PAGE, Ctx);
-    } else if (Inst.getOpcode() == AArch64::ADRP) {
       return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_PAGE, Ctx);
     } else {
       switch(RelType) {
@@ -337,27 +351,13 @@ public:
     return Expr;
   }
 
-  const MCSymbol *getTargetSymbol(const MCExpr *Expr) const override {
-    auto *AArchExpr = dyn_cast<AArch64MCExpr>(Expr);
-    if (AArchExpr && AArchExpr->getSubExpr()) {
-      return getTargetSymbol(AArchExpr->getSubExpr());
-    }
-
-    auto *SymExpr = dyn_cast<MCSymbolRefExpr>(Expr);
-    if (!SymExpr || SymExpr->getKind() != MCSymbolRefExpr::VK_None)
-      return nullptr;
-
-    return &SymExpr->getSymbol();
-  }
-
-  const MCSymbol *getTargetSymbol(const MCInst &Inst,
-                                  unsigned OpNum = 0) const override {
+  bool getSymbolRefOperandNum(const MCInst &Inst, unsigned &OpNum) const {
     if (OpNum >= MCPlus::getNumPrimeOperands(Inst))
-      return nullptr;
+      return false;
 
     // Auto-select correct operand number
     if (OpNum == 0) {
-      if (isConditionalBranch(Inst))
+      if (isConditionalBranch(Inst) || isADR(Inst) || isADRP(Inst))
         OpNum = 1;
       if (isTB(Inst))
         OpNum = 2;
@@ -365,11 +365,63 @@ public:
         OpNum = 1;
     }
 
+    return true;
+  }
+
+  const MCSymbol *getTargetSymbol(const MCExpr *Expr) const override {
+    auto *AArchExpr = dyn_cast<AArch64MCExpr>(Expr);
+    if (AArchExpr && AArchExpr->getSubExpr())
+      return getTargetSymbol(AArchExpr->getSubExpr());
+
+    auto *BinExpr = dyn_cast<MCBinaryExpr>(Expr);
+    if (BinExpr)
+      return getTargetSymbol(BinExpr->getLHS());
+
+    auto *SymExpr = dyn_cast<MCSymbolRefExpr>(Expr);
+    if (SymExpr && SymExpr->getKind() == MCSymbolRefExpr::VK_None)
+      return &SymExpr->getSymbol();
+
+    return nullptr;
+  }
+
+  const MCSymbol *getTargetSymbol(const MCInst &Inst,
+                                  unsigned OpNum = 0) const override {
+    if (!getSymbolRefOperandNum(Inst, OpNum))
+      return nullptr;
+
     const MCOperand &Op = Inst.getOperand(OpNum);
     if (!Op.isExpr())
       return nullptr;
 
     return getTargetSymbol(Op.getExpr());
+  }
+
+  int64_t getTargetAddend(const MCExpr *Expr) const override {
+    auto *AArchExpr = dyn_cast<AArch64MCExpr>(Expr);
+    if (AArchExpr && AArchExpr->getSubExpr())
+      return getTargetAddend(AArchExpr->getSubExpr());
+
+    auto *BinExpr = dyn_cast<MCBinaryExpr>(Expr);
+    if (BinExpr && BinExpr->getOpcode() == MCBinaryExpr::Add)
+      return getTargetAddend(BinExpr->getRHS());
+
+    auto *ConstExpr = dyn_cast<MCConstantExpr>(Expr);
+    if (ConstExpr)
+      return ConstExpr->getValue();
+
+    return 0;
+  }
+
+  int64_t getTargetAddend(const MCInst &Inst,
+                          unsigned OpNum = 0) const override {
+    if (!getSymbolRefOperandNum(Inst, OpNum))
+      return 0;
+
+    const MCOperand &Op = Inst.getOperand(OpNum);
+    if (!Op.isExpr())
+      return 0;
+
+    return getTargetAddend(Op.getExpr());
   }
 
   bool evaluateBranch(const MCInst &Inst, uint64_t Addr, uint64_t Size,
@@ -1036,6 +1088,28 @@ public:
     Inst.clear();
     Inst.addOperand(MCOperand::createReg(AArch64::LR));
     return true;
+  }
+
+  std::vector<MCInst> materializeAddress(const MCSymbol *Target, MCContext *Ctx,
+                                         MCPhysReg RegName,
+                                         int64_t Addend) const override {
+    // Get page-aligned address and add page offset
+    std::vector<MCInst> Insts(2);
+    Insts[0].setOpcode(AArch64::ADRP);
+    Insts[0].clear();
+    Insts[0].addOperand(MCOperand::createReg(RegName));
+    Insts[0].addOperand(MCOperand::createImm(0));
+    setOperandToSymbolRef(Insts[0], /* OpNum */ 1, Target, Addend, Ctx,
+                          ELF::R_AARCH64_NONE);
+    Insts[1].setOpcode(AArch64::ADDXri);
+    Insts[1].clear();
+    Insts[1].addOperand(MCOperand::createReg(RegName));
+    Insts[1].addOperand(MCOperand::createReg(RegName));
+    Insts[1].addOperand(MCOperand::createImm(0));
+    Insts[1].addOperand(MCOperand::createImm(0));
+    setOperandToSymbolRef(Insts[1], /* OpNum */ 2, Target, Addend, Ctx,
+                          ELF::R_AARCH64_ADD_ABS_LO12_NC);
+    return Insts;
   }
 };
 

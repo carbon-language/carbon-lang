@@ -998,7 +998,8 @@ void RewriteInstance::discoverFileObjects() {
         [](const SymbolRef &Symbol) {
           StringRef Name = cantFail(Symbol.getName());
           return !(cantFail(Symbol.getType()) == SymbolRef::ST_Unknown &&
-                   (Name == "$d" || Name == "$x"));
+                   (Name == "$d" || Name.startswith("$d.") || Name == "$x" ||
+                    Name.startswith("$x.")));
         });
     --LastSymbol;
   }

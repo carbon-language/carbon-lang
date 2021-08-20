@@ -4018,7 +4018,9 @@ bool BinaryFunction::isDataMarker(const SymbolRef &Symbol,
   // code section (see IHI0056B). $d identifies a symbol starting data contents.
   if (BC.isAArch64() && Symbol.getType() &&
       cantFail(Symbol.getType()) == SymbolRef::ST_Unknown && SymbolSize == 0 &&
-      Symbol.getName() && cantFail(Symbol.getName()) == "$d")
+      Symbol.getName() &&
+      (cantFail(Symbol.getName()) == "$d" ||
+       cantFail(Symbol.getName()).startswith("$d.")))
     return true;
   return false;
 }
@@ -4030,7 +4032,9 @@ bool BinaryFunction::isCodeMarker(const SymbolRef &Symbol,
   // end of a data chunk inside code.
   if (BC.isAArch64() && Symbol.getType() &&
       cantFail(Symbol.getType()) == SymbolRef::ST_Unknown && SymbolSize == 0 &&
-      Symbol.getName() && cantFail(Symbol.getName()) == "$x")
+      Symbol.getName() &&
+      (cantFail(Symbol.getName()) == "$x" ||
+       cantFail(Symbol.getName()).startswith("$x.")))
     return true;
   return false;
 }

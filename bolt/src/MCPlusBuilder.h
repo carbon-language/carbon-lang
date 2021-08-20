@@ -559,6 +559,10 @@ public:
     return false;
   }
 
+  virtual void getADRReg(const MCInst &Inst, MCPhysReg &RegName) const {
+    llvm_unreachable("not implemented");
+  }
+
   virtual bool isMoveMem2Reg(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
@@ -1096,6 +1100,21 @@ public:
     return &cast<const MCSymbolRefExpr>(Expr)->getSymbol();
   }
 
+  /// Return addend that represents an offset from MCSymbol target
+  /// of this instruction at a given operand number \p OpNum.
+  /// If there's no symbol associated with  the operand - return 0
+  virtual int64_t getTargetAddend(const MCInst &Inst,
+                                  unsigned OpNum = 0) const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  /// Return MCSymbol addend extracted from a target expression
+  virtual int64_t getTargetAddend(const MCExpr *Expr) const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
   /// Return MCSymbol/offset extracted from a target expression
   virtual std::pair<const MCSymbol *, uint64_t>
   getTargetSymbolInfo(const MCExpr *Expr) const {
@@ -1380,6 +1399,15 @@ public:
   virtual bool createReturn(MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
+  }
+
+  /// Store \p Target absolute adddress to \p RegName
+  virtual std::vector<MCInst> materializeAddress(const MCSymbol *Target,
+                                                 MCContext *Ctx,
+                                                 MCPhysReg RegName,
+                                                 int64_t Addend = 0) const {
+    llvm_unreachable("not implemented");
+    return {};
   }
 
   /// Creates a new unconditional branch instruction in Inst and set its operand

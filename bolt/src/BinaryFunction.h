@@ -1315,8 +1315,11 @@ public:
     case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
     case ELF::R_AARCH64_ADR_GOT_PAGE:
+    case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
     case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
+    case ELF::R_AARCH64_ADR_PREL_LO21:
     case ELF::R_AARCH64_ADR_PREL_PG_HI21:
+    case ELF::R_AARCH64_ADR_PREL_PG_HI21_NC:
       Relocations[Offset] = Relocation{Offset, Symbol, RelType, Addend, Value};
       break;
     case ELF::R_X86_64_PC32:

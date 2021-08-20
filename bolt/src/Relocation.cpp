@@ -46,7 +46,9 @@ bool isSupportedAArch64(uint64_t Type) {
   default:
     return false;
   case ELF::R_AARCH64_CALL26:
+  case ELF::R_AARCH64_ADR_PREL_LO21:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21_NC:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
@@ -54,6 +56,7 @@ bool isSupportedAArch64(uint64_t Type) {
   case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
@@ -101,7 +104,9 @@ size_t getSizeForTypeAArch64(uint64_t Type) {
     dbgs() << "Reloc num: " << Type << "\n";
     llvm_unreachable("unsupported relocation type");
   case ELF::R_AARCH64_CALL26:
+  case ELF::R_AARCH64_ADR_PREL_LO21:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21_NC:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
@@ -109,6 +114,7 @@ size_t getSizeForTypeAArch64(uint64_t Type) {
   case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
@@ -147,15 +153,23 @@ uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
     Contents &= ~0xfffffffffc000000ULL;
     return static_cast<int64_t>(PC) + SignExtend64<28>(Contents << 2);
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-  case ELF::R_AARCH64_ADR_PREL_PG_HI21: {
+  case ELF::R_AARCH64_ADR_PREL_LO21:
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21:
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21_NC: {
     // Bits 32:12 of Symbol address goes in bits 30:29 + 23:5 of ADRP
-    // instruction
+    // and ADR instructions
+    bool IsAdr = !!(((Contents >> 31) & 0x1) == 0);
     Contents &= ~0xffffffff9f00001fUll;
     uint64_t LowBits = (Contents >> 29) & 0x3;
     uint64_t HighBits = (Contents >> 5) & 0x7ffff;
     Contents = LowBits | (HighBits << 2);
+    if (IsAdr)
+      return static_cast<int64_t>(PC) + SignExtend64<21>(Contents);
+
+    // ADRP instruction
     Contents = static_cast<int64_t>(PC) + SignExtend64<33>(Contents << 12);
     Contents &= ~0xfffUll;
     return Contents;
@@ -234,6 +248,7 @@ bool isGOTAArch64(uint64_t Type) {
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSDESC_LD64_LO12:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12:
@@ -257,6 +272,7 @@ bool isTLSAArch64(uint64_t Type) {
   switch (Type) {
   default:
     return false;
+  case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
@@ -312,9 +328,12 @@ bool isPCRelativeAArch64(uint64_t Type) {
     return false;
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_CALL26:
+  case ELF::R_AARCH64_ADR_PREL_LO21:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21_NC:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+  case ELF::R_AARCH64_TLSDESC_ADR_PREL21:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
