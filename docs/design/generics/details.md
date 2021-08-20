@@ -2340,9 +2340,9 @@ Similarly in an interface definition:
 ```
 interface {
   // Argument passing:
-  var PointT: NSpacePoint(.N = 2);
+  let PointT:! NSpacePoint(.N = 2);
   // versus `where` clause:
-  var PointT where PointT.N: NSpacePoint == 2;
+  let PointT:! NSpacePoint where PointT.N == 2;
 }
 ```
 
@@ -2350,13 +2350,13 @@ To name such a constraint:
 
 ```
 // Argument passing:
-let Point2DInterface = NSpacePoint(.N = 2);
+let Point2DInterface:! auto = NSpacePoint(.N = 2);
 structural interface Point2DInteface {
   extends NSpacePoint(.N = 2);
 }
 
 // versus `where` clause:
-let Point2DInterface = NSpacePoint where Point2D.N == 2;
+let Point2DInterface:! auto = NSpacePoint where Point2D.N == 2;
 structural interface Point2DInterface {
   extends NSpacePoint where NSpacePoint.N == 2;
 }
