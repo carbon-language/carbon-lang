@@ -1984,6 +1984,10 @@ void RewriteInstance::processRelocations() {
       readRelocations(Section);
     }
   }
+
+  if (NumFailedRelocations)
+    errs() << "BOLT-WARNING: Failed to analyze " << NumFailedRelocations
+           << " relocations\n";
 }
 
 void RewriteInstance::insertLKMarker(uint64_t PC, uint64_t SectionOffset,
@@ -2340,6 +2344,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: skipping relocation @ offset = 0x"
                         << Twine::utohexstr(Rel.getOffset())
                         << "; type name = " << TypeName << '\n');
+      ++NumFailedRelocations;
       continue;
     }
 

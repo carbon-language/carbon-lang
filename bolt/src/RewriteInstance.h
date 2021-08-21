@@ -543,6 +543,9 @@ private:
   /// -max-relocations debugging option.
   uint64_t NumDataRelocations{0};
 
+  /// Number of failed to process relocations.
+  uint64_t NumFailedRelocations{0};
+
   NameResolver NR;
 
   friend class RewriteInstanceDiff;
