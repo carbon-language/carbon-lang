@@ -3386,10 +3386,10 @@ argument passing form:
 
 | `where` form                   | argument passing form   |
 | ------------------------------ | ----------------------- |
-| `let B:! Z where B.X == A`     | `let Z(.X = A):! B`     |
-| `let B:! Z where B.X == A.T.U` | `let Z(.X = A.T.U):! B` |
-| `let B:! Z where B.X == Self`  | `let Z(.X = Self):! B`  |
-| `let B:! Z where B.X == B`     | `let Z(.X = .Self):! B` |
+| `let B:! Z where B.X == A`     | `let B:! Z(.X = A)`     |
+| `let B:! Z where B.X == A.T.U` | `let B:! Z(.X = A.T.U)` |
+| `let B:! Z where B.X == Self`  | `let B:! Z(.X = Self)`  |
+| `let B:! Z where B.X == B`     | `let B:! Z(.X = .Self)` |
 
 Note that the second example would not be allowed if `A.T.U` had type `Foo`, to
 avoid non-terminating recursion.
