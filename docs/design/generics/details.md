@@ -3391,8 +3391,8 @@ argument passing form:
 | `let B:! Z where B.X == Self`  | `let B:! Z(.X = Self)`  |
 | `let B:! Z where B.X == B`     | `let B:! Z(.X = .Self)` |
 
-Note that the second example would not be allowed if `A.T.U` had type `Foo`, to
-avoid non-terminating recursion.
+Note that the second example would not be allowed if `A.T.U` had the same type
+as `B.X`, to avoid non-terminating recursion.
 
 These forms of `where` clauses are forbidden:
 
