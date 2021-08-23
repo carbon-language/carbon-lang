@@ -17,14 +17,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 /* Turn off legacy bits we don't need */
 %option noyywrap nounput nodefault noinput
 
-/* Maintains the number of the current line read from input in the
+/*
+ * Maintains the number of the current line read from input in the
  * global variable yylineno.
  */
 %option yylineno
 
 /* Lexing a token immediately after consuming some whitespace. */
 %s AFTER_WHITESPACE
-/* Lexing a token immediately after consuming an operand-ending token:
+/*
+ * Lexing a token immediately after consuming an operand-ending token:
  * a closing bracket, identifier, or literal.
  */
 %s AFTER_OPERAND
@@ -98,8 +100,11 @@ operand_start         [(A-Za-z0-9_"]
         BEGIN(INITIAL); \
       }
 
-  #define MAKE_SIMPLE_TOKEN(name) \
+  #define MAKE_TOKEN(name) \
       Carbon::Parser::make_##name(context.current_token_position);
+
+  #define ARG_TOKEN(name, arg) \
+      Carbon::Parser::make_##name(arg, context.current_token_position);
 %}
 
 %%
@@ -111,67 +116,68 @@ operand_start         [(A-Za-z0-9_"]
   context.current_token_position.step();
 %}
 
-{AND}                 { return MAKE_SIMPLE_TOKEN(AND); }
-{ARROW}               { return MAKE_SIMPLE_TOKEN(ARROW); }
-{AUTO}                { return MAKE_SIMPLE_TOKEN(AUTO); }
-{AWAIT}               { return MAKE_SIMPLE_TOKEN(AWAIT); }
-{BOOL}                { return MAKE_SIMPLE_TOKEN(BOOL); }
-{BREAK}               { return MAKE_SIMPLE_TOKEN(BREAK); }
-{CASE}                { return MAKE_SIMPLE_TOKEN(CASE); }
-{CHOICE}              { return MAKE_SIMPLE_TOKEN(CHOICE); }
-{CLASS}               { return MAKE_SIMPLE_TOKEN(CLASS); }
-{COLON_BANG}          { return MAKE_SIMPLE_TOKEN(COLON_BANG); }
-{COLON}               { return MAKE_SIMPLE_TOKEN(COLON); }
-{COMMA}               { return MAKE_SIMPLE_TOKEN(COMMA); }
-{CONTINUATION_TYPE}   { return MAKE_SIMPLE_TOKEN(CONTINUATION_TYPE); }
-{CONTINUATION}        { return MAKE_SIMPLE_TOKEN(CONTINUATION); }
-{CONTINUE}            { return MAKE_SIMPLE_TOKEN(CONTINUE); }
-{DEFAULT}             { return MAKE_SIMPLE_TOKEN(DEFAULT); }
-{DOUBLE_ARROW}        { return MAKE_SIMPLE_TOKEN(DOUBLE_ARROW); }
-{ELSE}                { return MAKE_SIMPLE_TOKEN(ELSE); }
-{EQUAL_EQUAL}         { return MAKE_SIMPLE_TOKEN(EQUAL_EQUAL); }
-{EQUAL}               { return MAKE_SIMPLE_TOKEN(EQUAL); }
-{FALSE}               { return MAKE_SIMPLE_TOKEN(FALSE); }
-{FNTY}                { return MAKE_SIMPLE_TOKEN(FNTY); }
-{FN}                  { return MAKE_SIMPLE_TOKEN(FN); }
-{IF}                  { return MAKE_SIMPLE_TOKEN(IF); }
-{LEFT_PARENTHESIS}    { return MAKE_SIMPLE_TOKEN(LEFT_PARENTHESIS); }
-{LEFT_CURLY_BRACE}    { return MAKE_SIMPLE_TOKEN(LEFT_CURLY_BRACE); }
-{LEFT_SQUARE_BRACKET} { return MAKE_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
-{MATCH}               { return MAKE_SIMPLE_TOKEN(MATCH); }
-{MINUS}               { return MAKE_SIMPLE_TOKEN(MINUS); }
-{NOT}                 { return MAKE_SIMPLE_TOKEN(NOT); }
-{OR}                  { return MAKE_SIMPLE_TOKEN(OR); }
-{PERIOD}              { return MAKE_SIMPLE_TOKEN(PERIOD); }
-{PLUS}                { return MAKE_SIMPLE_TOKEN(PLUS); }
-{RETURN}              { return MAKE_SIMPLE_TOKEN(RETURN); }
-{RUN}                 { return MAKE_SIMPLE_TOKEN(RUN); }
-{SEMICOLON}           { return MAKE_SIMPLE_TOKEN(SEMICOLON); }
-{SLASH}               { return MAKE_SIMPLE_TOKEN(SLASH); }
-{STRING}              { return MAKE_SIMPLE_TOKEN(STRING); }
-{TRUE}                { return MAKE_SIMPLE_TOKEN(TRUE); }
-{TYPE}                { return MAKE_SIMPLE_TOKEN(TYPE); }
-{UNDERSCORE}          { return MAKE_SIMPLE_TOKEN(UNDERSCORE); }
-{VAR}                 { return MAKE_SIMPLE_TOKEN(VAR); }
-{WHILE}               { return MAKE_SIMPLE_TOKEN(WHILE); }
+{AND}                 { return MAKE_TOKEN(AND); }
+{ARROW}               { return MAKE_TOKEN(ARROW); }
+{AUTO}                { return MAKE_TOKEN(AUTO); }
+{AWAIT}               { return MAKE_TOKEN(AWAIT); }
+{BOOL}                { return MAKE_TOKEN(BOOL); }
+{BREAK}               { return MAKE_TOKEN(BREAK); }
+{CASE}                { return MAKE_TOKEN(CASE); }
+{CHOICE}              { return MAKE_TOKEN(CHOICE); }
+{CLASS}               { return MAKE_TOKEN(CLASS); }
+{COLON_BANG}          { return MAKE_TOKEN(COLON_BANG); }
+{COLON}               { return MAKE_TOKEN(COLON); }
+{COMMA}               { return MAKE_TOKEN(COMMA); }
+{CONTINUATION_TYPE}   { return MAKE_TOKEN(CONTINUATION_TYPE); }
+{CONTINUATION}        { return MAKE_TOKEN(CONTINUATION); }
+{CONTINUE}            { return MAKE_TOKEN(CONTINUE); }
+{DEFAULT}             { return MAKE_TOKEN(DEFAULT); }
+{DOUBLE_ARROW}        { return MAKE_TOKEN(DOUBLE_ARROW); }
+{ELSE}                { return MAKE_TOKEN(ELSE); }
+{EQUAL_EQUAL}         { return MAKE_TOKEN(EQUAL_EQUAL); }
+{EQUAL}               { return MAKE_TOKEN(EQUAL); }
+{FALSE}               { return MAKE_TOKEN(FALSE); }
+{FNTY}                { return MAKE_TOKEN(FNTY); }
+{FN}                  { return MAKE_TOKEN(FN); }
+{IF}                  { return MAKE_TOKEN(IF); }
+{LEFT_PARENTHESIS}    { return MAKE_TOKEN(LEFT_PARENTHESIS); }
+{LEFT_CURLY_BRACE}    { return MAKE_TOKEN(LEFT_CURLY_BRACE); }
+{LEFT_SQUARE_BRACKET} { return MAKE_TOKEN(LEFT_SQUARE_BRACKET); }
+{MATCH}               { return MAKE_TOKEN(MATCH); }
+{MINUS}               { return MAKE_TOKEN(MINUS); }
+{NOT}                 { return MAKE_TOKEN(NOT); }
+{OR}                  { return MAKE_TOKEN(OR); }
+{PERIOD}              { return MAKE_TOKEN(PERIOD); }
+{PLUS}                { return MAKE_TOKEN(PLUS); }
+{RETURN}              { return MAKE_TOKEN(RETURN); }
+{RUN}                 { return MAKE_TOKEN(RUN); }
+{SEMICOLON}           { return MAKE_TOKEN(SEMICOLON); }
+{SLASH}               { return MAKE_TOKEN(SLASH); }
+{STRING}              { return MAKE_TOKEN(STRING); }
+{TRUE}                { return MAKE_TOKEN(TRUE); }
+{TYPE}                { return MAKE_TOKEN(TYPE); }
+{UNDERSCORE}          { return MAKE_TOKEN(UNDERSCORE); }
+{VAR}                 { return MAKE_TOKEN(VAR); }
+{WHILE}               { return MAKE_TOKEN(WHILE); }
 
  /* More modern Bisons provide make_EOF. */
-<<EOF>>               { return MAKE_SIMPLE_TOKEN(END_OF_FILE); }
+<<EOF>>               { return MAKE_TOKEN(END_OF_FILE); }
 
 {RIGHT_PARENTHESIS} {
   BEGIN(AFTER_OPERAND);
-  return MAKE_SIMPLE_TOKEN(RIGHT_PARENTHESIS);
+  return MAKE_TOKEN(RIGHT_PARENTHESIS);
 }
 {RIGHT_CURLY_BRACE} {
   BEGIN(AFTER_OPERAND);
-  return MAKE_SIMPLE_TOKEN(RIGHT_CURLY_BRACE);
+  return MAKE_TOKEN(RIGHT_CURLY_BRACE);
 }
 {RIGHT_SQUARE_BRACKET} {
   BEGIN(AFTER_OPERAND);
-  return MAKE_SIMPLE_TOKEN(RIGHT_SQUARE_BRACKET);
+  return MAKE_TOKEN(RIGHT_SQUARE_BRACKET);
 }
 
- /* For a `*` operator, we look at whitespace and local context to determine the
+ /*
+  * For a `*` operator, we look at whitespace and local context to determine the
   * arity and fixity. There are two ways to write a binary operator:
   *
   * 1) Whitespace on both sides.
@@ -194,40 +200,40 @@ operand_start         [(A-Za-z0-9_"]
  /* `*` operator case 1: */
 <AFTER_WHITESPACE>"*"{whitespace}+ {
   BEGIN(AFTER_WHITESPACE);
-  return MAKE_SIMPLE_TOKEN(BINARY_STAR);
+  return MAKE_TOKEN(BINARY_STAR);
 }
  /* `*` operator case 2: */
 <AFTER_OPERAND>"*"/{operand_start} {
-  return MAKE_SIMPLE_TOKEN(BINARY_STAR);
+  return MAKE_TOKEN(BINARY_STAR);
 }
  /* `*` operator case 3: */
 <AFTER_WHITESPACE>"*" {
-  return MAKE_SIMPLE_TOKEN(PREFIX_STAR);
+  return MAKE_TOKEN(PREFIX_STAR);
 }
  /* `*` operator case 4: */
 <INITIAL,AFTER_OPERAND>"*"{whitespace}+ {
   BEGIN(AFTER_WHITESPACE);
-  return MAKE_SIMPLE_TOKEN(POSTFIX_STAR);
+  return MAKE_TOKEN(POSTFIX_STAR);
 }
  /* `*` operator case 5: */
 <INITIAL,AFTER_OPERAND>"*" {
-  return MAKE_SIMPLE_TOKEN(UNARY_STAR);
+  return MAKE_TOKEN(UNARY_STAR);
 }
 
 {sized_type_literal} {
-  return Carbon::Parser::make_sized_type_literal(yytext, context.current_token_position);
+  return ARG_TOKEN(sized_type_literal, yytext);
 }
 
 {identifier} {
   BEGIN(AFTER_OPERAND);
-  return Carbon::Parser::make_identifier(yytext, context.current_token_position);
+  return ARG_TOKEN(identifier, yytext);
 }
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
   int val;
   CHECK(llvm::to_integer(yytext, val));
-  return Carbon::Parser::make_integer_literal(val, context.current_token_position);
+  return ARG_TOKEN(integer_literal, val);
 }
 
 {string_literal} {
@@ -243,8 +249,7 @@ operand_start         [(A-Za-z0-9_"]
     FATAL_COMPILATION_ERROR(yylineno)
         << "Invalid escaping in string: " << yytext;
   }
-  return Carbon::Parser::make_string_literal(
-      *unescaped, context.current_token_position);
+  return ARG_TOKEN(string_literal, *unescaped);
 }
 
 {one_line_comment} {
