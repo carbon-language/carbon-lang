@@ -17,10 +17,10 @@ contributions.
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
+        -   [`python3` and `pip`](#python3-and-pip)
     -   [Linux only](#linux-only)
         -   [`go get`](#go-get)
         -   [Cargo (optional)](#cargo-optional)
-        -   [`python3` and `pip`](#python3-and-pip)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
@@ -89,6 +89,27 @@ Our recommended way of installing is to run
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
+#### `python3` and `pip`
+
+Carbon requires Python 3.9 or newer. The included `pip` should typically be used
+for Python package installation rather than other package managers.
+
+Our recommended way of installing is:
+
+```bash
+brew install python@3.9
+pip3 install -U pip
+```
+
+**NOTE**: Brew installs print deprecation warnings referencing
+https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
+addressed in the future, but as of August 2021 can be ignored.
+
+To get the latest version of `pip` packages, it will be necessary to
+periodically run `pip list --outdated`, then `pip install -U <package>` to
+upgrade desired packages. Keep in mind when upgrading that version dependencies
+may mean packages _should_ be outdated, and not be upgraded.
+
 ### Linux only
 
 Linux-specific package managers are typically used for packages which work
@@ -120,27 +141,6 @@ Our recommended way of installing is to run
 
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo install ...` command used.
-
-#### `python3` and `pip`
-
-Carbon requires Python 3.9 or newer. The included `pip` should typically be used
-for Python package installation rather than other package managers.
-
-Our recommended way of installing is:
-
-```bash
-brew install python@3.9
-pip3 install -U pip
-```
-
-**NOTE**: Brew installs print deprecation warnings referencing
-https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
-addressed in the future, but as of August 2021 can be ignored.
-
-To get the latest version of `pip` packages, it will be necessary to
-periodically run `pip list --outdated`, then `pip install -U <package>` to
-upgrade desired packages. Keep in mind when upgrading that version dependencies
-may mean packages _should_ be outdated, and not be upgraded.
 
 ## Main tools
 
