@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/error.h"
 
 namespace Carbon {
@@ -40,7 +41,7 @@ struct ParenContents {
   //
   // TODO: Find a way to deduce TupleElement from Term.
   template <typename TupleElement>
-  auto TupleElements(int line_num) const -> std::vector<TupleElement>;
+  auto TupleElements(SourceLocation loc) const -> std::vector<TupleElement>;
 
   std::vector<Element> elements;
   bool has_trailing_comma;
@@ -60,7 +61,7 @@ auto ParenContents<Term>::SingleTerm() const -> std::optional<const Term*> {
 
 template <typename Term>
 template <typename TupleElement>
-auto ParenContents<Term>::TupleElements(int line_num) const
+auto ParenContents<Term>::TupleElements(SourceLocation loc) const
     -> std::vector<TupleElement> {
   std::vector<TupleElement> result;
   int i = 0;
@@ -71,7 +72,7 @@ auto ParenContents<Term>::TupleElements(int line_num) const
       result.push_back(TupleElement(*element.name, element.term));
     } else {
       if (seen_named_member) {
-        FATAL_PROGRAM_ERROR(line_num)
+        FATAL_PROGRAM_ERROR(loc)
             << "positional members must come before named members";
       }
       result.push_back(TupleElement(std::to_string(i), element.term));

@@ -55,7 +55,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
 }
 
 TuplePattern::TuplePattern(const Expression* tuple_literal)
-    : Pattern(Kind::TuplePattern, tuple_literal->LineNumber()) {
+    : Pattern(Kind::TuplePattern, tuple_literal->Loc()) {
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
     fields.push_back(Field(
@@ -63,30 +63,30 @@ TuplePattern::TuplePattern(const Expression* tuple_literal)
   }
 }
 
-auto PatternFromParenContents(int line_num,
+auto PatternFromParenContents(SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
     -> const Pattern* {
   std::optional<const Pattern*> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return TuplePatternFromParenContents(line_num, paren_contents);
+    return TuplePatternFromParenContents(loc, paren_contents);
   }
 }
 
-auto TuplePatternFromParenContents(int line_num,
+auto TuplePatternFromParenContents(SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> const TuplePattern* {
   return global_arena->RawNew<TuplePattern>(
-      line_num, paren_contents.TupleElements<TuplePattern::Field>(line_num));
+      loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }
 
-AlternativePattern::AlternativePattern(int line_num,
+AlternativePattern::AlternativePattern(SourceLocation loc,
                                        const Expression* alternative,
                                        const TuplePattern* arguments)
-    : Pattern(Kind::AlternativePattern, line_num), arguments(arguments) {
+    : Pattern(Kind::AlternativePattern, loc), arguments(arguments) {
   if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
-    FATAL_PROGRAM_ERROR(alternative->LineNumber())
+    FATAL_PROGRAM_ERROR(alternative->Loc())
         << "Alternative pattern must have the form of a field access.";
   }
   const auto& field_access = cast<FieldAccessExpression>(*alternative);

@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/source_location.h"
 
 namespace Carbon {
 
@@ -39,7 +40,7 @@ class Pattern {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto LineNumber() const -> int { return line_num; }
+  auto Loc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -48,17 +49,17 @@ class Pattern {
   // Constructs a Pattern representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
+  Pattern(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
 
  private:
   const Kind tag;
-  int line_num;
+  SourceLocation loc;
 };
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
-  explicit AutoPattern(int line_num) : Pattern(Kind::AutoPattern, line_num) {}
+  explicit AutoPattern(SourceLocation loc) : Pattern(Kind::AutoPattern, loc) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::AutoPattern;
@@ -69,11 +70,9 @@ class AutoPattern : public Pattern {
 // a name to it.
 class BindingPattern : public Pattern {
  public:
-  BindingPattern(int line_num, std::optional<std::string> name,
+  BindingPattern(SourceLocation loc, std::optional<std::string> name,
                  const Pattern* type)
-      : Pattern(Kind::BindingPattern, line_num),
-        name(std::move(name)),
-        type(type) {}
+      : Pattern(Kind::BindingPattern, loc), name(std::move(name)), type(type) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::BindingPattern;
@@ -105,8 +104,8 @@ class TuplePattern : public Pattern {
     const Pattern* pattern;
   };
 
-  TuplePattern(int line_num, std::vector<Field> fields)
-      : Pattern(Kind::TuplePattern, line_num), fields(std::move(fields)) {}
+  TuplePattern(SourceLocation loc, std::vector<Field> fields)
+      : Pattern(Kind::TuplePattern, loc), fields(std::move(fields)) {}
 
   // Converts tuple_literal to a TuplePattern, by wrapping each field in an
   // ExpressionPattern.
@@ -127,13 +126,13 @@ class TuplePattern : public Pattern {
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto PatternFromParenContents(int line_num,
+auto PatternFromParenContents(SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
     -> const Pattern*;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
-auto TuplePatternFromParenContents(int line_num,
+auto TuplePatternFromParenContents(SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> const TuplePattern*;
 
@@ -148,17 +147,17 @@ class AlternativePattern : public Pattern {
   // Constructs an AlternativePattern that matches a value of the type
   // specified by choice_type if it represents an alternative named
   // alternative_name, and its arguments match `arguments`.
-  AlternativePattern(int line_num, const Expression* choice_type,
+  AlternativePattern(SourceLocation loc, const Expression* choice_type,
                      std::string alternative_name,
                      const TuplePattern* arguments)
-      : Pattern(Kind::AlternativePattern, line_num),
+      : Pattern(Kind::AlternativePattern, loc),
         choice_type(choice_type),
         alternative_name(std::move(alternative_name)),
         arguments(arguments) {}
 
   // Constructs an AlternativePattern that matches the alternative specified
   // by `alternative`, if its arguments match `arguments`.
-  AlternativePattern(int line_num, const Expression* alternative,
+  AlternativePattern(SourceLocation loc, const Expression* alternative,
                      const TuplePattern* arguments);
 
   static auto classof(const Pattern* pattern) -> bool {
@@ -182,7 +181,7 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   ExpressionPattern(const Expression* expression)
-      : Pattern(Kind::ExpressionPattern, expression->LineNumber()),
+      : Pattern(Kind::ExpressionPattern, expression->Loc()),
         expression(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {

@@ -5,6 +5,17 @@
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
+    name = "class_definition",
+    hdrs = ["class_definition.h"],
+    deps = [
+        ":member",
+        ":source_location",
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
@@ -16,6 +27,7 @@ cc_library(
         ":function_definition",
         ":member",
         ":pattern",
+        ":source_location",
         "//common:ostream",
         "//executable_semantics/common:ptr",
         "@llvm-project//llvm:Support",
@@ -53,6 +65,7 @@ cc_library(
     hdrs = ["function_definition.h"],
     deps = [
         ":expression",
+        ":source_location",
         ":statement",
         "@llvm-project//llvm:Support",
     ],
@@ -64,6 +77,7 @@ cc_library(
     hdrs = ["member.h"],
     deps = [
         ":pattern",
+        ":source_location",
         "//common:ostream",
     ],
 )
@@ -71,6 +85,10 @@ cc_library(
 cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
+    deps = [
+        ":source_location",
+        "//executable_semantics/common:error",
+    ],
 )
 
 cc_library(
@@ -79,6 +97,7 @@ cc_library(
     hdrs = ["pattern.h"],
     deps = [
         ":expression",
+        ":source_location",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -99,25 +118,22 @@ cc_test(
 )
 
 cc_library(
+    name = "source_location",
+    hdrs = ["source_location.h"],
+    deps = ["//common:ostream"],
+)
+
+cc_library(
     name = "statement",
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
     deps = [
         ":expression",
         ":pattern",
+        ":source_location",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "class_definition",
-    hdrs = ["class_definition.h"],
-    deps = [
-        ":member",
-        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
