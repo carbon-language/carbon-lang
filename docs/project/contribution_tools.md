@@ -94,24 +94,24 @@ periodically run `brew upgrade`.
 Carbon requires Python 3.9 or newer. The included `pip` should typically be used
 for Python package installation rather than other package managers.
 
-If you don't already have `python3` with version 3.9 or newer, our recommended
-way of installing is:
+**NOTE**: Python can be installed in various ways. Carbon will focus support on
+Homebrew installs, but it may not be necessary if you have Python 3.9 installed
+another way. If you're trying to use a non-Homebrew Python but have issues with
+instructions, please try Homebrew's Python.
+
+Our recommended way of installing is:
 
 ```bash
 brew install python@3.9
 pip3 install -U pip
 ```
 
-When `pip3` installs `pip`, it should add the `pip` command to the path. While
-`pip3` is still more canonical, if `pip` does not work, other installs such as
-`pre-commit` should not be expected to work either.
-
-**NOTE**: `pip` runs may print deprecation warnings referencing
+**NOTE**: `pip3` runs may print deprecation warnings referencing
 https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
 addressed in the future, but as of August 2021 can be ignored.
 
 To get the latest version of `pip` packages, it will be necessary to
-periodically run `pip list --outdated`, then `pip install -U <package>` to
+periodically run `pip3 list --outdated`, then `pip3 install -U <package>` to
 upgrade desired packages. Keep in mind when upgrading that version dependencies
 may mean packages _should_ be outdated, and not be upgraded.
 
@@ -243,7 +243,7 @@ important checks, including formatting.
 Our recommended way of installing is:
 
 ```bash
-pip install pre-commit
+pip3 install pre-commit
 
 # From within each carbon-language git repository:
 pre-commit install
