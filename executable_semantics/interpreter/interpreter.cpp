@@ -441,8 +441,8 @@ Transition StepLvalue() {
     case Expression::Kind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Address pointer = GetFromEnv(exp->LineNumber(),
-                                   cast<IdentifierExpression>(*exp).Name());
+      Address pointer =
+          GetFromEnv(exp->Loc(), cast<IdentifierExpression>(*exp).Name());
       const Value* v = global_arena->RawNew<PointerValue>(pointer);
       return Done{v};
     }
@@ -585,16 +585,16 @@ Transition StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        return Done{act->Results()[0]->GetField(FieldPath(access.Field()),
-                                                exp->LineNumber())};
+        return Done{
+            act->Results()[0]->GetField(FieldPath(access.Field()), exp->Loc())};
       }
     }
     case Expression::Kind::IdentifierExpression: {
       CHECK(act->Pos() == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address pointer = GetFromEnv(exp->LineNumber(), ident.Name());
-      return Done{state->heap.Read(pointer, exp->LineNumber())};
+      Address pointer = GetFromEnv(exp->Loc(), ident.Name());
+      return Done{state->heap.Read(pointer, exp->Loc())};
     }
     case Expression::Kind::IntLiteral:
       CHECK(act->Pos() == 0);
@@ -615,7 +615,7 @@ Transition StepExp() {
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        return Done{EvalPrim(op.Op(), act->Results(), exp->LineNumber())};
+        return Done{EvalPrim(op.Op(), act->Results(), exp->Loc())};
       }
     }
     case Expression::Kind::CallExpression:
@@ -634,14 +634,14 @@ Transition StepExp() {
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->Results()[0]->Tag()) {
           case Value::Kind::ClassType: {
-            const Value* arg = CopyVal(act->Results()[1], exp->LineNumber());
+            const Value* arg = CopyVal(act->Results()[1], exp->Loc());
             return Done{
                 global_arena->RawNew<StructValue>(act->Results()[0], arg)};
           }
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
                 cast<AlternativeConstructorValue>(*act->Results()[0]);
-            const Value* arg = CopyVal(act->Results()[1], exp->LineNumber());
+            const Value* arg = CopyVal(act->Results()[1], exp->Loc());
             return Done{global_arena->RawNew<AlternativeValue>(
                 alt.AltName(), alt.ChoiceName(), arg)};
           }
@@ -649,9 +649,9 @@ Transition StepExp() {
             return CallFunction{
                 .function = cast<FunctionValue>(act->Results()[0]),
                 .args = act->Results()[1],
-                .line_num = exp->LineNumber()};
+                .line_num = exp->Loc()};
           default:
-            FATAL_RUNTIME_ERROR(exp->LineNumber())
+            FATAL_RUNTIME_ERROR(exp->Loc())
                 << "in call, expected a function, not " << *act->Results()[0];
         }
       } else {
@@ -662,8 +662,8 @@ Transition StepExp() {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
         case IntrinsicExpression::IntrinsicKind::Print:
-          Address pointer = GetFromEnv(exp->LineNumber(), "format_str");
-          const Value* pointee = state->heap.Read(pointer, exp->LineNumber());
+          Address pointer = GetFromEnv(exp->Loc(), "format_str");
+          const Value* pointee = state->heap.Read(pointer, exp->Loc());
           CHECK(pointee->Tag() == Value::Kind::StringValue);
           // TODO: This could eventually use something like llvm::formatv.
           llvm::outs() << cast<StringValue>(*pointee).Val();
@@ -853,7 +853,7 @@ Transition StepStmt() {
         } else {  // try to match
           auto v = act->Results()[0];
           auto pat = act->Results()[clause_num + 1];
-          std::optional<Env> matches = PatternMatch(pat, v, stmt->LineNumber());
+          std::optional<Env> matches = PatternMatch(pat, v, stmt->Loc());
           if (matches) {  // we have a match, start the body
             Env values = CurrentEnv(state);
             std::list<std::string> vars;
@@ -863,7 +863,7 @@ Transition StepStmt() {
             }
             frame->scopes.Push(global_arena->New<Scope>(values, vars));
             const Statement* body_block =
-                global_arena->RawNew<Block>(stmt->LineNumber(), c->second);
+                global_arena->RawNew<Block>(stmt->Loc(), c->second);
             auto body_act = global_arena->New<StatementAction>(body_block);
             body_act->IncrementPos();
             frame->todo.Pop(1);
@@ -905,7 +905,7 @@ Transition StepStmt() {
       auto it =
           std::find_if(frame->todo.begin(), frame->todo.end(), &IsWhileAct);
       if (it == frame->todo.end()) {
-        FATAL_RUNTIME_ERROR(stmt->LineNumber())
+        FATAL_RUNTIME_ERROR(stmt->Loc())
             << "`break` not inside `while` statement";
       }
       ++it;
@@ -918,7 +918,7 @@ Transition StepStmt() {
       auto it =
           std::find_if(frame->todo.begin(), frame->todo.end(), &IsWhileAct);
       if (it == frame->todo.end()) {
-        FATAL_RUNTIME_ERROR(stmt->LineNumber())
+        FATAL_RUNTIME_ERROR(stmt->Loc())
             << "`continue` not inside `while` statement";
       }
       return UnwindTo{*it};
@@ -954,9 +954,9 @@ Transition StepStmt() {
         const Value* v = act->Results()[0];
         const Value* p = act->Results()[1];
 
-        std::optional<Env> matches = PatternMatch(p, v, stmt->LineNumber());
+        std::optional<Env> matches = PatternMatch(p, v, stmt->Loc());
         CHECK(matches)
-            << stmt->LineNumber()
+            << stmt->Loc()
             << ": internal error in variable definition, match failed";
         for (const auto& [name, value] : *matches) {
           frame->scopes.Top()->values.Set(name, value);
@@ -988,7 +988,7 @@ Transition StepStmt() {
         // -> { { C, E, F} :: S, H(a := v)}
         auto pat = act->Results()[0];
         auto val = act->Results()[1];
-        PatternAssignment(pat, val, stmt->LineNumber());
+        PatternAssignment(pat, val, stmt->Loc());
         return Done{};
       }
     case Statement::Kind::If:
@@ -1021,7 +1021,7 @@ Transition StepStmt() {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        const Value* ret_val = CopyVal(act->Results()[0], stmt->LineNumber());
+        const Value* ret_val = CopyVal(act->Results()[0], stmt->Loc());
         return UnwindFunctionCall{ret_val};
       }
     case Statement::Kind::Sequence: {
@@ -1047,7 +1047,7 @@ Transition StepStmt() {
           Stack<Ptr<Scope>>(global_arena->New<Scope>(CurrentEnv(state)));
       Stack<Ptr<Action>> todo;
       todo.Push(global_arena->New<StatementAction>(
-          global_arena->RawNew<Return>(stmt->LineNumber(), nullptr,
+          global_arena->RawNew<Return>(stmt->Loc(), nullptr,
                                        /*is_omitted_exp=*/true)));
       todo.Push(
           global_arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
@@ -1077,8 +1077,7 @@ Transition StepStmt() {
         // value from the continuation.
         auto ignore_result = global_arena->New<StatementAction>(
             global_arena->RawNew<ExpressionStatement>(
-                stmt->LineNumber(),
-                global_arena->RawNew<TupleLiteral>(stmt->LineNumber())));
+                stmt->Loc(), global_arena->RawNew<TupleLiteral>(stmt->Loc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
         const std::vector<Ptr<Frame>>& continuation_vector =
@@ -1100,7 +1099,7 @@ Transition StepStmt() {
       // Update the continuation with the paused stack.
       state->heap.Write(*paused.back()->continuation,
                         global_arena->RawNew<ContinuationValue>(paused),
-                        stmt->LineNumber());
+                        stmt->Loc());
       return ManualTransition{};
   }
 }
