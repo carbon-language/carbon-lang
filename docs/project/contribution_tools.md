@@ -94,10 +94,10 @@ periodically run `brew upgrade`.
 Carbon requires Python 3.9 or newer. The included `pip` should typically be used
 for Python package installation rather than other package managers.
 
-**NOTE**: Python can be installed in various ways. Carbon will focus support on
-Homebrew installs, but it may not be necessary if you have Python 3.9 installed
-another way. If you're trying to use a non-Homebrew Python but have issues with
-instructions, please try Homebrew's Python.
+**NOTE**: Carbon will focus support on Homebrew installs of Python 3.9, but it
+may not be necessary if you have Python 3.9 installed another way. If you're
+trying to use a non-Homebrew Python but have issues with instructions, please
+try Homebrew's Python.
 
 Our recommended way of installing is:
 
