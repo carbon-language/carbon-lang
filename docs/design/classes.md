@@ -1125,6 +1125,12 @@ There are three virtual override keywords:
     doesn't match the base class. We intentionally use the same keyword here as
     for implementing interfaces, to emphasize that they are similar operations.
 
+| Keyword on<br />method in `C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C extends B`                          | in `D` where<br />`D extends C`                                                  |
+| ----------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `virtual`                     | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
+| `abstract`                    | ✅                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
+| `impl`                        | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
+
 <table>
   <tr>
    <td>
