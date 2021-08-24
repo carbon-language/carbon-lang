@@ -2,9 +2,13 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
 package(default_visibility = ["//executable_semantics:__pkg__"])
+
+cc_library(
+    name = "bison_wrap",
+    hdrs = ["bison_wrap.h"],
+    deps = ["//common:check"],
+)
 
 cc_library(
     name = "syntax",
@@ -28,6 +32,7 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
+        ":bison_wrap",
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",

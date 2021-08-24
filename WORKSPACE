@@ -10,11 +10,16 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # Python rules
 ###############################################################################
 
+rules_python_version = "0.3.0"
+
 # Add Bazel's python rules and set up pip.
 http_archive(
     name = "rules_python",
-    sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
+    sha256 = "934c9ceb552e84577b0faf1e5a2f0450314985b4d8712b2b70717dc679fdc01b",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/%s/rules_python-%s.tar.gz" % (
+        rules_python_version,
+        rules_python_version,
+    ),
 )
 
 load("@rules_python//python:pip.bzl", "pip_install")
@@ -66,7 +71,10 @@ mypy_integration_deps(
 ###############################################################################
 
 # Configure the bootstrapped Clang and LLVM toolchain for Bazel.
-load("//bazel/cc_toolchains:clang_configuration.bzl", "configure_clang_toolchain")
+load(
+    "//bazel/cc_toolchains:clang_configuration.bzl",
+    "configure_clang_toolchain",
+)
 
 configure_clang_toolchain(name = "bazel_cc_toolchain")
 
@@ -105,16 +113,16 @@ llvm_zlib_system(name = "llvm_zlib")
 # Flex/Bison rules
 ###############################################################################
 
-# TODO(chandlerc): Replace this with an upstream release once the pull request
-# with our needed functionality lands:
-# https://github.com/jmillikin/rules_m4/pull/7
-#
-# Until then, this is pulling from that pull request's commit.
+# TODO: Can switch to a normal release version when it includes:
+# https://github.com/jmillikin/rules_m4/commit/b504241407916d1d6d72c66a766daacf9603cf8b
+rules_m4_version = "b504241407916d1d6d72c66a766daacf9603cf8b"
+
 http_archive(
     name = "rules_m4",
-    sha256 = "4d34917214e8890ad770bdf0c319c41c9201fffd770938b41a1d641d4b27e05c",
-    strip_prefix = "rules_m4-add-extra-copts",
-    urls = ["https://github.com/chandlerc/rules_m4/archive/add-extra-copts.zip"],
+    sha256 = "e6003c5f45746a2ad01335a8526044591f2b6c5c68852cee1bcd28adc2cf452b",
+    strip_prefix = "rules_m4-%s" % rules_m4_version,
+    urls = ["https://github.com/jmillikin/rules_m4/archive/%s.zip" %
+            rules_m4_version],
 )
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
@@ -123,16 +131,16 @@ load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
 # them anyways.
 m4_register_toolchains(extra_copts = ["-w"])
 
-# TODO(chandlerc): Replace this with an upstream release once the pull request
-# with our needed functionality lands:
-# https://github.com/jmillikin/rules_flex/pull/5
-#
-# Until then, this is pulling from that pull request's commit.
+# TODO: Can switch to a normal release version when it includes:
+# https://github.com/jmillikin/rules_flex/commit/1f1d9c306c2b4b8be2cb899a3364b84302124e77
+rules_flex_version = "1f1d9c306c2b4b8be2cb899a3364b84302124e77"
+
 http_archive(
     name = "rules_flex",
-    sha256 = "fd97c3ae23926507be1b95158a683cd41c628d201e852a325d38b5e9f821b752",
-    strip_prefix = "rules_flex-add-extra-copts",
-    urls = ["https://github.com/chandlerc/rules_flex/archive/add-extra-copts.zip"],
+    sha256 = "ad1c3a1a9bdd6254df857f84f3ab4c052df6e21ce4af5d32710f2feff2abf4dd",
+    strip_prefix = "rules_flex-%s" % rules_flex_version,
+    urls = ["https://github.com/jmillikin/rules_flex/archive/%s.zip" %
+            rules_flex_version],
 )
 
 load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
@@ -141,16 +149,16 @@ load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
 # fix them anyways.
 flex_register_toolchains(extra_copts = ["-w"])
 
-# TODO(chandlerc): Replace this with an upstream release once the pull request
-# with our needed functionality lands:
-# https://github.com/jmillikin/rules_bison/pull/7
-#
-# Until then, this is pulling from that pull request's commit.
+# TODO: Can switch to a normal release version when it includes:
+# https://github.com/jmillikin/rules_bison/commit/478079b28605a38000eaf83719568d756b3383a0
+rules_bison_version = "478079b28605a38000eaf83719568d756b3383a0"
+
 http_archive(
     name = "rules_bison",
-    sha256 = "c6e926f15214d903966dc950d759ec69116db67f148be114c119e4def0551eaa",
-    strip_prefix = "rules_bison-add-extra-copts",
-    urls = ["https://github.com/chandlerc/rules_bison/archive/add-extra-copts.zip"],
+    sha256 = "d662d200f4e2a868f6873d666402fa4d413f07ba1a433591c5f60ac601157fb9",
+    strip_prefix = "rules_bison-%s" % rules_bison_version,
+    urls = ["https://github.com/jmillikin/rules_bison/archive/%s.zip" %
+            rules_bison_version],
 )
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
