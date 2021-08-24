@@ -96,8 +96,8 @@ for Python package installation rather than other package managers.
 
 **NOTE**: Carbon will focus support on Homebrew installs of Python 3.9, but it
 may not be necessary if you have Python 3.9 installed another way. If you're
-trying to use a non-Homebrew Python but have issues with instructions, please
-try Homebrew's Python.
+trying to use a non-Homebrew Python but have issues involving Carbon and Python,
+please try Homebrew's Python.
 
 Our recommended way of installing is:
 
