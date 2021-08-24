@@ -101,7 +101,7 @@ brew install python@3.9
 pip3 install -U pip
 ```
 
-**NOTE**: Brew installs print deprecation warnings referencing
+**NOTE**: `pip` runs may print deprecation warnings referencing
 https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
 addressed in the future, but as of August 2021 can be ignored.
 
