@@ -94,12 +94,17 @@ periodically run `brew upgrade`.
 Carbon requires Python 3.9 or newer. The included `pip` should typically be used
 for Python package installation rather than other package managers.
 
-Our recommended way of installing is:
+If you don't already have `python3` with version 3.9 or newer, our recommended
+way of installing is:
 
 ```bash
 brew install python@3.9
 pip3 install -U pip
 ```
+
+When `pip3` installs `pip`, it should add the `pip` command to the path. While
+`pip3` is still more canonical, if `pip` does not work, other installs such as
+`pre-commit` should not be expected to work either.
 
 **NOTE**: `pip` runs may print deprecation warnings referencing
 https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
