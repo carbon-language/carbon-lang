@@ -17,10 +17,10 @@ contributions.
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
-        -   [Python using `pyenv`](#python-using-pyenv)
     -   [Linux only](#linux-only)
         -   [`go get`](#go-get)
         -   [Cargo (optional)](#cargo-optional)
+        -   [`python3` and `pip`](#python3-and-pip)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
@@ -89,40 +89,6 @@ Our recommended way of installing is to run
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-#### Python using `pyenv`
-
-Carbon requires Python 3.6 or newer. Everything below assumes that `python` or
-`pip` reach the Python 3 tools, not legacy installations of Python 2.
-
-We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
-[Python](python.org) and Python's `pip` package manager. `pip` should typically
-be used for Python package installation rather than other package managers.
-
-Our recommended way of installing is:
-
-```bash
-brew install pyenv
-pyenv install 3.8.5
-pyenv global 3.8.5
-```
-
-You will also need to update your rc file to add pyenv to your `PATH`; this
-should look like:
-
-```bash
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-```
-
-Restart the shell (for example, `exec $SHELL`) to get `PATH` updates. If there
-are still issues, check instructions using `pyenv init`.
-
-To get the latest version of `pip` packages, it will be necessary to
-periodically run `pip list --outdated`, then `pip install -U <package>` to
-upgrade desired packages. Keep in mind when upgrading that version dependencies
-may mean packages _should_ be outdated, and not be upgraded.
-
 ### Linux only
 
 Linux-specific package managers are typically used for packages which work
@@ -154,6 +120,27 @@ Our recommended way of installing is to run
 
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo install ...` command used.
+
+#### `python3` and `pip`
+
+Carbon requires Python 3.9 or newer. The included `pip` should typically be used
+for Python package installation rather than other package managers.
+
+Our recommended way of installing is:
+
+```bash
+brew install python@3.9
+pip3 install -U pip
+```
+
+**NOTE**: Brew installs print deprecation warnings referencing
+https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
+addressed in the future, but as of August 2021 can be ignored.
+
+To get the latest version of `pip` packages, it will be necessary to
+periodically run `pip list --outdated`, then `pip install -U <package>` to
+upgrade desired packages. Keep in mind when upgrading that version dependencies
+may mean packages _should_ be outdated, and not be upgraded.
 
 ## Main tools
 
