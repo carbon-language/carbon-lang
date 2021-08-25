@@ -1066,7 +1066,7 @@ base classes except the one listed first.
 
 **Terminology:** We say `MiddleDerived` is a _derived class_, derived from or
 extending `MyBaseClass`. Similarly `FinalDerived` is derived from or extends
-`MiddleDerived`. `MiddleDerived` is `FinalDerived` _immediate base class_, and
+`MiddleDerived`. `MiddleDerived` is `FinalDerived`'s _immediate base class_, and
 both `MiddleDerived` and `MyBaseClass` are base classes of `FinalDerived`.
 
 A derived class has all the members of the class it extends, including data
@@ -1114,11 +1114,12 @@ There are three virtual override keywords:
     ["pure virtual" in C++](https://en.wikipedia.org/wiki/Virtual_function#Abstract_classes_and_pure_virtual_functions).
     A class with abstract methods that have not been overridden is also called
     _[abstract](https://en.wikipedia.org/wiki/Abstract_type)_. Abstract types
-    can not be instantiated and can not be final.
--   `impl` - This marks a method that may be overridden in a base of this class,
-    due to being marked `virtual` or `abstract`, that has an overriding
-    implementation in this class. This method may be overridden again in derived
-    classes. See
+    cannot be instantiated and cannot be final.
+-   `impl` - This marks a method that overrides a method marked `virtual` or
+    `abstract` in the base class with an implementation specific to -- and
+    defined within -- this class. The method is still virtual and may be
+    overridden again in subsequent derived classes if this is a base class.
+    See
     [method overriding in Wikipedia](https://en.wikipedia.org/wiki/Method_overriding).
     Requiring a keyword when overriding allows the compiler to diagnose when the
     derived class accidentally uses the wrong signature or spelling and so
@@ -1231,9 +1232,8 @@ The partial facet for a base class type like `MyBaseType` is written
     constructed.
 -   `partial MyBaseClass` and `MyBaseClass` have the same fields in the same
     order with the same data layout. The only difference is that
-    `partial MyBaseClass` doesn't use (look into) its hidden vptr slot. In
-    release (both fast and hardened) builds, the hidden vptr slot will be
-    initialized to a null pointer. In debug builds, it will point to an
+    `partial MyBaseClass` doesn't use (look into) its hidden vptr slot. To reliably catch any bugs where virtual function calls occur in this state,
+    both fast and hardened release builds will initialize the hidden vptr slot to a null pointer. Debug builds will initialize it to an
     alternate vtable whose functions will abort the program with a clear
     diagnostic.
 -   Since `partial MyBaseClass` has the same data layout but only uses a subset,
@@ -1688,8 +1688,11 @@ C++ constructors to initialize their base class:
     class Derived : public Base {
     public:
         virtual ~Derived() override {}
-        // Should not copy thanks to RVO, but we need to fix
-        // the GCC and Clang compilers to comply (MSVC works).
+        // This isn't currently a case where C++ guarantees no copy,
+        // and so it currently still requires a notional copy and
+        // there appear to be implementation challenges with
+        // removing them. This may require an extension to make work
+        // reliably without an extraneous copy of the base subobject.
         Derived() : Base(Base::Create()) {}
     };
     ```
