@@ -11,6 +11,7 @@ import glob
 import os
 import subprocess
 import sys
+from typing import List
 
 _CPP_REFACTORING = "./cpp_refactoring/cpp_refactoring"
 _H_EXTS = {".h", ".hpp"}
@@ -27,9 +28,9 @@ class _Workflow(object):
             help="A directory containing C++ files to migrate to Carbon.",
         )
         parsed_args = parser.parse_args()
-        self._parsed_args = parsed_args
+        self._parsed_args: argparse.Namespace = parsed_args
 
-        self._data_dir = os.path.dirname(sys.argv[0])
+        self._data_dir: str = os.path.dirname(sys.argv[0])
 
         # Validate arguments.
         if not os.path.isdir(parsed_args.dir):
@@ -70,7 +71,7 @@ class _Workflow(object):
                 "%r doesn't contain any C++ files to convert."
                 % self._parsed_args.dir
             )
-        self._cpp_files = sorted(cpp_files)
+        self._cpp_files: List[str] = sorted(cpp_files)
         print("%d files found." % len(self._cpp_files))
 
     def _clang_tidy(self) -> None:
