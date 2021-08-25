@@ -9,9 +9,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import os
 import re
 import sys
+from typing import List, Tuple
 
 
-def get_title(parent_dir, entry):
+def get_title(parent_dir: str, entry: str) -> str:
     """Returns the title from the requested file."""
     path = os.path.join(parent_dir, entry)
     with open(path) as md:
@@ -21,11 +22,11 @@ def get_title(parent_dir, entry):
         return titles[0][2:-1]
 
 
-def get_path():
+def get_path() -> str:
     return os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-def get_list(proposals_path):
+def get_list(proposals_path: str) -> List[Tuple[str, str]]:
     proposals = []
     proposals_list = os.listdir(proposals_path)
     proposals_list.sort()
