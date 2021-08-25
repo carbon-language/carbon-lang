@@ -40,7 +40,7 @@ class Pattern {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto Loc() const -> SourceLocation { return loc; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -181,7 +181,7 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   ExpressionPattern(const Expression* expression)
-      : Pattern(Kind::ExpressionPattern, expression->Loc()),
+      : Pattern(Kind::ExpressionPattern, expression->SourceLoc()),
         expression(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {

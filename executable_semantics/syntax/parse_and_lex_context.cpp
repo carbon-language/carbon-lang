@@ -10,7 +10,7 @@ auto ParseAndLexContext::PrintDiagnostic(const std::string& message) -> void {
   // TODO: Do we really want this to be fatal?  It makes the comment and the
   // name a lie, and renders some of the other yyparse() result propagation code
   // moot.
-  FATAL_COMPILATION_ERROR(Loc()) << message;
+  FATAL_COMPILATION_ERROR(SourceLoc()) << message;
 }
 
 }  // namespace Carbon

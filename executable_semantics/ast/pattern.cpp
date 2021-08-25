@@ -55,7 +55,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
 }
 
 TuplePattern::TuplePattern(const Expression* tuple_literal)
-    : Pattern(Kind::TuplePattern, tuple_literal->Loc()) {
+    : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
     fields.push_back(Field(
@@ -86,7 +86,7 @@ AlternativePattern::AlternativePattern(SourceLocation loc,
                                        const TuplePattern* arguments)
     : Pattern(Kind::AlternativePattern, loc), arguments(arguments) {
   if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
-    FATAL_PROGRAM_ERROR(alternative->Loc())
+    FATAL_PROGRAM_ERROR(alternative->SourceLoc())
         << "Alternative pattern must have the form of a field access.";
   }
   const auto& field_access = cast<FieldAccessExpression>(*alternative);

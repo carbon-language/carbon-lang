@@ -42,7 +42,7 @@ class Expression {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto Loc() const -> SourceLocation { return loc; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }

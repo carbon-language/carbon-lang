@@ -38,7 +38,7 @@ class Statement {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto Loc() const -> SourceLocation { return loc; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
