@@ -1260,8 +1260,8 @@ The partial facet for a base class type like `MyBaseType` is written
     specifically means "exactly this and no more." This means we don't need to
     look at the hidden vptr slot, and we can instantiate it even if it doesn't
     have a virtual destructor.
--   The keyword `partial` may only be applied to a base class. There is no need
-    for a second type for final classes.
+-   The keyword `partial` may only be applied to a base class. For final
+    classes, there is no need for a second type.
 
 **Open question:** We should consider other keywords than `partial` to designate
 this. We considered using `base` here, but it does not match the use of `base`
