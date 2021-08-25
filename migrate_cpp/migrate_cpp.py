@@ -11,7 +11,7 @@ import glob
 import os
 import subprocess
 import sys
-from typing import List
+from typing import List, Optional
 
 _CPP_REFACTORING = "./cpp_refactoring/cpp_refactoring"
 _H_EXTS = {".h", ".hpp"}
@@ -19,6 +19,10 @@ _CPP_EXTS = {".c", ".cc", ".cpp", ".cxx"}
 
 
 class _Workflow(object):
+    _parsed_args: argparse.Namespace
+    _data_dir: str
+    _cpp_files: Optional[List[str]]
+
     def __init__(self) -> None:
         """Parses command-line arguments and flags."""
         parser = argparse.ArgumentParser(description=__doc__)
@@ -28,9 +32,9 @@ class _Workflow(object):
             help="A directory containing C++ files to migrate to Carbon.",
         )
         parsed_args = parser.parse_args()
-        self._parsed_args: argparse.Namespace = parsed_args
+        self._parsed_args = parsed_args
 
-        self._data_dir: str = os.path.dirname(sys.argv[0])
+        self._data_dir = os.path.dirname(sys.argv[0])
 
         # Validate arguments.
         if not os.path.isdir(parsed_args.dir):
@@ -71,7 +75,7 @@ class _Workflow(object):
                 "%r doesn't contain any C++ files to convert."
                 % self._parsed_args.dir
             )
-        self._cpp_files: List[str] = sorted(cpp_files)
+        self._cpp_files = sorted(cpp_files)
         print("%d files found." % len(self._cpp_files))
 
     def _clang_tidy(self) -> None:
@@ -88,12 +92,14 @@ class _Workflow(object):
         """Runs cpp_refactoring to migrate C++ files towards Carbon syntax."""
         self._print_header("Running cpp_refactoring...")
         cpp_refactoring = self._data_file(_CPP_REFACTORING)
+        assert self._cpp_files is not None
         subprocess.run([cpp_refactoring] + self._cpp_files, check=True)
 
     def _rename_files(self) -> None:
         """Renames C++ files to the destination Carbon filenames."""
         api_renames = 0
         impl_renames = 0
+        assert self._cpp_files is not None
         for f in self._cpp_files:
             parts = os.path.splitext(f)
             if parts[1] in _H_EXTS:
