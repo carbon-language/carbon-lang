@@ -110,7 +110,7 @@ pip3 install -U pip
 https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
 addressed in the future, but as of August 2021 can be ignored.
 
-To get the latest version of `pip` packages, it will be necessary to
+To get the latest version of `pip3` packages, it will be necessary to
 periodically run `pip3 list --outdated`, then `pip3 install -U <package>` to
 upgrade desired packages. Keep in mind when upgrading that version dependencies
 may mean packages _should_ be outdated, and not be upgraded.
