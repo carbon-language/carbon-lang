@@ -1637,23 +1637,23 @@ witness table for the latter.
 
 #### Overloaded methods
 
-FIXME:
-[Open discussion from 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr)
+We allow a derived class to define a [class function](#class-functions) with the
+same name as a class function in the base class. For example, we expect it to be
+pretty common to have a constructor function named `Create` at all levels of the
+type hierarchy.
 
--   avoid unexpected behavior of adding something with the same name as a base
-    hides the methods in the base
-    -   don't have the multiple-inheritance problem where two parents have
-        virtual methods with the same name
--   unclear what to do when derived type has method with the same name as a base
-    -   solution: ask the programmer to make a choice
--   don't want to have virtual dispatch happen prior to overload resolution
-    (even more important for generics and templates where it isn't necessarily a
-    finite set)
--   if you define anything with the same name as a virtual method in the base,
-    the base virtual method must be overridden in the derived type; can have
-    syntactic sugar like C++'s `using` to import base names into the derived
-    type
-    -   important so that overload resolution is always coherent
+Beyond that, we may want some rules or restrictions about defining methods in a
+derived class with the same name as a base class method without overriding it.
+There are some opportunities to improve on and simplify the C++ story:
+
+-   We don't want to silently hide methods in the base class because of a method
+    with the same name in a derived class. There are uses for this in C++, but
+    it also causes problems and without multiple inheritance there isn't the
+    same need in Carbon.
+-   Overload resolution should happen before virtual dispatch.
+
+**References:** This was discussed in
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 
