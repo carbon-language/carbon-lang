@@ -1380,7 +1380,8 @@ would be able to advise that functions returning `Self` be changed to return
 -   Functions returning a value used to initialize a derived class should
     generally return a partial facet.
 -   As a heuristic, class functions of a base class should return `partial Self`
-    instead of `Self`.
+    instead of `Self`. This is particularly true of any class functions that are
+    [protected](#protected-access).
 
 Note that the consequences of returning `Self` instead of `partial Self` when
 the value will be used to initialize a derived class are fairly minor:
