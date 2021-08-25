@@ -89,7 +89,7 @@ Our recommended way of installing is to run
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-#### `python3` and `pip`
+#### `python3` and `pip3`
 
 Carbon requires Python 3.9 or newer. The included `pip` should typically be used
 for Python package installation rather than other package managers.
