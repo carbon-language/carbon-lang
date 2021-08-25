@@ -2,8 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-filegroup(
-    name = "website_content",
-    srcs = glob(["*"]),
-    visibility = ["//website/jekyll:__pkg__"],
-)
+# Empty stub.
