@@ -17,7 +17,7 @@ contributions.
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
-        -   [`python3` and `pip`](#python3-and-pip)
+        -   [`python3` and `pip3`](#python3-and-pip3)
     -   [Linux only](#linux-only)
         -   [`go get`](#go-get)
         -   [Cargo (optional)](#cargo-optional)
@@ -91,8 +91,8 @@ periodically run `brew upgrade`.
 
 #### `python3` and `pip3`
 
-Carbon requires Python 3.9 or newer. The included `pip3` should typically be used
-for Python package installation rather than other package managers.
+Carbon requires Python 3.9 or newer. The included `pip3` should typically be
+used for Python package installation rather than other package managers.
 
 **NOTE**: Carbon will focus support on Homebrew installs of Python 3.9, but it
 may not be necessary if you have Python 3.9 installed another way. If you're
