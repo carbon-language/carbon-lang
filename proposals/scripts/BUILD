@@ -5,13 +5,12 @@
 py_library(
     name = "proposals",
     srcs = ["proposals.py"],
-    visibility = ["//website/jekyll:__pkg__"],
 )
 
 py_test(
     name = "proposals_test",
     srcs = ["proposals_test.py"],
-    data = ["//proposals:website_content"],
+    data = ["//proposals:md_files"],
     python_version = "PY3",
     deps = [":proposals"],
 )
@@ -25,7 +24,7 @@ py_binary(
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
-    data = ["//proposals:website_content"],
+    data = ["//proposals:md_files"],
     python_version = "PY3",
     deps = [":new_proposal"],
 )
