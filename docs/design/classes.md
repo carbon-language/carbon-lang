@@ -1118,8 +1118,7 @@ There are three virtual override keywords:
 -   `impl` - This marks a method that overrides a method marked `virtual` or
     `abstract` in the base class with an implementation specific to -- and
     defined within -- this class. The method is still virtual and may be
-    overridden again in subsequent derived classes if this is a base class.
-    See
+    overridden again in subsequent derived classes if this is a base class. See
     [method overriding in Wikipedia](https://en.wikipedia.org/wiki/Method_overriding).
     Requiring a keyword when overriding allows the compiler to diagnose when the
     derived class accidentally uses the wrong signature or spelling and so
@@ -1232,10 +1231,11 @@ The partial facet for a base class type like `MyBaseType` is written
     constructed.
 -   `partial MyBaseClass` and `MyBaseClass` have the same fields in the same
     order with the same data layout. The only difference is that
-    `partial MyBaseClass` doesn't use (look into) its hidden vptr slot. To reliably catch any bugs where virtual function calls occur in this state,
-    both fast and hardened release builds will initialize the hidden vptr slot to a null pointer. Debug builds will initialize it to an
-    alternate vtable whose functions will abort the program with a clear
-    diagnostic.
+    `partial MyBaseClass` doesn't use (look into) its hidden vptr slot. To
+    reliably catch any bugs where virtual function calls occur in this state,
+    both fast and hardened release builds will initialize the hidden vptr slot
+    to a null pointer. Debug builds will initialize it to an alternate vtable
+    whose functions will abort the program with a clear diagnostic.
 -   Since `partial MyBaseClass` has the same data layout but only uses a subset,
     there is a subtyping relationship between these types. A `MyBaseClass` value
     is a `partial MyBaseClass` value, but not the other way around. So you can
