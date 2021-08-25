@@ -14,19 +14,18 @@ import hashlib
 import os
 import importlib.util
 import textwrap
-from typing import Any, Dict, Callable, List, Optional, Tuple
 
 
 # Do some extra work to support direct runs.
 try:
-    from github_tools import github_helpers
+    from carbon.github_tools import github_helpers
 except ImportError:
     github_helpers_spec = importlib.util.spec_from_file_location(
         "github_helpers",
         os.path.join(os.path.dirname(__file__), "github_helpers.py"),
     )
     github_helpers = importlib.util.module_from_spec(github_helpers_spec)
-    github_helpers_spec.loader.exec_module(github_helpers)  # type: ignore
+    github_helpers_spec.loader.exec_module(github_helpers)
 
 
 # The main query, into which other queries are composed.
@@ -112,7 +111,7 @@ _QUERY_REVIEW_THREADS = """
 class _Comment(object):
     """A comment, either on a review thread or top-level on the PR."""
 
-    def __init__(self, author: str, timestamp: str, body: str):
+    def __init__(self, author, timestamp, body):
         self.author = author
         self.timestamp = datetime.datetime.strptime(
             timestamp, "%Y-%m-%dT%H:%M:%SZ"
@@ -120,7 +119,7 @@ class _Comment(object):
         self.body = body
 
     @staticmethod
-    def from_raw_comment(raw_comment: Dict) -> "_Comment":
+    def from_raw_comment(raw_comment):
         """Creates the comment from a raw comment dict."""
         return _Comment(
             raw_comment["author"]["login"],
@@ -129,7 +128,7 @@ class _Comment(object):
         )
 
     @staticmethod
-    def _rewrap(content: str) -> str:
+    def _rewrap(content):
         """Rewraps a comment to fit in 80 columns with an indent."""
         lines = []
         for line in content.split("\n"):
@@ -146,7 +145,7 @@ class _Comment(object):
             )
         return "\n".join(lines)
 
-    def format(self, long: bool) -> str:
+    def format(self, long):
         """Formats the comment."""
         if long:
             return "%s%s at %s:\n%s" % (
@@ -167,7 +166,7 @@ class _Comment(object):
 class _PRComment(_Comment):
     """A comment on the top-level PR."""
 
-    def __init__(self, raw_comment: Dict):
+    def __init__(self, raw_comment):
         super().__init__(
             raw_comment["author"]["login"],
             raw_comment["createdAt"],
@@ -175,23 +174,23 @@ class _PRComment(_Comment):
         )
         self.url = raw_comment["url"]
 
-    def __lt__(self, other: "_PRComment") -> bool:
+    def __lt__(self, other):
         return self.timestamp < other.timestamp
 
-    def format(self, long: bool) -> str:
+    def format(self, long):
         return "%s\n%s" % (self.url, super().format(long))
 
 
 class _Thread(object):
     """A review thread on a line of code."""
 
-    def __init__(self, parsed_args: argparse.Namespace, thread: Dict):
-        self.is_resolved: bool = thread["isResolved"]
+    def __init__(self, parsed_args, thread):
+        self.is_resolved = thread["isResolved"]
 
         comments = thread["comments"]["nodes"]
         first_comment = comments[0]
-        self.line: int = first_comment["originalPosition"]
-        self.path: str = first_comment["path"]
+        self.line = first_comment["originalPosition"]
+        self.path = first_comment["path"]
 
         # Link to the comment in the commit; GitHub features work better there
         # than in the conversation view. The diff_url allows viewing changes
@@ -212,10 +211,10 @@ class _Thread(object):
             "pr_num": parsed_args.pr_num,
             "repo": parsed_args.repo,
         }
-        self.url: str = template % format_dict
+        self.url = template % format_dict
         format_dict["head"] = "..HEAD"
         format_dict["line_side"] = "L"
-        self.diff_url: str = template % format_dict
+        self.diff_url = template % format_dict
 
         self.comments = [
             _Comment.from_raw_comment(comment)
@@ -230,13 +229,13 @@ class _Thread(object):
                 )
             )
 
-    def __lt__(self, other: "_Thread") -> bool:
+    def __lt__(self, other):
         """Sort threads by line then timestamp."""
         if self.line != other.line:
-            return bool(self.line < other.line)
+            return self.line < other.line
         return self.comments[0].timestamp < other.comments[0].timestamp
 
-    def format(self, long: bool) -> str:
+    def format(self, long):
         """Formats the review thread with comments."""
         lines = []
         lines.append(
@@ -253,7 +252,7 @@ class _Thread(object):
             lines.append(comment.format(long))
         return "\n".join(lines)
 
-    def has_comment_from(self, comments_from: str) -> bool:
+    def has_comment_from(self, comments_from):
         """Returns true if comments has a comment from comments_from."""
         for comment in self.comments:
             if comment.author == comments_from:
@@ -261,7 +260,7 @@ class _Thread(object):
         return False
 
 
-def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def _parse_args(args=None):
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description="Lists comments on a PR.")
     parser.add_argument(
@@ -304,9 +303,7 @@ def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args=args)
 
 
-def _query(
-    parsed_args: argparse.Namespace, field_name: Optional[str] = None
-) -> str:
+def _query(parsed_args, field_name=None):
     """Returns a query for the passed field_name, or all by default."""
     print(".", end="", flush=True)
     format = {
@@ -335,22 +332,14 @@ def _query(
     return _QUERY % format
 
 
-def _accumulate_pr_comment(
-    parsed_args: argparse.Namespace,
-    comments: List[_PRComment],
-    raw_comment: Dict,
-) -> None:
+def _accumulate_pr_comment(parsed_args, comments, raw_comment):
     """Collects top-level comments and reviews."""
     # Elide reviews that have no top-level comment body.
     if raw_comment["body"]:
         comments.append(_PRComment(raw_comment))
 
 
-def _accumulate_thread(
-    parsed_args: argparse.Namespace,
-    threads_by_path: Dict[str, List[_Thread]],
-    raw_thread: Dict,
-) -> None:
+def _accumulate_thread(parsed_args, threads_by_path, raw_thread):
     """Adds threads to threads_by_path for later sorting."""
     thread = _Thread(parsed_args, raw_thread)
 
@@ -377,13 +366,8 @@ def _accumulate_thread(
 
 
 def _paginate(
-    field_name: str,
-    accumulator: Callable[[argparse.Namespace, Any, Dict], None],
-    parsed_args: argparse.Namespace,
-    client: github_helpers.Client,
-    main_result: Dict,
-    output: Any,
-) -> None:
+    field_name, accumulator, parsed_args, client, main_result, output
+):
     """Paginates through the given field_name, accumulating results."""
     query = _query(parsed_args, field_name=field_name)
     path = ("repository", "pullRequest", field_name)
@@ -393,9 +377,7 @@ def _paginate(
         accumulator(parsed_args, output, node)
 
 
-def _fetch_comments(
-    parsed_args: argparse.Namespace,
-) -> Tuple[List[_PRComment], Dict[str, List[_Thread]]]:
+def _fetch_comments(parsed_args):
     """Fetches comments and review threads from GitHub."""
     # Each _query call will print a '.' for progress.
     print(
@@ -412,7 +394,7 @@ def _fetch_comments(
     pull_request = main_result["repository"]["pullRequest"]
 
     # Paginate comments, reviews, and review threads.
-    comments: List[_PRComment] = []
+    comments = []
     _paginate(
         "comments",
         _accumulate_pr_comment,
@@ -430,7 +412,7 @@ def _fetch_comments(
         main_result,
         comments,
     )
-    threads_by_path: Dict[str, List[_Thread]] = {}
+    threads_by_path = {}
     _paginate(
         "reviewThreads",
         _accumulate_thread,
@@ -451,7 +433,7 @@ def _fetch_comments(
     return comments, threads_by_path
 
 
-def main() -> None:
+def main():
     parsed_args = _parse_args()
     comments, threads_by_path = _fetch_comments(parsed_args)
 

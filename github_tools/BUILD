@@ -4,7 +4,6 @@
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@py_deps//:requirements.bzl", "requirement")
-load("@mypy_integration//:mypy.bzl", "mypy_test")
 
 py_library(
     name = "github_helpers",
@@ -26,11 +25,6 @@ py_binary(
     deps = ["github_helpers"],
 )
 
-mypy_test(
-    name = "pr_comments_mypy_test",
-    deps = [":pr_comments"],
-)
-
 py_test(
     name = "pr_comments_test",
     srcs = ["pr_comments_test.py"],
@@ -46,11 +40,6 @@ py_binary(
         "github_helpers",
         requirement("pygithub"),
     ],
-)
-
-mypy_test(
-    name = "update_label_access_mypy_test",
-    deps = [":update_label_access"],
 )
 
 py_test(

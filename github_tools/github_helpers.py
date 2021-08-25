@@ -9,14 +9,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import argparse
 import os
-from typing import Dict, Generator, Optional, Tuple
 
 # https://pypi.org/project/gql/
-# gql is missing type annotations, so disable checking on around it.
-import gql  # type: ignore
-import gql.transport.requests  # type: ignore
+import gql
+import gql.transport.requests
 
 _ENV_TOKEN = "GITHUB_ACCESS_TOKEN"
 
@@ -28,9 +25,7 @@ PAGINATION = """pageInfo {
 totalCount"""
 
 
-def add_access_token_arg(
-    parser: argparse.ArgumentParser, permissions: str
-) -> None:
+def add_access_token_arg(parser, permissions):
     """Adds a flag to set the access token."""
     access_token = os.environ.get(_ENV_TOKEN, default=None)
     parser.add_argument(
@@ -47,7 +42,7 @@ def add_access_token_arg(
 class Client(object):
     """A GitHub GraphQL client."""
 
-    def __init__(self, parsed_args: argparse.Namespace):
+    def __init__(self, parsed_args):
         """Connects to GitHub."""
         transport = gql.transport.requests.RequestsHTTPTransport(
             url="https://api.github.com/graphql",
@@ -55,16 +50,11 @@ class Client(object):
         )
         self._client = gql.Client(transport=transport)
 
-    def execute(self, query: str) -> Dict:
+    def execute(self, query):
         """Runs a query."""
-        return self._client.execute(gql.gql(query))  # type: ignore
+        return self._client.execute(gql.gql(query))
 
-    def execute_and_paginate(
-        self,
-        query: str,
-        path: Tuple[str, ...],
-        first_page: Optional[Dict] = None,
-    ) -> Generator[Dict, None, None]:
+    def execute_and_paginate(self, query, path, first_page=None):
         """Runs a query with pagination.
 
         Arguments:
