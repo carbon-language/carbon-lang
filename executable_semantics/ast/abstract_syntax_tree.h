@@ -8,9 +8,10 @@
 #include <variant>
 
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/common/ptr.h"
 
 namespace Carbon {
-using AST = std::list<const Carbon::Declaration*>;
+using AST = std::list<Ptr<const Declaration>>;
 }
 
 #endif  // EXECUTABLE_SEMANTICS_AST_ABSTRACT_SYNTAX_TREE_H_

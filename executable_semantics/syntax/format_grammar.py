@@ -8,6 +8,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import argparse
 import os
 import subprocess
 import sys
@@ -49,6 +50,17 @@ class _CppCode:
     has_percent: bool
 
 
+def _parse_args():
+    """Parses command-line arguments and flags."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Whether to print debug details.",
+    )
+    return parser.parse_args()
+
+
 def _clang_format(code: str, base_style: str, cols: int) -> str:
     """Calls clang-format to format the given code."""
     style = "--style={%s, ColumnLimit: %d}" % (base_style, cols)
@@ -83,6 +95,11 @@ def _find_brace_end(content: str, has_percent: bool, start: int) -> int:
         if c == '"':
             # Skip over strings.
             i = _find_string_end(content, i + 1)
+        elif c == "/" and content[i + 1 : i + 2] == "/":
+            # Skip over line comments.
+            i = content.find("\n", i + 2)
+            if i == -1:
+                i = len(content)
         elif c == "{":
             i = _find_brace_end(content, False, i + 1)
         elif c == "}" and (not has_percent or content[i - 1] == "%"):
@@ -93,6 +110,7 @@ def _find_brace_end(content: str, has_percent: bool, start: int) -> int:
 
 def _parse_cpp_segments(
     content: str,
+    debug: bool,
 ) -> Tuple[List[Optional[str]], Dict[int, List[_CppCode]]]:
     """Returns text and code segments.
 
@@ -109,6 +127,14 @@ def _parse_cpp_segments(
         if c == '"':
             # Skip over strings.
             i = _find_string_end(content, i + 1)
+        elif c == "/" and content[i + 1 : i + 2] == "*":
+            # Skip over block comments.
+            i = content.find("*/", i + 2)
+            if i == -1:
+                exit(
+                    "failed to find end of /* comment: %s" % content[i : i + 20]
+                )
+            i += 1
         elif c == "\\":
             # Skip over escapes.
             i += 1
@@ -133,6 +159,10 @@ def _parse_cpp_segments(
                 # Code has been found. First, record the text segment; then,
                 # indicate the non-text segment.
                 text_segments.append(content[segment_start:i])
+                if debug:
+                    print("=== Text segment ===")
+                    print(text_segments[-1])
+                    print("====================")
                 text_segments.append(None)
 
                 # If the opening brace is the first character on its line, use
@@ -145,21 +175,36 @@ def _parse_cpp_segments(
                 # Record the code segment.
                 if close_brace_indent not in cpp_segments:
                     cpp_segments[close_brace_indent] = []
-                cpp_segments[close_brace_indent].append(
-                    _CppCode(
-                        len(text_segments) - 1,
-                        braced_content,
-                        i - line_offset + 1,
-                        close_brace_indent,
-                        has_percent,
-                    )
+                cpp_segment = _CppCode(
+                    len(text_segments) - 1,
+                    braced_content,
+                    i - (line_offset + 1),
+                    close_brace_indent,
+                    has_percent,
                 )
+                if debug:
+                    print("=== C++ segment ===")
+                    print(cpp_segment.content)
+                    print(
+                        "Structure: { at %d; } at %d; %%: %s"
+                        % (
+                            cpp_segment.open_brace_column,
+                            cpp_segment.close_brace_indent,
+                            cpp_segment.has_percent,
+                        )
+                    )
+                    print("===================")
+                cpp_segments[close_brace_indent].append(cpp_segment)
 
                 # Increment cursors.
                 i = end
                 segment_start = i + 1
         i += 1
-    text_segments.append(content[segment_start])
+    text_segments.append(content[segment_start:])
+    if debug:
+        print("=== Text segment ===")
+        print(text_segments[-1])
+        print("====================")
     return text_segments, cpp_segments
 
 
@@ -167,6 +212,7 @@ def _format_cpp_segments(
     base_style: str,
     text_segments: List[Optional[str]],
     cpp_segments: Dict[int, List[_CppCode]],
+    debug: bool,
 ):
     """Does the actual C++ code formatting.
 
@@ -187,7 +233,8 @@ def _format_cpp_segments(
         # If there's a mismatch in lengths, error with the formatted output to
         # help determine what was wrong with input.
         if len(code_list) != len(formatted_segments):
-            sys.stderr.write(formatted_block)
+            if debug:
+                sys.stderr.write(formatted_block)
             exit(
                 (
                     "Unexpected formatting error (likely bad input): wanted %d "
@@ -217,17 +264,19 @@ def _format_cpp_segments(
                 text_segments[code.segment_index] = "{ %s }" % formatted
 
 
-def _format_file(path: str, base_style: str):
+def _format_file(path: str, base_style: str, debug: bool):
     """Formats a file, writing the result."""
     content = open(path).read()
-    text_segments, cpp_segments = _parse_cpp_segments(content)
-    _format_cpp_segments(base_style, text_segments, cpp_segments)
+    text_segments, cpp_segments = _parse_cpp_segments(content, debug)
+    _format_cpp_segments(base_style, text_segments, cpp_segments, debug)
     assert None not in text_segments
     open(path, "w").write("".join(cast(List[str], text_segments)))
 
 
 def main():
     """See the file comment."""
+    parsed_args = _parse_args()
+
     # Go to the repository root so that paths will match bazel's view.
     os.chdir(os.path.join(os.path.dirname(__file__), "../.."))
 
@@ -246,7 +295,7 @@ def main():
 
     # Format the grammar files.
     for path in _FILES:
-        _format_file(path, base_style)
+        _format_file(path, base_style, parsed_args.debug)
 
 
 if __name__ == "__main__":

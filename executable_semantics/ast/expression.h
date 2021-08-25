@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/syntax/paren_contents.h"
+#include "executable_semantics/ast/paren_contents.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {

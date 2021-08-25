@@ -24,7 +24,6 @@ class Action {
     ExpressionAction,
     PatternAction,
     StatementAction,
-    ValAction,
   };
 
   Action(const Value&) = delete;
@@ -54,7 +53,7 @@ class Action {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  static void PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out);
+  static void PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out);
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -129,20 +128,6 @@ class StatementAction : public Action {
 
  private:
   const Statement* stmt;
-};
-
-class ValAction : public Action {
- public:
-  explicit ValAction(const Value* val) : Action(Kind::ValAction), val(val) {}
-
-  static auto classof(const Action* action) -> bool {
-    return action->Tag() == Kind::ValAction;
-  }
-
-  auto Val() const -> const Value* { return val; }
-
- private:
-  const Value* val;
 };
 
 }  // namespace Carbon

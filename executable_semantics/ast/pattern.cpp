@@ -59,7 +59,7 @@ TuplePattern::TuplePattern(const Expression* tuple_literal)
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
     fields.push_back(Field(
-        init.name, global_arena->New<ExpressionPattern>(init.expression)));
+        init.name, global_arena->RawNew<ExpressionPattern>(init.expression)));
   }
 }
 
@@ -77,7 +77,7 @@ auto PatternFromParenContents(int line_num,
 auto TuplePatternFromParenContents(int line_num,
                                    const ParenContents<Pattern>& paren_contents)
     -> const TuplePattern* {
-  return global_arena->New<TuplePattern>(
+  return global_arena->RawNew<TuplePattern>(
       line_num, paren_contents.TupleElements<TuplePattern::Field>(line_num));
 }
 
@@ -101,7 +101,7 @@ auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
   for (const auto& element : contents.elements) {
     result.elements.push_back(
         {.name = element.name,
-         .term = global_arena->New<ExpressionPattern>(element.term)});
+         .term = global_arena->RawNew<ExpressionPattern>(element.term)});
   }
   return result;
 }

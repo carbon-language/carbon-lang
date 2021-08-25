@@ -10,10 +10,10 @@ import os
 import unittest
 from unittest import mock
 
-import github
+import github  # type: ignore
 
-from carbon.github_tools import github_helpers
-from carbon.github_tools import update_label_access
+from github_tools import github_helpers
+from github_tools import update_label_access
 
 
 class TestUpdateLabelAccess(unittest.TestCase):

@@ -2,9 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-circularly
-copyable
-crate
-inout
-pullrequest
-statics
+# Empty BUILD file to allow access to Bazel extensions.

@@ -51,7 +51,7 @@ NOT               "not"
 OR                "or"
 RETURN            "return"
 STRING            "String"
-STRUCT            "struct"
+CLASS             "class"
 TRUE              "true"
 TYPE              "Type"
 VAR               "var"
@@ -92,26 +92,21 @@ operand_start [(A-Za-z0-9_\"]
   context.current_token_position.step();
 %}
 
-{AND}      {
-  return Carbon::Parser::make_AND(context.current_token_position);
-}
+{AND}      { return Carbon::Parser::make_AND(context.current_token_position); }
 {ARROW}    {
   return Carbon::Parser::make_ARROW(context.current_token_position);
 }
-{AUTO}     {
-  return Carbon::Parser::make_AUTO(context.current_token_position);
-}
-{BOOL}     {
-  return Carbon::Parser::make_BOOL(context.current_token_position);
-}
+{AUTO}     { return Carbon::Parser::make_AUTO(context.current_token_position); }
+{BOOL}     { return Carbon::Parser::make_BOOL(context.current_token_position); }
 {BREAK}    {
   return Carbon::Parser::make_BREAK(context.current_token_position);
 }
-{CASE}     {
-  return Carbon::Parser::make_CASE(context.current_token_position);
-}
+{CASE}     { return Carbon::Parser::make_CASE(context.current_token_position); }
 {CHOICE}   {
   return Carbon::Parser::make_CHOICE(context.current_token_position);
+}
+{CLASS}    {
+  return Carbon::Parser::make_CLASS(context.current_token_position);
 }
 {CONTINUE} {
   return Carbon::Parser::make_CONTINUE(context.current_token_position);
@@ -122,9 +117,7 @@ operand_start [(A-Za-z0-9_\"]
 {DEFAULT}  {
   return Carbon::Parser::make_DEFAULT(context.current_token_position);
 }
-{ELSE}     {
-  return Carbon::Parser::make_ELSE(context.current_token_position);
-}
+{ELSE}     { return Carbon::Parser::make_ELSE(context.current_token_position); }
 "=="       {
   return Carbon::Parser::make_EQUAL_EQUAL(context.current_token_position);
 }
@@ -132,32 +125,19 @@ operand_start [(A-Za-z0-9_\"]
   return Carbon::Parser::make_FALSE(context.current_token_position);
 }
 {FN}       { return Carbon::Parser::make_FN(context.current_token_position); }
-{FNTY}     {
-  return Carbon::Parser::make_FNTY(context.current_token_position);
-}
+{FNTY}     { return Carbon::Parser::make_FNTY(context.current_token_position); }
 {IF}       { return Carbon::Parser::make_IF(context.current_token_position); }
 {MATCH}    {
   return Carbon::Parser::make_MATCH(context.current_token_position);
 }
-{NOT}      {
-  return Carbon::Parser::make_NOT(context.current_token_position);
-}
+{NOT}      { return Carbon::Parser::make_NOT(context.current_token_position); }
 {OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
 {RETURN}   {
   return Carbon::Parser::make_RETURN(context.current_token_position);
 }
-{STRUCT}   {
-  return Carbon::Parser::make_STRUCT(context.current_token_position);
-}
-{TRUE}     {
-  return Carbon::Parser::make_TRUE(context.current_token_position);
-}
-{TYPE}     {
-  return Carbon::Parser::make_TYPE(context.current_token_position);
-}
-{VAR}      {
-  return Carbon::Parser::make_VAR(context.current_token_position);
-}
+{TRUE}     { return Carbon::Parser::make_TRUE(context.current_token_position); }
+{TYPE}     { return Carbon::Parser::make_TYPE(context.current_token_position); }
+{VAR}      { return Carbon::Parser::make_VAR(context.current_token_position); }
 {WHILE}    {
   return Carbon::Parser::make_WHILE(context.current_token_position);
 }
@@ -167,9 +147,7 @@ operand_start [(A-Za-z0-9_\"]
 {CONTINUATION}    {
   return Carbon::Parser::make_CONTINUATION(context.current_token_position);
 }
-{RUN}      {
-  return Carbon::Parser::make_RUN(context.current_token_position);
-}
+{RUN}      { return Carbon::Parser::make_RUN(context.current_token_position); }
 {AWAIT}    {
   return Carbon::Parser::make_AWAIT(context.current_token_position);
 }
@@ -316,3 +294,5 @@ operator and its operand, leading to three more cases:
   // A more modern Bison would give us make_EOF.
   return Carbon::Parser::make_END_OF_FILE(context.current_token_position);
 }
+
+%%

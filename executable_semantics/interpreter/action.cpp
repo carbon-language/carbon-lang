@@ -35,9 +35,6 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).Stmt()->PrintDepth(1, out);
       break;
-    case Action::Kind::ValAction:
-      out << *cast<ValAction>(*this).Val();
-      break;
   }
   out << "<" << pos << ">";
   if (results.size() > 0) {
@@ -53,7 +50,7 @@ void Action::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void Action::PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out) {
+void Action::PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out) {
   llvm::ListSeparator sep(" :: ");
   for (const auto& action : ls) {
     out << sep << *action;

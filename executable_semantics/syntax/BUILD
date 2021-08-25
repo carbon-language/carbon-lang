@@ -2,9 +2,13 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+package(default_visibility = ["//executable_semantics:__pkg__"])
 
-package(default_visibility = ["//executable_semantics:__subpackages__"])
+cc_library(
+    name = "bison_wrap",
+    hdrs = ["bison_wrap.h"],
+    deps = ["//common:check"],
+)
 
 cc_library(
     name = "syntax",
@@ -28,23 +32,19 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
-        ":paren_contents",
+        ":bison_wrap",
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:paren_contents",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
         "//executable_semantics/interpreter:typecheck",
     ],
-)
-
-cc_library(
-    name = "paren_contents",
-    hdrs = ["paren_contents.h"],
 )
 
 genrule(
@@ -76,4 +76,15 @@ genrule(
         "@rules_flex//flex:current_flex_toolchain",
         "@rules_m4//m4:current_m4_toolchain",
     ],
+)
+
+py_library(
+    name = "format_grammar_lib",
+    srcs = ["format_grammar.py"],
+)
+
+py_test(
+    name = "format_grammar_test",
+    srcs = ["format_grammar_test.py"],
+    deps = ["format_grammar_lib"],
 )
