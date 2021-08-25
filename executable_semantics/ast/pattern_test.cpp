@@ -26,7 +26,7 @@ MATCHER_P(AutoFieldNamed, name, "") {
 }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
-  return {.filename = "<test>", .line_num = line_num};
+  return SourceLocation("<test>", line_num);
 }
 
 TEST(PatternTest, EmptyAsPattern) {

@@ -24,8 +24,8 @@ class ParseAndLexContext {
   auto PrintDiagnostic(const std::string& message) -> void;
 
   auto SourceLoc() -> SourceLocation {
-    return {.filename = input_file_name->c_str(),
-            .line_num = static_cast<int>(current_token_position.begin.line)};
+    return SourceLocation(input_file_name,
+                          static_cast<int>(current_token_position.begin.line));
   }
 
   // The source range of the token being (or just) lex'd.

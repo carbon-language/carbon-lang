@@ -337,8 +337,7 @@ class IntrinsicExpression : public Expression {
   };
 
   explicit IntrinsicExpression(IntrinsicKind intrinsic)
-      : Expression(Kind::IntrinsicExpression,
-                   {.filename = "<intrinsic>", .line_num = -1}),
+      : Expression(Kind::IntrinsicExpression, SourceLocation("<intrinsic>", 0)),
         intrinsic(intrinsic) {}
 
   static auto classof(const Expression* exp) -> bool {

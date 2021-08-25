@@ -1215,7 +1215,7 @@ auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int {
   }
   InitGlobals(fs);
 
-  SourceLocation loc = {.filename = "<InterpProgram()>", .line_num = 0};
+  SourceLocation loc("<InterpProgram()>", 0);
 
   const Expression* arg = global_arena->RawNew<TupleLiteral>(loc);
   const Expression* call_main = global_arena->RawNew<CallExpression>(

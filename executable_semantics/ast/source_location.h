@@ -8,21 +8,35 @@
 #include <string>
 
 #include "common/ostream.h"
+#include "executable_semantics/common/ptr.h"
 
 namespace Carbon {
 
-struct SourceLocation {
+class SourceLocation {
+ public:
+  // The filename should be eternal or arena-allocated to eliminate copies.
+  SourceLocation(const char* filename, int line_num)
+      : filename(filename), line_num(line_num) {}
+  SourceLocation(Ptr<const std::string> filename, int line_num)
+      : filename(filename->c_str()), line_num(line_num) {}
+
+  SourceLocation(const SourceLocation&) = default;
+  SourceLocation(SourceLocation&&) = default;
+  auto operator=(const SourceLocation&) -> SourceLocation& = default;
+  auto operator=(SourceLocation&&) -> SourceLocation& = default;
+
   bool operator==(SourceLocation other) const {
-    return strcmp(filename, other.filename) == 0 && line_num == other.line_num;
+    return strcmp(filename.Get(), other.filename.Get()) == 0 &&
+           line_num == other.line_num;
   }
 
   void Print(llvm::raw_ostream& out) const {
-    out << filename << ":" << line_num;
+    out << filename.Get() << ":" << line_num;
   }
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // The filename should be arena-allocated to eliminate copies.
-  const char* filename;
+ private:
+  Ptr<const char> filename;
   int line_num;
 };
 

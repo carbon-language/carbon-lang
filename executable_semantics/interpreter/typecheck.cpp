@@ -51,7 +51,7 @@ static void ExpectPointerType(SourceLocation loc, const std::string& context,
 }
 
 static SourceLocation ReifyFakeSourceLoc() {
-  return SourceLocation{.filename = "<reify>", .line_num = 0};
+  return SourceLocation("<reify>", 0);
 }
 
 // Reify type to type expression.
