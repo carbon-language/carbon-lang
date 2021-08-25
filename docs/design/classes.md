@@ -1077,9 +1077,17 @@ declared `private`.
 
 A base class may define
 [virtual methods](https://en.wikipedia.org/wiki/Virtual_function). These are
-methods whose implementation may be overridden in a derived class. Only methods
-defined in the scope of the class definition may be virtual, not any defined in
-external interface impls. Class functions may not be declared virtual.
+methods whose implementation may be overridden in a derived class.
+
+Only methods defined in the scope of the class definition may be virtual, not
+any defined in
+[external interface impls](/docs/design/generics/details.md#external-impl).
+Interface methods may be implemented using virtual methods when the
+[impl is internal](/docs/design/generics/details.md#implementing-interfaces),
+and calls to those methods by way of the interface will do virtual dispatch just
+like a direct call to the method does.
+
+[Class functions](#class-functions) may not be declared virtual.
 
 ##### Virtual override keywords
 
