@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_AST_SOURCE_LOCATION_H_
 
 #include <string>
+#include <string_view>
 
 #include "common/ostream.h"
 #include "executable_semantics/common/ptr.h"
@@ -26,17 +27,16 @@ class SourceLocation {
   auto operator=(SourceLocation&&) -> SourceLocation& = default;
 
   bool operator==(SourceLocation other) const {
-    return strcmp(filename.Get(), other.filename.Get()) == 0 &&
-           line_num == other.line_num;
+    return filename == other.filename && line_num == other.line_num;
   }
 
   void Print(llvm::raw_ostream& out) const {
-    out << filename.Get() << ":" << line_num;
+    out << filename << ":" << line_num;
   }
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
-  Ptr<const char> filename;
+  std::string_view filename;
   int line_num;
 };
 
