@@ -50,7 +50,7 @@ class _CppCode:
     has_percent: bool
 
 
-def _parse_args():
+def _parse_args() -> argparse.Namespace:
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -108,6 +108,94 @@ def _find_brace_end(content: str, has_percent: bool, start: int) -> int:
     exit("failed to find end of brace: %s" % content[start : start + 20])
 
 
+def _add_text_segment(
+    text_segments: List[Optional[str]],
+    segment: str,
+    debug: bool,
+) -> None:
+    """Adds a text segment to the list."""
+    text_segments.append(segment)
+    if debug:
+        print("=== Text segment ===")
+        print(segment)
+        print("====================")
+
+
+def _maybe_add_cpp_segment(
+    content: str,
+    text_segments: List[Optional[str]],
+    cpp_segments: Dict[int, List[_CppCode]],
+    text_segment_start: int,
+    cpp_segment_start: int,
+    debug: bool,
+) -> Tuple[int, bool]:
+    """Checks if cpp_segment_start is really at a C++ segment, and adds if so.
+
+    Returns a tuple of (end, added) where `end` indicates the new offset into
+    content to parse at, and `added` indicates whether a C++ segment was really
+    added.
+    """
+    # lexer.lpp uses %{ %} for code, so detect it here.
+    has_percent = content[cpp_segment_start - 1] == "%"
+    # Find the end of the braced section.
+    end = _find_brace_end(content, has_percent, cpp_segment_start + 1)
+
+    # Determine the braced content, stripping the % and whitespace.
+    braced_content = content[cpp_segment_start + 1 : end]
+    if has_percent:
+        braced_content = braced_content.rstrip("% \n")
+    braced_content = braced_content.strip()
+
+    if not has_percent and braced_content[-1] not in (";", "}", '"'):
+        # Code would end with one of the indicated characters. This is
+        # likely a non-formattable braced section, such as `{AND}`.
+        # Keep treating it as text.
+        return (end, False)
+    else:
+        # Code has been found. First, record the text segment; then,
+        # indicate the non-text segment.
+        _add_text_segment(
+            text_segments, content[text_segment_start:cpp_segment_start], debug
+        )
+        text_segments.append(None)
+
+        # If the opening brace is the first character on its line, use
+        # its indent when wrapping.
+        close_brace_indent = 0
+        line_offset = content.rfind("\n", 0, cpp_segment_start)
+        if content[line_offset + 1 : cpp_segment_start].isspace():
+            close_brace_indent = cpp_segment_start - line_offset - 1
+
+        # Construct the code segment.
+        cpp_segment = _CppCode(
+            len(text_segments) - 1,
+            braced_content,
+            cpp_segment_start - (line_offset + 1),
+            close_brace_indent,
+            has_percent,
+        )
+        if debug:
+            print("=== C++ segment ===")
+            print(cpp_segment.content)
+            print(
+                "Structure: { at %d; } at %d; %%: %s"
+                % (
+                    cpp_segment.open_brace_column,
+                    cpp_segment.close_brace_indent,
+                    cpp_segment.has_percent,
+                )
+            )
+            print("===================")
+
+        # Record the code segment.
+        if close_brace_indent not in cpp_segments:
+            cpp_segments[close_brace_indent] = []
+        cpp_segments[close_brace_indent].append(cpp_segment)
+
+        # Increment cursors.
+        return (end, True)
+
+
 def _parse_cpp_segments(
     content: str,
     debug: bool,
@@ -139,72 +227,13 @@ def _parse_cpp_segments(
             # Skip over escapes.
             i += 1
         elif c == "{":
-            # lexer.lpp uses %{ %} for code, so detect it here.
-            has_percent = content[i - 1] == "%"
-            # Find the end of the braced section.
-            end = _find_brace_end(content, has_percent, i + 1)
-
-            # Determine the braced content, stripping the % and whitespace.
-            braced_content = content[i + 1 : end]
-            if has_percent:
-                braced_content = braced_content.rstrip("% \n")
-            braced_content = braced_content.strip()
-
-            if not has_percent and braced_content[-1] not in (";", "}", '"'):
-                # Code would end with one of the indicated characters. This is
-                # likely a non-formattable braced section, such as `{AND}`.
-                # Keep treating it as text.
-                i = end
-            else:
-                # Code has been found. First, record the text segment; then,
-                # indicate the non-text segment.
-                text_segments.append(content[segment_start:i])
-                if debug:
-                    print("=== Text segment ===")
-                    print(text_segments[-1])
-                    print("====================")
-                text_segments.append(None)
-
-                # If the opening brace is the first character on its line, use
-                # its indent when wrapping.
-                close_brace_indent = 0
-                line_offset = content.rfind("\n", 0, i)
-                if content[line_offset + 1 : i].isspace():
-                    close_brace_indent = i - line_offset - 1
-
-                # Record the code segment.
-                if close_brace_indent not in cpp_segments:
-                    cpp_segments[close_brace_indent] = []
-                cpp_segment = _CppCode(
-                    len(text_segments) - 1,
-                    braced_content,
-                    i - (line_offset + 1),
-                    close_brace_indent,
-                    has_percent,
-                )
-                if debug:
-                    print("=== C++ segment ===")
-                    print(cpp_segment.content)
-                    print(
-                        "Structure: { at %d; } at %d; %%: %s"
-                        % (
-                            cpp_segment.open_brace_column,
-                            cpp_segment.close_brace_indent,
-                            cpp_segment.has_percent,
-                        )
-                    )
-                    print("===================")
-                cpp_segments[close_brace_indent].append(cpp_segment)
-
-                # Increment cursors.
-                i = end
+            i, added = _maybe_add_cpp_segment(
+                content, text_segments, cpp_segments, segment_start, i, debug
+            )
+            if added:
                 segment_start = i + 1
         i += 1
-    text_segments.append(content[segment_start:])
-    if debug:
-        print("=== Text segment ===")
-        print(text_segments[-1])
-        print("====================")
+    _add_text_segment(text_segments, content[segment_start:], debug)
     return text_segments, cpp_segments
 
 
@@ -213,7 +242,7 @@ def _format_cpp_segments(
     text_segments: List[Optional[str]],
     cpp_segments: Dict[int, List[_CppCode]],
     debug: bool,
-):
+) -> None:
     """Does the actual C++ code formatting.
 
     Formatting is done in groups, divided by indent because that affects code
@@ -264,7 +293,7 @@ def _format_cpp_segments(
                 text_segments[code.segment_index] = "{ %s }" % formatted
 
 
-def _format_file(path: str, base_style: str, debug: bool):
+def _format_file(path: str, base_style: str, debug: bool) -> None:
     """Formats a file, writing the result."""
     content = open(path).read()
     text_segments, cpp_segments = _parse_cpp_segments(content, debug)
@@ -273,7 +302,7 @@ def _format_file(path: str, base_style: str, debug: bool):
     open(path, "w").write("".join(cast(List[str], text_segments)))
 
 
-def main():
+def main() -> None:
     """See the file comment."""
     parsed_args = _parse_args()
 

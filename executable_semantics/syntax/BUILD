@@ -4,6 +4,9 @@
 
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
+load("@mypy_integration//:mypy.bzl", "mypy_test")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
 cc_library(
     name = "bison_wrap",
     hdrs = ["bison_wrap.h"],
@@ -87,4 +90,9 @@ py_test(
     name = "format_grammar_test",
     srcs = ["format_grammar_test.py"],
     deps = ["format_grammar_lib"],
+)
+
+mypy_test(
+    name = "format_grammar_mypy_test",
+    deps = [":format_grammar_lib"],
 )
