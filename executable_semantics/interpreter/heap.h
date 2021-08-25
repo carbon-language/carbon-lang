@@ -25,11 +25,11 @@ class Heap {
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
-  auto Read(const Address& a, int line_num) -> const Value*;
+  auto Read(const Address& a, SourceLocation loc) -> const Value*;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  void Write(const Address& a, const Value* v, int line_num);
+  void Write(const Address& a, const Value* v, SourceLocation loc);
 
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(const Value* v) -> Address;
@@ -47,7 +47,7 @@ class Heap {
 
  private:
   // Signal an error if the address is no longer alive.
-  void CheckAlive(const Address& address, int line_num);
+  void CheckAlive(const Address& address, SourceLocation loc);
 
   std::vector<const Value*> values_;
   std::vector<bool> alive_;

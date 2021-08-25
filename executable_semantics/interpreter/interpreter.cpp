@@ -62,10 +62,10 @@ auto CurrentEnv(State* state) -> Env {
 }
 
 // Returns the given name from the environment, printing an error if not found.
-static auto GetFromEnv(int line_num, const std::string& name) -> Address {
+static auto GetFromEnv(SourceLocation loc, const std::string& name) -> Address {
   std::optional<Address> pointer = CurrentEnv(state).Get(name);
   if (!pointer) {
-    FATAL_RUNTIME_ERROR(line_num) << "could not find `" << name << "`";
+    FATAL_RUNTIME_ERROR(loc) << "could not find `" << name << "`";
   }
   return *pointer;
 }
@@ -81,8 +81,8 @@ void PrintState(llvm::raw_ostream& out) {
   out << "\n}\n";
 }
 
-auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
-    -> const Value* {
+auto EvalPrim(Operator op, const std::vector<const Value*>& args,
+              SourceLocation loc) -> const Value* {
   switch (op) {
     case Operator::Neg:
       return global_arena->RawNew<IntValue>(-cast<IntValue>(*args[0]).Val());
@@ -104,8 +104,7 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
       return global_arena->RawNew<BoolValue>(cast<BoolValue>(*args[0]).Val() ||
                                              cast<BoolValue>(*args[1]).Val());
     case Operator::Eq:
-      return global_arena->RawNew<BoolValue>(
-          ValueEqual(args[0], args[1], line_num));
+      return global_arena->RawNew<BoolValue>(ValueEqual(args[0], args[1], loc));
     case Operator::Ptr:
       return global_arena->RawNew<PointerType>(args[0]);
     case Operator::Deref:
@@ -220,14 +219,14 @@ const Value* CreateTuple(Ptr<Action> act, const Expression* exp) {
   return global_arena->RawNew<TupleValue>(std::move(elements));
 }
 
-auto PatternMatch(const Value* p, const Value* v, int line_num)
+auto PatternMatch(const Value* p, const Value* v, SourceLocation loc)
     -> std::optional<Env> {
   switch (p->Tag()) {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       Env values;
       if (placeholder.Name().has_value()) {
-        Address a = state->heap.AllocateValue(CopyVal(v, line_num));
+        Address a = state->heap.AllocateValue(CopyVal(v, loc));
         values.Set(*placeholder.Name(), a);
       }
       return values;
@@ -238,20 +237,20 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
           if (p_tup.Elements().size() != v_tup.Elements().size()) {
-            FATAL_PROGRAM_ERROR(line_num)
+            FATAL_PROGRAM_ERROR(loc)
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
           }
           Env values;
           for (size_t i = 0; i < p_tup.Elements().size(); ++i) {
             if (p_tup.Elements()[i].name != v_tup.Elements()[i].name) {
-              FATAL_PROGRAM_ERROR(line_num)
+              FATAL_PROGRAM_ERROR(loc)
                   << "Tuple field name '" << v_tup.Elements()[i].name
                   << "' does not match pattern field name '"
                   << p_tup.Elements()[i].name << "'";
             }
             std::optional<Env> matches = PatternMatch(
-                p_tup.Elements()[i].value, v_tup.Elements()[i].value, line_num);
+                p_tup.Elements()[i].value, v_tup.Elements()[i].value, loc);
             if (!matches) {
               return std::nullopt;
             }
@@ -273,7 +272,7 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
               p_alt.AltName() != v_alt.AltName()) {
             return std::nullopt;
           }
-          return PatternMatch(p_alt.Argument(), v_alt.Argument(), line_num);
+          return PatternMatch(p_alt.Argument(), v_alt.Argument(), loc);
         }
         default:
           FATAL() << "expected a choice alternative in pattern, not " << *v;
@@ -284,12 +283,12 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
           std::optional<Env> param_matches =
-              PatternMatch(p_fn.Param(), v_fn.Param(), line_num);
+              PatternMatch(p_fn.Param(), v_fn.Param(), loc);
           if (!param_matches) {
             return std::nullopt;
           }
           std::optional<Env> ret_matches =
-              PatternMatch(p_fn.Ret(), v_fn.Ret(), line_num);
+              PatternMatch(p_fn.Ret(), v_fn.Ret(), loc);
           if (!ret_matches) {
             return std::nullopt;
           }
@@ -307,7 +306,7 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
       // on the typechecker to ensure that `v` is a type.
       return Env();
     default:
-      if (ValueEqual(p, v, line_num)) {
+      if (ValueEqual(p, v, loc)) {
         return Env();
       } else {
         return std::nullopt;
@@ -315,11 +314,10 @@ auto PatternMatch(const Value* p, const Value* v, int line_num)
   }
 }
 
-void PatternAssignment(const Value* pat, const Value* val, int line_num) {
+void PatternAssignment(const Value* pat, const Value* val, SourceLocation loc) {
   switch (pat->Tag()) {
     case Value::Kind::PointerValue:
-      state->heap.Write(cast<PointerValue>(*pat).Val(), CopyVal(val, line_num),
-                        line_num);
+      state->heap.Write(cast<PointerValue>(*pat).Val(), CopyVal(val, loc), loc);
       break;
     case Value::Kind::TupleValue: {
       switch (val->Tag()) {
@@ -327,17 +325,17 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           const auto& pat_tup = cast<TupleValue>(*pat);
           const auto& val_tup = cast<TupleValue>(*val);
           if (pat_tup.Elements().size() != val_tup.Elements().size()) {
-            FATAL_RUNTIME_ERROR(line_num)
+            FATAL_RUNTIME_ERROR(loc)
                 << "arity mismatch in tuple pattern assignment:\n  pattern: "
                 << pat_tup << "\n  value: " << val_tup;
           }
           for (const TupleElement& pattern_element : pat_tup.Elements()) {
             const Value* value_field = val_tup.FindField(pattern_element.name);
             if (value_field == nullptr) {
-              FATAL_RUNTIME_ERROR(line_num)
+              FATAL_RUNTIME_ERROR(loc)
                   << "field " << pattern_element.name << "not in " << *val;
             }
-            PatternAssignment(pattern_element.value, value_field, line_num);
+            PatternAssignment(pattern_element.value, value_field, loc);
           }
           break;
         }
@@ -354,7 +352,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
           CHECK(val_alt.ChoiceName() == pat_alt.ChoiceName() &&
                 val_alt.AltName() == pat_alt.AltName())
               << "internal error in pattern assignment";
-          PatternAssignment(pat_alt.Argument(), val_alt.Argument(), line_num);
+          PatternAssignment(pat_alt.Argument(), val_alt.Argument(), loc);
           break;
         }
         default:
@@ -363,7 +361,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
       break;
     }
     default:
-      CHECK(ValueEqual(pat, val, line_num))
+      CHECK(ValueEqual(pat, val, loc))
           << "internal error in pattern assignment";
   }
 }
@@ -417,7 +415,7 @@ struct UnwindFunctionCall {
 struct CallFunction {
   const FunctionValue* function;
   const Value* args;
-  int line_num;
+  SourceLocation loc;
 };
 
 // Transition type which does nothing.
@@ -649,7 +647,7 @@ Transition StepExp() {
             return CallFunction{
                 .function = cast<FunctionValue>(act->Results()[0]),
                 .args = act->Results()[1],
-                .line_num = exp->Loc()};
+                .loc = exp->Loc()};
           default:
             FATAL_RUNTIME_ERROR(exp->Loc())
                 << "in call, expected a function, not " << *act->Results()[0];
@@ -1163,7 +1161,7 @@ struct DoTransition {
   void operator()(const CallFunction& call) {
     state->stack.Top()->todo.Pop();
     std::optional<Env> matches =
-        PatternMatch(call.function->Param(), call.args, call.line_num);
+        PatternMatch(call.function->Param(), call.args, call.loc);
     CHECK(matches.has_value())
         << "internal error in call_function, pattern match failed";
     // Create the new frame and push it on the stack
@@ -1216,9 +1214,11 @@ auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg = global_arena->RawNew<TupleLiteral>(0);
+  SourceLocation loc = {.filename = "<InterpProgram()>", .line_num = 0};
+
+  const Expression* arg = global_arena->RawNew<TupleLiteral>(loc);
   const Expression* call_main = global_arena->RawNew<CallExpression>(
-      0, global_arena->RawNew<IdentifierExpression>(0, "main"), arg);
+      loc, global_arena->RawNew<IdentifierExpression>(loc, "main"), arg);
   auto todo =
       Stack<Ptr<Action>>(global_arena->New<ExpressionAction>(call_main));
   auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(globals));

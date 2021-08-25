@@ -12,16 +12,12 @@
 namespace Carbon {
 
 struct SourceLocation {
-  bool operator==(SourceLocation other) {
-    // Pointer equality is often sufficient for filenames, but double-check the
-    // string if needed.
-    return (filename == other.filename ||
-            strcmp(filename, other.filename) == 0) &&
-           line_num == other.line_num;
+  bool operator==(SourceLocation other) const {
+    return strcmp(filename, other.filename) == 0 && line_num == other.line_num;
   }
 
   void Print(llvm::raw_ostream& out) const {
-    out << *filename << ":" << line_num;
+    out << filename << ":" << line_num;
   }
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 

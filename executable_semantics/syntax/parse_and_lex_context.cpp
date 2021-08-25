@@ -6,14 +6,11 @@
 
 namespace Carbon {
 
-// Writes a syntax error diagnostic, containing message, for the input file at
-// the given line, to standard error.
-auto ParseAndLexContext::PrintDiagnostic(const std::string& message,
-                                         int line_num) -> void {
+auto ParseAndLexContext::PrintDiagnostic(const std::string& message) -> void {
   // TODO: Do we really want this to be fatal?  It makes the comment and the
   // name a lie, and renders some of the other yyparse() result propagation code
   // moot.
-  FATAL_COMPILATION_ERROR(line_num) << message;
+  FATAL_COMPILATION_ERROR(Loc()) << message;
 }
 
 }  // namespace Carbon
