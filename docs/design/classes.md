@@ -1249,8 +1249,10 @@ The partial facet for a base class type like `MyBaseType` is written
     is a `partial MyBaseClass` value, but not the other way around. So you can
     cast `MyBaseClass*` to `partial MyBaseClass*`, but the other direction is
     not safe.
--   There is a conversion from `partial MyBaseClass` to `MyBaseClass`, but it
-    changes the value by filling in the hidden vptr slot.
+-   When `MyBaseClass` may be instantiated, there is a conversion from
+    `partial MyBaseClass` to `MyBaseClass`. It changes the value by filling in
+    the hidden vptr slot. If `MyBaseClass` may not be instantiated, for example
+    if it is abstract, then attempting that conversion is an error.
 -   `partial MyBaseClass` is considered final, even if `MyBaseClass` is not.
     This is despite the fact that from a data layout perspective,
     `partial MyDerivedClass` will have `partial MyBaseClass` as a prefix if
