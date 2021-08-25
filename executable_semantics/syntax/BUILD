@@ -5,7 +5,6 @@
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
 load("@mypy_integration//:mypy.bzl", "mypy_test")
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 cc_library(
     name = "bison_wrap",
