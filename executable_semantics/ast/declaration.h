@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/ptr.h"
 #include "llvm/Support/Compiler.h"
 
@@ -42,7 +43,7 @@ class Declaration {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto LineNumber() const -> int { return line_num; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
 
@@ -50,17 +51,17 @@ class Declaration {
   // Constructs a Declaration representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
+  Declaration(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
 
  private:
   const Kind tag;
-  int line_num;
+  SourceLocation loc;
 };
 
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(Ptr<const FunctionDefinition> definition)
-      : Declaration(Kind::FunctionDeclaration, definition->line_num),
+      : Declaration(Kind::FunctionDeclaration, definition->source_location),
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
@@ -75,9 +76,10 @@ class FunctionDeclaration : public Declaration {
 
 class ClassDeclaration : public Declaration {
  public:
-  ClassDeclaration(int line_num, std::string name, std::list<Member*> members)
-      : Declaration(Kind::ClassDeclaration, line_num),
-        definition({.line_num = line_num,
+  ClassDeclaration(SourceLocation loc, std::string name,
+                   std::list<Member*> members)
+      : Declaration(Kind::ClassDeclaration, loc),
+        definition({.loc = loc,
                     .name = std::move(name),
                     .members = std::move(members)}) {}
 
@@ -94,9 +96,9 @@ class ClassDeclaration : public Declaration {
 class ChoiceDeclaration : public Declaration {
  public:
   ChoiceDeclaration(
-      int line_num, std::string name,
+      SourceLocation loc, std::string name,
       std::list<std::pair<std::string, const Expression*>> alternatives)
-      : Declaration(Kind::ChoiceDeclaration, line_num),
+      : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
 
@@ -118,9 +120,9 @@ class ChoiceDeclaration : public Declaration {
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(int line_num, const BindingPattern* binding,
+  VariableDeclaration(SourceLocation loc, const BindingPattern* binding,
                       const Expression* initializer)
-      : Declaration(Kind::VariableDeclaration, line_num),
+      : Declaration(Kind::VariableDeclaration, loc),
         binding(binding),
         initializer(initializer) {}
 
