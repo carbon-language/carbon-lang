@@ -58,13 +58,13 @@ class FieldMember : public Member {
     return member->Tag() == Kind::FieldMember;
   }
 
-  auto Binding() const -> const BindingPattern* { return binding; }
+  auto Binding() const -> Ptr<const BindingPattern> { return binding; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  const BindingPattern* binding;
+  Ptr<const BindingPattern> binding;
 };
 
 }  // namespace Carbon

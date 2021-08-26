@@ -33,7 +33,7 @@ static auto FakeSourceLoc(int line_num) -> SourceLocation {
 TEST(ExpressionTest, EmptyAsExpression) {
   ParenContents<Expression> contents = {.elements = {},
                                         .has_trailing_comma = false};
-  const Expression* expression =
+  Ptr<const Expression> expression =
       ExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
@@ -43,7 +43,7 @@ TEST(ExpressionTest, EmptyAsExpression) {
 TEST(ExpressionTest, EmptyAsTuple) {
   ParenContents<Expression> contents = {.elements = {},
                                         .has_trailing_comma = false};
-  const Expression* tuple =
+  Ptr<const Expression> tuple =
       TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
@@ -63,7 +63,7 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
                                                              42)}},
       .has_trailing_comma = false};
 
-  const Expression* expression =
+  Ptr<const Expression> expression =
       ExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(2));
   ASSERT_EQ(expression->Tag(), Expression::Kind::IntLiteral);
@@ -76,7 +76,7 @@ TEST(ExpressionTest, UnaryNoCommaAsTuple) {
                                                              42)}},
       .has_trailing_comma = false};
 
-  const Expression* tuple =
+  Ptr<const Expression> tuple =
       TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
@@ -91,7 +91,7 @@ TEST(ExpressionTest, UnaryWithCommaAsExpression) {
                                                              42)}},
       .has_trailing_comma = true};
 
-  const Expression* expression =
+  Ptr<const Expression> expression =
       ExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
@@ -106,7 +106,7 @@ TEST(ExpressionTest, UnaryWithCommaAsTuple) {
                                                              42)}},
       .has_trailing_comma = true};
 
-  const Expression* tuple =
+  Ptr<const Expression> tuple =
       TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
@@ -124,7 +124,7 @@ TEST(ExpressionTest, BinaryAsExpression) {
                                                              42)}},
       .has_trailing_comma = true};
 
-  const Expression* expression =
+  Ptr<const Expression> expression =
       ExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
@@ -142,7 +142,7 @@ TEST(ExpressionTest, BinaryAsTuple) {
                                                              42)}},
       .has_trailing_comma = true};
 
-  const Expression* tuple =
+  Ptr<const Expression> tuple =
       TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);

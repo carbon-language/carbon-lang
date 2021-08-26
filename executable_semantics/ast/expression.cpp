@@ -18,8 +18,9 @@ using llvm::cast;
 
 auto ExpressionFromParenContents(
     SourceLocation loc, const ParenContents<Expression>& paren_contents)
-    -> const Expression* {
-  std::optional<const Expression*> single_term = paren_contents.SingleTerm();
+    -> Ptr<const Expression> {
+  std::optional<Ptr<const Expression>> single_term =
+      paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
@@ -29,8 +30,8 @@ auto ExpressionFromParenContents(
 
 auto TupleExpressionFromParenContents(
     SourceLocation loc, const ParenContents<Expression>& paren_contents)
-    -> const Expression* {
-  return global_arena->RawNew<TupleLiteral>(
+    -> Ptr<const Expression> {
+  return global_arena->New<TupleLiteral>(
       loc, paren_contents.TupleElements<FieldInitializer>(loc));
 }
 

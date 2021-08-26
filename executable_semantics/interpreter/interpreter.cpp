@@ -142,8 +142,8 @@ void InitEnv(const Declaration& d, Env* env) {
       for (const Member* m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember: {
-            const BindingPattern* binding = cast<FieldMember>(*m).Binding();
-            const Expression* type_expression =
+            Ptr<const BindingPattern> binding = cast<FieldMember>(*m).Binding();
+            Ptr<const Expression> type_expression =
                 cast<ExpressionPattern>(binding->Type())->Expression();
             auto type = InterpExp(Env(), type_expression);
             fields.push_back(make_pair(*binding->Name(), type));
@@ -205,7 +205,7 @@ void DeallocateLocals(Ptr<Frame> frame) {
   }
 }
 
-const Value* CreateTuple(Ptr<Action> act, const Expression* exp) {
+const Value* CreateTuple(Ptr<Action> act, Ptr<const Expression> exp) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   const auto& tup_lit = cast<TupleLiteral>(*exp);
@@ -431,7 +431,7 @@ using Transition =
 // State transitions for lvalues.
 Transition StepLvalue() {
   Ptr<Action> act = state->stack.Top()->todo.Top();
-  const Expression* exp = cast<LValAction>(*act).Exp();
+  Ptr<const Expression> exp = cast<LValAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step lvalue " << *exp << " --->\n";
   }
@@ -483,7 +483,8 @@ Transition StepLvalue() {
       if (act->Pos() == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = cast<TupleLiteral>(*exp).Fields()[0].expression;
+        Ptr<const Expression> e1 =
+            cast<TupleLiteral>(*exp).Fields()[0].expression;
         return Spawn{global_arena->New<LValAction>(e1)};
       } else if (act->Pos() !=
                  static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
@@ -491,7 +492,7 @@ Transition StepLvalue() {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Expression* elt =
+        Ptr<const Expression> elt =
             cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
         return Spawn{global_arena->New<LValAction>(elt)};
       } else {
@@ -518,7 +519,7 @@ Transition StepLvalue() {
 // State transitions for expressions.
 Transition StepExp() {
   Ptr<Action> act = state->stack.Top()->todo.Top();
-  const Expression* exp = cast<ExpressionAction>(*act).Exp();
+  Ptr<const Expression> exp = cast<ExpressionAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step exp " << *exp << " --->\n";
   }
@@ -555,7 +556,7 @@ Transition StepExp() {
         if (cast<TupleLiteral>(*exp).Fields().size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-          const Expression* e1 =
+          Ptr<const Expression> e1 =
               cast<TupleLiteral>(*exp).Fields()[0].expression;
           return Spawn{global_arena->New<ExpressionAction>(e1)};
         } else {
@@ -567,7 +568,7 @@ Transition StepExp() {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Expression* elt =
+        Ptr<const Expression> elt =
             cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
         return Spawn{global_arena->New<ExpressionAction>(elt)};
       } else {
@@ -608,7 +609,7 @@ Transition StepExp() {
       if (act->Pos() != static_cast<int>(op.Arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        const Expression* arg = op.Arguments()[act->Pos()];
+        Ptr<const Expression> arg = op.Arguments()[act->Pos()];
         return Spawn{global_arena->New<ExpressionAction>(arg)};
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
@@ -715,7 +716,7 @@ Transition StepExp() {
 
 Transition StepPattern() {
   Ptr<Action> act = state->stack.Top()->todo.Top();
-  const Pattern* pattern = cast<PatternAction>(*act).Pat();
+  Ptr<const Pattern> pattern = cast<PatternAction>(*act).Pat();
   if (tracing_output) {
     llvm::outs() << "--- step pattern " << *pattern << " --->\n";
   }
@@ -739,7 +740,7 @@ Transition StepPattern() {
         if (tuple.Fields().empty()) {
           return Done{&TupleValue::Empty()};
         } else {
-          const Pattern* p1 = tuple.Fields()[0].pattern;
+          Ptr<const Pattern> p1 = tuple.Fields()[0].pattern;
           return Spawn{(global_arena->New<PatternAction>(p1))};
         }
       } else if (act->Pos() != static_cast<int>(tuple.Fields().size())) {
@@ -747,7 +748,7 @@ Transition StepPattern() {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        const Pattern* elt = tuple.Fields()[act->Pos()].pattern;
+        Ptr<const Pattern> elt = tuple.Fields()[act->Pos()].pattern;
         return Spawn{global_arena->New<PatternAction>(elt)};
       } else {
         std::vector<TupleElement> elements;
@@ -1217,8 +1218,8 @@ auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int {
 
   SourceLocation loc("<InterpProgram()>", 0);
 
-  const Expression* arg = global_arena->RawNew<TupleLiteral>(loc);
-  const Expression* call_main = global_arena->RawNew<CallExpression>(
+  Ptr<const Expression> arg = global_arena->RawNew<TupleLiteral>(loc);
+  Ptr<const Expression> call_main = global_arena->RawNew<CallExpression>(
       loc, global_arena->RawNew<IdentifierExpression>(loc, "main"), arg);
   auto todo =
       Stack<Ptr<Action>>(global_arena->New<ExpressionAction>(call_main));
@@ -1241,7 +1242,7 @@ auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int {
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env values, const Expression* e) -> const Value* {
+auto InterpExp(Env values, Ptr<const Expression> e) -> const Value* {
   CHECK(state->program_value == std::nullopt);
   auto program_value_guard =
       llvm::make_scope_exit([] { state->program_value = std::nullopt; });
@@ -1258,7 +1259,7 @@ auto InterpExp(Env values, const Expression* e) -> const Value* {
 }
 
 // Interpret a pattern at compile-time.
-auto InterpPattern(Env values, const Pattern* p) -> const Value* {
+auto InterpPattern(Env values, Ptr<const Pattern> p) -> const Value* {
   CHECK(state->program_value == std::nullopt);
   auto program_value_guard =
       llvm::make_scope_exit([] { state->program_value = std::nullopt; });

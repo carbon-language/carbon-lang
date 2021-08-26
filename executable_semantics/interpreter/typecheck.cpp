@@ -55,7 +55,8 @@ static SourceLocation ReifyFakeSourceLoc() {
 }
 
 // Reify type to type expression.
-static auto ReifyType(const Value* t, SourceLocation loc) -> const Expression* {
+static auto ReifyType(const Value* t, SourceLocation loc)
+    -> Ptr<const Expression> {
   switch (t->Tag()) {
     case Value::Kind::IntType:
       return global_arena->RawNew<IntTypeLiteral>(ReifyFakeSourceLoc());
@@ -90,7 +91,7 @@ static auto ReifyType(const Value* t, SourceLocation loc) -> const Expression* {
     case Value::Kind::PointerType:
       return global_arena->RawNew<PrimitiveOperatorExpression>(
           ReifyFakeSourceLoc(), Operator::Ptr,
-          std::vector<const Expression*>(
+          std::vector<Ptr<const Expression>>(
               {ReifyType(cast<PointerType>(*t).Type(), loc)}));
     case Value::Kind::VariableType:
       return global_arena->RawNew<IdentifierExpression>(
@@ -266,7 +267,7 @@ static auto Substitute(TypeEnv dict, const Value* type) -> const Value* {
 // types maps variable names to the type of their run-time value.
 // values maps variable names to their compile-time values. It is not
 //    directly used in this function but is passed to InterExp.
-auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
+auto TypeCheckExp(Ptr<const Expression> e, TypeEnv types, Env values)
     -> TCExpression {
   if (tracing_output) {
     llvm::outs() << "checking expression " << *e << "\ntypes: ";
@@ -323,7 +324,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
           // Search for a field
           for (auto& field : t_class.Fields()) {
             if (access.Field() == field.first) {
-              const Expression* new_e =
+              Ptr<const Expression> new_e =
                   global_arena->RawNew<FieldAccessExpression>(
                       e->SourceLoc(), res.exp, access.Field());
               return TCExpression(new_e, field.second, res.types);
@@ -332,7 +333,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
           // Search for a method
           for (auto& method : t_class.Methods()) {
             if (access.Field() == method.first) {
-              const Expression* new_e =
+              Ptr<const Expression> new_e =
                   global_arena->RawNew<FieldAccessExpression>(
                       e->SourceLoc(), res.exp, access.Field());
               return TCExpression(new_e, method.second, res.types);
@@ -359,7 +360,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
           const auto& choice = cast<ChoiceType>(*t);
           for (const auto& vt : choice.Alternatives()) {
             if (access.Field() == vt.first) {
-              const Expression* new_e =
+              Ptr<const Expression> new_e =
                   global_arena->RawNew<FieldAccessExpression>(
                       e->SourceLoc(), res.exp, access.Field());
               auto fun_ty = global_arena->RawNew<FunctionType>(
@@ -393,10 +394,10 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
       return TCExpression(e, global_arena->RawNew<BoolType>(), types);
     case Expression::Kind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(*e);
-      std::vector<const Expression*> es;
+      std::vector<Ptr<const Expression>> es;
       std::vector<const Value*> ts;
       auto new_types = types;
-      for (const Expression* argument : op.Arguments()) {
+      for (Ptr<const Expression> argument : op.Arguments()) {
         auto res = TypeCheckExp(argument, types, values);
         new_types = res.types;
         es.push_back(res.exp);
@@ -533,7 +534,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
 // Equivalent to TypeCheckExp, but operates on Patterns instead of Expressions.
 // `expected` is the type that this pattern is expected to have, if the
 // surrounding context gives us that information. Otherwise, it is null.
-auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
+auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
                       const Value* expected) -> TCPattern {
   if (tracing_output) {
     llvm::outs() << "checking pattern " << *p;
@@ -655,10 +656,10 @@ auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
   }
 }
 
-static auto TypecheckCase(const Value* expected, const Pattern* pat,
+static auto TypecheckCase(Ptr<const Value * expected, const Pattern> pat,
                           const Statement* body, TypeEnv types, Env values,
                           const Value*& ret_type, bool is_omitted_ret_type)
-    -> std::pair<const Pattern*, const Statement*> {
+    -> std::pair<Ptr<const Pattern>, const Statement*> {
   auto pat_res = TypeCheckPattern(pat, types, values, expected);
   auto res =
       TypeCheckStmt(body, pat_res.types, values, ret_type, is_omitted_ret_type);
@@ -684,7 +685,7 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       auto res = TypeCheckExp(match.Exp(), types, values);
       auto res_type = res.type;
       auto new_clauses = global_arena->RawNew<
-          std::list<std::pair<const Pattern*, const Statement*>>>();
+          std::list<std::pair<Ptr<const Pattern>, const Statement*>>>();
       for (auto& clause : *match.Clauses()) {
         new_clauses->push_back(TypecheckCase(res_type, clause.first,
                                              clause.second, types, values,
@@ -829,7 +830,7 @@ static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
     case Statement::Kind::Match: {
       const auto& match = cast<Match>(*stmt);
       auto new_clauses = global_arena->RawNew<
-          std::list<std::pair<const Pattern*, const Statement*>>>();
+          std::list<std::pair<Ptr<const Pattern>, const Statement*>>>();
       for (const auto& clause : *match.Clauses()) {
         auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
                                      stmt->SourceLoc());
@@ -951,12 +952,12 @@ static auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
   for (const Member* m : sd->members) {
     switch (m->Tag()) {
       case Member::Kind::FieldMember: {
-        const BindingPattern* binding = cast<FieldMember>(*m).Binding();
+        Ptr<const BindingPattern> binding = cast<FieldMember>(*m).Binding();
         if (!binding->Name().has_value()) {
           FATAL_COMPILATION_ERROR(binding->SourceLoc())
               << "Struct members must have names";
         }
-        const Expression* type_expression =
+        Ptr<const Expression> type_expression =
             dyn_cast<ExpressionPattern>(binding->Type())->Expression();
         if (type_expression == nullptr) {
           FATAL_COMPILATION_ERROR(binding->SourceLoc())
@@ -981,7 +982,8 @@ static auto GetName(const Declaration& d) -> const std::string& {
     case Declaration::Kind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(d).Name();
     case Declaration::Kind::VariableDeclaration: {
-      const BindingPattern* binding = cast<VariableDeclaration>(d).Binding();
+      Ptr<const BindingPattern> binding =
+          cast<VariableDeclaration>(d).Binding();
       if (!binding->Name().has_value()) {
         FATAL_COMPILATION_ERROR(binding->SourceLoc())
             << "Top-level variable declarations must have names";
@@ -1025,7 +1027,7 @@ auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
       // declaration with annotated types.
       TCExpression type_checked_initializer =
           TypeCheckExp(var.Initializer(), types, values);
-      const Expression* type =
+      Ptr<const Expression> type =
           dyn_cast<ExpressionPattern>(var.Binding()->Type())->Expression();
       if (type == nullptr) {
         // TODO: consider adding support for `auto`
@@ -1087,7 +1089,7 @@ static void TopLevel(const Declaration& d, TypeCheckContext* tops) {
       const auto& var = cast<VariableDeclaration>(d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
-      const Expression* type =
+      Ptr<const Expression> type =
           cast<ExpressionPattern>(var.Binding()->Type())->Expression();
       const Value* declared_type = InterpExp(tops->values, type);
       tops->types.Set(*var.Binding()->Name(), declared_type);

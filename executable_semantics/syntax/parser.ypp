@@ -99,18 +99,18 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <const Statement*> statement
 %type <const Statement*> if_statement
 %type <const Statement*> optional_else
-%type <std::pair<const Expression*, bool>> return_expression
+%type <std::pair<Ptr<const Expression>, bool>> return_expression
 %type <const Statement*> block
 %type <const Statement*> statement_list
-%type <const Expression*> expression
+%type <BisonWrap<Ptr<const Expression>>> expression
 %type <GenericBinding> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
 %type <std::vector<GenericBinding>> deduced_param_list
 %type <const Pattern*> pattern
 %type <const Pattern*> non_expression_pattern
-%type <std::pair<const Expression*, bool>> return_type
-%type <const Expression*> paren_expression
-%type <const Expression*> tuple
+%type <std::pair<Ptr<const Expression>, bool>> return_type
+%type <BisonWrap<Ptr<const Expression>>> paren_expression
+%type <BisonWrap<Ptr<const Expression>>> tuple
 %type <std::optional<std::string>> binding_lhs
 %type <const BindingPattern*> variable_declaration
 %type <Member*> member
@@ -124,8 +124,8 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <std::pair<std::string, const Expression*>> alternative
-%type <std::list<std::pair<std::string, const Expression*>>> alternative_list
+%type <std::pair<std::string, Ptr<const Expression>>> alternative
+%type <std::list<std::pair<std::string, Ptr<const Expression>>>> alternative_list
 %type <std::pair<const Pattern*, const Statement*>*> clause
 %type <std::list<std::pair<const Pattern*, const Statement*>>*> clause_list
 %token END_OF_FILE 0
@@ -244,42 +244,42 @@ expression:
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Eq, std::vector<const Expression*>({$1, $3})); }
+        context.SourceLoc(), Operator::Eq, std::vector<Ptr<const Expression>>({$1, $3})); }
 | expression "+" expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Add, std::vector<const Expression*>({$1, $3})); }
+        context.SourceLoc(), Operator::Add, std::vector<Ptr<const Expression>>({$1, $3})); }
 | expression "-" expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Sub, std::vector<const Expression*>({$1, $3})); }
+        context.SourceLoc(), Operator::Sub, std::vector<Ptr<const Expression>>({$1, $3})); }
 | expression BINARY_STAR expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Mul, std::vector<const Expression*>({$1, $3})); }
+        context.SourceLoc(), Operator::Mul, std::vector<Ptr<const Expression>>({$1, $3})); }
 | expression AND expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::And, std::vector<const Expression*>({$1, $3})); }
+        context.SourceLoc(), Operator::And, std::vector<Ptr<const Expression>>({$1, $3})); }
 | expression OR expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Or, std::vector<const Expression*>({$1, $3})); }
+        context.SourceLoc(), Operator::Or, std::vector<Ptr<const Expression>>({$1, $3})); }
 | NOT expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Not, std::vector<const Expression*>({$2})); }
+        context.SourceLoc(), Operator::Not, std::vector<Ptr<const Expression>>({$2})); }
 | "-" expression %prec UNARY_MINUS
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Neg, std::vector<const Expression*>({$2})); }
+        context.SourceLoc(), Operator::Neg, std::vector<Ptr<const Expression>>({$2})); }
 | PREFIX_STAR expression
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Deref, std::vector<const Expression*>({$2})); }
+        context.SourceLoc(), Operator::Deref, std::vector<Ptr<const Expression>>({$2})); }
 | UNARY_STAR expression %prec PREFIX_STAR
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Deref, std::vector<const Expression*>({$2})); }
+        context.SourceLoc(), Operator::Deref, std::vector<Ptr<const Expression>>({$2})); }
 | expression tuple
     { $$ = global_arena->RawNew<CallExpression>(context.SourceLoc(), $1, $2); }
 | expression POSTFIX_STAR
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Ptr, std::vector<const Expression*>({$1})); }
+        context.SourceLoc(), Operator::Ptr, std::vector<Ptr<const Expression>>({$1})); }
 | expression UNARY_STAR
     { $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-        context.SourceLoc(), Operator::Ptr, std::vector<const Expression*>({$1})); }
+        context.SourceLoc(), Operator::Ptr, std::vector<Ptr<const Expression>>({$1})); }
 | FNTY tuple return_type
     { $$ = global_arena->RawNew<FunctionTypeLiteral>(
         context.SourceLoc(), $2, $3.first, $3.second); }
@@ -546,19 +546,19 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = std::pair<std::string, const Expression*>($1, $2); }
+    { $$ = std::pair<std::string, Ptr<const Expression>>($1, $2); }
 | identifier
     {
-      $$ = std::pair<std::string, const Expression*>(
+      $$ = std::pair<std::string, Ptr<const Expression>>(
           $1, global_arena->RawNew<TupleLiteral>(context.SourceLoc()));
     }
 ;
 alternative_list:
   // Empty
-    { $$ = std::list<std::pair<std::string, const Expression*>>(); }
+    { $$ = std::list<std::pair<std::string, Ptr<const Expression>>>(); }
 | alternative
     {
-      $$ = std::list<std::pair<std::string, const Expression*>>();
+      $$ = std::list<std::pair<std::string, Ptr<const Expression>>>();
       $$.push_front($1);
     }
 | alternative "," alternative_list
