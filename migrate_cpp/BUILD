@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_python//python:defs.bzl", "py_binary")
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
 py_binary(
