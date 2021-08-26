@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -33,7 +34,7 @@ class Member {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto LineNumber() const -> int { return line_num; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
 
@@ -41,17 +42,17 @@ class Member {
   // Constructs a Member representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Member(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
+  Member(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
 
  private:
   const Kind tag;
-  int line_num;
+  SourceLocation loc;
 };
 
 class FieldMember : public Member {
  public:
-  FieldMember(int line_num, const BindingPattern* binding)
-      : Member(Kind::FieldMember, line_num), binding(binding) {}
+  FieldMember(SourceLocation loc, const BindingPattern* binding)
+      : Member(Kind::FieldMember, loc), binding(binding) {}
 
   static auto classof(const Member* member) -> bool {
     return member->Tag() == Kind::FieldMember;

@@ -8,6 +8,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
 #include "llvm/Support/Compiler.h"
 
@@ -21,12 +22,12 @@ struct GenericBinding {
 };
 
 struct FunctionDefinition {
-  FunctionDefinition(int line_num, std::string name,
+  FunctionDefinition(SourceLocation source_location, std::string name,
                      std::vector<GenericBinding> deduced_params,
                      const TuplePattern* param_pattern,
                      const Pattern* return_type, bool is_omitted_return_type,
                      const Statement* body)
-      : line_num(line_num),
+      : source_location(source_location),
         name(std::move(name)),
         deduced_parameters(deduced_params),
         param_pattern(param_pattern),
@@ -38,7 +39,7 @@ struct FunctionDefinition {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  int line_num;
+  SourceLocation source_location;
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
   const TuplePattern* param_pattern;
