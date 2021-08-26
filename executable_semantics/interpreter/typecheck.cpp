@@ -892,7 +892,7 @@ static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
-                            Env values) -> struct FunctionDefinition* {
+                            Env values) -> Ptr<const FunctionDefinition> {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
@@ -913,7 +913,7 @@ static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
                            f->is_omitted_return_type);
   auto body =
       CheckOrEnsureReturn(res.stmt, f->is_omitted_return_type, f->line_num);
-  return global_arena->RawNew<FunctionDefinition>(
+  return global_arena->New<FunctionDefinition>(
       f->line_num, f->name, f->deduced_parameters, f->param_pattern,
       global_arena->RawNew<ExpressionPattern>(
           ReifyType(return_type, f->line_num)),
