@@ -1,4 +1,4 @@
-"""Tests for proposals.py."""
+"""Tests for proposal_list.py."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -8,13 +8,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import unittest
 
-from carbon.proposals.scripts import proposals
+from proposals.scripts import proposal_list
 
 
 class TestProposal(unittest.TestCase):
     def test_get_path(self):
-        proposals_path = proposals.get_path()
-        p = proposals.get_list(proposals_path)
+        proposals_path = proposal_list.get_path()
+        p = proposal_list.get_list(proposals_path)
         self.assertEqual(
             p[0],
             (
