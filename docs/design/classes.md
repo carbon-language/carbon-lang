@@ -1153,12 +1153,10 @@ pointer to that type or any derived class, like `MiddleDerived` or
 to type `MiddleDerived*` or `MyBaseClass*`.
 
 This is accomplished by making the data layout of a type extending `MyBaseClass`
-have `MyBaseClass` as a prefix. We allow members of a derived class like
-`MiddleDerived` to put data members in the final padding of the `MyBaseClass`
-prefix. Furthermore, the first class in the inheritance chain with a virtual
-method will include a virtual pointer, or _vptr_, pointing to a
-[virtual method table](https://en.wikipedia.org/wiki/Virtual_method_table), or
-_vtable_. Any calls to virtual methods will perform
+have `MyBaseClass` as a prefix. In addition, the first class in the inheritance
+chain with a virtual method will include a virtual pointer, or _vptr_, pointing
+to a [virtual method table](https://en.wikipedia.org/wiki/Virtual_method_table),
+or _vtable_. Any calls to virtual methods will perform
 [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch) by calling
 the method using the function pointer in the vtable, to get the overridden
 implementation from the most derived class that implements the method.
@@ -1744,6 +1742,40 @@ also complicate how constructors work.
 Carbon will need some way for users to specify the memory layout of class types
 beyond simple ordering of fields, such as controlling the packing and alignment
 for the whole type or individual members.
+
+We may allow members of a derived class like to put data members in the final
+padding of its base class prefix. Tail-padding reuse has both advantages and
+disadvantages, so we may have some way for a class to explicitly mark that its
+tail padding is available for use by a derived class,
+
+Advantages:
+
+-   Tail-padding reuse is sometimes a nice layout optimization (eg, in Clang we
+    save 8 bytes per `Expr` by reusing tail padding).
+-   No class size regressions when migrating from C++.
+-   Special case of reusing the tail padding of a class that is empty other than
+    its tail padding is very important, to the extent that we will likely need
+    to support either zero-sized types or tail-padding reuse in order to have
+    acceptable class layouts.
+
+Disadvantages:
+
+-   Cannot use `memcpy(p, q, sizeof(Base))` to copy around base class subobjects
+    if the destination is an in-lifetime, because they might overlap other
+    objects' representations.
+-   Somewhat more complex model.
+-   We need some mechanism for disabling tail-padding reuse in "standard layout"
+    types.
+-   We may also have to use narrowed loads for the last member of a base class
+    to avoid accidentally creating a race condition.
+
+However, we can still use `memcpy` and `memset` to initialize a base class
+subobject, even if its tail padding might be reused, so long as we guarantee
+that no other object lives in the tail padding and is initialized before the
+base class. In C++, that happens only due to virtual base classes getting
+initialized early and laid out at the end of the object; if we disallow virtual
+base classes then we can guarantee that initialization order is address order,
+removing most of the downside of tail-padding reuse.
 
 ### No `static` variables
 
