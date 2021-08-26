@@ -77,7 +77,7 @@ class FunctionDeclaration : public Declaration {
 class ClassDeclaration : public Declaration {
  public:
   ClassDeclaration(SourceLocation loc, std::string name,
-                   std::list<Member*> members)
+                   std::list<Ptr<Member>> members)
       : Declaration(Kind::ClassDeclaration, loc),
         definition({.loc = loc,
                     .name = std::move(name),

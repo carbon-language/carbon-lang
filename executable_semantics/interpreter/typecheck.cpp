@@ -948,7 +948,7 @@ static auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
                            Env ct_top) -> const Value* {
   VarValues fields;
   VarValues methods;
-  for (const Member* m : sd->members) {
+  for (Ptr<const Member> m : sd->members) {
     switch (m->Tag()) {
       case Member::Kind::FieldMember: {
         const BindingPattern* binding = cast<FieldMember>(*m).Binding();
@@ -1001,8 +1001,8 @@ auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def =
           cast<ClassDeclaration>(*d).Definition();
-      std::list<Member*> fields;
-      for (Member* m : class_def.members) {
+      std::list<Ptr<Member>> fields;
+      for (Ptr<Member> m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember:
             // TODO: Interpret the type expression and store the result.
