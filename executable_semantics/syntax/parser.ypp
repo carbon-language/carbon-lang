@@ -113,8 +113,8 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <const Expression*> tuple
 %type <std::optional<std::string>> binding_lhs
 %type <const BindingPattern*> variable_declaration
-%type <Member*> member
-%type <std::list<Member*>> member_list
+%type <BisonWrap<Ptr<Member>>> member
+%type <std::list<Ptr<Member>>> member_list
 %type <ParenContents<Expression>::Element> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
@@ -536,11 +536,11 @@ variable_declaration: identifier ":" pattern
     { $$ = global_arena->RawNew<BindingPattern>(context.SourceLoc(), $1, $3); }
 ;
 member: VAR variable_declaration ";"
-    { $$ = global_arena->RawNew<FieldMember>(context.SourceLoc(), $2); }
+    { $$ = global_arena->New<FieldMember>(context.SourceLoc(), $2); }
 ;
 member_list:
   // Empty
-    { $$ = std::list<Member*>(); }
+    { $$ = std::list<Ptr<Member>>(); }
 | member member_list
     { $$ = $2; $$.push_front($1); }
 ;
