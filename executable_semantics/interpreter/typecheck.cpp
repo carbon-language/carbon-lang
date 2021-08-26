@@ -894,7 +894,7 @@ static auto CheckOrEnsureReturn(const Statement* stmt, bool omitted_ret_type,
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
-                            Env values) -> struct FunctionDefinition* {
+                            Env values) -> Ptr<const FunctionDefinition> {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters) {
     // auto t = InterpExp(values, deduced.type);
@@ -907,16 +907,18 @@ static auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
   // Evaluate the return type expression
   auto return_type = InterpPattern(values, f->return_type);
   if (f->name == "main") {
-    ExpectType(f->loc, "return type of `main`", global_arena->RawNew<IntType>(),
-               return_type);
+    ExpectType(f->source_location, "return type of `main`",
+               global_arena->RawNew<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type,
                            f->is_omitted_return_type);
-  auto body = CheckOrEnsureReturn(res.stmt, f->is_omitted_return_type, f->loc);
-  return global_arena->RawNew<FunctionDefinition>(
-      f->loc, f->name, f->deduced_parameters, f->param_pattern,
-      global_arena->RawNew<ExpressionPattern>(ReifyType(return_type, f->loc)),
+  auto body = CheckOrEnsureReturn(res.stmt, f->is_omitted_return_type,
+                                  f->source_location);
+  return global_arena->New<FunctionDefinition>(
+      f->source_location, f->name, f->deduced_parameters, f->param_pattern,
+      global_arena->RawNew<ExpressionPattern>(
+          ReifyType(return_type, f->source_location)),
       /*is_omitted_return_type=*/false, body);
 }
 

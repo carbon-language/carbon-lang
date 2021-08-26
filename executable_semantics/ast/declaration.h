@@ -14,6 +14,7 @@
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/ptr.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -59,8 +60,8 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(const FunctionDefinition* definition)
-      : Declaration(Kind::FunctionDeclaration, definition->loc),
+  FunctionDeclaration(Ptr<const FunctionDefinition> definition)
+      : Declaration(Kind::FunctionDeclaration, definition->source_location),
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
@@ -70,7 +71,7 @@ class FunctionDeclaration : public Declaration {
   auto Definition() const -> const FunctionDefinition& { return *definition; }
 
  private:
-  const FunctionDefinition* definition;
+  Ptr<const FunctionDefinition> definition;
 };
 
 class ClassDeclaration : public Declaration {

@@ -22,12 +22,12 @@ struct GenericBinding {
 };
 
 struct FunctionDefinition {
-  FunctionDefinition(SourceLocation loc, std::string name,
+  FunctionDefinition(SourceLocation source_location, std::string name,
                      std::vector<GenericBinding> deduced_params,
                      const TuplePattern* param_pattern,
                      const Pattern* return_type, bool is_omitted_return_type,
                      const Statement* body)
-      : loc(loc),
+      : source_location(source_location),
         name(std::move(name)),
         deduced_parameters(deduced_params),
         param_pattern(param_pattern),
@@ -39,7 +39,7 @@ struct FunctionDefinition {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  SourceLocation loc;
+  SourceLocation source_location;
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
   const TuplePattern* param_pattern;

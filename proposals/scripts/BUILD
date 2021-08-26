@@ -3,19 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@mypy_integration//:mypy.bzl", "mypy_test")
 
 py_library(
-    name = "proposals",
-    srcs = ["proposals.py"],
-    visibility = ["//website/jekyll:__pkg__"],
+    name = "proposal_list",
+    srcs = ["proposal_list.py"],
 )
 
 py_test(
-    name = "proposals_test",
-    srcs = ["proposals_test.py"],
-    data = ["//proposals:website_content"],
+    name = "proposal_list_test",
+    srcs = ["proposal_list_test.py"],
+    data = ["//proposals:md_files"],
     python_version = "PY3",
-    deps = [":proposals"],
+    deps = [":proposal_list"],
 )
 
 py_binary(
@@ -27,8 +27,13 @@ py_binary(
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
-    data = ["//proposals:website_content"],
+    data = ["//proposals:md_files"],
     python_version = "PY3",
+    deps = [":new_proposal"],
+)
+
+mypy_test(
+    name = "new_proposal_mypy_test",
     deps = [":new_proposal"],
 )
 
@@ -36,5 +41,10 @@ py_test(
 py_library(
     name = "update_proposal_list",
     srcs = ["update_proposal_list.py"],
-    deps = [":proposals"],
+    deps = [":proposal_list"],
+)
+
+mypy_test(
+    name = "update_proposal_list_mypy_test",
+    deps = [":update_proposal_list"],
 )
