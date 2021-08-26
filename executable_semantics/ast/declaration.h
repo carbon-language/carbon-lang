@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/common/ptr.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -58,7 +59,7 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(const FunctionDefinition* definition)
+  FunctionDeclaration(Ptr<const FunctionDefinition> definition)
       : Declaration(Kind::FunctionDeclaration, definition->line_num),
         definition(definition) {}
 
@@ -69,7 +70,7 @@ class FunctionDeclaration : public Declaration {
   auto Definition() const -> const FunctionDefinition& { return *definition; }
 
  private:
-  const FunctionDefinition* definition;
+  Ptr<const FunctionDefinition> definition;
 };
 
 class ClassDeclaration : public Declaration {
