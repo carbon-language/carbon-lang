@@ -27,7 +27,7 @@ static void AddIntrinsics(std::list<Ptr<const Declaration>>* fs) {
           IntrinsicExpression::IntrinsicKind::Print),
       false);
   auto print = global_arena->New<FunctionDeclaration>(
-      global_arena->RawNew<FunctionDefinition>(
+      global_arena->New<FunctionDefinition>(
           -1, "Print", std::vector<GenericBinding>(),
           global_arena->RawNew<TuplePattern>(-1, print_fields),
           global_arena->RawNew<ExpressionPattern>(
