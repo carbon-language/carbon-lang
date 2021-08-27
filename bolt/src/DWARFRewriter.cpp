@@ -52,6 +52,37 @@ static void printDie(const DWARFDie &DIE) {
   DIE.dump(dbgs(), 0, DumpOpts);
 }
 
+struct AttrInfo {
+  DWARFFormValue V;
+  uint64_t Offset;
+};
+
+/// Finds attributes FormValue and Offset.
+///
+/// \param DIE die to look up in.
+/// \param Attr the attribute to extract.
+/// \return an optional AttrInfo with DWARFFormValue and Offset.
+Optional<AttrInfo> findAttributeInfo(const DWARFDie DIE,
+                                     dwarf::Attribute Attr) {
+  if (!DIE.isValid())
+    return None;
+  const DWARFAbbreviationDeclaration *AbbrevDecl =
+      DIE.getAbbreviationDeclarationPtr();
+  if (!AbbrevDecl)
+    return None;
+  Optional<uint32_t> Index = AbbrevDecl->findAttributeIndex(Attr);
+  if (!Index)
+    return None;
+  const DWARFUnit &U = *DIE.getDwarfUnit();
+  uint64_t Offset =
+      AbbrevDecl->getAttributeOffsetFromIndex(*Index, DIE.getOffset(), U);
+  Optional<DWARFFormValue> Value =
+      AbbrevDecl->getAttributeValueFromOffset(*Index, Offset, U);
+  if (!Value)
+    return None;
+  return AttrInfo{*Value, Offset};
+}
+
 using namespace llvm;
 using namespace llvm::support::endian;
 using namespace object;
@@ -173,23 +204,22 @@ void DWARFRewriter::updateDebugInfo() {
 
   auto updateDWONameCompDir = [&](DWARFUnit &Unit) -> void {
     const DWARFDie &DIE = Unit.getUnitDIE();
-    uint64_t AttrOffset = 0;
-    Optional<DWARFFormValue> ValDwoName =
-        DIE.find(dwarf::DW_AT_GNU_dwo_name, &AttrOffset);
-    (void)ValDwoName;
-    assert(ValDwoName && "Skeleton CU doesn't have dwo_name.");
+    Optional<AttrInfo> AttrInfoVal =
+        findAttributeInfo(DIE, dwarf::DW_AT_GNU_dwo_name);
+    (void)AttrInfoVal;
+    assert(AttrInfoVal && "Skeleton CU doesn't have dwo_name.");
 
     std::string ObjectName = getDWOName(Unit, &NameToIndexMap, DWOIdToName);
     uint32_t NewOffset = StrWriter->addString(ObjectName.c_str());
-    DebugInfoPatcher->addLE32Patch(AttrOffset, NewOffset);
+    DebugInfoPatcher->addLE32Patch(AttrInfoVal->Offset, NewOffset);
 
-    Optional<DWARFFormValue> ValCompDir =
-        DIE.find(dwarf::DW_AT_comp_dir, &AttrOffset);
-    (void)ValCompDir;
-    assert(ValCompDir && "DW_AT_comp_dir is not in Skeleton CU.");
+    AttrInfoVal = findAttributeInfo(DIE, dwarf::DW_AT_comp_dir);
+    (void)AttrInfoVal;
+    assert(AttrInfoVal && "DW_AT_comp_dir is not in Skeleton CU.");
+
     if (!opts::DwarfOutputPath.empty()) {
       uint32_t NewOffset = StrWriter->addString(opts::DwarfOutputPath.c_str());
-      DebugInfoPatcher->addLE32Patch(AttrOffset, NewOffset);
+      DebugInfoPatcher->addLE32Patch(AttrInfoVal->Offset, NewOffset);
     }
   };
 
@@ -199,19 +229,19 @@ void DWARFRewriter::updateDebugInfo() {
   // .debug_info/.debug_abbrev
   auto updateRangeBase = [&](DWARFUnit &Unit, uint64_t RangeBase,
                              bool WasRangeBaseUsed) -> void {
-    uint64_t AttrOffset = 0;
     DWARFDie DIE = Unit.getUnitDIE();
-    Optional<DWARFFormValue> ValRangeBase =
-        DIE.find(dwarf::DW_AT_GNU_ranges_base, &AttrOffset);
-    bool NeedToPatch = ValRangeBase.hasValue();
+    Optional<AttrInfo> AttrInfoVal =
+        findAttributeInfo(DIE, dwarf::DW_AT_GNU_ranges_base);
+    bool NeedToPatch = AttrInfoVal.hasValue();
+    uint64_t AttrOffset = NeedToPatch ? AttrInfoVal->Offset : 0;
     uint32_t PrevAbbrevOffsetModifier = AbbrevOffsetModifier;
     // Case where Skeleton CU doesn't have DW_AT_GNU_ranges_base
     if (!NeedToPatch && WasRangeBaseUsed) {
       const DWARFAbbreviationDeclaration *AbbreviationDecl =
           DIE.getAbbreviationDeclarationPtr();
-      if (Optional<DWARFFormValue> ValLowPC =
-              DIE.find(dwarf::DW_AT_low_pc, &AttrOffset)) {
-
+      if (Optional<AttrInfo> ValLowP =
+              findAttributeInfo(DIE, dwarf::DW_AT_low_pc)) {
+        AttrOffset = ValLowP->Offset;
         Optional<DWARFFormValue> ValHighPC = DIE.find(dwarf::DW_AT_high_pc);
         uint32_t NumBytesToFill = 7;
 
@@ -454,9 +484,10 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
       // Handle any tag that can have DW_AT_location attribute.
       DWARFFormValue Value;
       uint64_t AttrOffset;
-      if (Optional<DWARFFormValue> V =
-              DIE.find(dwarf::DW_AT_location, &AttrOffset)) {
-        Value = *V;
+      if (Optional<AttrInfo> AttrVal =
+              findAttributeInfo(DIE, dwarf::DW_AT_location)) {
+        AttrOffset = AttrVal->Offset;
+        Value = AttrVal->V;
         if (Value.isFormClass(DWARFFormValue::FC_Constant) ||
             Value.isFormClass(DWARFFormValue::FC_SectionOffset)) {
           uint64_t Offset = Value.isFormClass(DWARFFormValue::FC_Constant)
@@ -570,9 +601,10 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
             }
           }
         }
-      } else if (Optional<DWARFFormValue> V =
-                     DIE.find(dwarf::DW_AT_low_pc, &AttrOffset)) {
-        Value = *V;
+      } else if (Optional<AttrInfo> AttrVal =
+                     findAttributeInfo(DIE, dwarf::DW_AT_low_pc)) {
+        AttrOffset = AttrVal->Offset;
+        Value = AttrVal->V;
         const Optional<uint64_t> Result = Value.getAsAddress();
         if (Result.hasValue()) {
           const uint64_t Address = Result.getValue();
@@ -643,13 +675,11 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
   if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges)) {
     // Case 1: The object was already non-contiguous and had DW_AT_ranges.
     // In this case we simply need to update the value of DW_AT_ranges.
-    uint64_t AttrOffset = -1U;
-    DIE.find(dwarf::DW_AT_ranges, &AttrOffset);
-    assert(AttrOffset != -1U && "failed to locate DWARF attribute");
+    Optional<AttrInfo> AttrVal = findAttributeInfo(DIE, dwarf::DW_AT_ranges);
 
     std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
     DebugInfoPatcher.addLE32Patch(
-        AttrOffset, DebugRangesOffset - DebugInfoPatcher.getRangeBase());
+        AttrVal->Offset, DebugRangesOffset - DebugInfoPatcher.getRangeBase());
   } else {
     // Case 2: The object has both DW_AT_low_pc and DW_AT_high_pc emitted back
     // to back. We replace the attributes with DW_AT_ranges and DW_AT_low_pc.
@@ -711,10 +741,11 @@ void DWARFRewriter::updateLineTableOffsets() {
     if (!Label)
       continue;
 
-    const uint64_t LTOffset =
-      BC.DwCtx->getAttrFieldOffsetForUnit(CU.get(), dwarf::DW_AT_stmt_list);
-    if (!LTOffset)
+    Optional<AttrInfo> AttrVal =
+        findAttributeInfo(CU.get()->getUnitDIE(), dwarf::DW_AT_stmt_list);
+    if (!AttrVal)
       continue;
+    const uint64_t LTOffset = AttrVal->Offset;
 
     // Line tables are stored in MCContext in ascending order of offset in the
     // output file, thus we can compute all table's offset by passing through
@@ -757,10 +788,11 @@ void DWARFRewriter::updateLineTableOffsets() {
 
   for (const std::unique_ptr<DWARFUnit> &TU : BC.DwCtx->types_section_units()) {
     DWARFUnit *Unit = TU.get();
-    const uint64_t LTOffset =
-        BC.DwCtx->getAttrFieldOffsetForUnit(Unit, dwarf::DW_AT_stmt_list);
-    if (!LTOffset)
+    Optional<AttrInfo> AttrVal =
+        findAttributeInfo(TU.get()->getUnitDIE(), dwarf::DW_AT_stmt_list);
+    if (!AttrVal)
       continue;
+    const uint64_t LTOffset = AttrVal->Offset;
     auto Iter = DebugLineOffsetMap.find(GetStatementListValue(Unit));
     assert(Iter != DebugLineOffsetMap.end() &&
            "Type Unit Updated Line Number Entry does not exist.");
@@ -812,11 +844,11 @@ void DWARFRewriter::finalizeDebugSections(
                                    AddressSectionContents.size());
     for (auto &CU : BC.DwCtx->compile_units()) {
       DWARFDie DIE = CU->getUnitDIE();
-      uint64_t AttrOffset = 0;
-      if (Optional<DWARFFormValue> Val =
-              DIE.find(dwarf::DW_AT_GNU_addr_base, &AttrOffset)) {
+      if (Optional<AttrInfo> AttrVal =
+              findAttributeInfo(DIE, dwarf::DW_AT_GNU_addr_base)) {
         uint64_t Offset = AddrWriter->getOffset(*CU->getDWOId());
-        DebugInfoPatcher.addLE32Patch(AttrOffset, static_cast<int32_t>(Offset));
+        DebugInfoPatcher.addLE32Patch(AttrVal->Offset,
+                                      static_cast<int32_t>(Offset));
       }
     }
   }
@@ -1407,10 +1439,12 @@ namespace {
 void getRangeAttrData(DWARFDie DIE, uint64_t &LowPCOffset,
                       uint64_t &HighPCOffset, DWARFFormValue &LowPCFormValue,
                       DWARFFormValue &HighPCFormValue) {
-  LowPCOffset = -1U;
-  HighPCOffset = -1U;
-  LowPCFormValue = *DIE.find(dwarf::DW_AT_low_pc, &LowPCOffset);
-  HighPCFormValue = *DIE.find(dwarf::DW_AT_high_pc, &HighPCOffset);
+  Optional<AttrInfo> LowPCVal = findAttributeInfo(DIE, dwarf::DW_AT_low_pc);
+  Optional<AttrInfo> HighPCVal = findAttributeInfo(DIE, dwarf::DW_AT_high_pc);
+  LowPCOffset = LowPCVal->Offset;
+  HighPCOffset = HighPCVal->Offset;
+  LowPCFormValue = LowPCVal->V;
+  HighPCFormValue = HighPCVal->V;
 
   if ((LowPCFormValue.getForm() != dwarf::DW_FORM_addr &&
        LowPCFormValue.getForm() != dwarf::DW_FORM_GNU_addr_index) ||
