@@ -64,6 +64,8 @@ re-stating the full motivation, this should connect that motivation back to
 Carbon's stated goals for the project or language. This may evolve during
 review. Use links to appropriate goals:
 
+-   [Community and culture](/docs/project/goals.md#community-and-culture)
+-   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
 -   [Performance-critical software](/docs/project/goals.md#performance-critical-software)
 -   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution)
 -   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
