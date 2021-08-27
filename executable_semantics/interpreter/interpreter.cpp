@@ -139,7 +139,7 @@ void InitEnv(const Declaration& d, Env* env) {
       const ClassDefinition& class_def = cast<ClassDeclaration>(d).Definition();
       VarValues fields;
       VarValues methods;
-      for (const Member* m : class_def.members) {
+      for (Ptr<const Member> m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember: {
             Ptr<const BindingPattern> binding = cast<FieldMember>(*m).Binding();
