@@ -354,7 +354,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         assert(contents.front() != ' ' &&
                "should not have stopped at a plain space");
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
-        if (after_space == contents.size() || contents[after_space] != '\n') {
+        if (after_space == llvm::StringRef::npos ||
+            contents[after_space] != '\n') {
           // TODO: Include the source range of the whitespace up to
           // `contents.begin() + after_space` in the diagnostic.
           emitter.EmitError<InvalidHorizontalWhitespaceInString>(

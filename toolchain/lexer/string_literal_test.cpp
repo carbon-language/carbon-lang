@@ -273,9 +273,15 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
 }
 
 TEST_F(StringLiteralTest, TabInString) {
-  auto value = Parse("\"x\ty\\n\"");
+  auto value = Parse("\"x\ty\"");
   EXPECT_TRUE(error_tracker.SeenError());
-  EXPECT_EQ(value, "x\ty\n");
+  EXPECT_EQ(value, "x\ty");
+}
+
+TEST_F(StringLiteralTest, TabAtEndOfString) {
+  auto value = Parse("\"\t\t\t\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, "\t\t\t");
 }
 
 TEST_F(StringLiteralTest, TabInBlockString) {
