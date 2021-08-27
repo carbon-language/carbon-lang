@@ -98,10 +98,10 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <std::list<Ptr<const Declaration>>> declaration_list
 %type <BisonWrap<Ptr<const Statement>>> statement
 %type <BisonWrap<Ptr<const Statement>>> if_statement
-%type <BisonWrap<Ptr<const Statement>>> optional_else
+%type <std::optional<Ptr<const Statement>>> optional_else
 %type <BisonWrap<std::pair<Ptr<const Expression>, bool>>> return_expression
 %type <BisonWrap<Ptr<const Statement>>> block
-%type <BisonWrap<Ptr<const Statement>>> statement_list
+%type <std::optional<Ptr<const Statement>>> statement_list
 %type <BisonWrap<Ptr<const Expression>>> expression
 %type <BisonWrap<GenericBinding>> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
@@ -458,7 +458,7 @@ if_statement:
 ;
 optional_else:
   // Empty
-    { $$ = 0; }
+    { $$ = std::nullopt; }
 | ELSE if_statement
     { $$ = $2; }
 | ELSE block
@@ -472,7 +472,7 @@ return_expression:
 ;
 statement_list:
   // Empty
-    { $$ = 0; }
+    { $$ = std::nullopt; }
 | statement statement_list
     { $$ = global_arena->New<Sequence>(context.SourceLoc(), $1, $2); }
 ;
@@ -538,7 +538,7 @@ function_declaration:
       $$ = global_arena->New<FunctionDefinition>(
           context.SourceLoc(), $2, $3, $4,
           global_arena->New<ExpressionPattern>(return_exp),
-          is_omitted_exp, nullptr);
+          is_omitted_exp, std::nullopt);
     }
 ;
 variable_declaration: identifier ":" pattern
