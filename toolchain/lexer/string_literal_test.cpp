@@ -272,19 +272,16 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
   }
 }
 
-TEST_F(StringLiteralTest, StringLiteralBadWhitespace) {
-  // Tabs aren't allowed in strings.
-  llvm::StringLiteral testcases[] = {
-      "\"x\ty\\n\"",
-      "\"\"\"\nx\ty\n\"\"\"",
-  };
+TEST_F(StringLiteralTest, TabInString) {
+  auto value = Parse("\"x\ty\\n\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, "x\ty\n");
+}
 
-  for (llvm::StringLiteral test : testcases) {
-    error_tracker.Reset();
-    auto value = Parse(test);
-    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
-    EXPECT_EQ(value, "x\ty\n");
-  }
+TEST_F(StringLiteralTest, TabInBlockString) {
+  auto value = Parse("\"\"\"\nx\ty\n\"\"\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, "x\ty\n");
 }
 
 }  // namespace
