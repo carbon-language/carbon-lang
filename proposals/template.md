@@ -62,7 +62,7 @@ TODO: Fully explain the details of the proposed solution.
 TODO: How does this proposal effectively advance Carbon's goals? Rather than
 re-stating the full motivation, this should connect that motivation back to
 Carbon's stated goals for the project or language. This may evolve during
-review. Use links to appropriate goals:
+review. Use links to appropriate goals, for example:
 
 -   [Community and culture](/docs/project/goals.md#community-and-culture)
 -   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
