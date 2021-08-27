@@ -65,7 +65,7 @@ UNDERSCORE        "_"
 identifier    [A-Za-z_][A-Za-z0-9_]*
 sized_type_literal [iuf][1-9][0-9]*
 integer_literal   [0-9]+
-string_literal    \"([^\\\"\n\t]|\\.)*\"
+string_literal    \"([^\\\"]|\\.)*\"
 horizontal_whitespace [ \t\r]
 whitespace [ \t\r\n]
 operand_start [(A-Za-z0-9_"]

@@ -1,2 +1,2 @@
-COMPILATION ERROR: 6: invalid character '\x22' in source file.
+COMPILATION ERROR: 6: Invalid escaping in string: "new	line"
 EXIT CODE: 255
