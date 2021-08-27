@@ -46,13 +46,13 @@ void ExecProgram(std::list<Ptr<const Declaration>> fs) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
-  state = global_arena->RawNew<State>();  // Compile-time state.
-  TypeCheckContext p = TopLevel(fs);
+  TypeChecker type_checker;
+  TypeChecker::TypeCheckContext p = type_checker.TopLevel(fs);
   TypeEnv top = p.types;
   Env ct_top = p.values;
   std::list<Ptr<const Declaration>> new_decls;
   for (const auto decl : fs) {
-    new_decls.push_back(MakeTypeChecked(decl, top, ct_top));
+    new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {
     llvm::outs() << "\n";
@@ -62,7 +62,7 @@ void ExecProgram(std::list<Ptr<const Declaration>> fs) {
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = InterpProgram(new_decls);
+  int result = Interpreter().InterpProgram(new_decls);
   llvm::outs() << "result: " << result << "\n";
 }
 
