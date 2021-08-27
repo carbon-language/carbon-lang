@@ -39,6 +39,17 @@ config.test_source_root = os.path.dirname(__file__)
 # test_exec_root: The root path where tests should be run.
 config.test_exec_root = os.path.join(config.bolt_obj_root, 'test')
 
+# checking if maxIndividualTestTime is available on the platform and sets
+# it to 60sec if so, declares lit-max-individual-test-time feature for
+# further checking by tests.
+supported, errormsg = lit_config.maxIndividualTestTimeIsSupported
+if supported:
+    config.available_features.add("lit-max-individual-test-time")
+    lit_config.maxIndividualTestTime = 60
+else:
+    lit_config.warning('Setting a timeout per test not supported. ' + errormsg
+                       + ' Some tests will be skipped.')
+
 llvm_config.use_default_substitutions()
 
 config.substitutions.append(('%host_cc', config.host_cc))
