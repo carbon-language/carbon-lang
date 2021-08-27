@@ -36,6 +36,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:paren_contents",

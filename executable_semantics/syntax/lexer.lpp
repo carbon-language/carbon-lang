@@ -30,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 AND               "and"
+API               "api"
 ARROW             "->"
 AUTO              "auto"
 BOOL              "Bool"
@@ -46,9 +47,13 @@ FALSE             "false"
 FN                "fn"
 FNTY              "fnty"
 IF                "if"
+IMPL              "impl"
+IMPORT            "import"
+LIBRARY           "library"
 MATCH             "match"
 NOT               "not"
 OR                "or"
+PACKAGE           "package"
 RETURN            "return"
 STRING            "String"
 CLASS             "class"
@@ -94,6 +99,7 @@ operand_start [(A-Za-z0-9_"]
 %}
 
 {AND}      { return Carbon::Parser::make_AND(context.current_token_position); }
+{API}      { return Carbon::Parser::make_API(context.current_token_position); }
 {ARROW}    { return Carbon::Parser::make_ARROW(context.current_token_position); }
 {AUTO}     { return Carbon::Parser::make_AUTO(context.current_token_position); }
 {BOOL}     { return Carbon::Parser::make_BOOL(context.current_token_position); }
@@ -110,9 +116,13 @@ operand_start [(A-Za-z0-9_"]
 {FN}       { return Carbon::Parser::make_FN(context.current_token_position); }
 {FNTY}     { return Carbon::Parser::make_FNTY(context.current_token_position); }
 {IF}       { return Carbon::Parser::make_IF(context.current_token_position); }
+{IMPL}     { return Carbon::Parser::make_IMPL(context.current_token_position); }
+{IMPORT}   { return Carbon::Parser::make_IMPORT(context.current_token_position); }
+{LIBRARY}  { return Carbon::Parser::make_LIBRARY(context.current_token_position); }
 {MATCH}    { return Carbon::Parser::make_MATCH(context.current_token_position); }
 {NOT}      { return Carbon::Parser::make_NOT(context.current_token_position); }
 {OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
+{PACKAGE}  { return Carbon::Parser::make_PACKAGE(context.current_token_position); }
 {RETURN}   { return Carbon::Parser::make_RETURN(context.current_token_position); }
 {TRUE}     { return Carbon::Parser::make_TRUE(context.current_token_position); }
 {TYPE}     { return Carbon::Parser::make_TYPE(context.current_token_position); }

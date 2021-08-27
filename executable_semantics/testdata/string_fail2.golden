@@ -1,2 +1,2 @@
-COMPILATION ERROR: 6: Invalid escaping in string: "str\x"
+COMPILATION ERROR: 8: Invalid escaping in string: "str\x"
 EXIT CODE: 255

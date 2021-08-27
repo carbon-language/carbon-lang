@@ -68,6 +68,8 @@ TEST_LIST = [
     "match_placeholder",
     "next",
     "no_match",
+    "package_library",
+    "package_required",
     "pattern_init",
     "pattern_variable_fail",
     "placeholder_variable",

@@ -1,2 +1,2 @@
-COMPILATION ERROR: 6: Invalid escaping in string: "str\xaa"
+COMPILATION ERROR: 8: Invalid escaping in string: "str\xaa"
 EXIT CODE: 255
