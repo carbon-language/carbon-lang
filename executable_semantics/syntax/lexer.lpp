@@ -16,8 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #include "llvm/ADT/StringExtras.h"
 %}
 
-/* Turn off legacy bits we don't need */
-%option noyywrap noinput nounput nodefault
+/* Turn off legacy bits we don't need. */
+%option noyywrap nounput nodefault noinput
 
 %option reentrant
 
