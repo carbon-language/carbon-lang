@@ -2047,7 +2047,7 @@ This reflects these two properties of these parameters:
 -   We allow either generic or template values to be passed in.
 
 **Context:** See
-[type parameters for interfaces](terminology.md#interface-type-parameters-versus-associated-types)
+[interface type parameters](terminology.md#interface-type-parameters-versus-associated-types)
 in the terminology doc.
 
 **Caveat:** When implementing an interface twice for a type, you need to be sure

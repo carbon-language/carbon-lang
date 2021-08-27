@@ -535,10 +535,10 @@ Imagine an interface defining a container. Different containers will contain
 different types of values, and the container API will have to refer to that
 "element type" when defining the signature of methods like "insert" or "find".
 If that element type is a parameter (input) to the interface type, we say it is
-a type parameter; if it is an output, we say it is an associated type. An
-associated type is a kind of [associated item](#associated-item).
+an _interface type parameter_; if it is an output, we say it is an _associated
+type_. An associated type is a kind of [associated item](#associated-item).
 
-Type parameter example:
+Interface type parameter example:
 
 ```
 interface StackTP(ElementType:! Type)
@@ -584,10 +584,6 @@ class List(ElementType:! Type) {
   impl as Container;
 }
 ```
-
-Since type parameters are directly under the user's control, it is easier to
-express things like "this type parameter is the same for all these interfaces",
-and other type constraints.
 
 If you have an interface with type parameters, a type can have multiple impls
 for different combinations of type parameters. As a result, type parameters may
@@ -662,12 +658,12 @@ express, for example:
     element type.
 -   An interface may define an associated type that needs to be constrained to
     implement some interfaces.
--   This type parameter must be [compatible](#compatible-types) with another
-    type. You might use this to define alternate implementations of a single
-    interfaces, such as sorting order, for a single type.
+-   This type must be [compatible](#compatible-types) with another type. You
+    might use this to define alternate implementations of a single interfaces,
+    such as sorting order, for a single type.
 
-Note that type constraints can be a restriction on one type parameter, or can
-define a relationship between multiple type parameters.
+Note that type constraints can be a restriction on one type parameter or
+associated type, or can define a relationship between multiple types.
 
 ## Type-of-type
 

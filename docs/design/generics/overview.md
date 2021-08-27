@@ -30,7 +30,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Structural interfaces](#structural-interfaces)
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
-    -   [Type parameters](#type-parameters)
+    -   [Interface input and output types](#interface-input-and-output-types)
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
 -   [Future work](#future-work)
@@ -492,7 +492,7 @@ adapter SongByTitle extends Song {
 Values of type `Song` may be cast to `SongByArtist` or `SongByTitle` to get a
 specific sort order.
 
-### Type parameters
+### Interface input and output types
 
 [Associated types and interface parameters](terminology.md#interface-type-parameters-and-associated-types)
 allow function signatures to vary with the implementing type. The biggest
@@ -502,9 +502,10 @@ with different interface parameters ("input types").
 
 #### Associated types
 
-Expect type parameters to be associated types by default. Since associated types
-may be deduced, they are more convenient to use. Imagine a `Stack` interface.
-Different types implementing `Stack` will have different element types:
+Expect types that vary in an interface to be associated types by default. Since
+associated types may be deduced, they are more convenient to use. Imagine a
+`Stack` interface. Different types implementing `Stack` will have different
+element types:
 
 ```
 interface Stack {
