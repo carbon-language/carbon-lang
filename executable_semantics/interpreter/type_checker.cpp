@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/interpreter/type_checker.h"
 
 #include <algorithm>
 #include <iterator>

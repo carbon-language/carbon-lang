@@ -9,7 +9,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
-#include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
 
