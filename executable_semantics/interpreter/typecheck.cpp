@@ -636,9 +636,9 @@ auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
       }
       TCPattern arg_results = TypeCheckPattern(alternative.Arguments(), types,
                                                values, parameter_types);
-      const TuplePattern* arg_p =
-          cast<const TuplePattern>(arg_results.pattern.Get());
-      auto arguments = Ptr<const TuplePattern>(arg_p);
+      // TODO: Think about a cleaner way to cast between Ptr types.
+      auto arguments = Ptr<const TuplePattern>(
+          cast<const TuplePattern>(arg_results.pattern.Get()));
       return {.pattern = global_arena->New<AlternativePattern>(
                   alternative.SourceLoc(),
                   ReifyType(choice_type, alternative.SourceLoc()),
