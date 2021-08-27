@@ -62,7 +62,15 @@ TODO: Fully explain the details of the proposed solution.
 TODO: How does this proposal effectively advance Carbon's goals? Rather than
 re-stating the full motivation, this should connect that motivation back to
 Carbon's stated goals for the project or language. This may evolve during
-review.
+review. Use links to appropriate goals:
+
+-   [Performance-critical software](/docs/project/goals.md#performance-critical-software)
+-   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution)
+-   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
+-   [Practical safety and testing mechanisms](/docs/project/goals.md#practical-safety-and-testing-mechanisms)
+-   [Fast and scalable development](/docs/project/goals.md#fast-and-scalable-development)
+-   [Modern OS platforms, hardware architectures, and environments](/docs/project/goals.md#modern-os-platforms-hardware-architectures-and-environments)
+-   [Interoperability with and migration from existing C++ code](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
 
 ## Alternatives considered
 
