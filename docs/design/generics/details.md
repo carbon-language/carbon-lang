@@ -2050,6 +2050,22 @@ This reflects these two properties of these parameters:
 [interface type parameters](terminology.md#interface-type-parameters-versus-associated-types)
 in the terminology doc.
 
+**Note:** Interface parameters aren't required to be types, but that is the vast
+majority of cases. As an example, if we had an interface that allowed a type to
+define how the tuple-member-read operator would work, the index of the member
+could be an interface parameter:
+
+```
+interface ReadTupleMember(index:! u32) {
+  [let T:! Type];
+  // Returns me[index]
+  fn Get[me:Self]() -> T;
+}
+```
+
+This requires that the index be known at compile time, but allows different
+indices to be associated with different types.
+
 **Caveat:** When implementing an interface twice for a type, you need to be sure
 that the interface parameters will always be different. For example:
 
