@@ -54,19 +54,19 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
-TuplePattern::TuplePattern(const Expression* tuple_literal)
+TuplePattern::TuplePattern(Ptr<const Expression> tuple_literal)
     : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
     fields.push_back(Field(
-        init.name, global_arena->RawNew<ExpressionPattern>(init.expression)));
+        init.name, global_arena->New<ExpressionPattern>(init.expression)));
   }
 }
 
 auto PatternFromParenContents(SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> const Pattern* {
-  std::optional<const Pattern*> single_term = paren_contents.SingleTerm();
+    -> Ptr<const Pattern> {
+  std::optional<Ptr<const Pattern>> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
@@ -76,23 +76,30 @@ auto PatternFromParenContents(SourceLocation loc,
 
 auto TuplePatternFromParenContents(SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> const TuplePattern* {
-  return global_arena->RawNew<TuplePattern>(
+    -> Ptr<const TuplePattern> {
+  return global_arena->New<TuplePattern>(
       loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }
 
-AlternativePattern::AlternativePattern(SourceLocation loc,
-                                       const Expression* alternative,
-                                       const TuplePattern* arguments)
-    : Pattern(Kind::AlternativePattern, loc), arguments(arguments) {
+// Used by AlternativePattern for constructor initialization. Produces a helpful
+// error for incorrect expressions, rather than letting a default cast error
+// apply.
+static const FieldAccessExpression& RequireFieldAccess(
+    Ptr<const Expression> alternative) {
   if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
     FATAL_PROGRAM_ERROR(alternative->SourceLoc())
         << "Alternative pattern must have the form of a field access.";
   }
-  const auto& field_access = cast<FieldAccessExpression>(*alternative);
-  choice_type = field_access.Aggregate();
-  alternative_name = field_access.Field();
+  return cast<FieldAccessExpression>(*alternative);
 }
+
+AlternativePattern::AlternativePattern(SourceLocation loc,
+                                       Ptr<const Expression> alternative,
+                                       Ptr<const TuplePattern> arguments)
+    : Pattern(Kind::AlternativePattern, loc),
+      choice_type(RequireFieldAccess(alternative).Aggregate()),
+      alternative_name(RequireFieldAccess(alternative).Field()),
+      arguments(arguments) {}
 
 auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
     -> ParenContents<Pattern> {
@@ -101,7 +108,7 @@ auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
   for (const auto& element : contents.elements) {
     result.elements.push_back(
         {.name = element.name,
-         .term = global_arena->RawNew<ExpressionPattern>(element.term)});
+         .term = global_arena->New<ExpressionPattern>(element.term)});
   }
   return result;
 }

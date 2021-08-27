@@ -97,7 +97,7 @@ class ChoiceDeclaration : public Declaration {
  public:
   ChoiceDeclaration(
       SourceLocation loc, std::string name,
-      std::list<std::pair<std::string, const Expression*>> alternatives)
+      std::list<std::pair<std::string, Ptr<const Expression>>> alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -108,20 +108,20 @@ class ChoiceDeclaration : public Declaration {
 
   auto Name() const -> const std::string& { return name; }
   auto Alternatives() const
-      -> const std::list<std::pair<std::string, const Expression*>>& {
+      -> const std::list<std::pair<std::string, Ptr<const Expression>>>& {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::list<std::pair<std::string, const Expression*>> alternatives;
+  std::list<std::pair<std::string, Ptr<const Expression>>> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(SourceLocation loc, const BindingPattern* binding,
-                      const Expression* initializer)
+  VariableDeclaration(SourceLocation loc, Ptr<const BindingPattern> binding,
+                      Ptr<const Expression> initializer)
       : Declaration(Kind::VariableDeclaration, loc),
         binding(binding),
         initializer(initializer) {}
@@ -130,15 +130,15 @@ class VariableDeclaration : public Declaration {
     return decl->Tag() == Kind::VariableDeclaration;
   }
 
-  auto Binding() const -> const BindingPattern* { return binding; }
-  auto Initializer() const -> const Expression* { return initializer; }
+  auto Binding() const -> Ptr<const BindingPattern> { return binding; }
+  auto Initializer() const -> Ptr<const Expression> { return initializer; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  const BindingPattern* binding;
-  const Expression* initializer;
+  Ptr<const BindingPattern> binding;
+  Ptr<const Expression> initializer;
 };
 
 }  // namespace Carbon
