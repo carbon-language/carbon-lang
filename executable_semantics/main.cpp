@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
   }
 
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::parse(input_file_name);
+      Carbon::Parse(input_file_name);
 
   if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.

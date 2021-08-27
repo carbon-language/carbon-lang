@@ -29,8 +29,10 @@
 // Enable support for parser debugging
 %define parse.trace true
 
-//
-// Parameters to the parser and lexer
+// Generate location structs.
+%locations
+
+// Parameters to the parser and lexer.
 //
 // Parameters to the parser are stored therein as protected data members, and
 // thus available to its methods.
@@ -39,6 +41,7 @@
 %parse-param {std::optional<AST>& parsed_program}
 
 // "inout" parameter passed to both the parser and the lexer.
+%param {yyscan_t yyscanner}
 %param {ParseAndLexContext& context}
 
 // No shift-reduce conflicts are expected.
@@ -76,6 +79,8 @@
 namespace Carbon {
 class ParseAndLexContext;
 }  // namespace Carbon
+
+typedef void* yyscan_t;
 
 }  // %code requires
 
@@ -206,7 +211,6 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %precedence "(" ")" "[" "]"
 
 %start input
-%locations
 %%
 input: declaration_list
     { parsed_program = $1; }
