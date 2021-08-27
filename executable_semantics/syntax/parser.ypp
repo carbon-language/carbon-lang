@@ -40,7 +40,7 @@
 // "out" parameter passed to the parser, where the AST is written.
 %parse-param {std::optional<AST>& parsed_program}
 
-// "inout" parameter passed to both the parser and the lexer.
+// "inout" parameters passed to both the parser and the lexer.
 %param {yyscan_t yyscanner}
 %param {ParseAndLexContext& context}
 
