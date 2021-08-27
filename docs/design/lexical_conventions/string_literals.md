@@ -88,8 +88,8 @@ A _simple string literal_ is formed of a sequence of:
 -   [Escape sequences](#escape-sequences).
     -   Each escape sequence is replaced with the corresponding character
         sequence or code unit sequence.
-    -   Similarly to whitespace, invalid escape sequences such as `\z` parse as
-        part of the string.
+    -   Similarly to invalid whitespace, invalid escape sequences such as `\z`
+        parse as part of the string.
 
 This sequence is enclosed in `"`s. For example, this is a simple string literal:
 
