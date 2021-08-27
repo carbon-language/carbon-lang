@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Real number literals](#real-number-literals)
         -   [Ties](#ties)
     -   [Digit separators](#digit-separators)
--   [Caveats](#caveats)
+-   [Divergence from other languages](#divergence-from-other-languages)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -141,9 +141,9 @@ respective condition:
 
 ## Divergence from other languages
 
-The design provides a syntax that is deliberately close to that used both by
-C++ and many other languages, so it should feel familiar to developers. However,
-it selects a reasonably minimal subset of the syntaxes. This minimal approach
+The design provides a syntax that is deliberately close to that used both by C++
+and many other languages, so it should feel familiar to developers. However, it
+selects a reasonably minimal subset of the syntaxes. This minimal approach
 provides benefits directly in line with the goal that Carbon code should be
 [easy to read, understand, and write](../docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
 
