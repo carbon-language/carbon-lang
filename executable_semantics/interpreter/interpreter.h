@@ -23,64 +23,6 @@ namespace Carbon {
 
 using Env = Dictionary<std::string, Address>;
 
-// State transition functions
-//
-// The `Step*` family of functions implement state transitions in the
-// interpreter by executing a step of the Action at the top of the todo stack,
-// and then returning a Transition that specifies how `state.stack` should be
-// updated. `Transition` is a variant of several "transition types"
-// representing the different kinds of state transition.
-
-// Transition type which indicates that the current Action is now done.
-struct Done {
-  // The value computed by the Action. Should always be null for Statement
-  // Actions, and never null for any other kind of Action.
-  const Value* result = nullptr;
-};
-
-// Transition type which spawns a new Action on the todo stack above the
-// current Action, and increments the current Action's position counter.
-struct Spawn {
-  Ptr<Action> child;
-};
-
-// Transition type which spawns a new Action that replaces the current action
-// on the todo stack.
-struct Delegate {
-  Ptr<Action> delegate;
-};
-
-// Transition type which keeps the current Action at the top of the stack,
-// and increments its position counter.
-struct RunAgain {};
-
-// Transition type which unwinds the `todo` and `scopes` stacks until it
-// reaches a specified Action lower in the stack.
-struct UnwindTo {
-  const Ptr<Action> new_top;
-};
-
-// Transition type which unwinds the entire current stack frame, and returns
-// a specified value to the caller.
-struct UnwindFunctionCall {
-  const Value* return_val;
-};
-
-// Transition type which removes the current action from the top of the todo
-// stack, then creates a new stack frame which calls the specified function
-// with the specified arguments.
-struct CallFunction {
-  const FunctionValue* function;
-  const Value* args;
-  SourceLocation loc;
-};
-
-// Transition type which does nothing.
-//
-// TODO(geoffromer): This is a temporary placeholder during refactoring. All
-// uses of this type should be replaced with meaningful transitions.
-struct ManualTransition {};
-
 class Interpreter {
  public:
   // Interpret the whole program.
@@ -106,6 +48,64 @@ class Interpreter {
   void PrintEnv(Env values, llvm::raw_ostream& out);
 
  private:
+  // State transition functions
+  //
+  // The `Step*` family of functions implement state transitions in the
+  // interpreter by executing a step of the Action at the top of the todo stack,
+  // and then returning a Transition that specifies how `state.stack` should be
+  // updated. `Transition` is a variant of several "transition types"
+  // representing the different kinds of state transition.
+
+  // Transition type which indicates that the current Action is now done.
+  struct Done {
+    // The value computed by the Action. Should always be null for Statement
+    // Actions, and never null for any other kind of Action.
+    const Value* result = nullptr;
+  };
+
+  // Transition type which spawns a new Action on the todo stack above the
+  // current Action, and increments the current Action's position counter.
+  struct Spawn {
+    Ptr<Action> child;
+  };
+
+  // Transition type which spawns a new Action that replaces the current action
+  // on the todo stack.
+  struct Delegate {
+    Ptr<Action> delegate;
+  };
+
+  // Transition type which keeps the current Action at the top of the stack,
+  // and increments its position counter.
+  struct RunAgain {};
+
+  // Transition type which unwinds the `todo` and `scopes` stacks until it
+  // reaches a specified Action lower in the stack.
+  struct UnwindTo {
+    const Ptr<Action> new_top;
+  };
+
+  // Transition type which unwinds the entire current stack frame, and returns
+  // a specified value to the caller.
+  struct UnwindFunctionCall {
+    const Value* return_val;
+  };
+
+  // Transition type which removes the current action from the top of the todo
+  // stack, then creates a new stack frame which calls the specified function
+  // with the specified arguments.
+  struct CallFunction {
+    const FunctionValue* function;
+    const Value* args;
+    SourceLocation loc;
+  };
+
+  // Transition type which does nothing.
+  //
+  // TODO(geoffromer): This is a temporary placeholder during refactoring. All
+  // uses of this type should be replaced with meaningful transitions.
+  struct ManualTransition {};
+
   using Transition =
       std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
                    UnwindFunctionCall, CallFunction, ManualTransition>;
