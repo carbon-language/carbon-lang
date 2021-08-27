@@ -1660,6 +1660,10 @@ There are some opportunities to improve on and simplify the C++ story:
     it also causes problems and without multiple inheritance there isn't the
     same need in Carbon.
 -   Overload resolution should happen before virtual dispatch.
+-   For evolution purposes, you should be able to add private members to a base
+    class that have the same name as member of a derived class without affecting
+    overload resolution on instances of the derived class, in functions that
+    aren't friends of the base class.
 
 **References:** This was discussed in
 [the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
