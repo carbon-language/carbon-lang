@@ -96,12 +96,12 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_declaration
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_definition
 %type <std::list<Ptr<const Declaration>>> declaration_list
-%type <const Statement*> statement
-%type <const Statement*> if_statement
-%type <const Statement*> optional_else
+%type <BisonWrap<Ptr<const Statement>>> statement
+%type <BisonWrap<Ptr<const Statement>>> if_statement
+%type <BisonWrap<Ptr<const Statement>>> optional_else
 %type <BisonWrap<std::pair<Ptr<const Expression>, bool>>> return_expression
-%type <const Statement*> block
-%type <const Statement*> statement_list
+%type <BisonWrap<Ptr<const Statement>>> block
+%type <BisonWrap<Ptr<const Statement>>> statement_list
 %type <BisonWrap<Ptr<const Expression>>> expression
 %type <BisonWrap<GenericBinding>> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
@@ -126,8 +126,8 @@ void Carbon::Parser::error(const location_type&, const std::string& message) {
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<std::pair<std::string, Ptr<const Expression>>>> alternative
 %type <std::list<std::pair<std::string, Ptr<const Expression>>>> alternative_list
-%type <std::pair<Ptr<const Pattern>, const Statement*>*> clause
-%type <std::list<std::pair<Ptr<const Pattern>, const Statement*>>*> clause_list
+%type <std::pair<Ptr<const Pattern>, Ptr<const Statement>>*> clause
+%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>*> clause_list
 %token END_OF_FILE 0
 %token AND
 %token OR
@@ -404,57 +404,57 @@ maybe_empty_tuple_pattern:
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = global_arena->RawNew<std::pair<Ptr<const Pattern>, const Statement*>>($2, $4); }
+    { $$ = global_arena->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>($2, $4); }
 | DEFAULT DBLARROW statement
     {
       auto vp = global_arena->New<BindingPattern>(
           context.SourceLoc(), std::nullopt, global_arena->New<AutoPattern>(context.SourceLoc()));
-      $$ = global_arena->RawNew<std::pair<Ptr<const Pattern>, const Statement*>>(vp, $3);
+      $$ = global_arena->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
       $$ = global_arena->RawNew<std::list<
-          std::pair<Ptr<const Pattern>, const Statement*>>>();
+          std::pair<Ptr<const Pattern>, Ptr<const Statement>>>>();
     }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
 ;
 statement:
   expression "=" expression ";"
-    { $$ = global_arena->RawNew<Assign>(context.SourceLoc(), $1, $3); }
+    { $$ = global_arena->New<Assign>(context.SourceLoc(), $1, $3); }
 | VAR pattern "=" expression ";"
-    { $$ = global_arena->RawNew<VariableDefinition>(context.SourceLoc(), $2, $4); }
+    { $$ = global_arena->New<VariableDefinition>(context.SourceLoc(), $2, $4); }
 | expression ";"
-    { $$ = global_arena->RawNew<ExpressionStatement>(context.SourceLoc(), $1); }
+    { $$ = global_arena->New<ExpressionStatement>(context.SourceLoc(), $1); }
 | if_statement
     { $$ = $1; }
 | WHILE "(" expression ")" block
-    { $$ = global_arena->RawNew<While>(context.SourceLoc(), $3, $5); }
+    { $$ = global_arena->New<While>(context.SourceLoc(), $3, $5); }
 | BREAK ";"
-    { $$ = global_arena->RawNew<Break>(context.SourceLoc()); }
+    { $$ = global_arena->New<Break>(context.SourceLoc()); }
 | CONTINUE ";"
-    { $$ = global_arena->RawNew<Continue>(context.SourceLoc()); }
+    { $$ = global_arena->New<Continue>(context.SourceLoc()); }
 | RETURN return_expression ";"
     {
       auto [return_exp, is_omitted_exp] = $2.Release();
-      $$ = global_arena->RawNew<Return>(context.SourceLoc(), return_exp, is_omitted_exp);
+      $$ = global_arena->New<Return>(context.SourceLoc(), return_exp, is_omitted_exp);
     }
 | block
     { $$ = $1; }
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = global_arena->RawNew<Match>(context.SourceLoc(), $3, $6); }
+    { $$ = global_arena->New<Match>(context.SourceLoc(), $3, $6); }
 | CONTINUATION identifier statement
-    { $$ = global_arena->RawNew<Continuation>(context.SourceLoc(), $2, $3); }
+    { $$ = global_arena->New<Continuation>(context.SourceLoc(), $2, $3); }
 | RUN expression ";"
-    { $$ = global_arena->RawNew<Run>(context.SourceLoc(), $2); }
+    { $$ = global_arena->New<Run>(context.SourceLoc(), $2); }
 | AWAIT ";"
-    { $$ = global_arena->RawNew<Await>(context.SourceLoc()); }
+    { $$ = global_arena->New<Await>(context.SourceLoc()); }
 ;
 if_statement:
   IF "(" expression ")" block optional_else
-    { $$ = global_arena->RawNew<If>(context.SourceLoc(), $3, $5, $6); }
+    { $$ = global_arena->New<If>(context.SourceLoc(), $3, $5, $6); }
 ;
 optional_else:
   // Empty
@@ -474,11 +474,11 @@ statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
-    { $$ = global_arena->RawNew<Sequence>(context.SourceLoc(), $1, $2); }
+    { $$ = global_arena->New<Sequence>(context.SourceLoc(), $1, $2); }
 ;
 block:
   "{" statement_list "}"
-    { $$ = global_arena->RawNew<Block>(context.SourceLoc(), $2); }
+    { $$ = global_arena->New<Block>(context.SourceLoc(), $2); }
 ;
 return_type:
   // Empty
@@ -528,7 +528,7 @@ function_definition:
       $$ = global_arena->New<FunctionDefinition>(
           context.SourceLoc(), $2, $3, $4,
           global_arena->New<AutoPattern>(context.SourceLoc()), true,
-          global_arena->RawNew<Return>(context.SourceLoc(), $6, true));
+          global_arena->New<Return>(context.SourceLoc(), $6, true));
     }
 ;
 function_declaration:
