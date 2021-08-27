@@ -375,7 +375,8 @@ paren_pattern_contents:
 | paren_pattern_contents "," paren_expression_element
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name, .term = global_arena->New<ExpressionPattern>($3.term)});
+      auto el = $3.Release();
+      $$.elements.push_back({.name = el.name, .term = global_arena->New<ExpressionPattern>(el.term)});
     }
 | paren_pattern_contents "," paren_pattern_element
     {

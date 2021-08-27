@@ -51,7 +51,7 @@ class Member {
 
 class FieldMember : public Member {
  public:
-  FieldMember(SourceLocation loc, const BindingPattern* binding)
+  FieldMember(SourceLocation loc, Ptr<const BindingPattern> binding)
       : Member(Kind::FieldMember, loc), binding(binding) {}
 
   static auto classof(const Member* member) -> bool {
