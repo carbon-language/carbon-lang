@@ -81,18 +81,25 @@ auto TuplePatternFromParenContents(SourceLocation loc,
       loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }
 
-AlternativePattern::AlternativePattern(SourceLocation loc,
-                                       Ptr<const Expression> alternative,
-                                       Ptr<const TuplePattern> arguments)
-    : Pattern(Kind::AlternativePattern, loc), arguments(arguments) {
+// Used by AlternativePattern for constructor initialization. Produces a helpful
+// error for incorrect expressions, rather than letting a default cast error
+// apply.
+static const FieldAccessExpression& RequireFieldAccess(
+    Ptr<const Expression> alternative) {
   if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
     FATAL_PROGRAM_ERROR(alternative->SourceLoc())
         << "Alternative pattern must have the form of a field access.";
   }
-  const auto& field_access = cast<FieldAccessExpression>(*alternative);
-  choice_type = field_access.Aggregate();
-  alternative_name = field_access.Field();
+  return cast<FieldAccessExpression>(*alternative);
 }
+
+AlternativePattern::AlternativePattern(SourceLocation loc,
+                                       Ptr<const Expression> alternative,
+                                       Ptr<const TuplePattern> arguments)
+    : Pattern(Kind::AlternativePattern, loc),
+      choice_type(RequireFieldAccess(alternative).Aggregate()),
+      alternative_name(RequireFieldAccess(alternative).Field()),
+      arguments(arguments) {}
 
 auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
     -> ParenContents<Pattern> {

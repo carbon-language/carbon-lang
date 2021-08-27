@@ -144,7 +144,7 @@ void InitEnv(const Declaration& d, Env* env) {
           case Member::Kind::FieldMember: {
             Ptr<const BindingPattern> binding = cast<FieldMember>(*m).Binding();
             Ptr<const Expression> type_expression =
-                cast<ExpressionPattern>(binding->Type())->Expression();
+                cast<ExpressionPattern>(*binding->Type()).Expression();
             auto type = InterpExp(Env(), type_expression);
             fields.push_back(make_pair(*binding->Name(), type));
             break;
@@ -776,7 +776,7 @@ Transition StepPattern() {
     }
     case Pattern::Kind::ExpressionPattern:
       return Delegate{global_arena->New<ExpressionAction>(
-          cast<ExpressionPattern>(pattern)->Expression())};
+          cast<ExpressionPattern>(*pattern).Expression())};
   }
 }
 
@@ -1046,8 +1046,7 @@ Transition StepStmt() {
           Stack<Ptr<Scope>>(global_arena->New<Scope>(CurrentEnv(state)));
       Stack<Ptr<Action>> todo;
       todo.Push(global_arena->New<StatementAction>(
-          global_arena->RawNew<Return>(stmt->SourceLoc(), nullptr,
-                                       /*is_omitted_exp=*/true)));
+          global_arena->RawNew<Return>(stmt->SourceLoc())));
       todo.Push(
           global_arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
       auto continuation_frame =
@@ -1077,7 +1076,7 @@ Transition StepStmt() {
         auto ignore_result = global_arena->New<StatementAction>(
             global_arena->RawNew<ExpressionStatement>(
                 stmt->SourceLoc(),
-                global_arena->RawNew<TupleLiteral>(stmt->SourceLoc())));
+                global_arena->New<TupleLiteral>(stmt->SourceLoc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
         const std::vector<Ptr<Frame>>& continuation_vector =
@@ -1218,9 +1217,9 @@ auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int {
 
   SourceLocation loc("<InterpProgram()>", 0);
 
-  Ptr<const Expression> arg = global_arena->RawNew<TupleLiteral>(loc);
-  Ptr<const Expression> call_main = global_arena->RawNew<CallExpression>(
-      loc, global_arena->RawNew<IdentifierExpression>(loc, "main"), arg);
+  Ptr<const Expression> arg = global_arena->New<TupleLiteral>(loc);
+  Ptr<const Expression> call_main = global_arena->New<CallExpression>(
+      loc, global_arena->New<IdentifierExpression>(loc, "main"), arg);
   auto todo =
       Stack<Ptr<Action>>(global_arena->New<ExpressionAction>(call_main));
   auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(globals));

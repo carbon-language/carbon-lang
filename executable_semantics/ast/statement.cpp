@@ -130,12 +130,4 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   }
 }
 
-Return::Return(SourceLocation loc, std::optional<Ptr<const Expression>> exp,
-               bool is_omitted_exp)
-    : Statement(Kind::Return, loc),
-      exp(exp.has_value() ? *exp : global_arena->New<TupleLiteral>(loc)),
-      is_omitted_exp(is_omitted_exp) {
-  CHECK(exp.has_value() || is_omitted_exp);
-}
-
 }  // namespace Carbon

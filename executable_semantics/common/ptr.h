@@ -30,6 +30,12 @@ class Ptr {
   auto operator*() const -> T& { return *ptr; }
   auto operator->() const -> T* { return ptr; }
 
+  template <typename BaseT,
+            std::enable_if_t<std::is_convertible_v<BaseT*, T*>>* = nullptr>
+  static auto classof(const Ptr<BaseT> base) -> bool {
+    return T::classof(base.get());
+  }
+
   T* Get() const { return ptr; }
 
  private:

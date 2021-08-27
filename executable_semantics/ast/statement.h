@@ -11,6 +11,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/arena.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -131,8 +132,12 @@ class If : public Statement {
 
 class Return : public Statement {
  public:
-  Return(SourceLocation loc, std::optional<Ptr<const Expression>> exp,
-         bool is_omitted_exp);
+  explicit Return(SourceLocation loc)
+      : Return(loc, global_arena->New<TupleLiteral>(loc), true) {}
+  Return(SourceLocation loc, Ptr<const Expression> exp, bool is_omitted_exp)
+      : Statement(Kind::Return, loc),
+        exp(exp),
+        is_omitted_exp(is_omitted_exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Return;

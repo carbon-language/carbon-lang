@@ -59,8 +59,8 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
   // ```
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->RawNew<IntLiteral>(FakeSourceLoc(2),
-                                                             42)}},
+                    .term =
+                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = false};
 
   Ptr<const Expression> expression =
@@ -72,8 +72,8 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
 TEST(ExpressionTest, UnaryNoCommaAsTuple) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->RawNew<IntLiteral>(FakeSourceLoc(2),
-                                                             42)}},
+                    .term =
+                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = false};
 
   Ptr<const Expression> tuple =
@@ -87,8 +87,8 @@ TEST(ExpressionTest, UnaryNoCommaAsTuple) {
 TEST(ExpressionTest, UnaryWithCommaAsExpression) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->RawNew<IntLiteral>(FakeSourceLoc(2),
-                                                             42)}},
+                    .term =
+                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> expression =
@@ -102,8 +102,8 @@ TEST(ExpressionTest, UnaryWithCommaAsExpression) {
 TEST(ExpressionTest, UnaryWithCommaAsTuple) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = global_arena->RawNew<IntLiteral>(FakeSourceLoc(2),
-                                                             42)}},
+                    .term =
+                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> tuple =
@@ -118,10 +118,10 @@ TEST(ExpressionTest, BinaryAsExpression) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
                     .term =
-                        global_arena->RawNew<IntLiteral>(FakeSourceLoc(2), 42)},
+                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)},
                    {.name = std::nullopt,
-                    .term = global_arena->RawNew<IntLiteral>(FakeSourceLoc(3),
-                                                             42)}},
+                    .term =
+                        global_arena->New<IntLiteral>(FakeSourceLoc(3), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> expression =
@@ -136,10 +136,10 @@ TEST(ExpressionTest, BinaryAsTuple) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
                     .term =
-                        global_arena->RawNew<IntLiteral>(FakeSourceLoc(2), 42)},
+                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)},
                    {.name = std::nullopt,
-                    .term = global_arena->RawNew<IntLiteral>(FakeSourceLoc(3),
-                                                             42)}},
+                    .term =
+                        global_arena->New<IntLiteral>(FakeSourceLoc(3), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> tuple =

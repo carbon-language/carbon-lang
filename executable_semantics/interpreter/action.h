@@ -109,7 +109,7 @@ class PatternAction : public Action {
     return action->Tag() == Kind::PatternAction;
   }
 
-  auto Pat() Ptr<const->const Pattern> { return pat; }
+  auto Pat() const -> Ptr<const Pattern> { return pat; }
 
  private:
   Ptr<const Pattern> pat;
