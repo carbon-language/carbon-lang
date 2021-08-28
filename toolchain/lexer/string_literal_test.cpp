@@ -131,6 +131,10 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
        )",
        "\n"},
 
+      // Lines containing only whitespace are treated as empty even if they
+      // contain tabs.
+      {"\"\"\"\n\t  \t\n\"\"\"", "\n"},
+
       // Indent removal.
       {R"(
        """file type indicator
@@ -138,6 +142,9 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
          """
        )",
        " indented contents "},
+
+      // Removal of tabs in indent and suffix.
+      {"\"\"\"\n \t  hello \t \n \t \"\"\"", " hello\n"},
 
       {R"(
     """
@@ -263,6 +270,24 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
     EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }
+}
+
+TEST_F(StringLiteralTest, TabInString) {
+  auto value = Parse("\"x\ty\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, "x\ty");
+}
+
+TEST_F(StringLiteralTest, TabAtEndOfString) {
+  auto value = Parse("\"\t\t\t\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, "\t\t\t");
+}
+
+TEST_F(StringLiteralTest, TabInBlockString) {
+  auto value = Parse("\"\"\"\nx\ty\n\"\"\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, "x\ty\n");
 }
 
 }  // namespace
