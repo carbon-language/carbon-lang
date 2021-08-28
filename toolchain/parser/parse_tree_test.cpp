@@ -1063,6 +1063,10 @@ TEST_F(ParseTreeTest, StructErrors) {
        DiagnosticMessage("Expected `.field: type`.")},
       {"var x: {.a = 0,,} = {};",
        DiagnosticMessage("Expected `.field = value`.")},
+      {"var x: {.a: i32 banana} = {.a = 0};",
+       DiagnosticMessage("Expected `,` or `}`.")},
+      {"var x: {.a: i32} = {.a = 0 banana};",
+       DiagnosticMessage("Expected `,` or `}`.")},
   };
 
   for (Testcase testcase : testcases) {
