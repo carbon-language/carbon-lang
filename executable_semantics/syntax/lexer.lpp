@@ -23,51 +23,67 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /* Lexing a token immediately after consuming some whitespace. */
 %s AFTER_WHITESPACE
-/* Lexing a token immediately after consuming an operand-ending token:
+/*
+ * Lexing a token immediately after consuming an operand-ending token:
  * a closing bracket, identifier, or literal.
  */
 %s AFTER_OPERAND
 
-AND               "and"
-ARROW             "->"
-AUTO              "auto"
-BOOL              "Bool"
-BREAK             "break"
-CASE              "case"
-CHOICE            "choice"
-ONE_LINE_COMMENT  \/\/[^\n]*\n
-CONTINUE          "continue"
-DBLARROW          "=>"
-DEFAULT           "default"
-ELSE              "else"
-EQUAL_EQUAL       "=="
-FALSE             "false"
-FN                "fn"
-FNTY              "fnty"
-IF                "if"
-MATCH             "match"
-NOT               "not"
-OR                "or"
-RETURN            "return"
-STRING            "String"
-CLASS             "class"
-TRUE              "true"
-TYPE              "Type"
-VAR               "var"
-WHILE             "while"
-CONTINUATION_TYPE "__Continuation"
-CONTINUATION      "__continuation"
-RUN               "__run"
-AWAIT             "__await"
-UNDERSCORE        "_"
+AND                  "and"
+ARROW                "->"
+AUTO                 "auto"
+AWAIT                "__await"
+BOOL                 "Bool"
+BREAK                "break"
+CASE                 "case"
+CHOICE               "choice"
+CLASS                "class"
+COLON                ":"
+COLON_BANG           ":!"
+COMMA                ","
+CONTINUATION         "__continuation"
+CONTINUATION_TYPE    "__Continuation"
+CONTINUE             "continue"
+DEFAULT              "default"
+DOUBLE_ARROW         "=>"
+ELSE                 "else"
+EQUAL                "="
+EQUAL_EQUAL          "=="
+FALSE                "false"
+FN                   "fn"
+FNTY                 "fnty"
+IF                   "if"
+LEFT_CURLY_BRACE     "{"
+LEFT_PARENTHESIS     "("
+LEFT_SQUARE_BRACKET  "["
+MATCH                "match"
+MINUS                "-"
+NOT                  "not"
+OR                   "or"
+PERIOD               "."
+PLUS                 "+"
+RETURN               "return"
+RIGHT_CURLY_BRACE    "}"
+RIGHT_PARENTHESIS    ")"
+RIGHT_SQUARE_BRACKET "]"
+RUN                  "__run"
+SEMICOLON            ";"
+SLASH                "/"
+STRING               "String"
+TRUE                 "true"
+TYPE                 "Type"
+UNDERSCORE           "_"
+VAR                  "var"
+WHILE                "while"
 
-identifier    [A-Za-z_][A-Za-z0-9_]*
-sized_type_literal [iuf][1-9][0-9]*
-integer_literal   [0-9]+
-string_literal    \"([^\\\"\n\t]|\\.)*\"
+identifier            [A-Za-z_][A-Za-z0-9_]*
+sized_type_literal    [iuf][1-9][0-9]*
+integer_literal       [0-9]+
+string_literal        \"([^\\\"\n\t]|\\.)*\"
 horizontal_whitespace [ \t\r]
-whitespace [ \t\r\n]
-operand_start [(A-Za-z0-9_"]
+whitespace            [ \t\r\n]
+one_line_comment      \/\/[^\n]*\n
+operand_start         [(A-Za-z0-9_"]
 
 %{
   // This macro is expanded immediately before each action specified below.
@@ -81,6 +97,12 @@ operand_start [(A-Za-z0-9_"]
           YY_START == AFTER_OPERAND) { \
         BEGIN(INITIAL); \
       }
+
+  #define SIMPLE_TOKEN(name) \
+      Carbon::Parser::make_##name(context.current_token_position);
+
+  #define ARG_TOKEN(name, arg) \
+      Carbon::Parser::make_##name(arg, context.current_token_position);
 %}
 
 %%
@@ -92,104 +114,124 @@ operand_start [(A-Za-z0-9_"]
   context.current_token_position.step();
 %}
 
-{AND}      { return Carbon::Parser::make_AND(context.current_token_position); }
-{ARROW}    { return Carbon::Parser::make_ARROW(context.current_token_position); }
-{AUTO}     { return Carbon::Parser::make_AUTO(context.current_token_position); }
-{BOOL}     { return Carbon::Parser::make_BOOL(context.current_token_position); }
-{BREAK}    { return Carbon::Parser::make_BREAK(context.current_token_position); }
-{CASE}     { return Carbon::Parser::make_CASE(context.current_token_position); }
-{CHOICE}   { return Carbon::Parser::make_CHOICE(context.current_token_position); }
-{CLASS}    { return Carbon::Parser::make_CLASS(context.current_token_position); }
-{CONTINUE} { return Carbon::Parser::make_CONTINUE(context.current_token_position); }
-{DBLARROW} { return Carbon::Parser::make_DBLARROW(context.current_token_position); }
-{DEFAULT}  { return Carbon::Parser::make_DEFAULT(context.current_token_position); }
-{ELSE}     { return Carbon::Parser::make_ELSE(context.current_token_position); }
-"=="       { return Carbon::Parser::make_EQUAL_EQUAL(context.current_token_position); }
-{FALSE}    { return Carbon::Parser::make_FALSE(context.current_token_position); }
-{FN}       { return Carbon::Parser::make_FN(context.current_token_position); }
-{FNTY}     { return Carbon::Parser::make_FNTY(context.current_token_position); }
-{IF}       { return Carbon::Parser::make_IF(context.current_token_position); }
-{MATCH}    { return Carbon::Parser::make_MATCH(context.current_token_position); }
-{NOT}      { return Carbon::Parser::make_NOT(context.current_token_position); }
-{OR}       { return Carbon::Parser::make_OR(context.current_token_position); }
-{RETURN}   { return Carbon::Parser::make_RETURN(context.current_token_position); }
-{TRUE}     { return Carbon::Parser::make_TRUE(context.current_token_position); }
-{TYPE}     { return Carbon::Parser::make_TYPE(context.current_token_position); }
-{VAR}      { return Carbon::Parser::make_VAR(context.current_token_position); }
-{WHILE}    { return Carbon::Parser::make_WHILE(context.current_token_position); }
-{CONTINUATION_TYPE} { return Carbon::Parser::make_CONTINUATION_TYPE(context.current_token_position); }
-{CONTINUATION}    { return Carbon::Parser::make_CONTINUATION(context.current_token_position); }
-{RUN}      { return Carbon::Parser::make_RUN(context.current_token_position); }
-{AWAIT}    { return Carbon::Parser::make_AWAIT(context.current_token_position); }
-{UNDERSCORE}      { return Carbon::Parser::make_UNDERSCORE(context.current_token_position); }
-{STRING}   { return Carbon::Parser::make_STRING(context.current_token_position); }
+{AND}                 { return SIMPLE_TOKEN(AND); }
+{ARROW}               { return SIMPLE_TOKEN(ARROW); }
+{AUTO}                { return SIMPLE_TOKEN(AUTO); }
+{AWAIT}               { return SIMPLE_TOKEN(AWAIT); }
+{BOOL}                { return SIMPLE_TOKEN(BOOL); }
+{BREAK}               { return SIMPLE_TOKEN(BREAK); }
+{CASE}                { return SIMPLE_TOKEN(CASE); }
+{CHOICE}              { return SIMPLE_TOKEN(CHOICE); }
+{CLASS}               { return SIMPLE_TOKEN(CLASS); }
+{COLON_BANG}          { return SIMPLE_TOKEN(COLON_BANG); }
+{COLON}               { return SIMPLE_TOKEN(COLON); }
+{COMMA}               { return SIMPLE_TOKEN(COMMA); }
+{CONTINUATION_TYPE}   { return SIMPLE_TOKEN(CONTINUATION_TYPE); }
+{CONTINUATION}        { return SIMPLE_TOKEN(CONTINUATION); }
+{CONTINUE}            { return SIMPLE_TOKEN(CONTINUE); }
+{DEFAULT}             { return SIMPLE_TOKEN(DEFAULT); }
+{DOUBLE_ARROW}        { return SIMPLE_TOKEN(DOUBLE_ARROW); }
+{ELSE}                { return SIMPLE_TOKEN(ELSE); }
+{EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL); }
+{EQUAL}               { return SIMPLE_TOKEN(EQUAL); }
+{FALSE}               { return SIMPLE_TOKEN(FALSE); }
+{FNTY}                { return SIMPLE_TOKEN(FNTY); }
+{FN}                  { return SIMPLE_TOKEN(FN); }
+{IF}                  { return SIMPLE_TOKEN(IF); }
+{LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS); }
+{LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE); }
+{LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{MATCH}               { return SIMPLE_TOKEN(MATCH); }
+{MINUS}               { return SIMPLE_TOKEN(MINUS); }
+{NOT}                 { return SIMPLE_TOKEN(NOT); }
+{OR}                  { return SIMPLE_TOKEN(OR); }
+{PERIOD}              { return SIMPLE_TOKEN(PERIOD); }
+{PLUS}                { return SIMPLE_TOKEN(PLUS); }
+{RETURN}              { return SIMPLE_TOKEN(RETURN); }
+{RUN}                 { return SIMPLE_TOKEN(RUN); }
+{SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON); }
+{SLASH}               { return SIMPLE_TOKEN(SLASH); }
+{STRING}              { return SIMPLE_TOKEN(STRING); }
+{TRUE}                { return SIMPLE_TOKEN(TRUE); }
+{TYPE}                { return SIMPLE_TOKEN(TYPE); }
+{UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE); }
+{VAR}                 { return SIMPLE_TOKEN(VAR); }
+{WHILE}               { return SIMPLE_TOKEN(WHILE); }
 
-{sized_type_literal} { return Carbon::Parser::make_sized_type_literal(yytext, context.current_token_position); }
+ /* More modern Bisons provide make_EOF. */
+<<EOF>>               { return SIMPLE_TOKEN(END_OF_FILE); }
 
-"=" return Carbon::Parser::make_EQUAL(context.current_token_position);
-"-" return Carbon::Parser::make_MINUS(context.current_token_position);
-"+" return Carbon::Parser::make_PLUS(context.current_token_position);
-"/" return Carbon::Parser::make_SLASH(context.current_token_position);
-"(" return Carbon::Parser::make_LEFT_PARENTHESIS(context.current_token_position);
-")" { BEGIN(AFTER_OPERAND); return Carbon::Parser::make_RIGHT_PARENTHESIS(context.current_token_position); }
-"{" return Carbon::Parser::make_LEFT_CURLY_BRACE(context.current_token_position);
-"}" { BEGIN(AFTER_OPERAND); return Carbon::Parser::make_RIGHT_CURLY_BRACE(context.current_token_position); }
-"[" return Carbon::Parser::make_LEFT_SQUARE_BRACKET(context.current_token_position);
-"]" { BEGIN(AFTER_OPERAND); return Carbon::Parser::make_RIGHT_SQUARE_BRACKET(context.current_token_position); }
-"." return Carbon::Parser::make_PERIOD(context.current_token_position);
-"," return Carbon::Parser::make_COMMA(context.current_token_position);
-";" return Carbon::Parser::make_SEMICOLON(context.current_token_position);
-":!" return Carbon::Parser::make_COLON_BANG(context.current_token_position);
-":" return Carbon::Parser::make_COLON(context.current_token_position);
+{RIGHT_PARENTHESIS} {
+  BEGIN(AFTER_OPERAND);
+  return SIMPLE_TOKEN(RIGHT_PARENTHESIS);
+}
+{RIGHT_CURLY_BRACE} {
+  BEGIN(AFTER_OPERAND);
+  return SIMPLE_TOKEN(RIGHT_CURLY_BRACE);
+}
+{RIGHT_SQUARE_BRACKET} {
+  BEGIN(AFTER_OPERAND);
+  return SIMPLE_TOKEN(RIGHT_SQUARE_BRACKET);
+}
 
  /*
-For a `*` operator, we look at whitespace and local context to determine the
-arity and fixity. There are two ways to write a binary operator:
+  * For a `*` operator, we look at whitespace and local context to determine the
+  * arity and fixity. There are two ways to write a binary operator:
+  *
+  * 1) Whitespace on both sides.
+  * 2) Whitespace on neither side, and the previous token is considered to be
+  *    the end of an operand, and the next token is considered to be the start
+  *    of an operand.
+  *
+  * Otherwise, the operator is unary, but we also check for whitespace to help
+  * the parser enforce the rule that whitespace is not permitted between the
+  * operator and its operand, leading to three more cases:
+  *
+  * 3) Whitespace before (but implicitly not after, because that would give a
+  *    longer match and hit case 1): this can only be a prefix operator.
+  * 4) Whitespace after and not before: this can only be a postfix operator.
+  * 5) No whitespace on either side (otherwise the longest match would take us
+  *    to case 4): this is a unary operator and could be either prefix or
+  *    postfix.
+  */
 
- 1) Whitespace on both sides.
- 2) Whitespace on neither side, and the previous token is considered to be
-    the end of an operand, and the next token is considered to be the start
-    of an operand.
-
-Otherwise, the operator is unary, but we also check for whitespace to help
-the parser enforce the rule that whitespace is not permitted between the
-operator and its operand, leading to three more cases:
-
- 3) Whitespace before (but implicitly not after, because that would give a
-    longer match and hit case 1): this can only be a prefix operator.
- 4) Whitespace after and not before: this can only be a postfix operator.
- 5) No whitespace on either side (otherwise the longest match would take us
-    to case 4): this is a unary operator and could be either prefix or
-    postfix.
-*/
-<AFTER_WHITESPACE>"*"{whitespace}+ /*case 1*/ {
+ /* `*` operator case 1: */
+<AFTER_WHITESPACE>"*"{whitespace}+ {
   BEGIN(AFTER_WHITESPACE);
-  return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
+  return SIMPLE_TOKEN(BINARY_STAR);
 }
-<AFTER_OPERAND>"*"/{operand_start} /*case 2*/ {
-  return Carbon::Parser::make_BINARY_STAR(context.current_token_position);
+ /* `*` operator case 2: */
+<AFTER_OPERAND>"*"/{operand_start} {
+  return SIMPLE_TOKEN(BINARY_STAR);
 }
-<AFTER_WHITESPACE>"*" /*case 3*/ {
-  return Carbon::Parser::make_PREFIX_STAR(context.current_token_position);
+ /* `*` operator case 3: */
+<AFTER_WHITESPACE>"*" {
+  return SIMPLE_TOKEN(PREFIX_STAR);
 }
-<INITIAL,AFTER_OPERAND>"*"{whitespace}+ /*case 4*/ {
+ /* `*` operator case 4: */
+<INITIAL,AFTER_OPERAND>"*"{whitespace}+ {
   BEGIN(AFTER_WHITESPACE);
-  return Carbon::Parser::make_POSTFIX_STAR(context.current_token_position);
+  return SIMPLE_TOKEN(POSTFIX_STAR);
 }
-<INITIAL,AFTER_OPERAND>"*" /*case 5*/ {
-  return Carbon::Parser::make_UNARY_STAR(context.current_token_position);
+ /* `*` operator case 5: */
+<INITIAL,AFTER_OPERAND>"*" {
+  return SIMPLE_TOKEN(UNARY_STAR);
+}
+
+{sized_type_literal} {
+  return ARG_TOKEN(sized_type_literal, yytext);
 }
 
 {identifier} {
   BEGIN(AFTER_OPERAND);
-  return Carbon::Parser::make_identifier(yytext, context.current_token_position);
+  return ARG_TOKEN(identifier, yytext);
 }
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
   int val;
   CHECK(llvm::to_integer(yytext, val));
-  return Carbon::Parser::make_integer_literal(val, context.current_token_position);
+  return ARG_TOKEN(integer_literal, val);
 }
 
 {string_literal} {
@@ -205,11 +247,10 @@ operator and its operand, leading to three more cases:
     FATAL_COMPILATION_ERROR(context.SourceLoc())
         << "Invalid escaping in string: " << yytext;
   }
-  return Carbon::Parser::make_string_literal(
-      *unescaped, context.current_token_position);
+  return ARG_TOKEN(string_literal, *unescaped);
 }
 
-{ONE_LINE_COMMENT} {
+{one_line_comment} {
   // Advance end by 1 line, resetting the column to zero.
   context.current_token_position.lines(1);
   // Make the span empty by setting start to end.
@@ -238,11 +279,6 @@ operator and its operand, leading to three more cases:
   }
   FATAL_COMPILATION_ERROR(context.SourceLoc()) << "invalid character '\\x"
             << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file.";
-}
-
-<<EOF>>    {
-  // A more modern Bison would give us make_EOF.
-  return Carbon::Parser::make_END_OF_FILE(context.current_token_position);
 }
 
 %%
