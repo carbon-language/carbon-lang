@@ -19,24 +19,24 @@ namespace Carbon {
 using TypeEnv = Dictionary<std::string, const Value*>;
 
 struct TCExpression {
-  TCExpression(const Expression* e, const Value* t, TypeEnv types)
+  TCExpression(Ptr<const Expression> e, const Value* t, TypeEnv types)
       : exp(e), type(t), types(types) {}
 
-  const Expression* exp;
+  Ptr<const Expression> exp;
   const Value* type;
   TypeEnv types;
 };
 
 struct TCPattern {
-  const Pattern* pattern;
+  Ptr<const Pattern> pattern;
   const Value* type;
   TypeEnv types;
 };
 
 struct TCStatement {
-  TCStatement(const Statement* s, TypeEnv types) : stmt(s), types(types) {}
+  TCStatement(Ptr<const Statement> s, TypeEnv types) : stmt(s), types(types) {}
 
-  const Statement* stmt;
+  Ptr<const Statement> stmt;
   TypeEnv types;
 };
 
@@ -47,12 +47,12 @@ struct TypeCheckContext {
   Env values;
 };
 
-auto TypeCheckExp(const Expression* e, TypeEnv types, Env values)
+auto TypeCheckExp(Ptr<const Expression> e, TypeEnv types, Env values)
     -> TCExpression;
-auto TypeCheckPattern(const Pattern* p, TypeEnv types, Env values,
+auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
                       const Value* expected) -> TCPattern;
 
-auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
+auto TypeCheckStmt(Ptr<const Statement> s, TypeEnv types, Env values,
                    const Value*& ret_type, bool is_omitted_ret_type)
     -> TCStatement;
 

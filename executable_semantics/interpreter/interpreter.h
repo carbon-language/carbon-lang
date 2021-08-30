@@ -39,12 +39,12 @@ void PrintEnv(Env values, llvm::raw_ostream& out);
 
 // Attempts to match `v` against the pattern `p`. If matching succeeds, returns
 // the bindings of pattern variables to their matched values.
-auto PatternMatch(const Value* p, const Value* v, int line_num)
+auto PatternMatch(const Value* p, const Value* v, SourceLocation loc)
     -> std::optional<Env>;
 
 auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int;
-auto InterpExp(Env values, const Expression* e) -> const Value*;
-auto InterpPattern(Env values, const Pattern* p) -> const Value*;
+auto InterpExp(Env values, Ptr<const Expression> e) -> const Value*;
+auto InterpPattern(Env values, Ptr<const Pattern> p) -> const Value*;
 
 }  // namespace Carbon
 

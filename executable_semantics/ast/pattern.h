@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/source_location.h"
 
 namespace Carbon {
 
@@ -39,7 +40,7 @@ class Pattern {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto LineNumber() const -> int { return line_num; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -48,17 +49,17 @@ class Pattern {
   // Constructs a Pattern representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
+  Pattern(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
 
  private:
   const Kind tag;
-  int line_num;
+  SourceLocation loc;
 };
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
-  explicit AutoPattern(int line_num) : Pattern(Kind::AutoPattern, line_num) {}
+  explicit AutoPattern(SourceLocation loc) : Pattern(Kind::AutoPattern, loc) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::AutoPattern;
@@ -69,11 +70,9 @@ class AutoPattern : public Pattern {
 // a name to it.
 class BindingPattern : public Pattern {
  public:
-  BindingPattern(int line_num, std::optional<std::string> name,
-                 const Pattern* type)
-      : Pattern(Kind::BindingPattern, line_num),
-        name(std::move(name)),
-        type(type) {}
+  BindingPattern(SourceLocation loc, std::optional<std::string> name,
+                 Ptr<const Pattern> type)
+      : Pattern(Kind::BindingPattern, loc), name(std::move(name)), type(type) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::BindingPattern;
@@ -83,11 +82,11 @@ class BindingPattern : public Pattern {
   auto Name() const -> const std::optional<std::string>& { return name; }
 
   // The pattern specifying the type of values that this pattern matches.
-  auto Type() const -> const Pattern* { return type; }
+  auto Type() const -> Ptr<const Pattern> { return type; }
 
  private:
   std::optional<std::string> name;
-  const Pattern* type;
+  Ptr<const Pattern> type;
 };
 
 // A pattern that matches a tuple value field-wise.
@@ -95,24 +94,24 @@ class TuplePattern : public Pattern {
  public:
   // Represents a portion of a tuple pattern corresponding to a single field.
   struct Field {
-    Field(std::string name, const Pattern* pattern)
+    Field(std::string name, Ptr<const Pattern> pattern)
         : name(std::move(name)), pattern(pattern) {}
 
     // The field name. Cannot be empty
     std::string name;
 
     // The pattern the field must match.
-    const Pattern* pattern;
+    Ptr<const Pattern> pattern;
   };
 
-  TuplePattern(int line_num, std::vector<Field> fields)
-      : Pattern(Kind::TuplePattern, line_num), fields(std::move(fields)) {}
+  TuplePattern(SourceLocation loc, std::vector<Field> fields)
+      : Pattern(Kind::TuplePattern, loc), fields(std::move(fields)) {}
 
   // Converts tuple_literal to a TuplePattern, by wrapping each field in an
   // ExpressionPattern.
   //
   // REQUIRES: tuple_literal->Tag() == Expression::Kind::TupleLiteral
-  explicit TuplePattern(const Expression* tuple_literal);
+  explicit TuplePattern(Ptr<const Expression> tuple_literal);
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::TuplePattern;
@@ -127,15 +126,15 @@ class TuplePattern : public Pattern {
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto PatternFromParenContents(int line_num,
+auto PatternFromParenContents(SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> const Pattern*;
+    -> Ptr<const Pattern>;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
-auto TuplePatternFromParenContents(int line_num,
+auto TuplePatternFromParenContents(SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> const TuplePattern*;
+    -> Ptr<const TuplePattern>;
 
 // Converts `contents` to ParenContents<Pattern> by replacing each Expression
 // with an ExpressionPattern.
@@ -148,51 +147,51 @@ class AlternativePattern : public Pattern {
   // Constructs an AlternativePattern that matches a value of the type
   // specified by choice_type if it represents an alternative named
   // alternative_name, and its arguments match `arguments`.
-  AlternativePattern(int line_num, const Expression* choice_type,
+  AlternativePattern(SourceLocation loc, Ptr<const Expression> choice_type,
                      std::string alternative_name,
-                     const TuplePattern* arguments)
-      : Pattern(Kind::AlternativePattern, line_num),
+                     Ptr<const TuplePattern> arguments)
+      : Pattern(Kind::AlternativePattern, loc),
         choice_type(choice_type),
         alternative_name(std::move(alternative_name)),
         arguments(arguments) {}
 
   // Constructs an AlternativePattern that matches the alternative specified
   // by `alternative`, if its arguments match `arguments`.
-  AlternativePattern(int line_num, const Expression* alternative,
-                     const TuplePattern* arguments);
+  AlternativePattern(SourceLocation loc, Ptr<const Expression> alternative,
+                     Ptr<const TuplePattern> arguments);
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::AlternativePattern;
   }
 
-  auto ChoiceType() const -> const Expression* { return choice_type; }
+  auto ChoiceType() const -> Ptr<const Expression> { return choice_type; }
   auto AlternativeName() const -> const std::string& {
     return alternative_name;
   }
-  auto Arguments() const -> const TuplePattern* { return arguments; }
+  auto Arguments() const -> Ptr<const TuplePattern> { return arguments; }
 
  private:
-  const Expression* choice_type;
+  Ptr<const Expression> choice_type;
   std::string alternative_name;
-  const TuplePattern* arguments;
+  Ptr<const TuplePattern> arguments;
 };
 
 // A pattern that matches a value if it is equal to the value of a given
 // expression.
 class ExpressionPattern : public Pattern {
  public:
-  ExpressionPattern(const Expression* expression)
-      : Pattern(Kind::ExpressionPattern, expression->LineNumber()),
+  ExpressionPattern(Ptr<const Expression> expression)
+      : Pattern(Kind::ExpressionPattern, expression->SourceLoc()),
         expression(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::ExpressionPattern;
   }
 
-  auto Expression() const -> const Expression* { return expression; }
+  auto Expression() const -> Ptr<const Expression> { return expression; }
 
  private:
-  const Carbon::Expression* expression;
+  Ptr<const Carbon::Expression> expression;
 };
 
 }  // namespace Carbon
