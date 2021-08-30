@@ -117,17 +117,17 @@ class PatternAction : public Action {
 
 class StatementAction : public Action {
  public:
-  explicit StatementAction(const Statement* stmt)
+  explicit StatementAction(Ptr<const Statement> stmt)
       : Action(Kind::StatementAction), stmt(stmt) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::StatementAction;
   }
 
-  auto Stmt() const -> const Statement* { return stmt; }
+  auto Stmt() const -> Ptr<const Statement> { return stmt; }
 
  private:
-  const Statement* stmt;
+  Ptr<const Statement> stmt;
 };
 
 }  // namespace Carbon
