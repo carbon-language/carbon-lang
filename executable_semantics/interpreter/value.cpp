@@ -399,8 +399,14 @@ auto ValueEqual(const Value* v1, const Value* v2, SourceLocation loc) -> bool {
       return cast<BoolValue>(*v1).Val() == cast<BoolValue>(*v2).Val();
     case Value::Kind::PointerValue:
       return cast<PointerValue>(*v1).Val() == cast<PointerValue>(*v2).Val();
-    case Value::Kind::FunctionValue:
-      return cast<FunctionValue>(*v1).Body() == cast<FunctionValue>(*v2).Body();
+    case Value::Kind::FunctionValue: {
+      std::optional<Ptr<const Statement>> body1 =
+          cast<FunctionValue>(*v1).Body();
+      std::optional<Ptr<const Statement>> body2 =
+          cast<FunctionValue>(*v2).Body();
+      return body1.has_value() == body2.has_value() &&
+             (!body1.has_value() || *body1 == *body2);
+    }
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
                               cast<TupleValue>(*v2).Elements(), loc);

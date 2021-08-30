@@ -22,11 +22,11 @@ static void AddIntrinsics(std::list<Ptr<const Declaration>>* fs) {
                loc, "format_str",
                global_arena->New<ExpressionPattern>(
                    global_arena->New<StringTypeLiteral>(loc))))};
-  auto* print_return = global_arena->RawNew<Return>(
-      loc,
-      global_arena->New<IntrinsicExpression>(
-          IntrinsicExpression::IntrinsicKind::Print),
-      false);
+  auto print_return =
+      global_arena->New<Return>(loc,
+                                global_arena->New<IntrinsicExpression>(
+                                    IntrinsicExpression::IntrinsicKind::Print),
+                                false);
   auto print = global_arena->New<FunctionDeclaration>(
       global_arena->New<FunctionDefinition>(
           loc, "Print", std::vector<GenericBinding>(),

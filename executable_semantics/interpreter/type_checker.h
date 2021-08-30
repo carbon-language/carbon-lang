@@ -50,18 +50,38 @@ class TypeChecker {
   };
 
   struct TCStatement {
-    TCStatement(const Statement* s, TypeEnv types) : stmt(s), types(types) {}
+    TCStatement(Ptr<const Statement> s, TypeEnv types)
+        : stmt(s), types(types) {}
 
-    const Statement* stmt;
+    Ptr<const Statement> stmt;
     TypeEnv types;
   };
 
+  // TypeCheckExp performs semantic analysis on an expression.  It returns a new
+  // version of the expression, its type, and an updated environment which are
+  // bundled into a TCResult object.  The purpose of the updated environment is
+  // to bring pattern variables into scope, for example, in a match case.  The
+  // new version of the expression may include more information, for example,
+  // the type arguments deduced for the type parameters of a generic.
+  //
+  // e is the expression to be analyzed.
+  // types maps variable names to the type of their run-time value.
+  // values maps variable names to their compile-time values. It is not
+  //    directly used in this function but is passed to InterExp.
   auto TypeCheckExp(Ptr<const Expression> e, TypeEnv types, Env values)
       -> TCExpression;
+
   auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
                         const Value* expected) -> TCPattern;
 
-  auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
+  // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
+  // version of the statement and a new type environment.
+  //
+  // The ret_type parameter is used for analyzing return statements.  It is the
+  // declared return type of the enclosing function definition.  If the return
+  // type is "auto", then the return type is inferred from the first return
+  // statement.
+  auto TypeCheckStmt(Ptr<const Statement> s, TypeEnv types, Env values,
                      const Value*& ret_type, bool is_omitted_ret_type)
       -> TCStatement;
 
@@ -69,9 +89,9 @@ class TypeChecker {
       -> Ptr<const FunctionDefinition>;
 
   auto TypeCheckCase(const Value* expected, Ptr<const Pattern> pat,
-                     const Statement* body, TypeEnv types, Env values,
+                     Ptr<const Statement> body, TypeEnv types, Env values,
                      const Value*& ret_type, bool is_omitted_ret_type)
-      -> std::pair<Ptr<const Pattern>, const Statement*>;
+      -> std::pair<Ptr<const Pattern>, Ptr<const Statement>>;
 
   auto TypeOfFunDef(TypeEnv types, Env values,
                     const FunctionDefinition* fun_def) -> const Value*;

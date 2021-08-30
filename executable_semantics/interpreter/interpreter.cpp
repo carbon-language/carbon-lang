@@ -739,8 +739,7 @@ static auto IsBlockAct(Ptr<Action> act) -> bool {
 auto Interpreter::StepStmt() -> Transition {
   Ptr<Frame> frame = stack.Top();
   Ptr<Action> act = frame->todo.Top();
-  const Statement* stmt = cast<StatementAction>(*act).Stmt();
-  CHECK(stmt != nullptr) << "null statement!";
+  Ptr<const Statement> stmt = cast<StatementAction>(*act).Stmt();
   if (tracing_output) {
     llvm::outs() << "--- step stmt ";
     stmt->PrintDepth(1, llvm::outs());
@@ -788,9 +787,8 @@ auto Interpreter::StepStmt() -> Transition {
               vars.push_back(name);
             }
             frame->scopes.Push(global_arena->New<Scope>(values, vars));
-            const Statement* body_block =
-                global_arena->RawNew<Block>(stmt->SourceLoc(), c->second);
-            auto body_act = global_arena->New<StatementAction>(body_block);
+            auto body_act = global_arena->New<StatementAction>(
+                global_arena->New<Block>(stmt->SourceLoc(), c->second));
             body_act->IncrementPos();
             frame->todo.Pop(1);
             frame->todo.Push(body_act);
@@ -852,9 +850,9 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Block: {
       if (act->Pos() == 0) {
         const Block& block = cast<Block>(*stmt);
-        if (block.Stmt() != nullptr) {
+        if (block.Stmt()) {
           frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
-          return Spawn{global_arena->New<StatementAction>(block.Stmt())};
+          return Spawn{global_arena->New<StatementAction>(*block.Stmt())};
         } else {
           return Done{};
         }
@@ -934,7 +932,7 @@ auto Interpreter::StepStmt() -> Transition {
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
         return Delegate{
-            global_arena->New<StatementAction>(cast<If>(*stmt).ElseStmt())};
+            global_arena->New<StatementAction>(*cast<If>(*stmt).ElseStmt())};
       } else {
         return Done{};
       }
@@ -957,9 +955,9 @@ auto Interpreter::StepStmt() -> Transition {
       if (act->Pos() == 0) {
         return Spawn{global_arena->New<StatementAction>(seq.Stmt())};
       } else {
-        if (seq.Next() != nullptr) {
-          return Delegate{
-              global_arena->New<StatementAction>(cast<Sequence>(*stmt).Next())};
+        if (seq.Next()) {
+          return Delegate{global_arena->New<StatementAction>(
+              *cast<Sequence>(*stmt).Next())};
         } else {
           return Done{};
         }
@@ -972,7 +970,7 @@ auto Interpreter::StepStmt() -> Transition {
       auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(CurrentEnv()));
       Stack<Ptr<Action>> todo;
       todo.Push(global_arena->New<StatementAction>(
-          global_arena->RawNew<Return>(stmt->SourceLoc())));
+          global_arena->New<Return>(stmt->SourceLoc())));
       todo.Push(
           global_arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
       auto continuation_frame =
@@ -1000,7 +998,7 @@ auto Interpreter::StepStmt() -> Transition {
         // Push an expression statement action to ignore the result
         // value from the continuation.
         auto ignore_result = global_arena->New<StatementAction>(
-            global_arena->RawNew<ExpressionStatement>(
+            global_arena->New<ExpressionStatement>(
                 stmt->SourceLoc(),
                 global_arena->New<TupleLiteral>(stmt->SourceLoc())));
         frame->todo.Push(ignore_result);
@@ -1068,8 +1066,7 @@ class Interpreter::DoTransition {
 
   void operator()(const UnwindTo& unwind_to) {
     Ptr<Frame> frame = interpreter->stack.Top();
-    // TODO: drop .Get() calls once `Ptr` has comparison operators
-    while (frame->todo.Top().Get() != unwind_to.new_top.Get()) {
+    while (frame->todo.Top() != unwind_to.new_top) {
       if (IsBlockAct(frame->todo.Top())) {
         interpreter->DeallocateScope(frame->scopes.Top());
         frame->scopes.Pop();
@@ -1102,8 +1099,9 @@ class Interpreter::DoTransition {
       params.push_back(name);
     }
     auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(values, params));
+    CHECK(call.function->Body()) << "Calling a function that's missing a body";
     auto todo = Stack<Ptr<Action>>(
-        global_arena->New<StatementAction>(call.function->Body()));
+        global_arena->New<StatementAction>(*call.function->Body()));
     auto frame = global_arena->New<Frame>(call.function->Name(), scopes, todo);
     interpreter->stack.Push(frame);
   }
