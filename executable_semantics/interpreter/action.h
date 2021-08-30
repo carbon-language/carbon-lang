@@ -40,7 +40,7 @@ class Action {
   // Results from a subexpression.
   auto Results() const -> const std::vector<const Value*>& { return results; }
 
-  void IncrementPos() { ++pos; }
+  void SetPos(int pos) { this->pos = pos; }
 
   void AddResult(const Value* result) { results.push_back(result); }
 
