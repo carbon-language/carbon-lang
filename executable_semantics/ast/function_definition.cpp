@@ -27,7 +27,7 @@ void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
   }
   if (body) {
     out << " {\n";
-    body->PrintDepth(depth, out);
+    (*body)->PrintDepth(depth, out);
     out << "\n}\n";
   } else {
     out << ";\n";

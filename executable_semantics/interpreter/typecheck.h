@@ -34,9 +34,9 @@ struct TCPattern {
 };
 
 struct TCStatement {
-  TCStatement(const Statement* s, TypeEnv types) : stmt(s), types(types) {}
+  TCStatement(Ptr<const Statement> s, TypeEnv types) : stmt(s), types(types) {}
 
-  const Statement* stmt;
+  Ptr<const Statement> stmt;
   TypeEnv types;
 };
 
@@ -52,7 +52,7 @@ auto TypeCheckExp(Ptr<const Expression> e, TypeEnv types, Env values)
 auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
                       const Value* expected) -> TCPattern;
 
-auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
+auto TypeCheckStmt(Ptr<const Statement> s, TypeEnv types, Env values,
                    const Value*& ret_type, bool is_omitted_ret_type)
     -> TCStatement;
 

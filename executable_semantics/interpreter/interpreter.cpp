@@ -812,8 +812,7 @@ auto IsBlockAct(Ptr<Action> act) -> bool {
 Transition StepStmt() {
   Ptr<Frame> frame = state->stack.Top();
   Ptr<Action> act = frame->todo.Top();
-  const Statement* stmt = cast<StatementAction>(*act).Stmt();
-  CHECK(stmt != nullptr) << "null statement!";
+  Ptr<const Statement> stmt = cast<StatementAction>(*act).Stmt();
   if (tracing_output) {
     llvm::outs() << "--- step stmt ";
     stmt->PrintDepth(1, llvm::outs());
@@ -861,9 +860,8 @@ Transition StepStmt() {
               vars.push_back(name);
             }
             frame->scopes.Push(global_arena->New<Scope>(values, vars));
-            const Statement* body_block =
-                global_arena->RawNew<Block>(stmt->SourceLoc(), c->second);
-            auto body_act = global_arena->New<StatementAction>(body_block);
+            auto body_act = global_arena->New<StatementAction>(
+                global_arena->New<Block>(stmt->SourceLoc(), c->second));
             body_act->IncrementPos();
             frame->todo.Pop(1);
             frame->todo.Push(body_act);
@@ -925,9 +923,9 @@ Transition StepStmt() {
     case Statement::Kind::Block: {
       if (act->Pos() == 0) {
         const Block& block = cast<Block>(*stmt);
-        if (block.Stmt() != nullptr) {
+        if (block.Stmt()) {
           frame->scopes.Push(global_arena->New<Scope>(CurrentEnv(state)));
-          return Spawn{global_arena->New<StatementAction>(block.Stmt())};
+          return Spawn{global_arena->New<StatementAction>(*block.Stmt())};
         } else {
           return Done{};
         }
@@ -1007,7 +1005,7 @@ Transition StepStmt() {
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
         return Delegate{
-            global_arena->New<StatementAction>(cast<If>(*stmt).ElseStmt())};
+            global_arena->New<StatementAction>(*cast<If>(*stmt).ElseStmt())};
       } else {
         return Done{};
       }
@@ -1030,9 +1028,9 @@ Transition StepStmt() {
       if (act->Pos() == 0) {
         return Spawn{global_arena->New<StatementAction>(seq.Stmt())};
       } else {
-        if (seq.Next() != nullptr) {
-          return Delegate{
-              global_arena->New<StatementAction>(cast<Sequence>(*stmt).Next())};
+        if (seq.Next()) {
+          return Delegate{global_arena->New<StatementAction>(
+              *cast<Sequence>(*stmt).Next())};
         } else {
           return Done{};
         }
@@ -1046,7 +1044,7 @@ Transition StepStmt() {
           Stack<Ptr<Scope>>(global_arena->New<Scope>(CurrentEnv(state)));
       Stack<Ptr<Action>> todo;
       todo.Push(global_arena->New<StatementAction>(
-          global_arena->RawNew<Return>(stmt->SourceLoc())));
+          global_arena->New<Return>(stmt->SourceLoc())));
       todo.Push(
           global_arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
       auto continuation_frame =
@@ -1074,7 +1072,7 @@ Transition StepStmt() {
         // Push an expression statement action to ignore the result
         // value from the continuation.
         auto ignore_result = global_arena->New<StatementAction>(
-            global_arena->RawNew<ExpressionStatement>(
+            global_arena->New<ExpressionStatement>(
                 stmt->SourceLoc(),
                 global_arena->New<TupleLiteral>(stmt->SourceLoc())));
         frame->todo.Push(ignore_result);
@@ -1172,8 +1170,9 @@ struct DoTransition {
       params.push_back(name);
     }
     auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(values, params));
+    CHECK(call.function->Body()) << "Calling a function that's missing a body";
     auto todo = Stack<Ptr<Action>>(
-        global_arena->New<StatementAction>(call.function->Body()));
+        global_arena->New<StatementAction>(*call.function->Body()));
     auto frame = global_arena->New<Frame>(call.function->Name(), scopes, todo);
     state->stack.Push(frame);
   }
