@@ -44,7 +44,7 @@ cc_library(
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
-        "//executable_semantics/interpreter:typecheck",
+        "//executable_semantics/interpreter:type_checker",
     ],
 )
 
