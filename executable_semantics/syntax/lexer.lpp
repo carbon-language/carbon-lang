@@ -79,11 +79,13 @@ WHILE                "while"
 identifier            [A-Za-z_][A-Za-z0-9_]*
 sized_type_literal    [iuf][1-9][0-9]*
 integer_literal       [0-9]+
-string_literal        \"([^\\\"\n\t]|\\.)*\"
 horizontal_whitespace [ \t\r]
 whitespace            [ \t\r\n]
 one_line_comment      \/\/[^\n]*\n
 operand_start         [(A-Za-z0-9_"]
+
+/* Single-line string literals should reject vertical whitespace. */
+string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 %{
   // This macro is expanded immediately before each action specified below.
