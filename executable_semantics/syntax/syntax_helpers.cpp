@@ -16,22 +16,23 @@ namespace Carbon {
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
 static void AddIntrinsics(std::list<Ptr<const Declaration>>* fs) {
+  SourceLocation loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
-      "0", global_arena->RawNew<BindingPattern>(
-               -1, "format_str",
-               global_arena->RawNew<ExpressionPattern>(
-                   global_arena->RawNew<StringTypeLiteral>(-1))))};
+      "0", global_arena->New<BindingPattern>(
+               loc, "format_str",
+               global_arena->New<ExpressionPattern>(
+                   global_arena->New<StringTypeLiteral>(loc))))};
   auto* print_return = global_arena->RawNew<Return>(
-      -1,
-      global_arena->RawNew<IntrinsicExpression>(
+      loc,
+      global_arena->New<IntrinsicExpression>(
           IntrinsicExpression::IntrinsicKind::Print),
       false);
   auto print = global_arena->New<FunctionDeclaration>(
-      global_arena->RawNew<FunctionDefinition>(
-          -1, "Print", std::vector<GenericBinding>(),
-          global_arena->RawNew<TuplePattern>(-1, print_fields),
-          global_arena->RawNew<ExpressionPattern>(
-              global_arena->RawNew<TupleLiteral>(-1)),
+      global_arena->New<FunctionDefinition>(
+          loc, "Print", std::vector<GenericBinding>(),
+          global_arena->New<TuplePattern>(loc, print_fields),
+          global_arena->New<ExpressionPattern>(
+              global_arena->New<TupleLiteral>(loc)),
           /*is_omitted_return_type=*/false, print_return));
   fs->insert(fs->begin(), print);
 }

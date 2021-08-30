@@ -4,8 +4,6 @@
 
 # Rules are adapted from CMakeLists.txt.
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-
 package(
     default_visibility = ["//visibility:public"],
 )

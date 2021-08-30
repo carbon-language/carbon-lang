@@ -30,18 +30,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Type expression](#type-expression)
     -   [Assignment and initialization](#assignment-and-initialization)
     -   [Operations performed field-wise](#operations-performed-field-wise)
--   [Future work](#future-work)
-    -   [Nominal class types](#nominal-class-types)
-    -   [Construction](#construction)
-    -   [Member type](#member-type)
+-   [Nominal class types](#nominal-class-types)
+    -   [Forward declaration](#forward-declaration)
     -   [Self](#self)
+    -   [Construction](#construction)
+        -   [Assignment](#assignment)
+    -   [Member functions](#member-functions)
+        -   [Class functions](#class-functions)
+        -   [Methods](#methods)
+        -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
+    -   [Nominal data classes](#nominal-data-classes)
+    -   [Member type](#member-type)
     -   [Let](#let)
-    -   [Methods](#methods)
+    -   [Alias](#alias)
+    -   [Private access](#private-access)
+-   [Future work](#future-work)
+    -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
         -   [Field defaults for struct types](#field-defaults-for-struct-types)
         -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
         -   [Discussion](#discussion)
-    -   [Access control](#access-control)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
     -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
@@ -75,8 +83,9 @@ class variables.
 The use cases for classes include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
-**This design currently only attempts to address the "data classes" use case.**
-Addressing the other use cases is future work.
+**This design currently only attempts to address the "data classes" and
+"encapsulated types without inheritance" use cases.** Addressing the other use
+cases is future work.
 
 ### Data classes
 
@@ -130,8 +139,7 @@ We expect two kinds of methods on these types: public methods defining the API
 for accessing and manipulating values of the type, and private helper methods
 used as an implementation detail of the public methods.
 
-These types are expected in idiomatic Carbon-only code. Extending this design to
-support these types is future work.
+These types are expected in idiomatic Carbon-only code.
 
 #### With inheritance and subtyping
 
@@ -509,8 +517,7 @@ but we expect later to support more ways to define data class types. Also note
 that there is no `struct` keyword, "struct" is just convenient shorthand
 terminology for a structural data class.
 
-**Future work:** We intend to support nominal [data classes](#data-classes) as
-well.
+[Nominal data classes](#nominal-data-classes) are also supported by Carbon.
 
 ### Literals
 
@@ -635,68 +642,67 @@ Destruction is performed field-wise in reverse order.
 Extending user-defined operations on the fields to an operation on an entire
 data class is [future work](#interfaces-implemented-for-data-classes).
 
-## Future work
+## Nominal class types
 
-This includes features that need to be designed, questions to answer, and a
-description of the provisional syntax in use until these decisions have been
-made.
+The declarations for nominal class types will have:
 
-### Nominal class types
+-   `class` introducer
+-   the name of the class
+-   in the future, we will have optional modifiers for inheritance
+-   `{`, an open curly brace
+-   a sequence of declarations
+-   `}`, a close curly brace
 
-The declarations for nominal class types will have a different format.
-Provisionally we have been using something like this:
+Declarations should generally match declarations that can be declared in other
+contexts, for example variable declarations with `var` will define
+[instance variables](https://en.wikipedia.org/wiki/Instance_variable):
 
 ```
 class TextLabel {
-  var x: Int;
-  var y: Int;
+  var x: i32;
+  var y: i32;
 
-  var text: String;
+  var text: String = "default";
 }
 ```
 
-It is an open question, though, how we will address the
-[different use cases](#use-cases). For example, we might mark
-[data classes](#data-classes) with an `impl as Data {}` line.
+The main difference here is that `"default"` is a default instead of an
+initializer, and will be ignored if another value is supplied for that field
+when constructing a value. Defaults must be constants whose value can be
+determined at compile time.
 
-### Construction
+### Forward declaration
 
-There are a variety of options for constructing class values, we might choose to
-support, including initializing from struct values:
-
-```
-var p1: Point2D = {.x = 1, .y = 2};
-var p2: auto = {.x = 1, .y = 2} as Point2D;
-var p3: auto = Point2D{.x = 1, .y = 2};
-var p4: auto = Point2D(1, 2);
-```
-
-### Member type
-
-Additional types may be defined in the scope of a class definition.
+To support circular references between class types, we allow
+[forward declaration](https://en.wikipedia.org/wiki/Forward_declaration) of
+types. A type that is forward declared is considered incomplete until the end of
+a definition with the same name.
 
 ```
-class StringCounts {
-  class Node {
-    var key: String;
-    var count: Int;
-  }
-  var counts: Vector(Node);
+class GraphNode;
+
+class GraphEdge {
+  var head: GraphNode*;
+  var tail: GraphNode*;
+}
+
+class GraphNode {
+  var edges: Vector(GraphEdge*);
 }
 ```
 
-The inner type is a member of the type, and is given the name
-`StringCounts.Node`.
+**Open question:** What is specifically allowed and forbidden with an incomplete
+type has not yet been decided.
 
 ### Self
 
 A `class` definition may provisionally include references to its own name in
-limited ways, similar to an incomplete type. What is allowed and forbidden is an
-open question.
+limited ways. These limitations arise from the type not being complete until the
+end of its definition is reached.
 
 ```
 class IntListNode {
-  var data: Int;
+  var data: i32;
   var next: IntListNode*;
 }
 ```
@@ -706,7 +712,7 @@ current type, is:
 
 ```
 class IntListNode {
-  var data: Int;
+  var data: i32;
   var next: Self*;
 }
 ```
@@ -716,48 +722,388 @@ class IntListNode {
 ```
 class IntList {
   class IntListNode {
-    var data: Int;
+    var data: i32;
     var next: Self*;
   }
   var first: IntListNode*;
 }
 ```
 
-### Let
+### Construction
 
-Other type constants can provisionally be defined using a `let` declaration:
+Any function with access to all the data fields of a class can construct one by
+converting a [struct value](#struct-types) to the class type:
 
 ```
-class MyClass {
-  let Pi: Float32 = 3.141592653589793;
-  let IndexType: Type = Int;
+var tl1: TextLabel = {.x = 1, .y = 2};
+var tl2: auto = {.x = 1, .y = 2} as TextLabel;
+
+Assert(tl1.x == tl2.x);
+
+fn ReturnsATextLabel() -> TextLabel {
+  return {.x = 1, .y = 2};
+}
+var tl3: TextLabel = ReturnsATextLabel();
+
+fn AcceptsATextLabel(tl: TextLabel) -> i32 {
+  return tl.x + tl.y;
+}
+Assert(AcceptsATextLabel({.x = 2, .y = 4}) == 6);
+```
+
+Note that a nominal class, unlike a [struct type](#type-expression), can define
+default values for fields, and so may be initialized with a
+[struct value](#literals) that omits some or all of those fields.
+
+#### Assignment
+
+Assignment to a struct value is also allowed in a function with access to all
+the data fields of a class. Assignment always overwrites all of the field
+members.
+
+```
+var tl: TextLabel = {.x = 1, .y = 2};
+Assert(tl.text == "default");
+
+// ✅ Allowed: assigns all fields
+tl = {.x = 3, .y = 4, .text = "new"};
+
+// ✅ Allowed: This statement is evaluated in two steps:
+// 1. {.x = 5, .y = 6} is converted into a new TextLabel value,
+//    using default for field `text`.
+// 2. tl is assigned to a TextLabel, which has values for all
+//    fields.
+tl = {.x = 5, .y = 6};
+Assert(tl.text == "default");
+```
+
+**Open question:** This behavior might be surprising because there is an
+ambiguity about whether to use the default value or the previous value for a
+field. We could require all fields to be specified when assigning, and only use
+field defaults when initializing a new value.
+
+```
+// ❌ Forbidden: should tl.text == "default" or "new"?
+tl = {.x = 5, .y = 6};
+```
+
+### Member functions
+
+Member functions can either be class functions or methods. Class functions are
+members of the type, while methods can only be called on instances.
+
+#### Class functions
+
+A class function is like a
+[C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+and is declared like a function at file scope. The declaration can include a
+definition of the function body, or that definition can be provided out of line
+after the class definition is finished. A common use is for constructor
+functions.
+
+```
+class Point {
+  fn Origin() -> Self {
+    return {.x = 0, .y = 0};
+  }
+  fn CreateCentered() -> Self;
+
+  var x: i32;
+  var y: i32;
+}
+
+fn Point.CreateCentered() -> Self {
+  return {.x = ScreenWidth() / 2, .y = ScreenHeight() / 2};
 }
 ```
 
-There are definite questions about this syntax:
+Class functions are members of the type, and may be accessed as using dot `.`
+member access either the type or any instance.
 
--   Should these use the `:!` generic syntax decided in
-    [issue #565](https://github.com/carbon-language/carbon-lang/issues/565)?
--   Would we also have `alias` declarations? They would only be used for names,
-    not other constant values.
+```
+var p1: Point = Point.Origin();
+var p2: Point = p1.CreateCentered();
+```
 
-### Methods
+#### Methods
 
-A future proposal will incorporate
-[method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
-declaration, definition, and calling into classes. The syntax for declaring
-methods has been decided in
-[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
-Summarizing that issue:
+[Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
+declarations are distinguished from [class function](#class-functions)
+declarations by having a `me` parameter in square brackets `[`...`]` before the
+explicit parameter list in parens `(`...`)`. There is no implicit member access
+in methods, so inside the method body members are accessed through the `me`
+parameter. Methods may be written lexically inline or after the class
+declaration.
 
--   Accessors are written: `fn Diameter[me: Self]() -> Float { ... }`
--   Mutators are written: `fn Expand[addr me: Self*](distance: Float) { ... }`
--   Associated functions that don't take a receiver at all, like
-    [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
-    are written: `fn Create() -> Self { ... }`
+```carbon
+class Circle {
+  fn Diameter[me: Self]() -> f32 {
+    return me.radius * 2;
+  }
+  fn Expand[addr me: Self*](distance: f32);
 
-We do not expect to have implicit member access in methods, so inside the method
-body members will be accessed through the `me` parameter.
+  var center: Point;
+  var radius: f32;
+}
+
+fn Circle.Expand[addr me: Self*](distance: f32) {
+  me->radius += distance;
+}
+
+var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
+Assert(Math.Abs(c.Diameter() - 3.0) < 0.001);
+c.Expand(0.5);
+Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
+```
+
+-   Methods are called using using the dot `.` member syntax, `c.Diameter()` and
+    `c.Expand(`...`)`.
+-   `Diameter` computes and returns the diameter of the circle without modifying
+    the `Circle` instance. This is signified using `[me: Self]` in the method
+    declaration.
+-   `c.Expand(`...`)` does modify the value of `c`. This is signified using
+    `[addr me: Self*]` in the method declaration.
+
+The pattern '`addr` _patt_' means "first take the address of the argument, which
+must be an
+[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
+then match pattern _patt_ against it".
+
+If the method declaration also includes
+[deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
+the `me` parameter must be in the same list in square brackets `[`...`]`. The
+`me` parameter may appear in any position in that list, as long as it appears
+after any names needed to describe its type.
+
+#### Name lookup in member function definitions
+
+When defining a member function lexically inline, we delay type checking of the
+function body until the definition of the current type is complete. This means
+that name lookup _for members of objects_ is also delayed. That means that you
+can reference `me.F()` in a lexically inline method definition even before the
+declaration of `F` in that class definition. However, other names still need to
+be declared before they are used. This includes unqualified names, names within
+namespaces, and names _for members of types_.
+
+```
+class Point {
+  fn Distance[me: Self]() -> f32 {
+    // ✅ Allowed: `x` and `y` are names for members of an object,
+    // and so lookup is delayed until `type_of(me) == Self` is complete.
+    return Math.Sqrt(me.x * me.x + me.y * me.y);
+  }
+
+  fn CreatePolarInvalid(r: f32, theta: f32) -> Point {
+    // ❌ Forbidden: unqualified name used before declaration.
+    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  }
+  fn CreatePolarValid1(r: f32, theta: f32) -> Point {
+    // ❌ Forbidden: `Create` is not yet declared.
+    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  }
+  fn CreatePolarValid2(r: f32, theta: f32) -> Point {
+    // ❌ Forbidden: `Create` is not yet declared.
+    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  }
+
+  fn Create(x: f32, y: f32) -> Point {
+    // ✅ Allowed: checking that conversion of `{.x: f32, .y: f32}`
+    // to `Point` is delayed until `Point` is complete.
+    return {.x = x, .y = y};
+  }
+
+  fn CreateXEqualsY(xy: f32) -> Point {
+    // ✅ Allowed: `Create` is declared earlier.
+    return Create(xy, xy);
+  }
+
+  fn CreateXAxis(x: f32) -> Point;
+
+  fn Angle[me: Self]() -> f32;
+
+  var x: f32;
+  var y: f32;
+}
+
+fn Point.CreateXAxis(x: f32) -> Point;
+  // ✅ Allowed: `Point` type is complete.
+  // Members of `Point` like `Create` are in scope.
+  return Create(x, 0);
+}
+
+fn Point.Angle[me: Self]() -> f32 {
+  // ✅ Allowed: `Point` type is complete.
+  // Function is checked immediately.
+  return Math.ATan2(me.y, me.x);
+}
+```
+
+**Note:** The details of name lookup are still being decided in issue
+[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472).
+
+### Nominal data classes
+
+We will mark [data classes](#data-classes) with an `impl as Data {}` line.
+
+```
+class TextLabel {
+  var x: i32;
+  var y: i32;
+
+  var text: String;
+
+  // This line makes `TextLabel` a data class, which defines
+  // a number of operations field-wise.
+  impl as Data {}
+}
+```
+
+The fields of data classes must all be public. That line will add
+[field-wise implementations and operations of all interfaces that a struct with the same fields would get by default](#operations-performed-field-wise).
+
+The word `Data` here refers to an empty interface in the Carbon prologue. That
+interface would then be part of our
+[strategy for defining how other interfaces are implemented for data classes](#interfaces-implemented-for-data-classes).
+
+**References:** Rationale for this approach is given in proposal
+[#722](/proposals/p0722.md#nominal-data-class).
+
+### Member type
+
+Additional types may be defined in the scope of a class definition.
+
+```
+class StringCounts {
+  class Node {
+    var key: String;
+    var count: i32;
+  }
+  var counts: Vector(Node);
+}
+```
+
+The inner type is a member of the type, and is given the name
+`StringCounts.Node`. This case is called a _member class_ since the type is a
+class, but other kinds of type declarations, like choice types, are allowed.
+
+### Let
+
+Other type constants can be defined using a `let` declaration:
+
+```
+class MyClass {
+  let Pi:! f32 = 3.141592653589793;
+  let IndexType:! Type = i32;
+}
+```
+
+The `:!` indicates that this is defining a compile-time constant, and so does
+not affect the storage of instances of that class.
+
+### Alias
+
+You may declare aliases of the names of class members. This is to allow them to
+be renamed in multiple steps or support alternate names.
+
+```
+class StringPair {
+  var key: String;
+  var value: String;
+  alias first = key;
+  alias second = value;
+}
+
+var sp1: StringPair = {.key = "K", .value = "1"};
+var sp2: StringPair = {.first = "K", .second = "2"};
+Assert(sp1.first == sp2.key);
+Assert(&sp1.first == &sp1.key);
+```
+
+**Future work:** This needs to be connected to the broader design of aliases,
+once that lands.
+
+### Private access
+
+By default, all members of a class are fully publicly accessible. Access can be
+restricted by adding a keyword, called an
+[access modifier](https://en.wikipedia.org/wiki/Access_modifiers), prior to the
+declaration. Access modifiers are how Carbon supports
+[encapsulation](#encapsulated-types).
+
+```carbon
+class Point {
+  fn Distance[me: Self]() -> f32;
+  // These are only accessible to members of `Point`.
+  private var x: f32;
+  private var y: f32;
+}
+```
+
+As in C++, `private` means only accessible to members of the class.
+
+**Future work:** We will add support for `protected` access when inheritance is
+added to this design. We will also define a convenient way for tests that belong
+to the same library to get access to private members.
+
+**Future work:** `private` will give the member internal linkage unless it needs
+to be external because it is used in an inline method or template. We may in the
+future
+[add a way to specify internal linkage explicitly](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier).
+
+**Open questions:** Using `private` to mean "restricted to this class" matches
+C++. Other languages support restricting to different scopes:
+
+-   Swift supports "restrict to this module" and "restrict to this file".
+-   Rust supports "restrict to this module and any children of this module", as
+    well as "restrict to this crate", "restrict to parent module", and "restrict
+    to a specific ancestor module".
+
+**Comparison to other languages:** C++, Rust, and Swift all make class members
+private by default. C++ offers the `struct` keyword that makes members public by
+default.
+
+**Rationale:** Carbon makes members public by default for a few reasons:
+
+-   The readability of public members is the most important, since we expect
+    most readers to be concerned with the public API of a type.
+-   The members that are most commonly private are the data fields, which have
+    relatively less complicated definitions that suffer less from the extra
+    annotation.
+
+Additionally, there is precedent for this approach in modern object-oriented
+languages such as
+[Kotlin](https://kotlinlang.org/docs/visibility-modifiers.html) and
+[Python](https://docs.python.org/3/tutorial/classes.html), both of which are
+well regarded for their usability.
+
+Keywords controlling visibility are attached to individual declarations instead
+of C++'s approach of labels controlling the visibility for all following
+declarations to
+[reduce context sensitivity](/docs/project/principles/low_context_sensitivity.md).
+This matches
+[Rust](https://doc.rust-lang.org/reference/visibility-and-privacy.html),
+[Swift](https://docs.swift.org/swift-book/LanguageGuide/AccessControl.html),
+[Java](http://rosettacode.org/wiki/Classes#Java),
+[C#](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/access-modifiers),
+[Kotlin](https://kotlinlang.org/docs/visibility-modifiers.html#classes-and-interfaces),
+and [D](https://wiki.dlang.org/Access_specifiers_and_visibility).
+
+**References:** Proposal
+[#561: Basic classes](https://github.com/carbon-language/carbon-lang/pull/561)
+included the decision that
+[members default to publicly accessible](/proposals/p0561.md#access-control)
+originally asked in issue
+[#665](https://github.com/carbon-language/carbon-lang/issues/665).
+
+## Future work
+
+This includes features that need to be designed, questions to answer, and a
+description of the provisional syntax in use until these decisions have been
+made.
+
+### Struct literal shortcut
+
+We could allow you to write `{x, y}` as a short hand for `{.x = x, .y = y}`.
 
 ### Optional named parameters
 
@@ -836,16 +1182,6 @@ Some discussion on this topic has occurred in:
     [1](https://docs.google.com/document/d/1a1wI8SHGh3HYV8SUWPIKhg48ZW2glUlAMIIS3aec5dY/edit),
     [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
 -   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
-
-### Access control
-
-We will need some way of controlling access to the members of classes. By
-default, all members are fully publicly accessible, as decided in
-[issue #665](https://github.com/carbon-language/carbon-lang/issues/665).
-
-The set of access control options Carbon will support is an open question. Swift
-and C++ (especially w/ modules) provide a lot of options and a pretty wide space
-to explore here.
 
 ### Operator overloading
 

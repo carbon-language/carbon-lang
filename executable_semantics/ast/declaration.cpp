@@ -20,7 +20,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       const ClassDefinition& class_def =
           cast<ClassDeclaration>(*this).Definition();
       out << "class " << class_def.name << " {\n";
-      for (Member* m : class_def.members) {
+      for (Ptr<Member> m : class_def.members) {
         out << *m;
       }
       out << "}\n";

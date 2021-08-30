@@ -69,12 +69,13 @@ class Value {
 
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
-  auto GetField(const FieldPath& path, int line_num) const -> const Value*;
+  auto GetField(const FieldPath& path, SourceLocation loc) const
+      -> const Value*;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
   auto SetField(const FieldPath& path, const Value* field_value,
-                int line_num) const -> const Value*;
+                SourceLocation loc) const -> const Value*;
 
  protected:
   // Constructs a Value. `tag` must be the enumerator corresponding to the
@@ -471,10 +472,10 @@ class StringValue : public Value {
   std::string val;
 };
 
-auto CopyVal(const Value* val, int line_num) -> const Value*;
+auto CopyVal(const Value* val, SourceLocation loc) -> const Value*;
 
 auto TypeEqual(const Value* t1, const Value* t2) -> bool;
-auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
+auto ValueEqual(const Value* v1, const Value* v2, SourceLocation loc) -> bool;
 
 }  // namespace Carbon
 

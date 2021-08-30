@@ -10,6 +10,8 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/arena.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -37,7 +39,7 @@ class Statement {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  auto LineNumber() const -> int { return line_num; }
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
@@ -47,67 +49,69 @@ class Statement {
   // Constructs an Statement representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Statement(Kind tag, int line_num) : tag(tag), line_num(line_num) {}
+  Statement(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
 
  private:
   const Kind tag;
-  int line_num;
+  SourceLocation loc;
 };
 
 class ExpressionStatement : public Statement {
  public:
-  ExpressionStatement(int line_num, const Expression* exp)
-      : Statement(Kind::ExpressionStatement, line_num), exp(exp) {}
+  ExpressionStatement(SourceLocation loc, Ptr<const Expression> exp)
+      : Statement(Kind::ExpressionStatement, loc), exp(exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::ExpressionStatement;
   }
 
-  auto Exp() const -> const Expression* { return exp; }
+  auto Exp() const -> Ptr<const Expression> { return exp; }
 
  private:
-  const Expression* exp;
+  Ptr<const Expression> exp;
 };
 
 class Assign : public Statement {
  public:
-  Assign(int line_num, const Expression* lhs, const Expression* rhs)
-      : Statement(Kind::Assign, line_num), lhs(lhs), rhs(rhs) {}
+  Assign(SourceLocation loc, Ptr<const Expression> lhs,
+         Ptr<const Expression> rhs)
+      : Statement(Kind::Assign, loc), lhs(lhs), rhs(rhs) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Assign;
   }
 
-  auto Lhs() const -> const Expression* { return lhs; }
-  auto Rhs() const -> const Expression* { return rhs; }
+  auto Lhs() const -> Ptr<const Expression> { return lhs; }
+  auto Rhs() const -> Ptr<const Expression> { return rhs; }
 
  private:
-  const Expression* lhs;
-  const Expression* rhs;
+  Ptr<const Expression> lhs;
+  Ptr<const Expression> rhs;
 };
 
 class VariableDefinition : public Statement {
  public:
-  VariableDefinition(int line_num, const Pattern* pat, const Expression* init)
-      : Statement(Kind::VariableDefinition, line_num), pat(pat), init(init) {}
+  VariableDefinition(SourceLocation loc, Ptr<const Pattern> pat,
+                     Ptr<const Expression> init)
+      : Statement(Kind::VariableDefinition, loc), pat(pat), init(init) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::VariableDefinition;
   }
 
-  auto Pat() const -> const Pattern* { return pat; }
-  auto Init() const -> const Expression* { return init; }
+  auto Pat() const -> Ptr<const Pattern> { return pat; }
+  auto Init() const -> Ptr<const Expression> { return init; }
 
  private:
-  const Pattern* pat;
-  const Expression* init;
+  Ptr<const Pattern> pat;
+  Ptr<const Expression> init;
 };
 
 class If : public Statement {
  public:
-  If(int line_num, const Expression* cond, const Statement* then_stmt,
+  If(SourceLocation loc, Ptr<const Expression> cond, const Statement* then_stmt,
      const Statement* else_stmt)
-      : Statement(Kind::If, line_num),
+      : Statement(Kind::If, loc),
         cond(cond),
         then_stmt(then_stmt),
         else_stmt(else_stmt) {}
@@ -116,36 +120,41 @@ class If : public Statement {
     return stmt->Tag() == Kind::If;
   }
 
-  auto Cond() const -> const Expression* { return cond; }
+  auto Cond() const -> Ptr<const Expression> { return cond; }
   auto ThenStmt() const -> const Statement* { return then_stmt; }
   auto ElseStmt() const -> const Statement* { return else_stmt; }
 
  private:
-  const Expression* cond;
+  Ptr<const Expression> cond;
   const Statement* then_stmt;
   const Statement* else_stmt;
 };
 
 class Return : public Statement {
  public:
-  Return(int line_num, const Expression* exp, bool is_omitted_exp);
+  explicit Return(SourceLocation loc)
+      : Return(loc, global_arena->New<TupleLiteral>(loc), true) {}
+  Return(SourceLocation loc, Ptr<const Expression> exp, bool is_omitted_exp)
+      : Statement(Kind::Return, loc),
+        exp(exp),
+        is_omitted_exp(is_omitted_exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Return;
   }
 
-  auto Exp() const -> const Expression* { return exp; }
+  auto Exp() const -> Ptr<const Expression> { return exp; }
   auto IsOmittedExp() const -> bool { return is_omitted_exp; }
 
  private:
-  const Expression* exp;
+  Ptr<const Expression> exp;
   bool is_omitted_exp;
 };
 
 class Sequence : public Statement {
  public:
-  Sequence(int line_num, const Statement* stmt, const Statement* next)
-      : Statement(Kind::Sequence, line_num), stmt(stmt), next(next) {}
+  Sequence(SourceLocation loc, const Statement* stmt, const Statement* next)
+      : Statement(Kind::Sequence, loc), stmt(stmt), next(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Sequence;
@@ -161,8 +170,8 @@ class Sequence : public Statement {
 
 class Block : public Statement {
  public:
-  Block(int line_num, const Statement* stmt)
-      : Statement(Kind::Block, line_num), stmt(stmt) {}
+  Block(SourceLocation loc, const Statement* stmt)
+      : Statement(Kind::Block, loc), stmt(stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Block;
@@ -176,24 +185,24 @@ class Block : public Statement {
 
 class While : public Statement {
  public:
-  While(int line_num, const Expression* cond, const Statement* body)
-      : Statement(Kind::While, line_num), cond(cond), body(body) {}
+  While(SourceLocation loc, Ptr<const Expression> cond, const Statement* body)
+      : Statement(Kind::While, loc), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::While;
   }
 
-  auto Cond() const -> const Expression* { return cond; }
+  auto Cond() const -> Ptr<const Expression> { return cond; }
   auto Body() const -> const Statement* { return body; }
 
  private:
-  const Expression* cond;
+  Ptr<const Expression> cond;
   const Statement* body;
 };
 
 class Break : public Statement {
  public:
-  explicit Break(int line_num) : Statement(Kind::Break, line_num) {}
+  explicit Break(SourceLocation loc) : Statement(Kind::Break, loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Break;
@@ -202,7 +211,7 @@ class Break : public Statement {
 
 class Continue : public Statement {
  public:
-  explicit Continue(int line_num) : Statement(Kind::Continue, line_num) {}
+  explicit Continue(SourceLocation loc) : Statement(Kind::Continue, loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Continue;
@@ -211,23 +220,23 @@ class Continue : public Statement {
 
 class Match : public Statement {
  public:
-  Match(int line_num, const Expression* exp,
-        std::list<std::pair<const Pattern*, const Statement*>>* clauses)
-      : Statement(Kind::Match, line_num), exp(exp), clauses(clauses) {}
+  Match(SourceLocation loc, Ptr<const Expression> exp,
+        std::list<std::pair<Ptr<const Pattern>, const Statement*>>* clauses)
+      : Statement(Kind::Match, loc), exp(exp), clauses(clauses) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Match;
   }
 
-  auto Exp() const -> const Expression* { return exp; }
+  auto Exp() const -> Ptr<const Expression> { return exp; }
   auto Clauses() const
-      -> const std::list<std::pair<const Pattern*, const Statement*>>* {
+      -> const std::list<std::pair<Ptr<const Pattern>, const Statement*>>* {
     return clauses;
   }
 
  private:
-  const Expression* exp;
-  std::list<std::pair<const Pattern*, const Statement*>>* clauses;
+  Ptr<const Expression> exp;
+  std::list<std::pair<Ptr<const Pattern>, const Statement*>>* clauses;
 };
 
 // A continuation statement.
@@ -237,9 +246,9 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
-  Continuation(int line_num, std::string continuation_variable,
+  Continuation(SourceLocation loc, std::string continuation_variable,
                const Statement* body)
-      : Statement(Kind::Continuation, line_num),
+      : Statement(Kind::Continuation, loc),
         continuation_variable(std::move(continuation_variable)),
         body(body) {}
 
@@ -262,17 +271,17 @@ class Continuation : public Statement {
 //     __run <argument>;
 class Run : public Statement {
  public:
-  Run(int line_num, const Expression* argument)
-      : Statement(Kind::Run, line_num), argument(argument) {}
+  Run(SourceLocation loc, Ptr<const Expression> argument)
+      : Statement(Kind::Run, loc), argument(argument) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Run;
   }
 
-  auto Argument() const -> const Expression* { return argument; }
+  auto Argument() const -> Ptr<const Expression> { return argument; }
 
  private:
-  const Expression* argument;
+  Ptr<const Expression> argument;
 };
 
 // An await statement.
@@ -280,7 +289,7 @@ class Run : public Statement {
 //    __await;
 class Await : public Statement {
  public:
-  explicit Await(int line_num) : Statement(Kind::Await, line_num) {}
+  explicit Await(SourceLocation loc) : Statement(Kind::Await, loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Await;

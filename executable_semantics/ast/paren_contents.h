@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/error.h"
 
 namespace Carbon {
@@ -27,20 +28,20 @@ template <typename Term>
 struct ParenContents {
   struct Element {
     std::optional<std::string> name;
-    const Term* term;
+    Ptr<const Term> term;
   };
 
   // If this object represents a single term, with no name and no trailing
   // comma, this method returns that term. This typically means the parentheses
   // can be interpreted as grouping.
-  auto SingleTerm() const -> std::optional<const Term*>;
+  auto SingleTerm() const -> std::optional<Ptr<const Term>>;
 
   // Converts `elements` to std::vector<TupleElement>. TupleElement must
-  // have a constructor that takes a std::string and a const Term*.
+  // have a constructor that takes a std::string and a Ptr<const Term>.
   //
   // TODO: Find a way to deduce TupleElement from Term.
   template <typename TupleElement>
-  auto TupleElements(int line_num) const -> std::vector<TupleElement>;
+  auto TupleElements(SourceLocation loc) const -> std::vector<TupleElement>;
 
   std::vector<Element> elements;
   bool has_trailing_comma;
@@ -49,7 +50,7 @@ struct ParenContents {
 // Implementation details only below here.
 
 template <typename Term>
-auto ParenContents<Term>::SingleTerm() const -> std::optional<const Term*> {
+auto ParenContents<Term>::SingleTerm() const -> std::optional<Ptr<const Term>> {
   if (elements.size() == 1 && !elements.front().name.has_value() &&
       !has_trailing_comma) {
     return elements.front().term;
@@ -60,7 +61,7 @@ auto ParenContents<Term>::SingleTerm() const -> std::optional<const Term*> {
 
 template <typename Term>
 template <typename TupleElement>
-auto ParenContents<Term>::TupleElements(int line_num) const
+auto ParenContents<Term>::TupleElements(SourceLocation loc) const
     -> std::vector<TupleElement> {
   std::vector<TupleElement> result;
   int i = 0;
@@ -71,7 +72,7 @@ auto ParenContents<Term>::TupleElements(int line_num) const
       result.push_back(TupleElement(*element.name, element.term));
     } else {
       if (seen_named_member) {
-        FATAL_PROGRAM_ERROR(line_num)
+        FATAL_PROGRAM_ERROR(loc)
             << "positional members must come before named members";
       }
       result.push_back(TupleElement(std::to_string(i), element.term));
