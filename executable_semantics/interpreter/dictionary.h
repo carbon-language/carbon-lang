@@ -80,6 +80,8 @@ class Dictionary {
     head = global_arena->RawNew<Node>(std::make_pair(k, v), head);
   }
 
+  bool IsEmpty() { return head == nullptr; }
+
   // The position of the first element of the dictionary
   // or `end()` if the dictionary is empty.
   auto begin() const -> Iterator { return Iterator(head); }
