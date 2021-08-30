@@ -468,6 +468,9 @@ import Math;
 import Math library "Trigonometry";
 ```
 
+NOTE: A library must never import itself. The `impl` files of a library
+automatically import the `api`, so a self-import should never be required.
+
 #### Imports from the current package
 
 Entities defined in the current file may be used without mentioning the package
