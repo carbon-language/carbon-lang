@@ -26,7 +26,8 @@ struct FunctionDefinition {
                      std::vector<GenericBinding> deduced_params,
                      Ptr<const TuplePattern> param_pattern,
                      Ptr<const Pattern> return_type,
-                     bool is_omitted_return_type, const Statement* body)
+                     bool is_omitted_return_type,
+                     std::optional<Ptr<const Statement>> body)
       : source_location(source_location),
         name(std::move(name)),
         deduced_parameters(deduced_params),
@@ -45,7 +46,7 @@ struct FunctionDefinition {
   Ptr<const TuplePattern> param_pattern;
   Ptr<const Pattern> return_type;
   bool is_omitted_return_type;
-  const Statement* body;
+  std::optional<Ptr<const Statement>> body;
 };
 
 }  // namespace Carbon

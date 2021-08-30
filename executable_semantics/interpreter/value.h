@@ -121,7 +121,8 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(std::string name, const Value* param, const Statement* body)
+  FunctionValue(std::string name, const Value* param,
+                std::optional<Ptr<const Statement>> body)
       : Value(Kind::FunctionValue),
         name(std::move(name)),
         param(param),
@@ -133,12 +134,12 @@ class FunctionValue : public Value {
 
   auto Name() const -> const std::string& { return name; }
   auto Param() const -> const Value* { return param; }
-  auto Body() const -> const Statement* { return body; }
+  auto Body() const -> std::optional<Ptr<const Statement>> { return body; }
 
  private:
   std::string name;
   const Value* param;
-  const Statement* body;
+  std::optional<Ptr<const Statement>> body;
 };
 
 // A pointer value.

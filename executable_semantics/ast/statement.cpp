@@ -65,7 +65,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       if_stmt.ThenStmt()->PrintDepth(depth - 1, out);
       if (if_stmt.ElseStmt()) {
         out << "\nelse\n";
-        if_stmt.ElseStmt()->PrintDepth(depth - 1, out);
+        (*if_stmt.ElseStmt())->PrintDepth(depth - 1, out);
       }
       break;
     }
@@ -87,7 +87,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
         out << " ";
       }
       if (seq.Next()) {
-        seq.Next()->PrintDepth(depth - 1, out);
+        (*seq.Next())->PrintDepth(depth - 1, out);
       }
       break;
     }
@@ -98,7 +98,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
         out << "\n";
       }
       if (block.Stmt()) {
-        block.Stmt()->PrintDepth(depth, out);
+        (*block.Stmt())->PrintDepth(depth, out);
         if (depth < 0 || depth > 1) {
           out << "\n";
         }
