@@ -53,6 +53,7 @@ genrule(
     outs = [
         "parser.cpp",
         "parser.h",
+        "parser.output",
     ],
     cmd = "M4=$(M4) $(BISON) " +
           "--output=$(location parser.cpp) " +
