@@ -405,7 +405,7 @@ auto ValueEqual(const Value* v1, const Value* v2, SourceLocation loc) -> bool {
       std::optional<Ptr<const Statement>> body2 =
           cast<FunctionValue>(*v2).Body();
       return body1.has_value() == body2.has_value() &&
-             (!body1.has_value() || body1->Get() == body2->Get());
+             (!body1.has_value() || *body1 == *body2);
     }
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
