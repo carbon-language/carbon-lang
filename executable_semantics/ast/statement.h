@@ -109,8 +109,9 @@ class VariableDefinition : public Statement {
 
 class If : public Statement {
  public:
-  If(SourceLocation loc, Ptr<const Expression> cond, const Statement* then_stmt,
-     const Statement* else_stmt)
+  If(SourceLocation loc, Ptr<const Expression> cond,
+     Ptr<const Statement> then_stmt,
+     std::optional<Ptr<const Statement>> else_stmt)
       : Statement(Kind::If, loc),
         cond(cond),
         then_stmt(then_stmt),
@@ -121,13 +122,15 @@ class If : public Statement {
   }
 
   auto Cond() const -> Ptr<const Expression> { return cond; }
-  auto ThenStmt() const -> const Statement* { return then_stmt; }
-  auto ElseStmt() const -> const Statement* { return else_stmt; }
+  auto ThenStmt() const -> Ptr<const Statement> { return then_stmt; }
+  auto ElseStmt() const -> std::optional<Ptr<const Statement>> {
+    return else_stmt;
+  }
 
  private:
   Ptr<const Expression> cond;
-  const Statement* then_stmt;
-  const Statement* else_stmt;
+  Ptr<const Statement> then_stmt;
+  std::optional<Ptr<const Statement>> else_stmt;
 };
 
 class Return : public Statement {
@@ -153,39 +156,41 @@ class Return : public Statement {
 
 class Sequence : public Statement {
  public:
-  Sequence(SourceLocation loc, const Statement* stmt, const Statement* next)
+  Sequence(SourceLocation loc, Ptr<const Statement> stmt,
+           std::optional<Ptr<const Statement>> next)
       : Statement(Kind::Sequence, loc), stmt(stmt), next(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Sequence;
   }
 
-  auto Stmt() const -> const Statement* { return stmt; }
-  auto Next() const -> const Statement* { return next; }
+  auto Stmt() const -> Ptr<const Statement> { return stmt; }
+  auto Next() const -> std::optional<Ptr<const Statement>> { return next; }
 
  private:
-  const Statement* stmt;
-  const Statement* next;
+  Ptr<const Statement> stmt;
+  std::optional<Ptr<const Statement>> next;
 };
 
 class Block : public Statement {
  public:
-  Block(SourceLocation loc, const Statement* stmt)
+  Block(SourceLocation loc, std::optional<Ptr<const Statement>> stmt)
       : Statement(Kind::Block, loc), stmt(stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Block;
   }
 
-  auto Stmt() const -> const Statement* { return stmt; }
+  auto Stmt() const -> std::optional<Ptr<const Statement>> { return stmt; }
 
  private:
-  const Statement* stmt;
+  std::optional<Ptr<const Statement>> stmt;
 };
 
 class While : public Statement {
  public:
-  While(SourceLocation loc, Ptr<const Expression> cond, const Statement* body)
+  While(SourceLocation loc, Ptr<const Expression> cond,
+        Ptr<const Statement> body)
       : Statement(Kind::While, loc), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -193,11 +198,11 @@ class While : public Statement {
   }
 
   auto Cond() const -> Ptr<const Expression> { return cond; }
-  auto Body() const -> const Statement* { return body; }
+  auto Body() const -> Ptr<const Statement> { return body; }
 
  private:
   Ptr<const Expression> cond;
-  const Statement* body;
+  Ptr<const Statement> body;
 };
 
 class Break : public Statement {
@@ -221,7 +226,7 @@ class Continue : public Statement {
 class Match : public Statement {
  public:
   Match(SourceLocation loc, Ptr<const Expression> exp,
-        std::list<std::pair<Ptr<const Pattern>, const Statement*>>* clauses)
+        std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* clauses)
       : Statement(Kind::Match, loc), exp(exp), clauses(clauses) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -230,13 +235,13 @@ class Match : public Statement {
 
   auto Exp() const -> Ptr<const Expression> { return exp; }
   auto Clauses() const
-      -> const std::list<std::pair<Ptr<const Pattern>, const Statement*>>* {
+      -> const std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* {
     return clauses;
   }
 
  private:
   Ptr<const Expression> exp;
-  std::list<std::pair<Ptr<const Pattern>, const Statement*>>* clauses;
+  std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* clauses;
 };
 
 // A continuation statement.
@@ -247,7 +252,7 @@ class Match : public Statement {
 class Continuation : public Statement {
  public:
   Continuation(SourceLocation loc, std::string continuation_variable,
-               const Statement* body)
+               Ptr<const Statement> body)
       : Statement(Kind::Continuation, loc),
         continuation_variable(std::move(continuation_variable)),
         body(body) {}
@@ -259,11 +264,11 @@ class Continuation : public Statement {
   auto ContinuationVariable() const -> const std::string& {
     return continuation_variable;
   }
-  auto Body() const -> const Statement* { return body; }
+  auto Body() const -> Ptr<const Statement> { return body; }
 
  private:
   std::string continuation_variable;
-  const Statement* body;
+  Ptr<const Statement> body;
 };
 
 // A run statement.
