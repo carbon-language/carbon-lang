@@ -722,11 +722,12 @@ static auto IsWhileAct(Ptr<Action> act) -> bool {
   }
 }
 
-static auto IsBlockAct(Ptr<Action> act) -> bool {
+static auto HasLocalScope(Ptr<Action> act) -> bool {
   switch (act->Tag()) {
     case Action::Kind::StatementAction:
       switch (cast<StatementAction>(*act).Stmt()->Tag()) {
         case Statement::Kind::Block:
+        case Statement::Kind::Match:
           return true;
         default:
           return false;
@@ -746,12 +747,13 @@ auto Interpreter::StepStmt() -> Transition {
     llvm::outs() << " --->\n";
   }
   switch (stmt->Tag()) {
-    case Statement::Kind::Match:
+    case Statement::Kind::Match: {
+      const auto& match_stmt = cast<Match>(*stmt);
       if (act->Pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-        return Spawn{
-            global_arena->New<ExpressionAction>(cast<Match>(*stmt).Exp())};
+        frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
+        return Spawn{global_arena->New<ExpressionAction>(match_stmt.Exp())};
       } else {
         // Regarding act->Pos():
         // * odd: start interpreting the pattern of a clause
@@ -763,11 +765,12 @@ auto Interpreter::StepStmt() -> Transition {
         // * 2: the pattern for clause 1
         // * ...
         auto clause_num = (act->Pos() - 1) / 2;
-        if (clause_num >=
-            static_cast<int>(cast<Match>(*stmt).Clauses()->size())) {
+        if (clause_num >= static_cast<int>(match_stmt.Clauses()->size())) {
+          DeallocateScope(frame->scopes.Top());
+          frame->scopes.Pop();
           return Done{};
         }
-        auto c = cast<Match>(*stmt).Clauses()->begin();
+        auto c = match_stmt.Clauses()->begin();
         std::advance(c, clause_num);
 
         if (act->Pos() % 2 == 1) {
@@ -780,31 +783,20 @@ auto Interpreter::StepStmt() -> Transition {
           auto pat = act->Results()[clause_num + 1];
           std::optional<Env> matches = PatternMatch(pat, v, stmt->SourceLoc());
           if (matches) {  // we have a match, start the body
-            Env values = CurrentEnv();
-            std::list<std::string> vars;
+            // Ensure we don't process any more clauses.
+            act->SetPos(2 * match_stmt.Clauses()->size() + 1);
+
             for (const auto& [name, value] : *matches) {
-              values.Set(name, value);
-              vars.push_back(name);
+              frame->scopes.Top()->values.Set(name, value);
+              frame->scopes.Top()->locals.push_back(name);
             }
-            frame->scopes.Push(global_arena->New<Scope>(values, vars));
-            auto body_act = global_arena->New<StatementAction>(
-                global_arena->New<Block>(stmt->SourceLoc(), c->second));
-            body_act->IncrementPos();
-            frame->todo.Pop(1);
-            frame->todo.Push(body_act);
-            frame->todo.Push(global_arena->New<StatementAction>(c->second));
-            return ManualTransition{};
+            return Spawn{global_arena->New<StatementAction>(c->second)};
           } else {
-            // this case did not match, moving on
-            int next_clause_num = act->Pos() / 2;
-            if (next_clause_num ==
-                static_cast<int>(cast<Match>(*stmt).Clauses()->size())) {
-              return Done{};
-            }
             return RunAgain{};
           }
         }
       }
+    }
     case Statement::Kind::While:
       if (act->Pos() % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
@@ -1050,7 +1042,8 @@ class Interpreter::DoTransition {
 
   void operator()(const Spawn& spawn) {
     Ptr<Frame> frame = interpreter->stack.Top();
-    frame->todo.Top()->IncrementPos();
+    Ptr<Action> action = frame->todo.Top();
+    action->SetPos(action->Pos() + 1);
     frame->todo.Push(spawn.child);
   }
 
@@ -1061,13 +1054,14 @@ class Interpreter::DoTransition {
   }
 
   void operator()(const RunAgain&) {
-    interpreter->stack.Top()->todo.Top()->IncrementPos();
+    Ptr<Action> action = interpreter->stack.Top()->todo.Top();
+    action->SetPos(action->Pos() + 1);
   }
 
   void operator()(const UnwindTo& unwind_to) {
     Ptr<Frame> frame = interpreter->stack.Top();
     while (frame->todo.Top() != unwind_to.new_top) {
-      if (IsBlockAct(frame->todo.Top())) {
+      if (HasLocalScope(frame->todo.Top())) {
         interpreter->DeallocateScope(frame->scopes.Top());
         frame->scopes.Pop();
       }
