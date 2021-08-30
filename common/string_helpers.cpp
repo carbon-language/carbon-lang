@@ -80,13 +80,8 @@ auto UnescapeStringLiteral(llvm::StringRef source)
         }
         break;
 
-      // 0x09 through 0x0D in order:
       case '\t':
-      case '\n':
-      case '\v':
-      case '\f':
-      case '\r':
-        // Disallow non-` ` whitespace:
+        // Disallow non-` ` horizontal whitespace:
         // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/whitespace.md
         // TODO: This doesn't handle unicode whitespace.
         return std::nullopt;
