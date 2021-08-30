@@ -1,2 +1,2 @@
-COMPILATION ERROR: 5: syntax error, unexpected AUTO
+COMPILATION ERROR: executable_semantics/testdata/return_auto.carbon:5: syntax error, unexpected AUTO
 EXIT CODE: 255

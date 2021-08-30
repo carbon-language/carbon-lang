@@ -19,11 +19,7 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
-        exclude: |
-          (?x)^(
-              website/jekyll/site/_includes|
-              bazel-(clang-toolchain|execroot)
-          )$
+        exclude: ^bazel-(clang-toolchain|execroot)$
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
@@ -71,7 +67,6 @@ repos:
               .bazelversion|
               compile_flags.txt|
               third_party/examples/.*/compile_flags.carbon.txt|
-              website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|
               .*\.def|
               .*\.svg|
               .*/testdata/.*\.golden
@@ -83,7 +78,6 @@ repos:
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
-        exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
       - id: executable-semantics-format-grammar
@@ -122,7 +116,6 @@ repos:
     rev: bc48c541add1551be726f23c4294c773442341cb # frozen: v2.3.2
     hooks:
       - id: prettier
-        exclude: ^website/jekyll/theme/
   # Run linters last, as formatters and other checks may fix issues.
   - repo: https://gitlab.com/PyCQA/flake8
     rev: dcd740bc0ebaf2b3d43e59a0060d157c97de13f3 # frozen: 3.9.2

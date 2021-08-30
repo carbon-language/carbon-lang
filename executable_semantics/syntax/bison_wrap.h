@@ -23,9 +23,12 @@ class BisonWrap {
     return *this;
   }
 
-  // Support transparent conversion to the wrapped type, erroring if not
-  // initialized.
-  operator T() {
+  // Support transparent conversion to the wrapped type.
+  operator T() { return Release(); }
+
+  // Deliberately releases the contained value. Errors if not initialized.
+  // Called directly in parser.ypp when releasing pairs.
+  auto Release() -> T {
     CHECK(val.has_value());
     T ret = std::move(*val);
     val.reset();

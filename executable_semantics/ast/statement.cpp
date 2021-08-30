@@ -65,7 +65,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       if_stmt.ThenStmt()->PrintDepth(depth - 1, out);
       if (if_stmt.ElseStmt()) {
         out << "\nelse\n";
-        if_stmt.ElseStmt()->PrintDepth(depth - 1, out);
+        (*if_stmt.ElseStmt())->PrintDepth(depth - 1, out);
       }
       break;
     }
@@ -87,7 +87,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
         out << " ";
       }
       if (seq.Next()) {
-        seq.Next()->PrintDepth(depth - 1, out);
+        (*seq.Next())->PrintDepth(depth - 1, out);
       }
       break;
     }
@@ -98,7 +98,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
         out << "\n";
       }
       if (block.Stmt()) {
-        block.Stmt()->PrintDepth(depth, out);
+        (*block.Stmt())->PrintDepth(depth, out);
         if (depth < 0 || depth > 1) {
           out << "\n";
         }
@@ -128,13 +128,6 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       out << "await;";
       break;
   }
-}
-
-Return::Return(int line_num, const Expression* exp, bool is_omitted_exp)
-    : Statement(Kind::Return, line_num),
-      exp(exp != nullptr ? exp : global_arena->RawNew<TupleLiteral>(line_num)),
-      is_omitted_exp(is_omitted_exp) {
-  CHECK(exp != nullptr || is_omitted_exp);
 }
 
 }  // namespace Carbon

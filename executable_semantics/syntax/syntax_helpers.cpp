@@ -9,29 +9,30 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
-#include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
 
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
 static void AddIntrinsics(std::list<Ptr<const Declaration>>* fs) {
+  SourceLocation loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
-      "0", global_arena->RawNew<BindingPattern>(
-               -1, "format_str",
-               global_arena->RawNew<ExpressionPattern>(
-                   global_arena->RawNew<StringTypeLiteral>(-1))))};
-  auto* print_return = global_arena->RawNew<Return>(
-      -1,
-      global_arena->RawNew<IntrinsicExpression>(
-          IntrinsicExpression::IntrinsicKind::Print),
-      false);
+      "0", global_arena->New<BindingPattern>(
+               loc, "format_str",
+               global_arena->New<ExpressionPattern>(
+                   global_arena->New<StringTypeLiteral>(loc))))};
+  auto print_return =
+      global_arena->New<Return>(loc,
+                                global_arena->New<IntrinsicExpression>(
+                                    IntrinsicExpression::IntrinsicKind::Print),
+                                false);
   auto print = global_arena->New<FunctionDeclaration>(
-      global_arena->RawNew<FunctionDefinition>(
-          -1, "Print", std::vector<GenericBinding>(),
-          global_arena->RawNew<TuplePattern>(-1, print_fields),
-          global_arena->RawNew<ExpressionPattern>(
-              global_arena->RawNew<TupleLiteral>(-1)),
+      global_arena->New<FunctionDefinition>(
+          loc, "Print", std::vector<GenericBinding>(),
+          global_arena->New<TuplePattern>(loc, print_fields),
+          global_arena->New<ExpressionPattern>(
+              global_arena->New<TupleLiteral>(loc)),
           /*is_omitted_return_type=*/false, print_return));
   fs->insert(fs->begin(), print);
 }
@@ -45,13 +46,13 @@ void ExecProgram(std::list<Ptr<const Declaration>> fs) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
-  state = global_arena->RawNew<State>();  // Compile-time state.
-  TypeCheckContext p = TopLevel(fs);
+  TypeChecker type_checker;
+  TypeChecker::TypeCheckContext p = type_checker.TopLevel(fs);
   TypeEnv top = p.types;
   Env ct_top = p.values;
   std::list<Ptr<const Declaration>> new_decls;
   for (const auto decl : fs) {
-    new_decls.push_back(MakeTypeChecked(decl, top, ct_top));
+    new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {
     llvm::outs() << "\n";
@@ -61,7 +62,7 @@ void ExecProgram(std::list<Ptr<const Declaration>> fs) {
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = InterpProgram(new_decls);
+  int result = Interpreter().InterpProgram(new_decls);
   llvm::outs() << "result: " << result << "\n";
 }
 

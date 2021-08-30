@@ -29,8 +29,10 @@
 // Enable support for parser debugging
 %define parse.trace true
 
-//
-// Parameters to the parser and lexer
+// Generate location structs.
+%locations
+
+// Parameters to the parser and lexer.
 //
 // Parameters to the parser are stored therein as protected data members, and
 // thus available to its methods.
@@ -38,7 +40,8 @@
 // "out" parameter passed to the parser, where the AST is written.
 %parse-param {std::optional<AST>& parsed_program}
 
-// "inout" parameter passed to both the parser and the lexer.
+// "inout" parameters passed to both the parser and the lexer.
+%param {yyscan_t yyscanner}
 %param {ParseAndLexContext& context}
 
 // No shift-reduce conflicts are expected.
@@ -61,29 +64,28 @@
 }  // %code top
 
 %code requires {
-#include <optional>
+  #include <optional>
 
-#include "executable_semantics/ast/abstract_syntax_tree.h"
-#include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/ptr.h"
-#include "executable_semantics/ast/paren_contents.h"
-#include "executable_semantics/syntax/bison_wrap.h"
+  #include "executable_semantics/ast/abstract_syntax_tree.h"
+  #include "executable_semantics/ast/declaration.h"
+  #include "executable_semantics/ast/expression.h"
+  #include "executable_semantics/ast/function_definition.h"
+  #include "executable_semantics/ast/paren_contents.h"
+  #include "executable_semantics/ast/pattern.h"
+  #include "executable_semantics/common/arena.h"
+  #include "executable_semantics/common/ptr.h"
+  #include "executable_semantics/syntax/bison_wrap.h"
 
-namespace Carbon {
-class ParseAndLexContext;
-}  // namespace Carbon
+  namespace Carbon {
+  class ParseAndLexContext;
+  }  // namespace Carbon
 
+  typedef void* yyscan_t;
 }  // %code requires
 
 %code {
-  extern int yylineno;
-
   void Carbon::Parser::error(const location_type&, const std::string& message) {
-    context.PrintDiagnostic(message, yylineno);
+    context.PrintDiagnostic(message);
   }
 }  // %code
 
@@ -93,78 +95,94 @@ class ParseAndLexContext;
 %token <std::string> string_literal
 %type <std::string> designator
 %type <BisonWrap<Ptr<const Declaration>>> declaration
-%type <const FunctionDefinition*> function_declaration
-%type <const FunctionDefinition*> function_definition
+%type <BisonWrap<Ptr<const FunctionDefinition>>> function_declaration
+%type <BisonWrap<Ptr<const FunctionDefinition>>> function_definition
 %type <std::list<Ptr<const Declaration>>> declaration_list
-%type <const Statement*> statement
-%type <const Statement*> if_statement
-%type <const Statement*> optional_else
-%type <std::pair<const Expression*, bool>> return_expression
-%type <const Statement*> block
-%type <const Statement*> statement_list
-%type <const Expression*> expression
-%type <GenericBinding> generic_binding
+%type <BisonWrap<Ptr<const Statement>>> statement
+%type <BisonWrap<Ptr<const Statement>>> if_statement
+%type <std::optional<Ptr<const Statement>>> optional_else
+%type <BisonWrap<std::pair<Ptr<const Expression>, bool>>> return_expression
+%type <BisonWrap<Ptr<const Statement>>> block
+%type <std::optional<Ptr<const Statement>>> statement_list
+%type <BisonWrap<Ptr<const Expression>>> expression
+%type <BisonWrap<GenericBinding>> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
 %type <std::vector<GenericBinding>> deduced_param_list
-%type <const Pattern*> pattern
-%type <const Pattern*> non_expression_pattern
-%type <std::pair<const Expression*, bool>> return_type
-%type <const Expression*> paren_expression
-%type <const Expression*> tuple
+%type <BisonWrap<Ptr<const Pattern>>> pattern
+%type <BisonWrap<Ptr<const Pattern>>> non_expression_pattern
+%type <BisonWrap<std::pair<Ptr<const Expression>, bool>>> return_type
+%type <BisonWrap<Ptr<const Expression>>> paren_expression
+%type <BisonWrap<Ptr<const Expression>>> tuple
 %type <std::optional<std::string>> binding_lhs
-%type <const BindingPattern*> variable_declaration
-%type <Member*> member
-%type <std::list<Member*>> member_list
-%type <ParenContents<Expression>::Element> paren_expression_element
+%type <BisonWrap<Ptr<const BindingPattern>>> variable_declaration
+%type <BisonWrap<Ptr<Member>>> member
+%type <std::list<Ptr<Member>>> member_list
+%type <BisonWrap<ParenContents<Expression>::Element>> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
-%type <const Pattern*> paren_pattern
-%type <const TuplePattern*> tuple_pattern
-%type <const TuplePattern*> maybe_empty_tuple_pattern
+%type <BisonWrap<Ptr<const Pattern>>> paren_pattern
+%type <BisonWrap<Ptr<const TuplePattern>>> tuple_pattern
+%type <BisonWrap<Ptr<const TuplePattern>>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
-%type <ParenContents<Pattern>::Element> paren_pattern_element
+%type <BisonWrap<ParenContents<Pattern>::Element>> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <std::pair<std::string, const Expression*>> alternative
-%type <std::list<std::pair<std::string, const Expression*>>> alternative_list
-%type <std::pair<const Pattern*, const Statement*>*> clause
-%type <std::list<std::pair<const Pattern*, const Statement*>>*> clause_list
-%token END_OF_FILE 0
-%token AND
-%token OR
-%token NOT
-%token STRING
-%token BOOL
-%token TYPE
-%token FN
-%token FNTY
-%token ARROW "->"
-%token FNARROW "-> in return type"
-%token VAR
-%token EQUAL_EQUAL
-%token IF
-%token ELSE
-%token WHILE
-%token CONTINUATION_TYPE
-%token CONTINUATION
-%token RUN
-%token AWAIT
-%token BREAK
-%token CONTINUE
-%token RETURN
-%token TRUE
-%token FALSE
-%token CLASS
-%token CHOICE
-%token MATCH
-%token CASE
-%token DBLARROW "=>"
-%token DEFAULT
-%token AUTO
-%token UNDERSCORE
+%type <BisonWrap<std::pair<std::string, Ptr<const Expression>>>> alternative
+%type <std::list<std::pair<std::string, Ptr<const Expression>>>> alternative_list
+%type <std::pair<Ptr<const Pattern>, Ptr<const Statement>>*> clause
+%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>*> clause_list
+
 %token
-  EQUAL  "="
-  MINUS  "-"
-  PLUS   "+"
+  // Most tokens have their spelling defined in lexer.lpp.
+  AND
+  ARROW
+  AUTO
+  AWAIT
+  BOOL
+  BREAK
+  CASE
+  CHOICE
+  CLASS
+  COLON
+  COLON_BANG
+  COMMA
+  CONTINUATION
+  CONTINUATION_TYPE
+  CONTINUE
+  DEFAULT
+  DOUBLE_ARROW
+  ELSE
+  EQUAL
+  EQUAL_EQUAL
+  FALSE
+  FN
+  FNTY
+  IF
+  LEFT_CURLY_BRACE
+  LEFT_PARENTHESIS
+  LEFT_SQUARE_BRACKET
+  MATCH
+  MINUS
+  NOT
+  OR
+  PERIOD
+  PLUS
+  RETURN
+  RIGHT_CURLY_BRACE
+  RIGHT_PARENTHESIS
+  RIGHT_SQUARE_BRACKET
+  RUN
+  SEMICOLON
+  SLASH
+  STRING
+  TRUE
+  TYPE
+  UNDERSCORE
+  VAR
+  WHILE
+  // Used to track EOF.
+  END_OF_FILE 0
+  // Only used for precedence.
+  FNARROW "-> in return type"
   // The lexer determines the arity and fixity of each `*` based on whitespace
   // and adjacent tokens. UNARY_STAR indicates that the operator is unary but
   // could be either prefix or postfix.
@@ -172,26 +190,14 @@ class ParseAndLexContext;
   PREFIX_STAR "prefix *"
   POSTFIX_STAR "postfix *"
   BINARY_STAR "binary *"
-  SLASH  "/"
-  LEFT_PARENTHESIS "("
-  RIGHT_PARENTHESIS ")"
-  LEFT_CURLY_BRACE "{"
-  RIGHT_CURLY_BRACE "}"
-  LEFT_SQUARE_BRACKET "["
-  RIGHT_SQUARE_BRACKET "]"
-  PERIOD "."
-  COMMA ","
-  SEMICOLON ";"
-  COLON_BANG ":!"
-  COLON ":"
 ;
 
 %precedence FNARROW
-%precedence "{" "}"
-%precedence ":!" ":" "," DBLARROW
+%precedence LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+%precedence COLON_BANG COLON COMMA DOUBLE_ARROW
 %left OR AND
 %nonassoc EQUAL_EQUAL
-%left "+" "-"
+%left PLUS MINUS
 %left BINARY_STAR
 %precedence NOT UNARY_MINUS PREFIX_STAR
 // We need to give the `UNARY_STAR` token a precedence, rather than overriding
@@ -202,135 +208,155 @@ class ParseAndLexContext;
 // is the final token of a rule, it must be a postfix usage, so we give it the
 // same precedence as POSTFIX_STAR.
 %precedence POSTFIX_STAR UNARY_STAR
-%left "." ARROW
-%precedence "(" ")" "[" "]"
+%left PERIOD ARROW
+%precedence
+  LEFT_PARENTHESIS
+  RIGHT_PARENTHESIS
+  LEFT_SQUARE_BRACKET
+  RIGHT_SQUARE_BRACKET
+;
 
 %start input
-%locations
 %%
 input: declaration_list
     { parsed_program = $1; }
 ;
 expression:
   identifier
-    { $$ = global_arena->RawNew<IdentifierExpression>(yylineno, $1); }
+    { $$ = global_arena->New<IdentifierExpression>(context.SourceLoc(), $1); }
 | expression designator
-    { $$ = global_arena->RawNew<FieldAccessExpression>(yylineno, $1, $2); }
-| expression "[" expression "]"
-    { $$ = global_arena->RawNew<IndexExpression>(yylineno, $1, $3); }
+    {
+      $$ =
+          global_arena->New<FieldAccessExpression>(context.SourceLoc(), $1, $2);
+    }
+| expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
+    { $$ = global_arena->New<IndexExpression>(context.SourceLoc(), $1, $3); }
 | integer_literal
-    { $$ = global_arena->RawNew<IntLiteral>(yylineno, $1); }
+    { $$ = global_arena->New<IntLiteral>(context.SourceLoc(), $1); }
 | string_literal
-    { $$ = global_arena->RawNew<StringLiteral>(yylineno, $1); }
+    { $$ = global_arena->New<StringLiteral>(context.SourceLoc(), $1); }
 | TRUE
-    { $$ = global_arena->RawNew<BoolLiteral>(yylineno, true); }
+    { $$ = global_arena->New<BoolLiteral>(context.SourceLoc(), true); }
 | FALSE
-    { $$ = global_arena->RawNew<BoolLiteral>(yylineno, false); }
+    { $$ = global_arena->New<BoolLiteral>(context.SourceLoc(), false); }
 | sized_type_literal
     {
       int val;
       CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
       CHECK($1[0] == 'i' && val == 32)
           << "Only i32 is supported for now: " << $1;
-      $$ = global_arena->RawNew<IntTypeLiteral>(yylineno);
+      $$ = global_arena->New<IntTypeLiteral>(context.SourceLoc());
     }
 | STRING
-    { $$ = global_arena->RawNew<StringTypeLiteral>(yylineno); }
+    { $$ = global_arena->New<StringTypeLiteral>(context.SourceLoc()); }
 | BOOL
-    { $$ = global_arena->RawNew<BoolTypeLiteral>(yylineno); }
+    { $$ = global_arena->New<BoolTypeLiteral>(context.SourceLoc()); }
 | TYPE
-    { $$ = global_arena->RawNew<TypeTypeLiteral>(yylineno); }
+    { $$ = global_arena->New<TypeTypeLiteral>(context.SourceLoc()); }
 | CONTINUATION_TYPE
-    { $$ = global_arena->RawNew<ContinuationTypeLiteral>(yylineno); }
+    { $$ = global_arena->New<ContinuationTypeLiteral>(context.SourceLoc()); }
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Eq, std::vector<const Expression*>({$1, $3}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Eq,
+          std::vector<Ptr<const Expression>>({$1, $3}));
     }
-| expression "+" expression
+| expression PLUS expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Add, std::vector<const Expression*>({$1, $3}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Add,
+          std::vector<Ptr<const Expression>>({$1, $3}));
     }
-| expression "-" expression
+| expression MINUS expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Sub, std::vector<const Expression*>({$1, $3}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Sub,
+          std::vector<Ptr<const Expression>>({$1, $3}));
     }
 | expression BINARY_STAR expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Mul, std::vector<const Expression*>({$1, $3}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Mul,
+          std::vector<Ptr<const Expression>>({$1, $3}));
     }
 | expression AND expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::And, std::vector<const Expression*>({$1, $3}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::And,
+          std::vector<Ptr<const Expression>>({$1, $3}));
     }
 | expression OR expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Or, std::vector<const Expression*>({$1, $3}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Or,
+          std::vector<Ptr<const Expression>>({$1, $3}));
     }
 | NOT expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Not, std::vector<const Expression*>({$2}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Not,
+          std::vector<Ptr<const Expression>>({$2}));
     }
-| "-" expression %prec UNARY_MINUS
+| MINUS expression %prec UNARY_MINUS
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Neg, std::vector<const Expression*>({$2}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Neg,
+          std::vector<Ptr<const Expression>>({$2}));
     }
 | PREFIX_STAR expression
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Deref, std::vector<const Expression*>({$2}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Deref,
+          std::vector<Ptr<const Expression>>({$2}));
     }
 | UNARY_STAR expression %prec PREFIX_STAR
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Deref, std::vector<const Expression*>({$2}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Deref,
+          std::vector<Ptr<const Expression>>({$2}));
     }
 | expression tuple
-    { $$ = global_arena->RawNew<CallExpression>(yylineno, $1, $2); }
+    { $$ = global_arena->New<CallExpression>(context.SourceLoc(), $1, $2); }
 | expression POSTFIX_STAR
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Ptr, std::vector<const Expression*>({$1}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Ptr,
+          std::vector<Ptr<const Expression>>({$1}));
     }
 | expression UNARY_STAR
     {
-      $$ = global_arena->RawNew<PrimitiveOperatorExpression>(
-          yylineno, Operator::Ptr, std::vector<const Expression*>({$1}));
+      $$ = global_arena->New<PrimitiveOperatorExpression>(
+          context.SourceLoc(), Operator::Ptr,
+          std::vector<Ptr<const Expression>>({$1}));
     }
 | FNTY tuple return_type
     {
-      $$ = global_arena->RawNew<FunctionTypeLiteral>(yylineno, $2, $3.first,
-                                                     $3.second);
+      auto [return_exp, is_omitted_exp] = $3.Release();
+      $$ = global_arena->New<FunctionTypeLiteral>(context.SourceLoc(), $2,
+                                                  return_exp, is_omitted_exp);
     }
 ;
-designator: "." identifier { $$ = $2; }
+designator: PERIOD identifier { $$ = $2; }
 ;
 paren_expression: paren_expression_base
-    { $$ = ExpressionFromParenContents(yylineno, $1); }
+    { $$ = ExpressionFromParenContents(context.SourceLoc(), $1); }
 ;
 tuple: paren_expression_base
-    { $$ = TupleExpressionFromParenContents(yylineno, $1); }
+    { $$ = TupleExpressionFromParenContents(context.SourceLoc(), $1); }
 ;
 paren_expression_element:
   expression
     { $$ = {.name = std::nullopt, .term = $1}; }
-| designator "=" expression
+| designator EQUAL expression
     { $$ = {.name = $1, .term = $3}; }
 ;
 paren_expression_base:
-  "(" ")"
+  LEFT_PARENTHESIS RIGHT_PARENTHESIS
     { $$ = {.elements = {}, .has_trailing_comma = false}; }
-| "(" paren_expression_contents ")"
+| LEFT_PARENTHESIS paren_expression_contents RIGHT_PARENTHESIS
     { $$ = $2; }
-| "(" paren_expression_contents "," ")"
+| LEFT_PARENTHESIS paren_expression_contents COMMA RIGHT_PARENTHESIS
     {
       $$ = $2;
       $$.has_trailing_comma = true;
@@ -339,7 +365,7 @@ paren_expression_base:
 paren_expression_contents:
   paren_expression_element
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents "," paren_expression_element
+| paren_expression_contents COMMA paren_expression_element
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -356,29 +382,29 @@ pattern:
   non_expression_pattern
     { $$ = $1; }
 | expression
-    { $$ = global_arena->RawNew<ExpressionPattern>($1); }
+    { $$ = global_arena->New<ExpressionPattern>($1); }
 ;
 non_expression_pattern:
   AUTO
-    { $$ = global_arena->RawNew<AutoPattern>(yylineno); }
-| binding_lhs ":" pattern
-    { $$ = global_arena->RawNew<BindingPattern>(yylineno, $1, $3); }
+    { $$ = global_arena->New<AutoPattern>(context.SourceLoc()); }
+| binding_lhs COLON pattern
+    { $$ = global_arena->New<BindingPattern>(context.SourceLoc(), $1, $3); }
 | paren_pattern
     { $$ = $1; }
 | expression tuple_pattern
-    { $$ = global_arena->RawNew<AlternativePattern>(yylineno, $1, $2); }
+    { $$ = global_arena->New<AlternativePattern>(context.SourceLoc(), $1, $2); }
 ;
 binding_lhs:
   identifier { $$ = $1; }
 | UNDERSCORE { $$ = std::nullopt; }
 ;
 paren_pattern: paren_pattern_base
-    { $$ = PatternFromParenContents(yylineno, $1); }
+    { $$ = PatternFromParenContents(context.SourceLoc(), $1); }
 ;
 paren_pattern_base:
-  "(" paren_pattern_contents ")"
+  LEFT_PARENTHESIS paren_pattern_contents RIGHT_PARENTHESIS
     { $$ = $2; }
-| "(" paren_pattern_contents "," ")"
+| LEFT_PARENTHESIS paren_pattern_contents COMMA RIGHT_PARENTHESIS
     {
       $$ = $2;
       $$.has_trailing_comma = true;
@@ -392,19 +418,20 @@ paren_pattern_base:
 paren_pattern_contents:
   paren_pattern_element
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents "," paren_pattern_element
+| paren_expression_contents COMMA paren_pattern_element
     {
       $$ = ParenExpressionToParenPattern($1);
       $$.elements.push_back($3);
     }
-| paren_pattern_contents "," paren_expression_element
+| paren_pattern_contents COMMA paren_expression_element
     {
       $$ = $1;
+      auto el = $3.Release();
       $$.elements.push_back(
-          {.name = $3.name,
-           .term = global_arena->RawNew<ExpressionPattern>($3.term)});
+          {.name = el.name,
+           .term = global_arena->New<ExpressionPattern>(el.term)});
     }
-| paren_pattern_contents "," paren_pattern_element
+| paren_pattern_contents COMMA paren_pattern_element
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -413,44 +440,46 @@ paren_pattern_contents:
 paren_pattern_element:
   non_expression_pattern
     { $$ = {.name = std::nullopt, .term = $1}; }
-| designator "=" non_expression_pattern
+| designator EQUAL non_expression_pattern
     { $$ = {.name = $1, .term = $3}; }
 ;
 tuple_pattern: paren_pattern_base
-    { $$ = TuplePatternFromParenContents(yylineno, $1); }
+    { $$ = TuplePatternFromParenContents(context.SourceLoc(), $1); }
 ;
 // Unlike most `pattern` nonterminals, this one overlaps with `expression`,
 // so it should be used only when prior context (such as an introducer)
 // rules out the possibility of an `expression` at this point.
 maybe_empty_tuple_pattern:
-  "(" ")"
+  LEFT_PARENTHESIS RIGHT_PARENTHESIS
     {
-      $$ = global_arena->RawNew<TuplePattern>(
-          yylineno, std::vector<TuplePattern::Field>());
+      $$ = global_arena->New<TuplePattern>(context.SourceLoc(),
+                                           std::vector<TuplePattern::Field>());
     }
 | tuple_pattern
     { $$ = $1; }
 ;
 clause:
-  CASE pattern DBLARROW statement
+  CASE pattern DOUBLE_ARROW statement
     {
-      $$ = global_arena->RawNew<std::pair<const Pattern*, const Statement*>>(
-          $2, $4);
+      $$ = global_arena
+               ->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(
+                   $2, $4);
     }
-| DEFAULT DBLARROW statement
+| DEFAULT DOUBLE_ARROW statement
     {
-      auto vp = global_arena -> RawNew<BindingPattern>(
-                    yylineno, std::nullopt,
-                    global_arena->RawNew<AutoPattern>(yylineno));
-      $$ = global_arena->RawNew<std::pair<const Pattern*, const Statement*>>(
-          vp, $3);
+      auto vp = global_arena -> New<BindingPattern>(
+                    context.SourceLoc(), std::nullopt,
+                    global_arena->New<AutoPattern>(context.SourceLoc()));
+      $$ = global_arena
+               ->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(
+                   vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
       $$ = global_arena->RawNew<
-          std::list<std::pair<const Pattern*, const Statement*>>>();
+          std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>>();
     }
 | clause clause_list
     {
@@ -459,40 +488,45 @@ clause_list:
     }
 ;
 statement:
-  expression "=" expression ";"
-    { $$ = global_arena->RawNew<Assign>(yylineno, $1, $3); }
-| VAR pattern "=" expression ";"
-    { $$ = global_arena->RawNew<VariableDefinition>(yylineno, $2, $4); }
-| expression ";"
-    { $$ = global_arena->RawNew<ExpressionStatement>(yylineno, $1); }
+  expression EQUAL expression SEMICOLON
+    { $$ = global_arena->New<Assign>(context.SourceLoc(), $1, $3); }
+| VAR pattern EQUAL expression SEMICOLON
+    { $$ = global_arena->New<VariableDefinition>(context.SourceLoc(), $2, $4); }
+| expression SEMICOLON
+    { $$ = global_arena->New<ExpressionStatement>(context.SourceLoc(), $1); }
 | if_statement
     { $$ = $1; }
-| WHILE "(" expression ")" block
-    { $$ = global_arena->RawNew<While>(yylineno, $3, $5); }
-| BREAK ";"
-    { $$ = global_arena->RawNew<Break>(yylineno); }
-| CONTINUE ";"
-    { $$ = global_arena->RawNew<Continue>(yylineno); }
-| RETURN return_expression ";"
-    { $$ = global_arena->RawNew<Return>(yylineno, $2.first, $2.second); }
+| WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block
+    { $$ = global_arena->New<While>(context.SourceLoc(), $3, $5); }
+| BREAK SEMICOLON
+    { $$ = global_arena->New<Break>(context.SourceLoc()); }
+| CONTINUE SEMICOLON
+    { $$ = global_arena->New<Continue>(context.SourceLoc()); }
+| RETURN return_expression SEMICOLON
+    {
+      auto [return_exp, is_omitted_exp] = $2.Release();
+      $$ = global_arena->New<Return>(context.SourceLoc(), return_exp,
+                                     is_omitted_exp);
+    }
 | block
     { $$ = $1; }
-| MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = global_arena->RawNew<Match>(yylineno, $3, $6); }
+| MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
+  clause_list RIGHT_CURLY_BRACE
+    { $$ = global_arena->New<Match>(context.SourceLoc(), $3, $6); }
 | CONTINUATION identifier statement
-    { $$ = global_arena->RawNew<Continuation>(yylineno, $2, $3); }
-| RUN expression ";"
-    { $$ = global_arena->RawNew<Run>(yylineno, $2); }
-| AWAIT ";"
-    { $$ = global_arena->RawNew<Await>(yylineno); }
+    { $$ = global_arena->New<Continuation>(context.SourceLoc(), $2, $3); }
+| RUN expression SEMICOLON
+    { $$ = global_arena->New<Run>(context.SourceLoc(), $2); }
+| AWAIT SEMICOLON
+    { $$ = global_arena->New<Await>(context.SourceLoc()); }
 ;
 if_statement:
-  IF "(" expression ")" block optional_else
-    { $$ = global_arena->RawNew<If>(yylineno, $3, $5, $6); }
+  IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block optional_else
+    { $$ = global_arena->New<If>(context.SourceLoc(), $3, $5, $6); }
 ;
 optional_else:
   // Empty
-    { $$ = 0; }
+    { $$ = std::nullopt; }
 | ELSE if_statement
     { $$ = $2; }
 | ELSE block
@@ -500,28 +534,28 @@ optional_else:
 ;
 return_expression:
   // Empty
-    { $$ = {global_arena->RawNew<TupleLiteral>(yylineno), true}; }
+    { $$ = {global_arena->New<TupleLiteral>(context.SourceLoc()), true}; }
 | expression
     { $$ = {$1, false}; }
 ;
 statement_list:
   // Empty
-    { $$ = 0; }
+    { $$ = std::nullopt; }
 | statement statement_list
-    { $$ = global_arena->RawNew<Sequence>(yylineno, $1, $2); }
+    { $$ = global_arena->New<Sequence>(context.SourceLoc(), $1, $2); }
 ;
 block:
-  "{" statement_list "}"
-    { $$ = global_arena->RawNew<Block>(yylineno, $2); }
+  LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
+    { $$ = global_arena->New<Block>(context.SourceLoc(), $2); }
 ;
 return_type:
   // Empty
-    { $$ = {global_arena->RawNew<TupleLiteral>(yylineno), true}; }
+    { $$ = {global_arena->New<TupleLiteral>(context.SourceLoc()), true}; }
 | ARROW expression %prec FNARROW
     { $$ = {$2, false}; }
 ;
 generic_binding:
-  identifier ":!" expression
+  identifier COLON_BANG expression
     { $$ = GenericBinding({.name = std::move($1), .type = $3}); }
 ;
 deduced_param_list:
@@ -532,7 +566,7 @@ deduced_param_list:
       $$ = std::vector<GenericBinding>();
       $$.push_back($1);
     }
-| generic_binding "," deduced_param_list
+| generic_binding COMMA deduced_param_list
     {
       $$ = $3;
       $$.push_back($1);
@@ -541,43 +575,47 @@ deduced_param_list:
 deduced_params:
   // Empty
     { $$ = std::vector<GenericBinding>(); }
-| "[" deduced_param_list "]"
+| LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
 function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
-      $$ = global_arena->RawNew<FunctionDefinition>(
-          yylineno, $2, $3, $4,
-          global_arena->RawNew<ExpressionPattern>($5.first), $5.second, $6);
+      auto [return_exp, is_omitted_exp] = $5.Release();
+      $$ = global_arena->New<FunctionDefinition>(
+          context.SourceLoc(), $2, $3, $4,
+          global_arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
     }
-| FN identifier deduced_params maybe_empty_tuple_pattern DBLARROW expression ";"
+| FN identifier deduced_params maybe_empty_tuple_pattern DOUBLE_ARROW expression
+  SEMICOLON
     {
       // The return type is not considered "omitted" because it's automatic from
       // the expression.
-      $$ = global_arena->RawNew<FunctionDefinition>(
-          yylineno, $2, $3, $4, global_arena->RawNew<AutoPattern>(yylineno),
-          true, global_arena->RawNew<Return>(yylineno, $6, true));
+      $$ = global_arena->New<FunctionDefinition>(
+          context.SourceLoc(), $2, $3, $4,
+          global_arena->New<AutoPattern>(context.SourceLoc()), true,
+          global_arena->New<Return>(context.SourceLoc(), $6, true));
     }
 ;
 function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type ";"
+  FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
     {
-      $$ = global_arena->RawNew<FunctionDefinition>(
-          yylineno, $2, $3, $4,
-          global_arena->RawNew<ExpressionPattern>($5.first), $5.second,
-          nullptr);
+      auto [return_exp, is_omitted_exp] = $5.Release();
+      $$ = global_arena->New<FunctionDefinition>(
+          context.SourceLoc(), $2, $3, $4,
+          global_arena->New<ExpressionPattern>(return_exp), is_omitted_exp,
+          std::nullopt);
     }
 ;
-variable_declaration: identifier ":" pattern
-    { $$ = global_arena->RawNew<BindingPattern>(yylineno, $1, $3); }
+variable_declaration: identifier COLON pattern
+    { $$ = global_arena->New<BindingPattern>(context.SourceLoc(), $1, $3); }
 ;
-member: VAR variable_declaration ";"
-    { $$ = global_arena->RawNew<FieldMember>(yylineno, $2); }
+member: VAR variable_declaration SEMICOLON
+    { $$ = global_arena->New<FieldMember>(context.SourceLoc(), $2); }
 ;
 member_list:
   // Empty
-    { $$ = std::list<Member*>(); }
+    { $$ = std::list<Ptr<Member>>(); }
 | member member_list
     {
       $$ = $2;
@@ -586,22 +624,22 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = std::pair<std::string, const Expression*>($1, $2); }
+    { $$ = std::pair<std::string, Ptr<const Expression>>($1, $2); }
 | identifier
     {
-      $$ = std::pair<std::string, const Expression*>(
-          $1, global_arena->RawNew<TupleLiteral>(yylineno));
+      $$ = std::pair<std::string, Ptr<const Expression>>(
+          $1, global_arena->New<TupleLiteral>(context.SourceLoc()));
     }
 ;
 alternative_list:
   // Empty
-    { $$ = std::list<std::pair<std::string, const Expression*>>(); }
+    { $$ = std::list<std::pair<std::string, Ptr<const Expression>>>(); }
 | alternative
     {
-      $$ = std::list<std::pair<std::string, const Expression*>>();
+      $$ = std::list<std::pair<std::string, Ptr<const Expression>>>();
       $$.push_front($1);
     }
-| alternative "," alternative_list
+| alternative COMMA alternative_list
     {
       $$ = std::move($3);
       $$.push_front($1);
@@ -612,12 +650,14 @@ declaration:
     { $$ = global_arena->New<FunctionDeclaration>($1); }
 | function_declaration
     { $$ = global_arena->New<FunctionDeclaration>($1); }
-| CLASS identifier "{" member_list "}"
-    { $$ = global_arena->New<ClassDeclaration>(yylineno, $2, $4); }
-| CHOICE identifier "{" alternative_list "}"
-    { $$ = global_arena->New<ChoiceDeclaration>(yylineno, $2, $4); }
-| VAR variable_declaration "=" expression ";"
-    { $$ = global_arena->New<VariableDeclaration>(yylineno, $2, $4); }
+| CLASS identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE
+    { $$ = global_arena->New<ClassDeclaration>(context.SourceLoc(), $2, $4); }
+| CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
+    { $$ = global_arena->New<ChoiceDeclaration>(context.SourceLoc(), $2, $4); }
+| VAR variable_declaration EQUAL expression SEMICOLON
+    {
+      $$ = global_arena->New<VariableDeclaration>(context.SourceLoc(), $2, $4);
+    }
 ;
 declaration_list:
   // Empty
@@ -627,3 +667,5 @@ declaration_list:
       $$ = $2;
       $$.push_front(Ptr<const Declaration>($1));
     }
+;
+%%
