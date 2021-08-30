@@ -5,22 +5,21 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 */
 
 %{
+
 #include <cstdlib>
 
 #include "common/check.h"
 #include "common/string_helpers.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
+#include "executable_semantics/syntax/parser.h"
 #include "llvm/ADT/StringExtras.h"
 %}
 
-/* Turn off legacy bits we don't need */
+/* Turn off legacy bits we don't need. */
 %option noyywrap nounput nodefault noinput
 
-/* maintains the number of the current line read from input in the
-   global variable yylineno.
-*/
-%option yylineno
+%option reentrant
 
 /* Lexing a token immediately after consuming some whitespace. */
 %s AFTER_WHITESPACE
@@ -203,7 +202,7 @@ operator and its operand, leading to three more cases:
       // "Reading a token: ".
       llvm::errs() << "\n";
     }
-    FATAL_COMPILATION_ERROR(yylineno)
+    FATAL_COMPILATION_ERROR(context.SourceLoc())
         << "Invalid escaping in string: " << yytext;
   }
   return Carbon::Parser::make_string_literal(
@@ -237,7 +236,7 @@ operator and its operand, leading to three more cases:
     // "Reading a token: ".
     llvm::errs() << "\n";
   }
-  FATAL_COMPILATION_ERROR(yylineno) << "invalid character '\\x"
+  FATAL_COMPILATION_ERROR(context.SourceLoc()) << "invalid character '\\x"
             << llvm::toHex(llvm::StringRef(yytext, 1)) << "' in source file.";
 }
 
