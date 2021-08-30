@@ -1,2 +1,2 @@
-COMPILATION ERROR: 6: Invalid escaping in string: "new	line"
+COMPILATION ERROR: executable_semantics/testdata/string_fail6.carbon:6: Invalid escaping in string: "new	line"
 EXIT CODE: 255

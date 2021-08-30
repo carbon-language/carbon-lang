@@ -1,2 +1,2 @@
-COMPILATION ERROR: 1: invalid character '\xFE' in source file.
+COMPILATION ERROR: executable_semantics/testdata/invalid_char.carbon:1: invalid character '\xFE' in source file.
 EXIT CODE: 255
