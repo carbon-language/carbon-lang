@@ -97,20 +97,19 @@ class TestFormatGrammar(unittest.TestCase):
                 "/* Table end. */\n"
                 "more content\n",
                 False,
-                [],
             ),
             (
                 [
-                    "content\n",
+                    "content\n" "/* Table begin. */\n",
                     None,
-                    "more content\n",
+                    "\n" "/* Table end. */\n" "more content\n",
                 ],
                 {},
                 [
                     format_grammar._Table(
                         1,
                         "{VAR} { return SIMPLE_TOKEN(VAR); }\n"
-                        "{WHILE} { return SIMPLE_TOKEN(WHILE); }\n",
+                        "{WHILE} { return SIMPLE_TOKEN(WHILE); }",
                     )
                 ],
             ),

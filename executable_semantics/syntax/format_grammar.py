@@ -244,7 +244,7 @@ def _parse_block_comment(
         )
         text_segments.append(None)
         table_segments.append(
-            _Table(len(text_segments) - 1, content[comment_end:table_end])
+            _Table(len(text_segments) - 1, content[comment_end + 1 : table_end])
         )
         return table_end, table_end + len(_TABLE_END) - 1
     else:

@@ -116,7 +116,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   context.current_token_position.step();
 %}
 
-/* Table begin. */
+ /* Table begin. */
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {ARROW}               { return SIMPLE_TOKEN(ARROW);               }
 {AUTO}                { return SIMPLE_TOKEN(AUTO);                }
@@ -160,7 +160,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
 {VAR}                 { return SIMPLE_TOKEN(VAR);                 }
 {WHILE}               { return SIMPLE_TOKEN(WHILE);               }
-/* Table end. */
+ /* Table end. */
 
  /* More modern Bisons provide make_EOF. */
 <<EOF>>               { return SIMPLE_TOKEN(END_OF_FILE); }
