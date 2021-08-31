@@ -8,14 +8,20 @@
 #include <list>
 
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/library.h"
+#include "executable_semantics/ast/library_name.h"
 #include "executable_semantics/common/ptr.h"
 
 namespace Carbon {
 
+// A Carbon file's AST.
 struct AST {
-  Library package;
-  std::vector<Library> imports;
+  // The package directive's library.
+  LibraryName package;
+  // The package directive's API or impl state.
+  bool is_api;
+  // Import directives.
+  std::vector<LibraryName> imports;
+  // The file's ordered declarations.
   std::list<Ptr<const Declaration>> declarations;
 };
 

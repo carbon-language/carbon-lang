@@ -9,7 +9,7 @@ cc_library(
     hdrs = ["ast.h"],
     deps = [
         ":declaration",
-        ":library",
+        ":library_name",
     ],
 )
 
@@ -91,8 +91,8 @@ cc_library(
 )
 
 cc_library(
-    name = "library",
-    hdrs = ["library.h"],
+    name = "library_name",
+    hdrs = ["library_name.h"],
 )
 
 cc_library(

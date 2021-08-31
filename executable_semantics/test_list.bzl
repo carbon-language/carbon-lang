@@ -72,7 +72,7 @@ TEST_LIST = [
     "next",
     "no_match",
     "package_library",
-    "package_required",
+    "package_missing",
     "pattern_init",
     "pattern_variable_fail",
     "placeholder_variable",

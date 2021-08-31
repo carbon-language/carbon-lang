@@ -94,10 +94,10 @@
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
-%type <Library> package
-%type <Library> import
-%type <std::vector<Library>> import_list
-%type <std::optional<std::string>> optional_library_path
+%type <std::pair<LibraryName, bool>> package_directive
+%type <LibraryName> import_directive
+%type <std::vector<LibraryName>> import_directives
+%type <std::string> optional_library_path
 %type <bool> api_or_impl
 %type <BisonWrap<Ptr<const Declaration>>> declaration
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_declaration
@@ -228,25 +228,26 @@
 
 %start input
 %%
-input: package import_list declaration_list
+input: package_directive import_directives declaration_list
     {
-      parsed_program = AST({.package = $1,
+      parsed_program = AST({.package = $1.first,
+                            .is_api = $1.second,
                             .imports = std::move($2),
                             .declarations = std::move($3)});
     }
 ;
-package:
+package_directive:
   PACKAGE identifier optional_library_path api_or_impl SEMICOLON
-    { $$ = Library({.package = $2, .path = $3, .is_api = $4}); }
+    { $$ = {LibraryName({.package = $2, .path = $3}), $4}; }
 ;
-import:
+import_directive:
   IMPORT identifier optional_library_path SEMICOLON
-    { $$ = Library({.package = $2, .path = $3, .is_api = false}); }
+    { $$ = LibraryName({.package = $2, .path = $3}); }
 ;
-import_list:
+import_directives:
   // Empty
-    { $$ = std::vector<Library>(); }
-| import_list import
+    { $$ = std::vector<LibraryName>(); }
+| import_directives import_directive
     {
       $$ = std::move($1);
       $$.push_back($2);
@@ -254,7 +255,7 @@ import_list:
 ;
 optional_library_path:
   // Empty
-    { $$ = std::nullopt; }
+    { $$ = ""; }
 | LIBRARY string_literal
     { $$ = $2; }
 ;

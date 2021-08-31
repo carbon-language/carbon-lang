@@ -16,7 +16,7 @@
 namespace Carbon {
 
 // Runs the top-level declaration list.
-void ExecProgram(const AST& ast);
+void ExecProgram(AST ast);
 
 }  // namespace Carbon
 

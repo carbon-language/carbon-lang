@@ -37,23 +37,21 @@ static void AddIntrinsics(std::list<Ptr<const Declaration>>* declarations) {
   declarations->insert(declarations->begin(), print);
 }
 
-void ExecProgram(const AST& ast) {
-  AST modified_ast = ast;
-  AddIntrinsics(&modified_ast.declarations);
+void ExecProgram(AST ast) {
+  AddIntrinsics(&ast.declarations);
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
-    for (const auto decl : modified_ast.declarations) {
+    for (const auto decl : ast.declarations) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** type checking **********\n";
   }
   TypeChecker type_checker;
-  TypeChecker::TypeCheckContext p =
-      type_checker.TopLevel(modified_ast.declarations);
+  TypeChecker::TypeCheckContext p = type_checker.TopLevel(ast.declarations);
   TypeEnv top = p.types;
   Env ct_top = p.values;
   std::list<Ptr<const Declaration>> new_decls;
-  for (const auto decl : modified_ast.declarations) {
+  for (const auto decl : ast.declarations) {
     new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {
