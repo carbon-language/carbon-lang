@@ -136,7 +136,6 @@ class StatementAction : public Action {
   Ptr<const Statement> stmt;
 };
 
-// FIXME Should Pos somehow go here to avoid ambiguity (and duplicate storage)?
 template <typename StatementType>
 class ConcreteStatementAction : public StatementAction {
  public:
