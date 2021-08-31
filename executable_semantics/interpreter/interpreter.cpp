@@ -748,54 +748,53 @@ auto Interpreter::StepStmt() -> Transition {
   }
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
-      // FIXME update this to use (and update) State() instead of Pos()
       auto& match_action = cast<ConcreteStatementAction<Match>>(*act);
-      if (match_action.Pos() == 0) {
+      if (!match_action.State().started) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
+        match_action.State().started = true;
         return Spawn{
             global_arena->New<ExpressionAction>(match_action.Stmt()->Exp())};
       } else {
-        // Regarding act->Pos():
-        // * odd: start interpreting the pattern of a clause
-        // * even: finished interpreting the pattern, now try to match
-        //
-        // Regarding act->Results():
-        // * 0: the value that we're matching
-        // * 1: the pattern for clause 0
-        // * 2: the pattern for clause 1
-        // * ...
-        auto clause_num = (match_action.Pos() - 1) / 2;
-        if (clause_num >=
+        if (match_action.State().clause >=
             static_cast<int>(match_action.Stmt()->Clauses()->size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
           return Done{};
         }
         auto c = match_action.Stmt()->Clauses()->begin();
-        std::advance(c, clause_num);
+        std::advance(c, match_action.State().clause);
 
-        if (match_action.Pos() % 2 == 1) {
-          // start interpreting the pattern of the clause
-          //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
-          // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          return Spawn{global_arena->New<PatternAction>(c->first)};
-        } else {  // try to match
-          auto v = match_action.Results()[0];
-          auto pat = match_action.Results()[clause_num + 1];
-          std::optional<Env> matches = PatternMatch(pat, v, stmt->SourceLoc());
-          if (matches) {  // we have a match, start the body
-            // Ensure we don't process any more clauses.
-            act->SetPos(2 * match_action.Stmt()->Clauses()->size() + 1);
+        switch (match_action.State().next_mode) {
+          case Match::ActionState::EvaluatePattern: {
+            // start interpreting the pattern of the clause
+            //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
+            // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
+            match_action.State().next_mode = Match::ActionState::MatchPattern;
+            return Spawn{global_arena->New<PatternAction>(c->first)};
+          }
+          case Match::ActionState::MatchPattern: {
+            auto v = match_action.Results()[0];
+            auto pat = match_action.Results()[match_action.State().clause + 1];
+            std::optional<Env> matches =
+                PatternMatch(pat, v, stmt->SourceLoc());
+            if (matches) {  // we have a match, start the body
+              // Ensure we don't process any more clauses.
+              match_action.State().clause =
+                  match_action.Stmt()->Clauses()->size();
 
-            for (const auto& [name, value] : *matches) {
-              frame->scopes.Top()->values.Set(name, value);
-              frame->scopes.Top()->locals.push_back(name);
+              for (const auto& [name, value] : *matches) {
+                frame->scopes.Top()->values.Set(name, value);
+                frame->scopes.Top()->locals.push_back(name);
+              }
+              return Spawn{StatementAction::Make(c->second)};
+            } else {
+              match_action.State().next_mode =
+                  Match::ActionState::EvaluatePattern;
+              match_action.State().clause += 1;
+              return RunAgain{};
             }
-            return Spawn{StatementAction::Make(c->second)};
-          } else {
-            return RunAgain{};
           }
         }
       }

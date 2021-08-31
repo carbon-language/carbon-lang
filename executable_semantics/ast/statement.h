@@ -244,7 +244,7 @@ class Match : public Statement {
   struct ActionState {
     bool started = false;
     int clause = 0;
-    enum { EvaluatePattern, MatchPattern, Done } next_mode = EvaluatePattern;
+    enum { EvaluatePattern, MatchPattern } next_mode = EvaluatePattern;
   };
 
  private:
