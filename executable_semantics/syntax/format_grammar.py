@@ -377,7 +377,10 @@ def _format_table_segments(
                 col_widths[col_index] = max(
                     col_widths[col_index], len(cols[col_index])
                 )
-        row_format = " ".join(["%%-%ds" % width for width in col_widths])
+        # The last column should not add spaces.
+        row_format = " ".join(
+            ["%%-%ds" % width for width in col_widths[:-1]] + ["%s"]
+        )
         text_segments[table.segment_index] = "\n".join(
             [row_format % tuple(cols) for cols in rows]
         )

@@ -143,6 +143,50 @@ class TestFormatGrammar(unittest.TestCase):
             ),
         )
 
+    def test_format_table_defines(self):
+        text_segments = [None]
+        format_grammar._format_table_segments(
+            text_segments,
+            [
+                format_grammar._Table(
+                    0,
+                    'CONTINUE "continue"\n'
+                    'DEFAULT "default"\n'
+                    'DOUBLE_ARROW "=>"',
+                )
+            ],
+            False,
+        )
+        self.assertEqual(
+            text_segments,
+            [
+                'CONTINUE     "continue"\n'
+                'DEFAULT      "default"\n'
+                'DOUBLE_ARROW "=>"'
+            ],
+        )
+
+    def test_format_table_returns(self):
+        text_segments = [None]
+        format_grammar._format_table_segments(
+            text_segments,
+            [
+                format_grammar._Table(
+                    0,
+                    "{VAR} { return SIMPLE_TOKEN(VAR); }\n"
+                    "{WHILE} { return SIMPLE_TOKEN(WHILE); }",
+                )
+            ],
+            False,
+        )
+        self.assertEqual(
+            text_segments,
+            [
+                "{VAR}   { return SIMPLE_TOKEN(VAR);   }\n"
+                "{WHILE} { return SIMPLE_TOKEN(WHILE); }"
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
