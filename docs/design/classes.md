@@ -1046,7 +1046,7 @@ using a
 on an opt-in basis. Classes by default are
 _[final](https://en.wikipedia.org/wiki/Inheritance_(object-oriented*programming)#Non-subclassable_classes)*,
 which means they may not be extended. To declare a class as allowing extension,
-use the `base class` introducer:
+use either the `base class` or `abstract class` introducer:
 
 ```
 base class MyBaseClass { ... }
@@ -1060,14 +1060,24 @@ class FinalDerived extends MiddleDerived { ... }
 // ❌ Forbidden: class Illegal extends FinalDerived { ... }
 ```
 
+An _[abstract class](https://en.wikipedia.org/wiki/Abstract_type)_ or _abstract
+base class_ is a base class that may not be instantiated.
+
+```
+abstract class MyAbstractClass { ... }
+// ❌ Forbidden: var a: MyAbstractClass = ...;
+```
+
 **Future work:** For now, the Carbon design only supports single inheritance. In
 the future, Carbon will support multiple inheritance with limitations on all
 base classes except the one listed first.
 
-**Terminology:** We say `MiddleDerived` is a _derived class_, derived from or
-extending `MyBaseClass`. Similarly `FinalDerived` is derived from or extends
-`MiddleDerived`. `MiddleDerived` is `FinalDerived`'s _immediate base class_, and
-both `MiddleDerived` and `MyBaseClass` are base classes of `FinalDerived`.
+**Terminology:** We say `MiddleDerived` and `FinalDerived` are _derived
+classes_, transitively extending or _derived from_ `MyBaseClass`. Similarly
+`FinalDerived` is derived from or extends `MiddleDerived`. `MiddleDerived` is
+`FinalDerived`'s _immediate base class_, and both `MiddleDerived` and
+`MyBaseClass` are base classes of `FinalDerived`. Base classes that are not
+abstract are called _extensible classes_.
 
 A derived class has all the members of the class it extends, including data
 members and methods, though it may not be able to access them if they were
@@ -1120,9 +1130,7 @@ There are three virtual override keywords:
     since it has no implementation in this class. This is short for "abstract
     virtual" but is called
     ["pure virtual" in C++](https://en.wikipedia.org/wiki/Virtual_function#Abstract_classes_and_pure_virtual_functions).
-    A class with abstract methods that have not been overridden is also called
-    _[abstract](https://en.wikipedia.org/wiki/Abstract_type)_. Abstract types
-    cannot be instantiated and cannot be final.
+    Only abstract classes may have unimplemented abstract methods.
 -   `impl` - This marks a method that overrides a method marked `virtual` or
     `abstract` in the base class with an implementation specific to -- and
     defined within -- this class. The method is still virtual and may be
@@ -1133,17 +1141,11 @@ There are three virtual override keywords:
     doesn't match the base class. We intentionally use the same keyword here as
     for implementing interfaces, to emphasize that they are similar operations.
 
-| Keyword on<br />method in `C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C extends B`                          | in `D` where<br />`D extends C`                                                  |
-| ----------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `virtual`                     | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
-| `abstract`                    | ✅                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
-| `impl`                        | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
-
-**Open question:** Should there be a way to mark a type as
-[abstract](https://en.wikipedia.org/wiki/Abstract_type) without having any
-methods marked `abstract`? One option is to declare it using `abstract class`
-instead of `base class`. In C++, this case is handled by making the destructor
-pure virtual, even though you have to implement it anyway.
+| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C extends B`       | in `D` where<br />`D extends C`                          |
+| ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | ------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                         | `abstract`<br />`impl`<br />_not mentioned_              |
+| `abstract`                    | ✅                                 | ❌                             |                                 | ❌                                    | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
+| `impl`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`                                   |
 
 #### Subtyping
 
