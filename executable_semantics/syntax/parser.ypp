@@ -133,6 +133,7 @@
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
+  // table-begin
   AND
   ARROW
   AUTO
@@ -179,6 +180,7 @@
   UNDERSCORE
   VAR
   WHILE
+  // table-end
   // Used to track EOF.
   END_OF_FILE 0
   // Only used for precedence.

@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  */
 %s AFTER_OPERAND
 
-/* Table begin. */
+/* table-begin */
 AND                  "and"
 ARROW                "->"
 AUTO                 "auto"
@@ -75,7 +75,7 @@ TYPE                 "Type"
 UNDERSCORE           "_"
 VAR                  "var"
 WHILE                "while"
-/* Table end. */
+/* table-end */
 
 /* This should be kept table-like, but isn't automatic due to spaces. */
 identifier            [A-Za-z_][A-Za-z0-9_]*
@@ -117,51 +117,51 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   context.current_token_position.step();
 %}
 
- /* Table begin. */
-{AND}                 { return SIMPLE_TOKEN(AND); }
-{ARROW}               { return SIMPLE_TOKEN(ARROW); }
-{AUTO}                { return SIMPLE_TOKEN(AUTO); }
-{AWAIT}               { return SIMPLE_TOKEN(AWAIT); }
-{BOOL}                { return SIMPLE_TOKEN(BOOL); }
-{BREAK}               { return SIMPLE_TOKEN(BREAK); }
-{CASE}                { return SIMPLE_TOKEN(CASE); }
-{CHOICE}              { return SIMPLE_TOKEN(CHOICE); }
-{CLASS}               { return SIMPLE_TOKEN(CLASS); }
-{COLON_BANG}          { return SIMPLE_TOKEN(COLON_BANG); }
-{COLON}               { return SIMPLE_TOKEN(COLON); }
-{COMMA}               { return SIMPLE_TOKEN(COMMA); }
-{CONTINUATION_TYPE}   { return SIMPLE_TOKEN(CONTINUATION_TYPE); }
-{CONTINUATION}        { return SIMPLE_TOKEN(CONTINUATION); }
-{CONTINUE}            { return SIMPLE_TOKEN(CONTINUE); }
-{DEFAULT}             { return SIMPLE_TOKEN(DEFAULT); }
-{DOUBLE_ARROW}        { return SIMPLE_TOKEN(DOUBLE_ARROW); }
-{ELSE}                { return SIMPLE_TOKEN(ELSE); }
-{EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL); }
-{EQUAL}               { return SIMPLE_TOKEN(EQUAL); }
-{FALSE}               { return SIMPLE_TOKEN(FALSE); }
-{FNTY}                { return SIMPLE_TOKEN(FNTY); }
-{FN}                  { return SIMPLE_TOKEN(FN); }
-{IF}                  { return SIMPLE_TOKEN(IF); }
-{LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS); }
-{LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE); }
+ /* table-begin */
+{AND}                 { return SIMPLE_TOKEN(AND);                 }
+{ARROW}               { return SIMPLE_TOKEN(ARROW);               }
+{AUTO}                { return SIMPLE_TOKEN(AUTO);                }
+{AWAIT}               { return SIMPLE_TOKEN(AWAIT);               }
+{BOOL}                { return SIMPLE_TOKEN(BOOL);                }
+{BREAK}               { return SIMPLE_TOKEN(BREAK);               }
+{CASE}                { return SIMPLE_TOKEN(CASE);                }
+{CHOICE}              { return SIMPLE_TOKEN(CHOICE);              }
+{CLASS}               { return SIMPLE_TOKEN(CLASS);               }
+{COLON_BANG}          { return SIMPLE_TOKEN(COLON_BANG);          }
+{COLON}               { return SIMPLE_TOKEN(COLON);               }
+{COMMA}               { return SIMPLE_TOKEN(COMMA);               }
+{CONTINUATION_TYPE}   { return SIMPLE_TOKEN(CONTINUATION_TYPE);   }
+{CONTINUATION}        { return SIMPLE_TOKEN(CONTINUATION);        }
+{CONTINUE}            { return SIMPLE_TOKEN(CONTINUE);            }
+{DEFAULT}             { return SIMPLE_TOKEN(DEFAULT);             }
+{DOUBLE_ARROW}        { return SIMPLE_TOKEN(DOUBLE_ARROW);        }
+{ELSE}                { return SIMPLE_TOKEN(ELSE);                }
+{EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL);         }
+{EQUAL}               { return SIMPLE_TOKEN(EQUAL);               }
+{FALSE}               { return SIMPLE_TOKEN(FALSE);               }
+{FNTY}                { return SIMPLE_TOKEN(FNTY);                }
+{FN}                  { return SIMPLE_TOKEN(FN);                  }
+{IF}                  { return SIMPLE_TOKEN(IF);                  }
+{LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
+{LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
-{MATCH}               { return SIMPLE_TOKEN(MATCH); }
-{MINUS}               { return SIMPLE_TOKEN(MINUS); }
-{NOT}                 { return SIMPLE_TOKEN(NOT); }
-{OR}                  { return SIMPLE_TOKEN(OR); }
-{PERIOD}              { return SIMPLE_TOKEN(PERIOD); }
-{PLUS}                { return SIMPLE_TOKEN(PLUS); }
-{RETURN}              { return SIMPLE_TOKEN(RETURN); }
-{RUN}                 { return SIMPLE_TOKEN(RUN); }
-{SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON); }
-{SLASH}               { return SIMPLE_TOKEN(SLASH); }
-{STRING}              { return SIMPLE_TOKEN(STRING); }
-{TRUE}                { return SIMPLE_TOKEN(TRUE); }
-{TYPE}                { return SIMPLE_TOKEN(TYPE); }
-{UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE); }
-{VAR}                 { return SIMPLE_TOKEN(VAR); }
-{WHILE}               { return SIMPLE_TOKEN(WHILE); }
- /* Table end. */
+{MATCH}               { return SIMPLE_TOKEN(MATCH);               }
+{MINUS}               { return SIMPLE_TOKEN(MINUS);               }
+{NOT}                 { return SIMPLE_TOKEN(NOT);                 }
+{OR}                  { return SIMPLE_TOKEN(OR);                  }
+{PERIOD}              { return SIMPLE_TOKEN(PERIOD);              }
+{PLUS}                { return SIMPLE_TOKEN(PLUS);                }
+{RETURN}              { return SIMPLE_TOKEN(RETURN);              }
+{RUN}                 { return SIMPLE_TOKEN(RUN);                 }
+{SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
+{SLASH}               { return SIMPLE_TOKEN(SLASH);               }
+{STRING}              { return SIMPLE_TOKEN(STRING);              }
+{TRUE}                { return SIMPLE_TOKEN(TRUE);                }
+{TYPE}                { return SIMPLE_TOKEN(TYPE);                }
+{UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
+{VAR}                 { return SIMPLE_TOKEN(VAR);                 }
+{WHILE}               { return SIMPLE_TOKEN(WHILE);               }
+ /* table-end */
 
  /* More modern Bisons provide make_EOF. */
 <<EOF>>               { return SIMPLE_TOKEN(END_OF_FILE); }
