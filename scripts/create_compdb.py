@@ -46,20 +46,6 @@ if not bazel:
         if not shutil.which(bazel):
             sys.exit("Unable to run Bazel")
 
-# This should typically be called through pyenv due to the shebang. However,
-# pyenv then modifies the PATH, which affects build caching. In order to
-# mimic the calling environment for bazel, this strips out PATH entries
-# which pyenv likely added.
-# TODO: remove this when/if we're able to add
-# `--incompatible_strict_action_env=true` to the project .bazelrc, because
-# that will cause Bazel to ignore PATH.
-env = os.environ.copy()
-stripped_path = []
-for x in env["PATH"].split(":"):
-    if not ("/Cellar/pyenv/" in x or "/.pyenv/versions/" in x):
-        stripped_path.append(x)
-env["PATH"] = ":".join(stripped_path)
-
 # Load compiler flags. We do this first in order to fail fast if not run from
 # the workspace root.
 print("Reading the arguments to use...")
@@ -93,7 +79,6 @@ source_files_query = subprocess.run(
     stdout=subprocess.PIPE,
     stderr=subprocess.DEVNULL,
     universal_newlines=True,
-    env=env,
 ).stdout
 source_files = [
     Path(line.split(":")[0]) for line in source_files_query.splitlines()
@@ -135,7 +120,6 @@ generated_file_labels = subprocess.run(
     stdout=subprocess.PIPE,
     stderr=subprocess.DEVNULL,
     universal_newlines=True,
-    env=env,
 ).stdout.splitlines()
 print("Found %d generated files..." % (len(generated_file_labels),))
 
@@ -143,9 +127,7 @@ print("Found %d generated files..." % (len(generated_file_labels),))
 # fail in case there are build errors in the client, and just warn the user
 # that they may be missing generated files.
 print("Building the generated files so that tools can find them...")
-subprocess.run(
-    [bazel, "build", "--keep_going"] + generated_file_labels, env=env
-)
+subprocess.run([bazel, "build", "--keep_going"] + generated_file_labels)
 
 
 # Manually translate the label to a user friendly path into the Bazel output

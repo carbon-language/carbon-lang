@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
@@ -105,9 +103,9 @@ cc_library(
 )
 
 cc_library(
-    name = "typecheck",
-    srcs = ["typecheck.cpp"],
-    hdrs = ["typecheck.h"],
+    name = "type_checker",
+    srcs = ["type_checker.cpp"],
+    hdrs = ["type_checker.h"],
     deps = [
         ":dictionary",
         ":interpreter",

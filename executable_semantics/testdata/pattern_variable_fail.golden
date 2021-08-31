@@ -1,2 +1,2 @@
-COMPILATION ERROR: 7: syntax error, unexpected :
+COMPILATION ERROR: executable_semantics/testdata/pattern_variable_fail.carbon:7: syntax error, unexpected COLON
 EXIT CODE: 255

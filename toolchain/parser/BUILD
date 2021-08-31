@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -66,6 +65,7 @@ cc_test(
         ":parse_tree",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",

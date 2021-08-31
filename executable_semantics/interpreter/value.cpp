@@ -54,29 +54,28 @@ auto TupleValue::FindField(const std::string& name) const -> const Value* {
 
 namespace {
 
-auto GetMember(const Value* v, const std::string& f, int line_num)
+auto GetMember(const Value* v, const std::string& f, SourceLocation loc)
     -> const Value* {
   switch (v->Tag()) {
     case Value::Kind::StructValue: {
       const Value* field =
           cast<TupleValue>(*cast<StructValue>(*v).Inits()).FindField(f);
       if (field == nullptr) {
-        FATAL_RUNTIME_ERROR(line_num) << "member " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(loc) << "member " << f << " not in " << *v;
       }
       return field;
     }
     case Value::Kind::TupleValue: {
       const Value* field = cast<TupleValue>(*v).FindField(f);
       if (field == nullptr) {
-        FATAL_RUNTIME_ERROR(line_num) << "field " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(loc) << "field " << f << " not in " << *v;
       }
       return field;
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (FindInVarValues(f, choice.Alternatives()) == nullptr) {
-        FATAL_RUNTIME_ERROR(line_num)
-            << "alternative " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(loc) << "alternative " << f << " not in " << *v;
       }
       return global_arena->RawNew<AlternativeConstructorValue>(f,
                                                                choice.Name());
@@ -88,11 +87,11 @@ auto GetMember(const Value* v, const std::string& f, int line_num)
 
 }  // namespace
 
-auto Value::GetField(const FieldPath& path, int line_num) const
+auto Value::GetField(const FieldPath& path, SourceLocation loc) const
     -> const Value* {
   const Value* value = this;
   for (const std::string& field : path.components) {
-    value = GetMember(value, field, line_num);
+    value = GetMember(value, field, loc);
   }
   return value;
 }
@@ -102,14 +101,15 @@ namespace {
 auto SetFieldImpl(const Value* value,
                   std::vector<std::string>::const_iterator path_begin,
                   std::vector<std::string>::const_iterator path_end,
-                  const Value* field_value, int line_num) -> const Value* {
+                  const Value* field_value, SourceLocation loc)
+    -> const Value* {
   if (path_begin == path_end) {
     return field_value;
   }
   switch (value->Tag()) {
     case Value::Kind::StructValue: {
       return SetFieldImpl(cast<StructValue>(*value).Inits(), path_begin,
-                          path_end, field_value, line_num);
+                          path_end, field_value, loc);
     }
     case Value::Kind::TupleValue: {
       std::vector<TupleElement> elements = cast<TupleValue>(*value).Elements();
@@ -118,11 +118,11 @@ auto SetFieldImpl(const Value* value,
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
-        FATAL_RUNTIME_ERROR(line_num)
+        FATAL_RUNTIME_ERROR(loc)
             << "field " << *path_begin << " not in " << *value;
       }
-      it->value = SetFieldImpl(it->value, path_begin + 1, path_end, field_value,
-                               line_num);
+      it->value =
+          SetFieldImpl(it->value, path_begin + 1, path_end, field_value, loc);
       return global_arena->RawNew<TupleValue>(elements);
     }
     default:
@@ -133,9 +133,9 @@ auto SetFieldImpl(const Value* value,
 }  // namespace
 
 auto Value::SetField(const FieldPath& path, const Value* field_value,
-                     int line_num) const -> const Value* {
+                     SourceLocation loc) const -> const Value* {
   return SetFieldImpl(this, path.components.begin(), path.components.end(),
-                      field_value, line_num);
+                      field_value, loc);
 }
 
 void Value::Print(llvm::raw_ostream& out) const {
@@ -248,25 +248,25 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto CopyVal(const Value* val, int line_num) -> const Value* {
+auto CopyVal(const Value* val, SourceLocation loc) -> const Value* {
   switch (val->Tag()) {
     case Value::Kind::TupleValue: {
       std::vector<TupleElement> elements;
       for (const TupleElement& element : cast<TupleValue>(*val).Elements()) {
         elements.push_back(
-            {.name = element.name, .value = CopyVal(element.value, line_num)});
+            {.name = element.name, .value = CopyVal(element.value, loc)});
       }
       return global_arena->RawNew<TupleValue>(std::move(elements));
     }
     case Value::Kind::AlternativeValue: {
       const auto& alt = cast<AlternativeValue>(*val);
-      const Value* arg = CopyVal(alt.Argument(), line_num);
+      const Value* arg = CopyVal(alt.Argument(), loc);
       return global_arena->RawNew<AlternativeValue>(alt.AltName(),
                                                     alt.ChoiceName(), arg);
     }
     case Value::Kind::StructValue: {
       const auto& s = cast<StructValue>(*val);
-      const Value* inits = CopyVal(s.Inits(), line_num);
+      const Value* inits = CopyVal(s.Inits(), loc);
       return global_arena->RawNew<StructValue>(s.Type(), inits);
     }
     case Value::Kind::IntValue:
@@ -285,13 +285,13 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return val;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*val);
-      return global_arena->RawNew<FunctionType>(
-          fn_type.Deduced(), CopyVal(fn_type.Param(), line_num),
-          CopyVal(fn_type.Ret(), line_num));
+      return global_arena->RawNew<FunctionType>(fn_type.Deduced(),
+                                                CopyVal(fn_type.Param(), loc),
+                                                CopyVal(fn_type.Ret(), loc));
     }
     case Value::Kind::PointerType:
       return global_arena->RawNew<PointerType>(
-          CopyVal(cast<PointerType>(*val).Type(), line_num));
+          CopyVal(cast<PointerType>(*val).Type(), loc));
     case Value::Kind::IntType:
       return global_arena->RawNew<IntType>();
     case Value::Kind::BoolType:
@@ -366,8 +366,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
 // Returns true if all the fields of the two tuples contain equal values
 // and returns false otherwise.
 static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
-                             const std::vector<TupleElement>& ts2, int line_num)
-    -> bool {
+                             const std::vector<TupleElement>& ts2,
+                             SourceLocation loc) -> bool {
   if (ts1.size() != ts2.size()) {
     return false;
   }
@@ -378,7 +378,7 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
     if (iter == ts2.end()) {
       return false;
     }
-    if (!ValueEqual(element.value, iter->value, line_num)) {
+    if (!ValueEqual(element.value, iter->value, loc)) {
       return false;
     }
   }
@@ -388,7 +388,7 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
 // Returns true if the two values are equal and returns false otherwise.
 //
 // This function implements the `==` operator of Carbon.
-auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
+auto ValueEqual(const Value* v1, const Value* v2, SourceLocation loc) -> bool {
   if (v1->Tag() != v2->Tag()) {
     return false;
   }
@@ -399,11 +399,17 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return cast<BoolValue>(*v1).Val() == cast<BoolValue>(*v2).Val();
     case Value::Kind::PointerValue:
       return cast<PointerValue>(*v1).Val() == cast<PointerValue>(*v2).Val();
-    case Value::Kind::FunctionValue:
-      return cast<FunctionValue>(*v1).Body() == cast<FunctionValue>(*v2).Body();
+    case Value::Kind::FunctionValue: {
+      std::optional<Ptr<const Statement>> body1 =
+          cast<FunctionValue>(*v1).Body();
+      std::optional<Ptr<const Statement>> body2 =
+          cast<FunctionValue>(*v2).Body();
+      return body1.has_value() == body2.has_value() &&
+             (!body1.has_value() || *body1 == *body2);
+    }
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
-                              cast<TupleValue>(*v2).Elements(), line_num);
+                              cast<TupleValue>(*v2).Elements(), loc);
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).Val() == cast<StringValue>(*v2).Val();
     case Value::Kind::IntType:

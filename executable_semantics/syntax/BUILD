@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
 cc_library(
@@ -16,6 +14,7 @@ cc_library(
     name = "syntax",
     srcs = [
         "lexer.cpp",
+        "lexer.h",
         "parse.cpp",
         "parse_and_lex_context.cpp",
         "parse_and_lex_context.h",
@@ -45,7 +44,7 @@ cc_library(
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter",
-        "//executable_semantics/interpreter:typecheck",
+        "//executable_semantics/interpreter:type_checker",
     ],
 )
 
@@ -55,6 +54,7 @@ genrule(
     outs = [
         "parser.cpp",
         "parser.h",
+        "parser.output",
     ],
     cmd = "M4=$(M4) $(BISON) " +
           "--output=$(location parser.cpp) " +
@@ -70,9 +70,13 @@ genrule(
 genrule(
     name = "syntax_flex_srcs",
     srcs = ["lexer.lpp"],
-    outs = ["lexer.cpp"],
+    outs = [
+        "lexer.cpp",
+        "lexer.h",
+    ],
     cmd = "M4=$(M4) $(FLEX) " +
           "--outfile=$(location lexer.cpp) " +
+          "--header-file=$(location lexer.h) " +
           "$(location lexer.lpp)",
     toolchains = [
         "@rules_flex//flex:current_flex_toolchain",
