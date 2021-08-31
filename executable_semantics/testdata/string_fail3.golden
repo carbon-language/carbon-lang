@@ -1,2 +1,2 @@
-COMPILATION ERROR: executable_semantics/testdata/string_fail3.carbon:8: Invalid escaping in string: "str\xaa"
+COMPILATION ERROR: executable_semantics/testdata/string_fail3.carbon:6: Invalid escaping in string: "str\xaa"
 EXIT CODE: 255

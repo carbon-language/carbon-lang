@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package ExecutableSemanticsTest api;
-
 // Test that a global variable may not depend on a later global.
 // Error expected.
 

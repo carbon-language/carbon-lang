@@ -1,4 +1,4 @@
-COMPILATION ERROR: executable_semantics/testdata/class_field_mismatch.carbon:13: type error in call
+COMPILATION ERROR: executable_semantics/testdata/class_field_mismatch.carbon:11: type error in call
 expected: (x = i32, y = i32)
 actual: (x = i32, z = i32)
 EXIT CODE: 255

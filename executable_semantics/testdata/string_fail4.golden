@@ -1,2 +1,2 @@
-COMPILATION ERROR: executable_semantics/testdata/string_fail4.carbon:8: Invalid escaping in string: "str\01"
+COMPILATION ERROR: executable_semantics/testdata/string_fail4.carbon:6: Invalid escaping in string: "str\01"
 EXIT CODE: 255

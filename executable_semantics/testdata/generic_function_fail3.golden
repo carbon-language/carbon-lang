@@ -1,4 +1,4 @@
-COMPILATION ERROR: executable_semantics/testdata/generic_function_fail3.carbon:8: type error in addition(1)
+COMPILATION ERROR: executable_semantics/testdata/generic_function_fail3.carbon:6: type error in addition(1)
 expected: i32
 actual: T
 EXIT CODE: 255

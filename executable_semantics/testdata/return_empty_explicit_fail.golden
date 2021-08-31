@@ -1,2 +1,2 @@
-COMPILATION ERROR: executable_semantics/testdata/return_empty_explicit_fail.carbon:8: return (); should not provide a return value, to match the function's signature.
+COMPILATION ERROR: executable_semantics/testdata/return_empty_explicit_fail.carbon:6: return (); should not provide a return value, to match the function's signature.
 EXIT CODE: 255

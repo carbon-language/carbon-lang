@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package ExecutableSemanticsTest api;
-
 // Test type checking of global variable. Error expected.
 
 var flag: i32 = true;

@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package ExecutableSemanticsTest api;
-
 fn CompareStr(s: String) -> i32 {
   if (s == "str") {
     return 0;

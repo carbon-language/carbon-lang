@@ -7,7 +7,7 @@
 
 #include <variant>
 
-#include "executable_semantics/ast/ast.h"
+#include "executable_semantics/ast/abstract_syntax_tree.h"
 #include "executable_semantics/syntax/parser.h"  // from parser.ypp
 
 namespace Carbon {

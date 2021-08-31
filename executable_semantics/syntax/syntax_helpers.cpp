@@ -15,7 +15,7 @@ namespace Carbon {
 
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
-static void AddIntrinsics(std::list<Ptr<const Declaration>>* declarations) {
+static void AddIntrinsics(std::list<Ptr<const Declaration>>* fs) {
   SourceLocation loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
       "0", global_arena->New<BindingPattern>(
@@ -34,26 +34,24 @@ static void AddIntrinsics(std::list<Ptr<const Declaration>>* declarations) {
           global_arena->New<ExpressionPattern>(
               global_arena->New<TupleLiteral>(loc)),
           /*is_omitted_return_type=*/false, print_return));
-  declarations->insert(declarations->begin(), print);
+  fs->insert(fs->begin(), print);
 }
 
-void ExecProgram(const AST& ast) {
-  AST modified_ast = ast;
-  AddIntrinsics(&modified_ast.declarations);
+void ExecProgram(std::list<Ptr<const Declaration>> fs) {
+  AddIntrinsics(&fs);
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
-    for (const auto decl : modified_ast.declarations) {
+    for (const auto decl : fs) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** type checking **********\n";
   }
   TypeChecker type_checker;
-  TypeChecker::TypeCheckContext p =
-      type_checker.TopLevel(modified_ast.declarations);
+  TypeChecker::TypeCheckContext p = type_checker.TopLevel(fs);
   TypeEnv top = p.types;
   Env ct_top = p.values;
   std::list<Ptr<const Declaration>> new_decls;
-  for (const auto decl : modified_ast.declarations) {
+  for (const auto decl : fs) {
     new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
   }
   if (tracing_output) {

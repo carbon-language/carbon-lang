@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package ExecutableSemanticsTest api;
-
 // Test that the read from x triggers an error because x is dead.
 // This test also demonstrates how by-reference free-variable capture
 // is dangerous and can happen inside continuations.

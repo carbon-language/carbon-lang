@@ -1,2 +1,2 @@
-PROGRAM ERROR: executable_semantics/testdata/tuple5.carbon:10: Tuple field name 'y' does not match pattern field name 'x'
+PROGRAM ERROR: executable_semantics/testdata/tuple5.carbon:8: Tuple field name 'y' does not match pattern field name 'x'
 EXIT CODE: 255

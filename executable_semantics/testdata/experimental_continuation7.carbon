@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package ExecutableSemanticsTest api;
-
 // Test the way in which copying of continuations interacts with data
 // on the stack such as the variable `x`. In this example the copy
 // happens after the variable `x` is created.

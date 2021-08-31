@@ -1,2 +1,2 @@
-RUNTIME ERROR: executable_semantics/testdata/global_variable8.carbon:10: could not find `y`
+RUNTIME ERROR: executable_semantics/testdata/global_variable8.carbon:8: could not find `y`
 EXIT CODE: 255
