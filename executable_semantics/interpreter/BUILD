@@ -12,6 +12,7 @@ cc_library(
         ":stack",
         ":value",
         "//common:ostream",
+        "//common:property",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",

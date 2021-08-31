@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "common/property.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
@@ -35,12 +36,13 @@ class Action {
   // pos indicates how many of the entries in the following `results` vector
   // will be filled in the next time this action is active.
   // For each i < pos, results[i] contains a pointer to a Value.
-  auto Pos() const -> int { return pos; }
+  Property<int, int> Pos = Property<int, int>(
+      [&]() { return pos; }, [&](int pos) { this->pos = pos; });
 
   // Results from a subexpression.
-  auto Results() const -> const std::vector<const Value*>& { return results; }
-
-  void SetPos(int pos) { this->pos = pos; }
+  ReadOnlyProperty<const std::vector<const Value*>&> Results =
+      ReadOnlyProperty<const std::vector<const Value*>&>(
+          [&]() { return results; });
 
   void AddResult(const Value* result) { results.push_back(result); }
 

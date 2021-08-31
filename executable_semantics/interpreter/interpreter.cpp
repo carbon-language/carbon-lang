@@ -784,7 +784,7 @@ auto Interpreter::StepStmt() -> Transition {
           std::optional<Env> matches = PatternMatch(pat, v, stmt->SourceLoc());
           if (matches) {  // we have a match, start the body
             // Ensure we don't process any more clauses.
-            act->SetPos(2 * match_stmt.Clauses()->size() + 1);
+            act->Pos = 2 * match_stmt.Clauses()->size() + 1;
 
             for (const auto& [name, value] : *matches) {
               frame->scopes.Top()->values.Set(name, value);
@@ -1043,7 +1043,7 @@ class Interpreter::DoTransition {
   void operator()(const Spawn& spawn) {
     Ptr<Frame> frame = interpreter->stack.Top();
     Ptr<Action> action = frame->todo.Top();
-    action->SetPos(action->Pos() + 1);
+    action->Pos += 1;
     frame->todo.Push(spawn.child);
   }
 
@@ -1055,7 +1055,7 @@ class Interpreter::DoTransition {
 
   void operator()(const RunAgain&) {
     Ptr<Action> action = interpreter->stack.Top()->todo.Top();
-    action->SetPos(action->Pos() + 1);
+    action->Pos += 1;
   }
 
   void operator()(const UnwindTo& unwind_to) {

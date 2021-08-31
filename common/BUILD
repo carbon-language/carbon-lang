@@ -46,6 +46,11 @@ cc_library(
 )
 
 cc_library(
+    name = "property",
+    hdrs = ["property.h"],
+)
+
+cc_library(
     name = "string_helpers",
     srcs = ["string_helpers.cpp"],
     hdrs = ["string_helpers.h"],
