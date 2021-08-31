@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -32,6 +33,10 @@ _COLS = 80
 # An arbitrary separator to use when formatting multiple code segments.
 _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
 
+# The table begin and end comments, including table-bounding newlines.
+_TABLE_BEGIN = "/* Table begin. */\n"
+_TABLE_END = "\n/* Table end. */"
+
 
 @dataclass
 class _CppCode:
@@ -48,6 +53,16 @@ class _CppCode:
     close_brace_indent: int
     # Whether to write `%}` or `}`.
     has_percent: bool
+
+
+@dataclass
+class _Table:
+    """Information about a table segment for formatting."""
+
+    # The index of the table segment in the list of all segments.
+    segment_index: int
+    # The table content, with wrapping comments stripped.
+    content: str
 
 
 def _parse_args() -> argparse.Namespace:
@@ -196,33 +211,72 @@ def _maybe_add_cpp_segment(
         return (end, True)
 
 
-def _parse_cpp_segments(
+def _parse_block_comment(
+    content: str,
+    text_segments: List[Optional[str]],
+    table_segments: List[_Table],
+    text_segment_start: int,
+    cursor: int,
+    debug: bool,
+) -> Tuple[int, int]:
+    """Parses a comment, possibly adding a table segment.
+
+    Returns a tuple of (new_segment_start, new_cursor). Note the
+    new_segment_start may or may not change.
+    """
+    # Skip over block comments.
+    comment_end = content.find("*/", cursor + 2)
+    if comment_end == -1:
+        exit(
+            "failed to find end of /* comment: %s"
+            % content[cursor : cursor + 20]
+        )
+    comment_end += 2
+    if content[cursor : comment_end + 1] == _TABLE_BEGIN:
+        table_end = content.find(_TABLE_END, comment_end)
+        if table_end == -1:
+            exit(
+                "failed to find end of table: %s"
+                % content[cursor : cursor + 20]
+            )
+        _add_text_segment(
+            text_segments, content[text_segment_start : comment_end + 1], debug
+        )
+        text_segments.append(None)
+        table_segments.append(
+            _Table(len(text_segments) - 1, content[comment_end:table_end])
+        )
+        return table_end, table_end + len(_TABLE_END) - 1
+    else:
+        return text_segment_start, comment_end - 1
+
+
+def _parse_segments(
     content: str,
     debug: bool,
-) -> Tuple[List[Optional[str]], Dict[int, List[_CppCode]]]:
-    """Returns text and code segments.
+) -> Tuple[List[Optional[str]], Dict[int, List[_CppCode]], List[_Table]]:
+    """Parses out text, code, and table segments.
 
-    Returns a tuple `(text_segments, code_segments)`. text_segments is a list
-    version of the input content, with None where code goes. cpp_segments groups
-    _CppCode objects by their close_brace_indent.
+    Returns a tuple `(text_segments, code_segments, table_segments)`:
+    - text_segments is a list version of the input content, with None where
+      other segments go.
+    - cpp_segments groups _CppCode objects by their close_brace_indent.
+    - table_segments is a list of _Table objects.
     """
     i = 0
     segment_start = 0
     text_segments: List[Optional[str]] = []
     cpp_segments: Dict[int, List[_CppCode]] = {}
+    table_segments: List[_Table] = []
     while i < len(content):
         c = content[i]
         if c == '"':
             # Skip over strings.
             i = _find_string_end(content, i + 1)
         elif c == "/" and content[i + 1 : i + 2] == "*":
-            # Skip over block comments.
-            i = content.find("*/", i + 2)
-            if i == -1:
-                exit(
-                    "failed to find end of /* comment: %s" % content[i : i + 20]
-                )
-            i += 1
+            segment_start, i = _parse_block_comment(
+                content, text_segments, table_segments, segment_start, i, debug
+            )
         elif c == "\\":
             # Skip over escapes.
             i += 1
@@ -234,7 +288,7 @@ def _parse_cpp_segments(
                 segment_start = i + 1
         i += 1
     _add_text_segment(text_segments, content[segment_start:], debug)
-    return text_segments, cpp_segments
+    return text_segments, cpp_segments, table_segments
 
 
 def _format_cpp_segments(
@@ -293,11 +347,43 @@ def _format_cpp_segments(
                 text_segments[code.segment_index] = "{ %s }" % formatted
 
 
+def _format_table_segments(
+    text_segments: List[Optional[str]],
+    table_segments: List[_Table],
+    debug: bool,
+) -> None:
+    """Formats table segments."""
+    for table in table_segments:
+        rows = table.content.strip().splitlines()
+        col_widths = None
+        for row_index in range(len(rows)):
+            cols = re.findall("[^ ]+", rows[row_index])
+            if col_widths is None:
+                col_widths = [0] * len(cols)
+            elif len(col_widths) != len(cols):
+                exit(
+                    "Wanted %d columns, found %d in `%s`"
+                    % (len(col_widths), len(cols), rows[row_index])
+                )
+            for col_index in range(len(cols)):
+                col_widths[col_index] = max(
+                    col_widths[col_index], len(cols[col_index])
+                )
+            rows[row_index] = cols
+        row_format = " ".join(["%%-%ds" % width for width in col_widths])
+        text_segments[table.segment_index] = "\n".join(
+            [row_format % tuple(cols) for cols in rows]
+        )
+
+
 def _format_file(path: str, base_style: str, debug: bool) -> None:
     """Formats a file, writing the result."""
     content = open(path).read()
-    text_segments, cpp_segments = _parse_cpp_segments(content, debug)
+    text_segments, cpp_segments, table_segments = _parse_segments(
+        content, debug
+    )
     _format_cpp_segments(base_style, text_segments, cpp_segments, debug)
+    _format_table_segments(text_segments, table_segments, debug)
     assert None not in text_segments
     open(path, "w").write("".join(cast(List[str], text_segments)))
 
