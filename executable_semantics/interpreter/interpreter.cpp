@@ -374,7 +374,7 @@ auto Interpreter::StepLvalue() -> Transition {
       return Done{v};
     }
     case Expression::Kind::FieldAccessExpression: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         return Spawn{global_arena->New<LValAction>(
@@ -389,13 +389,13 @@ auto Interpreter::StepLvalue() -> Transition {
       }
     }
     case Expression::Kind::IndexExpression: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
         return Spawn{global_arena->New<LValAction>(
             cast<IndexExpression>(*exp).Aggregate())};
 
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         return Spawn{global_arena->New<ExpressionAction>(
             cast<IndexExpression>(*exp).Offset())};
       } else {
@@ -409,20 +409,20 @@ auto Interpreter::StepLvalue() -> Transition {
       }
     }
     case Expression::Kind::TupleLiteral: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
         Ptr<const Expression> e1 =
             cast<TupleLiteral>(*exp).Fields()[0].expression;
         return Spawn{global_arena->New<LValAction>(e1)};
-      } else if (act->Pos() !=
+      } else if (act->Pos !=
                  static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         Ptr<const Expression> elt =
-            cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
+            cast<TupleLiteral>(*exp).Fields()[act->Pos].expression;
         return Spawn{global_arena->New<LValAction>(elt)};
       } else {
         return Done{CreateTuple(act, exp)};
@@ -453,12 +453,12 @@ auto Interpreter::StepExp() -> Transition {
   }
   switch (exp->Tag()) {
     case Expression::Kind::IndexExpression: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(
             cast<IndexExpression>(*exp).Aggregate())};
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         return Spawn{global_arena->New<ExpressionAction>(
             cast<IndexExpression>(*exp).Offset())};
       } else {
@@ -480,7 +480,7 @@ auto Interpreter::StepExp() -> Transition {
       }
     }
     case Expression::Kind::TupleLiteral: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         if (cast<TupleLiteral>(*exp).Fields().size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
@@ -490,14 +490,14 @@ auto Interpreter::StepExp() -> Transition {
         } else {
           return Done{CreateTuple(act, exp)};
         }
-      } else if (act->Pos() !=
+      } else if (act->Pos !=
                  static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         Ptr<const Expression> elt =
-            cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
+            cast<TupleLiteral>(*exp).Fields()[act->Pos].expression;
         return Spawn{global_arena->New<ExpressionAction>(elt)};
       } else {
         return Done{CreateTuple(act, exp)};
@@ -505,7 +505,7 @@ auto Interpreter::StepExp() -> Transition {
     }
     case Expression::Kind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*exp);
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(access.Aggregate())};
@@ -517,27 +517,27 @@ auto Interpreter::StepExp() -> Transition {
       }
     }
     case Expression::Kind::IdentifierExpression: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       Address pointer = GetFromEnv(exp->SourceLoc(), ident.Name());
       return Done{heap.Read(pointer, exp->SourceLoc())};
     }
     case Expression::Kind::IntLiteral:
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return Done{global_arena->RawNew<IntValue>(cast<IntLiteral>(*exp).Val())};
     case Expression::Kind::BoolLiteral:
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return Done{
           global_arena->RawNew<BoolValue>(cast<BoolLiteral>(*exp).Val())};
     case Expression::Kind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(*exp);
-      if (act->Pos() != static_cast<int>(op.Arguments().size())) {
+      if (act->Pos != static_cast<int>(op.Arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        Ptr<const Expression> arg = op.Arguments()[act->Pos()];
+        Ptr<const Expression> arg = op.Arguments()[act->Pos];
         return Spawn{global_arena->New<ExpressionAction>(arg)};
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
@@ -546,17 +546,17 @@ auto Interpreter::StepExp() -> Transition {
       }
     }
     case Expression::Kind::CallExpression:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(
             cast<CallExpression>(*exp).Function())};
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(
             cast<CallExpression>(*exp).Argument())};
-      } else if (act->Pos() == 2) {
+      } else if (act->Pos == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->Results()[0]->Tag()) {
@@ -582,10 +582,10 @@ auto Interpreter::StepExp() -> Transition {
                 << "in call, expected a function, not " << *act->Results()[0];
         }
       } else {
-        FATAL() << "in handle_value with Call pos " << act->Pos();
+        FATAL() << "in handle_value with Call pos " << act->Pos;
       }
     case Expression::Kind::IntrinsicExpression:
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
         case IntrinsicExpression::IntrinsicKind::Print:
@@ -598,22 +598,22 @@ auto Interpreter::StepExp() -> Transition {
       }
 
     case Expression::Kind::IntTypeLiteral: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       return Done{global_arena->RawNew<IntType>()};
     }
     case Expression::Kind::BoolTypeLiteral: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       return Done{global_arena->RawNew<BoolType>()};
     }
     case Expression::Kind::TypeTypeLiteral: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       return Done{global_arena->RawNew<TypeType>()};
     }
     case Expression::Kind::FunctionTypeLiteral: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         return Spawn{global_arena->New<ExpressionAction>(
             cast<FunctionTypeLiteral>(*exp).Parameter())};
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(
@@ -627,16 +627,16 @@ auto Interpreter::StepExp() -> Transition {
       }
     }
     case Expression::Kind::ContinuationTypeLiteral: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       return Done{global_arena->RawNew<ContinuationType>()};
     }
     case Expression::Kind::StringLiteral:
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return Done{
           global_arena->RawNew<StringValue>(cast<StringLiteral>(*exp).Val())};
     case Expression::Kind::StringTypeLiteral: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       return Done{global_arena->RawNew<StringType>()};
     }
   }  // switch (exp->Tag)
@@ -650,12 +650,12 @@ auto Interpreter::StepPattern() -> Transition {
   }
   switch (pattern->Tag()) {
     case Pattern::Kind::AutoPattern: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       return Done{global_arena->RawNew<AutoType>()};
     }
     case Pattern::Kind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*pattern);
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         return Spawn{global_arena->New<PatternAction>(binding.Type())};
       } else {
         return Done{global_arena->RawNew<BindingPlaceholderValue>(
@@ -664,19 +664,19 @@ auto Interpreter::StepPattern() -> Transition {
     }
     case Pattern::Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*pattern);
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         if (tuple.Fields().empty()) {
           return Done{&TupleValue::Empty()};
         } else {
           Ptr<const Pattern> p1 = tuple.Fields()[0].pattern;
           return Spawn{(global_arena->New<PatternAction>(p1))};
         }
-      } else if (act->Pos() != static_cast<int>(tuple.Fields().size())) {
+      } else if (act->Pos != static_cast<int>(tuple.Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Ptr<const Pattern> elt = tuple.Fields()[act->Pos()].pattern;
+        Ptr<const Pattern> elt = tuple.Fields()[act->Pos].pattern;
         return Spawn{global_arena->New<PatternAction>(elt)};
       } else {
         std::vector<TupleElement> elements;
@@ -689,13 +689,13 @@ auto Interpreter::StepPattern() -> Transition {
     }
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*pattern);
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         return Spawn{
             global_arena->New<ExpressionAction>(alternative.ChoiceType())};
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         return Spawn{global_arena->New<PatternAction>(alternative.Arguments())};
       } else {
-        CHECK(act->Pos() == 2);
+        CHECK(act->Pos == 2);
         const auto& choice_type = cast<ChoiceType>(*act->Results()[0]);
         return Done{global_arena->RawNew<AlternativeValue>(
             alternative.AlternativeName(), choice_type.Name(),
@@ -749,13 +749,13 @@ auto Interpreter::StepStmt() -> Transition {
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
       const auto& match_stmt = cast<Match>(*stmt);
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
         return Spawn{global_arena->New<ExpressionAction>(match_stmt.Exp())};
       } else {
-        // Regarding act->Pos():
+        // Regarding act->Pos:
         // * odd: start interpreting the pattern of a clause
         // * even: finished interpreting the pattern, now try to match
         //
@@ -764,7 +764,7 @@ auto Interpreter::StepStmt() -> Transition {
         // * 1: the pattern for clause 0
         // * 2: the pattern for clause 1
         // * ...
-        auto clause_num = (act->Pos() - 1) / 2;
+        auto clause_num = (act->Pos - 1) / 2;
         if (clause_num >= static_cast<int>(match_stmt.Clauses()->size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
@@ -773,7 +773,7 @@ auto Interpreter::StepStmt() -> Transition {
         auto c = match_stmt.Clauses()->begin();
         std::advance(c, clause_num);
 
-        if (act->Pos() % 2 == 1) {
+        if (act->Pos % 2 == 1) {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
@@ -798,7 +798,7 @@ auto Interpreter::StepStmt() -> Transition {
       }
     }
     case Statement::Kind::While:
-      if (act->Pos() % 2 == 0) {
+      if (act->Pos % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         act->Clear();
@@ -815,7 +815,7 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     case Statement::Kind::Break: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       auto it =
@@ -828,7 +828,7 @@ auto Interpreter::StepStmt() -> Transition {
       return UnwindTo{*it};
     }
     case Statement::Kind::Continue: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       auto it =
@@ -840,7 +840,7 @@ auto Interpreter::StepStmt() -> Transition {
       return UnwindTo{*it};
     }
     case Statement::Kind::Block: {
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         const Block& block = cast<Block>(*stmt);
         if (block.Stmt()) {
           frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
@@ -856,12 +856,12 @@ auto Interpreter::StepStmt() -> Transition {
       }
     }
     case Statement::Kind::VariableDefinition:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(
             cast<VariableDefinition>(*stmt).Init())};
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         return Spawn{global_arena->New<PatternAction>(
             cast<VariableDefinition>(*stmt).Pat())};
       } else {
@@ -881,7 +881,7 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     case Statement::Kind::ExpressionStatement:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
         return Spawn{global_arena->New<ExpressionAction>(
@@ -890,11 +890,11 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     case Statement::Kind::Assign:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
         return Spawn{global_arena->New<LValAction>(cast<Assign>(*stmt).Lhs())};
-      } else if (act->Pos() == 1) {
+      } else if (act->Pos == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
         return Spawn{
@@ -908,7 +908,7 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     case Statement::Kind::If:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         return Spawn{
@@ -929,7 +929,7 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     case Statement::Kind::Return:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         return Spawn{
@@ -944,7 +944,7 @@ auto Interpreter::StepStmt() -> Transition {
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       const Sequence& seq = cast<Sequence>(*stmt);
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         return Spawn{global_arena->New<StatementAction>(seq.Stmt())};
       } else {
         if (seq.Next()) {
@@ -956,7 +956,7 @@ auto Interpreter::StepStmt() -> Transition {
       }
     }
     case Statement::Kind::Continuation: {
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
       auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(CurrentEnv()));
@@ -981,7 +981,7 @@ auto Interpreter::StepStmt() -> Transition {
       return ManualTransition{};
     }
     case Statement::Kind::Run:
-      if (act->Pos() == 0) {
+      if (act->Pos == 0) {
         // Evaluate the argument of the run statement.
         return Spawn{
             global_arena->New<ExpressionAction>(cast<Run>(*stmt).Argument())};
@@ -1004,7 +1004,7 @@ auto Interpreter::StepStmt() -> Transition {
         return ManualTransition{};
       }
     case Statement::Kind::Await:
-      CHECK(act->Pos() == 0);
+      CHECK(act->Pos == 0);
       // Pause the current continuation
       frame->todo.Pop();
       std::vector<Ptr<Frame>> paused;
