@@ -841,11 +841,12 @@ auto Interpreter::StepStmt() -> Transition {
       return UnwindTo{*it};
     }
     case Statement::Kind::Block: {
-      if (act->Pos() == 0) {
-        const Block& block = cast<Block>(*stmt);
-        if (block.Stmt().has_value()) {
+      auto& block_action = cast<ConcreteStatementAction<Block>>(*act);
+      if (block_action.State() == 0) {
+        if (block_action.Stmt()->Stmt().has_value()) {
           frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
-          return Spawn{StatementAction::Make(*block.Stmt())};
+          block_action.State() = 1;
+          return Spawn{StatementAction::Make(*block_action.Stmt()->Stmt())};
         } else {
           return Done{};
         }

@@ -141,7 +141,7 @@ template <typename StatementType>
 class ConcreteStatementAction : public StatementAction {
  public:
   explicit ConcreteStatementAction(Ptr<const StatementType> stmt)
-      : StatementAction(stmt) {}
+      : StatementAction(stmt), state() {}
 
   static auto classof(const Action* action) -> bool {
     const auto* statement_action = llvm::dyn_cast<StatementAction>(action);

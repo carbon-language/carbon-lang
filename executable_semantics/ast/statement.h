@@ -185,6 +185,8 @@ class Block : public Statement {
 
   auto Stmt() const -> std::optional<Ptr<const Statement>> { return stmt; }
 
+  using ActionState = int;
+
  private:
   std::optional<Ptr<const Statement>> stmt;
 };
