@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -117,17 +118,55 @@ class PatternAction : public Action {
 
 class StatementAction : public Action {
  public:
-  explicit StatementAction(Ptr<const Statement> stmt)
-      : Action(Kind::StatementAction), stmt(stmt) {}
-
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::StatementAction;
   }
 
   auto Stmt() const -> Ptr<const Statement> { return stmt; }
 
+  // Returns a StatementAction that executes `stmt`. Its dynamic type will be
+  // the specialization of ConcreteStatementAction corresponding to stmt's kind.
+  static auto Make(Ptr<const Statement> stmt) -> Ptr<StatementAction>;
+
+ protected:
+  explicit StatementAction(Ptr<const Statement> stmt)
+      : Action(Kind::StatementAction), stmt(stmt) {}
+
  private:
   Ptr<const Statement> stmt;
+};
+
+// FIXME Should Pos somehow go here to avoid ambiguity (and duplicate storage)?
+template <typename StatementType>
+class ConcreteStatementAction : public StatementAction {
+ public:
+  explicit ConcreteStatementAction(Ptr<const StatementType> stmt)
+      : StatementAction(stmt) {}
+
+  static auto classof(const Action* action) -> bool {
+    const auto* statement_action = llvm::dyn_cast<StatementAction>(action);
+    if (statement_action == nullptr) {
+      return false;
+    }
+    const auto* statement =
+        llvm::dyn_cast<StatementType>(statement_action->Stmt().Get());
+    return statement != nullptr;
+  }
+
+  // FIXME should this be virtual?
+  auto Stmt() const -> Ptr<const StatementType> {
+    return Ptr<const StatementType>(
+        llvm::cast<const StatementType>(StatementAction::Stmt().Get()));
+  }
+
+  auto State() const -> const typename StatementType::ActionState& {
+    return state;
+  }
+
+  auto State() -> typename StatementType::ActionState& { return state; }
+
+ private:
+  typename StatementType::ActionState state;
 };
 
 }  // namespace Carbon

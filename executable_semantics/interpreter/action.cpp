@@ -57,4 +57,45 @@ void Action::PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out) {
   }
 }
 
+template <typename StatementType>
+static auto MakeConcreteStatementAction(Ptr<const Statement> stmt)
+    -> Ptr<ConcreteStatementAction<StatementType>> {
+  Ptr<const StatementType> concrete_stmt(cast<const StatementType>(stmt.Get()));
+  return global_arena->New<ConcreteStatementAction<StatementType>>(
+      concrete_stmt);
+}
+
+auto StatementAction::Make(Ptr<const Statement> stmt) -> Ptr<StatementAction> {
+  switch (stmt->Tag()) {
+    case Statement::Kind::ExpressionStatement:
+      return MakeConcreteStatementAction<ExpressionStatement>(stmt);
+    case Statement::Kind::Assign:
+      return MakeConcreteStatementAction<Assign>(stmt);
+    case Statement::Kind::VariableDefinition:
+      return MakeConcreteStatementAction<VariableDefinition>(stmt);
+    case Statement::Kind::If:
+      return MakeConcreteStatementAction<If>(stmt);
+    case Statement::Kind::Return:
+      return MakeConcreteStatementAction<Return>(stmt);
+    case Statement::Kind::Sequence:
+      return MakeConcreteStatementAction<Sequence>(stmt);
+    case Statement::Kind::Block:
+      return MakeConcreteStatementAction<Block>(stmt);
+    case Statement::Kind::While:
+      return MakeConcreteStatementAction<While>(stmt);
+    case Statement::Kind::Break:
+      return MakeConcreteStatementAction<Break>(stmt);
+    case Statement::Kind::Continue:
+      return MakeConcreteStatementAction<Continue>(stmt);
+    case Statement::Kind::Match:
+      return MakeConcreteStatementAction<Match>(stmt);
+    case Statement::Kind::Continuation:
+      return MakeConcreteStatementAction<Continuation>(stmt);
+    case Statement::Kind::Run:
+      return MakeConcreteStatementAction<Run>(stmt);
+    case Statement::Kind::Await:
+      return MakeConcreteStatementAction<Await>(stmt);
+  }
+}
+
 }  // namespace Carbon

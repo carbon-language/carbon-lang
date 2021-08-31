@@ -748,12 +748,14 @@ auto Interpreter::StepStmt() -> Transition {
   }
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
-      const auto& match_stmt = cast<Match>(*stmt);
-      if (act->Pos() == 0) {
+      // FIXME update this to use (and update) State() instead of Pos()
+      auto& match_action = cast<ConcreteStatementAction<Match>>(*act);
+      if (match_action.Pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
-        return Spawn{global_arena->New<ExpressionAction>(match_stmt.Exp())};
+        return Spawn{
+            global_arena->New<ExpressionAction>(match_action.Stmt()->Exp())};
       } else {
         // Regarding act->Pos():
         // * odd: start interpreting the pattern of a clause
@@ -764,33 +766,34 @@ auto Interpreter::StepStmt() -> Transition {
         // * 1: the pattern for clause 0
         // * 2: the pattern for clause 1
         // * ...
-        auto clause_num = (act->Pos() - 1) / 2;
-        if (clause_num >= static_cast<int>(match_stmt.Clauses()->size())) {
+        auto clause_num = (match_action.Pos() - 1) / 2;
+        if (clause_num >=
+            static_cast<int>(match_action.Stmt()->Clauses()->size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
           return Done{};
         }
-        auto c = match_stmt.Clauses()->begin();
+        auto c = match_action.Stmt()->Clauses()->begin();
         std::advance(c, clause_num);
 
-        if (act->Pos() % 2 == 1) {
+        if (match_action.Pos() % 2 == 1) {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
           return Spawn{global_arena->New<PatternAction>(c->first)};
         } else {  // try to match
-          auto v = act->Results()[0];
-          auto pat = act->Results()[clause_num + 1];
+          auto v = match_action.Results()[0];
+          auto pat = match_action.Results()[clause_num + 1];
           std::optional<Env> matches = PatternMatch(pat, v, stmt->SourceLoc());
           if (matches) {  // we have a match, start the body
             // Ensure we don't process any more clauses.
-            act->SetPos(2 * match_stmt.Clauses()->size() + 1);
+            act->SetPos(2 * match_action.Stmt()->Clauses()->size() + 1);
 
             for (const auto& [name, value] : *matches) {
               frame->scopes.Top()->values.Set(name, value);
               frame->scopes.Top()->locals.push_back(name);
             }
-            return Spawn{global_arena->New<StatementAction>(c->second)};
+            return Spawn{StatementAction::Make(c->second)};
           } else {
             return RunAgain{};
           }
@@ -807,8 +810,7 @@ auto Interpreter::StepStmt() -> Transition {
       } else if (cast<BoolValue>(*act->Results().back()).Val()) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-        return Spawn{
-            global_arena->New<StatementAction>(cast<While>(*stmt).Body())};
+        return Spawn{StatementAction::Make(cast<While>(*stmt).Body())};
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { C, E, F } :: S, H}
@@ -842,9 +844,9 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Block: {
       if (act->Pos() == 0) {
         const Block& block = cast<Block>(*stmt);
-        if (block.Stmt()) {
+        if (block.Stmt().has_value()) {
           frame->scopes.Push(global_arena->New<Scope>(CurrentEnv()));
-          return Spawn{global_arena->New<StatementAction>(*block.Stmt())};
+          return Spawn{StatementAction::Make(*block.Stmt())};
         } else {
           return Done{};
         }
@@ -917,14 +919,12 @@ auto Interpreter::StepStmt() -> Transition {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { then_stmt :: C, E, F } :: S, H}
-        return Delegate{
-            global_arena->New<StatementAction>(cast<If>(*stmt).ThenStmt())};
+        return Delegate{StatementAction::Make(cast<If>(*stmt).ThenStmt())};
       } else if (cast<If>(*stmt).ElseStmt()) {
         //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
-        return Delegate{
-            global_arena->New<StatementAction>(*cast<If>(*stmt).ElseStmt())};
+        return Delegate{StatementAction::Make(*cast<If>(*stmt).ElseStmt())};
       } else {
         return Done{};
       }
@@ -945,11 +945,10 @@ auto Interpreter::StepStmt() -> Transition {
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       const Sequence& seq = cast<Sequence>(*stmt);
       if (act->Pos() == 0) {
-        return Spawn{global_arena->New<StatementAction>(seq.Stmt())};
+        return Spawn{StatementAction::Make(seq.Stmt())};
       } else {
         if (seq.Next()) {
-          return Delegate{global_arena->New<StatementAction>(
-              *cast<Sequence>(*stmt).Next())};
+          return Delegate{StatementAction::Make(*cast<Sequence>(*stmt).Next())};
         } else {
           return Done{};
         }
@@ -961,10 +960,9 @@ auto Interpreter::StepStmt() -> Transition {
       // way one is created in a function call.
       auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(CurrentEnv()));
       Stack<Ptr<Action>> todo;
-      todo.Push(global_arena->New<StatementAction>(
-          global_arena->New<Return>(stmt->SourceLoc())));
       todo.Push(
-          global_arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
+          StatementAction::Make(global_arena->New<Return>(stmt->SourceLoc())));
+      todo.Push(StatementAction::Make(cast<Continuation>(*stmt).Body()));
       auto continuation_frame =
           global_arena->New<Frame>("__continuation", scopes, todo);
       Address continuation_address =
@@ -989,8 +987,8 @@ auto Interpreter::StepStmt() -> Transition {
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
         // value from the continuation.
-        auto ignore_result = global_arena->New<StatementAction>(
-            global_arena->New<ExpressionStatement>(
+        auto ignore_result =
+            StatementAction::Make(global_arena->New<ExpressionStatement>(
                 stmt->SourceLoc(),
                 global_arena->New<TupleLiteral>(stmt->SourceLoc())));
         frame->todo.Push(ignore_result);
@@ -1094,8 +1092,8 @@ class Interpreter::DoTransition {
     }
     auto scopes = Stack<Ptr<Scope>>(global_arena->New<Scope>(values, params));
     CHECK(call.function->Body()) << "Calling a function that's missing a body";
-    auto todo = Stack<Ptr<Action>>(
-        global_arena->New<StatementAction>(*call.function->Body()));
+    auto todo =
+        Stack<Ptr<Action>>(StatementAction::Make(*call.function->Body()));
     auto frame = global_arena->New<Frame>(call.function->Name(), scopes, todo);
     interpreter->stack.Push(frame);
   }

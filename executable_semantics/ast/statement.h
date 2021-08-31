@@ -45,6 +45,8 @@ class Statement {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  struct ActionState {};
+
  protected:
   // Constructs an Statement representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
@@ -238,6 +240,12 @@ class Match : public Statement {
       -> const std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* {
     return clauses;
   }
+
+  struct ActionState {
+    bool started = false;
+    int clause = 0;
+    enum { EvaluatePattern, MatchPattern, Done } next_mode = EvaluatePattern;
+  };
 
  private:
   Ptr<const Expression> exp;
