@@ -40,7 +40,7 @@ class Action {
   // Results from a subexpression.
   auto Results() const -> const std::vector<const Value*>& { return results; }
 
-  void IncrementPos() { ++pos; }
+  void SetPos(int pos) { this->pos = pos; }
 
   void AddResult(const Value* result) { results.push_back(result); }
 
@@ -117,17 +117,17 @@ class PatternAction : public Action {
 
 class StatementAction : public Action {
  public:
-  explicit StatementAction(const Statement* stmt)
+  explicit StatementAction(Ptr<const Statement> stmt)
       : Action(Kind::StatementAction), stmt(stmt) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::StatementAction;
   }
 
-  auto Stmt() const -> const Statement* { return stmt; }
+  auto Stmt() const -> Ptr<const Statement> { return stmt; }
 
  private:
-  const Statement* stmt;
+  Ptr<const Statement> stmt;
 };
 
 }  // namespace Carbon

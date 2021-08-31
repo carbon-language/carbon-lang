@@ -80,6 +80,12 @@ repos:
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
   - repo: local
     hooks:
+      - id: executable-semantics-format-grammar
+        name: Format the executable_semantics grammar file
+        entry: executable_semantics/syntax/format_grammar.py
+        language: python
+        files: ^executable_semantics/syntax/parser.ypp$
+        pass_filenames: false
       - id: executable-semantics-tests
         name: Update list of executable_semantics tests
         description: Updates executable_semantics/test_list.bzl

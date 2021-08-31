@@ -1,2 +1,2 @@
-COMPILATION ERROR: 8: invalid character '\x22' in source file.
+COMPILATION ERROR: executable_semantics/testdata/string_fail6.carbon:8: Invalid escaping in string: "new	line"
 EXIT CODE: 255
