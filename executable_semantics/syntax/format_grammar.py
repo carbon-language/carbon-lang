@@ -33,11 +33,6 @@ _COLS = 80
 # An arbitrary separator to use when formatting multiple code segments.
 _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
 
-# The table begin and end comments, including table-bounding newlines.
-_TABLE_BEGIN = "/* Table begin. */\n"
-_TABLE_END = "\n/* Table end. */"
-_TABLE_END_WITH_SPACE = "\n /* Table end. */"
-
 
 @dataclass
 class _CppCode:
@@ -64,6 +59,16 @@ class _Table:
     segment_index: int
     # The table content, with wrapping comments stripped.
     content: str
+
+
+def _print_header(msg: str) -> None:
+    """Prints a header, mostly for debug output."""
+    print(("=== %s " % msg).ljust(79, "="))
+
+
+def _print_footer() -> None:
+    """Prints a footer, mostly for debug output."""
+    print("=" * 79)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -132,9 +137,9 @@ def _add_text_segment(
     """Adds a text segment to the list."""
     text_segments.append(segment)
     if debug:
-        print("=== Text segment ===")
+        _print_header("Text segment")
         print(segment)
-        print("====================")
+        _print_footer()
 
 
 def _maybe_add_cpp_segment(
@@ -191,7 +196,7 @@ def _maybe_add_cpp_segment(
             has_percent,
         )
         if debug:
-            print("=== C++ segment ===")
+            _print_header("C++ segment")
             print(cpp_segment.content)
             print(
                 "Structure: { at %d; } at %d; %%: %s"
@@ -201,7 +206,7 @@ def _maybe_add_cpp_segment(
                     cpp_segment.has_percent,
                 )
             )
-            print("===================")
+            _print_footer()
 
         # Record the code segment.
         if close_brace_indent not in cpp_segments:
@@ -212,12 +217,16 @@ def _maybe_add_cpp_segment(
         return (end, True)
 
 
-def _parse_block_comment(
+def _parse_comment(
     content: str,
     text_segments: List[Optional[str]],
     table_segments: List[_Table],
     text_segment_start: int,
     cursor: int,
+    comment_start_str: str,
+    comment_end_str: str,
+    table_begin_str: str,
+    table_end_pattern: str,
     debug: bool,
 ) -> Tuple[int, int]:
     """Parses a comment, possibly adding a table segment.
@@ -226,31 +235,35 @@ def _parse_block_comment(
     new_segment_start may or may not change.
     """
     # Skip over block comments.
-    comment_end = content.find("*/", cursor + 2)
+    comment_end = content.find(comment_end_str, cursor + len(comment_start_str))
     if comment_end == -1:
         exit(
-            "failed to find end of /* comment: %s"
-            % content[cursor : cursor + 20]
+            "failed to find end of %s comment: %s"
+            % (comment_start_str, content[cursor : cursor + 20])
         )
-    comment_end += 2
-    if content[cursor : comment_end + 1] == _TABLE_BEGIN:
-        for table_end_style in (_TABLE_END, _TABLE_END_WITH_SPACE):
-            table_end = content.find(table_end_style, comment_end)
-            if table_end != -1:
-                break
-        if table_end == -1:
+    if comment_end_str != "\n":
+        comment_end += len(comment_end_str)
+    if content[cursor : comment_end + 1] == table_begin_str:
+        m = re.compile(table_end_pattern).search(content, comment_end)
+        if not m:
             exit(
-                "failed to find end of table: %s"
-                % content[comment_end + 1 : comment_end + 20]
+                "failed to find end of table: `%s`"
+                % content[comment_end : comment_end + 20]
             )
         _add_text_segment(
             text_segments, content[text_segment_start : comment_end + 1], debug
         )
         text_segments.append(None)
-        table_segments.append(
-            _Table(len(text_segments) - 1, content[comment_end + 1 : table_end])
+        table_segment = _Table(
+            len(text_segments) - 1, content[comment_end + 1 : m.start()]
         )
-        return table_end, table_end + len(_TABLE_END) - 1
+        table_segments.append(table_segment)
+        if debug:
+            _print_header("Table segment")
+            print(table_segment.content)
+            _print_footer()
+
+        return m.start(), m.end()
     else:
         return text_segment_start, comment_end - 1
 
@@ -278,8 +291,30 @@ def _parse_segments(
             # Skip over strings.
             i = _find_string_end(content, i + 1)
         elif c == "/" and content[i + 1 : i + 2] == "*":
-            segment_start, i = _parse_block_comment(
-                content, text_segments, table_segments, segment_start, i, debug
+            segment_start, i = _parse_comment(
+                content,
+                text_segments,
+                table_segments,
+                segment_start,
+                i,
+                "/*",
+                "*/",
+                "/* table-begin */\n",
+                r"\n */\* table-end \*/\n",
+                debug,
+            )
+        elif c == "/" and content[i + 1 : i + 2] == "/":
+            segment_start, i = _parse_comment(
+                content,
+                text_segments,
+                table_segments,
+                segment_start,
+                i,
+                "//",
+                "\n",
+                "// table-begin\n",
+                r"\n *// table-end\n",
+                debug,
             )
         elif c == "\\":
             # Skip over escapes.
@@ -358,7 +393,9 @@ def _format_table_segments(
 ) -> None:
     """Formats table segments."""
     for table in table_segments:
-        lines = table.content.strip().splitlines()
+        # Split, removing empty lines.
+        lines = [line for line in table.content.splitlines() if line]
+        lines.sort()
         rows: List[List[str]] = []
         col_widths: List[int] = []
         for row_index in range(len(lines)):
@@ -377,8 +414,12 @@ def _format_table_segments(
                 col_widths[col_index] = max(
                     col_widths[col_index], len(cols[col_index])
                 )
+        # Count prefix spaces for the indent.
+        m = re.match("^ *", lines[0])
+        assert m
+        indent = m.end()
         # The last column should not add spaces.
-        row_format = " ".join(
+        row_format = (" " * indent) + " ".join(
             ["%%-%ds" % width for width in col_widths[:-1]] + ["%s"]
         )
         text_segments[table.segment_index] = "\n".join(
