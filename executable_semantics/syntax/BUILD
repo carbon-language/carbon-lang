@@ -4,6 +4,8 @@
 
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
+load("@mypy_integration//:mypy.bzl", "mypy_test")
+
 cc_library(
     name = "bison_wrap",
     hdrs = ["bison_wrap.h"],
@@ -82,4 +84,20 @@ genrule(
         "@rules_flex//flex:current_flex_toolchain",
         "@rules_m4//m4:current_m4_toolchain",
     ],
+)
+
+py_library(
+    name = "format_grammar_lib",
+    srcs = ["format_grammar.py"],
+)
+
+py_test(
+    name = "format_grammar_test",
+    srcs = ["format_grammar_test.py"],
+    deps = ["format_grammar_lib"],
+)
+
+mypy_test(
+    name = "format_grammar_mypy_test",
+    deps = [":format_grammar_lib"],
 )
