@@ -36,6 +36,7 @@ _FORMAT_SEPARATOR = "\n// CLANG FORMAT CODE SEGMENT SEPARATOR\n"
 # The table begin and end comments, including table-bounding newlines.
 _TABLE_BEGIN = "/* Table begin. */\n"
 _TABLE_END = "\n/* Table end. */"
+_TABLE_END_WITH_SPACE = "\n /* Table end. */"
 
 
 @dataclass
@@ -233,11 +234,14 @@ def _parse_block_comment(
         )
     comment_end += 2
     if content[cursor : comment_end + 1] == _TABLE_BEGIN:
-        table_end = content.find(_TABLE_END, comment_end)
+        for table_end_style in (_TABLE_END, _TABLE_END_WITH_SPACE):
+            table_end = content.find(table_end_style, comment_end)
+            if table_end != -1:
+                break
         if table_end == -1:
             exit(
                 "failed to find end of table: %s"
-                % content[cursor : cursor + 20]
+                % content[comment_end + 1 : comment_end + 20]
             )
         _add_text_segment(
             text_segments, content[text_segment_start : comment_end + 1], debug
@@ -354,22 +358,25 @@ def _format_table_segments(
 ) -> None:
     """Formats table segments."""
     for table in table_segments:
-        rows = table.content.strip().splitlines()
-        col_widths = None
-        for row_index in range(len(rows)):
-            cols = re.findall("[^ ]+", rows[row_index])
-            if col_widths is None:
+        lines = table.content.strip().splitlines()
+        rows: List[List[str]] = []
+        col_widths: List[int] = []
+        for row_index in range(len(lines)):
+            cols = re.findall("[^ ]+", lines[row_index])
+            rows.append(cols)
+            if not col_widths:
+                if len(cols) == 0:
+                    exit("Black line in table")
                 col_widths = [0] * len(cols)
             elif len(col_widths) != len(cols):
                 exit(
                     "Wanted %d columns, found %d in `%s`"
-                    % (len(col_widths), len(cols), rows[row_index])
+                    % (len(col_widths), len(cols), lines[row_index])
                 )
             for col_index in range(len(cols)):
                 col_widths[col_index] = max(
                     col_widths[col_index], len(cols[col_index])
                 )
-            rows[row_index] = cols
         row_format = " ".join(["%%-%ds" % width for width in col_widths])
         text_segments[table.segment_index] = "\n".join(
             [row_format % tuple(cols) for cols in rows]

@@ -115,6 +115,34 @@ class TestFormatGrammar(unittest.TestCase):
             ),
         )
 
+    def test_table_with_space(self):
+        self.assertEqual(
+            format_grammar._parse_segments(
+                "content\n"
+                " /* Table begin. */\n"
+                "{VAR} { return SIMPLE_TOKEN(VAR); }\n"
+                "{WHILE} { return SIMPLE_TOKEN(WHILE); }\n"
+                " /* Table end. */\n"
+                "more content\n",
+                False,
+            ),
+            (
+                [
+                    "content\n /* Table begin. */\n",
+                    None,
+                    "\n /* Table end. */\nmore content\n",
+                ],
+                {},
+                [
+                    format_grammar._Table(
+                        1,
+                        "{VAR} { return SIMPLE_TOKEN(VAR); }\n"
+                        "{WHILE} { return SIMPLE_TOKEN(WHILE); }",
+                    )
+                ],
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
