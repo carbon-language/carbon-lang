@@ -14,6 +14,8 @@ class ReadOnlyProperty {
  public:
   ReadOnlyProperty(std::function<GetT()> getter) : getter(getter) {}
   auto operator()() const -> GetT { return getter(); }
+  auto operator*() const -> GetT { return getter(); }
+  operator decltype(auto)() const { return getter(); }
 
  private:
   std::function<GetT()> getter;
