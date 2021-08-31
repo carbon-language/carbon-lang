@@ -47,11 +47,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Virtual methods](#virtual-methods)
             -   [Virtual override keywords](#virtual-override-keywords)
         -   [Subtyping](#subtyping)
-        -   [Inheritance with non-virtual destructors](#inheritance-with-non-virtual-destructors)
         -   [Constructors](#constructors)
             -   [Partial facet](#partial-facet)
             -   [Usage](#usage)
-        -   [Assignment only defined for final types](#assignment-only-defined-for-final-types)
+        -   [Assignment with inheritance](#assignment-with-inheritance)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
         -   [Protected access](#protected-access)
@@ -65,6 +64,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Discussion](#discussion)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance-1)
+        -   [Destructors](#destructors)
         -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
         -   [Overloaded methods](#overloaded-methods)
         -   [Interop with C++ inheritance](#interop-with-c-inheritance)
@@ -1164,30 +1164,19 @@ the method using the function pointer in the vtable, to get the overridden
 implementation from the most derived class that implements the method.
 
 Since a final class may not be extended, the compiler can bypass the vtable and
-use [static dispatch](https://en.wikipedia.org/wiki/Static_dispatch).
-
-#### Inheritance with non-virtual destructors
-
-As a consequence of these rules, Carbon doesn't support deleting an instance of
-a base class unless it has a
-[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
-This means also forbidding creating values of such types, much like the
-restriction on abstract classes that have `abstract` methods without
-implementations. To work around this limitation, create a final derived class
-that can be instantiated.
+use [static dispatch](https://en.wikipedia.org/wiki/Static_dispatch). In
+general, you can use a combination of an abstract base class and a final class
+instead of an extensible class if you need to distinguish between exactly a type
+and possibly a subtype.
 
 ```
-base class NonVirtualBase { ... }
-class NonVirtual extends NonVirtualBase { ... }
+base class Extensible { ... }
+
+// Can be replaced by:
+
+abstract class ExtensibleBase { ... }
+class ExactlyExtensible extends ExtensibleBase { ... }
 ```
-
-Having both of these classes allows us to express the difference between a
-pointer to a `NonVirtualBase` or derived class and a pointer to exactly a
-`NonVirtual` object in the type system.
-
-**Open question:** Issue
-[#652: Safe inheritance with non-virtual destructors and assignment](https://github.com/carbon-language/carbon-lang/issues/652)
-considers other ways we might support base classes with non-virtual destructors.
 
 #### Constructors
 
@@ -1214,9 +1203,8 @@ class MyDerivedType extends MyBaseType {
 
 There are two additional concerns:
 
--   We don't want users to create a value with an abstract type or of a base
-    class with a non-virtual destructor.
--   We want to prevent mistakes where a method is called on an object that isn't
+-   We don't want users to create a value with an abstract type.
+-   We want to reduce mistakes where a method is called on an object that isn't
     fully constructed.
 
 We address both of these concerns by introducing another type just used during
@@ -1251,8 +1239,8 @@ The partial facet for a base class type like `MyBaseType` is written
     not safe.
 -   When `MyBaseClass` may be instantiated, there is a conversion from
     `partial MyBaseClass` to `MyBaseClass`. It changes the value by filling in
-    the hidden vptr slot. If `MyBaseClass` may not be instantiated, for example
-    if it is abstract, then attempting that conversion is an error.
+    the hidden vptr slot. If `MyBaseClass` is abstract, then attempting that
+    conversion is an error.
 -   `partial MyBaseClass` is considered final, even if `MyBaseClass` is not.
     This is despite the fact that from a data layout perspective,
     `partial MyDerivedClass` will have `partial MyBaseClass` as a prefix if
@@ -1270,34 +1258,21 @@ with the words "prototype" and "protocol" (for example as in "protocol
 buffers"). We also considered `impl` and `novirt`. Maybe `exact`? Maybe
 `constructor`, `construct`, `ctor`, or `under_construction`?
 
-**Rejected alternative:** We could support
-[inheritance with non-virtual destructors](#inheritance-with-non-virtual-destructors)
-without users having to define a separate final type for every base type that
-can be instantiated, by letting them use the partial facet as the final type
-instead. One problem with this approach is the two types end up having
-undesirable names: `Foo*` would mean "pointer to a descendant of `Foo`" and
-`partial Foo` would mean "exactly type `Foo`". This is as opposed to defining
-`class Foo extends FooBase`, so `FooBase*` means "pointer to a descendant of
-`FooBase`" and `Foo` means "exactly type `Foo`". The other problem is if the
-class has virtual methods and so needs a vtable, but we could probably just
-require that the destructor be virtual if any methods are.
-
 ##### Usage
 
-The general pattern is that base classes should define constructors returning
-the partial facet type.
+The general pattern is that base classes can define constructors returning the
+partial facet type.
 
 ```
 base class MyBaseClass {
-  protected fn Create() -> partial Self {
+  fn Create() -> partial Self {
     return {.base_field_1 = ..., .base_field_2 = ...};
   }
-  ...  // including an abstract method
+  // ...
 }
 ```
 
-In the case where `MyBaseClass` has a virtual destructor and no unimplemented
-`abstract` methods, it can be instantiated like so:
+Extensible classes can be instantiated even from a partial facet value:
 
 ```
 var mbc: MyBaseClass = MyBaseClass.Create();
@@ -1307,64 +1282,93 @@ The conversion from `partial MyBaseClass` to `MyBaseClass` only fills in the
 vptr value and can be done in place. After the conversion, all public methods
 may be called, including virtual methods.
 
-Otherwise, if the base class should not be instantiated itself, since it is
-abstract or has a non-virtual destructor, constructor functions should be marked
+The partial facet is required for abstract classes, since otherwise they may not
+be instantiated. Constructor functions for abstract classes should be marked
 [protected](#protected-access) so they may only be accessed in derived classes.
 
 ```
-base class AbstractBaseClass {
-  protected fn Create() -> partial AbstractBaseClass {
+abstract class MyAbstractClass {
+  protected fn Create() -> partial Self {
     return {.base_field_1 = ..., .base_field_2 = ...};
   }
-  ...  // including an abstract method
+  // ...
 }
-```
-
-In this case, variables of type `AbstractBaseClass` can't be created at all.
-
-```
 // ❌ Error: can't instantiate abstract class
-var abc: AbstractBaseClass = ...;
+var abc: MyAbstractClass = ...;
 ```
 
 If a base class wants to store a pointer to itself somewhere in the constructor
-function, it will have to explicitly cast the type of its address. This pointer
-should not be used to call any virtual method until the object is finished being
-constructed, since the vptr will be null.
+function, there are two choices:
+
+-   An extensible class could use the plain type instead of the partial facet.
+
+    ```
+    base class MyBaseClass {
+      fn Create() -> Self {
+        returned var result: Self = {...};
+        StoreMyPointerSomewhere(&result);
+        return var;
+      }
+    }
+    ```
+
+-   The other choice is to explicitly cast the type of its address. This pointer
+    should not be used to call any virtual method until the object is finished
+    being constructed, since the vptr will be null.
+
+    ```
+    abstract class MyAbstractClass {
+      protected fn Create() -> partial Self {
+        returned var result: partial Self = {...};
+        // Careful! Pointer to object that isn't fully constructed!
+        StoreMyPointerSomewhere(&result as Self);
+        return var;
+      }
+    }
+    ```
+
+The constructor for a derived class may construct values from a partial facet of
+the class' immediate base type or the full type:
 
 ```
-class MyBaseClass {
-  fn Create() -> partial MyBaseClass {
-    returned var result: partial MyBaseClass = {...};
-    // Careful! Pointer to object that isn't fully constructed!
-    StoreMyPointerSomewhere(&result as MyBaseClass);
+abstract class MyAbstractClass {
+  protected fn Create() -> partial Self { ... }
+}
+
+// Base class returns a partial type
+base class Derived extends MyAbstractClass {
+  protected fn Create() -> partial Self {
+    return {.base = MyAbstractClass.Create(), .derived_field = ...};
+  }
+  ...
+}
+
+base class MyBaseClass {
+  fn Create() -> Self { ... }
+}
+
+// Base class returns a full type
+base class ExtensibleDerived extends MyBaseClass {
+  fn Create() -> Self {
+    return {.base = MyBaseClass.Create(), .derived_field = ...};
   }
   ...
 }
 ```
 
-The constructor for a derived class will construct values from a partial facet
-of the class' immediate base type:
-
-```
-base class MiddleDerived extends AbstractBaseClass {
-  fn Create() -> partial MiddleDerived {
-    return {.base = AbstractBaseClass.Create(), .derived_field = ...};
-  }
-```
-
-And final classes can return the value without using the partial facet:
+And final classes will return a type that does not use the partial facet:
 
 ```
 class FinalDerived extends MiddleDerived {
-  fn Create() -> FinalDerived {
+  fn Create() -> Self {
     return {.base = MiddleDerived.Create(), .derived_field = ...};
   }
-  ...  // including an implementation of the abstract method
+  ...
 }
 ```
 
-Observe that the vptr is only assigned twice in release builds:
+Observe that the vptr is only assigned twice in release builds if you use
+partial facets:
 
 -   The first class value created, by the factory function creating the base of
     the class hierarchy, initialized the vptr field to nullptr. Every derived
@@ -1373,29 +1377,23 @@ Observe that the vptr is only assigned twice in release builds:
     partial facet type to its final type is the vptr field set to its final
     value.
 
-In the case that the base class can be instantiated, tooling such as a linter
-would be able to advise that functions returning `Self` be changed to return
-`partial Self` in two situations:
-
--   Functions returning a value used to initialize a derived class should
-    generally return a partial facet.
--   As a heuristic, class functions of a base class should return `partial Self`
-    instead of `Self`. This is particularly true of any class functions that are
-    [protected](#protected-access).
-
-Note that the consequences of returning `Self` instead of `partial Self` when
-the value will be used to initialize a derived class are fairly minor:
+In the case that the base class can be instantiated, tooling could optionally
+recommend that functions returning `Self` that are used to initialize a derived
+class be changed to return `partial Self` instead. However, the consequences of
+returning `Self` instead of `partial Self` when the value will be used to
+initialize a derived class are fairly minor:
 
 -   The vptr field will be assigned more than necessary.
 -   The types won't protect against calling methods on a value while it is being
     constructed, much like the situation in C++ currently.
 
-#### Assignment only defined for final types
+#### Assignment with inheritance
 
-Since the assignment operator method should not be virtual, it should only be
-implemented on final types. This is consistent with rules for non-virtual method
-inheritance. This avoids the problem of
-[slicing](https://en.wikipedia.org/wiki/Object_slicing).
+Since the assignment operator method should not be virtual, it is only safe to
+implement it for final types. However, following the
+[maxim that Carbon should "focus on encouraging appropriate usage of features rather than restricting misuse"](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
+we allow users to also implement assignment on extensible classes, even though
+it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
 ### Access control
 
@@ -1624,6 +1622,62 @@ implementing corresponding interfaces, see
 [the generics overview](generics/overview.md).
 
 ### Inheritance
+
+#### Destructors
+
+We need a syntax for declaring destructors. Provisionally we are considering
+allowing a couple of variations:
+
+```carbon
+class MyClass {
+  destructor [me: Self] { ... }
+}
+```
+
+or:
+
+```carbon
+class MyClass {
+  destructor [addr me: Self*] { ... }
+}
+```
+
+Destructors may be declared `virtual`, or `impl` in the case that a base class
+declares it `virtual`.
+
+```carbon
+base class MyBaseClass {
+  virtual destructor [addr me: Self*] { ... }
+}
+
+class MyDerivedClass {
+  impl destructor [addr me: Self*] { ... }
+}
+```
+
+Destructors may be declared out-of-line:
+
+```carbon
+class MyClass {
+  destructor [addr me: Self*];
+}
+destructor MyClass [addr me: Self*] { ... }
+```
+
+It isn't safe to delete an instance of a base class through a pointer unless it
+has a
+[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
+Issue
+[#652: Extensible classes with or without vtables](https://github.com/carbon-language/carbon-lang/issues/652)
+considers other ways we might support base classes with non-virtual destructors.
+We rejected using the `partial` facet as a way to spell an exact type that could
+be safely destroyed, since we don't want users to generally have to keep track
+of the difference between exact and "or derived" types.
+
+An alternative is the Rust approach is there is some interface that is only
+implemented for types with non-trivial destructors. It allows metaprogramming to
+distinguish whether the type needs clean up. Rust allows you to declare `Self`
+as being moved into the destructor, which nicely captures the semantics.
 
 #### C++ abstract base classes interoperating with object-safe interfaces
 
