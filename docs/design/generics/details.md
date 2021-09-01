@@ -1528,7 +1528,11 @@ problems, see
 and
 [here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
 Rust's mechanism doesn't directly support reusing implementations, though some
-of that is provided by macros defined in libraries.
+of that is provided by macros defined in libraries. Haskell has a
+[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
+doesn't directly support reusing implementations either, but the most popular
+compiler provides it as
+[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
 
 ### Adapter compatibility
 
