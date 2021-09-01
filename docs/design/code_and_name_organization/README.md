@@ -192,8 +192,8 @@ of `library` on the `package` of the code being imported.
 
 Every source file will consist of, in order:
 
-1. One `package` statement.
-2. A section of zero or more `import` statements.
+1. One `package` directive.
+2. A section of zero or more `import` directives.
 3. Source file body, with other code.
 
 Comments and blank lines may be intermingled with these sections.
@@ -256,7 +256,7 @@ are a couple important and deliberate side-effects:
 -   Every entity in Carbon will be in a namespace, even if its namespace path
     consists of only the package name. There is no "global" namespace.
     -   Every entity in a file will be defined within the namespace described in
-        the `package` statement.
+        the `package` directive.
     -   Entities within a file may be defined in
         [child namespaces](#namespaces).
 
