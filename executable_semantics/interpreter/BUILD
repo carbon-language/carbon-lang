@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//executable_semantics:__subpackages__"])
+package(default_visibility = ["//executable_semantics:__pkg__"])
 
 cc_library(
     name = "action",
