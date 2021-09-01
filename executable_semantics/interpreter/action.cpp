@@ -41,11 +41,7 @@ void Action::Print(llvm::raw_ostream& out) const {
     out << "(";
     llvm::ListSeparator sep;
     for (auto& result : results) {
-      out << sep;
-      // TODO: keep? remove? cleanup?
-      // if (result) {
-      out << *result;
-      //}
+      out << sep << *result;
     }
     out << ")";
   }
