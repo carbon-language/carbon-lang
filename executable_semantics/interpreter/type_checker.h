@@ -16,7 +16,7 @@
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, const Value*>;
+using TypeEnv = Dictionary<std::string, Ptr<const Value>>;
 
 class TypeChecker {
  public:
@@ -35,17 +35,17 @@ class TypeChecker {
 
  private:
   struct TCExpression {
-    TCExpression(Ptr<const Expression> e, const Value* t, TypeEnv types)
+    TCExpression(Ptr<const Expression> e, Ptr<const Value> t, TypeEnv types)
         : exp(e), type(t), types(types) {}
 
     Ptr<const Expression> exp;
-    const Value* type;
+    Ptr<const Value> type;
     TypeEnv types;
   };
 
   struct TCPattern {
     Ptr<const Pattern> pattern;
-    const Value* type;
+    Ptr<const Value> type;
     TypeEnv types;
   };
 
@@ -71,8 +71,12 @@ class TypeChecker {
   auto TypeCheckExp(Ptr<const Expression> e, TypeEnv types, Env values)
       -> TCExpression;
 
+  // Equivalent to TypeCheckExp, but operates on Patterns instead of
+  // Expressions. `expected` is the type that this pattern is expected to have,
+  // if the surrounding context gives us that information. Otherwise, it is
+  // null.
   auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
-                        const Value* expected) -> TCPattern;
+                        std::optional<Ptr<const Value>> expected) -> TCPattern;
 
   // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
   // version of the statement and a new type environment.
@@ -82,21 +86,21 @@ class TypeChecker {
   // type is "auto", then the return type is inferred from the first return
   // statement.
   auto TypeCheckStmt(Ptr<const Statement> s, TypeEnv types, Env values,
-                     const Value*& ret_type, bool is_omitted_ret_type)
+                     Ptr<const Value>& ret_type, bool is_omitted_ret_type)
       -> TCStatement;
 
   auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
       -> Ptr<const FunctionDefinition>;
 
-  auto TypeCheckCase(const Value* expected, Ptr<const Pattern> pat,
+  auto TypeCheckCase(Ptr<const Value> expected, Ptr<const Pattern> pat,
                      Ptr<const Statement> body, TypeEnv types, Env values,
-                     const Value*& ret_type, bool is_omitted_ret_type)
+                     Ptr<const Value>& ret_type, bool is_omitted_ret_type)
       -> std::pair<Ptr<const Pattern>, Ptr<const Statement>>;
 
   auto TypeOfFunDef(TypeEnv types, Env values,
-                    const FunctionDefinition* fun_def) -> const Value*;
+                    const FunctionDefinition* fun_def) -> Ptr<const Value>;
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
-      -> const Value*;
+      -> Ptr<const Value>;
 
   void TopLevel(const Declaration& d, TypeCheckContext* tops);
 
