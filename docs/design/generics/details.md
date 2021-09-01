@@ -2067,9 +2067,9 @@ could be an interface parameter:
 
 ```
 interface ReadTupleMember(index:! u32) {
-  [let T:! Type];
+  let T:! Type;
   // Returns me[index]
-  fn Get[me:Self]() -> T;
+  fn Get[me: Self]() -> T;
 }
 ```
 
@@ -2113,7 +2113,7 @@ Note that Rust further supports defaults for those type parameters (such as
 `Self`).
 
 [Rust uses the term "type parameters"](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#clearer-trait-matching)
-both interface type parameters and associated types. The difference is that
+for both interface type parameters and associated types. The difference is that
 interface parameters are "inputs" since they _determine_ which `impl` to use,
 and associated types are "outputs" since they are determined _by_ the `impl`,
 but play no role in selecting the `impl`.
@@ -2149,7 +2149,7 @@ do allow there to be more than one `impl` to be defined for a type, as long as
 one can unambiguously be picked as most specific.
 
 **References:** Implementation coherence is
-[defined in terminology](terminology.md#coherence), is
+[defined in terminology](terminology.md#coherence), and is
 [a goal for Carbon](goals.md#coherence). More detail can be found in
 [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
