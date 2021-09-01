@@ -333,7 +333,7 @@ class GameBoard {
     fn Draw[me: Self]() { ... }
   }
   impl as EndOfGame {
-    // Error: `GameBoard` has two methods named
+    // ❌ Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     fn Draw[me: Self]() { ... }
     fn Winner[me: Self](player: Int) { ... }
@@ -411,7 +411,7 @@ visible:
 ```
 var a: Point2 = (.x = 1.0, .y = 2.0);
 // `a` does *not* have `Add` and `Scale` methods:
-// Error: a.Add(a.Scale(2.0));
+// ❌ Error: a.Add(a.Scale(2.0));
 
 // Cast from Point2 implicitly
 var b: Point2 as Vector = a;
@@ -573,7 +573,7 @@ However, for another type implementing `Vector` but out-of-line using an
 
 ```
 fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
-  // ERROR: `Point2` doesn't have `Add` or `Scale` methods.
+  // ❌ ERROR: `Point2` doesn't have `Add` or `Scale` methods.
   return a.Add(b).Scale(s);
 }
 ```
@@ -1519,7 +1519,13 @@ impl as Printable = FormattedSong;
 This would remove ceremony that the compiler doesn't need. The concern is
 whether it makes sense or is a category error. In this example, is
 `FormattedSong`, a type, a suitable value to provide when asking for a
-`Printable` implementation?
+`Printable` implementation? An argument for this terser syntax is that the
+implicit conversion is legal in other contexts:
+
+```
+// ✅ Legal implicit conversion
+var v:! Printable = FormattedSong;
+```
 
 **Comparison with other languages:** This matches the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding coherence
@@ -1992,7 +1998,7 @@ parameters can't be deduced. For example, if we were to rewrite
 for `StackParameterized(T)` it would generate a compile error:
 
 ```
-// Error: can't deduce interface parameter `T`.
+// ❌ Error: can't deduce interface parameter `T`.
 fn BrokenPeekAtTopOfStackParameterized
     [T:! Type, StackType:! StackParameterized(T)]
     (s: StackType*) -> T { ... }
@@ -2079,7 +2085,7 @@ class Bijection(FromType:! Type, ToType:! Type) {
   impl as Map(FromType, ToType) { ... }
   impl as Map(ToType, FromType) { ... }
 }
-// Error: Bijection has two impls of interface Map(String, String)
+// ❌ Error: Bijection has two impls of interface Map(String, String)
 var oops: Bijection(String, String) = ...;
 ```
 
