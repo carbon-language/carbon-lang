@@ -313,7 +313,7 @@ def _parse_segments(
                 "//",
                 "\n",
                 "// table-begin\n",
-                r"\n *// table-end\n",
+                r"\n\s*// table-end\n",
                 debug,
             )
         elif c == "\\":
