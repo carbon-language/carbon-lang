@@ -56,6 +56,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Protected access](#protected-access)
         -   [Friends](#friends)
         -   [Test friendship](#test-friendship)
+        -   [Access control for construction](#access-control-for-construction)
 -   [Future work](#future-work)
     -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
@@ -1525,6 +1526,15 @@ member of a template.
 library as the class definition to access private members of the class. Ideally
 this could be done without changing the class definition itself, since it
 doesn't affect the class' public API.
+
+#### Access control for construction
+
+A function may construct a class, by casting a struct value to the class type,
+if it has access to (write) all of its fields.
+
+**Future work:** There should be a way to limit which code can construct a class
+even when it only has public fields. This will be resolved in question-for-leads
+issue [#803](https://github.com/carbon-language/carbon-lang/issues/803).
 
 ## Future work
 
