@@ -74,7 +74,7 @@ class TypeChecker {
   // Equivalent to TypeCheckExp, but operates on Patterns instead of
   // Expressions. `expected` is the type that this pattern is expected to have,
   // if the surrounding context gives us that information. Otherwise, it is
-  // null.
+  // nullopt.
   auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
                         std::optional<Ptr<const Value>> expected) -> TCPattern;
 
