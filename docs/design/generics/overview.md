@@ -59,7 +59,7 @@ Summary of how Carbon generics work:
     They are used to avoid writing specialized, near-duplicate code for similar
     situations.
 -   Generics are written using _interfaces_ which have a name and describe
-    methods, functions, and other items for types to implement.
+    methods, functions, and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     its functionality. A given type may implement an interface at most once.
 -   Implementations may be part of the type's definition, in which case you can
@@ -144,8 +144,8 @@ requirements were sufficient.
 
 #### Defining interfaces
 
-Interfaces, then, have a name and describe methods, functions, and other items
-for types to implement.
+Interfaces, then, have a name and describe methods, functions, and other
+entities for types to implement.
 
 Example:
 
@@ -569,8 +569,8 @@ fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
     specialization rule that picks the more specific one.
 -   Support functions should have a way to accept types that types that vary at
     runtime.
--   You should have the ability to mark items as `upcoming` or `deprecated` to
-    support evolution.
+-   You should have the ability to mark entities as `upcoming` or `deprecated`
+    to support evolution.
 -   Types should be able to define overloads for operators by implementing
     standard interfaces.
 -   There should be a way to provide default implementations of methods in

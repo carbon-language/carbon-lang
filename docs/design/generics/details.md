@@ -194,8 +194,8 @@ interface Vector {
 The syntax here is to match
 [how the same members would be defined in a type](/docs/design/classes.md#methods).
 Each declaration in the interface defines an
-[associated item](terminology.md#associated-item). In this example, `Vector` has
-two associated methods, `Add` and `Scale`.
+[associated entity](terminology.md#associated-entity). In this example, `Vector`
+has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-of-type, that is a type whose values are types. The
 values of an interface are specifically
@@ -209,7 +209,7 @@ interface.
 Carbon interfaces are ["nominal"](terminology.md#nominal-interfaces), which
 means that types explicitly describe how they implement interfaces. An
 ["impl"](terminology.md#impls-implementations-of-interfaces) defines how one
-interface is implemented for a type. Every associated item is given a
+interface is implemented for a type. Every associated entity is given a
 definition. Different types satisfying `Vector` can have different definitions
 for `Add` and `Scale`, so we say their definitions are _associated_ with what
 type is implementing `Vector`. The `impl` defines what is associated with the
@@ -1699,8 +1699,8 @@ class IntWrapper {
 ## Associated constants
 
 In addition to associated methods, we allow other kinds of
-[associated items](terminology.md#associated-item). For consistency, we use the
-same syntax to describe a constant in an interface as in a type without
+[associated entities](terminology.md#associated-entity). For consistency, we use
+the same syntax to describe a constant in an interface as in a type without
 assigning a value. As constants, they are declared using the `let` introducer.
 For example, a fixed-dimensional point type could have the dimension as an
 associated constant.
@@ -1805,11 +1805,11 @@ called [member functions](/docs/design/classes.md#member-functions).
 
 ## Associated types
 
-Associated types are [associated items](terminology.md#associated-item) that
-happen to be types. These are particularly interesting since they can be used in
-the signatures of associated methods or functions, to allow the signatures of
-methods to vary from implementation to implementation. We already have one
-example of this: the `Self` type discussed
+Associated types are [associated entities](terminology.md#associated-entity)
+that happen to be types. These are particularly interesting since they can be
+used in the signatures of associated methods or functions, to allow the
+signatures of methods to vary from implementation to implementation. We already
+have one example of this: the `Self` type discussed
 [above in the "Interfaces" section](#interfaces). For other cases, we can say
 that the interface declares that each implementation will provide a type under a
 specific name. For example:

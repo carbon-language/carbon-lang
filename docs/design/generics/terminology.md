@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
     -   [Nominal interfaces](#nominal-interfaces)
--   [Associated item](#associated-item)
+-   [Associated entity](#associated-entity)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
@@ -297,20 +297,22 @@ We use the "structural" versus "nominal" terminology as a generalization of the
 same terms being used in a
 [subtyping context](https://en.wikipedia.org/wiki/Subtyping#Subtyping_schemes).
 
-## Associated item
+## Associated entity
 
-An associated item is a requirement in an interface that a type's implementation
-of the interface must satisfy by having a matching member. A requirement that
-the type define a value for a member constant is called an _associated
-constant_, and similarly an _associated function_ or _associated type_.
+An _associated entity_ is a requirement in an interface that a type's
+implementation of the interface must satisfy by having a matching member. A
+requirement that the type define a value for a member constant is called an
+_associated constant_, and similarly an _associated function_ or _associated
+type_.
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the
 interface. An [impl](#impls-implementations-of-interfaces) defines what is
 associated with the type for that interface.
 
-This terminology is also used by
-[Rust](https://doc.rust-lang.org/reference/items/associated-items.html).
+Rust uses the term
+["associated item"](https://doc.rust-lang.org/reference/items/associated-items.html)
+instead of associated entity.
 
 ## Impls: Implementations of interfaces
 
@@ -536,7 +538,7 @@ different types of values, and the container API will have to refer to that
 "element type" when defining the signature of methods like "insert" or "find".
 If that element type is a parameter (input) to the interface type, we say it is
 an _interface type parameter_; if it is an output, we say it is an _associated
-type_. An associated type is a kind of [associated item](#associated-item).
+type_. An associated type is a kind of [associated entity](#associated-entity).
 
 Interface type parameter example:
 
