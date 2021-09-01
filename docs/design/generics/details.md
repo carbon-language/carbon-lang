@@ -1564,7 +1564,7 @@ This means that it is safe to cast between
 `HashMap(Song, Int) == HashMap(Song as Hashable, Int)` and
 `HashMap(PlayableSong, Int) == HashMap(PlayableSong as Hashable, Int)` (though
 maybe only with an explicit cast) but
-`HashMap(SongHashedByTitle, Int) == Hashmap(SongHashByTitle as Hashable, Int)`
+`HashMap(SongHashedByTitle, Int) == HashMap(SongHashByTitle as Hashable, Int)`
 is incompatible. This is a relief, because we know that in practice the
 invariants of a `HashMap` implementation rely on the hashing function staying
 the same.
@@ -1593,7 +1593,7 @@ adapter SongByArtist extends Song {
 }
 ```
 
-The result would be `SongByArtist` would:
+The resulting type `SongByArtist` would:
 
 -   implement `Comparable`, unlike `Song`,
 -   implement `Hashable`, but differently than `Song`, and
@@ -1812,7 +1812,7 @@ interface StackAssociatedType {
 ```
 
 Here we have an interface called `StackAssociatedType` which defines two
-methods, `Push` and `Pop`. The signatures of those two methods declared as
+methods, `Push` and `Pop`. The signatures of those two methods declare them as
 accepting or returning values with the type `ElementType`, which any implementer
 of `StackAssociatedType` must also define. For example, maybe `DynamicArray`
 implements `StackAssociatedType`:
@@ -1835,7 +1835,7 @@ class DynamicArray(T:! Type) {
       var pos: IteratorType = this->End();
       Assert(pos != this->Begin());
       --pos;
-      var ret: ElementType = *pos;
+      returned var ret: ElementType = *pos;
       this->Remove(pos);
       return ret;
     }
@@ -1863,10 +1863,10 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
   return top;
 }
 
-var my_array: DynamicArray(Int) = (1, 2, 3);
+var my_array: DynamicArray(i32) = (1, 2, 3);
 // PeekAtTopOfStack's `StackType` is set to
-// `DynamicArray(Int) as StackAssociatedType`.
-// `StackType.ElementType` becomes `Int`.
+// `DynamicArray(i32) as StackAssociatedType`.
+// `StackType.ElementType` becomes `i32`.
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
@@ -1926,7 +1926,7 @@ class Container(Self:! Type) {
   var iterator_impl: Iterator(IteratorType)*;
 
   // Method
-  var Begin: fnty (this: Self*) -> IteratorType
+  var Begin: fnty (this: Self*) -> IteratorType;
   ...
 }
 ```
@@ -2030,12 +2030,12 @@ interface EquatableWith(T:! Type) {
   ...
 }
 class Complex {
-  var real: Float64;
-  var imag: Float64;
+  var real: f64;
+  var imag: f64;
   // Can implement this interface more than once as long as it has different
   // arguments.
   impl as EquatableWith(Complex) { ... }
-  impl as EquatableWith(Float64) { ... }
+  impl as EquatableWith(f64) { ... }
 }
 ```
 
