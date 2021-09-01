@@ -562,8 +562,6 @@ fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 
 ## Future work
 
--   Be able to have non-type generic parameters like the `UInt` size of an array
-    or tuple.
 -   Other kinds of constraints will be finalized.
 -   Implementations can be parameterized to apply to multiple types. These
     implementations would be restricted to various conditions are true for the
