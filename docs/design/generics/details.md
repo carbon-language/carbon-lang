@@ -2002,7 +2002,7 @@ explicit parameters.
 ```
 fn PeekAtTopOfStackParameterized
     [T:! Type, StackType:! StackParameterized(T)]
-    (s: StackType*, _: singleton_type(T)) -> T { ... }
+    (s: StackType*, _: singleton_type_of(T)) -> T { ... }
 
 var produce: Produce = ...;
 var top_fruit: Fruit =
@@ -2011,7 +2011,7 @@ var top_veggie: Veggie =
     PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
 
-The pattern `_: singleton_type(T)` is a placeholder syntax for an expression
+The pattern `_: singleton_type_of(T)` is a placeholder syntax for an expression
 that will only match `T`, until issue
 [#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578)
 is resolved. Using that pattern in the explicit parameter list allows us to make
