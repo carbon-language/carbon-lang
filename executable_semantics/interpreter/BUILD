@@ -37,6 +37,16 @@ cc_library(
 )
 
 cc_library(
+    name = "exec_program",
+    srcs = ["exec_program.cpp"],
+    hdrs = ["exec_program.h"],
+    deps = [
+        ":interpreter",
+        ":type_checker",
+    ],
+)
+
+cc_library(
     name = "field_path",
     hdrs = ["field_path.h"],
     deps = [

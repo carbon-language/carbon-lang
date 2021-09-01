@@ -22,8 +22,6 @@ cc_library(
         "parse_and_lex_context.h",
         "parser.cpp",
         "parser.h",
-        "syntax_helpers.cpp",
-        "syntax_helpers.h",
     ],
     hdrs = [
         "parse.h",
@@ -45,8 +43,7 @@ cc_library(
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
-        "//executable_semantics/interpreter",
-        "//executable_semantics/interpreter:type_checker",
+        "//executable_semantics/interpreter:exec_program",
     ],
 )
 
