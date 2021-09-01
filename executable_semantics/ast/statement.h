@@ -226,8 +226,8 @@ class Continue : public Statement {
 class Match : public Statement {
  public:
   Match(SourceLocation loc, Ptr<const Expression> exp,
-        std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* clauses)
-      : Statement(Kind::Match, loc), exp(exp), clauses(clauses) {}
+        std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>> clauses)
+      : Statement(Kind::Match, loc), exp(exp), clauses(std::move(clauses)) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Match;
@@ -235,13 +235,13 @@ class Match : public Statement {
 
   auto Exp() const -> Ptr<const Expression> { return exp; }
   auto Clauses() const
-      -> const std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* {
+      -> const std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>& {
     return clauses;
   }
 
  private:
   Ptr<const Expression> exp;
-  std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>* clauses;
+  std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>> clauses;
 };
 
 // A continuation statement.

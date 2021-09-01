@@ -765,12 +765,12 @@ auto Interpreter::StepStmt() -> Transition {
         // * 2: the pattern for clause 1
         // * ...
         auto clause_num = (act->Pos() - 1) / 2;
-        if (clause_num >= static_cast<int>(match_stmt.Clauses()->size())) {
+        if (clause_num >= static_cast<int>(match_stmt.Clauses().size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
           return Done{};
         }
-        auto c = match_stmt.Clauses()->begin();
+        auto c = match_stmt.Clauses().begin();
         std::advance(c, clause_num);
 
         if (act->Pos() % 2 == 1) {
@@ -784,7 +784,7 @@ auto Interpreter::StepStmt() -> Transition {
           std::optional<Env> matches = PatternMatch(pat, v, stmt->SourceLoc());
           if (matches) {  // we have a match, start the body
             // Ensure we don't process any more clauses.
-            act->SetPos(2 * match_stmt.Clauses()->size() + 1);
+            act->SetPos(2 * match_stmt.Clauses().size() + 1);
 
             for (const auto& [name, value] : *matches) {
               frame->scopes.Top()->values.Set(name, value);

@@ -667,12 +667,12 @@ auto TypeChecker::TypeCheckStmt(Ptr<const Statement> s, TypeEnv types,
       const auto& match = cast<Match>(*s);
       auto res = TypeCheckExp(match.Exp(), types, values);
       auto res_type = res.type;
-      auto new_clauses = global_arena->RawNew<
-          std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>>();
-      for (auto& clause : *match.Clauses()) {
-        new_clauses->push_back(TypeCheckCase(res_type, clause.first,
-                                             clause.second, types, values,
-                                             ret_type, is_omitted_ret_type));
+      std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>
+          new_clauses;
+      for (auto& clause : match.Clauses()) {
+        new_clauses.push_back(TypeCheckCase(res_type, clause.first,
+                                            clause.second, types, values,
+                                            ret_type, is_omitted_ret_type));
       }
       auto new_s =
           global_arena->New<Match>(s->SourceLoc(), res.exp, new_clauses);
@@ -826,12 +826,12 @@ static auto CheckOrEnsureReturn(std::optional<Ptr<const Statement>> opt_stmt,
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
       const auto& match = cast<Match>(*stmt);
-      auto new_clauses = global_arena->RawNew<
-          std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>>();
-      for (const auto& clause : *match.Clauses()) {
+      std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>
+          new_clauses;
+      for (const auto& clause : match.Clauses()) {
         auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
                                      stmt->SourceLoc());
-        new_clauses->push_back(std::make_pair(clause.first, s));
+        new_clauses.push_back(std::make_pair(clause.first, s));
       }
       return global_arena->New<Match>(stmt->SourceLoc(), match.Exp(),
                                       new_clauses);
