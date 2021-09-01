@@ -1837,7 +1837,7 @@ class DynamicArray(T:! Type) {
       --pos;
       returned var ret: ElementType = *pos;
       this->Remove(pos);
-      return ret;
+      return var;
     }
     fn IsEmpty[addr me: Self*]() -> Bool {
       return this->Begin() == this->End();
@@ -2002,7 +2002,7 @@ explicit parameters.
 ```
 fn PeekAtTopOfStackParameterized
     [T:! Type, StackType:! StackParameterized(T)]
-    (s: StackType*, _: type_of(T)) -> T { ... }
+    (s: StackType*, _: singleton_type(T)) -> T { ... }
 
 var produce: Produce = ...;
 var top_fruit: Fruit =
@@ -2011,14 +2011,12 @@ var top_veggie: Veggie =
     PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
 
-The pattern `_: type_of(T)` will only match `T` since `T` is a type so
-`type_of(T)` returns a single-value type-of-type. Using that pattern in the
-explicit parameter list allows us to make `T` available earlier in the
-declaration so it can be passed as the argument to the parameterized interface
-`StackParameterized`.
-
-**Open question:** Perhaps `type_of` should be spelled `singleton_type_of` or
-`single_value_type_of`, and only take a type argument?
+The pattern `_: singleton_type(T)` is a placeholder syntax for an expression
+that will only match `T`, until issue
+[#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578)
+is resolved. Using that pattern in the explicit parameter list allows us to make
+`T` available earlier in the declaration so it can be passed as the argument to
+the parameterized interface `StackParameterized`.
 
 This approach is useful for the `ComparableTo(T)` interface, where a type might
 be comparable with multiple other types, and in fact interfaces for
