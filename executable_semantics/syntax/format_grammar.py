@@ -300,7 +300,7 @@ def _parse_segments(
                 "/*",
                 "*/",
                 "/* table-begin */\n",
-                r"\n */\* table-end \*/\n",
+                r"\n\s*/\* table-end \*/\n",
                 debug,
             )
         elif c == "/" and content[i + 1 : i + 2] == "/":
