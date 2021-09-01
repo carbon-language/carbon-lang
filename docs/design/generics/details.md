@@ -1467,8 +1467,10 @@ This allows us to provide implementations of new interfaces (as in
 `FormattedSong`), or mix and match implementations from other compatible types
 (as in `FormattedSongByTitle`). The rules are:
 
--   You may only add APIs, not change the representation of the type, unlike
-    extending a type where you may add fields.
+-   You can add any declaration that you could add to a class except for
+    declarations that would change the representation of the type. This means
+    you can add functions, interface implementations, and aliases, but not
+    fields, base classes, or virtual functions.
 -   The adapted type is compatible with the original type, and that relationship
     is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
     and `FormattedSongByTitle` end up compatible with each other.
