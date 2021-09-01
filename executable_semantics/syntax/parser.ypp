@@ -59,7 +59,6 @@
 
   #include "common/check.h"
   #include "executable_semantics/syntax/parse_and_lex_context.h"
-  #include "executable_semantics/syntax/syntax_helpers.h"
   #include "llvm/ADT/StringExtras.h"
 }  // %code top
 
