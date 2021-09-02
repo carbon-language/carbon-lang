@@ -2464,7 +2464,7 @@ interface HyperPointInterface {
 or naming this kind of constraint:
 
 ```
-let HyperPoint = NSpacePoint where Point2Or3.N > 3;
+let HyperPoint = NSpacePoint where HyperPoint.N > 3;
 structural interface HyperPoint {
   extends NSpacePoint where NSpacePoint.N > 3;
 }
