@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Source file introduction](#source-file-introduction)
     -   [Name paths](#name-paths)
-        -   [`package` syntax](#package-syntax)
+        -   [`package` directives](#package-directives)
     -   [Packages](#packages)
         -   [Shorthand notation for libraries in packages](#shorthand-notation-for-libraries-in-packages)
         -   [Package name conflicts](#package-name-conflicts)
@@ -216,7 +216,8 @@ Name conflicts are addressed by [name lookup](/docs/design/name_lookup.md).
 
 ### Packages
 
-The `package` directive's syntax may be loosely expressed as a regular expression:
+The `package` directive's syntax may be loosely expressed as a regular
+expression:
 
 ```regex
 package IDENTIFIER (library STRING)? (api|impl);
@@ -245,8 +246,8 @@ Breaking this apart:
     under [libraries](#libraries). If it instead had `impl`, this would be an
     implementation file.
 
-Because every file must have exactly one `package` directive, there are a
-couple important and deliberate side-effects:
+Because every file must have exactly one `package` directive, there are a couple
+important and deliberate side-effects:
 
 -   Every file will be in precisely one library.
     -   A library still exists even when there is no explicit library argument,
