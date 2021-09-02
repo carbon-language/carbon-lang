@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+package ExecutableSemanticsTest api;
+
 fn apply[T:! Type, U:! Type](f: fnty (T) -> U, x: T) -> U {
   return f(x);
 }

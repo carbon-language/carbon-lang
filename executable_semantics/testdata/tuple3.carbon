@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+package ExecutableSemanticsTest api;
+
 fn main() -> i32 {
   var t: (i32, .x = i32) = (3, .x = 2);
   return t.x + 1 - t[0];
