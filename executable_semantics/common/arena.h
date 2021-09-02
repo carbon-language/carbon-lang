@@ -25,16 +25,6 @@ class Arena {
     return ptr;
   }
 
-  // TODO: Remove. This is only to help findability during migration.
-  template <typename T, typename... Args>
-  auto RawNew(Args&&... args) -> T* {
-    auto smart_ptr =
-        std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
-    T* raw_ptr = smart_ptr->Instance().Get();
-    arena.push_back(std::move(smart_ptr));
-    return raw_ptr;
-  }
-
  private:
   // Virtualizes arena entries so that a single vector can contain many types,
   // avoiding templated statics.
