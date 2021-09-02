@@ -5,6 +5,15 @@
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
+    name = "ast",
+    hdrs = ["ast.h"],
+    deps = [
+        ":declaration",
+        ":library_name",
+    ],
+)
+
+cc_library(
     name = "class_definition",
     hdrs = ["class_definition.h"],
     deps = [
@@ -19,7 +28,6 @@ cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
-        "abstract_syntax_tree.h",
         "declaration.h",
     ],
     deps = [
@@ -80,6 +88,11 @@ cc_library(
         ":source_location",
         "//common:ostream",
     ],
+)
+
+cc_library(
+    name = "library_name",
+    hdrs = ["library_name.h"],
 )
 
 cc_library(

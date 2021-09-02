@@ -6,19 +6,18 @@
 // statement. The intent is to minimize the amount of C++ in the .ypp file, to
 // improve ease of maintenance.
 
-#ifndef EXECUTABLE_SEMANTICS_EXEC_H_
-#define EXECUTABLE_SEMANTICS_EXEC_H_
+#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
+#define EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
 
 #include <list>
 
-#include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/ast/ast.h"
 
 namespace Carbon {
 
 // Runs the top-level declaration list.
-void ExecProgram(std::list<Ptr<const Declaration>> fs);
+void ExecProgram(AST ast);
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_EXEC_H_
+#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_

@@ -30,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /* table-begin */
 AND                  "and"
+API                  "api"
 ARROW                "->"
 AUTO                 "auto"
 AWAIT                "__await"
@@ -53,13 +54,17 @@ FALSE                "false"
 FN                   "fn"
 FNTY                 "fnty"
 IF                   "if"
+IMPL                 "impl"
+IMPORT               "import"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
 NOT                  "not"
 OR                   "or"
+PACKAGE              "package"
 PERIOD               "."
 PLUS                 "+"
 RETURN               "return"
@@ -119,6 +124,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
  /* table-begin */
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
+{API}                 { return SIMPLE_TOKEN(API);                 }
 {ARROW}               { return SIMPLE_TOKEN(ARROW);               }
 {AUTO}                { return SIMPLE_TOKEN(AUTO);                }
 {AWAIT}               { return SIMPLE_TOKEN(AWAIT);               }
@@ -142,13 +148,17 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {FNTY}                { return SIMPLE_TOKEN(FNTY);                }
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
+{IMPL}                { return SIMPLE_TOKEN(IMPL);                }
+{IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
 {LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LIBRARY}             { return SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return SIMPLE_TOKEN(MINUS);               }
 {NOT}                 { return SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return SIMPLE_TOKEN(OR);                  }
+{PACKAGE}             { return SIMPLE_TOKEN(PACKAGE);             }
 {PERIOD}              { return SIMPLE_TOKEN(PERIOD);              }
 {PLUS}                { return SIMPLE_TOKEN(PLUS);                }
 {RETURN}              { return SIMPLE_TOKEN(RETURN);              }

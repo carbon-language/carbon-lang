@@ -59,14 +59,13 @@
 
   #include "common/check.h"
   #include "executable_semantics/syntax/parse_and_lex_context.h"
-  #include "executable_semantics/syntax/syntax_helpers.h"
   #include "llvm/ADT/StringExtras.h"
 }  // %code top
 
 %code requires {
   #include <optional>
 
-  #include "executable_semantics/ast/abstract_syntax_tree.h"
+  #include "executable_semantics/ast/ast.h"
   #include "executable_semantics/ast/declaration.h"
   #include "executable_semantics/ast/expression.h"
   #include "executable_semantics/ast/function_definition.h"
@@ -94,6 +93,11 @@
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
+%type <std::pair<LibraryName, bool>> package_directive
+%type <LibraryName> import_directive
+%type <std::vector<LibraryName>> import_directives
+%type <std::string> optional_library_path
+%type <bool> api_or_impl
 %type <BisonWrap<Ptr<const Declaration>>> declaration
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_declaration
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_definition
@@ -128,13 +132,14 @@
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<std::pair<std::string, Ptr<const Expression>>>> alternative
 %type <std::list<std::pair<std::string, Ptr<const Expression>>>> alternative_list
-%type <std::pair<Ptr<const Pattern>, Ptr<const Statement>>*> clause
-%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>*> clause_list
+%type <BisonWrap<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause
+%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause_list
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
   AND
+  API
   ARROW
   AUTO
   AWAIT
@@ -158,13 +163,17 @@
   FN
   FNTY
   IF
+  IMPL
+  IMPORT
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
+  LIBRARY
   MATCH
   MINUS
   NOT
   OR
+  PACKAGE
   PERIOD
   PLUS
   RETURN
@@ -220,8 +229,42 @@
 
 %start input
 %%
-input: declaration_list
-    { parsed_program = $1; }
+input: package_directive import_directives declaration_list
+    {
+      parsed_program = AST({.package = $1.first,
+                            .is_api = $1.second,
+                            .imports = std::move($2),
+                            .declarations = std::move($3)});
+    }
+;
+package_directive:
+  PACKAGE identifier optional_library_path api_or_impl SEMICOLON
+    { $$ = {LibraryName({.package = $2, .path = $3}), $4}; }
+;
+import_directive:
+  IMPORT identifier optional_library_path SEMICOLON
+    { $$ = LibraryName({.package = $2, .path = $3}); }
+;
+import_directives:
+  // Empty
+    { $$ = std::vector<LibraryName>(); }
+| import_directives import_directive
+    {
+      $$ = std::move($1);
+      $$.push_back($2);
+    }
+;
+optional_library_path:
+  // Empty
+    { $$ = ""; }
+| LIBRARY string_literal
+    { $$ = $2; }
+;
+api_or_impl:
+  API
+    { $$ = true; }
+| IMPL
+    { $$ = false; }
 ;
 expression:
   identifier
@@ -462,31 +505,22 @@ maybe_empty_tuple_pattern:
 ;
 clause:
   CASE pattern DOUBLE_ARROW statement
-    {
-      $$ = global_arena
-               ->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(
-                   $2, $4);
-    }
+    { $$ = std::pair<Ptr<const Pattern>, Ptr<const Statement>>($2, $4); }
 | DEFAULT DOUBLE_ARROW statement
     {
       auto vp = global_arena -> New<BindingPattern>(
                     context.SourceLoc(), std::nullopt,
                     global_arena->New<AutoPattern>(context.SourceLoc()));
-      $$ = global_arena
-               ->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(
-                   vp, $3);
+      $$ = std::pair<Ptr<const Pattern>, Ptr<const Statement>>(vp, $3);
     }
 ;
 clause_list:
   // Empty
-    {
-      $$ = global_arena->RawNew<
-          std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>>();
-    }
+    { $$ = std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(); }
 | clause clause_list
     {
       $$ = $2;
-      $$->push_front(*$1);
+      $$.push_front($1);
     }
 ;
 statement:

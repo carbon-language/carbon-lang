@@ -1,2 +1,2 @@
-RUNTIME ERROR: executable_semantics/testdata/experimental_continuation9.carbon:12: undefined behavior: access to dead value 1
+RUNTIME ERROR: executable_semantics/testdata/experimental_continuation9.carbon:14: undefined behavior: access to dead value 1
 EXIT CODE: 255

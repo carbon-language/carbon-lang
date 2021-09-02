@@ -2,9 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//executable_semantics:__pkg__"])
-
 load("@mypy_integration//:mypy.bzl", "mypy_test")
+
+package(default_visibility = ["//executable_semantics:__pkg__"])
 
 cc_library(
     name = "bison_wrap",
@@ -22,8 +22,6 @@ cc_library(
         "parse_and_lex_context.h",
         "parser.cpp",
         "parser.h",
-        "syntax_helpers.cpp",
-        "syntax_helpers.h",
     ],
     hdrs = [
         "parse.h",
@@ -39,14 +37,13 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:paren_contents",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
-        "//executable_semantics/interpreter",
-        "//executable_semantics/interpreter:type_checker",
     ],
 )
 
