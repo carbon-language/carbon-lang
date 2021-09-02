@@ -335,14 +335,17 @@ public:
       return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_PAGE, Ctx);
     } else {
       switch(RelType) {
+      case ELF::R_AARCH64_ADD_ABS_LO12_NC:
+      case ELF::R_AARCH64_LD64_GOT_LO12_NC:
       case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
       case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
       case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
       case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
-      case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-      case ELF::R_AARCH64_TLSDESC_LD64_LO12:
       case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
-      case ELF::R_AARCH64_ADD_ABS_LO12_NC:
+      case ELF::R_AARCH64_TLSDESC_ADD_LO12:
+      case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+      case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+      case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
         return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_LO12, Ctx);
       default:
         break;
