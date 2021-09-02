@@ -225,7 +225,7 @@ def _parse_comment(
     cursor: int,
     comment_start_str: str,
     comment_end_str: str,
-    table_begin_str: str,
+    table_start_str: str,
     table_end_pattern: str,
     debug: bool,
 ) -> Tuple[int, int]:
@@ -243,7 +243,7 @@ def _parse_comment(
         )
     if comment_end_str != "\n":
         comment_end += len(comment_end_str)
-    if content[cursor : comment_end + 1] == table_begin_str:
+    if content[cursor : comment_end + 1] == table_start_str:
         m = re.compile(table_end_pattern).search(content, comment_end)
         if not m:
             exit(
@@ -281,7 +281,7 @@ def _parse_segments(
     - table_segments is a list of _Table objects.
     """
     i = 0
-    segment_start = 0
+    text_segment_start = 0
     text_segments: List[Optional[str]] = []
     cpp_segments: Dict[int, List[_CppCode]] = {}
     table_segments: List[_Table] = []
@@ -291,42 +291,47 @@ def _parse_segments(
             # Skip over strings.
             i = _find_string_end(content, i + 1)
         elif c == "/" and content[i + 1 : i + 2] == "*":
-            segment_start, i = _parse_comment(
-                content,
-                text_segments,
-                table_segments,
-                segment_start,
-                i,
-                "/*",
-                "*/",
-                "/* table-begin */\n",
-                r"\n\s*/\* table-end \*/\n",
-                debug,
+            text_segment_start, i = _parse_comment(
+                content=content,
+                text_segments=text_segments,
+                table_segments=table_segments,
+                text_segment_start=text_segment_start,
+                cursor=i,
+                comment_start_str="/*",
+                comment_end_str="*/",
+                table_start_str="/* table-begin */\n",
+                table_end_pattern=r"\n\s*/\* table-end \*/\n",
+                debug=debug,
             )
         elif c == "/" and content[i + 1 : i + 2] == "/":
-            segment_start, i = _parse_comment(
-                content,
-                text_segments,
-                table_segments,
-                segment_start,
-                i,
-                "//",
-                "\n",
-                "// table-begin\n",
-                r"\n\s*// table-end\n",
-                debug,
+            text_segment_start, i = _parse_comment(
+                content=content,
+                text_segments=text_segments,
+                table_segments=table_segments,
+                text_segment_start=text_segment_start,
+                cursor=i,
+                comment_start_str="//",
+                comment_end_str="\n",
+                table_start_str="// table-begin\n",
+                table_end_pattern=r"\n\s*// table-end\n",
+                debug=debug,
             )
         elif c == "\\":
             # Skip over escapes.
             i += 1
         elif c == "{":
             i, added = _maybe_add_cpp_segment(
-                content, text_segments, cpp_segments, segment_start, i, debug
+                content,
+                text_segments,
+                cpp_segments,
+                text_segment_start,
+                i,
+                debug,
             )
             if added:
-                segment_start = i + 1
+                text_segment_start = i + 1
         i += 1
-    _add_text_segment(text_segments, content[segment_start:], debug)
+    _add_text_segment(text_segments, content[text_segment_start:], debug)
     return text_segments, cpp_segments, table_segments
 
 
