@@ -4,18 +4,30 @@
 
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
+# These must be a single build rule because of a dependency cycle in printing.
 cc_library(
-    name = "action",
-    srcs = ["action.cpp"],
-    hdrs = ["action.h"],
+    name = "action_frame_and_value",
+    srcs = [
+        "action.cpp",
+        "frame.cpp",
+        "value.cpp",
+    ],
+    hdrs = [
+        "action.h",
+        "frame.h",
+        "value.h",
+    ],
     deps = [
+        ":address",
+        ":dictionary",
+        ":field_path",
         ":stack",
-        ":value",
         "//common:ostream",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -46,26 +58,12 @@ cc_library(
 )
 
 cc_library(
-    name = "frame",
-    srcs = ["frame.cpp"],
-    hdrs = ["frame.h"],
-    deps = [
-        ":action",
-        ":address",
-        ":dictionary",
-        ":stack",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "heap",
     srcs = ["heap.cpp"],
     hdrs = ["heap.h"],
     deps = [
+        ":action_frame_and_value",
         ":address",
-        ":value",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -80,11 +78,9 @@ cc_library(
         "interpreter.h",
     ],
     deps = [
-        ":action",
+        ":action_frame_and_value",
         ":address",
-        ":frame",
         ":heap",
-        ":value",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
@@ -115,23 +111,6 @@ cc_library(
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:tracing_flag",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "value",
-    srcs = ["value.cpp"],
-    hdrs = ["value.h"],
-    deps = [
-        ":address",
-        ":field_path",
-        ":stack",
-        "//common:ostream",
-        "//executable_semantics/ast:function_definition",
-        "//executable_semantics/ast:statement",
-        "//executable_semantics/common:arena",
-        "//executable_semantics/common:error",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -362,7 +362,8 @@ auto Interpreter::StepLvalue() -> Transition {
   Ptr<Action> act = stack.Top()->todo.Top();
   Ptr<const Expression> exp = cast<LValAction>(*act).Exp();
   if (tracing_output) {
-    llvm::outs() << "--- step lvalue " << *exp << " --->\n";
+    llvm::outs() << "--- step lvalue " << *exp << " (" << exp->SourceLoc()
+                 << ") --->\n";
   }
   switch (exp->Tag()) {
     case Expression::Kind::IdentifierExpression: {
@@ -449,7 +450,8 @@ auto Interpreter::StepExp() -> Transition {
   Ptr<Action> act = stack.Top()->todo.Top();
   Ptr<const Expression> exp = cast<ExpressionAction>(*act).Exp();
   if (tracing_output) {
-    llvm::outs() << "--- step exp " << *exp << " --->\n";
+    llvm::outs() << "--- step exp " << *exp << " (" << exp->SourceLoc()
+                 << ") --->\n";
   }
   switch (exp->Tag()) {
     case Expression::Kind::IndexExpression: {
@@ -646,7 +648,8 @@ auto Interpreter::StepPattern() -> Transition {
   Ptr<Action> act = stack.Top()->todo.Top();
   Ptr<const Pattern> pattern = cast<PatternAction>(*act).Pat();
   if (tracing_output) {
-    llvm::outs() << "--- step pattern " << *pattern << " --->\n";
+    llvm::outs() << "--- step pattern " << *pattern << " ("
+                 << pattern->SourceLoc() << ") --->\n";
   }
   switch (pattern->Tag()) {
     case Pattern::Kind::AutoPattern: {
@@ -744,7 +747,7 @@ auto Interpreter::StepStmt() -> Transition {
   if (tracing_output) {
     llvm::outs() << "--- step stmt ";
     stmt->PrintDepth(1, llvm::outs());
-    llvm::outs() << " --->\n";
+    llvm::outs() << " (" << stmt->SourceLoc() << ") --->\n";
   }
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {

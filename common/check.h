@@ -17,19 +17,24 @@ class ExitingStream {
   LLVM_ATTRIBUTE_NORETURN ~ExitingStream() {
     // Finish with a newline.
     llvm::errs() << "\n";
-    exit(-1);
+    if (treat_as_bug) {
+      std::abort();
+    } else {
+      std::exit(-1);
+    }
   }
 
   // Indicates that initial input is in, so this is where a ": " should be added
   // before user input.
-  ExitingStream& add_separator() {
+  ExitingStream& AddSeparator() {
     separator = true;
     return *this;
   }
 
-  // Prints a stack traces.
-  ExitingStream& print_stack() {
-    llvm::sys::PrintStackTrace(llvm::errs());
+  // Indicates that the program is exiting due to a bug in the program, rather
+  // than e.g. invalid input.
+  ExitingStream& TreatAsBug() {
+    treat_as_bug = true;
     return *this;
   }
 
@@ -51,6 +56,9 @@ class ExitingStream {
  private:
   // Whether a separator should be printed if << is used again.
   bool separator = false;
+
+  // Whether the program is exiting due to a bug.
+  bool treat_as_bug = false;
 };
 
 // Checks the given condition, and if it's false, prints a stack, streams the
@@ -60,16 +68,16 @@ class ExitingStream {
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";
 #define CHECK(condition)                                                      \
-  (!(condition)) &&                                                           \
-      (Carbon::ExitingStream().print_stack() << "CHECK failure: " #condition) \
-          .add_separator()
+  (!(condition)) && (Carbon::ExitingStream() << "CHECK failure: " #condition) \
+                        .AddSeparator()                                       \
+                        .TreatAsBug()
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
 // than CHECK(false) because it avoids confusion about control flow.
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL() Carbon::ExitingStream().print_stack() << "FATAL: "
+#define FATAL() Carbon::ExitingStream().TreatAsBug() << "FATAL: "
 
 }  // namespace Carbon
 

@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
+#include "executable_semantics/interpreter/frame.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -232,11 +233,15 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::VariableType:
       out << cast<VariableType>(*this).Name();
       break;
-    case Value::Kind::ContinuationValue:
-      out << "continuation";
-      // TODO: Find a way to print useful information about the continuation
-      // without creating a dependency cycle.
+    case Value::Kind::ContinuationValue: {
+      out << "{";
+      llvm::ListSeparator sep(" :: ");
+      for (Ptr<Frame> frame : cast<ContinuationValue>(*this).Stack()) {
+        out << *frame;
+      }
+      out << "}";
       break;
+    }
     case Value::Kind::StringType:
       out << "String";
       break;
