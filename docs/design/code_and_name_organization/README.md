@@ -192,8 +192,8 @@ of `library` on the `package` of the code being imported.
 
 Every source file will consist of, in order:
 
-1. One `package` statement.
-2. A section of zero or more `import` statements.
+1. One `package` directive.
+2. A section of zero or more `import` directives.
 3. Source file body, with other code.
 
 Comments and blank lines may be intermingled with these sections.
@@ -212,11 +212,11 @@ IDENTIFIER(\.IDENTIFIER)*
 
 Name conflicts are addressed by [name lookup](/docs/design/name_lookup.md).
 
-#### `package` syntax
+#### `package` directives
 
 ### Packages
 
-The `package` keyword's syntax may be loosely expressed as a regular expression:
+The `package` directive's syntax may be loosely expressed as a regular expression:
 
 ```regex
 package IDENTIFIER (library STRING)? (api|impl);
@@ -245,8 +245,8 @@ Breaking this apart:
     under [libraries](#libraries). If it instead had `impl`, this would be an
     implementation file.
 
-Because the `package` keyword must be specified exactly once in all files, there
-are a couple important and deliberate side-effects:
+Because every file must have exactly one `package` directive, there are a
+couple important and deliberate side-effects:
 
 -   Every file will be in precisely one library.
     -   A library still exists even when there is no explicit library argument,
@@ -256,7 +256,7 @@ are a couple important and deliberate side-effects:
 -   Every entity in Carbon will be in a namespace, even if its namespace path
     consists of only the package name. There is no "global" namespace.
     -   Every entity in a file will be defined within the namespace described in
-        the `package` statement.
+        the `package` directive.
     -   Entities within a file may be defined in
         [child namespaces](#namespaces).
 
@@ -303,7 +303,7 @@ Every Carbon library consists of one or more files. Each Carbon library has a
 primary file that defines its API, and may optionally contain additional files
 that are implementation.
 
--   An API file's `package` will have `api`. For example,
+-   An API file's `package` directive will have `api`. For example,
     `package Geometry library "Shapes" api;`
     -   API filenames must have the `.carbon` extension. They must not have a
         `.impl.carbon` extension.
@@ -312,7 +312,7 @@ that are implementation.
             be expected to be similar to a "Math/Algebra" library being in a
             "Math/Algebra.carbon" file path.
         -   The package will not be used when considering the file path.
--   An implementation file's `package` will have `impl`. For example,
+-   An implementation file's `package` directive will have `impl`. For example,
     `package Geometry library "Shapes" impl;`.
     -   Implementation filenames must have the `.impl.carbon` extension.
     -   Implementation file paths need not correspond to the library name.
@@ -425,8 +425,8 @@ implicitly.
 
 ### Imports
 
-The `import` keyword supports reusing code from other files and libraries. The
-`import` keyword's syntax may be loosely expressed as a regular expression:
+`import` directives supports reusing code from other files and libraries. The
+`import` directive's syntax may be loosely expressed as a regular expression:
 
 ```regex
 import IDENTIFIER (library NAME_PATH)?;
