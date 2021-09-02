@@ -6,8 +6,8 @@
 // statement. The intent is to minimize the amount of C++ in the .ypp file, to
 // improve ease of maintenance.
 
-#ifndef EXECUTABLE_SEMANTICS_EXEC_H_
-#define EXECUTABLE_SEMANTICS_EXEC_H_
+#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
+#define EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
 
 #include <list>
 
@@ -20,4 +20,4 @@ void ExecProgram(AST ast);
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_EXEC_H_
+#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_

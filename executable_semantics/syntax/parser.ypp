@@ -59,7 +59,6 @@
 
   #include "common/check.h"
   #include "executable_semantics/syntax/parse_and_lex_context.h"
-  #include "executable_semantics/syntax/syntax_helpers.h"
   #include "llvm/ADT/StringExtras.h"
 }  // %code top
 
@@ -133,8 +132,8 @@
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<std::pair<std::string, Ptr<const Expression>>>> alternative
 %type <std::list<std::pair<std::string, Ptr<const Expression>>>> alternative_list
-%type <std::pair<Ptr<const Pattern>, Ptr<const Statement>>*> clause
-%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>*> clause_list
+%type <BisonWrap<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause
+%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause_list
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
@@ -504,31 +503,22 @@ maybe_empty_tuple_pattern:
 ;
 clause:
   CASE pattern DOUBLE_ARROW statement
-    {
-      $$ = global_arena
-               ->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(
-                   $2, $4);
-    }
+    { $$ = std::pair<Ptr<const Pattern>, Ptr<const Statement>>($2, $4); }
 | DEFAULT DOUBLE_ARROW statement
     {
       auto vp = global_arena -> New<BindingPattern>(
                     context.SourceLoc(), std::nullopt,
                     global_arena->New<AutoPattern>(context.SourceLoc()));
-      $$ = global_arena
-               ->RawNew<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(
-                   vp, $3);
+      $$ = std::pair<Ptr<const Pattern>, Ptr<const Statement>>(vp, $3);
     }
 ;
 clause_list:
   // Empty
-    {
-      $$ = global_arena->RawNew<
-          std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>>();
-    }
+    { $$ = std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(); }
 | clause clause_list
     {
       $$ = $2;
-      $$->push_front(*$1);
+      $$.push_front($1);
     }
 ;
 statement:
