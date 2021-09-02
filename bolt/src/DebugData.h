@@ -15,6 +15,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdint>
@@ -495,6 +496,76 @@ public:
            "no abbrev data found for unit");
     return CUAbbrevData[Unit.getAbbreviationsOffset()].Offset;
   }
+};
+
+/// Similar to MCDwarfLineEntry, but identifies the location by its address
+/// instead of MCLabel.
+class BinaryDwarfLineEntry : public MCDwarfLoc {
+  uint64_t Address;
+
+public:
+  // Constructor to create an BinaryDwarfLineEntry given a symbol and the dwarf
+  // loc.
+  BinaryDwarfLineEntry(uint64_t Address, const MCDwarfLoc loc)
+      : MCDwarfLoc(loc), Address(Address) {}
+
+  uint64_t getAddress() const { return Address; }
+};
+
+/// Similar to MCLineSection, store line entries per CU but use absolute
+/// addresses for line locations.
+class BinaryLineSection {
+public:
+  // Add an entry to this MCLineSection's line entries.
+  void addLineEntry(const BinaryDwarfLineEntry &LineEntry, MCSection *Sec) {
+    BinaryLineDivisions[Sec].push_back(LineEntry);
+  }
+
+  using BinaryDwarfLineEntryCollection = std::vector<BinaryDwarfLineEntry>;
+  using BinaryLineDivisionMap =
+      MapVector<MCSection *, BinaryDwarfLineEntryCollection>;
+
+private:
+  // A collection of BinaryDwarfLineEntry for each section.
+  BinaryLineDivisionMap BinaryLineDivisions;
+
+public:
+  // Returns the collection of BinaryDwarfLineEntry for a given Compile Unit ID.
+  const BinaryLineDivisionMap &getBinaryLineEntries() const {
+    return BinaryLineDivisions;
+  }
+};
+
+/// Line number information for all parts of the binary.
+class DwarfLineTable {
+  MCDwarfLineTableHeader Header;
+  MCLineSection MCLineSections;
+  BinaryLineSection BinaryLineSections;
+
+public:
+  ///  Emit line info for all units in the binary context.
+  static void emit(BinaryContext &BC, MCStreamer &Streamer);
+
+  // Emit the Dwarf file and the line tables for a given CU.
+  void emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
+              Optional<MCDwarfLineStr> &LineStr) const;
+
+  Expected<unsigned> tryGetFile(StringRef &Directory, StringRef &FileName,
+                                Optional<MD5::MD5Result> Checksum,
+                                Optional<StringRef> Source,
+                                uint16_t DwarfVersion,
+                                unsigned FileNumber = 0) {
+    return Header.tryGetFile(Directory, FileName, Checksum, Source,
+                             DwarfVersion, FileNumber);
+  }
+
+  MCSymbol *getLabel() const { return Header.Label; }
+
+  void setLabel(MCSymbol *Label) { Header.Label = Label; }
+
+  MCLineSection &getMCLineSections() { return MCLineSections; }
+
+  BinaryLineSection &getBinaryLineSections() { return BinaryLineSections; }
 };
 
 } // namespace bolt

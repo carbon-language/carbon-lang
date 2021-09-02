@@ -28,6 +28,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -207,6 +208,9 @@ class BinaryContext {
   /// Preprocess DWO debug information.
   void preprocessDWODebugInfo();
 
+  /// DWARF line info for CUs.
+  std::map<unsigned, DwarfLineTable> DwarfLineTablesCUMap;
+
 public:
   static std::unique_ptr<BinaryContext>
   createBinaryContext(const ObjectFile *File, bool IsPIC,
@@ -220,6 +224,19 @@ public:
 
   /// Get Number of DWOCUs in a map.
   uint32_t getNumDWOCUs() { return DWOCUs.size(); }
+
+  const std::map<unsigned, DwarfLineTable> &getDwarfLineTables() const {
+    return DwarfLineTablesCUMap;
+  }
+
+  DwarfLineTable &getDwarfLineTable(unsigned CUID) {
+    return DwarfLineTablesCUMap[CUID];
+  }
+
+  Expected<unsigned> getDwarfFile(StringRef Directory, StringRef FileName,
+                                  unsigned FileNumber,
+                                  Optional<MD5::MD5Result> Checksum,
+                                  Optional<StringRef> Source, unsigned CUID);
 
   /// [start memory address] -> [segment info] mapping.
   std::map<uint64_t, SegmentInfo> SegmentMapInfo;

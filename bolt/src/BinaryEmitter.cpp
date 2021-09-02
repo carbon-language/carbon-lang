@@ -210,8 +210,10 @@ void BinaryEmitter::emitAll(StringRef OrgSecPrefix) {
 
   emitFunctions();
 
-  if (opts::UpdateDebugSections)
+  if (opts::UpdateDebugSections) {
     emitDebugLineInfoForOriginalFunctions();
+    DwarfLineTable::emit(BC, Streamer);
+  }
 
   emitDataSections(OrgSecPrefix);
 
@@ -654,7 +656,16 @@ SMLoc BinaryEmitter::emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc,
     Flags,
     CurrentRow.Isa,
     CurrentRow.Discriminator);
-  BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
+  const MCDwarfLoc &DwarfLoc = BC.Ctx->getCurrentDwarfLoc();
+  BC.Ctx->clearDwarfLocSeen();
+
+  MCSymbol *LineSym = BC.Ctx->createTempSymbol();
+  Streamer.emitLabel(LineSym);
+
+  BC.getDwarfLineTable(FunctionUnitIndex)
+      .getMCLineSections()
+      .addLineEntry(MCDwarfLineEntry(LineSym, DwarfLoc),
+                    Streamer.getCurrentSectionOnly());
 
   return NewLoc;
 }
@@ -1010,34 +1021,30 @@ void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
     uint64_t Address = It.first;
     if (LineTable->lookupAddressRange({Address, 0}, Function.getMaxSize(),
                                       Results)) {
-      MCLineSection &OutputLineTable =
-          BC.Ctx->getMCDwarfLineTable(Unit->getOffset()).getMCLineSections();
+      BinaryLineSection &OutputLineTable =
+          BC.getDwarfLineTable(Unit->getOffset()).getBinaryLineSections();
       for (uint32_t RowIndex : Results) {
         const DWARFDebugLine::Row &Row = LineTable->Rows[RowIndex];
         BC.Ctx->setCurrentDwarfLoc(
-            Row.File,
-            Row.Line,
-            Row.Column,
+            Row.File, Row.Line, Row.Column,
             (DWARF2_FLAG_IS_STMT * Row.IsStmt) |
-            (DWARF2_FLAG_BASIC_BLOCK * Row.BasicBlock) |
-            (DWARF2_FLAG_PROLOGUE_END * Row.PrologueEnd) |
-            (DWARF2_FLAG_EPILOGUE_BEGIN * Row.EpilogueBegin),
-            Row.Isa,
-            Row.Discriminator,
-            Row.Address.Address);
+                (DWARF2_FLAG_BASIC_BLOCK * Row.BasicBlock) |
+                (DWARF2_FLAG_PROLOGUE_END * Row.PrologueEnd) |
+                (DWARF2_FLAG_EPILOGUE_BEGIN * Row.EpilogueBegin),
+            Row.Isa, Row.Discriminator);
         MCDwarfLoc Loc = BC.Ctx->getCurrentDwarfLoc();
         BC.Ctx->clearDwarfLocSeen();
-        OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
-                                     FunctionSection);
+        OutputLineTable.addLineEntry(
+            BinaryDwarfLineEntry{Row.Address.Address, Loc}, FunctionSection);
       }
       // Add an empty entry past the end of the function
       // for end_sequence mark.
-      BC.Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0,
-                                 Address + Function.getMaxSize());
+      BC.Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0);
       MCDwarfLoc Loc = BC.Ctx->getCurrentDwarfLoc();
       BC.Ctx->clearDwarfLocSeen();
-      OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
-                                   FunctionSection);
+      OutputLineTable.addLineEntry(
+          BinaryDwarfLineEntry{Address + Function.getMaxSize(), Loc},
+          FunctionSection);
     } else {
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: function " << Function
                         << " has no associated line number information\n");

@@ -12,6 +12,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/EndianStream.h"
@@ -520,6 +521,205 @@ std::unique_ptr<DebugBufferVector> DebugAbbrevWriter::finalize() {
   }
 
   return std::make_unique<DebugBufferVector>(ReturnBuffer);
+}
+
+static void emitDwarfSetLineAddrAbs(MCStreamer &OS,
+                                    MCDwarfLineTableParams Params,
+                                    int64_t LineDelta, uint64_t Address,
+                                    int PointerSize) {
+  // emit the sequence to set the address
+  OS.emitIntValue(dwarf::DW_LNS_extended_op, 1);
+  OS.emitULEB128IntValue(PointerSize + 1);
+  OS.emitIntValue(dwarf::DW_LNE_set_address, 1);
+  OS.emitIntValue(Address, PointerSize);
+
+  // emit the sequence for the LineDelta (from 1) and a zero address delta.
+  MCDwarfLineAddr::Emit(&OS, Params, LineDelta, 0);
+}
+
+static inline void emitBinaryDwarfLineTable(
+    MCStreamer *MCOS, MCDwarfLineTableParams Params,
+    const BinaryLineSection::BinaryDwarfLineEntryCollection &LineEntries) {
+  unsigned FileNum = 1;
+  unsigned LastLine = 1;
+  unsigned Column = 0;
+  unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
+  unsigned Isa = 0;
+  unsigned Discriminator = 0;
+  uint64_t LastAddress = -1ULL;
+  const MCAsmInfo *AsmInfo = MCOS->getContext().getAsmInfo();
+
+  // Loop through each line entry and encode the dwarf line number table.
+  for (auto It = LineEntries.begin(), Ie = LineEntries.end(); It != Ie; ++It) {
+    const BinaryDwarfLineEntry &LineEntry = *It;
+    int64_t LineDelta = static_cast<int64_t>(LineEntry.getLine()) - LastLine;
+
+    const uint64_t Address = LineEntry.getAddress();
+    if (std::next(It) == Ie) {
+      // If emitting absolute addresses, the last entry only carries address
+      // info for the DW_LNE_end_sequence. This entry compensates for the lack
+      // of the section context used to emit the end of section label.
+      MCDwarfLineAddr::Emit(MCOS, Params, INT64_MAX, Address - LastAddress);
+      return;
+    }
+
+    if (FileNum != LineEntry.getFileNum()) {
+      FileNum = LineEntry.getFileNum();
+      MCOS->emitInt8(dwarf::DW_LNS_set_file);
+      MCOS->emitULEB128IntValue(FileNum);
+    }
+    if (Column != LineEntry.getColumn()) {
+      Column = LineEntry.getColumn();
+      MCOS->emitInt8(dwarf::DW_LNS_set_column);
+      MCOS->emitULEB128IntValue(Column);
+    }
+    if (Discriminator != LineEntry.getDiscriminator() &&
+        MCOS->getContext().getDwarfVersion() >= 4) {
+      Discriminator = LineEntry.getDiscriminator();
+      unsigned Size = getULEB128Size(Discriminator);
+      MCOS->emitInt8(dwarf::DW_LNS_extended_op);
+      MCOS->emitULEB128IntValue(Size + 1);
+      MCOS->emitInt8(dwarf::DW_LNE_set_discriminator);
+      MCOS->emitULEB128IntValue(Discriminator);
+    }
+    if (Isa != LineEntry.getIsa()) {
+      Isa = LineEntry.getIsa();
+      MCOS->emitInt8(dwarf::DW_LNS_set_isa);
+      MCOS->emitULEB128IntValue(Isa);
+    }
+    if ((LineEntry.getFlags() ^ Flags) & DWARF2_FLAG_IS_STMT) {
+      Flags = LineEntry.getFlags();
+      MCOS->emitInt8(dwarf::DW_LNS_negate_stmt);
+    }
+    if (LineEntry.getFlags() & DWARF2_FLAG_BASIC_BLOCK)
+      MCOS->emitInt8(dwarf::DW_LNS_set_basic_block);
+    if (LineEntry.getFlags() & DWARF2_FLAG_PROLOGUE_END)
+      MCOS->emitInt8(dwarf::DW_LNS_set_prologue_end);
+    if (LineEntry.getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
+      MCOS->emitInt8(dwarf::DW_LNS_set_epilogue_begin);
+
+    if (LastAddress == -1ULL) {
+      emitDwarfSetLineAddrAbs(*MCOS, Params, LineDelta, Address,
+                              AsmInfo->getCodePointerSize());
+    } else {
+      MCDwarfLineAddr::Emit(MCOS, Params, LineDelta, Address - LastAddress);
+    }
+    LastAddress = Address;
+
+    Discriminator = 0;
+    LastLine = LineEntry.getLine();
+  }
+}
+
+static inline void emitDwarfLineTable(
+    MCStreamer *MCOS, MCSection *Section,
+    const MCLineSection::MCDwarfLineEntryCollection &LineEntries) {
+  unsigned FileNum = 1;
+  unsigned LastLine = 1;
+  unsigned Column = 0;
+  unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
+  unsigned Isa = 0;
+  unsigned Discriminator = 0;
+  MCSymbol *LastLabel = nullptr;
+  const MCAsmInfo *AsmInfo = MCOS->getContext().getAsmInfo();
+
+  // Loop through each MCDwarfLineEntry and encode the dwarf line number table.
+  for (const MCDwarfLineEntry &LineEntry : LineEntries) {
+    int64_t LineDelta = static_cast<int64_t>(LineEntry.getLine()) - LastLine;
+
+    if (FileNum != LineEntry.getFileNum()) {
+      FileNum = LineEntry.getFileNum();
+      MCOS->emitInt8(dwarf::DW_LNS_set_file);
+      MCOS->emitULEB128IntValue(FileNum);
+    }
+    if (Column != LineEntry.getColumn()) {
+      Column = LineEntry.getColumn();
+      MCOS->emitInt8(dwarf::DW_LNS_set_column);
+      MCOS->emitULEB128IntValue(Column);
+    }
+    if (Discriminator != LineEntry.getDiscriminator() &&
+        MCOS->getContext().getDwarfVersion() >= 4) {
+      Discriminator = LineEntry.getDiscriminator();
+      unsigned Size = getULEB128Size(Discriminator);
+      MCOS->emitInt8(dwarf::DW_LNS_extended_op);
+      MCOS->emitULEB128IntValue(Size + 1);
+      MCOS->emitInt8(dwarf::DW_LNE_set_discriminator);
+      MCOS->emitULEB128IntValue(Discriminator);
+    }
+    if (Isa != LineEntry.getIsa()) {
+      Isa = LineEntry.getIsa();
+      MCOS->emitInt8(dwarf::DW_LNS_set_isa);
+      MCOS->emitULEB128IntValue(Isa);
+    }
+    if ((LineEntry.getFlags() ^ Flags) & DWARF2_FLAG_IS_STMT) {
+      Flags = LineEntry.getFlags();
+      MCOS->emitInt8(dwarf::DW_LNS_negate_stmt);
+    }
+    if (LineEntry.getFlags() & DWARF2_FLAG_BASIC_BLOCK)
+      MCOS->emitInt8(dwarf::DW_LNS_set_basic_block);
+    if (LineEntry.getFlags() & DWARF2_FLAG_PROLOGUE_END)
+      MCOS->emitInt8(dwarf::DW_LNS_set_prologue_end);
+    if (LineEntry.getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
+      MCOS->emitInt8(dwarf::DW_LNS_set_epilogue_begin);
+
+    MCSymbol *Label = LineEntry.getLabel();
+
+    // At this point we want to emit/create the sequence to encode the delta
+    // in line numbers and the increment of the address from the previous
+    // Label and the current Label.
+    MCOS->emitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
+                                   AsmInfo->getCodePointerSize());
+    Discriminator = 0;
+    LastLine = LineEntry.getLine();
+    LastLabel = Label;
+  }
+
+  // Generate DWARF line end entry.
+  MCOS->emitDwarfLineEndEntry(Section, LastLabel);
+}
+
+void DwarfLineTable::emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
+                            Optional<MCDwarfLineStr> &LineStr) const {
+  MCSymbol *LineEndSym = Header.Emit(MCOS, Params, LineStr).second;
+
+  // Put out the line tables.
+  for (const auto &LineSec : MCLineSections.getMCLineEntries())
+    emitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
+
+  // Emit line tables for the original code.
+  for (const auto &LineSec : BinaryLineSections.getBinaryLineEntries())
+    emitBinaryDwarfLineTable(MCOS, Params, LineSec.second);
+
+  // This is the end of the section, so set the value of the symbol at the end
+  // of this section (that was used in a previous expression).
+  MCOS->emitLabel(LineEndSym);
+}
+
+void DwarfLineTable::emit(BinaryContext &BC, MCStreamer &Streamer) {
+  MCAssembler &Assembler =
+      static_cast<MCObjectStreamer *>(&Streamer)->getAssembler();
+
+  MCDwarfLineTableParams Params = Assembler.getDWARFLinetableParams();
+
+  auto &LineTables = BC.getDwarfLineTables();
+
+  // Bail out early so we don't switch to the debug_line section needlessly and
+  // in doing so create an unnecessary (if empty) section.
+  if (LineTables.empty())
+    return;
+
+  // In a v5 non-split line table, put the strings in a separate section.
+  Optional<MCDwarfLineStr> LineStr(None);
+  if (BC.Ctx->getDwarfVersion() >= 5)
+    LineStr = MCDwarfLineStr(*BC.Ctx);
+
+  // Switch to the section where the table will be emitted into.
+  Streamer.SwitchSection(BC.MOFI->getDwarfLineSection());
+
+  // Handle the rest of the Compile Units.
+  for (auto &CUIDTablePair : LineTables) {
+    CUIDTablePair.second.emitCU(&Streamer, Params, LineStr);
+  }
 }
 
 } // namespace bolt

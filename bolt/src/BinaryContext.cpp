@@ -1396,6 +1396,16 @@ void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
   }
 }
 
+Expected<unsigned>
+BinaryContext::getDwarfFile(StringRef Directory, StringRef FileName,
+                            unsigned FileNumber,
+                            Optional<MD5::MD5Result> Checksum,
+                            Optional<StringRef> Source, unsigned CUID) {
+  DwarfLineTable &Table = DwarfLineTablesCUMap[CUID];
+  return Table.tryGetFile(Directory, FileName, Checksum, Source,
+                          Ctx->getDwarfVersion(), FileNumber);
+}
+
 unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
                                                const uint32_t SrcCUID,
                                                unsigned FileIndex) {
@@ -1421,7 +1431,7 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
           dwarf::toString(FileNames[FileIndex - 1].Name))
     FileName = *FName;
   assert(FileName != "");
-  return cantFail(Ctx->getDwarfFile(Dir, FileName, 0, None, None, DestCUID));
+  return cantFail(getDwarfFile(Dir, FileName, 0, None, None, DestCUID));
 }
 
 std::vector<BinaryFunction *> BinaryContext::getSortedFunctions() {
@@ -1545,12 +1555,12 @@ void BinaryContext::preprocessDebugInfo() {
         LineTable->Prologue.FileNames;
 
     // Assign a unique label to every line table, one per CU.
-    Ctx->getMCDwarfLineTable(CUID).setLabel(
-      Ctx->getOrCreateSymbol(GlobalPrefix + "line_table_start" + Twine(CUID)));
+    getDwarfLineTable(CUID).setLabel(Ctx->getOrCreateSymbol(
+        GlobalPrefix + "line_table_start" + Twine(CUID)));
 
     // Make sure empty debug line tables are registered too.
     if (FileNames.empty()) {
-      cantFail(Ctx->getDwarfFile("", "<unknown>", 0, None, None, CUID));
+      cantFail(getDwarfFile("", "<unknown>", 0, None, None, CUID));
       continue;
     }
     for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
@@ -1566,7 +1576,7 @@ void BinaryContext::preprocessDebugInfo() {
       if (Optional<const char *> FName = dwarf::toString(FileNames[I].Name))
         FileName = *FName;
       assert(FileName != "");
-      cantFail(Ctx->getDwarfFile(Dir, FileName, 0, None, None, CUID));
+      cantFail(getDwarfFile(Dir, FileName, 0, None, None, CUID));
     }
   }
 

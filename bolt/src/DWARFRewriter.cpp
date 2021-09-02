@@ -705,7 +705,7 @@ void DWARFRewriter::updateLineTableOffsets() {
 
   for (const std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units()) {
     const unsigned CUID = CU->getOffset();
-    MCSymbol *Label = BC.Ctx->getMCDwarfLineTable(CUID).getLabel();
+    MCSymbol *Label = BC.getDwarfLineTable(CUID).getLabel();
     if (!Label)
       continue;
 
