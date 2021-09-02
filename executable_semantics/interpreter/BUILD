@@ -43,6 +43,7 @@ cc_library(
     deps = [
         ":interpreter",
         ":type_checker",
+        "//executable_semantics/ast",
     ],
 )
 

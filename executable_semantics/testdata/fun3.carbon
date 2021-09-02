@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+package ExecutableSemanticsTest api;
+
 // Test multiple arguments
 fn f(x: i32, y: i32) -> i32 {
   return x + y;
