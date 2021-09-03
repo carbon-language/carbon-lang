@@ -14,33 +14,34 @@ auto Heap::AllocateValue(Ptr<const Value> v) -> Address {
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  Address a(values_.size());
-  values_.push_back(v);
-  alive_.push_back(true);
+  Address a(values.size());
+  values.push_back(v);
+  alive.push_back(true);
   return a;
 }
 
 auto Heap::Read(const Address& a, SourceLocation loc) -> Ptr<const Value> {
   this->CheckAlive(a, loc);
-  return values_[a.index]->GetField(&arena, a.field_path, loc);
+  return values[a.index]->GetField(arena.Get(), a.field_path, loc);
 }
 
 void Heap::Write(const Address& a, Ptr<const Value> v, SourceLocation loc) {
   this->CheckAlive(a, loc);
-  values_[a.index] = values_[a.index]->SetField(&arena, a.field_path, v, loc);
+  values[a.index] =
+      values[a.index]->SetField(arena.Get(), a.field_path, v, loc);
 }
 
 void Heap::CheckAlive(const Address& address, SourceLocation loc) {
-  if (!alive_[address.index]) {
+  if (!alive[address.index]) {
     FATAL_RUNTIME_ERROR(loc) << "undefined behavior: access to dead value "
-                             << *values_[address.index];
+                             << *values[address.index];
   }
 }
 
 void Heap::Deallocate(const Address& address) {
   CHECK(address.field_path.IsEmpty());
-  if (alive_[address.index]) {
-    alive_[address.index] = false;
+  if (alive[address.index]) {
+    alive[address.index] = false;
   } else {
     FATAL_RUNTIME_ERROR_NO_LINE() << "deallocating an already dead value";
   }
@@ -48,17 +49,17 @@ void Heap::Deallocate(const Address& address) {
 
 void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
-  for (size_t i = 0; i < values_.size(); ++i) {
+  for (size_t i = 0; i < values.size(); ++i) {
     out << sep;
     PrintAddress(Address(i), out);
   }
 }
 
 void Heap::PrintAddress(const Address& a, llvm::raw_ostream& out) const {
-  if (!alive_[a.index]) {
+  if (!alive[a.index]) {
     out << "!!";
   }
-  out << *values_[a.index];
+  out << *values[a.index];
 }
 
 }  // namespace Carbon
