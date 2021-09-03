@@ -17,6 +17,8 @@
 
 namespace Carbon {
 
+class FunctionDefinition;
+
 class Statement {
  public:
   enum class Kind {
@@ -161,9 +163,26 @@ class Return : public Statement {
   auto Exp() -> Nonnull<Expression*> { return exp; }
   auto IsOmittedExp() const -> bool { return is_omitted_exp; }
 
+  // The AST node representing the function body this statement returns from.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto function() const -> Nonnull<const FunctionDefinition*> {
+    return *function_;
+  }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_function(Nonnull<const FunctionDefinition*> function) {
+    CHECK(!function_.has_value());
+    function_ = function;
+  }
+
  private:
   Nonnull<Expression*> exp;
   bool is_omitted_exp;
+  std::optional<Nonnull<const FunctionDefinition*>> function_;
 };
 
 class Sequence : public Statement {
@@ -230,6 +249,23 @@ class Break : public Statement {
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Break;
   }
+
+  // The AST node representing the loop this statement breaks out of.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto loop() const -> Nonnull<const Statement*> { return *loop_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_loop(Nonnull<const Statement*> loop) {
+    CHECK(!loop_.has_value());
+    loop_ = loop;
+  }
+
+ private:
+  std::optional<Nonnull<const Statement*>> loop_;
 };
 
 class Continue : public Statement {
@@ -240,6 +276,23 @@ class Continue : public Statement {
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Continue;
   }
+
+  // The AST node representing the loop this statement continues.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto loop() const -> Nonnull<const Statement*> { return *loop_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_loop(Nonnull<const Statement*> loop) {
+    CHECK(!loop_.has_value());
+    loop_ = loop;
+  }
+
+ private:
+  std::optional<Nonnull<const Statement*>> loop_;
 };
 
 class Match : public Statement {

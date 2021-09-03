@@ -9,6 +9,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/interpreter/resolve_control_flow.h"
 #include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
@@ -44,6 +45,9 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** type checking **********\n";
+  }
+  for (auto decl : ast.declarations) {
+    ResolveControlFlow(decl);
   }
   TypeChecker type_checker(arena);
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);

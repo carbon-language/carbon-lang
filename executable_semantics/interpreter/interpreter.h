@@ -13,15 +13,13 @@
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/interpreter/frame.h"
+#include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/heap.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
-
-using Env = Dictionary<std::string, Address>;
 
 class Interpreter {
  public:
@@ -85,16 +83,19 @@ class Interpreter {
   // and increments its position counter.
   struct RunAgain {};
 
-  // Transition type which unwinds the `todo` and `scopes` stacks until it
-  // reaches a specified Action lower in the stack.
+  // Transition type which unwinds the `todo` stack until it reaches the Action
+  // associated with the given AST node. Execution then resumes with that
+  // Action.
   struct UnwindTo {
-    const Nonnull<Action*> new_top;
+    Nonnull<const void*> ast_node;
   };
 
-  // Transition type which unwinds the entire current stack frame, and returns
-  // a specified value to the caller.
-  struct UnwindFunctionCall {
-    Nonnull<const Value*> return_val;
+  // Transition type which unwinds the `todo` stack down to and including the
+  // Action associated with `ast_node`. If `result` is set, it will be treated
+  // as the result of that Action.
+  struct UnwindPast {
+    Nonnull<const void*> ast_node;
+    std::optional<Nonnull<const Value*>> result;
   };
 
   // Transition type which removes the current action from the top of the todo
@@ -112,12 +113,12 @@ class Interpreter {
   // uses of this type should be replaced with meaningful transitions.
   struct ManualTransition {};
 
-  using Transition =
-      std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
-                   UnwindFunctionCall, CallFunction, ManualTransition>;
+  using Transition = std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
+                                  UnwindPast, CallFunction, ManualTransition>;
 
   // Visitor which implements the behavior associated with each transition type.
   class DoTransition;
+  friend class DoTransition;
 
   void Step();
 
@@ -131,12 +132,12 @@ class Interpreter {
   auto StepStmt() -> Transition;
 
   void InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs);
+  auto CurrentScope() -> Scope&;
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
 
-  void DeallocateScope(Nonnull<Scope*> scope);
-  void DeallocateLocals(Nonnull<Frame*> frame);
+  void DeallocateScope(Scope& scope);
 
   auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
       -> Nonnull<const Value*>;
@@ -157,9 +158,8 @@ class Interpreter {
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals;
 
-  Stack<Nonnull<Frame*>> stack;
+  Stack<Nonnull<Action*>> todo;
   Heap heap;
-  std::optional<Nonnull<const Value*>> program_value;
 };
 
 }  // namespace Carbon

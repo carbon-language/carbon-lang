@@ -21,6 +21,8 @@
 
 namespace Carbon {
 
+class Action;
+
 // Abstract base class of all AST nodes representing values.
 //
 // Value and its derived classes support LLVM-style RTTI, including
@@ -106,8 +108,6 @@ struct TupleElement {
   // The field's value.
   Nonnull<const Value*> value;
 };
-
-struct Frame;  // Used by continuation.
 
 // An integer value.
 class IntValue : public Value {
@@ -497,21 +497,23 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Frame*>>*> stack)
+  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Action*>>*> stack)
       : Value(Kind::ContinuationValue), stack(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
   }
 
-  // The call stack of the suspended continuation, starting with the top
-  // frame (the reverse of the usual order). Note that this provides mutable
+  // The todo stack of the suspended continuation, starting with the top
+  // Action (the reverse of the usual order). Note that this provides mutable
   // access, even when *this is const, because of the reference-like semantics
   // of ContinuationValue.
-  auto Stack() const -> Nonnull<std::vector<Nonnull<Frame*>>*> { return stack; }
+  auto Stack() const -> Nonnull<std::vector<Nonnull<Action*>>*> {
+    return stack;
+  }
 
  private:
-  Nonnull<std::vector<Nonnull<Frame*>>*> stack;
+  Nonnull<std::vector<Nonnull<Action*>>*> stack;
 };
 
 // The String type.

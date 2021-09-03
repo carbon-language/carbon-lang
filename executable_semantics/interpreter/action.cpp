@@ -21,6 +21,21 @@ namespace Carbon {
 
 using llvm::cast;
 
+auto Action::AstNode() const -> const void* {
+  switch (kind()) {
+    case Action::Kind::LValAction:
+      return cast<LValAction>(*this).Exp();
+    case Action::Kind::ExpressionAction:
+      return cast<ExpressionAction>(*this).Exp();
+    case Action::Kind::PatternAction:
+      return cast<PatternAction>(*this).Pat();
+    case Action::Kind::StatementAction:
+      return cast<StatementAction>(*this).Stmt();
+    case Action::Kind::ScopeAction:
+      return nullptr;
+  }
+}
+
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:
@@ -35,6 +50,8 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).Stmt()->PrintDepth(1, out);
       break;
+    case Action::Kind::ScopeAction:
+      out << "ScopeAction";
   }
   out << "<" << pos_ << ">";
   if (results_.size() > 0) {
