@@ -91,18 +91,18 @@ class TestFormatGrammar(unittest.TestCase):
         self.assertEqual(
             format_grammar._parse_segments(
                 "content\n"
-                "/* Table begin. */\n"
+                "/* table-begin */\n"
                 "{VAR} { return SIMPLE_TOKEN(VAR); }\n"
                 "{WHILE} { return SIMPLE_TOKEN(WHILE); }\n"
-                "/* Table end. */\n"
+                "/* table-end */\n"
                 "more content\n",
                 False,
             ),
             (
                 [
-                    "content\n" "/* Table begin. */\n",
+                    "content\n" "/* table-begin */\n",
                     None,
-                    "\n" "/* Table end. */\n" "more content\n",
+                    "\n" "/* table-end */\n" "more content\n",
                 ],
                 {},
                 [
@@ -119,18 +119,18 @@ class TestFormatGrammar(unittest.TestCase):
         self.assertEqual(
             format_grammar._parse_segments(
                 "content\n"
-                " /* Table begin. */\n"
+                " /* table-begin */\n"
                 "{VAR} { return SIMPLE_TOKEN(VAR); }\n"
                 "{WHILE} { return SIMPLE_TOKEN(WHILE); }\n"
-                " /* Table end. */\n"
+                " /* table-end */\n"
                 "more content\n",
                 False,
             ),
             (
                 [
-                    "content\n /* Table begin. */\n",
+                    "content\n /* table-begin */\n",
                     None,
-                    "\n /* Table end. */\nmore content\n",
+                    "\n /* table-end */\nmore content\n",
                 ],
                 {},
                 [
@@ -143,6 +143,29 @@ class TestFormatGrammar(unittest.TestCase):
             ),
         )
 
+    def test_table_tokens(self):
+        self.assertEqual(
+            format_grammar._parse_segments(
+                "%tokens\n"
+                "  // Comment\n"
+                "  // table-begin\n"
+                "  VAR\n"
+                "  WHILE\n"
+                "  // table-end\n"
+                "  MORE\n",
+                False,
+            ),
+            (
+                [
+                    "%tokens\n" "  // Comment\n" "  // table-begin\n",
+                    None,
+                    "\n" "  // table-end\n" "  MORE\n",
+                ],
+                {},
+                [format_grammar._Table(1, "  VAR\n" "  WHILE")],
+            ),
+        )
+
     def test_format_table_defines(self):
         text_segments = [None]
         format_grammar._format_table_segments(
@@ -150,8 +173,8 @@ class TestFormatGrammar(unittest.TestCase):
             [
                 format_grammar._Table(
                     0,
-                    'CONTINUE "continue"\n'
                     'DEFAULT "default"\n'
+                    'CONTINUE "continue"\n'
                     'DOUBLE_ARROW "=>"',
                 )
             ],
@@ -184,6 +207,25 @@ class TestFormatGrammar(unittest.TestCase):
             [
                 "{VAR}   { return SIMPLE_TOKEN(VAR);   }\n"
                 "{WHILE} { return SIMPLE_TOKEN(WHILE); }"
+            ],
+        )
+
+    def test_format_table_tokens(self):
+        text_segments = [None]
+        format_grammar._format_table_segments(
+            text_segments,
+            [
+                format_grammar._Table(
+                    0,
+                    "  AND\n" "  CONTINUE\n" "  BREAK",
+                )
+            ],
+            False,
+        )
+        self.assertEqual(
+            text_segments,
+            [
+                "  AND\n" "  BREAK\n" "  CONTINUE",
             ],
         )
 
