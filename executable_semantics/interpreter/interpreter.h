@@ -47,6 +47,8 @@ class Interpreter {
   void InitEnv(const Declaration& d, Env* env);
   void PrintEnv(Env values, llvm::raw_ostream& out);
 
+  Arena* MutableArena() { return &arena; }
+
  private:
   // State transition functions
   //
@@ -131,6 +133,12 @@ class Interpreter {
   void DeallocateScope(Ptr<Scope> scope);
   void DeallocateLocals(Ptr<Frame> frame);
 
+  auto CreateTuple(Ptr<Action> act, Ptr<const Expression> exp)
+      -> Ptr<const Value>;
+
+  auto EvalPrim(Operator op, const std::vector<Ptr<const Value>>& args,
+                SourceLocation loc) -> Ptr<const Value>;
+
   void PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
                          SourceLocation loc);
 
@@ -139,6 +147,7 @@ class Interpreter {
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals;
 
+  Arena arena;
   Stack<Ptr<Frame>> stack;
   Heap heap;
   std::optional<Ptr<const Value>> program_value;

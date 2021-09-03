@@ -104,6 +104,16 @@ class TypeChecker {
 
   void TopLevel(const Declaration& d, TypeCheckContext* tops);
 
+  auto CheckOrEnsureReturn(std::optional<Ptr<const Statement>> opt_stmt,
+                           bool omitted_ret_type, SourceLocation loc)
+      -> Ptr<const Statement>;
+
+  // Reify type to type expression.
+  auto ReifyType(Ptr<const Value> t, SourceLocation loc)
+      -> Ptr<const Expression>;
+
+  auto Substitute(TypeEnv dict, Ptr<const Value> type) -> Ptr<const Value>;
+
   Interpreter interpreter;
 };
 
