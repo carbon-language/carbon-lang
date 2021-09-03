@@ -464,9 +464,211 @@ and `T1 != T2`".
 
 ### Implicit constraints
 
-FIXME
+Imagine we have a generic function that accepts an arbitrary `HashMap`:
+
+```
+class HashMap(KeyType:! Hashable, ValueType:! Type);
+
+fn LookUp[KeyType:! Type](hm: HashMap(KeyType, Int)*,
+                          k: KeyType) -> Int;
+
+fn PrintValueOrDefault[KeyType:! Printable,
+                       ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT), key: KeyT);
+```
+
+The `KeyType` in these declarations does not satisfy the requirements of
+`HashMap`, which requires the type implement `Hashable` and other interfaces:
+
+```
+class HashMap(
+    KeyType:! Hashable & Sized & EqualityComparable & Movable,
+    ...) { ... }
+```
+
+In this case, `KeyType` gets `Hashable` and so on as _implicit constraints_.
+
+FIXME: This is being decided in question-for-leads issue
+[#809: Implicit/inferred generic type constraints](https://github.com/carbon-language/carbon-lang/issues/809).
+
+**Open question:** Should we allow those function declarations, and implicitly
+add needed constraints to `KeyType` implied by being used as an argument to a
+parameter with those constraints? Or should we require `KeyType` to name all
+needed constraints as part of its declarations?
+
+In this specific case, Swift will accept the definition and infer the needed
+constraints on the generic type parameter
+([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
+[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference)).
+This is both more concise for the author of the code and follows the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+This redundancy is undesirable since it means if the needed constraints for
+`HashMap` are changed, then the code has to be updated in more locations.
+Further it can add noise that obscures relevant information. In practice, any
+user of these functions will have to pass in a valid `HashMap` instance, and so
+will have already satisfied these constraints.
+
+**Note:** These implied constraints should affect the _requirements_ of a
+generic type parameter, but not its _unqualified names_. This way you can always
+look at the declaration to see how name resolution works, without having to look
+up the definitions of everything it is used as an argument to.
+
+FIXME: Not for interfaces. Maybe: The initial declaration part of an
+`interface`, type definition, or associated type declaration should include
+complete description of all needed constraints.
+
+FIXME: Resolve with #809
+
+**Alternative:** As an alternative, we could make it so the user would need to
+explicitly opt in to this behavior by adding `& auto` or
+`& implicit_requirements` to their type constraint, as in:
+
+```
+fn LookUp[KeyType:! Type & auto](hm: HashMap(KeyType, Int)*,
+                                 k: KeyType) -> Int;
+
+fn PrintValueOrDefault[KeyType:! Printable & auto,
+                       ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT), key: KeyT);
+```
 
 ### Restrictions
+
+With the full expressive power of `where` clauses, determining whether two type
+expressions are equal is in general undecidable, as
+[has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+In practice this means that a compiler would reject some legal programs based on
+heuristics simply to avoid running for an unbounded length of time.
+
+For Carbon, we instead introduce restrictions on `where` clauses so that type
+questions can be decided by an efficient algorithm. This is an important part of
+achieving
+[Carbon's goal of fast and scalable development](/docs/project/goals.md#fast-and-scalable-development).
+The intent is that these restrictions:
+
+-   are understandable to users,
+-   allow most use cases that arise in practice, and
+-   when users hit the restrictions there is a clear path of action for
+    resolving the issue.
+
+The restrictions arise from the the algorithm used to answer type questions. It
+works by first rewriting `where` operations to put a declaration, like a
+function signature or interface definition, into a normalized form. This
+normalized form can then be lazily evaluated to answer queries. Queries take a
+dotted name and return an archetype that has a canonical type name and a
+type-of-type.
+
+The normalized form for a function declaration includes generic type parameters
+and any associated types mentioned in a `where` constraint.
+
+```
+fn Sort[C:! Container where .Elt is Comparable](c: C*)
+```
+
+normalizes to:
+
+```
+{
+  C.Elt:! Comparable;
+  C:! Container{.Elt=C.Elt};
+}
+```
+
+The normalized form for an interface includes the associated types as well as
+dotted names mentioned in `where` constraints. It includes interface's name to
+support recursive references. Given these interface definitions,
+
+```
+interface P {
+  let T:! F;
+}
+
+interface Q {
+  let Y:! H;
+}
+
+interface R {
+  let X:! Q;
+}
+
+interface S {
+  let A:! P;
+  let B:! R where .X.Y == A.T;
+}
+```
+
+the interface `S` normalizes to:
+
+```
+S {
+  A.T, B.X.Y:! F & H;
+  B.X:! Q{.Y = A.T};
+  A:! P{.T = A.T as F};
+  B:! R{.X = B.X};
+}
+```
+
+There are a couple of ways this normalization can fail. The first is by
+introducing a cycle:
+
+```
+interface Graph {
+  let Vertex:! V;
+  let Edge:! E where Vertex.Edge == .Self,
+                     .Vertex == Vertex;
+}
+```
+
+normalizes to:
+
+```
+Graph {
+  Vertex, Edge.Vertex:! V{.Edge = Edge};
+  Edge, Vertex.Edge:! E{.Vertex = Vertex};
+}
+```
+
+This can happen even without a `.Self ==` constraint:
+
+```
+interface HasCycle {
+  let A:! P;
+  let B:! Q where .X.Y == A.T, .X == A.T.U;
+}
+```
+
+which normalizes to:
+
+```
+HasCycle {
+  A.T, B.X.Y:! ...{.U = A.T.U};
+  A.T.U, B.X:! ...{.Y = A.T};
+  A:! P{.T = A.T};
+  B:! Q{.X = A.T.U};
+}
+```
+
+The other failure is when setting two terms equal, we need to combine the
+constraints of both terms to get a type that both satifsy. In many cases, this
+combination is straightforward.
+
+-   `combine(X, X) = X`.
+-   If interface `BidirectionalIter` extends `ForwardIter`, then
+    `combine(is ForwardIter, is BidirectionalIter) = is BidirectionalIter`.
+-   More generally, if `P` implies `Q` then `combine(P, Q) = P`. For example,
+    `combine(is A, is A & B) = is A & B`.
+-   For two different interfaces `A` and `B`, `combine(is A, is B) = is A & B`.
+-   For an interface `Printable` and a type `String` implementing that
+    interface, `combine(is Printable, == String) = String`. If the type doesn't
+    implement the interface, the compiler should generate a type error.
+-   For two different associated types `X` and `Y` of the same interface `A`,
+    `combine(is A{.X = T}, is A{.Y = U}) = is A(.X = T, .Y = U}`.
+
+The interesting case is `intersect(is A{.X = T}, is A{.X = U})` when `T` and `U`
+are different. We could in principle recursively add a rewrite setting them
+equal, but to guarantee that the algorithm terminates, we instead give an error.
+The insight is that in this case, the error is reasonably clear. In cases that
+arise in practice, the error should be enough for the user to fix the issue.
 
 FIXME
 
@@ -792,3 +994,41 @@ FIXME: Alternative to using `.Self` for
 
 **Rejected alternative:** We could use the name of the type being declared
 inside the type declaration, as in `T:! HasAbs(.MagnitudeType = T)`.
+
+### No inferred/implied constraints for interfaces
+
+FIXME
+
+In interfaces, these constraints can be obscured:
+
+```
+interface I(A:! Type, B:! Type, C:! Type, D:! Type, E:! Type) {
+  let SwapType:! I(B, A, C, D, E);
+  let CycleType:! I(B, C, D, E, A);
+  fn LookUp(hm: HashMap(D, E)*) -> E;
+  fn Foo(x: Bar(A, B));
+}
+```
+
+All type arguments to "I" must actually implement `Hashable` (since
+[an adjacent swap and a cycle generate the full symmetry group on 5 elements](https://www.mathcounterexamples.net/generating-the-symmetric-group-with-a-transposition-and-a-maximal-length-cycle/)).
+And additional restrictions on those types depend on the definition of `Bar`.
+For example, this definition
+
+```
+class Bar(A:! Type, B:! ComparableWith(A)) { ... }
+```
+
+would imply that all the type arguments to `I` would have to be comparable with
+every other. This propagation problem means that allowing implicit constraints
+to be inferred in this context is substantial (potentially unbounded?) work for
+the compiler, and these implied constraints are not at all clear to human
+readers of the code either.
+
+**Conclusion:** The initial declaration part of an `interface`, type definition,
+or associated type declaration should include complete description of all needed
+constraints.
+
+Furthermore, inferring that two types are equal (in contrast to the type bound
+constraints described so far) introduces additional problems for establishing
+which types are equal in a generic context.
