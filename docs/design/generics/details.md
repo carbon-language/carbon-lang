@@ -1611,7 +1611,9 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
-Unlike the similar `class B extends A` notation, `adaptor B extends A` is permitted even if `A` is a final class.
+Unlike the similar `class B extends A` notation, `adaptor B extends A` is
+permitted even if `A` is a final class. Also, there is no implicit conversion
+from `B` to `A`, matching `adapter`...`for` but unlike class extension.
 
 **Future work:** We may need additional mechanisms for changing the API in the
 adapter. For example, to resolve conflicts we might want to be able to move the
