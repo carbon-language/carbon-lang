@@ -476,8 +476,9 @@ auto TypeChecker::TypeCheckExp(Ptr<const Expression> e, TypeEnv types,
           auto parameter_type = fun_t.Param();
           auto return_type = fun_t.Ret();
           if (!fun_t.Deduced().empty()) {
-            auto deduced_args = ArgumentDeduction(e->SourceLoc(), TypeEnv(),
-                                                  parameter_type, arg_res.type);
+            auto deduced_args = ArgumentDeduction(
+                e->SourceLoc(), TypeEnv(interpreter.MutableArena()),
+                parameter_type, arg_res.type);
             for (auto& deduced_param : fun_t.Deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
@@ -833,7 +834,8 @@ auto TypeChecker::CheckOrEnsureReturn(
     SourceLocation loc) -> Ptr<const Statement> {
   if (!opt_stmt) {
     if (omitted_ret_type) {
-      return interpreter.MutableArena()->New<Return>(loc);
+      return interpreter.MutableArena()->New<Return>(interpreter.MutableArena(),
+                                                     loc);
     } else {
       FATAL_COMPILATION_ERROR(loc)
           << "control-flow reaches end of function that provides a `->` return "
@@ -895,7 +897,8 @@ auto TypeChecker::CheckOrEnsureReturn(
       if (omitted_ret_type) {
         return interpreter.MutableArena()->New<Sequence>(
             stmt->SourceLoc(), stmt,
-            interpreter.MutableArena()->New<Return>(loc));
+            interpreter.MutableArena()->New<Return>(interpreter.MutableArena(),
+                                                    loc));
       } else {
         FATAL_COMPILATION_ERROR(stmt->SourceLoc())
             << "control-flow reaches end of function that provides a `->` "
@@ -1127,7 +1130,7 @@ void TypeChecker::TopLevel(const Declaration& d, TypeCheckContext* tops) {
 
 auto TypeChecker::TopLevel(const std::list<Ptr<const Declaration>>& fs)
     -> TypeCheckContext {
-  TypeCheckContext tops;
+  TypeCheckContext tops(interpreter.MutableArena());
   bool found_main = false;
 
   for (auto const& d : fs) {

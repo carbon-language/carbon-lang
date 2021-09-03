@@ -54,30 +54,30 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
-TuplePattern::TuplePattern(Ptr<const Expression> tuple_literal)
+TuplePattern::TuplePattern(Arena* arena, Ptr<const Expression> tuple_literal)
     : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
-    fields.push_back(Field(
-        init.name, global_arena->New<ExpressionPattern>(init.expression)));
+    fields.push_back(
+        Field(init.name, arena->New<ExpressionPattern>(init.expression)));
   }
 }
 
-auto PatternFromParenContents(SourceLocation loc,
+auto PatternFromParenContents(Arena* arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Ptr<const Pattern> {
   std::optional<Ptr<const Pattern>> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return TuplePatternFromParenContents(loc, paren_contents);
+    return TuplePatternFromParenContents(arena, loc, paren_contents);
   }
 }
 
-auto TuplePatternFromParenContents(SourceLocation loc,
+auto TuplePatternFromParenContents(Arena* arena, SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> Ptr<const TuplePattern> {
-  return global_arena->New<TuplePattern>(
+  return arena->New<TuplePattern>(
       loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }
 
@@ -101,14 +101,15 @@ AlternativePattern::AlternativePattern(SourceLocation loc,
       alternative_name(RequireFieldAccess(alternative).Field()),
       arguments(arguments) {}
 
-auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
+auto ParenExpressionToParenPattern(Arena* arena,
+                                   const ParenContents<Expression>& contents)
     -> ParenContents<Pattern> {
   ParenContents<Pattern> result = {
       .elements = {}, .has_trailing_comma = contents.has_trailing_comma};
   for (const auto& element : contents.elements) {
     result.elements.push_back(
         {.name = element.name,
-         .term = global_arena->New<ExpressionPattern>(element.term)});
+         .term = arena->New<ExpressionPattern>(element.term)});
   }
   return result;
 }

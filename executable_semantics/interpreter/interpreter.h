@@ -25,6 +25,8 @@ using Env = Dictionary<std::string, Address>;
 
 class Interpreter {
  public:
+  Interpreter() : globals(&arena) {}
+
   // Interpret the whole program.
   auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int;
 
@@ -144,10 +146,11 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
+  Arena arena;
+
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals;
 
-  Arena arena;
   Stack<Ptr<Frame>> stack;
   Heap heap;
   std::optional<Ptr<const Value>> program_value;

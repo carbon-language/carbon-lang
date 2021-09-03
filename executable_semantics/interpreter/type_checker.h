@@ -21,6 +21,9 @@ using TypeEnv = Dictionary<std::string, Ptr<const Value>>;
 class TypeChecker {
  public:
   struct TypeCheckContext {
+    // Does not take ownership of arena.
+    TypeCheckContext(Arena* arena) : types(arena), values(arena) {}
+
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
     // Symbol table mapping names of compile time entities to their value.

@@ -135,7 +135,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             Ptr<const BindingPattern> binding = cast<FieldMember>(*m).Binding();
             Ptr<const Expression> type_expression =
                 cast<ExpressionPattern>(*binding->Type()).Expression();
-            auto type = InterpExp(Env(), type_expression);
+            auto type = InterpExp(Env(&arena), type_expression);
             fields.push_back(make_pair(*binding->Name(), type));
             break;
           }
@@ -152,7 +152,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
       for (const auto& [name, signature] : choice.Alternatives()) {
-        auto t = InterpExp(Env(), signature);
+        auto t = InterpExp(Env(&arena), signature);
         alts.push_back(make_pair(name, t));
       }
       auto ct = arena.New<ChoiceType>(choice.Name(), std::move(alts));
@@ -214,9 +214,9 @@ auto Interpreter::PatternMatch(Ptr<const Value> p, Ptr<const Value> v,
   switch (p->Tag()) {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      Env values;
+      Env values(&arena);
       if (placeholder.Name().has_value()) {
-        Address a = heap.AllocateValue(CopyVal(v, loc));
+        Address a = heap.AllocateValue(CopyVal(&arena, v, loc));
         values.Set(*placeholder.Name(), a);
       }
       return values;
@@ -231,7 +231,7 @@ auto Interpreter::PatternMatch(Ptr<const Value> p, Ptr<const Value> v,
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
           }
-          Env values;
+          Env values(&arena);
           for (size_t i = 0; i < p_tup.Elements().size(); ++i) {
             if (p_tup.Elements()[i].name != v_tup.Elements()[i].name) {
               FATAL_PROGRAM_ERROR(loc)
@@ -294,10 +294,10 @@ auto Interpreter::PatternMatch(Ptr<const Value> p, Ptr<const Value> v,
     case Value::Kind::AutoType:
       // `auto` matches any type, without binding any new names. We rely
       // on the typechecker to ensure that `v` is a type.
-      return Env();
+      return Env(&arena);
     default:
       if (ValueEqual(p, v, loc)) {
-        return Env();
+        return Env(&arena);
       } else {
         return std::nullopt;
       }
@@ -308,7 +308,8 @@ void Interpreter::PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
                                     SourceLocation loc) {
   switch (pat->Tag()) {
     case Value::Kind::PointerValue:
-      heap.Write(cast<PointerValue>(*pat).Val(), CopyVal(val, loc), loc);
+      heap.Write(cast<PointerValue>(*pat).Val(), CopyVal(&arena, val, loc),
+                 loc);
       break;
     case Value::Kind::TupleValue: {
       switch (val->Tag()) {
@@ -512,8 +513,8 @@ auto Interpreter::StepExp() -> Transition {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        return Done{act->Results()[0]->GetField(FieldPath(access.Field()),
-                                                exp->SourceLoc())};
+        return Done{act->Results()[0]->GetField(
+            &arena, FieldPath(access.Field()), exp->SourceLoc())};
       }
     }
     case Expression::Kind::IdentifierExpression: {
@@ -560,13 +561,15 @@ auto Interpreter::StepExp() -> Transition {
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->Results()[0]->Tag()) {
           case Value::Kind::ClassType: {
-            Ptr<const Value> arg = CopyVal(act->Results()[1], exp->SourceLoc());
+            Ptr<const Value> arg =
+                CopyVal(&arena, act->Results()[1], exp->SourceLoc());
             return Done{arena.New<StructValue>(act->Results()[0], arg)};
           }
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
                 cast<AlternativeConstructorValue>(*act->Results()[0]);
-            Ptr<const Value> arg = CopyVal(act->Results()[1], exp->SourceLoc());
+            Ptr<const Value> arg =
+                CopyVal(&arena, act->Results()[1], exp->SourceLoc());
             return Done{arena.New<AlternativeValue>(alt.AltName(),
                                                     alt.ChoiceName(), arg)};
           }
@@ -931,7 +934,7 @@ auto Interpreter::StepStmt() -> Transition {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
         Ptr<const Value> ret_val =
-            CopyVal(act->Results()[0], stmt->SourceLoc());
+            CopyVal(&arena, act->Results()[0], stmt->SourceLoc());
         return UnwindFunctionCall{ret_val};
       }
     case Statement::Kind::Sequence: {
@@ -955,8 +958,8 @@ auto Interpreter::StepStmt() -> Transition {
       // way one is created in a function call.
       auto scopes = Stack<Ptr<Scope>>(arena.New<Scope>(CurrentEnv()));
       Stack<Ptr<Action>> todo;
-      todo.Push(
-          arena.New<StatementAction>(arena.New<Return>(stmt->SourceLoc())));
+      todo.Push(arena.New<StatementAction>(
+          arena.New<Return>(&arena, stmt->SourceLoc())));
       todo.Push(arena.New<StatementAction>(cast<Continuation>(*stmt).Body()));
       auto continuation_frame =
           arena.New<Frame>("__continuation", scopes, todo);

@@ -51,6 +51,7 @@ class Heap {
 
   std::vector<Ptr<const Value>> values_;
   std::vector<bool> alive_;
+  Arena arena;
 };
 
 }  // namespace Carbon

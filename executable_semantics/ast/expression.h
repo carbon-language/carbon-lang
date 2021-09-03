@@ -13,6 +13,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/arena.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -62,14 +63,14 @@ class Expression {
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
 auto ExpressionFromParenContents(
-    SourceLocation loc, const ParenContents<Expression>& paren_contents)
-    -> Ptr<const Expression>;
+    Arena* arena, SourceLocation loc,
+    const ParenContents<Expression>& paren_contents) -> Ptr<const Expression>;
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // forming a tuple.
 auto TupleExpressionFromParenContents(
-    SourceLocation loc, const ParenContents<Expression>& paren_contents)
-    -> Ptr<const Expression>;
+    Arena* arena, SourceLocation loc,
+    const ParenContents<Expression>& paren_contents) -> Ptr<const Expression>;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {

@@ -69,13 +69,14 @@ class Value {
 
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
-  auto GetField(const FieldPath& path, SourceLocation loc) const
+  auto GetField(Arena* arena, const FieldPath& path, SourceLocation loc) const
       -> Ptr<const Value>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
-  auto SetField(const FieldPath& path, Ptr<const Value> field_value,
-                SourceLocation loc) const -> Ptr<const Value>;
+  auto SetField(Arena* arena, const FieldPath& path,
+                Ptr<const Value> field_value, SourceLocation loc) const
+      -> Ptr<const Value>;
 
  protected:
   // Constructs a Value. `tag` must be the enumerator corresponding to the
@@ -475,7 +476,8 @@ class StringValue : public Value {
   std::string val;
 };
 
-auto CopyVal(Ptr<const Value> val, SourceLocation loc) -> Ptr<const Value>;
+auto CopyVal(Arena* arena, Ptr<const Value> val, SourceLocation loc)
+    -> Ptr<const Value>;
 
 auto TypeEqual(Ptr<const Value> t1, Ptr<const Value> t2) -> bool;
 auto ValueEqual(Ptr<const Value> v1, Ptr<const Value> v2, SourceLocation loc)

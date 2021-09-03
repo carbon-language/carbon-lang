@@ -9,6 +9,7 @@
 #include <variant>
 
 #include "executable_semantics/ast/ast.h"
+#include "executable_semantics/common/arena.h"
 
 namespace Carbon {
 
@@ -16,8 +17,8 @@ namespace Carbon {
 using SyntaxErrorCode = int;
 
 // Returns the AST representing the contents of the named file, or an error code
-// if parsing fails.
-auto Parse(const std::string& input_file_name)
+// if parsing fails. Allocations go into the provided arena.
+auto Parse(const std::string& input_file_name, Carbon::Arena* arena)
     -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
 }  // namespace Carbon

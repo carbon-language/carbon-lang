@@ -13,10 +13,7 @@
 
 namespace Carbon {
 
-// Returns an abstract representation of the program contained in the
-// well-formed input file, or if the file was malformed, a description of the
-// problem.
-auto Parse(const std::string& input_file_name)
+auto Parse(const std::string& input_file_name, Arena* arena)
     -> std::variant<AST, SyntaxErrorCode> {
   FILE* input_file = fopen(input_file_name.c_str(), "r");
   if (input_file == nullptr) {
@@ -30,11 +27,11 @@ auto Parse(const std::string& input_file_name)
   yyset_in(input_file, scanner);
 
   // Prepare other parser arguments.
-  std::optional<AST> parsed_input = std::nullopt;
-  ParseAndLexContext context(input_file_name);
+  std::optional<AST> ast = std::nullopt;
+  ParseAndLexContext context(arena->New<std::string>(input_file_name));
 
   // Do the parse.
-  auto parser = Parser(parsed_input, scanner, context);
+  auto parser = Parser(ast, scanner, context, arena);
   if (tracing_output) {
     parser.set_debug_level(1);
   }
@@ -50,9 +47,9 @@ auto Parse(const std::string& input_file_name)
   }
 
   // Return parse results.
-  CHECK(parsed_input != std::nullopt)
+  CHECK(ast != std::nullopt)
       << "parser validated syntax yet didn't produce an AST.";
-  return *parsed_input;
+  return *ast;
 }
 
 }  // namespace Carbon

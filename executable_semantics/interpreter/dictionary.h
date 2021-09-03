@@ -59,8 +59,8 @@ class Dictionary {
     std::optional<Ptr<Node>> p;
   };
 
-  // Create an empty dictionary.
-  Dictionary() {}
+  // Create an empty dictionary. Does not take ownership of arena.
+  explicit Dictionary(Arena* arena) : arena(arena) {}
 
   // Return the value associated with the given key.
   // Time complexity: O(n) where n is the number of times
@@ -77,7 +77,7 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = global_arena->New<Node>(std::make_pair(k, v), head);
+    head = arena->New<Node>(std::make_pair(k, v), head);
   }
 
   bool IsEmpty() { return !head; }
@@ -91,6 +91,7 @@ class Dictionary {
 
  private:
   std::optional<Ptr<Node>> head;
+  Ptr<Arena> arena;
 };
 
 }  // namespace Carbon
