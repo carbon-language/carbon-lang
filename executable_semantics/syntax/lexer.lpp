@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  */
 %s AFTER_OPERAND
 
-/* Table begin. */
+/* table-begin */
 AND                  "and"
 API                  "api"
 ARROW                "->"
@@ -80,7 +80,7 @@ TYPE                 "Type"
 UNDERSCORE           "_"
 VAR                  "var"
 WHILE                "while"
-/* Table end. */
+/* table-end */
 
 /* This should be kept table-like, but isn't automatic due to spaces. */
 identifier            [A-Za-z_][A-Za-z0-9_]*
@@ -122,7 +122,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   context.current_token_position.step();
 %}
 
- /* Table begin. */
+ /* table-begin */
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {API}                 { return SIMPLE_TOKEN(API);                 }
 {ARROW}               { return SIMPLE_TOKEN(ARROW);               }
@@ -150,8 +150,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
-{LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
+{LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
 {LIBRARY}             { return SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return SIMPLE_TOKEN(MATCH);               }
@@ -171,7 +171,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
 {VAR}                 { return SIMPLE_TOKEN(VAR);                 }
 {WHILE}               { return SIMPLE_TOKEN(WHILE);               }
- /* Table end. */
+ /* table-end */
 
  /* More modern Bisons provide make_EOF. */
 <<EOF>>               { return SIMPLE_TOKEN(END_OF_FILE); }
