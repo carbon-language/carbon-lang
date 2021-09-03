@@ -63,13 +63,13 @@ class Expression {
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
 auto ExpressionFromParenContents(
-    Arena* arena, SourceLocation loc,
+    Ptr<Arena> arena, SourceLocation loc,
     const ParenContents<Expression>& paren_contents) -> Ptr<const Expression>;
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // forming a tuple.
 auto TupleExpressionFromParenContents(
-    Arena* arena, SourceLocation loc,
+    Ptr<Arena> arena, SourceLocation loc,
     const ParenContents<Expression>& paren_contents) -> Ptr<const Expression>;
 
 // A FieldInitializer represents the initialization of a single tuple field.

@@ -55,7 +55,7 @@ auto TupleValue::FindField(const std::string& name) const
 
 namespace {
 
-auto GetMember(Arena* arena, Ptr<const Value> v, const std::string& f,
+auto GetMember(Ptr<Arena> arena, Ptr<const Value> v, const std::string& f,
                SourceLocation loc) -> Ptr<const Value> {
   switch (v->Tag()) {
     case Value::Kind::StructValue: {
@@ -87,7 +87,7 @@ auto GetMember(Arena* arena, Ptr<const Value> v, const std::string& f,
 
 }  // namespace
 
-auto Value::GetField(Arena* arena, const FieldPath& path,
+auto Value::GetField(Ptr<Arena> arena, const FieldPath& path,
                      SourceLocation loc) const -> Ptr<const Value> {
   Ptr<const Value> value(this);
   for (const std::string& field : path.components) {
@@ -98,7 +98,7 @@ auto Value::GetField(Arena* arena, const FieldPath& path,
 
 namespace {
 
-auto SetFieldImpl(Arena* arena, Ptr<const Value> value,
+auto SetFieldImpl(Ptr<Arena> arena, Ptr<const Value> value,
                   std::vector<std::string>::const_iterator path_begin,
                   std::vector<std::string>::const_iterator path_end,
                   Ptr<const Value> field_value, SourceLocation loc)
@@ -132,7 +132,7 @@ auto SetFieldImpl(Arena* arena, Ptr<const Value> value,
 
 }  // namespace
 
-auto Value::SetField(Arena* arena, const FieldPath& path,
+auto Value::SetField(Ptr<Arena> arena, const FieldPath& path,
                      Ptr<const Value> field_value, SourceLocation loc) const
     -> Ptr<const Value> {
   return SetFieldImpl(arena, Ptr<const Value>(this), path.components.begin(),
@@ -249,7 +249,7 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto CopyVal(Arena* arena, Ptr<const Value> val, SourceLocation loc)
+auto CopyVal(Ptr<Arena> arena, Ptr<const Value> val, SourceLocation loc)
     -> Ptr<const Value> {
   switch (val->Tag()) {
     case Value::Kind::TupleValue: {

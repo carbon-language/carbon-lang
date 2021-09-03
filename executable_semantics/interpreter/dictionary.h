@@ -60,7 +60,7 @@ class Dictionary {
   };
 
   // Create an empty dictionary. Does not take ownership of arena.
-  explicit Dictionary(Arena* arena) : arena(arena) {}
+  explicit Dictionary(Ptr<Arena> arena) : arena(arena) {}
 
   // Return the value associated with the given key.
   // Time complexity: O(n) where n is the number of times

@@ -31,6 +31,8 @@ static auto FakeSourceLoc(int line_num) -> SourceLocation {
 
 class PatternTest : public ::testing::Test {
  protected:
+  Ptr<Arena> GetArena() { return Ptr<Arena>(&arena); }
+
   Arena arena;
 };
 
@@ -38,7 +40,7 @@ TEST_F(PatternTest, EmptyAsPattern) {
   ParenContents<Pattern> contents = {.elements = {},
                                      .has_trailing_comma = false};
   Ptr<const Pattern> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      PatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(pattern->SourceLoc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(), IsEmpty());
@@ -48,7 +50,7 @@ TEST_F(PatternTest, EmptyAsTuplePattern) {
   ParenContents<Pattern> contents = {.elements = {},
                                      .has_trailing_comma = false};
   Ptr<const TuplePattern> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      TuplePatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   EXPECT_THAT(tuple->Fields(), IsEmpty());
 }
@@ -66,7 +68,7 @@ TEST_F(PatternTest, UnaryNoCommaAsPattern) {
       .has_trailing_comma = false};
 
   Ptr<const Pattern> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      PatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(pattern->SourceLoc(), FakeSourceLoc(2));
   ASSERT_TRUE(isa<AutoPattern>(*pattern));
 }
@@ -78,7 +80,7 @@ TEST_F(PatternTest, UnaryNoCommaAsTuplePattern) {
       .has_trailing_comma = false};
 
   Ptr<const TuplePattern> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      TuplePatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
 }
@@ -90,7 +92,7 @@ TEST_F(PatternTest, UnaryWithCommaAsPattern) {
       .has_trailing_comma = true};
 
   Ptr<const Pattern> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      PatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(pattern->SourceLoc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
@@ -104,7 +106,7 @@ TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
       .has_trailing_comma = true};
 
   Ptr<const TuplePattern> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      TuplePatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
 }
@@ -118,7 +120,7 @@ TEST_F(PatternTest, BinaryAsPattern) {
       .has_trailing_comma = true};
 
   Ptr<const Pattern> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      PatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(pattern->SourceLoc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
@@ -134,7 +136,7 @@ TEST_F(PatternTest, BinaryAsTuplePattern) {
       .has_trailing_comma = true};
 
   Ptr<const TuplePattern> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
+      TuplePatternFromParenContents(GetArena(), FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   EXPECT_THAT(tuple->Fields(),
               ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));

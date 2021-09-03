@@ -40,10 +40,10 @@ class ParseAndLexContext {
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL                                                          \
-  Carbon::Parser::symbol_type yylex(yyscan_t yyscanner,                  \
-                                    Carbon::ParseAndLexContext& context, \
-                                    Carbon::Arena* arena)
+#define YY_DECL                                                       \
+  Carbon::Parser::symbol_type yylex(Carbon::Ptr<Carbon::Arena> arena, \
+                                    yyscan_t yyscanner,               \
+                                    Carbon::ParseAndLexContext& context)
 
 // Declares yylex for the parser's sake.
 YY_DECL;

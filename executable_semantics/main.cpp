@@ -31,8 +31,9 @@ int main(int argc, char* argv[]) {
   }
 
   Carbon::Arena arena;
+  Carbon::Ptr<Carbon::Arena> arena_ptr(&arena);
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::Parse(input_file_name, &arena);
+      Carbon::Parse(arena_ptr, input_file_name);
 
   if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
@@ -40,5 +41,5 @@ int main(int argc, char* argv[]) {
   }
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(std::get<Carbon::AST>(ast_or_error));
+  Carbon::ExecProgram(arena_ptr, std::get<Carbon::AST>(ast_or_error));
 }

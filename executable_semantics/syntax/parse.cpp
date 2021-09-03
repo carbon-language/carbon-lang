@@ -13,7 +13,7 @@
 
 namespace Carbon {
 
-auto Parse(const std::string& input_file_name, Arena* arena)
+auto Parse(Ptr<Arena> arena, const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   FILE* input_file = fopen(input_file_name.c_str(), "r");
   if (input_file == nullptr) {
@@ -31,7 +31,7 @@ auto Parse(const std::string& input_file_name, Arena* arena)
   ParseAndLexContext context(arena->New<std::string>(input_file_name));
 
   // Do the parse.
-  auto parser = Parser(ast, scanner, context, arena);
+  auto parser = Parser(arena, scanner, context, &ast);
   if (tracing_output) {
     parser.set_debug_level(1);
   }

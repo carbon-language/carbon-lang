@@ -18,7 +18,7 @@ using SyntaxErrorCode = int;
 
 // Returns the AST representing the contents of the named file, or an error code
 // if parsing fails. Allocations go into the provided arena.
-auto Parse(const std::string& input_file_name, Carbon::Arena* arena)
+auto Parse(Ptr<Arena> arena, const std::string& input_file_name)
     -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
 }  // namespace Carbon

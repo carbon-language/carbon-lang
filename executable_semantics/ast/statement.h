@@ -135,7 +135,7 @@ class If : public Statement {
 
 class Return : public Statement {
  public:
-  Return(Arena* arena, SourceLocation loc)
+  Return(Ptr<Arena> arena, SourceLocation loc)
       : Return(loc, arena->New<TupleLiteral>(loc), true) {}
   Return(SourceLocation loc, Ptr<const Expression> exp, bool is_omitted_exp)
       : Statement(Kind::Return, loc),

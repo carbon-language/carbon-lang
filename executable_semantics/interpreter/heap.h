@@ -18,7 +18,7 @@ namespace Carbon {
 class Heap {
  public:
   // Constructs an empty Heap.
-  explicit Heap(Arena* arena) : arena(arena){};
+  explicit Heap(Ptr<Arena> arena) : arena(arena){};
 
   Heap(const Heap&) = delete;
   Heap& operator=(const Heap&) = delete;

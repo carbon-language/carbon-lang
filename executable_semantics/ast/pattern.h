@@ -111,7 +111,7 @@ class TuplePattern : public Pattern {
   // ExpressionPattern.
   //
   // REQUIRES: tuple_literal->Tag() == Expression::Kind::TupleLiteral
-  TuplePattern(Arena* arena, Ptr<const Expression> tuple_literal);
+  TuplePattern(Ptr<Arena> arena, Ptr<const Expression> tuple_literal);
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::TuplePattern;
@@ -126,19 +126,19 @@ class TuplePattern : public Pattern {
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto PatternFromParenContents(Arena* arena, SourceLocation loc,
+auto PatternFromParenContents(Ptr<Arena> arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Ptr<const Pattern>;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
-auto TuplePatternFromParenContents(Arena* arena, SourceLocation loc,
+auto TuplePatternFromParenContents(Ptr<Arena> arena, SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> Ptr<const TuplePattern>;
 
 // Converts `contents` to ParenContents<Pattern> by replacing each Expression
 // with an ExpressionPattern.
-auto ParenExpressionToParenPattern(Arena* arena,
+auto ParenExpressionToParenPattern(Ptr<Arena> arena,
                                    const ParenContents<Expression>& contents)
     -> ParenContents<Pattern>;
 

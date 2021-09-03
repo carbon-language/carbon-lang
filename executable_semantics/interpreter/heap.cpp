@@ -22,13 +22,12 @@ auto Heap::AllocateValue(Ptr<const Value> v) -> Address {
 
 auto Heap::Read(const Address& a, SourceLocation loc) -> Ptr<const Value> {
   this->CheckAlive(a, loc);
-  return values[a.index]->GetField(arena.Get(), a.field_path, loc);
+  return values[a.index]->GetField(arena, a.field_path, loc);
 }
 
 void Heap::Write(const Address& a, Ptr<const Value> v, SourceLocation loc) {
   this->CheckAlive(a, loc);
-  values[a.index] =
-      values[a.index]->SetField(arena.Get(), a.field_path, v, loc);
+  values[a.index] = values[a.index]->SetField(arena, a.field_path, v, loc);
 }
 
 void Heap::CheckAlive(const Address& address, SourceLocation loc) {

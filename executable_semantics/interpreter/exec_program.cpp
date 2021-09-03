@@ -15,7 +15,7 @@ namespace Carbon {
 
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
-static void AddIntrinsics(Arena* arena,
+static void AddIntrinsics(Ptr<Arena> arena,
                           std::list<Ptr<const Declaration>>* declarations) {
   SourceLocation loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
@@ -36,9 +36,8 @@ static void AddIntrinsics(Arena* arena,
   declarations->insert(declarations->begin(), print);
 }
 
-void ExecProgram(AST ast) {
-  Arena arena;
-  AddIntrinsics(&arena, &ast.declarations);
+void ExecProgram(Ptr<Arena> arena, AST ast) {
+  AddIntrinsics(arena, &ast.declarations);
   if (tracing_output) {
     llvm::outs() << "********** source program **********\n";
     for (const auto decl : ast.declarations) {
@@ -46,7 +45,7 @@ void ExecProgram(AST ast) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
-  TypeChecker type_checker;
+  TypeChecker type_checker(arena);
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(ast.declarations);
   TypeEnv top = p.types;
   Env ct_top = p.values;
@@ -62,7 +61,7 @@ void ExecProgram(AST ast) {
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = Interpreter().InterpProgram(new_decls);
+  int result = Interpreter(arena).InterpProgram(new_decls);
   llvm::outs() << "result: " << result << "\n";
 }
 

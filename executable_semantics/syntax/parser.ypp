@@ -37,13 +37,13 @@
 // Parameters to the parser are stored therein as protected data members, and
 // thus available to its methods.
 
-// "out" parameter passed to the parser, where the AST is written.
-%parse-param {std::optional<AST>& ast}
-
 // "inout" parameters passed to both the parser and the lexer.
+%param {Ptr<Arena> arena}
 %param {yyscan_t yyscanner}
 %param {ParseAndLexContext& context}
-%param {Arena* arena}
+
+// "out" parameter passed to the parser, where the AST is written.
+%parse-param {std::optional<AST>* ast}
 
 // No shift-reduce conflicts are expected.
 %expect 0
@@ -232,10 +232,10 @@
 %%
 input: package_directive import_directives declaration_list
     {
-      ast = AST({.package = $1.first,
-                 .is_api = $1.second,
-                 .imports = std::move($2),
-                 .declarations = std::move($3)});
+      *ast = AST({.package = $1.first,
+                  .is_api = $1.second,
+                  .imports = std::move($2),
+                  .declarations = std::move($3)});
     }
 ;
 package_directive:

@@ -20,9 +20,11 @@ using TypeEnv = Dictionary<std::string, Ptr<const Value>>;
 
 class TypeChecker {
  public:
+  TypeChecker(Ptr<Arena> arena) : arena(arena), interpreter(arena) {}
+
   struct TypeCheckContext {
     // Does not take ownership of arena.
-    TypeCheckContext(Arena* arena) : types(arena), values(arena) {}
+    TypeCheckContext(Ptr<Arena> arena) : types(arena), values(arena) {}
 
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
@@ -117,6 +119,7 @@ class TypeChecker {
 
   auto Substitute(TypeEnv dict, Ptr<const Value> type) -> Ptr<const Value>;
 
+  Ptr<Arena> arena;
   Interpreter interpreter;
 };
 
