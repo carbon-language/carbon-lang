@@ -179,6 +179,17 @@ def _impl(ctx):
             ),
             flag_set(
                 actions = codegen_compile_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-D_LIBCPP_DEBUG=0",
+                        ],
+                    ),
+                ]),
+                with_features = [with_feature_set(not_features = ["opt"])],
+            ),
+            flag_set(
+                actions = codegen_compile_actions,
                 flag_groups = [
                     flag_group(flags = ["-fPIC"], expand_if_available = "pic"),
                 ],
