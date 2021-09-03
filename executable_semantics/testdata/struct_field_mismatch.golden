@@ -1,4 +1,0 @@
-COMPILATION ERROR: 11: type error in call
-expected: (x = i32, y = i32)
-actual: (x = i32, z = i32)
-EXIT CODE: 255

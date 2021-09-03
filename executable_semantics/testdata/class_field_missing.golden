@@ -1,0 +1,4 @@
+COMPILATION ERROR: executable_semantics/testdata/class_field_missing.carbon:13: type error in call
+expected: (x = i32, y = i32)
+actual: (x = i32)
+EXIT CODE: 255

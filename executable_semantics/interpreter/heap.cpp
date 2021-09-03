@@ -9,33 +9,31 @@
 
 namespace Carbon {
 
-auto Heap::AllocateValue(const Value* v) -> Address {
+auto Heap::AllocateValue(Ptr<const Value> v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  CHECK(v != nullptr);
   Address a(values_.size());
   values_.push_back(v);
   alive_.push_back(true);
   return a;
 }
 
-auto Heap::Read(const Address& a, int line_num) -> const Value* {
-  this->CheckAlive(a, line_num);
-  return values_[a.index]->GetField(a.field_path, line_num);
+auto Heap::Read(const Address& a, SourceLocation loc) -> Ptr<const Value> {
+  this->CheckAlive(a, loc);
+  return values_[a.index]->GetField(a.field_path, loc);
 }
 
-void Heap::Write(const Address& a, const Value* v, int line_num) {
-  CHECK(v != nullptr);
-  this->CheckAlive(a, line_num);
-  values_[a.index] = values_[a.index]->SetField(a.field_path, v, line_num);
+void Heap::Write(const Address& a, Ptr<const Value> v, SourceLocation loc) {
+  this->CheckAlive(a, loc);
+  values_[a.index] = values_[a.index]->SetField(a.field_path, v, loc);
 }
 
-void Heap::CheckAlive(const Address& address, int line_num) {
+void Heap::CheckAlive(const Address& address, SourceLocation loc) {
   if (!alive_[address.index]) {
-    FATAL_RUNTIME_ERROR(line_num) << "undefined behavior: access to dead value "
-                                  << *values_[address.index];
+    FATAL_RUNTIME_ERROR(loc) << "undefined behavior: access to dead value "
+                             << *values_[address.index];
   }
 }
 

@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/testing:golden_test.bzl", "golden_test")
 load("test_list.bzl", "TEST_LIST")
 
@@ -11,6 +10,7 @@ cc_binary(
     srcs = ["main.cpp"],
     deps = [
         "//executable_semantics/common:tracing_flag",
+        "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
         "@llvm-project//llvm:Support",
     ],

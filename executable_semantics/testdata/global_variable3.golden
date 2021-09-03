@@ -1,4 +1,4 @@
-COMPILATION ERROR: 7: type error in initializer of variable
+COMPILATION ERROR: executable_semantics/testdata/global_variable3.carbon:9: type error in initializer of variable
 expected: i32
 actual: Bool
 EXIT CODE: 255

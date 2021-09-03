@@ -2,25 +2,42 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
 package(default_visibility = ["//executable_semantics:__subpackages__"])
+
+cc_library(
+    name = "ast",
+    hdrs = ["ast.h"],
+    deps = [
+        ":declaration",
+        ":library_name",
+    ],
+)
+
+cc_library(
+    name = "class_definition",
+    hdrs = ["class_definition.h"],
+    deps = [
+        ":member",
+        ":source_location",
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
 
 cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
-        "abstract_syntax_tree.h",
         "declaration.h",
     ],
     deps = [
+        ":class_definition",
         ":function_definition",
         ":member",
         ":pattern",
-        ":struct_definition",
+        ":source_location",
         "//common:ostream",
-        "//executable_semantics/interpreter:address",
-        "//executable_semantics/interpreter:containers",
+        "//executable_semantics/common:ptr",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -30,11 +47,11 @@ cc_library(
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
     deps = [
+        ":paren_contents",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
-        "//executable_semantics/syntax:paren_contents",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -44,7 +61,7 @@ cc_test(
     srcs = ["expression_test.cpp"],
     deps = [
         ":expression",
-        "//executable_semantics/syntax:paren_contents",
+        ":paren_contents",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
     ],
@@ -56,6 +73,7 @@ cc_library(
     hdrs = ["function_definition.h"],
     deps = [
         ":expression",
+        ":source_location",
         ":statement",
         "@llvm-project//llvm:Support",
     ],
@@ -67,7 +85,22 @@ cc_library(
     hdrs = ["member.h"],
     deps = [
         ":pattern",
+        ":source_location",
         "//common:ostream",
+    ],
+)
+
+cc_library(
+    name = "library_name",
+    hdrs = ["library_name.h"],
+)
+
+cc_library(
+    name = "paren_contents",
+    hdrs = ["paren_contents.h"],
+    deps = [
+        ":source_location",
+        "//executable_semantics/common:error",
     ],
 )
 
@@ -77,6 +110,7 @@ cc_library(
     hdrs = ["pattern.h"],
     deps = [
         ":expression",
+        ":source_location",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -88,12 +122,18 @@ cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
+        ":paren_contents",
         ":pattern",
-        "//executable_semantics/syntax:paren_contents",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
     ],
+)
+
+cc_library(
+    name = "source_location",
+    hdrs = ["source_location.h"],
+    deps = ["//common:ostream"],
 )
 
 cc_library(
@@ -103,19 +143,10 @@ cc_library(
     deps = [
         ":expression",
         ":pattern",
+        ":source_location",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "struct_definition",
-    hdrs = ["struct_definition.h"],
-    deps = [
-        ":member",
-        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )

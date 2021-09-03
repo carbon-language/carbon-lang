@@ -103,10 +103,9 @@ def _update_list(use_git_state):
     # Garbage collect unnecessary golden files.
     for golden in sorted(goldens):
         if golden not in tests:
-            print(
-                "Removing golden '%s.golden' because it has no test." % golden
-            )
-            os.unlink(os.path.join(_TESTDATA, golden))
+            filename = "%s.golden" % golden
+            print("Removing golden '%s' because it has no test." % filename)
+            os.unlink(os.path.join(_TESTDATA, filename))
 
 
 def _update_golden(test):
@@ -132,20 +131,6 @@ def _update_golden(test):
 
 def _update_goldens():
     """Runs bazel to update golden files."""
-    # This should typically be called through pyenv due to the shebang. However,
-    # pyenv then modifies the PATH, which affects build caching. In order to
-    # mimic the calling environment for bazel, this strips out PATH entries
-    # which pyenv likely added.
-    # TODO: remove this when/if we're able to add
-    # `--incompatible_strict_action_env=true` to the project .bazelrc, because
-    # that will cause Bazel to ignore PATH.
-    env = os.environ.copy()
-    stripped_path = []
-    for x in env["PATH"].split(":"):
-        if not ("/Cellar/pyenv/" in x or "/.pyenv/versions/" in x):
-            stripped_path.append(x)
-    env["PATH"] = ":".join(stripped_path)
-
     # Load tests from the bzl file. This isn't done through os.listdir because
     # building new tests requires --update_list.
     bzl_content = open(_TEST_LIST_BZL).read()
@@ -159,7 +144,6 @@ def _update_goldens():
             "build",
             "//executable_semantics:golden_tests",
         ],
-        env=env,
     )
 
     print("Updating %d goldens..." % len(tests))

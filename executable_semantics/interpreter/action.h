@@ -24,7 +24,6 @@ class Action {
     ExpressionAction,
     PatternAction,
     StatementAction,
-    ValAction,
   };
 
   Action(const Value&) = delete;
@@ -39,11 +38,13 @@ class Action {
   auto Pos() const -> int { return pos; }
 
   // Results from a subexpression.
-  auto Results() const -> const std::vector<const Value*>& { return results; }
+  auto Results() const -> const std::vector<Ptr<const Value>>& {
+    return results;
+  }
 
-  void IncrementPos() { ++pos; }
+  void SetPos(int pos) { this->pos = pos; }
 
-  void AddResult(const Value* result) { results.push_back(result); }
+  void AddResult(Ptr<const Value> result) { results.push_back(result); }
 
   void Clear() {
     pos = 0;
@@ -54,7 +55,7 @@ class Action {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  static void PrintList(const Stack<Action*>& ls, llvm::raw_ostream& out);
+  static void PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out);
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -66,83 +67,69 @@ class Action {
 
  private:
   int pos = 0;
-  std::vector<const Value*> results;
+  std::vector<Ptr<const Value>> results;
 
   const Kind tag;
 };
 
 class LValAction : public Action {
  public:
-  explicit LValAction(const Expression* exp)
+  explicit LValAction(Ptr<const Expression> exp)
       : Action(Kind::LValAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::LValAction;
   }
 
-  auto Exp() const -> const Expression* { return exp; }
+  auto Exp() const -> Ptr<const Expression> { return exp; }
 
  private:
-  const Expression* exp;
+  Ptr<const Expression> exp;
 };
 
 class ExpressionAction : public Action {
  public:
-  explicit ExpressionAction(const Expression* exp)
+  explicit ExpressionAction(Ptr<const Expression> exp)
       : Action(Kind::ExpressionAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::ExpressionAction;
   }
 
-  auto Exp() const -> const Expression* { return exp; }
+  auto Exp() const -> Ptr<const Expression> { return exp; }
 
  private:
-  const Expression* exp;
+  Ptr<const Expression> exp;
 };
 
 class PatternAction : public Action {
  public:
-  explicit PatternAction(const Pattern* pat)
+  explicit PatternAction(Ptr<const Pattern> pat)
       : Action(Kind::PatternAction), pat(pat) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::PatternAction;
   }
 
-  auto Pat() const -> const Pattern* { return pat; }
+  auto Pat() const -> Ptr<const Pattern> { return pat; }
 
  private:
-  const Pattern* pat;
+  Ptr<const Pattern> pat;
 };
 
 class StatementAction : public Action {
  public:
-  explicit StatementAction(const Statement* stmt)
+  explicit StatementAction(Ptr<const Statement> stmt)
       : Action(Kind::StatementAction), stmt(stmt) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::StatementAction;
   }
 
-  auto Stmt() const -> const Statement* { return stmt; }
+  auto Stmt() const -> Ptr<const Statement> { return stmt; }
 
  private:
-  const Statement* stmt;
-};
-
-class ValAction : public Action {
- public:
-  explicit ValAction(const Value* val) : Action(Kind::ValAction), val(val) {}
-
-  static auto classof(const Action* action) -> bool {
-    return action->Tag() == Kind::ValAction;
-  }
-
-  auto Val() const -> const Value* { return val; }
-
- private:
-  const Value* val;
+  Ptr<const Statement> stmt;
 };
 
 }  // namespace Carbon

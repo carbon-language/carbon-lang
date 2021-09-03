@@ -7,8 +7,8 @@
 #include <iostream>
 
 #include "executable_semantics/common/tracing_flag.h"
+#include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
-#include "executable_semantics/syntax/syntax_helpers.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
   }
 
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::parse(input_file_name);
+      Carbon::Parse(input_file_name);
 
   if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.

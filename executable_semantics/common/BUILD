@@ -9,6 +9,7 @@ cc_library(
     srcs = ["arena.cpp"],
     hdrs = ["arena.h"],
     deps = [
+        ":ptr",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -28,6 +29,15 @@ cc_test(
         ":error",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "ptr",
+    hdrs = ["ptr.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
     ],
 )
 

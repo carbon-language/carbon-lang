@@ -1,0 +1,2 @@
+COMPILATION ERROR: executable_semantics/testdata/string_fail1.carbon:8: Invalid escaping in string: "str\e"
+EXIT CODE: 255
