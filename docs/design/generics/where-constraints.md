@@ -670,15 +670,23 @@ equal, but to guarantee that the algorithm terminates, we instead give an error.
 The insight is that in this case, the error is reasonably clear. In cases that
 arise in practice, the error should be enough for the user to fix the issue.
 
-FIXME
+The last restriction comes from the query algorithm. It imposes a condition on
+recursive references to the same interface. The rewrite to normalized form tries
+to avoid triggering this condition, so the only known examples hitting this
+restriction require mutually recursive interfaces. That would require forward
+declaration of interfaces, which is not permitted at this time, but we may add
+in the future.
 
-### Generic type equality
+The query algorithm allows us to determine if two dotted names represent equal
+types by querying both and comparing canonical type names. It establishes what
+type should be used for a dotted name after constraints are taken into
+consideration. For example, in the `Sort` function declaration above, this would
+determine that `C.Elt`, `C.Iter.Elt`, `C.Slice.Elt`, and so on are all equal and
+implement `Comparable`. This is despite `Elt` as being declared `let Elt:! Type`
+in the definition of `Container`.
 
-FIXME
-
-#### Canonical types and type checking
-
-FIXME
+A more complete description of the normalization rewrite and querying algorithms
+can be found in [this appendix](appendix-archetype-algorithm.md).
 
 ## Other constraints as type-of-types
 
