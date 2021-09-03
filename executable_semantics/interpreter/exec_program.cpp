@@ -15,7 +15,7 @@ namespace Carbon {
 
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
-static void AddIntrinsics(std::list<Ptr<const Declaration>>* declarations) {
+static void AddIntrinsics(std::vector<Ptr<const Declaration>>* declarations) {
   SourceLocation loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
       "0", global_arena->New<BindingPattern>(
@@ -50,7 +50,7 @@ void ExecProgram(AST ast) {
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(ast.declarations);
   TypeEnv top = p.types;
   Env ct_top = p.values;
-  std::list<Ptr<const Declaration>> new_decls;
+  std::vector<Ptr<const Declaration>> new_decls;
   for (const auto decl : ast.declarations) {
     new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
   }

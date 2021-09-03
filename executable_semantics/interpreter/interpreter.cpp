@@ -5,7 +5,6 @@
 #include "executable_semantics/interpreter/interpreter.h"
 
 #include <iterator>
-#include <list>
 #include <map>
 #include <optional>
 #include <utility>
@@ -174,7 +173,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
   }
 }
 
-void Interpreter::InitGlobals(const std::list<Ptr<const Declaration>>& fs) {
+void Interpreter::InitGlobals(const std::vector<Ptr<const Declaration>>& fs) {
   for (const auto d : fs) {
     InitEnv(*d, &globals);
   }
@@ -772,14 +771,13 @@ auto Interpreter::StepStmt() -> Transition {
           frame->scopes.Pop();
           return Done{};
         }
-        auto c = match_stmt.Clauses().begin();
-        std::advance(c, clause_num);
+        auto c = match_stmt.Clauses()[clause_num];
 
         if (act->Pos() % 2 == 1) {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          return Spawn{global_arena->New<PatternAction>(c->first)};
+          return Spawn{global_arena->New<PatternAction>(c.first)};
         } else {  // try to match
           auto v = act->Results()[0];
           auto pat = act->Results()[clause_num + 1];
@@ -792,7 +790,7 @@ auto Interpreter::StepStmt() -> Transition {
               frame->scopes.Top()->values.Set(name, value);
               frame->scopes.Top()->locals.push_back(name);
             }
-            return Spawn{global_arena->New<StatementAction>(c->second)};
+            return Spawn{global_arena->New<StatementAction>(c.second)};
           } else {
             return RunAgain{};
           }
@@ -1090,7 +1088,7 @@ class Interpreter::DoTransition {
         << "internal error in call_function, pattern match failed";
     // Create the new frame and push it on the stack
     Env values = interpreter->globals;
-    std::list<std::string> params;
+    std::vector<std::string> params;
     for (const auto& [name, value] : *matches) {
       values.Set(name, value);
       params.push_back(name);
@@ -1134,7 +1132,7 @@ void Interpreter::Step() {
   }  // switch
 }
 
-auto Interpreter::InterpProgram(const std::list<Ptr<const Declaration>>& fs)
+auto Interpreter::InterpProgram(const std::vector<Ptr<const Declaration>>& fs)
     -> int {
   // Check that the interpreter is in a clean state.
   CHECK(globals.IsEmpty());

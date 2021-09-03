@@ -54,7 +54,6 @@
   #include <cstdarg>
   #include <cstdio>
   #include <cstdlib>
-  #include <list>
   #include <vector>
 
   #include "common/check.h"
@@ -101,7 +100,7 @@
 %type <BisonWrap<Ptr<const Declaration>>> declaration
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_declaration
 %type <BisonWrap<Ptr<const FunctionDefinition>>> function_definition
-%type <std::list<Ptr<const Declaration>>> declaration_list
+%type <std::vector<Ptr<const Declaration>>> declaration_list
 %type <BisonWrap<Ptr<const Statement>>> statement
 %type <BisonWrap<Ptr<const Statement>>> if_statement
 %type <std::optional<Ptr<const Statement>>> optional_else
@@ -120,7 +119,7 @@
 %type <std::optional<std::string>> binding_lhs
 %type <BisonWrap<Ptr<const BindingPattern>>> variable_declaration
 %type <BisonWrap<Ptr<Member>>> member
-%type <std::list<Ptr<Member>>> member_list
+%type <std::vector<Ptr<Member>>> member_list
 %type <BisonWrap<ParenContents<Expression>::Element>> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
@@ -131,9 +130,10 @@
 %type <BisonWrap<ParenContents<Pattern>::Element>> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<std::pair<std::string, Ptr<const Expression>>>> alternative
-%type <std::list<std::pair<std::string, Ptr<const Expression>>>> alternative_list
+%type <std::vector<std::pair<std::string, Ptr<const Expression>>>> alternative_list
+%type <std::vector<std::pair<std::string, Ptr<const Expression>>>> alternative_list_contents
 %type <BisonWrap<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause
-%type <std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause_list
+%type <std::vector<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>> clause_list
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
@@ -516,11 +516,11 @@ clause:
 ;
 clause_list:
   // Empty
-    { $$ = std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>(); }
-| clause clause_list
+    { $$ = {}; }
+| clause_list clause
     {
-      $$ = $2;
-      $$.push_front($1);
+      $$ = $1;
+      $$.push_back($2);
     }
 ;
 statement:
@@ -651,11 +651,11 @@ member: VAR variable_declaration SEMICOLON
 ;
 member_list:
   // Empty
-    { $$ = std::list<Ptr<Member>>(); }
-| member member_list
+    { $$ = {}; }
+| member_list member
     {
-      $$ = $2;
-      $$.push_front($1);
+      $$ = $1;
+      $$.push_back($2);
     }
 ;
 alternative:
@@ -669,16 +669,19 @@ alternative:
 ;
 alternative_list:
   // Empty
-    { $$ = std::list<std::pair<std::string, Ptr<const Expression>>>(); }
-| alternative
+    { $$ = {}; }
+| alternative_list_contents
+    { $$ = $1; }
+| alternative_list_contents COMMA
+    { $$ = $1; }
+;
+alternative_list_contents:
+  alternative
+    { $$ = {$1}; }
+| alternative_list_contents COMMA alternative
     {
-      $$ = std::list<std::pair<std::string, Ptr<const Expression>>>();
-      $$.push_front($1);
-    }
-| alternative COMMA alternative_list
-    {
-      $$ = std::move($3);
-      $$.push_front($1);
+      $$ = $1;
+      $$.push_back($3);
     }
 ;
 declaration:
@@ -697,11 +700,11 @@ declaration:
 ;
 declaration_list:
   // Empty
-    { $$ = std::list<Ptr<const Declaration>>(); }
-| declaration declaration_list
+    { $$ = {}; }
+| declaration_list declaration
     {
-      $$ = $2;
-      $$.push_front(Ptr<const Declaration>($1));
+      $$ = $1;
+      $$.push_back(Ptr<const Declaration>($2));
     }
 ;
 %%
