@@ -32,7 +32,7 @@ class ExitingStream {
   }
 
   // Indicates that the program is exiting due to a bug in the program, rather
-  // than e.g. invalid input.
+  // than, e.g., invalid input.
   ExitingStream& TreatAsBug() {
     treat_as_bug = true;
     return *this;

@@ -237,7 +237,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "{";
       llvm::ListSeparator sep(" :: ");
       for (Ptr<Frame> frame : cast<ContinuationValue>(*this).Stack()) {
-        out << *frame;
+        out << sep << *frame;
       }
       out << "}";
       break;
