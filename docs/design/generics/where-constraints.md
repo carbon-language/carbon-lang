@@ -958,9 +958,13 @@ FIXME: Issue
 [#780: How to write constraints](https://github.com/carbon-language/carbon-lang/issues/780)
 considered other forms that constraints could be written:
 
--   `where` clauses on declarations instead of types (Swift and Rust)
--   parameter passing style used by Rust
--   whole expression constraint intersections
+-   `where` clauses on declarations instead of types (Swift and Rust) - doesn't
+    work with trait objects
+-   parameter passing style used by Rust - can't express some kinds of
+    constraints
+-   whole expression constraint intersections - also can't express some
+    constraints, allows setting one name in two interfaces at once, concerns
+    about this making `&` be not associative / commutative
 
 FIXME: other keywords: `requires`, `with`, `if`
 
@@ -968,6 +972,9 @@ FIXME: The
 ["parameterized type implements interface"](/docs/design/generics/details.md#parameterized-type-implements-interface)
 case motivated Rust to
 [add support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
+
+FIXME: Look through [this appendix](appendix-requires-constraints.md) for other
+alternatives and rationale.
 
 ### Inline constraints instead of `.Self`
 
