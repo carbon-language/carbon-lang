@@ -30,12 +30,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
+-   [Adapting types](#adapting-types)
+    -   [Adapter compatibility](#adapter-compatibility)
+    -   [Extending adapter](#extending-adapter)
+    -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
+    -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
+    -   [Application: Defining an impl for use by other types](#application-defining-an-impl-for-use-by-other-types)
+-   [Associated constants](#associated-constants)
+    -   [Associated class functions](#associated-class-functions)
+-   [Associated types](#associated-types)
+    -   [Model](#model-1)
+-   [Parameterized interfaces](#parameterized-interfaces)
+    -   [Impl lookup](#impl-lookup)
+    -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
 -   [Future work](#future-work)
-    -   [Adapting types](#adapting-types)
-    -   [Associated constants](#associated-constants)
-    -   [Associated types](#associated-types)
-    -   [Parameterized interfaces](#parameterized-interfaces)
-        -   [Impl lookup](#impl-lookup)
     -   [Constraints](#constraints)
     -   [Conditional conformance](#conditional-conformance)
     -   [Parameterized impls](#parameterized-impls)
@@ -183,13 +191,11 @@ interface Vector {
 }
 ```
 
-The syntax here is to match how the same members would be defined in a type.
-Each declaration in the interface defines an _associated item_ (same
-[terminology as Rust](https://doc.rust-lang.org/reference/items/associated-items.html)).
-In this example, `Vector` has two associated methods, `Add` and `Scale`.
-
-**References:** Method syntax for types was decided in
-[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
+The syntax here is to match
+[how the same members would be defined in a type](/docs/design/classes.md#methods).
+Each declaration in the interface defines an
+[associated entity](terminology.md#associated-entity). In this example, `Vector`
+has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-of-type, that is a type whose values are types. The
 values of an interface are specifically
@@ -203,7 +209,7 @@ interface.
 Carbon interfaces are ["nominal"](terminology.md#nominal-interfaces), which
 means that types explicitly describe how they implement interfaces. An
 ["impl"](terminology.md#impls-implementations-of-interfaces) defines how one
-interface is implemented for a type. Every associated item is given a
+interface is implemented for a type. Every associated entity is given a
 definition. Different types satisfying `Vector` can have different definitions
 for `Add` and `Scale`, so we say their definitions are _associated_ with what
 type is implementing `Vector`. The `impl` defines what is associated with the
@@ -327,7 +333,7 @@ class GameBoard {
     fn Draw[me: Self]() { ... }
   }
   impl as EndOfGame {
-    // Error: `GameBoard` has two methods named
+    // ❌ Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     fn Draw[me: Self]() { ... }
     fn Winner[me: Self](player: Int) { ... }
@@ -405,7 +411,7 @@ visible:
 ```
 var a: Point2 = (.x = 1.0, .y = 2.0);
 // `a` does *not* have `Add` and `Scale` methods:
-// Error: a.Add(a.Scale(2.0));
+// ❌ Error: a.Add(a.Scale(2.0));
 
 // Cast from Point2 implicitly
 var b: Point2 as Vector = a;
@@ -567,7 +573,7 @@ However, for another type implementing `Vector` but out-of-line using an
 
 ```
 fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
-  // ERROR: `Point2` doesn't have `Add` or `Scale` methods.
+  // ❌ ERROR: `Point2` doesn't have `Add` or `Scale` methods.
   return a.Add(b).Scale(s);
 }
 ```
@@ -1144,7 +1150,7 @@ interface ConvertibleTo(T:! Type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  let AssociatedType: Type;
+  let AssociatedType:! Type;
   extends ConvertibleTo(AssociatedType);
 }
 ```
@@ -1422,38 +1428,742 @@ var m: HashMap(String, Int);
 PrintValue(m, "key");
 ```
 
-## Future work
-
-### Adapting types
+## Adapting types
 
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
-switch the type of a value to access different interface implementations. See
-["adapting a type" in the terminology document](terminology.md#adapting-a-type).
+switch the type of a value to access different interface implementations. We
+therefore provide a way to create new types
+[compatible with](terminology.md#compatible-types) existing types with different
+APIs, in particular with different interface implementations, by
+[adapting](terminology.md#adapting-a-type) them:
 
-### Associated constants
+```
+interface Printable {
+  fn Print[me: Self]();
+}
+interface Comparable {
+  fn Less[me: Self](that: Self) -> Bool;
+}
+class Song {
+  impl as Printable { fn Print[me: Self]() { ... } }
+}
+adapter SongByTitle for Song {
+  impl as Comparable {
+    fn Less[me: Self](that: Self) -> Bool { ... }
+  }
+}
+adapter FormattedSong for Song {
+  impl as Printable { fn Print[me: Self]() { ... } }
+}
+adapter FormattedSongByTitle for Song {
+  impl as Printable = FormattedSong as Printable;
+  impl as Comparable = SongByTitle as Comparable;
+}
+```
 
-In addition to associated methods, we will allow other kinds of associated items
-associating values with types implementing an interface.
+This allows us to provide implementations of new interfaces (as in
+`SongByTitle`), provide different implementations of the same interface (as in
+`FormattedSong`), or mix and match implementations from other compatible types
+(as in `FormattedSongByTitle`). The rules are:
 
-### Associated types
+-   You can add any declaration that you could add to a class except for
+    declarations that would change the representation of the type. This means
+    you can add functions, interface implementations, and aliases, but not
+    fields, base classes, or virtual functions.
+-   The adapted type is compatible with the original type, and that relationship
+    is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
+    and `FormattedSongByTitle` end up compatible with each other.
+-   Since adapted types are compatible with the original type, you may
+    explicitly cast between them, but there is no implicit casting between these
+    types (unlike between a type and one of its facet types / impls).
+-   For the purposes of generics, we only need to support adding interface
+    implementations. But this `adapter` feature could be used more generally,
+    such as to add methods.
 
-Associated types are associated constants that happen to be types. These are
-particularly interesting since they can be used in the signatures of associated
-methods or functions, to allow the signatures of methods to vary from
-implementation to implementation.
+Inside an adapter, the `Self` type matches the adapter. Members of the original
+type may be accessed like any other facet type; either by a cast:
 
-### Parameterized interfaces
+```
+adapter SongByTitle for Song {
+  impl as Comparable {
+    fn Less[me: Self](that: Self) -> Bool {
+      return (this as Song).Title() < (that as Song).Title();
+    }
+  }
+}
+```
+
+or using qualified names:
+
+```
+adapter SongByTitle for Song {
+  impl as Comparable {
+    fn Less[me: Self](that: Self) -> Bool {
+      return this.(Song.Title)() < that(Song.Title)();
+    }
+  }
+}
+```
+
+**Open question:** As an alternative to:
+
+```
+impl as Printable = FormattedSong as Printable;
+```
+
+we could allow users to write:
+
+```
+impl as Printable = FormattedSong;
+```
+
+This would remove ceremony that the compiler doesn't need. The concern is
+whether it makes sense or is a category error. In this example, is
+`FormattedSong`, a type, a suitable value to provide when asking for a
+`Printable` implementation? An argument for this terser syntax is that the
+implicit conversion is legal in other contexts:
+
+```
+// ✅ Legal implicit conversion
+var v:! Printable = FormattedSong;
+```
+
+**Comparison with other languages:** This matches the Rust idiom called
+"newtype", which is used to implement traits on types while avoiding coherence
+problems, see
+[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
+and
+[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
+Rust's mechanism doesn't directly support reusing implementations, though some
+of that is provided by macros defined in libraries. Haskell has a
+[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
+doesn't directly support reusing implementations either, but the most popular
+compiler provides it as
+[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+
+### Adapter compatibility
+
+The framework from the [type compatibility section](#type-compatibility) allows
+us to evaluate when we can cast between two different arguments to a
+parameterized type. Consider three compatible types, all of which implement
+`Hashable`:
+
+```
+class Song {
+  impl as Hashable { ... }
+  impl as Printable { ... }
+}
+adapter SongHashedByTitle for Song {
+  impl as Hashable { ... }
+}
+adapter PlayableSong for Song {
+  impl as Hashable = Song as Hashable;
+  impl as Media { ... }
+}
+```
+
+Observe that `Song as Hashable` is different from
+`SongHashedByTitle as Hashable`, since they have different definitions of the
+`Hashable` interface even though they are compatible types. However
+`Song as Hashable` and `PlayableSong as Hashable` are almost the same. In
+addition to using the same data representation, they both implement one
+interface, `Hashable`, and use the same implementation for that interface. The
+one difference between them is that `Song as Hashable` may be implicitly cast to
+`Song`, which implements interface `Printable`, and `PlayableSong as Hashable`
+may be implicilty cast to `PlayableSong`, which implements interface `Media`.
+This means that it is safe to cast between
+`HashMap(Song, Int) == HashMap(Song as Hashable, Int)` and
+`HashMap(PlayableSong, Int) == HashMap(PlayableSong as Hashable, Int)` (though
+maybe only with an explicit cast) but
+`HashMap(SongHashedByTitle, Int) == HashMap(SongHashByTitle as Hashable, Int)`
+is incompatible. This is a relief, because we know that in practice the
+invariants of a `HashMap` implementation rely on the hashing function staying
+the same.
+
+### Extending adapter
+
+Frequently we expect that the adapter type will want to preserve most or all of
+the API of the original type. The two most common cases expected are adding and
+replacing an interface implementation. Users would indicate that an adapter
+starts from the original type's existing API by using the `extends` keyword
+instead of `for`:
+
+```
+class Song {
+  impl as Hashable { ... }
+  impl as Printable { ... }
+}
+
+adapter SongByArtist extends Song {
+  // Add an implementation of a new interface
+  impl as Comparable { ... }
+
+  // Replace an existing implementation of an interface
+  // with an alternative.
+  impl as Hashable { ... }
+}
+```
+
+The resulting type `SongByArtist` would:
+
+-   implement `Comparable`, unlike `Song`,
+-   implement `Hashable`, but differently than `Song`, and
+-   implement `Printable`, inherited from `Song`.
+
+Unlike the similar `class B extends A` notation, `adaptor B extends A` is
+permitted even if `A` is a final class. Also, there is no implicit conversion
+from `B` to `A`, matching `adapter`...`for` but unlike class extension.
+
+**Future work:** We may need additional mechanisms for changing the API in the
+adapter. For example, to resolve conflicts we might want to be able to move the
+implementation of a specific interface into an [external impl](#external-impl).
+
+### Use case: Using independent libraries together
+
+Imagine we have two packages that are developed independently. Package
+`CompareLib` defines an interface `CompareLib.Comparable` and a generic
+algorithm `CompareLib.Sort` that operates on types that implement
+`CompareLib.Comparable`. Package `SongLib` defines a type `SongLib.Song`.
+Neither has a dependency on the other, so neither package defines an
+implementation for `CompareLib.Comparable` for type `SongLib.Song`. A user that
+wants to pass a value of type `SongLib.Song` to `CompareLib.Sort` has to define
+an adapter that provides an implementation of `CompareLib.Comparable` for
+`SongLib.Song`. This adapter will probably use the
+[`extends` facility of adapters](#extending-adapter) to preserve the
+`SongLib.Song` API.
+
+```
+import CompareLib;
+import SongLib;
+
+adapter Song extends SongLib.Song {
+  impl as CompareLib.Comparable { ... }
+}
+// Or, to keep the names from CompareLib.Comparable out of Song's API:
+adapter Song extends SongLib.Song { }
+external impl Song as CompareLib.Comparable { ... }
+```
+
+The caller can either cast `SongLib.Song` values to `Song` when calling
+`CompareLib.Sort` or just start with `Song` values in the first place.
+
+```
+var lib_song: SongLib.Song = ...;
+CompareLib.Sort((lib_song as Song,));
+
+var song: Song = ...;
+CompareLib.Sort((song,));
+```
+
+### Adapter with stricter invariants
+
+**Future work:** Rust also uses the newtype idiom to create types with
+additional invariants or other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`. We should have some way of restricting the casts between a type
+and an adapter to address this use case.
+
+### Application: Defining an impl for use by other types
+
+Let's say we want to provide a possible implementation of an interface for use
+by types for which that implementation would be appropriate. We can do that by
+defining an adapter implementing the interface that is parameterized on the type
+it is adapting. That impl may then be pulled in using the `impl as ... = ...;`
+syntax.
+
+```
+interface Comparable {
+  fn Less[me: Self](that: Self) -> Bool;
+}
+adapter ComparableFromDifferenceFn
+    (T:! Type, Difference:! fnty(T, T)->Int) for T {
+  impl as Comparable {
+    fn Less[me: Self](that: Self) -> Bool {
+      return Difference(this, that) < 0;
+    }
+  }
+}
+class IntWrapper {
+  var x: Int;
+  fn Difference(this: Self, that: Self) {
+    return that.x - this.x;
+  }
+  impl as Comparable =
+      ComparableFromDifferenceFn(IntWrapper, Difference)
+      as Comparable;
+}
+```
+
+## Associated constants
+
+In addition to associated methods, we allow other kinds of
+[associated entities](terminology.md#associated-entity). For consistency, we use
+the same syntax to describe a constant in an interface as in a type without
+assigning a value. As constants, they are declared using the `let` introducer.
+For example, a fixed-dimensional point type could have the dimension as an
+associated constant.
+
+```
+interface NSpacePoint {
+  let N:! Int;
+  // The following require: 0 <= i < N.
+  fn Get[addr me: Self*](i: Int) -> Float64;
+  fn Set[addr me: Self*](i: Int, value: Float64);
+  // Associated constants may be used in signatures:
+  fn SetAll[addr me: Self*](value: Array(Float64, N));
+}
+```
+
+Implementations of `NSpacePoint` for different types might have different values
+for `N`:
+
+```
+class Point2D {
+  impl as NSpacePoint {
+    let N:! Int = 2;
+    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
+    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
+    fn SetAll[addr me: Self*](value: Array(Float64, 2)) { ... }
+  }
+}
+
+class Point3D {
+  impl as NSpacePoint {
+    let N:! Int = 3;
+    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
+    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
+    fn SetAll[addr me: Self*](value: Array(Float64, 3)) { ... }
+  }
+}
+```
+
+And these values may be accessed as members of the type:
+
+```
+Assert(Point2D.N == 2);
+Assert(Point3D.N == 3);
+
+fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
+  for (var i: Int = 0; i < PointT.N; ++i) {
+    if (i > 0) { Print(", "); }
+    Print(p.Get(i));
+  }
+}
+
+fn ExtractPoint[PointT:! NSpacePoint](
+    p: PointT,
+    dest: Array(Float64, PointT.N)*) {
+  for (var i: Int = 0; i < PointT.N; ++i) {
+    (*dest)[i] = p.Get(i);
+  }
+}
+```
+
+**Comparison with other languages:** This feature is also called
+[associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
+
+**Aside:** In general, the use of `:!` here means these `let` declarations will
+only have compile-time and not runtime storage associated with them.
+
+### Associated class functions
+
+To be consistent with normal
+[class function](/docs/design/classes.md#class-functions) declaration syntax,
+associated class functions are written:
+
+```
+interface DeserializeFromString {
+  fn Deserialize(serialized: String) -> Self;
+}
+
+class MySerializableType {
+  var i: Int;
+
+  impl as DeserializeFromString {
+    fn Deserialize(serialized: String) -> Self {
+      return (.i = StringToInt(serialized));
+    }
+  }
+}
+
+var x: MySerializableType = MySerializableType.Deserialize("3");
+
+fn Deserialize(T:! DeserializeFromString, serialized: String) -> T {
+  return T.Deserialize(serialized);
+}
+var y: MySerializableType = Deserialize(MySerializableType, "4");
+```
+
+This is instead of declaring an associated constant using `let` with a function
+type.
+
+Together associated methods and associated class functions are called
+_associated functions_, much like together methods and class functions are
+called [member functions](/docs/design/classes.md#member-functions).
+
+## Associated types
+
+Associated types are [associated entities](terminology.md#associated-entity)
+that happen to be types. These are particularly interesting since they can be
+used in the signatures of associated methods or functions, to allow the
+signatures of methods to vary from implementation to implementation. We already
+have one example of this: the `Self` type discussed
+[above in the "Interfaces" section](#interfaces). For other cases, we can say
+that the interface declares that each implementation will provide a type under a
+specific name. For example:
+
+```
+interface StackAssociatedType {
+  let ElementType:! Type;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> Bool;
+}
+```
+
+Here we have an interface called `StackAssociatedType` which defines two
+methods, `Push` and `Pop`. The signatures of those two methods declare them as
+accepting or returning values with the type `ElementType`, which any implementer
+of `StackAssociatedType` must also define. For example, maybe `DynamicArray`
+implements `StackAssociatedType`:
+
+```
+class DynamicArray(T:! Type) {
+  class IteratorType { ... }
+  fn Begin[addr me: Self*]() -> IteratorType;
+  fn End[addr me: Self*]() -> IteratorType;
+  fn Insert[addr me: Self*](pos: IteratorType, value: T);
+  fn Remove[addr me: Self*](pos: IteratorType);
+
+  impl as StackAssociatedType {
+    // Set the associated type `ElementType` to `T`.
+    let ElementType:! Type = T;
+    fn Push[addr me: Self*](value: ElementType) {
+      this->Insert(this->End(), value);
+    }
+    fn Pop[addr me: Self*]() -> ElementType {
+      var pos: IteratorType = this->End();
+      Assert(pos != this->Begin());
+      --pos;
+      returned var ret: ElementType = *pos;
+      this->Remove(pos);
+      return var;
+    }
+    fn IsEmpty[addr me: Self*]() -> Bool {
+      return this->Begin() == this->End();
+    }
+  }
+}
+```
+
+**Alternatives considered:** See
+[other syntax options considered for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
+In particular, it was deemed that
+[Swift's approach of inferring the associated type from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
+was unneeded complexity.
+
+The definition of the `StackAssociatedType` is sufficient for writing a generic
+function that operates on anything implementing that interface, for example:
+
+```
+fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
+    -> StackType.ElementType {
+  var top: StackType.ElementType = s->Pop();
+  s->Push(top);
+  return top;
+}
+
+var my_array: DynamicArray(i32) = (1, 2, 3);
+// PeekAtTopOfStack's `StackType` is set to
+// `DynamicArray(i32) as StackAssociatedType`.
+// `StackType.ElementType` becomes `i32`.
+Assert(PeekAtTopOfStack(my_array) == 3);
+```
+
+Associated types can also be implemented using a
+[member type](/docs/design/classes.md#member-type).
+
+```
+interface Container {
+  let IteratorType:! Iterator;
+  ...
+}
+
+class DynamicArray(T:! Type) {
+  ...
+  impl as Container {
+    class IteratorType { ... }
+    ...
+  }
+}
+```
+
+For context, see
+["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-type-parameters-versus-associated-types).
+
+**Comparison with other languages:** Both
+[Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
+and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
+support associated types.
+
+### Model
+
+The associated type can be modeled by a witness table field in the interface's
+witness table.
+
+```
+interface Iterator {
+  fn Advance[addr me: Self*]();
+}
+
+interface Container {
+  let IteratorType:! Iterator;
+  fn Begin[addr me: Self*]() -> IteratorType;
+}
+```
+
+is represented by:
+
+```
+class Iterator(Self:! Type) {
+  var Advance: fnty(this: Self*);
+  ...
+}
+class Container(Self:! Type) {
+  // Representation type for the iterator.
+  let IteratorType:! Type;
+  // Witness that IteratorType implements Iterator.
+  var iterator_impl: Iterator(IteratorType)*;
+
+  // Method
+  var Begin: fnty (this: Self*) -> IteratorType;
+  ...
+}
+```
+
+## Parameterized interfaces
 
 Associated types don't change the fact that a type can only implement an
-interface at most once. If instead you want a family of related interfaces, each
-of which could be implemented for a given type, you could use parameterized
-interfaces instead.
+interface at most once.
 
-#### Impl lookup
+If instead you want a family of related interfaces, one per possible value of a
+type parameter, multiple of which could be implemented for a single type, you
+would use parameterized interfaces. To write a parameterized version the stack
+interface instead of using associated types, write a parameter list after the
+name of the interface instead of the associated type declaration:
 
-We will have rules limiting where interface implementations are defined for
-coherence.
+```
+interface StackParameterized(ElementType:! Type) {
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> Bool;
+}
+```
+
+Then `StackParameterized(Fruit)` and `StackParameterized(Veggie)` would be
+considered different interfaces, with distinct implementations.
+
+```
+class Produce {
+  var fruit: DynamicArray(Fruit);
+  var veggie: DynamicArray(Veggie);
+  impl as StackParameterized(Fruit) {
+    fn Push[addr me: Self*](value: Fruit) {
+      this->fruit.Push(value);
+    }
+    fn Pop[addr me: Self*]() -> Fruit {
+      return this->fruit.Pop();
+    }
+    fn IsEmpty[addr me: Self*]() -> Bool {
+      return this->fruit.IsEmpty();
+    }
+  }
+  impl as StackParameterized(Veggie) {
+    fn Push[addr me: Self*](value: Veggie) {
+      this->veggie.Push(value);
+    }
+    fn Pop[addr me: Self*]() -> Veggie {
+      return this->veggie.Pop();
+    }
+    fn IsEmpty[addr me: Self*]() -> Bool {
+      return this->veggie.IsEmpty();
+    }
+  }
+}
+```
+
+Unlike associated types in interfaces and parameters to types, interface
+parameters can't be deduced. For example, if we were to rewrite
+[the `PeekAtTopOfStack` example in the "associated types" section](#associated-types)
+for `StackParameterized(T)` it would generate a compile error:
+
+```
+// ❌ Error: can't deduce interface parameter `T`.
+fn BrokenPeekAtTopOfStackParameterized
+    [T:! Type, StackType:! StackParameterized(T)]
+    (s: StackType*) -> T { ... }
+```
+
+This error is because the compiler can not determine if `T` should be `Fruit` or
+`Veggie` when passing in argument of type `Produce*`. The function's signature
+would have to be changed so that the value for `T` could be determined from the
+explicit parameters.
+
+```
+fn PeekAtTopOfStackParameterized
+    [T:! Type, StackType:! StackParameterized(T)]
+    (s: StackType*, _: singleton_type_of(T)) -> T { ... }
+
+var produce: Produce = ...;
+var top_fruit: Fruit =
+    PeekAtTopOfStackParameterized(&produce, Fruit);
+var top_veggie: Veggie =
+    PeekAtTopOfStackParameterized(&produce, Veggie);
+```
+
+The pattern `_: singleton_type_of(T)` is a placeholder syntax for an expression
+that will only match `T`, until issue
+[#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578)
+is resolved. Using that pattern in the explicit parameter list allows us to make
+`T` available earlier in the declaration so it can be passed as the argument to
+the parameterized interface `StackParameterized`.
+
+This approach is useful for the `ComparableTo(T)` interface, where a type might
+be comparable with multiple other types, and in fact interfaces for
+[operator overloads](#operator-overloading) more generally. Example:
+
+```
+interface EquatableWith(T:! Type) {
+  fn Equals[me: Self](that: T) -> Bool;
+  ...
+}
+class Complex {
+  var real: f64;
+  var imag: f64;
+  // Can implement this interface more than once as long as it has different
+  // arguments.
+  impl as EquatableWith(Complex) { ... }
+  impl as EquatableWith(f64) { ... }
+}
+```
+
+All interface parameters must be marked as "generic", using the `:!` syntax.
+This reflects these two properties of these parameters:
+
+-   They must be resolved at compile-time, and so can't be passed regular
+    dynamic values.
+-   We allow either generic or template values to be passed in.
+
+**Context:** See
+[interface type parameters](terminology.md#interface-type-parameters-versus-associated-types)
+in the terminology doc.
+
+**Note:** Interface parameters aren't required to be types, but that is the vast
+majority of cases. As an example, if we had an interface that allowed a type to
+define how the tuple-member-read operator would work, the index of the member
+could be an interface parameter:
+
+```
+interface ReadTupleMember(index:! u32) {
+  let T:! Type;
+  // Returns me[index]
+  fn Get[me: Self]() -> T;
+}
+```
+
+This requires that the index be known at compile time, but allows different
+indices to be associated with different types.
+
+**Caveat:** When implementing an interface twice for a type, you need to be sure
+that the interface parameters will always be different. For example:
+
+```
+interface Map(FromType:! Type, ToType:! Type) {
+  fn Map[addr me: Self*](needle: FromType) -> Optional(ToType);
+}
+class Bijection(FromType:! Type, ToType:! Type) {
+  impl as Map(FromType, ToType) { ... }
+  impl as Map(ToType, FromType) { ... }
+}
+// ❌ Error: Bijection has two impls of interface Map(String, String)
+var oops: Bijection(String, String) = ...;
+```
+
+In this case, it would be better to have an [adapting type](#adapting-types) to
+contain the `impl` for the reverse map lookup, instead of implementing the `Map`
+interface twice:
+
+```
+class Bijection(FromType:! Type, ToType:! Type) {
+  impl as Map(FromType, ToType) { ... }
+}
+adapter ReverseLookup(FromType:! Type, ToType:! Type)
+    for Bijection(FromType, ToType) {
+  impl as Map(ToType, FromType) { ... }
+}
+```
+
+**Comparison with other languages:** Rust calls
+[traits with type parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
+and
+[uses them for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
+Note that Rust further supports defaults for those type parameters (such as
+`Self`).
+
+[Rust uses the term "type parameters"](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#clearer-trait-matching)
+for both interface type parameters and associated types. The difference is that
+interface parameters are "inputs" since they _determine_ which `impl` to use,
+and associated types are "outputs" since they are determined _by_ the `impl`,
+but play no role in selecting the `impl`.
+
+### Impl lookup
+
+Let's say you have some interface `I(T, U(V))` being implemented for some type
+`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
+defined in some library that must be imported in any code that looks up whether
+that interface is implemented for that type. This requires that `impl` is
+defined in the same library that defines the interface or one of the names
+needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
+`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
+this `impl` to import the _definitions_ of all of those names. Seeing a forward
+declaration of these names is insufficient, since you can presumably see forward
+declarations without seeing an `impl` with the definition. This accomplishes a
+few goals:
+
+-   The compiler can check that there is only one definition of any `impl` that
+    is actually used, avoiding
+    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
+    problems.
+-   Every attempt to use an `impl` will see the exact same `impl`, making the
+    interpretation and semantics of code consistent no matter its context, in
+    accordance with the
+    [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
+-   Allowing the `impl` to be defined with either the interface or the type
+    addresses the
+    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+Note that [the rules for specialization](#lookup-resolution-and-specialization)
+do allow there to be more than one `impl` to be defined for a type, as long as
+one can unambiguously be picked as most specific.
+
+**References:** Implementation coherence is
+[defined in terminology](terminology.md#coherence), and is
+[a goal for Carbon](goals.md#coherence). More detail can be found in
+[this appendix with the rationale and alternatives considered](appendix-coherence.md).
+
+### Parameterized structural interfaces
+
+We should also allow the [structural interface](#structural-interfaces)
+construct to support parameters. Parameters would work the same way as for
+regular, that is nominal or non-structural, interfaces.
+
+## Future work
 
 ### Constraints
 
