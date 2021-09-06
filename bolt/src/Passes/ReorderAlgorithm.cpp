@@ -434,7 +434,7 @@ void TSPReorderAlgorithm::reorderBasicBlocks(
 
   std::vector<std::vector<int64_t>> DP;
   DP.resize(1 << N);
-  for (std::vector<long> &Elmt : DP) {
+  for (std::vector<int64_t> &Elmt : DP) {
     Elmt.resize(N, -1);
   }
   // Start with the entry basic block being allocated with cost zero
