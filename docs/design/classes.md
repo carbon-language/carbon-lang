@@ -1681,12 +1681,6 @@ destructor MyClass [addr me: Self*] { ... }
 It isn't safe to delete an instance of a base class through a pointer unless it
 has a
 [virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
-Issue
-[#652: Extensible classes with or without vtables](https://github.com/carbon-language/carbon-lang/issues/652)
-considers other ways we might support base classes with non-virtual destructors.
-We rejected using the `partial` facet as a way to spell an exact type that could
-be safely destroyed, since we don't want users to generally have to keep track
-of the difference between exact and "or derived" types.
 
 An alternative is the Rust approach is there is some interface that is only
 implemented for types with non-trivial destructors. It allows metaprogramming to
