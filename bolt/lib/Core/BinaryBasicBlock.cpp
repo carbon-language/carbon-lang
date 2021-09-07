@@ -13,6 +13,7 @@
 #include "bolt/Core/BinaryBasicBlock.h"
 #include "bolt/Core/BinaryContext.h"
 #include "bolt/Core/BinaryFunction.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Errc.h"
@@ -285,7 +286,8 @@ void BinaryBasicBlock::replaceSuccessor(BinaryBasicBlock *Succ,
 }
 
 void BinaryBasicBlock::removeAllSuccessors() {
-  for (BinaryBasicBlock *SuccessorBB : successors())
+  SmallPtrSet<BinaryBasicBlock *, 2> UniqSuccessors(succ_begin(), succ_end());
+  for (BinaryBasicBlock *SuccessorBB : UniqSuccessors)
     SuccessorBB->removePredecessor(this);
   Successors.clear();
   BranchInfo.clear();
