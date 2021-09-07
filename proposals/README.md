@@ -69,6 +69,6 @@ request:
 -   [0680 - And, or, not](p0680.md)
 -   [0722 - Nominal classes and methods](p0722.md)
 -   [0731 - Generics details 2: adapters, associated types, parameterized interfaces](p0731.md)
--   [0818 - Constraints for generics](p0818.md)
+-   [0818 - Constraints for generics (generics details 3)](p0818.md)
 
 <!-- endproposals -->
