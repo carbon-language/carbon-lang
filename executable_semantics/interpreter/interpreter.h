@@ -5,7 +5,6 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
 
-#include <list>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -28,7 +27,7 @@ class Interpreter {
   Interpreter(Ptr<Arena> arena) : arena(arena), globals(arena), heap(arena) {}
 
   // Interpret the whole program.
-  auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int;
+  auto InterpProgram(const std::vector<Ptr<const Declaration>>& fs) -> int;
 
   // Interpret an expression at compile-time.
   auto InterpExp(Env values, Ptr<const Expression> e) -> Ptr<const Value>;
@@ -126,7 +125,7 @@ class Interpreter {
   // State transition for statements.
   auto StepStmt() -> Transition;
 
-  void InitGlobals(const std::list<Ptr<const Declaration>>& fs);
+  void InitGlobals(const std::vector<Ptr<const Declaration>>& fs);
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation loc, const std::string& name) -> Address;
 

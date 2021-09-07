@@ -5,7 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_STATEMENT_H_
 #define EXECUTABLE_SEMANTICS_AST_STATEMENT_H_
 
-#include <list>
+#include <vector>
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
@@ -225,8 +225,9 @@ class Continue : public Statement {
 
 class Match : public Statement {
  public:
-  Match(SourceLocation loc, Ptr<const Expression> exp,
-        std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>> clauses)
+  Match(
+      SourceLocation loc, Ptr<const Expression> exp,
+      std::vector<std::pair<Ptr<const Pattern>, Ptr<const Statement>>> clauses)
       : Statement(Kind::Match, loc), exp(exp), clauses(std::move(clauses)) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -234,14 +235,14 @@ class Match : public Statement {
   }
 
   auto Exp() const -> Ptr<const Expression> { return exp; }
-  auto Clauses() const
-      -> const std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>& {
+  auto Clauses() const -> const
+      std::vector<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>& {
     return clauses;
   }
 
  private:
   Ptr<const Expression> exp;
-  std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>> clauses;
+  std::vector<std::pair<Ptr<const Pattern>, Ptr<const Statement>>> clauses;
 };
 
 // A continuation statement.

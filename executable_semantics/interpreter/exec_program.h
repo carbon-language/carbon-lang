@@ -9,8 +9,6 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
 
-#include <list>
-
 #include "executable_semantics/ast/ast.h"
 
 namespace Carbon {

@@ -5,7 +5,6 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_
 
-#include <list>
 #include <optional>
 #include <string>
 #include <variant>
@@ -87,7 +86,7 @@ class Value {
   const Kind tag;
 };
 
-using VarValues = std::list<std::pair<std::string, Ptr<const Value>>>;
+using VarValues = std::vector<std::pair<std::string, Ptr<const Value>>>;
 
 auto FindInVarValues(const std::string& field, const VarValues& inits)
     -> std::optional<Ptr<const Value>>;
