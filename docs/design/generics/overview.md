@@ -27,7 +27,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Generic type parameters](#generic-type-parameters)
     -   [Requiring or extending another interface](#requiring-or-extending-another-interface)
     -   [Combining interfaces](#combining-interfaces)
-        -   [Structural interfaces](#structural-interfaces)
+        -   [Named constraints](#named-constraints)
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
     -   [Interface input and output types](#interface-input-and-output-types)
@@ -83,9 +83,9 @@ Summary of how Carbon generics work:
 -   The `&` operation on type-of-types allows you conveniently combine
     interfaces. It gives you all the names that don't conflict.
 -   You may also declare a new type-of-type directly using
-    ["structural interfaces"](terminology.md#structural-interfaces). Structural
-    interfaces can express requirements that multiple interfaces be implemented,
-    and give you control over how name conflicts are handled.
+    ["named constraints"](terminology.md#named-constraints). Named constraints
+    can express requirements that multiple interfaces be implemented, and give
+    you control over how name conflicts are handled.
 -   Alternatively, you may resolve name conflicts by using a qualified syntax to
     directly call a function from a specific interface.
 
@@ -250,7 +250,7 @@ the constraint on the type is that it must implement the interface `Comparable`.
 A type-of-type also defines a set of names and a mapping to corresponding
 qualified names. You may combine interfaces into new type-of-types using
 [the `&` operator](#combining-interfaces) or
-[structural interfaces](#structural-interfaces).
+[named constraints](#named-constraints).
 
 ### Generic functions
 
@@ -405,16 +405,16 @@ fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
 }
 ```
 
-#### Structural interfaces
+#### Named constraints
 
 You may also declare a new type-of-type directly using
-["structural interfaces"](terminology.md#structural-interfaces). Structural
-interfaces can express requirements that multiple interfaces be implemented, and
-give you control over how name conflicts are handled. Structural interfaces have
-other applications and capabilities not covered here.
+["named constraints"](terminology.md#named-constraints). Named constraints can
+express requirements that multiple interfaces be implemented, and give you
+control over how name conflicts are handled. Named constraints have other
+applications and capabilities not covered here.
 
 ```
-structural interface Combined {
+constraint Combined {
   impl as Renderable;
   impl as EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
@@ -430,7 +430,7 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
   }
   game_state->Draw_Renderable();
   // Can still use qualified syntax for names
-  // not defined in the structural interface
+  // not defined in the named constraint
   return game_state->(Renderable.Center)();
 }
 ```
