@@ -18,6 +18,6 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}executable_semantics/testdata/tuple_equality3.carbon:13: type error in ==
+// CHECK: COMPILATION ERROR: {{.*}}testdata/tuple_equality3.carbon:13: type error in ==
 // CHECK: expected: (0 = i32, 1 = i32)
 // CHECK: actual: (0 = i32)
