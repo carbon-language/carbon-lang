@@ -21,12 +21,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
 -   [Type-of-types and facet types](#type-of-types-and-facet-types)
--   [Structural interfaces](#structural-interfaces)
+-   [Named constraints](#named-constraints)
     -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
 -   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [`extends` and `impl` with structural interfaces](#extends-and-impl-with-structural-interfaces)
+        -   [`extends` and `impl` with named constraints](#extends-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
@@ -42,7 +42,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
-    -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
+    -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Future work](#future-work)
     -   [Constraints](#constraints)
     -   [Conditional conformance](#conditional-conformance)
@@ -705,23 +705,22 @@ a facet type, you might say a facet type `F` is the `I` facet of `T` if `F` is
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
 
-## Structural interfaces
+## Named constraints
 
-If the nominal interfaces discussed above are the building blocks for
-type-of-types, [structural interfaces](terminology.md#structural-interfaces)
-describe how they may be composed together. Unlike nominal interfaces, the name
-of a structural interface is not a part of its value. Two different structural
-interfaces with the same definition are equivalent even if they have different
-names. This is because types don't explicitly specify which structural
-interfaces they implement, types automatically implement any structural
-interfaces they can satisfy.
+If the interfaces discussed above are the building blocks for type-of-types,
+[named constraints](terminology.md#named-constraints) describe how they may be
+composed together. Unlike interfaces which are nominal, the name of a named
+constraint is not a part of its value. Two different named constraints with the
+same definition are equivalent even if they have different names. This is
+because types don't explicitly specify which named constraints they implement,
+types automatically implement any named constraints they can satisfy.
 
-A structural interface definition can contain interface requirements using
-`impl` declarations and names using `alias` declarations. Note that this allows
-us to declare the aspects of a type-of-type directly.
+A named constraint definition can contain interface requirements using `impl`
+declarations and names using `alias` declarations. Note that this allows us to
+declare the aspects of a type-of-type directly.
 
 ```
-structural interface VectorLegoFish {
+constraint VectorLegoFish {
   // Interface implementation requirements
   impl as Vector;
   impl as LegoFish;
@@ -732,12 +731,12 @@ structural interface VectorLegoFish {
 }
 ```
 
-We don't expect users do directly define many structural interfaces, but other
+We don't expect users do directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
 example, we can define the Carbon builtin `Type` as:
 
 ```
-structural interface Type { }
+constraint Type { }
 ```
 
 That is, `Type` is the type-of-type with no requirements (so matches every
@@ -762,11 +761,10 @@ type, and this function will be instantiated separately for every different
 type." This is consistent with the
 [use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
 
-In general we should support the same kinds of declarations in a
-`structural interface` definitions as in an `interface`. Generally speaking
-declarations in one kind of interface make sense in the other, and there is an
-analogy between them. If an `interface` `I` has (non-`alias`) declarations `X`,
-`Y`, and `Z`, like so:
+In general we should support the same kinds of declarations in a `constraint`
+definitions as in an `interface`. Generally speaking declarations in one kind of
+interface make sense in the other, and there is an analogy between them. If an
+`interface` `I` has (non-`alias`) declarations `X`, `Y`, and `Z`, like so:
 
 ```
 interface I {
@@ -792,10 +790,10 @@ class ImplementsI {
 }
 ```
 
-But the corresponding `structural interface`, `S`:
+But the corresponding `constraint`, `S`:
 
 ```
-structural interface S {
+constraint S {
   X;
   Y;
   Z;
@@ -829,11 +827,11 @@ implicitly cast to `T as I2`. For example:
 interface Printable { fn Print[me: Self](); }
 interface Renderable { fn Draw[me: Self](); }
 
-structural interface PrintAndRender {
+constraint PrintAndRender {
   impl as Printable;
   impl as Renderable;
 }
-structural interface JustPrint {
+constraint JustPrint {
   impl as Printable;
 }
 
@@ -869,7 +867,7 @@ interface Renderable {
 }
 
 // `Printable & Renderable` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Printable;
   impl as Renderable;
   alias Print = Printable.Print;
@@ -911,7 +909,7 @@ interface EndOfGame {
   fn Winner[me: Self](player: Int);
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Renderable;
   impl as EndOfGame;
   alias Center = Renderable.Center;
@@ -923,11 +921,11 @@ structural interface {
 ```
 
 Conflicts can be resolved at the call site using
-[the qualified name syntax](#qualified-member-names), or by defining a
-structural interface explicitly and renaming the methods:
+[the qualified name syntax](#qualified-member-names), or by defining a named
+constraint explicitly and renaming the methods:
 
 ```
-structural interface RenderableAndEndOfGame {
+constraint RenderableAndEndOfGame {
   impl as Renderable;
   impl as EndOfGame;
   alias Center = Renderable.Center;
@@ -970,14 +968,14 @@ and `B [&] A` has the names of `B`.
 
 ```
 // `Printable [&] Renderable` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Printable;
   impl as Renderable;
   alias Print = Printable.Print;
 }
 
 // `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Renderable;
   impl as EndOfGame;
   alias Center = Renderable.Center;
@@ -1013,7 +1011,7 @@ requires all containers to also satisfy the requirements of
 `Swappable`. This is already a capability for
 [type-of-types in general](#type-of-types-and-facet-types). For consistency we
 will use the same semantics and syntax as we do for
-[structural interfaces](#structural-interfaces):
+[named constraints](#named-constraints):
 
 ```
 interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
@@ -1039,9 +1037,9 @@ var x: Iota;
 DoAdvanceAndEquals(x);
 ```
 
-Like with structural interfaces, an interface implementation requirement doesn't
-by itself add any names to the interface, but again those can be added with
-`alias` declarations:
+Like with named constraints, an interface implementation requirement doesn't by
+itself add any names to the interface, but again those can be added with `alias`
+declarations:
 
 ```
 interface Hashable {
@@ -1155,10 +1153,10 @@ interface PreferredConversion {
 }
 ```
 
-#### `extends` and `impl` with structural interfaces
+#### `extends` and `impl` with named constraints
 
 The `extends` declaration makes sense with the same meaning inside a
-[`structural interface`](#structural-interfaces), and so is also supported.
+[`constraint`](#named-constraints) definition, and so is also supported.
 
 ```
 interface Media {
@@ -1168,7 +1166,7 @@ interface Job {
   fn Run[me: Self]();
 }
 
-structural interface Combined {
+constraint Combined {
   extends Media;
   extends Job;
 }
@@ -1179,7 +1177,7 @@ This definition of `Combined` is equivalent to requiring both the `Media` and
 
 ```
 // Equivalent
-structural interface Combined {
+constraint Combined {
   impl as Media;
   alias Play = Media.Play;
   impl as Job;
@@ -1188,8 +1186,8 @@ structural interface Combined {
 ```
 
 Notice how `Combined` has aliases for all the methods in the interfaces it
-requires. That condition is sufficient to allow a type to `impl` the structural
-interface:
+requires. That condition is sufficient to allow a type to `impl` the named
+constraint:
 
 ```
 class Song {
@@ -1217,7 +1215,7 @@ This is just like you get an implementation of `Equatable` by implementing
 `Hashable` when `Hashable` extends `Equatable`. This provides a tool useful for
 [evolution](#evolution).
 
-Conversely, an `interface` can extend a `structural interface`:
+Conversely, an `interface` can extend a `constraint`:
 
 ```
 interface MovieCodec {
@@ -2157,11 +2155,10 @@ one can unambiguously be picked as most specific.
 [a goal for Carbon](goals.md#coherence). More detail can be found in
 [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
-### Parameterized structural interfaces
+### Parameterized named constraints
 
-We should also allow the [structural interface](#structural-interfaces)
-construct to support parameters. Parameters would work the same way as for
-regular, that is nominal or non-structural, interfaces.
+We should also allow the [named constraint](#named-constraints) construct to
+support parameters. Parameters would work the same way as for interfaces.
 
 ## Future work
 
