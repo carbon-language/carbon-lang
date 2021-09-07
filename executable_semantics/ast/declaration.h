@@ -5,8 +5,8 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 #define EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 
-#include <list>
 #include <string>
+#include <vector>
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/class_definition.h"
@@ -77,7 +77,7 @@ class FunctionDeclaration : public Declaration {
 class ClassDeclaration : public Declaration {
  public:
   ClassDeclaration(SourceLocation loc, std::string name,
-                   std::list<Ptr<Member>> members)
+                   std::vector<Ptr<Member>> members)
       : Declaration(Kind::ClassDeclaration, loc),
         definition({.loc = loc,
                     .name = std::move(name),
@@ -97,7 +97,7 @@ class ChoiceDeclaration : public Declaration {
  public:
   ChoiceDeclaration(
       SourceLocation loc, std::string name,
-      std::list<std::pair<std::string, Ptr<const Expression>>> alternatives)
+      std::vector<std::pair<std::string, Ptr<const Expression>>> alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -108,13 +108,13 @@ class ChoiceDeclaration : public Declaration {
 
   auto Name() const -> const std::string& { return name; }
   auto Alternatives() const
-      -> const std::list<std::pair<std::string, Ptr<const Expression>>>& {
+      -> const std::vector<std::pair<std::string, Ptr<const Expression>>>& {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::list<std::pair<std::string, Ptr<const Expression>>> alternatives;
+  std::vector<std::pair<std::string, Ptr<const Expression>>> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.

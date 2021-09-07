@@ -5,7 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_AST_H_
 #define EXECUTABLE_SEMANTICS_AST_AST_H_
 
-#include <list>
+#include <vector>
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/library_name.h"
@@ -22,7 +22,7 @@ struct AST {
   // Import directives.
   std::vector<LibraryName> imports;
   // The file's ordered declarations.
-  std::list<Ptr<const Declaration>> declarations;
+  std::vector<Ptr<const Declaration>> declarations;
 };
 
 }  // namespace Carbon
