@@ -1204,15 +1204,16 @@ class MyDerivedType extends MyBaseType {
 
 There are two cases that aren't well supported with this pattern:
 
--   Users cannot create a value of an abstract class, which is necessary
-    when it has private fields or otherwise requires initialization.
--   Users may want to reduce the chance of mistakes where a virtual method
-    is called on the base class prior to forming the derived class and use
-    the base class implementations.
+-   Users cannot create a value of an abstract class, which is necessary when it
+    has private fields or otherwise requires initialization.
+-   Users may want to reduce the chance of mistakes from calling a method on a
+    partially constructed object. Of particular concern is calling a virtual
+    method prior to forming the derived class and so it uses the base class
+    implementation.
 
-While expected to be relatively rarely needed, we will address both of
-these concerns with a specialized type just used during construction
-of base classes, called the partial facet type for the class.
+While expected to be relatively rarely needed, we will address both of these
+concerns with a specialized type just used during construction of base classes,
+called the partial facet type for the class.
 
 **Open question:** Issue
 [#741: Constructing an object of a derived type](https://github.com/carbon-language/carbon-lang/issues/741)
