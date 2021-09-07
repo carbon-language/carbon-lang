@@ -1,6 +1,9 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: ../executable_semantics %s | \
+// RUN:   FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -12,3 +15,8 @@ class Point {
 fn main() -> i32 {
   return Point(.x = 1, .z = 2).x - 1;
 }
+
+// AUTOUPDATE: ../executable_semantics %s
+// CHECK: COMPILATION ERROR: executable_semantics/testdata/class_field_mismatch.carbon:16: type error in call
+// CHECK: expected: (x = i32, y = i32)
+// CHECK: actual: (x = i32, z = i32)

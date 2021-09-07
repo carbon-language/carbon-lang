@@ -33,6 +33,10 @@ _TEST_LIST_FOOTER = """
 ]
 """
 
+# TODO: Right now this is a static string used. In theory maybe we should use
+# the command; it's included for that flexibility.
+_AUTOUPDATE_MARKER = "// AUTOUPDATE: ../executable_semantics %s\n"
+
 
 def _parse_args(args=None):
     """Parses command-line arguments and flags."""
@@ -66,9 +70,8 @@ def _parse_args(args=None):
 
 def _update_list(use_git_state):
     """Updates test_list.bzl."""
-    # Get the list of tests and goldens from the filesystem.
+    # Get the list of tests from the filesystem.
     tests = set()
-    goldens = set()
     if use_git_state:
         ls_files = subprocess.check_output(["git", "ls-files", _TESTDATA])
         files = ls_files.decode("utf-8").splitlines()
@@ -76,21 +79,19 @@ def _update_list(use_git_state):
         files = list(os.listdir(_TESTDATA))
     for path in files:
         f = os.path.basename(path)
+        if f == "lit.cfg":
+            # Ignore the lit config.
+            continue
         basename, ext = os.path.splitext(f)
         if ext == ".carbon":
             tests.add(basename)
-        elif ext == ".golden":
-            goldens.add(basename)
         else:
             sys.exit("Unrecognized file type in testdata: %s" % f)
 
-    # Update test_list.bzl if needed, creating any missing golden files too.
+    # Update test_list.bzl if needed.
     test_list = _TEST_LIST_HEADER.lstrip("\n")
     for test in sorted(tests):
         test_list += '    "%s",\n' % test
-        if test not in goldens:
-            print("Creating empty golden '%s.golden' for test." % test)
-            open(os.path.join(_TESTDATA, "%s.golden" % test), "w").close()
     test_list += _TEST_LIST_FOOTER.lstrip("\n")
     bzl_content = open(_TEST_LIST_BZL).read()
     if bzl_content != test_list:
@@ -100,56 +101,52 @@ def _update_list(use_git_state):
     else:
         print("test_list.bzl is up-to-date")
 
-    # Garbage collect unnecessary golden files.
-    for golden in sorted(goldens):
-        if golden not in tests:
-            filename = "%s.golden" % golden
-            print("Removing golden '%s' because it has no test." % filename)
-            os.unlink(os.path.join(_TESTDATA, filename))
-
 
 def _update_golden(test):
-    """Updates the golden file for `test` by running executable_semantics."""
-    # Invoke the test update directly in order to allow parallel execution
-    # (`bazel run` will serialize).
+    """Updates the golden output for `test` by running executable_semantics."""
+    test_file = "%s/%s.carbon" % (_TESTDATA, test)
+    with open(test_file) as f:
+        orig_lines = f.readlines()
+    if _AUTOUPDATE_MARKER not in orig_lines:
+        raise ValueError("No autoupdate marker in %s" % test_file)
+    # Run executable_semantics to general output.
+    # (`bazel run` would serialize)
     p = subprocess.run(
-        [
-            "%s/%s_test" % (_BINDIR, test),
-            "%s/%s.golden" % (_TESTDATA, test),
-            "%s/executable_semantics %s/%s.carbon" % (_BINDIR, _TESTDATA, test),
-            "--update",
-        ],
+        ["%s/executable_semantics" % _BINDIR, test_file],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    if p.returncode != 0:
-        out = p.stdout.decode("utf-8")
-        print(out, file=sys.stderr, end="")
-        sys.exit("ERROR: Updating test '%s' failed" % test)
+    out = p.stdout.decode("utf-8")
+
+    # Remove old OUT.
+    lines_without_golden = [
+        x for x in orig_lines if not x.startswith("// CHECK:")
+    ]
+    autoupdate_index = lines_without_golden.index(_AUTOUPDATE_MARKER)
+    assert autoupdate_index >= 0
+    with open(test_file, "w") as f:
+        f.writelines(lines_without_golden[: autoupdate_index + 1])
+        f.writelines(["// CHECK: %s\n" % x for x in out.splitlines()])
+        f.writelines(lines_without_golden[autoupdate_index + 1 :])
+
     print(".", end="", flush=True)
 
 
 def _update_goldens():
-    """Runs bazel to update golden files."""
+    """Runs bazel to update golden output."""
     # Load tests from the bzl file. This isn't done through os.listdir because
     # building new tests requires --update_list.
     bzl_content = open(_TEST_LIST_BZL).read()
     tests = re.findall(r'"(\w+)",', bzl_content)
 
     # Build all tests at once in order to allow parallel updates.
-    print("Building tests...")
-    subprocess.check_call(
-        [
-            "bazel",
-            "build",
-            "//executable_semantics:golden_tests",
-        ],
-    )
+    print("Building executable_semantics...")
+    subprocess.check_call(["bazel", "build", "//executable_semantics"])
 
     print("Updating %d goldens..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
-        list([exec.map(_update_golden, tests)])
+        list(exec.map(_update_golden, tests))
     # Each golden indicates progress with a dot without a newline, so put a
     # newline to wrap.
     print("\nUpdated goldens.")
