@@ -1202,14 +1202,17 @@ class MyDerivedType extends MyBaseType {
 }
 ```
 
-There are two additional concerns:
+There are two cases that aren't well supported with this pattern:
 
--   We don't want users to create a value with an abstract type.
--   We want to reduce mistakes where a method is called on an object that isn't
-    fully constructed.
+-   Users cannot create a value of an abstract class, which is necessary
+    when it has private fields or otherwise requires initialization.
+-   Users may want to reduce the chance of mistakes where a virtual method
+    is called on the base class prior to forming the derived class and use
+    the base class implementations.
 
-We address both of these concerns by introducing another type just used during
-construction of base classes, called the partial facet type for the class.
+While expected to be relatively rarely needed, we will address both of
+these concerns with a specialized type just used during construction
+of base classes, called the partial facet type for the class.
 
 **Open question:** Issue
 [#741: Constructing an object of a derived type](https://github.com/carbon-language/carbon-lang/issues/741)
@@ -1322,7 +1325,7 @@ function, there are two choices:
       protected fn Create() -> partial Self {
         returned var result: partial Self = {...};
         // Careful! Pointer to object that isn't fully constructed!
-        StoreMyPointerSomewhere(&result as Self);
+        StoreMyPointerSomewhere(&result as Self*);
         return var;
       }
     }
