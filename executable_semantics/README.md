@@ -198,6 +198,9 @@ the continuation. After the first `__run`, the control state is just after the
 `__await`. After the second `__run`, the control state is at the end of the
 continuation.
 
+Continuation variables are currently copyable, but that operation is "shallow":
+the two values are aliases for the same underlying continuation object.
+
 The delimited continuation feature described here is based on the
 `shift`/`reset` style of delimited continuations created by Danvy and Filinsky
 (Abstracting control, ACM Conference on Lisp and Functional Programming, 1990).
