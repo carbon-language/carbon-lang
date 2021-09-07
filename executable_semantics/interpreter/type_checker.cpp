@@ -658,7 +658,7 @@ auto TypeChecker::TypeCheckStmt(Ptr<const Statement> s, TypeEnv types,
       const auto& match = cast<Match>(*s);
       auto res = TypeCheckExp(match.Exp(), types, values);
       auto res_type = res.type;
-      std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>
+      std::vector<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>
           new_clauses;
       for (auto& clause : match.Clauses()) {
         new_clauses.push_back(TypeCheckCase(res_type, clause.first,
@@ -816,7 +816,7 @@ static auto CheckOrEnsureReturn(std::optional<Ptr<const Statement>> opt_stmt,
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
       const auto& match = cast<Match>(*stmt);
-      std::list<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>
+      std::vector<std::pair<Ptr<const Pattern>, Ptr<const Statement>>>
           new_clauses;
       for (const auto& clause : match.Clauses()) {
         auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
@@ -995,7 +995,7 @@ auto TypeChecker::MakeTypeChecked(const Ptr<const Declaration> d,
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def =
           cast<ClassDeclaration>(*d).Definition();
-      std::list<Ptr<Member>> fields;
+      std::vector<Ptr<Member>> fields;
       for (Ptr<Member> m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember:
@@ -1091,7 +1091,7 @@ void TypeChecker::TopLevel(const Declaration& d, TypeCheckContext* tops) {
   }
 }
 
-auto TypeChecker::TopLevel(const std::list<Ptr<const Declaration>>& fs)
+auto TypeChecker::TopLevel(const std::vector<Ptr<const Declaration>>& fs)
     -> TypeCheckContext {
   TypeCheckContext tops;
   bool found_main = false;

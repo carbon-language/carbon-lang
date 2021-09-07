@@ -30,7 +30,7 @@ class TypeChecker {
   auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
                        const Env& values) -> Ptr<const Declaration>;
 
-  auto TopLevel(const std::list<Ptr<const Declaration>>& fs)
+  auto TopLevel(const std::vector<Ptr<const Declaration>>& fs)
       -> TypeCheckContext;
 
  private:
