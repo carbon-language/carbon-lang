@@ -25,7 +25,6 @@ TEST_LIST = [
     "experimental_continuation5",
     "experimental_continuation6",
     "experimental_continuation7",
-    "experimental_continuation8",
     "experimental_continuation9",
     "fun1",
     "fun2",
