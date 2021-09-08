@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: not ../executable_semantics %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines %s
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not ../executable_semantics --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines %s
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+
 
 package ExecutableSemanticsTest api;
 
@@ -18,6 +19,6 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail1.carbon:17: type error in argument deduction
+// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail1.carbon:18: type error in argument deduction
 // CHECK: expected: i32
 // CHECK: actual: Bool

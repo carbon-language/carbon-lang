@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: not ../executable_semantics %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines %s
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not ../executable_semantics --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines %s
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+
 
 package ExecutableSemanticsTest api;
 
@@ -15,4 +16,4 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/string_fail6.carbon:13: Invalid escaping in string: "new	line"
+// CHECK: COMPILATION ERROR: {{.*}}/string_fail6.carbon:14: Invalid escaping in string: "new	line"
