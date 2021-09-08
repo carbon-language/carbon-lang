@@ -4,11 +4,12 @@
 
 """Rule for a lit test."""
 
-def lit_test(name, test_path, data, args = None, env = None, **kwargs):
+def lit_test(name, test_path, data, tools, args = None, env = None, **kwargs):
     """Compares two files. Passes if they are identical.
 
     Args:
       name: Name of the build rule.
+      test_path: The path to the
       data: Data files.
       env: Optional environment.
       **kwargs: Any additional parameters for the generated py_test.
@@ -21,7 +22,11 @@ def lit_test(name, test_path, data, args = None, env = None, **kwargs):
         name = name,
         srcs = ["//bazel/testing:lit_test.py"],
         main = "//bazel/testing:lit_test.py",
-        data = ["@llvm-project//llvm:lit"] + data,
+        data = [
+            "@llvm-project//llvm:lit",
+            "@llvm-project//llvm:not",
+            "@llvm-project//llvm:FileCheck",
+        ] + data + tools,
         args = [test_path] + args,
         env = env,
         **kwargs

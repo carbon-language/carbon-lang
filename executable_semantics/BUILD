@@ -22,10 +22,10 @@ cc_binary(
         args = ["-v"],
         data = [
             "testdata/lit.cfg",
-            ":executable_semantics",
             "testdata/%s.carbon" % x,
         ],
         test_path = "executable_semantics/testdata",
+        tools = [":executable_semantics"],
     )
     for x in TEST_LIST
 ]
