@@ -2,7 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines %s
+// RUN: not ../executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines %s
 
 package ExecutableSemanticsTest api;
 
@@ -13,4 +16,4 @@ line");
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/string_fail5.carbon:10: invalid character '\x22' in source file.
+// CHECK: COMPILATION ERROR: {{.*}}/string_fail5.carbon:13: invalid character '\x22' in source file.

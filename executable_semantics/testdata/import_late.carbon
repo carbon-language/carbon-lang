@@ -2,7 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines %s
+// RUN: not ../executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines %s
 
 package ExecutableSemanticsTest api;
 
@@ -13,4 +16,4 @@ fn main() -> i32 {
 import ExecutableSemanticsTest library "Nonexistent";
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/import_late.carbon:13: syntax error, unexpected IMPORT, expecting END_OF_FILE
+// CHECK: COMPILATION ERROR: {{.*}}/import_late.carbon:16: syntax error, unexpected IMPORT, expecting END_OF_FILE

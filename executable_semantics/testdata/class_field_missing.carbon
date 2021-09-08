@@ -2,7 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines %s
+// RUN: not ../executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines %s
 
 package ExecutableSemanticsTest api;
 
@@ -16,6 +19,6 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/class_field_missing.carbon:15: type error in call
+// CHECK: COMPILATION ERROR: {{.*}}/class_field_missing.carbon:18: type error in call
 // CHECK: expected: (x = i32, y = i32)
 // CHECK: actual: (x = i32)
