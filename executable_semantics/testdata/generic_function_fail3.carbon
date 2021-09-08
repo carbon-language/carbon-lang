@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -16,6 +15,6 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: executable_semantics/testdata/generic_function_fail3.carbon:11: type error in addition(1)
+// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail3.carbon:10: type error in addition(1)
 // CHECK: expected: i32
 // CHECK: actual: T

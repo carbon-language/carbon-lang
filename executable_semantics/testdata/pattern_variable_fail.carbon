@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -14,4 +13,4 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: executable_semantics/testdata/pattern_variable_fail.carbon:12: syntax error, unexpected COLON
+// CHECK: COMPILATION ERROR: {{.*}}/pattern_variable_fail.carbon:11: syntax error, unexpected COLON

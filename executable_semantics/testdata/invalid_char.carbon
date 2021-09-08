@@ -2,10 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 �
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: executable_semantics/testdata/invalid_char.carbon:8: invalid character '\xEF' in source file.
+// CHECK: COMPILATION ERROR: {{.*}}/invalid_char.carbon:7: invalid character '\xEF' in source file.

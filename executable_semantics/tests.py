@@ -118,6 +118,10 @@ def _update_golden(test):
     )
     out = p.stdout.decode("utf-8")
 
+    # `lit` uses full paths to the test file, so use a regex to ignore paths
+    # when used.
+    out = out.replace(test_file, "{{.*}}/%s.carbon" % test)
+
     # Remove old OUT.
     lines_without_golden = [
         x for x in orig_lines if not x.startswith("// CHECK:")

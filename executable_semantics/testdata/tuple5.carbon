@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -15,4 +14,4 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: PROGRAM ERROR: executable_semantics/testdata/tuple5.carbon:13: Tuple field name 'y' does not match pattern field name 'x'
+// CHECK: PROGRAM ERROR: {{.*}}/tuple5.carbon:12: Tuple field name 'y' does not match pattern field name 'x'

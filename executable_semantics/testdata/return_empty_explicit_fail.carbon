@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -17,4 +16,4 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: COMPILATION ERROR: executable_semantics/testdata/return_empty_explicit_fail.carbon:11: return (); should not provide a return value, to match the function's signature.
+// CHECK: COMPILATION ERROR: {{.*}}/return_empty_explicit_fail.carbon:10: return (); should not provide a return value, to match the function's signature.

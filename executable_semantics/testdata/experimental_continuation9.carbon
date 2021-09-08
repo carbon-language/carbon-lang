@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -26,4 +25,4 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: RUNTIME ERROR: executable_semantics/testdata/experimental_continuation9.carbon:17: undefined behavior: access to dead value 1
+// CHECK: RUNTIME ERROR: {{.*}}/experimental_continuation9.carbon:16: undefined behavior: access to dead value 1

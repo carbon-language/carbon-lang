@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s | \
-// RUN:   FileCheck %s
+// RUN: not ../executable_semantics %s 2>&1 | FileCheck %s
 
 package ExecutableSemanticsTest api;
 
@@ -14,4 +13,4 @@ fn main() -> i32 {
 }
 
 // AUTOUPDATE: ../executable_semantics %s
-// CHECK: PROGRAM ERROR: executable_semantics/testdata/fun_named_params2.carbon:10: positional members must come before named members
+// CHECK: PROGRAM ERROR: {{.*}}/fun_named_params2.carbon:9: positional members must come before named members
