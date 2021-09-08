@@ -64,6 +64,8 @@ def main():
         symlink_dir,
         env["PATH"],
     )
+
+    # Create symlinks to all the tools.
     bin_dir = os.getcwd()
     relative_base = os.path.dirname(_normalize("", env["TEST_TARGET"]))
     for tool in parsed_args.tool:
@@ -73,14 +75,18 @@ def main():
         if not os.path.exists(symlinked_file):
             raise ValueError("Missing file: %s" % symlinked_file)
         os.symlink(symlinked_file, symlink_loc)
+
+    # Figure out the actual path for the test_dir.
     test_dir = os.path.join(
         bin_dir, _normalize(relative_base, parsed_args.test_dir)
     )
 
+    # Run lit.
     p = subprocess.run(
         args=["lit", test_dir] + parsed_args.lit_args,
         env=env,
     )
+    # Do this instead of check_call to hide stack traces.
     if p.returncode != 0:
         exit("lit failed, exit code %d" % p.returncode)
 
