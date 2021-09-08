@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+package ExecutableSemanticsTest api;
+
 // Never actually called, so this only tests typechecking and semantic analysis.
 fn F(n: i32, p: i32*, q: i32***) -> i32* {
   var a: i32 = n * *p;

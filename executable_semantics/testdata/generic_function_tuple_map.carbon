@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+package ExecutableSemanticsTest api;
+
 fn map[T:! Type](f: fnty (T) -> T, tuple: (T, T)) -> (T, T) {
   return (f(tuple[0]), f(tuple[1]));
 }

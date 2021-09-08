@@ -5,8 +5,8 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_FRAME_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_FRAME_H_
 
-#include <list>
 #include <string>
+#include <vector>
 
 #include "common/ostream.h"
 #include "executable_semantics/interpreter/action.h"
@@ -20,12 +20,12 @@ namespace Carbon {
 using Env = Dictionary<std::string, Address>;
 
 struct Scope {
-  explicit Scope(Env values) : Scope(values, std::list<std::string>()) {}
-  Scope(Env values, std::list<std::string> l)
+  explicit Scope(Env values) : Scope(values, std::vector<std::string>()) {}
+  Scope(Env values, std::vector<std::string> l)
       : values(values), locals(std::move(l)) {}
 
   Env values;
-  std::list<std::string> locals;
+  std::vector<std::string> locals;
 };
 
 // A frame represents either a function call or a delimited continuation.

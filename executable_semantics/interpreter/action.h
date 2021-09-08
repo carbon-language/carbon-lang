@@ -38,11 +38,13 @@ class Action {
   auto Pos() const -> int { return pos; }
 
   // Results from a subexpression.
-  auto Results() const -> const std::vector<const Value*>& { return results; }
+  auto Results() const -> const std::vector<Ptr<const Value>>& {
+    return results;
+  }
 
   void SetPos(int pos) { this->pos = pos; }
 
-  void AddResult(const Value* result) { results.push_back(result); }
+  void AddResult(Ptr<const Value> result) { results.push_back(result); }
 
   void Clear() {
     pos = 0;
@@ -65,7 +67,7 @@ class Action {
 
  private:
   int pos = 0;
-  std::vector<const Value*> results;
+  std::vector<Ptr<const Value>> results;
 
   const Kind tag;
 };

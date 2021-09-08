@@ -20,10 +20,10 @@ class Dictionary {
   struct Node {
     using ValueType = std::pair<K, V>;
 
-    Node(ValueType e, Node* n) : curr(e), next(n) {}
+    Node(ValueType e, std::optional<Ptr<Node>> n) : curr(e), next(n) {}
 
     const ValueType curr;
-    Node* const next;
+    const std::optional<Ptr<Node>> next;
 
     // Node cells are part of a "persistent data structure" and are thus
     // immutable.
@@ -39,10 +39,10 @@ class Dictionary {
     using reference = const value_type&;
     using iterator_category = std::forward_iterator_tag;
 
-    Iterator(Node* x) : p(x) {}
+    Iterator(std::optional<Ptr<Node>> x) : p(x) {}
     Iterator(const Iterator& iter) : p(iter.p) {}
     Iterator& operator++() {
-      p = p->next;
+      p = (*p)->next;
       return *this;
     }
     Iterator operator++(int) {
@@ -52,15 +52,15 @@ class Dictionary {
     }
     bool operator==(const Iterator& rhs) const { return p == rhs.p; }
     bool operator!=(const Iterator& rhs) const { return p != rhs.p; }
-    const value_type& operator*() { return p->curr; }
-    const value_type* operator->() { return &p->curr; }
+    const value_type& operator*() { return (*p)->curr; }
+    const value_type* operator->() { return &(*p)->curr; }
 
    private:
-    Node* p;
+    std::optional<Ptr<Node>> p;
   };
 
   // Create an empty dictionary.
-  Dictionary() { head = nullptr; }
+  Dictionary() {}
 
   // Return the value associated with the given key.
   // Time complexity: O(n) where n is the number of times
@@ -77,20 +77,20 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = global_arena->RawNew<Node>(std::make_pair(k, v), head);
+    head = global_arena->New<Node>(std::make_pair(k, v), head);
   }
 
-  bool IsEmpty() { return head == nullptr; }
+  bool IsEmpty() { return !head; }
 
   // The position of the first element of the dictionary
   // or `end()` if the dictionary is empty.
   auto begin() const -> Iterator { return Iterator(head); }
 
   // The position one past that of the last element.
-  auto end() const -> Iterator { return Iterator(nullptr); }
+  auto end() const -> Iterator { return Iterator(std::nullopt); }
 
  private:
-  Node* head;
+  std::optional<Ptr<Node>> head;
 };
 
 }  // namespace Carbon

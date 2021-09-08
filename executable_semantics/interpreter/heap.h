@@ -25,14 +25,14 @@ class Heap {
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
-  auto Read(const Address& a, SourceLocation loc) -> const Value*;
+  auto Read(const Address& a, SourceLocation loc) -> Ptr<const Value>;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  void Write(const Address& a, const Value* v, SourceLocation loc);
+  void Write(const Address& a, Ptr<const Value> v, SourceLocation loc);
 
   // Put the given value on the heap and mark it as alive.
-  auto AllocateValue(const Value* v) -> Address;
+  auto AllocateValue(Ptr<const Value> v) -> Address;
 
   // Marks the object at this address, and all of its sub-objects, as dead.
   void Deallocate(const Address& address);
@@ -49,7 +49,7 @@ class Heap {
   // Signal an error if the address is no longer alive.
   void CheckAlive(const Address& address, SourceLocation loc);
 
-  std::vector<const Value*> values_;
+  std::vector<Ptr<const Value>> values_;
   std::vector<bool> alive_;
 };
 

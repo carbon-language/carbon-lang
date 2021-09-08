@@ -5,8 +5,8 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_CLASS_DEFINITION_H_
 #define EXECUTABLE_SEMANTICS_AST_CLASS_DEFINITION_H_
 
-#include <list>
 #include <string>
+#include <vector>
 
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/source_location.h"
@@ -16,7 +16,7 @@ namespace Carbon {
 struct ClassDefinition {
   SourceLocation loc;
   std::string name;
-  std::list<Ptr<Member>> members;
+  std::vector<Ptr<Member>> members;
 };
 
 }  // namespace Carbon

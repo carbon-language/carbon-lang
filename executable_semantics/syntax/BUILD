@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@mypy_integration//:mypy.bzl", "mypy_test")
+
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
 cc_library(
@@ -20,8 +22,6 @@ cc_library(
         "parse_and_lex_context.h",
         "parser.cpp",
         "parser.h",
-        "syntax_helpers.cpp",
-        "syntax_helpers.h",
     ],
     hdrs = [
         "parse.h",
@@ -37,14 +37,13 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:paren_contents",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:tracing_flag",
-        "//executable_semantics/interpreter",
-        "//executable_semantics/interpreter:type_checker",
     ],
 )
 
@@ -82,4 +81,20 @@ genrule(
         "@rules_flex//flex:current_flex_toolchain",
         "@rules_m4//m4:current_m4_toolchain",
     ],
+)
+
+py_library(
+    name = "format_grammar_lib",
+    srcs = ["format_grammar.py"],
+)
+
+py_test(
+    name = "format_grammar_test",
+    srcs = ["format_grammar_test.py"],
+    deps = ["format_grammar_lib"],
+)
+
+mypy_test(
+    name = "format_grammar_mypy_test",
+    deps = [":format_grammar_lib"],
 )

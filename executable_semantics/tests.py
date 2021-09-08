@@ -103,10 +103,9 @@ def _update_list(use_git_state):
     # Garbage collect unnecessary golden files.
     for golden in sorted(goldens):
         if golden not in tests:
-            print(
-                "Removing golden '%s.golden' because it has no test." % golden
-            )
-            os.unlink(os.path.join(_TESTDATA, golden))
+            filename = "%s.golden" % golden
+            print("Removing golden '%s' because it has no test." % filename)
+            os.unlink(os.path.join(_TESTDATA, filename))
 
 
 def _update_golden(test):

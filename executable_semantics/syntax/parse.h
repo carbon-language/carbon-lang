@@ -8,7 +8,7 @@
 #include <string>
 #include <variant>
 
-#include "executable_semantics/ast/abstract_syntax_tree.h"
+#include "executable_semantics/ast/ast.h"
 
 namespace Carbon {
 

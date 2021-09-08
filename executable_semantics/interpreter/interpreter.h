@@ -5,7 +5,6 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
 
-#include <list>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -26,21 +25,21 @@ using Env = Dictionary<std::string, Address>;
 class Interpreter {
  public:
   // Interpret the whole program.
-  auto InterpProgram(const std::list<Ptr<const Declaration>>& fs) -> int;
+  auto InterpProgram(const std::vector<Ptr<const Declaration>>& fs) -> int;
 
   // Interpret an expression at compile-time.
-  auto InterpExp(Env values, Ptr<const Expression> e) -> const Value*;
+  auto InterpExp(Env values, Ptr<const Expression> e) -> Ptr<const Value>;
 
   // Interpret a pattern at compile-time.
-  auto InterpPattern(Env values, Ptr<const Pattern> p) -> const Value*;
+  auto InterpPattern(Env values, Ptr<const Pattern> p) -> Ptr<const Value>;
 
   // Attempts to match `v` against the pattern `p`. If matching succeeds,
   // returns the bindings of pattern variables to their matched values.
-  auto PatternMatch(const Value* p, const Value* v, SourceLocation loc)
+  auto PatternMatch(Ptr<const Value> p, Ptr<const Value> v, SourceLocation loc)
       -> std::optional<Env>;
 
   // Support TypeChecker allocating values on the heap.
-  auto AllocateValue(const Value* v) -> Address {
+  auto AllocateValue(Ptr<const Value> v) -> Address {
     return heap.AllocateValue(v);
   }
 
@@ -58,9 +57,9 @@ class Interpreter {
 
   // Transition type which indicates that the current Action is now done.
   struct Done {
-    // The value computed by the Action. Should always be null for Statement
+    // The value computed by the Action. Should always be nullopt for Statement
     // Actions, and never null for any other kind of Action.
-    const Value* result = nullptr;
+    std::optional<Ptr<const Value>> result;
   };
 
   // Transition type which spawns a new Action on the todo stack above the
@@ -88,15 +87,15 @@ class Interpreter {
   // Transition type which unwinds the entire current stack frame, and returns
   // a specified value to the caller.
   struct UnwindFunctionCall {
-    const Value* return_val;
+    Ptr<const Value> return_val;
   };
 
   // Transition type which removes the current action from the top of the todo
   // stack, then creates a new stack frame which calls the specified function
   // with the specified arguments.
   struct CallFunction {
-    const FunctionValue* function;
-    const Value* args;
+    Ptr<const FunctionValue> function;
+    Ptr<const Value> args;
     SourceLocation loc;
   };
 
@@ -124,14 +123,14 @@ class Interpreter {
   // State transition for statements.
   auto StepStmt() -> Transition;
 
-  void InitGlobals(const std::list<Ptr<const Declaration>>& fs);
+  void InitGlobals(const std::vector<Ptr<const Declaration>>& fs);
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation loc, const std::string& name) -> Address;
 
   void DeallocateScope(Ptr<Scope> scope);
   void DeallocateLocals(Ptr<Frame> frame);
 
-  void PatternAssignment(const Value* pat, const Value* val,
+  void PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
                          SourceLocation loc);
 
   void PrintState(llvm::raw_ostream& out);
@@ -141,7 +140,7 @@ class Interpreter {
 
   Stack<Ptr<Frame>> stack;
   Heap heap;
-  std::optional<const Value*> program_value;
+  std::optional<Ptr<const Value>> program_value;
 };
 
 }  // namespace Carbon

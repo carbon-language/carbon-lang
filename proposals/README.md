@@ -68,6 +68,7 @@ request:
 -   [0676 - `:!` generic syntax](p0676.md)
 -   [0680 - And, or, not](p0680.md)
 -   [0722 - Nominal classes and methods](p0722.md)
+-   [0731 - Generics details 2: adapters, associated types, parameterized interfaces](p0731.md)
 -   [0777 - Inheritance](p0777.md)
 
 <!-- endproposals -->
