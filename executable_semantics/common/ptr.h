@@ -16,7 +16,7 @@ namespace Carbon {
 template <typename T>
 class Ptr {
  public:
-  explicit Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
+  Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
 
   template <typename OtherT,
             std::enable_if_t<std::is_convertible_v<OtherT*, T*>>* = nullptr>

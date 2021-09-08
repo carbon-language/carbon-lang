@@ -59,7 +59,7 @@ class Dictionary {
     std::optional<Ptr<Node>> p;
   };
 
-  // Create an empty dictionary. Does not take ownership of arena.
+  // Create an empty dictionary.
   explicit Dictionary(Ptr<Arena> arena) : arena(arena) {}
 
   // Return the value associated with the given key.

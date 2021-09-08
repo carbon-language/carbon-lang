@@ -24,7 +24,8 @@ using Env = Dictionary<std::string, Address>;
 
 class Interpreter {
  public:
-  Interpreter(Ptr<Arena> arena) : arena(arena), globals(arena), heap(arena) {}
+  explicit Interpreter(Ptr<Arena> arena)
+      : arena(arena), globals(arena), heap(arena) {}
 
   // Interpret the whole program.
   auto InterpProgram(const std::vector<Ptr<const Declaration>>& fs) -> int;
