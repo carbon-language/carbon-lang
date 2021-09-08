@@ -338,9 +338,9 @@ for separate compilation.
 
 #### Exporting entities from an API file
 
-Entities in the API file are part of the library's API by default. They may be
-marked as `private` to indicate they should only be visible to other parts of
-the library.
+Entities in the API file are part of the library's public API by default. They
+may be marked as `private` to indicate they should only be visible to other
+parts of the library.
 
 ```carbon
 package Geometry library "Shapes" api;
@@ -372,8 +372,9 @@ However, separate implementation files are still desirable for a few reasons:
 -   From a code maintenance perspective, having smaller files can make a library
     more maintainable.
 
-Entities in an `impl` file are implicitly `private`. The `private` keyword is
-invalid in `impl` files because it would be redundant.
+Entities in the `impl` file should never have visibility keywords. If they are
+forward declared in the `api` file, they use the declaration's visibility; if
+they are defined in the `impl` file, they are implicitly `private`.
 
 #### Granularity of libraries
 
