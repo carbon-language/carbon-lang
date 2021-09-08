@@ -132,6 +132,71 @@ size_t getSizeForTypeAArch64(uint64_t Type) {
   }
 }
 
+bool skipRelocationProcessX86(uint64_t Type, uint64_t Contents) {
+  return false;
+}
+
+bool skipRelocationProcessAArch64(uint64_t Type, uint64_t Contents) {
+  auto IsMov = [](uint64_t Contents) -> bool {
+    // The bits 28-23 are 0b100101
+    if ((Contents & 0x1f800000) == 0x12800000)
+      return true;
+    return false;
+  };
+
+  auto IsB = [](uint64_t Contents) -> bool {
+    // The bits 31-26 are 0b000101
+    if ((Contents & 0xfc000000) == 0x14000000)
+      return true;
+    return false;
+  };
+
+  auto IsNop = [](uint64_t Contents) -> bool {
+    return Contents == 0xd503201f;
+  };
+
+  // The linker might eliminate the instruction and replace it with NOP, ignore
+  if (IsNop(Contents))
+    return true;
+
+  // The linker might perform TLS relocations relaxations, such as
+  // changed TLS access model (e.g. changed global dynamic model
+  // to initial exec), thus changing the instructions. The static
+  // relocations might be invalid at this point and we might no
+  // need to proccess these relocations anymore.
+  // More information could be find by searching
+  // elfNN_aarch64_tls_relax in bfd
+  switch (Type) {
+  default:
+    break;
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21: {
+    if (IsMov(Contents))
+      return true;
+  }
+  }
+
+  // The ld might replace load/store instruction with jump and
+  // veneer due to errata 843419
+  // https://documentation-service.arm.com/static/5fa29fddb209f547eebd361d
+  // Thus load/store relocations for these instructions must be ignored
+  // NOTE: We only process GOT and TLS relocations this way since the
+  // addend used in load/store instructions won't change after bolt
+  // (it is important since the instruction in veneer won't have relocation)
+  switch (Type) {
+  default:
+    break;
+  case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12: {
+    if (IsB(Contents))
+      return true;
+  }
+  }
+
+  return false;
+}
+
 uint64_t extractValueX86(uint64_t Type, uint64_t Contents, uint64_t PC) {
   if (Type == ELF::R_X86_64_32S)
     return SignExtend64<32>(Contents & 0xffffffff);
@@ -351,6 +416,12 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   if (Arch == Triple::aarch64)
     return getSizeForTypeAArch64(Type);
   return getSizeForTypeX86(Type);
+}
+
+bool Relocation::skipRelocationProcess(uint64_t Type, uint64_t Contents) {
+  if (Arch == Triple::aarch64)
+    return skipRelocationProcessAArch64(Type, Contents);
+  return skipRelocationProcessX86(Type, Contents);
 }
 
 uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,

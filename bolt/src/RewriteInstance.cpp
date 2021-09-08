@@ -1825,13 +1825,11 @@ int64_t getRelocationAddend(const ELFObjectFileBase *Obj,
 }
 } // anonymous namespace
 
-bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
-                                        uint64_t RType,
-                                        std::string &SymbolName,
-                                        bool &IsSectionRelocation,
-                                        uint64_t &SymbolAddress,
-                                        int64_t &Addend,
-                                        uint64_t &ExtractedValue) const {
+bool RewriteInstance::analyzeRelocation(
+    const RelocationRef &Rel, uint64_t RType, std::string &SymbolName,
+    bool &IsSectionRelocation, uint64_t &SymbolAddress, int64_t &Addend,
+    uint64_t &ExtractedValue, bool &Skip) const {
+  Skip = false;
   if (!Relocation::isSupported(RType))
     return false;
 
@@ -1842,6 +1840,9 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   ErrorOr<uint64_t> Value =
       BC->getUnsignedValueAtAddress(Rel.getOffset(), RelSize);
   assert(Value && "failed to extract relocated value");
+  if ((Skip = Relocation::skipRelocationProcess(RType, *Value)))
+    return true;
+
   ExtractedValue = Relocation::extractValue(RType,
                                             *Value,
                                             Rel.getOffset());
@@ -2340,17 +2341,20 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     int64_t Addend;
     uint64_t ExtractedValue;
     bool IsSectionRelocation;
-    if (!analyzeRelocation(Rel,
-                           RType,
-                           SymbolName,
-                           IsSectionRelocation,
-                           SymbolAddress,
-                           Addend,
-                           ExtractedValue)) {
+    bool Skip;
+    if (!analyzeRelocation(Rel, RType, SymbolName, IsSectionRelocation,
+                           SymbolAddress, Addend, ExtractedValue, Skip)) {
+      LLVM_DEBUG(dbgs() << "BOLT-WARNING: failed to analyze relocation @ "
+                        << "offset = 0x" << Twine::utohexstr(Rel.getOffset())
+                        << "; type name = " << TypeName << '\n');
+      ++NumFailedRelocations;
+      continue;
+    }
+
+    if (Skip) {
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: skipping relocation @ offset = 0x"
                         << Twine::utohexstr(Rel.getOffset())
                         << "; type name = " << TypeName << '\n');
-      ++NumFailedRelocations;
       continue;
     }
 

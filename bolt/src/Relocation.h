@@ -54,6 +54,9 @@ struct Relocation {
   /// Return size of this relocation.
   size_t getSize() const { return getSizeForType(Type); }
 
+  /// Handle special cases when relocation should not be processed by bolt
+  static bool skipRelocationProcess(uint64_t Type, uint64_t Contents);
+
   /// Extract current relocated value from binary contents. This is used for
   /// RISC architectures where values are encoded in specific bits depending
   /// on the relocation value. For X86, we limit to sign extending the value
