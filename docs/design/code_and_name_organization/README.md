@@ -374,7 +374,7 @@ However, separate implementation files are still desirable for a few reasons:
 
 Entities in the `impl` file should never have visibility keywords. If they are
 forward declared in the `api` file, they use the declaration's visibility; if
-they are defined in the `impl` file, they are implicitly `private`.
+they are only present in the `impl` file, they are implicitly `private`.
 
 #### Granularity of libraries
 
