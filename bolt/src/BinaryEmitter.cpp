@@ -1008,47 +1008,36 @@ void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
     if (Function.isEmitted())
       continue;
 
-    DWARFUnit *Unit = Function.getDWARFUnit();
     const DWARFDebugLine::LineTable *LineTable = Function.getDWARFLineTable();
-
     if (!LineTable)
       continue; // nothing to update for this function
 
+    const uint64_t Address = Function.getAddress();
     std::vector<uint32_t> Results;
-    MCSection *FunctionSection =
-        BC.getCodeSection(Function.getCodeSectionName());
+    if (!LineTable->lookupAddressRange(
+            {Address, object::SectionedAddress::UndefSection},
+            Function.getSize(), Results))
+      continue;
 
-    uint64_t Address = It.first;
-    if (LineTable->lookupAddressRange({Address, 0}, Function.getMaxSize(),
-                                      Results)) {
-      BinaryLineSection &OutputLineTable =
-          BC.getDwarfLineTable(Unit->getOffset()).getBinaryLineSections();
-      for (uint32_t RowIndex : Results) {
-        const DWARFDebugLine::Row &Row = LineTable->Rows[RowIndex];
-        BC.Ctx->setCurrentDwarfLoc(
-            Row.File, Row.Line, Row.Column,
-            (DWARF2_FLAG_IS_STMT * Row.IsStmt) |
-                (DWARF2_FLAG_BASIC_BLOCK * Row.BasicBlock) |
-                (DWARF2_FLAG_PROLOGUE_END * Row.PrologueEnd) |
-                (DWARF2_FLAG_EPILOGUE_BEGIN * Row.EpilogueBegin),
-            Row.Isa, Row.Discriminator);
-        MCDwarfLoc Loc = BC.Ctx->getCurrentDwarfLoc();
-        BC.Ctx->clearDwarfLocSeen();
-        OutputLineTable.addLineEntry(
-            BinaryDwarfLineEntry{Row.Address.Address, Loc}, FunctionSection);
-      }
-      // Add an empty entry past the end of the function
-      // for end_sequence mark.
-      BC.Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0);
-      MCDwarfLoc Loc = BC.Ctx->getCurrentDwarfLoc();
-      BC.Ctx->clearDwarfLocSeen();
-      OutputLineTable.addLineEntry(
-          BinaryDwarfLineEntry{Address + Function.getMaxSize(), Loc},
-          FunctionSection);
-    } else {
-      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: function " << Function
-                        << " has no associated line number information\n");
+    if (Results.empty())
+      continue;
+
+    // The first row returned could be the last row matching the start address.
+    // Find the first row with the same address that is not the end of the
+    // sequence.
+    uint64_t FirstRow = Results.front();
+    while (FirstRow > 0) {
+      const DWARFDebugLine::Row &PrevRow = LineTable->Rows[FirstRow - 1];
+      if (PrevRow.Address.Address != Address || PrevRow.EndSequence)
+        break;
+      --FirstRow;
     }
+
+    const uint64_t EndOfSequenceAddress =
+        Function.getAddress() + Function.getMaxSize();
+    BC.getDwarfLineTable(Function.getDWARFUnit()->getOffset())
+        .addLineTableSequence(LineTable, FirstRow, Results.back(),
+                              EndOfSequenceAddress);
   }
 }
 

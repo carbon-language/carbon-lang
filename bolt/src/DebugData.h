@@ -13,6 +13,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_DEBUG_DATA_H
 #define LLVM_TOOLS_LLVM_BOLT_DEBUG_DATA_H
 
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCDwarf.h"
@@ -512,41 +513,34 @@ public:
   uint64_t getAddress() const { return Address; }
 };
 
-/// Similar to MCLineSection, store line entries per CU but use absolute
-/// addresses for line locations.
-class BinaryLineSection {
-public:
-  // Add an entry to this MCLineSection's line entries.
-  void addLineEntry(const BinaryDwarfLineEntry &LineEntry, MCSection *Sec) {
-    BinaryLineDivisions[Sec].push_back(LineEntry);
-  }
-
-  using BinaryDwarfLineEntryCollection = std::vector<BinaryDwarfLineEntry>;
-  using BinaryLineDivisionMap =
-      MapVector<MCSection *, BinaryDwarfLineEntryCollection>;
-
-private:
-  // A collection of BinaryDwarfLineEntry for each section.
-  BinaryLineDivisionMap BinaryLineDivisions;
-
-public:
-  // Returns the collection of BinaryDwarfLineEntry for a given Compile Unit ID.
-  const BinaryLineDivisionMap &getBinaryLineEntries() const {
-    return BinaryLineDivisions;
-  }
-};
-
 /// Line number information for all parts of the binary.
 class DwarfLineTable {
+public:
+  /// Line number information on contiguous code region from the original
+  /// binary. Represented by [FirstIndex, LastIndex] rows range in the binary
+  /// line table, and the end address of the sequence used for issuing the end
+  /// of the sequence directive.
+  struct RowSequence {
+    uint32_t FirstIndex;
+    uint32_t LastIndex;
+    uint64_t EndAddress;
+  };
+
+private:
   MCDwarfLineTableHeader Header;
+
+  /// Line tables for generated code.
   MCLineSection MCLineSections;
-  BinaryLineSection BinaryLineSections;
+
+  /// Line info for the original code to be merged with tables for new code.
+  const DWARFDebugLine::LineTable *InputTable{nullptr};
+  std::vector<RowSequence> InputSequences;
 
 public:
-  ///  Emit line info for all units in the binary context.
+  /// Emit line info for all units in the binary context.
   static void emit(BinaryContext &BC, MCStreamer &Streamer);
 
-  // Emit the Dwarf file and the line tables for a given CU.
+  /// Emit the Dwarf file and the line tables for a given CU.
   void emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
               Optional<MCDwarfLineStr> &LineStr) const;
 
@@ -565,7 +559,16 @@ public:
 
   MCLineSection &getMCLineSections() { return MCLineSections; }
 
-  BinaryLineSection &getBinaryLineSections() { return BinaryLineSections; }
+  /// Add line information using the sequence from the input line \p Table.
+  void addLineTableSequence(const DWARFDebugLine::LineTable *Table,
+                            uint32_t FirstRow, uint32_t LastRow,
+                            uint64_t EndOfSequenceAddress) {
+    assert(!InputTable || InputTable == Table && "expected same table for CU");
+    InputTable = Table;
+
+    InputSequences.emplace_back(
+        RowSequence{FirstRow, LastRow, EndOfSequenceAddress});
+  }
 };
 
 } // namespace bolt

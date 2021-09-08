@@ -539,76 +539,107 @@ static void emitDwarfSetLineAddrAbs(MCStreamer &OS,
 
 static inline void emitBinaryDwarfLineTable(
     MCStreamer *MCOS, MCDwarfLineTableParams Params,
-    const BinaryLineSection::BinaryDwarfLineEntryCollection &LineEntries) {
+    const DWARFDebugLine::LineTable *Table,
+    const std::vector<DwarfLineTable::RowSequence> &InputSequences) {
+  if (InputSequences.empty())
+    return;
+
+  constexpr uint64_t InvalidAddress = UINT64_MAX;
   unsigned FileNum = 1;
   unsigned LastLine = 1;
   unsigned Column = 0;
   unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
   unsigned Isa = 0;
   unsigned Discriminator = 0;
-  uint64_t LastAddress = -1ULL;
+  uint64_t LastAddress = InvalidAddress;
+  uint64_t PrevEndOfSequence = InvalidAddress;
   const MCAsmInfo *AsmInfo = MCOS->getContext().getAsmInfo();
 
-  // Loop through each line entry and encode the dwarf line number table.
-  for (auto It = LineEntries.begin(), Ie = LineEntries.end(); It != Ie; ++It) {
-    const BinaryDwarfLineEntry &LineEntry = *It;
-    int64_t LineDelta = static_cast<int64_t>(LineEntry.getLine()) - LastLine;
-
-    const uint64_t Address = LineEntry.getAddress();
-    if (std::next(It) == Ie) {
-      // If emitting absolute addresses, the last entry only carries address
-      // info for the DW_LNE_end_sequence. This entry compensates for the lack
-      // of the section context used to emit the end of section label.
-      MCDwarfLineAddr::Emit(MCOS, Params, INT64_MAX, Address - LastAddress);
-      return;
-    }
-
-    if (FileNum != LineEntry.getFileNum()) {
-      FileNum = LineEntry.getFileNum();
-      MCOS->emitInt8(dwarf::DW_LNS_set_file);
-      MCOS->emitULEB128IntValue(FileNum);
-    }
-    if (Column != LineEntry.getColumn()) {
-      Column = LineEntry.getColumn();
-      MCOS->emitInt8(dwarf::DW_LNS_set_column);
-      MCOS->emitULEB128IntValue(Column);
-    }
-    if (Discriminator != LineEntry.getDiscriminator() &&
-        MCOS->getContext().getDwarfVersion() >= 4) {
-      Discriminator = LineEntry.getDiscriminator();
-      unsigned Size = getULEB128Size(Discriminator);
-      MCOS->emitInt8(dwarf::DW_LNS_extended_op);
-      MCOS->emitULEB128IntValue(Size + 1);
-      MCOS->emitInt8(dwarf::DW_LNE_set_discriminator);
-      MCOS->emitULEB128IntValue(Discriminator);
-    }
-    if (Isa != LineEntry.getIsa()) {
-      Isa = LineEntry.getIsa();
-      MCOS->emitInt8(dwarf::DW_LNS_set_isa);
-      MCOS->emitULEB128IntValue(Isa);
-    }
-    if ((LineEntry.getFlags() ^ Flags) & DWARF2_FLAG_IS_STMT) {
-      Flags = LineEntry.getFlags();
-      MCOS->emitInt8(dwarf::DW_LNS_negate_stmt);
-    }
-    if (LineEntry.getFlags() & DWARF2_FLAG_BASIC_BLOCK)
-      MCOS->emitInt8(dwarf::DW_LNS_set_basic_block);
-    if (LineEntry.getFlags() & DWARF2_FLAG_PROLOGUE_END)
-      MCOS->emitInt8(dwarf::DW_LNS_set_prologue_end);
-    if (LineEntry.getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
-      MCOS->emitInt8(dwarf::DW_LNS_set_epilogue_begin);
-
-    if (LastAddress == -1ULL) {
-      emitDwarfSetLineAddrAbs(*MCOS, Params, LineDelta, Address,
-                              AsmInfo->getCodePointerSize());
-    } else {
-      MCDwarfLineAddr::Emit(MCOS, Params, LineDelta, Address - LastAddress);
-    }
-    LastAddress = Address;
-
+  auto emitEndOfSequence = [&](uint64_t Address) {
+    MCDwarfLineAddr::Emit(MCOS, Params, INT64_MAX, Address - LastAddress);
+    FileNum = 1;
+    LastLine = 1;
+    Column = 0;
+    Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
+    Isa = 0;
     Discriminator = 0;
-    LastLine = LineEntry.getLine();
+    LastAddress = InvalidAddress;
+  };
+
+  for (const DwarfLineTable::RowSequence &Sequence : InputSequences) {
+    const uint64_t SequenceStart =
+        Table->Rows[Sequence.FirstIndex].Address.Address;
+
+    // Check if we need to mark the end of the sequence.
+    if (PrevEndOfSequence != InvalidAddress && LastAddress != InvalidAddress &&
+        PrevEndOfSequence != SequenceStart) {
+      emitEndOfSequence(PrevEndOfSequence);
+    }
+
+    for (uint32_t RowIndex = Sequence.FirstIndex;
+         RowIndex <= Sequence.LastIndex; ++RowIndex) {
+      const DWARFDebugLine::Row &Row = Table->Rows[RowIndex];
+      int64_t LineDelta = static_cast<int64_t>(Row.Line) - LastLine;
+      const uint64_t Address = Row.Address.Address;
+
+      if (FileNum != Row.File) {
+        FileNum = Row.File;
+        MCOS->emitInt8(dwarf::DW_LNS_set_file);
+        MCOS->emitULEB128IntValue(FileNum);
+      }
+      if (Column != Row.Column) {
+        Column = Row.Column;
+        MCOS->emitInt8(dwarf::DW_LNS_set_column);
+        MCOS->emitULEB128IntValue(Column);
+      }
+      if (Discriminator != Row.Discriminator &&
+          MCOS->getContext().getDwarfVersion() >= 4) {
+        Discriminator = Row.Discriminator;
+        unsigned Size = getULEB128Size(Discriminator);
+        MCOS->emitInt8(dwarf::DW_LNS_extended_op);
+        MCOS->emitULEB128IntValue(Size + 1);
+        MCOS->emitInt8(dwarf::DW_LNE_set_discriminator);
+        MCOS->emitULEB128IntValue(Discriminator);
+      }
+      if (Isa != Row.Isa) {
+        Isa = Row.Isa;
+        MCOS->emitInt8(dwarf::DW_LNS_set_isa);
+        MCOS->emitULEB128IntValue(Isa);
+      }
+      if (Row.IsStmt != Flags) {
+        Flags = Row.IsStmt;
+        MCOS->emitInt8(dwarf::DW_LNS_negate_stmt);
+      }
+      if (Row.BasicBlock)
+        MCOS->emitInt8(dwarf::DW_LNS_set_basic_block);
+      if (Row.PrologueEnd)
+        MCOS->emitInt8(dwarf::DW_LNS_set_prologue_end);
+      if (Row.EpilogueBegin)
+        MCOS->emitInt8(dwarf::DW_LNS_set_epilogue_begin);
+
+      // The end of the sequence is not normal in the middle of the input
+      // sequence, but could happen, e.g. for assembly code.
+      if (Row.EndSequence) {
+        emitEndOfSequence(Address);
+      } else {
+        if (LastAddress == InvalidAddress)
+          emitDwarfSetLineAddrAbs(*MCOS, Params, LineDelta, Address,
+                                  AsmInfo->getCodePointerSize());
+        else
+          MCDwarfLineAddr::Emit(MCOS, Params, LineDelta, Address - LastAddress);
+
+        LastAddress = Address;
+        LastLine = Row.Line;
+      }
+
+      Discriminator = 0;
+    }
+    PrevEndOfSequence = Sequence.EndAddress;
   }
+
+  // Finish with the end of the sequence.
+  if (LastAddress != InvalidAddress)
+    emitEndOfSequence(PrevEndOfSequence);
 }
 
 static inline void emitDwarfLineTable(
@@ -687,8 +718,7 @@ void DwarfLineTable::emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
     emitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
 
   // Emit line tables for the original code.
-  for (const auto &LineSec : BinaryLineSections.getBinaryLineEntries())
-    emitBinaryDwarfLineTable(MCOS, Params, LineSec.second);
+  emitBinaryDwarfLineTable(MCOS, Params, InputTable, InputSequences);
 
   // This is the end of the section, so set the value of the symbol at the end
   // of this section (that was used in a previous expression).
