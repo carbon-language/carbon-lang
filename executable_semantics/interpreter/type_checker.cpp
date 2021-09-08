@@ -50,27 +50,22 @@ static void ExpectPointerType(SourceLocation loc, const std::string& context,
   }
 }
 
-static SourceLocation ReifyFakeSourceLoc() {
-  return SourceLocation("<reify>", 0);
-}
-
 auto TypeChecker::ReifyType(Ptr<const Value> t, SourceLocation loc)
     -> Ptr<const Expression> {
   switch (t->Tag()) {
     case Value::Kind::IntType:
-      return arena->New<IntTypeLiteral>(ReifyFakeSourceLoc());
+      return arena->New<IntTypeLiteral>(loc);
     case Value::Kind::BoolType:
-      return arena->New<BoolTypeLiteral>(ReifyFakeSourceLoc());
+      return arena->New<BoolTypeLiteral>(loc);
     case Value::Kind::TypeType:
-      return arena->New<TypeTypeLiteral>(ReifyFakeSourceLoc());
+      return arena->New<TypeTypeLiteral>(loc);
     case Value::Kind::ContinuationType:
-      return arena->New<ContinuationTypeLiteral>(ReifyFakeSourceLoc());
+      return arena->New<ContinuationTypeLiteral>(loc);
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*t);
-      return arena->New<FunctionTypeLiteral>(ReifyFakeSourceLoc(),
-                                             ReifyType(fn_type.Param(), loc),
-                                             ReifyType(fn_type.Ret(), loc),
-                                             /*is_omitted_return_type=*/false);
+      return arena->New<FunctionTypeLiteral>(
+          loc, ReifyType(fn_type.Param(), loc), ReifyType(fn_type.Ret(), loc),
+          /*is_omitted_return_type=*/false);
     }
     case Value::Kind::TupleValue: {
       std::vector<FieldInitializer> args;
@@ -78,24 +73,22 @@ auto TypeChecker::ReifyType(Ptr<const Value> t, SourceLocation loc)
         args.push_back(
             FieldInitializer(field.name, ReifyType(field.value, loc)));
       }
-      return arena->New<TupleLiteral>(ReifyFakeSourceLoc(), args);
+      return arena->New<TupleLiteral>(loc, args);
     }
     case Value::Kind::ClassType:
-      return arena->New<IdentifierExpression>(ReifyFakeSourceLoc(),
-                                              cast<ClassType>(*t).Name());
+      return arena->New<IdentifierExpression>(loc, cast<ClassType>(*t).Name());
     case Value::Kind::ChoiceType:
-      return arena->New<IdentifierExpression>(ReifyFakeSourceLoc(),
-                                              cast<ChoiceType>(*t).Name());
+      return arena->New<IdentifierExpression>(loc, cast<ChoiceType>(*t).Name());
     case Value::Kind::PointerType:
       return arena->New<PrimitiveOperatorExpression>(
-          ReifyFakeSourceLoc(), Operator::Ptr,
+          loc, Operator::Ptr,
           std::vector<Ptr<const Expression>>(
               {ReifyType(cast<PointerType>(*t).Type(), loc)}));
     case Value::Kind::VariableType:
-      return arena->New<IdentifierExpression>(ReifyFakeSourceLoc(),
+      return arena->New<IdentifierExpression>(loc,
                                               cast<VariableType>(*t).Name());
     case Value::Kind::StringType:
-      return arena->New<StringTypeLiteral>(ReifyFakeSourceLoc());
+      return arena->New<StringTypeLiteral>(loc);
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::AutoType:
