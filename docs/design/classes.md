@@ -1215,10 +1215,6 @@ While expected to be relatively rarely needed, we will address both of these
 concerns with a specialized type just used during construction of base classes,
 called the partial facet type for the class.
 
-**Open question:** Issue
-[#741: Constructing an object of a derived type](https://github.com/carbon-language/carbon-lang/issues/741)
-considers other options.
-
 ##### Partial facet
 
 The partial facet for a base class type like `MyBaseType` is written
