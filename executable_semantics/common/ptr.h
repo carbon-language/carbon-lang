@@ -16,7 +16,7 @@ namespace Carbon {
 template <typename T>
 class Ptr {
  public:
-  Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
+  explicit Ptr(T* ptr) : ptr(ptr) { CHECK(ptr != nullptr); }
 
   template <typename OtherT,
             std::enable_if_t<std::is_convertible_v<OtherT*, T*>>* = nullptr>
@@ -38,6 +38,11 @@ class Ptr {
  private:
   T* ptr;
 };
+
+template <typename T>
+auto PtrTo(T& obj) -> Ptr<T> {
+  return Ptr<T>(&obj);
+}
 
 }  // namespace Carbon
 
