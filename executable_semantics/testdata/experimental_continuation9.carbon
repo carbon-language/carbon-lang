@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not ../executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not ../executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 
 
@@ -28,5 +28,5 @@ fn main() -> i32 {
   return 0;
 }
 
-// AUTOUPDATE: ../executable_semantics %s
+// AUTOUPDATE: executable_semantics %s
 // CHECK: RUNTIME ERROR: {{.*}}/experimental_continuation9.carbon:20: undefined behavior: access to dead value 1

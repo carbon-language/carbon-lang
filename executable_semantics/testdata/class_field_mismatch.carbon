@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not ../executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not ../executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 
 
@@ -19,7 +19,7 @@ fn main() -> i32 {
   return Point(.x = 1, .z = 2).x - 1;
 }
 
-// AUTOUPDATE: ../executable_semantics %s
+// AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/class_field_mismatch.carbon:19: type error in call
 // CHECK: expected: (x = i32, y = i32)
 // CHECK: actual: (x = i32, z = i32)

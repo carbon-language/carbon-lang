@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: ../executable_semantics %s 2>&1 | \
+// RUN: executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: ../executable_semantics --trace %s 2>&1 | \
+// RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 
 package ExecutableSemanticsTest api;
@@ -20,5 +20,5 @@ fn main() -> i32 {
   return CompareStr("\x73\x74\x72\x3B");
 }
 
-// AUTOUPDATE: ../executable_semantics %s
+// AUTOUPDATE: executable_semantics %s
 // CHECK: result: 0

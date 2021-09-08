@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/testing:lit_test.bzl", "lit_test")
-load("test_list.bzl", "TEST_LIST")
 
 cc_binary(
     name = "executable_semantics",
@@ -16,16 +15,8 @@ cc_binary(
     ],
 )
 
-[
-    lit_test(
-        name = "%s_test" % x,
-        args = ["-v"],
-        data = [
-            "testdata/lit.cfg",
-            "testdata/%s.carbon" % x,
-        ],
-        test_path = "executable_semantics/testdata",
-        tools = [":executable_semantics"],
-    )
-    for x in TEST_LIST
-]
+lit_test(
+    name = "executable_semantics_lit_test",
+    test_dir = "testdata",
+    tools = [":executable_semantics"],
+)

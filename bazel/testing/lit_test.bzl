@@ -4,30 +4,35 @@
 
 """Rule for a lit test."""
 
-def lit_test(name, test_path, data, tools, args = None, env = None, **kwargs):
-    """Compares two files. Passes if they are identical.
+def lit_test(name, test_dir, tools = None, **kwargs):
+    """Runs `lit` on test_dir.
+
+    `lit` reference:
+      https://llvm.org/docs/CommandGuide/lit.html
+
+    To pass flags to `lit`, use `--test_arg`. For example:
+      bazel test :lit_test --test_arg=-v
+      bazel test :lit_test --test_arg=--filter=REGEXP
 
     Args:
       name: Name of the build rule.
-      test_path: The path to the
-      data: Data files.
-      env: Optional environment.
+      test_dir: The directory with the lit tests.
+      tools: An optional list of tools to provide to the tests. These will be
+        aliased for execution.
       **kwargs: Any additional parameters for the generated py_test.
     """
-    if not args:
-        args = []
-    if not env:
-        env = {}
+    if not tools:
+        tools = []
+    tools += [
+        "@llvm-project//llvm:lit",
+        "@llvm-project//llvm:not",
+        "@llvm-project//llvm:FileCheck",
+    ]
     native.py_test(
         name = name,
         srcs = ["//bazel/testing:lit_test.py"],
         main = "//bazel/testing:lit_test.py",
-        data = [
-            "@llvm-project//llvm:lit",
-            "@llvm-project//llvm:not",
-            "@llvm-project//llvm:FileCheck",
-        ] + data + tools,
-        args = [test_path] + args,
-        env = env,
+        data = tools + native.glob([test_dir + "/**"]),
+        args = ["--tool=%s" % t for t in tools] + [test_dir, "--"],
         **kwargs
     )

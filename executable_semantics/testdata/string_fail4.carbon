@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not ../executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not ../executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 
 
@@ -15,5 +15,5 @@ fn main() -> i32 {
   return 0;
 }
 
-// AUTOUPDATE: ../executable_semantics %s
+// AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/string_fail4.carbon:14: Invalid escaping in string: "str\01"
