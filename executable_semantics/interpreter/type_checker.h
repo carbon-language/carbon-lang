@@ -20,7 +20,11 @@ using TypeEnv = Dictionary<std::string, Ptr<const Value>>;
 
 class TypeChecker {
  public:
+  explicit TypeChecker(Ptr<Arena> arena) : arena(arena), interpreter(arena) {}
+
   struct TypeCheckContext {
+    TypeCheckContext(Ptr<Arena> arena) : types(arena), values(arena) {}
+
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
     // Symbol table mapping names of compile time entities to their value.
@@ -104,6 +108,17 @@ class TypeChecker {
 
   void TopLevel(const Declaration& d, TypeCheckContext* tops);
 
+  auto CheckOrEnsureReturn(std::optional<Ptr<const Statement>> opt_stmt,
+                           bool omitted_ret_type, SourceLocation loc)
+      -> Ptr<const Statement>;
+
+  // Reify type to type expression.
+  auto ReifyType(Ptr<const Value> t, SourceLocation loc)
+      -> Ptr<const Expression>;
+
+  auto Substitute(TypeEnv dict, Ptr<const Value> type) -> Ptr<const Value>;
+
+  Ptr<Arena> arena;
   Interpreter interpreter;
 };
 

@@ -24,6 +24,9 @@ using Env = Dictionary<std::string, Address>;
 
 class Interpreter {
  public:
+  explicit Interpreter(Ptr<Arena> arena)
+      : arena(arena), globals(arena), heap(arena) {}
+
   // Interpret the whole program.
   auto InterpProgram(const std::vector<Ptr<const Declaration>>& fs) -> int;
 
@@ -130,10 +133,18 @@ class Interpreter {
   void DeallocateScope(Ptr<Scope> scope);
   void DeallocateLocals(Ptr<Frame> frame);
 
+  auto CreateTuple(Ptr<Action> act, Ptr<const Expression> exp)
+      -> Ptr<const Value>;
+
+  auto EvalPrim(Operator op, const std::vector<Ptr<const Value>>& args,
+                SourceLocation loc) -> Ptr<const Value>;
+
   void PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
                          SourceLocation loc);
 
   void PrintState(llvm::raw_ostream& out);
+
+  Ptr<Arena> arena;
 
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals;
