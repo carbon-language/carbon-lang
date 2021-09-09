@@ -1252,12 +1252,6 @@ The partial facet for a base class type like `MyBaseType` is written
 -   The keyword `partial` may only be applied to a base class. For final
     classes, there is no need for a second type.
 
-**Open question:** We should consider other keywords than `partial` to designate
-this. We considered using `base` here, but it does not match the use of `base`
-in `base class`. We considered the word `proto`, but are worried about confusion
-with the words "prototype" and "protocol" (for example as in "protocol
-buffers"). We also considered `impl` and `novirt`. Maybe `exact`? Maybe
-`constructor`, `construct`, `ctor`, or `under_construction`?
 
 ##### Usage
 
