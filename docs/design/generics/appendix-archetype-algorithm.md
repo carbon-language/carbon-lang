@@ -26,7 +26,10 @@ needed and then cached.
 ## Rewrite to normalized form algorithm
 
 FIXME: do type checking at the same time, possibly it is triggered by type
-checking?
+checking? It is sound to type check one level by induction, assuming you type
+check every interface "satidfies its constraints given parameters and Self meet
+their constraints." The caller adding additional constraints won't invalidate
+that.
 
 FIXME: invariants of normalized form
 
