@@ -70,5 +70,6 @@ request:
 -   [0722 - Nominal classes and methods](p0722.md)
 -   [0731 - Generics details 2: adapters, associated types, parameterized interfaces](p0731.md)
 -   [0777 - Inheritance](p0777.md)
+-   [0821 - Values, variables, pointers, and references](p0821.md)
 
 <!-- endproposals -->
