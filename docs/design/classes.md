@@ -43,7 +43,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Member type](#member-type)
     -   [Let](#let)
     -   [Alias](#alias)
-    -   [Private access](#private-access)
+    -   [Inheritance](#inheritance)
+        -   [Virtual methods](#virtual-methods)
+            -   [Virtual override keywords](#virtual-override-keywords)
+        -   [Subtyping](#subtyping)
+        -   [Constructors](#constructors)
+            -   [Partial facet](#partial-facet)
+            -   [Usage](#usage)
+        -   [Assignment with inheritance](#assignment-with-inheritance)
+    -   [Access control](#access-control)
+        -   [Private access](#private-access)
+        -   [Protected access](#protected-access)
+        -   [Friends](#friends)
+        -   [Test friendship](#test-friendship)
+        -   [Access control for construction](#access-control-for-construction)
 -   [Future work](#future-work)
     -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
@@ -51,10 +64,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
         -   [Discussion](#discussion)
     -   [Operator overloading](#operator-overloading)
-    -   [Inheritance](#inheritance)
-    -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
+    -   [Inheritance](#inheritance-1)
+        -   [Destructors](#destructors)
+        -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
+        -   [Overloaded methods](#overloaded-methods)
+        -   [Interop with C++ inheritance](#interop-with-c-inheritance)
+            -   [Virtual base classes](#virtual-base-classes)
     -   [Mixins](#mixins-1)
-    -   [Non-virtual inheritance](#non-virtual-inheritance)
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
@@ -1022,7 +1038,358 @@ Assert(&sp1.first == &sp1.key);
 **Future work:** This needs to be connected to the broader design of aliases,
 once that lands.
 
-### Private access
+### Inheritance
+
+Carbon supports
+[inheritance](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>)
+using a
+[class hierarchy](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Hierarchical>),
+on an opt-in basis. Classes by default are
+_[final](https://en.wikipedia.org/wiki/Inheritance_(object-oriented*programming)#Non-subclassable_classes)*,
+which means they may not be extended. To declare a class as allowing extension,
+use either the `base class` or `abstract class` introducer:
+
+```
+base class MyBaseClass { ... }
+```
+
+A _base class_ may be _extended_ to get a _derived class_:
+
+```
+base class MiddleDerived extends MyBaseClass { ... }
+class FinalDerived extends MiddleDerived { ... }
+// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+```
+
+An _[abstract class](https://en.wikipedia.org/wiki/Abstract_type)_ or _abstract
+base class_ is a base class that may not be instantiated.
+
+```
+abstract class MyAbstractClass { ... }
+// ❌ Forbidden: var a: MyAbstractClass = ...;
+```
+
+**Future work:** For now, the Carbon design only supports single inheritance. In
+the future, Carbon will support multiple inheritance with limitations on all
+base classes except the one listed first.
+
+**Terminology:** We say `MiddleDerived` and `FinalDerived` are _derived
+classes_, transitively extending or _derived from_ `MyBaseClass`. Similarly
+`FinalDerived` is derived from or extends `MiddleDerived`. `MiddleDerived` is
+`FinalDerived`'s _immediate base class_, and both `MiddleDerived` and
+`MyBaseClass` are base classes of `FinalDerived`. Base classes that are not
+abstract are called _extensible classes_.
+
+A derived class has all the members of the class it extends, including data
+members and methods, though it may not be able to access them if they were
+declared `private`.
+
+#### Virtual methods
+
+A base class may define
+[virtual methods](https://en.wikipedia.org/wiki/Virtual_function). These are
+methods whose implementation may be overridden in a derived class.
+
+Only methods defined in the scope of the class definition may be virtual, not
+any defined in
+[external interface impls](/docs/design/generics/details.md#external-impl).
+Interface methods may be implemented using virtual methods when the
+[impl is internal](/docs/design/generics/details.md#implementing-interfaces),
+and calls to those methods by way of the interface will do virtual dispatch just
+like a direct call to the method does.
+
+[Class functions](#class-functions) may not be declared virtual.
+
+##### Virtual override keywords
+
+A method is declared as virtual by using a _virtual override keyword_ in its
+declaration before `fn`.
+
+```
+base class MyBaseClass {
+  virtual fn Overridable[me: Self]() -> i32 { return 7; }
+}
+```
+
+This matches C++, and makes it relatively easy for authors of derived classes to
+find the functions that can be overridden.
+
+If no keyword is specified, the default for methods is that they are
+_non-virtual_. This means:
+
+-   they can't override methods in bases of this class;
+-   they can't be overridden in derived classes; and
+-   they have an implementation in the current class, and that implementation
+    must work for all derived classes.
+
+There are three virtual override keywords:
+
+-   `virtual` - This marks a method as not present in bases of this class and
+    having an implementation in this class. That implementation may be
+    overridden in derived classes.
+-   `abstract` - This marks a method that must be overridden in a derived class
+    since it has no implementation in this class. This is short for "abstract
+    virtual" but is called
+    ["pure virtual" in C++](https://en.wikipedia.org/wiki/Virtual_function#Abstract_classes_and_pure_virtual_functions).
+    Only abstract classes may have unimplemented abstract methods.
+-   `impl` - This marks a method that overrides a method marked `virtual` or
+    `abstract` in the base class with an implementation specific to -- and
+    defined within -- this class. The method is still virtual and may be
+    overridden again in subsequent derived classes if this is a base class. See
+    [method overriding in Wikipedia](https://en.wikipedia.org/wiki/Method_overriding).
+    Requiring a keyword when overriding allows the compiler to diagnose when the
+    derived class accidentally uses the wrong signature or spelling and so
+    doesn't match the base class. We intentionally use the same keyword here as
+    for implementing interfaces, to emphasize that they are similar operations.
+
+| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C extends B`                          | in `D` where<br />`D extends C`                                                  |
+| ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
+| `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
+| `impl`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
+
+#### Subtyping
+
+A pointer to a base class, like `MyBaseClass*` is actually considered to be a
+pointer to that type or any derived class, like `MiddleDerived` or
+`FinalDerived`. This means that a `FinalDerived*` value may be implicitly cast
+to type `MiddleDerived*` or `MyBaseClass*`.
+
+This is accomplished by making the data layout of a type extending `MyBaseClass`
+have `MyBaseClass` as a prefix. In addition, the first class in the inheritance
+chain with a virtual method will include a virtual pointer, or _vptr_, pointing
+to a [virtual method table](https://en.wikipedia.org/wiki/Virtual_method_table),
+or _vtable_. Any calls to virtual methods will perform
+[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch) by calling
+the method using the function pointer in the vtable, to get the overridden
+implementation from the most derived class that implements the method.
+
+Since a final class may not be extended, the compiler can bypass the vtable and
+use [static dispatch](https://en.wikipedia.org/wiki/Static_dispatch). In
+general, you can use a combination of an abstract base class and a final class
+instead of an extensible class if you need to distinguish between exactly a type
+and possibly a subtype.
+
+```
+base class Extensible { ... }
+
+// Can be replaced by:
+
+abstract class ExtensibleBase { ... }
+class ExactlyExtensible extends ExtensibleBase { ... }
+```
+
+#### Constructors
+
+Like for classes without inheritance, constructors for a derived class are
+ordinary functions that return an instance of the derived class. Generally
+constructor functions should return the constructed value without copying, as in
+proposal
+[#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257).
+This means either
+[creating the object in the return statement itself](/proposals/p0257.md#function-returns-and-initialization),
+or in
+[a `returned var` declaration](/proposals/p0257.md#declared-returned-variable).
+As before, instances can be created using by casting a struct value into the
+class type, this time with a `.base` member to initialize the members of the
+immediate base type.
+
+```
+class MyDerivedType extends MyBaseType {
+  fn Create() -> MyDerivedType {
+    return {.base = MyBaseType.Create(), .derived_field = ...};
+  }
+}
+```
+
+There are two cases that aren't well supported with this pattern:
+
+-   Users cannot create a value of an abstract class, which is necessary when it
+    has private fields or otherwise requires initialization.
+-   Users may want to reduce the chance of mistakes from calling a method on a
+    partially constructed object. Of particular concern is calling a virtual
+    method prior to forming the derived class and so it uses the base class
+    implementation.
+
+While expected to be relatively rarely needed, we will address both of these
+concerns with a specialized type just used during construction of base classes,
+called the partial facet type for the class.
+
+##### Partial facet
+
+The partial facet for a base class type like `MyBaseType` is written
+`partial MyBaseType`.
+
+-   Only methods that take the partial facet type may be called on the partial
+    facet type, so methods have to opt in to being called on an object that
+    isn't fully constructed.
+-   No virtual methods may take the partial facet type, so there is no way to
+    transitively call a virtual method on an object that isn't fully
+    constructed.
+-   `partial MyBaseClass` and `MyBaseClass` have the same fields in the same
+    order with the same data layout. The only difference is that
+    `partial MyBaseClass` doesn't use (look into) its hidden vptr slot. To
+    reliably catch any bugs where virtual function calls occur in this state,
+    both fast and hardened release builds will initialize the hidden vptr slot
+    to a null pointer. Debug builds will initialize it to an alternate vtable
+    whose functions will abort the program with a clear diagnostic.
+-   Since `partial MyBaseClass` has the same data layout but only uses a subset,
+    there is a subtyping relationship between these types. A `MyBaseClass` value
+    is a `partial MyBaseClass` value, but not the other way around. So you can
+    cast `MyBaseClass*` to `partial MyBaseClass*`, but the other direction is
+    not safe.
+-   When `MyBaseClass` may be instantiated, there is a conversion from
+    `partial MyBaseClass` to `MyBaseClass`. It changes the value by filling in
+    the hidden vptr slot. If `MyBaseClass` is abstract, then attempting that
+    conversion is an error.
+-   `partial MyBaseClass` is considered final, even if `MyBaseClass` is not.
+    This is despite the fact that from a data layout perspective,
+    `partial MyDerivedClass` will have `partial MyBaseClass` as a prefix if
+    `MyDerivedClass` extends `MyBaseClass`. The type `partial MyBaseClass`
+    specifically means "exactly this and no more." This means we don't need to
+    look at the hidden vptr slot, and we can instantiate it even if it doesn't
+    have a virtual destructor.
+-   The keyword `partial` may only be applied to a base class. For final
+    classes, there is no need for a second type.
+
+##### Usage
+
+The general pattern is that base classes can define constructors returning the
+partial facet type.
+
+```
+base class MyBaseClass {
+  fn Create() -> partial Self {
+    return {.base_field_1 = ..., .base_field_2 = ...};
+  }
+  // ...
+}
+```
+
+Extensible classes can be instantiated even from a partial facet value:
+
+```
+var mbc: MyBaseClass = MyBaseClass.Create();
+```
+
+The conversion from `partial MyBaseClass` to `MyBaseClass` only fills in the
+vptr value and can be done in place. After the conversion, all public methods
+may be called, including virtual methods.
+
+The partial facet is required for abstract classes, since otherwise they may not
+be instantiated. Constructor functions for abstract classes should be marked
+[protected](#protected-access) so they may only be accessed in derived classes.
+
+```
+abstract class MyAbstractClass {
+  protected fn Create() -> partial Self {
+    return {.base_field_1 = ..., .base_field_2 = ...};
+  }
+  // ...
+}
+// ❌ Error: can't instantiate abstract class
+var abc: MyAbstractClass = ...;
+```
+
+If a base class wants to store a pointer to itself somewhere in the constructor
+function, there are two choices:
+
+-   An extensible class could use the plain type instead of the partial facet.
+
+    ```
+    base class MyBaseClass {
+      fn Create() -> Self {
+        returned var result: Self = {...};
+        StoreMyPointerSomewhere(&result);
+        return var;
+      }
+    }
+    ```
+
+-   The other choice is to explicitly cast the type of its address. This pointer
+    should not be used to call any virtual method until the object is finished
+    being constructed, since the vptr will be null.
+
+    ```
+    abstract class MyAbstractClass {
+      protected fn Create() -> partial Self {
+        returned var result: partial Self = {...};
+        // Careful! Pointer to object that isn't fully constructed!
+        StoreMyPointerSomewhere(&result as Self*);
+        return var;
+      }
+    }
+    ```
+
+The constructor for a derived class may construct values from a partial facet of
+the class' immediate base type or the full type:
+
+```
+abstract class MyAbstractClass {
+  protected fn Create() -> partial Self { ... }
+}
+
+// Base class returns a partial type
+base class Derived extends MyAbstractClass {
+  protected fn Create() -> partial Self {
+    return {.base = MyAbstractClass.Create(), .derived_field = ...};
+  }
+  ...
+}
+
+base class MyBaseClass {
+  fn Create() -> Self { ... }
+}
+
+// Base class returns a full type
+base class ExtensibleDerived extends MyBaseClass {
+  fn Create() -> Self {
+    return {.base = MyBaseClass.Create(), .derived_field = ...};
+  }
+  ...
+}
+```
+
+And final classes will return a type that does not use the partial facet:
+
+```
+class FinalDerived extends MiddleDerived {
+  fn Create() -> Self {
+    return {.base = MiddleDerived.Create(), .derived_field = ...};
+  }
+  ...
+}
+```
+
+Observe that the vptr is only assigned twice in release builds if you use
+partial facets:
+
+-   The first class value created, by the factory function creating the base of
+    the class hierarchy, initialized the vptr field to nullptr. Every derived
+    type transitively created from that value will leave it alone.
+-   Only when the value has its most-derived class and is converted from the
+    partial facet type to its final type is the vptr field set to its final
+    value.
+
+In the case that the base class can be instantiated, tooling could optionally
+recommend that functions returning `Self` that are used to initialize a derived
+class be changed to return `partial Self` instead. However, the consequences of
+returning `Self` instead of `partial Self` when the value will be used to
+initialize a derived class are fairly minor:
+
+-   The vptr field will be assigned more than necessary.
+-   The types won't protect against calling methods on a value while it is being
+    constructed, much like the situation in C++ currently.
+
+#### Assignment with inheritance
+
+Since the assignment operator method should not be virtual, it is only safe to
+implement it for final types. However, following the
+[maxim that Carbon should "focus on encouraging appropriate usage of features rather than restricting misuse"](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
+we allow users to also implement assignment on extensible classes, even though
+it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
+
+### Access control
 
 By default, all members of a class are fully publicly accessible. Access can be
 restricted by adding a keyword, called an
@@ -1030,37 +1397,8 @@ restricted by adding a keyword, called an
 declaration. Access modifiers are how Carbon supports
 [encapsulation](#encapsulated-types).
 
-```carbon
-class Point {
-  fn Distance[me: Self]() -> f32;
-  // These are only accessible to members of `Point`.
-  private var x: f32;
-  private var y: f32;
-}
-```
-
-As in C++, `private` means only accessible to members of the class.
-
-**Future work:** We will add support for `protected` access when inheritance is
-added to this design. We will also define a convenient way for tests that belong
-to the same library to get access to private members.
-
-**Future work:** `private` will give the member internal linkage unless it needs
-to be external because it is used in an inline method or template. We may in the
-future
-[add a way to specify internal linkage explicitly](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier).
-
-**Open questions:** Using `private` to mean "restricted to this class" matches
-C++. Other languages support restricting to different scopes:
-
--   Swift supports "restrict to this module" and "restrict to this file".
--   Rust supports "restrict to this module and any children of this module", as
-    well as "restrict to this crate", "restrict to parent module", and "restrict
-    to a specific ancestor module".
-
-**Comparison to other languages:** C++, Rust, and Swift all make class members
-private by default. C++ offers the `struct` keyword that makes members public by
-default.
+The [access modifier](https://en.wikipedia.org/wiki/Access_modifiers) is written
+before any [virtual override keyword](#virtual-override-keywords).
 
 **Rationale:** Carbon makes members public by default for a few reasons:
 
@@ -1094,6 +1432,102 @@ included the decision that
 [members default to publicly accessible](/proposals/p0561.md#access-control)
 originally asked in issue
 [#665](https://github.com/carbon-language/carbon-lang/issues/665).
+
+#### Private access
+
+As in C++, `private` means only accessible to members of the class and any
+[friends](#friends).
+
+```carbon
+class Point {
+  fn Distance[me: Self]() -> f32;
+  // These are only accessible to members of `Point`.
+  private var x: f32;
+  private var y: f32;
+}
+```
+
+A `private virtual` or `private abstract` method may be implemented in derived
+classes, even though it may not be called. This allows derived classes to
+customize the behavior of a function called by a method of the base class, while
+still preventing the derived class from calling it. This matches the behavior of
+C++ and is more orthogonal.
+
+**Future work:** `private` will give the member internal linkage unless it needs
+to be external because it is used in an inline method or template. We may in the
+future
+[add a way to specify internal linkage explicitly](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier).
+
+**Open questions:** Using `private` to mean "restricted to this class" matches
+C++. Other languages support restricting to different scopes:
+
+-   Swift supports "restrict to this module" and "restrict to this file".
+-   Rust supports "restrict to this module and any children of this module", as
+    well as "restrict to this crate", "restrict to parent module", and "restrict
+    to a specific ancestor module".
+
+**Comparison to other languages:** C++, Rust, and Swift all make class members
+private by default. C++ offers the `struct` keyword that makes members public by
+default.
+
+#### Protected access
+
+Protected members may only be accessed by members of this class, members of
+derived classes, and any [friends](#friends).
+
+```
+base class MyBaseClass {
+  protected fn HelperClassFunction(x: i32) -> i32;
+  protected fn HelperMethod[me: Self](x: i32) -> i32;
+  protected var data: i32;
+}
+
+class MyDerivedClass extends MyBaseClass {
+  fn UsesProtected[addr me: Self*]() {
+    // Can access protected members in derived class
+    var x: i32 = HelperClassFunction(3);
+    me->data = me->HelperMethod(x);
+  }
+}
+```
+
+#### Friends
+
+Classes may have a _friend_ declaration:
+
+```
+class Buddy { ... }
+
+class Pal {
+  private var x: i32;
+  friend Buddy;
+}
+```
+
+This declares `Buddy` to be a friend of `Pal`, which means that `Buddy` can
+access all members of this class, even the ones that are declared `private` or
+`protected`.
+
+The `friend` keyword is followed by the name of an existing function, type, or
+parameterized family of types. Unlike C++, it won't act as a forward declaration
+of that name. The name must be resolvable by the compiler, and so may not be a
+member of a template.
+
+#### Test friendship
+
+**Future work:** There should be a convenient way of allowing tests in the same
+library as the class definition to access private members of the class. Ideally
+this could be done without changing the class definition itself, since it
+doesn't affect the class' public API.
+
+#### Access control for construction
+
+A function may construct a class, by casting a struct value to the class type,
+if it has access to (write) all of its fields.
+
+**Future work:** There should be a way to limit which code can construct a class
+even when it only has public fields. This will be resolved in question-for-leads
+issue [#803](https://github.com/carbon-language/carbon-lang/issues/803).
 
 ## Future work
 
@@ -1192,25 +1626,57 @@ implementing corresponding interfaces, see
 
 ### Inheritance
 
-Carbon will need ways of saying:
+#### Destructors
 
--   this `class` type has a virtual method table
--   this `class` type extends a base type
--   this `class` type is "final" and may not be extended further
--   this method is "virtual" and may be overridden in descendents
--   this method is "pure virtual" or "abstract" and must be overridden in
-    descendants
--   this method overrides a method declared in a base type
+We need a syntax for declaring destructors. Provisionally we are considering
+allowing a couple of variations:
 
-Multiple inheritance will be limited in at least a couple of ways:
+```carbon
+class MyClass {
+  destructor [me: Self] { ... }
+}
+```
 
--   At most one supertype may define data members.
--   Carbon types can't access data members of C++ virtual base classes.
+or:
 
-There is a
-[document considering the options for constructing objects with inheritance](https://docs.google.com/document/d/1GyrBIFyUbuLJGItmTAYUf9sqSDQjry_kjZKm5INl-84/edit).
+```carbon
+class MyClass {
+  destructor [addr me: Self*] { ... }
+}
+```
 
-### C++ abstract base classes interoperating with object-safe interfaces
+Destructors may be declared `virtual`, or `impl` in the case that a base class
+declares it `virtual`.
+
+```carbon
+base class MyBaseClass {
+  virtual destructor [addr me: Self*] { ... }
+}
+
+class MyDerivedClass {
+  impl destructor [addr me: Self*] { ... }
+}
+```
+
+Destructors may be declared out-of-line:
+
+```carbon
+class MyClass {
+  destructor [addr me: Self*];
+}
+destructor MyClass [addr me: Self*] { ... }
+```
+
+It isn't safe to delete an instance of a base class through a pointer unless it
+has a
+[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
+
+An alternative is the Rust approach is there is some interface that is only
+implemented for types with non-trivial destructors. It allows metaprogramming to
+distinguish whether the type needs clean up. Rust allows you to declare `Self`
+as being moved into the destructor, which nicely captures the semantics.
+
+#### C++ abstract base classes interoperating with object-safe interfaces
 
 We want four things so that Carbon's object-safe interfaces may interoperate
 with C++ abstract base classes without data members, matching the
@@ -1231,6 +1697,91 @@ different type than `DynPtr(MyInterface)` since the receiver input to the
 function members of the vtable for the former does not match those in the
 witness table for the latter.
 
+#### Overloaded methods
+
+We allow a derived class to define a [class function](#class-functions) with the
+same name as a class function in the base class. For example, we expect it to be
+pretty common to have a constructor function named `Create` at all levels of the
+type hierarchy.
+
+Beyond that, we may want some rules or restrictions about defining methods in a
+derived class with the same name as a base class method without overriding it.
+There are some opportunities to improve on and simplify the C++ story:
+
+-   We don't want to silently hide methods in the base class because of a method
+    with the same name in a derived class. There are uses for this in C++, but
+    it also causes problems and without multiple inheritance there isn't the
+    same need in Carbon.
+-   Overload resolution should happen before virtual dispatch.
+-   For evolution purposes, you should be able to add private members to a base
+    class that have the same name as member of a derived class without affecting
+    overload resolution on instances of the derived class, in functions that
+    aren't friends of the base class.
+
+**References:** This was discussed in
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
+
+#### Interop with C++ inheritance
+
+This design directly supports Carbon classes inheriting from a single C++ class.
+
+```
+class CarbonClass extends C++.CPlusPlusClass {
+  fn Create() -> Self {
+    return {.base = C++.CPlusPlusClass(...), .other_fields = ...};
+  }
+  ...
+}
+```
+
+To allow C++ classes to extend Carbon classes, there needs to be some way for
+C++ constructors to initialize their base class:
+
+-   There could be some way to export a Carbon class that identifies which
+    factory functions may be used as constructors.
+-   We could explicitly call the Carbon factory function, as in:
+
+    ```
+    // `Base` is a Carbon class which gets converted to a
+    // C++ class for interop purposes:
+    class Base {
+    public:
+        virtual ~Base() {}
+        static auto Create() -> Base;
+    };
+
+    // In C++
+    class Derived : public Base {
+    public:
+        virtual ~Derived() override {}
+        // This isn't currently a case where C++ guarantees no copy,
+        // and so it currently still requires a notional copy and
+        // there appear to be implementation challenges with
+        // removing them. This may require an extension to make work
+        // reliably without an extraneous copy of the base subobject.
+        Derived() : Base(Base::Create()) {}
+    };
+    ```
+
+    However, this doesn't work in the case where `Base` can't be instantiated,
+    or `Base` does not have a copy constructor, even though it shouldn't be
+    called due to RVO.
+
+##### Virtual base classes
+
+FIXME: Ask zygoloid to fill this in.
+
+Carbon won't support declaring virtual base classes, and the C++ interop use
+cases Carbon needs to support are limited. This will allow us to simplify the
+C++ interop by allowing Carbon to delegate initialization of virtual base
+classes to the C++ side.
+
+This requires that we enforce two rules:
+
+-   No multiple inheritance of C++ classes with virtual bases
+-   No C++ class extending a Carbon class that extends a C++ class with a
+    virtual base
+
 ### Mixins
 
 We will need some way to declare mixins. This syntax will need a way to
@@ -1243,30 +1794,45 @@ Open questions include whether a mixin is its own type that is a member of the
 containing type, and whether mixins are templated on the containing type. Mixins
 also complicate how constructors work.
 
-### Non-virtual inheritance
-
-We need some way of addressing two safety concerns created by non-virtual
-inheritance:
-
--   Unclear how to safely run the right destructor.
--   [Object slicing](https://en.wikipedia.org/wiki/Object_slicing) is a danger
-    when dereferencing a pointer of a base type.
-
-These concerns would be resolved by distinguishing between pointers that point
-to a specified type only and those that point to a type or any subtype. The
-latter case would have restrictions to prevent misuse. This distinction may be
-more complexity than is justified for a relatively rare use case. An alternative
-approach would be to forbid destruction of non-final types without virtual
-destructors, and forbid assignment of non-final types entirely.
-
-This open question is being considered in
-[question-for-leads issue #652](https://github.com/carbon-language/carbon-lang/issues/652).
-
 ### Memory layout
 
 Carbon will need some way for users to specify the memory layout of class types
 beyond simple ordering of fields, such as controlling the packing and alignment
 for the whole type or individual members.
+
+We may allow members of a derived class like to put data members in the final
+padding of its base class prefix. Tail-padding reuse has both advantages and
+disadvantages, so we may have some way for a class to explicitly mark that its
+tail padding is available for use by a derived class,
+
+Advantages:
+
+-   Tail-padding reuse is sometimes a nice layout optimization (eg, in Clang we
+    save 8 bytes per `Expr` by reusing tail padding).
+-   No class size regressions when migrating from C++.
+-   Special case of reusing the tail padding of a class that is empty other than
+    its tail padding is very important, to the extent that we will likely need
+    to support either zero-sized types or tail-padding reuse in order to have
+    acceptable class layouts.
+
+Disadvantages:
+
+-   Cannot use `memcpy(p, q, sizeof(Base))` to copy around base class subobjects
+    if the destination is an in-lifetime, because they might overlap other
+    objects' representations.
+-   Somewhat more complex model.
+-   We need some mechanism for disabling tail-padding reuse in "standard layout"
+    types.
+-   We may also have to use narrowed loads for the last member of a base class
+    to avoid accidentally creating a race condition.
+
+However, we can still use `memcpy` and `memset` to initialize a base class
+subobject, even if its tail padding might be reused, so long as we guarantee
+that no other object lives in the tail padding and is initialized before the
+base class. In C++, that happens only due to virtual base classes getting
+initialized early and laid out at the end of the object; if we disallow virtual
+base classes then we can guarantee that initialization order is address order,
+removing most of the downside of tail-padding reuse.
 
 ### No `static` variables
 
