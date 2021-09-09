@@ -1,4 +1,0 @@
-COMPILATION ERROR: executable_semantics/testdata/tuple_equality3.carbon:10: type error in ==
-expected: (0 = i32, 1 = i32)
-actual: (0 = i32)
-EXIT CODE: 255
