@@ -15,12 +15,13 @@ from what that name is superficially declared as.
 
 FIXME: input is an environment with interface definitions, a signature, and a
 dotted-name query; output is an archetype consisting of a canonical type name
-and a type.
+and a type. An _archetype_ is a representation of the most general type that
+satifsies the constraints.
 
 FIXME: Two main pieced of the algorithm: rewriting declarations into a
 normalized form, which is done eagerly as the compiler encounters declarations,
-and the composition of two declarations which is done lazily as needed and
-cached.
+and the composition of two normalized declarations which is computed lazily as
+needed and then cached.
 
 ## Rewrite to normalized form algorithm
 
