@@ -1252,7 +1252,6 @@ The partial facet for a base class type like `MyBaseType` is written
 -   The keyword `partial` may only be applied to a base class. For final
     classes, there is no need for a second type.
 
-
 ##### Usage
 
 The general pattern is that base classes can define constructors returning the
