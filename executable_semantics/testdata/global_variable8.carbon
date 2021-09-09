@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: RUNTIME ERROR: {{.*}}/global_variable8.carbon:16: could not find `y`
 
 
 package ExecutableSemanticsTest api;
@@ -20,6 +22,3 @@ var y: i32 = 0;
 fn main() -> i32 {
   return x;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: RUNTIME ERROR: {{.*}}/global_variable8.carbon:16: could not find `y`

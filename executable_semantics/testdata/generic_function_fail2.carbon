@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail2.carbon:18: could not deduce type argument for type parameter T
 
 
 package ExecutableSemanticsTest api;
@@ -17,6 +19,3 @@ fn id[T:! Type](x: i32) -> i32 {
 fn main() -> i32 {
   return id(0);
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail2.carbon:18: could not deduce type argument for type parameter T

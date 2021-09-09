@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/return_empty_explicit_fail.carbon:14: return (); should not provide a return value, to match the function's signature.
 
 
 package ExecutableSemanticsTest api;
@@ -18,6 +20,3 @@ fn main() -> i32 {
   F();
   return 0;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/return_empty_explicit_fail.carbon:14: return (); should not provide a return value, to match the function's signature.

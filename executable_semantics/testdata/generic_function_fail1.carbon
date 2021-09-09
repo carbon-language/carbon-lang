@@ -6,6 +6,10 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail1.carbon:18: type error in argument deduction
+// CHECK: expected: i32
+// CHECK: actual: Bool
 
 
 package ExecutableSemanticsTest api;
@@ -17,8 +21,3 @@ fn fst[T:! Type](x: T, y: T) -> T {
 fn main() -> i32 {
   return fst(0, true);
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail1.carbon:18: type error in argument deduction
-// CHECK: expected: i32
-// CHECK: actual: Bool

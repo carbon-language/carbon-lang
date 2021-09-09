@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: PROGRAM ERROR: {{.*}}/tuple4.carbon:13: positional members must come before named members
 
 package ExecutableSemanticsTest api;
 
@@ -13,6 +15,3 @@ fn main() -> i32 {
   var t: auto = (.x = 2, 3);
   return 0;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/tuple4.carbon:13: positional members must come before named members

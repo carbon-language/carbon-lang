@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Helps manage tests."""
+"""Updates the CHECK: lines in lit tests based on the AUTOUPDATE line."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -37,8 +37,8 @@ def _get_tests():
     return tests
 
 
-def _update_golden(test):
-    """Updates the golden output for `test` by running executable_semantics."""
+def _update_check(test):
+    """Updates the CHECK: lines for `test` by running executable_semantics."""
     test_file = "%s/%s.carbon" % (_TESTDATA, test)
     with open(test_file) as f:
         orig_lines = f.readlines()
@@ -55,44 +55,48 @@ def _update_golden(test):
 
     # `lit` uses full paths to the test file, so use a regex to ignore paths
     # when used.
+    # TODO: Maybe revisit and see if lit can be convinced to give a
+    # root-relative path.
     out = out.replace(test_file, "{{.*}}/%s.carbon" % test)
 
     # Remove old OUT.
-    lines_without_golden = [
+    lines_without_check = [
         x for x in orig_lines if not x.startswith("// CHECK:")
     ]
-    autoupdate_index = lines_without_golden.index(_AUTOUPDATE_MARKER)
+    autoupdate_index = lines_without_check.index(_AUTOUPDATE_MARKER)
     assert autoupdate_index >= 0
     with open(test_file, "w") as f:
-        f.writelines(lines_without_golden[: autoupdate_index + 1])
+        f.writelines(lines_without_check[: autoupdate_index + 1])
         f.writelines(["// CHECK: %s\n" % x for x in out.splitlines()])
-        f.writelines(lines_without_golden[autoupdate_index + 1 :])
+        f.writelines(lines_without_check[autoupdate_index + 1 :])
 
     print(".", end="", flush=True)
 
 
-def _update_goldens():
-    """Runs bazel to update golden output."""
+def _update_checks():
+    """Runs bazel to update CHECK: lines in lit tests."""
+    # TODO: It may be helpful if a list of tests can be passed in args; would
+    # want to use argparse for this.
     tests = _get_tests()
 
     # Build all tests at once in order to allow parallel updates.
     print("Building executable_semantics...")
     subprocess.check_call(["bazel", "build", "//executable_semantics"])
 
-    print("Updating %d goldens..." % len(tests))
+    print("Updating %d lit tests..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
-        list(exec.map(_update_golden, tests))
-    # Each golden indicates progress with a dot without a newline, so put a
+        list(exec.map(_update_check, tests))
+    # Each update call indicates progress with a dot without a newline, so put a
     # newline to wrap.
-    print("\nUpdated goldens.")
+    print("\nUpdated lit tests.")
 
 
 def main():
     # Go to the repository root so that paths will match bazel's view.
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
 
-    _update_goldens()
+    _update_checks()
 
 
 if __name__ == "__main__":

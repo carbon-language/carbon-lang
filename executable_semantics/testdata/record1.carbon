@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
@@ -14,6 +16,3 @@ fn main() -> i32 {
   t2.y = 3;
   return t2.y - t2.x - 1; // 3 - 2 - 1
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0

@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
@@ -19,6 +21,3 @@ fn CompareStr(s: String) -> i32 {
 fn main() -> i32 {
   return CompareStr("\x73\x74\x72\x3B");
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0

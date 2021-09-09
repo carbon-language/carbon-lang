@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: PROGRAM ERROR: {{.*}}/fun_named_params2.carbon:13: positional members must come before named members
 
 
 package ExecutableSemanticsTest api;
@@ -15,6 +17,3 @@ fn f(x: i32, .d = y: i32, z: i32, .e = a: i32) => (x + y) - (z + a);
 fn main() -> i32 {
   return 0;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/fun_named_params2.carbon:13: positional members must come before named members

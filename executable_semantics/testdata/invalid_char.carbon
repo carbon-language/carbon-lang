@@ -6,9 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/invalid_char.carbon:11: invalid character '\xEF' in source file.
 
 
 �
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/invalid_char.carbon:11: invalid character '\xEF' in source file.

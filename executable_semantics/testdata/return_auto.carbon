@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/return_auto.carbon:13: syntax error, unexpected AUTO
 
 
 package ExecutableSemanticsTest api;
@@ -17,6 +19,3 @@ fn F() -> auto {
 fn main() -> i32 {
   return F();
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/return_auto.carbon:13: syntax error, unexpected AUTO

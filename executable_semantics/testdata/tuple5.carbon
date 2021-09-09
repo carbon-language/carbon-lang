@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: PROGRAM ERROR: {{.*}}/tuple5.carbon:15: Tuple field name 'y' does not match pattern field name 'x'
 
 package ExecutableSemanticsTest api;
 
@@ -15,6 +17,3 @@ fn main() -> i32 {
   var t: (.x = i32, .y = i32) = (.y = 2, .x = 3);
   return 0;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/tuple5.carbon:15: Tuple field name 'y' does not match pattern field name 'x'

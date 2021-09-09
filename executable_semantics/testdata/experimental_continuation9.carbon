@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: RUNTIME ERROR: {{.*}}/experimental_continuation9.carbon:20: undefined behavior: access to dead value 1
 
 
 package ExecutableSemanticsTest api;
@@ -27,6 +29,3 @@ fn main() -> i32 {
   __run k; // error, lifetime of x is over
   return 0;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: RUNTIME ERROR: {{.*}}/experimental_continuation9.carbon:20: undefined behavior: access to dead value 1

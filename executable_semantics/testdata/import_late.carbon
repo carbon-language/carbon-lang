@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/import_late.carbon:17: syntax error, unexpected IMPORT, expecting END_OF_FILE
 
 
 package ExecutableSemanticsTest api;
@@ -15,6 +17,3 @@ fn main() -> i32 {
 }
 
 import ExecutableSemanticsTest library "Nonexistent";
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/import_late.carbon:17: syntax error, unexpected IMPORT, expecting END_OF_FILE

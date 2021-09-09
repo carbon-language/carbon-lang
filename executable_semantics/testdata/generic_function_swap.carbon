@@ -6,6 +6,8 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
@@ -16,6 +18,3 @@ fn swap[T:! Type, U:! Type](tuple: (T, U)) -> (U, T) {
 fn main() -> i32 {
   return swap((0, true))[1];
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0

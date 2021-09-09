@@ -6,6 +6,10 @@
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: COMPILATION ERROR: {{.*}}/global_variable3.carbon:15: type error in initializer of variable
+// CHECK: expected: i32
+// CHECK: actual: Bool
 
 
 package ExecutableSemanticsTest api;
@@ -17,8 +21,3 @@ var flag: i32 = true;
 fn main() -> i32 {
   return 0;
 }
-
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/global_variable3.carbon:15: type error in initializer of variable
-// CHECK: expected: i32
-// CHECK: actual: Bool
