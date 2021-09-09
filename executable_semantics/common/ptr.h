@@ -39,6 +39,11 @@ class Ptr {
   T* ptr;
 };
 
+template <typename T>
+auto PtrTo(T& obj) -> Ptr<T> {
+  return Ptr<T>(&obj);
+}
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_COMMON_PTR_H_
