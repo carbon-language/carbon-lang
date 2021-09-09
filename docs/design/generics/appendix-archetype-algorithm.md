@@ -25,7 +25,20 @@ needed and then cached.
 
 ## Rewrite to normalized form algorithm
 
-FIXME
+FIXME: do type checking at the same time, possibly it is triggered by type
+checking?
+
+FIXME: invariants of normalized form
+
+-   All but 2 kinds of `where` constraints rewritten away. Exceptions are
+    `Vector(T) is Printable` and `N > 3` constraints.
+-   All declarations are of one of these forms:
+    -   `Z.Y = X.W [as A];`
+    -   `Z.Y :! A{.X = Z.Y.X[, ...]} & B{.W = Z.Y.W} [& ...] [where Vector(Z.Y) is C];`
+    -   `Z.N :! u32 [where Z.N < 4];`
+-   No cycles and no forward references.
+-   Original/immediate associated types at the end and in the original source
+    code order.
 
 This leads to the question of whether we can describe a set of restrictions on
 `where` clauses that would allow us to directly translate them into the argument
@@ -315,3 +328,7 @@ interface Graph {
   let Verts:! A(.W = Vector(Edges));
 }
 ```
+
+## Rejecting undecidable declarations
+
+FIXME
