@@ -58,6 +58,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type inequality](#type-inequality)
     -   [Implicit constraints](#implicit-constraints)
     -   [Restrictions](#restrictions)
+        -   [Normalized form](#normalized-form)
+        -   [No cycles](#no-cycles)
+        -   [Conflicting constraints on an associated type](#conflicting-constraints-on-an-associated-type)
+        -   [Terminating recursion](#terminating-recursion)
 -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
     -   [Is a derived class](#is-a-derived-class)
     -   [Type compatible with another type](#type-compatible-with-another-type)
@@ -2752,10 +2756,12 @@ The intent is that these restrictions:
 
 The restrictions arise from the the algorithm used to answer type questions. It
 works by first rewriting `where` operations to put a declaration, like a
-function signature or interface definition, into a normalized form. This
-normalized form can then be lazily evaluated to answer queries. Queries take a
-dotted name and return an archetype that has a canonical type name and a
-type-of-type.
+function signature or interface definition, into a normalized form. FIXME:
+triggered by type checking. This normalized form can then be lazily evaluated to
+answer queries. Queries take a dotted name and return an archetype that has a
+canonical type name and a type-of-type.
+
+#### Normalized form
 
 The normalized form for a function declaration includes generic type parameters
 and any associated types mentioned in a `where` constraint.
@@ -2807,6 +2813,8 @@ S {
 }
 ```
 
+#### No cycles
+
 There are a couple of ways this normalization can fail. The first is by
 introducing a cycle:
 
@@ -2847,6 +2855,10 @@ HasCycle {
 }
 ```
 
+#### Conflicting constraints on an associated type
+
+FIXME: do we call this unification? intersection?
+
 The other failure is when setting two terms equal, we need to combine the
 constraints of both terms to get a type that both satifsy. In many cases, this
 combination is straightforward.
@@ -2868,6 +2880,10 @@ are different. We could in principle recursively add a rewrite setting them
 equal, but to guarantee that the algorithm terminates, we instead give an error.
 The insight is that in this case, the error is reasonably clear. In cases that
 arise in practice, the error should be enough for the user to fix the issue.
+
+FIXME: example
+
+#### Terminating recursion
 
 The last restriction comes from the query algorithm. It imposes a condition on
 recursive references to the same interface. The rewrite to normalized form tries
