@@ -2643,8 +2643,6 @@ and `T1 != T2`".
 Imagine we have a generic function that accepts an arbitrary `HashMap`:
 
 ```
-class HashMap(KeyType:! Hashable, ValueType:! Type);
-
 fn LookUp[KeyType:! Type](hm: HashMap(KeyType, Int)*,
                           k: KeyType) -> Int;
 
@@ -2658,14 +2656,32 @@ The `KeyType` in these declarations does not satisfy the requirements of
 
 ```
 class HashMap(
-    KeyType:! Hashable & Sized & EqualityComparable & Movable,
+    KeyType:! Hashable & EqualityComparable & Movable,
     ...) { ... }
 ```
 
 In this case, `KeyType` gets `Hashable` and so on as _implicit constraints_.
+Effectively that means that these functions are automatically rewritten to add a
+`where` constraint on `KeyType` attached to the `HashMap` type:
+
+```
+fn LookUp[KeyType:! Type]
+    (hm: HashMap(KeyType, Int)*
+        where KeyType is Hashable & EqualityComparable & Movable,
+     k: KeyType) -> Int;
+
+fn PrintValueOrDefault[KeyType:! Printable,
+                       ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT)
+        where KeyType is Hashable & EqualityComparable & Movable,
+     key: KeyT);
+```
 
 FIXME: This is being decided in question-for-leads issue
 [#809: Implicit/inferred generic type constraints](https://github.com/carbon-language/carbon-lang/issues/809).
+
+**Open question:** Should these be called "implicit" constraints, "inferred"
+constraints, or "implied" constraints?
 
 **Open question:** Should we allow those function declarations, and implicitly
 add needed constraints to `KeyType` implied by being used as an argument to a
@@ -2683,6 +2699,13 @@ This redundancy is undesirable since it means if the needed constraints for
 Further it can add noise that obscures relevant information. In practice, any
 user of these functions will have to pass in a valid `HashMap` instance, and so
 will have already satisfied these constraints.
+
+**Comparison with other languages:** Both Swift
+([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
+[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
+and
+[Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
+support some form of this feature as part of their type inference.
 
 **Note:** These implied constraints should affect the _requirements_ of a
 generic type parameter, but not its _unqualified names_. This way you can always
