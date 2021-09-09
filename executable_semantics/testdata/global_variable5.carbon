@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/global_variable5.carbon:18: type error in return
+// CHECK: COMPILATION ERROR: {{.*}}/global_variable5.carbon:22: type error in return
 // CHECK: expected: ()
 // CHECK: actual: i32
 

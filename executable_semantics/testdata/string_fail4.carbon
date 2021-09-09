@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/string_fail4.carbon:14: Invalid escaping in string: "str\01"
+// CHECK: COMPILATION ERROR: {{.*}}/string_fail4.carbon:16: Invalid escaping in string: "str\01"
 
 
 package ExecutableSemanticsTest api;

@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/tuple5.carbon:15: Tuple field name 'y' does not match pattern field name 'x'
+// CHECK: PROGRAM ERROR: {{.*}}/tuple5.carbon:17: Tuple field name 'y' does not match pattern field name 'x'
 
 package ExecutableSemanticsTest api;
 

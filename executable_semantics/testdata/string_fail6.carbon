@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/string_fail6.carbon:14: Invalid escaping in string: "new	line"
+// CHECK: COMPILATION ERROR: {{.*}}/string_fail6.carbon:16: Invalid escaping in string: "new	line"
 
 
 package ExecutableSemanticsTest api;

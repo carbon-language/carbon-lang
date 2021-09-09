@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/class_field_access_mismatch.carbon:19: class Point does not have a field named z
+// CHECK: COMPILATION ERROR: {{.*}}/class_field_access_mismatch.carbon:21: class Point does not have a field named z
 
 
 package ExecutableSemanticsTest api;

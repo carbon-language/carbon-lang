@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/string_fail3.carbon:14: Invalid escaping in string: "str\xaa"
+// CHECK: COMPILATION ERROR: {{.*}}/string_fail3.carbon:16: Invalid escaping in string: "str\xaa"
 
 
 package ExecutableSemanticsTest api;

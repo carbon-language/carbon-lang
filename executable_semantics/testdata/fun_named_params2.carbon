@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/fun_named_params2.carbon:13: positional members must come before named members
+// CHECK: PROGRAM ERROR: {{.*}}/fun_named_params2.carbon:15: positional members must come before named members
 
 
 package ExecutableSemanticsTest api;

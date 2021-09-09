@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/global_variable3.carbon:15: type error in initializer of variable
+// CHECK: COMPILATION ERROR: {{.*}}/global_variable3.carbon:19: type error in initializer of variable
 // CHECK: expected: i32
 // CHECK: actual: Bool
 

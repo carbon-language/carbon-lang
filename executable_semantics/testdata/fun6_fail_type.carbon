@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/fun6_fail_type.carbon:18: type error in call
+// CHECK: COMPILATION ERROR: {{.*}}/fun6_fail_type.carbon:22: type error in call
 // CHECK: expected: (0 = i32, 1 = i32)
 // CHECK: actual: (0 = (0 = i32, 1 = i32))
 

@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/return_empty_implicit_fail2.carbon:14: return; should provide a return value, to match the function's signature.
+// CHECK: COMPILATION ERROR: {{.*}}/return_empty_implicit_fail2.carbon:16: return; should provide a return value, to match the function's signature.
 
 
 package ExecutableSemanticsTest api;

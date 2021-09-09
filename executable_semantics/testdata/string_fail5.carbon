@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/string_fail5.carbon:14: invalid character '\x22' in source file.
+// CHECK: COMPILATION ERROR: {{.*}}/string_fail5.carbon:16: invalid character '\x22' in source file.
 
 
 package ExecutableSemanticsTest api;

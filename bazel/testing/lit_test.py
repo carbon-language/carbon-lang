@@ -58,16 +58,11 @@ def main():
 
     # A symlink directory is added to the PATH so that commands like `lit` and
     # `not` can use the versions in the path.
-    env = os.environ.copy()
-    symlink_dir = env["TEST_TMPDIR"]
-    env["PATH"] = "%s:%s" % (
-        symlink_dir,
-        env["PATH"],
-    )
+    symlink_dir = os.environ["TEST_TMPDIR"]
 
     # Create symlinks to all the tools.
     bin_dir = os.getcwd()
-    relative_base = os.path.dirname(_normalize("", env["TEST_TARGET"]))
+    relative_base = os.path.dirname(_normalize("", os.environ["TEST_TARGET"]))
     for tool in parsed_args.tool:
         tool_path = _normalize(relative_base, tool)
         symlink_loc = os.path.join(symlink_dir, os.path.basename(tool_path))
@@ -81,11 +76,14 @@ def main():
         bin_dir, _normalize(relative_base, parsed_args.test_dir)
     )
 
+    args = [
+        os.path.join(symlink_dir, "lit"),
+        "--path=%s" % symlink_dir,
+        test_dir,
+    ]
+
     # Run lit.
-    p = subprocess.run(
-        args=["lit", test_dir] + parsed_args.lit_args,
-        env=env,
-    )
+    p = subprocess.run(args=args + parsed_args.lit_args)
     # Do this instead of check_call to hide stack traces.
     if p.returncode != 0:
         exit("lit failed, exit code %d" % p.returncode)

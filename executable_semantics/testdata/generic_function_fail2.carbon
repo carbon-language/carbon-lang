@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail2.carbon:18: could not deduce type argument for type parameter T
+// CHECK: COMPILATION ERROR: {{.*}}/generic_function_fail2.carbon:20: could not deduce type argument for type parameter T
 
 
 package ExecutableSemanticsTest api;

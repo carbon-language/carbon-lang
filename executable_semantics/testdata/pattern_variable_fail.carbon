@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/pattern_variable_fail.carbon:15: syntax error, unexpected COLON
+// CHECK: COMPILATION ERROR: {{.*}}/pattern_variable_fail.carbon:17: syntax error, unexpected COLON
 
 
 package ExecutableSemanticsTest api;

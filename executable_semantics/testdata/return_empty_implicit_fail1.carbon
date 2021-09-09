@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/return_empty_implicit_fail1.carbon:14: control-flow reaches end of function that provides a `->` return type without reaching a return statement
+// CHECK: COMPILATION ERROR: {{.*}}/return_empty_implicit_fail1.carbon:16: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
 
 package ExecutableSemanticsTest api;

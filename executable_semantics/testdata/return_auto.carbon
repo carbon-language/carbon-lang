@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/return_auto.carbon:13: syntax error, unexpected AUTO
+// CHECK: COMPILATION ERROR: {{.*}}/return_auto.carbon:15: syntax error, unexpected AUTO
 
 
 package ExecutableSemanticsTest api;
