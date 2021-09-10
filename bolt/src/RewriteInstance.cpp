@@ -3717,11 +3717,11 @@ void RewriteInstance::mapCodeSections(RuntimeDyld &RTDyld) {
         JumpTable *JT = JTI.second;
         BinarySection &Section = JT->getOutputSection();
         Section.setOutputAddress(JT->getAddress());
+        Section.setOutputFileOffset(getFileOffsetForAddress(JT->getAddress()));
         LLVM_DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section.getName()
                           << " to 0x" << Twine::utohexstr(JT->getAddress())
                           << '\n');
-        RTDyld.reassignSectionAddress(Section.getSectionID(),
-                                      JT->getAddress());
+        RTDyld.reassignSectionAddress(Section.getSectionID(), JT->getAddress());
       }
     }
 
@@ -5153,11 +5153,12 @@ void RewriteInstance::rewriteFile() {
   assert(Offset == getFileOffsetForAddress(NextAvailableAddress) &&
          "error resizing output file");
 
-  // Overwrite functions with fixed output address.
+  // Overwrite functions with fixed output address. This is mostly used by
+  // non-relocation mode, with one exception: injected functions are covered
+  // here in both modes.
   uint64_t CountOverwrittenFunctions = 0;
   uint64_t OverwrittenScore = 0;
   for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
-
     if (Function->getImageAddress() == 0 || Function->getImageSize() == 0)
       continue;
 
@@ -5170,6 +5171,15 @@ void RewriteInstance::rewriteFile() {
                << ") for function " << *Function << '\n';
       }
       FailedAddresses.emplace_back(Function->getAddress());
+      // Remove jump table sections that this function owns in non-reloc mode
+      // because we don't wnat to write them anymore
+      if (!BC->HasRelocations && opts::JumpTables == JTS_BASIC) {
+        for (auto &JTI : Function->JumpTables) {
+          JumpTable *JT = JTI.second;
+          BinarySection &Section = JT->getOutputSection();
+          BC->deregisterSection(Section);
+        }
+      }
       continue;
     }
 
@@ -5194,20 +5204,6 @@ void RewriteInstance::rewriteFile() {
                         &*BC->STI);
 
       OS.seek(Pos);
-    }
-
-    // Write jump tables if updating in-place.
-    if (opts::JumpTables == JTS_BASIC) {
-      for (auto &JTI : Function->JumpTables) {
-        JumpTable *JT = JTI.second;
-        BinarySection &Section = JT->getOutputSection();
-        Section.setOutputFileOffset(
-            getFileOffsetForAddress(JT->getAddress()));
-        assert(Section.getOutputFileOffset() && "no matching offset in file");
-        OS.pwrite(reinterpret_cast<const char*>(Section.getOutputData()),
-                  Section.getOutputSize(),
-                  Section.getOutputFileOffset());
-      }
     }
 
     if (!Function->isSplit()) {
@@ -5264,7 +5260,7 @@ void RewriteInstance::rewriteFile() {
     OS.seek(SavedPos);
   }
 
-  // Write all non-local sections, i.e. those not emitted with the function.
+  // Write all allocatable sections - reloc-mode text is written here as well
   for (BinarySection &Section : BC->allocatableSections()) {
     if (!Section.isFinalized() || !Section.getOutputData())
       continue;
