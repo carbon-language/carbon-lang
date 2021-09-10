@@ -20,17 +20,20 @@ class Ptr {
 
   template <typename OtherT,
             std::enable_if_t<std::is_convertible_v<OtherT*, T*>>* = nullptr>
-  Ptr(Ptr<OtherT> other) : ptr(other.Get()) {}
+  Ptr(Ptr<OtherT> other) : ptr(other.Get()) {}  // NOLINT
 
   Ptr(std::nullptr_t) = delete;
 
   Ptr(const Ptr& other) = default;
-  Ptr& operator=(const Ptr& rhs) = default;
+  auto operator=(const Ptr& rhs) -> Ptr& = default;
 
-  auto operator*() const -> T& { return *ptr; }
-  auto operator->() const -> T* { return ptr; }
+  auto operator*() -> T& { return *ptr; }
+  auto operator*() const -> const T& { return *ptr; }
+  auto operator->() -> T* { return ptr; }
+  auto operator->() const -> const T* { return ptr; }
 
-  T* Get() const { return ptr; }
+  auto Get() -> T* { return ptr; }
+  auto Get() const -> const T* { return ptr; }
 
   friend auto operator==(Ptr lhs, Ptr rhs) { return lhs.ptr == rhs.ptr; }
   friend auto operator!=(Ptr lhs, Ptr rhs) { return lhs.ptr != rhs.ptr; }
