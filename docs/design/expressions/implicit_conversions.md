@@ -87,7 +87,7 @@ except:
     **Note:** We have not yet decided what will qualify as a constant in this
     context, but it will include at least integer and floating-point literals,
     with optional enclosing parentheses. It is possible that such constants will
-    have singleton types; see
+    have singleton types; see issue
     [#508](https://github.com/carbon-language/carbon-lang/issues/508).
 
 ### Equivalent types
@@ -164,13 +164,13 @@ of `E as T` in this document is provisional.
 ## Extensibility
 
 Implicit conversions can be defined for user-defined types such as
-[classes](#../classes.md) by implementing the `ImplicitAs` interface:
+[classes](../classes.md) by implementing the `ImplicitAs` interface:
 
 ```
-interface As(Type:! Dest) {
+interface As(Dest:! Type) {
   fn Convert[me: Self]() -> Dest;
 }
-interface ImplicitAs(Type:! Dest) extends As(Dest) {}
+interface ImplicitAs(Dest:! Type) extends As(Dest) {}
 ```
 
 When attempting to implicitly convert an expression `x` of type `T` to type `U`,
@@ -193,4 +193,4 @@ types.
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
-    [#820: implicit cnoversions](https://github.com/carbon-language/carbon-lang/pull/820).
+    [#820: implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
