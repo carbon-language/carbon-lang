@@ -98,8 +98,9 @@ The following conversion is available:
 
 Two types are equivalent if they can represent the same set of values and can be
 used interchangeably, implicitly. This refines the notion of types being
-compatible, where the representation is the same but an explicit cast may be
-required to view a value of one type with a compatible but non-equivalent type.
+[compatible](../generics/terminology.md#compatible-types), where the
+representation is the same but an explicit cast may be required to view a value
+of one type with a compatible but non-equivalent type.
 
 `T` is equivalent to `U` if:
 
