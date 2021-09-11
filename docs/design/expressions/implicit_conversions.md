@@ -73,7 +73,7 @@ representable finite value and the greatest representable finite value
 (inclusive), and does not fall exactly half-way between two representable
 values, and converts to the nearest representable finite value.
 
-The above conversions are precisely those that C++ considers non-narrowing,
+The above conversions are also precisely those that C++ considers non-narrowing,
 except:
 
 -   Carbon also permits integer to floating-point conversions in more cases. The
