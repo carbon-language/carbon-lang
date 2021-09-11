@@ -56,12 +56,12 @@ The following implicit numeric conversions are available:
 -   `fN` -> `fM` if `M` > `N`
 -   `iN` or `uN` -> `fM` if every value of type `iN` or `uN` can be represeted
     in `fM`:
-    -   `i11` or `u11` (or smaller) -> `f16`
-    -   `i24` or `u24` (or smaller) -> `f32`
-    -   `i53` or `u53` (or smaller) -> `f64`
-    -   `i64` or `u64` (or smaller) -> `f80` (x86 only)
-    -   `i113` or `u113` (or smaller) -> `f128` (if available)
-    -   `i237` or `u237` (or smaller) -> `f256` (if available)
+    -   `i12` or `u11` (or smaller) -> `f16`
+    -   `i25` or `u24` (or smaller) -> `f32`
+    -   `i54` or `u53` (or smaller) -> `f64`
+    -   `i65` or `u64` (or smaller) -> `f80` (x86 only)
+    -   `i114` or `u113` (or smaller) -> `f128` (if available)
+    -   `i238` or `u237` (or smaller) -> `f256` (if available)
 
 In each case, the numerical value is the same before and after the conversion.
 An integer zero is translated into a floating-point positive zero.
