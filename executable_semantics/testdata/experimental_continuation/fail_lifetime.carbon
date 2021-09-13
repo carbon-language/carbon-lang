@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/experimental_continuation/fail_lifetime.carbon:22: undefined behavior: access to dead value 1
 
-
 package ExecutableSemanticsTest api;
 
 // Test that the read from x triggers an error because x is dead.

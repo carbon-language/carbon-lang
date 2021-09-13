@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/string/fail_newline.carbon:16: invalid character '\x22' in source file.
 
-
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {

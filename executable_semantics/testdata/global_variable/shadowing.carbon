@@ -11,7 +11,6 @@
 // CHECK: expected: ()
 // CHECK: actual: i32
 
-
 package ExecutableSemanticsTest api;
 
 // Test overshadowing of global variable.

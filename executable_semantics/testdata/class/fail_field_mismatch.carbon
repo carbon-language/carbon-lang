@@ -11,7 +11,6 @@
 // CHECK: expected: (x = i32, y = i32)
 // CHECK: actual: (x = i32, z = i32)
 
-
 package ExecutableSemanticsTest api;
 
 class Point {

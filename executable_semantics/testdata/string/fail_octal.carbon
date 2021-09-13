@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/string/fail_octal.carbon:16: Invalid escaping in string: "str\01"
 
-
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {

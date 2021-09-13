@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/string/fail_tab.carbon:16: Invalid escaping in string: "new	line"
 
-
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {

@@ -9,5 +9,4 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_char.carbon:13: invalid character '\xEF' in source file.
 
-
 �

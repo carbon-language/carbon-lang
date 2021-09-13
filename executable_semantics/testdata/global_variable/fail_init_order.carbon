@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_order.carbon:18: could not find `y`
 
-
 package ExecutableSemanticsTest api;
 
 // Test that a global variable may not depend on a later global.

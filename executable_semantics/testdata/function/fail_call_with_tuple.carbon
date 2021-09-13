@@ -11,7 +11,6 @@
 // CHECK: expected: (0 = i32, 1 = i32)
 // CHECK: actual: (0 = (0 = i32, 1 = i32))
 
-
 package ExecutableSemanticsTest api;
 
 fn f(x: i32, y: i32) -> i32 { return x + y; }

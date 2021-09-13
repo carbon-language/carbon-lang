@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_access_mismatch.carbon:21: class Point does not have a field named z
 
-
 package ExecutableSemanticsTest api;
 
 class Point {

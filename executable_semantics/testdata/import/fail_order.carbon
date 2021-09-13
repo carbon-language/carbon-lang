@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/import/fail_order.carbon:19: syntax error, unexpected IMPORT, expecting END_OF_FILE
 
-
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {

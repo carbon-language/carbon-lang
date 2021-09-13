@@ -11,7 +11,6 @@
 // CHECK: expected: i32
 // CHECK: actual: Bool
 
-
 package ExecutableSemanticsTest api;
 
 // Test type checking of global variable. Error expected.

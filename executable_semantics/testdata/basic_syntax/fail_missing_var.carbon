@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_missing_var.carbon:17: syntax error, unexpected COLON
 
-
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {

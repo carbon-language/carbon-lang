@@ -9,7 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: PROGRAM ERROR: {{.*}}/executable_semantics/testdata/function/fail_named_params_order.carbon:15: positional members must come before named members
 
-
 package ExecutableSemanticsTest api;
 
 fn f(x: i32, .d = y: i32, z: i32, .e = a: i32) -> i32 {
