@@ -16,5 +16,6 @@ py_binary(
 
 mypy_test(
     name = "migrate_cpp_mypy_test",
+    include_imports = True,
     deps = [":migrate_cpp"],
 )

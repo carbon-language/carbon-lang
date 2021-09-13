@@ -38,14 +38,25 @@ pip_install(
 # typing directly. If it's added, we will probably want to switch.
 
 # Add mypy
-mypy_integration_version = "0.2.0"
+mypy_integration_version = "e5f8071f33eca637cd90bf70cb45f749e63bf2ca"
+
+# TODO: Can switch back to the official repo when it includes:
+# https://github.com/thundergolfer/bazel-mypy-integration/pull/43
+#http_archive(
+#    name = "mypy_integration",
+#    sha256 = "621df076709dc72809add1f5fe187b213fee5f9b92e39eb33851ab13487bd67d",
+#    strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
+#    urls = [
+#        "https://github.com/thundergolfer/bazel-mypy-integration/archive/refs/tags/%s.tar.gz" % mypy_integration_version,
+#    ],
+#)
 
 http_archive(
     name = "mypy_integration",
-    sha256 = "621df076709dc72809add1f5fe187b213fee5f9b92e39eb33851ab13487bd67d",
+    sha256 = "481ec6f0953a84a36b8103286f04c4cd274ae689060099085c02ac187d007592",
     strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
     urls = [
-        "https://github.com/thundergolfer/bazel-mypy-integration/archive/refs/tags/%s.tar.gz" % mypy_integration_version,
+        "https://github.com/jonmeow/bazel-mypy-integration/archive/%s.zip" % mypy_integration_version,
     ],
 )
 

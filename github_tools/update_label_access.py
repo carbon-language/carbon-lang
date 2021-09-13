@@ -16,7 +16,7 @@ from typing import List, Optional, Set
 
 # https://github.com/PyGithub/PyGithub
 # GraphQL is preferred, but falling back to pygithub for unsupported mutations.
-import github  # type: ignore
+import github
 
 from github_tools import github_helpers
 
@@ -114,18 +114,18 @@ def _update_team(
 
     This switches to pygithub because GraphQL lacks equivalent mutation support.
     """
-    gh_team = gh.get_organization(_ORG).get_team_by_slug(_TEAM)
+    gh_team = gh.get_organization(_ORG).get_team_by_slug(_TEAM)  # type: ignore
     add_members = org_members - team_members
     if add_members:
         print("Adding members: %s" % ", ".join(add_members))
         for member in add_members:
-            gh_team.add_membership(gh.get_user(member))
+            gh_team.add_membership(gh.get_user(member))  # type: ignore
 
     remove_members = team_members - org_members
     if remove_members:
         print("Removing members: %s" % ", ".join(remove_members))
         for member in remove_members:
-            gh_team.remove_membership(gh.get_user(member))
+            gh_team.remove_membership(gh.get_user(member))  # type: ignore
 
 
 def main() -> None:
@@ -136,7 +136,7 @@ def main() -> None:
     org_members = _load_org_members(client)
     team_members = _load_team_members(client)
     if org_members != team_members:
-        gh = github.Github(parsed_args.access_token)
+        gh = github.Github(parsed_args.access_token)  # type: ignore
         _update_team(gh, org_members, team_members)
     print("Done!")
 
