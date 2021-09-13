@@ -33,6 +33,7 @@ py_test(
 
 mypy_test(
     name = "new_proposal_mypy_test",
+    include_imports = True,
     deps = [":new_proposal"],
 )
 
@@ -45,5 +46,6 @@ py_library(
 
 mypy_test(
     name = "update_proposal_list_mypy_test",
+    include_imports = True,
     deps = [":update_proposal_list"],
 )

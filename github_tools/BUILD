@@ -27,6 +27,7 @@ py_binary(
 
 mypy_test(
     name = "pr_comments_mypy_test",
+    include_imports = True,
     deps = [":pr_comments"],
 )
 
@@ -49,6 +50,7 @@ py_binary(
 
 mypy_test(
     name = "update_label_access_mypy_test",
+    include_imports = True,
     deps = [":update_label_access"],
 )
 

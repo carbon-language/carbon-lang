@@ -96,5 +96,6 @@ py_test(
 
 mypy_test(
     name = "format_grammar_mypy_test",
+    include_imports = True,
     deps = [":format_grammar_lib"],
 )
