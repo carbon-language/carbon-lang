@@ -12,8 +12,8 @@
 
 namespace Carbon {
 
-// A wrapper similar to llvm::ArrayRef, but which returns const access to the
-// contained type, rather than just the wrapping `Ptr` type.
+// A wrapper similar to llvm::ArrayRef<Ptr<T>>, but which exposes the array
+// elements as `Ptr<const T>`.
 template <typename T>
 class PtrArrayRef {
  public:
