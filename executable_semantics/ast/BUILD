@@ -52,6 +52,7 @@ cc_library(
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
+        "//executable_semantics/common:ptr_array_ref",
         "@llvm-project//llvm:Support",
     ],
 )

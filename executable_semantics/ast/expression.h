@@ -14,6 +14,7 @@
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/arena.h"
+#include "executable_semantics/common/ptr_array_ref.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -240,7 +241,7 @@ class PrimitiveOperatorExpression : public Expression {
   }
 
   auto Op() const -> Operator { return op; }
-  auto Arguments() const -> const std::vector<Ptr<const Expression>>& {
+  auto Arguments() const -> const PtrArrayRef<const Expression> {
     return arguments;
   }
 
