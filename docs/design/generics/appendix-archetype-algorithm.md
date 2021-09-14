@@ -41,133 +41,259 @@ The first listed dotted name defines the canonical name for the archetype. There
 are no forward references allowed in the name bindings, which results in the ids
 generally being listed in decreasing order.
 
+As an example, these interface and function declarations
+
 ```
+interface Iterable {
+  var Elt:! Type;
+}
+
+interface Container {
+  let Elt:! Type;
+  let Iter:! Iterable where .Elt == Elt;
+  let Slice:! Container where .Elt == Elt, .Slice == .Self;
+}
+
 fn Sort[C:! Container where .Elt is Comparable](c: C*)
 ```
 
-normalizes to:
+normalize to:
 
 ```
+Iterable
+* $1 :! Type
+  - Elt
+* $0 :! Iterable{.Elt = $1}
+  - Self
+
+Container
+* $3 :! Type
+  - Elt
+  - Iter.Elt
+  - Slice.Elt
+* $2 :! Iterable{.Elt = $3}
+  - Iter
+* $1 :! Container{.Elt = $3, .Slice = $1}
+  - Slice
+* $0 :! Container{.Elt = $3, .Iter = $2, .Slice = $1}
+  - Self
+
+Sort
 * $2 :! Comparable
   - C.Elt
 * $1 :! Container{.Elt=$2}
   - C
 ```
 
-FIXME: do type checking at the same time, possibly it is triggered by type
-checking? It is sound to type check one level by induction, assuming you type
-check every interface "satisfies its constraints given parameters and Self meet
-their constraints." The caller adding additional constraints won't invalidate
-that.
+For function declarations, the first step of normalization is to transform
+implicit/implied/inferred constraints into explicit constraints. This means
+adding a `where` constraint on every generic type that is passed as a parameter
+to a type.
 
-FIXME: invariants of normalized form
-
--   All but 2 kinds of `where` constraints rewritten away. Exceptions are
-    `Vector(T) is Printable` and `N > 3` constraints.
--   All declarations are of one of these forms:
-    -   `Z.Y = X.W [as A];`
-    -   `Z.Y :! A{.X = Z.Y.X[, ...]} [& ...] [where Vector(Z.Y) is C];`
-    -   `$1 "Z.Y" :! A{.X = Z.Y.X[, ...]} [& ...] [where ...];`
-    -   `Z.N :! u32 [where Z.N < 4];`
--   No cycles and no forward references.
--   Original/immediate associated types at the end and in the original source
-    code order.
-
-FIXME: First step is to make implicit/implied/inferred constraints into explicit
-constraints. Next is to rewrite `where` constraints. Last is to type check.
-
-This leads to the question of whether we can describe a set of restrictions on
-`where` clauses that would allow us to directly translate them into the argument
-passing form. If so, we could allow the `where` clause syntax and still use the
-above efficient decision procedure.
-
-Consider an interface with one associate type that has `where` constraints:
+In this example, `KeyType` is passed as a parameter to `HashSet`
 
 ```
-interface Foo {
-  // Some associated types
-  let A:! ...;
-  let B:! Z where B.X == ..., B.Y == ...;
-  let C:! ...;
+class HashSet(KeyType:! Hashable & HasEquals & Movable);
+
+fn PrintSet[KeyType:! Printable](set: HashSet(KeyType));
+```
+
+so the transformation adds requirements to `KeyType` to satisfy the constraints
+from `HashSet`
+
+```
+fn PrintSet[KeyType:! Printable]
+    (set: HashSet(KeyType)
+     where KeyType is KeyType:! Hashable & HasEquals & Movable);
+```
+
+Next, every generic type and constant parameter is extracted from the
+declaration, and assigned an id.
+
+```
+fn Sort[C:! Container where .Elt is Comparable](c: C*);
+```
+
+is transformed to:
+
+```
+Sort
+* $1 :! Container where .Elt is Comparable
+  - C
+```
+
+Interfaces also get a `Self` type assigned to reserved id `$0`, with name
+bindings for all of its members. Id `$0` gets some special treatment, for
+example it may be referenced before it is declared.
+
+```
+interface Iterable {
+  var Elt:! Type;
 }
 ```
 
-These forms of `where` clauses are allowed because we can rewrite them into the
-argument passing form:
-
-| `where` form                   | argument passing form   |
-| ------------------------------ | ----------------------- |
-| `let B:! Z where B.X == A`     | `let B:! Z(.X = A)`     |
-| `let B:! Z where B.X == A.T.U` | `let B:! Z(.X = A.T.U)` |
-| `let B:! Z where B.X == Self`  | `let B:! Z(.X = Self)`  |
-| `let B:! Z where B.X == B`     | `let B:! Z(.X = .Self)` |
-
-Note that the second example would not be allowed if `A.T.U` had the same type
-as `B.X`, to avoid non-terminating recursion.
-
-These forms of `where` clauses are forbidden:
-
-| Example forbidden `where` form           | Rule                                     |
-| ---------------------------------------- | ---------------------------------------- |
-| `let B:! Z where B == ...`               | must have a dot on left of `==`          |
-| `let B:! Z where B.X.Y == ...`           | must have a single dot on left of `==`   |
-| `let B:! Z where A.X == ...`             | `A` ≠ `B` on left of `==`                |
-| `let B:! Z where B.X == ..., B.X == ...` | no two constraints on same member        |
-| `let B:! Z where B.X == B.Y`             | right side can't refer to members of `B` |
-| `let B:! Z where B.X == C`               | no forward reference                     |
-
-There is some room to rewrite other `where` expressions into allowed argument
-passing forms. One simple example is allowing the two sides of the `==` in one
-of the allowed forms to be swapped, but more complicated rewrites may be
-possible. For example,
+is transformed to:
 
 ```
-let B:! Z where B.X == B.Y;
+Iterable
+* $1 :! Type
+  - Elt
+* $0 :! Iterable{.Elt = $1}
+  - Self
 ```
 
-might be rewritten to:
+Then, `where` clauses are replaced with name bindings, introducing ids as
+needed. There are a number of patterns that can be replaced in this way.
 
-```
-[let XY:! ...];
-let B:! Z(.X = XY, .Y = XY);
-```
+-   Create ids for all prefixes of dotted names mentioned in a `where`
+    constraint that don't already have names.
 
-except it may be tricky in general to find a type for `XY` that satisfies the
-constraints on both `B.X` and `B.Y`. Similarly,
+    ```
+    F
+    * $1 :! A where .X.Y is B
+      - Z
+    ```
 
-```
-let A:! ...;
-let B:! Z where B == A.T.U
-```
+    would be rewritten:
 
-might be rewritten as:
+    ```
+    F
+    * $2 :! typeof(A.X) where .Y is B
+      - Z.X
+    * $1 :! A{.X = $2}
+      - Z
+    ```
 
-```
-let A:! ...;
-alias B = A.T.U;
-```
+-   If the prefix has already been given an id, that id should be reused.
 
-unless the type bounds on `A.T.U` do not match the `Z` bound on `B`. In that
-case, we need to find a type-of-type `Z2` that represents the intersection of
-the two type constraints and a different rewrite:
+    ```
+    F
+    * $1 :! A where .X.Y is B, .X.Z is C
+      - Z
+    ```
 
-```
-let Z2:! B
-[let AT:! ...(.U = B)];
-let A:! ...(.T = AT);
-```
+    might first be rewritten by the previous rule to:
 
-**Note:** It would be great if the
-['&' operator for type-of-types](#combining-interfaces-by-anding-type-of-types)
-was all we needed to define the intersection of two type constraints, but it
-isn't yet defined for two type-of-types that have the same interface but with
-different constraints. And that requires being able to automatically combine
-constraints of the form `B.X == Foo` and `B.X == Bar`.
+    ```
+    F
+    * $2 :! typeof(A.X) where .Y is B
+      - Z.X
+    * $1 :! A{.X = $2} where .X.Z is C
+      - Z
+    ```
 
-**Open question:** How much rewriting can be done automatically?
+    Then the second `where` clause would be reuse the id for `Z.X`:
 
-**Open question:** Is there a simple set of rules explaining which `where`
-clauses are allowed that we could explain to users?
+    ```
+    F
+    * $2 :! typeof(A.X) where .Y is B, .Z is C
+      - Z.X
+    * $1 :! A{.X = $2}
+      - Z
+    ```
+
+-   A `where` constraint saying a member must have a specific type or
+    type-of-type creates an id with type combining the existing type and the
+    type from the constraint.
+
+    ```
+    Sort
+    * $1 :! Container where .Elt is Comparable
+      - C
+    ```
+
+    becomes:
+
+    ```
+    Sort
+    * $2 :! Combine(typeof(Container.Elt), Comparable)
+      - C.Elt
+    * $1 :! Container{.Elt = $2}
+      - C
+    ```
+
+-   A `where` constraint equating two types needs to both ensure an id exists,
+    combine their types, and bind both names to that id.
+
+    ```
+    G
+    * $1 :! A where .X == .Y
+      - Z
+    ```
+
+    becomes:
+
+    ```
+    G
+    * $2 :! Combine(typeof(A.X), typeof(A.Y))
+      - Z.X
+      - Z.Y
+    * $1 :! A{.X = $2, .Y = $2)
+      - Z
+    ```
+
+    Note that only members of the type with the `where` clause get the combined
+    type. Any other expression will get a cast associated with its name binding.
+
+    ```
+    Container
+    * $2 :! Type
+      - Elt
+    * $1 :! Iterable where .Elt == Elt;
+      - Iter
+    ```
+
+    becomes:
+
+    ```
+    Container
+    * $2 :! Combine(Type, typeof(Iterable.Elt))
+      - Elt as Type
+      - Iter.Elt
+    * $1 :! Iterable{.Elt = $2}
+      - Iter
+    ```
+
+-   Setting a member to `Self` or `.Self` is treated slightly differently.
+    Instead of combining types to make sure it satisfies constraints, we just
+    typecheck that the existing types do.
+
+    ```
+    Container
+    * $1 :! Container where .Slice == .Self
+      - Slice
+    ```
+
+    checks that `Container.Slice` satisfies the requirements of `Self` and then
+    becomes:
+
+    ```
+    Container
+    * $1 :! Container{.Slice = $1}
+      - Slice
+    ```
+
+    `Self` is similar except it uses id `$0`.
+
+FIXME: `Combine`
+
+Some `where` constraints can't be rewritten and the only rewrite is to make sure
+they are attached to the relevant id.
+
+-   `where Vector(T) is Printable` constraints should be moved to `T`
+-   `where T != U` constraints should be moved to the latter id
+-   `where N > 3` constraints should be moved to `N`
+
+FIXME: Type check. It is sound to type check one level by induction, assuming
+you type check every interface "satisfies its constraints given parameters and
+Self meet their constraints." The caller adding additional constraints won't
+invalidate that.
+
+FIXME: invariants of normalized form
+
+-   No cycles and no forward references.
+-   Original/immediate associated types at the end and in the original source
+    code order.
 
 ## Query algorithm
 
