@@ -45,3 +45,21 @@ cc_library(
     hdrs = ["tracing_flag.h"],
     visibility = ["//executable_semantics:__subpackages__"],
 )
+
+cc_library(
+    name = "ptr_array_ref",
+    hdrs = ["ptr_array_ref.h"],
+    deps = [
+        ":ptr",
+    ],
+)
+
+cc_test(
+    name = "ptr_array_ref_test",
+    srcs = ["ptr_array_ref_test.cpp"],
+    deps = [
+        ":ptr_array_ref",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
