@@ -44,6 +44,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
 -   [Type-of-type](#type-of-type)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -688,3 +689,8 @@ available in the body of the function. Calling a function with a type `T` passed
 to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
 the facet type `T as I`. This has the API determined by `I`, with the
 implementation of that API coming from `T`.
+
+## References
+
+-   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)

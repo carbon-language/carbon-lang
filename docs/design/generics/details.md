@@ -93,6 +93,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Reverse generics for return types](#reverse-generics-for-return-types)
     -   [Variadic arguments](#variadic-arguments)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -2773,15 +2774,15 @@ fn Sort[C:! Container where .Elt is Comparable](c: C*)
 normalizes to:
 
 ```
-{
-  C.Elt:! Comparable;
-  C:! Container{.Elt=C.Elt};
-}
+* $2 :! Comparable
+  - C.Elt
+* $1 :! Container{.Elt=$2}
+  - C
 ```
 
 The normalized form for an interface includes the associated types as well as
-dotted names mentioned in `where` constraints. It includes interface's name to
-support recursive references. Given these interface definitions,
+dotted names mentioned in `where` constraints. It includes the interface's name
+to support recursive references. Given these interface definitions,
 
 ```
 interface P {
@@ -2805,13 +2806,25 @@ interface S {
 the interface `S` normalizes to:
 
 ```
-S {
-  A.T, B.X.Y:! F & H;
-  B.X:! Q{.Y = A.T};
-  A:! P{.T = A.T as F};
-  B:! R{.X = B.X};
-}
+S
+* $4 :! F & H
+  - A.T as F
+  - B.X.Y
+* $3 :! Q{.Y = $4}
+  - B.X
+* $2 :! P{.T = $4}
+  - A
+* $1 :! R{.X = $3}
+  - B
 ```
+
+Note that `A.T` and `B.X.Y` both correspond to `$4`, but their types are
+slightly different, reflecting the fact that the `where` clause modifies the API
+of ` B.X.Y` but not `A.T`. The type of `A.T` is `$4 as F`, while the type of
+`B.X.Y` is just `$4` or equivalently `$4 as F & H`.
+
+Also note that `B.X` gets its own entry, as a result of `B.X.Y` being mentioned
+in a `where` constraint.
 
 #### No cycles
 
@@ -2829,9 +2842,13 @@ interface Graph {
 normalizes to:
 
 ```
-Graph {
-  Vertex, Edge.Vertex:! V{.Edge = Edge};
-  Edge, Vertex.Edge:! E{.Vertex = Vertex};
+Graph
+* $2 :! V{.Edge = $1}
+  - Vertex
+  - Edge.Vertex
+* $1 :! E{.Vertex = $2}
+  - Edge
+  - Vertex.Edge
 }
 ```
 
@@ -2847,11 +2864,17 @@ interface HasCycle {
 which normalizes to:
 
 ```
-HasCycle {
-  A.T, B.X.Y:! ...{.U = A.T.U};
-  A.T.U, B.X:! ...{.Y = A.T};
-  A:! P{.T = A.T};
-  B:! Q{.X = A.T.U};
+HasCycle
+* $4 :! ...{.U = $3}
+  - A.T
+  - B.X.Y
+* $3 :! ...{.Y = $4}
+  - A.T.U
+  - B.X
+* $2 :! P{.T = $4}
+  - A
+* $1 :! Q{.X = $3}
+  - B
 }
 ```
 
@@ -3307,3 +3330,9 @@ Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 Some facility for allowing a function to generically take a variable number of
 arguments.
+
+## References
+
+-   [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)

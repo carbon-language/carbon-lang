@@ -25,9 +25,38 @@ needed and then cached.
 
 ## Rewrite to normalized form algorithm
 
+For every interface, function, or type declaration, the Carbon compiler will
+convert it to normalized form when it first type checks it. The normalized form
+is both to simplify type checking and support later queries.
+
+The normalized form consists of a list of archetypes and constants. An archetype
+has a few components:
+
+-   a unique id like `$3`
+-   a list of interfaces, each of which may have name bindings
+-   an optional `where` clause, and
+-   a list of dotted names with optional type-of-types.
+
+The first listed dotted name defines the canonical name for the archetype. There
+are no forward references allowed in the name bindings, which results in the ids
+generally being listed in decreasing order.
+
+```
+fn Sort[C:! Container where .Elt is Comparable](c: C*)
+```
+
+normalizes to:
+
+```
+* $2 :! Comparable
+  - C.Elt
+* $1 :! Container{.Elt=$2}
+  - C
+```
+
 FIXME: do type checking at the same time, possibly it is triggered by type
 checking? It is sound to type check one level by induction, assuming you type
-check every interface "satidfies its constraints given parameters and Self meet
+check every interface "satisfies its constraints given parameters and Self meet
 their constraints." The caller adding additional constraints won't invalidate
 that.
 
@@ -37,11 +66,15 @@ FIXME: invariants of normalized form
     `Vector(T) is Printable` and `N > 3` constraints.
 -   All declarations are of one of these forms:
     -   `Z.Y = X.W [as A];`
-    -   `Z.Y :! A{.X = Z.Y.X[, ...]} & B{.W = Z.Y.W} [& ...] [where Vector(Z.Y) is C];`
+    -   `Z.Y :! A{.X = Z.Y.X[, ...]} [& ...] [where Vector(Z.Y) is C];`
+    -   `$1 "Z.Y" :! A{.X = Z.Y.X[, ...]} [& ...] [where ...];`
     -   `Z.N :! u32 [where Z.N < 4];`
 -   No cycles and no forward references.
 -   Original/immediate associated types at the end and in the original source
     code order.
+
+FIXME: First step is to make implicit/implied/inferred constraints into explicit
+constraints. Next is to rewrite `where` constraints. Last is to type check.
 
 This leads to the question of whether we can describe a set of restrictions on
 `where` clauses that would allow us to directly translate them into the argument

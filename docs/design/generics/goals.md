@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Template use cases that are out of scope](#template-use-cases-that-are-out-of-scope)
     -   [Generics will be checked when defined](#generics-will-be-checked-when-defined)
     -   [Specialization strategy](#specialization-strategy)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -668,3 +669,7 @@ cases.
 Lastly, runtime specialization is out of scope as an implementation strategy.
 That is, some language runtimes JIT a specialization when it is first needed,
 but it is not a goal for Carbon to support such an implementation strategy.
+
+## References
+
+-   [#24: Generics goals](https://github.com/carbon-language/carbon-lang/pull/24)
