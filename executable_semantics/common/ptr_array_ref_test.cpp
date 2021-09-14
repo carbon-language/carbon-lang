@@ -43,7 +43,7 @@ TEST(PtrTest, Constness) {
   static_assert(!IsConstRef<decltype((v[0]->i))>);
   static_assert(!IsConstPtr<decltype(v[0].Get())>);
 
-  PtrArrayRef<Stub> ref(&v);
+  PtrArrayRef<Stub> ref(v);
   static_assert(IsConstRef<decltype(*ref[0])>);
   static_assert(IsConstRef<decltype((ref[0]->i))>);
   static_assert(IsConstPtr<decltype(ref[0].Get())>);
@@ -54,7 +54,7 @@ TEST(PtrTest, Constness) {
   static_assert(IsConstRef<decltype((v_const[0]->i))>);
   static_assert(IsConstPtr<decltype(v_const[0].Get())>);
 
-  PtrArrayRef<const Stub> ref_const(&v_const);
+  PtrArrayRef<const Stub> ref_const(v_const);
   static_assert(IsConstRef<decltype(*ref_const[0])>);
   static_assert(IsConstRef<decltype((ref_const[0]->i))>);
   static_assert(IsConstPtr<decltype(ref_const[0].Get())>);

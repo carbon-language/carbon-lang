@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "executable_semantics/common/ptr.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
@@ -15,11 +16,12 @@ namespace Carbon {
 template <typename T>
 class PtrArrayRef {
  public:
-  explicit PtrArrayRef(const std::vector<Ptr<T>>* v) : v(v) {}
-  auto operator[](int i) -> Ptr<const T> { return (*v)[i]; }
+  explicit PtrArrayRef(llvm::ArrayRef<Ptr<T>> ref) : ref(ref) {}
+
+  auto operator[](int i) -> Ptr<const T> { return ref[i]; }
 
  private:
-  Ptr<const std::vector<Ptr<T>>> v;
+  llvm::ArrayRef<Ptr<T>> ref;
 };
 
 }  // namespace Carbon

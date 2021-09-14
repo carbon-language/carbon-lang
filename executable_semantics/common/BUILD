@@ -51,6 +51,7 @@ cc_library(
     hdrs = ["ptr_array_ref.h"],
     deps = [
         ":ptr",
+        "@llvm-project//llvm:Support",
     ],
 )
 
