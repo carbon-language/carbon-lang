@@ -35,14 +35,14 @@ class PtrArrayRef {
 
   auto operator[](size_t i) const -> Ptr<const T> { return ref[i]; }
 
-  iterator begin() const { return ref.begin(); }
-  iterator end() const { return ref.end(); }
+  auto begin() const -> iterator { return ref.begin(); }
+  auto end() const -> iterator { return ref.end(); }
 
-  reverse_iterator rbegin() const { return reverse_iterator(end()); }
-  reverse_iterator rend() const { return reverse_iterator(begin()); }
+  auto rbegin() const -> reverse_iterator { return reverse_iterator(end()); }
+  auto rend() const -> reverse_iterator { return reverse_iterator(begin()); }
 
-  bool empty() const { return ref.empty(); }
-  size_t size() const { return ref.size(); }
+  auto empty() const -> bool { return ref.empty(); }
+  auto size() const -> size_t { return ref.size(); }
 
  private:
   llvm::ArrayRef<Ptr<T>> ref;

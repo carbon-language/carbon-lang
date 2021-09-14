@@ -42,6 +42,11 @@ TEST(PtrArrayRefTest, MutableT) {
   static_assert(IsConstRef<decltype(*ref[0])>);
   static_assert(IsConstRef<decltype((ref[0]->i))>);
   static_assert(IsConstPtr<decltype(ref[0].Get())>);
+
+  // Note that things like `.begin()` are still const.
+  static_assert(IsConstRef<decltype(*ref.begin()[0])>);
+  static_assert(IsConstRef<decltype((ref.begin()[0]->i))>);
+  static_assert(IsConstPtr<decltype(ref.begin()[0].Get())>);
 }
 
 TEST(PtrArrayRefTest, ConstT) {
