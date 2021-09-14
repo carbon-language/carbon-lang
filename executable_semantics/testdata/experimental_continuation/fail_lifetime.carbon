@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/experimental_continuation/fail_lifetime.carbon:22: undefined behavior: access to dead value 1
+// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/experimental_continuation/fail_lifetime.carbon:21: undefined behavior: access to dead value 1
 
 package ExecutableSemanticsTest api;
 

@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/shadowing.carbon:22: type error in return
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/shadowing.carbon:21: type error in return
 // CHECK: expected: ()
 // CHECK: actual: i32
 

@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/import/fail_order.carbon:19: syntax error, unexpected IMPORT, expecting END_OF_FILE
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/import/fail_order.carbon:18: syntax error, unexpected IMPORT, expecting END_OF_FILE
 
 package ExecutableSemanticsTest api;
 

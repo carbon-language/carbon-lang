@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_order.carbon:18: could not find `y`
+// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_order.carbon:17: could not find `y`
 
 package ExecutableSemanticsTest api;
 

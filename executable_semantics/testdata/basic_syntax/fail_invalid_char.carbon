@@ -7,6 +7,6 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_char.carbon:13: invalid character '\xEF' in source file.
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_char.carbon:12: invalid character '\xEF' in source file.
 
 �

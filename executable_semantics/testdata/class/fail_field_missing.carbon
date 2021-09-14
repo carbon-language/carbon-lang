@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_missing.carbon:23: type error in call
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_missing.carbon:22: type error in call
 // CHECK: expected: (x = i32, y = i32)
 // CHECK: actual: (x = i32)
 
