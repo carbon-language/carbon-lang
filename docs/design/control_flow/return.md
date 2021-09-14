@@ -89,8 +89,8 @@ When a variable is marked as `returned`, it must be the only `returned` value
 in-scope.
 
 If a `returned var` is returned, the specific syntax `return var` must be used.
-Returning other expressions is not allowed while a `returned var` is in scope.
-For example:
+Returning expressions is not allowed while a `returned var` is in scope. For
+example:
 
 ```carbon
 fn MakeCircle(radius: Int) -> Circle {
