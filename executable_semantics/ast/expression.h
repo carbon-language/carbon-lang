@@ -241,7 +241,7 @@ class PrimitiveOperatorExpression : public Expression {
   }
 
   auto Op() const -> Operator { return op; }
-  auto Arguments() const -> const PtrArrayRef<const Expression> {
+  auto Arguments() const -> PtrArrayRef<const Expression> {
     return arguments;
   }
 
