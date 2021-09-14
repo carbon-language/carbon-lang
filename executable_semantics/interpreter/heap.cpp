@@ -9,7 +9,7 @@
 
 namespace Carbon {
 
-auto Heap::AllocateValue(Ptr<const Value> v) -> Address {
+auto Heap::AllocateValue(const Value* v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
@@ -20,12 +20,12 @@ auto Heap::AllocateValue(Ptr<const Value> v) -> Address {
   return a;
 }
 
-auto Heap::Read(const Address& a, SourceLocation loc) -> Ptr<const Value> {
+auto Heap::Read(const Address& a, SourceLocation loc) -> const Value* {
   this->CheckAlive(a, loc);
   return values[a.index]->GetField(arena, a.field_path, loc);
 }
 
-void Heap::Write(const Address& a, Ptr<const Value> v, SourceLocation loc) {
+void Heap::Write(const Address& a, const Value* v, SourceLocation loc) {
   this->CheckAlive(a, loc);
   values[a.index] = values[a.index]->SetField(arena, a.field_path, v, loc);
 }

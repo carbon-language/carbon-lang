@@ -17,7 +17,7 @@ namespace Carbon {
 class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  ParseAndLexContext(Ptr<const std::string> input_file_name)
+  ParseAndLexContext(const std::string* input_file_name)
       : input_file_name(input_file_name) {}
 
   // Writes a syntax error diagnostic containing message to standard error.
@@ -34,15 +34,14 @@ class ParseAndLexContext {
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
-  Ptr<const std::string> input_file_name;
+  const std::string* input_file_name;
 };
 
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL                                                       \
-  Carbon::Parser::symbol_type yylex(Carbon::Ptr<Carbon::Arena> arena, \
-                                    yyscan_t yyscanner,               \
+#define YY_DECL                                                               \
+  Carbon::Parser::symbol_type yylex(Carbon::Arena* arena, yyscan_t yyscanner, \
                                     Carbon::ParseAndLexContext& context)
 
 // Declares yylex for the parser's sake.

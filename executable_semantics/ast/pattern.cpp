@@ -54,8 +54,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
-TuplePattern::TuplePattern(Ptr<Arena> arena,
-                           Ptr<const Expression> tuple_literal)
+TuplePattern::TuplePattern(Arena* arena, const Expression* tuple_literal)
     : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
@@ -64,10 +63,10 @@ TuplePattern::TuplePattern(Ptr<Arena> arena,
   }
 }
 
-auto PatternFromParenContents(Ptr<Arena> arena, SourceLocation loc,
+auto PatternFromParenContents(Arena* arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> Ptr<const Pattern> {
-  std::optional<Ptr<const Pattern>> single_term = paren_contents.SingleTerm();
+    -> const Pattern* {
+  std::optional<const Pattern*> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
@@ -75,9 +74,9 @@ auto PatternFromParenContents(Ptr<Arena> arena, SourceLocation loc,
   }
 }
 
-auto TuplePatternFromParenContents(Ptr<Arena> arena, SourceLocation loc,
+auto TuplePatternFromParenContents(Arena* arena, SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> Ptr<const TuplePattern> {
+    -> const TuplePattern* {
   return arena->New<TuplePattern>(
       loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }
@@ -86,7 +85,7 @@ auto TuplePatternFromParenContents(Ptr<Arena> arena, SourceLocation loc,
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
 static const FieldAccessExpression& RequireFieldAccess(
-    Ptr<const Expression> alternative) {
+    const Expression* alternative) {
   if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
     FATAL_PROGRAM_ERROR(alternative->SourceLoc())
         << "Alternative pattern must have the form of a field access.";
@@ -95,14 +94,14 @@ static const FieldAccessExpression& RequireFieldAccess(
 }
 
 AlternativePattern::AlternativePattern(SourceLocation loc,
-                                       Ptr<const Expression> alternative,
-                                       Ptr<const TuplePattern> arguments)
+                                       const Expression* alternative,
+                                       const TuplePattern* arguments)
     : Pattern(Kind::AlternativePattern, loc),
       choice_type(RequireFieldAccess(alternative).Aggregate()),
       alternative_name(RequireFieldAccess(alternative).Field()),
       arguments(arguments) {}
 
-auto ParenExpressionToParenPattern(Ptr<Arena> arena,
+auto ParenExpressionToParenPattern(Arena* arena,
                                    const ParenContents<Expression>& contents)
     -> ParenContents<Pattern> {
   ParenContents<Pattern> result = {

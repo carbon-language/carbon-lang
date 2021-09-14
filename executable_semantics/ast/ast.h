@@ -9,7 +9,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/library_name.h"
-#include "executable_semantics/common/ptr.h"
 
 namespace Carbon {
 
@@ -22,7 +21,7 @@ struct AST {
   // Import directives.
   std::vector<LibraryName> imports;
   // The file's ordered declarations.
-  std::vector<Ptr<const Declaration>> declarations;
+  std::vector<const Declaration*> declarations;
 };
 
 }  // namespace Carbon

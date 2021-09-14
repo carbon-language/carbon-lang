@@ -13,7 +13,6 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/common/ptr.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/field_path.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -68,14 +67,13 @@ class Value {
 
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
-  auto GetField(Ptr<Arena> arena, const FieldPath& path,
-                SourceLocation loc) const -> Ptr<const Value>;
+  auto GetField(Arena* arena, const FieldPath& path, SourceLocation loc) const
+      -> const Value*;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
-  auto SetField(Ptr<Arena> arena, const FieldPath& path,
-                Ptr<const Value> field_value, SourceLocation loc) const
-      -> Ptr<const Value>;
+  auto SetField(Arena* arena, const FieldPath& path, const Value* field_value,
+                SourceLocation loc) const -> const Value*;
 
  protected:
   // Constructs a Value. `tag` must be the enumerator corresponding to the
@@ -86,10 +84,10 @@ class Value {
   const Kind tag;
 };
 
-using VarValues = std::vector<std::pair<std::string, Ptr<const Value>>>;
+using VarValues = std::vector<std::pair<std::string, const Value*>>;
 
 auto FindInVarValues(const std::string& field, const VarValues& inits)
-    -> std::optional<Ptr<const Value>>;
+    -> std::optional<const Value*>;
 auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
 
 // A TupleElement represents the value of a single tuple field.
@@ -98,7 +96,7 @@ struct TupleElement {
   std::string name;
 
   // The field's value.
-  Ptr<const Value> value;
+  const Value* value;
 };
 
 struct Frame;  // Used by continuation.
@@ -121,8 +119,8 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(std::string name, Ptr<const Value> param,
-                std::optional<Ptr<const Statement>> body)
+  FunctionValue(std::string name, const Value* param,
+                std::optional<const Statement*> body)
       : Value(Kind::FunctionValue),
         name(std::move(name)),
         param(param),
@@ -133,13 +131,13 @@ class FunctionValue : public Value {
   }
 
   auto Name() const -> const std::string& { return name; }
-  auto Param() const -> Ptr<const Value> { return param; }
-  auto Body() const -> std::optional<Ptr<const Statement>> { return body; }
+  auto Param() const -> const Value* { return param; }
+  auto Body() const -> std::optional<const Statement*> { return body; }
 
  private:
   std::string name;
-  Ptr<const Value> param;
-  std::optional<Ptr<const Statement>> body;
+  const Value* param;
+  std::optional<const Statement*> body;
 };
 
 // A pointer value.
@@ -176,19 +174,19 @@ class BoolValue : public Value {
 // A function value.
 class StructValue : public Value {
  public:
-  StructValue(Ptr<const Value> type, Ptr<const Value> inits)
+  StructValue(const Value* type, const Value* inits)
       : Value(Kind::StructValue), type(type), inits(inits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->Tag() == Kind::StructValue;
   }
 
-  auto Type() const -> Ptr<const Value> { return type; }
-  auto Inits() const -> Ptr<const Value> { return inits; }
+  auto Type() const -> const Value* { return type; }
+  auto Inits() const -> const Value* { return inits; }
 
  private:
-  Ptr<const Value> type;
-  Ptr<const Value> inits;
+  const Value* type;
+  const Value* inits;
 };
 
 // An alternative constructor value.
@@ -215,7 +213,7 @@ class AlternativeConstructorValue : public Value {
 class AlternativeValue : public Value {
  public:
   AlternativeValue(std::string alt_name, std::string choice_name,
-                   Ptr<const Value> argument)
+                   const Value* argument)
       : Value(Kind::AlternativeValue),
         alt_name(std::move(alt_name)),
         choice_name(std::move(choice_name)),
@@ -227,21 +225,21 @@ class AlternativeValue : public Value {
 
   auto AltName() const -> const std::string& { return alt_name; }
   auto ChoiceName() const -> const std::string& { return choice_name; }
-  auto Argument() const -> Ptr<const Value> { return argument; }
+  auto Argument() const -> const Value* { return argument; }
 
  private:
   std::string alt_name;
   std::string choice_name;
-  Ptr<const Value> argument;
+  const Value* argument;
 };
 
 // A function value.
 class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
-  static Ptr<const TupleValue> Empty() {
+  static const TupleValue* Empty() {
     static const TupleValue empty = TupleValue(std::vector<TupleElement>());
-    return Ptr<const TupleValue>(&empty);
+    return &empty;
   }
 
   explicit TupleValue(std::vector<TupleElement> elements)
@@ -255,8 +253,7 @@ class TupleValue : public Value {
 
   // Returns the value of the field named `name` in this tuple, or
   // nullopt if there is no such field.
-  auto FindField(const std::string& name) const
-      -> std::optional<Ptr<const Value>>;
+  auto FindField(const std::string& name) const -> std::optional<const Value*>;
 
  private:
   std::vector<TupleElement> elements;
@@ -266,8 +263,7 @@ class TupleValue : public Value {
 class BindingPlaceholderValue : public Value {
  public:
   // nullopt represents the `_` placeholder.
-  BindingPlaceholderValue(std::optional<std::string> name,
-                          Ptr<const Value> type)
+  BindingPlaceholderValue(std::optional<std::string> name, const Value* type)
       : Value(Kind::BindingPlaceholderValue),
         name(std::move(name)),
         type(type) {}
@@ -277,11 +273,11 @@ class BindingPlaceholderValue : public Value {
   }
 
   auto Name() const -> const std::optional<std::string>& { return name; }
-  auto Type() const -> Ptr<const Value> { return type; }
+  auto Type() const -> const Value* { return type; }
 
  private:
   std::optional<std::string> name;
-  Ptr<const Value> type;
+  const Value* type;
 };
 
 // The int type.
@@ -317,8 +313,8 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<GenericBinding> deduced, Ptr<const Value> param,
-               Ptr<const Value> ret)
+  FunctionType(std::vector<GenericBinding> deduced, const Value* param,
+               const Value* ret)
       : Value(Kind::FunctionType),
         deduced(std::move(deduced)),
         param(param),
@@ -329,29 +325,29 @@ class FunctionType : public Value {
   }
 
   auto Deduced() const -> const std::vector<GenericBinding>& { return deduced; }
-  auto Param() const -> Ptr<const Value> { return param; }
-  auto Ret() const -> Ptr<const Value> { return ret; }
+  auto Param() const -> const Value* { return param; }
+  auto Ret() const -> const Value* { return ret; }
 
  private:
   std::vector<GenericBinding> deduced;
-  Ptr<const Value> param;
-  Ptr<const Value> ret;
+  const Value* param;
+  const Value* ret;
 };
 
 // A pointer type.
 class PointerType : public Value {
  public:
-  explicit PointerType(Ptr<const Value> type)
+  explicit PointerType(const Value* type)
       : Value(Kind::PointerType), type(type) {}
 
   static auto classof(const Value* value) -> bool {
     return value->Tag() == Kind::PointerType;
   }
 
-  auto Type() const -> Ptr<const Value> { return type; }
+  auto Type() const -> const Value* { return type; }
 
  private:
-  Ptr<const Value> type;
+  const Value* type;
 };
 
 // The `auto` type.
@@ -436,17 +432,17 @@ class VariableType : public Value {
 // A first-class continuation representation of a fragment of the stack.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(std::vector<Ptr<Frame>> stack)
+  explicit ContinuationValue(std::vector<Frame*> stack)
       : Value(Kind::ContinuationValue), stack(std::move(stack)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->Tag() == Kind::ContinuationValue;
   }
 
-  auto Stack() const -> const std::vector<Ptr<Frame>>& { return stack; }
+  auto Stack() const -> const std::vector<Frame*>& { return stack; }
 
  private:
-  std::vector<Ptr<Frame>> stack;
+  std::vector<Frame*> stack;
 };
 
 // The String type.
@@ -475,12 +471,11 @@ class StringValue : public Value {
   std::string val;
 };
 
-auto CopyVal(Ptr<Arena> arena, Ptr<const Value> val, SourceLocation loc)
-    -> Ptr<const Value>;
+auto CopyVal(Arena* arena, const Value* val, SourceLocation loc)
+    -> const Value*;
 
-auto TypeEqual(Ptr<const Value> t1, Ptr<const Value> t2) -> bool;
-auto ValueEqual(Ptr<const Value> v1, Ptr<const Value> v2, SourceLocation loc)
-    -> bool;
+auto TypeEqual(const Value* t1, const Value* t2) -> bool;
+auto ValueEqual(const Value* v1, const Value* v2, SourceLocation loc) -> bool;
 
 }  // namespace Carbon
 

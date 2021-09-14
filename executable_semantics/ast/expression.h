@@ -63,25 +63,25 @@ class Expression {
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
 auto ExpressionFromParenContents(
-    Ptr<Arena> arena, SourceLocation loc,
-    const ParenContents<Expression>& paren_contents) -> Ptr<const Expression>;
+    Arena* arena, SourceLocation loc,
+    const ParenContents<Expression>& paren_contents) -> const Expression*;
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // forming a tuple.
 auto TupleExpressionFromParenContents(
-    Ptr<Arena> arena, SourceLocation loc,
-    const ParenContents<Expression>& paren_contents) -> Ptr<const Expression>;
+    Arena* arena, SourceLocation loc,
+    const ParenContents<Expression>& paren_contents) -> const Expression*;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {
-  FieldInitializer(std::string name, Ptr<const Expression> expression)
+  FieldInitializer(std::string name, const Expression* expression)
       : name(std::move(name)), expression(expression) {}
 
   // The field name. Cannot be empty.
   std::string name;
 
   // The expression that initializes the field.
-  Ptr<const Expression> expression;
+  const Expression* expression;
 };
 
 enum class Operator {
@@ -115,8 +115,7 @@ class IdentifierExpression : public Expression {
 class FieldAccessExpression : public Expression {
  public:
   explicit FieldAccessExpression(SourceLocation loc,
-                                 Ptr<const Expression> aggregate,
-                                 std::string field)
+                                 const Expression* aggregate, std::string field)
       : Expression(Kind::FieldAccessExpression, loc),
         aggregate(aggregate),
         field(std::move(field)) {}
@@ -125,18 +124,18 @@ class FieldAccessExpression : public Expression {
     return exp->Tag() == Kind::FieldAccessExpression;
   }
 
-  auto Aggregate() const -> Ptr<const Expression> { return aggregate; }
+  auto Aggregate() const -> const Expression* { return aggregate; }
   auto Field() const -> const std::string& { return field; }
 
  private:
-  Ptr<const Expression> aggregate;
+  const Expression* aggregate;
   std::string field;
 };
 
 class IndexExpression : public Expression {
  public:
-  explicit IndexExpression(SourceLocation loc, Ptr<const Expression> aggregate,
-                           Ptr<const Expression> offset)
+  explicit IndexExpression(SourceLocation loc, const Expression* aggregate,
+                           const Expression* offset)
       : Expression(Kind::IndexExpression, loc),
         aggregate(aggregate),
         offset(offset) {}
@@ -145,12 +144,12 @@ class IndexExpression : public Expression {
     return exp->Tag() == Kind::IndexExpression;
   }
 
-  auto Aggregate() const -> Ptr<const Expression> { return aggregate; }
-  auto Offset() const -> Ptr<const Expression> { return offset; }
+  auto Aggregate() const -> const Expression* { return aggregate; }
+  auto Offset() const -> const Expression* { return offset; }
 
  private:
-  Ptr<const Expression> aggregate;
-  Ptr<const Expression> offset;
+  const Expression* aggregate;
+  const Expression* offset;
 };
 
 class IntLiteral : public Expression {
@@ -228,9 +227,8 @@ class TupleLiteral : public Expression {
 
 class PrimitiveOperatorExpression : public Expression {
  public:
-  explicit PrimitiveOperatorExpression(
-      SourceLocation loc, Operator op,
-      std::vector<Ptr<const Expression>> arguments)
+  explicit PrimitiveOperatorExpression(SourceLocation loc, Operator op,
+                                       std::vector<const Expression*> arguments)
       : Expression(Kind::PrimitiveOperatorExpression, loc),
         op(op),
         arguments(std::move(arguments)) {}
@@ -240,19 +238,19 @@ class PrimitiveOperatorExpression : public Expression {
   }
 
   auto Op() const -> Operator { return op; }
-  auto Arguments() const -> const std::vector<Ptr<const Expression>>& {
+  auto Arguments() const -> const std::vector<const Expression*>& {
     return arguments;
   }
 
  private:
   Operator op;
-  std::vector<Ptr<const Expression>> arguments;
+  std::vector<const Expression*> arguments;
 };
 
 class CallExpression : public Expression {
  public:
-  explicit CallExpression(SourceLocation loc, Ptr<const Expression> function,
-                          Ptr<const Expression> argument)
+  explicit CallExpression(SourceLocation loc, const Expression* function,
+                          const Expression* argument)
       : Expression(Kind::CallExpression, loc),
         function(function),
         argument(argument) {}
@@ -261,19 +259,18 @@ class CallExpression : public Expression {
     return exp->Tag() == Kind::CallExpression;
   }
 
-  auto Function() const -> Ptr<const Expression> { return function; }
-  auto Argument() const -> Ptr<const Expression> { return argument; }
+  auto Function() const -> const Expression* { return function; }
+  auto Argument() const -> const Expression* { return argument; }
 
  private:
-  Ptr<const Expression> function;
-  Ptr<const Expression> argument;
+  const Expression* function;
+  const Expression* argument;
 };
 
 class FunctionTypeLiteral : public Expression {
  public:
-  explicit FunctionTypeLiteral(SourceLocation loc,
-                               Ptr<const Expression> parameter,
-                               Ptr<const Expression> return_type,
+  explicit FunctionTypeLiteral(SourceLocation loc, const Expression* parameter,
+                               const Expression* return_type,
                                bool is_omitted_return_type)
       : Expression(Kind::FunctionTypeLiteral, loc),
         parameter(parameter),
@@ -284,13 +281,13 @@ class FunctionTypeLiteral : public Expression {
     return exp->Tag() == Kind::FunctionTypeLiteral;
   }
 
-  auto Parameter() const -> Ptr<const Expression> { return parameter; }
-  auto ReturnType() const -> Ptr<const Expression> { return return_type; }
+  auto Parameter() const -> const Expression* { return parameter; }
+  auto ReturnType() const -> const Expression* { return return_type; }
   auto IsOmittedReturnType() const -> bool { return is_omitted_return_type; }
 
  private:
-  Ptr<const Expression> parameter;
-  Ptr<const Expression> return_type;
+  const Expression* parameter;
+  const Expression* return_type;
   bool is_omitted_return_type;
 };
 

@@ -17,10 +17,9 @@ namespace Carbon {
 using llvm::cast;
 
 auto ExpressionFromParenContents(
-    Ptr<Arena> arena, SourceLocation loc,
-    const ParenContents<Expression>& paren_contents) -> Ptr<const Expression> {
-  std::optional<Ptr<const Expression>> single_term =
-      paren_contents.SingleTerm();
+    Arena* arena, SourceLocation loc,
+    const ParenContents<Expression>& paren_contents) -> const Expression* {
+  std::optional<const Expression*> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
@@ -29,8 +28,8 @@ auto ExpressionFromParenContents(
 }
 
 auto TupleExpressionFromParenContents(
-    Ptr<Arena> arena, SourceLocation loc,
-    const ParenContents<Expression>& paren_contents) -> Ptr<const Expression> {
+    Arena* arena, SourceLocation loc,
+    const ParenContents<Expression>& paren_contents) -> const Expression* {
   return arena->New<TupleLiteral>(
       loc, paren_contents.TupleElements<FieldInitializer>(loc));
 }

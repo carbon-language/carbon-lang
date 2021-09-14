@@ -16,7 +16,7 @@ namespace Carbon {
 struct ClassDefinition {
   SourceLocation loc;
   std::string name;
-  std::vector<Ptr<Member>> members;
+  std::vector<Member*> members;
 };
 
 }  // namespace Carbon

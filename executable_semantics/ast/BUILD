@@ -37,7 +37,6 @@ cc_library(
         ":pattern",
         ":source_location",
         "//common:ostream",
-        "//executable_semantics/common:ptr",
         "@llvm-project//llvm:Support",
     ],
 )
