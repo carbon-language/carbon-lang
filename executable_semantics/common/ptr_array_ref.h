@@ -53,7 +53,6 @@ class PtrArrayRef {
     auto operator==(const Iterator& rhs) const -> bool { return p == rhs.p; }
     auto operator!=(const Iterator& rhs) const -> bool { return p != rhs.p; }
     auto operator*() -> const Ptr<const T> { return *p; }
-    auto operator->() -> const Ptr<const T>* { return &*this; }
 
    private:
     const Ptr<T>* p;
