@@ -12,7 +12,8 @@
 
 namespace Carbon {
 
-// Provides a constant reference to an underlying vector.
+// A wrapper similar to llvm::ArrayRef, but which returns const access to the
+// contained type, rather than just the wrapping `Ptr` type.
 template <typename T>
 class PtrArrayRef {
  public:
