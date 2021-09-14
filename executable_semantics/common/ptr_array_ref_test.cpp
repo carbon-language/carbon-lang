@@ -6,7 +6,9 @@
 
 #include <type_traits>
 
+#include "executable_semantics/common/arena.h"
 #include "gtest/gtest.h"
+#include "llvm/include/llvm/ADT/STLExtras.h"
 
 namespace Carbon {
 namespace {
@@ -42,11 +44,6 @@ TEST(PtrArrayRefTest, MutableT) {
   static_assert(IsConstRef<decltype(*ref[0])>);
   static_assert(IsConstRef<decltype((ref[0]->i))>);
   static_assert(IsConstPtr<decltype(ref[0].Get())>);
-
-  // Note that things like `.begin()` are still const.
-  static_assert(IsConstRef<decltype(*ref.begin()[0])>);
-  static_assert(IsConstRef<decltype((ref.begin()[0]->i))>);
-  static_assert(IsConstPtr<decltype(ref.begin()[0].Get())>);
 }
 
 TEST(PtrArrayRefTest, ConstT) {
@@ -70,6 +67,23 @@ TEST(PtrArrayRefTest, ConstT) {
   static_assert(IsConstRef<decltype(*ref[0])>);
   static_assert(IsConstRef<decltype((ref[0]->i))>);
   static_assert(IsConstPtr<decltype(ref[0].Get())>);
+}
+
+TEST(PtrArrayRefTest, Iterator) {
+  Arena arena;
+  std::vector<Ptr<int>> v = {arena.New<int>(0), arena.New<int>(1)};
+  PtrArrayRef<int> ref(v);
+
+  int i = 0;
+  for (Ptr<const int> ptr : ref) {
+    EXPECT_EQ(*ptr, i);
+    ++i;
+  }
+
+  for (Ptr<const int> ptr : llvm::reverse(ref)) {
+    --i;
+    EXPECT_EQ(*ptr, i);
+  }
 }
 
 }  // namespace

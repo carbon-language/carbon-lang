@@ -5,7 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_COMMON_PTR_ARRAY_REF_H_
 #define EXECUTABLE_SEMANTICS_COMMON_PTR_ARRAY_REF_H_
 
-#include <vector>
+#include <optional>
 
 #include "executable_semantics/common/ptr.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -17,26 +17,63 @@ namespace Carbon {
 template <typename T>
 class PtrArrayRef {
  public:
-  using value_type = typename llvm::ArrayRef<Ptr<const T>>::value_type;
-  using pointer = value_type*;
-  using const_pointer = const value_type*;
-  using reference = value_type&;
-  using const_reference = const value_type&;
-  using iterator = const_pointer;
-  using const_iterator = const_pointer;
+  class Iterator {
+   public:
+    using value_type = Ptr<const T>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const value_type*;
+    using reference = const value_type&;
+    using iterator_category = std::bidirectional_iterator_tag;
+
+    Iterator(const Ptr<T>* x) : p(x) {}
+    Iterator(const Iterator& iter) : p(iter.p) {}
+
+    auto operator++() -> Iterator& {
+      p = ++p;
+      return *this;
+    }
+
+    auto operator++(int) -> Iterator {
+      Iterator tmp(*this);
+      operator++();
+      return tmp;
+    }
+
+    auto operator--() -> Iterator& {
+      p = --p;
+      return *this;
+    }
+
+    auto operator--(int) -> Iterator {
+      Iterator tmp(*this);
+      operator--();
+      return tmp;
+    }
+
+    auto operator==(const Iterator& rhs) const -> bool { return p == rhs.p; }
+    auto operator!=(const Iterator& rhs) const -> bool { return p != rhs.p; }
+    auto operator*() -> const Ptr<const T> { return *p; }
+    auto operator->() -> const Ptr<const T>* { return &*this; }
+
+   private:
+    const Ptr<T>* p;
+  };
+
+  using value_type = Ptr<const T>;
+  using difference_type = std::ptrdiff_t;
+  using pointer = const value_type*;
+  using reference = const value_type&;
+  using iterator = Iterator;
   using reverse_iterator = std::reverse_iterator<iterator>;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-  using size_type = size_t;
-  using difference_type = ptrdiff_t;
 
   // Mimic implicit constructors of llvm::ArrayRef, but based on what Carbon
   // uses.
   PtrArrayRef(const std::vector<Ptr<T>>& v) : ref(v) {}
 
-  auto operator[](size_t i) const -> Ptr<const T> { return ref[i]; }
+  auto operator[](size_t i) const -> value_type { return ref[i]; }
 
-  auto begin() const -> iterator { return ref.begin(); }
-  auto end() const -> iterator { return ref.end(); }
+  auto begin() const -> iterator { return iterator(ref.begin()); }
+  auto end() const -> iterator { return iterator(ref.end()); }
 
   auto rbegin() const -> reverse_iterator { return reverse_iterator(end()); }
   auto rend() const -> reverse_iterator { return reverse_iterator(begin()); }

@@ -50,6 +50,7 @@ cc_library(
     name = "ptr_array_ref",
     hdrs = ["ptr_array_ref.h"],
     deps = [
+        ":arena",
         ":ptr",
         "@llvm-project//llvm:Support",
     ],
@@ -60,6 +61,7 @@ cc_test(
     srcs = ["ptr_array_ref_test.cpp"],
     deps = [
         ":ptr_array_ref",
+        "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
     ],
