@@ -297,6 +297,24 @@ needed. There are a number of patterns that can be replaced in this way.
       - Z
     ```
 
+    If two constraints set the same member to types, that member should get the
+    unification of those two types, or an error.
+
+    ```
+    J
+    * $3 :! C
+    * $2 :! B
+    * $1 :! A{.X = Pair(i32, $2)} where .X == Pair($3, f32)
+    ```
+
+    would get an error unless `i32` implements `C` and `f32` implements `B`, and
+    otherwise is rewritten to:
+
+    ```
+    J
+    * $1 :! A{.X = Pair(i32, f32)}
+    ```
+
 FIXME: `__combine__`
 
 Some `where` constraints can't be rewritten and the only rewrite is to make sure
