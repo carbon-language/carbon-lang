@@ -24,30 +24,28 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: executable_semantics %s\n"
 def _get_tests():
     """Get the list of tests from the filesystem."""
     tests = set()
-    for path in list(os.listdir(_TESTDATA)):
-        f = os.path.basename(path)
-        if f == "lit.cfg":
-            # Ignore the lit config.
-            continue
-        basename, ext = os.path.splitext(f)
-        if ext == ".carbon":
-            tests.add(basename)
-        else:
-            sys.exit("Unrecognized file type in testdata: %s" % f)
+    for root, _, files in os.walk(_TESTDATA):
+        for f in files:
+            if f == "lit.cfg":
+                # Ignore the lit config.
+                continue
+            if os.path.splitext(f)[1] == ".carbon":
+                tests.add(os.path.join(root, f))
+            else:
+                sys.exit("Unrecognized file type in testdata: %s" % f)
     return tests
 
 
 def _update_check(test):
     """Updates the CHECK: lines for `test` by running executable_semantics."""
-    test_file = "%s/%s.carbon" % (_TESTDATA, test)
-    with open(test_file) as f:
+    with open(test) as f:
         orig_lines = f.readlines()
     if _AUTOUPDATE_MARKER not in orig_lines:
-        raise ValueError("No autoupdate marker in %s" % test_file)
+        raise ValueError("No autoupdate marker in %s" % test)
     # Run executable_semantics to general output.
     # (`bazel run` would serialize)
     p = subprocess.run(
-        ["%s/executable_semantics" % _BINDIR, test_file],
+        ["%s/executable_semantics" % _BINDIR, test],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -57,7 +55,7 @@ def _update_check(test):
     # when used.
     # TODO: Maybe revisit and see if lit can be convinced to give a
     # root-relative path.
-    out = out.replace(test_file, "{{.*}}/%s.carbon" % test)
+    out = out.replace(test, "{{.*}}/%s" % test)
 
     # Remove old OUT.
     lines_without_check = [
@@ -65,7 +63,7 @@ def _update_check(test):
     ]
     autoupdate_index = lines_without_check.index(_AUTOUPDATE_MARKER)
     assert autoupdate_index >= 0
-    with open(test_file, "w") as f:
+    with open(test, "w") as f:
         f.writelines(lines_without_check[: autoupdate_index + 1])
         f.writelines(["// CHECK: %s\n" % x for x in out.splitlines()])
         f.writelines(lines_without_check[autoupdate_index + 1 :])
