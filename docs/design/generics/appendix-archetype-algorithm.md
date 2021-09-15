@@ -51,7 +51,7 @@ interface Iterable {
 interface Container {
   let Elt:! Type;
   let Iter:! Iterable where .Elt == Elt;
-  let Slice:! Container where .Elt == Elt, .Slice == .Self;
+  let Slice:! Container where .Elt == Elt and .Slice == .Self;
 }
 
 fn Sort[C:! Container where .Elt is Comparable](c: C*)
@@ -168,7 +168,7 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     F
-    * $1 :! A where .X.Y is B, .X.Z is C
+    * $1 :! A where .X.Y is B and .X.Z is C
       - Z
     ```
 
@@ -186,7 +186,7 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     F
-    * $2 :! typeof(A.X) where .Y is B, .Z is C
+    * $2 :! typeof(A.X) where .Y is B and .Z is C
       - Z.X
     * $1 :! A{.X = $2}
       - Z
@@ -206,7 +206,7 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     Sort
-    * $2 :! Combine(typeof(Container.Elt), Comparable)
+    * $2 :! __combine__(typeof(Container.Elt), Comparable)
       - C.Elt
     * $1 :! Container{.Elt = $2}
       - C
@@ -225,7 +225,7 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     G
-    * $2 :! Combine(typeof(A.X), typeof(A.Y))
+    * $2 :! __combine__(typeof(A.X), typeof(A.Y))
       - Z.X
       - Z.Y
     * $1 :! A{.X = $2, .Y = $2)
@@ -247,7 +247,7 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     Container
-    * $2 :! Combine(Type, typeof(Iterable.Elt))
+    * $2 :! __combine__(Type, typeof(Iterable.Elt))
       - Elt as Type
       - Iter.Elt
     * $1 :! Iterable{.Elt = $2}
@@ -275,7 +275,29 @@ needed. There are a number of patterns that can be replaced in this way.
 
     `Self` is similar except it uses id `$0`.
 
-FIXME: `Combine`
+-   Setting a member to a specific type, like `i32`, first checks that the type
+    satisfies all constraints on that member, and then binds the name of the
+    member to the type, possibly replacing an existing id. To rewrite the
+    `where` clause in this example,
+
+    ```
+    H
+    * $2 :! B
+      - Z.X
+    * $1 :! A{.X = $2} where .X == i32
+      - Z
+    ```
+
+    the compiler must first check that `i32` implements `B` and report an error
+    if it doesn't. Otherwise, it gets rewritten to:
+
+    ```
+    H
+    * $1 :! A{.X = i32}
+      - Z
+    ```
+
+FIXME: `__combine__`
 
 Some `where` constraints can't be rewritten and the only rewrite is to make sure
 they are attached to the relevant id.

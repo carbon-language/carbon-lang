@@ -2318,7 +2318,7 @@ exampls shows constraining the `N` member of `NSpacePoint` from
 
 ```
 fn PrintPoint2Or3
-    [PointT:! NSpacePoint where 2 <= .N, .N <= 3]
+    [PointT:! NSpacePoint where 2 <= .N and .N <= 3]
     (p: PointT);
 ```
 
@@ -2507,18 +2507,22 @@ won't have an unqualified `Compare` method, but can still be cast to
 
 #### Combining constraints
 
-Constraints can be combined by separating constraint clauses with a comma `,`.
-This example expresses a constraint that two associated types are equal and
-satisfy an interface:
+Constraints can be combined by separating constraint clauses with the `and`
+keyword. This example expresses a constraint that two associated types are equal
+and satisfy an interface:
 
 ```
 fn EqualContainers
-    [CT1:! Container
-     CT2:! Container
-         where .ElementType is HasEquality,
-               .ElementType == CT1.ElementType]
+    [CT1:! Container,
+     CT2:! Container where .ElementType is HasEquality
+                       and .ElementType == CT1.ElementType]
     (c1: CT1*, c2: CT2*) -> Bool;
 ```
+
+**Comparison with other languages:** Swift and Rust use commas `,` to separate
+constraint clauses, but that only works because they place the `where` in a
+different position in a declaration. In Carbon, the `where` is attached to a
+type in a parameter list that is already using commas to separate parameters.
 
 #### Recursive constraints
 
@@ -2572,7 +2576,7 @@ interface Container {
   let ElementType:! Type;
 
   let SliceType:! Container
-      where .ElementType == ElementType,
+      where .ElementType == ElementType and
             .SliceType == .Self;
 
   fn GetSlice[addr me: Self*]
@@ -2816,6 +2820,8 @@ S
   - A
 * $1 :! R{.X = $3}
   - B
+* $0 :! S{.A = $2, .B = $1}
+  - Self
 ```
 
 Note that `A.T` and `B.X.Y` both correspond to `$4`, but their types are
@@ -2834,8 +2840,8 @@ introducing a cycle:
 ```
 interface Graph {
   let Vertex:! V;
-  let Edge:! E where Vertex.Edge == .Self,
-                     .Vertex == Vertex;
+  let Edge:! E where Vertex.Edge == .Self
+                 and .Vertex == Vertex;
 }
 ```
 
@@ -2849,6 +2855,8 @@ Graph
 * $1 :! E{.Vertex = $2}
   - Edge
   - Vertex.Edge
+* $0 :! Graph{.Vertex = $2, .Edge = $1}
+  - Self
 }
 ```
 
@@ -2857,7 +2865,7 @@ This can happen even without a `.Self ==` constraint:
 ```
 interface HasCycle {
   let A:! P;
-  let B:! Q where .X.Y == A.T, .X == A.T.U;
+  let B:! Q where .X.Y == A.T and .X == A.T.U;
 }
 ```
 
@@ -2875,7 +2883,8 @@ HasCycle
   - A
 * $1 :! Q{.X = $3}
   - B
-}
+* $0 :! HasCycle{.A = $2, .B = $1}
+  - Self
 ```
 
 #### Conflicting constraints on an associated type
@@ -2898,7 +2907,7 @@ combination is straightforward.
 -   For two different associated types `X` and `Y` of the same interface `A`,
     `combine(is A{.X = T}, is A{.Y = U}) = is A(.X = T, .Y = U}`.
 
-The interesting case is `intersect(is A{.X = T}, is A{.X = U})` when `T` and `U`
+The interesting case is `combine(is A{.X = T}, is A{.X = U})` when `T` and `U`
 are different. We could in principle recursively add a rewrite setting them
 equal, but to guarantee that the algorithm terminates, we instead give an error.
 The insight is that in this case, the error is reasonably clear. In cases that
