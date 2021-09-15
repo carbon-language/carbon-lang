@@ -33,7 +33,7 @@ The normalized form consists of a list of archetypes and constants. An archetype
 has a few components:
 
 -   a unique id like `$3`
--   a list of interfaces, each of which may have name bindings
+-   a list of interfaces, each of which may have name bindings, or a type
 -   an optional `where` clause, and
 -   a list of dotted names with optional type-of-types.
 
@@ -278,7 +278,8 @@ needed. There are a number of patterns that can be replaced in this way.
 -   Setting a member to a specific type, like `i32`, first checks that the type
     satisfies all constraints on that member, and then binds the name of the
     member to the type, possibly replacing an existing id. To rewrite the
-    `where` clause in this example,
+    `where` clause in this example, which results from the original source code
+    of `Z:! A where .X is B and .X == i32`:
 
     ```
     H
@@ -293,26 +294,48 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     H
-    * $1 :! A{.X = i32}
+    * $2 = i32
+      - Z.X
+    * $1 :! A{.X = $2}
       - Z
     ```
 
     If two constraints set the same member to types, that member should get the
-    unification of those two types, or an error.
+    unification of those two types, or an error. For example, these parameters
+    in the declaration of a function `J`:
+
+    ```
+    Y:! C, W:! B, Z:! A where .X == Pair(i32, W)
+                          and .X == Pair(Y, f32)
+    ```
+
+    would first be rewritten to:
 
     ```
     J
-    * $3 :! C
-    * $2 :! B
-    * $1 :! A{.X = Pair(i32, $2)} where .X == Pair($3, f32)
+    * $4 :! C
+      - Y
+    * $3 :! B
+      - W
+    * $2 = Pair(i32, $3)
+      - Z.X
+    * $1 :! A{.X = $2} where .X == Pair($4, f32)
+      - Z
     ```
 
-    would get an error unless `i32` implements `C` and `f32` implements `B`, and
-    otherwise is rewritten to:
+    This would trigger a type error unless `i32` implements `C` and `f32`
+    implements `B`, and otherwise it is rewritten to:
 
     ```
     J
-    * $1 :! A{.X = Pair(i32, f32)}
+    * $4 = i32
+      - Y as C
+    * $3 = f32
+      - W as B
+    * $2 = Pair($4, $3)
+      - Z.X
+    * $1 :! A{.X = $2}
+      - Z
     ```
 
 FIXME: `__combine__`
