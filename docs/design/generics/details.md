@@ -4089,8 +4089,8 @@ There are two different goals here:
 
 We address these two different use cases with two different mechanisms. What
 they have in common is using a runtime/dynamic type value (using
-`InterfaceName: type_name`, no `!`) instead of a generic type value (using
-`InterfaceName:! type_name`, with a `!`). In the first case,
+`type_name: InterfaceName`, no `!`) instead of a generic type value (using
+`type_name:! InterfaceName`, with a `!`). In the first case,
 [we make the type parameter to a function dynamic](#runtime-type-parameters). In
 the second case,
 [we use a dynamic type value as a field in a class](#runtime-type-fields). In
@@ -4297,9 +4297,9 @@ about reducing restrictions in Swift.
 TODO
 
 ```
-// Note: InterfaceType is essentially "TypeOfTypeOfType".
+// Note: ConstraintType is essentially "TypeOfTypeOfType".
 // It allows `TT` to be any interface or type-of-type.
-class DynPtr(template TT:! InterfaceType) {
+class DynPtr(template TT:! ConstraintType) {
   class DynPtrImpl {
     private t: TT;
     // The type of `p` is really `t*` instead of `Void*`.
@@ -4335,7 +4335,7 @@ interface Deref {
 }
 
 // Implementation of Deref() for DynPtr(TT).
-external impl DynPtr(template TT:! InterfaceType) as Deref {
+external impl DynPtr(template TT:! ConstraintType) as Deref {
   let DerefT = DynPtr(TT).DynPtrImpl as TT;
   // or equivalently:
   let DerefT = DynPtr(TT).T;
@@ -4442,7 +4442,7 @@ Like `Boxed(T)`, it owns that pointer.
 TODO
 
 ```
-class DynBoxed(template TT:! InterfaceType,
+class DynBoxed(template TT:! ConstraintType,
                 template AllocatorInterface:! AllocatorType = DefaultAllocatorType) {
   private var p: DynTT*;
   private var allocator: AllocatorType;
@@ -4490,7 +4490,7 @@ interface MaybeBoxed {
 
 // Blanket implementations
 external impl Boxed(T:! Type) as MaybeBoxed { }
-external impl DynBoxed(template TT:! InterfaceType) as MaybeBoxed { }
+external impl DynBoxed(template TT:! ConstraintType) as MaybeBoxed { }
 ```
 
 For the case of values that we can efficiently move without boxing, we implement
