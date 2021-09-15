@@ -85,6 +85,8 @@ Sort
   - C
 ```
 
+### Transform implicit/implied/inferred constraints
+
 For function declarations, the first step of normalization is to transform
 implicit/implied/inferred constraints into explicit constraints. This means
 adding a `where` constraint on every generic type that is passed as a parameter
@@ -106,6 +108,8 @@ fn PrintSet[KeyType:! Printable]
     (set: HashSet(KeyType)
      where KeyType is KeyType:! Hashable & HasEquals & Movable);
 ```
+
+### Parameters are assigned ids
 
 Next, every generic type and constant parameter is extracted from the
 declaration, and assigned an id.
@@ -141,6 +145,8 @@ Iterable
 * $0 :! Iterable{.Elt = $1}
   - Self
 ```
+
+### Where clauses are rewritten
 
 Then, `where` clauses are replaced with name bindings, introducing ids as
 needed. There are a number of patterns that can be replaced in this way.
@@ -338,7 +344,28 @@ needed. There are a number of patterns that can be replaced in this way.
       - Z
     ```
 
-FIXME: `__combine__`
+#### Combining type-of-types
+
+The rewrites in some cases employ the `__combine__` operator, that takes two
+type-of-types and returns a type-of-type with all the restrictions of both. In
+many cases, this combination is straightforward.
+
+-   `__combine__(X, X) = X`.
+-   If interface `BidirectionalIter` extends `ForwardIter`, then
+    `__combine__(ForwardIter, BidirectionalIter) = BidirectionalIter`.
+-   More generally, if `P` implies `Q` then `__combine__(P, Q) = P`. For
+    example, `__combine__(A, A & B) = A & B`.
+-   For two different interfaces `A` and `B`, `__combine__(A, B) = A & B`.
+-   For two different associated types `X` and `Y` of the same interface `A`,
+    `__combine__(A{.X = T}, A{.Y = U}) = A{.X = T, .Y = U}`.
+
+The interesting case is `combine(is A{.X = T}, is A{.X = U})` when `T` and `U`
+are different. We could in principle recursively add a rewrite setting them
+equal, but to guarantee that the algorithm terminates, we instead give an error.
+The insight is that in this case, the error is reasonably clear. In cases that
+arise in practice, the error should be enough for the user to fix the issue.
+
+### Some where clauses are preserved
 
 Some `where` constraints can't be rewritten and the only rewrite is to make sure
 they are attached to the relevant id.
@@ -346,6 +373,8 @@ they are attached to the relevant id.
 -   `where Vector(T) is Printable` constraints should be moved to `T`
 -   `where T != U` constraints should be moved to the latter id
 -   `where N > 3` constraints should be moved to `N`
+
+### Type checking
 
 FIXME: Type check. It is sound to type check one level by induction, assuming
 you type check every interface "satisfies its constraints given parameters and
