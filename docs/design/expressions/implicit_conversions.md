@@ -104,6 +104,7 @@ how the type interprets operations on values of that type.
 
 `T` is equivalent to `U` if:
 
+-   `T` is the same type as `U`, or
 -   `T` is the facet type `U as SomeInterface`, or
 -   `U` is the facet type `T as SomeInterface`, or
 -   `T` is `A*`, `U` is `B*`, and `A` is equivalent to `B`, or
@@ -132,7 +133,7 @@ The following pointer conversion is available:
 `T` is a subtype of `U` if:
 
 -   `T` is equivalent to `U`, as described above, or
--   `T` is a class derived from `U`.
+-   `T` is equivalent to a class derived from a class eqiuvalent to `U`.
 
 **Note:** More type subtyping rules are expected to be added over time.
 
@@ -173,6 +174,8 @@ These implicit pointer conversions are permitted:
 -   `C*` -> `F*`: `C` is equivalent to `F`, so `C` is a subtype of `F`
 -   `F**` -> `C**`: `F` is equivalent to `C`, so `F*` is equivalent to `C*`, so
     `F*` is a subtype of `C*`
+-   `D*` -> `F*`: `D` is derived from `C` and `C` is equivalent to `D`, so `D`
+    is a subtype of `F`
 
 These implicit pointer conversions are disallowed:
 
