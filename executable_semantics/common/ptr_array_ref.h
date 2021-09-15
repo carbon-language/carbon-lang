@@ -23,39 +23,28 @@ class PtrArrayRef {
     using difference_type = std::ptrdiff_t;
     using pointer = const value_type*;
     using reference = const value_type&;
-    using iterator_category = std::bidirectional_iterator_tag;
+    using iterator_category = std::forward_iterator_tag;
 
-    Iterator(const Ptr<T>* x) : p(x) {}
-    Iterator(const Iterator& iter) : p(iter.p) {}
+    Iterator(typename llvm::ArrayRef<Ptr<T>>::iterator it) : it(it) {}
+    Iterator(const Iterator& copy_it) : it(copy_it.it) {}
 
     auto operator++() -> Iterator& {
-      p = ++p;
+      it = ++it;
       return *this;
     }
 
     auto operator++(int) -> Iterator {
       Iterator tmp(*this);
-      operator++();
+      ++it;
       return tmp;
     }
 
-    auto operator--() -> Iterator& {
-      p = --p;
-      return *this;
-    }
-
-    auto operator--(int) -> Iterator {
-      Iterator tmp(*this);
-      operator--();
-      return tmp;
-    }
-
-    auto operator==(const Iterator& rhs) const -> bool { return p == rhs.p; }
-    auto operator!=(const Iterator& rhs) const -> bool { return p != rhs.p; }
-    auto operator*() -> const Ptr<const T> { return *p; }
+    auto operator==(const Iterator& rhs) const -> bool { return it == rhs.it; }
+    auto operator!=(const Iterator& rhs) const -> bool { return it != rhs.it; }
+    auto operator*() -> const Ptr<const T> { return *it; }
 
    private:
-    const Ptr<T>* p;
+    typename llvm::ArrayRef<Ptr<T>>::iterator it;
   };
 
   using value_type = Ptr<const T>;
@@ -63,7 +52,6 @@ class PtrArrayRef {
   using pointer = const value_type*;
   using reference = const value_type&;
   using iterator = Iterator;
-  using reverse_iterator = std::reverse_iterator<iterator>;
 
   // Mimic implicit constructors of llvm::ArrayRef, but based on what Carbon
   // uses.
@@ -73,9 +61,6 @@ class PtrArrayRef {
 
   auto begin() const -> iterator { return iterator(ref.begin()); }
   auto end() const -> iterator { return iterator(ref.end()); }
-
-  auto rbegin() const -> reverse_iterator { return reverse_iterator(end()); }
-  auto rend() const -> reverse_iterator { return reverse_iterator(begin()); }
 
   auto empty() const -> bool { return ref.empty(); }
   auto size() const -> size_t { return ref.size(); }

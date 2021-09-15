@@ -79,11 +79,6 @@ TEST(PtrArrayRefTest, Iterator) {
     EXPECT_EQ(*ptr, i);
     ++i;
   }
-
-  for (Ptr<const int> ptr : llvm::reverse(ref)) {
-    --i;
-    EXPECT_EQ(*ptr, i);
-  }
 }
 
 }  // namespace
