@@ -2780,7 +2780,7 @@ normalizes to:
 ```
 * $2 :! Comparable
   - C.Elt
-* $1 :! Container{.Elt=$2}
+* $1 :! Container{.Elt = $2}
   - C
 ```
 
@@ -2892,24 +2892,11 @@ HasCycle
 FIXME: do we call this unification? intersection?
 
 The other failure is when setting two terms equal, we need to combine the
-constraints of both terms to get a type that both satifsy. In many cases, this
-combination is straightforward.
+constraints of both terms to get a type that both satifsy. In most cases, this
+combination is straightforward, and the compiler will form the combination
+automatically. The case that generates an error is when combining `A{.X = T}`
+and `A{.X = U}` when `T` and `U` are different.
 
--   `combine(X, X) = X`.
--   If interface `BidirectionalIter` extends `ForwardIter`, then
-    `combine(is ForwardIter, is BidirectionalIter) = is BidirectionalIter`.
--   More generally, if `P` implies `Q` then `combine(P, Q) = P`. For example,
-    `combine(is A, is A & B) = is A & B`.
--   For two different interfaces `A` and `B`, `combine(is A, is B) = is A & B`.
--   For an interface `Printable` and a type `String` implementing that
-    interface, `combine(is Printable, == String) = String`. If the type doesn't
-    implement the interface, the compiler should generate a type error.
--   For two different associated types `X` and `Y` of the same interface `A`,
-    `combine(is A{.X = T}, is A{.Y = U}) = is A(.X = T, .Y = U}`.
-
-The interesting case is `combine(is A{.X = T}, is A{.X = U})` when `T` and `U`
-are different. We could in principle recursively add a rewrite setting them
-equal, but to guarantee that the algorithm terminates, we instead give an error.
 The insight is that in this case, the error is reasonably clear. In cases that
 arise in practice, the error should be enough for the user to fix the issue.
 
