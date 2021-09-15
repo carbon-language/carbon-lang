@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Data types](#data-types)
     -   [Equivalent types](#equivalent-types)
     -   [Pointer conversions](#pointer-conversions)
+        -   [Pointer conversion examples](#pointer-conversion-examples)
     -   [Type-of-types](#type-of-types)
 -   [Semantics](#semantics)
 -   [Extensibility](#extensibility)
@@ -96,20 +97,31 @@ The following conversion is available:
 
 -   `T` -> `U` if `T` is equivalent to `U`
 
-Two types are equivalent if they can represent the same set of values and can be
-used interchangeably, implicitly. This refines the notion of types being
-[compatible](../generics/terminology.md#compatible-types), where the
-representation is the same but an explicit cast may be required to view a value
-of one type with a compatible but non-equivalent type.
+Two types are equivalent if they can be used interchangeably, implicitly: they
+have the same set of values with the same meaning and the same representation,
+with the same set of capabilities and constraints, where the only difference is
+how the type interprets operations on values of that type.
 
 `T` is equivalent to `U` if:
 
--   `T` is `A*`, `U` is `B*`, and `A` is equivalent to `B`, or
 -   `T` is the facet type `U as SomeInterface`, or
 -   `U` is the facet type `T as SomeInterface`, or
+-   `T` is `A*`, `U` is `B*`, and `A` is equivalent to `B`, or
 -   for some type `V`, `T` is equivalent to `V` and `V` is equivalent to `U`.
 
 **Note:** More type equivalence rules are expected to be added over time.
+
+A prerequisite for types being equivalent is that they are
+[compatible](../generics/terminology.md#compatible-types), and in particular
+that they have the same set of values and the same representation for those
+values. However, types being compatible does not imply that an implicit
+conversion, or even an explicit cast, between those types is necessarily valid.
+This is because the type of a value models not only the representation of the
+value but also the capabilities that a user of the value has to interact with
+the value. Two compatible types may expose different capabilities, such as the
+capability to mutate the object or to access its implementation details, and
+conversions between such types may require an explicit cast if the conversion is
+possible at all.
 
 ### Pointer conversions
 
@@ -124,7 +136,7 @@ The following pointer conversion is available:
 
 **Note:** More type subtyping rules are expected to be added over time.
 
-Note that `T*` is not a subtype of `U*` even if `T` is a subtype of `U`. For
+`T*` is not necessarily a subtype of `U*` even if `T` is a subtype of `U`. For
 example, we can convert `Derived*` to `Base*`, but cannot convert `Derived**` to
 `Base**` because that would allow storing a `Derived2*` into a `Derived*`:
 
@@ -140,9 +152,38 @@ var r: Base** = &p;
 *r = q;
 ```
 
-**Note:** If we add `const` qualification, we should treat `const T*` as a
-subtype of `const U*` if `T` is a subtype of `U`, and should treat `T` as a
+**Note:** If we add `const` qualification, we could treat `const T*` as a
+subtype of `const U*` if `T` is a subtype of `U`, and could treat `T` as a
 subtype of `const T`.
+
+#### Pointer conversion examples
+
+With these classes:
+
+```
+base class C;
+let F: auto = C as Hashable;
+class D extends C;
+```
+
+These implicit pointer conversions are permitted:
+
+-   `D*` -> `C*`: `D` is a subtype of `C`
+-   `F*` -> `C*`: `F` is equivalent to `C`, so `F` is a subtype of `C`
+-   `C*` -> `F*`: `C` is equivalent to `F`, so `C` is a subtype of `F`
+-   `F**` -> `C**`: `F` is equivalent to `C`, so `F*` is equivalent to `C*`, so
+    `F*` is a subtype of `C*`
+
+These implicit pointer conversions are disallowed:
+
+-   `C*` -> `D*`: `C` is not a subtype of `D`
+-   `D**` -> `C**`: `D*` is not a subtype of `C*`
+
+Note that "equivalent to" means we can freely convert back and forwards; the
+difference in the types is just changing which operations are surfaced, not
+changing anything about the interpretation or switching between different
+abstractions. In contrast, "subtype of" permits conversion from a more specific
+type to a more general type, so the reverse conversion is not necessarily valid.
 
 ### Type-of-types
 
