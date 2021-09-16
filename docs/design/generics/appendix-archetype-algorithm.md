@@ -6,6 +6,23 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Overview](#overview)
+-   [Rewrite to normalized form algorithm](#rewrite-to-normalized-form-algorithm)
+    -   [Transform implicit/implied/inferred constraints](#transform-implicitimpliedinferred-constraints)
+    -   [Parameters are assigned ids](#parameters-are-assigned-ids)
+    -   [Where clauses are rewritten](#where-clauses-are-rewritten)
+        -   [Combining type-of-types](#combining-type-of-types)
+    -   [Some where clauses are preserved](#some-where-clauses-are-preserved)
+    -   [Type checking](#type-checking)
+-   [Query algorithm](#query-algorithm)
+-   [Rejecting undecidable declarations](#rejecting-undecidable-declarations)
+
+<!-- tocstop -->
+
 ## Overview
 
 FIXME: used for answering what type and type-of-type an expression involving
@@ -359,11 +376,16 @@ many cases, this combination is straightforward.
 -   For two different associated types `X` and `Y` of the same interface `A`,
     `__combine__(A{.X = T}, A{.Y = U}) = A{.X = T, .Y = U}`.
 
-The interesting case is `combine(is A{.X = T}, is A{.X = U})` when `T` and `U`
-are different. We could in principle recursively add a rewrite setting them
-equal, but to guarantee that the algorithm terminates, we instead give an error.
-The insight is that in this case, the error is reasonably clear. In cases that
-arise in practice, the error should be enough for the user to fix the issue.
+The interesting case is `__combine__(A{.X = T}, A{.X = U})` when `T` and `U` are
+different. We could in principle recursively add a rewrite setting them equal,
+but to guarantee that the algorithm terminates, we instead give an error. The
+insight is that in this case, the error is reasonably clear. In cases that arise
+in practice, the error should be enough for the user to fix the issue.
+
+**Open question:** We could instead call this "unification." For now, I am
+calling it "combine" since it is unioning the constraints but intersecting the
+types satisfying the constraints, so neither "union" nor "intersect" seems
+clear.
 
 ### Some where clauses are preserved
 
