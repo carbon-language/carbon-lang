@@ -144,8 +144,7 @@ Sort
 ```
 
 Interfaces also get a `Self` type assigned to reserved id `$0`, with name
-bindings for all of its members. Id `$0` gets some special treatment, for
-example it may be referenced before it is declared.
+bindings for all of its members.
 
 ```
 interface Iterable {
@@ -287,7 +286,7 @@ needed. There are a number of patterns that can be replaced in this way.
       - Slice
     ```
 
-    checks that `Container.Slice` satisfies the requirements of `Self` and then
+    checks that `$1` satisfies the requirements of `Container.Slice` and then
     becomes:
 
     ```
@@ -296,13 +295,32 @@ needed. There are a number of patterns that can be replaced in this way.
       - Slice
     ```
 
-    `Self` is similar except it uses id `$0`.
+-   `Self` is similar to `.Self` except it uses id `$0`. Unlike other ids, id
+    `$0` may be referenced before its declaration.
+
+    ```
+    Tree
+    * $1 :! Tree where .Parent == Self
+      - Child
+    * $0 :! Tree{.Child = $1}
+      - Self
+    ```
+
+    becomes, after checking that `Self` satisfies the constraints on `.Parent`:
+
+    ```
+    Tree
+    * $1 :! Tree{.Parent = $0}
+      - Child
+    * $0 :! Tree{.Child = $1}
+      - Self
+    ```
 
 -   Setting a member to a specific type, like `i32`, first checks that the type
     satisfies all constraints on that member, and then binds the name of the
-    member to the type, possibly replacing an existing id. To rewrite the
-    `where` clause in this example, which results from the original source code
-    of `Z:! A where .X is B and .X == i32`:
+    member to the type, replacing the existing list of interfaces and bindings.
+    To rewrite the `where` clause in this example, which results from the
+    original source code of `Z:! A where .X is B and .X == i32`:
 
     ```
     H
@@ -323,7 +341,7 @@ needed. There are a number of patterns that can be replaced in this way.
       - Z
     ```
 
-    If two constraints set the same member to types, that member should get the
+-   If two constraints set the same member to types, that member should get the
     unification of those two types, or an error. For example, these parameters
     in the declaration of a function `J`:
 
