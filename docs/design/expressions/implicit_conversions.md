@@ -33,7 +33,7 @@ possible.
 For [built-in types](#built-in-types), implicit conversions are permitted when:
 
 -   The conversion is _lossless_: every possible value for the source expression
-    converts to a distinct representation in the target type.
+    converts to a distinct value in the target type.
 -   The conversion is _semantics-preserving_: corresponding values in the source
     and destination type have the same abstract meaning.
 
@@ -218,8 +218,13 @@ interface As(Dest:! Type) {
 interface ImplicitAs(Dest:! Type) extends As(Dest) {}
 ```
 
-When attempting to implicitly convert an expression `x` of type `T` to type `U`,
-the expression is rewritten to `(x as (T as ImplicitAs(U))).Convert()`.
+When attempting to implicitly convert an expression `x` to type `U`, the
+expression is rewritten to `x.(ImplicitAs(U).Convert)()`.
+
+**Note:** The `As` interface is intended to be used as the implementation
+vehicle for explicit casts: `x as U` would be rewritten as
+`x.(As(U).Convert)()`. However, the explicit cast expression syntax has not yet
+been decided, so this rewrite is provisional.
 
 Note that implicit conversions are not transitive. Even if an
 `impl A as ImplicitAs(B)` and an `impl B as ImplicitAs(C)` are both provided, an
