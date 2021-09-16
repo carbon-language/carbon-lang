@@ -2889,18 +2889,30 @@ HasCycle
 
 #### Conflicting constraints on an associated type
 
-FIXME: do we call this unification? intersection?
-
 The other failure is when setting two terms equal, we need to combine the
 constraints of both terms to get a type that both satifsy. In most cases, this
 combination is straightforward, and the compiler will form the combination
 automatically. The case that generates an error is when combining `A{.X = T}`
-and `A{.X = U}` when `T` and `U` are different.
+and `A{.X = U}` when `T` and `U` are different. This arises in this example:
 
-The insight is that in this case, the error is reasonably clear. In cases that
-arise in practice, the error should be enough for the user to fix the issue.
+```
+interface Conflict {
+  let T:! C;
+  let U:! B;
+  let V:! A where .X == T;
+  let W:! A where .X == U and .Self == V;
+}
+```
 
-FIXME: example
+The error will say that `V` can't be set to `W` because `V.X == T` and
+`W.X == U`. There are a few fixes available, such as setting them both to `T` or
+both to `U` or constraining `T == U`. The intent is that in the cases that arise
+in practice, this error could represent an actual mistake in the code. When it
+is not a mistake, the fix is to make the missing constraint explicit.
+
+Making this an error instead of automatically recursively constraining `T == U`
+avoids cases, not expected to arise in practice, where that recursion would
+never terminate.
 
 #### Terminating recursion
 
