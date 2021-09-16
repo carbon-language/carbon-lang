@@ -3559,11 +3559,10 @@ RewriteInstance::getCodeSections() {
 }
 
 void RewriteInstance::mapCodeSections(RuntimeDyld &RTDyld) {
-  ErrorOr<BinarySection &> TextSection =
-      BC->getUniqueSectionByName(BC->getMainCodeSectionName());
-  assert(TextSection && ".text section not found in output");
-
   if (BC->HasRelocations) {
+    ErrorOr<BinarySection &> TextSection =
+        BC->getUniqueSectionByName(BC->getMainCodeSectionName());
+    assert(TextSection && ".text section not found in output");
     assert(TextSection->hasValidSectionID() && ".text section should be valid");
 
     // Map sections for functions with pre-assigned addresses.
@@ -3668,26 +3667,6 @@ void RewriteInstance::mapCodeSections(RuntimeDyld &RTDyld) {
 
   // Processing in non-relocation mode.
   uint64_t NewTextSectionStartAddress = NextAvailableAddress;
-
-  // Prepare .text section for injected functions
-  if (TextSection->hasValidSectionID()) {
-    uint64_t NewTextSectionOffset = 0;
-    uint64_t Padding = offsetToAlignment(NewTextSectionStartAddress,
-                                         llvm::Align(BC->PageAlign));
-    NextAvailableAddress += Padding;
-    NewTextSectionStartAddress = NextAvailableAddress;
-    NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
-    NextAvailableAddress += Padding + TextSection->getOutputSize();
-    TextSection->setOutputAddress(NewTextSectionStartAddress);
-    TextSection->setOutputFileOffset(NewTextSectionOffset);
-
-    LLVM_DEBUG(dbgs() << "BOLT: mapping .text 0x"
-                      << Twine::utohexstr(TextSection->getAllocAddress())
-                      << " to 0x"
-                      << Twine::utohexstr(NewTextSectionStartAddress) << '\n');
-    RTDyld.reassignSectionAddress(TextSection->getSectionID(),
-                                  NewTextSectionStartAddress);
-  }
 
   for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
