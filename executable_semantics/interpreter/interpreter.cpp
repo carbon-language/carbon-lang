@@ -465,7 +465,7 @@ auto Interpreter::StepExp() -> Transition {
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
-        auto* tuple = dyn_cast<TupleValue>(act->Results()[0].Get());
+        auto* tuple = dyn_cast<TupleValue>(act->Results()[0]);
         if (tuple == nullptr) {
           FATAL_RUNTIME_ERROR_NO_LINE()
               << "expected a tuple in field access, not " << *act->Results()[0];
@@ -578,7 +578,7 @@ auto Interpreter::StepExp() -> Transition {
                 // TODO: Think about a cleaner way to cast between Ptr types.
                 // (multiple TODOs)
                 .function = Ptr<const FunctionValue>(
-                    cast<FunctionValue>(act->Results()[0].Get())),
+                    cast<FunctionValue>(act->Results()[0])),
                 .args = act->Results()[1],
                 .loc = exp->SourceLoc()};
           default:
