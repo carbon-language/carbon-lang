@@ -601,7 +601,7 @@ auto TypeChecker::TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types,
       // TODO: Think about a cleaner way to cast between Ptr types.
       // (multiple TODOs)
       auto arguments = Ptr<const TuplePattern>(
-          cast<const TuplePattern>(arg_results.pattern.Get()));
+          cast<const TuplePattern>(arg_results.pattern));
       return {.pattern = arena->New<AlternativePattern>(
                   alternative.SourceLoc(),
                   ReifyType(choice_type, alternative.SourceLoc()),
@@ -922,8 +922,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
           FATAL_COMPILATION_ERROR(binding->SourceLoc())
               << "Struct members must have names";
         }
-        const auto* binding_type =
-            dyn_cast<ExpressionPattern>(binding->Type().Get());
+        const auto* binding_type = dyn_cast<ExpressionPattern>(binding->Type());
         if (binding_type == nullptr) {
           FATAL_COMPILATION_ERROR(binding->SourceLoc())
               << "Struct members must have explicit types";
@@ -993,7 +992,7 @@ auto TypeChecker::MakeTypeChecked(const Ptr<const Declaration> d,
       TCExpression type_checked_initializer =
           TypeCheckExp(var.Initializer(), types, values);
       const auto* binding_type =
-          dyn_cast<ExpressionPattern>(var.Binding()->Type().Get());
+          dyn_cast<ExpressionPattern>(var.Binding()->Type());
       if (binding_type == nullptr) {
         // TODO: consider adding support for `auto`
         FATAL_COMPILATION_ERROR(var.SourceLoc())
