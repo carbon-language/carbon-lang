@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Background
 
-It's common in programming to provide multiple, similar ways of doing the same
+It's common in programming languages to provide multiple, similar ways of doing the same
 thing. Sometimes this reflects the legacy of a language, and difficulties in
 evolving in ways that would require changes to developer-authored code, thereby
 retaining backwards compatibility. Other times it reflects a desire to provide
