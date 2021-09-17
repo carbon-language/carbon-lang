@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "executable_semantics/common/ptr.h"
-#include "llvm/Support/ManagedStatic.h"
 
 namespace Carbon {
 
@@ -50,8 +49,6 @@ class Arena {
   // Manages allocations in an arena for destruction at shutdown.
   std::vector<std::unique_ptr<ArenaEntry>> arena;
 };
-
-extern llvm::ManagedStatic<Arena> global_arena;
 
 }  // namespace Carbon
 

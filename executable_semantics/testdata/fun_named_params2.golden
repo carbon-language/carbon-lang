@@ -1,2 +1,0 @@
-PROGRAM ERROR: executable_semantics/testdata/fun_named_params2.carbon:7: positional members must come before named members
-EXIT CODE: 255

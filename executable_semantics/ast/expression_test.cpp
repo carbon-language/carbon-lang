@@ -30,27 +30,32 @@ static auto FakeSourceLoc(int line_num) -> SourceLocation {
   return SourceLocation("<test>", line_num);
 }
 
-TEST(ExpressionTest, EmptyAsExpression) {
+class ExpressionTest : public ::testing::Test {
+ protected:
+  Arena arena;
+};
+
+TEST_F(ExpressionTest, EmptyAsExpression) {
   ParenContents<Expression> contents = {.elements = {},
                                         .has_trailing_comma = false};
   Ptr<const Expression> expression =
-      ExpressionFromParenContents(FakeSourceLoc(1), contents);
+      ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*expression).Fields(), IsEmpty());
 }
 
-TEST(ExpressionTest, EmptyAsTuple) {
+TEST_F(ExpressionTest, EmptyAsTuple) {
   ParenContents<Expression> contents = {.elements = {},
                                         .has_trailing_comma = false};
   Ptr<const Expression> tuple =
-      TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
+      TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(), IsEmpty());
 }
 
-TEST(ExpressionTest, UnaryNoCommaAsExpression) {
+TEST_F(ExpressionTest, UnaryNoCommaAsExpression) {
   // Equivalent to a code fragment like
   // ```
   // (
@@ -59,91 +64,83 @@ TEST(ExpressionTest, UnaryNoCommaAsExpression) {
   // ```
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = false};
 
   Ptr<const Expression> expression =
-      ExpressionFromParenContents(FakeSourceLoc(1), contents);
+      ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(2));
   ASSERT_EQ(expression->Tag(), Expression::Kind::IntLiteral);
 }
 
-TEST(ExpressionTest, UnaryNoCommaAsTuple) {
+TEST_F(ExpressionTest, UnaryNoCommaAsTuple) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = false};
 
   Ptr<const Expression> tuple =
-      TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
+      TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(),
               ElementsAre(IntFieldNamed("0")));
 }
 
-TEST(ExpressionTest, UnaryWithCommaAsExpression) {
+TEST_F(ExpressionTest, UnaryWithCommaAsExpression) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> expression =
-      ExpressionFromParenContents(FakeSourceLoc(1), contents);
+      ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*expression).Fields(),
               ElementsAre(IntFieldNamed("0")));
 }
 
-TEST(ExpressionTest, UnaryWithCommaAsTuple) {
+TEST_F(ExpressionTest, UnaryWithCommaAsTuple) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)}},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> tuple =
-      TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
+      TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(),
               ElementsAre(IntFieldNamed("0")));
 }
 
-TEST(ExpressionTest, BinaryAsExpression) {
+TEST_F(ExpressionTest, BinaryAsExpression) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
                    {.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(3), 42)}},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(3), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> expression =
-      ExpressionFromParenContents(FakeSourceLoc(1), contents);
+      ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*expression).Fields(),
               ElementsAre(IntFieldNamed("0"), IntFieldNamed("1")));
 }
 
-TEST(ExpressionTest, BinaryAsTuple) {
+TEST_F(ExpressionTest, BinaryAsTuple) {
   ParenContents<Expression> contents = {
       .elements = {{.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(2), 42)},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
                    {.name = std::nullopt,
-                    .term =
-                        global_arena->New<IntLiteral>(FakeSourceLoc(3), 42)}},
+                    .term = arena.New<IntLiteral>(FakeSourceLoc(3), 42)}},
       .has_trailing_comma = true};
 
   Ptr<const Expression> tuple =
-      TupleExpressionFromParenContents(FakeSourceLoc(1), contents);
+      TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
   ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
   EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(),
