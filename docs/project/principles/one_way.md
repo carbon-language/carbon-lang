@@ -1,4 +1,4 @@
-# Principle: Only provide one way of doing things
+# Principle: Prefer providing only one way to do a given thing
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -13,9 +13,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Background](#background)
 -   [Principle](#principle)
 -   [Applications of this principle](#applications-of-this-principle)
--   [Exceptions to this principle](#exceptions-to-this-principle)
+-   [Caveats](#caveats)
     -   [Specialized syntax](#specialized-syntax)
+    -   [Non-obvious alternatives](#non-obvious-alternatives)
     -   [In evolution](#in-evolution)
+-   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
 
@@ -42,12 +44,21 @@ accident or intent, choosing different coding patterns simply because either
 option works. It can also become an issue as developers move between an
 organization that they need to learn a new style guide, and relearn habits.
 
+A couple examples of this in other languages are:
+
+-   In Perl,
+    ["There is more than one way to do it."](https://en.wikipedia.org/wiki/There%27s_more_than_one_way_to_do_it)
+-   In Python,
+    ["There should be one -- and preferably only one -- obvious way to do it."](https://www.python.org/dev/peps/pep-0020/)
+
 ## Principle
 
-In Carbon, we will generally try to only provide one way of doing things. That
-is, given a syntax scenario where multiple options are available, we will tend
-to provide _one_ option rather than than providing several and letting users
-choose. This serves several goals:
+In Carbon, we will prefer providing only one way to do a given thing. That is,
+given a syntax scenario where multiple design options are available, we will
+tend to provide _one_ option rather than than providing several and letting
+users choose. This echoes Pythons' principle.
+
+Minimizing choices serves several goals:
 
 -   [Language tools](/docs/project/goals.md#language-tools-and-ecosystem) should
     be easier to write and maintain with the lower language complexity implied
@@ -66,21 +77,25 @@ both Carbon's maintainers and developers.
 ## Applications of this principle
 
 We can observe the application of this principle by comparing several language
-features to C++:
+features to C++. There, improving understandability is frequently the primary
+motivation:
 
 -   Where C++ allows logical operators to be written with either symbols (for
     example, `&&`) or text (for example, `and`), Carbon will only support one
     form (in this case, [text](/proposals/p0680.md)).
-    -   This is motivated by improving understandability.
 -   Where C++ allows hexadecimal numeric literals to be either lowercase
     (`0xaa`) or uppercase (`0xAA`), and with `x` optionally uppercase as well,
     Carbon will only allow the [`0xAA` casing](/proposals/p0143.md).
-    -   This is motivated by improving understandability.
--   Where C++ allows braces to be omitted for single-statement control flow
-    blocks, Carbon will [require braces](/proposals/p0623.md).
-    -   This is motivated by simplifying syntax and improving evolvability.
+-   Where C++ provides both `struct` and `class` with the only difference is
+    access control defaults, Carbon will only provide one (`class`, albeit with
+    a default diverging from C++).
 
-## Exceptions to this principle
+However, sometimes language tools are the primary motivation. For example, where
+C++ allows braces to be omitted for single-statement control flow blocks, Carbon
+will [require braces](/proposals/p0623.md). This offers a syntax simplification
+that should allow for better error detection.
+
+## Caveats
 
 ### Specialized syntax
 
@@ -96,15 +111,11 @@ occurs are:
     [understandability of code](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
     there may be times that a particular use-case is common enough that
     simplifying its syntax provides substantial benefit.
-    -   For example, lambdas can be implemented using other code constructs, but
-        it comes at a significant cost. Providing a concise syntax for lambda
-        declarations can enable understandability by reducing the complexity of
-        a common coding pattern.
     -   For example, `for (var x: list)` could typically be written with as a
-        `while` loop, but with a substantial increase in complexity; as a
-        consequence, the range-based for loop syntax exists in Carbon. However,
-        C++'s `for (;;)` syntax is sufficiently close to `while` that we expect
-        to use `while` to address the corresponding use-cases.
+        `while` loop, but range-based for loops are considered to improve
+        understandability. However, C++'s `for (;;)` syntax is sufficiently
+        close to `while` that we expect to use `while` to address the
+        corresponding use-cases.
 -   For
     [migration and interoperability](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code),
     it may be pragmatic to provide both an ideal way of doing things for new
@@ -114,6 +125,19 @@ occurs are:
         be the preferred form for new code, but templates are considered a
         necessity for migration of C++ code. This is not an evolution situation
         because we do not anticipate ever removing templates.
+
+### Non-obvious alternatives
+
+Echoing Python, there may be non-obvious alternative ways of doing a given
+thing, such as using `while (condition) { DoSomething(); break; }` in place of
+`if (condition) { DoSomething(); }`. As a more complex example, lambdas could be
+implemented using other code constructs; this would require significantly more
+code and hinder understandability.
+
+This kind of overlap may exist, but will hopefully be considered sufficiently
+non-idiomatic that examples won't be common in code. If a choice would not
+likely be based mainly on coding styles, it's likely sufficiently distinct that
+this principle won't apply.
 
 ### In evolution
 
@@ -125,3 +149,7 @@ For example, if renaming a language feature, it may be appropriate to provide
 the same functionality under two identifiers. However, one should be marked as
 deprecated and eventually removed. We should be cautious of adding new,
 overlapping features without a plan to remove the corresponding legacy version.
+
+## Alternatives considered
+
+-   [Provide multiple ways of doing a given thing](/proposals/p0829.md#provide-multiple-ways-of-doing-a-given-thing)
