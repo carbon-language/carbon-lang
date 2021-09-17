@@ -22,7 +22,7 @@ struct AST {
   // Import directives.
   std::vector<LibraryName> imports;
   // The file's ordered declarations.
-  std::vector<Ptr<const Declaration>> declarations;
+  std::vector<Nonnull<const Declaration*>> declarations;
 };
 
 }  // namespace Carbon

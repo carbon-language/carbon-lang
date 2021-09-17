@@ -18,16 +18,16 @@ namespace Carbon {
 //   For now, only generic parameters are supported.
 struct GenericBinding {
   std::string name;
-  Ptr<const Expression> type;
+  Nonnull<const Expression*> type;
 };
 
 struct FunctionDefinition {
   FunctionDefinition(SourceLocation source_location, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     Ptr<const TuplePattern> param_pattern,
-                     Ptr<const Pattern> return_type,
+                     Nonnull<const TuplePattern*> param_pattern,
+                     Nonnull<const Pattern*> return_type,
                      bool is_omitted_return_type,
-                     std::optional<Ptr<const Statement>> body)
+                     std::optional<Nonnull<const Statement*>> body)
       : source_location(source_location),
         name(std::move(name)),
         deduced_parameters(deduced_params),
@@ -43,10 +43,10 @@ struct FunctionDefinition {
   SourceLocation source_location;
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
-  Ptr<const TuplePattern> param_pattern;
-  Ptr<const Pattern> return_type;
+  Nonnull<const TuplePattern*> param_pattern;
+  Nonnull<const Pattern*> return_type;
   bool is_omitted_return_type;
-  std::optional<Ptr<const Statement>> body;
+  std::optional<Nonnull<const Statement*>> body;
 };
 
 }  // namespace Carbon
