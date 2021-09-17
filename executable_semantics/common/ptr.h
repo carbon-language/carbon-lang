@@ -5,11 +5,17 @@
 #ifndef EXECUTABLE_SEMANTICS_COMMON_PTR_H_
 #define EXECUTABLE_SEMANTICS_COMMON_PTR_H_
 
+#include <type_traits>
+
 namespace Carbon {
 
-// A non-nullable pointer. Written as `Ptr<T>` instead of `T*`.
-template <typename T>
-using Ptr = T* _Nonnull;
+// A non-nullable pointer. Written as `Nonnull<T*>` instead of `T*`.
+//
+// Sanitizers enforce this dynamically on assignment, return, and when passing
+// as an argument. Static analysis will also track erroneous uses of `nullptr`.
+template <typename T,
+          typename std::enable_if_t<std::is_pointer_v<T>>* = nullptr>
+using Nonnull = T _Nonnull;
 
 }  // namespace Carbon
 
