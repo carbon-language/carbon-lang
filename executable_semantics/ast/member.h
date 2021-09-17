@@ -51,20 +51,20 @@ class Member {
 
 class FieldMember : public Member {
  public:
-  FieldMember(SourceLocation loc, Ptr<const BindingPattern> binding)
+  FieldMember(SourceLocation loc, Nonnull<const BindingPattern*> binding)
       : Member(Kind::FieldMember, loc), binding(binding) {}
 
   static auto classof(const Member* member) -> bool {
     return member->Tag() == Kind::FieldMember;
   }
 
-  auto Binding() const -> Ptr<const BindingPattern> { return binding; }
+  auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  Ptr<const BindingPattern> binding;
+  Nonnull<const BindingPattern*> binding;
 };
 
 }  // namespace Carbon

@@ -24,25 +24,27 @@ using Env = Dictionary<std::string, Address>;
 
 class Interpreter {
  public:
-  explicit Interpreter(Ptr<Arena> arena)
+  explicit Interpreter(Nonnull<Arena*> arena)
       : arena(arena), globals(arena), heap(arena) {}
 
   // Interpret the whole program.
-  auto InterpProgram(const std::vector<Ptr<const Declaration>>& fs) -> int;
+  auto InterpProgram(const std::vector<Nonnull<const Declaration*>>& fs) -> int;
 
   // Interpret an expression at compile-time.
-  auto InterpExp(Env values, Ptr<const Expression> e) -> Ptr<const Value>;
+  auto InterpExp(Env values, Nonnull<const Expression*> e)
+      -> Nonnull<const Value*>;
 
   // Interpret a pattern at compile-time.
-  auto InterpPattern(Env values, Ptr<const Pattern> p) -> Ptr<const Value>;
+  auto InterpPattern(Env values, Nonnull<const Pattern*> p)
+      -> Nonnull<const Value*>;
 
   // Attempts to match `v` against the pattern `p`. If matching succeeds,
   // returns the bindings of pattern variables to their matched values.
-  auto PatternMatch(Ptr<const Value> p, Ptr<const Value> v, SourceLocation loc)
-      -> std::optional<Env>;
+  auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
+                    SourceLocation loc) -> std::optional<Env>;
 
   // Support TypeChecker allocating values on the heap.
-  auto AllocateValue(Ptr<const Value> v) -> Address {
+  auto AllocateValue(Nonnull<const Value*> v) -> Address {
     return heap.AllocateValue(v);
   }
 
@@ -62,19 +64,19 @@ class Interpreter {
   struct Done {
     // The value computed by the Action. Should always be nullopt for Statement
     // Actions, and never null for any other kind of Action.
-    std::optional<Ptr<const Value>> result;
+    std::optional<Nonnull<const Value*>> result;
   };
 
   // Transition type which spawns a new Action on the todo stack above the
   // current Action, and increments the current Action's position counter.
   struct Spawn {
-    Ptr<Action> child;
+    Nonnull<Action*> child;
   };
 
   // Transition type which spawns a new Action that replaces the current action
   // on the todo stack.
   struct Delegate {
-    Ptr<Action> delegate;
+    Nonnull<Action*> delegate;
   };
 
   // Transition type which keeps the current Action at the top of the stack,
@@ -84,21 +86,21 @@ class Interpreter {
   // Transition type which unwinds the `todo` and `scopes` stacks until it
   // reaches a specified Action lower in the stack.
   struct UnwindTo {
-    const Ptr<Action> new_top;
+    const Nonnull<Action*> new_top;
   };
 
   // Transition type which unwinds the entire current stack frame, and returns
   // a specified value to the caller.
   struct UnwindFunctionCall {
-    Ptr<const Value> return_val;
+    Nonnull<const Value*> return_val;
   };
 
   // Transition type which removes the current action from the top of the todo
   // stack, then creates a new stack frame which calls the specified function
   // with the specified arguments.
   struct CallFunction {
-    Ptr<const FunctionValue> function;
-    Ptr<const Value> args;
+    Nonnull<const FunctionValue*> function;
+    Nonnull<const Value*> args;
     SourceLocation loc;
   };
 
@@ -126,32 +128,32 @@ class Interpreter {
   // State transition for statements.
   auto StepStmt() -> Transition;
 
-  void InitGlobals(const std::vector<Ptr<const Declaration>>& fs);
+  void InitGlobals(const std::vector<Nonnull<const Declaration*>>& fs);
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation loc, const std::string& name) -> Address;
 
-  void DeallocateScope(Ptr<Scope> scope);
-  void DeallocateLocals(Ptr<Frame> frame);
+  void DeallocateScope(Nonnull<Scope*> scope);
+  void DeallocateLocals(Nonnull<Frame*> frame);
 
-  auto CreateTuple(Ptr<Action> act, Ptr<const Expression> exp)
-      -> Ptr<const Value>;
+  auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
+      -> Nonnull<const Value*>;
 
-  auto EvalPrim(Operator op, const std::vector<Ptr<const Value>>& args,
-                SourceLocation loc) -> Ptr<const Value>;
+  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
+                SourceLocation loc) -> Nonnull<const Value*>;
 
-  void PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
+  void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
                          SourceLocation loc);
 
   void PrintState(llvm::raw_ostream& out);
 
-  Ptr<Arena> arena;
+  Nonnull<Arena*> arena;
 
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals;
 
-  Stack<Ptr<Frame>> stack;
+  Stack<Nonnull<Frame*>> stack;
   Heap heap;
-  std::optional<Ptr<const Value>> program_value;
+  std::optional<Nonnull<const Value*>> program_value;
 };
 
 }  // namespace Carbon

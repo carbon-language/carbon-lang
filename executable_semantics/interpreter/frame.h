@@ -33,7 +33,7 @@ struct Frame {
   Frame(const Frame&) = delete;
   Frame& operator=(const Frame&) = delete;
 
-  Frame(std::string n, Stack<Ptr<Scope>> s, Stack<Ptr<Action>> c)
+  Frame(std::string n, Stack<Nonnull<Scope*>> s, Stack<Nonnull<Action*>> c)
       : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
 
   void Print(llvm::raw_ostream& out) const;
@@ -47,11 +47,11 @@ struct Frame {
   // blocks within the function. The scope at the top of the stack is
   // the current scope and its environment is the one used for looking
   // up the value associated with a variable.
-  Stack<Ptr<Scope>> scopes;
+  Stack<Nonnull<Scope*>> scopes;
   // The actions that need to be executed in the future of the
   // current function call. The top of the stack is the action
   // that is executed first.
-  Stack<Ptr<Action>> todo;
+  Stack<Nonnull<Action*>> todo;
   // If this frame is the bottom frame of a continuation, then it stores
   // the address of the continuation.
   std::optional<Address> continuation;
