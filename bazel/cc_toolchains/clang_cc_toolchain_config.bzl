@@ -169,13 +169,11 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-DNDEBUG",
                             "-ffunction-sections",
                             "-fdata-sections",
                         ],
                     ),
                 ]),
-                with_features = [with_feature_set(features = ["opt"])],
             ),
             flag_set(
                 actions = codegen_compile_actions,
@@ -284,12 +282,20 @@ def _impl(ctx):
         name = "default_optimization_flags",
         enabled = True,
         requires = [feature_set(["opt"])],
-        flag_sets = [flag_set(
-            actions = codegen_compile_actions,
-            flag_groups = [flag_group(flags = [
-                "-O3",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-DNDEBUG",
+                ])],
+            ),
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-O3",
+                ])],
+            ),
+        ],
     )
 
     # Handle different levels and forms of debug info emission with individual
@@ -517,6 +523,17 @@ def _impl(ctx):
                         ],
                     ),
                 ]),
+            ),
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    # Enable libc++'s debug features.
+                    "-D_LIBCXX_DEBUG=1",
+                ])],
+                with_features = [
+                    with_feature_set(features = ["dbg"]),
+                    with_feature_set(features = ["fastbuild"]),
+                ],
             ),
         ],
     )
