@@ -23,12 +23,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Background
 
-It's common in programming languages to provide multiple, similar ways of doing the same
-thing. Sometimes this reflects the legacy of a language, and difficulties in
-evolving in ways that would require changes to developer-authored code, thereby
-retaining backwards compatibility. Other times it reflects a desire to provide
-both verbose and concise versions of the same syntax. We are concerned with both
-forms.
+It's common in programming languages to provide multiple, similar ways of doing
+the same thing. Sometimes this reflects the legacy of a language, and
+difficulties in evolving in ways that would require changes to
+developer-authored code, thereby retaining backwards compatibility. Other times
+it reflects a desire to provide both verbose and concise versions of the same
+syntax. We are concerned with both forms.
 
 We also are cautious about creating alternatives that may give rise to a
 [paradox of choice](https://en.wikipedia.org/wiki/The_Paradox_of_Choice),
