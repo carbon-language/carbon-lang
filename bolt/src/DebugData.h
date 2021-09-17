@@ -28,6 +28,8 @@
 
 namespace llvm {
 
+class DWARFAbbreviationDeclarationSet;
+
 namespace bolt {
 
 class BinaryContext;
@@ -100,7 +102,8 @@ struct DebugLineTableRowRef {
   }
 };
 
-using RangesBufferVector = SmallVector<char, 16>;
+/// Common buffer vector used for debug info handling.
+using DebugBufferVector = SmallVector<char, 16>;
 
 /// Serializes the .debug_ranges DWARF section.
 class DebugRangesSectionWriter {
@@ -122,12 +125,12 @@ public:
   /// Returns the SectionOffset.
   uint64_t getSectionOffset();
 
-  std::unique_ptr<RangesBufferVector> finalize() {
+  std::unique_ptr<DebugBufferVector> finalize() {
     return std::move(RangesBuffer);
   }
 
 private:
-  std::unique_ptr<RangesBufferVector> RangesBuffer;
+  std::unique_ptr<DebugBufferVector> RangesBuffer;
 
   std::unique_ptr<raw_svector_ostream> RangesStream;
 
@@ -277,8 +280,6 @@ private:
   BinaryContext *BC;
 };
 
-using LocBufferVector = SmallVector<char, 16>;
-
 enum class LocWriterKind { DebugLocWriter, DebugLoclistWriter };
 
 /// Serializes part of a .debug_loc DWARF section with LocationLists.
@@ -290,7 +291,7 @@ public:
 
   virtual uint64_t addList(const DebugLocationsVector &LocList);
 
-  virtual std::unique_ptr<LocBufferVector> finalize() {
+  virtual std::unique_ptr<DebugBufferVector> finalize() {
     return std::move(LocBuffer);
   }
 
@@ -309,7 +310,7 @@ public:
   }
 
 protected:
-  std::unique_ptr<LocBufferVector> LocBuffer;
+  std::unique_ptr<DebugBufferVector> LocBuffer;
 
   std::unique_ptr<raw_svector_ostream> LocStream;
   /// Current offset in the section (updated as new entries are written).
@@ -429,59 +430,69 @@ public:
                            uint32_t DWPOffset) override;
 };
 
-/// Apply small modifications to the .debug_abbrev DWARF section.
-class DebugAbbrevPatcher : public BinaryPatcher {
-public:
-  /// Patch of changing one attribute to another.
-  struct AbbrevAttrPatch {
-    const DWARFAbbreviationDeclaration *Abbrev;
-    dwarf::Attribute Attr;    // ID of attribute to be replaced.
-    dwarf::Attribute NewAttr; // ID of the new attribute.
-    uint8_t NewForm;          // Form of the new attribute.
+/// Class to facilitate modifying and writing abbreviations for compilation
+/// units. One class instance manages all abbreviation sections in a file
+/// or in a section contribution for DWPs.
+class DebugAbbrevWriter {
 
-    bool operator==(const AbbrevAttrPatch &RHS) const {
-      return Abbrev == RHS.Abbrev && Attr == RHS.Attr;
-    }
+  std::mutex WriterMutex;
+
+  struct AbbrevData {
+    /// Offset in the final section.
+    uint64_t Offset{0};
+    std::unique_ptr<DebugBufferVector> Buffer;
+    std::unique_ptr<raw_svector_ostream> Stream;
+  };
+  /// Map CU offset to abbreviations data.
+  std::map<uint64_t, AbbrevData> CUAbbrevData;
+
+  /// Attributes Substitution information.
+  struct PatchInfo {
+    dwarf::Attribute OldAttr;
+    dwarf::Attribute NewAttr;
+    uint8_t NewAttrForm;
   };
 
-  struct AbbrevHash {
-    size_t operator()(const AbbrevAttrPatch &P) const {
-      return std::hash<uint64_t>()(((uint64_t)P.Abbrev << 16) + P.Attr);
-    }
-  };
-
-private:
-  std::unordered_set<AbbrevAttrPatch, AbbrevHash> AbbrevPatches;
-  /// Using Vector because this is currently being used for specific purpose of
-  /// patching DW_AT_GNU_ranges_base. So don't need fast look up, but do need
-  /// them to be in order.
-  std::vector<AbbrevAttrPatch> AbbrevNonStandardPatches;
+  using PatchesTy = std::unordered_map<const DWARFAbbreviationDeclaration *,
+                                       SmallVector<PatchInfo, 2>>;
+  std::unordered_map<const DWARFUnit *, PatchesTy> Patches;
 
 public:
-  virtual ~DebugAbbrevPatcher() {}
-  /// Adds a patch to change an attribute of the abbreviation
-  /// \p Abbrev the abbreviation to be modified.
-  /// \p AttrTag ID of the attribute to be replaced.
-  /// \p NewAttrTag ID of the new attribute.
-  /// \p NewAttrForm Form of the new attribute.
-  /// If None standard form is added through this API it will expand the section
-  /// to accomidate it.
-  void addAttributePatch(const DWARFAbbreviationDeclaration *Abbrev,
+  DebugAbbrevWriter() = default;
+
+  DebugAbbrevWriter(const DebugAbbrevWriter &) = delete;
+  DebugAbbrevWriter &operator=(const DebugAbbrevWriter &) = delete;
+
+  DebugAbbrevWriter(DebugAbbrevWriter &&) = delete;
+  DebugAbbrevWriter &operator=(DebugAbbrevWriter &&) = delete;
+
+  virtual ~DebugAbbrevWriter() = default;
+
+  /// Substitute attribute \p AttrTag in abbreviation declaration \p Abbrev
+  /// belonging to CU \p Unit with new attribute \p NewAttrTag having
+  /// \p NewAttrForm form.
+  void addAttributePatch(const DWARFUnit &Unit,
+                         const DWARFAbbreviationDeclaration *Abbrev,
                          dwarf::Attribute AttrTag, dwarf::Attribute NewAttrTag,
-                         uint8_t NewAttrForm);
+                         uint8_t NewAttrForm) {
+    std::lock_guard<std::mutex> Lock(WriterMutex);
+    Patches[&Unit][Abbrev].emplace_back(
+        PatchInfo{AttrTag, NewAttrTag, NewAttrForm});
+  }
 
-  virtual void patchBinary(std::string &Contents, uint32_t DWPOffset) override;
+  /// Add abbreviations from CU \p Unit to the writer.
+  void addUnitAbbreviations(DWARFUnit &Unit);
 
-  /// Finds an abbreviation patch.
-  /// \p AbbrevDecl the abbreviation declaration.
-  /// \p AttrTag Attribute to search for.
-  /// Returns nullptr if patch doesn't exist.
-  const AbbrevAttrPatch *find(const DWARFAbbreviationDeclaration *AbbrevDecl,
-                              dwarf::Attribute AttrTag) {
-    auto Iter = AbbrevPatches.find({AbbrevDecl, AttrTag, AttrTag, 0});
-    if (Iter == AbbrevPatches.end())
-      return nullptr;
-    return &(*Iter);
+  /// Return a buffer with concatenated abbrev sections for all added CUs.
+  /// Section offsets for CUs could be queried using
+  /// getAbbreviationsOffsetForUnit() interface.
+  std::unique_ptr<DebugBufferVector> finalize();
+
+  /// Return an offset in the finalized section corresponding to CU \p Unit.
+  uint64_t getAbbreviationsOffsetForUnit(const DWARFUnit &Unit) {
+    assert(CUAbbrevData.find(Unit.getOffset()) != CUAbbrevData.end() &&
+           "no abbrev data found for unit");
+    return CUAbbrevData[Unit.getOffset()].Offset;
   }
 };
 

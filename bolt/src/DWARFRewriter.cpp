@@ -163,16 +163,10 @@ static bool isHighPcFormEightBytes(dwarf::Form DwarfForm) {
 }
 
 void DWARFRewriter::updateDebugInfo() {
-  ErrorOr<BinarySection &> DebugAbbrev =
-      BC.getUniqueSectionByName(".debug_abbrev");
   ErrorOr<BinarySection &> DebugInfo = BC.getUniqueSectionByName(".debug_info");
 
-  if (!DebugAbbrev || !DebugInfo)
+  if (!DebugInfo)
     return;
-
-  DebugAbbrev->registerPatcher(std::make_unique<DebugAbbrevPatcher>());
-  auto *AbbrevPatcher =
-      static_cast<DebugAbbrevPatcher *>(DebugAbbrev->getPatcher());
 
   DebugInfo->registerPatcher(std::make_unique<SimpleBinaryPatcher>());
   auto *DebugInfoPatcher =
@@ -181,6 +175,7 @@ void DWARFRewriter::updateDebugInfo() {
   ARangesSectionWriter = std::make_unique<DebugARangesSectionWriter>();
   RangesSectionWriter = std::make_unique<DebugRangesSectionWriter>();
   StrWriter = std::make_unique<DebugStrWriter>(&BC);
+  AbbrevWriter = std::make_unique<DebugAbbrevWriter>();
 
   AddrWriter = std::make_unique<DebugAddrWriter>(&BC);
   DebugLoclistWriter::setAddressWriter(AddrWriter.get());
@@ -223,7 +218,6 @@ void DWARFRewriter::updateDebugInfo() {
     }
   };
 
-  uint32_t AbbrevOffsetModifier = 0;
   // Case 1) Range_base found: patch .debug_info
   // Case 2) Range_base not found, but Ranges will be used: patch
   // .debug_info/.debug_abbrev
@@ -234,7 +228,6 @@ void DWARFRewriter::updateDebugInfo() {
         findAttributeInfo(DIE, dwarf::DW_AT_GNU_ranges_base);
     const bool NeedToPatch = AttrInfoVal.hasValue();
     uint64_t AttrOffset = NeedToPatch ? AttrInfoVal->Offset : 0;
-    const uint32_t PrevAbbrevOffsetModifier = AbbrevOffsetModifier;
     // Case where Skeleton CU doesn't have DW_AT_GNU_ranges_base
     if (!NeedToPatch && WasRangeBaseUsed) {
       const DWARFAbbreviationDeclaration *AbbreviationDecl =
@@ -252,15 +245,15 @@ void DWARFRewriter::updateDebugInfo() {
       Optional<DWARFFormValue> ValHighPC = DIE.find(dwarf::DW_AT_high_pc);
       uint32_t NumBytesToFill = 7;
 
-      AbbrevPatcher->addAttributePatch(AbbreviationDecl, dwarf::DW_AT_low_pc,
-                                       dwarf::DW_AT_GNU_ranges_base,
-                                       dwarf::DW_FORM_indirect);
+      AbbrevWriter->addAttributePatch(
+          Unit, AbbreviationDecl, dwarf::DW_AT_low_pc,
+          dwarf::DW_AT_GNU_ranges_base, dwarf::DW_FORM_indirect);
       // Bolt converts DW_AT_low_pc/DW_AT_high_pc to DW_AT_low_pc/DW_at_ranges
       // DW_AT_high_pc can be 4 or 8 bytes. If it's 8 bytes need to use first
       // 4 bytes.
-      if (ValHighPC && isHighPcFormEightBytes(ValHighPC->getForm()))
+      if (ValHighPC && isHighPcFormEightBytes(ValHighPC->getForm())) {
         NumBytesToFill += 4;
-
+      }
       LLVM_DEBUG(if (opts::DebugSkeletonCu) dbgs()
                      << "AttrOffset: " << Twine::utohexstr(AttrOffset) << "\n"
                      << "Die Offset: " << Twine::utohexstr(DIE.getOffset())
@@ -272,56 +265,49 @@ void DWARFRewriter::updateDebugInfo() {
       DebugInfoPatcher->addUDataPatch(AttrOffset, dwarf::DW_FORM_udata, 1);
       DebugInfoPatcher->addUDataPatch(AttrOffset + 1, RangeBase,
                                       NumBytesToFill);
-
-      // 1 Byte for DW_AT_GNU_ranges_base (since it's 2 bytes vs DW_AT_low_pc)
-      AbbrevOffsetModifier += 1;
     }
     if (NeedToPatch)
       DebugInfoPatcher->addLE32Patch(AttrOffset,
                                      static_cast<uint32_t>(RangeBase));
-
-    // DWARF4
-    // unit_length - 4 bytes
-    // version - 2 bytes
-    // So + 6 to patch debug_abbrev_offset
-    if (PrevAbbrevOffsetModifier)
-      DebugInfoPatcher->addLE32Patch(
-          Unit.getOffset() + 6, static_cast<uint32_t>(Unit.getAbbrOffset()) +
-                                    PrevAbbrevOffsetModifier);
   };
 
   auto processUnitDIE = [&](size_t CUIndex, DWARFUnit *Unit) {
     uint64_t RangeBase = RangesSectionWriter->getSectionOffset();
-    updateUnitDebugInfo(CUIndex, *Unit, *DebugInfoPatcher, *AbbrevPatcher);
+    updateUnitDebugInfo(CUIndex, *Unit, *DebugInfoPatcher, *AbbrevWriter);
 
     // Check if the unit is a skeleton and we need more updates for the CU and
     // its matching split CU.
+    Optional<DWARFUnit *> SplitCU;
     llvm::Optional<uint64_t> DWOId = Unit->getDWOId();
-    if (!DWOId)
-      return;
+    if (DWOId)
+      SplitCU = BC.getDWOCU(*DWOId);
 
     // Skipping CUs that failed to load.
-    Optional<DWARFUnit *> SplitCU = BC.getDWOCU(*DWOId);
-    if (!SplitCU)
-      return;
+    if (SplitCU) {
+      updateDWONameCompDir(*Unit);
 
-    updateDWONameCompDir(*Unit);
+      // Assuming there is unique DWOID per binary. i.e. two or more CUs don't
+      // have same DWO ID.
+      assert(LocListWritersByCU.count(*DWOId) == 0 &&
+             "LocList writer for DWO unit already exists.");
+      LocListWritersByCU[*DWOId] =
+          std::make_unique<DebugLoclistWriter>(&BC, *DWOId);
+      SimpleBinaryPatcher *DwoDebugInfoPatcher =
+          getBinaryDWODebugInfoPatcher(*DWOId);
+      DwoDebugInfoPatcher->setRangeBase(RangeBase);
+      DebugAbbrevWriter *DWOAbbrevWriter = getBinaryDWOAbbrevWriter(*DWOId);
+      updateUnitDebugInfo(*DWOId, *(*SplitCU), *DwoDebugInfoPatcher,
+                          *DWOAbbrevWriter);
+      DWOAbbrevWriter->addUnitAbbreviations(*(*SplitCU));
+      static_cast<DebugLoclistWriter *>(LocListWritersByCU[*DWOId].get())
+          ->finalizePatches();
+      updateRangeBase(*Unit, RangeBase,
+                      DwoDebugInfoPatcher->getWasRangBasedUsed());
+    }
 
-    // Assuming there is unique DWOID per binary. i.e. two or more CUs don't
-    // have same DWO ID.
-    assert(LocListWritersByCU.count(*DWOId) == 0 &&
-           "LocList writer for DWO unit already exists.");
-    LocListWritersByCU[*DWOId] =
-        std::make_unique<DebugLoclistWriter>(&BC, *DWOId);
-    SimpleBinaryPatcher *DwoDebugInfoPatcher =
-        getBinaryDWODebugInfoPatcher(*DWOId);
-    DwoDebugInfoPatcher->setRangeBase(RangeBase);
-    updateUnitDebugInfo(*DWOId, *(*SplitCU), *DwoDebugInfoPatcher,
-                        *getBinaryDWOAbbrevPatcher(*DWOId));
-    static_cast<DebugLoclistWriter *>(LocListWritersByCU[*DWOId].get())
-        ->finalizePatches();
-    updateRangeBase(*Unit, RangeBase,
-                    DwoDebugInfoPatcher->getWasRangBasedUsed());
+    // Add abbreviations for the main unit. Note: the action is delayed until
+    // after updateRangeBase() call.
+    AbbrevWriter->addUnitAbbreviations(*Unit);
   };
 
   if (opts::NoThreads || opts::DeterministicDebugInfo) {
@@ -354,7 +340,7 @@ void DWARFRewriter::updateDebugInfo() {
 
 void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
                                         SimpleBinaryPatcher &DebugInfoPatcher,
-                                        DebugAbbrevPatcher &AbbrevPatcher) {
+                                        DebugAbbrevWriter &AbbrevWriter) {
   // Cache debug ranges so that the offset for identical ranges could be reused.
   std::map<DebugAddressRangesVector, uint64_t> CachedRanges;
 
@@ -398,7 +384,7 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
       ARangesSectionWriter->addCURanges(Unit.getOffset(),
                                         std::move(OutputRanges));
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset, DebugInfoPatcher,
-                                     AbbrevPatcher);
+                                     AbbrevWriter);
       break;
     }
     case dwarf::DW_TAG_subprogram: {
@@ -433,7 +419,7 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
       if (UsesRanges) {
         updateDWARFObjectAddressRanges(
             DIE, RangesSectionWriter->addRanges(FunctionRanges),
-            DebugInfoPatcher, AbbrevPatcher);
+            DebugInfoPatcher, AbbrevWriter);
       } else {
         // Delay conversion of [LowPC, HighPC) into DW_AT_ranges if possible.
         const DWARFAbbreviationDeclaration *Abbrev =
@@ -445,7 +431,7 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
         std::unique_lock<std::shared_timed_mutex> Lock(CriticalSectionMutex);
 
         if (FunctionRanges.size() > 1) {
-          convertPending(Abbrev, DebugInfoPatcher, AbbrevPatcher);
+          convertPending(Unit, Abbrev, DebugInfoPatcher, AbbrevWriter);
           // Exit critical section early.
           Lock.unlock();
           convertToRanges(DIE, FunctionRanges, DebugInfoPatcher);
@@ -486,7 +472,7 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
         consumeError(RangesOrError.takeError());
       }
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset, DebugInfoPatcher,
-                                     AbbrevPatcher);
+                                     AbbrevWriter);
       break;
     }
     default: {
@@ -662,7 +648,7 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
 
 void DWARFRewriter::updateDWARFObjectAddressRanges(
     const DWARFDie DIE, uint64_t DebugRangesOffset,
-    SimpleBinaryPatcher &DebugInfoPatcher, DebugAbbrevPatcher &AbbrevPatcher) {
+    SimpleBinaryPatcher &DebugInfoPatcher, DebugAbbrevWriter &AbbrevWriter) {
 
   // Some objects don't have an associated DIE and cannot be updated (such as
   // compiler-generated functions).
@@ -704,7 +690,7 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
     // large size.
     if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) &&
         AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc)) {
-      convertToRanges(AbbreviationDecl, AbbrevPatcher);
+      convertToRanges(*DIE.getDwarfUnit(), AbbreviationDecl, AbbrevWriter);
       convertToRanges(DIE, DebugRangesOffset, DebugInfoPatcher);
     } else {
       if (opts::Verbosity >= 1) {
@@ -862,17 +848,41 @@ void DWARFRewriter::finalizeDebugSections(
     }
   }
 
-  std::unique_ptr<RangesBufferVector> RangesSectionContents =
+  std::unique_ptr<DebugBufferVector> RangesSectionContents =
       RangesSectionWriter->finalize();
   BC.registerOrUpdateNoteSection(".debug_ranges",
-                                  copyByteArray(*RangesSectionContents),
-                                  RangesSectionContents->size());
+                                 copyByteArray(*RangesSectionContents),
+                                 RangesSectionContents->size());
 
-  std::unique_ptr<LocBufferVector> LocationListSectionContents =
+  std::unique_ptr<DebugBufferVector> LocationListSectionContents =
       makeFinalLocListsSection(DebugInfoPatcher);
   BC.registerOrUpdateNoteSection(".debug_loc",
-                                  copyByteArray(*LocationListSectionContents),
-                                  LocationListSectionContents->size());
+                                 copyByteArray(*LocationListSectionContents),
+                                 LocationListSectionContents->size());
+
+  std::unique_ptr<DebugBufferVector> AbbrevSectionContents =
+      AbbrevWriter->finalize();
+  BC.registerOrUpdateNoteSection(".debug_abbrev",
+                                 copyByteArray(*AbbrevSectionContents),
+                                 AbbrevSectionContents->size());
+
+  // Update abbreviation offsets if they were changed.
+  for (auto &CU : BC.DwCtx->compile_units()) {
+    if (CU->isDWOUnit())
+      continue;
+
+    const uint64_t NewAbbrevOffset =
+        AbbrevWriter->getAbbreviationsOffsetForUnit(*CU);
+    if (CU->getAbbreviationsOffset() == NewAbbrevOffset)
+      continue;
+
+    // DWARFv4
+    // unit_length - 4 bytes
+    // version - 2 bytes
+    // So + 6 to patch debug_abbrev_offset
+    DebugInfoPatcher.addLE32Patch(CU->getOffset() + 6,
+                                  static_cast<uint32_t>(NewAbbrevOffset));
+  }
 }
 
 // Creates all the data structures necessary for creating MCStreamer.
@@ -915,13 +925,13 @@ StringRef getSectionName(const SectionRef &Section) {
 }
 
 // Exctracts an appropriate slice if input is DWP.
-// Applies patches to debug and its abbrev section.
+// Applies patches or overwrites the section.
 Optional<StringRef>
-patchDebugData(std::string &Storage, const SectionRef &Section,
-               const StringMap<KnownSectionsEntry> &KnownSections,
-               MCStreamer &Streamer, DWARFRewriter &Writer,
-               const DWARFUnitIndex::Entry *DWOEntry, uint64_t DWOId,
-               std::unique_ptr<LocBufferVector> &LocVectorOut) {
+updateDebugData(std::string &Storage, const SectionRef &Section,
+                const StringMap<KnownSectionsEntry> &KnownSections,
+                MCStreamer &Streamer, DWARFRewriter &Writer,
+                const DWARFUnitIndex::Entry *DWOEntry, uint64_t DWOId,
+                std::unique_ptr<DebugBufferVector> &OutputBuffer) {
   auto applyPatch = [&](BinaryPatcher *Patcher, StringRef Data,
                         uint32_t Offset) -> StringRef {
     Storage = Data.str();
@@ -973,19 +983,22 @@ patchDebugData(std::string &Storage, const SectionRef &Section,
                         DWARFSectionKind::DW_SECT_STR_OFFSETS, DWPOffset);
   }
   case DWARFSectionKind::DW_SECT_ABBREV: {
-    OutData = getSliceData(DWOEntry, OutData, DWARFSectionKind::DW_SECT_ABBREV,
-                           DWPOffset);
-    DebugAbbrevPatcher *Patcher = Writer.getBinaryDWOAbbrevPatcher(DWOId);
-    return applyPatch(Patcher, OutData, DWPOffset);
-  }
-  case DWARFSectionKind::DW_SECT_EXT_LOC: {
-    DebugLocWriter *LocWriter = Writer.getDebugLocWriter(DWOId);
-    LocVectorOut = LocWriter->finalize();
+    DebugAbbrevWriter *AbbrevWriter = Writer.getBinaryDWOAbbrevWriter(DWOId);
+    OutputBuffer = AbbrevWriter->finalize();
     // Creating explicit StringRef here, otherwise
     // with impicit conversion it will take null byte as end of
     // string.
-    return StringRef(reinterpret_cast<const char *>(LocVectorOut->data()),
-                     LocVectorOut->size());
+    return StringRef(reinterpret_cast<const char *>(OutputBuffer->data()),
+                     OutputBuffer->size());
+  }
+  case DWARFSectionKind::DW_SECT_EXT_LOC: {
+    DebugLocWriter *LocWriter = Writer.getDebugLocWriter(DWOId);
+    OutputBuffer = LocWriter->finalize();
+    // Creating explicit StringRef here, otherwise
+    // with impicit conversion it will take null byte as end of
+    // string.
+    return StringRef(reinterpret_cast<const char *>(OutputBuffer->data()),
+                     OutputBuffer->size());
   }
   case DWARFSectionKind::DW_SECT_LINE: {
     return getSliceData(DWOEntry, OutData, DWARFSectionKind::DW_SECT_LINE,
@@ -1080,10 +1093,10 @@ void DWARFRewriter::writeDWP(
         (*DWOCU)->getContext().getDWARFObj().getFile();
     for (const SectionRef &Section : DWOFile->sections()) {
       std::string Storage = "";
-      std::unique_ptr<LocBufferVector> LocData;
+      std::unique_ptr<DebugBufferVector> OutputData;
       Optional<StringRef> TOutData =
-          patchDebugData(Storage, Section, KnownSections, *Streamer, *this,
-                         DWOEntry, *DWOId, LocData);
+          updateDebugData(Storage, Section, KnownSections, *Streamer, *this,
+                          DWOEntry, *DWOId, OutputData);
       if (!TOutData)
         continue;
 
@@ -1180,10 +1193,10 @@ void DWARFRewriter::writeDWOFiles(
 
     for (const SectionRef &Section : File->sections()) {
       std::string Storage = "";
-      std::unique_ptr<LocBufferVector> LocData;
+      std::unique_ptr<DebugBufferVector> OutputData;
       if (Optional<StringRef> OutData =
-              patchDebugData(Storage, Section, KnownSections, *Streamer, *this,
-                             DWOEntry, *DWOId, LocData))
+              updateDebugData(Storage, Section, KnownSections, *Streamer, *this,
+                              DWOEntry, *DWOId, OutputData))
         Streamer->emitBytes(*OutData);
     }
     Streamer->Finish();
@@ -1299,25 +1312,25 @@ void DWARFRewriter::updateGdbIndexSection() {
                                  NewGdbIndexSize);
 }
 
-void DWARFRewriter::convertToRanges(const DWARFAbbreviationDeclaration *Abbrev,
-                                    DebugAbbrevPatcher &AbbrevPatcher) {
+void DWARFRewriter::convertToRanges(const DWARFUnit &Unit,
+                                    const DWARFAbbreviationDeclaration *Abbrev,
+                                    DebugAbbrevWriter &AbbrevWriter) {
   dwarf::Form HighPCForm = Abbrev->findAttribute(dwarf::DW_AT_high_pc)->Form;
   dwarf::Form LowPCForm = Abbrev->findAttribute(dwarf::DW_AT_low_pc)->Form;
 
-  std::lock_guard<std::mutex> Lock(AbbrevPatcherMutex);
   // DW_FORM_GNU_addr_index is already variable encoding so nothing to do
   // there. If HighForm is 8 bytes need to change low_pc to be variable
   // encoding to consume extra bytes from high_pc, since DW_FORM_sec_offset is
   // 4 bytes for DWARF32.
   if (LowPCForm != dwarf::DW_FORM_GNU_addr_index &&
       isHighPcFormEightBytes(HighPCForm))
-    AbbrevPatcher.addAttributePatch(Abbrev, dwarf::DW_AT_low_pc,
-                                    dwarf::DW_AT_low_pc,
-                                    dwarf::DW_FORM_indirect);
+    AbbrevWriter.addAttributePatch(Unit, Abbrev, dwarf::DW_AT_low_pc,
+                                   dwarf::DW_AT_low_pc,
+                                   dwarf::DW_FORM_indirect);
 
-  AbbrevPatcher.addAttributePatch(Abbrev, dwarf::DW_AT_high_pc,
-                                  dwarf::DW_AT_ranges,
-                                  dwarf::DW_FORM_sec_offset);
+  AbbrevWriter.addAttributePatch(Unit, Abbrev, dwarf::DW_AT_high_pc,
+                                 dwarf::DW_AT_ranges,
+                                 dwarf::DW_FORM_sec_offset);
 }
 
 void DWARFRewriter::convertToRanges(DWARFDie DIE,
@@ -1333,13 +1346,14 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
   convertToRanges(DIE, RangesSectionOffset, DebugInfoPatcher);
 }
 
-void DWARFRewriter::convertPending(const DWARFAbbreviationDeclaration *Abbrev,
+void DWARFRewriter::convertPending(const DWARFUnit &Unit,
+                                   const DWARFAbbreviationDeclaration *Abbrev,
                                    SimpleBinaryPatcher &DebugInfoPatcher,
-                                   DebugAbbrevPatcher &AbbrevPatcher) {
+                                   DebugAbbrevWriter &AbbrevWriter) {
   if (ConvertedRangesAbbrevs.count(Abbrev))
     return;
 
-  convertToRanges(Abbrev, AbbrevPatcher);
+  convertToRanges(Unit, Abbrev, AbbrevWriter);
 
   auto I = PendingRanges.find(Abbrev);
   if (I != PendingRanges.end()) {
@@ -1382,9 +1396,9 @@ void DWARFRewriter::addToPendingRanges(
       std::make_pair(DWARFDieWrapper(DIE), FunctionRanges.front()));
 }
 
-std::unique_ptr<LocBufferVector>
+std::unique_ptr<DebugBufferVector>
 DWARFRewriter::makeFinalLocListsSection(SimpleBinaryPatcher &DebugInfoPatcher) {
-  auto LocBuffer = std::make_unique<LocBufferVector>();
+  auto LocBuffer = std::make_unique<DebugBufferVector>();
   auto LocStream = std::make_unique<raw_svector_ostream>(*LocBuffer);
   auto Writer =
       std::unique_ptr<MCObjectWriter>(BC.createObjectWriter(*LocStream));
@@ -1406,7 +1420,7 @@ DWARFRewriter::makeFinalLocListsSection(SimpleBinaryPatcher &DebugInfoPatcher) {
     if (llvm::isa<DebugLoclistWriter>(*LocWriter))
       continue;
     SectionOffsetByCU[CUIndex] = SectionOffset;
-    std::unique_ptr<LocBufferVector> CurrCULocationLists =
+    std::unique_ptr<DebugBufferVector> CurrCULocationLists =
         LocWriter->finalize();
     *LocStream << *CurrCULocationLists;
     SectionOffset += CurrCULocationLists->size();

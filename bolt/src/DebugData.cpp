@@ -59,7 +59,7 @@ uint64_t writeAddressRanges(
 } // namespace
 
 DebugRangesSectionWriter::DebugRangesSectionWriter() {
-  RangesBuffer = std::make_unique<RangesBufferVector>();
+  RangesBuffer = std::make_unique<DebugBufferVector>();
   RangesStream = std::make_unique<raw_svector_ostream>(*RangesBuffer);
 
   // Add an empty range as the first entry;
@@ -257,7 +257,7 @@ uint64_t DebugAddrWriter::getOffset(uint64_t DWOId) {
 }
 
 DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
-  LocBuffer = std::make_unique<LocBufferVector>();
+  LocBuffer = std::make_unique<DebugBufferVector>();
   LocStream = std::make_unique<raw_svector_ostream>(*LocBuffer);
 }
 
@@ -385,71 +385,6 @@ void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents,
   }
 }
 
-void DebugAbbrevPatcher::addAttributePatch(
-    const DWARFAbbreviationDeclaration *Abbrev, dwarf::Attribute AttrTag,
-    dwarf::Attribute NewAttrTag, uint8_t NewAttrForm) {
-  assert(Abbrev && "no abbreviation specified");
-
-  if (std::numeric_limits<uint8_t>::max() >= NewAttrTag)
-    AbbrevPatches.emplace(
-        AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
-  else
-    AbbrevNonStandardPatches.emplace_back(
-        AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
-}
-
-void DebugAbbrevPatcher::patchBinary(std::string &Contents,
-                                     uint32_t DWPOffset = 0) {
-  SimpleBinaryPatcher Patcher;
-
-  for (const AbbrevAttrPatch &Patch : AbbrevPatches) {
-    const DWARFAbbreviationDeclaration::AttributeSpec *const Attribute =
-        Patch.Abbrev->findAttribute(Patch.Attr);
-    assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
-
-    Patcher.addBytePatch(Attribute->AttrOffset - DWPOffset,
-                         static_cast<uint8_t>(Patch.NewAttr));
-    Patcher.addBytePatch(Attribute->FormOffset - DWPOffset, Patch.NewForm);
-  }
-  Patcher.patchBinary(Contents);
-
-  if (AbbrevNonStandardPatches.empty())
-    return;
-
-  std::string Section;
-  Section.reserve(Contents.size() + AbbrevNonStandardPatches.size() / 2);
-
-  const char *Ptr = Contents.c_str();
-  uint32_t Start = 0;
-  std::string Buff;
-  auto Encode = [&](uint16_t Value) -> std::string {
-    Buff.clear();
-    raw_string_ostream OS(Buff);
-    encodeULEB128(Value, OS, 2);
-    return Buff;
-  };
-
-  for (const AbbrevAttrPatch &Patch : AbbrevNonStandardPatches) {
-    const DWARFAbbreviationDeclaration::AttributeSpec *const Attribute =
-        Patch.Abbrev->findAttribute(Patch.Attr);
-    assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
-    assert(Start <= Attribute->AttrOffset &&
-           "Offsets are not in sequential order.");
-    // Assuming old attribute is 1 byte. Otherwise will need to add logic to
-    // determine it's size at runtime.
-    assert(std::numeric_limits<uint8_t>::max() >= Patch.Attr &&
-           "Old attribute is greater then 1 byte.");
-
-    Section.append(Ptr + Start, Attribute->AttrOffset - Start);
-    Section.append(Encode(Patch.NewAttr));
-    Section.append(std::string(1, Patch.NewForm));
-
-    Start = Attribute->FormOffset + 1;
-  }
-  Section.append(Ptr + Start, Contents.size() - Start);
-  Contents = std::move(Section);
-}
-
 void DebugStrWriter::create() {
   StrBuffer = std::make_unique<DebugStrBufferVector>();
   StrStream = std::make_unique<raw_svector_ostream>(*StrBuffer);
@@ -467,6 +402,123 @@ uint32_t DebugStrWriter::addString(StringRef Str) {
   (*StrStream) << Str;
   StrStream->write_zeros(1);
   return Offset;
+}
+
+void DebugAbbrevWriter::addUnitAbbreviations(DWARFUnit &Unit) {
+  const DWARFAbbreviationDeclarationSet *Abbrevs = Unit.getAbbreviations();
+  if (!Abbrevs)
+    return;
+
+  uint64_t CUIndex = Unit.getOffset();
+
+  if (CUAbbrevData.find(CUIndex) == CUAbbrevData.end()) {
+    std::lock_guard<std::mutex> Lock(WriterMutex);
+    AbbrevData &Data = CUAbbrevData[CUIndex];
+    Data.Buffer = std::make_unique<DebugBufferVector>();
+    Data.Stream = std::make_unique<raw_svector_ostream>(*Data.Buffer);
+  }
+
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  const auto &UnitPatches = Patches[&Unit];
+
+  raw_svector_ostream &OS = *CUAbbrevData[CUIndex].Stream.get();
+
+  // Take a fast path if there are no patches to apply. Simply copy the original
+  // contents.
+  if (UnitPatches.empty()) {
+    StringRef AbbrevSectionContents =
+        Unit.isDWOUnit() ? Unit.getContext().getDWARFObj().getAbbrevDWOSection()
+                         : Unit.getContext().getDWARFObj().getAbbrevSection();
+    StringRef AbbrevContents;
+
+    const DWARFUnitIndex &CUIndex = Unit.getContext().getCUIndex();
+    if (!CUIndex.getRows().empty()) {
+      // Handle DWP section contribution.
+      const DWARFUnitIndex::Entry *DWOEntry =
+          CUIndex.getFromHash(*Unit.getDWOId());
+      if (!DWOEntry)
+        return;
+
+      const DWARFUnitIndex::Entry::SectionContribution *DWOContrubution =
+          DWOEntry->getContribution(DWARFSectionKind::DW_SECT_ABBREV);
+      AbbrevContents = AbbrevSectionContents.substr(DWOContrubution->Offset,
+                                                    DWOContrubution->Length);
+    } else {
+      DWARFCompileUnit *NextUnit =
+          Unit.getContext().getCompileUnitForOffset(Unit.getNextUnitOffset());
+      const uint64_t StartOffset = Unit.getAbbreviationsOffset();
+      const uint64_t EndOffset = NextUnit ? NextUnit->getAbbreviationsOffset()
+                                          : AbbrevSectionContents.size();
+      AbbrevContents = AbbrevSectionContents.slice(StartOffset, EndOffset);
+    }
+
+    OS.reserveExtraSpace(AbbrevContents.size());
+    OS << AbbrevContents;
+
+    return;
+  }
+
+  for (auto I = Abbrevs->begin(), E = Abbrevs->end(); I != E; ++I) {
+    const DWARFAbbreviationDeclaration &Abbrev = *I;
+    auto Patch = UnitPatches.find(&Abbrev);
+
+    encodeULEB128(Abbrev.getCode(), OS);
+    encodeULEB128(Abbrev.getTag(), OS);
+    encodeULEB128(Abbrev.hasChildren(), OS);
+    for (const DWARFAbbreviationDeclaration::AttributeSpec &AttrSpec :
+         Abbrev.attributes()) {
+      if (Patch != UnitPatches.end()) {
+        bool Patched = false;
+        // Patches added later take a precedence over earlier ones.
+        for (auto I = Patch->second.rbegin(), E = Patch->second.rend(); I != E;
+             ++I) {
+          if (I->OldAttr != AttrSpec.Attr)
+            continue;
+
+          encodeULEB128(I->NewAttr, OS);
+          encodeULEB128(I->NewAttrForm, OS);
+          Patched = true;
+          break;
+        }
+        if (Patched)
+          continue;
+      }
+
+      encodeULEB128(AttrSpec.Attr, OS);
+      encodeULEB128(AttrSpec.Form, OS);
+      if (AttrSpec.isImplicitConst())
+        encodeSLEB128(AttrSpec.getImplicitConstValue(), OS);
+    }
+
+    encodeULEB128(0, OS);
+    encodeULEB128(0, OS);
+  }
+  encodeULEB128(0, OS);
+}
+
+std::unique_ptr<DebugBufferVector> DebugAbbrevWriter::finalize() {
+  DebugBufferVector ReturnBuffer;
+
+  // Pre-calculate the total size of abbrev section.
+  uint64_t Size = 0;
+  for (const auto &KV : CUAbbrevData) {
+    const AbbrevData &Data = KV.second;
+    Size += Data.Buffer->size();
+  }
+  ReturnBuffer.reserve(Size);
+
+  uint64_t Pos = 0;
+  for (auto &KV : CUAbbrevData) {
+    AbbrevData &Data = KV.second;
+    ReturnBuffer.append(*Data.Buffer);
+    Data.Offset = Pos;
+    Pos += Data.Buffer->size();
+
+    Data.Buffer.reset();
+    Data.Stream.reset();
+  }
+
+  return std::make_unique<DebugBufferVector>(ReturnBuffer);
 }
 
 } // namespace bolt
