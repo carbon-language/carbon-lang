@@ -9,7 +9,7 @@ namespace Carbon {
 
 // A non-nullable pointer. Written as `Ptr<T>` instead of `T*`.
 template <typename T>
-using Ptr = T* _Nonnull __attribute__((nonnull));
+using Ptr = T* _Nonnull;
 
 }  // namespace Carbon
 
