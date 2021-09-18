@@ -18,6 +18,15 @@ auto operator<<(llvm::raw_ostream& out, const T& obj) -> llvm::raw_ostream& {
   return out;
 }
 
+// Prevents ostream << for pointers to printable types.
+template <typename T, typename std::enable_if<std::is_member_function_pointer<
+                          decltype(&T::Print)>::value>::type* = nullptr>
+__attribute__((unavailable(
+    "Received a pointer to a printable type, are you missing a `*`?"))) auto
+operator<<(llvm::raw_ostream& out, const T* /*obj*/) -> llvm::raw_ostream& {
+  return out;
+}
+
 }  // namespace Carbon
 
 #endif  // COMMON_OSTREAM_H_
