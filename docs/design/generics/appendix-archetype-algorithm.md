@@ -52,7 +52,7 @@ has a few components:
 -   a unique id like `$3`
 -   a list of interfaces, each of which may have name bindings, or a type
 -   an optional `where` clause, and
--   a list of dotted names with optional type-of-types.
+-   a list of dotted names with type-of-types.
 
 The first listed dotted name defines the canonical name for the archetype. There
 are no forward references allowed in the name bindings, which results in the ids
@@ -79,27 +79,27 @@ normalize to:
 ```
 Iterable
 * $1 :! Type
-  - Elt
+  - Elt as Type
 * $0 :! Iterable{.Elt = $1}
-  - Self
+  - Self as Iterable
 
 Container
 * $3 :! Type
-  - Elt
-  - Iter.Elt
-  - Slice.Elt
+  - Elt as Type
+  - Iter.Elt as Type
+  - Slice.Elt as Type
 * $2 :! Iterable{.Elt = $3}
-  - Iter
+  - Iter as Iterable
 * $1 :! Container{.Elt = $3, .Slice = $1}
-  - Slice
+  - Slice as Container
 * $0 :! Container{.Elt = $3, .Iter = $2, .Slice = $1}
-  - Self
+  - Self as Container
 
 Sort
 * $2 :! Comparable
-  - C.Elt
+  - C.Elt as Comparable
 * $1 :! Container{.Elt=$2}
-  - C
+  - C as Container
 ```
 
 ### Transform implicit/implied/inferred constraints
@@ -140,7 +140,7 @@ is transformed to:
 ```
 Sort
 * $1 :! Container where .Elt is Comparable
-  - C
+  - C as Container
 ```
 
 Interfaces also get a `Self` type assigned to reserved id `$0`, with name
@@ -157,9 +157,9 @@ is transformed to:
 ```
 Iterable
 * $1 :! Type
-  - Elt
+  - Elt as Type
 * $0 :! Iterable{.Elt = $1}
-  - Self
+  - Self as Iterable
 ```
 
 ### Where clauses are rewritten
@@ -173,7 +173,7 @@ needed. There are a number of patterns that can be replaced in this way.
     ```
     F
     * $1 :! A where .X.Y is B
-      - Z
+      - Z as A
     ```
 
     would be rewritten:
@@ -181,9 +181,9 @@ needed. There are a number of patterns that can be replaced in this way.
     ```
     F
     * $2 :! typeof(A.X) where .Y is B
-      - Z.X
+      - Z.X as typeof(A.X)
     * $1 :! A{.X = $2}
-      - Z
+      - Z as A
     ```
 
 -   If the prefix has already been given an id, that id should be reused.
@@ -191,7 +191,7 @@ needed. There are a number of patterns that can be replaced in this way.
     ```
     F
     * $1 :! A where .X.Y is B and .X.Z is C
-      - Z
+      - Z as A
     ```
 
     might first be rewritten by the previous rule to:
@@ -199,9 +199,9 @@ needed. There are a number of patterns that can be replaced in this way.
     ```
     F
     * $2 :! typeof(A.X) where .Y is B
-      - Z.X
+      - Z.X as typeof(A.X)
     * $1 :! A{.X = $2} where .X.Z is C
-      - Z
+      - Z as A
     ```
 
     Then the second `where` clause would be reuse the id for `Z.X`:
@@ -209,9 +209,107 @@ needed. There are a number of patterns that can be replaced in this way.
     ```
     F
     * $2 :! typeof(A.X) where .Y is B and .Z is C
-      - Z.X
+      - Z.X as typeof(A.X)
     * $1 :! A{.X = $2}
+      - Z as A
+    ```
+
+-   Given a list of parameters like `Z:! A, Y:! B where .X == Z`, the `where`
+    clause on `Y` changes the type for members of `Y` but not other names. In
+    this case `Y.X` changes but not `Z`. For `W:! C where .U == .V`, the types
+    of both `W.U` and `W.V` are changed by the `where` clause.
+
+    FIXME: Example
+
+-   Consider two different functions declarations, `F` and `G`:
+
+    ```
+    interface A {}
+    interface B {
+      let X:! D;
+    }
+    interface C {
+      let V:! E;
+    }
+
+    fn F[Z:! A, Y:! B where .X == Z, W:! C where .V == Z](...);
+    fn G[Z:! A, Y:! B where .X == Z, W:! C where .V == Y.X](...);
+    ```
+
+    The names for `W.V` are different between `F` and `G`, even though they end
+    up naming the same id in both cases.
+
+    ```
+    F or G
+    $3 :! A & D
+      - Z as A
+      - Y.X as A & D
+    $2 :! B{.X = $3}
+      - Y as B
+    $1 :! C where .V == Z or Y.X
+      - W as C
+    ```
+
+    The only difference is the type of `C.V` in the rewrite:
+
+    ```
+    F or G
+    $3 :! A & D & E
+      - Z as A
+      - Y.X as A & D
+      - C.V as A & E  // <-- F
+      - C.V as A & D & E  // <-- G
+    $2 :! B{.X = $3}
+      - Y as B
+    $1 :! C{.V = $3}
+      - W as C
+    ```
+
+    To get the type right, we need that the types of `Z` and `Y.X` to be
+    finalized before rewriting the `where` clause for `C.V`. Since we don't
+    allow forward references, it is suffient to process declarations in the
+    order they are declared lexically. Then we set the type of `C.V` from
+    `where .V == Something` to `__combine__(typeof(C.V), typeof(Something))`
+    where `typeof(Something)` can be read out of the normalized form produced so
+    far.
+
+FIXME
+
+type expression like FIXME: If reusing an id means changing its type, preserve
+the type of anything that doesn't have as a prefix with the
+
+    ```
+    interface B {
+      let X:! C;
+      let W:! D;
+    }
+
+    fn K[Z:! A, Y:! B where .X == Z and .W == Z](...);
+    ```
+
+    is first transformed to:
+
+    ```
+    K
+    * $2 :! A
       - Z
+    * $1 :! B where .X == Z and .W == Z
+      - Y
+    ```
+
+    To enforce the constraint `Y.X == Z`, id `$2` list of interfaces is changed
+    from `A` to `__combine__(A, typeof(B.X)) == A & C`. Since we are rewriting a
+    `where` clause on `Y`, we only want to change the types of names starting
+    with `Y`. Since `Z` doesn't have `Y` as a prefix, it gains a cast to
+    preserve its type.
+
+    ```
+    K
+    * $2 :! A & C
+      - Z as A
+      - Y.X
+    * $1 :! B{.X = $2} where .W == Z
+      - Y
     ```
 
 -   A `where` constraint saying a member must have a specific type or
@@ -278,7 +376,9 @@ needed. There are a number of patterns that can be replaced in this way.
 
 -   Setting a member to `Self` or `.Self` is treated slightly differently.
     Instead of combining types to make sure it satisfies constraints, we just
-    typecheck that the existing types do.
+    typecheck that the existing types do. However, since the rewrite to normal
+    form is still in progress at this point, the type check is delayed until the
+    [type check step](#type-checking) after the rewrites are complete.
 
     ```
     Container
@@ -286,7 +386,6 @@ needed. There are a number of patterns that can be replaced in this way.
       - Slice
     ```
 
-    checks that `$1` satisfies the requirements of `Container.Slice` and then
     becomes:
 
     ```
@@ -306,7 +405,7 @@ needed. There are a number of patterns that can be replaced in this way.
       - Self
     ```
 
-    becomes, after checking that `Self` satisfies the constraints on `.Parent`:
+    becomes:
 
     ```
     Tree
@@ -315,6 +414,10 @@ needed. There are a number of patterns that can be replaced in this way.
     * $0 :! Tree{.Child = $1}
       - Self
     ```
+
+    Again, checking that `Self` satisfies the constraints on `.Parent` is
+    delayed until the [type check step](#type-checking) after the rewrites are
+    complete.
 
 -   Setting a member to a specific type, like `i32`, first checks that the type
     satisfies all constraints on that member, and then binds the name of the
@@ -408,11 +511,10 @@ clear.
 ### Some where clauses are preserved
 
 Some `where` constraints can't be rewritten and the only rewrite is to make sure
-they are attached to the relevant id.
+they are attached to the relevant id:
 
 -   `where Vector(T) is Printable` constraints should be moved to `T`
 -   `where T != U` constraints should be moved to the latter id
--   `where N > 3` constraints should be moved to `N`
 
 ### Type checking
 
@@ -420,6 +522,8 @@ FIXME: Type check. It is sound to type check one level by induction, assuming
 you type check every interface "satisfies its constraints given parameters and
 Self meet their constraints." The caller adding additional constraints won't
 invalidate that.
+
+FIXME: Need to validate references from `Self` and `.Self` at this stage.
 
 FIXME: invariants of normalized form
 

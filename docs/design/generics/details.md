@@ -47,7 +47,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
         -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
-        -   [Range constraints on associated constants](#range-constraints-on-associated-constants)
         -   [Type bound for associated type](#type-bound-for-associated-type)
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
@@ -93,6 +92,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Reverse generics for return types](#reverse-generics-for-return-types)
     -   [Variadic arguments](#variadic-arguments)
+    -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -2310,44 +2310,6 @@ constraint IntStack {
 }
 ```
 
-#### Range constraints on associated constants
-
-We can express range and inequality constraints on associated constants. This
-exampls shows constraining the `N` member of `NSpacePoint` from
-[the "associated constants" section](#associated-constants):
-
-```
-fn PrintPoint2Or3
-    [PointT:! NSpacePoint where 2 <= .N and .N <= 3]
-    (p: PointT);
-```
-
-Name this kind of constraint like so:
-
-```
-let HyperPoint:! auto = NSpacePoint where .N > 3;
-constraint HyperPoint {
-  extends NSpacePoint where .N > 3;
-}
-```
-
-**Concern:** How should we express range constraints on generic integer
-parameters?
-
-```
-fn TakesAtLeastAPair[N:! u32 where ___ >= 2](x: NTuple(N, i32));
-fn TakesAtLeastAPair[N:! u32](x: NTuple(N, i32) where N >= 2);
-```
-
-Or on associated constants in an interface definition?
-
-```
-interface HyperPointInterface {
-  let N:! u32 where ___ > 3;
-  fn Get[addr me: Self*](i: i32) -> f64;
-}
-```
-
 #### Type bound for associated type
 
 Type restrictions in Carbon are represented by a type-of-type. So to express a
@@ -2598,8 +2560,14 @@ constraint ContainerIsSlice {
 }
 ```
 
-Note that using the `constraint` approach we can name these constraints without
-using `.Self`.
+Note that using the `constraint` approach we can name these constraints using
+`Self` instead of `.Self`.
+
+FIXME: There is an important difference here, constraints equating `.Self` or
+`Self` to some other type don't change the interfaces that are implemented like
+[same type constraints](#same-type-constraints). Instead it will just check that
+the type represented by `Self` or `.Self` satisfies the constraints on the other
+type.
 
 #### Parameterized type implements interface
 
@@ -2766,6 +2734,9 @@ triggered by type checking. This normalized form can then be lazily evaluated to
 answer queries. Queries take a dotted name and return an archetype that has a
 canonical type name and a type-of-type.
 
+A more complete description of the normalization rewrite and querying algorithms
+can be found in [this appendix](appendix-archetype-algorithm.md).
+
 #### Normalized form
 
 The normalized form for a function declaration includes generic type parameters
@@ -2779,14 +2750,15 @@ normalizes to:
 
 ```
 * $2 :! Comparable
-  - C.Elt
+  - C.Elt as Comparable
 * $1 :! Container{.Elt = $2}
-  - C
+  - C as Container
 ```
 
 The normalized form for an interface includes the associated types as well as
-dotted names mentioned in `where` constraints. It includes the interface's name
-to support recursive references. Given these interface definitions,
+dotted names mentioned in `where` constraints. It includes the interface's
+`Self` type and interface name to support recursive references. Given these
+interface definitions,
 
 ```
 interface P {
@@ -2813,15 +2785,15 @@ the interface `S` normalizes to:
 S
 * $4 :! F & H
   - A.T as F
-  - B.X.Y
+  - B.X.Y as F & H
 * $3 :! Q{.Y = $4}
-  - B.X
+  - B.X as Q
 * $2 :! P{.T = $4}
-  - A
+  - A as P
 * $1 :! R{.X = $3}
-  - B
+  - B as R
 * $0 :! S{.A = $2, .B = $1}
-  - Self
+  - Self as S
 ```
 
 Note that `A.T` and `B.X.Y` both correspond to `$4`, but their types are
@@ -2850,13 +2822,13 @@ normalizes to:
 ```
 Graph
 * $2 :! V{.Edge = $1}
-  - Vertex
-  - Edge.Vertex
+  - Vertex as V
+  - Edge.Vertex as V
 * $1 :! E{.Vertex = $2}
-  - Edge
-  - Vertex.Edge
+  - Edge as E
+  - Vertex.Edge as E
 * $0 :! Graph{.Vertex = $2, .Edge = $1}
-  - Self
+  - Self as Graph
 }
 ```
 
@@ -2874,17 +2846,17 @@ which normalizes to:
 ```
 HasCycle
 * $4 :! ...{.U = $3}
-  - A.T
-  - B.X.Y
+  - A.T as ...
+  - B.X.Y as ...
 * $3 :! ...{.Y = $4}
-  - A.T.U
-  - B.X
+  - A.T.U as ...
+  - B.X as ...
 * $2 :! P{.T = $4}
-  - A
+  - A as P
 * $1 :! Q{.X = $3}
-  - B
+  - B as Q
 * $0 :! HasCycle{.A = $2, .B = $1}
-  - Self
+  - Self as HasCycle
 ```
 
 #### Conflicting constraints on an associated type
@@ -2930,9 +2902,6 @@ consideration. For example, in the `Sort` function declaration above, this would
 determine that `C.Elt`, `C.Iter.Elt`, `C.Slice.Elt`, and so on are all equal and
 implement `Comparable`. This is despite `Elt` as being declared `let Elt:! Type`
 in the definition of `Container`.
-
-A more complete description of the normalization rewrite and querying algorithms
-can be found in [this appendix](appendix-archetype-algorithm.md).
 
 ## Other constraints as type-of-types
 
@@ -3338,6 +3307,22 @@ Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 Some facility for allowing a function to generically take a variable number of
 arguments.
+
+### Range constraints on generic integers
+
+We currently only support `where` clauses on type-of-types. We may want to also
+support constraints on generic integers. The constraint with the most expected
+value is the ability to do comparisons like `<`, or `>=`. For example, you might
+constrain the `N` member of [`NSpacePoint`](#associated-constants) using an
+expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
+
+The concern here is supporting this at compile time without more complexity than
+benefit. For example, we probably don't want to support integer-range based
+types at runtime, and there are also concerns about reasoning about comparisons
+between multiple generic integer parameters. For example, if `J < K` and
+`K <= L`, can we call a function that requires `J < L`? There is also a
+secondary syntactic concern about how to write this kind of constraint on a
+parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 
 ## References
 
