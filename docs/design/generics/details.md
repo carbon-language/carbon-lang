@@ -3648,6 +3648,20 @@ parameters meet a criteria. In this section, we extend the ways of
 parameterizing a single `impl` declaration so that it applies to multiple types
 or multiple interface arguments.
 
+FIXME: Open question whether a blanket impl saying anything implementing `I1`
+also implements `I2` is sufficient for a function `F` generically accepting a
+type `T` implementing `I1` to call a function `G` that requires it to implement
+`I2`. Two concerns: since `F` likely doesn't import the library defining the
+actual `T`, it won't see all relevant `impl` declarations so it won't itself be
+able to determine which `impl` will be used, that resolution will have to be
+deferred to code generation when the generic is instantiated for the right type.
+This is a problem for implementing dynamic dispatch cases, since it isn't
+obvious that the compiler will need to package a witness table for `I2` along
+with a witness table for `I1`. The other concern is whether it will in fact be
+guaranteed to be able to implement `I2`, if there are concerns that the
+implementation of `I2` by `T` might be blocked by having multiple
+implementations to choose from without a clear rule of how to pick a winner.
+
 ### Bridge for C++ templates
 
 #### Calling C++ template code from Carbon
@@ -4616,10 +4630,9 @@ implementation of the indexing operator (operator `[]`), by way of
 
 ```
 interface RandomAccessContainer {
-  extends Container {
-    // Extension of the associated type `IteratorType` from `Container`.
-    let IteratorType:! RandomAccessIterator;
-  }
+  // Refinement of the associated type `IteratorType` from `Container`.
+  extends Container where .IteratorType is RandomAccessIterator;
+
   // Either `impl` or `extends` here, depending if you want
   // `RandomAccessContainer`'s API to include these names.
   impl as OperatorIndex(Int) {
@@ -4633,6 +4646,11 @@ interface RandomAccessContainer {
   }
 }
 ```
+
+Note that there is a difference between extending an interface with a `where`
+constraint specifying a requirement on an associated type, as is done for
+`Container.IteratorType` above, and providing a default value for an associated
+type, which can be overridden.
 
 ### Interface evolution
 
