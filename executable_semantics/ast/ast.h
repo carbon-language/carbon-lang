@@ -9,7 +9,7 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/library_name.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 

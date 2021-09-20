@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_COMMON_PTR_H_
-#define EXECUTABLE_SEMANTICS_COMMON_PTR_H_
+#ifndef EXECUTABLE_SEMANTICS_COMMON_NONNULL_H_
+#define EXECUTABLE_SEMANTICS_COMMON_NONNULL_H_
 
 #include <type_traits>
 
@@ -19,4 +19,4 @@ using Nonnull = T _Nonnull;
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_COMMON_PTR_H_
+#endif  // EXECUTABLE_SEMANTICS_COMMON_NONNULL_H_
