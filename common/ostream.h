@@ -23,9 +23,7 @@ template <typename T, typename std::enable_if<std::is_member_function_pointer<
                           decltype(&T::Print)>::value>::type* = nullptr>
 __attribute__((unavailable(
     "Received a pointer to a printable type, are you missing a `*`?"))) auto
-operator<<(llvm::raw_ostream& out, const T* /*obj*/) -> llvm::raw_ostream& {
-  return out;
-}
+operator<<(llvm::raw_ostream& out, const T* /*obj*/) -> llvm::raw_ostream&;
 
 }  // namespace Carbon
 
