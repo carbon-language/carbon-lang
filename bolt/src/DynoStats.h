@@ -124,10 +124,9 @@ public:
   /// and BB offsets where intructions of these opcodes occur.
   using MaxOpcodeHistogramTy =
       std::multimap<uint64_t, std::pair<StringRef, uint32_t>>;
-  using OpcodeStatTy =
-      std::pair<unsigned, std::pair<uint64_t, MaxOpcodeHistogramTy>>;
   using OpcodeHistogramTy =
       std::unordered_map<unsigned, std::pair<uint64_t, MaxOpcodeHistogramTy>>;
+  using OpcodeStatTy = OpcodeHistogramTy::value_type;
 
   OpcodeHistogramTy OpcodeHistogram;
 };
