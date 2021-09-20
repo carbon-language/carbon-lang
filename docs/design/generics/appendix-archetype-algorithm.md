@@ -50,9 +50,8 @@ The normalized form consists of a list of archetypes and constants. An archetype
 has a few components:
 
 -   a unique id like `$3`
--   a list of interfaces, each of which may have name bindings, or a type
--   an optional `where` clause, and
--   a list of dotted names with type-of-types.
+-   a list of interfaces, each of which may have name bindings, or a type, and
+-   a list of dotted names with type-of-types, and an optional `where` clause.
 
 The first listed dotted name defines the canonical name for the archetype. There
 are no forward references allowed in the name bindings, which results in the ids
@@ -165,23 +164,27 @@ Iterable
 ### Where clauses are rewritten
 
 Then, `where` clauses are replaced with name bindings, introducing ids as
-needed. There are a number of patterns that can be replaced in this way.
+needed. The `where` clauses should be rewritten in the order they appear
+lexically in the original source code. This leverages the lack of forward
+references to ensure names have their final type resolved before we do anything
+that relies on that final type. There are a number of patterns that can be
+replaced in this way.
 
 -   Create ids for all prefixes of dotted names mentioned in a `where`
     constraint that don't already have names.
 
     ```
     F
-    * $1 :! A where .X.Y is B
-      - Z as A
+    * $1 :! A
+      - Z as A where .X.Y is B
     ```
 
     would be rewritten:
 
     ```
     F
-    * $2 :! typeof(A.X) where .Y is B
-      - Z.X as typeof(A.X)
+    * $2 :! typeof(A.X)
+      - Z.X as typeof(A.X) where .Y is B
     * $1 :! A{.X = $2}
       - Z as A
     ```
@@ -190,26 +193,26 @@ needed. There are a number of patterns that can be replaced in this way.
 
     ```
     F
-    * $1 :! A where .X.Y is B and .X.Z is C
-      - Z as A
+    * $1 :! A
+      - Z as A where .X.Y is B and .X.Z is C
     ```
 
     might first be rewritten by the previous rule to:
 
     ```
     F
-    * $2 :! typeof(A.X) where .Y is B
-      - Z.X as typeof(A.X)
-    * $1 :! A{.X = $2} where .X.Z is C
-      - Z as A
+    * $2 :! typeof(A.X)
+      - Z.X as typeof(A.X) where .Y is B
+    * $1 :! A{.X = $2}
+      - Z as A where .X.Z is C
     ```
 
     Then the second `where` clause would be reuse the id for `Z.X`:
 
     ```
     F
-    * $2 :! typeof(A.X) where .Y is B and .Z is C
-      - Z.X as typeof(A.X)
+    * $2 :! typeof(A.X)
+      - Z.X as typeof(A.X) where .Y is B and .Z is C
     * $1 :! A{.X = $2}
       - Z as A
     ```
@@ -218,6 +221,10 @@ needed. There are a number of patterns that can be replaced in this way.
     clause on `Y` changes the type for members of `Y` but not other names. In
     this case `Y.X` changes but not `Z`. For `W:! C where .U == .V`, the types
     of both `W.U` and `W.V` are changed by the `where` clause.
+
+    FIXME: This is why we keep the `where` clause associated to a name binding,
+    because we know it only affects the visible type for names that have this
+    name as prefix.
 
     FIXME: Example
 
@@ -246,8 +253,9 @@ needed. There are a number of patterns that can be replaced in this way.
       - Y.X as A & D
     $2 :! B{.X = $3}
       - Y as B
-    $1 :! C where .V == Z or Y.X
-      - W as C
+    $1 :! C
+      - W as C where .V == Z  // <-- F
+      - W as C where .V == Y.X  // <-- G
     ```
 
     The only difference is the type of `C.V` in the rewrite:
@@ -292,9 +300,9 @@ the type of anything that doesn't have as a prefix with the
     ```
     K
     * $2 :! A
-      - Z
-    * $1 :! B where .X == Z and .W == Z
-      - Y
+      - Z as A
+    * $1 :! B
+      - Y as B where .X == Z and .W == Z
     ```
 
     To enforce the constraint `Y.X == Z`, id `$2` list of interfaces is changed
@@ -307,9 +315,9 @@ the type of anything that doesn't have as a prefix with the
     K
     * $2 :! A & C
       - Z as A
-      - Y.X
-    * $1 :! B{.X = $2} where .W == Z
-      - Y
+      - Y.X as A & C
+    * $1 :! B{.X = $2}
+      - Y as B where .W == Z
     ```
 
 -   A `where` constraint saying a member must have a specific type or
@@ -318,8 +326,8 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     Sort
-    * $1 :! Container where .Elt is Comparable
-      - C
+    * $1 :! Container
+      - C as Container where .Elt is Comparable
     ```
 
     becomes:
@@ -327,9 +335,9 @@ the type of anything that doesn't have as a prefix with the
     ```
     Sort
     * $2 :! __combine__(typeof(Container.Elt), Comparable)
-      - C.Elt
+      - C.Elt as ...
     * $1 :! Container{.Elt = $2}
-      - C
+      - C as Container
     ```
 
 -   A `where` constraint equating two types needs to both ensure an id exists,
@@ -337,8 +345,8 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     G
-    * $1 :! A where .X == .Y
-      - Z
+    * $1 :! A
+      - Z as A where .X == .Y
     ```
 
     becomes:
@@ -346,10 +354,10 @@ the type of anything that doesn't have as a prefix with the
     ```
     G
     * $2 :! __combine__(typeof(A.X), typeof(A.Y))
-      - Z.X
-      - Z.Y
+      - Z.X as ...
+      - Z.Y as ...
     * $1 :! A{.X = $2, .Y = $2)
-      - Z
+      - Z as A
     ```
 
     Note that only members of the type with the `where` clause get the combined
@@ -358,9 +366,9 @@ the type of anything that doesn't have as a prefix with the
     ```
     Container
     * $2 :! Type
-      - Elt
-    * $1 :! Iterable where .Elt == Elt;
-      - Iter
+      - Elt as Type
+    * $1 :! Iterable
+      - Iter as Iterable where .Elt == Elt;
     ```
 
     becomes:
@@ -369,9 +377,9 @@ the type of anything that doesn't have as a prefix with the
     Container
     * $2 :! __combine__(Type, typeof(Iterable.Elt))
       - Elt as Type
-      - Iter.Elt
+      - Iter.Elt as __combine__(Type, typeof(Iterable.Elt))
     * $1 :! Iterable{.Elt = $2}
-      - Iter
+      - Iter as Iterable
     ```
 
 -   Setting a member to `Self` or `.Self` is treated slightly differently.
@@ -382,8 +390,8 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     Container
-    * $1 :! Container where .Slice == .Self
-      - Slice
+    * $1 :! Container
+      - Slice as Container where .Slice == .Self
     ```
 
     becomes:
@@ -391,7 +399,7 @@ the type of anything that doesn't have as a prefix with the
     ```
     Container
     * $1 :! Container{.Slice = $1}
-      - Slice
+      - Slice as Container
     ```
 
 -   `Self` is similar to `.Self` except it uses id `$0`. Unlike other ids, id
@@ -399,10 +407,10 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     Tree
-    * $1 :! Tree where .Parent == Self
-      - Child
+    * $1 :! Tree
+      - Child as Tree where .Parent == Self
     * $0 :! Tree{.Child = $1}
-      - Self
+      - Self as Tree
     ```
 
     becomes:
@@ -410,9 +418,9 @@ the type of anything that doesn't have as a prefix with the
     ```
     Tree
     * $1 :! Tree{.Parent = $0}
-      - Child
+      - Child as Tree
     * $0 :! Tree{.Child = $1}
-      - Self
+      - Self as Tree
     ```
 
     Again, checking that `Self` satisfies the constraints on `.Parent` is
@@ -428,9 +436,9 @@ the type of anything that doesn't have as a prefix with the
     ```
     H
     * $2 :! B
-      - Z.X
-    * $1 :! A{.X = $2} where .X == i32
-      - Z
+      - Z.X as B
+    * $1 :! A{.X = $2}
+      - Z as A where .X == i32
     ```
 
     the compiler must first check that `i32` implements `B` and report an error
@@ -441,7 +449,7 @@ the type of anything that doesn't have as a prefix with the
     * $2 = i32
       - Z.X
     * $1 :! A{.X = $2}
-      - Z
+      - Z as A
     ```
 
 -   If two constraints set the same member to types, that member should get the
@@ -458,13 +466,13 @@ the type of anything that doesn't have as a prefix with the
     ```
     J
     * $4 :! C
-      - Y
+      - Y as C
     * $3 :! B
-      - W
+      - W as B
     * $2 = Pair(i32, $3)
       - Z.X
-    * $1 :! A{.X = $2} where .X == Pair($4, f32)
-      - Z
+    * $1 :! A{.X = $2}
+      - Z as A where .X == Pair($4, f32)
     ```
 
     This would trigger a type error unless `i32` implements `C` and `f32`
@@ -527,7 +535,7 @@ FIXME: Need to validate references from `Self` and `.Self` at this stage.
 
 FIXME: invariants of normalized form
 
--   No cycles and no forward references.
+-   MAYBE: No cycles and no forward references.
 -   Original/immediate associated types at the end and in the original source
     code order.
 
