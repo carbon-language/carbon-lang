@@ -2465,7 +2465,8 @@ fn Contains
 then `CT.ElementType` will still end up implementing `Comparable`, but it will
 act like an [external implementation](#external-impl). That is, the type `CT`
 won't have an unqualified `Compare` method, but can still be cast to
-`Comparable`.
+`Comparable`. The rule is that the `where` constraint only modifies the names
+that can be accessed unqualified of the current type.
 
 #### Combining constraints
 
@@ -2805,6 +2806,8 @@ Also note that `B.X` gets its own entry, as a result of `B.X.Y` being mentioned
 in a `where` constraint.
 
 #### No cycles
+
+**Open question:** I'm not sure we need this restriction.
 
 There are a couple of ways this normalization can fail. The first is by
 introducing a cycle:
