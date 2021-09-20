@@ -243,6 +243,8 @@ To explain this boilerplate:
     -   `-allow-unused-prefixes` controls that the command without `--trace`
         should _precisely_ match `CHECK` lines, whereas the command with
         `--trace` will be a superset.
+    -   `RUN:` will be followed by the `not` command when failure is expected.
+        In particular, `RUN: not executable_semantics ...`.
 -   `AUTOUPDATE` indicates that `CHECK` lines will be automatically inserted
     immediately below by the `./update_checks.py` script.
 -   `CHECK` indicates lines which are expected to be in output, verified by
