@@ -133,7 +133,7 @@ The following pointer conversion is available:
 `T` is a subtype of `U` if:
 
 -   `T` is equivalent to `U`, as described above, or
--   `T` is equivalent to a class derived from a class eqiuvalent to `U`.
+-   `T` is equivalent to a class derived from a class equivalent to `U`.
 
 **Note:** More type subtyping rules are expected to be added over time.
 
