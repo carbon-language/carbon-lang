@@ -13,7 +13,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/field_path.h"
 #include "executable_semantics/interpreter/stack.h"

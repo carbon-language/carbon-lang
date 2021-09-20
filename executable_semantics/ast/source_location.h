@@ -9,7 +9,7 @@
 #include <string_view>
 
 #include "common/ostream.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 

@@ -8,7 +8,7 @@ cc_library(
     name = "arena",
     hdrs = ["arena.h"],
     deps = [
-        ":ptr",
+        ":nonnull",
     ],
 )
 
@@ -31,8 +31,8 @@ cc_test(
 )
 
 cc_library(
-    name = "ptr",
-    hdrs = ["ptr.h"],
+    name = "nonnull",
+    hdrs = ["nonnull.h"],
     deps = [
         "//common:check",
         "@llvm-project//llvm:Support",
