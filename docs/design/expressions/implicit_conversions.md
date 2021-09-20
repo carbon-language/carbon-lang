@@ -11,6 +11,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Properties of implicit conversions](#properties-of-implicit-conversions)
+    -   [Lossless](#lossless)
+    -   [Semantics-preserving](#semantics-preserving)
+    -   [Examples](#examples)
 -   [Built-in types](#built-in-types)
     -   [Data types](#data-types)
     -   [Equivalent types](#equivalent-types)
@@ -32,10 +36,11 @@ possible.
 
 For [built-in types](#built-in-types), implicit conversions are permitted when:
 
--   The conversion is _lossless_: every possible value for the source expression
-    converts to a distinct value in the target type.
--   The conversion is _semantics-preserving_: corresponding values in the source
-    and destination type have the same abstract meaning.
+-   The conversion is [_lossless_](#lossless): every possible value for the
+    source expression converts to a distinct value in the target type.
+-   The conversion is [_semantics-preserving_](#semantics-preserving):
+    corresponding values in the source and destination type have the same
+    abstract meaning.
 
 These rules aim to ensure that implicit conversions are unsurprising: the value
 that is provided as the operand of an operation should match how that operation
@@ -45,6 +50,51 @@ preserved by any implicit conversions that are applied.
 It is possible for user-defined types to [extend](#extensibility) the set of
 valid implicit conversions. Such extensions are expected to also follow these
 rules.
+
+## Properties of implicit conversions
+
+### Lossless
+
+We expect implicit conversion to never lose information: if two values are
+distinguishable before the conversion, they should generally be distinguishable
+after the conversion. A conversion in the opposite direction should be possible,
+but such a conversion is not expected to be provided in general, and might be
+computationally expensive.
+
+Because an implicit conversion is converting from a narrower type to a wider
+type, implicit conversions do not necessarily preserve invariants of the source
+type.
+
+### Semantics-preserving
+
+We expect implicit conversions to preserve the meaning of converted values. The
+assessment of this criterion will necessarily be subjective, because the
+meanings of values generally live in the mind of the programmer rather than in
+the program text. However, the semantic interpretation is expected to be
+consistent from one conversion to another, so we can provide a test: if multiple
+paths of implicit conversions from a type `A` to a type `B` exist, and the same
+value of type `A` would convert to different values of type `B` along different
+paths, then at least one of those conversions must not be semantics-preserving.
+
+A semantics-preserving conversion does not necessarily preserve the meaning of
+particular syntax when applied to the value. The same syntax may map to
+different operations in the new type. For example, division may mean different
+things in integer and floating-point types, and member access may find different
+members in a derived class pointer versus in a base class pointer.
+
+### Examples
+
+Conversion from `i32` to `Vector(int)` by forming a vector of N zeroes is
+lossless but not semantics-preserving.
+
+Conversion from `i32` to `f32` by rounding to the nearest representable value is
+semantics-preserving but not lossless.
+
+Conversion from `String` to `StringView` is lossless, because we can compute the
+`String` value from the `StringView` value, and semantics-preserving because the
+string value denoted is the same. Conversion in the other direction may or may
+not be semantics-preserving depending on whether we consider the address to be a
+salient part of a `StringView`'s value.
 
 ## Built-in types
 
