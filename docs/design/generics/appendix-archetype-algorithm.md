@@ -50,14 +50,26 @@ The normalized form consists of a list of archetypes and constants. An archetype
 has a few components:
 
 -   a unique id like `$3`
--   a list of interfaces, each of which may have name bindings, or a type, and
--   a list of dotted names with type-of-types, and an optional `where` clause.
+-   a type, or a list of interfaces each of which may have name bindings,
+-   a list of dotted names each with type-of-types
 
-The first listed dotted name defines the canonical name for the archetype. There
-are no forward references allowed in the name bindings, which results in the ids
-generally being listed in decreasing order.
+The first listed dotted name, if any, defines the canonical name for the
+archetype. The list of interfaces defines the requirements on that specific id,
+while the type-of-type associated with a dotted name defines the unqualified
+names that are available as members of that specific name.
 
-As an example, these interface and function declarations
+**Open question:** I don't know if I need the following restriction:
+
+> There are no forward references allowed in the name bindings, which results in
+> the ids generally being listed in decreasing order.
+
+In addition to the normalized form, we maintain a list of `where` constraint
+clauses that have yet to be incoroprated. These `where` clauses include the name
+of the type they modify, if any, and are kept in the lexical order they appear
+in the source code, to preserve the property that any names mentioned in a
+`where` clause will be resolved before we resolve the `where` clause itself.
+
+As an example, these interface and function declarations:
 
 ```
 interface Iterable {
@@ -125,10 +137,14 @@ fn PrintSet[KeyType:! Printable]
      where KeyType is KeyType:! Hashable & HasEquals & Movable);
 ```
 
+Note that this introduced `where` constraint is not attached to a generic type
+parameter, and so won't have a name in list of `where` constraint clauses.
+
 ### Parameters are assigned ids
 
 Next, every generic type and constant parameter is extracted from the
-declaration, and assigned an id.
+declaration, and assigned an id. The `where` clauses are collected separately,
+in the order they are declared.
 
 ```
 fn Sort[C:! Container where .Elt is Comparable](c: C*);
@@ -138,8 +154,10 @@ is transformed to:
 
 ```
 Sort
-* $1 :! Container where .Elt is Comparable
+* $1 :! Container
   - C as Container
+
+C where .Elt is Comparable
 ```
 
 Interfaces also get a `Self` type assigned to reserved id `$0`, with name
@@ -163,59 +181,99 @@ Iterable
 
 ### Where clauses are rewritten
 
-Then, `where` clauses are replaced with name bindings, introducing ids as
-needed. The `where` clauses should be rewritten in the order they appear
-lexically in the original source code. This leverages the lack of forward
-references to ensure names have their final type resolved before we do anything
-that relies on that final type. There are a number of patterns that can be
-replaced in this way.
+Then, `where` clauses are resolved by introducing name bindings, and ids as
+needed in the normalized form. The `where` clauses should be rewritten in the
+order they appear lexically in the original source code. This leverages the lack
+of forward references to ensure names have their final type resolved before we
+do anything that relies on that final type. There are a number of patterns that
+can be replaced in this way.
 
 -   Create ids for all prefixes of dotted names mentioned in a `where`
-    constraint that don't already have names.
+    constraint that don't already have names, including the dotted name itself.
 
     ```
     F
     * $1 :! A
-      - Z as A where .X.Y is B
+      - Z as A
+
+    Z where .X.Y is B
     ```
 
-    would be rewritten:
+    would be rewritten to:
 
     ```
     F
-    * $2 :! typeof(A.X)
-      - Z.X as typeof(A.X) where .Y is B
+    * $3 :! typeof(A.X.Y)
+      - Z.X.Y as typeof(A.X.Y)
+    * $2 :! typeof(A.X){.Y = $3}
+      - Z.X as typeof(A.X)
     * $1 :! A{.X = $2}
+      - Z as A
+
+    Z where .X.Y is B
+    ```
+
+-   If the prefix has already been given an id, that id should be reused. In
+    this example, `Z.Y` has already been given an id as part of resolving a
+    constraint on `Z.Y.X`:
+
+    ```
+    F
+    * $3 :! C
+      - Z.Y.X as C
+    * $2 :! B{.X = $3}
+      - Z.Y as B
+    * $1 :! A{.Y = $2}
+      - Z as A
+
+    Z where .Y.W is D
+    ```
+
+    Then the remaining `where` clause would be reuse the id for `Z.Y`:
+
+    ```
+    F
+    * $4 :! typeof(A.Y.W)
+      - Z.Y.W as typeof(A.Y.W)
+    * $3 :! C
+      - Z.Y.X as C
+    * $2 :! B{.X = $3, .W = $4}
+      - Z.Y as B
+    * $1 :! A{.Y = $2}
+      - Z as A
+
+    Z where .Y.W is D
+    ```
+
+-   An `is` constraint uses the
+    [`__combine__` operator](#combining-type-of-types) to add constraints to a
+    type. It also modifies the type-of-type for any listed name that the `where`
+    clause is on a prefix of.
+
+    ```
+    F
+    * $2 :! B
+      - Z.Y as B
+      - X as B
+    * $1 :! A{.Y = $2}
+      - Z as A
+
+    Z where .Y is C
+    ```
+
+    would be rewritten to:
+
+    ```
+    F
+    * $2 :! __combine__(B, C)
+      - Z.Y as __combine__(B, C)
+      - X as B
+    * $1 :! A{.Y = $2}
       - Z as A
     ```
 
--   If the prefix has already been given an id, that id should be reused.
-
-    ```
-    F
-    * $1 :! A
-      - Z as A where .X.Y is B and .X.Z is C
-    ```
-
-    might first be rewritten by the previous rule to:
-
-    ```
-    F
-    * $2 :! typeof(A.X)
-      - Z.X as typeof(A.X) where .Y is B
-    * $1 :! A{.X = $2}
-      - Z as A where .X.Z is C
-    ```
-
-    Then the second `where` clause would be reuse the id for `Z.X`:
-
-    ```
-    F
-    * $2 :! typeof(A.X)
-      - Z.X as typeof(A.X) where .Y is B and .Z is C
-    * $1 :! A{.X = $2}
-      - Z as A
-    ```
+    Note that since the `where` clause was defined on `Z`, the type-of-type of
+    `Z.Y` is modified but `X` is not.
 
 -   Given a list of parameters like `Z:! A, Y:! B where .X == Z`, the `where`
     clause on `Y` changes the type for members of `Y` but not other names. In
@@ -254,8 +312,11 @@ replaced in this way.
     $2 :! B{.X = $3}
       - Y as B
     $1 :! C
-      - W as C where .V == Z  // <-- F
-      - W as C where .V == Y.X  // <-- G
+      - W as C
+      - W as C
+
+    W where .V == Z  // <-- F
+    W where .V == Y.X  // <-- G
     ```
 
     The only difference is the type of `C.V` in the rewrite:
@@ -382,7 +443,7 @@ the type of anything that doesn't have as a prefix with the
       - Iter as Iterable
     ```
 
--   Setting a member to `Self` or `.Self` is treated slightly differently.
+-   Setting a member equal to `Self` or `.Self` is treated slightly differently.
     Instead of combining types to make sure it satisfies constraints, we just
     typecheck that the existing types do. However, since the rewrite to normal
     form is still in progress at this point, the type check is delayed until the
@@ -511,10 +572,9 @@ but to guarantee that the algorithm terminates, we instead give an error. The
 insight is that in this case, the error is reasonably clear. In cases that arise
 in practice, the error should be enough for the user to fix the issue.
 
-**Open question:** We could instead call this "unification." For now, I am
-calling it "combine" since it is unioning the constraints but intersecting the
-types satisfying the constraints, so neither "union" nor "intersect" seems
-clear.
+**Open question:** For now, I am calling it "combine" since it is unioning the
+constraints but intersecting the types satisfying the constraints, so neither
+"union" nor "intersect" seems clear. We could instead call this "unification."
 
 ### Some where clauses are preserved
 
