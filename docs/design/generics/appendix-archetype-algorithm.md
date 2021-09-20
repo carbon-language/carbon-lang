@@ -203,10 +203,10 @@ can be replaced in this way.
 
     ```
     F
-    * $3 :! typeof(A.X.Y)
-      - Z.X.Y as typeof(A.X.Y)
-    * $2 :! typeof(A.X){.Y = $3}
-      - Z.X as typeof(A.X)
+    * $3 :! __typeof__(A.X.Y)
+      - Z.X.Y as __typeof__(A.X.Y)
+    * $2 :! __typeof__(A.X){.Y = $3}
+      - Z.X as __typeof__(A.X)
     * $1 :! A{.X = $2}
       - Z as A
 
@@ -233,8 +233,8 @@ can be replaced in this way.
 
     ```
     F
-    * $4 :! typeof(A.Y.W)
-      - Z.Y.W as typeof(A.Y.W)
+    * $4 :! __typeof__(A.Y.W)
+      - Z.Y.W as __typeof__(A.Y.W)
     * $3 :! C
       - Z.Y.X as C
     * $2 :! B{.X = $3, .W = $4}
@@ -338,8 +338,9 @@ can be replaced in this way.
     finalized before rewriting the `where` clause for `C.V`. Since we don't
     allow forward references, it is suffient to process declarations in the
     order they are declared lexically. Then we set the type of `C.V` from
-    `where .V == Something` to `__combine__(typeof(C.V), typeof(Something))`
-    where `typeof(Something)` can be read out of the normalized form produced so
+    `where .V == Something` to
+    `__combine__(__typeof__(C.V), __typeof__(Something))` where
+    `__typeof__(Something)` can be read out of the normalized form produced so
     far.
 
 FIXME
@@ -367,7 +368,7 @@ the type of anything that doesn't have as a prefix with the
     ```
 
     To enforce the constraint `Y.X == Z`, id `$2` list of interfaces is changed
-    from `A` to `__combine__(A, typeof(B.X)) == A & C`. Since we are rewriting a
+    from `A` to `__combine__(A, __typeof__(B.X)) == A & C`. Since we are rewriting a
     `where` clause on `Y`, we only want to change the types of names starting
     with `Y`. Since `Z` doesn't have `Y` as a prefix, it gains a cast to
     preserve its type.
@@ -395,7 +396,7 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     Sort
-    * $2 :! __combine__(typeof(Container.Elt), Comparable)
+    * $2 :! __combine__(__typeof__(Container.Elt), Comparable)
       - C.Elt as ...
     * $1 :! Container{.Elt = $2}
       - C as Container
@@ -414,7 +415,7 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     G
-    * $2 :! __combine__(typeof(A.X), typeof(A.Y))
+    * $2 :! __combine__(__typeof__(A.X), __typeof__(A.Y))
       - Z.X as ...
       - Z.Y as ...
     * $1 :! A{.X = $2, .Y = $2)
@@ -436,9 +437,9 @@ the type of anything that doesn't have as a prefix with the
 
     ```
     Container
-    * $2 :! __combine__(Type, typeof(Iterable.Elt))
+    * $2 :! __combine__(Type, __typeof__(Iterable.Elt))
       - Elt as Type
-      - Iter.Elt as __combine__(Type, typeof(Iterable.Elt))
+      - Iter.Elt as __combine__(Type, __typeof__(Iterable.Elt))
     * $1 :! Iterable{.Elt = $2}
       - Iter as Iterable
     ```
