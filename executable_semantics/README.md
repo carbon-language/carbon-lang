@@ -213,4 +213,49 @@ equivalent to calling the continuation. The `__await` feature is equivalent to a
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
-golden output.
+expected output.
+
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
+boilerplate at the top:
+
+```carbon
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
+// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
+
+package ExecutableSemanticsTest api;
+```
+
+To explain this boilerplate:
+
+-   The standard copyright is expected.
+-   `RUN` lines indicate two commands to verify with the file: one without
+    `--trace` output, one with.
+    -   `-allow-unused-prefixes` controls that the command without `--trace`
+        should _precisely_ match `CHECK` lines, whereas the command with
+        `--trace` will be a superset.
+-   `AUTOUPDATE` indicates that `CHECK` lines will be automatically inserted
+    immediately below by the `./update_checks.py` script.
+-   `CHECK` indicates lines which are expected to be in output, verified by
+    `FileCheck`.
+    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
+        braces indicate a contained regular expression.
+-   The `package` is required in all test files, per normal Carbon syntax rules.
+
+Useful commands are:
+
+-   `./update_checks.py` -- Updates expected output.
+-   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=-v`
+    -- Runs tests and prints verbose output.
+-   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=-v --test_arg=--filter=basic_syntax/.*`
+    -- Only runs tests in the `basic_syntax` direction; `--filter` is a regular
+    expression.
