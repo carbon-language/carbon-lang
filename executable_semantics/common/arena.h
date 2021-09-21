@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 
