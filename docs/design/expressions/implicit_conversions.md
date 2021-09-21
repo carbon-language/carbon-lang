@@ -58,8 +58,8 @@ rules.
 We expect implicit conversion to never lose information: if two values are
 distinguishable before the conversion, they should generally be distinguishable
 after the conversion. It should be possible to define a conversion in the
-opposite direction that restores the original value, but such a conversion is not
-expected to be provided in general, and might be computationally expensive.
+opposite direction that restores the original value, but such a conversion is
+not expected to be provided in general, and might be computationally expensive.
 
 Because an implicit conversion is converting from a narrower type to a wider
 type, implicit conversions do not necessarily preserve static information about
