@@ -14,7 +14,7 @@ namespace Carbon {
 // Wraps a stream and exiting for fatal errors.
 class ExitingStream {
  public:
-  LLVM_ATTRIBUTE_NORETURN ~ExitingStream() {
+  [[noreturn]] ~ExitingStream() {
     // Finish with a newline.
     llvm::errs() << "\n";
     if (treat_as_bug) {

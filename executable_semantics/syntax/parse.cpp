@@ -13,7 +13,7 @@
 
 namespace Carbon {
 
-auto Parse(Ptr<Arena> arena, const std::string& input_file_name)
+auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
   FILE* input_file = fopen(input_file_name.c_str(), "r");
   if (input_file == nullptr) {
