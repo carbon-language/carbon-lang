@@ -18,7 +18,7 @@
 # RUN:   --reorder-blocks=reverse \
 # RUN:   --update-debug-sections \
 # RUN:   --dwarf-output-path=%T \
-# RUN:   -o %t.bolt.1.exe
+# RUN:   -o %t.bolt.1.exe 2>&1 | FileCheck %s
 # RUN: llvm-dwarfdump --show-form --verbose \
 # RUN:   --debug-info \
 # RUN:   %T/debug-fission-simple.dwo0.dwo \
@@ -28,6 +28,8 @@
 # RUN:   --debug-addr \
 # RUN:   %t.bolt.1.exe \
 # RUN:   | FileCheck %s --check-prefix=CHECK-ADDR-SEC
+
+# CHECK-NOT: warning: DWARF unit from offset {{.*}} incl. to offset {{.*}} excl. tries to read DIEs at offset {{.*}}
 
 # CHECK-ADDR-INDEX: DW_AT_low_pc [DW_FORM_GNU_addr_index]	(indexed (00000001)
 # CHECK-ADDR-INDEX: DW_AT_low_pc [DW_FORM_GNU_addr_index]	(indexed (00000002)

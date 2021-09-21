@@ -359,6 +359,7 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
   uint32_t Depth = 0;
 
   while (
+      DIEOffset < NextCUOffset &&
       Die.extractFast(Unit, &DIEOffset, DebugInfoData, NextCUOffset, Depth)) {
     if (const DWARFAbbreviationDeclaration *AbbrDecl =
             Die.getAbbreviationDeclarationPtr()) {
