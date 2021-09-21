@@ -371,10 +371,15 @@ its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
 might use a cast to switch between [type adaptations](#adapting-a-type), or to
-be explicit where an implicit cast would otherwise occur. For now, we are saying
-"`x as y`" is the provisional syntax in Carbon for casting the value `x` to the
-type `y`. Note that outside of generics, the term "casting" includes any
+be explicit where an implicit conversion would otherwise occur. For now, we are
+saying "`x as y`" is the provisional syntax in Carbon for casting the value `x`
+to the type `y`. Note that outside of generics, the term "casting" includes any
 explicit type change, including those that change the data representation.
+
+In contexts where an expression of one type is provided and a different type is
+required, an [implicit conversion](../expressions/implicit_conversions.md) is
+performed if it is considered safe to do so. Such an implicit conversion, if
+permitted, always has the same meaning as an explicit cast.
 
 ## Adapting a type
 
