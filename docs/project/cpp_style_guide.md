@@ -81,11 +81,11 @@ a language with native property support:
 
 -   Properties, like all other data members, should have `snake_case` names.
 -   A member function can have the same name as a property, including the
-    `snake_case` spelling, if it functions as a read-only accessor for that
-    property. Such a member function must conform to the expectations that users
-    have for accessors. In particular, it must be a pure function of state
-    that's owned by the object, and the costs of calling it must be comparable
-    to the costs of directly accessing an equivalent data member.
+    `snake_case` spelling, if it functions as an accessor for that property.
+    Such a member function must conform to the expectations that users have for
+    accessors. In particular, it must be a pure function of state that's owned
+    by the object, and the costs of calling it must be comparable to the costs
+    of directly accessing an equivalent data member.
 -   A member function can also have the same name as a property, prefixed with
     `set_`, if it takes a single argument and effectively assigns that argument
     to the property. As with accessors, it must conform to the expectations that
