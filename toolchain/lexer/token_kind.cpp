@@ -90,6 +90,12 @@ auto TokenKind::IsKeyword() const -> bool {
   return Table[static_cast<int>(kind_value)];
 }
 
+auto TokenKind::IsSizedTypeLiteral() const -> bool {
+  return *this == TokenKind::IntegerTypeLiteral() ||
+         *this == TokenKind::UnsignedIntegerTypeLiteral() ||
+         *this == TokenKind::FloatingPointTypeLiteral();
+}
+
 auto TokenKind::GetFixedSpelling() const -> llvm::StringRef {
   static constexpr llvm::StringLiteral Table[] = {
 #define CARBON_TOKEN(TokenName) "",

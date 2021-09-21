@@ -2,4 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-exports_files(["golden_test.py"])
+exports_files(["lit_test.py"])

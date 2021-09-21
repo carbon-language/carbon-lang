@@ -75,6 +75,9 @@ class TokenKind {
   // Test whether this kind of token is a keyword.
   [[nodiscard]] auto IsKeyword() const -> bool;
 
+  // Test whether this kind of token is a sized type literal.
+  [[nodiscard]] auto IsSizedTypeLiteral() const -> bool;
+
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
   [[nodiscard]] auto GetFixedSpelling() const -> llvm::StringRef;

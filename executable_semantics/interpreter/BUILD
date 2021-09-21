@@ -2,21 +2,33 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+package(default_visibility = ["//executable_semantics:__pkg__"])
 
-package(default_visibility = ["//executable_semantics:__subpackages__"])
-
+# These currently have to be a single build rule because of a dependency cycle
+# in printing.
 cc_library(
-    name = "action",
-    srcs = ["action.cpp"],
-    hdrs = ["action.h"],
+    name = "action_frame_and_value",
+    srcs = [
+        "action.cpp",
+        "frame.cpp",
+        "value.cpp",
+    ],
+    hdrs = [
+        "action.h",
+        "frame.h",
+        "value.h",
+    ],
     deps = [
-        ":containers",
-        ":value",
+        ":address",
+        ":dictionary",
+        ":field_path",
+        ":stack",
         "//common:ostream",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -32,15 +44,20 @@ cc_library(
 )
 
 cc_library(
-    name = "containers",
-    srcs = [
-        "list_node.h",
+    name = "dictionary",
+    hdrs = ["dictionary.h"],
+    deps = ["//executable_semantics/common:arena"],
+)
+
+cc_library(
+    name = "exec_program",
+    srcs = ["exec_program.cpp"],
+    hdrs = ["exec_program.h"],
+    deps = [
+        ":interpreter",
+        ":type_checker",
+        "//executable_semantics/ast",
     ],
-    hdrs = [
-        "dictionary.h",
-        "stack.h",
-    ],
-    deps = ["//common:check"],
 )
 
 cc_library(
@@ -53,25 +70,12 @@ cc_library(
 )
 
 cc_library(
-    name = "frame",
-    srcs = ["frame.cpp"],
-    hdrs = ["frame.h"],
-    deps = [
-        ":action",
-        ":address",
-        ":containers",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "heap",
     srcs = ["heap.cpp"],
     hdrs = ["heap.h"],
     deps = [
+        ":action_frame_and_value",
         ":address",
-        ":value",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -86,47 +90,39 @@ cc_library(
         "interpreter.h",
     ],
     deps = [
-        ":action",
+        ":action_frame_and_value",
         ":address",
-        ":containers",
-        ":frame",
         ":heap",
-        ":value",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:tracing_flag",
+        "@llvm-project//llvm:Support",
     ],
 )
 
 cc_library(
-    name = "typecheck",
-    srcs = ["typecheck.cpp"],
-    hdrs = ["typecheck.h"],
+    name = "stack",
+    hdrs = ["stack.h"],
+    deps = ["//common:check"],
+)
+
+cc_library(
+    name = "type_checker",
+    srcs = ["type_checker.cpp"],
+    hdrs = ["type_checker.h"],
     deps = [
-        ":containers",
+        ":dictionary",
         ":interpreter",
         "//common:ostream",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:tracing_flag",
-    ],
-)
-
-cc_library(
-    name = "value",
-    srcs = ["value.cpp"],
-    hdrs = ["value.h"],
-    deps = [
-        ":address",
-        ":containers",
-        ":field_path",
-        "//common:ostream",
-        "//executable_semantics/ast:function_definition",
-        "//executable_semantics/ast:statement",
         "@llvm-project//llvm:Support",
     ],
 )

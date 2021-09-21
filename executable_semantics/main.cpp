@@ -7,12 +7,16 @@
 #include <iostream>
 
 #include "executable_semantics/common/tracing_flag.h"
+#include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
-#include "executable_semantics/syntax/syntax_helpers.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
 
 int main(int argc, char* argv[]) {
+  llvm::setBugReportMsg(
+      "Please report issues to "
+      "https://github.com/carbon-language/carbon-lang/issues and include the "
+      "crash backtrace.\n");
   llvm::InitLLVM(argc, argv);
 
   // Printing to stderr should flush stdout. This is most noticeable when stderr
@@ -30,8 +34,9 @@ int main(int argc, char* argv[]) {
     Carbon::tracing_output = true;
   }
 
+  Carbon::Arena arena;
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::parse(input_file_name);
+      Carbon::Parse(&arena, input_file_name);
 
   if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
@@ -39,5 +44,5 @@ int main(int argc, char* argv[]) {
   }
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(&std::get<Carbon::AST>(ast_or_error));
+  Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error));
 }
