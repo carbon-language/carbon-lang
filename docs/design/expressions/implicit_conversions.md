@@ -147,10 +147,10 @@ The following conversion is available:
 
 -   `T` -> `U` if `T` is equivalent to `U`
 
-Two types are equivalent if they can be used interchangeably, implicitly: they
-have the same set of values with the same meaning and the same representation,
-with the same set of capabilities and constraints, where the only difference is
-how the type interprets operations on values of that type.
+Two types are equivalent only if they have the same set of values with the same
+meaning and the same representation, with the same set of capabilities and
+constraints, where the only difference is how the type interprets operations on
+values of that type.
 
 `T` is equivalent to `U` if:
 
