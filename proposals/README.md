@@ -71,5 +71,6 @@ request:
 -   [0731 - Generics details 2: adapters, associated types, parameterized interfaces](p0731.md)
 -   [0752 - `api` file default-`public`](p0752.md)
 -   [0777 - Inheritance](p0777.md)
+-   [0829 - One way principle](p0829.md)
 
 <!-- endproposals -->
