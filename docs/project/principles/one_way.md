@@ -56,7 +56,7 @@ A couple examples of this in other languages are:
 In Carbon, we will prefer providing only one way to do a given thing. That is,
 given a syntax scenario where multiple design options are available, we will
 tend to provide _one_ option rather than than providing several and letting
-users choose. This echoes Pythons' principle.
+users choose. This echoes Python's principle.
 
 Minimizing choices serves several goals:
 
@@ -88,7 +88,7 @@ motivation:
     Carbon will only allow the [`0xAA` casing](/proposals/p0143.md).
 -   Where C++ provides both `struct` and `class` with the only difference is
     access control defaults, Carbon will only provide one (`class`, albeit with
-    a default diverging from C++).
+    default public visibility diverging from C++).
 
 However, sometimes language tools are the primary motivation. For example, where
 C++ allows braces to be omitted for single-statement control flow blocks, Carbon
@@ -111,8 +111,8 @@ occurs are:
     [understandability of code](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
     there may be times that a particular use-case is common enough that
     simplifying its syntax provides substantial benefit.
-    -   For example, `for (var x: list)` could typically be written with as a
-        `while` loop, but range-based for loops are considered to improve
+    -   For example, `for (var x: auto in list)` could typically be written with
+        as a `while` loop, but range-based for loops are considered to improve
         understandability. However, C++'s `for (;;)` syntax is sufficiently
         close to `while` that we expect to use `while` to address the
         corresponding use-cases.
