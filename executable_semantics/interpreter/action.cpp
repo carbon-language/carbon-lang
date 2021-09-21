@@ -47,7 +47,8 @@ void Action::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void Action::PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out) {
+void Action::PrintList(const Stack<Nonnull<Action*>>& ls,
+                       llvm::raw_ostream& out) {
   llvm::ListSeparator sep(" :: ");
   for (const auto& action : ls) {
     out << sep << *action;

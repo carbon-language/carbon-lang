@@ -8,8 +8,7 @@
 #include <memory>
 #include <vector>
 
-#include "executable_semantics/common/ptr.h"
-#include "llvm/Support/ManagedStatic.h"
+#include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 
@@ -17,10 +16,10 @@ class Arena {
  public:
   // Allocates an object in the arena, returning a pointer to it.
   template <typename T, typename... Args>
-  auto New(Args&&... args) -> Ptr<T> {
+  auto New(Args&&... args) -> Nonnull<T*> {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
-    Ptr<T> ptr = smart_ptr->Instance();
+    Nonnull<T*> ptr = smart_ptr->Instance();
     arena.push_back(std::move(smart_ptr));
     return ptr;
   }
@@ -41,7 +40,7 @@ class Arena {
     explicit ArenaEntryTyped(Args&&... args)
         : instance(std::forward<Args>(args)...) {}
 
-    auto Instance() -> Ptr<T> { return Ptr<T>(&instance); }
+    auto Instance() -> Nonnull<T*> { return Nonnull<T*>(&instance); }
 
    private:
     T instance;
@@ -50,8 +49,6 @@ class Arena {
   // Manages allocations in an arena for destruction at shutdown.
   std::vector<std::unique_ptr<ArenaEntry>> arena;
 };
-
-extern llvm::ManagedStatic<Arena> global_arena;
 
 }  // namespace Carbon
 

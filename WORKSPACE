@@ -38,14 +38,25 @@ pip_install(
 # typing directly. If it's added, we will probably want to switch.
 
 # Add mypy
-mypy_integration_version = "0.2.0"
+mypy_integration_version = "e5f8071f33eca637cd90bf70cb45f749e63bf2ca"
+
+# TODO: Can switch back to the official repo when it includes:
+# https://github.com/thundergolfer/bazel-mypy-integration/pull/43
+#http_archive(
+#    name = "mypy_integration",
+#    sha256 = "621df076709dc72809add1f5fe187b213fee5f9b92e39eb33851ab13487bd67d",
+#    strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
+#    urls = [
+#        "https://github.com/thundergolfer/bazel-mypy-integration/archive/refs/tags/%s.tar.gz" % mypy_integration_version,
+#    ],
+#)
 
 http_archive(
     name = "mypy_integration",
-    sha256 = "621df076709dc72809add1f5fe187b213fee5f9b92e39eb33851ab13487bd67d",
+    sha256 = "481ec6f0953a84a36b8103286f04c4cd274ae689060099085c02ac187d007592",
     strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
     urls = [
-        "https://github.com/thundergolfer/bazel-mypy-integration/archive/refs/tags/%s.tar.gz" % mypy_integration_version,
+        "https://github.com/jonmeow/bazel-mypy-integration/archive/%s.zip" % mypy_integration_version,
     ],
 )
 
@@ -82,29 +93,28 @@ configure_clang_toolchain(name = "bazel_cc_toolchain")
 # LLVM libraries
 ###############################################################################
 
-local_repository(
-    name = "llvm_bazel",
-    path = "third_party/llvm-bazel/llvm-bazel",
+new_local_repository(
+    name = "llvm-raw",
+    build_file_content = "# empty",
+    path = "third_party/llvm-project",
 )
 
-load("@llvm_bazel//:configure.bzl", "llvm_configure")
+load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "llvm-project",
-    src_path = "third_party/llvm-project",
-    src_workspace = "@carbon//:WORKSPACE",
     targets = [
         "AArch64",
         "X86",
     ],
 )
 
-load("@llvm_bazel//:terminfo.bzl", "llvm_terminfo_system")
+load("@llvm-raw//utils/bazel:terminfo.bzl", "llvm_terminfo_system")
 
 # We require successful detection and use of a system terminfo library.
 llvm_terminfo_system(name = "llvm_terminfo")
 
-load("@llvm_bazel//:zlib.bzl", "llvm_zlib_system")
+load("@llvm-raw//utils/bazel:zlib.bzl", "llvm_zlib_system")
 
 # We require successful detection and use of a system zlib library.
 llvm_zlib_system(name = "llvm_zlib")

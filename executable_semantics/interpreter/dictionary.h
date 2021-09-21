@@ -20,10 +20,10 @@ class Dictionary {
   struct Node {
     using ValueType = std::pair<K, V>;
 
-    Node(ValueType e, std::optional<Ptr<Node>> n) : curr(e), next(n) {}
+    Node(ValueType e, std::optional<Nonnull<Node*>> n) : curr(e), next(n) {}
 
     const ValueType curr;
-    const std::optional<Ptr<Node>> next;
+    const std::optional<Nonnull<Node*>> next;
 
     // Node cells are part of a "persistent data structure" and are thus
     // immutable.
@@ -39,7 +39,7 @@ class Dictionary {
     using reference = const value_type&;
     using iterator_category = std::forward_iterator_tag;
 
-    Iterator(std::optional<Ptr<Node>> x) : p(x) {}
+    Iterator(std::optional<Nonnull<Node*>> x) : p(x) {}
     Iterator(const Iterator& iter) : p(iter.p) {}
     Iterator& operator++() {
       p = (*p)->next;
@@ -56,11 +56,11 @@ class Dictionary {
     const value_type* operator->() { return &(*p)->curr; }
 
    private:
-    std::optional<Ptr<Node>> p;
+    std::optional<Nonnull<Node*>> p;
   };
 
   // Create an empty dictionary.
-  Dictionary() {}
+  explicit Dictionary(Nonnull<Arena*> arena) : arena(arena) {}
 
   // Return the value associated with the given key.
   // Time complexity: O(n) where n is the number of times
@@ -77,7 +77,7 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = global_arena->New<Node>(std::make_pair(k, v), head);
+    head = arena->New<Node>(std::make_pair(k, v), head);
   }
 
   bool IsEmpty() { return !head; }
@@ -90,7 +90,8 @@ class Dictionary {
   auto end() const -> Iterator { return Iterator(std::nullopt); }
 
  private:
-  std::optional<Ptr<Node>> head;
+  std::optional<Nonnull<Node*>> head;
+  Nonnull<Arena*> arena;
 };
 
 }  // namespace Carbon

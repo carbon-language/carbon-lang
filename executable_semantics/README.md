@@ -213,4 +213,54 @@ equivalent to calling the continuation. The `__await` feature is equivalent to a
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
-golden output.
+expected output.
+
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
+boilerplate at the top:
+
+```carbon
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
+// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
+
+package ExecutableSemanticsTest api;
+```
+
+To explain this boilerplate:
+
+-   The standard copyright is expected.
+-   The `RUN` lines indicate two commands for `lit` to execute using the file:
+    one without `--trace` output, one with.
+    -   Output is piped to `FileCheck` for verification.
+    -   `-allow-unused-prefixes` controls that output of the command without
+        `--trace` should _precisely_ match `CHECK` lines, whereas the command
+        with `--trace` will be a superset.
+    -   `RUN:` will be followed by the `not` command when failure is expected.
+        In particular, `RUN: not executable_semantics ...`.
+    -   `%s` is a
+        [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
+        for the path to the given test file.
+-   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
+    inserted immediately below by the `./update_checks.py` script.
+-   The `CHECK` lines indicate expected output, verified by `FileCheck`.
+    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
+        braces indicate a contained regular expression.
+-   The `package` is required in all test files, per normal Carbon syntax rules.
+
+Useful commands are:
+
+-   `./update_checks.py` -- Updates expected output.
+-   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=-v`
+    -- Runs tests and prints verbose output.
+-   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=-v --test_arg=--filter=basic_syntax/.*`
+    -- Only runs tests in the `basic_syntax` directory; `--filter` is a regular
+    expression.

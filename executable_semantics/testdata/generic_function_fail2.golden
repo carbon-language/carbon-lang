@@ -1,2 +1,0 @@
-COMPILATION ERROR: executable_semantics/testdata/generic_function_fail2.carbon:12: could not deduce type argument for type parameter T
-EXIT CODE: 255

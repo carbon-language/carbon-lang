@@ -18,7 +18,7 @@ namespace Carbon {
 using llvm::cast;
 
 auto FindInVarValues(const std::string& field, const VarValues& inits)
-    -> std::optional<Ptr<const Value>> {
+    -> std::optional<Nonnull<const Value*>> {
   for (auto& i : inits) {
     if (i.first == field) {
       return i.second;
@@ -45,7 +45,7 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
 }
 
 auto TupleValue::FindField(const std::string& name) const
-    -> std::optional<Ptr<const Value>> {
+    -> std::optional<Nonnull<const Value*>> {
   for (const TupleElement& element : elements) {
     if (element.name == name) {
       return element.value;
@@ -56,11 +56,12 @@ auto TupleValue::FindField(const std::string& name) const
 
 namespace {
 
-auto GetMember(Ptr<const Value> v, const std::string& f, SourceLocation loc)
-    -> Ptr<const Value> {
+auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+               const std::string& f, SourceLocation loc)
+    -> Nonnull<const Value*> {
   switch (v->Tag()) {
     case Value::Kind::StructValue: {
-      std::optional<Ptr<const Value>> field =
+      std::optional<Nonnull<const Value*>> field =
           cast<TupleValue>(*cast<StructValue>(*v).Inits()).FindField(f);
       if (field == std::nullopt) {
         FATAL_RUNTIME_ERROR(loc) << "member " << f << " not in " << *v;
@@ -68,7 +69,8 @@ auto GetMember(Ptr<const Value> v, const std::string& f, SourceLocation loc)
       return *field;
     }
     case Value::Kind::TupleValue: {
-      std::optional<Ptr<const Value>> field = cast<TupleValue>(*v).FindField(f);
+      std::optional<Nonnull<const Value*>> field =
+          cast<TupleValue>(*v).FindField(f);
       if (!field) {
         FATAL_RUNTIME_ERROR(loc) << "field " << f << " not in " << *v;
       }
@@ -79,7 +81,7 @@ auto GetMember(Ptr<const Value> v, const std::string& f, SourceLocation loc)
       if (!FindInVarValues(f, choice.Alternatives())) {
         FATAL_RUNTIME_ERROR(loc) << "alternative " << f << " not in " << *v;
       }
-      return global_arena->New<AlternativeConstructorValue>(f, choice.Name());
+      return arena->New<AlternativeConstructorValue>(f, choice.Name());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -88,28 +90,28 @@ auto GetMember(Ptr<const Value> v, const std::string& f, SourceLocation loc)
 
 }  // namespace
 
-auto Value::GetField(const FieldPath& path, SourceLocation loc) const
-    -> Ptr<const Value> {
-  Ptr<const Value> value(this);
+auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
+                     SourceLocation loc) const -> Nonnull<const Value*> {
+  Nonnull<const Value*> value(this);
   for (const std::string& field : path.components) {
-    value = GetMember(value, field, loc);
+    value = GetMember(arena, value, field, loc);
   }
   return value;
 }
 
 namespace {
 
-auto SetFieldImpl(Ptr<const Value> value,
+auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
                   std::vector<std::string>::const_iterator path_begin,
                   std::vector<std::string>::const_iterator path_end,
-                  Ptr<const Value> field_value, SourceLocation loc)
-    -> Ptr<const Value> {
+                  Nonnull<const Value*> field_value, SourceLocation loc)
+    -> Nonnull<const Value*> {
   if (path_begin == path_end) {
     return field_value;
   }
   switch (value->Tag()) {
     case Value::Kind::StructValue: {
-      return SetFieldImpl(cast<StructValue>(*value).Inits(), path_begin,
+      return SetFieldImpl(arena, cast<StructValue>(*value).Inits(), path_begin,
                           path_end, field_value, loc);
     }
     case Value::Kind::TupleValue: {
@@ -122,9 +124,9 @@ auto SetFieldImpl(Ptr<const Value> value,
         FATAL_RUNTIME_ERROR(loc)
             << "field " << *path_begin << " not in " << *value;
       }
-      it->value =
-          SetFieldImpl(it->value, path_begin + 1, path_end, field_value, loc);
-      return global_arena->New<TupleValue>(elements);
+      it->value = SetFieldImpl(arena, it->value, path_begin + 1, path_end,
+                               field_value, loc);
+      return arena->New<TupleValue>(elements);
     }
     default:
       FATAL() << "field access not allowed for value " << *value;
@@ -133,10 +135,12 @@ auto SetFieldImpl(Ptr<const Value> value,
 
 }  // namespace
 
-auto Value::SetField(const FieldPath& path, Ptr<const Value> field_value,
-                     SourceLocation loc) const -> Ptr<const Value> {
-  return SetFieldImpl(Ptr<const Value>(this), path.components.begin(),
-                      path.components.end(), field_value, loc);
+auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
+                     Nonnull<const Value*> field_value,
+                     SourceLocation loc) const -> Nonnull<const Value*> {
+  return SetFieldImpl(arena, Nonnull<const Value*>(this),
+                      path.components.begin(), path.components.end(),
+                      field_value, loc);
 }
 
 void Value::Print(llvm::raw_ostream& out) const {
@@ -236,7 +240,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ContinuationValue: {
       out << "{";
       llvm::ListSeparator sep(" :: ");
-      for (Ptr<Frame> frame : cast<ContinuationValue>(*this).Stack()) {
+      for (Nonnull<Frame*> frame : cast<ContinuationValue>(*this).Stack()) {
         out << sep << *frame;
       }
       out << "}";
@@ -253,64 +257,64 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto CopyVal(Ptr<const Value> val, SourceLocation loc) -> Ptr<const Value> {
+auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
+             SourceLocation loc) -> Nonnull<const Value*> {
   switch (val->Tag()) {
     case Value::Kind::TupleValue: {
       std::vector<TupleElement> elements;
       for (const TupleElement& element : cast<TupleValue>(*val).Elements()) {
-        elements.push_back(
-            {.name = element.name, .value = CopyVal(element.value, loc)});
+        elements.push_back({.name = element.name,
+                            .value = CopyVal(arena, element.value, loc)});
       }
-      return global_arena->New<TupleValue>(std::move(elements));
+      return arena->New<TupleValue>(std::move(elements));
     }
     case Value::Kind::AlternativeValue: {
       const auto& alt = cast<AlternativeValue>(*val);
-      Ptr<const Value> arg = CopyVal(alt.Argument(), loc);
-      return global_arena->New<AlternativeValue>(alt.AltName(),
-                                                 alt.ChoiceName(), arg);
+      Nonnull<const Value*> arg = CopyVal(arena, alt.Argument(), loc);
+      return arena->New<AlternativeValue>(alt.AltName(), alt.ChoiceName(), arg);
     }
     case Value::Kind::StructValue: {
       const auto& s = cast<StructValue>(*val);
-      Ptr<const Value> inits = CopyVal(s.Inits(), loc);
-      return global_arena->New<StructValue>(s.Type(), inits);
+      Nonnull<const Value*> inits = CopyVal(arena, s.Inits(), loc);
+      return arena->New<StructValue>(s.Type(), inits);
     }
     case Value::Kind::IntValue:
-      return global_arena->New<IntValue>(cast<IntValue>(*val).Val());
+      return arena->New<IntValue>(cast<IntValue>(*val).Val());
     case Value::Kind::BoolValue:
-      return global_arena->New<BoolValue>(cast<BoolValue>(*val).Val());
+      return arena->New<BoolValue>(cast<BoolValue>(*val).Val());
     case Value::Kind::FunctionValue: {
       const auto& fn_value = cast<FunctionValue>(*val);
-      return global_arena->New<FunctionValue>(fn_value.Name(), fn_value.Param(),
-                                              fn_value.Body());
+      return arena->New<FunctionValue>(fn_value.Name(), fn_value.Param(),
+                                       fn_value.Body());
     }
     case Value::Kind::PointerValue:
-      return global_arena->New<PointerValue>(cast<PointerValue>(*val).Val());
+      return arena->New<PointerValue>(cast<PointerValue>(*val).Val());
     case Value::Kind::ContinuationValue:
       // Copying a continuation is "shallow".
       return val;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*val);
-      return global_arena->New<FunctionType>(fn_type.Deduced(),
-                                             CopyVal(fn_type.Param(), loc),
-                                             CopyVal(fn_type.Ret(), loc));
+      return arena->New<FunctionType>(fn_type.Deduced(),
+                                      CopyVal(arena, fn_type.Param(), loc),
+                                      CopyVal(arena, fn_type.Ret(), loc));
     }
     case Value::Kind::PointerType:
-      return global_arena->New<PointerType>(
-          CopyVal(cast<PointerType>(*val).Type(), loc));
+      return arena->New<PointerType>(
+          CopyVal(arena, cast<PointerType>(*val).Type(), loc));
     case Value::Kind::IntType:
-      return global_arena->New<IntType>();
+      return arena->New<IntType>();
     case Value::Kind::BoolType:
-      return global_arena->New<BoolType>();
+      return arena->New<BoolType>();
     case Value::Kind::TypeType:
-      return global_arena->New<TypeType>();
+      return arena->New<TypeType>();
     case Value::Kind::AutoType:
-      return global_arena->New<AutoType>();
+      return arena->New<AutoType>();
     case Value::Kind::ContinuationType:
-      return global_arena->New<ContinuationType>();
+      return arena->New<ContinuationType>();
     case Value::Kind::StringType:
-      return global_arena->New<StringType>();
+      return arena->New<StringType>();
     case Value::Kind::StringValue:
-      return global_arena->New<StringValue>(cast<StringValue>(*val).Val());
+      return arena->New<StringValue>(cast<StringValue>(*val).Val());
     case Value::Kind::VariableType:
     case Value::Kind::ClassType:
     case Value::Kind::ChoiceType:
@@ -321,7 +325,7 @@ auto CopyVal(Ptr<const Value> val, SourceLocation loc) -> Ptr<const Value> {
   }
 }
 
-auto TypeEqual(Ptr<const Value> t1, Ptr<const Value> t2) -> bool {
+auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
   if (t1->Tag() != t2->Tag()) {
     return false;
   }
@@ -393,8 +397,8 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
 // Returns true if the two values are equal and returns false otherwise.
 //
 // This function implements the `==` operator of Carbon.
-auto ValueEqual(Ptr<const Value> v1, Ptr<const Value> v2, SourceLocation loc)
-    -> bool {
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
+                SourceLocation loc) -> bool {
   if (v1->Tag() != v2->Tag()) {
     return false;
   }
@@ -406,9 +410,9 @@ auto ValueEqual(Ptr<const Value> v1, Ptr<const Value> v2, SourceLocation loc)
     case Value::Kind::PointerValue:
       return cast<PointerValue>(*v1).Val() == cast<PointerValue>(*v2).Val();
     case Value::Kind::FunctionValue: {
-      std::optional<Ptr<const Statement>> body1 =
+      std::optional<Nonnull<const Statement*>> body1 =
           cast<FunctionValue>(*v1).Body();
-      std::optional<Ptr<const Statement>> body2 =
+      std::optional<Nonnull<const Statement*>> body2 =
           cast<FunctionValue>(*v2).Body();
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
