@@ -55,11 +55,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Type inequality](#type-inequality)
-    -   [Implicit constraints](#implicit-constraints)
+    -   [Implied constraints](#implied-constraints)
     -   [Restrictions](#restrictions)
         -   [Normalized form](#normalized-form)
-        -   [No cycles](#no-cycles)
-        -   [Conflicting constraints on an associated type](#conflicting-constraints-on-an-associated-type)
+        -   [Recursive constraints](#recursive-constraints-1)
         -   [Terminating recursion](#terminating-recursion)
 -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
     -   [Is a derived class](#is-a-derived-class)
@@ -2570,6 +2569,48 @@ FIXME: There is an important difference here, constraints equating `.Self` or
 the type represented by `Self` or `.Self` satisfies the constraints on the other
 type.
 
+Example: This does not type check:
+
+```
+interface A {
+    let Q:! E;
+    let P:! E;
+    let Y:! A where .Q == Q and .P == Q;
+}
+
+interface B {
+    let X:! A where .Y == .Self;
+}
+```
+
+But this does:
+
+```
+interface A {
+    let Q:! E;
+    let P:! E;
+    let Y:! A where .Q == Q and .P == Q;
+}
+
+interface B {
+    let X:! A where .Y == .Self and .P == .Q;
+}
+```
+
+And this does:
+
+```
+interface A {
+    let Q:! E;
+    let P:! E;
+    let Y:! A where .Q == Q;
+}
+
+interface B {
+    let X:! A where .Y == .Self;
+}
+```
+
 #### Parameterized type implements interface
 
 There are times when a function will pass a generic type parameter of the
@@ -2589,6 +2630,23 @@ fn PrintThree
     (a: T, b: T, c: T) {
   var v: Vector(T) = (a, b, c);
   Print(v);
+}
+```
+
+This constraint needs to be restated when it is on an associated type in a
+referenced interface, as in this example:
+
+```
+interface HasConstraint {
+  let T:! Type where Vector(.Self) is Printable;
+}
+
+interface RestatesConstraint {
+  // This works, since it restates the constraint on
+  // `HasConstraint.T` that `U` is equal to.
+  let U:! Type where Vector(.Self) is Printable;
+  // This doesn't: let U:! Type;
+  let V:! HasConstraint where .T == U;
 }
 ```
 
@@ -2616,7 +2674,26 @@ Another use case for inequality type constraints would be to say something like
 "define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
 and `T1 != T2`".
 
-### Implicit constraints
+Like a
+[parameterized type implements interface](#parameterized-type-implements-interface)
+constraint, inequality constraints need to be restated when it is on an
+associated type in a referenced interface, as in this example:
+
+```
+interface HasConstraint {
+  let T:! Type where .Self != Bool;
+}
+
+interface RestatesConstraint {
+  // This works, since it restates the constraint on
+  // `HasConstraint.T` that `U` is equal to.
+  let U:! Type where .Self != Bool;
+  // This doesn't: let U:! Type;
+  let V:! HasConstraint where .T == U;
+}
+```
+
+### Implied constraints
 
 Imagine we have a generic function that accepts an arbitrary `HashMap`:
 
@@ -2638,7 +2715,7 @@ class HashMap(
     ...) { ... }
 ```
 
-In this case, `KeyType` gets `Hashable` and so on as _implicit constraints_.
+In this case, `KeyType` gets `Hashable` and so on as _implied constraints_.
 Effectively that means that these functions are automatically rewritten to add a
 `where` constraint on `KeyType` attached to the `HashMap` type:
 
@@ -2655,28 +2732,20 @@ fn PrintValueOrDefault[KeyType:! Printable,
      key: KeyT);
 ```
 
-FIXME: This is being decided in question-for-leads issue
-[#809: Implicit/inferred generic type constraints](https://github.com/carbon-language/carbon-lang/issues/809).
-
-**Open question:** Should these be called "implicit" constraints, "inferred"
-constraints, or "implied" constraints?
-
-**Open question:** Should we allow those function declarations, and implicitly
-add needed constraints to `KeyType` implied by being used as an argument to a
-parameter with those constraints? Or should we require `KeyType` to name all
-needed constraints as part of its declarations?
-
-In this specific case, Swift will accept the definition and infer the needed
-constraints on the generic type parameter
-([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
-[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference)).
-This is both more concise for the author of the code and follows the
+In this case, Carbon will accept the definition and infer the needed constraints
+on the generic type parameter. This is both more concise for the author of the
+code and follows the
 ["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 This redundancy is undesirable since it means if the needed constraints for
 `HashMap` are changed, then the code has to be updated in more locations.
 Further it can add noise that obscures relevant information. In practice, any
 user of these functions will have to pass in a valid `HashMap` instance, and so
 will have already satisfied these constraints.
+
+**Note:** These implied constraints affect the _requirements_ of a generic type
+parameter, but not its _unqualified member names_. This way you can always look
+at the declaration to see how name resolution works, without having to look up
+the definitions of everything it is used as an argument to.
 
 **Comparison with other languages:** Both Swift
 ([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
@@ -2685,29 +2754,9 @@ and
 [Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
 support some form of this feature as part of their type inference.
 
-**Note:** These implied constraints should affect the _requirements_ of a
-generic type parameter, but not its _unqualified names_. This way you can always
-look at the declaration to see how name resolution works, without having to look
-up the definitions of everything it is used as an argument to.
-
 FIXME: Not for interfaces. Maybe: The initial declaration part of an
 `interface`, type definition, or associated type declaration should include
 complete description of all needed constraints.
-
-FIXME: Resolve with #809
-
-**Alternative:** As an alternative, we could make it so the user would need to
-explicitly opt in to this behavior by adding `& auto` or
-`& implicit_requirements` to their type constraint, as in:
-
-```
-fn LookUp[KeyType:! Type & auto](hm: HashMap(KeyType, Int)*,
-                                 k: KeyType) -> Int;
-
-fn PrintValueOrDefault[KeyType:! Printable & auto,
-                       ValueT:! Printable & HasDefault]
-    (map: HashMap(KeyType, ValueT), key: KeyT);
-```
 
 ### Restrictions
 
@@ -2805,93 +2854,13 @@ of ` B.X.Y` but not `A.T`. The type of `A.T` is `$4 as F`, while the type of
 Also note that `B.X` gets its own entry, as a result of `B.X.Y` being mentioned
 in a `where` constraint.
 
-#### No cycles
+#### Recursive constraints
 
-**Open question:** I'm not sure we need this restriction.
-
-There are a couple of ways this normalization can fail. The first is by
-introducing a cycle:
-
-```
-interface Graph {
-  let Vertex:! V;
-  let Edge:! E where Vertex.Edge == .Self
-                 and .Vertex == Vertex;
-}
-```
-
-normalizes to:
-
-```
-Graph
-* $2 :! V{.Edge = $1}
-  - Vertex as V
-  - Edge.Vertex as V
-* $1 :! E{.Vertex = $2}
-  - Edge as E
-  - Vertex.Edge as E
-* $0 :! Graph{.Vertex = $2, .Edge = $1}
-  - Self as Graph
-}
-```
-
-This can happen even without a `.Self ==` constraint:
-
-```
-interface HasCycle {
-  let A:! P;
-  let B:! Q where .X.Y == A.T and .X == A.T.U;
-}
-```
-
-which normalizes to:
-
-```
-HasCycle
-* $4 :! ...{.U = $3}
-  - A.T as ...
-  - B.X.Y as ...
-* $3 :! ...{.Y = $4}
-  - A.T.U as ...
-  - B.X as ...
-* $2 :! P{.T = $4}
-  - A as P
-* $1 :! Q{.X = $3}
-  - B as Q
-* $0 :! HasCycle{.A = $2, .B = $1}
-  - Self as HasCycle
-```
-
-#### Conflicting constraints on an associated type
-
-The other failure is when setting two terms equal, we need to combine the
-constraints of both terms to get a type that both satifsy. In most cases, this
-combination is straightforward, and the compiler will form the combination
-automatically. The case that generates an error is when combining `A{.X = T}`
-and `A{.X = U}` when `T` and `U` are different. This arises in this example:
-
-```
-interface Conflict {
-  let T:! C;
-  let U:! B;
-  let V:! A where .X == T;
-  let W:! A where .X == U and .Self == V;
-}
-```
-
-The error will say that `V` can't be set to `W` because `V.X == T` and
-`W.X == U`. There are a few fixes available, such as setting them both to `T` or
-both to `U` or constraining `T == U`. The intent is that in the cases that arise
-in practice, this error could represent an actual mistake in the code. When it
-is not a mistake, the fix is to make the missing constraint explicit.
-
-Making this an error instead of automatically recursively constraining `T == U`
-avoids cases, not expected to arise in practice, where that recursion would
-never terminate.
+FIXME: Cases which might be rejected due to recursion
 
 #### Terminating recursion
 
-The last restriction comes from the query algorithm. It imposes a condition on
+This restriction comes from the query algorithm. It imposes a condition on
 recursive references to the same interface. The rewrite to normalized form tries
 to avoid triggering this condition, so the only known examples hitting this
 restriction require mutually recursive interfaces. That would require forward

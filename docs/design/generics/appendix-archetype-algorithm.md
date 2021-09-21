@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Rewrite to normalized form algorithm](#rewrite-to-normalized-form-algorithm)
-    -   [Transform implicit/implied/inferred constraints](#transform-implicitimpliedinferred-constraints)
+    -   [Transform implied constraints](#transform-implied-constraints)
     -   [Parameters are assigned ids](#parameters-are-assigned-ids)
     -   [Where clauses are rewritten](#where-clauses-are-rewritten)
         -   [Combining type-of-types](#combining-type-of-types)
@@ -113,12 +113,11 @@ Sort
   - C as Container
 ```
 
-### Transform implicit/implied/inferred constraints
+### Transform implied constraints
 
 For function declarations, the first step of normalization is to transform
-implicit/implied/inferred constraints into explicit constraints. This means
-adding a `where` constraint on every generic type that is passed as a parameter
-to a type.
+implied constraints into explicit constraints. This means adding a `where`
+constraint on every generic type that is passed as a parameter to a type.
 
 In this example, `KeyType` is passed as a parameter to `HashSet`
 
@@ -579,11 +578,13 @@ constraints but intersecting the types satisfying the constraints, so neither
 
 ### Some where clauses are preserved
 
-Some `where` constraints can't be rewritten and the only rewrite is to make sure
-they are attached to the relevant id:
+Some `where` constraints can't be eliminated by a rewrite:
 
--   `where Vector(T) is Printable` constraints should be moved to `T`
--   `where T != U` constraints should be moved to the latter id
+-   `where Vector(T) is Printable`
+-   `where T != U`
+
+These constraints are left alone, except that they don't need to be associated
+with a dotted name since they don't affect their unqualified API.
 
 ### Type checking
 
