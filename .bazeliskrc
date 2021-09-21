@@ -4,4 +4,6 @@
 
 # Keep pinned to a recent release, listed at
 # https://github.com/bazelbuild/bazel.
-USE_BAZEL_VERSION=4.1.0
+# TODO: Temporarily using pre-release versions due to a python3 fix. This can
+# switch to stable versions post-release.
+USE_BAZEL_VERSION=5.0.0-pre.20210810.4

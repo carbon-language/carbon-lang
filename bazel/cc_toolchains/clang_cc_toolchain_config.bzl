@@ -169,13 +169,11 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-DNDEBUG",
                             "-ffunction-sections",
                             "-fdata-sections",
                         ],
                     ),
                 ]),
-                with_features = [with_feature_set(features = ["opt"])],
             ),
             flag_set(
                 actions = codegen_compile_actions,
@@ -284,12 +282,20 @@ def _impl(ctx):
         name = "default_optimization_flags",
         enabled = True,
         requires = [feature_set(["opt"])],
-        flag_sets = [flag_set(
-            actions = codegen_compile_actions,
-            flag_groups = [flag_group(flags = [
-                "-O3",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-DNDEBUG",
+                ])],
+            ),
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-O3",
+                ])],
+            ),
+        ],
     )
 
     # Handle different levels and forms of debug info emission with individual
@@ -444,7 +450,7 @@ def _impl(ctx):
         flag_sets = [flag_set(
             actions = all_compile_actions + all_link_actions,
             flag_groups = [flag_group(flags = [
-                "-fsanitize=address,undefined",
+                "-fsanitize=address,undefined,nullability",
                 "-fsanitize-address-use-after-scope",
                 # We don't need the recovery behavior of UBSan as we expect
                 # builds to be clean. Not recoverying is a bit cheaper.
@@ -453,10 +459,6 @@ def _impl(ctx):
                 # and combined with line numbers is unlikely to result in many
                 # ambiguities.
                 "-fsanitize-undefined-strip-path-components=-1",
-                # Force some expensive UBSan checks to the cheaper trap mode.
-                # The dedicated debugging message is unlikely to be critical for
-                # these.
-                "-fsanitize-trap=alignment,bool,null,return,unreachable",
                 # Needed due to clang AST issues, such as in
                 # clang/AST/Redeclarable.h line 199.
                 "-fno-sanitize=vptr",
@@ -521,6 +523,17 @@ def _impl(ctx):
                         ],
                     ),
                 ]),
+            ),
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    # Enable libc++'s debug features.
+                    "-D_LIBCXX_DEBUG=1",
+                ])],
+                with_features = [
+                    with_feature_set(features = ["dbg"]),
+                    with_feature_set(features = ["fastbuild"]),
+                ],
             ),
         ],
     )

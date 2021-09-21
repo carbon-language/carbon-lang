@@ -17,6 +17,8 @@ namespace {
 
 TEST(UnescapeStringLiteral, Valid) {
   EXPECT_THAT(UnescapeStringLiteral("test"), Optional(Eq("test")));
+  EXPECT_THAT(UnescapeStringLiteral("okay whitespace"),
+              Optional(Eq("okay whitespace")));
   EXPECT_THAT(UnescapeStringLiteral("test\n"), Optional(Eq("test\n")));
   EXPECT_THAT(UnescapeStringLiteral("test\\n"), Optional(Eq("test\n")));
   EXPECT_THAT(UnescapeStringLiteral("abc\\ndef"), Optional(Eq("abc\ndef")));

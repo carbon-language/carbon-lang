@@ -1,2 +1,0 @@
-COMPILATION ERROR: 6: control-flow reaches end of function that provides a `->` return type without reaching a return statement
-EXIT CODE: 255

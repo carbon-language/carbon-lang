@@ -15,7 +15,7 @@ void Member::Print(llvm::raw_ostream& out) const {
   switch (Tag()) {
     case Kind::FieldMember:
       const auto& field = cast<FieldMember>(*this);
-      out << "var " << field.Binding() << ";\n";
+      out << "var " << *field.Binding() << ";\n";
       break;
   }
 }
