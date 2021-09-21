@@ -78,7 +78,7 @@ This code will:
 
 ## References
 
--   `if` and `else`
-    [#285](https://github.com/carbon-language/carbon-lang/pull/285)
--   Require braces
-    [#623](https://github.com/carbon-language/carbon-lang/pull/623)
+-   Proposal
+    [#285: `if` and `else`](https://github.com/carbon-language/carbon-lang/pull/285)
+-   Proposal
+    [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)

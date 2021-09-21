@@ -7,6 +7,8 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
 #include "llvm/Support/Compiler.h"
 
@@ -16,32 +18,35 @@ namespace Carbon {
 //   For now, only generic parameters are supported.
 struct GenericBinding {
   std::string name;
-  const Expression* type;
+  Nonnull<const Expression*> type;
 };
 
 struct FunctionDefinition {
-  FunctionDefinition() = default;
-  FunctionDefinition(int line_num, std::string name,
+  FunctionDefinition(SourceLocation source_location, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     const Expression* param_pattern,
-                     const Expression* return_type, const Statement* body)
-      : line_num(line_num),
+                     Nonnull<const TuplePattern*> param_pattern,
+                     Nonnull<const Pattern*> return_type,
+                     bool is_omitted_return_type,
+                     std::optional<Nonnull<const Statement*>> body)
+      : source_location(source_location),
         name(std::move(name)),
         deduced_parameters(deduced_params),
         param_pattern(param_pattern),
         return_type(return_type),
+        is_omitted_return_type(is_omitted_return_type),
         body(body) {}
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  int line_num;
+  SourceLocation source_location;
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
-  const Expression* param_pattern;
-  const Expression* return_type;
-  const Statement* body;
+  Nonnull<const TuplePattern*> param_pattern;
+  Nonnull<const Pattern*> return_type;
+  bool is_omitted_return_type;
+  std::optional<Nonnull<const Statement*>> body;
 };
 
 }  // namespace Carbon

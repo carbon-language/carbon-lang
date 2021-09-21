@@ -4,95 +4,42 @@
 
 #include "executable_semantics/ast/declaration.h"
 
+#include "llvm/Support/Casting.h"
+
 namespace Carbon {
 
-auto Declaration::MakeFunctionDeclaration(FunctionDefinition definition)
-    -> const Declaration {
-  Declaration d;
-  d.value = FunctionDeclaration({.definition = definition});
-  return d;
-}
-
-auto Declaration::MakeStructDeclaration(int line_num, std::string name,
-                                        std::list<Member*> members)
-    -> const Declaration {
-  Declaration d;
-  d.value = StructDeclaration(
-      {.definition = StructDefinition({.line_num = line_num,
-                                       .name = std::move(name),
-                                       .members = std::move(members)})});
-  return d;
-}
-
-auto Declaration::MakeChoiceDeclaration(
-    int line_num, std::string name,
-    std::list<std::pair<std::string, const Expression*>> alternatives)
-    -> const Declaration {
-  Declaration d;
-  d.value = ChoiceDeclaration({.line_num = line_num,
-                               .name = std::move(name),
-                               .alternatives = std::move(alternatives)});
-  return d;
-}
-
-auto Declaration::MakeVariableDeclaration(int source_location, std::string name,
-                                          const Expression* type,
-                                          const Expression* initializer)
-    -> const Declaration {
-  Declaration d;
-  d.value = VariableDeclaration({.source_location = source_location,
-                                 .name = std::move(name),
-                                 .type = type,
-                                 .initializer = initializer});
-  return d;
-}
-
-auto Declaration::GetFunctionDeclaration() const -> const FunctionDeclaration& {
-  return std::get<FunctionDeclaration>(value);
-}
-
-auto Declaration::GetStructDeclaration() const -> const StructDeclaration& {
-  return std::get<StructDeclaration>(value);
-}
-
-auto Declaration::GetChoiceDeclaration() const -> const ChoiceDeclaration& {
-  return std::get<ChoiceDeclaration>(value);
-}
-
-auto Declaration::GetVariableDeclaration() const -> const VariableDeclaration& {
-  return std::get<VariableDeclaration>(value);
-}
+using llvm::cast;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
-    case DeclarationKind::FunctionDeclaration:
-      out << GetFunctionDeclaration().definition;
+  switch (Tag()) {
+    case Kind::FunctionDeclaration:
+      out << cast<FunctionDeclaration>(*this).Definition();
       break;
 
-    case DeclarationKind::StructDeclaration: {
-      const StructDefinition& struct_def = GetStructDeclaration().definition;
-      out << "struct " << struct_def.name << " {\n";
-      for (Member* m : struct_def.members) {
+    case Kind::ClassDeclaration: {
+      const ClassDefinition& class_def =
+          cast<ClassDeclaration>(*this).Definition();
+      out << "class " << class_def.name << " {\n";
+      for (Nonnull<Member*> m : class_def.members) {
         out << *m;
       }
       out << "}\n";
       break;
     }
 
-    case DeclarationKind::ChoiceDeclaration: {
-      const auto& choice = GetChoiceDeclaration();
-      out << "choice " << choice.name << " {\n";
-      for (const auto& [name, signature] : choice.alternatives) {
+    case Kind::ChoiceDeclaration: {
+      const auto& choice = cast<ChoiceDeclaration>(*this);
+      out << "choice " << choice.Name() << " {\n";
+      for (const auto& [name, signature] : choice.Alternatives()) {
         out << "alt " << name << " " << *signature << ";\n";
       }
       out << "}\n";
       break;
     }
 
-    case DeclarationKind::VariableDeclaration: {
-      const auto& var = GetVariableDeclaration();
-      out << "var " << *var.type << " : " << var.name << " = "
-          << *var.initializer << "\n";
+    case Kind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(*this);
+      out << "var " << *var.Binding() << " = " << *var.Initializer() << "\n";
       break;
     }
   }

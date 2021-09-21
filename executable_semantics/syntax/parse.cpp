@@ -4,44 +4,52 @@
 
 #include "executable_semantics/syntax/parse.h"
 
-#include <iostream>
-
 #include "common/check.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
+#include "executable_semantics/syntax/lexer.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
 
-extern FILE* yyin;
-
 namespace Carbon {
 
-// Returns an abstract representation of the program contained in the
-// well-formed input file, or if the file was malformed, a description of the
-// problem.
-auto parse(const std::string& input_file_name)
+auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
-  yyin = fopen(input_file_name.c_str(), "r");
-  if (yyin == nullptr) {
-    FATAL_USER_ERROR_NO_LINE() << "Error opening '" << input_file_name
-                               << "': " << std::strerror(errno);
+  FILE* input_file = fopen(input_file_name.c_str(), "r");
+  if (input_file == nullptr) {
+    FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
+                                  << "': " << std::strerror(errno);
   }
 
-  std::optional<AST> parsed_input = std::nullopt;
-  ParseAndLexContext context(input_file_name);
+  // Prepare the lexer.
+  yyscan_t scanner;
+  yylex_init(&scanner);
+  yyset_in(input_file, scanner);
 
-  auto parser = yy::parser(parsed_input, context);
+  // Prepare other parser arguments.
+  std::optional<AST> ast = std::nullopt;
+  ParseAndLexContext context(arena->New<std::string>(input_file_name));
+
+  // Do the parse.
+  auto parser = Parser(arena, scanner, context, &ast);
   if (tracing_output) {
     parser.set_debug_level(1);
   }
   auto syntax_error_code = parser();
+
+  // Clean up the lexer.
+  fclose(input_file);
+  yylex_destroy(scanner);
+
+  // Return an error if appropriate.
   if (syntax_error_code != 0) {
     return syntax_error_code;
   }
 
-  CHECK(parsed_input != std::nullopt)
+  // Return parse results.
+  CHECK(ast != std::nullopt)
       << "parser validated syntax yet didn't produce an AST.";
-  return *parsed_input;
+  return *ast;
 }
 
 }  // namespace Carbon

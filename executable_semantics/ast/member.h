@@ -9,35 +9,62 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-enum class MemberKind { FieldMember };
+// Abstract base class of all AST nodes representing patterns.
+//
+// Member and its derived classes support LLVM-style RTTI, including
+// llvm::isa, llvm::cast, and llvm::dyn_cast. To support this, every
+// class derived from Member must provide a `classof` operation, and
+// every concrete derived class must have a corresponding enumerator
+// in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
+// details.
+class Member {
+ public:
+  enum class Kind { FieldMember };
 
-struct FieldMember {
-  static constexpr MemberKind Kind = MemberKind::FieldMember;
-  std::string name;
-  const Expression* type;
-};
+  Member(const Member&) = delete;
+  Member& operator=(const Member&) = delete;
 
-struct Member {
-  static auto MakeFieldMember(int line_num, std::string name,
-                              const Expression* type) -> Member*;
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto Tag() const -> Kind { return tag; }
 
-  auto GetFieldMember() const -> const FieldMember&;
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  inline auto tag() const -> MemberKind {
-    return std::visit([](const auto& t) { return t.Kind; }, value);
-  }
-
-  int line_num;
+ protected:
+  // Constructs a Member representing syntax at the given line number.
+  // `tag` must be the enumerator corresponding to the most-derived type being
+  // constructed.
+  Member(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
 
  private:
-  std::variant<FieldMember> value;
+  const Kind tag;
+  SourceLocation loc;
+};
+
+class FieldMember : public Member {
+ public:
+  FieldMember(SourceLocation loc, Nonnull<const BindingPattern*> binding)
+      : Member(Kind::FieldMember, loc), binding(binding) {}
+
+  static auto classof(const Member* member) -> bool {
+    return member->Tag() == Kind::FieldMember;
+  }
+
+  auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
+
+ private:
+  // TODO: split this into a non-optional name and a type, initialized by
+  // a constructor that takes a BindingPattern and handles errors like a
+  // missing name.
+  Nonnull<const BindingPattern*> binding;
 };
 
 }  // namespace Carbon

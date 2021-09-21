@@ -4,25 +4,18 @@
 
 #include "executable_semantics/ast/member.h"
 
+#include "executable_semantics/common/arena.h"
+#include "llvm/Support/Casting.h"
+
 namespace Carbon {
 
-auto Member::MakeFieldMember(int line_num, std::string name,
-                             const Expression* type) -> Member* {
-  auto m = new Member();
-  m->line_num = line_num;
-  m->value = FieldMember({.name = std::move(name), .type = type});
-  return m;
-}
-
-auto Member::GetFieldMember() const -> const FieldMember& {
-  return std::get<FieldMember>(value);
-}
+using llvm::cast;
 
 void Member::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
-    case MemberKind::FieldMember:
-      const auto& field = GetFieldMember();
-      out << "var " << field.name << " : " << *field.type << ";\n";
+  switch (Tag()) {
+    case Kind::FieldMember:
+      const auto& field = cast<FieldMember>(*this);
+      out << "var " << *field.Binding() << ";\n";
       break;
   }
 }
