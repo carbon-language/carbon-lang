@@ -14,7 +14,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Baseline](#baseline)
 -   [Carbon-local guidance](#carbon-local-guidance)
     -   [General naming rules](#general-naming-rules)
-        -   [Properties](#properties)
     -   [File names](#file-names)
     -   [Syntax and formatting](#syntax-and-formatting)
     -   [Copyable and movable types](#copyable-and-movable-types)
@@ -63,37 +62,14 @@ serves to simplify it.
         non-virtual function should be invisible, especially at the call site,
         as that is an internal implementation detail. We want to be able to
         freely change that without updating the name.
+-   Member functions may use `snake_case` names if they do nothing besides
+    return a reference to a data member (or assign a value to a data member, in
+    the case of `set_` methods), **or** if their behavior (including
+    performance) would be unsurprising to a caller who assumes they are
+    implemented that way.
 -   All other names use `snake_case`, including function parameters, and
     non-constant local and member variables.
     -   Private member variables should have a trailing `_`.
-
-#### Properties
-
-Under our style rules, classes cannot have public data members, but it is
-sometimes useful to describe a class's behavior in terms of certain data
-members, and even provide access to them by way of methods. For these purposes,
-it doesn't matter whether those data members actually exist, so long as the
-object behaves as if they exist. We'll call these notional data members
-"properties". Many languages have native support for properties, and we would
-like to explore providing such a feature in Carbon. To that end, we have special
-naming rules that allow C++ classes to emulate the interface they might have in
-a language with native property support:
-
--   Properties, like all other data members, should have `snake_case` names.
--   A member function can have the same name as a property, including the
-    `snake_case` spelling, if it functions as an accessor for that property.
-    Such a member function must conform to the expectations that users have for
-    accessors. In particular, it must be a pure function of state that's owned
-    by the object, and the costs of calling it must be comparable to the costs
-    of directly accessing an equivalent data member.
--   A member function can also have the same name as a property, prefixed with
-    `set_`, if it takes a single argument and effectively assigns that argument
-    to the property. As with accessors, it must conform to the expectations that
-    users have for such an assignment, including performance.
--   If a data member directly stores the value of a property, it should have the
-    same name as the property, plus a trailing `_` as with all other data
-    members. Conversely, a data member that shares a name with a property must
-    provide backing storage for that property.
 
 ### File names
 
