@@ -240,6 +240,7 @@ To explain this boilerplate:
 -   The standard copyright is expected.
 -   The `RUN` lines indicate two commands for `lit` to execute using the file:
     one without `--trace` output, one with.
+    -   Output is piped to `FileCheck` for verification.
     -   `-allow-unused-prefixes` controls that output of the command without
         `--trace` should _precisely_ match `CHECK` lines, whereas the command
         with `--trace` will be a superset.
