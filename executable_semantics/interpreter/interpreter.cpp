@@ -46,7 +46,7 @@ void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
 //
 
 auto Interpreter::CurrentEnv() -> Env {
-  Ptr<Frame> frame = stack.Top();
+  Nonnull<Frame*> frame = stack.Top();
   return frame->scopes.Top()->values;
 }
 
@@ -75,8 +75,8 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
 }
 
 auto Interpreter::EvalPrim(Operator op,
-                           const std::vector<Ptr<const Value>>& args,
-                           SourceLocation loc) -> Ptr<const Value> {
+                           const std::vector<Nonnull<const Value*>>& args,
+                           SourceLocation loc) -> Nonnull<const Value*> {
   switch (op) {
     case Operator::Neg:
       return arena->New<IntValue>(-cast<IntValue>(*args[0]).Val());
@@ -128,11 +128,12 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const ClassDefinition& class_def = cast<ClassDeclaration>(d).Definition();
       VarValues fields;
       VarValues methods;
-      for (Ptr<const Member> m : class_def.members) {
+      for (Nonnull<const Member*> m : class_def.members) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember: {
-            Ptr<const BindingPattern> binding = cast<FieldMember>(*m).Binding();
-            Ptr<const Expression> type_expression =
+            Nonnull<const BindingPattern*> binding =
+                cast<FieldMember>(*m).Binding();
+            Nonnull<const Expression*> type_expression =
                 cast<ExpressionPattern>(*binding->Type()).Expression();
             auto type = InterpExp(Env(arena), type_expression);
             fields.push_back(make_pair(*binding->Name(), type));
@@ -172,13 +173,14 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
   }
 }
 
-void Interpreter::InitGlobals(const std::vector<Ptr<const Declaration>>& fs) {
+void Interpreter::InitGlobals(
+    const std::vector<Nonnull<const Declaration*>>& fs) {
   for (const auto d : fs) {
     InitEnv(*d, &globals);
   }
 }
 
-void Interpreter::DeallocateScope(Ptr<Scope> scope) {
+void Interpreter::DeallocateScope(Nonnull<Scope*> scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
     CHECK(a);
@@ -186,15 +188,16 @@ void Interpreter::DeallocateScope(Ptr<Scope> scope) {
   }
 }
 
-void Interpreter::DeallocateLocals(Ptr<Frame> frame) {
+void Interpreter::DeallocateLocals(Nonnull<Frame*> frame) {
   while (!frame->scopes.IsEmpty()) {
     DeallocateScope(frame->scopes.Top());
     frame->scopes.Pop();
   }
 }
 
-auto Interpreter::CreateTuple(Ptr<Action> act, Ptr<const Expression> exp)
-    -> Ptr<const Value> {
+auto Interpreter::CreateTuple(Nonnull<Action*> act,
+                              Nonnull<const Expression*> exp)
+    -> Nonnull<const Value*> {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   const auto& tup_lit = cast<TupleLiteral>(*exp);
@@ -208,7 +211,7 @@ auto Interpreter::CreateTuple(Ptr<Action> act, Ptr<const Expression> exp)
   return arena->New<TupleValue>(std::move(elements));
 }
 
-auto Interpreter::PatternMatch(Ptr<const Value> p, Ptr<const Value> v,
+auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                                SourceLocation loc) -> std::optional<Env> {
   switch (p->Tag()) {
     case Value::Kind::BindingPlaceholderValue: {
@@ -303,7 +306,8 @@ auto Interpreter::PatternMatch(Ptr<const Value> p, Ptr<const Value> v,
   }
 }
 
-void Interpreter::PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
+void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
+                                    Nonnull<const Value*> val,
                                     SourceLocation loc) {
   switch (pat->Tag()) {
     case Value::Kind::PointerValue:
@@ -320,7 +324,7 @@ void Interpreter::PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
                 << pat_tup << "\n  value: " << val_tup;
           }
           for (const TupleElement& pattern_element : pat_tup.Elements()) {
-            std::optional<Ptr<const Value>> value_field =
+            std::optional<Nonnull<const Value*>> value_field =
                 val_tup.FindField(pattern_element.name);
             if (!value_field) {
               FATAL_RUNTIME_ERROR(loc)
@@ -358,8 +362,8 @@ void Interpreter::PatternAssignment(Ptr<const Value> pat, Ptr<const Value> val,
 }
 
 auto Interpreter::StepLvalue() -> Transition {
-  Ptr<Action> act = stack.Top()->todo.Top();
-  Ptr<const Expression> exp = cast<LValAction>(*act).Exp();
+  Nonnull<Action*> act = stack.Top()->todo.Top();
+  Nonnull<const Expression*> exp = cast<LValAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step lvalue " << *exp << " (" << exp->SourceLoc()
                  << ") --->\n";
@@ -370,7 +374,7 @@ auto Interpreter::StepLvalue() -> Transition {
       // -> { {E(x) :: C, E, F} :: S, H}
       Address pointer =
           GetFromEnv(exp->SourceLoc(), cast<IdentifierExpression>(*exp).Name());
-      Ptr<const Value> v = arena->New<PointerValue>(pointer);
+      Nonnull<const Value*> v = arena->New<PointerValue>(pointer);
       return Done{v};
     }
     case Expression::Kind::FieldAccessExpression: {
@@ -412,7 +416,7 @@ auto Interpreter::StepLvalue() -> Transition {
       if (act->Pos() == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        Ptr<const Expression> e1 =
+        Nonnull<const Expression*> e1 =
             cast<TupleLiteral>(*exp).Fields()[0].expression;
         return Spawn{arena->New<LValAction>(e1)};
       } else if (act->Pos() !=
@@ -421,7 +425,7 @@ auto Interpreter::StepLvalue() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Ptr<const Expression> elt =
+        Nonnull<const Expression*> elt =
             cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
         return Spawn{arena->New<LValAction>(elt)};
       } else {
@@ -446,8 +450,8 @@ auto Interpreter::StepLvalue() -> Transition {
 }
 
 auto Interpreter::StepExp() -> Transition {
-  Ptr<Action> act = stack.Top()->todo.Top();
-  Ptr<const Expression> exp = cast<ExpressionAction>(*act).Exp();
+  Nonnull<Action*> act = stack.Top()->todo.Top();
+  Nonnull<const Expression*> exp = cast<ExpressionAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step exp " << *exp << " (" << exp->SourceLoc()
                  << ") --->\n";
@@ -465,14 +469,14 @@ auto Interpreter::StepExp() -> Transition {
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
-        auto* tuple = dyn_cast<TupleValue>(act->Results()[0].Get());
+        auto* tuple = dyn_cast<TupleValue>(act->Results()[0]);
         if (tuple == nullptr) {
           FATAL_RUNTIME_ERROR_NO_LINE()
               << "expected a tuple in field access, not " << *act->Results()[0];
         }
         std::string f =
             std::to_string(cast<IntValue>(*act->Results()[1]).Val());
-        std::optional<Ptr<const Value>> field = tuple->FindField(f);
+        std::optional<Nonnull<const Value*>> field = tuple->FindField(f);
         if (!field) {
           FATAL_RUNTIME_ERROR_NO_LINE()
               << "field " << f << " not in " << *tuple;
@@ -485,7 +489,7 @@ auto Interpreter::StepExp() -> Transition {
         if (cast<TupleLiteral>(*exp).Fields().size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-          Ptr<const Expression> e1 =
+          Nonnull<const Expression*> e1 =
               cast<TupleLiteral>(*exp).Fields()[0].expression;
           return Spawn{arena->New<ExpressionAction>(e1)};
         } else {
@@ -497,7 +501,7 @@ auto Interpreter::StepExp() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Ptr<const Expression> elt =
+        Nonnull<const Expression*> elt =
             cast<TupleLiteral>(*exp).Fields()[act->Pos()].expression;
         return Spawn{arena->New<ExpressionAction>(elt)};
       } else {
@@ -537,7 +541,7 @@ auto Interpreter::StepExp() -> Transition {
       if (act->Pos() != static_cast<int>(op.Arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        Ptr<const Expression> arg = op.Arguments()[act->Pos()];
+        Nonnull<const Expression*> arg = op.Arguments()[act->Pos()];
         return Spawn{arena->New<ExpressionAction>(arg)};
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
@@ -561,14 +565,14 @@ auto Interpreter::StepExp() -> Transition {
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->Results()[0]->Tag()) {
           case Value::Kind::ClassType: {
-            Ptr<const Value> arg =
+            Nonnull<const Value*> arg =
                 CopyVal(arena, act->Results()[1], exp->SourceLoc());
             return Done{arena->New<StructValue>(act->Results()[0], arg)};
           }
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
                 cast<AlternativeConstructorValue>(*act->Results()[0]);
-            Ptr<const Value> arg =
+            Nonnull<const Value*> arg =
                 CopyVal(arena, act->Results()[1], exp->SourceLoc());
             return Done{arena->New<AlternativeValue>(alt.AltName(),
                                                      alt.ChoiceName(), arg)};
@@ -577,8 +581,8 @@ auto Interpreter::StepExp() -> Transition {
             return CallFunction{
                 // TODO: Think about a cleaner way to cast between Ptr types.
                 // (multiple TODOs)
-                .function = Ptr<const FunctionValue>(
-                    cast<FunctionValue>(act->Results()[0].Get())),
+                .function = Nonnull<const FunctionValue*>(
+                    cast<FunctionValue>(act->Results()[0])),
                 .args = act->Results()[1],
                 .loc = exp->SourceLoc()};
           default:
@@ -594,7 +598,7 @@ auto Interpreter::StepExp() -> Transition {
       switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
         case IntrinsicExpression::IntrinsicKind::Print:
           Address pointer = GetFromEnv(exp->SourceLoc(), "format_str");
-          Ptr<const Value> pointee = heap.Read(pointer, exp->SourceLoc());
+          Nonnull<const Value*> pointee = heap.Read(pointer, exp->SourceLoc());
           CHECK(pointee->Tag() == Value::Kind::StringValue);
           // TODO: This could eventually use something like llvm::formatv.
           llvm::outs() << cast<StringValue>(*pointee).Val();
@@ -646,8 +650,8 @@ auto Interpreter::StepExp() -> Transition {
 }
 
 auto Interpreter::StepPattern() -> Transition {
-  Ptr<Action> act = stack.Top()->todo.Top();
-  Ptr<const Pattern> pattern = cast<PatternAction>(*act).Pat();
+  Nonnull<Action*> act = stack.Top()->todo.Top();
+  Nonnull<const Pattern*> pattern = cast<PatternAction>(*act).Pat();
   if (tracing_output) {
     llvm::outs() << "--- step pattern " << *pattern << " ("
                  << pattern->SourceLoc() << ") --->\n";
@@ -672,7 +676,7 @@ auto Interpreter::StepPattern() -> Transition {
         if (tuple.Fields().empty()) {
           return Done{TupleValue::Empty()};
         } else {
-          Ptr<const Pattern> p1 = tuple.Fields()[0].pattern;
+          Nonnull<const Pattern*> p1 = tuple.Fields()[0].pattern;
           return Spawn{(arena->New<PatternAction>(p1))};
         }
       } else if (act->Pos() != static_cast<int>(tuple.Fields().size())) {
@@ -680,7 +684,7 @@ auto Interpreter::StepPattern() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Ptr<const Pattern> elt = tuple.Fields()[act->Pos()].pattern;
+        Nonnull<const Pattern*> elt = tuple.Fields()[act->Pos()].pattern;
         return Spawn{arena->New<PatternAction>(elt)};
       } else {
         std::vector<TupleElement> elements;
@@ -711,7 +715,7 @@ auto Interpreter::StepPattern() -> Transition {
   }
 }
 
-static auto IsWhileAct(Ptr<Action> act) -> bool {
+static auto IsWhileAct(Nonnull<Action*> act) -> bool {
   switch (act->Tag()) {
     case Action::Kind::StatementAction:
       switch (cast<StatementAction>(*act).Stmt()->Tag()) {
@@ -725,7 +729,7 @@ static auto IsWhileAct(Ptr<Action> act) -> bool {
   }
 }
 
-static auto HasLocalScope(Ptr<Action> act) -> bool {
+static auto HasLocalScope(Nonnull<Action*> act) -> bool {
   switch (act->Tag()) {
     case Action::Kind::StatementAction:
       switch (cast<StatementAction>(*act).Stmt()->Tag()) {
@@ -741,9 +745,9 @@ static auto HasLocalScope(Ptr<Action> act) -> bool {
 }
 
 auto Interpreter::StepStmt() -> Transition {
-  Ptr<Frame> frame = stack.Top();
-  Ptr<Action> act = frame->todo.Top();
-  Ptr<const Statement> stmt = cast<StatementAction>(*act).Stmt();
+  Nonnull<Frame*> frame = stack.Top();
+  Nonnull<Action*> act = frame->todo.Top();
+  Nonnull<const Statement*> stmt = cast<StatementAction>(*act).Stmt();
   if (tracing_output) {
     llvm::outs() << "--- step stmt ";
     stmt->PrintDepth(1, llvm::outs());
@@ -849,7 +853,7 @@ auto Interpreter::StepStmt() -> Transition {
           return Done{};
         }
       } else {
-        Ptr<Scope> scope = frame->scopes.Top();
+        Nonnull<Scope*> scope = frame->scopes.Top();
         DeallocateScope(scope);
         frame->scopes.Pop(1);
         return Done{};
@@ -867,8 +871,8 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        Ptr<const Value> v = act->Results()[0];
-        Ptr<const Value> p = act->Results()[1];
+        Nonnull<const Value*> v = act->Results()[0];
+        Nonnull<const Value*> p = act->Results()[1];
 
         std::optional<Env> matches = PatternMatch(p, v, stmt->SourceLoc());
         CHECK(matches)
@@ -934,7 +938,7 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        Ptr<const Value> ret_val =
+        Nonnull<const Value*> ret_val =
             CopyVal(arena, act->Results()[0], stmt->SourceLoc());
         return UnwindFunctionCall{ret_val};
       }
@@ -957,8 +961,8 @@ auto Interpreter::StepStmt() -> Transition {
       CHECK(act->Pos() == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
-      auto scopes = Stack<Ptr<Scope>>(arena->New<Scope>(CurrentEnv()));
-      Stack<Ptr<Action>> todo;
+      auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(CurrentEnv()));
+      Stack<Nonnull<Action*>> todo;
       todo.Push(arena->New<StatementAction>(
           arena->New<Return>(arena, stmt->SourceLoc())));
       todo.Push(arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
@@ -966,7 +970,7 @@ auto Interpreter::StepStmt() -> Transition {
           arena->New<Frame>("__continuation", scopes, todo);
       Address continuation_address =
           heap.AllocateValue(arena->New<ContinuationValue>(
-              std::vector<Ptr<Frame>>({continuation_frame})));
+              std::vector<Nonnull<Frame*>>({continuation_frame})));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -991,7 +995,7 @@ auto Interpreter::StepStmt() -> Transition {
                 arena->New<TupleLiteral>(stmt->SourceLoc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
-        const std::vector<Ptr<Frame>>& continuation_vector =
+        const std::vector<Nonnull<Frame*>>& continuation_vector =
             cast<ContinuationValue>(*act->Results()[0]).Stack();
         for (auto frame_iter = continuation_vector.rbegin();
              frame_iter != continuation_vector.rend(); ++frame_iter) {
@@ -1003,7 +1007,7 @@ auto Interpreter::StepStmt() -> Transition {
       CHECK(act->Pos() == 0);
       // Pause the current continuation
       frame->todo.Pop();
-      std::vector<Ptr<Frame>> paused;
+      std::vector<Nonnull<Frame*>> paused;
       do {
         paused.push_back(stack.Pop());
       } while (paused.back()->continuation == std::nullopt);
@@ -1020,7 +1024,7 @@ class Interpreter::DoTransition {
   DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
-    Ptr<Frame> frame = interpreter->stack.Top();
+    Nonnull<Frame*> frame = interpreter->stack.Top();
     if (frame->todo.Top()->Tag() != Action::Kind::StatementAction) {
       CHECK(done.result);
       frame->todo.Pop();
@@ -1036,25 +1040,25 @@ class Interpreter::DoTransition {
   }
 
   void operator()(const Spawn& spawn) {
-    Ptr<Frame> frame = interpreter->stack.Top();
-    Ptr<Action> action = frame->todo.Top();
+    Nonnull<Frame*> frame = interpreter->stack.Top();
+    Nonnull<Action*> action = frame->todo.Top();
     action->SetPos(action->Pos() + 1);
     frame->todo.Push(spawn.child);
   }
 
   void operator()(const Delegate& delegate) {
-    Ptr<Frame> frame = interpreter->stack.Top();
+    Nonnull<Frame*> frame = interpreter->stack.Top();
     frame->todo.Pop();
     frame->todo.Push(delegate.delegate);
   }
 
   void operator()(const RunAgain&) {
-    Ptr<Action> action = interpreter->stack.Top()->todo.Top();
+    Nonnull<Action*> action = interpreter->stack.Top()->todo.Top();
     action->SetPos(action->Pos() + 1);
   }
 
   void operator()(const UnwindTo& unwind_to) {
-    Ptr<Frame> frame = interpreter->stack.Top();
+    Nonnull<Frame*> frame = interpreter->stack.Top();
     while (frame->todo.Top() != unwind_to.new_top) {
       if (HasLocalScope(frame->todo.Top())) {
         interpreter->DeallocateScope(frame->scopes.Top());
@@ -1088,9 +1092,9 @@ class Interpreter::DoTransition {
       params.push_back(name);
     }
     auto scopes =
-        Stack<Ptr<Scope>>(interpreter->arena->New<Scope>(values, params));
+        Stack<Nonnull<Scope*>>(interpreter->arena->New<Scope>(values, params));
     CHECK(call.function->Body()) << "Calling a function that's missing a body";
-    auto todo = Stack<Ptr<Action>>(
+    auto todo = Stack<Nonnull<Action*>>(
         interpreter->arena->New<StatementAction>(*call.function->Body()));
     auto frame =
         interpreter->arena->New<Frame>(call.function->Name(), scopes, todo);
@@ -1100,18 +1104,18 @@ class Interpreter::DoTransition {
   void operator()(const ManualTransition&) {}
 
  private:
-  Ptr<Interpreter> interpreter;
+  Nonnull<Interpreter*> interpreter;
 };
 
 // State transition.
 void Interpreter::Step() {
-  Ptr<Frame> frame = stack.Top();
+  Nonnull<Frame*> frame = stack.Top();
   if (frame->todo.IsEmpty()) {
     FATAL_RUNTIME_ERROR_NO_LINE()
         << "fell off end of function " << frame->name << " without `return`";
   }
 
-  Ptr<Action> act = frame->todo.Top();
+  Nonnull<Action*> act = frame->todo.Top();
   switch (act->Tag()) {
     case Action::Kind::LValAction:
       std::visit(DoTransition(this), StepLvalue());
@@ -1128,8 +1132,8 @@ void Interpreter::Step() {
   }  // switch
 }
 
-auto Interpreter::InterpProgram(const std::vector<Ptr<const Declaration>>& fs)
-    -> int {
+auto Interpreter::InterpProgram(
+    const std::vector<Nonnull<const Declaration*>>& fs) -> int {
   // Check that the interpreter is in a clean state.
   CHECK(globals.IsEmpty());
   CHECK(stack.IsEmpty());
@@ -1142,12 +1146,12 @@ auto Interpreter::InterpProgram(const std::vector<Ptr<const Declaration>>& fs)
 
   SourceLocation loc("<InterpProgram()>", 0);
 
-  Ptr<const Expression> arg = arena->New<TupleLiteral>(loc);
-  Ptr<const Expression> call_main = arena->New<CallExpression>(
+  Nonnull<const Expression*> arg = arena->New<TupleLiteral>(loc);
+  Nonnull<const Expression*> call_main = arena->New<CallExpression>(
       loc, arena->New<IdentifierExpression>(loc, "main"), arg);
-  auto todo = Stack<Ptr<Action>>(arena->New<ExpressionAction>(call_main));
-  auto scopes = Stack<Ptr<Scope>>(arena->New<Scope>(globals));
-  stack = Stack<Ptr<Frame>>(arena->New<Frame>("top", scopes, todo));
+  auto todo = Stack<Nonnull<Action*>>(arena->New<ExpressionAction>(call_main));
+  auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(globals));
+  stack = Stack<Nonnull<Frame*>>(arena->New<Frame>("top", scopes, todo));
 
   if (tracing_output) {
     llvm::outs() << "********** calling main function **********\n";
@@ -1163,14 +1167,14 @@ auto Interpreter::InterpProgram(const std::vector<Ptr<const Declaration>>& fs)
   return cast<IntValue>(**program_value).Val();
 }
 
-auto Interpreter::InterpExp(Env values, Ptr<const Expression> e)
-    -> Ptr<const Value> {
+auto Interpreter::InterpExp(Env values, Nonnull<const Expression*> e)
+    -> Nonnull<const Value*> {
   CHECK(program_value == std::nullopt);
   auto program_value_guard =
       llvm::make_scope_exit([&] { program_value = std::nullopt; });
-  auto todo = Stack<Ptr<Action>>(arena->New<ExpressionAction>(e));
-  auto scopes = Stack<Ptr<Scope>>(arena->New<Scope>(values));
-  stack = Stack<Ptr<Frame>>(arena->New<Frame>("InterpExp", scopes, todo));
+  auto todo = Stack<Nonnull<Action*>>(arena->New<ExpressionAction>(e));
+  auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(values));
+  stack = Stack<Nonnull<Frame*>>(arena->New<Frame>("InterpExp", scopes, todo));
 
   while (stack.Count() > 1 || !stack.Top()->todo.IsEmpty()) {
     Step();
@@ -1179,14 +1183,15 @@ auto Interpreter::InterpExp(Env values, Ptr<const Expression> e)
   return *program_value;
 }
 
-auto Interpreter::InterpPattern(Env values, Ptr<const Pattern> p)
-    -> Ptr<const Value> {
+auto Interpreter::InterpPattern(Env values, Nonnull<const Pattern*> p)
+    -> Nonnull<const Value*> {
   CHECK(program_value == std::nullopt);
   auto program_value_guard =
       llvm::make_scope_exit([&] { program_value = std::nullopt; });
-  auto todo = Stack<Ptr<Action>>(arena->New<PatternAction>(p));
-  auto scopes = Stack<Ptr<Scope>>(arena->New<Scope>(values));
-  stack = Stack<Ptr<Frame>>(arena->New<Frame>("InterpPattern", scopes, todo));
+  auto todo = Stack<Nonnull<Action*>>(arena->New<PatternAction>(p));
+  auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(values));
+  stack =
+      Stack<Nonnull<Frame*>>(arena->New<Frame>("InterpPattern", scopes, todo));
 
   while (stack.Count() > 1 || !stack.Top()->todo.IsEmpty()) {
     Step();

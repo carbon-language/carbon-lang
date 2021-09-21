@@ -93,29 +93,28 @@ configure_clang_toolchain(name = "bazel_cc_toolchain")
 # LLVM libraries
 ###############################################################################
 
-local_repository(
-    name = "llvm_bazel",
-    path = "third_party/llvm-bazel/llvm-bazel",
+new_local_repository(
+    name = "llvm-raw",
+    build_file_content = "# empty",
+    path = "third_party/llvm-project",
 )
 
-load("@llvm_bazel//:configure.bzl", "llvm_configure")
+load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "llvm-project",
-    src_path = "third_party/llvm-project",
-    src_workspace = "@carbon//:WORKSPACE",
     targets = [
         "AArch64",
         "X86",
     ],
 )
 
-load("@llvm_bazel//:terminfo.bzl", "llvm_terminfo_system")
+load("@llvm-raw//utils/bazel:terminfo.bzl", "llvm_terminfo_system")
 
 # We require successful detection and use of a system terminfo library.
 llvm_terminfo_system(name = "llvm_terminfo")
 
-load("@llvm_bazel//:zlib.bzl", "llvm_zlib_system")
+load("@llvm-raw//utils/bazel:zlib.bzl", "llvm_zlib_system")
 
 # We require successful detection and use of a system zlib library.
 llvm_zlib_system(name = "llvm_zlib")

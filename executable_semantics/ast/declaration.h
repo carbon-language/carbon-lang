@@ -14,7 +14,7 @@
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -60,7 +60,7 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(Ptr<const FunctionDefinition> definition)
+  FunctionDeclaration(Nonnull<const FunctionDefinition*> definition)
       : Declaration(Kind::FunctionDeclaration, definition->source_location),
         definition(definition) {}
 
@@ -71,13 +71,13 @@ class FunctionDeclaration : public Declaration {
   auto Definition() const -> const FunctionDefinition& { return *definition; }
 
  private:
-  Ptr<const FunctionDefinition> definition;
+  Nonnull<const FunctionDefinition*> definition;
 };
 
 class ClassDeclaration : public Declaration {
  public:
   ClassDeclaration(SourceLocation loc, std::string name,
-                   std::vector<Ptr<Member>> members)
+                   std::vector<Nonnull<Member*>> members)
       : Declaration(Kind::ClassDeclaration, loc),
         definition({.loc = loc,
                     .name = std::move(name),
@@ -97,7 +97,8 @@ class ChoiceDeclaration : public Declaration {
  public:
   ChoiceDeclaration(
       SourceLocation loc, std::string name,
-      std::vector<std::pair<std::string, Ptr<const Expression>>> alternatives)
+      std::vector<std::pair<std::string, Nonnull<const Expression*>>>
+          alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -107,21 +108,22 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto Name() const -> const std::string& { return name; }
-  auto Alternatives() const
-      -> const std::vector<std::pair<std::string, Ptr<const Expression>>>& {
+  auto Alternatives() const -> const
+      std::vector<std::pair<std::string, Nonnull<const Expression*>>>& {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::vector<std::pair<std::string, Ptr<const Expression>>> alternatives;
+  std::vector<std::pair<std::string, Nonnull<const Expression*>>> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(SourceLocation loc, Ptr<const BindingPattern> binding,
-                      Ptr<const Expression> initializer)
+  VariableDeclaration(SourceLocation loc,
+                      Nonnull<const BindingPattern*> binding,
+                      Nonnull<const Expression*> initializer)
       : Declaration(Kind::VariableDeclaration, loc),
         binding(binding),
         initializer(initializer) {}
@@ -130,15 +132,15 @@ class VariableDeclaration : public Declaration {
     return decl->Tag() == Kind::VariableDeclaration;
   }
 
-  auto Binding() const -> Ptr<const BindingPattern> { return binding; }
-  auto Initializer() const -> Ptr<const Expression> { return initializer; }
+  auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
+  auto Initializer() const -> Nonnull<const Expression*> { return initializer; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  Ptr<const BindingPattern> binding;
-  Ptr<const Expression> initializer;
+  Nonnull<const BindingPattern*> binding;
+  Nonnull<const Expression*> initializer;
 };
 
 }  // namespace Carbon
