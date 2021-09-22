@@ -80,6 +80,7 @@ def main():
         os.path.join(symlink_dir, "lit"),
         "--path=%s" % symlink_dir,
         test_dir,
+        "-sv",
     ]
 
     # Run lit.
