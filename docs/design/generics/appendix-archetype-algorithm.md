@@ -335,17 +335,17 @@ can be replaced in this way.
 
     To get the type right, we need that the types of `Z` and `Y.X` to be
     finalized before rewriting the `where` clause for `C.V`. Since we don't
-    allow forward references, it is suffient to process declarations in the
+    allow forward references, it is suffient to process `where` clauses in the
     order they are declared lexically. Then we set the type of `C.V` from
     `where .V == Something` to
     `__combine__(__typeof__(C.V), __typeof__(Something))` where
     `__typeof__(Something)` can be read out of the normalized form produced so
     far.
 
-FIXME
+    FIXME
 
-type expression like FIXME: If reusing an id means changing its type, preserve
-the type of anything that doesn't have as a prefix with the
+    FIXME: If reusing an id means changing its type, preserve the type of
+    anything that doesn't have as a prefix with the
 
     ```
     interface B {
@@ -367,10 +367,10 @@ the type of anything that doesn't have as a prefix with the
     ```
 
     To enforce the constraint `Y.X == Z`, id `$2` list of interfaces is changed
-    from `A` to `__combine__(A, __typeof__(B.X)) == A & C`. Since we are rewriting a
-    `where` clause on `Y`, we only want to change the types of names starting
-    with `Y`. Since `Z` doesn't have `Y` as a prefix, it gains a cast to
-    preserve its type.
+    from `A` to `__combine__(A, __typeof__(B.X)) == A & C`. Since we are
+    rewriting a `where` clause on `Y`, we only want to change the types of names
+    starting with `Y`. Since `Z` doesn't have `Y` as a prefix, it gains a cast
+    to preserve its type.
 
     ```
     K
