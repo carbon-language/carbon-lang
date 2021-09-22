@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Pointer conversions](#pointer-conversions)
         -   [Pointer conversion examples](#pointer-conversion-examples)
     -   [Type-of-types](#type-of-types)
--   [Semantics](#semantics)
+-   [Consistency with `as`](#consistency-with-as)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -245,14 +245,15 @@ can be implicitly converted to the type-of-type `TT2` if `T`
 [satisfies the requirements](../generics/details.md#subtyping-between-type-of-types)
 of `TT2`.
 
-## Semantics
+## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when
 permitted, always has the same meaning as the
-[explicit cast expression `E as U`](as_expressions.md). Moreover, such an
-implicit conversion is expected to exactly preserve the value. For example,
+[explicit cast expression `E as U`](as_expressions.md). Moreover, because such
+an implicit conversion is expected to exactly preserve the value,
 `(E as U) as T`, if valid, should be expected to result in the same value as
-produced by `E`.
+produced by `E` even if the `as T` cast cannot be performed as an implicit
+conversion.
 
 ## Extensibility
 
