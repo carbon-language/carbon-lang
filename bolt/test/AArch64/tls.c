@@ -25,9 +25,9 @@ int main() {
 
 // REQUIRES: system-linux
 
-// RUN: %host_cc %cflags -no-pie %s -o %t.exe -Wl,-q \
+// RUN: %clang %cflags -no-pie %s -o %t.exe -Wl,-q \
 // RUN:   -Wl,--unresolved-symbols=ignore-all
 // RUN: llvm-bolt %t.exe -o %t.bolt
-// RUN: %host_cc %cflags -fPIC -pie -%s -o %t_pie.exe -Wl,-q \
+// RUN: %clang %cflags -fPIC -pie -%s -o %t_pie.exe -Wl,-q \
 // RUN:   -Wl,--unresolved-symbols=ignore-all
 // RUN: llvm-bolt %t_pie.exe -o %t.bolt

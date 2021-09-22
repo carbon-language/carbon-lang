@@ -3,7 +3,7 @@
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown \
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
-# RUN: %host_cc %cflags %t.o -o %t.exe -Wl,-q
+# RUN: %clang %cflags %t.o -o %t.exe -Wl,-q
 # RUN: llvm-bolt %t.exe -data %t.fdata -print-finalized \
 # RUN: -o %t.out -three-way-branch | FileCheck %s
 # RUN: %t.exe

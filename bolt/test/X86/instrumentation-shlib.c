@@ -49,8 +49,8 @@ int main(int argc, char **argv) {
 /*
 REQUIRES: system-linux
 
-RUN: %host_cc %cflags %s -o %t.so -Wl,-q -fpie -fPIC -shared -DLIB
-RUN: %host_cc %cflags %s -o %t.exe -Wl,-q -ldl
+RUN: %clang %cflags %s -o %t.so -Wl,-q -fpie -fPIC -shared -DLIB
+RUN: %clang %cflags %s -o %t.exe -Wl,-q -ldl
 
 RUN: llvm-bolt %t.so -instrument -instrumentation-file=%t.so.fdata \
 RUN:   -o %t.so.instrumented

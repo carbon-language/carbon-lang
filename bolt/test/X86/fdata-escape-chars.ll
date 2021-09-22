@@ -53,7 +53,7 @@ define internal void @static_symb_backslash_b() #0 {
 ; REQUIRES: system-linux
 
 ; RUN: llc %s -o %t.s
-; RUN: %host_cc %cflags -O0 %t.s -o %t.exe -Wl,-q
+; RUN: %clang %cflags -O0 %t.s -o %t.exe -Wl,-q
 ; RUN: llvm-objcopy --redefine-syms=%p/Inputs/fdata-escape-chars-syms.txt %t.exe
 ;
 ; RUN: llvm-bolt %t.exe -o %t.exe.instrumented -instrument  \

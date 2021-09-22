@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 /*
 REQUIRES: system-linux
 
-RUN: %host_cc %cflags %s -o %t.exe -Wl,-q -pie -fpie
+RUN: %clang %cflags %s -o %t.exe -Wl,-q -pie -fpie
 
 RUN: llvm-bolt %t.exe -instrument -instrumentation-file=%t.fdata \
 RUN:   -o %t.instrumented

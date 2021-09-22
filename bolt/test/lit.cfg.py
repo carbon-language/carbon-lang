@@ -52,8 +52,8 @@ else:
 
 llvm_config.use_default_substitutions()
 
-config.substitutions.append(('%host_cc', config.host_cc))
-config.substitutions.append(('%host_cxx', config.host_cxx))
+llvm_config.use_clang()
+llvm_config.use_lld()
 
 config.substitutions.append(('%cflags', '-no-pie'))
 config.substitutions.append(('%cxxflags', '-no-pie'))
@@ -63,6 +63,7 @@ tool_dirs = [config.llvm_tools_dir,
 
 tools = [
     ToolSubst('llc', unresolved='fatal'),
+    ToolSubst('lld', unresolved='fatal'),
     ToolSubst('llvm-dwarfdump', unresolved='fatal'),
     ToolSubst('llvm-bolt', unresolved='fatal'),
     ToolSubst('perf2bolt', unresolved='fatal'),

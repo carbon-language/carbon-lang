@@ -24,6 +24,8 @@ list(APPEND BOLT_TEST_DEPS
   llvm-dwarfdump
   llvm-mc
   llvm-objcopy
+  clang
+  lld
   )
 
 add_custom_target(bolt-test-depends DEPENDS ${BOLT_TEST_DEPS})

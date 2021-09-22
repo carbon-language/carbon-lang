@@ -4,7 +4,7 @@
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
 # RUN: link_fdata %s %t.o %t.fdata2 "FDATA2"
-# RUN: %host_cc %cflags %t.o -o %t.exe -Wl,-q
+# RUN: %clang %cflags %t.o -o %t.exe -Wl,-q
 # RUN: llvm-bolt %t.exe -data %t.fdata -reorder-blocks=cache+ -print-finalized \
 # RUN:    -loop-inversion-opt -o %t.out | FileCheck %s
 # RUN: llvm-bolt %t.exe -data %t.fdata2 -reorder-blocks=cache+ -print-finalized \
