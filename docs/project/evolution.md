@@ -62,7 +62,7 @@ language are well explained, justified, and reviewed by the community.
 
 -   Proposals consist of a PR (pull request) in GitHub that adds a document to
     the [`proposals/` directory](/proposals/) following
-    [the template](/proposals/template.md).
+    [the template](/proposals/scripts/template.md).
 
 -   Proposal PRs start out in draft mode. When proposal PRs are ready, click on
     ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review),
@@ -129,7 +129,7 @@ For proposal authors, this should feel like a code review, with some broken out
 issues for longer discussion:
 
 -   Create a proposal document and draft PR following
-    [the template](/proposals/template.md).
+    [the template](/proposals/scripts/template.md).
 
     -   [new_proposal.py](/proposals/scripts/new_proposal.py) helps create
         templated PRs.
@@ -285,7 +285,7 @@ the proposal possible.
 
 A proposal PR will include a "P-numbered" _proposal document_,
 `proposals/pNNNN.md`, where `NNNN` is the pull request number. This file should
-be based on the [proposal template file](/proposals/template.md).
+be based on the [proposal template file](/proposals/scripts/template.md).
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use

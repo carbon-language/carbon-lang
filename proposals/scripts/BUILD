@@ -13,7 +13,7 @@ py_binary(
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
-    data = ["//proposals:md_files"],
+    data = ["template.md"],
     python_version = "PY3",
     deps = [":new_proposal"],
 )
