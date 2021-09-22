@@ -73,6 +73,6 @@ request:
 -   [0777 - Inheritance](p0777.md)
 -   [0820 - Implicit conversions](p0820.md)
 -   [0829 - One way principle](p0829.md)
--   [0845 - as expressions](p0845.md)
+-   [0845 - `as` expressions](p0845.md)
 
 <!-- endproposals -->

@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Implicit conversions](#implicit-conversions)
+-   [Conversions and casts](#conversions-and-casts)
 
 <!-- tocstop -->
 
@@ -29,11 +29,14 @@ fn Foo(a: i32*) -> i32 {
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
 
-## Implicit conversions
+## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific
 type is expected, [implicit conversions](implicit_conversions.md) are applied to
 convert the expression to the target type.
+
+Expressions can also be converted to a specific type using an
+[`as` expression](as_expressions.md).
 
 ```
 fn Bar(n: i32);
