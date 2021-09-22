@@ -52,7 +52,7 @@ static void ExpectPointerType(SourceLocation loc, const std::string& context,
 }
 
 auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation loc)
-    -> Nonnull<const Expression*> {
+    -> Nonnull<Expression*> {
   switch (t->Tag()) {
     case Value::Kind::IntType:
       return arena->New<IntTypeLiteral>(loc);
@@ -83,7 +83,7 @@ auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation loc)
     case Value::Kind::PointerType:
       return arena->New<PrimitiveOperatorExpression>(
           loc, Operator::Ptr,
-          std::vector<Nonnull<const Expression*>>(
+          std::vector<Nonnull<Expression*>>(
               {ReifyType(cast<PointerType>(*t).Type(), loc)}));
     case Value::Kind::VariableType:
       return arena->New<IdentifierExpression>(loc,
@@ -248,7 +248,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
   }
 }
 
-auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
+auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                                Env values) -> TCExpression {
   if (tracing_output) {
     llvm::outs() << "checking expression " << *e << "\ntypes: ";
@@ -377,7 +377,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
       return TCExpression(e, arena->New<BoolType>(), types);
     case Expression::Kind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(*e);
-      std::vector<Nonnull<const Expression*>> es;
+      std::vector<Nonnull<Expression*>> es;
       std::vector<Nonnull<const Value*>> ts;
       auto new_types = types;
       for (Nonnull<const Expression*> argument : op.Arguments()) {
@@ -634,7 +634,7 @@ auto TypeChecker::TypeCheckCase(Nonnull<const Value*> expected,
   return std::make_pair(pat, res.stmt);
 }
 
-auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
+auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
                                 Env values, Nonnull<const Value*>& ret_type,
                                 bool is_omitted_ret_type) -> TCStatement {
   switch (s->Tag()) {
@@ -1068,7 +1068,7 @@ void TypeChecker::TopLevel(const Declaration& d, TypeCheckContext* tops) {
   }
 }
 
-auto TypeChecker::TopLevel(const std::vector<Nonnull<const Declaration*>>& fs)
+auto TypeChecker::TopLevel(const std::vector<Nonnull<Declaration*>>& fs)
     -> TypeCheckContext {
   TypeCheckContext tops(arena);
   bool found_main = false;

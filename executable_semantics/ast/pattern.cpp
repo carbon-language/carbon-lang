@@ -66,9 +66,8 @@ TuplePattern::TuplePattern(Nonnull<Arena*> arena,
 
 auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const Pattern*> {
-  std::optional<Nonnull<const Pattern*>> single_term =
-      paren_contents.SingleTerm();
+    -> Nonnull<Pattern*> {
+  std::optional<Nonnull<Pattern*>> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
@@ -78,7 +77,7 @@ auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
 
 auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const TuplePattern*> {
+    -> Nonnull<TuplePattern*> {
   return arena->New<TuplePattern>(
       loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }

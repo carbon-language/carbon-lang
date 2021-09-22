@@ -15,9 +15,8 @@ namespace Carbon {
 
 // Adds builtins, currently only Print(). Note Print() is experimental, not
 // standardized, but is made available for printing state in tests.
-static void AddIntrinsics(
-    Nonnull<Arena*> arena,
-    std::vector<Nonnull<const Declaration*>>* declarations) {
+static void AddIntrinsics(Nonnull<Arena*> arena,
+                          std::vector<Nonnull<Declaration*>>* declarations) {
   SourceLocation loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
       "0",

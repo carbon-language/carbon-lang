@@ -12,6 +12,7 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/arena.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -110,8 +111,8 @@ class VariableDefinition : public Statement {
 class If : public Statement {
  public:
   If(SourceLocation loc, Nonnull<const Expression*> cond,
-     Nonnull<const Statement*> then_stmt,
-     std::optional<Nonnull<const Statement*>> else_stmt)
+     Nonnull<Statement*> then_stmt,
+     std::optional<Nonnull<Statement*>> else_stmt)
       : Statement(Kind::If, loc),
         cond(cond),
         then_stmt(then_stmt),
@@ -122,15 +123,16 @@ class If : public Statement {
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto ThenStmt() const -> Nonnull<const Statement*> { return then_stmt; }
+  auto ThenStmt() const -> Nonnull<Statement*> { return then_stmt; }
   auto ElseStmt() const -> std::optional<Nonnull<const Statement*>> {
     return else_stmt;
   }
+  auto ElseStmt() -> std::optional<Nonnull<Statement*>> { return else_stmt; }
 
  private:
   Nonnull<const Expression*> cond;
-  Nonnull<const Statement*> then_stmt;
-  std::optional<Nonnull<const Statement*>> else_stmt;
+  Nonnull<Statement*> then_stmt;
+  std::optional<Nonnull<Statement*>> else_stmt;
 };
 
 class Return : public Statement {
@@ -157,25 +159,25 @@ class Return : public Statement {
 
 class Sequence : public Statement {
  public:
-  Sequence(SourceLocation loc, Nonnull<const Statement*> stmt,
-           std::optional<Nonnull<const Statement*>> next)
+  Sequence(SourceLocation loc, Nonnull<Statement*> stmt,
+           std::optional<Nonnull<Statement*>> next)
       : Statement(Kind::Sequence, loc), stmt(stmt), next(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Sequence;
   }
 
-  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
+  auto Stmt() const -> Nonnull<Statement*> { return stmt; }
   auto Next() const -> std::optional<Nonnull<const Statement*>> { return next; }
 
  private:
-  Nonnull<const Statement*> stmt;
-  std::optional<Nonnull<const Statement*>> next;
+  Nonnull<Statement*> stmt;
+  std::optional<Nonnull<Statement*>> next;
 };
 
 class Block : public Statement {
  public:
-  Block(SourceLocation loc, std::optional<Nonnull<const Statement*>> stmt)
+  Block(SourceLocation loc, std::optional<Nonnull<Statement*>> stmt)
       : Statement(Kind::Block, loc), stmt(stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -185,13 +187,13 @@ class Block : public Statement {
   auto Stmt() const -> std::optional<Nonnull<const Statement*>> { return stmt; }
 
  private:
-  std::optional<Nonnull<const Statement*>> stmt;
+  std::optional<Nonnull<Statement*>> stmt;
 };
 
 class While : public Statement {
  public:
   While(SourceLocation loc, Nonnull<const Expression*> cond,
-        Nonnull<const Statement*> body)
+        Nonnull<Statement*> body)
       : Statement(Kind::While, loc), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -199,11 +201,11 @@ class While : public Statement {
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto Body() const -> Nonnull<const Statement*> { return body; }
+  auto Body() const -> Nonnull<Statement*> { return body; }
 
  private:
   Nonnull<const Expression*> cond;
-  Nonnull<const Statement*> body;
+  Nonnull<Statement*> body;
 };
 
 class Break : public Statement {
@@ -226,10 +228,8 @@ class Continue : public Statement {
 
 class Match : public Statement {
  public:
-  Match(
-      SourceLocation loc, Nonnull<const Expression*> exp,
-      std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>
-          clauses)
+  Match(SourceLocation loc, Nonnull<const Expression*> exp,
+        std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clauses)
       : Statement(Kind::Match, loc), exp(exp), clauses(std::move(clauses)) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -237,15 +237,14 @@ class Match : public Statement {
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
-  auto Clauses() const -> const std::vector<
-      std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>& {
+  auto Clauses() const
+      -> llvm::ArrayRef<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> {
     return clauses;
   }
 
  private:
   Nonnull<const Expression*> exp;
-  std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>
-      clauses;
+  std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clauses;
 };
 
 // A continuation statement.
@@ -256,7 +255,7 @@ class Match : public Statement {
 class Continuation : public Statement {
  public:
   Continuation(SourceLocation loc, std::string continuation_variable,
-               Nonnull<const Statement*> body)
+               Nonnull<Statement*> body)
       : Statement(Kind::Continuation, loc),
         continuation_variable(std::move(continuation_variable)),
         body(body) {}
@@ -268,11 +267,11 @@ class Continuation : public Statement {
   auto ContinuationVariable() const -> const std::string& {
     return continuation_variable;
   }
-  auto Body() const -> Nonnull<const Statement*> { return body; }
+  auto Body() const -> Nonnull<Statement*> { return body; }
 
  private:
   std::string continuation_variable;
-  Nonnull<const Statement*> body;
+  Nonnull<Statement*> body;
 };
 
 // A run statement.
@@ -280,7 +279,7 @@ class Continuation : public Statement {
 //     __run <argument>;
 class Run : public Statement {
  public:
-  Run(SourceLocation loc, Nonnull<const Expression*> argument)
+  Run(SourceLocation loc, Nonnull<Expression*> argument)
       : Statement(Kind::Run, loc), argument(argument) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -288,9 +287,10 @@ class Run : public Statement {
   }
 
   auto Argument() const -> Nonnull<const Expression*> { return argument; }
+  auto Argument() -> Nonnull<Expression*> { return argument; }
 
  private:
-  Nonnull<const Expression*> argument;
+  Nonnull<Expression*> argument;
 };
 
 // An await statement.

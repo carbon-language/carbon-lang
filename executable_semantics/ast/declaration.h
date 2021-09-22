@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -97,8 +98,7 @@ class ChoiceDeclaration : public Declaration {
  public:
   ChoiceDeclaration(
       SourceLocation loc, std::string name,
-      std::vector<std::pair<std::string, Nonnull<const Expression*>>>
-          alternatives)
+      std::vector<std::pair<std::string, Nonnull<Expression*>>> alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -108,14 +108,14 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto Name() const -> const std::string& { return name; }
-  auto Alternatives() const -> const
-      std::vector<std::pair<std::string, Nonnull<const Expression*>>>& {
+  auto Alternatives() const
+      -> llvm::ArrayRef<std::pair<std::string, Nonnull<Expression*>>> {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::vector<std::pair<std::string, Nonnull<const Expression*>>> alternatives;
+  std::vector<std::pair<std::string, Nonnull<Expression*>>> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.

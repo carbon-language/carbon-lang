@@ -14,6 +14,7 @@
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/arena.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -64,15 +65,13 @@ class Expression {
 // tuple otherwise.
 auto ExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation loc,
-    const ParenContents<Expression>& paren_contents)
-    -> Nonnull<const Expression*>;
+    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // forming a tuple.
 auto TupleExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation loc,
-    const ParenContents<Expression>& paren_contents)
-    -> Nonnull<const Expression*>;
+    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {
@@ -233,7 +232,7 @@ class PrimitiveOperatorExpression : public Expression {
  public:
   explicit PrimitiveOperatorExpression(
       SourceLocation loc, Operator op,
-      std::vector<Nonnull<const Expression*>> arguments)
+      std::vector<Nonnull<Expression*>> arguments)
       : Expression(Kind::PrimitiveOperatorExpression, loc),
         op(op),
         arguments(std::move(arguments)) {}
@@ -243,13 +242,13 @@ class PrimitiveOperatorExpression : public Expression {
   }
 
   auto Op() const -> Operator { return op; }
-  auto Arguments() const -> const std::vector<Nonnull<const Expression*>>& {
+  auto Arguments() const -> llvm::ArrayRef<Nonnull<Expression*>> {
     return arguments;
   }
 
  private:
   Operator op;
-  std::vector<Nonnull<const Expression*>> arguments;
+  std::vector<Nonnull<Expression*>> arguments;
 };
 
 class CallExpression : public Expression {

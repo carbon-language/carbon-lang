@@ -36,16 +36,15 @@ class TypeChecker {
                        const TypeEnv& types, const Env& values)
       -> Nonnull<const Declaration*>;
 
-  auto TopLevel(const std::vector<Nonnull<const Declaration*>>& fs)
+  auto TopLevel(const std::vector<Nonnull<Declaration*>>& fs)
       -> TypeCheckContext;
 
  private:
   struct TCExpression {
-    TCExpression(Nonnull<const Expression*> e, Nonnull<const Value*> t,
-                 TypeEnv types)
+    TCExpression(Nonnull<Expression*> e, Nonnull<const Value*> t, TypeEnv types)
         : exp(e), type(t), types(types) {}
 
-    Nonnull<const Expression*> exp;
+    Nonnull<Expression*> exp;
     Nonnull<const Value*> type;
     TypeEnv types;
   };
@@ -75,7 +74,7 @@ class TypeChecker {
   // types maps variable names to the type of their run-time value.
   // values maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  auto TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types, Env values)
+  auto TypeCheckExp(Nonnull<Expression*> e, TypeEnv types, Env values)
       -> TCExpression;
 
   // Equivalent to TypeCheckExp, but operates on Patterns instead of
@@ -93,7 +92,7 @@ class TypeChecker {
   // declared return type of the enclosing function definition.  If the return
   // type is "auto", then the return type is inferred from the first return
   // statement.
-  auto TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types, Env values,
+  auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values,
                      Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
       -> TCStatement;
 
@@ -119,7 +118,7 @@ class TypeChecker {
 
   // Reify type to type expression.
   auto ReifyType(Nonnull<const Value*> t, SourceLocation loc)
-      -> Nonnull<const Expression*>;
+      -> Nonnull<Expression*>;
 
   auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
       -> Nonnull<const Value*>;

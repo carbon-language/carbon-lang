@@ -128,13 +128,13 @@ class TuplePattern : public Pattern {
 // tuple otherwise.
 auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const Pattern*>;
+    -> Nonnull<Pattern*>;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
 auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const TuplePattern*>;
+    -> Nonnull<TuplePattern*>;
 
 // Converts `contents` to ParenContents<Pattern> by replacing each Expression
 // with an ExpressionPattern.
