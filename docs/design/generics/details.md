@@ -53,6 +53,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Same type constraints](#same-type-constraints)
         -   [Combining constraints](#combining-constraints)
         -   [Recursive constraints](#recursive-constraints)
+        -   [Must be legal type argument](#must-be-legal-type-argument)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Type inequality](#type-inequality)
     -   [Implied constraints](#implied-constraints)
@@ -2611,11 +2612,42 @@ interface B {
 }
 ```
 
+#### Must be legal type argument
+
+If a function body is going to use a generic type parameter as an argument to a
+parameterized type, it needs to ensure that the parameter satisfies all the
+requirements of the parameterized type. For example, a function that adds its
+parameters to a `HashSet` to deduplicate them, needs them to be `Hashable` and
+so on.
+
+```
+fn NumDistinct[T:! ...](a: T, b: T, c: T) -> i32 {
+  var set: HashSet(T);
+  set.Add(a);
+  set.Add(b);
+  set.Add(c);
+  return set.Size();
+}
+```
+
+Repeating the constraints on `HashSet` arguments in the type of `T` would
+violate the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+This redundancy is undesirable since it means if the needed constraints for
+`HashSet` are changed, then the code has to be updated in more locations.
+
+**Note:** This is the explicit version of
+[implied constraints](#implied-constraints), useful when the parameterized type
+is only used in the body of the function, not in the parameter list.
+
+**Open question:** How should this constraint be spelled?
+`T:! Type where Vector(T)` or `T:! Type where Vector(T) legal`?
+
 #### Parameterized type implements interface
 
 There are times when a function will pass a generic type parameter of the
-function as an argument to a parameterized type, and the function needs the
-result to implement a specific interface.
+function as an argument to a parameterized type, as in the previous case, and in
+addition the function needs the result to implement a specific interface.
 
 ```
 // Some parametized type.
