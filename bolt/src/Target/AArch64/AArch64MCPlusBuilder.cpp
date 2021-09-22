@@ -347,6 +347,17 @@ public:
       case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
       case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
         return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_LO12, Ctx);
+      case ELF::R_AARCH64_MOVW_UABS_G3:
+        return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_G3, Ctx);
+      case ELF::R_AARCH64_MOVW_UABS_G2:
+      case ELF::R_AARCH64_MOVW_UABS_G2_NC:
+        return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_G2_NC, Ctx);
+      case ELF::R_AARCH64_MOVW_UABS_G1:
+      case ELF::R_AARCH64_MOVW_UABS_G1_NC:
+        return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_G1_NC, Ctx);
+      case ELF::R_AARCH64_MOVW_UABS_G0:
+      case ELF::R_AARCH64_MOVW_UABS_G0_NC:
+        return AArch64MCExpr::create(Expr, AArch64MCExpr::VK_ABS_G0_NC, Ctx);
       default:
         break;
       }

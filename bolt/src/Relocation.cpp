@@ -69,6 +69,13 @@ bool isSupportedAArch64(uint64_t Type) {
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
   case ELF::R_AARCH64_ABS64:
+  case ELF::R_AARCH64_MOVW_UABS_G0:
+  case ELF::R_AARCH64_MOVW_UABS_G0_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G1:
+  case ELF::R_AARCH64_MOVW_UABS_G1_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G2:
+  case ELF::R_AARCH64_MOVW_UABS_G2_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G3:
     return true;
   }
 }
@@ -126,6 +133,13 @@ size_t getSizeForTypeAArch64(uint64_t Type) {
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
+  case ELF::R_AARCH64_MOVW_UABS_G0:
+  case ELF::R_AARCH64_MOVW_UABS_G0_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G1:
+  case ELF::R_AARCH64_MOVW_UABS_G1_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G2:
+  case ELF::R_AARCH64_MOVW_UABS_G2_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G3:
     return 4;
   case ELF::R_AARCH64_ABS64:
     return 8;
@@ -280,6 +294,18 @@ uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
     Contents &= ~0xffffffffffc003ffU;
     return Contents >> (10 - 0);
   }
+  case ELF::R_AARCH64_MOVW_UABS_G3:
+  case ELF::R_AARCH64_MOVW_UABS_G2_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G2:
+  case ELF::R_AARCH64_MOVW_UABS_G1_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G1:
+  case ELF::R_AARCH64_MOVW_UABS_G0_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G0:
+    // The shift goest in bits 22:21 of MOV* instructions
+    uint8_t Shift = (Contents >> 21) & 0x3;
+    // Immediate goes in bits 20:5
+    Contents = (Contents >> 5) & 0xffff;
+    return Contents << (16 * Shift);
   }
 }
 
@@ -388,6 +414,13 @@ bool isPCRelativeAArch64(uint64_t Type) {
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_LD64_LO12:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12:
+  case ELF::R_AARCH64_MOVW_UABS_G0:
+  case ELF::R_AARCH64_MOVW_UABS_G0_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G1:
+  case ELF::R_AARCH64_MOVW_UABS_G1_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G2:
+  case ELF::R_AARCH64_MOVW_UABS_G2_NC:
+  case ELF::R_AARCH64_MOVW_UABS_G3:
     return false;
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_CALL26:

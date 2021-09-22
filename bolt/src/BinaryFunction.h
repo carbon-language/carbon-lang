@@ -1307,6 +1307,13 @@ public:
     case ELF::R_AARCH64_TLSDESC_LD64_LO12:
     case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+    case ELF::R_AARCH64_MOVW_UABS_G0:
+    case ELF::R_AARCH64_MOVW_UABS_G0_NC:
+    case ELF::R_AARCH64_MOVW_UABS_G1:
+    case ELF::R_AARCH64_MOVW_UABS_G1_NC:
+    case ELF::R_AARCH64_MOVW_UABS_G2:
+    case ELF::R_AARCH64_MOVW_UABS_G2_NC:
+    case ELF::R_AARCH64_MOVW_UABS_G3:
       Relocations[Offset] = Relocation{Offset, Symbol, RelType, Addend, Value};
       return;
     case ELF::R_AARCH64_CALL26:
