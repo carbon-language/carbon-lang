@@ -92,7 +92,7 @@ decided.
 The following conversion is supported by `as`:
 
 -   `T` -> `U` if `T` is
-    [cmopatible](../generics/terminology.md#compatible-types) with `U`.
+    [compatible](../generics/terminology.md#compatible-types) with `U`.
 
 **Future work:** We may need a mechanism to restrict which conversions between
 adapters are permitted and which code can perform them. Some of the conversions
@@ -130,9 +130,6 @@ interface As(Dest:! Type) extends UnsafeAs(Dest) {
 
 The expression `x as U` is rewritten to `x.(As(U).Convert)()`. The expression
 `x unsafe_as U` is rewritten to `x.(UnsafeAs(U).Convert)()`.
-
-**Future work:** Add a `TryAs` interface to test whether an input value is in
-the domain of the conversion and convert it if so.
 
 ## Alternatives considered
 
