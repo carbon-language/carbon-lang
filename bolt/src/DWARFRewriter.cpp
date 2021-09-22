@@ -232,49 +232,49 @@ void DWARFRewriter::updateDebugInfo() {
     DWARFDie DIE = Unit.getUnitDIE();
     Optional<AttrInfo> AttrInfoVal =
         findAttributeInfo(DIE, dwarf::DW_AT_GNU_ranges_base);
-    bool NeedToPatch = AttrInfoVal.hasValue();
+    const bool NeedToPatch = AttrInfoVal.hasValue();
     uint64_t AttrOffset = NeedToPatch ? AttrInfoVal->Offset : 0;
-    uint32_t PrevAbbrevOffsetModifier = AbbrevOffsetModifier;
+    const uint32_t PrevAbbrevOffsetModifier = AbbrevOffsetModifier;
     // Case where Skeleton CU doesn't have DW_AT_GNU_ranges_base
     if (!NeedToPatch && WasRangeBaseUsed) {
       const DWARFAbbreviationDeclaration *AbbreviationDecl =
           DIE.getAbbreviationDeclarationPtr();
-      if (Optional<AttrInfo> ValLowP =
-              findAttributeInfo(DIE, dwarf::DW_AT_low_pc)) {
-        AttrOffset = ValLowP->Offset;
-        Optional<DWARFFormValue> ValHighPC = DIE.find(dwarf::DW_AT_high_pc);
-        uint32_t NumBytesToFill = 7;
-
-        AbbrevPatcher->addAttributePatch(AbbreviationDecl, dwarf::DW_AT_low_pc,
-                                         dwarf::DW_AT_GNU_ranges_base,
-                                         dwarf::DW_FORM_indirect);
-        // Bolt converts DW_AT_low_pc/DW_AT_high_pc to DW_AT_low_pc/DW_at_ranges
-        // DW_AT_high_pc can be 4 or 8 bytes. If it's 8 bytes need to use first
-        // 4 bytes.
-        if (ValHighPC && isHighPcFormEightBytes(ValHighPC->getForm())) {
-          NumBytesToFill += 4;
-        }
-        LLVM_DEBUG(if (opts::DebugSkeletonCu) dbgs()
-                       << "AttrOffset: " << Twine::utohexstr(AttrOffset) << "\n"
-                       << "Die Offset: " << Twine::utohexstr(DIE.getOffset())
-                       << "\n"
-                       << "AbbrDecl offfset: "
-                       << Twine::utohexstr(Unit.getAbbrOffset()) << "\n"
-                       << "Unit Offset: " << Twine::utohexstr(Unit.getOffset())
-                       << "\n\n";);
-        DebugInfoPatcher->addUDataPatch(AttrOffset, dwarf::DW_FORM_udata, 1);
-        DebugInfoPatcher->addUDataPatch(AttrOffset + 1, RangeBase,
-                                        NumBytesToFill);
-
-        // 1 Byte for DW_AT_GNU_ranges_base (since it's 2 bytes vs DW_AT_low_pc)
-        AbbrevOffsetModifier += 1;
-      } else {
+      Optional<AttrInfo> ValLowP = findAttributeInfo(DIE, dwarf::DW_AT_low_pc);
+      if (!ValLowP) {
         errs() << "BOLT-WARNING: Skeleton CU at 0x"
                << Twine::utohexstr(DIE.getOffset())
                << " doesn't have DW_AT_GNU_ranges_base, or "
                   "DW_AT_low_pc to convert\n";
         return;
       }
+
+      AttrOffset = ValLowP->Offset;
+      Optional<DWARFFormValue> ValHighPC = DIE.find(dwarf::DW_AT_high_pc);
+      uint32_t NumBytesToFill = 7;
+
+      AbbrevPatcher->addAttributePatch(AbbreviationDecl, dwarf::DW_AT_low_pc,
+                                       dwarf::DW_AT_GNU_ranges_base,
+                                       dwarf::DW_FORM_indirect);
+      // Bolt converts DW_AT_low_pc/DW_AT_high_pc to DW_AT_low_pc/DW_at_ranges
+      // DW_AT_high_pc can be 4 or 8 bytes. If it's 8 bytes need to use first
+      // 4 bytes.
+      if (ValHighPC && isHighPcFormEightBytes(ValHighPC->getForm()))
+        NumBytesToFill += 4;
+
+      LLVM_DEBUG(if (opts::DebugSkeletonCu) dbgs()
+                     << "AttrOffset: " << Twine::utohexstr(AttrOffset) << "\n"
+                     << "Die Offset: " << Twine::utohexstr(DIE.getOffset())
+                     << "\n"
+                     << "AbbrDecl offfset: "
+                     << Twine::utohexstr(Unit.getAbbrOffset()) << "\n"
+                     << "Unit Offset: " << Twine::utohexstr(Unit.getOffset())
+                     << "\n\n";);
+      DebugInfoPatcher->addUDataPatch(AttrOffset, dwarf::DW_FORM_udata, 1);
+      DebugInfoPatcher->addUDataPatch(AttrOffset + 1, RangeBase,
+                                      NumBytesToFill);
+
+      // 1 Byte for DW_AT_GNU_ranges_base (since it's 2 bytes vs DW_AT_low_pc)
+      AbbrevOffsetModifier += 1;
     }
     if (NeedToPatch)
       DebugInfoPatcher->addLE32Patch(AttrOffset,
@@ -293,27 +293,35 @@ void DWARFRewriter::updateDebugInfo() {
   auto processUnitDIE = [&](size_t CUIndex, DWARFUnit *Unit) {
     uint64_t RangeBase = RangesSectionWriter->getSectionOffset();
     updateUnitDebugInfo(CUIndex, *Unit, *DebugInfoPatcher, *AbbrevPatcher);
-    if (llvm::Optional<uint64_t> DWOId = Unit->getDWOId()) {
-      Optional<DWARFUnit *> CU = BC.getDWOCU(*DWOId);
-      if (CU) {
-        updateDWONameCompDir(*Unit);
-        // Assuming there is unique DWOID per binary. i.e. Two or more CUs don't
-        // have same DWO ID.
-        assert(LocListWritersByCU.count(*DWOId) == 0 &&
-               "LocList writer for DWO unit already exists.");
-        LocListWritersByCU[*DWOId] =
-            std::make_unique<DebugLoclistWriter>(&BC, *DWOId);
-        SimpleBinaryPatcher *DwoDebugInfoPatcher =
-            getBinaryDWODebugInfoPatcher(*DWOId);
-        DwoDebugInfoPatcher->setRangeBase(RangeBase);
-        updateUnitDebugInfo(*DWOId, *(*CU), *DwoDebugInfoPatcher,
-                            *getBinaryDWOAbbrevPatcher(*DWOId));
-        static_cast<DebugLoclistWriter *>(LocListWritersByCU[*DWOId].get())
-            ->finalizePatches();
-        updateRangeBase(*Unit, RangeBase,
-                        DwoDebugInfoPatcher->getWasRangBasedUsed());
-      }
-    }
+
+    // Check if the unit is a skeleton and we need more updates for the CU and
+    // its matching split CU.
+    llvm::Optional<uint64_t> DWOId = Unit->getDWOId();
+    if (!DWOId)
+      return;
+
+    // Skipping CUs that failed to load.
+    Optional<DWARFUnit *> SplitCU = BC.getDWOCU(*DWOId);
+    if (!SplitCU)
+      return;
+
+    updateDWONameCompDir(*Unit);
+
+    // Assuming there is unique DWOID per binary. i.e. two or more CUs don't
+    // have same DWO ID.
+    assert(LocListWritersByCU.count(*DWOId) == 0 &&
+           "LocList writer for DWO unit already exists.");
+    LocListWritersByCU[*DWOId] =
+        std::make_unique<DebugLoclistWriter>(&BC, *DWOId);
+    SimpleBinaryPatcher *DwoDebugInfoPatcher =
+        getBinaryDWODebugInfoPatcher(*DWOId);
+    DwoDebugInfoPatcher->setRangeBase(RangeBase);
+    updateUnitDebugInfo(*DWOId, *(*SplitCU), *DwoDebugInfoPatcher,
+                        *getBinaryDWOAbbrevPatcher(*DWOId));
+    static_cast<DebugLoclistWriter *>(LocListWritersByCU[*DWOId].get())
+        ->finalizePatches();
+    updateRangeBase(*Unit, RangeBase,
+                    DwoDebugInfoPatcher->getWasRangBasedUsed());
   };
 
   if (opts::NoThreads || opts::DeterministicDebugInfo) {
