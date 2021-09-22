@@ -171,7 +171,7 @@ properties:
     just implementations of the names and signatures defined in the
     `ConvertibleToString` interface, like `ToString`, and not the functions
     defined on `Song` values.
--   Carbon will implicitly cast values from type `Song` to type
+-   Carbon will implicitly convert values from type `Song` to type
     `Song as ConvertibleToString` when calling a function that can only accept
     types of type `ConvertibleToString`.
 -   In the normal case where the implementation of `ConvertibleToString` for
@@ -199,7 +199,7 @@ guaranteed to see when needed. For more on this, see
 If `Song` doesn't implement an interface or we would like to use a different
 implementation of that interface, we can define another type that also has the
 same data representation as `Song` that has whatever different interface
-implementations we want. However, Carbon won't implicitly cast to that other
+implementations we want. However, Carbon won't implicitly convert to that other
 type, the user will have to explicitly cast to that type in order to select
 those alternate implementations. For more on this, see
 [the adapting type section](#adapting-types) below.
@@ -286,8 +286,8 @@ The `impl` definition defines a [facet type](terminology.md#facet-type):
 along with the `Add` and `Scale` methods, the API of `Point as Vector` _only_
 has the `Add` and `Scale` methods of the `Vector` interface. The facet type
 `Point as Vector` is [compatible](terminology.md#compatible-types) with `Point`,
-meaning their data representations are the same, so we allow you to cast between
-the two freely:
+meaning their data representations are the same, so we allow you to convert
+between the two freely:
 
 ```
 var a: Point = (.x = 1.0, .y = 2.0);
@@ -299,7 +299,7 @@ var b: Point as Vector = a;
 // `b` has `Add` and `Scale` methods:
 b.Add(b.Scale(2.0));
 
-// Will also implicitly cast when calling functions:
+// Will also implicitly convert when calling functions:
 fn F(c: Point as Vector, d: Point) {
   d.Add(c.Scale(2.0));
 }
@@ -311,7 +311,7 @@ z.Add(b);
 var w: Point = z as Point;
 ```
 
-These [casts](terminology.md#subtyping-and-casting) change which names are
+These [conversions](terminology.md#subtyping-and-casting) change which names are
 exposed in the type's API, but as much as possible we don't want the meaning of
 any given name to change. Instead we want these casts to simply change the
 subset of names that are visible.
@@ -327,8 +327,8 @@ of selecting an implementation of an interface for a type unambiguous throughout
 the whole program, so for example `Point as Vector` is well defined.
 
 We don't expect users to ordinarily name facet types explicitly in source code.
-Instead, values are implicitly cast to a facet type as part of calling a generic
-function, as described in the [Generics](#generics) section.
+Instead, values are implicitly converted to a facet type as part of calling a
+generic function, as described in the [Generics](#generics) section.
 
 ### Implementing multiple interfaces
 
@@ -432,7 +432,7 @@ can find all the names of direct (unqualified) members of a type in the
 definition of that type. The only thing that may be in another library is an
 `impl` of an interface.
 
-On the other hand, if we cast to the facet type, those methods do become
+On the other hand, if we convert to the facet type, those methods do become
 visible:
 
 ```
@@ -440,7 +440,7 @@ var a: Point2 = (.x = 1.0, .y = 2.0);
 // `a` does *not* have `Add` and `Scale` methods:
 // ❌ Error: a.Add(a.Scale(2.0));
 
-// Cast from Point2 implicitly
+// Convert from Point2 implicitly
 var b: Point2 as Vector = a;
 // `b` does have `Add` and `Scale` methods:
 b.Add(b.Scale(2.0));
@@ -579,8 +579,8 @@ fn AddAndScaleForPointAsVector(
       -> Point as Vector {
   return a.Add(b).Scale(s);
 }
-// May still be called with Point arguments, due to implicit casts.
-// Similarly the return value can be implicitly cast to a Point.
+// May still be called with Point arguments, due to implicit conversions.
+// Similarly the return value can be implicitly converted to a Point.
 var v2: Point = AddAndScaleForPointAsVector(a, w, 2.5);
 ```
 
@@ -724,10 +724,11 @@ An interface is one particularly simple example of a type-of-type. For example,
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types may be cast to a given type-of-type. The
-result of casting a type `T` to a type-of-type `I` (written `T as I`) is called
-a facet type, you might say a facet type `F` is the `I` facet of `T` if `F` is
-`T as I`. The API of `F` is determined by the set of names in the type-of-type.
+The requirements determine which types may be converted to a given type-of-type.
+The result of converting a type `T` to a type-of-type `I` (written `T as I`) is
+called a facet type, you might say a facet type `F` is the `I` facet of `T` if
+`F` is `T as I`. The API of `F` is determined by the set of names in the
+type-of-type.
 
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
@@ -845,10 +846,10 @@ one generic function from another as long as you are calling a function with a
 subset of your requirements.
 
 Given a generic type `T` with type-of-type `I1`, it may be
-[implicitly cast](terminology.md#subtyping-and-casting) to a type-of-type `I2`,
-resulting in `T as I2`, as long as the requirements of `I1` are a superset of
-the requirements of `I2`. Further, given a value `x` of type `T`, it can be
-implicitly cast to `T as I2`. For example:
+[implicitly converted](../expressions/implicit_conversions.md) to a type-of-type
+`I2`, resulting in `T as I2`, as long as the requirements of `I1` are a superset
+of the requirements of `I2`. Further, given a value `x` of type `T`, it can be
+implicitly converted to `T as I2`. For example:
 
 ```
 interface Printable { fn Print[me: Self](); }
@@ -1409,10 +1410,10 @@ requiring an implementation of interface `B` means `A` is more specific than
 
 ## Type compatibility
 
-None of the casts between facet types change the implementation of any
-interfaces for a type. So the result of a cast does not depend on the sequence
-of casts you perform, just the original type and the final type-of-type. That
-is, these types will all be equal:
+None of the conversions between facet types change the implementation of any
+interfaces for a type. So the result of a conversion does not depend on the
+sequence of conversions you perform, just the original type and the final
+type-of-type. That is, these types will all be equal:
 
 -   `T as I`
 -   `(T as A) as I`
@@ -1500,8 +1501,8 @@ This allows us to provide implementations of new interfaces (as in
     is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
     and `FormattedSongByTitle` end up compatible with each other.
 -   Since adapted types are compatible with the original type, you may
-    explicitly cast between them, but there is no implicit casting between these
-    types (unlike between a type and one of its facet types / impls).
+    explicitly cast between them, but there is no implicit conversion between
+    these types (unlike between a type and one of its facet types / impls).
 -   For the purposes of generics, we only need to support adding interface
     implementations. But this `adapter` feature could be used more generally,
     such as to add methods.
@@ -1570,7 +1571,7 @@ compiler provides it as
 ### Adapter compatibility
 
 The framework from the [type compatibility section](#type-compatibility) allows
-us to evaluate when we can cast between two different arguments to a
+us to evaluate when we can convert between two different arguments to a
 parameterized type. Consider three compatible types, all of which implement
 `Hashable`:
 
@@ -1594,10 +1595,10 @@ Observe that `Song as Hashable` is different from
 `Song as Hashable` and `PlayableSong as Hashable` are almost the same. In
 addition to using the same data representation, they both implement one
 interface, `Hashable`, and use the same implementation for that interface. The
-one difference between them is that `Song as Hashable` may be implicitly cast to
-`Song`, which implements interface `Printable`, and `PlayableSong as Hashable`
-may be implicilty cast to `PlayableSong`, which implements interface `Media`.
-This means that it is safe to cast between
+one difference between them is that `Song as Hashable` may be implicitly
+converted to `Song`, which implements interface `Printable`, and
+`PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
+implements interface `Media`. This means that it is safe to convert between
 `HashMap(Song, Int) == HashMap(Song as Hashable, Int)` and
 `HashMap(PlayableSong, Int) == HashMap(PlayableSong as Hashable, Int)` (though
 maybe only with an explicit cast) but
@@ -1670,7 +1671,7 @@ adapter Song extends SongLib.Song { }
 external impl Song as CompareLib.Comparable { ... }
 ```
 
-The caller can either cast `SongLib.Song` values to `Song` when calling
+The caller can either convert `SongLib.Song` values to `Song` when calling
 `CompareLib.Sort` or just start with `Song` values in the first place.
 
 ```

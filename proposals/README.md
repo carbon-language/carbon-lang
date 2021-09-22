@@ -72,6 +72,7 @@ request:
 -   [0752 - `api` file default-`public`](p0752.md)
 -   [0777 - Inheritance](p0777.md)
 -   [0818 - Constraints for generics (generics details 3)](p0818.md)
+-   [0820 - Implicit conversions](p0820.md)
 -   [0829 - One way principle](p0829.md)
 
 <!-- endproposals -->
