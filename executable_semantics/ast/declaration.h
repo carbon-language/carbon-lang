@@ -14,7 +14,7 @@
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {

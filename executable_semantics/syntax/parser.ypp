@@ -72,8 +72,7 @@
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
   #include "executable_semantics/common/arena.h"
-  #include "executable_semantics/common/ptr.h"
-  #include "executable_semantics/syntax/bison_wrap.h"
+  #include "executable_semantics/common/nonnull.h"
 
   namespace Carbon {
   class ParseAndLexContext;
@@ -98,42 +97,42 @@
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
-%type <BisonWrap<Nonnull<const Declaration*>>> declaration
-%type <BisonWrap<Nonnull<const FunctionDefinition*>>> function_declaration
-%type <BisonWrap<Nonnull<const FunctionDefinition*>>> function_definition
+%type <Nonnull<const Declaration*>> declaration
+%type <Nonnull<const FunctionDefinition*>> function_declaration
+%type <Nonnull<const FunctionDefinition*>> function_definition
 %type <std::vector<Nonnull<const Declaration*>>> declaration_list
-%type <BisonWrap<Nonnull<const Statement*>>> statement
-%type <BisonWrap<Nonnull<const Statement*>>> if_statement
+%type <Nonnull<const Statement*>> statement
+%type <Nonnull<const Statement*>> if_statement
 %type <std::optional<Nonnull<const Statement*>>> optional_else
-%type <BisonWrap<std::pair<Nonnull<const Expression*>, bool>>> return_expression
-%type <BisonWrap<Nonnull<const Statement*>>> block
+%type <std::pair<Nonnull<const Expression*>, bool>> return_expression
+%type <Nonnull<const Statement*>> block
 %type <std::optional<Nonnull<const Statement*>>> statement_list
-%type <BisonWrap<Nonnull<const Expression*>>> expression
-%type <BisonWrap<GenericBinding>> generic_binding
+%type <Nonnull<const Expression*>> expression
+%type <GenericBinding> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
 %type <std::vector<GenericBinding>> deduced_param_list
-%type <BisonWrap<Nonnull<const Pattern*>>> pattern
-%type <BisonWrap<Nonnull<const Pattern*>>> non_expression_pattern
-%type <BisonWrap<std::pair<Nonnull<const Expression*>, bool>>> return_type
-%type <BisonWrap<Nonnull<const Expression*>>> paren_expression
-%type <BisonWrap<Nonnull<const Expression*>>> tuple
+%type <Nonnull<const Pattern*>> pattern
+%type <Nonnull<const Pattern*>> non_expression_pattern
+%type <std::pair<Nonnull<const Expression*>, bool>> return_type
+%type <Nonnull<const Expression*>> paren_expression
+%type <Nonnull<const Expression*>> tuple
 %type <std::optional<std::string>> binding_lhs
-%type <BisonWrap<Nonnull<const BindingPattern*>>> variable_declaration
-%type <BisonWrap<Nonnull<Member*>>> member
+%type <Nonnull<const BindingPattern*>> variable_declaration
+%type <Nonnull<Member*>> member
 %type <std::vector<Nonnull<Member*>>> member_list
-%type <BisonWrap<ParenContents<Expression>::Element>> paren_expression_element
+%type <ParenContents<Expression>::Element> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
-%type <BisonWrap<Nonnull<const Pattern*>>> paren_pattern
-%type <BisonWrap<Nonnull<const TuplePattern*>>> tuple_pattern
-%type <BisonWrap<Nonnull<const TuplePattern*>>> maybe_empty_tuple_pattern
+%type <Nonnull<const Pattern*>> paren_pattern
+%type <Nonnull<const TuplePattern*>> tuple_pattern
+%type <Nonnull<const TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
-%type <BisonWrap<ParenContents<Pattern>::Element>> paren_pattern_element
+%type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <BisonWrap<std::pair<std::string, Nonnull<const Expression*>>>> alternative
+%type <std::pair<std::string, Nonnull<const Expression*>>> alternative
 %type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list
 %type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list_contents
-%type <BisonWrap<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>> clause
+%type <std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>> clause
 %type <std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>> clause_list
 
 %token
@@ -375,7 +374,7 @@ expression:
     }
 | FNTY tuple return_type
     {
-      auto [return_exp, is_omitted_exp] = $3.Release();
+      auto [return_exp, is_omitted_exp] = $3;
       $$ = arena->New<FunctionTypeLiteral>(context.SourceLoc(), $2, return_exp,
                                            is_omitted_exp);
     }
@@ -469,9 +468,8 @@ paren_pattern_contents:
 | paren_pattern_contents COMMA paren_expression_element
     {
       $$ = $1;
-      auto el = $3.Release();
-      $$.elements.push_back({.name = el.name,
-                             .term = arena->New<ExpressionPattern>(el.term)});
+      $$.elements.push_back({.name = $3.name,
+                             .term = arena->New<ExpressionPattern>($3.term)});
     }
 | paren_pattern_contents COMMA paren_pattern_element
     {
@@ -541,7 +539,7 @@ statement:
     { $$ = arena->New<Continue>(context.SourceLoc()); }
 | RETURN return_expression SEMICOLON
     {
-      auto [return_exp, is_omitted_exp] = $2.Release();
+      auto [return_exp, is_omitted_exp] = $2;
       $$ = arena->New<Return>(context.SourceLoc(), return_exp, is_omitted_exp);
     }
 | block
@@ -617,7 +615,7 @@ deduced_params:
 function_definition:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
-      auto [return_exp, is_omitted_exp] = $5.Release();
+      auto [return_exp, is_omitted_exp] = $5;
       $$ = arena->New<FunctionDefinition>(
           context.SourceLoc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
@@ -636,7 +634,7 @@ function_definition:
 function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
     {
-      auto [return_exp, is_omitted_exp] = $5.Release();
+      auto [return_exp, is_omitted_exp] = $5;
       $$ = arena->New<FunctionDefinition>(
           context.SourceLoc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp,

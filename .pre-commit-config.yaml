@@ -86,13 +86,6 @@ repos:
         language: python
         files: ^executable_semantics/syntax/parser.ypp$
         pass_filenames: false
-      - id: proposal-list
-        name: Update list of proposals
-        description: Updates the list of proposals in proposals/README.md
-        entry: proposals/scripts/update_proposal_list.py
-        language: python
-        files: ^proposals/(README|p.*)\.md$
-        pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
     rev: a8b4665e7d6eb945c47820adb1a3f8b006adce0c # frozen: 21.8b0
