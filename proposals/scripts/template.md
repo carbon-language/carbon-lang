@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## TODO: Initial proposal setup
 
-> TIP: Run `./scripts/new_proposal.py "TITLE"` to do new proposal setup.
+> TIP: Run `./new_proposal.py "TITLE"` to do new proposal setup.
 
 1. Copy this template to `new.md`, and create a commit.
 2. Create a GitHub pull request, to get a pull request number.
