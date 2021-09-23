@@ -40,6 +40,24 @@ class TypeChecker {
       -> TypeCheckContext;
 
  private:
+  // Context about the return type, which may be updated during type checking.
+  struct ReturnTypeContext {
+    // If in_return_type is auto, return_type will be nullopt; otherwise, it's
+    // in_return_type. `is_auto` is set accordingly.
+    ReturnTypeContext(Nonnull<const Value*> in_return_type, bool is_omitted);
+
+    // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.
+    const bool is_auto;
+
+    // The actual return type. May be nullopt for an `auto` return type that has
+    // yet to be determined.
+    std::optional<Nonnull<const Value*>> return_type;
+
+    // Indicates the return type was omitted and is implicitly the empty tuple,
+    // as in `fn Foo() {}`.
+    const bool is_omitted;
+  };
+
   struct TCExpression {
     TCExpression(Nonnull<const Expression*> e, Nonnull<const Value*> t,
                  TypeEnv types)
@@ -94,7 +112,7 @@ class TypeChecker {
   // type is "auto", then the return type is inferred from the first return
   // statement.
   auto TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types, Env values,
-                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
+                     Nonnull<ReturnTypeContext*> return_type_context)
       -> TCStatement;
 
   auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
@@ -103,7 +121,7 @@ class TypeChecker {
   auto TypeCheckCase(Nonnull<const Value*> expected,
                      Nonnull<const Pattern*> pat,
                      Nonnull<const Statement*> body, TypeEnv types, Env values,
-                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
+                     Nonnull<ReturnTypeContext*> return_type_context)
       -> std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>;
 
   auto TypeOfFunDef(TypeEnv types, Env values,

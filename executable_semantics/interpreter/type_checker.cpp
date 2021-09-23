@@ -22,8 +22,15 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
+using llvm::isa;
 
 namespace Carbon {
+
+TypeChecker::ReturnTypeContext::ReturnTypeContext(
+    Nonnull<const Value*> in_return_type, bool is_omitted)
+    : is_auto(isa<AutoType>(in_return_type)),
+      return_type(is_auto ? std::nullopt : std::optional(in_return_type)),
+      is_omitted(is_omitted) {}
 
 void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
@@ -625,18 +632,18 @@ auto TypeChecker::TypeCheckPattern(
 auto TypeChecker::TypeCheckCase(Nonnull<const Value*> expected,
                                 Nonnull<const Pattern*> pat,
                                 Nonnull<const Statement*> body, TypeEnv types,
-                                Env values, Nonnull<const Value*>& ret_type,
-                                bool is_omitted_ret_type)
+                                Env values,
+                                Nonnull<ReturnTypeContext*> return_type_context)
     -> std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>> {
   auto pat_res = TypeCheckPattern(pat, types, values, expected);
-  auto res =
-      TypeCheckStmt(body, pat_res.types, values, ret_type, is_omitted_ret_type);
+  auto res = TypeCheckStmt(body, pat_res.types, values, return_type_context);
   return std::make_pair(pat, res.stmt);
 }
 
 auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
-                                Env values, Nonnull<const Value*>& ret_type,
-                                bool is_omitted_ret_type) -> TCStatement {
+                                Env values,
+                                Nonnull<ReturnTypeContext*> return_type_context)
+    -> TCStatement {
   switch (s->Tag()) {
     case Statement::Kind::Match: {
       const auto& match = cast<Match>(*s);
@@ -647,7 +654,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
       for (auto& clause : match.Clauses()) {
         new_clauses.push_back(TypeCheckCase(res_type, clause.first,
                                             clause.second, types, values,
-                                            ret_type, is_omitted_ret_type));
+                                            return_type_context));
       }
       auto new_s = arena->New<Match>(s->SourceLoc(), res.exp, new_clauses);
       return TCStatement(new_s, types);
@@ -657,8 +664,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
       auto cnd_res = TypeCheckExp(while_stmt.Cond(), types, values);
       ExpectType(s->SourceLoc(), "condition of `while`", arena->New<BoolType>(),
                  cnd_res.type);
-      auto body_res = TypeCheckStmt(while_stmt.Body(), types, values, ret_type,
-                                    is_omitted_ret_type);
+      auto body_res =
+          TypeCheckStmt(while_stmt.Body(), types, values, return_type_context);
       auto new_s =
           arena->New<While>(s->SourceLoc(), cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, types);
@@ -669,8 +676,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
     case Statement::Kind::Block: {
       const auto& block = cast<Block>(*s);
       if (block.Stmt()) {
-        auto stmt_res = TypeCheckStmt(*block.Stmt(), types, values, ret_type,
-                                      is_omitted_ret_type);
+        auto stmt_res =
+            TypeCheckStmt(*block.Stmt(), types, values, return_type_context);
         return TCStatement(arena->New<Block>(s->SourceLoc(), stmt_res.stmt),
                            types);
       } else {
@@ -688,13 +695,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
     }
     case Statement::Kind::Sequence: {
       const auto& seq = cast<Sequence>(*s);
-      auto stmt_res = TypeCheckStmt(seq.Stmt(), types, values, ret_type,
-                                    is_omitted_ret_type);
+      auto stmt_res =
+          TypeCheckStmt(seq.Stmt(), types, values, return_type_context);
       auto checked_types = stmt_res.types;
       std::optional<Nonnull<const Statement*>> next_stmt;
       if (seq.Next()) {
         auto next_res = TypeCheckStmt(*seq.Next(), checked_types, values,
-                                      ret_type, is_omitted_ret_type);
+                                      return_type_context);
         next_stmt = next_res.stmt;
         checked_types = next_res.types;
       }
@@ -723,12 +730,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
       auto cnd_res = TypeCheckExp(if_stmt.Cond(), types, values);
       ExpectType(s->SourceLoc(), "condition of `if`", arena->New<BoolType>(),
                  cnd_res.type);
-      auto then_res = TypeCheckStmt(if_stmt.ThenStmt(), types, values, ret_type,
-                                    is_omitted_ret_type);
+      auto then_res =
+          TypeCheckStmt(if_stmt.ThenStmt(), types, values, return_type_context);
       std::optional<Nonnull<const Statement*>> else_stmt;
       if (if_stmt.ElseStmt()) {
         auto else_res = TypeCheckStmt(*if_stmt.ElseStmt(), types, values,
-                                      ret_type, is_omitted_ret_type);
+                                      return_type_context);
         else_stmt = else_res.stmt;
       }
       auto new_s =
@@ -738,17 +745,24 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
     case Statement::Kind::Return: {
       const auto& ret = cast<Return>(*s);
       auto res = TypeCheckExp(ret.Exp(), types, values);
-      if (ret_type->Tag() == Value::Kind::AutoType) {
-        // The following infers the return type from the first 'return'
-        // statement. This will get more difficult with subtyping, when we
-        // should infer the least-upper bound of all the 'return' statements.
-        ret_type = res.type;
+      if (return_type_context->is_auto) {
+        if (return_type_context->return_type) {
+          // Only one return is allowed when the return type is `auto`.
+          FATAL_COMPILATION_ERROR(s->SourceLoc())
+              << "Only one return is allowed in a function with an `auto` "
+                 "return type.";
+        } else {
+          // Infer the auto return from the first `return` statement.
+          return_type_context->return_type = res.type;
+        }
       } else {
-        ExpectType(s->SourceLoc(), "return", ret_type, res.type);
+        ExpectType(s->SourceLoc(), "return", *return_type_context->return_type,
+                   res.type);
       }
-      if (ret.IsOmittedExp() != is_omitted_ret_type) {
+      if (ret.IsOmittedExp() != return_type_context->is_omitted) {
         FATAL_COMPILATION_ERROR(s->SourceLoc())
-            << *s << " should" << (is_omitted_ret_type ? " not" : "")
+            << *s << " should"
+            << (return_type_context->is_omitted ? " not" : "")
             << " provide a return value, to match the function's signature.";
       }
       return TCStatement(
@@ -757,8 +771,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
     }
     case Statement::Kind::Continuation: {
       const auto& cont = cast<Continuation>(*s);
-      TCStatement body_result = TypeCheckStmt(cont.Body(), types, values,
-                                              ret_type, is_omitted_ret_type);
+      TCStatement body_result =
+          TypeCheckStmt(cont.Body(), types, values, return_type_context);
       auto new_continuation = arena->New<Continuation>(
           s->SourceLoc(), cont.ContinuationVariable(), body_result.stmt);
       types.Set(cont.ContinuationVariable(), arena->New<ContinuationType>());
@@ -879,9 +893,13 @@ auto TypeChecker::TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
   }
   std::optional<Nonnull<const Statement*>> body_stmt;
   if (f->body) {
-    auto res = TypeCheckStmt(*f->body, param_res.types, values, return_type,
-                             f->is_omitted_return_type);
+    ReturnTypeContext return_type_context(return_type,
+                                          f->is_omitted_return_type);
+    auto res =
+        TypeCheckStmt(*f->body, param_res.types, values, &return_type_context);
     body_stmt = res.stmt;
+    // Save the return type in case it changed.
+    return_type = *return_type_context.return_type;
   }
   auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type,
                                   f->source_location);

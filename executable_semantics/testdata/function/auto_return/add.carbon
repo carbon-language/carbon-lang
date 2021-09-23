@@ -11,11 +11,8 @@
 
 package ExecutableSemanticsTest api;
 
-fn Id(t: Type) => t;
-
-// Test non-trivial type expression in variable declaration statement.
+fn add(x: i32, y: i32) -> auto { return x + y; }
 
 fn main() -> i32 {
-  var x: Id(i32) = 0;
-  return x;
+  return add(1, 2) - 3;
 }
