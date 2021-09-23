@@ -55,7 +55,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
 }
 
 TuplePattern::TuplePattern(Nonnull<Arena*> arena,
-                           Nonnull<const Expression*> tuple_literal)
+                           Nonnull<Expression*> tuple_literal)
     : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
   const auto& tuple = cast<TupleLiteral>(*tuple_literal);
   for (const FieldInitializer& init : tuple.Fields()) {
@@ -85,8 +85,8 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
 // Used by AlternativePattern for constructor initialization. Produces a helpful
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
-static const FieldAccessExpression& RequireFieldAccess(
-    Nonnull<const Expression*> alternative) {
+static auto RequireFieldAccess(Nonnull<Expression*> alternative)
+    -> FieldAccessExpression& {
   if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
     FATAL_PROGRAM_ERROR(alternative->SourceLoc())
         << "Alternative pattern must have the form of a field access.";
@@ -95,8 +95,8 @@ static const FieldAccessExpression& RequireFieldAccess(
 }
 
 AlternativePattern::AlternativePattern(SourceLocation loc,
-                                       Nonnull<const Expression*> alternative,
-                                       Nonnull<const TuplePattern*> arguments)
+                                       Nonnull<Expression*> alternative,
+                                       Nonnull<TuplePattern*> arguments)
     : Pattern(Kind::AlternativePattern, loc),
       choice_type(RequireFieldAccess(alternative).Aggregate()),
       alternative_name(RequireFieldAccess(alternative).Field()),

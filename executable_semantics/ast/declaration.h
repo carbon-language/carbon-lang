@@ -61,7 +61,7 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(Nonnull<const FunctionDefinition*> definition)
+  FunctionDeclaration(Nonnull<FunctionDefinition*> definition)
       : Declaration(Kind::FunctionDeclaration, definition->source_location),
         definition(definition) {}
 
@@ -70,9 +70,10 @@ class FunctionDeclaration : public Declaration {
   }
 
   auto Definition() const -> const FunctionDefinition& { return *definition; }
+  auto Definition() -> FunctionDefinition& { return *definition; }
 
  private:
-  Nonnull<const FunctionDefinition*> definition;
+  Nonnull<FunctionDefinition*> definition;
 };
 
 class ClassDeclaration : public Declaration {
@@ -89,6 +90,7 @@ class ClassDeclaration : public Declaration {
   }
 
   auto Definition() const -> const ClassDefinition& { return definition; }
+  auto Definition() -> ClassDefinition& { return definition; }
 
  private:
   ClassDefinition definition;
@@ -121,9 +123,8 @@ class ChoiceDeclaration : public Declaration {
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(SourceLocation loc,
-                      Nonnull<const BindingPattern*> binding,
-                      Nonnull<const Expression*> initializer)
+  VariableDeclaration(SourceLocation loc, Nonnull<BindingPattern*> binding,
+                      Nonnull<Expression*> initializer)
       : Declaration(Kind::VariableDeclaration, loc),
         binding(binding),
         initializer(initializer) {}
@@ -133,14 +134,16 @@ class VariableDeclaration : public Declaration {
   }
 
   auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
+  auto Binding() -> Nonnull<BindingPattern*> { return binding; }
   auto Initializer() const -> Nonnull<const Expression*> { return initializer; }
+  auto Initializer() -> Nonnull<Expression*> { return initializer; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  Nonnull<const BindingPattern*> binding;
-  Nonnull<const Expression*> initializer;
+  Nonnull<BindingPattern*> binding;
+  Nonnull<Expression*> initializer;
 };
 
 }  // namespace Carbon

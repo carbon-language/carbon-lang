@@ -59,7 +59,7 @@ class Statement {
 
 class ExpressionStatement : public Statement {
  public:
-  ExpressionStatement(SourceLocation loc, Nonnull<const Expression*> exp)
+  ExpressionStatement(SourceLocation loc, Nonnull<Expression*> exp)
       : Statement(Kind::ExpressionStatement, loc), exp(exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -67,15 +67,15 @@ class ExpressionStatement : public Statement {
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  auto Exp() -> Nonnull<Expression*> { return exp; }
 
  private:
-  Nonnull<const Expression*> exp;
+  Nonnull<Expression*> exp;
 };
 
 class Assign : public Statement {
  public:
-  Assign(SourceLocation loc, Nonnull<const Expression*> lhs,
-         Nonnull<const Expression*> rhs)
+  Assign(SourceLocation loc, Nonnull<Expression*> lhs, Nonnull<Expression*> rhs)
       : Statement(Kind::Assign, loc), lhs(lhs), rhs(rhs) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -83,17 +83,19 @@ class Assign : public Statement {
   }
 
   auto Lhs() const -> Nonnull<const Expression*> { return lhs; }
+  auto Lhs() -> Nonnull<Expression*> { return lhs; }
   auto Rhs() const -> Nonnull<const Expression*> { return rhs; }
+  auto Rhs() -> Nonnull<Expression*> { return rhs; }
 
  private:
-  Nonnull<const Expression*> lhs;
-  Nonnull<const Expression*> rhs;
+  Nonnull<Expression*> lhs;
+  Nonnull<Expression*> rhs;
 };
 
 class VariableDefinition : public Statement {
  public:
-  VariableDefinition(SourceLocation loc, Nonnull<const Pattern*> pat,
-                     Nonnull<const Expression*> init)
+  VariableDefinition(SourceLocation loc, Nonnull<Pattern*> pat,
+                     Nonnull<Expression*> init)
       : Statement(Kind::VariableDefinition, loc), pat(pat), init(init) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -101,16 +103,18 @@ class VariableDefinition : public Statement {
   }
 
   auto Pat() const -> Nonnull<const Pattern*> { return pat; }
+  auto Pat() -> Nonnull<Pattern*> { return pat; }
   auto Init() const -> Nonnull<const Expression*> { return init; }
+  auto Init() -> Nonnull<Expression*> { return init; }
 
  private:
-  Nonnull<const Pattern*> pat;
-  Nonnull<const Expression*> init;
+  Nonnull<Pattern*> pat;
+  Nonnull<Expression*> init;
 };
 
 class If : public Statement {
  public:
-  If(SourceLocation loc, Nonnull<const Expression*> cond,
+  If(SourceLocation loc, Nonnull<Expression*> cond,
      Nonnull<Statement*> then_stmt,
      std::optional<Nonnull<Statement*>> else_stmt)
       : Statement(Kind::If, loc),
@@ -123,14 +127,16 @@ class If : public Statement {
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto ThenStmt() const -> Nonnull<Statement*> { return then_stmt; }
+  auto Cond() -> Nonnull<Expression*> { return cond; }
+  auto ThenStmt() const -> Nonnull<const Statement*> { return then_stmt; }
+  auto ThenStmt() -> Nonnull<Statement*> { return then_stmt; }
   auto ElseStmt() const -> std::optional<Nonnull<const Statement*>> {
     return else_stmt;
   }
   auto ElseStmt() -> std::optional<Nonnull<Statement*>> { return else_stmt; }
 
  private:
-  Nonnull<const Expression*> cond;
+  Nonnull<Expression*> cond;
   Nonnull<Statement*> then_stmt;
   std::optional<Nonnull<Statement*>> else_stmt;
 };
@@ -139,8 +145,7 @@ class Return : public Statement {
  public:
   Return(Nonnull<Arena*> arena, SourceLocation loc)
       : Return(loc, arena->New<TupleLiteral>(loc), true) {}
-  Return(SourceLocation loc, Nonnull<const Expression*> exp,
-         bool is_omitted_exp)
+  Return(SourceLocation loc, Nonnull<Expression*> exp, bool is_omitted_exp)
       : Statement(Kind::Return, loc),
         exp(exp),
         is_omitted_exp(is_omitted_exp) {}
@@ -150,10 +155,11 @@ class Return : public Statement {
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  auto Exp() -> Nonnull<Expression*> { return exp; }
   auto IsOmittedExp() const -> bool { return is_omitted_exp; }
 
  private:
-  Nonnull<const Expression*> exp;
+  Nonnull<Expression*> exp;
   bool is_omitted_exp;
 };
 
@@ -167,8 +173,10 @@ class Sequence : public Statement {
     return stmt->Tag() == Kind::Sequence;
   }
 
-  auto Stmt() const -> Nonnull<Statement*> { return stmt; }
+  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
+  auto Stmt() -> Nonnull<Statement*> { return stmt; }
   auto Next() const -> std::optional<Nonnull<const Statement*>> { return next; }
+  auto Next() -> std::optional<Nonnull<Statement*>> { return next; }
 
  private:
   Nonnull<Statement*> stmt;
@@ -185,6 +193,7 @@ class Block : public Statement {
   }
 
   auto Stmt() const -> std::optional<Nonnull<const Statement*>> { return stmt; }
+  auto Stmt() -> std::optional<Nonnull<Statement*>> { return stmt; }
 
  private:
   std::optional<Nonnull<Statement*>> stmt;
@@ -192,8 +201,7 @@ class Block : public Statement {
 
 class While : public Statement {
  public:
-  While(SourceLocation loc, Nonnull<const Expression*> cond,
-        Nonnull<Statement*> body)
+  While(SourceLocation loc, Nonnull<Expression*> cond, Nonnull<Statement*> body)
       : Statement(Kind::While, loc), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
@@ -201,10 +209,12 @@ class While : public Statement {
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto Body() const -> Nonnull<Statement*> { return body; }
+  auto Cond() -> Nonnull<Expression*> { return cond; }
+  auto Body() const -> Nonnull<const Statement*> { return body; }
+  auto Body() -> Nonnull<Statement*> { return body; }
 
  private:
-  Nonnull<const Expression*> cond;
+  Nonnull<Expression*> cond;
   Nonnull<Statement*> body;
 };
 
@@ -228,7 +238,7 @@ class Continue : public Statement {
 
 class Match : public Statement {
  public:
-  Match(SourceLocation loc, Nonnull<const Expression*> exp,
+  Match(SourceLocation loc, Nonnull<Expression*> exp,
         std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clauses)
       : Statement(Kind::Match, loc), exp(exp), clauses(std::move(clauses)) {}
 
@@ -237,13 +247,14 @@ class Match : public Statement {
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  auto Exp() -> Nonnull<Expression*> { return exp; }
   auto Clauses() const
       -> llvm::ArrayRef<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> {
     return clauses;
   }
 
  private:
-  Nonnull<const Expression*> exp;
+  Nonnull<Expression*> exp;
   std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clauses;
 };
 
@@ -267,7 +278,8 @@ class Continuation : public Statement {
   auto ContinuationVariable() const -> const std::string& {
     return continuation_variable;
   }
-  auto Body() const -> Nonnull<Statement*> { return body; }
+  auto Body() const -> Nonnull<const Statement*> { return body; }
+  auto Body() -> Nonnull<Statement*> { return body; }
 
  private:
   std::string continuation_variable;

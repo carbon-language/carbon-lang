@@ -32,12 +32,10 @@ class TypeChecker {
     Env values;
   };
 
-  auto MakeTypeChecked(const Nonnull<const Declaration*> d,
-                       const TypeEnv& types, const Env& values)
-      -> Nonnull<const Declaration*>;
+  auto MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
+                       const Env& values) -> Nonnull<Declaration*>;
 
-  auto TopLevel(const std::vector<Nonnull<Declaration*>>& fs)
-      -> TypeCheckContext;
+  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
 
  private:
   struct TCExpression {
@@ -50,16 +48,15 @@ class TypeChecker {
   };
 
   struct TCPattern {
-    Nonnull<const Pattern*> pattern;
+    Nonnull<Pattern*> pattern;
     Nonnull<const Value*> type;
     TypeEnv types;
   };
 
   struct TCStatement {
-    TCStatement(Nonnull<const Statement*> s, TypeEnv types)
-        : stmt(s), types(types) {}
+    TCStatement(Nonnull<Statement*> s, TypeEnv types) : stmt(s), types(types) {}
 
-    Nonnull<const Statement*> stmt;
+    Nonnull<Statement*> stmt;
     TypeEnv types;
   };
 
@@ -81,7 +78,7 @@ class TypeChecker {
   // Expressions. `expected` is the type that this pattern is expected to have,
   // if the surrounding context gives us that information. Otherwise, it is
   // nullopt.
-  auto TypeCheckPattern(Nonnull<const Pattern*> p, TypeEnv types, Env values,
+  auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
                         std::optional<Nonnull<const Value*>> expected)
       -> TCPattern;
 
@@ -96,25 +93,24 @@ class TypeChecker {
                      Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
       -> TCStatement;
 
-  auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
-      -> Nonnull<const FunctionDefinition*>;
+  auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
+      -> Nonnull<FunctionDefinition*>;
 
-  auto TypeCheckCase(Nonnull<const Value*> expected,
-                     Nonnull<const Pattern*> pat,
-                     Nonnull<const Statement*> body, TypeEnv types, Env values,
+  auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
+                     Nonnull<Statement*> body, TypeEnv types, Env values,
                      Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
-      -> std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>;
+      -> std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>;
 
-  auto TypeOfFunDef(TypeEnv types, Env values,
-                    const FunctionDefinition* fun_def) -> Nonnull<const Value*>;
+  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDefinition* fun_def)
+      -> Nonnull<const Value*>;
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
       -> Nonnull<const Value*>;
 
-  void TopLevel(const Declaration& d, TypeCheckContext* tops);
+  void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
-  auto CheckOrEnsureReturn(std::optional<Nonnull<const Statement*>> opt_stmt,
+  auto CheckOrEnsureReturn(std::optional<Nonnull<Statement*>> opt_stmt,
                            bool omitted_ret_type, SourceLocation loc)
-      -> Nonnull<const Statement*>;
+      -> Nonnull<Statement*>;
 
   // Reify type to type expression.
   auto ReifyType(Nonnull<const Value*> t, SourceLocation loc)

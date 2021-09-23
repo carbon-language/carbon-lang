@@ -24,13 +24,12 @@ struct GenericBinding {
 struct FunctionDefinition {
   FunctionDefinition(SourceLocation source_location, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     Nonnull<const TuplePattern*> param_pattern,
-                     Nonnull<const Pattern*> return_type,
-                     bool is_omitted_return_type,
-                     std::optional<Nonnull<const Statement*>> body)
+                     Nonnull<TuplePattern*> param_pattern,
+                     Nonnull<Pattern*> return_type, bool is_omitted_return_type,
+                     std::optional<Nonnull<Statement*>> body)
       : source_location(source_location),
         name(std::move(name)),
-        deduced_parameters(deduced_params),
+        deduced_parameters(std::move(deduced_params)),
         param_pattern(param_pattern),
         return_type(return_type),
         is_omitted_return_type(is_omitted_return_type),
@@ -43,10 +42,10 @@ struct FunctionDefinition {
   SourceLocation source_location;
   std::string name;
   std::vector<GenericBinding> deduced_parameters;
-  Nonnull<const TuplePattern*> param_pattern;
-  Nonnull<const Pattern*> return_type;
+  Nonnull<TuplePattern*> param_pattern;
+  Nonnull<Pattern*> return_type;
   bool is_omitted_return_type;
-  std::optional<Nonnull<const Statement*>> body;
+  std::optional<Nonnull<Statement*>> body;
 };
 
 }  // namespace Carbon
