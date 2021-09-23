@@ -87,19 +87,23 @@ class DWARFRewriter {
   /// Update debug info for all DIEs in \p Unit.
   void updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
                            SimpleBinaryPatcher &DebugInfoPatcher,
-                           DebugAbbrevWriter &AbbrevWriter);
+                           DebugAbbrevWriter &AbbrevWriter,
+                           Optional<uint64_t> RangesBase = None);
 
   /// Patches the binary for an object's address ranges to be updated.
-  /// The object can be a anything that has associated address ranges via either
+  /// The object can be anything that has associated address ranges via either
   /// DW_AT_low/high_pc or DW_AT_ranges (i.e. functions, lexical blocks, etc).
   /// \p DebugRangesOffset is the offset in .debug_ranges of the object's
   /// new address ranges in the output binary.
   /// \p Unit Compile unit the object belongs to.
   /// \p DIE is the object's DIE in the input binary.
+  /// \p RangesBase if present, update \p DIE to use  DW_AT_GNU_ranges_base
+  ///    attribute.
   void updateDWARFObjectAddressRanges(const DWARFDie DIE,
                                       uint64_t DebugRangesOffset,
                                       SimpleBinaryPatcher &DebugInfoPatcher,
-                                      DebugAbbrevWriter &AbbrevWriter);
+                                      DebugAbbrevWriter &AbbrevWriter,
+                                      Optional<uint64_t> RangesBase = None);
 
   std::unique_ptr<DebugBufferVector>
   makeFinalLocListsSection(SimpleBinaryPatcher &DebugInfoPatcher);
@@ -154,14 +158,18 @@ class DWARFRewriter {
   PendingRangesType PendingRanges;
 
   /// Convert \p Abbrev from using a simple DW_AT_(low|high)_pc range to
-  /// DW_AT_ranges.
+  /// DW_AT_ranges with optional \p RangesBase.
   void convertToRanges(const DWARFUnit &Unit,
                        const DWARFAbbreviationDeclaration *Abbrev,
-                       DebugAbbrevWriter &AbbrevWriter);
+                       DebugAbbrevWriter &AbbrevWriter,
+                       Optional<uint64_t> RangesBase = None);
 
   /// Update \p DIE that was using DW_AT_(low|high)_pc with DW_AT_ranges offset.
+  /// Updates to the DIE should be synced with abbreviation updates using the
+  /// function above.
   void convertToRanges(DWARFDie DIE, uint64_t RangesSectionOffset,
-                       SimpleBinaryPatcher &DebugInfoPatcher);
+                       SimpleBinaryPatcher &DebugInfoPatcher,
+                       Optional<uint64_t> RangesBase = None);
 
   /// Same as above, but takes a vector of \p Ranges as a parameter.
   void convertToRanges(DWARFDie DIE, const DebugAddressRangesVector &Ranges,
