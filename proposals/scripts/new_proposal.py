@@ -180,7 +180,7 @@ def main() -> None:
     _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
-    template_path = os.path.join(proposals_dir, "template.md")
+    template_path = os.path.join(proposals_dir, "scripts/template.md")
     temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
     shutil.copyfile(template_path, temp_path)
     _run([git_bin, "add", temp_path])
