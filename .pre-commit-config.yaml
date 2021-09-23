@@ -27,6 +27,11 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
         exclude: '^(.*/testdata/.*\.golden)$'
+  - repo: https://github.com/mattlqx/pre-commit-search-and-replace
+    rev: 417c99dafb534d7517d9abc17f0293de3c915a72 # frozen: v1.0.5
+    hooks:
+      - id: search-and-replace
+        files: '\.md$'
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
     hooks:
