@@ -11,9 +11,8 @@
 
 package ExecutableSemanticsTest api;
 
-// The Recurse() call's return doesn't need to be used to be a recursion error.
-// Right now this fails on lookup, but that may change and require a more
-// explicit check.
+// This is required to fail even though the Recurse() call's return value isn't
+// used.
 fn Recurse(x: i32, do_recurse: Bool) -> auto {
   if (do_recurse) {
     Recurse(x, false);
