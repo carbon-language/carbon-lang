@@ -2683,6 +2683,9 @@ interface RestatesConstraint {
 }
 ```
 
+**Comparison with other languages:** This use case was part of the
+[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
+
 #### Type inequality
 
 **Open question:** It isn't clear if we should support this in Carbon, since it
