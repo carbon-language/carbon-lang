@@ -46,12 +46,12 @@ As guidelines, an `as` conversion should be permitted when:
     in the destination type.
 
 In cases where a cast is only defined for a subset of the possible inputs, an
-`unsafe_as` expression can be used. An `unsafe_as` expression behaves like an
+`assume_as` expression can be used. An `assume_as` expression behaves like an
 `as` expression, except that the domain of the conversion is narrower than the
 entire input type, so the conversion is not safe as defined above.
 
 It is possible for user-defined types to [extend](#extensibility) the set of
-valid explicit casts that can be performed by `as` and `unsafe_as`. Such
+valid explicit casts that can be performed by `as` and `assume_as`. Such
 extensions are expected to follow these guidelines.
 
 ## Built-in types
@@ -71,7 +71,7 @@ the following numeric conversion is supported by `as`:
 
 -   `bool` -> `iN` or `uN`. `false` converts to `0` and `true` converts to `1`.
 
-The following additional numeric conversions are supported by `unsafe_as`:
+The following additional numeric conversions are supported by `assume_as`:
 
 -   `iN` or `uN` -> `iM` or `uM`, for any `N` and `M`. It is a programming error
     if the source value cannot be represented in the destination type.
@@ -100,7 +100,7 @@ permitted by this rule may only be allowed in certain contexts.
 
 ### Pointer conversions
 
-The following pointer conversion is supported by `unsafe_as`:
+The following pointer conversion is supported by `assume_as`:
 
 -   `T*` -> `U*` if `U` is a subtype of `T`.
 
@@ -108,7 +108,7 @@ This cast converts in the opposite direction to the corresponding
 [implicit conversion](implicit_conversions.md#pointer-conversions). It is a
 programming error if the source pointer does not point to a `U` object.
 
-**Note:** `unsafe_as` cannot convert between unrelated pointer types, because
+**Note:** `assume_as` cannot convert between unrelated pointer types, because
 there are no input values for which the conversion would produce a well-defined
 output value. Separate facilities will be provided for reinterpreting memory as
 a distinct type.
@@ -116,26 +116,26 @@ a distinct type.
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `As` or `UnsafeAs` interface:
+[classes](../classes.md) by implementing the `As` or `AssumeAs` interface:
 
 ```
-interface UnsafeAs(Dest:! Type) {
+interface AssumeAs(Dest:! Type) {
   fn Convert[me: Self]() -> Dest;
 }
-interface As(Dest:! Type) extends UnsafeAs(Dest) {
-  // Inherited from UnsafeAs(Dest):
+interface As(Dest:! Type) extends AssumeAs(Dest) {
+  // Inherited from AssumeAs(Dest):
   // fn Convert[me: Self]() -> Dest;
 }
 ```
 
 The expression `x as U` is rewritten to `x.(As(U).Convert)()`. The expression
-`x unsafe_as U` is rewritten to `x.(UnsafeAs(U).Convert)()`.
+`x assume_as U` is rewritten to `x.(AssumeAs(U).Convert)()`.
 
 ## Alternatives considered
 
--   [Do not distinguish between safe and unsafe casts](/docs/proposals/p0845.md#no-unsafe_as)
+-   [Do not distinguish between safe and unsafe casts](/docs/proposals/p0845.md#merge-as-and-assume_as)
 -   [Do not distinguish between safe as and implicit conversions](/docs/proposals/p0845.md#as-only-performs-implicit-conversions)
--   [Allow `unsafe_as` to perform bit casts](/docs/proposals/p0845.md#unsafe_as-performs-bit-casts)
+-   [Use a different name for `assume_as`](/docs/proposals/p0845.md#different-name-for-assume_as)
 
 ## References
 
