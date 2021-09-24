@@ -30,8 +30,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
       out << "choice " << choice.Name() << " {\n";
-      for (const auto& [name, signature] : choice.Alternatives()) {
-        out << "alt " << name << " " << *signature << ";\n";
+      for (const auto& alt : choice.Alternatives()) {
+        out << "alt " << alt.name() << " " << alt.signature() << ";\n";
       }
       out << "}\n";
       break;

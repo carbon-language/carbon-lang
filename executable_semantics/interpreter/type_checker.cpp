@@ -1043,9 +1043,9 @@ void TypeChecker::TopLevel(const Declaration& d, TypeCheckContext* tops) {
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
-      for (const auto& [name, signature] : choice.Alternatives()) {
-        auto t = interpreter.InterpExp(tops->values, signature);
-        alts.push_back(std::make_pair(name, t));
+      for (const auto& alternative : choice.Alternatives()) {
+        auto t = interpreter.InterpExp(tops->values, &alternative.signature());
+        alts.push_back(std::make_pair(alternative.name(), t));
       }
       auto ct = arena->New<ChoiceType>(choice.Name(), std::move(alts));
       Address a = interpreter.AllocateValue(ct);
