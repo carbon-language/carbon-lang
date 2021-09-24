@@ -15,6 +15,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from typing import List, Optional
 
 _PROMPT = """This will:
   - Create and switch to a new branch named '%s'.
@@ -37,12 +38,7 @@ _LINK_TEMPLATE = """Proposal links (add links as proposal evolves):
 """
 
 
-def _exit(error):
-    """Wraps sys.exit for testing."""
-    sys.exit(error)
-
-
-def _parse_args(args=None):
+def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(
         description="Generates a branch and PR for a new proposal with the "
@@ -75,23 +71,24 @@ def _parse_args(args=None):
     return parser.parse_args(args=args)
 
 
-def _calculate_branch(parsed_args):
+def _calculate_branch(parsed_args: argparse.Namespace) -> str:
     """Returns the branch name."""
     if parsed_args.branch:
+        assert isinstance(parsed_args.branch, str)
         return parsed_args.branch
     # Only use the first 20 chars of the title for branch names.
     return "proposal-%s" % (parsed_args.title.lower().replace(" ", "-")[0:20])
 
 
-def _find_tool(tool):
+def _find_tool(tool: str) -> str:
     """Checks if a tool is present."""
     tool_path = shutil.which(tool)
     if not tool_path:
-        _exit("ERROR: Missing the '%s' command-line tool." % tool)
+        exit("ERROR: Missing the '%s' command-line tool." % tool)
     return tool_path
 
 
-def _fill_template(template_path, title, pr_num):
+def _fill_template(template_path: str, title: str, pr_num: int) -> str:
     """Fills out template TODO fields."""
     with open(template_path) as template_file:
         content = template_file.read()
@@ -105,16 +102,19 @@ def _fill_template(template_path, title, pr_num):
     return content
 
 
-def _get_proposals_dir(parsed_args):
+def _get_proposals_dir(parsed_args: argparse.Namespace) -> str:
     """Returns the path to the proposals directory."""
     if parsed_args.proposals_dir:
+        assert isinstance(parsed_args.proposals_dir, str)
         return parsed_args.proposals_dir
     return os.path.realpath(
         os.path.join(os.path.dirname(__file__), "../../proposals")
     )
 
 
-def _run(argv, check=True, get_stdout=False):
+def _run(
+    argv: List[str], check: bool = True, get_stdout: bool = False
+) -> Optional[str]:
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
     print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
@@ -129,23 +129,25 @@ def _run(argv, check=True, get_stdout=False):
         out = stdout.decode("utf-8")
         print(out, end="")
     if check and p.returncode != 0:
-        _exit("ERROR: Command failed: %s" % cmd)
+        exit("ERROR: Command failed: %s" % cmd)
     if get_stdout:
         return out
+    return None
 
 
-def _run_pr_create(argv):
+def _run_pr_create(argv: List[str]) -> int:
     """Runs a command and returns the PR#."""
     out = _run(argv, get_stdout=True)
+    assert out is not None
     match = re.search(
         r"^https://github.com/[^/]+/[^/]+/pull/(\d+)$", out, re.MULTILINE
     )
     if not match:
-        _exit("ERROR: Failed to find PR# in output.")
-    return int(match[1])
+        exit("ERROR: Failed to find PR# in output.")
+    return int(match.group(1))
 
 
-def main():
+def main() -> None:
     parsed_args = _parse_args()
     title = parsed_args.title
     branch = _calculate_branch(parsed_args)
@@ -162,14 +164,14 @@ def main():
     # Verify there are no uncommitted changes.
     p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
     if p.returncode != 0:
-        _exit("ERROR: There are uncommitted changes in your git repo.")
+        exit("ERROR: There are uncommitted changes in your git repo.")
 
     # Prompt before proceeding.
     response = "?"
     while response not in ("y", "n", ""):
         response = input(_PROMPT % (branch, title)).lower()
     if response == "n":
-        _exit("ERROR: Cancelled")
+        exit("ERROR: Cancelled")
 
     # Create a proposal branch.
     _run(
@@ -178,7 +180,7 @@ def main():
     _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
-    template_path = os.path.join(proposals_dir, "template.md")
+    template_path = os.path.join(proposals_dir, "scripts/template.md")
     temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
     shutil.copyfile(template_path, temp_path)
     _run([git_bin, "add", temp_path])

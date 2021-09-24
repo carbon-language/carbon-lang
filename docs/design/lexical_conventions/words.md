@@ -11,7 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Alternatives](#alternatives)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -26,24 +27,11 @@ follow lexical conventions for identifiers based on
 the precise rules are decided; see the
 [Unicode source files](/proposals/p0142.md#characters-in-identifiers) proposal.
 
-## Alternatives
+## Alternatives considered
 
-**We could restrict words to ASCII.**
+-   [Character encoding: We could restrict words to ASCII.](/proposals/p0142.md#character-encoding-1)
 
-Advantages:
+## References
 
--   Reduced implementation complexity.
--   Avoids all problems relating to normalization, homoglyphs, text
-    directionality, and so on.
--   We have no intention of using non-ASCII characters in the language syntax or
-    in any library name.
--   Provides assurance that all names in libraries can reliably be typed by all
-    developers -- we already require that keywords, and thus all ASCII letters,
-    can be typed.
-
-Disadvantages:
-
--   An overarching goal of the Carbon project is to provide a language that is
-    inclusive and welcoming. A language that does not permit names in programs
-    to be expressed in the developer's native language will not meet that goal
-    for at least some of our developers.
+-   Proposal
+    [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)

@@ -37,71 +37,81 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << "(";
       llvm::ListSeparator sep;
       for (const TuplePattern::Field& field : tuple.Fields()) {
-        out << sep << field.name << " = " << field.pattern;
+        out << sep << field.name << " = " << *field.pattern;
       }
       out << ")";
       break;
     }
     case Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*this);
-      out << alternative.ChoiceType() << "." << alternative.AlternativeName()
-          << alternative.Arguments();
+      out << *alternative.ChoiceType() << "." << alternative.AlternativeName()
+          << *alternative.Arguments();
       break;
     }
     case Kind::ExpressionPattern:
-      out << cast<ExpressionPattern>(*this).Expression();
+      out << *cast<ExpressionPattern>(*this).Expression();
       break;
   }
 }
 
-TuplePattern::TuplePattern(const Expression* tuple_literal)
-    : Pattern(Kind::TuplePattern, tuple_literal->line_num) {
-  const auto& tuple = tuple_literal->GetTupleLiteral();
-  for (const FieldInitializer& init : tuple.fields) {
-    fields.push_back(Field(
-        init.name, global_arena->New<ExpressionPattern>(init.expression)));
+TuplePattern::TuplePattern(Nonnull<Arena*> arena,
+                           Nonnull<const Expression*> tuple_literal)
+    : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
+  const auto& tuple = cast<TupleLiteral>(*tuple_literal);
+  for (const FieldInitializer& init : tuple.Fields()) {
+    fields.push_back(
+        Field(init.name, arena->New<ExpressionPattern>(init.expression)));
   }
 }
 
-auto PatternFromParenContents(int line_num,
+auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> const Pattern* {
-  std::optional<const Pattern*> single_term = paren_contents.SingleTerm();
+    -> Nonnull<const Pattern*> {
+  std::optional<Nonnull<const Pattern*>> single_term =
+      paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return TuplePatternFromParenContents(line_num, paren_contents);
+    return TuplePatternFromParenContents(arena, loc, paren_contents);
   }
 }
 
-auto TuplePatternFromParenContents(int line_num,
+auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> const TuplePattern* {
-  return global_arena->New<TuplePattern>(
-      line_num, paren_contents.TupleElements<TuplePattern::Field>(line_num));
+    -> Nonnull<const TuplePattern*> {
+  return arena->New<TuplePattern>(
+      loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
 }
 
-AlternativePattern::AlternativePattern(int line_num,
-                                       const Expression* alternative,
-                                       const TuplePattern* arguments)
-    : Pattern(Kind::AlternativePattern, line_num), arguments(arguments) {
-  if (alternative->tag() != ExpressionKind::FieldAccessExpression) {
-    FATAL_USER_ERROR(alternative->line_num)
+// Used by AlternativePattern for constructor initialization. Produces a helpful
+// error for incorrect expressions, rather than letting a default cast error
+// apply.
+static const FieldAccessExpression& RequireFieldAccess(
+    Nonnull<const Expression*> alternative) {
+  if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
+    FATAL_PROGRAM_ERROR(alternative->SourceLoc())
         << "Alternative pattern must have the form of a field access.";
   }
-  const auto& field_access = alternative->GetFieldAccessExpression();
-  choice_type = field_access.aggregate;
-  alternative_name = field_access.field;
+  return cast<FieldAccessExpression>(*alternative);
 }
 
-auto ParenExpressionToParenPattern(const ParenContents<Expression>& contents)
+AlternativePattern::AlternativePattern(SourceLocation loc,
+                                       Nonnull<const Expression*> alternative,
+                                       Nonnull<const TuplePattern*> arguments)
+    : Pattern(Kind::AlternativePattern, loc),
+      choice_type(RequireFieldAccess(alternative).Aggregate()),
+      alternative_name(RequireFieldAccess(alternative).Field()),
+      arguments(arguments) {}
+
+auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
+                                   const ParenContents<Expression>& contents)
     -> ParenContents<Pattern> {
   ParenContents<Pattern> result = {
       .elements = {}, .has_trailing_comma = contents.has_trailing_comma};
   for (const auto& element : contents.elements) {
     result.elements.push_back(
         {.name = element.name,
-         .term = global_arena->New<ExpressionPattern>(element.term)});
+         .term = arena->New<ExpressionPattern>(element.term)});
   }
   return result;
 }

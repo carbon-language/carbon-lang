@@ -12,12 +12,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+from typing import List, Optional, Set
 
 # https://github.com/PyGithub/PyGithub
 # GraphQL is preferred, but falling back to pygithub for unsupported mutations.
 import github
 
-from carbon.github_tools import github_helpers
+from github_tools import github_helpers
 
 # The organization to mirror members from.
 _ORG = "carbon-language"
@@ -65,14 +66,14 @@ query {
 _TEAM_MEMBER_PATH = ("organization", "team", "members")
 
 
-def _parse_args(args=None):
+def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     github_helpers.add_access_token_arg(parser, "admin:org, repo")
     return parser.parse_args(args=args)
 
 
-def _load_org_members(client):
+def _load_org_members(client: github_helpers.Client) -> Set[str]:
     """Loads org members."""
     print("Loading %s..." % _ORG)
     org_members = set()
@@ -94,7 +95,7 @@ def _load_org_members(client):
     return org_members
 
 
-def _load_team_members(client):
+def _load_team_members(client: github_helpers.Client) -> Set[str]:
     """Load team members."""
     print("Loading %s..." % _TEAM)
     team_members = set()
@@ -106,26 +107,28 @@ def _load_team_members(client):
     return team_members
 
 
-def _update_team(gh, org_members, team_members):
+def _update_team(
+    gh: github.Github, org_members: Set[str], team_members: Set[str]
+) -> None:
     """Updates the team if needed.
 
     This switches to pygithub because GraphQL lacks equivalent mutation support.
     """
-    gh_team = gh.get_organization(_ORG).get_team_by_slug(_TEAM)
+    gh_team = gh.get_organization(_ORG).get_team_by_slug(_TEAM)  # type: ignore
     add_members = org_members - team_members
     if add_members:
         print("Adding members: %s" % ", ".join(add_members))
         for member in add_members:
-            gh_team.add_membership(gh.get_user(member))
+            gh_team.add_membership(gh.get_user(member))  # type: ignore
 
     remove_members = team_members - org_members
     if remove_members:
         print("Removing members: %s" % ", ".join(remove_members))
         for member in remove_members:
-            gh_team.remove_membership(gh.get_user(member))
+            gh_team.remove_membership(gh.get_user(member))  # type: ignore
 
 
-def main():
+def main() -> None:
     parsed_args = _parse_args()
     print("Connecting...")
     client = github_helpers.Client(parsed_args)
@@ -133,7 +136,7 @@ def main():
     org_members = _load_org_members(client)
     team_members = _load_team_members(client)
     if org_members != team_members:
-        gh = github.Github(parsed_args.access_token)
+        gh = github.Github(parsed_args.access_token)  # type: ignore
         _update_team(gh, org_members, team_members)
     print("Done!")
 

@@ -17,7 +17,7 @@ contributions.
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
-        -   [Python using `pyenv`](#python-using-pyenv)
+        -   [`python3` and `pip3`](#python3-and-pip3)
     -   [Linux only](#linux-only)
         -   [`go get`](#go-get)
         -   [Cargo (optional)](#cargo-optional)
@@ -89,37 +89,29 @@ Our recommended way of installing is to run
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-#### Python using `pyenv`
+#### `python3` and `pip3`
 
-Carbon requires Python 3.6 or newer. Everything below assumes that `python` or
-`pip` reach the Python 3 tools, not legacy installations of Python 2.
+Carbon requires Python 3.9 or newer. The included `pip3` should typically be
+used for Python package installation rather than other package managers.
 
-We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
-[Python](python.org) and Python's `pip` package manager. `pip` should typically
-be used for Python package installation rather than other package managers.
+**NOTE**: Carbon will focus support on Homebrew installs of Python 3.9, but it
+may not be necessary if you have Python 3.9 installed another way. If you're
+trying to use a non-Homebrew Python but have issues involving Carbon and Python,
+please try Homebrew's Python.
 
 Our recommended way of installing is:
 
 ```bash
-brew install pyenv
-pyenv install 3.8.5
-pyenv global 3.8.5
+brew install python@3.9
+pip3 install -U pip
 ```
 
-You will also need to update your rc file to add pyenv to your `PATH`; this
-should look like:
+**NOTE**: `pip3` runs may print deprecation warnings referencing
+https://github.com/Homebrew/homebrew-core/issues/76621. These will need to be
+addressed in the future, but as of August 2021 can be ignored.
 
-```bash
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-```
-
-Restart the shell (for example, `exec $SHELL`) to get `PATH` updates. If there
-are still issues, check instructions using `pyenv init`.
-
-To get the latest version of `pip` packages, it will be necessary to
-periodically run `pip list --outdated`, then `pip install -U <package>` to
+To get the latest version of `pip3` packages, it will be necessary to
+periodically run `pip3 list --outdated`, then `pip3 install -U <package>` to
 upgrade desired packages. Keep in mind when upgrading that version dependencies
 may mean packages _should_ be outdated, and not be upgraded.
 
@@ -251,7 +243,7 @@ important checks, including formatting.
 Our recommended way of installing is:
 
 ```bash
-pip install pre-commit
+pip3 install pre-commit
 
 # From within each carbon-language git repository:
 pre-commit install
@@ -287,7 +279,7 @@ than a separate install. They are noted here mainly to help findability.
 
 [new_proposal.py](/proposals/scripts/new_proposal.py) is a helper for generating
 the PR and proposal file for a new proposal. It's documented in
-[the proposal template](/proposals/template.md).
+[the proposal template](/proposals/scripts/template.md).
 
 **NOTE**: This requires installing [the gh CLI](#gh).
 

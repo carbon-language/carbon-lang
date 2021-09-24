@@ -5,99 +5,142 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 #define EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 
-#include <list>
 #include <string>
+#include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/class_definition.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/ast/struct_definition.h"
-#include "executable_semantics/interpreter/address.h"
-#include "executable_semantics/interpreter/dictionary.h"
+#include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/nonnull.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-struct Value;
-
-using TypeEnv = Dictionary<std::string, const Value*>;
-using Env = Dictionary<std::string, Address>;
-
-struct TypeCheckContext {
-  // Symbol table mapping names of runtime entities to their type.
-  TypeEnv types;
-  // Symbol table mapping names of compile time entities to their value.
-  Env values;
-};
-
-enum class DeclarationKind {
-  FunctionDeclaration,
-  StructDeclaration,
-  ChoiceDeclaration,
-  VariableDeclaration,
-};
-
-struct FunctionDeclaration {
-  static constexpr DeclarationKind Kind = DeclarationKind::FunctionDeclaration;
-  FunctionDefinition definition;
-};
-
-struct StructDeclaration {
-  static constexpr DeclarationKind Kind = DeclarationKind::StructDeclaration;
-  StructDefinition definition;
-};
-
-struct ChoiceDeclaration {
-  static constexpr DeclarationKind Kind = DeclarationKind::ChoiceDeclaration;
-  int line_num;
-  std::string name;
-  std::list<std::pair<std::string, const Expression*>> alternatives;
-};
-
-// Global variable definition implements the Declaration concept.
-struct VariableDeclaration {
-  static constexpr DeclarationKind Kind = DeclarationKind::VariableDeclaration;
-  int source_location;
-  // TODO: split this into a non-optional name and a type, initialized by
-  // a constructor that takes a BindingPattern and handles errors like a
-  // missing name.
-  const BindingPattern* binding;
-  const Expression* initializer;
-};
-
+// Abstract base class of all AST nodes representing patterns.
+//
+// Declaration and its derived classes support LLVM-style RTTI, including
+// llvm::isa, llvm::cast, and llvm::dyn_cast. To support this, every
+// class derived from Declaration must provide a `classof` operation, and
+// every concrete derived class must have a corresponding enumerator
+// in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
+// details.
 class Declaration {
  public:
-  static auto MakeFunctionDeclaration(FunctionDefinition definition)
-      -> const Declaration;
-  static auto MakeStructDeclaration(int line_num, std::string name,
-                                    std::list<Member*> members)
-      -> const Declaration;
-  static auto MakeChoiceDeclaration(
-      int line_num, std::string name,
-      std::list<std::pair<std::string, const Expression*>> alternatives)
-      -> const Declaration;
-  static auto MakeVariableDeclaration(int source_location,
-                                      const BindingPattern* binding,
-                                      const Expression* initializer)
-      -> const Declaration;
+  enum class Kind {
+    FunctionDeclaration,
+    ClassDeclaration,
+    ChoiceDeclaration,
+    VariableDeclaration,
+  };
 
-  auto GetFunctionDeclaration() const -> const FunctionDeclaration&;
-  auto GetStructDeclaration() const -> const StructDeclaration&;
-  auto GetChoiceDeclaration() const -> const ChoiceDeclaration&;
-  auto GetVariableDeclaration() const -> const VariableDeclaration&;
+  Declaration(const Member&) = delete;
+  Declaration& operator=(const Member&) = delete;
+
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto Tag() const -> Kind { return tag; }
+
+  auto SourceLoc() const -> SourceLocation { return loc; }
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  inline auto tag() const -> DeclarationKind {
-    return std::visit([](const auto& t) { return t.Kind; }, value);
+ protected:
+  // Constructs a Declaration representing syntax at the given line number.
+  // `tag` must be the enumerator corresponding to the most-derived type being
+  // constructed.
+  Declaration(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+
+ private:
+  const Kind tag;
+  SourceLocation loc;
+};
+
+class FunctionDeclaration : public Declaration {
+ public:
+  FunctionDeclaration(Nonnull<const FunctionDefinition*> definition)
+      : Declaration(Kind::FunctionDeclaration, definition->source_location),
+        definition(definition) {}
+
+  static auto classof(const Declaration* decl) -> bool {
+    return decl->Tag() == Kind::FunctionDeclaration;
+  }
+
+  auto Definition() const -> const FunctionDefinition& { return *definition; }
+
+ private:
+  Nonnull<const FunctionDefinition*> definition;
+};
+
+class ClassDeclaration : public Declaration {
+ public:
+  ClassDeclaration(SourceLocation loc, std::string name,
+                   std::vector<Nonnull<Member*>> members)
+      : Declaration(Kind::ClassDeclaration, loc),
+        definition({.loc = loc,
+                    .name = std::move(name),
+                    .members = std::move(members)}) {}
+
+  static auto classof(const Declaration* decl) -> bool {
+    return decl->Tag() == Kind::ClassDeclaration;
+  }
+
+  auto Definition() const -> const ClassDefinition& { return definition; }
+
+ private:
+  ClassDefinition definition;
+};
+
+class ChoiceDeclaration : public Declaration {
+ public:
+  ChoiceDeclaration(
+      SourceLocation loc, std::string name,
+      std::vector<std::pair<std::string, Nonnull<const Expression*>>>
+          alternatives)
+      : Declaration(Kind::ChoiceDeclaration, loc),
+        name(std::move(name)),
+        alternatives(std::move(alternatives)) {}
+
+  static auto classof(const Declaration* decl) -> bool {
+    return decl->Tag() == Kind::ChoiceDeclaration;
+  }
+
+  auto Name() const -> const std::string& { return name; }
+  auto Alternatives() const -> const
+      std::vector<std::pair<std::string, Nonnull<const Expression*>>>& {
+    return alternatives;
   }
 
  private:
-  std::variant<FunctionDeclaration, StructDeclaration, ChoiceDeclaration,
-               VariableDeclaration>
-      value;
+  std::string name;
+  std::vector<std::pair<std::string, Nonnull<const Expression*>>> alternatives;
+};
+
+// Global variable definition implements the Declaration concept.
+class VariableDeclaration : public Declaration {
+ public:
+  VariableDeclaration(SourceLocation loc,
+                      Nonnull<const BindingPattern*> binding,
+                      Nonnull<const Expression*> initializer)
+      : Declaration(Kind::VariableDeclaration, loc),
+        binding(binding),
+        initializer(initializer) {}
+
+  static auto classof(const Declaration* decl) -> bool {
+    return decl->Tag() == Kind::VariableDeclaration;
+  }
+
+  auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
+  auto Initializer() const -> Nonnull<const Expression*> { return initializer; }
+
+ private:
+  // TODO: split this into a non-optional name and a type, initialized by
+  // a constructor that takes a BindingPattern and handles errors like a
+  // missing name.
+  Nonnull<const BindingPattern*> binding;
+  Nonnull<const Expression*> initializer;
 };
 
 }  // namespace Carbon

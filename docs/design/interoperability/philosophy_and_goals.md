@@ -6,8 +6,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-[Pull request](https://github.com/carbon-language/carbon-lang/pull/175)
-
 <!-- toc -->
 
 ## Table of contents
@@ -43,6 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Carbon type inheritance from non-pure interface C++ types](#carbon-type-inheritance-from-non-pure-interface-c-types)
     -   [CRTP support](#crtp-support)
     -   [Object lifetimes](#object-lifetimes)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -461,3 +460,8 @@ into unsafe Carbon code, requiring developers to learn new coding patterns.
 More analysis should be done on object lifetimes and potential Carbon designs
 for it before deciding how to treat object lifetimes in the scope of
 interoperability.
+
+## References
+
+-   Proposal
+    [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
