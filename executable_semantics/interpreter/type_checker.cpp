@@ -861,7 +861,7 @@ auto TypeChecker::TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
                                   Env values)
     -> Nonnull<const FunctionDefinition*> {
   // Bring the deduced parameters into scope
-  for (const auto& deduced : f->deduced_parameters) {
+  for (const auto& deduced : f->deduced_parameters()) {
     // auto t = interpreter.InterpExp(values, deduced.type);
     types.Set(deduced.name, arena->New<VariableType>(deduced.name));
     Address a = interpreter.AllocateValue(*types.Get(deduced.name));
@@ -869,25 +869,25 @@ auto TypeChecker::TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
   }
   // Type check the parameter pattern
   auto param_res =
-      TypeCheckPattern(f->param_pattern, types, values, std::nullopt);
+      TypeCheckPattern(&f->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
-  auto return_type = interpreter.InterpPattern(values, f->return_type);
-  if (f->name == "main") {
-    ExpectType(f->source_location, "return type of `main`",
-               arena->New<IntType>(), return_type);
+  auto return_type = interpreter.InterpPattern(values, &f->return_type());
+  if (f->name() == "main") {
+    ExpectType(f->source_loc(), "return type of `main`", arena->New<IntType>(),
+               return_type);
     // TODO: Check that main doesn't have any parameters.
   }
   std::optional<Nonnull<const Statement*>> body_stmt;
-  if (f->body) {
-    auto res = TypeCheckStmt(*f->body, param_res.types, values, return_type,
-                             f->is_omitted_return_type);
+  if (f->body()) {
+    auto res = TypeCheckStmt(*f->body(), param_res.types, values, return_type,
+                             f->is_omitted_return_type());
     body_stmt = res.stmt;
   }
-  auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type,
-                                  f->source_location);
+  auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type(),
+                                  f->source_loc());
   return arena->New<FunctionDefinition>(
-      f->source_location, f->name, f->deduced_parameters, f->param_pattern,
-      arena->New<ExpressionPattern>(ReifyType(return_type, f->source_location)),
+      f->source_loc(), f->name(), f->deduced_parameters(), &f->param_pattern(),
+      arena->New<ExpressionPattern>(ReifyType(return_type, f->source_loc())),
       /*is_omitted_return_type=*/false, body);
 }
 
@@ -895,7 +895,7 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
                                const FunctionDefinition* fun_def)
     -> Nonnull<const Value*> {
   // Bring the deduced parameters into scope
-  for (const auto& deduced : fun_def->deduced_parameters) {
+  for (const auto& deduced : fun_def->deduced_parameters()) {
     // auto t = interpreter.InterpExp(values, deduced.type);
     types.Set(deduced.name, arena->New<VariableType>(deduced.name));
     Address a = interpreter.AllocateValue(*types.Get(deduced.name));
@@ -903,14 +903,14 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
   }
   // Type check the parameter pattern
   auto param_res =
-      TypeCheckPattern(fun_def->param_pattern, types, values, std::nullopt);
+      TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
-  auto ret = interpreter.InterpPattern(values, fun_def->return_type);
+  auto ret = interpreter.InterpPattern(values, &fun_def->return_type());
   if (ret->Tag() == Value::Kind::AutoType) {
     auto f = TypeCheckFunDef(fun_def, types, values);
-    ret = interpreter.InterpPattern(values, f->return_type);
+    ret = interpreter.InterpPattern(values, &f->return_type());
   }
-  return arena->New<FunctionType>(fun_def->deduced_parameters, param_res.type,
+  return arena->New<FunctionType>(fun_def->deduced_parameters(), param_res.type,
                                   ret);
 }
 
@@ -944,7 +944,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
 static auto GetName(const Declaration& d) -> const std::string& {
   switch (d.Tag()) {
     case Declaration::Kind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(d).Definition().name;
+      return cast<FunctionDeclaration>(d).Definition().name();
     case Declaration::Kind::ClassDeclaration:
       return cast<ClassDeclaration>(d).Definition().name;
     case Declaration::Kind::ChoiceDeclaration:
@@ -1018,7 +1018,7 @@ void TypeChecker::TopLevel(const Declaration& d, TypeCheckContext* tops) {
       const FunctionDefinition& func_def =
           cast<FunctionDeclaration>(d).Definition();
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
-      tops->types.Set(func_def.name, t);
+      tops->types.Set(func_def.name(), t);
       interpreter.InitEnv(d, &tops->values);
       break;
     }
