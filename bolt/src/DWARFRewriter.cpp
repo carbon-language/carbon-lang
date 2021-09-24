@@ -381,8 +381,9 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
           BC.translateModuleAddressRanges(ModuleRanges);
       const uint64_t RangesSectionOffset =
           RangesSectionWriter->addRanges(OutputRanges);
-      ARangesSectionWriter->addCURanges(Unit.getOffset(),
-                                        std::move(OutputRanges));
+      if (!Unit.isDWOUnit())
+        ARangesSectionWriter->addCURanges(Unit.getOffset(),
+                                          std::move(OutputRanges));
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset, DebugInfoPatcher,
                                      AbbrevWriter);
       break;
