@@ -41,21 +41,34 @@ class TypeChecker {
 
  private:
   // Context about the return type, which may be updated during type checking.
-  struct ReturnTypeContext {
-    // If in_return_type is auto, return_type will be nullopt; otherwise, it's
-    // in_return_type. `is_auto` is set accordingly.
-    ReturnTypeContext(Nonnull<const Value*> in_return_type, bool is_omitted);
+  class ReturnTypeContext {
+   public:
+    // If orig_return_type is auto, deduced_return_type_ will be nullopt;
+    // otherwise, it's orig_return_type. is_auto_ is set accordingly.
+    ReturnTypeContext(Nonnull<const Value*> orig_return_type, bool is_omitted);
 
+    auto is_auto() const -> bool { return is_auto_; }
+
+    auto deduced_return_type() const -> std::optional<Nonnull<const Value*>> {
+      return deduced_return_type_;
+    }
+    void set_deduced_return_type(Nonnull<const Value*> type) {
+      deduced_return_type_ = type;
+    }
+
+    auto is_omitted() const -> bool { return is_omitted_; }
+
+   private:
     // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.
-    const bool is_auto;
+    const bool is_auto_;
 
     // The actual return type. May be nullopt for an `auto` return type that has
     // yet to be determined.
-    std::optional<Nonnull<const Value*>> return_type;
+    std::optional<Nonnull<const Value*>> deduced_return_type_;
 
     // Indicates the return type was omitted and is implicitly the empty tuple,
     // as in `fn Foo() {}`.
-    const bool is_omitted;
+    const bool is_omitted_;
   };
 
   struct TCExpression {

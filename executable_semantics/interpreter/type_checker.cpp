@@ -27,10 +27,11 @@ using llvm::isa;
 namespace Carbon {
 
 TypeChecker::ReturnTypeContext::ReturnTypeContext(
-    Nonnull<const Value*> in_return_type, bool is_omitted)
-    : is_auto(isa<AutoType>(in_return_type)),
-      return_type(is_auto ? std::nullopt : std::optional(in_return_type)),
-      is_omitted(is_omitted) {}
+    Nonnull<const Value*> orig_return_type, bool is_omitted)
+    : is_auto_(isa<AutoType>(orig_return_type)),
+      deduced_return_type_(is_auto_ ? std::nullopt
+                                    : std::optional(orig_return_type)),
+      is_omitted_(is_omitted) {}
 
 void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
@@ -745,24 +746,24 @@ auto TypeChecker::TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types,
     case Statement::Kind::Return: {
       const auto& ret = cast<Return>(*s);
       auto res = TypeCheckExp(ret.Exp(), types, values);
-      if (return_type_context->is_auto) {
-        if (return_type_context->return_type) {
+      if (return_type_context->is_auto()) {
+        if (return_type_context->deduced_return_type()) {
           // Only one return is allowed when the return type is `auto`.
           FATAL_COMPILATION_ERROR(s->SourceLoc())
               << "Only one return is allowed in a function with an `auto` "
                  "return type.";
         } else {
           // Infer the auto return from the first `return` statement.
-          return_type_context->return_type = res.type;
+          return_type_context->set_deduced_return_type(res.type);
         }
       } else {
-        ExpectType(s->SourceLoc(), "return", *return_type_context->return_type,
-                   res.type);
+        ExpectType(s->SourceLoc(), "return",
+                   *return_type_context->deduced_return_type(), res.type);
       }
-      if (ret.IsOmittedExp() != return_type_context->is_omitted) {
+      if (ret.IsOmittedExp() != return_type_context->is_omitted()) {
         FATAL_COMPILATION_ERROR(s->SourceLoc())
             << *s << " should"
-            << (return_type_context->is_omitted ? " not" : "")
+            << (return_type_context->is_omitted() ? " not" : "")
             << " provide a return value, to match the function's signature.";
       }
       return TCStatement(
@@ -899,7 +900,7 @@ auto TypeChecker::TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types,
         TypeCheckStmt(*f->body, param_res.types, values, &return_type_context);
     body_stmt = res.stmt;
     // Save the return type in case it changed.
-    return_type = *return_type_context.return_type;
+    return_type = *return_type_context.deduced_return_type();
   }
   auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type,
                                   f->source_location);
