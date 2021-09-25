@@ -27,6 +27,11 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
         exclude: '^(.*/testdata/.*\.golden)$'
+  - repo: https://github.com/mattlqx/pre-commit-search-and-replace
+    rev: 417c99dafb534d7517d9abc17f0293de3c915a72 # frozen: v1.0.5
+    hooks:
+      - id: search-and-replace
+        files: '\.md$'
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
     hooks:
@@ -86,26 +91,19 @@ repos:
         language: python
         files: ^executable_semantics/syntax/parser.ypp$
         pass_filenames: false
-      - id: proposal-list
-        name: Update list of proposals
-        description: Updates the list of proposals in proposals/README.md
-        entry: proposals/scripts/update_proposal_list.py
-        language: python
-        files: ^proposals/(README|p.*)\.md$
-        pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: a8b4665e7d6eb945c47820adb1a3f8b006adce0c # frozen: 21.8b0
+    rev: 911470a610e47d9da5ea938b0887c3df62819b85 # frozen: 21.9b0
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: 2f588005ab7492a82f341c03d0418a155c46100d
+    rev: 7954578f36f10a81b0274a672653e38e46bd99c5
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
         types: [c++]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: 9c89e53b2d2fd9dac7703623c974133fe3b0e8c4 # frozen: v2.4.0
+    rev: 6e24ff01ab7d5e64045599b81c4cd34d6a6a7159 # frozen: v2.4.1
     hooks:
       - id: prettier
   # Run linters last, as formatters and other checks may fix issues.

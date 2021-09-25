@@ -259,8 +259,8 @@ To explain this boilerplate:
 Useful commands are:
 
 -   `./update_checks.py` -- Updates expected output.
--   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=-v`
-    -- Runs tests and prints verbose output.
--   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=-v --test_arg=--filter=basic_syntax/.*`
+-   `bazel test :executable_semantics_lit_test --test_output=errors` -- Runs
+    tests and prints any errors.
+-   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=--filter=basic_syntax/.*`
     -- Only runs tests in the `basic_syntax` directory; `--filter` is a regular
     expression.

@@ -279,7 +279,7 @@ than a separate install. They are noted here mainly to help findability.
 
 [new_proposal.py](/proposals/scripts/new_proposal.py) is a helper for generating
 the PR and proposal file for a new proposal. It's documented in
-[the proposal template](/proposals/template.md).
+[the proposal template](/proposals/scripts/template.md).
 
 **NOTE**: This requires installing [the gh CLI](#gh).
 
