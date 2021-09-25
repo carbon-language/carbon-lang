@@ -10,20 +10,21 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, Ptr<const Value>>;
+using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 
 class TypeChecker {
  public:
-  explicit TypeChecker(Ptr<Arena> arena) : arena(arena), interpreter(arena) {}
+  explicit TypeChecker(Nonnull<Arena*> arena)
+      : arena(arena), interpreter(arena) {}
 
   struct TypeCheckContext {
-    TypeCheckContext(Ptr<Arena> arena) : types(arena), values(arena) {}
+    TypeCheckContext(Nonnull<Arena*> arena) : types(arena), values(arena) {}
 
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
@@ -31,33 +32,35 @@ class TypeChecker {
     Env values;
   };
 
-  auto MakeTypeChecked(const Ptr<const Declaration> d, const TypeEnv& types,
-                       const Env& values) -> Ptr<const Declaration>;
+  auto MakeTypeChecked(const Nonnull<const Declaration*> d,
+                       const TypeEnv& types, const Env& values)
+      -> Nonnull<const Declaration*>;
 
-  auto TopLevel(const std::vector<Ptr<const Declaration>>& fs)
+  auto TopLevel(const std::vector<Nonnull<const Declaration*>>& fs)
       -> TypeCheckContext;
 
  private:
   struct TCExpression {
-    TCExpression(Ptr<const Expression> e, Ptr<const Value> t, TypeEnv types)
+    TCExpression(Nonnull<const Expression*> e, Nonnull<const Value*> t,
+                 TypeEnv types)
         : exp(e), type(t), types(types) {}
 
-    Ptr<const Expression> exp;
-    Ptr<const Value> type;
+    Nonnull<const Expression*> exp;
+    Nonnull<const Value*> type;
     TypeEnv types;
   };
 
   struct TCPattern {
-    Ptr<const Pattern> pattern;
-    Ptr<const Value> type;
+    Nonnull<const Pattern*> pattern;
+    Nonnull<const Value*> type;
     TypeEnv types;
   };
 
   struct TCStatement {
-    TCStatement(Ptr<const Statement> s, TypeEnv types)
+    TCStatement(Nonnull<const Statement*> s, TypeEnv types)
         : stmt(s), types(types) {}
 
-    Ptr<const Statement> stmt;
+    Nonnull<const Statement*> stmt;
     TypeEnv types;
   };
 
@@ -72,15 +75,16 @@ class TypeChecker {
   // types maps variable names to the type of their run-time value.
   // values maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  auto TypeCheckExp(Ptr<const Expression> e, TypeEnv types, Env values)
+  auto TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types, Env values)
       -> TCExpression;
 
   // Equivalent to TypeCheckExp, but operates on Patterns instead of
   // Expressions. `expected` is the type that this pattern is expected to have,
   // if the surrounding context gives us that information. Otherwise, it is
   // nullopt.
-  auto TypeCheckPattern(Ptr<const Pattern> p, TypeEnv types, Env values,
-                        std::optional<Ptr<const Value>> expected) -> TCPattern;
+  auto TypeCheckPattern(Nonnull<const Pattern*> p, TypeEnv types, Env values,
+                        std::optional<Nonnull<const Value*>> expected)
+      -> TCPattern;
 
   // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
   // version of the statement and a new type environment.
@@ -89,36 +93,38 @@ class TypeChecker {
   // declared return type of the enclosing function definition.  If the return
   // type is "auto", then the return type is inferred from the first return
   // statement.
-  auto TypeCheckStmt(Ptr<const Statement> s, TypeEnv types, Env values,
-                     Ptr<const Value>& ret_type, bool is_omitted_ret_type)
+  auto TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types, Env values,
+                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
       -> TCStatement;
 
   auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
-      -> Ptr<const FunctionDefinition>;
+      -> Nonnull<const FunctionDefinition*>;
 
-  auto TypeCheckCase(Ptr<const Value> expected, Ptr<const Pattern> pat,
-                     Ptr<const Statement> body, TypeEnv types, Env values,
-                     Ptr<const Value>& ret_type, bool is_omitted_ret_type)
-      -> std::pair<Ptr<const Pattern>, Ptr<const Statement>>;
+  auto TypeCheckCase(Nonnull<const Value*> expected,
+                     Nonnull<const Pattern*> pat,
+                     Nonnull<const Statement*> body, TypeEnv types, Env values,
+                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
+      -> std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>;
 
   auto TypeOfFunDef(TypeEnv types, Env values,
-                    const FunctionDefinition* fun_def) -> Ptr<const Value>;
+                    const FunctionDefinition* fun_def) -> Nonnull<const Value*>;
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
-      -> Ptr<const Value>;
+      -> Nonnull<const Value*>;
 
   void TopLevel(const Declaration& d, TypeCheckContext* tops);
 
-  auto CheckOrEnsureReturn(std::optional<Ptr<const Statement>> opt_stmt,
+  auto CheckOrEnsureReturn(std::optional<Nonnull<const Statement*>> opt_stmt,
                            bool omitted_ret_type, SourceLocation loc)
-      -> Ptr<const Statement>;
+      -> Nonnull<const Statement*>;
 
   // Reify type to type expression.
-  auto ReifyType(Ptr<const Value> t, SourceLocation loc)
-      -> Ptr<const Expression>;
+  auto ReifyType(Nonnull<const Value*> t, SourceLocation loc)
+      -> Nonnull<const Expression*>;
 
-  auto Substitute(TypeEnv dict, Ptr<const Value> type) -> Ptr<const Value>;
+  auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
+      -> Nonnull<const Value*>;
 
-  Ptr<Arena> arena;
+  Nonnull<Arena*> arena;
   Interpreter interpreter;
 };
 

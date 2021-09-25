@@ -38,13 +38,13 @@ class Action {
   auto Pos() const -> int { return pos; }
 
   // Results from a subexpression.
-  auto Results() const -> const std::vector<Ptr<const Value>>& {
+  auto Results() const -> const std::vector<Nonnull<const Value*>>& {
     return results;
   }
 
   void SetPos(int pos) { this->pos = pos; }
 
-  void AddResult(Ptr<const Value> result) { results.push_back(result); }
+  void AddResult(Nonnull<const Value*> result) { results.push_back(result); }
 
   void Clear() {
     pos = 0;
@@ -55,7 +55,8 @@ class Action {
   // object.
   auto Tag() const -> Kind { return tag; }
 
-  static void PrintList(const Stack<Ptr<Action>>& ls, llvm::raw_ostream& out);
+  static void PrintList(const Stack<Nonnull<Action*>>& ls,
+                        llvm::raw_ostream& out);
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -67,69 +68,69 @@ class Action {
 
  private:
   int pos = 0;
-  std::vector<Ptr<const Value>> results;
+  std::vector<Nonnull<const Value*>> results;
 
   const Kind tag;
 };
 
 class LValAction : public Action {
  public:
-  explicit LValAction(Ptr<const Expression> exp)
+  explicit LValAction(Nonnull<const Expression*> exp)
       : Action(Kind::LValAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::LValAction;
   }
 
-  auto Exp() const -> Ptr<const Expression> { return exp; }
+  auto Exp() const -> Nonnull<const Expression*> { return exp; }
 
  private:
-  Ptr<const Expression> exp;
+  Nonnull<const Expression*> exp;
 };
 
 class ExpressionAction : public Action {
  public:
-  explicit ExpressionAction(Ptr<const Expression> exp)
+  explicit ExpressionAction(Nonnull<const Expression*> exp)
       : Action(Kind::ExpressionAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::ExpressionAction;
   }
 
-  auto Exp() const -> Ptr<const Expression> { return exp; }
+  auto Exp() const -> Nonnull<const Expression*> { return exp; }
 
  private:
-  Ptr<const Expression> exp;
+  Nonnull<const Expression*> exp;
 };
 
 class PatternAction : public Action {
  public:
-  explicit PatternAction(Ptr<const Pattern> pat)
+  explicit PatternAction(Nonnull<const Pattern*> pat)
       : Action(Kind::PatternAction), pat(pat) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::PatternAction;
   }
 
-  auto Pat() const -> Ptr<const Pattern> { return pat; }
+  auto Pat() const -> Nonnull<const Pattern*> { return pat; }
 
  private:
-  Ptr<const Pattern> pat;
+  Nonnull<const Pattern*> pat;
 };
 
 class StatementAction : public Action {
  public:
-  explicit StatementAction(Ptr<const Statement> stmt)
+  explicit StatementAction(Nonnull<const Statement*> stmt)
       : Action(Kind::StatementAction), stmt(stmt) {}
 
   static auto classof(const Action* action) -> bool {
     return action->Tag() == Kind::StatementAction;
   }
 
-  auto Stmt() const -> Ptr<const Statement> { return stmt; }
+  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
 
  private:
-  Ptr<const Statement> stmt;
+  Nonnull<const Statement*> stmt;
 };
 
 }  // namespace Carbon

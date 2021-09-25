@@ -9,7 +9,7 @@
 #include <string_view>
 
 #include "common/ostream.h"
-#include "executable_semantics/common/ptr.h"
+#include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 
@@ -18,7 +18,7 @@ class SourceLocation {
   // The filename should be eternal or arena-allocated to eliminate copies.
   SourceLocation(const char* filename, int line_num)
       : filename(filename), line_num(line_num) {}
-  SourceLocation(Ptr<const std::string> filename, int line_num)
+  SourceLocation(Nonnull<const std::string*> filename, int line_num)
       : filename(filename->c_str()), line_num(line_num) {}
 
   SourceLocation(const SourceLocation&) = default;
