@@ -37,7 +37,7 @@ encounter any issues.
 
 ### Docker Image
 
-You can build and use the docker image containing BOLT using our [docker file](./utils/docker/Dockerfile).
+You can build and use the docker image containing BOLT using our [docker file](./bolt/utils/docker/Dockerfile).
 Alternatively, you can build BOLT manually using the steps below.
 
 ### Manual Build
@@ -46,28 +46,21 @@ BOLT heavily uses LLVM libraries, and by design, it is built as one of LLVM
 tools. The build process is not much different from a regular LLVM build.
 The following instructions are assuming that you are running under Linux.
 
-Start with cloning BOLT repo:
+Start with cloning LLVM and BOLT repos:
 
 ```
 > git clone https://github.com/facebookincubator/BOLT llvm-bolt
-```
-
-Proceed to a normal LLVM build using a compiler with C++11 support (for GCC
-use version 4.9 or later):
-
-```
-> cd llvm-bolt
 > mkdir build
 > cd build
-> cmake -G Ninja ../llvm -DLLVM_ENABLE_PROJECTS="bolt" -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON
+> cmake -G Ninja ../llvm-bolt/llvm -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_PROJECTS="clang;lld;bolt"
 > ninja
 ```
 
 `llvm-bolt` will be available under `bin/`. Add this directory to your path to
 ensure the rest of the commands in this tutorial work.
 
-Note that we use a specific revision of LLVM as we currently rely on a set of
-patches that are not yet upstreamed.
+Note that we use a specific snapshot of LLVM monorepo as we currently
+rely on a set of patches that are not yet upstreamed.
 
 ## Optimizing BOLT's Performance
 
@@ -87,7 +80,7 @@ Or if you rather use tcmalloc:
 
 ## Usage
 
-For a complete practical guide of using BOLT see [Optimizing Clang with BOLT](./docs/OptimizingClang.md).
+For a complete practical guide of using BOLT see [Optimizing Clang with BOLT](./bolt/docs/OptimizingClang.md).
 
 ### Step 0
 
