@@ -97,7 +97,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: 7954578f36f10a81b0274a672653e38e46bd99c5
+    rev: a0f1c385f6a50581983008c8737ca72473ecf3ad
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
