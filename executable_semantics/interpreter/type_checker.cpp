@@ -76,8 +76,16 @@ auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation loc)
       }
       return arena->New<TupleLiteral>(loc, args);
     }
-    case Value::Kind::ClassType:
-      return arena->New<IdentifierExpression>(loc, cast<ClassType>(*t).Name());
+    case Value::Kind::StructType: {
+      std::vector<FieldInitializer> args;
+      for (const auto& [name, type] : cast<StructType>(*t).Fields()) {
+        args.push_back(FieldInitializer(name, ReifyType(type, loc)));
+      }
+      return arena->New<StructTypeLiteral>(loc, args);
+    }
+    case Value::Kind::NominalClassType:
+      return arena->New<IdentifierExpression>(
+          loc, cast<NominalClassType>(*t).Name());
     case Value::Kind::ChoiceType:
       return arena->New<IdentifierExpression>(loc, cast<ChoiceType>(*t).Name());
     case Value::Kind::PointerType:
@@ -101,6 +109,7 @@ auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation loc)
     case Value::Kind::PointerValue:
     case Value::Kind::StringValue:
     case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
       FATAL() << "expected a type, not " << *t;
   }
 }
@@ -145,6 +154,27 @@ static auto ArgumentDeduction(SourceLocation loc, TypeEnv deduced,
       }
       return deduced;
     }
+    case Value::Kind::StructType: {
+      if (arg->Tag() != Value::Kind::StructType) {
+        ExpectType(loc, "argument deduction", param, arg);
+      }
+      const auto& param_struct = cast<StructType>(*param);
+      const auto& arg_struct = cast<StructType>(*arg);
+      if (param_struct.Fields().size() != arg_struct.Fields().size()) {
+        ExpectType(loc, "argument deduction", param, arg);
+      }
+      for (size_t i = 0; i < param_struct.Fields().size(); ++i) {
+        if (param_struct.Fields()[i].first != arg_struct.Fields()[i].first) {
+          FATAL_COMPILATION_ERROR(loc)
+              << "mismatch in field names, " << param_struct.Fields()[i].first
+              << " != " << arg_struct.Fields()[i].first;
+        }
+        deduced =
+            ArgumentDeduction(loc, deduced, param_struct.Fields()[i].second,
+                              arg_struct.Fields()[i].second);
+      }
+      return deduced;
+    }
     case Value::Kind::FunctionType: {
       if (arg->Tag() != Value::Kind::FunctionType) {
         ExpectType(loc, "argument deduction", param, arg);
@@ -170,7 +200,7 @@ static auto ArgumentDeduction(SourceLocation loc, TypeEnv deduced,
     }
     // For the following cases, we check for type equality.
     case Value::Kind::ContinuationType:
-    case Value::Kind::ClassType:
+    case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -184,6 +214,7 @@ static auto ArgumentDeduction(SourceLocation loc, TypeEnv deduced,
     case Value::Kind::FunctionValue:
     case Value::Kind::PointerValue:
     case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
@@ -213,6 +244,14 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
       }
       return arena->New<TupleValue>(elts);
     }
+    case Value::Kind::StructType: {
+      VarValues fields;
+      for (const auto& [name, value] : cast<StructType>(*type).Fields()) {
+        auto new_type = Substitute(dict, value);
+        fields.push_back({name, new_type});
+      }
+      return arena->New<StructType>(std::move(fields));
+    }
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, fn_type.Param());
@@ -228,7 +267,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
-    case Value::Kind::ClassType:
+    case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
@@ -239,6 +278,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     case Value::Kind::FunctionValue:
     case Value::Kind::PointerValue:
     case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
@@ -297,13 +337,65 @@ auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
       auto tuple_t = arena->New<TupleValue>(std::move(arg_types));
       return TCExpression(tuple_e, tuple_t, new_types);
     }
+    case Expression::Kind::StructLiteral: {
+      std::vector<FieldInitializer> new_args;
+      VarValues arg_types;
+      auto new_types = types;
+      for (const auto& arg : cast<StructLiteral>(*e).Fields()) {
+        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+        new_types = arg_res.types;
+        new_args.push_back(FieldInitializer(arg.name, arg_res.exp));
+        arg_types.push_back({arg.name, arg_res.type});
+      }
+      auto new_e = arena->New<StructLiteral>(e->SourceLoc(), new_args);
+      auto type = arena->New<StructType>(std::move(arg_types));
+      return TCExpression(new_e, type, new_types);
+    }
+    case Expression::Kind::StructTypeLiteral: {
+      const auto& struct_type = cast<StructTypeLiteral>(*e);
+      std::vector<FieldInitializer> new_args;
+      auto new_types = types;
+      for (const auto& arg : struct_type.Fields()) {
+        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+        new_types = arg_res.types;
+        Nonnull<const Value*> type = interpreter.InterpExp(values, arg_res.exp);
+        new_args.push_back(
+            FieldInitializer(arg.name, ReifyType(type, e->SourceLoc())));
+      }
+      auto new_e = arena->New<StructTypeLiteral>(e->SourceLoc(), new_args);
+      Nonnull<const Value*> type;
+      if (struct_type.Fields().empty()) {
+        // `{}` is the type of `{}`, just as `()` is the type of `()`.
+        // This applies only if there are no fields, because (unlike with
+        // tuples) non-empty struct types are syntactically disjoint
+        // from non-empty struct values.
+        type = arena->New<StructType>();
+      } else {
+        type = arena->New<TypeType>();
+      }
+      return TCExpression(new_e, type, new_types);
+    }
     case Expression::Kind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*e);
       auto res = TypeCheckExp(access.Aggregate(), types, values);
       auto t = res.type;
       switch (t->Tag()) {
-        case Value::Kind::ClassType: {
-          const auto& t_class = cast<ClassType>(*t);
+        case Value::Kind::StructType: {
+          const auto& struct_type = cast<StructType>(*t);
+          for (const auto& [field_name, field_type] : struct_type.Fields()) {
+            if (access.Field() == field_name) {
+              Nonnull<const Expression*> new_e =
+                  arena->New<FieldAccessExpression>(access.SourceLoc(), res.exp,
+                                                    access.Field());
+              return TCExpression(new_e, field_type, res.types);
+            }
+          }
+          FATAL_COMPILATION_ERROR(access.SourceLoc())
+              << "struct " << struct_type << " does not have a field named "
+              << access.Field();
+        }
+        case Value::Kind::NominalClassType: {
+          const auto& t_class = cast<NominalClassType>(*t);
           // Search for a field
           for (auto& field : t_class.Fields()) {
             if (access.Field() == field.first) {
@@ -578,6 +670,43 @@ auto TypeChecker::TypeCheckPattern(
       auto new_tuple = arena->New<TuplePattern>(tuple.SourceLoc(), new_fields);
       auto tuple_t = arena->New<TupleValue>(std::move(field_types));
       return {.pattern = new_tuple, .type = tuple_t, .types = new_types};
+    }
+    case Pattern::Kind::StructPattern: {
+      const auto& struct_pat = cast<StructPattern>(*p);
+      std::vector<StructPatternElement> new_fields;
+      VarValues field_types;
+      auto new_types = types;
+      if (expected && (*expected)->Tag() != Value::Kind::StructType) {
+        FATAL_COMPILATION_ERROR(p->SourceLoc()) << "didn't expect a struct";
+      }
+      if (expected && struct_pat.Fields().size() !=
+                          cast<StructType>(**expected).Fields().size()) {
+        FATAL_COMPILATION_ERROR(struct_pat.SourceLoc())
+            << "structs have different numbers of fields";
+      }
+      for (size_t i = 0; i < struct_pat.Fields().size(); ++i) {
+        const StructPatternElement& field = struct_pat.Fields()[i];
+        std::optional<Nonnull<const Value*>> expected_field_type;
+        if (expected) {
+          const auto& [expected_name, expected_type] =
+              cast<StructType>(**expected).Fields()[i];
+          if (expected_name != field.name) {
+            FATAL_COMPILATION_ERROR(struct_pat.SourceLoc())
+                << "field names do not match, expected " << expected_name
+                << " but got " << field.name;
+          }
+          expected_field_type = expected_type;
+        }
+        auto field_result = TypeCheckPattern(field.pattern, new_types, values,
+                                             expected_field_type);
+        new_types = field_result.types;
+        new_fields.push_back({field.name, field_result.pattern});
+        field_types.push_back({field.name, field_result.type});
+      }
+      auto new_struct_pat =
+          arena->New<StructPattern>(struct_pat.SourceLoc(), new_fields);
+      auto type = arena->New<StructType>(std::move(field_types));
+      return {.pattern = new_struct_pat, .type = type, .types = new_types};
     }
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*p);
@@ -938,7 +1067,8 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
       }
     }
   }
-  return arena->New<ClassType>(sd->name, std::move(fields), std::move(methods));
+  return arena->New<NominalClassType>(sd->name, std::move(fields),
+                                      std::move(methods));
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
@@ -1030,7 +1160,7 @@ void TypeChecker::TopLevel(const Declaration& d, TypeCheckContext* tops) {
       tops->values.Set(class_def.name, a);  // Is this obsolete?
       std::vector<TupleElement> field_types;
       for (const auto& [field_name, field_value] :
-           cast<ClassType>(*st).Fields()) {
+           cast<NominalClassType>(*st).Fields()) {
         field_types.push_back({.name = field_name, .value = field_value});
       }
       auto fun_ty = arena->New<FunctionType>(

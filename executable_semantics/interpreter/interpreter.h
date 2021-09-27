@@ -137,6 +137,9 @@ class Interpreter {
 
   auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
       -> Nonnull<const Value*>;
+  auto CreateStruct(const std::vector<FieldInitializer>& fields,
+                    const std::vector<Nonnull<const Value*>>& values)
+      -> Nonnull<const Value*>;
 
   auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
                 SourceLocation loc) -> Nonnull<const Value*>;

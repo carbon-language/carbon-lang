@@ -12,9 +12,14 @@
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {
-  var x: i32 = 0;
-  {
-    // empty block
+  var empty: {} = {};
+  empty = {};
+  if (not (empty == {})) {
+    return 1;
   }
-  return x;
+  match (empty) {
+    case {} => {
+      return 0;
+    }
+  }
 }

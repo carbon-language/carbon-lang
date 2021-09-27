@@ -67,10 +67,11 @@ static void PrintOp(llvm::raw_ostream& out, Operator op) {
 }
 
 static void PrintFields(llvm::raw_ostream& out,
-                        const std::vector<FieldInitializer>& fields) {
+                        const std::vector<FieldInitializer>& fields,
+                        std::string_view separator) {
   llvm::ListSeparator sep;
   for (const auto& field : fields) {
-    out << sep << field.name << " = " << *field.expression;
+    out << sep << "." << field.name << separator << *field.expression;
   }
 }
 
@@ -88,8 +89,18 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case Expression::Kind::TupleLiteral:
       out << "(";
-      PrintFields(out, cast<TupleLiteral>(*this).Fields());
+      PrintFields(out, cast<TupleLiteral>(*this).Fields(), " = ");
       out << ")";
+      break;
+    case Expression::Kind::StructLiteral:
+      out << "{";
+      PrintFields(out, cast<StructLiteral>(*this).Fields(), " = ");
+      out << "}";
+      break;
+    case Expression::Kind::StructTypeLiteral:
+      out << "{";
+      PrintFields(out, cast<StructTypeLiteral>(*this).Fields(), ": ");
+      out << "}";
       break;
     case Expression::Kind::IntLiteral:
       out << cast<IntLiteral>(*this).Val();

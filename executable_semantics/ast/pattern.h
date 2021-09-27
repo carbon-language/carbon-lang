@@ -29,6 +29,7 @@ class Pattern {
     AutoPattern,
     BindingPattern,
     TuplePattern,
+    StructPattern,
     AlternativePattern,
     ExpressionPattern,
   };
@@ -141,6 +142,36 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
                                    const ParenContents<Expression>& contents)
     -> ParenContents<Pattern>;
+
+struct StructPatternElement {
+  // The field name. Cannot be empty
+  std::string name;
+
+  // The pattern the field must match.
+  Nonnull<const Pattern*> pattern;
+};
+
+auto FieldInitializersToStructPatternElements(
+    Nonnull<Arena*> arena, const std::vector<FieldInitializer>& initializers)
+    -> std::vector<StructPatternElement>;
+
+// A pattern that matches a struct value field-wise.
+class StructPattern : public Pattern {
+ public:
+  StructPattern(SourceLocation loc, std::vector<StructPatternElement> fields)
+      : Pattern(Kind::StructPattern, loc), fields(std::move(fields)) {}
+
+  static auto classof(const Pattern* pattern) -> bool {
+    return pattern->Tag() == Kind::StructPattern;
+  }
+
+  auto Fields() const -> const std::vector<StructPatternElement>& {
+    return fields;
+  }
+
+ private:
+  std::vector<StructPatternElement> fields;
+};
 
 // A pattern that matches an alternative of a choice type.
 class AlternativePattern : public Pattern {
