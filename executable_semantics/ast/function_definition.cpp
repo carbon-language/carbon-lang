@@ -7,11 +7,11 @@
 namespace Carbon {
 
 void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
-  out << "fn " << name << " ";
-  if (deduced_parameters.size() > 0) {
+  out << "fn " << name_ << " ";
+  if (!deduced_parameters_.empty()) {
     out << "[";
     unsigned int i = 0;
-    for (const auto& deduced : deduced_parameters) {
+    for (const auto& deduced : deduced_parameters_) {
       if (i != 0) {
         out << ", ";
       }
@@ -21,13 +21,13 @@ void FunctionDefinition::PrintDepth(int depth, llvm::raw_ostream& out) const {
     }
     out << "]";
   }
-  out << *param_pattern;
-  if (!is_omitted_return_type) {
-    out << " -> " << *return_type;
+  out << *param_pattern_;
+  if (!is_omitted_return_type_) {
+    out << " -> " << *return_type_;
   }
-  if (body) {
+  if (body_) {
     out << " {\n";
-    (*body)->PrintDepth(depth, out);
+    (*body_)->PrintDepth(depth, out);
     out << "\n}\n";
   } else {
     out << ";\n";
