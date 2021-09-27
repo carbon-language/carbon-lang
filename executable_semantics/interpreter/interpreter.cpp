@@ -268,24 +268,12 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           FATAL() << "expected a tuple value in pattern, not " << *v;
       }
     case Value::Kind::StructValue: {
-      if (v->Tag() != Value::Kind::StructValue) {
-        FATAL() << "expected a struct in pattern, not " << *v;
-      }
       const auto& p_struct = cast<StructValue>(*p);
       const auto& v_struct = cast<StructValue>(*v);
-      if (p_struct.Elements().size() != v_struct.Elements().size()) {
-        FATAL_PROGRAM_ERROR(loc)
-            << "arity mismatch in struct pattern match:\n  pattern: "
-            << p_struct << "\n  value: " << v_struct;
-      }
+      CHECK(p_struct.Elements().size() == v_struct.Elements().size());
       Env values(arena);
       for (size_t i = 0; i < p_struct.Elements().size(); ++i) {
-        if (p_struct.Elements()[i].name != v_struct.Elements()[i].name) {
-          FATAL_PROGRAM_ERROR(loc)
-              << "Struct field name '" << v_struct.Elements()[i].name
-              << "' does not match pattern field name '"
-              << p_struct.Elements()[i].name << "'";
-        }
+        CHECK(p_struct.Elements()[i].name == v_struct.Elements()[i].name);
         std::optional<Env> matches = PatternMatch(
             p_struct.Elements()[i].value, v_struct.Elements()[i].value, loc);
         if (!matches) {
@@ -765,12 +753,13 @@ auto Interpreter::StepPattern() -> Transition {
     case Pattern::Kind::StructPattern: {
       const auto& struct_pat = cast<StructPattern>(*pattern);
       if (act->Pos() < static_cast<int>(struct_pat.Fields().size())) {
-        return Spawn{
-            arena->New<PatternAction>(struct_pat.Fields()[act->Pos()].pattern)};
+        return Spawn{arena->New<PatternAction>(
+            &struct_pat.Fields()[act->Pos()].Pattern())};
       } else {
         std::vector<TupleElement> elements;
         for (size_t i = 0; i < struct_pat.Fields().size(); ++i) {
-          elements.push_back({struct_pat.Fields()[i].name, act->Results()[i]});
+          elements.push_back(
+              {struct_pat.Fields()[i].Name(), act->Results()[i]});
         }
         return Done{arena->New<StructValue>(std::move(elements))};
       }

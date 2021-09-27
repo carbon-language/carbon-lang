@@ -690,18 +690,18 @@ auto TypeChecker::TypeCheckPattern(
         if (expected) {
           const auto& [expected_name, expected_type] =
               cast<StructType>(**expected).Fields()[i];
-          if (expected_name != field.name) {
+          if (expected_name != field.Name()) {
             FATAL_COMPILATION_ERROR(struct_pat.SourceLoc())
                 << "field names do not match, expected " << expected_name
-                << " but got " << field.name;
+                << " but got " << field.Name();
           }
           expected_field_type = expected_type;
         }
-        auto field_result = TypeCheckPattern(field.pattern, new_types, values,
-                                             expected_field_type);
+        auto field_result = TypeCheckPattern(&field.Pattern(), new_types,
+                                             values, expected_field_type);
         new_types = field_result.types;
-        new_fields.push_back({field.name, field_result.pattern});
-        field_types.push_back({field.name, field_result.type});
+        new_fields.push_back({field.Name(), field_result.pattern});
+        field_types.push_back({field.Name(), field_result.type});
       }
       auto new_struct_pat =
           arena->New<StructPattern>(struct_pat.SourceLoc(), new_fields);

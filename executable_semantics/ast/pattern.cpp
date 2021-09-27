@@ -47,7 +47,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << "{";
       llvm::ListSeparator sep;
       for (const StructPatternElement& field : struct_pat.Fields()) {
-        out << sep << "." << field.name << " = " << *field.pattern;
+        out << sep << "." << field.Name() << " = " << field.Pattern();
       }
       out << "}";
       break;

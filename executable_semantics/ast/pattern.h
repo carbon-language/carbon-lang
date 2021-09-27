@@ -143,12 +143,20 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
                                    const ParenContents<Expression>& contents)
     -> ParenContents<Pattern>;
 
-struct StructPatternElement {
-  // The field name. Cannot be empty
-  std::string name;
+class StructPatternElement {
+ public:
+  StructPatternElement(std::string name, Nonnull<const Pattern*> pattern)
+      : name(std::move(name)), pattern(std::move(pattern)) {}
 
-  // The pattern the field must match.
-  Nonnull<const Pattern*> pattern;
+  // The field name. Cannot be empty
+  auto Name() const -> const std::string& { return name; }
+
+  // The pattern that the field must match.
+  auto Pattern() const -> const Carbon::Pattern& { return *pattern; }
+
+ private:
+  std::string name;
+  Nonnull<const Carbon::Pattern*> pattern;
 };
 
 auto FieldInitializersToStructPatternElements(
