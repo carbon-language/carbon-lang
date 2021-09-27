@@ -61,7 +61,7 @@ class Declaration {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(Nonnull<const FunctionDefinition*> definition)
-      : Declaration(Kind::FunctionDeclaration, definition->source_location),
+      : Declaration(Kind::FunctionDeclaration, definition->source_loc()),
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
