@@ -1133,7 +1133,8 @@ void Interpreter::Step() {
 }
 
 auto Interpreter::InterpProgram(
-    const std::vector<Nonnull<const Declaration*>>& fs) -> int {
+    const std::vector<Nonnull<const Declaration*>>& fs,
+    Nonnull<const Expression*> call_main) -> int {
   // Check that the interpreter is in a clean state.
   CHECK(globals.IsEmpty());
   CHECK(stack.IsEmpty());
@@ -1144,11 +1145,6 @@ auto Interpreter::InterpProgram(
   }
   InitGlobals(fs);
 
-  SourceLocation loc("<InterpProgram()>", 0);
-
-  Nonnull<const Expression*> arg = arena->New<TupleLiteral>(loc);
-  Nonnull<const Expression*> call_main = arena->New<CallExpression>(
-      loc, arena->New<IdentifierExpression>(loc, "main"), arg);
   auto todo = Stack<Nonnull<Action*>>(arena->New<ExpressionAction>(call_main));
   auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(globals));
   stack = Stack<Nonnull<Frame*>>(arena->New<Frame>("top", scopes, todo));

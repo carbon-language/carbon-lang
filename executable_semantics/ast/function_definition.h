@@ -26,13 +26,12 @@ class FunctionDefinition {
  public:
   FunctionDefinition(SourceLocation source_loc, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     Nonnull<const TuplePattern*> param_pattern,
-                     Nonnull<const Pattern*> return_type,
-                     bool is_omitted_return_type,
-                     std::optional<Nonnull<const Statement*>> body)
+                     Nonnull<TuplePattern*> param_pattern,
+                     Nonnull<Pattern*> return_type, bool is_omitted_return_type,
+                     std::optional<Nonnull<Statement*>> body)
       : source_loc_(source_loc),
         name_(std::move(name)),
-        deduced_parameters_(deduced_params),
+        deduced_parameters_(std::move(deduced_params)),
         param_pattern_(param_pattern),
         return_type_(return_type),
         is_omitted_return_type_(is_omitted_return_type),
@@ -48,6 +47,7 @@ class FunctionDefinition {
     return deduced_parameters_;
   }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
+  auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_type() const -> const Pattern& { return *return_type_; }
   auto is_omitted_return_type() const -> bool {
     return is_omitted_return_type_;
@@ -55,15 +55,16 @@ class FunctionDefinition {
   auto body() const -> std::optional<Nonnull<const Statement*>> {
     return body_;
   }
+  auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
 
  private:
   SourceLocation source_loc_;
   std::string name_;
   std::vector<GenericBinding> deduced_parameters_;
-  Nonnull<const TuplePattern*> param_pattern_;
-  Nonnull<const Pattern*> return_type_;
+  Nonnull<TuplePattern*> param_pattern_;
+  Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
-  std::optional<Nonnull<const Statement*>> body_;
+  std::optional<Nonnull<Statement*>> body_;
 };
 
 }  // namespace Carbon
