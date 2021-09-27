@@ -73,6 +73,7 @@
   #include "executable_semantics/ast/pattern.h"
   #include "executable_semantics/common/arena.h"
   #include "executable_semantics/common/nonnull.h"
+  #include "executable_semantics/syntax/bison_wrap.h"
 
   namespace Carbon {
   class ParseAndLexContext;
@@ -129,9 +130,9 @@
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <std::pair<std::string, Nonnull<const Expression*>>> alternative
-%type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list
-%type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list_contents
+%type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
+%type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
+%type <std::vector<ChoiceDeclaration::Alternative>> alternative_list_contents
 %type <std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>> clause
 %type <std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>> clause_list
 
@@ -656,10 +657,10 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = std::pair<std::string, Nonnull<const Expression*>>($1, $2); }
+    { $$ = ChoiceDeclaration::Alternative($1, $2); }
 | identifier
     {
-      $$ = std::pair<std::string, Nonnull<const Expression*>>(
+      $$ = ChoiceDeclaration::Alternative(
           $1, arena->New<TupleLiteral>(context.SourceLoc()));
     }
 ;
@@ -673,11 +674,11 @@ alternative_list:
 ;
 alternative_list_contents:
   alternative
-    { $$ = {$1}; }
+    { $$ = {std::move($1)}; }
 | alternative_list_contents COMMA alternative
     {
       $$ = $1;
-      $$.push_back($3);
+      $$.push_back(std::move($3));
     }
 ;
 declaration:

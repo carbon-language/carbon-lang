@@ -113,14 +113,14 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
           cast<FunctionDeclaration>(d).Definition();
       Env new_env = *env;
       // Bring the deduced parameters into scope.
-      for (const auto& deduced : func_def.deduced_parameters) {
+      for (const auto& deduced : func_def.deduced_parameters()) {
         Address a = heap.AllocateValue(arena->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      auto pt = InterpPattern(new_env, func_def.param_pattern);
-      auto f = arena->New<FunctionValue>(func_def.name, pt, func_def.body);
+      auto pt = InterpPattern(new_env, &func_def.param_pattern());
+      auto f = arena->New<FunctionValue>(func_def.name(), pt, func_def.body());
       Address a = heap.AllocateValue(f);
-      env->Set(func_def.name, a);
+      env->Set(func_def.name(), a);
       break;
     }
 
@@ -151,9 +151,9 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
-      for (const auto& [name, signature] : choice.Alternatives()) {
-        auto t = InterpExp(Env(arena), signature);
-        alts.push_back(make_pair(name, t));
+      for (const auto& alternative : choice.Alternatives()) {
+        auto t = InterpExp(Env(arena), &alternative.signature());
+        alts.push_back(make_pair(alternative.name(), t));
       }
       auto ct = arena->New<ChoiceType>(choice.Name(), std::move(alts));
       auto a = heap.AllocateValue(ct);
