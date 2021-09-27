@@ -151,9 +151,9 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
-      for (const auto& [name, signature] : choice.Alternatives()) {
-        auto t = InterpExp(Env(arena), signature);
-        alts.push_back(make_pair(name, t));
+      for (const auto& alternative : choice.Alternatives()) {
+        auto t = InterpExp(Env(arena), &alternative.signature());
+        alts.push_back(make_pair(alternative.name(), t));
       }
       auto ct = arena->New<ChoiceType>(choice.Name(), std::move(alts));
       auto a = heap.AllocateValue(ct);

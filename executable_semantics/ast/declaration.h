@@ -95,10 +95,21 @@ class ClassDeclaration : public Declaration {
 
 class ChoiceDeclaration : public Declaration {
  public:
-  ChoiceDeclaration(
-      SourceLocation loc, std::string name,
-      std::vector<std::pair<std::string, Nonnull<const Expression*>>>
-          alternatives)
+  class Alternative {
+   public:
+    Alternative(std::string name, Nonnull<const Expression*> signature)
+        : name_(name), signature_(signature) {}
+
+    auto name() const -> const std::string& { return name_; }
+    auto signature() const -> const Expression& { return *signature_; }
+
+   private:
+    std::string name_;
+    Nonnull<const Expression*> signature_;
+  };
+
+  ChoiceDeclaration(SourceLocation loc, std::string name,
+                    std::vector<Alternative> alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -108,14 +119,13 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto Name() const -> const std::string& { return name; }
-  auto Alternatives() const -> const
-      std::vector<std::pair<std::string, Nonnull<const Expression*>>>& {
+  auto Alternatives() const -> const std::vector<Alternative>& {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::vector<std::pair<std::string, Nonnull<const Expression*>>> alternatives;
+  std::vector<Alternative> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.
