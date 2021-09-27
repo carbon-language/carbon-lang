@@ -62,7 +62,7 @@ class Declaration {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(Nonnull<FunctionDefinition*> definition)
-      : Declaration(Kind::FunctionDeclaration, definition->source_location),
+      : Declaration(Kind::FunctionDeclaration, definition->source_loc()),
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
@@ -98,9 +98,21 @@ class ClassDeclaration : public Declaration {
 
 class ChoiceDeclaration : public Declaration {
  public:
-  ChoiceDeclaration(
-      SourceLocation loc, std::string name,
-      std::vector<std::pair<std::string, Nonnull<Expression*>>> alternatives)
+  class Alternative {
+   public:
+    Alternative(std::string name, Nonnull<Expression*> signature)
+        : name_(name), signature_(signature) {}
+
+    auto name() const -> const std::string& { return name_; }
+    auto signature() const -> const Expression& { return *signature_; }
+
+   private:
+    std::string name_;
+    Nonnull<Expression*> signature_;
+  };
+
+  ChoiceDeclaration(SourceLocation loc, std::string name,
+                    std::vector<Alternative> alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -110,14 +122,13 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto Name() const -> const std::string& { return name; }
-  auto Alternatives() const
-      -> llvm::ArrayRef<std::pair<std::string, Nonnull<Expression*>>> {
+  auto Alternatives() const -> const std::vector<Alternative>& {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::vector<std::pair<std::string, Nonnull<Expression*>>> alternatives;
+  std::vector<Alternative> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.

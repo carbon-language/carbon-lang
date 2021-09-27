@@ -7,6 +7,12 @@ load("@mypy_integration//:mypy.bzl", "mypy_test")
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
 cc_library(
+    name = "bison_wrap",
+    hdrs = ["bison_wrap.h"],
+    deps = ["//common:check"],
+)
+
+cc_library(
     name = "syntax",
     srcs = [
         "lexer.cpp",
@@ -27,6 +33,7 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
+        ":bison_wrap",
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
