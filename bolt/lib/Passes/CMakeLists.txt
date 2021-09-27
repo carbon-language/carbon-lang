@@ -2,6 +2,7 @@ add_llvm_library(LLVMBOLTPasses
   ADRRelaxationPass.cpp
   Aligner.cpp
   AllocCombiner.cpp
+  AsmDump.cpp
   BinaryPasses.cpp
   BinaryFunctionCallGraph.cpp
   CacheMetrics.cpp

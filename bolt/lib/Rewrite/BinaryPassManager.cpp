@@ -12,6 +12,7 @@
 #include "bolt/Passes/ADRRelaxationPass.h"
 #include "bolt/Passes/Aligner.h"
 #include "bolt/Passes/AllocCombiner.h"
+#include "bolt/Passes/AsmDump.h"
 #include "bolt/Passes/FrameOptimizer.h"
 #include "bolt/Passes/IdenticalCodeFolding.h"
 #include "bolt/Passes/IndirectCallPromotion.h"
@@ -36,6 +37,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include <memory>
 #include <numeric>
 
 using namespace llvm;
@@ -45,6 +47,7 @@ namespace opts {
 extern cl::opt<bool> PrintAll;
 extern cl::opt<bool> PrintDynoStats;
 extern cl::opt<bool> DumpDotAll;
+extern cl::opt<std::string> AsmDump;
 extern cl::opt<bolt::PLTCall::OptType> PLT;
 
 static cl::opt<bool>
@@ -387,6 +390,9 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   BinaryFunctionPassManager Manager(BC);
 
   const DynoStats InitialDynoStats = getDynoStats(BC.getBinaryFunctions());
+
+  Manager.registerPass(std::make_unique<AsmDumpPass>(),
+                       opts::AsmDump.getNumOccurrences());
 
   if (opts::Instrument) {
     Manager.registerPass(std::make_unique<Instrumentation>(NeverPrint));
