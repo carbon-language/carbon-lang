@@ -28,7 +28,8 @@ class Interpreter {
       : arena(arena), globals(arena), heap(arena) {}
 
   // Interpret the whole program.
-  auto InterpProgram(const std::vector<Nonnull<const Declaration*>>& fs) -> int;
+  auto InterpProgram(const std::vector<Nonnull<const Declaration*>>& fs,
+                     Nonnull<const Expression*> call_main) -> int;
 
   // Interpret an expression at compile-time.
   auto InterpExp(Env values, Nonnull<const Expression*> e)

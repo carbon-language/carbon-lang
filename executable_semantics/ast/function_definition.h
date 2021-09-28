@@ -10,6 +10,7 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -21,32 +22,49 @@ struct GenericBinding {
   Nonnull<const Expression*> type;
 };
 
-struct FunctionDefinition {
-  FunctionDefinition(SourceLocation source_location, std::string name,
+class FunctionDefinition {
+ public:
+  FunctionDefinition(SourceLocation source_loc, std::string name,
                      std::vector<GenericBinding> deduced_params,
-                     Nonnull<const TuplePattern*> param_pattern,
-                     Nonnull<const Pattern*> return_type,
-                     bool is_omitted_return_type,
-                     std::optional<Nonnull<const Statement*>> body)
-      : source_location(source_location),
-        name(std::move(name)),
-        deduced_parameters(deduced_params),
-        param_pattern(param_pattern),
-        return_type(return_type),
-        is_omitted_return_type(is_omitted_return_type),
-        body(body) {}
+                     Nonnull<TuplePattern*> param_pattern,
+                     Nonnull<Pattern*> return_type, bool is_omitted_return_type,
+                     std::optional<Nonnull<Statement*>> body)
+      : source_loc_(source_loc),
+        name_(std::move(name)),
+        deduced_parameters_(std::move(deduced_params)),
+        param_pattern_(param_pattern),
+        return_type_(return_type),
+        is_omitted_return_type_(is_omitted_return_type),
+        body_(body) {}
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  SourceLocation source_location;
-  std::string name;
-  std::vector<GenericBinding> deduced_parameters;
-  Nonnull<const TuplePattern*> param_pattern;
-  Nonnull<const Pattern*> return_type;
-  bool is_omitted_return_type;
-  std::optional<Nonnull<const Statement*>> body;
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto name() const -> const std::string& { return name_; }
+  auto deduced_parameters() const -> llvm::ArrayRef<GenericBinding> {
+    return deduced_parameters_;
+  }
+  auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
+  auto param_pattern() -> TuplePattern& { return *param_pattern_; }
+  auto return_type() const -> const Pattern& { return *return_type_; }
+  auto is_omitted_return_type() const -> bool {
+    return is_omitted_return_type_;
+  }
+  auto body() const -> std::optional<Nonnull<const Statement*>> {
+    return body_;
+  }
+  auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
+
+ private:
+  SourceLocation source_loc_;
+  std::string name_;
+  std::vector<GenericBinding> deduced_parameters_;
+  Nonnull<TuplePattern*> param_pattern_;
+  Nonnull<Pattern*> return_type_;
+  bool is_omitted_return_type_;
+  std::optional<Nonnull<Statement*>> body_;
 };
 
 }  // namespace Carbon

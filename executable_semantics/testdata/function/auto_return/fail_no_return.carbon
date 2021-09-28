@@ -2,20 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_no_return.carbon:15: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
 package ExecutableSemanticsTest api;
 
-fn Id(t: Type) => t;
+fn NoReturn() -> auto {
+}
 
-// Test non-trivial type expression in variable declaration statement.
-
-fn main() -> i32 {
-  var x: Id(i32) = 0;
-  return x;
+fn main() {
+  NoReturn();
 }
