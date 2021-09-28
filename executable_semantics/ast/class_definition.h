@@ -13,10 +13,22 @@
 
 namespace Carbon {
 
-struct ClassDefinition {
-  SourceLocation loc;
-  std::string name;
-  std::vector<Nonnull<Member*>> members;
+class ClassDefinition {
+ public:
+  ClassDefinition(SourceLocation source_loc, std::string name,
+                  std::vector<Nonnull<Member*>> members)
+      : source_loc_(source_loc),
+        name_(std::move(name)),
+        members_(std::move(members)) {}
+
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto name() const -> const std::string& { return name_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+
+ private:
+  SourceLocation source_loc_;
+  std::string name_;
+  std::vector<Nonnull<Member*>> members_;
 };
 
 }  // namespace Carbon
