@@ -2,8 +2,5 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-filegroup(
-    name = "md_files",
-    srcs = glob(["*.md"]),
-    visibility = ["//proposals/scripts:__pkg__"],
-)
+- search: /https:\/\/github.com\/carbon-language\/carbon-lang\/blob\/trunk\//
+  replacement: /

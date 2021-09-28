@@ -38,7 +38,8 @@ class TestNewProposal(unittest.TestCase):
         parsed_args = new_proposal._parse_args(["foo"])
         content = new_proposal._fill_template(
             os.path.join(
-                new_proposal._get_proposals_dir(parsed_args), "template.md"
+                new_proposal._get_proposals_dir(parsed_args),
+                "scripts/template.md",
             ),
             "TITLE",
             123,

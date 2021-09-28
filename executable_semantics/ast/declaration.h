@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -60,8 +61,8 @@ class Declaration {
 
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(Nonnull<const FunctionDefinition*> definition)
-      : Declaration(Kind::FunctionDeclaration, definition->source_location),
+  FunctionDeclaration(Nonnull<FunctionDefinition*> definition)
+      : Declaration(Kind::FunctionDeclaration, definition->source_loc()),
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
@@ -69,9 +70,10 @@ class FunctionDeclaration : public Declaration {
   }
 
   auto Definition() const -> const FunctionDefinition& { return *definition; }
+  auto Definition() -> FunctionDefinition& { return *definition; }
 
  private:
-  Nonnull<const FunctionDefinition*> definition;
+  Nonnull<FunctionDefinition*> definition;
 };
 
 class ClassDeclaration : public Declaration {
@@ -88,6 +90,7 @@ class ClassDeclaration : public Declaration {
   }
 
   auto Definition() const -> const ClassDefinition& { return definition; }
+  auto Definition() -> ClassDefinition& { return definition; }
 
  private:
   ClassDefinition definition;
@@ -95,10 +98,21 @@ class ClassDeclaration : public Declaration {
 
 class ChoiceDeclaration : public Declaration {
  public:
-  ChoiceDeclaration(
-      SourceLocation loc, std::string name,
-      std::vector<std::pair<std::string, Nonnull<const Expression*>>>
-          alternatives)
+  class Alternative {
+   public:
+    Alternative(std::string name, Nonnull<Expression*> signature)
+        : name_(name), signature_(signature) {}
+
+    auto name() const -> const std::string& { return name_; }
+    auto signature() const -> const Expression& { return *signature_; }
+
+   private:
+    std::string name_;
+    Nonnull<Expression*> signature_;
+  };
+
+  ChoiceDeclaration(SourceLocation loc, std::string name,
+                    std::vector<Alternative> alternatives)
       : Declaration(Kind::ChoiceDeclaration, loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
@@ -108,22 +122,20 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto Name() const -> const std::string& { return name; }
-  auto Alternatives() const -> const
-      std::vector<std::pair<std::string, Nonnull<const Expression*>>>& {
+  auto Alternatives() const -> const std::vector<Alternative>& {
     return alternatives;
   }
 
  private:
   std::string name;
-  std::vector<std::pair<std::string, Nonnull<const Expression*>>> alternatives;
+  std::vector<Alternative> alternatives;
 };
 
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(SourceLocation loc,
-                      Nonnull<const BindingPattern*> binding,
-                      Nonnull<const Expression*> initializer)
+  VariableDeclaration(SourceLocation loc, Nonnull<BindingPattern*> binding,
+                      Nonnull<Expression*> initializer)
       : Declaration(Kind::VariableDeclaration, loc),
         binding(binding),
         initializer(initializer) {}
@@ -133,14 +145,16 @@ class VariableDeclaration : public Declaration {
   }
 
   auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
+  auto Binding() -> Nonnull<BindingPattern*> { return binding; }
   auto Initializer() const -> Nonnull<const Expression*> { return initializer; }
+  auto Initializer() -> Nonnull<Expression*> { return initializer; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  Nonnull<const BindingPattern*> binding;
-  Nonnull<const Expression*> initializer;
+  Nonnull<BindingPattern*> binding;
+  Nonnull<Expression*> initializer;
 };
 
 }  // namespace Carbon
