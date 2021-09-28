@@ -671,43 +671,6 @@ auto TypeChecker::TypeCheckPattern(
       auto tuple_t = arena->New<TupleValue>(std::move(field_types));
       return {.pattern = new_tuple, .type = tuple_t, .types = new_types};
     }
-    case Pattern::Kind::StructPattern: {
-      const auto& struct_pat = cast<StructPattern>(*p);
-      std::vector<StructPatternElement> new_fields;
-      VarValues field_types;
-      auto new_types = types;
-      if (expected && (*expected)->Tag() != Value::Kind::StructType) {
-        FATAL_COMPILATION_ERROR(p->SourceLoc()) << "didn't expect a struct";
-      }
-      if (expected && struct_pat.Fields().size() !=
-                          cast<StructType>(**expected).Fields().size()) {
-        FATAL_COMPILATION_ERROR(struct_pat.SourceLoc())
-            << "structs have different numbers of fields";
-      }
-      for (size_t i = 0; i < struct_pat.Fields().size(); ++i) {
-        const StructPatternElement& field = struct_pat.Fields()[i];
-        std::optional<Nonnull<const Value*>> expected_field_type;
-        if (expected) {
-          const auto& [expected_name, expected_type] =
-              cast<StructType>(**expected).Fields()[i];
-          if (expected_name != field.Name()) {
-            FATAL_COMPILATION_ERROR(struct_pat.SourceLoc())
-                << "field names do not match, expected " << expected_name
-                << " but got " << field.Name();
-          }
-          expected_field_type = expected_type;
-        }
-        auto field_result = TypeCheckPattern(&field.Pattern(), new_types,
-                                             values, expected_field_type);
-        new_types = field_result.types;
-        new_fields.push_back({field.Name(), field_result.pattern});
-        field_types.push_back({field.Name(), field_result.type});
-      }
-      auto new_struct_pat =
-          arena->New<StructPattern>(struct_pat.SourceLoc(), new_fields);
-      auto type = arena->New<StructType>(std::move(field_types));
-      return {.pattern = new_struct_pat, .type = type, .types = new_types};
-    }
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*p);
       Nonnull<const Value*> choice_type =

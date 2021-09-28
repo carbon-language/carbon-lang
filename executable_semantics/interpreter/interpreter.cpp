@@ -750,20 +750,6 @@ auto Interpreter::StepPattern() -> Transition {
         return Done{arena->New<TupleValue>(std::move(elements))};
       }
     }
-    case Pattern::Kind::StructPattern: {
-      const auto& struct_pat = cast<StructPattern>(*pattern);
-      if (act->Pos() < static_cast<int>(struct_pat.Fields().size())) {
-        return Spawn{arena->New<PatternAction>(
-            &struct_pat.Fields()[act->Pos()].Pattern())};
-      } else {
-        std::vector<TupleElement> elements;
-        for (size_t i = 0; i < struct_pat.Fields().size(); ++i) {
-          elements.push_back(
-              {struct_pat.Fields()[i].Name(), act->Results()[i]});
-        }
-        return Done{arena->New<StructValue>(std::move(elements))};
-      }
-    }
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*pattern);
       if (act->Pos() == 0) {

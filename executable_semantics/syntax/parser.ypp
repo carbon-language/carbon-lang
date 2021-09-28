@@ -135,8 +135,6 @@
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <Nonnull<const Pattern*>> struct_pattern
-%type <std::vector<StructPatternElement>> struct_pattern_contents
 %type <std::pair<std::string, Nonnull<const Expression*>>> alternative
 %type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list
 %type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list_contents
@@ -477,8 +475,6 @@ non_expression_pattern:
     { $$ = arena->New<BindingPattern>(context.SourceLoc(), $1, $3); }
 | paren_pattern
     { $$ = $1; }
-| struct_pattern
-    { $$ = $1; }
 | expression tuple_pattern
     { $$ = arena->New<AlternativePattern>(context.SourceLoc(), $1, $2); }
 ;
@@ -543,32 +539,6 @@ maybe_empty_tuple_pattern:
     }
 | tuple_pattern
     { $$ = $1; }
-;
-
-struct_pattern:
-  LEFT_CURLY_BRACE struct_pattern_contents RIGHT_CURLY_BRACE
-    { $$ = arena->New<StructPattern>(context.SourceLoc(), $2); }
-| LEFT_CURLY_BRACE struct_pattern_contents COMMA RIGHT_CURLY_BRACE
-    { $$ = arena->New<StructPattern>(context.SourceLoc(), $2); }
-;
-struct_pattern_contents:
-  designator EQUAL non_expression_pattern
-    { $$ = {{$1, $3}}; }
-| struct_literal_contents COMMA designator EQUAL non_expression_pattern
-    {
-      $$ = FieldInitializersToStructPatternElements(arena, $1);
-      $$.push_back({$3, $5});
-    }
-| struct_pattern_contents COMMA designator EQUAL non_expression_pattern
-    {
-      $$ = $1;
-      $$.push_back({$3, $5});
-    }
-| struct_pattern_contents COMMA designator EQUAL expression
-    {
-      $$ = $1;
-      $$.push_back({$3, arena->New<ExpressionPattern>($5)});
-    }
 ;
 
 clause:

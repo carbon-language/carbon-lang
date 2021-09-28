@@ -42,16 +42,6 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
-    case Kind::StructPattern: {
-      const auto& struct_pat = cast<StructPattern>(*this);
-      out << "{";
-      llvm::ListSeparator sep;
-      for (const StructPatternElement& field : struct_pat.Fields()) {
-        out << sep << "." << field.Name() << " = " << field.Pattern();
-      }
-      out << "}";
-      break;
-    }
     case Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*this);
       out << *alternative.ChoiceType() << "." << alternative.AlternativeName()
@@ -122,17 +112,6 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
     result.elements.push_back(
         {.name = element.name,
          .term = arena->New<ExpressionPattern>(element.term)});
-  }
-  return result;
-}
-
-auto FieldInitializersToStructPatternElements(
-    Nonnull<Arena*> arena, const std::vector<FieldInitializer>& initializers)
-    -> std::vector<StructPatternElement> {
-  std::vector<StructPatternElement> result;
-  for (const auto& initializer : initializers) {
-    result.push_back({initializer.name,
-                      arena->New<ExpressionPattern>(initializer.expression)});
   }
   return result;
 }
