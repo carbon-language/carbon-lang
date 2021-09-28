@@ -238,24 +238,39 @@ class Continue : public Statement {
 
 class Match : public Statement {
  public:
-  Match(SourceLocation loc, Nonnull<Expression*> exp,
-        std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clauses)
-      : Statement(Kind::Match, loc), exp(exp), clauses(std::move(clauses)) {}
+  class Clause {
+   public:
+    Clause(Nonnull<Pattern*> pattern, Nonnull<Statement*> statement)
+        : pattern_(pattern), statement_(statement) {}
+
+    auto pattern() const -> const Pattern& { return *pattern_; }
+    auto pattern() -> Pattern& { return *pattern_; }
+    auto statement() const -> const Statement& { return *statement_; }
+    auto statement() -> Statement& { return *statement_; }
+
+   private:
+    Nonnull<Pattern*> pattern_;
+    Nonnull<Statement*> statement_;
+  };
+
+  Match(SourceLocation loc, Nonnull<Expression*> expression,
+        std::vector<Clause> clauses)
+      : Statement(Kind::Match, loc),
+        expression_(expression),
+        clauses_(std::move(clauses)) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->Tag() == Kind::Match;
   }
 
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
-  auto Exp() -> Nonnull<Expression*> { return exp; }
-  auto Clauses() const
-      -> llvm::ArrayRef<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> {
-    return clauses;
-  }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
+  auto clauses() const -> llvm::ArrayRef<Clause> { return clauses_; }
+  auto clauses() -> llvm::MutableArrayRef<Clause> { return clauses_; }
 
  private:
-  Nonnull<Expression*> exp;
-  std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clauses;
+  Nonnull<Expression*> expression_;
+  std::vector<Clause> clauses_;
 };
 
 // A continuation statement.
