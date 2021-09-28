@@ -11,7 +11,7 @@ namespace Carbon {
 using llvm::cast;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
-  switch (Tag()) {
+  switch (tag()) {
     case Kind::FunctionDeclaration:
       out << cast<FunctionDeclaration>(*this).Definition();
       break;

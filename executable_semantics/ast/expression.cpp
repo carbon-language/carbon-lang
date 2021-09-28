@@ -17,21 +17,21 @@ namespace Carbon {
 using llvm::cast;
 
 auto ExpressionFromParenContents(
-    Nonnull<Arena*> arena, SourceLocation loc,
+    Nonnull<Arena*> arena, SourceLocation source_loc,
     const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*> {
   std::optional<Nonnull<Expression*>> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return TupleExpressionFromParenContents(arena, loc, paren_contents);
+    return TupleExpressionFromParenContents(arena, source_loc, paren_contents);
   }
 }
 
 auto TupleExpressionFromParenContents(
-    Nonnull<Arena*> arena, SourceLocation loc,
+    Nonnull<Arena*> arena, SourceLocation source_loc,
     const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*> {
   return arena->New<TupleLiteral>(
-      loc, paren_contents.TupleElements<FieldInitializer>(loc));
+      source_loc, paren_contents.TupleElements<FieldInitializer>(source_loc));
 }
 
 static void PrintOp(llvm::raw_ostream& out, Operator op) {
@@ -72,7 +72,7 @@ static void PrintFields(llvm::raw_ostream& out,
 }
 
 void Expression::Print(llvm::raw_ostream& out) const {
-  switch (Tag()) {
+  switch (tag()) {
     case Expression::Kind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
       out << *index.Aggregate() << "[" << *index.Offset() << "]";
@@ -116,7 +116,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case Expression::Kind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
       out << *call.Function();
-      if (call.Argument()->Tag() == Expression::Kind::TupleLiteral) {
+      if (call.Argument()->tag() == Expression::Kind::TupleLiteral) {
         out << *call.Argument();
       } else {
         out << "(" << *call.Argument() << ")";

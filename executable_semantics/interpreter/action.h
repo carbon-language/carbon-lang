@@ -29,31 +29,12 @@ class Action {
   Action(const Value&) = delete;
   Action& operator=(const Value&) = delete;
 
-  // The position or state of the action. Starts at 0 and goes up to the number
-  // of subexpressions.
-  //
-  // pos indicates how many of the entries in the following `results` vector
-  // will be filled in the next time this action is active.
-  // For each i < pos, results[i] contains a pointer to a Value.
-  auto Pos() const -> int { return pos; }
-
-  // Results from a subexpression.
-  auto Results() const -> const std::vector<Nonnull<const Value*>>& {
-    return results;
-  }
-
-  void SetPos(int pos) { this->pos = pos; }
-
-  void AddResult(Nonnull<const Value*> result) { results.push_back(result); }
+  void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 
   void Clear() {
-    pos = 0;
-    results.clear();
+    pos_ = 0;
+    results_.clear();
   }
-
-  // Returns the enumerator corresponding to the most-derived type of this
-  // object.
-  auto Tag() const -> Kind { return tag; }
 
   static void PrintList(const Stack<Nonnull<Action*>>& ls,
                         llvm::raw_ostream& out);
@@ -61,16 +42,35 @@ class Action {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto tag() const -> Kind { return tag_; }
+
+  // The position or state of the action. Starts at 0 and goes up to the number
+  // of subexpressions.
+  //
+  // pos indicates how many of the entries in the following `results` vector
+  // will be filled in the next time this action is active.
+  // For each i < pos, results[i] contains a pointer to a Value.
+  auto pos() const -> int { return pos_; }
+
+  void set_pos(int pos) { this->pos_ = pos; }
+
+  // Results from a subexpression.
+  auto results() const -> const std::vector<Nonnull<const Value*>>& {
+    return results_;
+  }
+
  protected:
   // Constructs an Action. `tag` must be the enumerator corresponding to the
   // most-derived type being constructed.
-  explicit Action(Kind tag) : tag(tag) {}
+  explicit Action(Kind tag) : tag_(tag) {}
 
  private:
-  int pos = 0;
-  std::vector<Nonnull<const Value*>> results;
+  int pos_ = 0;
+  std::vector<Nonnull<const Value*>> results_;
 
-  const Kind tag;
+  const Kind tag_;
 };
 
 class LValAction : public Action {
@@ -79,7 +79,7 @@ class LValAction : public Action {
       : Action(Kind::LValAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->Tag() == Kind::LValAction;
+    return action->tag() == Kind::LValAction;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -94,7 +94,7 @@ class ExpressionAction : public Action {
       : Action(Kind::ExpressionAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->Tag() == Kind::ExpressionAction;
+    return action->tag() == Kind::ExpressionAction;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -109,7 +109,7 @@ class PatternAction : public Action {
       : Action(Kind::PatternAction), pat(pat) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->Tag() == Kind::PatternAction;
+    return action->tag() == Kind::PatternAction;
   }
 
   auto Pat() const -> Nonnull<const Pattern*> { return pat; }
@@ -124,7 +124,7 @@ class StatementAction : public Action {
       : Action(Kind::StatementAction), stmt(stmt) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->Tag() == Kind::StatementAction;
+    return action->tag() == Kind::StatementAction;
   }
 
   auto Stmt() const -> Nonnull<const Statement*> { return stmt; }

@@ -40,23 +40,25 @@ class Declaration {
   Declaration(const Member&) = delete;
   Declaration& operator=(const Member&) = delete;
 
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto tag() const -> Kind { return tag_; }
 
-  auto SourceLoc() const -> SourceLocation { return loc; }
-
-  void Print(llvm::raw_ostream& out) const;
+  auto source_loc() const -> SourceLocation { return source_loc_; }
 
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+  Declaration(Kind tag, SourceLocation source_loc)
+      : tag_(tag), source_loc_(source_loc) {}
 
  private:
-  const Kind tag;
-  SourceLocation loc;
+  const Kind tag_;
+  SourceLocation source_loc_;
 };
 
 class FunctionDeclaration : public Declaration {
@@ -66,7 +68,7 @@ class FunctionDeclaration : public Declaration {
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->Tag() == Kind::FunctionDeclaration;
+    return decl->tag() == Kind::FunctionDeclaration;
   }
 
   auto Definition() const -> const FunctionDefinition& { return *definition; }
@@ -78,15 +80,15 @@ class FunctionDeclaration : public Declaration {
 
 class ClassDeclaration : public Declaration {
  public:
-  ClassDeclaration(SourceLocation loc, std::string name,
+  ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
-      : Declaration(Kind::ClassDeclaration, loc),
-        definition({.loc = loc,
+      : Declaration(Kind::ClassDeclaration, source_loc),
+        definition({.loc = source_loc,
                     .name = std::move(name),
                     .members = std::move(members)}) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->Tag() == Kind::ClassDeclaration;
+    return decl->tag() == Kind::ClassDeclaration;
   }
 
   auto Definition() const -> const ClassDefinition& { return definition; }
@@ -111,14 +113,14 @@ class ChoiceDeclaration : public Declaration {
     Nonnull<Expression*> signature_;
   };
 
-  ChoiceDeclaration(SourceLocation loc, std::string name,
+  ChoiceDeclaration(SourceLocation source_loc, std::string name,
                     std::vector<Alternative> alternatives)
-      : Declaration(Kind::ChoiceDeclaration, loc),
+      : Declaration(Kind::ChoiceDeclaration, source_loc),
         name(std::move(name)),
         alternatives(std::move(alternatives)) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->Tag() == Kind::ChoiceDeclaration;
+    return decl->tag() == Kind::ChoiceDeclaration;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -134,14 +136,15 @@ class ChoiceDeclaration : public Declaration {
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(SourceLocation loc, Nonnull<BindingPattern*> binding,
+  VariableDeclaration(SourceLocation source_loc,
+                      Nonnull<BindingPattern*> binding,
                       Nonnull<Expression*> initializer)
-      : Declaration(Kind::VariableDeclaration, loc),
+      : Declaration(Kind::VariableDeclaration, source_loc),
         binding(binding),
         initializer(initializer) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->Tag() == Kind::VariableDeclaration;
+    return decl->tag() == Kind::VariableDeclaration;
   }
 
   auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }

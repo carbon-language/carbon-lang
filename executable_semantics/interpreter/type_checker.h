@@ -140,11 +140,11 @@ class TypeChecker {
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
   auto CheckOrEnsureReturn(std::optional<Nonnull<Statement*>> opt_stmt,
-                           bool omitted_ret_type, SourceLocation loc)
+                           bool omitted_ret_type, SourceLocation source_loc)
       -> Nonnull<Statement*>;
 
   // Reify type to type expression.
-  auto ReifyType(Nonnull<const Value*> t, SourceLocation loc)
+  auto ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
       -> Nonnull<Expression*>;
 
   auto Substitute(TypeEnv dict, Nonnull<const Value*> type)

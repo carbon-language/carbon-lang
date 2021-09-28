@@ -30,32 +30,34 @@ class Member {
   Member(const Member&) = delete;
   Member& operator=(const Member&) = delete;
 
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto tag() const -> Kind { return tag_; }
 
-  auto SourceLoc() const -> SourceLocation { return loc; }
-
-  void Print(llvm::raw_ostream& out) const;
+  auto source_loc() const -> SourceLocation { return source_loc_; }
 
  protected:
   // Constructs a Member representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Member(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+  Member(Kind tag, SourceLocation source_loc)
+      : tag_(tag), source_loc_(source_loc) {}
 
  private:
-  const Kind tag;
-  SourceLocation loc;
+  const Kind tag_;
+  SourceLocation source_loc_;
 };
 
 class FieldMember : public Member {
  public:
-  FieldMember(SourceLocation loc, Nonnull<const BindingPattern*> binding)
-      : Member(Kind::FieldMember, loc), binding(binding) {}
+  FieldMember(SourceLocation source_loc, Nonnull<const BindingPattern*> binding)
+      : Member(Kind::FieldMember, source_loc), binding(binding) {}
 
   static auto classof(const Member* member) -> bool {
-    return member->Tag() == Kind::FieldMember;
+    return member->tag() == Kind::FieldMember;
   }
 
   auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }

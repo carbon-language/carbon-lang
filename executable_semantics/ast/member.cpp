@@ -12,7 +12,7 @@ namespace Carbon {
 using llvm::cast;
 
 void Member::Print(llvm::raw_ostream& out) const {
-  switch (Tag()) {
+  switch (tag()) {
     case Kind::FieldMember:
       const auto& field = cast<FieldMember>(*this);
       out << "var " << *field.Binding() << ";\n";
