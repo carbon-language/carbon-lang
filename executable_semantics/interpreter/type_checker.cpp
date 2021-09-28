@@ -78,7 +78,7 @@ auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation loc)
     }
     case Value::Kind::StructType: {
       std::vector<FieldInitializer> args;
-      for (const auto& [name, type] : cast<StructType>(*t).Fields()) {
+      for (const auto& [name, type] : cast<StructType>(*t).fields()) {
         args.push_back(FieldInitializer(name, ReifyType(type, loc)));
       }
       return arena->New<StructTypeLiteral>(loc, args);
@@ -160,18 +160,18 @@ static auto ArgumentDeduction(SourceLocation loc, TypeEnv deduced,
       }
       const auto& param_struct = cast<StructType>(*param);
       const auto& arg_struct = cast<StructType>(*arg);
-      if (param_struct.Fields().size() != arg_struct.Fields().size()) {
+      if (param_struct.fields().size() != arg_struct.fields().size()) {
         ExpectType(loc, "argument deduction", param, arg);
       }
-      for (size_t i = 0; i < param_struct.Fields().size(); ++i) {
-        if (param_struct.Fields()[i].first != arg_struct.Fields()[i].first) {
+      for (size_t i = 0; i < param_struct.fields().size(); ++i) {
+        if (param_struct.fields()[i].first != arg_struct.fields()[i].first) {
           FATAL_COMPILATION_ERROR(loc)
-              << "mismatch in field names, " << param_struct.Fields()[i].first
-              << " != " << arg_struct.Fields()[i].first;
+              << "mismatch in field names, " << param_struct.fields()[i].first
+              << " != " << arg_struct.fields()[i].first;
         }
         deduced =
-            ArgumentDeduction(loc, deduced, param_struct.Fields()[i].second,
-                              arg_struct.Fields()[i].second);
+            ArgumentDeduction(loc, deduced, param_struct.fields()[i].second,
+                              arg_struct.fields()[i].second);
       }
       return deduced;
     }
@@ -246,7 +246,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     }
     case Value::Kind::StructType: {
       VarValues fields;
-      for (const auto& [name, value] : cast<StructType>(*type).Fields()) {
+      for (const auto& [name, value] : cast<StructType>(*type).fields()) {
         auto new_type = Substitute(dict, value);
         fields.push_back({name, new_type});
       }
@@ -341,7 +341,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
       std::vector<FieldInitializer> new_args;
       VarValues arg_types;
       auto new_types = types;
-      for (const auto& arg : cast<StructLiteral>(*e).Fields()) {
+      for (const auto& arg : cast<StructLiteral>(*e).fields()) {
         auto arg_res = TypeCheckExp(arg.expression, new_types, values);
         new_types = arg_res.types;
         new_args.push_back(FieldInitializer(arg.name, arg_res.exp));
@@ -355,7 +355,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
       const auto& struct_type = cast<StructTypeLiteral>(*e);
       std::vector<FieldInitializer> new_args;
       auto new_types = types;
-      for (const auto& arg : struct_type.Fields()) {
+      for (const auto& arg : struct_type.fields()) {
         auto arg_res = TypeCheckExp(arg.expression, new_types, values);
         new_types = arg_res.types;
         Nonnull<const Value*> type = interpreter.InterpExp(values, arg_res.exp);
@@ -364,7 +364,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
       }
       auto new_e = arena->New<StructTypeLiteral>(e->SourceLoc(), new_args);
       Nonnull<const Value*> type;
-      if (struct_type.Fields().empty()) {
+      if (struct_type.fields().empty()) {
         // `{}` is the type of `{}`, just as `()` is the type of `()`.
         // This applies only if there are no fields, because (unlike with
         // tuples) non-empty struct types are syntactically disjoint
@@ -382,7 +382,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types,
       switch (t->Tag()) {
         case Value::Kind::StructType: {
           const auto& struct_type = cast<StructType>(*t);
-          for (const auto& [field_name, field_type] : struct_type.Fields()) {
+          for (const auto& [field_name, field_type] : struct_type.fields()) {
             if (access.Field() == field_name) {
               Nonnull<const Expression*> new_e =
                   arena->New<FieldAccessExpression>(access.SourceLoc(), res.exp,

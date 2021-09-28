@@ -46,7 +46,7 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
 
 auto StructValue::FindField(const std::string& name) const
     -> std::optional<Nonnull<const Value*>> {
-  for (const TupleElement& element : elements) {
+  for (const TupleElement& element : elements_) {
     if (element.name == name) {
       return element.value;
     }
@@ -129,7 +129,7 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
   }
   switch (value->Tag()) {
     case Value::Kind::StructValue: {
-      std::vector<TupleElement> elements = cast<StructValue>(*value).Elements();
+      std::vector<TupleElement> elements = cast<StructValue>(*value).elements();
       auto it = std::find_if(elements.begin(), elements.end(),
                              [path_begin](const TupleElement& element) {
                                return element.name == *path_begin;
@@ -202,7 +202,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& struct_val = cast<StructValue>(*this);
       out << "{";
       llvm::ListSeparator sep;
-      for (const TupleElement& element : struct_val.Elements()) {
+      for (const TupleElement& element : struct_val.elements()) {
         out << sep << "." << element.name << " = " << *element.value;
       }
       out << "}";
@@ -273,7 +273,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::StructType: {
       out << "{";
       llvm::ListSeparator sep;
-      for (const auto& [name, type] : cast<StructType>(*this).Fields()) {
+      for (const auto& [name, type] : cast<StructType>(*this).fields()) {
         out << sep << "." << name << ": " << *type;
       }
       out << "}";
@@ -326,7 +326,7 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
     }
     case Value::Kind::StructValue: {
       std::vector<TupleElement> elements;
-      for (const TupleElement& element : cast<StructValue>(*val).Elements()) {
+      for (const TupleElement& element : cast<StructValue>(*val).elements()) {
         elements.push_back({.name = element.name,
                             .value = CopyVal(arena, element.value, loc)});
       }
@@ -376,7 +376,7 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
       return arena->New<StringValue>(cast<StringValue>(*val).Val());
     case Value::Kind::StructType: {
       VarValues fields;
-      for (const auto& [name, type] : cast<StructType>(*val).Fields()) {
+      for (const auto& [name, type] : cast<StructType>(*val).fields()) {
         fields.push_back({name, CopyVal(arena, type, loc)});
       }
       return arena->New<StructType>(fields);
@@ -408,13 +408,13 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::StructType: {
       const auto& struct1 = cast<StructType>(*t1);
       const auto& struct2 = cast<StructType>(*t2);
-      if (struct1.Fields().size() != struct2.Fields().size()) {
+      if (struct1.fields().size() != struct2.fields().size()) {
         return false;
       }
-      for (size_t i = 0; i < struct1.Fields().size(); ++i) {
-        if (struct1.Fields()[i].first != struct2.Fields()[i].first ||
-            !TypeEqual(struct1.Fields()[i].second,
-                       struct2.Fields()[i].second)) {
+      for (size_t i = 0; i < struct1.fields().size(); ++i) {
+        if (struct1.fields()[i].first != struct2.fields()[i].first ||
+            !TypeEqual(struct1.fields()[i].second,
+                       struct2.fields()[i].second)) {
           return false;
         }
       }
@@ -503,8 +503,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
                               cast<TupleValue>(*v2).Elements(), loc);
     case Value::Kind::StructValue:
-      return FieldsValueEqual(cast<StructValue>(*v1).Elements(),
-                              cast<StructValue>(*v2).Elements(), loc);
+      return FieldsValueEqual(cast<StructValue>(*v1).elements(),
+                              cast<StructValue>(*v2).elements(), loc);
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).Val() == cast<StringValue>(*v2).Val();
     case Value::Kind::IntType:

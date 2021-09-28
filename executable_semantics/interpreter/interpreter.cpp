@@ -270,12 +270,12 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
     case Value::Kind::StructValue: {
       const auto& p_struct = cast<StructValue>(*p);
       const auto& v_struct = cast<StructValue>(*v);
-      CHECK(p_struct.Elements().size() == v_struct.Elements().size());
+      CHECK(p_struct.elements().size() == v_struct.elements().size());
       Env values(arena);
-      for (size_t i = 0; i < p_struct.Elements().size(); ++i) {
-        CHECK(p_struct.Elements()[i].name == v_struct.Elements()[i].name);
+      for (size_t i = 0; i < p_struct.elements().size(); ++i) {
+        CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
         std::optional<Env> matches = PatternMatch(
-            p_struct.Elements()[i].value, v_struct.Elements()[i].value, loc);
+            p_struct.elements()[i].value, v_struct.elements()[i].value, loc);
         if (!matches) {
           return std::nullopt;
         }
@@ -542,23 +542,23 @@ auto Interpreter::StepExp() -> Transition {
     }
     case Expression::Kind::StructLiteral: {
       const auto& literal = cast<StructLiteral>(*exp);
-      if (act->Pos() < static_cast<int>(literal.Fields().size())) {
+      if (act->Pos() < static_cast<int>(literal.fields().size())) {
         Nonnull<const Expression*> elt =
-            literal.Fields()[act->Pos()].expression;
+            literal.fields()[act->Pos()].expression;
         return Spawn{arena->New<ExpressionAction>(elt)};
       } else {
-        return Done{CreateStruct(literal.Fields(), act->Results())};
+        return Done{CreateStruct(literal.fields(), act->Results())};
       }
     }
     case Expression::Kind::StructTypeLiteral: {
       const auto& struct_type = cast<StructTypeLiteral>(*exp);
-      if (act->Pos() < static_cast<int>(struct_type.Fields().size())) {
+      if (act->Pos() < static_cast<int>(struct_type.fields().size())) {
         return Spawn{arena->New<ExpressionAction>(
-            struct_type.Fields()[act->Pos()].expression)};
+            struct_type.fields()[act->Pos()].expression)};
       } else {
         VarValues fields;
-        for (size_t i = 0; i < struct_type.Fields().size(); ++i) {
-          fields.push_back({struct_type.Fields()[i].name, act->Results()[i]});
+        for (size_t i = 0; i < struct_type.fields().size(); ++i) {
+          fields.push_back({struct_type.fields()[i].name, act->Results()[i]});
         }
         return Done{arena->New<StructType>(std::move(fields))};
       }

@@ -94,12 +94,12 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case Expression::Kind::StructLiteral:
       out << "{";
-      PrintFields(out, cast<StructLiteral>(*this).Fields(), " = ");
+      PrintFields(out, cast<StructLiteral>(*this).fields(), " = ");
       out << "}";
       break;
     case Expression::Kind::StructTypeLiteral:
       out << "{";
-      PrintFields(out, cast<StructTypeLiteral>(*this).Fields(), ": ");
+      PrintFields(out, cast<StructTypeLiteral>(*this).fields(), ": ");
       out << "}";
       break;
     case Expression::Kind::IntLiteral:

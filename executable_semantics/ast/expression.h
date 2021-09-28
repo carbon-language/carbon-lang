@@ -241,8 +241,8 @@ class StructLiteral : public Expression {
  public:
   explicit StructLiteral(SourceLocation loc,
                          std::vector<FieldInitializer> fields)
-      : Expression(Kind::StructLiteral, loc), fields(std::move(fields)) {
-    CHECK(!this->fields.empty())
+      : Expression(Kind::StructLiteral, loc), fields_(std::move(fields)) {
+    CHECK(!fields_.empty())
         << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
   }
 
@@ -250,10 +250,12 @@ class StructLiteral : public Expression {
     return exp->Tag() == Kind::StructLiteral;
   }
 
-  auto Fields() const -> const std::vector<FieldInitializer>& { return fields; }
+  auto fields() const -> const std::vector<FieldInitializer>& {
+    return fields_;
+  }
 
  private:
-  std::vector<FieldInitializer> fields;
+  std::vector<FieldInitializer> fields_;
 };
 
 // A literal representing a struct type.
@@ -266,16 +268,18 @@ class StructTypeLiteral : public Expression {
 
   explicit StructTypeLiteral(SourceLocation loc,
                              std::vector<FieldInitializer> fields)
-      : Expression(Kind::StructTypeLiteral, loc), fields(std::move(fields)) {}
+      : Expression(Kind::StructTypeLiteral, loc), fields_(std::move(fields)) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->Tag() == Kind::StructTypeLiteral;
   }
 
-  auto Fields() const -> const std::vector<FieldInitializer>& { return fields; }
+  auto fields() const -> const std::vector<FieldInitializer>& {
+    return fields_;
+  }
 
  private:
-  std::vector<FieldInitializer> fields;
+  std::vector<FieldInitializer> fields_;
 };
 
 class PrimitiveOperatorExpression : public Expression {

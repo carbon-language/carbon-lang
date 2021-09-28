@@ -189,8 +189,8 @@ class BoolValue : public Value {
 class StructValue : public Value {
  public:
   explicit StructValue(std::vector<TupleElement> elements)
-      : Value(Kind::StructValue), elements(std::move(elements)) {
-    CHECK(!this->elements.empty())
+      : Value(Kind::StructValue), elements_(std::move(elements)) {
+    CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
   }
 
@@ -198,7 +198,9 @@ class StructValue : public Value {
     return value->Tag() == Kind::StructValue;
   }
 
-  auto Elements() const -> const std::vector<TupleElement>& { return elements; }
+  auto elements() const -> const std::vector<TupleElement>& {
+    return elements_;
+  }
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
@@ -206,7 +208,7 @@ class StructValue : public Value {
       -> std::optional<Nonnull<const Value*>>;
 
  private:
-  std::vector<TupleElement> elements;
+  std::vector<TupleElement> elements_;
 };
 
 // A value of a nominal class type.
@@ -409,16 +411,16 @@ class StructType : public Value {
   StructType() : StructType(VarValues{}) {}
 
   explicit StructType(VarValues fields)
-      : Value(Kind::StructType), fields(std::move(fields)) {}
+      : Value(Kind::StructType), fields_(std::move(fields)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->Tag() == Kind::StructType;
   }
 
-  auto Fields() const -> const VarValues& { return fields; }
+  auto fields() const -> const VarValues& { return fields_; }
 
  private:
-  VarValues fields;
+  VarValues fields_;
 };
 
 // A class type.
