@@ -11,8 +11,10 @@
 
 package ExecutableSemanticsTest api;
 
-fn add(x: i32, y: i32) => x + y;
+fn Id(t: Type) -> auto { return t; }
 
-fn main() -> i32 {
-  return add(1, 2) - 3;
+// Test non-trivial type expression in return type.
+
+fn main() -> Id(i32) {
+  return 0;
 }

@@ -54,16 +54,6 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
-TuplePattern::TuplePattern(Nonnull<Arena*> arena,
-                           Nonnull<Expression*> tuple_literal)
-    : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
-  const auto& tuple = cast<TupleLiteral>(*tuple_literal);
-  for (const FieldInitializer& init : tuple.Fields()) {
-    fields.push_back(
-        Field(init.name, arena->New<ExpressionPattern>(init.expression)));
-  }
-}
-
 auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Nonnull<Pattern*> {

@@ -413,14 +413,8 @@ auto Interpreter::StepLvalue() -> Transition {
       }
     }
     case Expression::Kind::TupleLiteral: {
-      if (act->Pos() == 0) {
-        //    { {(f1=e1,...) :: C, E, F} :: S, H}
-        // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        Nonnull<const Expression*> e1 =
-            cast<TupleLiteral>(*exp).Fields()[0].expression;
-        return Spawn{arena->New<LValAction>(e1)};
-      } else if (act->Pos() !=
-                 static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
+      if (act->Pos() <
+          static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
@@ -485,18 +479,8 @@ auto Interpreter::StepExp() -> Transition {
       }
     }
     case Expression::Kind::TupleLiteral: {
-      if (act->Pos() == 0) {
-        if (cast<TupleLiteral>(*exp).Fields().size() > 0) {
-          //    { {(f1=e1,...) :: C, E, F} :: S, H}
-          // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-          Nonnull<const Expression*> e1 =
-              cast<TupleLiteral>(*exp).Fields()[0].expression;
-          return Spawn{arena->New<ExpressionAction>(e1)};
-        } else {
-          return Done{CreateTuple(act, exp)};
-        }
-      } else if (act->Pos() !=
-                 static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
+      if (act->Pos() <
+          static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
@@ -672,14 +656,7 @@ auto Interpreter::StepPattern() -> Transition {
     }
     case Pattern::Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*pattern);
-      if (act->Pos() == 0) {
-        if (tuple.Fields().empty()) {
-          return Done{TupleValue::Empty()};
-        } else {
-          Nonnull<const Pattern*> p1 = tuple.Fields()[0].pattern;
-          return Spawn{(arena->New<PatternAction>(p1))};
-        }
-      } else if (act->Pos() != static_cast<int>(tuple.Fields().size())) {
+      if (act->Pos() < static_cast<int>(tuple.Fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,

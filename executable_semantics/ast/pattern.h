@@ -109,12 +109,6 @@ class TuplePattern : public Pattern {
   TuplePattern(SourceLocation loc, std::vector<Field> fields)
       : Pattern(Kind::TuplePattern, loc), fields(std::move(fields)) {}
 
-  // Converts tuple_literal to a TuplePattern, by wrapping each field in an
-  // ExpressionPattern.
-  //
-  // REQUIRES: tuple_literal->Tag() == Expression::Kind::TupleLiteral
-  TuplePattern(Nonnull<Arena*> arena, Nonnull<Expression*> tuple_literal);
-
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->Tag() == Kind::TuplePattern;
   }

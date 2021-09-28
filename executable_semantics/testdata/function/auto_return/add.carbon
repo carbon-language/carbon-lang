@@ -2,19 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
+// RUN: executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
+// RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/return/fail_auto.carbon:14: syntax error, unexpected AUTO
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
-fn F() -> auto {
-  return 0;
-}
+fn add(x: i32, y: i32) -> auto { return x + y; }
 
 fn main() -> i32 {
-  return F();
+  return add(1, 2) - 3;
 }

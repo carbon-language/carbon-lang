@@ -617,15 +617,13 @@ function_definition:
           context.SourceLoc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
     }
-| FN identifier deduced_params maybe_empty_tuple_pattern DOUBLE_ARROW expression
-  SEMICOLON
+| FN identifier deduced_params maybe_empty_tuple_pattern ARROW AUTO block
     {
-      // The return type is not considered "omitted" because it's automatic from
-      // the expression.
+      // The return type is not considered "omitted" because it's `auto`.
       $$ = arena->New<FunctionDefinition>(
           context.SourceLoc(), $2, $3, $4,
-          arena->New<AutoPattern>(context.SourceLoc()), true,
-          arena->New<Return>(context.SourceLoc(), $6, true));
+          arena->New<AutoPattern>(context.SourceLoc()),
+          /*is_omitted_exp=*/false, $7);
     }
 ;
 function_declaration:

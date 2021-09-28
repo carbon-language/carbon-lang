@@ -38,6 +38,37 @@ class TypeChecker {
   auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
 
  private:
+  // Context about the return type, which may be updated during type checking.
+  class ReturnTypeContext {
+   public:
+    // If orig_return_type is auto, deduced_return_type_ will be nullopt;
+    // otherwise, it's orig_return_type. is_auto_ is set accordingly.
+    ReturnTypeContext(Nonnull<const Value*> orig_return_type, bool is_omitted);
+
+    auto is_auto() const -> bool { return is_auto_; }
+
+    auto deduced_return_type() const -> std::optional<Nonnull<const Value*>> {
+      return deduced_return_type_;
+    }
+    void set_deduced_return_type(Nonnull<const Value*> type) {
+      deduced_return_type_ = type;
+    }
+
+    auto is_omitted() const -> bool { return is_omitted_; }
+
+   private:
+    // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.
+    const bool is_auto_;
+
+    // The actual return type. May be nullopt for an `auto` return type that has
+    // yet to be determined.
+    std::optional<Nonnull<const Value*>> deduced_return_type_;
+
+    // Indicates the return type was omitted and is implicitly the empty tuple,
+    // as in `fn Foo() {}`.
+    const bool is_omitted_;
+  };
+
   struct TCExpression {
     TCExpression(Nonnull<Expression*> e, Nonnull<const Value*> t, TypeEnv types)
         : exp(e), type(t), types(types) {}
@@ -90,7 +121,7 @@ class TypeChecker {
   // type is "auto", then the return type is inferred from the first return
   // statement.
   auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values,
-                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
+                     Nonnull<ReturnTypeContext*> return_type_context)
       -> TCStatement;
 
   auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
@@ -98,7 +129,7 @@ class TypeChecker {
 
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
                      Nonnull<Statement*> body, TypeEnv types, Env values,
-                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
+                     Nonnull<ReturnTypeContext*> return_type_context)
       -> Match::Clause;
 
   auto TypeOfFunDef(TypeEnv types, Env values, FunctionDefinition* fun_def)
