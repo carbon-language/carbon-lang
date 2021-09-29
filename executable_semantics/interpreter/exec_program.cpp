@@ -17,21 +17,21 @@ namespace Carbon {
 // standardized, but is made available for printing state in tests.
 static void AddIntrinsics(Nonnull<Arena*> arena,
                           std::vector<Nonnull<Declaration*>>* declarations) {
-  SourceLocation loc("<intrinsic>", 0);
+  SourceLocation source_loc("<intrinsic>", 0);
   std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
-      "0",
-      arena->New<BindingPattern>(
-          loc, "format_str",
-          arena->New<ExpressionPattern>(arena->New<StringTypeLiteral>(loc))))};
+      "0", arena->New<BindingPattern>(
+               source_loc, "format_str",
+               arena->New<ExpressionPattern>(
+                   arena->New<StringTypeLiteral>(source_loc))))};
   auto print_return =
-      arena->New<Return>(loc,
+      arena->New<Return>(source_loc,
                          arena->New<IntrinsicExpression>(
                              IntrinsicExpression::IntrinsicKind::Print),
                          false);
   auto print = arena->New<FunctionDeclaration>(arena->New<FunctionDefinition>(
-      loc, "Print", std::vector<GenericBinding>(),
-      arena->New<TuplePattern>(loc, print_fields),
-      arena->New<ExpressionPattern>(arena->New<TupleLiteral>(loc)),
+      source_loc, "Print", std::vector<GenericBinding>(),
+      arena->New<TuplePattern>(source_loc, print_fields),
+      arena->New<ExpressionPattern>(arena->New<TupleLiteral>(source_loc)),
       /*is_omitted_return_type=*/false, print_return));
   declarations->insert(declarations->begin(), print);
 }
@@ -62,10 +62,10 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast) {
     llvm::outs() << "********** starting execution **********\n";
   }
 
-  SourceLocation loc("<main()>", 0);
+  SourceLocation source_loc("<main()>", 0);
   Nonnull<Expression*> call_main = arena->New<CallExpression>(
-      loc, arena->New<IdentifierExpression>(loc, "main"),
-      arena->New<TupleLiteral>(loc));
+      source_loc, arena->New<IdentifierExpression>(source_loc, "main"),
+      arena->New<TupleLiteral>(source_loc));
   int result = Interpreter(arena).InterpProgram(new_decls, call_main);
   llvm::outs() << "result: " << result << "\n";
 }

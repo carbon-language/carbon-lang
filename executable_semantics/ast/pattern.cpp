@@ -18,7 +18,7 @@ namespace Carbon {
 using llvm::cast;
 
 void Pattern::Print(llvm::raw_ostream& out) const {
-  switch (Tag()) {
+  switch (kind()) {
     case Kind::AutoPattern:
       out << "auto";
       break;
@@ -54,22 +54,24 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Nonnull<Pattern*> {
   std::optional<Nonnull<Pattern*>> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return TuplePatternFromParenContents(arena, loc, paren_contents);
+    return TuplePatternFromParenContents(arena, source_loc, paren_contents);
   }
 }
 
-auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
+                                   SourceLocation source_loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> Nonnull<TuplePattern*> {
   return arena->New<TuplePattern>(
-      loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
+      source_loc,
+      paren_contents.TupleElements<TuplePattern::Field>(source_loc));
 }
 
 // Used by AlternativePattern for constructor initialization. Produces a helpful
@@ -77,17 +79,17 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
 // apply.
 static auto RequireFieldAccess(Nonnull<Expression*> alternative)
     -> FieldAccessExpression& {
-  if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
-    FATAL_PROGRAM_ERROR(alternative->SourceLoc())
+  if (alternative->kind() != Expression::Kind::FieldAccessExpression) {
+    FATAL_PROGRAM_ERROR(alternative->source_loc())
         << "Alternative pattern must have the form of a field access.";
   }
   return cast<FieldAccessExpression>(*alternative);
 }
 
-AlternativePattern::AlternativePattern(SourceLocation loc,
+AlternativePattern::AlternativePattern(SourceLocation source_loc,
                                        Nonnull<Expression*> alternative,
                                        Nonnull<TuplePattern*> arguments)
-    : Pattern(Kind::AlternativePattern, loc),
+    : Pattern(Kind::AlternativePattern, source_loc),
       choice_type(RequireFieldAccess(alternative).Aggregate()),
       alternative_name(RequireFieldAccess(alternative).Field()),
       arguments(arguments) {}

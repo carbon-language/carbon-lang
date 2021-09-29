@@ -41,6 +41,7 @@ class Declaration {
   Declaration& operator=(const Member&) = delete;
 
   void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
@@ -50,7 +51,7 @@ class Declaration {
 
  protected:
   // Constructs a Declaration representing syntax at the given line number.
-  // `tag` must be the enumerator corresponding to the most-derived type being
+  // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
   Declaration(Kind kind, SourceLocation source_loc)
       : kind_(kind), source_loc_(source_loc) {}
