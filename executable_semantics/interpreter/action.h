@@ -62,7 +62,7 @@ class Action {
   }
 
  protected:
-  // Constructs an Action. `tag` must be the enumerator corresponding to the
+  // Constructs an Action. `kind` must be the enumerator corresponding to the
   // most-derived type being constructed.
   explicit Action(Kind kind) : kind_(kind) {}
 

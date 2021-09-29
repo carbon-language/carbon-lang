@@ -78,7 +78,7 @@ class Value {
   auto kind() const -> Kind { return kind_; }
 
  protected:
-  // Constructs a Value. `tag` must be the enumerator corresponding to the
+  // Constructs a Value. `kind` must be the enumerator corresponding to the
   // most-derived type being constructed.
   explicit Value(Kind kind) : kind_(kind) {}
 

@@ -41,7 +41,7 @@ class Member {
 
  protected:
   // Constructs a Member representing syntax at the given line number.
-  // `tag` must be the enumerator corresponding to the most-derived type being
+  // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
   Member(Kind kind, SourceLocation source_loc)
       : kind_(kind), source_loc_(source_loc) {}
