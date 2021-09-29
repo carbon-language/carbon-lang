@@ -5159,9 +5159,8 @@ void RewriteInstance::rewriteFile() {
                << Twine::utohexstr(Function->getMaxSize())
                << ") for function " << *Function << '\n';
       }
-      FailedAddresses.emplace_back(Function->getAddress());
       // Remove jump table sections that this function owns in non-reloc mode
-      // because we don't wnat to write them anymore
+      // because we don't want to write them anymore.
       if (!BC->HasRelocations && opts::JumpTables == JTS_BASIC) {
         for (auto &JTI : Function->JumpTables) {
           JumpTable *JT = JTI.second;
