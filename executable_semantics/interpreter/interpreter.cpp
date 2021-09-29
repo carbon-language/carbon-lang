@@ -107,10 +107,10 @@ auto Interpreter::EvalPrim(Operator op,
 }
 
 void Interpreter::InitEnv(const Declaration& d, Env* env) {
-  switch (d.Tag()) {
+  switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
-          cast<FunctionDeclaration>(d).Definition();
+          cast<FunctionDeclaration>(d).definition();
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
@@ -125,10 +125,10 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def = cast<ClassDeclaration>(d).Definition();
+      const ClassDefinition& class_def = cast<ClassDeclaration>(d).definition();
       VarValues fields;
       VarValues methods;
-      for (Nonnull<const Member*> m : class_def.members) {
+      for (Nonnull<const Member*> m : class_def.members()) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember: {
             Nonnull<const BindingPattern*> binding =
@@ -141,23 +141,23 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
           }
         }
       }
-      auto st = arena->New<NominalClassType>(class_def.name, std::move(fields),
-                                             std::move(methods));
+      auto st = arena->New<NominalClassType>(
+          class_def.name(), std::move(fields), std::move(methods));
       auto a = heap.AllocateValue(st);
-      env->Set(class_def.name, a);
+      env->Set(class_def.name(), a);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
       VarValues alts;
-      for (const auto& alternative : choice.Alternatives()) {
+      for (const auto& alternative : choice.alternatives()) {
         auto t = InterpExp(Env(arena), &alternative.signature());
         alts.push_back(make_pair(alternative.name(), t));
       }
-      auto ct = arena->New<ChoiceType>(choice.Name(), std::move(alts));
+      auto ct = arena->New<ChoiceType>(choice.name(), std::move(alts));
       auto a = heap.AllocateValue(ct);
-      env->Set(choice.Name(), a);
+      env->Set(choice.name(), a);
       break;
     }
 
@@ -165,9 +165,9 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const auto& var = cast<VariableDeclaration>(d);
       // Adds an entry in `globals` mapping the variable's name to the
       // result of evaluating the initializer.
-      auto v = InterpExp(*env, var.Initializer());
+      auto v = InterpExp(*env, &var.initializer());
       Address a = heap.AllocateValue(v);
-      env->Set(*var.Binding()->Name(), a);
+      env->Set(*var.binding().Name(), a);
       break;
     }
   }
@@ -792,7 +792,7 @@ auto Interpreter::StepStmt() -> Transition {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->scopes.Push(arena->New<Scope>(CurrentEnv()));
-        return Spawn{arena->New<ExpressionAction>(match_stmt.Exp())};
+        return Spawn{arena->New<ExpressionAction>(&match_stmt.expression())};
       } else {
         // Regarding act->Pos():
         // * odd: start interpreting the pattern of a clause
@@ -804,31 +804,31 @@ auto Interpreter::StepStmt() -> Transition {
         // * 2: the pattern for clause 1
         // * ...
         auto clause_num = (act->Pos() - 1) / 2;
-        if (clause_num >= static_cast<int>(match_stmt.Clauses().size())) {
+        if (clause_num >= static_cast<int>(match_stmt.clauses().size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
           return Done{};
         }
-        auto c = match_stmt.Clauses()[clause_num];
+        auto c = match_stmt.clauses()[clause_num];
 
         if (act->Pos() % 2 == 1) {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          return Spawn{arena->New<PatternAction>(c.first)};
+          return Spawn{arena->New<PatternAction>(&c.pattern())};
         } else {  // try to match
           auto v = act->Results()[0];
           auto pat = act->Results()[clause_num + 1];
           std::optional<Env> matches = PatternMatch(pat, v, stmt->SourceLoc());
           if (matches) {  // we have a match, start the body
             // Ensure we don't process any more clauses.
-            act->SetPos(2 * match_stmt.Clauses().size() + 1);
+            act->SetPos(2 * match_stmt.clauses().size() + 1);
 
             for (const auto& [name, value] : *matches) {
               frame->scopes.Top()->values.Set(name, value);
               frame->scopes.Top()->locals.push_back(name);
             }
-            return Spawn{arena->New<StatementAction>(c.second)};
+            return Spawn{arena->New<StatementAction>(&c.statement())};
           } else {
             return RunAgain{};
           }

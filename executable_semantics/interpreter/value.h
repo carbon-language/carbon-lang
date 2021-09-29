@@ -63,7 +63,7 @@ class Value {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto Tag() const -> Kind { return kind; }
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -82,10 +82,10 @@ class Value {
  protected:
   // Constructs a Value. `tag` must be the enumerator corresponding to the
   // most-derived type being constructed.
-  explicit Value(Kind tag) : tag(tag) {}
+  explicit Value(Kind kind) : kind(kind) {}
 
  private:
-  const Kind tag;
+  const Kind kind;
 };
 
 using VarValues = std::vector<std::pair<std::string, Nonnull<const Value*>>>;

@@ -722,10 +722,10 @@ auto TypeChecker::TypeCheckCase(Nonnull<const Value*> expected,
                                 Nonnull<Pattern*> pat, Nonnull<Statement*> body,
                                 TypeEnv types, Env values,
                                 Nonnull<ReturnTypeContext*> return_type_context)
-    -> std::pair<Nonnull<Pattern*>, Nonnull<Statement*>> {
+    -> Match::Clause {
   auto pat_res = TypeCheckPattern(pat, types, values, expected);
   auto res = TypeCheckStmt(body, pat_res.types, values, return_type_context);
-  return std::make_pair(pat, res.stmt);
+  return Match::Clause(pat, res.stmt);
 }
 
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
@@ -735,13 +735,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
   switch (s->Tag()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*s);
-      auto res = TypeCheckExp(match.Exp(), types, values);
+      auto res = TypeCheckExp(&match.expression(), types, values);
       auto res_type = res.type;
-      std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>>
-          new_clauses;
-      for (auto& clause : match.Clauses()) {
-        new_clauses.push_back(TypeCheckCase(res_type, clause.first,
-                                            clause.second, types, values,
+      std::vector<Match::Clause> new_clauses;
+      for (auto& clause : match.clauses()) {
+        new_clauses.push_back(TypeCheckCase(res_type, &clause.pattern(),
+                                            &clause.statement(), types, values,
                                             return_type_context));
       }
       auto new_s = arena->New<Match>(s->SourceLoc(), res.exp, new_clauses);
@@ -897,14 +896,14 @@ auto TypeChecker::CheckOrEnsureReturn(
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*stmt);
-      std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>>
-          new_clauses;
-      for (const auto& clause : match.Clauses()) {
-        auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
+      std::vector<Match::Clause> new_clauses;
+      for (auto& clause : match.clauses()) {
+        auto s = CheckOrEnsureReturn(&clause.statement(), omitted_ret_type,
                                      stmt->SourceLoc());
-        new_clauses.push_back(std::make_pair(clause.first, s));
+        new_clauses.push_back(Match::Clause(&clause.pattern(), s));
       }
-      return arena->New<Match>(stmt->SourceLoc(), match.Exp(), new_clauses);
+      return arena->New<Match>(stmt->SourceLoc(), &match.expression(),
+                               new_clauses);
     }
     case Statement::Kind::Block:
       return arena->New<Block>(
@@ -1023,7 +1022,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
                                  Env ct_top) -> Nonnull<const Value*> {
   VarValues fields;
   VarValues methods;
-  for (Nonnull<const Member*> m : sd->members) {
+  for (Nonnull<const Member*> m : sd->members()) {
     switch (m->Tag()) {
       case Member::Kind::FieldMember: {
         Nonnull<const BindingPattern*> binding =
@@ -1043,42 +1042,41 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
       }
     }
   }
-  return arena->New<NominalClassType>(sd->name, std::move(fields),
+  return arena->New<NominalClassType>(sd->name(), std::move(fields),
                                       std::move(methods));
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
-  switch (d.Tag()) {
+  switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(d).Definition().name();
+      return cast<FunctionDeclaration>(d).definition().name();
     case Declaration::Kind::ClassDeclaration:
-      return cast<ClassDeclaration>(d).Definition().name;
+      return cast<ClassDeclaration>(d).definition().name();
     case Declaration::Kind::ChoiceDeclaration:
-      return cast<ChoiceDeclaration>(d).Name();
+      return cast<ChoiceDeclaration>(d).name();
     case Declaration::Kind::VariableDeclaration: {
-      Nonnull<const BindingPattern*> binding =
-          cast<VariableDeclaration>(d).Binding();
-      if (!binding->Name().has_value()) {
-        FATAL_COMPILATION_ERROR(binding->SourceLoc())
+      const BindingPattern& binding = cast<VariableDeclaration>(d).binding();
+      if (!binding.Name().has_value()) {
+        FATAL_COMPILATION_ERROR(binding.SourceLoc())
             << "Top-level variable declarations must have names";
       }
-      return *binding->Name();
+      return *binding.Name();
     }
   }
 }
 
 auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
                                   const Env& values) -> Nonnull<Declaration*> {
-  switch (d->Tag()) {
+  switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
       return arena->New<FunctionDeclaration>(TypeCheckFunDef(
-          &cast<FunctionDeclaration>(*d).Definition(), types, values));
+          &cast<FunctionDeclaration>(*d).definition(), types, values));
 
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*d).Definition();
+          cast<ClassDeclaration>(*d).definition();
       std::vector<Nonnull<Member*>> fields;
-      for (Nonnull<Member*> m : class_def.members) {
+      for (Nonnull<Member*> m : class_def.members()) {
         switch (m->Tag()) {
           case Member::Kind::FieldMember:
             // TODO: Interpret the type expression and store the result.
@@ -1086,8 +1084,8 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
             break;
         }
       }
-      return arena->New<ClassDeclaration>(class_def.loc, class_def.name,
-                                          std::move(fields));
+      return arena->New<ClassDeclaration>(class_def.source_loc(),
+                                          class_def.name(), std::move(fields));
     }
 
     case Declaration::Kind::ChoiceDeclaration:
@@ -1100,17 +1098,17 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
       TCExpression type_checked_initializer =
-          TypeCheckExp(var.Initializer(), types, values);
+          TypeCheckExp(&var.initializer(), types, values);
       const auto* binding_type =
-          dyn_cast<ExpressionPattern>(var.Binding()->Type());
+          dyn_cast<ExpressionPattern>(var.binding().Type());
       if (binding_type == nullptr) {
         // TODO: consider adding support for `auto`
-        FATAL_COMPILATION_ERROR(var.SourceLoc())
+        FATAL_COMPILATION_ERROR(var.source_loc())
             << "Type of a top-level variable must be an expression.";
       }
       Nonnull<const Value*> declared_type =
           interpreter.InterpExp(values, binding_type->Expression());
-      ExpectType(var.SourceLoc(), "initializer of variable", declared_type,
+      ExpectType(var.source_loc(), "initializer of variable", declared_type,
                  type_checked_initializer.type);
       return d;
     }
@@ -1118,9 +1116,9 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
 }
 
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
-  switch (d->Tag()) {
+  switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      FunctionDefinition& func_def = cast<FunctionDeclaration>(*d).Definition();
+      FunctionDefinition& func_def = cast<FunctionDeclaration>(*d).definition();
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
       tops->types.Set(func_def.name(), t);
       interpreter.InitEnv(*d, &tops->values);
@@ -1129,10 +1127,10 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
 
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*d).Definition();
+          cast<ClassDeclaration>(*d).definition();
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
       Address a = interpreter.AllocateValue(st);
-      tops->values.Set(class_def.name, a);  // Is this obsolete?
+      tops->values.Set(class_def.name(), a);  // Is this obsolete?
       std::vector<TupleElement> field_types;
       for (const auto& [field_name, field_value] :
            cast<NominalClassType>(*st).Fields()) {
@@ -1141,21 +1139,21 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       auto fun_ty = arena->New<FunctionType>(
           std::vector<GenericBinding>(),
           arena->New<TupleValue>(std::move(field_types)), st);
-      tops->types.Set(class_def.name, fun_ty);
+      tops->types.Set(class_def.name(), fun_ty);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*d);
       VarValues alts;
-      for (const auto& alternative : choice.Alternatives()) {
+      for (const auto& alternative : choice.alternatives()) {
         auto t = interpreter.InterpExp(tops->values, &alternative.signature());
         alts.push_back(std::make_pair(alternative.name(), t));
       }
-      auto ct = arena->New<ChoiceType>(choice.Name(), std::move(alts));
+      auto ct = arena->New<ChoiceType>(choice.name(), std::move(alts));
       Address a = interpreter.AllocateValue(ct);
-      tops->values.Set(choice.Name(), a);  // Is this obsolete?
-      tops->types.Set(choice.Name(), ct);
+      tops->values.Set(choice.name(), a);  // Is this obsolete?
+      tops->types.Set(choice.name(), ct);
       break;
     }
 
@@ -1164,10 +1162,10 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       Nonnull<Expression*> type =
-          cast<ExpressionPattern>(*var.Binding()->Type()).Expression();
+          cast<ExpressionPattern>(*var.binding().Type()).Expression();
       Nonnull<const Value*> declared_type =
           interpreter.InterpExp(tops->values, type);
-      tops->types.Set(*var.Binding()->Name(), declared_type);
+      tops->types.Set(*var.binding().Name(), declared_type);
       break;
     }
   }

@@ -53,7 +53,7 @@ class Action {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto Tag() const -> Kind { return kind; }
 
   static void PrintList(const Stack<Nonnull<Action*>>& ls,
                         llvm::raw_ostream& out);
@@ -64,13 +64,13 @@ class Action {
  protected:
   // Constructs an Action. `tag` must be the enumerator corresponding to the
   // most-derived type being constructed.
-  explicit Action(Kind tag) : tag(tag) {}
+  explicit Action(Kind kind) : kind(kind) {}
 
  private:
   int pos = 0;
   std::vector<Nonnull<const Value*>> results;
 
-  const Kind tag;
+  const Kind kind;
 };
 
 class LValAction : public Action {
