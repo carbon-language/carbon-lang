@@ -45,7 +45,7 @@ class Expression {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
@@ -53,11 +53,11 @@ class Expression {
   // Constructs an Expression representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Expression(Kind tag, SourceLocation source_loc)
-      : tag_(tag), source_loc_(source_loc) {}
+  Expression(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind tag_;
+  const Kind kind_;
   SourceLocation source_loc_;
 };
 
@@ -106,7 +106,7 @@ class IdentifierExpression : public Expression {
         name(std::move(name)) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::IdentifierExpression;
+    return exp->kind() == Kind::IdentifierExpression;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -125,7 +125,7 @@ class FieldAccessExpression : public Expression {
         field(std::move(field)) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::FieldAccessExpression;
+    return exp->kind() == Kind::FieldAccessExpression;
   }
 
   auto Aggregate() const -> Nonnull<const Expression*> { return aggregate; }
@@ -147,7 +147,7 @@ class IndexExpression : public Expression {
         offset(offset) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::IndexExpression;
+    return exp->kind() == Kind::IndexExpression;
   }
 
   auto Aggregate() const -> Nonnull<const Expression*> { return aggregate; }
@@ -166,7 +166,7 @@ class IntLiteral : public Expression {
       : Expression(Kind::IntLiteral, source_loc), val(val) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::IntLiteral;
+    return exp->kind() == Kind::IntLiteral;
   }
 
   auto Val() const -> int { return val; }
@@ -181,7 +181,7 @@ class BoolLiteral : public Expression {
       : Expression(Kind::BoolLiteral, source_loc), val(val) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::BoolLiteral;
+    return exp->kind() == Kind::BoolLiteral;
   }
 
   auto Val() const -> bool { return val; }
@@ -196,7 +196,7 @@ class StringLiteral : public Expression {
       : Expression(Kind::StringLiteral, source_loc), val(std::move(val)) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::StringLiteral;
+    return exp->kind() == Kind::StringLiteral;
   }
 
   auto Val() const -> const std::string& { return val; }
@@ -211,7 +211,7 @@ class StringTypeLiteral : public Expression {
       : Expression(Kind::StringTypeLiteral, source_loc) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::StringTypeLiteral;
+    return exp->kind() == Kind::StringTypeLiteral;
   }
 };
 
@@ -225,7 +225,7 @@ class TupleLiteral : public Expression {
       : Expression(Kind::TupleLiteral, source_loc), fields(std::move(fields)) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::TupleLiteral;
+    return exp->kind() == Kind::TupleLiteral;
   }
 
   auto Fields() const -> const std::vector<FieldInitializer>& { return fields; }
@@ -244,7 +244,7 @@ class PrimitiveOperatorExpression : public Expression {
         arguments(std::move(arguments)) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::PrimitiveOperatorExpression;
+    return exp->kind() == Kind::PrimitiveOperatorExpression;
   }
 
   auto Op() const -> Operator { return op; }
@@ -270,7 +270,7 @@ class CallExpression : public Expression {
         argument(argument) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::CallExpression;
+    return exp->kind() == Kind::CallExpression;
   }
 
   auto Function() const -> Nonnull<const Expression*> { return function; }
@@ -295,7 +295,7 @@ class FunctionTypeLiteral : public Expression {
         is_omitted_return_type(is_omitted_return_type) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::FunctionTypeLiteral;
+    return exp->kind() == Kind::FunctionTypeLiteral;
   }
 
   auto Parameter() const -> Nonnull<const Expression*> { return parameter; }
@@ -316,7 +316,7 @@ class BoolTypeLiteral : public Expression {
       : Expression(Kind::BoolTypeLiteral, source_loc) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::BoolTypeLiteral;
+    return exp->kind() == Kind::BoolTypeLiteral;
   }
 };
 
@@ -326,7 +326,7 @@ class IntTypeLiteral : public Expression {
       : Expression(Kind::IntTypeLiteral, source_loc) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::IntTypeLiteral;
+    return exp->kind() == Kind::IntTypeLiteral;
   }
 };
 
@@ -336,7 +336,7 @@ class ContinuationTypeLiteral : public Expression {
       : Expression(Kind::ContinuationTypeLiteral, source_loc) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::ContinuationTypeLiteral;
+    return exp->kind() == Kind::ContinuationTypeLiteral;
   }
 };
 
@@ -346,7 +346,7 @@ class TypeTypeLiteral : public Expression {
       : Expression(Kind::TypeTypeLiteral, source_loc) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::TypeTypeLiteral;
+    return exp->kind() == Kind::TypeTypeLiteral;
   }
 };
 
@@ -361,7 +361,7 @@ class IntrinsicExpression : public Expression {
         intrinsic(intrinsic) {}
 
   static auto classof(const Expression* exp) -> bool {
-    return exp->tag() == Kind::IntrinsicExpression;
+    return exp->kind() == Kind::IntrinsicExpression;
   }
 
   auto Intrinsic() const -> IntrinsicKind { return intrinsic; }

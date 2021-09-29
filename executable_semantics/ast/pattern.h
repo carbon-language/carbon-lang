@@ -42,7 +42,7 @@ class Pattern {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
@@ -50,11 +50,11 @@ class Pattern {
   // Constructs a Pattern representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern(Kind tag, SourceLocation source_loc)
-      : tag_(tag), source_loc_(source_loc) {}
+  Pattern(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind tag_;
+  const Kind kind_;
   SourceLocation source_loc_;
 };
 
@@ -65,7 +65,7 @@ class AutoPattern : public Pattern {
       : Pattern(Kind::AutoPattern, source_loc) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->tag() == Kind::AutoPattern;
+    return pattern->kind() == Kind::AutoPattern;
   }
 };
 
@@ -80,7 +80,7 @@ class BindingPattern : public Pattern {
         type(type) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->tag() == Kind::BindingPattern;
+    return pattern->kind() == Kind::BindingPattern;
   }
 
   // The name this pattern binds, if any.
@@ -114,7 +114,7 @@ class TuplePattern : public Pattern {
       : Pattern(Kind::TuplePattern, source_loc), fields(std::move(fields)) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->tag() == Kind::TuplePattern;
+    return pattern->kind() == Kind::TuplePattern;
   }
 
   auto Fields() const -> llvm::ArrayRef<Field> { return fields; }
@@ -166,7 +166,7 @@ class AlternativePattern : public Pattern {
                      Nonnull<TuplePattern*> arguments);
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->tag() == Kind::AlternativePattern;
+    return pattern->kind() == Kind::AlternativePattern;
   }
 
   auto ChoiceType() const -> Nonnull<const Expression*> { return choice_type; }
@@ -192,7 +192,7 @@ class ExpressionPattern : public Pattern {
         expression(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->tag() == Kind::ExpressionPattern;
+    return pattern->kind() == Kind::ExpressionPattern;
   }
 
   auto Expression() const -> Nonnull<const Expression*> { return expression; }

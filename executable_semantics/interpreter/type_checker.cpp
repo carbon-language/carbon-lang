@@ -53,7 +53,7 @@ static void ExpectType(SourceLocation source_loc, const std::string& context,
 static void ExpectPointerType(SourceLocation source_loc,
                               const std::string& context,
                               Nonnull<const Value*> actual) {
-  if (actual->tag() != Value::Kind::PointerType) {
+  if (actual->kind() != Value::Kind::PointerType) {
     FATAL_COMPILATION_ERROR(source_loc) << "type error in " << context << "\n"
                                         << "expected a pointer type\n"
                                         << "actual: " << *actual;
@@ -62,7 +62,7 @@ static void ExpectPointerType(SourceLocation source_loc,
 
 auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
     -> Nonnull<Expression*> {
-  switch (t->tag()) {
+  switch (t->kind()) {
     case Value::Kind::IntType:
       return arena->New<IntTypeLiteral>(source_loc);
     case Value::Kind::BoolType:
@@ -126,7 +126,7 @@ auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
 static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
                               Nonnull<const Value*> param,
                               Nonnull<const Value*> arg) -> TypeEnv {
-  switch (param->tag()) {
+  switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
       std::optional<Nonnull<const Value*>> d = deduced.Get(var_type.Name());
@@ -138,7 +138,7 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       return deduced;
     }
     case Value::Kind::TupleValue: {
-      if (arg->tag() != Value::Kind::TupleValue) {
+      if (arg->kind() != Value::Kind::TupleValue) {
         ExpectType(source_loc, "argument deduction", param, arg);
       }
       const auto& param_tup = cast<TupleValue>(*param);
@@ -159,7 +159,7 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       return deduced;
     }
     case Value::Kind::FunctionType: {
-      if (arg->tag() != Value::Kind::FunctionType) {
+      if (arg->kind() != Value::Kind::FunctionType) {
         ExpectType(source_loc, "argument deduction", param, arg);
       }
       const auto& param_fn = cast<FunctionType>(*param);
@@ -172,7 +172,7 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       return deduced;
     }
     case Value::Kind::PointerType: {
-      if (arg->tag() != Value::Kind::PointerType) {
+      if (arg->kind() != Value::Kind::PointerType) {
         ExpectType(source_loc, "argument deduction", param, arg);
       }
       return ArgumentDeduction(source_loc, deduced,
@@ -210,7 +210,7 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
 
 auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     -> Nonnull<const Value*> {
-  switch (type->tag()) {
+  switch (type->kind()) {
     case Value::Kind::VariableType: {
       std::optional<Nonnull<const Value*>> t =
           dict.Get(cast<VariableType>(*type).Name());
@@ -272,12 +272,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     interpreter.PrintEnv(values, llvm::outs());
     llvm::outs() << "\n";
   }
-  switch (e->tag()) {
+  switch (e->kind()) {
     case Expression::Kind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
       auto res = TypeCheckExp(index.Aggregate(), types, values);
       auto t = res.type;
-      switch (t->tag()) {
+      switch (t->kind()) {
         case Value::Kind::TupleValue: {
           auto i =
               cast<IntValue>(*interpreter.InterpExp(values, index.Offset()))
@@ -316,7 +316,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       auto& access = cast<FieldAccessExpression>(*e);
       auto res = TypeCheckExp(access.Aggregate(), types, values);
       auto t = res.type;
-      switch (t->tag()) {
+      switch (t->kind()) {
         case Value::Kind::ClassType: {
           const auto& t_class = cast<ClassType>(*t);
           // Search for a field
@@ -449,7 +449,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     case Expression::Kind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
       auto fun_res = TypeCheckExp(call.Function(), types, values);
-      switch (fun_res.type->tag()) {
+      switch (fun_res.type->kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(*fun_res.type);
           auto arg_res = TypeCheckExp(call.Argument(), fun_res.types, values);
@@ -524,7 +524,7 @@ auto TypeChecker::TypeCheckPattern(
     interpreter.PrintEnv(values, llvm::outs());
     llvm::outs() << "\n";
   }
-  switch (p->tag()) {
+  switch (p->kind()) {
     case Pattern::Kind::AutoPattern: {
       return {.pattern = p, .type = arena->New<TypeType>(), .types = types};
     }
@@ -559,7 +559,7 @@ auto TypeChecker::TypeCheckPattern(
       std::vector<TuplePattern::Field> new_fields;
       std::vector<TupleElement> field_types;
       auto new_types = types;
-      if (expected && (*expected)->tag() != Value::Kind::TupleValue) {
+      if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
       }
       if (expected && tuple.Fields().size() !=
@@ -595,7 +595,7 @@ auto TypeChecker::TypeCheckPattern(
       auto& alternative = cast<AlternativePattern>(*p);
       Nonnull<const Value*> choice_type =
           interpreter.InterpExp(values, alternative.ChoiceType());
-      if (choice_type->tag() != Value::Kind::ChoiceType) {
+      if (choice_type->kind() != Value::Kind::ChoiceType) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "alternative pattern does not name a choice type.";
       }
@@ -648,7 +648,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
                                 Env values,
                                 Nonnull<ReturnTypeContext*> return_type_context)
     -> TCStatement {
-  switch (s->tag()) {
+  switch (s->kind()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*s);
       auto res = TypeCheckExp(match.Exp(), types, values);
@@ -811,7 +811,7 @@ auto TypeChecker::CheckOrEnsureReturn(
     }
   }
   Nonnull<Statement*> stmt = *opt_stmt;
-  switch (stmt->tag()) {
+  switch (stmt->kind()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*stmt);
       std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>>
@@ -928,7 +928,7 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
       TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
   auto ret = interpreter.InterpPattern(values, &fun_def->return_type());
-  if (ret->tag() == Value::Kind::AutoType) {
+  if (ret->kind() == Value::Kind::AutoType) {
     auto f = TypeCheckFunDef(fun_def, types, values);
     ret = interpreter.InterpPattern(values, &f->return_type());
   }
@@ -941,7 +941,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
   VarValues fields;
   VarValues methods;
   for (Nonnull<const Member*> m : sd->members) {
-    switch (m->tag()) {
+    switch (m->kind()) {
       case Member::Kind::FieldMember: {
         Nonnull<const BindingPattern*> binding =
             cast<FieldMember>(*m).Binding();
@@ -964,7 +964,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
-  switch (d.tag()) {
+  switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration:
       return cast<FunctionDeclaration>(d).Definition().name();
     case Declaration::Kind::ClassDeclaration:
@@ -985,7 +985,7 @@ static auto GetName(const Declaration& d) -> const std::string& {
 
 auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
                                   const Env& values) -> Nonnull<Declaration*> {
-  switch (d->tag()) {
+  switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
       return arena->New<FunctionDeclaration>(TypeCheckFunDef(
           &cast<FunctionDeclaration>(*d).Definition(), types, values));
@@ -995,7 +995,7 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
           cast<ClassDeclaration>(*d).Definition();
       std::vector<Nonnull<Member*>> fields;
       for (Nonnull<Member*> m : class_def.members) {
-        switch (m->tag()) {
+        switch (m->kind()) {
           case Member::Kind::FieldMember:
             // TODO: Interpret the type expression and store the result.
             fields.push_back(m);
@@ -1034,7 +1034,7 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
 }
 
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
-  switch (d->tag()) {
+  switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
       FunctionDefinition& func_def = cast<FunctionDeclaration>(*d).Definition();
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);

@@ -44,7 +44,7 @@ class Action {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
   // The position or state of the action. Starts at 0 and goes up to the number
   // of subexpressions.
@@ -64,13 +64,13 @@ class Action {
  protected:
   // Constructs an Action. `tag` must be the enumerator corresponding to the
   // most-derived type being constructed.
-  explicit Action(Kind tag) : tag_(tag) {}
+  explicit Action(Kind kind) : kind_(kind) {}
 
  private:
   int pos_ = 0;
   std::vector<Nonnull<const Value*>> results_;
 
-  const Kind tag_;
+  const Kind kind_;
 };
 
 class LValAction : public Action {
@@ -79,7 +79,7 @@ class LValAction : public Action {
       : Action(Kind::LValAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->tag() == Kind::LValAction;
+    return action->kind() == Kind::LValAction;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -94,7 +94,7 @@ class ExpressionAction : public Action {
       : Action(Kind::ExpressionAction), exp(exp) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->tag() == Kind::ExpressionAction;
+    return action->kind() == Kind::ExpressionAction;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -109,7 +109,7 @@ class PatternAction : public Action {
       : Action(Kind::PatternAction), pat(pat) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->tag() == Kind::PatternAction;
+    return action->kind() == Kind::PatternAction;
   }
 
   auto Pat() const -> Nonnull<const Pattern*> { return pat; }
@@ -124,7 +124,7 @@ class StatementAction : public Action {
       : Action(Kind::StatementAction), stmt(stmt) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->tag() == Kind::StatementAction;
+    return action->kind() == Kind::StatementAction;
   }
 
   auto Stmt() const -> Nonnull<const Statement*> { return stmt; }

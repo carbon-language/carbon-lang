@@ -107,7 +107,7 @@ auto Interpreter::EvalPrim(Operator op,
 }
 
 void Interpreter::InitEnv(const Declaration& d, Env* env) {
-  switch (d.tag()) {
+  switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           cast<FunctionDeclaration>(d).Definition();
@@ -129,7 +129,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       VarValues fields;
       VarValues methods;
       for (Nonnull<const Member*> m : class_def.members) {
-        switch (m->tag()) {
+        switch (m->kind()) {
           case Member::Kind::FieldMember: {
             Nonnull<const BindingPattern*> binding =
                 cast<FieldMember>(*m).Binding();
@@ -214,7 +214,7 @@ auto Interpreter::CreateTuple(Nonnull<Action*> act,
 auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                                SourceLocation source_loc)
     -> std::optional<Env> {
-  switch (p->tag()) {
+  switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       Env values(arena);
@@ -225,7 +225,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       return values;
     }
     case Value::Kind::TupleValue:
-      switch (v->tag()) {
+      switch (v->kind()) {
         case Value::Kind::TupleValue: {
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
@@ -258,7 +258,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           FATAL() << "expected a tuple value in pattern, not " << *v;
       }
     case Value::Kind::AlternativeValue:
-      switch (v->tag()) {
+      switch (v->kind()) {
         case Value::Kind::AlternativeValue: {
           const auto& p_alt = cast<AlternativeValue>(*p);
           const auto& v_alt = cast<AlternativeValue>(*v);
@@ -272,7 +272,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           FATAL() << "expected a choice alternative in pattern, not " << *v;
       }
     case Value::Kind::FunctionType:
-      switch (v->tag()) {
+      switch (v->kind()) {
         case Value::Kind::FunctionType: {
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
@@ -311,13 +311,13 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
 void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
                                     Nonnull<const Value*> val,
                                     SourceLocation source_loc) {
-  switch (pat->tag()) {
+  switch (pat->kind()) {
     case Value::Kind::PointerValue:
       heap.Write(cast<PointerValue>(*pat).Val(),
                  CopyVal(arena, val, source_loc), source_loc);
       break;
     case Value::Kind::TupleValue: {
-      switch (val->tag()) {
+      switch (val->kind()) {
         case Value::Kind::TupleValue: {
           const auto& pat_tup = cast<TupleValue>(*pat);
           const auto& val_tup = cast<TupleValue>(*val);
@@ -343,7 +343,7 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
       break;
     }
     case Value::Kind::AlternativeValue: {
-      switch (val->tag()) {
+      switch (val->kind()) {
         case Value::Kind::AlternativeValue: {
           const auto& pat_alt = cast<AlternativeValue>(*pat);
           const auto& val_alt = cast<AlternativeValue>(*val);
@@ -371,7 +371,7 @@ auto Interpreter::StepLvalue() -> Transition {
     llvm::outs() << "--- step lvalue " << *exp << " (" << exp->source_loc()
                  << ") --->\n";
   }
-  switch (exp->tag()) {
+  switch (exp->kind()) {
     case Expression::Kind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
@@ -453,7 +453,7 @@ auto Interpreter::StepExp() -> Transition {
     llvm::outs() << "--- step exp " << *exp << " (" << exp->source_loc()
                  << ") --->\n";
   }
-  switch (exp->tag()) {
+  switch (exp->kind()) {
     case Expression::Kind::IndexExpression: {
       if (act->pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -550,7 +550,7 @@ auto Interpreter::StepExp() -> Transition {
       } else if (act->pos() == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
-        switch (act->results()[0]->tag()) {
+        switch (act->results()[0]->kind()) {
           case Value::Kind::ClassType: {
             Nonnull<const Value*> arg =
                 CopyVal(arena, act->results()[1], exp->source_loc());
@@ -586,7 +586,7 @@ auto Interpreter::StepExp() -> Transition {
         case IntrinsicExpression::IntrinsicKind::Print:
           Address pointer = GetFromEnv(exp->source_loc(), "format_str");
           Nonnull<const Value*> pointee = heap.Read(pointer, exp->source_loc());
-          CHECK(pointee->tag() == Value::Kind::StringValue);
+          CHECK(pointee->kind() == Value::Kind::StringValue);
           // TODO: This could eventually use something like llvm::formatv.
           llvm::outs() << cast<StringValue>(*pointee).Val();
           return Done{TupleValue::Empty()};
@@ -643,7 +643,7 @@ auto Interpreter::StepPattern() -> Transition {
     llvm::outs() << "--- step pattern " << *pattern << " ("
                  << pattern->source_loc() << ") --->\n";
   }
-  switch (pattern->tag()) {
+  switch (pattern->kind()) {
     case Pattern::Kind::AutoPattern: {
       CHECK(act->pos() == 0);
       return Done{arena->New<AutoType>()};
@@ -696,9 +696,9 @@ auto Interpreter::StepPattern() -> Transition {
 }
 
 static auto IsWhileAct(Nonnull<Action*> act) -> bool {
-  switch (act->tag()) {
+  switch (act->kind()) {
     case Action::Kind::StatementAction:
-      switch (cast<StatementAction>(*act).Stmt()->tag()) {
+      switch (cast<StatementAction>(*act).Stmt()->kind()) {
         case Statement::Kind::While:
           return true;
         default:
@@ -710,9 +710,9 @@ static auto IsWhileAct(Nonnull<Action*> act) -> bool {
 }
 
 static auto HasLocalScope(Nonnull<Action*> act) -> bool {
-  switch (act->tag()) {
+  switch (act->kind()) {
     case Action::Kind::StatementAction:
-      switch (cast<StatementAction>(*act).Stmt()->tag()) {
+      switch (cast<StatementAction>(*act).Stmt()->kind()) {
         case Statement::Kind::Block:
         case Statement::Kind::Match:
           return true;
@@ -733,7 +733,7 @@ auto Interpreter::StepStmt() -> Transition {
     stmt->PrintDepth(1, llvm::outs());
     llvm::outs() << " (" << stmt->source_loc() << ") --->\n";
   }
-  switch (stmt->tag()) {
+  switch (stmt->kind()) {
     case Statement::Kind::Match: {
       const auto& match_stmt = cast<Match>(*stmt);
       if (act->pos() == 0) {
@@ -1005,7 +1005,7 @@ class Interpreter::DoTransition {
 
   void operator()(const Done& done) {
     Nonnull<Frame*> frame = interpreter->stack.Top();
-    if (frame->todo.Top()->tag() != Action::Kind::StatementAction) {
+    if (frame->todo.Top()->kind() != Action::Kind::StatementAction) {
       CHECK(done.result);
       frame->todo.Pop();
       if (frame->todo.IsEmpty()) {
@@ -1096,7 +1096,7 @@ void Interpreter::Step() {
   }
 
   Nonnull<Action*> act = frame->todo.Top();
-  switch (act->tag()) {
+  switch (act->kind()) {
     case Action::Kind::LValAction:
       std::visit(DoTransition(this), StepLvalue());
       break;

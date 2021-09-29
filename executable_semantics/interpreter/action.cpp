@@ -22,7 +22,7 @@ namespace Carbon {
 using llvm::cast;
 
 void Action::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
+  switch (kind()) {
     case Action::Kind::LValAction:
       out << *cast<LValAction>(*this).Exp();
       break;

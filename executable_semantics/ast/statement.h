@@ -42,7 +42,7 @@ class Statement {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
@@ -50,11 +50,11 @@ class Statement {
   // Constructs an Statement representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Statement(Kind tag, SourceLocation source_loc)
-      : tag_(tag), source_loc_(source_loc) {}
+  Statement(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind tag_;
+  const Kind kind_;
   SourceLocation source_loc_;
 };
 
@@ -64,7 +64,7 @@ class ExpressionStatement : public Statement {
       : Statement(Kind::ExpressionStatement, source_loc), exp(exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::ExpressionStatement;
+    return stmt->kind() == Kind::ExpressionStatement;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -81,7 +81,7 @@ class Assign : public Statement {
       : Statement(Kind::Assign, source_loc), lhs(lhs), rhs(rhs) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Assign;
+    return stmt->kind() == Kind::Assign;
   }
 
   auto Lhs() const -> Nonnull<const Expression*> { return lhs; }
@@ -101,7 +101,7 @@ class VariableDefinition : public Statement {
       : Statement(Kind::VariableDefinition, source_loc), pat(pat), init(init) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::VariableDefinition;
+    return stmt->kind() == Kind::VariableDefinition;
   }
 
   auto Pat() const -> Nonnull<const Pattern*> { return pat; }
@@ -125,7 +125,7 @@ class If : public Statement {
         else_stmt(else_stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::If;
+    return stmt->kind() == Kind::If;
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
@@ -154,7 +154,7 @@ class Return : public Statement {
         is_omitted_exp(is_omitted_exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Return;
+    return stmt->kind() == Kind::Return;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -173,7 +173,7 @@ class Sequence : public Statement {
       : Statement(Kind::Sequence, source_loc), stmt(stmt), next(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Sequence;
+    return stmt->kind() == Kind::Sequence;
   }
 
   auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
@@ -192,7 +192,7 @@ class Block : public Statement {
       : Statement(Kind::Block, source_loc), stmt(stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Block;
+    return stmt->kind() == Kind::Block;
   }
 
   auto Stmt() const -> std::optional<Nonnull<const Statement*>> { return stmt; }
@@ -209,7 +209,7 @@ class While : public Statement {
       : Statement(Kind::While, source_loc), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::While;
+    return stmt->kind() == Kind::While;
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
@@ -228,7 +228,7 @@ class Break : public Statement {
       : Statement(Kind::Break, source_loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Break;
+    return stmt->kind() == Kind::Break;
   }
 };
 
@@ -238,7 +238,7 @@ class Continue : public Statement {
       : Statement(Kind::Continue, source_loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Continue;
+    return stmt->kind() == Kind::Continue;
   }
 };
 
@@ -251,7 +251,7 @@ class Match : public Statement {
         clauses(std::move(clauses)) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Match;
+    return stmt->kind() == Kind::Match;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -280,7 +280,7 @@ class Continuation : public Statement {
         body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Continuation;
+    return stmt->kind() == Kind::Continuation;
   }
 
   auto ContinuationVariable() const -> const std::string& {
@@ -303,7 +303,7 @@ class Run : public Statement {
       : Statement(Kind::Run, source_loc), argument(argument) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Run;
+    return stmt->kind() == Kind::Run;
   }
 
   auto Argument() const -> Nonnull<const Expression*> { return argument; }
@@ -322,7 +322,7 @@ class Await : public Statement {
       : Statement(Kind::Await, source_loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->tag() == Kind::Await;
+    return stmt->kind() == Kind::Await;
   }
 };
 

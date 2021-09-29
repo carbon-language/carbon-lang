@@ -17,7 +17,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
     out << " ... ";
     return;
   }
-  switch (tag()) {
+  switch (kind()) {
     case Kind::Match: {
       const auto& match = cast<Match>(*this);
       out << "match (" << *match.Exp() << ") {";

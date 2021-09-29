@@ -72,7 +72,7 @@ static void PrintFields(llvm::raw_ostream& out,
 }
 
 void Expression::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
+  switch (kind()) {
     case Expression::Kind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
       out << *index.Aggregate() << "[" << *index.Offset() << "]";
@@ -116,7 +116,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case Expression::Kind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
       out << *call.Function();
-      if (call.Argument()->tag() == Expression::Kind::TupleLiteral) {
+      if (call.Argument()->kind() == Expression::Kind::TupleLiteral) {
         out << *call.Argument();
       } else {
         out << "(" << *call.Argument() << ")";

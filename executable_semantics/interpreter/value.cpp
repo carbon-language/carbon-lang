@@ -59,7 +59,7 @@ namespace {
 auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                const std::string& f, SourceLocation source_loc)
     -> Nonnull<const Value*> {
-  switch (v->tag()) {
+  switch (v->kind()) {
     case Value::Kind::StructValue: {
       std::optional<Nonnull<const Value*>> field =
           cast<TupleValue>(*cast<StructValue>(*v).Inits()).FindField(f);
@@ -110,7 +110,7 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
   if (path_begin == path_end) {
     return field_value;
   }
-  switch (value->tag()) {
+  switch (value->kind()) {
     case Value::Kind::StructValue: {
       return SetFieldImpl(arena, cast<StructValue>(*value).Inits(), path_begin,
                           path_end, field_value, source_loc);
@@ -145,7 +145,7 @@ auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
 }
 
 void Value::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
+  switch (kind()) {
     case Value::Kind::AlternativeConstructorValue: {
       const auto& alt = cast<AlternativeConstructorValue>(*this);
       out << alt.ChoiceName() << "." << alt.AltName();
@@ -260,7 +260,7 @@ void Value::Print(llvm::raw_ostream& out) const {
 
 auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
              SourceLocation source_loc) -> Nonnull<const Value*> {
-  switch (val->tag()) {
+  switch (val->kind()) {
     case Value::Kind::TupleValue: {
       std::vector<TupleElement> elements;
       for (const TupleElement& element : cast<TupleValue>(*val).Elements()) {
@@ -328,10 +328,10 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
 }
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
-  if (t1->tag() != t2->tag()) {
+  if (t1->kind() != t2->kind()) {
     return false;
   }
-  switch (t1->tag()) {
+  switch (t1->kind()) {
     case Value::Kind::PointerType:
       return TypeEqual(cast<PointerType>(*t1).Type(),
                        cast<PointerType>(*t2).Type());
@@ -401,10 +401,10 @@ static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
 // This function implements the `==` operator of Carbon.
 auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
                 SourceLocation source_loc) -> bool {
-  if (v1->tag() != v2->tag()) {
+  if (v1->kind() != v2->kind()) {
     return false;
   }
-  switch (v1->tag()) {
+  switch (v1->kind()) {
     case Value::Kind::IntValue:
       return cast<IntValue>(*v1).Val() == cast<IntValue>(*v2).Val();
     case Value::Kind::BoolValue:

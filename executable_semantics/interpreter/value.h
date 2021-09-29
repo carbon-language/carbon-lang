@@ -75,15 +75,15 @@ class Value {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
  protected:
   // Constructs a Value. `tag` must be the enumerator corresponding to the
   // most-derived type being constructed.
-  explicit Value(Kind tag) : tag_(tag) {}
+  explicit Value(Kind kind) : kind_(kind) {}
 
  private:
-  const Kind tag_;
+  const Kind kind_;
 };
 
 using VarValues = std::vector<std::pair<std::string, Nonnull<const Value*>>>;
@@ -109,7 +109,7 @@ class IntValue : public Value {
   explicit IntValue(int val) : Value(Kind::IntValue), val(val) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::IntValue;
+    return value->kind() == Kind::IntValue;
   }
 
   auto Val() const -> int { return val; }
@@ -129,7 +129,7 @@ class FunctionValue : public Value {
         body(body) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::FunctionValue;
+    return value->kind() == Kind::FunctionValue;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -149,7 +149,7 @@ class PointerValue : public Value {
       : Value(Kind::PointerValue), val(std::move(val)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::PointerValue;
+    return value->kind() == Kind::PointerValue;
   }
 
   auto Val() const -> const Address& { return val; }
@@ -164,7 +164,7 @@ class BoolValue : public Value {
   explicit BoolValue(bool val) : Value(Kind::BoolValue), val(val) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::BoolValue;
+    return value->kind() == Kind::BoolValue;
   }
 
   auto Val() const -> bool { return val; }
@@ -180,7 +180,7 @@ class StructValue : public Value {
       : Value(Kind::StructValue), type(type), inits(inits) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::StructValue;
+    return value->kind() == Kind::StructValue;
   }
 
   auto Type() const -> Nonnull<const Value*> { return type; }
@@ -200,7 +200,7 @@ class AlternativeConstructorValue : public Value {
         choice_name(std::move(choice_name)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::AlternativeConstructorValue;
+    return value->kind() == Kind::AlternativeConstructorValue;
   }
 
   auto AltName() const -> const std::string& { return alt_name; }
@@ -222,7 +222,7 @@ class AlternativeValue : public Value {
         argument(argument) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::AlternativeValue;
+    return value->kind() == Kind::AlternativeValue;
   }
 
   auto AltName() const -> const std::string& { return alt_name; }
@@ -248,7 +248,7 @@ class TupleValue : public Value {
       : Value(Kind::TupleValue), elements(std::move(elements)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::TupleValue;
+    return value->kind() == Kind::TupleValue;
   }
 
   auto Elements() const -> const std::vector<TupleElement>& { return elements; }
@@ -273,7 +273,7 @@ class BindingPlaceholderValue : public Value {
         type(type) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::BindingPlaceholderValue;
+    return value->kind() == Kind::BindingPlaceholderValue;
   }
 
   auto Name() const -> const std::optional<std::string>& { return name; }
@@ -290,7 +290,7 @@ class IntType : public Value {
   IntType() : Value(Kind::IntType) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::IntType;
+    return value->kind() == Kind::IntType;
   }
 };
 
@@ -300,7 +300,7 @@ class BoolType : public Value {
   BoolType() : Value(Kind::BoolType) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::BoolType;
+    return value->kind() == Kind::BoolType;
   }
 };
 
@@ -310,7 +310,7 @@ class TypeType : public Value {
   TypeType() : Value(Kind::TypeType) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::TypeType;
+    return value->kind() == Kind::TypeType;
   }
 };
 
@@ -325,7 +325,7 @@ class FunctionType : public Value {
         ret(ret) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::FunctionType;
+    return value->kind() == Kind::FunctionType;
   }
 
   auto Deduced() const -> const std::vector<GenericBinding>& { return deduced; }
@@ -345,7 +345,7 @@ class PointerType : public Value {
       : Value(Kind::PointerType), type(type) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::PointerType;
+    return value->kind() == Kind::PointerType;
   }
 
   auto Type() const -> Nonnull<const Value*> { return type; }
@@ -360,7 +360,7 @@ class AutoType : public Value {
   AutoType() : Value(Kind::AutoType) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::AutoType;
+    return value->kind() == Kind::AutoType;
   }
 };
 
@@ -374,7 +374,7 @@ class ClassType : public Value {
         methods(std::move(methods)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::ClassType;
+    return value->kind() == Kind::ClassType;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -396,7 +396,7 @@ class ChoiceType : public Value {
         alternatives(std::move(alternatives)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::ChoiceType;
+    return value->kind() == Kind::ChoiceType;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -413,7 +413,7 @@ class ContinuationType : public Value {
   ContinuationType() : Value(Kind::ContinuationType) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::ContinuationType;
+    return value->kind() == Kind::ContinuationType;
   }
 };
 
@@ -424,7 +424,7 @@ class VariableType : public Value {
       : Value(Kind::VariableType), name(std::move(name)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::VariableType;
+    return value->kind() == Kind::VariableType;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -440,7 +440,7 @@ class ContinuationValue : public Value {
       : Value(Kind::ContinuationValue), stack(std::move(stack)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::ContinuationValue;
+    return value->kind() == Kind::ContinuationValue;
   }
 
   auto Stack() const -> const std::vector<Nonnull<Frame*>>& { return stack; }
@@ -455,7 +455,7 @@ class StringType : public Value {
   StringType() : Value(Kind::StringType) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::StringType;
+    return value->kind() == Kind::StringType;
   }
 };
 
@@ -466,7 +466,7 @@ class StringValue : public Value {
       : Value(Kind::StringValue), val(std::move(val)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->tag() == Kind::StringValue;
+    return value->kind() == Kind::StringValue;
   }
 
   auto Val() const -> const std::string& { return val; }

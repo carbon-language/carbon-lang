@@ -35,7 +35,7 @@ class Member {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
@@ -43,11 +43,11 @@ class Member {
   // Constructs a Member representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Member(Kind tag, SourceLocation source_loc)
-      : tag_(tag), source_loc_(source_loc) {}
+  Member(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind tag_;
+  const Kind kind_;
   SourceLocation source_loc_;
 };
 
@@ -57,7 +57,7 @@ class FieldMember : public Member {
       : Member(Kind::FieldMember, source_loc), binding(binding) {}
 
   static auto classof(const Member* member) -> bool {
-    return member->tag() == Kind::FieldMember;
+    return member->kind() == Kind::FieldMember;
   }
 
   auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }

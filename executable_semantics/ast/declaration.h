@@ -45,7 +45,7 @@ class Declaration {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto tag() const -> Kind { return tag_; }
+  auto kind() const -> Kind { return kind_; }
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
@@ -53,11 +53,11 @@ class Declaration {
   // Constructs a Declaration representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration(Kind tag, SourceLocation source_loc)
-      : tag_(tag), source_loc_(source_loc) {}
+  Declaration(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind tag_;
+  const Kind kind_;
   SourceLocation source_loc_;
 };
 
@@ -68,7 +68,7 @@ class FunctionDeclaration : public Declaration {
         definition(definition) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->tag() == Kind::FunctionDeclaration;
+    return decl->kind() == Kind::FunctionDeclaration;
   }
 
   auto Definition() const -> const FunctionDefinition& { return *definition; }
@@ -88,7 +88,7 @@ class ClassDeclaration : public Declaration {
                     .members = std::move(members)}) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->tag() == Kind::ClassDeclaration;
+    return decl->kind() == Kind::ClassDeclaration;
   }
 
   auto Definition() const -> const ClassDefinition& { return definition; }
@@ -120,7 +120,7 @@ class ChoiceDeclaration : public Declaration {
         alternatives(std::move(alternatives)) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->tag() == Kind::ChoiceDeclaration;
+    return decl->kind() == Kind::ChoiceDeclaration;
   }
 
   auto Name() const -> const std::string& { return name; }
@@ -144,7 +144,7 @@ class VariableDeclaration : public Declaration {
         initializer(initializer) {}
 
   static auto classof(const Declaration* decl) -> bool {
-    return decl->tag() == Kind::VariableDeclaration;
+    return decl->kind() == Kind::VariableDeclaration;
   }
 
   auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }

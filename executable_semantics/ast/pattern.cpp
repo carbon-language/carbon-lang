@@ -18,7 +18,7 @@ namespace Carbon {
 using llvm::cast;
 
 void Pattern::Print(llvm::raw_ostream& out) const {
-  switch (tag()) {
+  switch (kind()) {
     case Kind::AutoPattern:
       out << "auto";
       break;
@@ -79,7 +79,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // apply.
 static auto RequireFieldAccess(Nonnull<Expression*> alternative)
     -> FieldAccessExpression& {
-  if (alternative->tag() != Expression::Kind::FieldAccessExpression) {
+  if (alternative->kind() != Expression::Kind::FieldAccessExpression) {
     FATAL_PROGRAM_ERROR(alternative->source_loc())
         << "Alternative pattern must have the form of a field access.";
   }
