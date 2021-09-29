@@ -631,10 +631,10 @@ auto TypeChecker::TypeCheckCase(Nonnull<const Value*> expected,
                                 Nonnull<Pattern*> pat, Nonnull<Statement*> body,
                                 TypeEnv types, Env values,
                                 Nonnull<ReturnTypeContext*> return_type_context)
-    -> std::pair<Nonnull<Pattern*>, Nonnull<Statement*>> {
+    -> Match::Clause {
   auto pat_res = TypeCheckPattern(pat, types, values, expected);
   auto res = TypeCheckStmt(body, pat_res.types, values, return_type_context);
-  return std::make_pair(pat, res.stmt);
+  return Match::Clause(pat, res.stmt);
 }
 
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
@@ -644,13 +644,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
   switch (s->Tag()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*s);
-      auto res = TypeCheckExp(match.Exp(), types, values);
+      auto res = TypeCheckExp(&match.expression(), types, values);
       auto res_type = res.type;
-      std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>>
-          new_clauses;
-      for (auto& clause : match.Clauses()) {
-        new_clauses.push_back(TypeCheckCase(res_type, clause.first,
-                                            clause.second, types, values,
+      std::vector<Match::Clause> new_clauses;
+      for (auto& clause : match.clauses()) {
+        new_clauses.push_back(TypeCheckCase(res_type, &clause.pattern(),
+                                            &clause.statement(), types, values,
                                             return_type_context));
       }
       auto new_s = arena->New<Match>(s->SourceLoc(), res.exp, new_clauses);
@@ -806,14 +805,14 @@ auto TypeChecker::CheckOrEnsureReturn(
   switch (stmt->Tag()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*stmt);
-      std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>>
-          new_clauses;
-      for (const auto& clause : match.Clauses()) {
-        auto s = CheckOrEnsureReturn(clause.second, omitted_ret_type,
+      std::vector<Match::Clause> new_clauses;
+      for (auto& clause : match.clauses()) {
+        auto s = CheckOrEnsureReturn(&clause.statement(), omitted_ret_type,
                                      stmt->SourceLoc());
-        new_clauses.push_back(std::make_pair(clause.first, s));
+        new_clauses.push_back(Match::Clause(&clause.pattern(), s));
       }
-      return arena->New<Match>(stmt->SourceLoc(), match.Exp(), new_clauses);
+      return arena->New<Match>(stmt->SourceLoc(), &match.expression(),
+                               new_clauses);
     }
     case Statement::Kind::Block:
       return arena->New<Block>(
