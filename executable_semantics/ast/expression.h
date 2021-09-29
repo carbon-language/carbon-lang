@@ -42,7 +42,7 @@ class Expression {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto Tag() const -> Kind { return kind; }
 
   auto SourceLoc() const -> SourceLocation { return loc; }
 
@@ -53,10 +53,10 @@ class Expression {
   // Constructs an Expression representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Expression(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+  Expression(Kind kind, SourceLocation loc) : kind(kind), loc(loc) {}
 
  private:
-  const Kind tag;
+  const Kind kind;
   SourceLocation loc;
 };
 

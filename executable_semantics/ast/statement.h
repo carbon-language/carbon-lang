@@ -38,7 +38,7 @@ class Statement {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto Tag() const -> Kind { return kind; }
 
   auto SourceLoc() const -> SourceLocation { return loc; }
 
@@ -50,10 +50,10 @@ class Statement {
   // Constructs an Statement representing syntax at the given line number.
   // `tag` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Statement(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+  Statement(Kind kind, SourceLocation loc) : kind(kind), loc(loc) {}
 
  private:
-  const Kind tag;
+  const Kind kind;
   SourceLocation loc;
 };
 
