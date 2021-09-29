@@ -106,7 +106,9 @@
 %type <Nonnull<Statement*>> if_statement
 %type <std::optional<Nonnull<Statement*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
+%type <Nonnull<Statement*>> nonempty_block
 %type <Nonnull<Statement*>> block
+%type <Nonnull<Statement*>> nonempty_statement_list
 %type <std::optional<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
 %type <GenericBinding> generic_binding
@@ -116,6 +118,10 @@
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <std::pair<Nonnull<Expression*>, bool>> return_type
 %type <Nonnull<Expression*>> paren_expression
+%type <Nonnull<Expression*>> struct_literal
+%type <std::vector<FieldInitializer>> struct_literal_contents
+%type <Nonnull<Expression*>> struct_type_literal
+%type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<Expression*>> tuple
 %type <std::optional<std::string>> binding_lhs
 %type <Nonnull<BindingPattern*>> variable_declaration
@@ -299,6 +305,8 @@ expression:
 | CONTINUATION_TYPE
     { $$ = arena->New<ContinuationTypeLiteral>(context.SourceLoc()); }
 | paren_expression { $$ = $1; }
+| struct_literal { $$ = $1; }
+| struct_type_literal { $$ = $1; }
 | expression EQUAL_EQUAL expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
@@ -415,6 +423,40 @@ paren_expression_contents:
     }
 ;
 
+struct_literal:
+  LEFT_CURLY_BRACE struct_literal_contents RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructLiteral>(context.SourceLoc(), $2); }
+| LEFT_CURLY_BRACE struct_literal_contents COMMA RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructLiteral>(context.SourceLoc(), $2); }
+;
+struct_literal_contents:
+  designator EQUAL expression
+    { $$ = {FieldInitializer($1, $3)}; }
+| struct_literal_contents COMMA designator EQUAL expression
+    {
+      $$ = $1;
+      $$.push_back(FieldInitializer($3, $5));
+    }
+;
+
+struct_type_literal:
+  LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructTypeLiteral>(context.SourceLoc()); }
+| LEFT_CURLY_BRACE struct_type_literal_contents RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructTypeLiteral>(context.SourceLoc(), $2); }
+| LEFT_CURLY_BRACE struct_type_literal_contents COMMA RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructTypeLiteral>(context.SourceLoc(), $2); }
+;
+struct_type_literal_contents:
+  designator COLON expression
+    { $$ = {FieldInitializer($1, $3)}; }
+| struct_type_literal_contents COMMA designator COLON expression
+  {
+    $$ = $1;
+    $$.push_back(FieldInitializer($3, $5));
+  }
+;
+
 // In many cases, using `pattern` recursively will result in ambiguities.
 // When that happens, it's necessary to factor out two separate productions,
 // one for when the sub-pattern is an expression, and one for when it is not.
@@ -499,6 +541,7 @@ maybe_empty_tuple_pattern:
 | tuple_pattern
     { $$ = $1; }
 ;
+
 clause:
   CASE pattern DOUBLE_ARROW statement
     { $$ = Match::Clause($2, $4); }
@@ -539,7 +582,14 @@ statement:
       auto [return_exp, is_omitted_exp] = $2;
       $$ = arena->New<Return>(context.SourceLoc(), return_exp, is_omitted_exp);
     }
-| block
+// We disallow empty blocks in places where an arbitrary statement can occur
+// in order to avoid ambiguity with the empty struct literal `{}`. We can
+// allow non-empty blocks because a non-empty struct literal always starts with
+// a designator, and a block never does, so one token of lookahead suffices
+// to disambiguate. As of this writing, the "official" resolution of this
+// ambiguity is an open question (see
+// https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals)
+| nonempty_block
     { $$ = $1; }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
@@ -572,13 +622,20 @@ return_expression:
 statement_list:
   // Empty
     { $$ = std::nullopt; }
-| statement statement_list
+| nonempty_statement_list
+    { $$ = $1; }
+;
+nonempty_statement_list:
+  statement statement_list
     { $$ = arena->New<Sequence>(context.SourceLoc(), $1, $2); }
 ;
 block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Block>(context.SourceLoc(), $2); }
 ;
+nonempty_block:
+  LEFT_CURLY_BRACE nonempty_statement_list RIGHT_CURLY_BRACE
+    { $$ = arena->New<Block>(context.SourceLoc(), $2); }
 return_type:
   // Empty
     { $$ = {arena->New<TupleLiteral>(context.SourceLoc()), true}; }

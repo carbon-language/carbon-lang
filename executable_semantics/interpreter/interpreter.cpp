@@ -141,8 +141,8 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
           }
         }
       }
-      auto st = arena->New<ClassType>(class_def.name(), std::move(fields),
-                                      std::move(methods));
+      auto st = arena->New<NominalClassType>(
+          class_def.name(), std::move(fields), std::move(methods));
       auto a = heap.AllocateValue(st);
       env->Set(class_def.name(), a);
       break;
@@ -211,6 +211,18 @@ auto Interpreter::CreateTuple(Nonnull<Action*> act,
   return arena->New<TupleValue>(std::move(elements));
 }
 
+auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
+                               const std::vector<Nonnull<const Value*>>& values)
+    -> Nonnull<const Value*> {
+  CHECK(fields.size() == values.size());
+  std::vector<TupleElement> elements;
+  for (size_t i = 0; i < fields.size(); ++i) {
+    elements.push_back({.name = fields[i].name, .value = values[i]});
+  }
+
+  return arena->New<StructValue>(std::move(elements));
+}
+
 auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                                SourceLocation loc) -> std::optional<Env> {
   switch (p->Tag()) {
@@ -255,6 +267,24 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         default:
           FATAL() << "expected a tuple value in pattern, not " << *v;
       }
+    case Value::Kind::StructValue: {
+      const auto& p_struct = cast<StructValue>(*p);
+      const auto& v_struct = cast<StructValue>(*v);
+      CHECK(p_struct.elements().size() == v_struct.elements().size());
+      Env values(arena);
+      for (size_t i = 0; i < p_struct.elements().size(); ++i) {
+        CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
+        std::optional<Env> matches = PatternMatch(
+            p_struct.elements()[i].value, v_struct.elements()[i].value, loc);
+        if (!matches) {
+          return std::nullopt;
+        }
+        for (const auto& [name, value] : *matches) {
+          values.Set(name, value);
+        }
+      }
+      return values;
+    }
     case Value::Kind::AlternativeValue:
       switch (v->Tag()) {
         case Value::Kind::AlternativeValue: {
@@ -426,6 +456,8 @@ auto Interpreter::StepLvalue() -> Transition {
         return Done{CreateTuple(act, exp)};
       }
     }
+    case Expression::Kind::StructLiteral:
+    case Expression::Kind::StructTypeLiteral:
     case Expression::Kind::IntLiteral:
     case Expression::Kind::BoolLiteral:
     case Expression::Kind::CallExpression:
@@ -492,6 +524,29 @@ auto Interpreter::StepExp() -> Transition {
         return Done{CreateTuple(act, exp)};
       }
     }
+    case Expression::Kind::StructLiteral: {
+      const auto& literal = cast<StructLiteral>(*exp);
+      if (act->Pos() < static_cast<int>(literal.fields().size())) {
+        Nonnull<const Expression*> elt =
+            literal.fields()[act->Pos()].expression;
+        return Spawn{arena->New<ExpressionAction>(elt)};
+      } else {
+        return Done{CreateStruct(literal.fields(), act->Results())};
+      }
+    }
+    case Expression::Kind::StructTypeLiteral: {
+      const auto& struct_type = cast<StructTypeLiteral>(*exp);
+      if (act->Pos() < static_cast<int>(struct_type.fields().size())) {
+        return Spawn{arena->New<ExpressionAction>(
+            struct_type.fields()[act->Pos()].expression)};
+      } else {
+        VarValues fields;
+        for (size_t i = 0; i < struct_type.fields().size(); ++i) {
+          fields.push_back({struct_type.fields()[i].name, act->Results()[i]});
+        }
+        return Done{arena->New<StructType>(std::move(fields))};
+      }
+    }
     case Expression::Kind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*exp);
       if (act->Pos() == 0) {
@@ -548,10 +603,10 @@ auto Interpreter::StepExp() -> Transition {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->Results()[0]->Tag()) {
-          case Value::Kind::ClassType: {
+          case Value::Kind::NominalClassType: {
             Nonnull<const Value*> arg =
                 CopyVal(arena, act->Results()[1], exp->SourceLoc());
-            return Done{arena->New<StructValue>(act->Results()[0], arg)};
+            return Done{arena->New<NominalClassValue>(act->Results()[0], arg)};
           }
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
