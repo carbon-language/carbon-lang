@@ -130,7 +130,7 @@ class TypeChecker {
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
                      Nonnull<Statement*> body, TypeEnv types, Env values,
                      Nonnull<ReturnTypeContext*> return_type_context)
-      -> std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>;
+      -> Match::Clause;
 
   auto TypeOfFunDef(TypeEnv types, Env values, FunctionDefinition* fun_def)
       -> Nonnull<const Value*>;
