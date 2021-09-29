@@ -957,7 +957,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
-  switch (d.tag()) {
+  switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration:
       return cast<FunctionDeclaration>(d).definition().name();
     case Declaration::Kind::ClassDeclaration:
@@ -977,7 +977,7 @@ static auto GetName(const Declaration& d) -> const std::string& {
 
 auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
                                   const Env& values) -> Nonnull<Declaration*> {
-  switch (d->tag()) {
+  switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
       return arena->New<FunctionDeclaration>(TypeCheckFunDef(
           &cast<FunctionDeclaration>(*d).definition(), types, values));
@@ -1026,7 +1026,7 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
 }
 
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
-  switch (d->tag()) {
+  switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
       FunctionDefinition& func_def = cast<FunctionDeclaration>(*d).definition();
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);

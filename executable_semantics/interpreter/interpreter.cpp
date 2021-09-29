@@ -107,7 +107,7 @@ auto Interpreter::EvalPrim(Operator op,
 }
 
 void Interpreter::InitEnv(const Declaration& d, Env* env) {
-  switch (d.tag()) {
+  switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration: {
       const FunctionDefinition& func_def =
           cast<FunctionDeclaration>(d).definition();
