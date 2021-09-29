@@ -443,7 +443,7 @@ class DebugAbbrevWriter {
     std::unique_ptr<DebugBufferVector> Buffer;
     std::unique_ptr<raw_svector_ostream> Stream;
   };
-  /// Map CU offset to abbreviations data.
+  /// Map original CU abbrev offset to abbreviations data.
   std::map<uint64_t, AbbrevData> CUAbbrevData;
 
   /// Attributes Substitution information.
@@ -490,9 +490,10 @@ public:
 
   /// Return an offset in the finalized section corresponding to CU \p Unit.
   uint64_t getAbbreviationsOffsetForUnit(const DWARFUnit &Unit) {
-    assert(CUAbbrevData.find(Unit.getOffset()) != CUAbbrevData.end() &&
+    assert(CUAbbrevData.find(Unit.getAbbreviationsOffset()) !=
+               CUAbbrevData.end() &&
            "no abbrev data found for unit");
-    return CUAbbrevData[Unit.getOffset()].Offset;
+    return CUAbbrevData[Unit.getAbbreviationsOffset()].Offset;
   }
 };
 

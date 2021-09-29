@@ -409,19 +409,20 @@ void DebugAbbrevWriter::addUnitAbbreviations(DWARFUnit &Unit) {
   if (!Abbrevs)
     return;
 
-  uint64_t CUIndex = Unit.getOffset();
-
-  if (CUAbbrevData.find(CUIndex) == CUAbbrevData.end()) {
-    std::lock_guard<std::mutex> Lock(WriterMutex);
-    AbbrevData &Data = CUAbbrevData[CUIndex];
-    Data.Buffer = std::make_unique<DebugBufferVector>();
-    Data.Stream = std::make_unique<raw_svector_ostream>(*Data.Buffer);
-  }
+  // Multiple units may share the same abbreviations. Only add abbreviations
+  // for the first unit and reuse them.
+  const uint64_t AbbrevOffset = Unit.getAbbreviationsOffset();
+  if (CUAbbrevData.find(AbbrevOffset) != CUAbbrevData.end())
+    return;
 
   std::lock_guard<std::mutex> Lock(WriterMutex);
+  AbbrevData &UnitData = CUAbbrevData[AbbrevOffset];
+  UnitData.Buffer = std::make_unique<DebugBufferVector>();
+  UnitData.Stream = std::make_unique<raw_svector_ostream>(*UnitData.Buffer);
+
   const auto &UnitPatches = Patches[&Unit];
 
-  raw_svector_ostream &OS = *CUAbbrevData[CUIndex].Stream.get();
+  raw_svector_ostream &OS = *UnitData.Stream.get();
 
   // Take a fast path if there are no patches to apply. Simply copy the original
   // contents.
@@ -502,20 +503,20 @@ std::unique_ptr<DebugBufferVector> DebugAbbrevWriter::finalize() {
   // Pre-calculate the total size of abbrev section.
   uint64_t Size = 0;
   for (const auto &KV : CUAbbrevData) {
-    const AbbrevData &Data = KV.second;
-    Size += Data.Buffer->size();
+    const AbbrevData &UnitData = KV.second;
+    Size += UnitData.Buffer->size();
   }
   ReturnBuffer.reserve(Size);
 
   uint64_t Pos = 0;
   for (auto &KV : CUAbbrevData) {
-    AbbrevData &Data = KV.second;
-    ReturnBuffer.append(*Data.Buffer);
-    Data.Offset = Pos;
-    Pos += Data.Buffer->size();
+    AbbrevData &UnitData = KV.second;
+    ReturnBuffer.append(*UnitData.Buffer);
+    UnitData.Offset = Pos;
+    Pos += UnitData.Buffer->size();
 
-    Data.Buffer.reset();
-    Data.Stream.reset();
+    UnitData.Buffer.reset();
+    UnitData.Stream.reset();
   }
 
   return std::make_unique<DebugBufferVector>(ReturnBuffer);

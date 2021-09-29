@@ -164,7 +164,6 @@ static bool isHighPcFormEightBytes(dwarf::Form DwarfForm) {
 
 void DWARFRewriter::updateDebugInfo() {
   ErrorOr<BinarySection &> DebugInfo = BC.getUniqueSectionByName(".debug_info");
-
   if (!DebugInfo)
     return;
 
@@ -841,9 +840,9 @@ void DWARFRewriter::finalizeDebugSections(
                                  AbbrevSectionContents->size());
 
   // Update abbreviation offsets if they were changed.
-  for (auto &CU : BC.DwCtx->compile_units()) {
-    if (CU->isDWOUnit())
-      continue;
+  SimpleBinaryPatcher *DebugTypesPatcher = nullptr;
+  for (auto &CU : BC.DwCtx->normal_units()) {
+    assert(!CU->isDWOUnit());
 
     const uint64_t NewAbbrevOffset =
         AbbrevWriter->getAbbreviationsOffsetForUnit(*CU);
@@ -854,8 +853,22 @@ void DWARFRewriter::finalizeDebugSections(
     // unit_length - 4 bytes
     // version - 2 bytes
     // So + 6 to patch debug_abbrev_offset
-    DebugInfoPatcher.addLE32Patch(CU->getOffset() + 6,
-                                  static_cast<uint32_t>(NewAbbrevOffset));
+    constexpr uint64_t AbbrevFieldOffset = 6;
+    if (!CU->isTypeUnit()) {
+      DebugInfoPatcher.addLE32Patch(CU->getOffset() + AbbrevFieldOffset,
+                                    static_cast<uint32_t>(NewAbbrevOffset));
+      continue;
+    }
+
+    if (!DebugTypesPatcher) {
+      ErrorOr<BinarySection &> DebugTypes =
+          BC.getUniqueSectionByName(".debug_types");
+      DebugTypes->registerPatcher(std::make_unique<SimpleBinaryPatcher>());
+      DebugTypesPatcher =
+          static_cast<SimpleBinaryPatcher *>(DebugTypes->getPatcher());
+    }
+    DebugTypesPatcher->addLE32Patch(CU->getOffset() + AbbrevFieldOffset,
+                                    static_cast<uint32_t>(NewAbbrevOffset));
   }
 }
 
