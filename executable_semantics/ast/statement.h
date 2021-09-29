@@ -36,34 +36,35 @@ class Statement {
     Await,         // Pause execution of the continuation.
   };
 
-  // Returns the enumerator corresponding to the most-derived type of this
-  // object.
-  auto Tag() const -> Kind { return kind; }
-
-  auto SourceLoc() const -> SourceLocation { return loc; }
-
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto kind() const -> Kind { return kind_; }
+
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+
  protected:
   // Constructs an Statement representing syntax at the given line number.
-  // `tag` must be the enumerator corresponding to the most-derived type being
+  // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Statement(Kind kind, SourceLocation loc) : kind(kind), loc(loc) {}
+  Statement(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind kind;
-  SourceLocation loc;
+  const Kind kind_;
+  SourceLocation source_loc_;
 };
 
 class ExpressionStatement : public Statement {
  public:
-  ExpressionStatement(SourceLocation loc, Nonnull<Expression*> exp)
-      : Statement(Kind::ExpressionStatement, loc), exp(exp) {}
+  ExpressionStatement(SourceLocation source_loc, Nonnull<Expression*> exp)
+      : Statement(Kind::ExpressionStatement, source_loc), exp(exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::ExpressionStatement;
+    return stmt->kind() == Kind::ExpressionStatement;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -75,11 +76,12 @@ class ExpressionStatement : public Statement {
 
 class Assign : public Statement {
  public:
-  Assign(SourceLocation loc, Nonnull<Expression*> lhs, Nonnull<Expression*> rhs)
-      : Statement(Kind::Assign, loc), lhs(lhs), rhs(rhs) {}
+  Assign(SourceLocation source_loc, Nonnull<Expression*> lhs,
+         Nonnull<Expression*> rhs)
+      : Statement(Kind::Assign, source_loc), lhs(lhs), rhs(rhs) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Assign;
+    return stmt->kind() == Kind::Assign;
   }
 
   auto Lhs() const -> Nonnull<const Expression*> { return lhs; }
@@ -94,12 +96,12 @@ class Assign : public Statement {
 
 class VariableDefinition : public Statement {
  public:
-  VariableDefinition(SourceLocation loc, Nonnull<Pattern*> pat,
+  VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pat,
                      Nonnull<Expression*> init)
-      : Statement(Kind::VariableDefinition, loc), pat(pat), init(init) {}
+      : Statement(Kind::VariableDefinition, source_loc), pat(pat), init(init) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::VariableDefinition;
+    return stmt->kind() == Kind::VariableDefinition;
   }
 
   auto Pat() const -> Nonnull<const Pattern*> { return pat; }
@@ -114,16 +116,16 @@ class VariableDefinition : public Statement {
 
 class If : public Statement {
  public:
-  If(SourceLocation loc, Nonnull<Expression*> cond,
+  If(SourceLocation source_loc, Nonnull<Expression*> cond,
      Nonnull<Statement*> then_stmt,
      std::optional<Nonnull<Statement*>> else_stmt)
-      : Statement(Kind::If, loc),
+      : Statement(Kind::If, source_loc),
         cond(cond),
         then_stmt(then_stmt),
         else_stmt(else_stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::If;
+    return stmt->kind() == Kind::If;
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
@@ -143,15 +145,16 @@ class If : public Statement {
 
 class Return : public Statement {
  public:
-  Return(Nonnull<Arena*> arena, SourceLocation loc)
-      : Return(loc, arena->New<TupleLiteral>(loc), true) {}
-  Return(SourceLocation loc, Nonnull<Expression*> exp, bool is_omitted_exp)
-      : Statement(Kind::Return, loc),
+  Return(Nonnull<Arena*> arena, SourceLocation source_loc)
+      : Return(source_loc, arena->New<TupleLiteral>(source_loc), true) {}
+  Return(SourceLocation source_loc, Nonnull<Expression*> exp,
+         bool is_omitted_exp)
+      : Statement(Kind::Return, source_loc),
         exp(exp),
         is_omitted_exp(is_omitted_exp) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Return;
+    return stmt->kind() == Kind::Return;
   }
 
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
@@ -165,12 +168,12 @@ class Return : public Statement {
 
 class Sequence : public Statement {
  public:
-  Sequence(SourceLocation loc, Nonnull<Statement*> stmt,
+  Sequence(SourceLocation source_loc, Nonnull<Statement*> stmt,
            std::optional<Nonnull<Statement*>> next)
-      : Statement(Kind::Sequence, loc), stmt(stmt), next(next) {}
+      : Statement(Kind::Sequence, source_loc), stmt(stmt), next(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Sequence;
+    return stmt->kind() == Kind::Sequence;
   }
 
   auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
@@ -185,11 +188,11 @@ class Sequence : public Statement {
 
 class Block : public Statement {
  public:
-  Block(SourceLocation loc, std::optional<Nonnull<Statement*>> stmt)
-      : Statement(Kind::Block, loc), stmt(stmt) {}
+  Block(SourceLocation source_loc, std::optional<Nonnull<Statement*>> stmt)
+      : Statement(Kind::Block, source_loc), stmt(stmt) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Block;
+    return stmt->kind() == Kind::Block;
   }
 
   auto Stmt() const -> std::optional<Nonnull<const Statement*>> { return stmt; }
@@ -201,11 +204,12 @@ class Block : public Statement {
 
 class While : public Statement {
  public:
-  While(SourceLocation loc, Nonnull<Expression*> cond, Nonnull<Statement*> body)
-      : Statement(Kind::While, loc), cond(cond), body(body) {}
+  While(SourceLocation source_loc, Nonnull<Expression*> cond,
+        Nonnull<Statement*> body)
+      : Statement(Kind::While, source_loc), cond(cond), body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::While;
+    return stmt->kind() == Kind::While;
   }
 
   auto Cond() const -> Nonnull<const Expression*> { return cond; }
@@ -220,19 +224,21 @@ class While : public Statement {
 
 class Break : public Statement {
  public:
-  explicit Break(SourceLocation loc) : Statement(Kind::Break, loc) {}
+  explicit Break(SourceLocation source_loc)
+      : Statement(Kind::Break, source_loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Break;
+    return stmt->kind() == Kind::Break;
   }
 };
 
 class Continue : public Statement {
  public:
-  explicit Continue(SourceLocation loc) : Statement(Kind::Continue, loc) {}
+  explicit Continue(SourceLocation source_loc)
+      : Statement(Kind::Continue, source_loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Continue;
+    return stmt->kind() == Kind::Continue;
   }
 };
 
@@ -253,14 +259,14 @@ class Match : public Statement {
     Nonnull<Statement*> statement_;
   };
 
-  Match(SourceLocation loc, Nonnull<Expression*> expression,
+  Match(SourceLocation source_loc, Nonnull<Expression*> expression,
         std::vector<Clause> clauses)
-      : Statement(Kind::Match, loc),
+      : Statement(Kind::Match, source_loc),
         expression_(expression),
         clauses_(std::move(clauses)) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Match;
+    return stmt->kind() == Kind::Match;
   }
 
   auto expression() const -> const Expression& { return *expression_; }
@@ -280,14 +286,14 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
-  Continuation(SourceLocation loc, std::string continuation_variable,
+  Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Statement*> body)
-      : Statement(Kind::Continuation, loc),
+      : Statement(Kind::Continuation, source_loc),
         continuation_variable(std::move(continuation_variable)),
         body(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Continuation;
+    return stmt->kind() == Kind::Continuation;
   }
 
   auto ContinuationVariable() const -> const std::string& {
@@ -306,11 +312,11 @@ class Continuation : public Statement {
 //     __run <argument>;
 class Run : public Statement {
  public:
-  Run(SourceLocation loc, Nonnull<Expression*> argument)
-      : Statement(Kind::Run, loc), argument(argument) {}
+  Run(SourceLocation source_loc, Nonnull<Expression*> argument)
+      : Statement(Kind::Run, source_loc), argument(argument) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Run;
+    return stmt->kind() == Kind::Run;
   }
 
   auto Argument() const -> Nonnull<const Expression*> { return argument; }
@@ -325,10 +331,11 @@ class Run : public Statement {
 //    __await;
 class Await : public Statement {
  public:
-  explicit Await(SourceLocation loc) : Statement(Kind::Await, loc) {}
+  explicit Await(SourceLocation source_loc)
+      : Statement(Kind::Await, source_loc) {}
 
   static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Await;
+    return stmt->kind() == Kind::Await;
   }
 };
 

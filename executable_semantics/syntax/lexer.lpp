@@ -251,7 +251,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       // "Reading a token: ".
       llvm::errs() << "\n";
     }
-    FATAL_COMPILATION_ERROR(context.SourceLoc())
+    FATAL_COMPILATION_ERROR(context.source_loc())
         << "Invalid escaping in string: " << yytext;
   }
   return ARG_TOKEN(string_literal, *unescaped);
@@ -284,7 +284,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     // "Reading a token: ".
     llvm::errs() << "\n";
   }
-  FATAL_COMPILATION_ERROR(context.SourceLoc())
+  FATAL_COMPILATION_ERROR(context.source_loc())
       << "invalid character '\\x" << llvm::toHex(llvm::StringRef(yytext, 1))
       << "' in source file.";
 }
