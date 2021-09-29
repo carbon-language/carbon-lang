@@ -35,6 +35,8 @@ class Expression {
     StringLiteral,
     StringTypeLiteral,
     TupleLiteral,
+    StructLiteral,
+    StructTypeLiteral,
     TypeTypeLiteral,
     IdentifierExpression,
     IntrinsicExpression,
@@ -228,6 +230,57 @@ class TupleLiteral : public Expression {
 
  private:
   std::vector<FieldInitializer> fields;
+};
+
+// A non-empty literal value of a struct type.
+//
+// It can't be empty because the syntax `{}` is a struct type literal as well
+// as a literal value of that type, so for consistency we always represent it
+// as a StructTypeLiteral rather than let it oscillate unpredictably between
+// the two.
+class StructLiteral : public Expression {
+ public:
+  explicit StructLiteral(SourceLocation loc,
+                         std::vector<FieldInitializer> fields)
+      : Expression(Kind::StructLiteral, loc), fields_(std::move(fields)) {
+    CHECK(!fields_.empty())
+        << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
+  }
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::StructLiteral;
+  }
+
+  auto fields() const -> const std::vector<FieldInitializer>& {
+    return fields_;
+  }
+
+ private:
+  std::vector<FieldInitializer> fields_;
+};
+
+// A literal representing a struct type.
+//
+// Code that handles this type may sometimes need to have special-case handling
+// for `{}`, which is a struct value in addition to being a struct type.
+class StructTypeLiteral : public Expression {
+ public:
+  explicit StructTypeLiteral(SourceLocation loc) : StructTypeLiteral(loc, {}) {}
+
+  explicit StructTypeLiteral(SourceLocation loc,
+                             std::vector<FieldInitializer> fields)
+      : Expression(Kind::StructTypeLiteral, loc), fields_(std::move(fields)) {}
+
+  static auto classof(const Expression* exp) -> bool {
+    return exp->Tag() == Kind::StructTypeLiteral;
+  }
+
+  auto fields() const -> const std::vector<FieldInitializer>& {
+    return fields_;
+  }
+
+ private:
+  std::vector<FieldInitializer> fields_;
 };
 
 class PrimitiveOperatorExpression : public Expression {

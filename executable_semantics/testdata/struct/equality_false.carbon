@@ -11,12 +11,12 @@
 
 package ExecutableSemanticsTest api;
 
-fn DoNothing() {
-  // Empty block
-}
-
 fn main() -> i32 {
-  var x: i32 = 0;
-  DoNothing();
-  return x;
+  var t1: {.x: i32, .y: i32} = {.x = 5, .y = 2};
+  var t2: {.x: i32, .y: i32} = {.x = 5, .y = 4};
+  if (t1 == t2) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
