@@ -11,12 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn DoNothing() {
-  // Empty block
-}
-
 fn main() -> i32 {
-  var x: i32 = 0;
-  DoNothing();
-  return x;
+  var p: {.x: i32, .y: i32} = {.x = 1, .y = 2};
+  return p.y - p.x - 1;
 }

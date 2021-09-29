@@ -37,6 +37,7 @@ class Value {
     PointerValue,
     BoolValue,
     StructValue,
+    NominalClassValue,
     AlternativeValue,
     TupleValue,
     IntType,
@@ -45,7 +46,8 @@ class Value {
     FunctionType,
     PointerType,
     AutoType,
-    ClassType,
+    StructType,
+    NominalClassType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -92,7 +94,11 @@ auto FindInVarValues(const std::string& field, const VarValues& inits)
     -> std::optional<Nonnull<const Value*>>;
 auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
 
-// A TupleElement represents the value of a single tuple field.
+// A TupleElement represents the value of a single tuple or struct field.
+//
+// TODO(geoffromer): Rename this, and look for ways to eliminate duplication
+// among TupleElement, VarValues::value_type, FieldInitializer,
+// TuplePattern::Field, and any similar types.
 struct TupleElement {
   // The field name.
   std::string name;
@@ -173,14 +179,46 @@ class BoolValue : public Value {
   bool val;
 };
 
-// A function value.
+// A non-empty value of a struct type.
+//
+// It can't be empty because `{}` is a struct type as well as a value of that
+// type, so for consistency we always represent it as a StructType rather than
+// let it oscillate unpredictably between the two. However, this means code
+// that handles StructValue instances may also need to be able to handle
+// StructType instances.
 class StructValue : public Value {
  public:
-  StructValue(Nonnull<const Value*> type, Nonnull<const Value*> inits)
-      : Value(Kind::StructValue), type(type), inits(inits) {}
+  explicit StructValue(std::vector<TupleElement> elements)
+      : Value(Kind::StructValue), elements_(std::move(elements)) {
+    CHECK(!elements_.empty())
+        << "`{}` is represented as a StructType, not a StructValue.";
+  }
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StructValue;
+  }
+
+  auto elements() const -> const std::vector<TupleElement>& {
+    return elements_;
+  }
+
+  // Returns the value of the field named `name` in this struct, or
+  // nullopt if there is no such field.
+  auto FindField(const std::string& name) const
+      -> std::optional<Nonnull<const Value*>>;
+
+ private:
+  std::vector<TupleElement> elements_;
+};
+
+// A value of a nominal class type.
+class NominalClassValue : public Value {
+ public:
+  NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits)
+      : Value(Kind::NominalClassValue), type(type), inits(inits) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::NominalClassValue;
   }
 
   auto Type() const -> Nonnull<const Value*> { return type; }
@@ -365,16 +403,37 @@ class AutoType : public Value {
 };
 
 // A struct type.
-class ClassType : public Value {
+//
+// Code that handles this type may sometimes need to have special-case handling
+// for `{}`, which is a struct value in addition to being a struct type.
+class StructType : public Value {
  public:
-  ClassType(std::string name, VarValues fields, VarValues methods)
-      : Value(Kind::ClassType),
+  StructType() : StructType(VarValues{}) {}
+
+  explicit StructType(VarValues fields)
+      : Value(Kind::StructType), fields_(std::move(fields)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::StructType;
+  }
+
+  auto fields() const -> const VarValues& { return fields_; }
+
+ private:
+  VarValues fields_;
+};
+
+// A class type.
+class NominalClassType : public Value {
+ public:
+  NominalClassType(std::string name, VarValues fields, VarValues methods)
+      : Value(Kind::NominalClassType),
         name(std::move(name)),
         fields(std::move(fields)),
         methods(std::move(methods)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ClassType;
+    return value->kind() == Kind::NominalClassType;
   }
 
   auto Name() const -> const std::string& { return name; }

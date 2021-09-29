@@ -25,7 +25,7 @@ MATCHER_P(AutoFieldNamed, name, "") {
   return arg.name == std::string(name) && isa<AutoPattern>(*arg.pattern);
 }
 
-static auto FakeSourceLoc(int line_num) -> SourceLocation {
+static auto Fakesource_loc(int line_num) -> SourceLocation {
   return SourceLocation("<test>", line_num);
 }
 
@@ -38,8 +38,8 @@ TEST_F(PatternTest, EmptyAsPattern) {
   ParenContents<Pattern> contents = {.elements = {},
                                      .has_trailing_comma = false};
   Nonnull<const Pattern*> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
+      PatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(pattern->source_loc(), Fakesource_loc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(), IsEmpty());
 }
@@ -48,8 +48,8 @@ TEST_F(PatternTest, EmptyAsTuplePattern) {
   ParenContents<Pattern> contents = {.elements = {},
                                      .has_trailing_comma = false};
   Nonnull<const TuplePattern*> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+      TuplePatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(tuple->source_loc(), Fakesource_loc(1));
   EXPECT_THAT(tuple->Fields(), IsEmpty());
 }
 
@@ -62,36 +62,36 @@ TEST_F(PatternTest, UnaryNoCommaAsPattern) {
   // ```
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))}},
       .has_trailing_comma = false};
 
   Nonnull<const Pattern*> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(2));
+      PatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(pattern->source_loc(), Fakesource_loc(2));
   ASSERT_TRUE(isa<AutoPattern>(*pattern));
 }
 
 TEST_F(PatternTest, UnaryNoCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))}},
       .has_trailing_comma = false};
 
   Nonnull<const TuplePattern*> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+      TuplePatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(tuple->source_loc(), Fakesource_loc(1));
   EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
 }
 
 TEST_F(PatternTest, UnaryWithCommaAsPattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))}},
       .has_trailing_comma = true};
 
   Nonnull<const Pattern*> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
+      PatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(pattern->source_loc(), Fakesource_loc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
               ElementsAre(AutoFieldNamed("0")));
@@ -100,26 +100,26 @@ TEST_F(PatternTest, UnaryWithCommaAsPattern) {
 TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))}},
       .has_trailing_comma = true};
 
   Nonnull<const TuplePattern*> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+      TuplePatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(tuple->source_loc(), Fakesource_loc(1));
   EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
 }
 
 TEST_F(PatternTest, BinaryAsPattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))},
                    {.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))}},
       .has_trailing_comma = true};
 
   Nonnull<const Pattern*> pattern =
-      PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
+      PatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(pattern->source_loc(), Fakesource_loc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
               ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));
@@ -128,14 +128,14 @@ TEST_F(PatternTest, BinaryAsPattern) {
 TEST_F(PatternTest, BinaryAsTuplePattern) {
   ParenContents<Pattern> contents = {
       .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))},
                    {.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+                    .term = arena.New<AutoPattern>(Fakesource_loc(2))}},
       .has_trailing_comma = true};
 
   Nonnull<const TuplePattern*> tuple =
-      TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+      TuplePatternFromParenContents(&arena, Fakesource_loc(1), contents);
+  EXPECT_EQ(tuple->source_loc(), Fakesource_loc(1));
   EXPECT_THAT(tuple->Fields(),
               ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));
 }

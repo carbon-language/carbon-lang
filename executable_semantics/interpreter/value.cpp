@@ -44,6 +44,16 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
   }
 }
 
+auto StructValue::FindField(const std::string& name) const
+    -> std::optional<Nonnull<const Value*>> {
+  for (const TupleElement& element : elements_) {
+    if (element.name == name) {
+      return element.value;
+    }
+  }
+  return std::nullopt;
+}
+
 auto TupleValue::FindField(const std::string& name) const
     -> std::optional<Nonnull<const Value*>> {
   for (const TupleElement& element : elements) {
@@ -62,7 +72,15 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   switch (v->kind()) {
     case Value::Kind::StructValue: {
       std::optional<Nonnull<const Value*>> field =
-          cast<TupleValue>(*cast<StructValue>(*v).Inits()).FindField(f);
+          cast<StructValue>(*v).FindField(f);
+      if (field == std::nullopt) {
+        FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v;
+      }
+      return *field;
+    }
+    case Value::Kind::NominalClassValue: {
+      std::optional<Nonnull<const Value*>> field =
+          cast<TupleValue>(*cast<NominalClassValue>(*v).Inits()).FindField(f);
       if (field == std::nullopt) {
         FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v;
       }
@@ -112,8 +130,22 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
   }
   switch (value->kind()) {
     case Value::Kind::StructValue: {
-      return SetFieldImpl(arena, cast<StructValue>(*value).Inits(), path_begin,
-                          path_end, field_value, source_loc);
+      std::vector<TupleElement> elements = cast<StructValue>(*value).elements();
+      auto it = std::find_if(elements.begin(), elements.end(),
+                             [path_begin](const TupleElement& element) {
+                               return element.name == *path_begin;
+                             });
+      if (it == elements.end()) {
+        FATAL_RUNTIME_ERROR(source_loc)
+            << "field " << *path_begin << " not in " << *value;
+      }
+      it->value = SetFieldImpl(arena, it->value, path_begin + 1, path_end,
+                               field_value, source_loc);
+      return arena->New<StructValue>(elements);
+    }
+    case Value::Kind::NominalClassValue: {
+      return SetFieldImpl(arena, cast<NominalClassValue>(*value).Inits(),
+                          path_begin, path_end, field_value, source_loc);
     }
     case Value::Kind::TupleValue: {
       std::vector<TupleElement> elements = cast<TupleValue>(*value).Elements();
@@ -168,8 +200,18 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::StructValue: {
-      const auto& s = cast<StructValue>(*this);
-      out << cast<ClassType>(*s.Type()).Name() << *s.Inits();
+      const auto& struct_val = cast<StructValue>(*this);
+      out << "{";
+      llvm::ListSeparator sep;
+      for (const TupleElement& element : struct_val.elements()) {
+        out << sep << "." << element.name << " = " << *element.value;
+      }
+      out << "}";
+      break;
+    }
+    case Value::Kind::NominalClassValue: {
+      const auto& s = cast<NominalClassValue>(*this);
+      out << cast<NominalClassType>(*s.Type()).Name() << *s.Inits();
       break;
     }
     case Value::Kind::TupleValue: {
@@ -229,8 +271,17 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << *fn_type.Param() << " -> " << *fn_type.Ret();
       break;
     }
-    case Value::Kind::ClassType:
-      out << "struct " << cast<ClassType>(*this).Name();
+    case Value::Kind::StructType: {
+      out << "{";
+      llvm::ListSeparator sep;
+      for (const auto& [name, type] : cast<StructType>(*this).fields()) {
+        out << sep << "." << name << ": " << *type;
+      }
+      out << "}";
+      break;
+    }
+    case Value::Kind::NominalClassType:
+      out << "class " << cast<NominalClassType>(*this).Name();
       break;
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).Name();
@@ -276,9 +327,18 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
       return arena->New<AlternativeValue>(alt.AltName(), alt.ChoiceName(), arg);
     }
     case Value::Kind::StructValue: {
-      const auto& s = cast<StructValue>(*val);
+      std::vector<TupleElement> elements;
+      for (const TupleElement& element : cast<StructValue>(*val).elements()) {
+        elements.push_back(
+            {.name = element.name,
+             .value = CopyVal(arena, element.value, source_loc)});
+      }
+      return arena->New<StructValue>(std::move(elements));
+    }
+    case Value::Kind::NominalClassValue: {
+      const auto& s = cast<NominalClassValue>(*val);
       Nonnull<const Value*> inits = CopyVal(arena, s.Inits(), source_loc);
-      return arena->New<StructValue>(s.Type(), inits);
+      return arena->New<NominalClassValue>(s.Type(), inits);
     }
     case Value::Kind::IntValue:
       return arena->New<IntValue>(cast<IntValue>(*val).Val());
@@ -317,8 +377,15 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
       return arena->New<StringType>();
     case Value::Kind::StringValue:
       return arena->New<StringValue>(cast<StringValue>(*val).Val());
+    case Value::Kind::StructType: {
+      VarValues fields;
+      for (const auto& [name, type] : cast<StructType>(*val).fields()) {
+        fields.push_back({name, CopyVal(arena, type, source_loc)});
+      }
+      return arena->New<StructType>(fields);
+    }
     case Value::Kind::VariableType:
-    case Value::Kind::ClassType:
+    case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
@@ -341,8 +408,24 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return TypeEqual(fn1.Param(), fn2.Param()) &&
              TypeEqual(fn1.Ret(), fn2.Ret());
     }
-    case Value::Kind::ClassType:
-      return cast<ClassType>(*t1).Name() == cast<ClassType>(*t2).Name();
+    case Value::Kind::StructType: {
+      const auto& struct1 = cast<StructType>(*t1);
+      const auto& struct2 = cast<StructType>(*t2);
+      if (struct1.fields().size() != struct2.fields().size()) {
+        return false;
+      }
+      for (size_t i = 0; i < struct1.fields().size(); ++i) {
+        if (struct1.fields()[i].first != struct2.fields()[i].first ||
+            !TypeEqual(struct1.fields()[i].second,
+                       struct2.fields()[i].second)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    case Value::Kind::NominalClassType:
+      return cast<NominalClassType>(*t1).Name() ==
+             cast<NominalClassType>(*t2).Name();
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).Name() == cast<ChoiceType>(*t2).Name();
     case Value::Kind::TupleValue: {
@@ -422,6 +505,9 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::TupleValue:
       return FieldsValueEqual(cast<TupleValue>(*v1).Elements(),
                               cast<TupleValue>(*v2).Elements(), source_loc);
+    case Value::Kind::StructValue:
+      return FieldsValueEqual(cast<StructValue>(*v1).elements(),
+                              cast<StructValue>(*v2).elements(), source_loc);
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).Val() == cast<StringValue>(*v2).Val();
     case Value::Kind::IntType:
@@ -430,13 +516,14 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
-    case Value::Kind::ClassType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
       return TypeEqual(v1, v2);
-    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:

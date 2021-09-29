@@ -11,12 +11,15 @@
 
 package ExecutableSemanticsTest api;
 
-fn DoNothing() {
-  // Empty block
-}
-
 fn main() -> i32 {
-  var x: i32 = 0;
-  DoNothing();
-  return x;
+  var empty: {} = {};
+  empty = {};
+  if (not (empty == {})) {
+    return 1;
+  }
+  match (empty) {
+    case {} => {
+      return 0;
+    }
+  }
 }

@@ -17,8 +17,8 @@ cc_library(
     name = "class_definition",
     hdrs = ["class_definition.h"],
     deps = [
+        ":SourceLocation",
         ":member",
-        ":source_location",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -31,11 +31,11 @@ cc_library(
         "declaration.h",
     ],
     deps = [
+        ":SourceLocation",
         ":class_definition",
         ":function_definition",
         ":member",
         ":pattern",
-        ":source_location",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -72,8 +72,8 @@ cc_library(
     srcs = ["function_definition.cpp"],
     hdrs = ["function_definition.h"],
     deps = [
+        ":SourceLocation",
         ":expression",
-        ":source_location",
         ":statement",
         "@llvm-project//llvm:Support",
     ],
@@ -84,8 +84,8 @@ cc_library(
     srcs = ["member.cpp"],
     hdrs = ["member.h"],
     deps = [
+        ":SourceLocation",
         ":pattern",
-        ":source_location",
         "//common:ostream",
     ],
 )
@@ -99,7 +99,7 @@ cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
     deps = [
-        ":source_location",
+        ":SourceLocation",
         "//executable_semantics/common:error",
     ],
 )
@@ -109,8 +109,8 @@ cc_library(
     srcs = ["pattern.cpp"],
     hdrs = ["pattern.h"],
     deps = [
+        ":SourceLocation",
         ":expression",
-        ":source_location",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -131,7 +131,7 @@ cc_test(
 )
 
 cc_library(
-    name = "source_location",
+    name = "SourceLocation",
     hdrs = ["source_location.h"],
     deps = ["//common:ostream"],
 )
@@ -141,9 +141,9 @@ cc_library(
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
     deps = [
+        ":SourceLocation",
         ":expression",
         ":pattern",
-        ":source_location",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
