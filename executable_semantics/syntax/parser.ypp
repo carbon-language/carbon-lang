@@ -133,8 +133,8 @@
 %type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
 %type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
 %type <std::vector<ChoiceDeclaration::Alternative>> alternative_list_contents
-%type <std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>> clause
-%type <std::vector<std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>>> clause_list
+%type <BisonWrap<Match::Clause>> clause
+%type <std::vector<Match::Clause>> clause_list
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
@@ -501,13 +501,13 @@ maybe_empty_tuple_pattern:
 ;
 clause:
   CASE pattern DOUBLE_ARROW statement
-    { $$ = std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>($2, $4); }
+    { $$ = Match::Clause($2, $4); }
 | DEFAULT DOUBLE_ARROW statement
     {
-      auto vp = arena -> New<BindingPattern>(
-                    context.source_loc(), std::nullopt,
-                    arena->New<AutoPattern>(context.source_loc()));
-      $$ = std::pair<Nonnull<Pattern*>, Nonnull<Statement*>>(vp, $3);
+      $$ = Match::Clause(arena->New<BindingPattern>(
+                             context.source_loc(), std::nullopt,
+                             arena->New<AutoPattern>(context.source_loc())),
+                         $3);
     }
 ;
 clause_list:

@@ -740,7 +740,7 @@ auto Interpreter::StepStmt() -> Transition {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->scopes.Push(arena->New<Scope>(CurrentEnv()));
-        return Spawn{arena->New<ExpressionAction>(match_stmt.Exp())};
+        return Spawn{arena->New<ExpressionAction>(&match_stmt.expression())};
       } else {
         // Regarding act->pos():
         // * odd: start interpreting the pattern of a clause
@@ -752,31 +752,31 @@ auto Interpreter::StepStmt() -> Transition {
         // * 2: the pattern for clause 1
         // * ...
         auto clause_num = (act->pos() - 1) / 2;
-        if (clause_num >= static_cast<int>(match_stmt.Clauses().size())) {
+        if (clause_num >= static_cast<int>(match_stmt.clauses().size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
           return Done{};
         }
-        auto c = match_stmt.Clauses()[clause_num];
+        auto c = match_stmt.clauses()[clause_num];
 
         if (act->pos() % 2 == 1) {
           // start interpreting the pattern of the clause
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          return Spawn{arena->New<PatternAction>(c.first)};
+          return Spawn{arena->New<PatternAction>(&c.pattern())};
         } else {  // try to match
           auto v = act->results()[0];
           auto pat = act->results()[clause_num + 1];
           std::optional<Env> matches = PatternMatch(pat, v, stmt->source_loc());
           if (matches) {  // we have a match, start the body
             // Ensure we don't process any more clauses.
-            act->set_pos(2 * match_stmt.Clauses().size() + 1);
+            act->set_pos(2 * match_stmt.clauses().size() + 1);
 
             for (const auto& [name, value] : *matches) {
               frame->scopes.Top()->values.Set(name, value);
               frame->scopes.Top()->locals.push_back(name);
             }
-            return Spawn{arena->New<StatementAction>(c.second)};
+            return Spawn{arena->New<StatementAction>(&c.statement())};
           } else {
             return RunAgain{};
           }
