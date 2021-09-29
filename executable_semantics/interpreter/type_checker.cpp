@@ -341,11 +341,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<FieldInitializer> new_args;
       std::vector<TupleElement> arg_types;
       auto new_types = types;
-      for (const auto& arg : cast<TupleLiteral>(*e).Fields()) {
-        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+      for (auto& arg : cast<TupleLiteral>(*e).fields()) {
+        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name, arg_res.exp));
-        arg_types.push_back({.name = arg.name, .value = arg_res.type});
+        new_args.push_back(FieldInitializer(arg.name(), arg_res.exp));
+        arg_types.push_back({.name = arg.name(), .value = arg_res.type});
       }
       auto tuple_e = arena->New<TupleLiteral>(e->source_loc(), new_args);
       auto tuple_t = arena->New<TupleValue>(std::move(arg_types));
@@ -355,26 +355,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<FieldInitializer> new_args;
       VarValues arg_types;
       auto new_types = types;
-      for (const auto& arg : cast<StructLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+      for (auto& arg : cast<StructLiteral>(*e).fields()) {
+        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name, arg_res.exp));
-        arg_types.push_back({arg.name, arg_res.type});
+        new_args.push_back(FieldInitializer(arg.name(), arg_res.exp));
+        arg_types.push_back({arg.name(), arg_res.type});
       }
       auto new_e = arena->New<StructLiteral>(e->source_loc(), new_args);
       auto type = arena->New<StructType>(std::move(arg_types));
       return TCExpression(new_e, type, new_types);
     }
     case Expression::Kind::StructTypeLiteral: {
-      const auto& struct_type = cast<StructTypeLiteral>(*e);
+      auto& struct_type = cast<StructTypeLiteral>(*e);
       std::vector<FieldInitializer> new_args;
       auto new_types = types;
-      for (const auto& arg : struct_type.fields()) {
-        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+      for (auto& arg : struct_type.fields()) {
+        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
         new_types = arg_res.types;
         Nonnull<const Value*> type = interpreter.InterpExp(values, arg_res.exp);
         new_args.push_back(
-            FieldInitializer(arg.name, ReifyType(type, e->source_loc())));
+            FieldInitializer(arg.name(), ReifyType(type, e->source_loc())));
       }
       auto new_e = arena->New<StructTypeLiteral>(e->source_loc(), new_args);
       Nonnull<const Value*> type;
