@@ -147,12 +147,18 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::TupleValue: {
       if (arg->kind() != Value::Kind::TupleValue) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       const auto& param_tup = cast<TupleValue>(*param);
       const auto& arg_tup = cast<TupleValue>(*arg);
       if (param_tup.Elements().size() != arg_tup.Elements().size()) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "mismatch in tuple sizes, expected "
+            << param_tup.Elements().size() << " but got "
+            << arg_tup.Elements().size();
       }
       for (size_t i = 0; i < param_tup.Elements().size(); ++i) {
         if (param_tup.Elements()[i].name != arg_tup.Elements()[i].name) {
@@ -168,12 +174,18 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::StructType: {
       if (arg->kind() != Value::Kind::StructType) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       const auto& param_struct = cast<StructType>(*param);
       const auto& arg_struct = cast<StructType>(*arg);
       if (param_struct.fields().size() != arg_struct.fields().size()) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "mismatch in struct field counts, expected "
+            << param_struct.fields().size() << " but got "
+            << arg_struct.fields().size();
       }
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
         if (param_struct.fields()[i].first != arg_struct.fields()[i].first) {
@@ -189,7 +201,10 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::FunctionType: {
       if (arg->kind() != Value::Kind::FunctionType) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       const auto& param_fn = cast<FunctionType>(*param);
       const auto& arg_fn = cast<FunctionType>(*arg);
@@ -202,7 +217,10 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::PointerType: {
       if (arg->kind() != Value::Kind::PointerType) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       return ArgumentDeduction(source_loc, deduced,
                                cast<PointerType>(*param).Type(),
