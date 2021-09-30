@@ -67,17 +67,21 @@ class ExitingStream {
 //
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";
-#define CHECK(condition)                                                      \
-  (!(condition)) && (Carbon::ExitingStream() << "CHECK failure: " #condition) \
-                        .AddSeparator()                                       \
-                        .TreatAsBug()
+#define CHECK(condition)                                                 \
+  (!(condition)) &&                                                      \
+      (Carbon::ExitingStream() << "CHECK failure at " << __FILE__ << ":" \
+                               << __LINE__ << ": " #condition)           \
+          .AddSeparator()                                                \
+          .TreatAsBug()
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
 // than CHECK(false) because it avoids confusion about control flow.
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL() Carbon::ExitingStream().TreatAsBug() << "FATAL: "
+#define FATAL()                        \
+  Carbon::ExitingStream().TreatAsBug() \
+      << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
 
 }  // namespace Carbon
 
