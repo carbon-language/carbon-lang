@@ -121,8 +121,8 @@ An integer constant can be implicitly converted to any type `iM`, `uM`, or `fM`
 in which that value can be exactly represented. A floating-point constant can be
 implicitly converted to any type `fM` in which that value is between the least
 representable finite value and the greatest representable finite value
-(inclusive), and does not fall exactly half-way between two representable
-values, and converts to the nearest representable finite value.
+(inclusive), and converts to the nearest representable finite value, with ties
+broken by picking the value for which the mantissa is even.
 
 The above conversions are also precisely those that C++ considers non-narrowing,
 except:
@@ -294,4 +294,6 @@ types.
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
-    [#820: implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
+    [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
+-   Proposal
+    [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
