@@ -803,17 +803,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
   }  // switch
 }
 
-auto TypeChecker::CheckOrEnsureReturn(
-    std::optional<Nonnull<Statement*>> opt_stmt, bool omitted_ret_type,
-    SourceLocation source_loc) -> Nonnull<Statement*> {
+void TypeChecker::ExpectReturnOnAllPaths(
+    std::optional<Nonnull<Statement*>> opt_stmt, SourceLocation source_loc) {
   if (!opt_stmt) {
-    if (omitted_ret_type) {
-      return arena->New<Return>(arena, source_loc);
-    } else {
-      FATAL_COMPILATION_ERROR(source_loc)
-          << "control-flow reaches end of function that provides a `->` return "
-             "type without reaching a return statement";
-    }
+    FATAL_COMPILATION_ERROR(source_loc)
+        << "control-flow reaches end of function that provides a `->` return "
+           "type without reaching a return statement";
   }
   Nonnull<Statement*> stmt = *opt_stmt;
   switch (stmt->kind()) {
@@ -821,59 +816,43 @@ auto TypeChecker::CheckOrEnsureReturn(
       auto& match = cast<Match>(*stmt);
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
-        auto s = CheckOrEnsureReturn(&clause.statement(), omitted_ret_type,
-                                     stmt->source_loc());
-        new_clauses.push_back(Match::Clause(&clause.pattern(), s));
+        ExpectReturnOnAllPaths(&clause.statement(), stmt->source_loc());
       }
-      return arena->New<Match>(stmt->source_loc(), &match.expression(),
-                               new_clauses);
+      return;
     }
     case Statement::Kind::Block:
-      return arena->New<Block>(
-          stmt->source_loc(),
-          CheckOrEnsureReturn(cast<Block>(*stmt).Stmt(), omitted_ret_type,
-                              stmt->source_loc()));
+      ExpectReturnOnAllPaths(cast<Block>(*stmt).Stmt(), stmt->source_loc());
+      return;
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*stmt);
-      return arena->New<If>(
-          stmt->source_loc(), if_stmt.Cond(),
-          CheckOrEnsureReturn(if_stmt.ThenStmt(), omitted_ret_type,
-                              stmt->source_loc()),
-          CheckOrEnsureReturn(if_stmt.ElseStmt(), omitted_ret_type,
-                              stmt->source_loc()));
+      ExpectReturnOnAllPaths(if_stmt.ThenStmt(), stmt->source_loc());
+      ExpectReturnOnAllPaths(if_stmt.ElseStmt(), stmt->source_loc());
+      return;
     }
     case Statement::Kind::Return:
-      return stmt;
+      return;
     case Statement::Kind::Sequence: {
       auto& seq = cast<Sequence>(*stmt);
       if (seq.Next()) {
-        return arena->New<Sequence>(
-            stmt->source_loc(), seq.Stmt(),
-            CheckOrEnsureReturn(seq.Next(), omitted_ret_type,
-                                stmt->source_loc()));
+        ExpectReturnOnAllPaths(seq.Next(), stmt->source_loc());
       } else {
-        return CheckOrEnsureReturn(seq.Stmt(), omitted_ret_type,
-                                   stmt->source_loc());
+        ExpectReturnOnAllPaths(seq.Stmt(), stmt->source_loc());
       }
+      return;
     }
     case Statement::Kind::Continuation:
     case Statement::Kind::Run:
     case Statement::Kind::Await:
-      return stmt;
+      return;
     case Statement::Kind::Assign:
     case Statement::Kind::ExpressionStatement:
     case Statement::Kind::While:
     case Statement::Kind::Break:
     case Statement::Kind::Continue:
     case Statement::Kind::VariableDefinition:
-      if (omitted_ret_type) {
-        return arena->New<Sequence>(stmt->source_loc(), stmt,
-                                    arena->New<Return>(arena, source_loc));
-      } else {
-        FATAL_COMPILATION_ERROR(stmt->source_loc())
-            << "control-flow reaches end of function that provides a `->` "
-               "return type without reaching a return statement";
-      }
+      FATAL_COMPILATION_ERROR(stmt->source_loc())
+          << "control-flow reaches end of function that provides a `->` "
+             "return type without reaching a return statement";
   }
 }
 
@@ -912,14 +891,11 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
       return_type = *return_type_context.deduced_return_type();
     }
   }
-  auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type(),
-                                  f->source_loc());
+  if (!f->is_omitted_return_type()) {
+    ExpectReturnOnAllPaths(body_stmt, f->source_loc());
+  }
   ExpectIsType(f->return_type().source_loc(), return_type);
-  return {.function = arena->New<FunctionDefinition>(
-              f->source_loc(), f->name(), f->deduced_parameters(),
-              &f->param_pattern(), &f->return_type(),
-              /*is_omitted_return_type=*/false, body),
-          .type = arena->New<FunctionType>(f->deduced_parameters(),
+  return {.type = arena->New<FunctionType>(f->deduced_parameters(),
                                            param_res.type, return_type)};
 }
 
@@ -992,34 +968,20 @@ static auto GetName(const Declaration& d) -> const std::string& {
   }
 }
 
-auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
-                                  const Env& values) -> Nonnull<Declaration*> {
+void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
+                            const Env& values) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      return arena->New<FunctionDeclaration>(
-          TypeCheckFunDef(&cast<FunctionDeclaration>(*d).definition(), types,
-                          values)
-              .function);
-
-    case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*d).definition();
-      std::vector<Nonnull<Member*>> fields;
-      for (Nonnull<Member*> m : class_def.members()) {
-        switch (m->kind()) {
-          case Member::Kind::FieldMember:
-            // TODO: Interpret the type expression and store the result.
-            fields.push_back(m);
-            break;
-        }
-      }
-      return arena->New<ClassDeclaration>(class_def.source_loc(),
-                                          class_def.name(), std::move(fields));
-    }
+      TypeCheckFunDef(&cast<FunctionDeclaration>(*d).definition(), types,
+                      values);
+      return;
+    case Declaration::Kind::ClassDeclaration:
+      // TODO
+      return;
 
     case Declaration::Kind::ChoiceDeclaration:
       // TODO
-      return d;
+      return;
 
     case Declaration::Kind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
@@ -1039,7 +1001,7 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
           interpreter.InterpExp(values, binding_type->Expression());
       ExpectType(var.source_loc(), "initializer of variable", declared_type,
                  type_checked_initializer.type);
-      return d;
+      return;
     }
   }
 }

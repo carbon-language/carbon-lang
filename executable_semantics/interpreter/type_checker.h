@@ -32,8 +32,8 @@ class TypeChecker {
     Env values;
   };
 
-  auto MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
-                       const Env& values) -> Nonnull<Declaration*>;
+  void TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
+                 const Env& values);
 
   auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
 
@@ -122,7 +122,6 @@ class TypeChecker {
       -> TCStatement;
 
   struct TCFunction {
-    Nonnull<FunctionDefinition*> function;
     Nonnull<const Value*> type;
   };
   auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
@@ -140,9 +139,10 @@ class TypeChecker {
 
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
-  auto CheckOrEnsureReturn(std::optional<Nonnull<Statement*>> opt_stmt,
-                           bool omitted_ret_type, SourceLocation source_loc)
-      -> Nonnull<Statement*>;
+  // Verifies that opt_stmt holds a statement, and it is structurally impossible
+  // for control flow to leave that statement except via a `return`.
+  void ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
+                              SourceLocation source_loc);
 
   void ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value);
 
