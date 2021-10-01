@@ -69,22 +69,10 @@ class TypeChecker {
     const bool is_omitted_;
   };
 
-  struct TCExpression {
-    TCExpression(Nonnull<const Value*> t, TypeEnv types)
-        : type(t), types(types) {}
+  struct TCResult {
+    TCResult(Nonnull<const Value*> t, TypeEnv types) : type(t), types(types) {}
 
     Nonnull<const Value*> type;
-    TypeEnv types;
-  };
-
-  struct TCPattern {
-    Nonnull<const Value*> type;
-    TypeEnv types;
-  };
-
-  struct TCStatement {
-    TCStatement(TypeEnv types) : types(types) {}
-
     TypeEnv types;
   };
 
@@ -100,7 +88,7 @@ class TypeChecker {
   // values maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
   auto TypeCheckExp(Nonnull<Expression*> e, TypeEnv types, Env values)
-      -> TCExpression;
+      -> TCResult;
 
   // Equivalent to TypeCheckExp, but operates on Patterns instead of
   // Expressions. `expected` is the type that this pattern is expected to have,
@@ -108,7 +96,7 @@ class TypeChecker {
   // nullopt.
   auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
                         std::optional<Nonnull<const Value*>> expected)
-      -> TCPattern;
+      -> TCResult;
 
   // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
   // version of the statement and a new type environment.
@@ -119,13 +107,10 @@ class TypeChecker {
   // statement.
   auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values,
                      Nonnull<ReturnTypeContext*> return_type_context)
-      -> TCStatement;
+      -> TCResult;
 
-  struct TCFunction {
-    Nonnull<const Value*> type;
-  };
   auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
-      -> TCFunction;
+      -> TCResult;
 
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
                      Nonnull<Statement*> body, TypeEnv types, Env values,
