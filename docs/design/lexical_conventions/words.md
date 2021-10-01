@@ -38,6 +38,7 @@ The following words are interpreted as keywords:
 -   `and`
 -   `api`
 -   `as`
+-   `assume_as`
 -   `auto`
 -   `base`
 -   `break`
@@ -68,7 +69,6 @@ The following words are interpreted as keywords:
 -   `protected`
 -   `return`
 -   `returned`
--   `unsafe_as`
 -   `var`
 -   `virtual`
 -   `where`

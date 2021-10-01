@@ -66,10 +66,8 @@ the following numeric conversion is supported by `as`:
     representable values. Very large finite values may be rounded to an
     infinity. NaN values are converted to NaN values.
 
--   `iN` or `uN` -> `bool`. Zero converts to `false` and non-zero values convert
-    to `true`.
-
--   `bool` -> `iN` or `uN`. `false` converts to `0` and `true` converts to `1`.
+-   `bool` -> `iN` or `uN`. `false` converts to `0` and `true` converts to `1`
+    (or to `-1` for `i1`).
 
 The following additional numeric conversions are supported by `assume_as`:
 
@@ -83,6 +81,9 @@ The following additional numeric conversions are supported by `assume_as`:
     are suitably rounded to one of the two nearest representable values. It is a
     programming error if the source value does not round to an integer that can
     be represented in the destination type.
+
+Conversions from numeric types to `bool` are not supported with `as`; instead of
+using `as bool`, such conversions can be performed with `!= 0`.
 
 **Note:** The precise rounding rules for these conversions have not yet been
 decided.
@@ -136,6 +137,8 @@ The expression `x as U` is rewritten to `x.(As(U).Convert)()`. The expression
 -   [Do not distinguish between safe and unsafe casts](/docs/proposals/p0845.md#merge-as-and-assume_as)
 -   [Do not distinguish between safe as and implicit conversions](/docs/proposals/p0845.md#as-only-performs-implicit-conversions)
 -   [Use a different name for `assume_as`](/docs/proposals/p0845.md#different-name-for-assume_as)
+-   [Allow `iN as bool`](/docs/proposals/p0845.md#integer-to-bool-conversions)
+-   [Allow `bool as iN`](/docs/proposals/p0845.md#bool-to-integer-conversions)
 
 ## References
 
