@@ -70,24 +70,21 @@ class TypeChecker {
   };
 
   struct TCExpression {
-    TCExpression(Nonnull<Expression*> e, Nonnull<const Value*> t, TypeEnv types)
-        : exp(e), type(t), types(types) {}
+    TCExpression(Nonnull<const Value*> t, TypeEnv types)
+        : type(t), types(types) {}
 
-    Nonnull<Expression*> exp;
     Nonnull<const Value*> type;
     TypeEnv types;
   };
 
   struct TCPattern {
-    Nonnull<Pattern*> pattern;
     Nonnull<const Value*> type;
     TypeEnv types;
   };
 
   struct TCStatement {
-    TCStatement(Nonnull<Statement*> s, TypeEnv types) : stmt(s), types(types) {}
+    TCStatement(TypeEnv types) : types(types) {}
 
-    Nonnull<Statement*> stmt;
     TypeEnv types;
   };
 
