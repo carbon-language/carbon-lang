@@ -60,7 +60,9 @@ static void ExpectPointerType(SourceLocation source_loc,
   }
 }
 
-static bool IsType(Nonnull<const Value*> value) {
+// Returns whether *value represents a concrete type, as opposed to a
+// type pattern or a non-type value.
+static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
@@ -87,11 +89,10 @@ static bool IsType(Nonnull<const Value*> value) {
     case Value::Kind::StringType:
       return true;
     case Value::Kind::AutoType:
-      // FIXME explain this
       return false;
     case Value::Kind::TupleValue:
       for (const TupleElement& field : cast<TupleValue>(*value).Elements()) {
-        if (!IsType(field.value)) {
+        if (!IsConcreteType(field.value)) {
           return false;
         }
       }
@@ -100,9 +101,9 @@ static bool IsType(Nonnull<const Value*> value) {
   FATAL() << *value;
 }
 
-void TypeChecker::ExpectIsType(SourceLocation source_loc,
-                               Nonnull<const Value*> value) {
-  if (!IsType(value)) {
+void TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
+                                       Nonnull<const Value*> value) {
+  if (!IsConcreteType(value)) {
     FATAL_COMPILATION_ERROR(source_loc)
         << "Expected a type, but got " << *value;
   }
@@ -350,8 +351,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       for (const auto& arg : struct_type.fields()) {
         auto arg_res = TypeCheckExp(arg.expression, new_types, values);
         new_types = arg_res.types;
-        ExpectIsType(arg.expression->source_loc(),
-                     interpreter.InterpExp(values, arg.expression));
+        ExpectIsConcreteType(arg.expression->source_loc(),
+                             interpreter.InterpExp(values, arg.expression));
         new_args.push_back(FieldInitializer(arg.name, arg.expression));
       }
       Nonnull<const Value*> type;
@@ -538,10 +539,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
-      ExpectIsType(fn.Parameter()->source_loc(),
-                   interpreter.InterpExp(values, fn.Parameter()));
-      ExpectIsType(fn.ReturnType()->source_loc(),
-                   interpreter.InterpExp(values, fn.ReturnType()));
+      ExpectIsConcreteType(fn.Parameter()->source_loc(),
+                           interpreter.InterpExp(values, fn.Parameter()));
+      ExpectIsConcreteType(fn.ReturnType()->source_loc(),
+                           interpreter.InterpExp(values, fn.ReturnType()));
       return TCResult(arena->New<TypeType>(), types);
     }
     case Expression::Kind::StringLiteral:
@@ -595,7 +596,7 @@ auto TypeChecker::TypeCheckPattern(
             << "Name bindings within type patterns are unsupported";
         type = *expected;
       }
-      ExpectIsType(binding.source_loc(), type);
+      ExpectIsConcreteType(binding.source_loc(), type);
       if (binding.Name().has_value()) {
         types.Set(*binding.Name(), type);
       }
@@ -893,7 +894,7 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
   if (!f->is_omitted_return_type()) {
     ExpectReturnOnAllPaths(body_stmt, f->source_loc());
   }
-  ExpectIsType(f->return_type().source_loc(), return_type);
+  ExpectIsConcreteType(f->return_type().source_loc(), return_type);
   return TCResult(arena->New<FunctionType>(f->deduced_parameters(),
                                            param_res.type, return_type),
                   types);

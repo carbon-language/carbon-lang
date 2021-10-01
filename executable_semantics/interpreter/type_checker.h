@@ -129,7 +129,10 @@ class TypeChecker {
   void ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc);
 
-  void ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value);
+  // Verifies that *value represents a concrete type, as opposed to a
+  // type pattern or a non-type value.
+  void ExpectIsConcreteType(SourceLocation source_loc,
+                            Nonnull<const Value*> value);
 
   auto ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
       -> Nonnull<Expression*>;
