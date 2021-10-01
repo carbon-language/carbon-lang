@@ -92,10 +92,11 @@ class ExitingStream {
 //
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";
-#define CHECK(condition)                            \
-  (condition) ? (void)0                             \
-              : RAW_EXITING_STREAM().TreatAsBug()   \
-                    << "CHECK failure: " #condition \
+#define CHECK(condition)                                                  \
+  (condition) ? (void)0                                                   \
+              : RAW_EXITING_STREAM().TreatAsBug()                         \
+                    << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
+                    << ": " #condition                                    \
                     << Carbon::ExitingStream::AddSeparator()
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
@@ -103,7 +104,9 @@ class ExitingStream {
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL() RAW_EXITING_STREAM().TreatAsBug() << "FATAL: "
+#define FATAL()                     \
+  RAW_EXITING_STREAM().TreatAsBug() \
+      << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
 
 }  // namespace Carbon
 
