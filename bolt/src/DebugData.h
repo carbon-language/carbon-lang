@@ -28,6 +28,8 @@
 #include <utility>
 #include <vector>
 
+#define DWARF2_FLAG_END_SEQUENCE (1 << 4)
+
 namespace llvm {
 
 class DWARFAbbreviationDeclarationSet;

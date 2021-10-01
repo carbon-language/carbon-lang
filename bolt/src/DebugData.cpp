@@ -642,6 +642,9 @@ static inline void emitBinaryDwarfLineTable(
     emitEndOfSequence(PrevEndOfSequence);
 }
 
+// This function is similar to the one from MCDwarfLineTable, except it handles
+// end-of-sequence entries differently by utilizing line entries with
+// DWARF2_FLAG_END_SEQUENCE flag.
 static inline void emitDwarfLineTable(
     MCStreamer *MCOS, MCSection *Section,
     const MCLineSection::MCDwarfLineEntryCollection &LineEntries) {
@@ -656,6 +659,19 @@ static inline void emitDwarfLineTable(
 
   // Loop through each MCDwarfLineEntry and encode the dwarf line number table.
   for (const MCDwarfLineEntry &LineEntry : LineEntries) {
+    if (LineEntry.getFlags() & DWARF2_FLAG_END_SEQUENCE) {
+      MCOS->emitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, LineEntry.getLabel(),
+                                     AsmInfo->getCodePointerSize());
+      FileNum = 1;
+      LastLine = 1;
+      Column = 0;
+      Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
+      Isa = 0;
+      Discriminator = 0;
+      LastLabel = nullptr;
+      continue;
+    }
+
     int64_t LineDelta = static_cast<int64_t>(LineEntry.getLine()) - LastLine;
 
     if (FileNum != LineEntry.getFileNum()) {
@@ -705,8 +721,7 @@ static inline void emitDwarfLineTable(
     LastLabel = Label;
   }
 
-  // Generate DWARF line end entry.
-  MCOS->emitDwarfLineEndEntry(Section, LastLabel);
+  assert(LastLabel == nullptr && "end of sequence expected");
 }
 
 void DwarfLineTable::emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,

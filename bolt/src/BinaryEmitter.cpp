@@ -11,6 +11,7 @@
 #include "BinaryEmitter.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "DebugData.h"
 #include "Utils.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
@@ -178,6 +179,12 @@ private:
   /// Return new current location which is either \p NewLoc or \p PrevLoc.
   SMLoc emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc, SMLoc PrevLoc,
                      bool FirstInstr);
+
+  /// Use \p FunctionEndSymbol to mark the end of the line info sequence.
+  /// Note that it does not automatically result in the insertion of the EOS
+  /// marker in the line table program, but provides one to the DWARF generator
+  /// when it needs it.
+  void emitLineInfoEnd(const BinaryFunction &BF, MCSymbol *FunctionEndSymbol);
 
   /// Emit debug line information for functions that were not emitted.
   void emitDebugLineInfoForOriginalFunctions();
@@ -384,6 +391,9 @@ bool BinaryEmitter::emitFunction(BinaryFunction &Function, bool EmitColdPart) {
         MCSymbolRefExpr::create(StartSymbol, Context), Context);
     Streamer.emitELFSize(StartSymbol, SizeExpr);
   }
+
+  if (opts::UpdateDebugSections && Function.getDWARFUnit())
+    emitLineInfoEnd(Function, EndSymbol);
 
   // Exception handling info for the function.
   emitLSDA(Function, EmitColdPart);
@@ -668,6 +678,19 @@ SMLoc BinaryEmitter::emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc,
                     Streamer.getCurrentSectionOnly());
 
   return NewLoc;
+}
+
+void BinaryEmitter::emitLineInfoEnd(const BinaryFunction &BF,
+                                    MCSymbol *FunctionEndLabel) {
+  DWARFUnit *FunctionCU = BF.getDWARFUnit();
+  assert(FunctionCU && "DWARF unit expected");
+  BC.Ctx->setCurrentDwarfLoc(0, 0, 0, DWARF2_FLAG_END_SEQUENCE, 0, 0);
+  const MCDwarfLoc &DwarfLoc = BC.Ctx->getCurrentDwarfLoc();
+  BC.Ctx->clearDwarfLocSeen();
+  BC.getDwarfLineTable(FunctionCU->getOffset())
+      .getMCLineSections()
+      .addLineEntry(MCDwarfLineEntry(FunctionEndLabel, DwarfLoc),
+                    Streamer.getCurrentSectionOnly());
 }
 
 void BinaryEmitter::emitJumpTables(const BinaryFunction &BF) {
