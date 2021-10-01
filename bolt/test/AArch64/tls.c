@@ -24,7 +24,6 @@ int main() {
 }
 
 // REQUIRES: system-linux
-// XFAIL: *
 // RUN: %clang %cflags -no-pie %s -o %t.exe -Wl,-q \
 // RUN:   -Wl,--unresolved-symbols=ignore-all \
 // RUN:   -target aarch64-linux -fuse-ld=ld.lld \

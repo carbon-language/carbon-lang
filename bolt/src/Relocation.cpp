@@ -178,11 +178,13 @@ bool skipRelocationProcessAArch64(uint64_t Type, uint64_t Contents) {
   // to initial exec), thus changing the instructions. The static
   // relocations might be invalid at this point and we might no
   // need to proccess these relocations anymore.
-  // More information could be find by searching
+  // More information could be found by searching
   // elfNN_aarch64_tls_relax in bfd
   switch (Type) {
   default:
     break;
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21: {
     if (IsMov(Contents))
