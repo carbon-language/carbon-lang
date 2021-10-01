@@ -57,7 +57,7 @@ extensions are expected to follow these guidelines.
 
 ## Precedence and associativity
 
-`as` expressions are non-associative.
+`as` and `assume_as` expressions are non-associative.
 
 ```
 var b: bool = true;
@@ -68,8 +68,8 @@ var m: auto = b as (bool as Hashable);
 var m: auto = b as T as U;
 ```
 
-The `as` operator has lower precedence than operators that visually bind
-tightly:
+The `as` and `assume_as` operators have lower precedence than operators that
+visually bind tightly:
 
 -   prefix symbolic operators
     -   dereference (`*a`)
@@ -81,9 +81,9 @@ tightly:
     -   array indexing (`a[...]`), and
     -   member access (`a.m`).
 
-The `as` operator has higher precedence than assignment and comparison. It is
-unordered with respect to binary arithmetic and bitwise operators and unary
-`not`.
+The `as` and `assume_as` operators have higher precedence than assignment and
+comparison. They are unordered with respect to binary arithmetic, bitwise
+operators, unary `not`, and each other.
 
 ```
 // OK
