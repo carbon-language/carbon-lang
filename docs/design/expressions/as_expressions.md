@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Precedence and associativity](#precedence-and-associativity)
 -   [Built-in types](#built-in-types)
     -   [Data types](#data-types)
     -   [Compatible types](#compatible-types)
@@ -53,6 +54,58 @@ entire input type, so the conversion is not safe as defined above.
 It is possible for user-defined types to [extend](#extensibility) the set of
 valid explicit casts that can be performed by `as` and `assume_as`. Such
 extensions are expected to follow these guidelines.
+
+## Precedence and associativity
+
+`as` expressions are non-associative.
+
+```
+var b: bool = true;
+// OK
+var n: i32 = (b as i1) as i32;
+var m: auto = b as (bool as Hashable);
+// Error, ambiguous
+var m: auto = b as T as U;
+```
+
+The `as` operator has lower precedence than operators that visually bind
+tightly:
+
+-   prefix symbolic operators
+    -   dereference (`*a`)
+    -   negation (`-a`)
+    -   complement (`~a`)
+-   postfix symbolic operators
+    -   pointer type formation (`T*`),
+    -   function call (`a(...)`),
+    -   array indexing (`a[...]`), and
+    -   member access (`a.m`).
+
+The `as` operator has higher precedence than assignment and comparison. It is
+unordered with respect to binary arithmetic and bitwise operators and unary
+`not`.
+
+```
+// OK
+var x: i32* as Comparable;
+// OK, `x as (U*)` not `(x as U)*`.
+var y: auto = x as U*;
+
+var a: i32;
+var b: i32;
+// OK, `(a as i64) < (*x as i64)`.
+if (a as i64 < *x as i64) {}
+// Ambiguous: `(a + b) as i64` or `a + (b as i64)`?
+var c: i32 = a + b as i64;
+// Ambiguous: `(a as i64) + b` or `a as (i64 + b)`?
+var d: i32 = a as i64 + b;
+
+// OK, `(-a) assume_as u64`, not `-(a assume_as u64)`.
+var u: u64 = -a assume_as u64;
+
+// OK, `i32 as (GetType())`, not `(i32 as GetType)()`.
+var e: i32 as GetType();
+```
 
 ## Built-in types
 
