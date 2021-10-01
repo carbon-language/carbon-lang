@@ -124,8 +124,12 @@ class TypeChecker {
                      Nonnull<ReturnTypeContext*> return_type_context)
       -> TCStatement;
 
+  struct TCFunction {
+    Nonnull<FunctionDefinition*> function;
+    Nonnull<const Value*> type;
+  };
   auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
-      -> Nonnull<FunctionDefinition*>;
+      -> TCFunction;
 
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
                      Nonnull<Statement*> body, TypeEnv types, Env values,
@@ -143,7 +147,8 @@ class TypeChecker {
                            bool omitted_ret_type, SourceLocation source_loc)
       -> Nonnull<Statement*>;
 
-  // Reify type to type expression.
+  void ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value);
+
   auto ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
       -> Nonnull<Expression*>;
 

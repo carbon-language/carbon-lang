@@ -60,68 +60,51 @@ static void ExpectPointerType(SourceLocation source_loc,
   }
 }
 
-auto TypeChecker::ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
-    -> Nonnull<Expression*> {
-  switch (t->kind()) {
-    case Value::Kind::IntType:
-      return arena->New<IntTypeLiteral>(source_loc);
-    case Value::Kind::BoolType:
-      return arena->New<BoolTypeLiteral>(source_loc);
-    case Value::Kind::TypeType:
-      return arena->New<TypeTypeLiteral>(source_loc);
-    case Value::Kind::ContinuationType:
-      return arena->New<ContinuationTypeLiteral>(source_loc);
-    case Value::Kind::FunctionType: {
-      const auto& fn_type = cast<FunctionType>(*t);
-      return arena->New<FunctionTypeLiteral>(
-          source_loc, ReifyType(fn_type.Param(), source_loc),
-          ReifyType(fn_type.Ret(), source_loc),
-          /*is_omitted_return_type=*/false);
-    }
-    case Value::Kind::TupleValue: {
-      std::vector<FieldInitializer> args;
-      for (const TupleElement& field : cast<TupleValue>(*t).Elements()) {
-        args.push_back(
-            FieldInitializer(field.name, ReifyType(field.value, source_loc)));
-      }
-      return arena->New<TupleLiteral>(source_loc, args);
-    }
-    case Value::Kind::StructType: {
-      std::vector<FieldInitializer> args;
-      for (const auto& [name, type] : cast<StructType>(*t).fields()) {
-        args.push_back(FieldInitializer(name, ReifyType(type, source_loc)));
-      }
-      return arena->New<StructTypeLiteral>(source_loc, args);
-    }
-    case Value::Kind::NominalClassType:
-      return arena->New<IdentifierExpression>(
-          source_loc, cast<NominalClassType>(*t).Name());
-    case Value::Kind::ChoiceType:
-      return arena->New<IdentifierExpression>(source_loc,
-                                              cast<ChoiceType>(*t).Name());
-    case Value::Kind::PointerType:
-      return arena->New<PrimitiveOperatorExpression>(
-          source_loc, Operator::Ptr,
-          std::vector<Nonnull<Expression*>>(
-              {ReifyType(cast<PointerType>(*t).Type(), source_loc)}));
-    case Value::Kind::VariableType:
-      return arena->New<IdentifierExpression>(source_loc,
-                                              cast<VariableType>(*t).Name());
-    case Value::Kind::StringType:
-      return arena->New<StringTypeLiteral>(source_loc);
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::AlternativeValue:
-    case Value::Kind::AutoType:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::ContinuationValue:
-    case Value::Kind::FunctionValue:
+static bool IsType(Nonnull<const Value*> value) {
+  switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
     case Value::Kind::PointerValue:
-    case Value::Kind::StringValue:
+    case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
-      FATAL() << "expected a type, not " << *t;
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+      return false;
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::TypeType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
+    case Value::Kind::StringType:
+      return true;
+    case Value::Kind::AutoType:
+      // FIXME explain this
+      return false;
+    case Value::Kind::TupleValue:
+      for (const TupleElement& field : cast<TupleValue>(*value).Elements()) {
+        if (!IsType(field.value)) {
+          return false;
+        }
+      }
+      return true;
+  }
+  FATAL() << *value;
+}
+
+void TypeChecker::ExpectIsType(SourceLocation source_loc,
+                               Nonnull<const Value*> value) {
+  if (!IsType(value)) {
+    FATAL_COMPILATION_ERROR(source_loc)
+        << "Expected a type, but got " << *value;
   }
 }
 
@@ -372,9 +355,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       for (const auto& arg : struct_type.fields()) {
         auto arg_res = TypeCheckExp(arg.expression, new_types, values);
         new_types = arg_res.types;
-        Nonnull<const Value*> type = interpreter.InterpExp(values, arg_res.exp);
-        new_args.push_back(
-            FieldInitializer(arg.name, ReifyType(type, e->source_loc())));
+        ExpectIsType(arg_res.exp->source_loc(),
+                     interpreter.InterpExp(values, arg_res.exp));
+        new_args.push_back(FieldInitializer(arg.name, arg_res.exp));
       }
       auto new_e = arena->New<StructTypeLiteral>(e->source_loc(), new_args);
       Nonnull<const Value*> type;
@@ -575,12 +558,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       break;
     }
     case Expression::Kind::FunctionTypeLiteral: {
-      const auto& fn = cast<FunctionTypeLiteral>(*e);
-      auto pt = interpreter.InterpExp(values, fn.Parameter());
-      auto rt = interpreter.InterpExp(values, fn.ReturnType());
+      auto& fn = cast<FunctionTypeLiteral>(*e);
+      ExpectIsType(fn.Parameter()->source_loc(),
+                   interpreter.InterpExp(values, fn.Parameter()));
+      ExpectIsType(fn.ReturnType()->source_loc(),
+                   interpreter.InterpExp(values, fn.ReturnType()));
       auto new_e = arena->New<FunctionTypeLiteral>(
-          e->source_loc(), ReifyType(pt, e->source_loc()),
-          ReifyType(rt, e->source_loc()),
+          e->source_loc(), fn.Parameter(), fn.ReturnType(),
           /*is_omitted_return_type=*/false);
       return TCExpression(new_e, arena->New<TypeType>(), types);
     }
@@ -636,9 +620,9 @@ auto TypeChecker::TypeCheckPattern(
             << "Name bindings within type patterns are unsupported";
         type = *expected;
       }
+      ExpectIsType(binding_type_result.pattern->source_loc(), type);
       auto new_p = arena->New<BindingPattern>(
-          binding.source_loc(), binding.Name(),
-          arena->New<ExpressionPattern>(ReifyType(type, binding.source_loc())));
+          binding.source_loc(), binding.Name(), binding_type_result.pattern);
       if (binding.Name().has_value()) {
         types.Set(*binding.Name(), type);
       }
@@ -708,8 +692,7 @@ auto TypeChecker::TypeCheckPattern(
       auto arguments =
           Nonnull<TuplePattern*>(cast<const TuplePattern>(arg_results.pattern));
       return {.pattern = arena->New<AlternativePattern>(
-                  alternative.source_loc(),
-                  ReifyType(choice_type, alternative.source_loc()),
+                  alternative.source_loc(), alternative.ChoiceType(),
                   alternative.AlternativeName(), arguments),
               .type = choice_type,
               .types = arg_results.types};
@@ -963,10 +946,11 @@ auto TypeChecker::CheckOrEnsureReturn(
 
 // TODO: factor common parts of TypeCheckFunDef and TypeOfFunDef into
 // a function.
+// FIXME: each caller only needs one part of output- refactoring opportunity?
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
-                                  Env values) -> Nonnull<FunctionDefinition*> {
+                                  Env values) -> TCFunction {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters()) {
     // auto t = interpreter.InterpExp(values, deduced.type);
@@ -992,14 +976,19 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
                              &return_type_context);
     body_stmt = res.stmt;
     // Save the return type in case it changed.
-    return_type = *return_type_context.deduced_return_type();
+    if (return_type_context.deduced_return_type().has_value()) {
+      return_type = *return_type_context.deduced_return_type();
+    }
   }
   auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type(),
                                   f->source_loc());
-  return arena->New<FunctionDefinition>(
-      f->source_loc(), f->name(), f->deduced_parameters(), &f->param_pattern(),
-      arena->New<ExpressionPattern>(ReifyType(return_type, f->source_loc())),
-      /*is_omitted_return_type=*/false, body);
+  ExpectIsType(f->return_type().source_loc(), return_type);
+  return {.function = arena->New<FunctionDefinition>(
+              f->source_loc(), f->name(), f->deduced_parameters(),
+              &f->param_pattern(), &f->return_type(),
+              /*is_omitted_return_type=*/false, body),
+          .type = arena->New<FunctionType>(f->deduced_parameters(),
+                                           param_res.type, return_type)};
 }
 
 auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
@@ -1018,8 +1007,7 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
   // Evaluate the return type expression
   auto ret = interpreter.InterpPattern(values, &fun_def->return_type());
   if (ret->kind() == Value::Kind::AutoType) {
-    auto f = TypeCheckFunDef(fun_def, types, values);
-    ret = interpreter.InterpPattern(values, &f->return_type());
+    return TypeCheckFunDef(fun_def, types, values).type;
   }
   return arena->New<FunctionType>(fun_def->deduced_parameters(), param_res.type,
                                   ret);
@@ -1076,8 +1064,10 @@ auto TypeChecker::MakeTypeChecked(Nonnull<Declaration*> d, const TypeEnv& types,
                                   const Env& values) -> Nonnull<Declaration*> {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      return arena->New<FunctionDeclaration>(TypeCheckFunDef(
-          &cast<FunctionDeclaration>(*d).definition(), types, values));
+      return arena->New<FunctionDeclaration>(
+          TypeCheckFunDef(&cast<FunctionDeclaration>(*d).definition(), types,
+                          values)
+              .function);
 
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def =
