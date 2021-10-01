@@ -2,7 +2,7 @@
 
 """Argument passing algorithm experiments.
 
-Problem: Given this interface definition:
+Example problem: Given this interface definition:
 
 interface C {
   let M:! C;
@@ -58,6 +58,15 @@ class Pointer:
 
 
 def commute_example():
+    """
+    interface C {
+      let M:! C;
+      let L:! C{.R = M};
+      let R:! C{.L = M};
+    }
+
+    fn F[S:! C](...) { ... }
+    """
     return Env(
         bind={"S": Archetype("S", "C")},
         iface={
@@ -71,6 +80,14 @@ def commute_example():
 
 
 def graph_example():
+    """
+    interface Graph {
+      let E:! Edge{.V = V};
+      let V:! Vert{.E = E};
+    }
+
+    fn F[S:! Graph](...) { ... }
+    """
     return Env(
         bind={"S": Archetype("S", "Graph")},
         iface={
@@ -80,6 +97,40 @@ def graph_example():
             ),
             "Edge": (("V", ("Vert", ())),),
             "Vert": (("E", ("Edge", ())),),
+        },
+    )
+
+
+def broken_example():
+    """
+    interface C {
+      let LLRR:! C;
+      let LLR:! C{.R = LLRR};
+      let LL:! C{.R = LLR};
+      let RRLL:! C;
+      let RRL:! C{.L = RRLL};
+      let RR:! C{.L = RRL};
+      let M:! C;
+      let L:! C{.R = M, .L = LL};
+      let R:! C{.L = M, .R = RR};
+    }
+
+    fn F[S:! C](...) { ... }
+    """
+    return Env(
+        bind={"S": Archetype("S", "C")},
+        iface={
+            "C": (
+                ("LLRR", ("C", ())),
+                ("LLR", ("C", (("R", "LLRR"),))),
+                ("LL", ("C", (("R", "LLR"),))),
+                ("RRLL", ("C", ())),
+                ("RRL", ("C", (("R", "RRLL"),))),
+                ("RR", ("C", (("R", "RRL"),))),
+                ("M", ("C", ())),
+                ("L", ("C", (("R", "M"), ("L", "LL")))),
+                ("R", ("C", (("L", "M"), ("R", "RR")))),
+            )
         },
     )
 
@@ -179,7 +230,6 @@ def resolve(n, f):
 
 # results = [(n, resolve(n, commute_example)) for n in
 #            ('S.L.L', 'S.L.R', 'S.R.L', 'S.R.R')]
-# results = [(n, resolve(n, commute_example)) for n in ('S.L.R',)]
 
 # results = [(n, resolve(n, commute_example)) for n in
 #            ('S.L.L.L.R.R', 'S.L.L.R.L.R', 'S.L.L.R.R.L', 'S.L.R.L.L.R',
@@ -187,22 +237,27 @@ def resolve(n, f):
 #             'S.R.L.R.L.L', 'S.R.R.L.L.L')]
 
 # import itertools
-# trials = ['.'.join(('S',) + x) for x in itertools.product('LR', repeat=5)]
+# trials = ['.'.join(('S',) + x) for x in itertools.product('LR', repeat=6)]
 # results = [(n, resolve(n, commute_example)) for n in trials]
 
-trials = (
-    "S.E",
-    "S.V",
-    "S.E.V",
-    "S.V.E",
-    "S.E.V.E",
-    "S.V.E.V",
-    "S.E.V.E.V",
-    "S.V.E.V.E",
-    "S.E.V.E.V.E",
-    "S.V.E.V.E.V",
-)
-results = [(n, resolve(n, graph_example)) for n in trials]
+# trials = (
+#     "S.E",
+#     "S.V",
+#     "S.E.V",
+#     "S.V.E",
+#     "S.E.V.E",
+#     "S.V.E.V",
+#     "S.E.V.E.V",
+#     "S.V.E.V.E",
+#     "S.E.V.E.V.E",
+#     "S.V.E.V.E.V",
+# )
+# results = [(n, resolve(n, graph_example)) for n in trials]
+
+import itertools
+
+trials = [".".join(("S",) + x) for x in itertools.product("LR", repeat=4)]
+results = [(n, resolve(n, broken_example)) for n in trials]
 
 print()
 print("RESULTS:")
