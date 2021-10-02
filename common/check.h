@@ -14,6 +14,22 @@ namespace Carbon {
 // Wraps a stream and exiting for fatal errors.
 class ExitingStream {
  public:
+
+  // A tag type that renders as ": " in an ExitingStream, but only if it is
+  // followed by additional output. Otherwise, it renders as "". Primarily used
+  // when building macros around these streams.
+  struct AddSeparator {};
+
+  // Internal type used in macros to dispatch to the `operator|` overload below.
+  struct Helper {};
+
+  [[noreturn]] ~ExitingStream() {
+    llvm_unreachable(
+        "Exiting streams should only be constructed with the below macros that "
+        "ensure the special operator| exits the program prior to their "
+        "destruction!");
+  }
+
   // Indicates that the program is exiting due to a bug in the program, rather
   // than, e.g., invalid input.
   ExitingStream& TreatAsBug() {
@@ -36,20 +52,10 @@ class ExitingStream {
     return *this;
   }
 
-  // A tag type that renders as ": " in an ExitingStream, but only if it is
-  // followed by additional output. Otherwise, it renders as "". Primarily used
-  // when building macros around these streams.
-  struct AddSeparator {};
-
   ExitingStream& operator<<(AddSeparator /*unused*/) {
     separator = true;
     return *this;
   }
-
-  // Below are implementation details used by the macros in this header.
-
-  // Internal type used in macros to dispatch to the `operator&` overload below.
-  struct Helper {};
 
   // Low-precedence binary operator overload used in macros below to flush the
   // output and exit the program. We do this in a binary operator rather than
@@ -62,13 +68,6 @@ class ExitingStream {
     } else {
       std::exit(-1);
     }
-  }
-
-  [[noreturn]] ~ExitingStream() {
-    llvm_unreachable(
-        "Exiting streams should only be constructed with the below macros that "
-        "ensure the special operator| exits the program prior to their "
-        "destruction!");
   }
 
  private:
