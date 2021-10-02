@@ -14,7 +14,6 @@ namespace Carbon {
 // Wraps a stream and exiting for fatal errors.
 class ExitingStream {
  public:
-
   // A tag type that renders as ": " in an ExitingStream, but only if it is
   // followed by additional output. Otherwise, it renders as "". Primarily used
   // when building macros around these streams.
