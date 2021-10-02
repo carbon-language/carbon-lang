@@ -36,12 +36,11 @@ class ExitingStream {
     return *this;
   }
 
-  // A tag type that triggers a special overload when streaming, see below.
+  // A tag type that renders as ": " in an ExitingStream, but only if it is
+  // followed by additional output. Otherwise, it renders as "". Primarily used
+  // when building macros around these streams.
   struct AddSeparator {};
 
-  // When the `AddSeparator` type is streamed, some initial input is in and this
-  // is where a ": " should be added if the user streams any further
-  // information. Primarily used when building macros around these streams.
   ExitingStream& operator<<(AddSeparator /*unused*/) {
     separator = true;
     return *this;
