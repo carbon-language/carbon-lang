@@ -10,8 +10,10 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
+namespace Internal {
 
-// Wraps a stream and exiting for fatal errors.
+// Wraps a stream and exiting for fatal errors. Should only be used by the
+// macros below.
 class ExitingStream {
  public:
   // A tag type that renders as ": " in an ExitingStream, but only if it is
@@ -77,11 +79,13 @@ class ExitingStream {
   bool treat_as_bug = false;
 };
 
+}  // namespace Internal
+
 // Raw exiting stream. This should be used when building other forms of exiting
 // macros like those below. It evaluates to a temporary `ExitingStream` object
 // that can be manipulated, streamed into, and then will exit the program.
 #define RAW_EXITING_STREAM() \
-  Carbon::ExitingStream::Helper() | Carbon::ExitingStream()
+  Carbon::Internal::ExitingStream::Helper() | Carbon::Internal::ExitingStream()
 
 // Checks the given condition, and if it's false, prints a stack, streams the
 // error message, then exits. This should be used for unexpected errors, such as
@@ -94,7 +98,7 @@ class ExitingStream {
               : RAW_EXITING_STREAM().TreatAsBug()                         \
                     << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
                     << ": " #condition                                    \
-                    << Carbon::ExitingStream::AddSeparator()
+                    << Carbon::Internal::ExitingStream::AddSeparator()
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
 // than CHECK(false) because it avoids confusion about control flow.
