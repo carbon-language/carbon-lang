@@ -992,7 +992,9 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
                              &return_type_context);
     body_stmt = res.stmt;
     // Save the return type in case it changed.
-    return_type = *return_type_context.deduced_return_type();
+    if (return_type_context.deduced_return_type().has_value()) {
+      return_type = *return_type_context.deduced_return_type();
+    }
   }
   auto body = CheckOrEnsureReturn(body_stmt, f->is_omitted_return_type(),
                                   f->source_loc());
