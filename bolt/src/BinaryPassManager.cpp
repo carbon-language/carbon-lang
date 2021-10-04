@@ -510,6 +510,15 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   // memory profiling data.
   Manager.registerPass(std::make_unique<ReorderData>());
 
+  if (BC.isAArch64()) {
+    Manager.registerPass(std::make_unique<ADRRelaxationPass>());
+
+    // Tighten branches according to offset differences between branch and
+    // targets. No extra instructions after this pass, otherwise we may have
+    // relocations out of range and crash during linking.
+    Manager.registerPass(std::make_unique<LongJmpPass>(PrintLongJmp));
+  }
+
   // This pass should always run last.*
   Manager.registerPass(std::make_unique<FinalizeFunctions>(PrintFinalized));
 
@@ -530,15 +539,6 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   // Patch original function entries
   if (BC.HasRelocations)
     Manager.registerPass(std::make_unique<PatchEntries>());
-
-  if (BC.isAArch64()) {
-    Manager.registerPass(std::make_unique<ADRRelaxationPass>());
-
-    // Tighten branches according to offset differences between branch and
-    // targets. No extra instructions after this pass, otherwise we may have
-    // relocations out of range and crash during linking.
-    Manager.registerPass(std::make_unique<LongJmpPass>(PrintLongJmp));
-  }
 
   // This pass turns tail calls into jumps which makes them invisible to
   // function reordering. It's unsafe to use any CFG or instruction analysis

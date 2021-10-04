@@ -800,7 +800,7 @@ public:
   }
 
   int getShortJmpEncodingSize() const override {
-    return 32;
+    return 33;
   }
 
   int getUncondBranchEncodingSize() const override {
@@ -815,6 +815,11 @@ public:
         *Ctx, 0)));
     setTailCall(Inst);
     return true;
+  }
+
+  void createLongTailCall(std::vector<MCInst> &Seq, const MCSymbol *Target,
+                          MCContext *Ctx) override {
+    createShortJmp(Seq, Target, Ctx, /*IsTailCall*/ true);
   }
 
   bool convertJmpToTailCall(MCInst &Inst) override {
@@ -908,7 +913,7 @@ public:
   }
 
   void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
-                     MCContext *Ctx) const override {
+                     MCContext *Ctx, bool IsTailCall) override {
     // ip0 (r16) is reserved to the linker (refer to 5.3.1.1 of "Procedure Call
     //   Standard for the ARM 64-bit Architecture (AArch64)".
     // The sequence of instructions we create here is the following:
@@ -959,40 +964,29 @@ public:
     Inst.clear();
     Inst.setOpcode(AArch64::BR);
     Inst.addOperand(MCOperand::createReg(AArch64::X16));
+    if (IsTailCall)
+      setTailCall(Inst);
     Seq.emplace_back(Inst);
   }
 
   void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
-                      MCContext *Ctx) const override {
+                      MCContext *Ctx, bool IsTailCall) override {
     // ip0 (r16) is reserved to the linker (refer to 5.3.1.1 of "Procedure Call
     //   Standard for the ARM 64-bit Architecture (AArch64)".
     // The sequence of instructions we create here is the following:
-    //  movz ip0, #:abs_g1_nc:<addr>
-    //  movk ip0, #:abs_g0_nc:<addr>
+    //  adrp ip0, imm
+    //  add ip0, ip0, imm
     //  br ip0
-    MCInst Inst;
-    Inst.setOpcode(AArch64::MOVZXi);
-    Inst.addOperand(MCOperand::createReg(AArch64::X16));
-    Inst.addOperand(MCOperand::createExpr(AArch64MCExpr::create(
-        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
-        AArch64MCExpr::VK_ABS_G1_NC, *Ctx)));
-    Inst.addOperand(MCOperand::createImm(0x10));
-    Seq.emplace_back(Inst);
-
-    Inst.clear();
-    Inst.setOpcode(AArch64::MOVKXi);
-    Inst.addOperand(MCOperand::createReg(AArch64::X16));
-    Inst.addOperand(MCOperand::createReg(AArch64::X16));
-    Inst.addOperand(MCOperand::createExpr(AArch64MCExpr::create(
-        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
-        AArch64MCExpr::VK_ABS_G0_NC, *Ctx)));
-    Inst.addOperand(MCOperand::createImm(0));
-    Seq.emplace_back(Inst);
-
+    MCPhysReg Reg = AArch64::X16;
+    std::vector<MCInst> Insts = materializeAddress(Target, Ctx, Reg);
+    Insts.emplace_back();
+    MCInst &Inst = Insts.back();
     Inst.clear();
     Inst.setOpcode(AArch64::BR);
-    Inst.addOperand(MCOperand::createReg(AArch64::X16));
-    Seq.emplace_back(Inst);
+    Inst.addOperand(MCOperand::createReg(Reg));
+    if (IsTailCall)
+      setTailCall(Inst);
+    Seq.swap(Insts);
   }
 
   /// Matching pattern here is
@@ -1106,7 +1100,7 @@ public:
 
   std::vector<MCInst> materializeAddress(const MCSymbol *Target, MCContext *Ctx,
                                          MCPhysReg RegName,
-                                         int64_t Addend) const override {
+                                         int64_t Addend = 0) const override {
     // Get page-aligned address and add page offset
     std::vector<MCInst> Insts(2);
     Insts[0].setOpcode(AArch64::ADRP);

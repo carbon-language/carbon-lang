@@ -3299,6 +3299,13 @@ public:
     return createDirectCall(Inst, Target, Ctx, /*IsTailCall*/ true);
   }
 
+  void createLongTailCall(std::vector<MCInst> &Seq, const MCSymbol *Target,
+                          MCContext *Ctx) override {
+    Seq.clear();
+    Seq.emplace_back();
+    createDirectCall(Seq.back(), Target, Ctx, /*IsTailCall*/ true);
+  }
+
   bool createTrap(MCInst &Inst) const override {
     Inst.clear();
     Inst.setOpcode(X86::TRAP);
@@ -3407,12 +3414,14 @@ public:
   }
 
   void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
-                      MCContext *Ctx) const override {
+                      MCContext *Ctx, bool IsTailCall) override {
     Seq.clear();
     MCInst Inst;
     Inst.setOpcode(X86::JMP_1);
     Inst.addOperand(MCOperand::createExpr(
         MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
+    if (IsTailCall)
+      setTailCall(Inst);
     Seq.emplace_back(Inst);
   }
 

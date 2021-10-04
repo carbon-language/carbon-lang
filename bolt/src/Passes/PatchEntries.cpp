@@ -57,10 +57,9 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
   // Calculate the size of the patch.
   static size_t PatchSize = 0;
   if (!PatchSize) {
-    MCInst TailCallInst;
-    BC.MIB->createTailCall(TailCallInst, BC.Ctx->createTempSymbol(),
-                           BC.Ctx.get());
-    PatchSize = BC.computeInstructionSize(TailCallInst);
+    std::vector<MCInst> Seq;
+    BC.MIB->createLongTailCall(Seq, BC.Ctx->createTempSymbol(), BC.Ctx.get());
+    PatchSize = BC.computeCodeSize(Seq.begin(), Seq.end());
   }
 
   for (auto &BFI : BC.getBinaryFunctions()) {
@@ -125,9 +124,9 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
       PatchFunction->setFileOffset(Patch.FileOffset);
       PatchFunction->setOriginSection(Patch.Section);
 
-      MCInst TailCallInst;
-      BC.MIB->createTailCall(TailCallInst, Patch.Symbol, BC.Ctx.get());
-      PatchFunction->addBasicBlock(0)->addInstruction(TailCallInst);
+      std::vector<MCInst> Seq;
+      BC.MIB->createLongTailCall(Seq, Patch.Symbol, BC.Ctx.get());
+      PatchFunction->addBasicBlock(0)->addInstructions(Seq);
 
       // Verify the size requirements.
       uint64_t HotSize, ColdSize;

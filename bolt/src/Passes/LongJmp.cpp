@@ -475,9 +475,12 @@ bool LongJmpPass::relaxStub(BinaryBasicBlock &StubBB) {
     return true;
   }
 
-  // Needs a long jmp
-  if (Bits > RangeShortJmp)
-    return false;
+  // The long jmp uses absolute address on AArch64
+  // So we could not use it for PIC binaries
+  if (BC.isAArch64() && !BC.HasFixedLoadAddress) {
+    errs() << "BOLT-ERROR: Unable to relax stub for PIC binary\n";
+    exit(1);
+  }
 
   LLVM_DEBUG(dbgs() << "Relaxing stub to long jump. PCRelTgtAddress = "
                     << Twine::utohexstr(PCRelTgtAddress)
@@ -577,6 +580,8 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
                                                     InsertionPoint == Frontier
                                                         ? FrontierAddress
                                                         : DotAddress));
+
+      DotAddress += InsnSize;
     }
   }
 

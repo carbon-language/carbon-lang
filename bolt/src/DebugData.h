@@ -565,7 +565,7 @@ public:
   void addLineTableSequence(const DWARFDebugLine::LineTable *Table,
                             uint32_t FirstRow, uint32_t LastRow,
                             uint64_t EndOfSequenceAddress) {
-    assert(!InputTable || InputTable == Table && "expected same table for CU");
+    assert((!InputTable || InputTable == Table) && "expected same table for CU");
     InputTable = Table;
 
     InputSequences.emplace_back(

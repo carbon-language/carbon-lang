@@ -1356,12 +1356,12 @@ public:
   }
 
   virtual void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
-                             MCContext *Ctx) const {
+                             MCContext *Ctx, bool IsTailCall = false) {
     llvm_unreachable("not implemented");
   }
 
   virtual void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
-                              MCContext *Ctx) const {
+                              MCContext *Ctx, bool IsTailCall = false) {
     llvm_unreachable("not implemented");
   }
 
@@ -1449,6 +1449,11 @@ public:
                               MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return false;
+  }
+
+  virtual void createLongTailCall(std::vector<MCInst> &Seq,
+                                  const MCSymbol *Target, MCContext *Ctx) {
+    llvm_unreachable("not implemented");
   }
 
   /// Creates a trap instruction in Inst.
