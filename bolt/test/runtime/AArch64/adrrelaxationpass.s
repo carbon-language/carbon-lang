@@ -13,9 +13,9 @@
   .data
   .align 8
   .global Gvar
-Gvar: .dword 0x0
+Gvar: .xword 0x0
   .global Gvar2
-Gvar2: .dword 0x42
+Gvar2: .xword 0x42
 
   .text
   .align 4

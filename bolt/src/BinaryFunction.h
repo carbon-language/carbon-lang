@@ -148,6 +148,9 @@ public:
     std::set<uint64_t> DataOffsets;
     std::set<uint64_t> CodeOffsets;
 
+    /// List of relocations associated with data in the constant island
+    std::map<uint64_t, Relocation> Relocations;
+
     /// Offsets in function that are data values in a constant island identified
     /// after disassembling
     std::map<uint64_t, MCSymbol *> Offsets;
@@ -1287,7 +1290,9 @@ public:
   }
 
   void addRelocationAArch64(uint64_t Offset, MCSymbol *Symbol, uint64_t RelType,
-                            uint64_t Addend, uint64_t Value) {
+                            uint64_t Addend, uint64_t Value, bool IsCI) {
+    std::map<uint64_t, Relocation> &Rels =
+        (IsCI) ? Islands.Relocations : Relocations;
     switch (RelType) {
     case ELF::R_AARCH64_ABS64:
     case ELF::R_AARCH64_ADD_ABS_LO12_NC:
@@ -1314,7 +1319,7 @@ public:
     case ELF::R_AARCH64_MOVW_UABS_G2:
     case ELF::R_AARCH64_MOVW_UABS_G2_NC:
     case ELF::R_AARCH64_MOVW_UABS_G3:
-      Relocations[Offset] = Relocation{Offset, Symbol, RelType, Addend, Value};
+      Rels[Offset] = Relocation{Offset, Symbol, RelType, Addend, Value};
       return;
     case ELF::R_AARCH64_CALL26:
     case ELF::R_AARCH64_JUMP26:
@@ -1361,8 +1366,10 @@ public:
     assert(Address >= getAddress() && Address < getAddress() + getMaxSize() &&
            "address is outside of the function");
     uint64_t Offset = Address - getAddress();
-    if (BC.isAArch64())
-      return addRelocationAArch64(Offset, Symbol, RelType, Addend, Value);
+    if (BC.isAArch64()) {
+      return addRelocationAArch64(Offset, Symbol, RelType, Addend, Value,
+                                  isInConstantIsland(Address));
+    }
 
     return addRelocationX86(Offset, Symbol, RelType, Addend, Value);
   }

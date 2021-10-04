@@ -549,17 +549,45 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
     if (FunctionOffset == EndOffset)
       continue;    // Size is zero, nothing to emit
 
+    auto emitCI = [&](uint64_t &FunctionOffset, uint64_t EndOffset) {
+      if (FunctionOffset >= EndOffset)
+        return;
+
+      for (auto It = Islands.Relocations.lower_bound(FunctionOffset);
+           It != Islands.Relocations.end(); ++It) {
+        if (It->first >= EndOffset)
+          break;
+
+        const Relocation &Relocation = It->second;
+        if (FunctionOffset < Relocation.Offset) {
+          Streamer.emitBytes(
+              FunctionContents.slice(FunctionOffset, Relocation.Offset));
+          FunctionOffset = Relocation.Offset;
+        }
+
+        LLVM_DEBUG(
+            dbgs() << "BOLT-DEBUG: emitting constant island relocation"
+                   << " for " << BF << " at offset 0x"
+                   << Twine::utohexstr(Relocation.Offset) << " with size "
+                   << Relocation::getSizeForType(Relocation.Type) << '\n');
+
+        FunctionOffset += Relocation.emit(&Streamer);
+      }
+
+      assert(FunctionOffset <= EndOffset && "overflow error");
+      if (FunctionOffset < EndOffset) {
+        Streamer.emitBytes(FunctionContents.slice(FunctionOffset, EndOffset));
+        FunctionOffset = EndOffset;
+      }
+    };
+
     // Emit labels, relocs and data
     while (IS != Islands.Offsets.end() && IS->first < EndOffset) {
       auto NextLabelOffset =
         IS == Islands.Offsets.end() ? EndOffset : IS->first;
-      auto NextRelOffset = EndOffset;
-      auto NextStop = std::min(NextLabelOffset, NextRelOffset);
+      auto NextStop = std::min(NextLabelOffset, EndOffset);
       assert(NextStop <= EndOffset && "internal overflow error");
-      if (FunctionOffset < NextStop) {
-        Streamer.emitBytes(FunctionContents.slice(FunctionOffset, NextStop));
-        FunctionOffset = NextStop;
-      }
+      emitCI(FunctionOffset, NextStop);
       if (IS != Islands.Offsets.end() && FunctionOffset == IS->first) {
         // This is a slightly complex code to decide which label to emit. We
         // have 4 cases to handle: regular symbol, cold symbol, regular or cold
@@ -598,9 +626,7 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
       }
     }
     assert(FunctionOffset <= EndOffset && "overflow error");
-    if (FunctionOffset < EndOffset) {
-      Streamer.emitBytes(FunctionContents.slice(FunctionOffset, EndOffset));
-    }
+    emitCI(FunctionOffset, EndOffset);
   }
   assert(IS == Islands.Offsets.end() && "some symbols were not emitted!");
 
