@@ -16,6 +16,8 @@
 
 namespace Carbon {
 
+class Value;
+
 // Abstract base class of all AST nodes representing patterns.
 //
 // Pattern and its derived classes support LLVM-style RTTI, including
@@ -46,6 +48,12 @@ class Pattern {
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
+  // The static type of this pattern. Cannot be called before typechecking.
+  auto static_type() const -> Nonnull<const Value*> {
+    CHECK(static_type_.has_value());  // FIXME drop this
+    return *static_type_;
+  }
+
  protected:
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -54,8 +62,14 @@ class Pattern {
       : kind_(kind), source_loc_(source_loc) {}
 
  private:
+  // Defined in type_checker.cpp to avoid circular dependencies.
+  friend void set_static_type(Nonnull<Pattern*> pattern,
+                              Nonnull<const Value*> type);
+
   const Kind kind_;
   SourceLocation source_loc_;
+
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // A pattern consisting of the `auto` keyword.

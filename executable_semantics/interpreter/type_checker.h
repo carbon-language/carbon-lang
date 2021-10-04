@@ -70,9 +70,8 @@ class TypeChecker {
   };
 
   struct TCResult {
-    TCResult(Nonnull<const Value*> t, TypeEnv types) : type(t), types(types) {}
+    TCResult(TypeEnv types) : types(types) {}
 
-    Nonnull<const Value*> type;
     TypeEnv types;
   };
 
