@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/executable_semantics/testdata/tuple/fail_name_order.carbon:17: Tuple field name 'y' does not match pattern field name 'x'
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/tuple/fail_name_order.carbon:17: Cannot implicitly convert '(y = i32, x = i32)' to '(x = i32, y = i32)'
 
 package ExecutableSemanticsTest api;
 

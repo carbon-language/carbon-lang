@@ -7,9 +7,8 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_type_mismatch.carbon:18: type error in initializer of variable
-// CHECK: expected: i32
-// CHECK: actual: Bool
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_type_mismatch.carbon:17: type error in initializer of variable
+// CHECK: 'Bool' is not implicitly convertible to 'i32'
 
 package ExecutableSemanticsTest api;
 

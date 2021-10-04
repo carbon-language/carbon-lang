@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
+// RUN: executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
+// RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_missing.carbon:20: Cannot implicitly convert '{.x: i32}' to 'class Point'
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
@@ -16,7 +16,8 @@ class Point {
   var y: i32;
 }
 
+var p: Point = {.x = 1, .y = 2};
+
 fn main() -> i32 {
-  var p: Point = {.x = 1};
-  return p.x - 1;
+  return p.y - p.x - 1;
 }

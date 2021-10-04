@@ -2,21 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
+// RUN: executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
+// RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_missing.carbon:20: Cannot implicitly convert '{.x: i32}' to 'class Point'
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
-class Point {
-  var x: i32;
-  var y: i32;
-}
+// Test the that field order doesn't matter for structs.
 
 fn main() -> i32 {
-  var p: Point = {.x = 1};
-  return p.x - 1;
+  var t: {.x: i32, .y: i32} = {.y = 2, .x = 3};
+  return 0;
 }
