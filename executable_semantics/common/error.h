@@ -21,19 +21,17 @@ namespace Carbon {
 // option is provided as a fallback for cases that don't fit those
 // classifications.
 
-#define FATAL_PROGRAM_ERROR_NO_LINE() \
-  Carbon::ExitingStream() << "PROGRAM ERROR: "
+#define FATAL_PROGRAM_ERROR_NO_LINE() RAW_EXITING_STREAM() << "PROGRAM ERROR: "
 
 #define FATAL_PROGRAM_ERROR(line) FATAL_PROGRAM_ERROR_NO_LINE() << line << ": "
 
 #define FATAL_COMPILATION_ERROR_NO_LINE() \
-  Carbon::ExitingStream() << "COMPILATION ERROR: "
+  RAW_EXITING_STREAM() << "COMPILATION ERROR: "
 
 #define FATAL_COMPILATION_ERROR(line) \
   FATAL_COMPILATION_ERROR_NO_LINE() << line << ": "
 
-#define FATAL_RUNTIME_ERROR_NO_LINE() \
-  Carbon::ExitingStream() << "RUNTIME ERROR: "
+#define FATAL_RUNTIME_ERROR_NO_LINE() RAW_EXITING_STREAM() << "RUNTIME ERROR: "
 
 #define FATAL_RUNTIME_ERROR(line) FATAL_RUNTIME_ERROR_NO_LINE() << line << ": "
 
