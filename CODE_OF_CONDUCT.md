@@ -215,10 +215,18 @@ confidential unless instructed otherwise by those individuals.
 
 ### Appealing
 
+**Note:** The process described in this section will become available when we
+have a dedicated conduct team that's separate from the Carbon leads.
+
 Only permanent resolutions, such as bans, or requests for public actions may be
 appealed. To appeal a decision of the conduct team, contact the
-[arbiters](docs/project/evolution.md#arbiters) with your appeal and the arbiters
-will review the case.
+[Carbon leads](docs/project/evolution.md#carbon-leads-1) with your appeal and
+they will review the case.
+
+As with [#reporting-conduct](reporting conduct), if you are appealing a decision
+that concerns a member of the leads, you may appeal directly to any individual
+member of the leads. They will follow the usual process, but will exclude the
+lead(s) concerned from any discussion or decision making.
 
 In general, it is **not** appropriate to appeal a particular decision in public
 areas of GitHub or Discord. Doing so would involve disclosure of information
