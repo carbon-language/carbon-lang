@@ -1274,10 +1274,10 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   uint64_t NumUnknownControlFlowFunctions = 0;
   uint64_t TotalSampleCount = 0;
   uint64_t StaleSampleCount = 0;
-  std::vector<BinaryFunction *> ProfiledFunctions;
+  std::vector<const BinaryFunction *> ProfiledFunctions;
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   for (auto &BFI : BC.getBinaryFunctions()) {
-    BinaryFunction &Function = BFI.second;
+    const BinaryFunction &Function = BFI.second;
 
     // Ignore PLT functions for stats.
     if (Function.isPLTFunction())
@@ -1373,7 +1373,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     if (opts::Verbosity >= 1) {
       outs() << "BOLT-INFO: top called functions are:\n";
       std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
-                [](BinaryFunction *A, BinaryFunction *B) {
+                [](const BinaryFunction *A, const BinaryFunction *B) {
                   return B->getExecutionCount() < A->getExecutionCount();
                 }
                 );
