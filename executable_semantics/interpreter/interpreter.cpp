@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "common/check.h"
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
@@ -109,8 +109,7 @@ auto Interpreter::EvalPrim(Operator op,
 void Interpreter::InitEnv(const Declaration& d, Env* env) {
   switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      const FunctionDefinition& func_def =
-          cast<FunctionDeclaration>(d).definition();
+      const auto& func_def = cast<FunctionDeclaration>(d);
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
