@@ -883,7 +883,7 @@ std::unique_ptr<BinaryContext>
 createDwarfOnlyBC(const object::ObjectFile &File) {
   return BinaryContext::createBinaryContext(
       &File, false,
-      DWARFContext::create(File, DWARFContext::ProcessDebugRelocations::Process,
+      DWARFContext::create(File, DWARFContext::ProcessDebugRelocations::Ignore,
                            nullptr, "", WithColor::defaultErrorHandler,
                            WithColor::defaultWarningHandler));
 }
