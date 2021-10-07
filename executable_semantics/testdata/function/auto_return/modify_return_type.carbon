@@ -11,12 +11,10 @@
 
 package ExecutableSemanticsTest api;
 
-fn DoNothing() {
-  // Empty block
-}
+fn Id(t: Type) -> auto { return t; }
 
-fn main() -> i32 {
-  var x: i32 = 0;
-  DoNothing();
-  return x;
+// Test non-trivial type expression in return type.
+
+fn main() -> Id(i32) {
+  return 0;
 }

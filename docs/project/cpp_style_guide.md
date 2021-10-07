@@ -54,16 +54,22 @@ serves to simplify it.
 
 -   Known, compile-time constants use `UpperCamelCase`, referencing Proper
     Nouns.
-    -   This includes namespaces, type names, functions, member functions,
-        template parameters, `constexpr` variables, enumerators, etc.
+    -   This includes namespaces, type names, functions, member functions
+        (except as noted below), template parameters, `constexpr` variables,
+        enumerators, etc.
     -   Note that virtual member functions should be named with
         `UpperCamelCase`. The distinction between a virtual function and a
         non-virtual function should be invisible, especially at the call site,
         as that is an internal implementation detail. We want to be able to
         freely change that without updating the name.
+-   Member functions may use `snake_case` names if they do nothing besides
+    return a reference to a data member (or assign a value to a data member, in
+    the case of `set_` methods), **or** if their behavior (including
+    performance) would be unsurprising to a caller who assumes they are
+    implemented that way.
 -   All other names use `snake_case`, including function parameters, and
     non-constant local and member variables.
-    -   Notably, don't use the `_` suffix for member variable names.
+    -   Private member variables should have a trailing `_`.
 
 ### File names
 

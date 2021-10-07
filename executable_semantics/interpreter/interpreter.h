@@ -28,7 +28,8 @@ class Interpreter {
       : arena(arena), globals(arena), heap(arena) {}
 
   // Interpret the whole program.
-  auto InterpProgram(const std::vector<Nonnull<const Declaration*>>& fs) -> int;
+  auto InterpProgram(const std::vector<Nonnull<const Declaration*>>& fs,
+                     Nonnull<const Expression*> call_main) -> int;
 
   // Interpret an expression at compile-time.
   auto InterpExp(Env values, Nonnull<const Expression*> e)
@@ -41,7 +42,7 @@ class Interpreter {
   // Attempts to match `v` against the pattern `p`. If matching succeeds,
   // returns the bindings of pattern variables to their matched values.
   auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                    SourceLocation loc) -> std::optional<Env>;
+                    SourceLocation source_loc) -> std::optional<Env>;
 
   // Support TypeChecker allocating values on the heap.
   auto AllocateValue(Nonnull<const Value*> v) -> Address {
@@ -101,7 +102,7 @@ class Interpreter {
   struct CallFunction {
     Nonnull<const FunctionValue*> function;
     Nonnull<const Value*> args;
-    SourceLocation loc;
+    SourceLocation source_loc;
   };
 
   // Transition type which does nothing.
@@ -130,19 +131,23 @@ class Interpreter {
 
   void InitGlobals(const std::vector<Nonnull<const Declaration*>>& fs);
   auto CurrentEnv() -> Env;
-  auto GetFromEnv(SourceLocation loc, const std::string& name) -> Address;
+  auto GetFromEnv(SourceLocation source_loc, const std::string& name)
+      -> Address;
 
   void DeallocateScope(Nonnull<Scope*> scope);
   void DeallocateLocals(Nonnull<Frame*> frame);
 
   auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
       -> Nonnull<const Value*>;
+  auto CreateStruct(const std::vector<FieldInitializer>& fields,
+                    const std::vector<Nonnull<const Value*>>& values)
+      -> Nonnull<const Value*>;
 
   auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
-                SourceLocation loc) -> Nonnull<const Value*>;
+                SourceLocation source_loc) -> Nonnull<const Value*>;
 
   void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
-                         SourceLocation loc);
+                         SourceLocation source_loc);
 
   void PrintState(llvm::raw_ostream& out);
 

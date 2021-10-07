@@ -11,12 +11,8 @@
 
 package ExecutableSemanticsTest api;
 
-fn DoNothing() {
-  // Empty block
-}
+fn add(x: i32, y: i32) -> auto { return x + y; }
 
 fn main() -> i32 {
-  var x: i32 = 0;
-  DoNothing();
-  return x;
+  return add(1, 2) - 3;
 }

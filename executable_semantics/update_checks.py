@@ -85,6 +85,8 @@ def _update_checks():
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
         list(exec.map(_update_check, tests))
+        # Run again, because the previous run may have changed line numbers.
+        list(exec.map(_update_check, tests))
     # Each update call indicates progress with a dot without a newline, so put a
     # newline to wrap.
     print("\nUpdated lit tests.")
