@@ -93,7 +93,7 @@ var y: auto = x as U*;
 
 var a: i32;
 var b: i32;
-// OK, `(a as i64) < (*x as i64)`.
+// OK, `(a as i64) < ((*x) as i64)`.
 if (a as i64 < *x as i64) {}
 // Ambiguous: `(a + b) as i64` or `a + (b as i64)`?
 var c: i32 = a + b as i64;
@@ -112,7 +112,7 @@ var e: i32 as GetType();
 ### Data types
 
 In addition to the [implicit conversions](implicit_conversions.md#data-types),
-the following numeric conversion is supported by `as`:
+the following numeric conversions are supported by `as`:
 
 -   `iN`, `uN`, or `fN` -> `fM`, for any `N` and `M`. Values that cannot be
     exactly represented are suitably rounded to one of the two nearest
@@ -188,10 +188,10 @@ The expression `x as U` is rewritten to `x.(As(U).Convert)()`. The expression
 ## Alternatives considered
 
 -   [Do not distinguish between safe and unsafe casts](/docs/proposals/p0845.md#merge-as-and-assume_as)
--   [Do not distinguish between safe as and implicit conversions](/docs/proposals/p0845.md#as-only-performs-implicit-conversions)
+-   [Do not distinguish between `as` and implicit conversions](/docs/proposals/p0845.md#as-only-performs-implicit-conversions)
 -   [Use a different name for `assume_as`](/docs/proposals/p0845.md#different-name-for-assume_as)
 -   [Allow `iN as bool`](/docs/proposals/p0845.md#integer-to-bool-conversions)
--   [Allow `bool as iN`](/docs/proposals/p0845.md#bool-to-integer-conversions)
+-   [Disallow `bool as iN`](/docs/proposals/p0845.md#bool-to-integer-conversions)
 
 ## References
 
