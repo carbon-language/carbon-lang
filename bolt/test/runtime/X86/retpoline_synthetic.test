@@ -1,0 +1,18 @@
+# Check that llvm-bolt retpoline all indirect branches and the resulting binary
+# correctly runs.
+
+REQUIRES: x86_64-linux
+
+RUN: %clangxx %S/Inputs/retpoline_synthetic.cpp -fno-jump-tables -Wl,-q,-znow \
+RUN:   -O2 -o %t.exe
+RUN: llvm-bolt %t.exe -o %t -insert-retpolines -trap-old-code &> %t.log &&\
+RUN: (echo "callq count:" ; (llvm-objdump -d %t | grep -c "callq  \*"))  &>>  %t.log ;\
+RUN: (echo "jmpq count:"  ; (llvm-objdump -d -j ".text"  %t | grep -c "jmpq   \*"))  &>> %t.log  ;\
+RUN: (echo "running binary" ; %t 1000 3  ) &>> %t.log &&  FileCheck %s -input-file %t.log
+
+CHECK:      callq count:
+CHECK-NEXT: 0
+CHECK-NEXT: jmpq count:
+CHECK-NEXT: 0
+CHECK-NEXT: running binary
+CHECK-NEXT: 30000000
