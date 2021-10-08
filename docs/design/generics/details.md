@@ -4853,8 +4853,10 @@ Rust has been working toward adding this feature
 ([1](https://github.com/rust-lang/rust/issues/44265),
 [2](https://github.com/rust-lang/rfcs/blob/master/text/1598-generic_associated_types.md),
 [3](https://github.com/rust-lang/rfcs/pull/1598),
-[4](https://www.fpcomplete.com/blog/monads-gats-nightly-rust/)). It has been
-proposed for Swift as well
+[4](https://www.fpcomplete.com/blog/monads-gats-nightly-rust/),
+[5](https://smallcultfollowing.com/babysteps//blog/2016/11/02/associated-type-constructors-part-1-basic-concepts-and-introduction/),
+[6](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/)).
+It has been proposed for Swift as well
 ([1](https://forums.swift.org/t/idea-generic-associated-types/5422),
 [2](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#generic-associatedtypes),
 [3](https://forums.swift.org/t/generic-associated-type/17831)). This corresponds
