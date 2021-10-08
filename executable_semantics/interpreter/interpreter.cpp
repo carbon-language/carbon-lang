@@ -1031,11 +1031,11 @@ auto Interpreter::StepStmt() -> Transition {
                 arena->New<TupleLiteral>(stmt->source_loc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
-        const std::vector<Nonnull<Frame*>>& continuation_vector =
+        std::vector<Nonnull<Frame*>>& continuation_vector =
             cast<ContinuationValue>(*act->results()[0]).Stack();
-        for (auto frame_iter = continuation_vector.rbegin();
-             frame_iter != continuation_vector.rend(); ++frame_iter) {
-          stack.Push(*frame_iter);
+        while (!continuation_vector.empty()) {
+          stack.Push(continuation_vector.back());
+          continuation_vector.pop_back();
         }
         return ManualTransition{};
       }
@@ -1048,8 +1048,10 @@ auto Interpreter::StepStmt() -> Transition {
         paused.push_back(stack.Pop());
       } while (paused.back()->continuation == std::nullopt);
       // Update the continuation with the paused stack.
-      heap.Write(*paused.back()->continuation,
-                 arena->New<ContinuationValue>(paused), stmt->source_loc());
+      const auto& continuation = cast<ContinuationValue>(
+          *heap.Read(*paused.back()->continuation, stmt->source_loc()));
+      CHECK(continuation.Stack().empty());
+      continuation.Stack() = std::move(paused);
       return ManualTransition{};
   }
 }

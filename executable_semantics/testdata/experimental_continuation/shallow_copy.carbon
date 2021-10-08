@@ -14,12 +14,17 @@ package ExecutableSemanticsTest api;
 // Assignment for continuations is shallow, so `k2` refers to the same
 // continuation as `k1`.
 
+var x: i32 = 0;
+
+fn Foo() {
+  x = x + 1;
+  __await;
+  x = x + 2;
+}
+
 fn main() -> i32 {
-  var x: i32 = 0;
   __continuation k1 {
-    x = x + 1;
-    __await;
-    x = x + 2;
+    Foo();
   }
   var k2: __Continuation = k1;
   __run k1;
