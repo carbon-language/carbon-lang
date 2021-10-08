@@ -445,8 +445,8 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
         /// a reference to its constant island. When emitting this function,
         /// we will also emit IslandIter->second's constants. This only
         /// happens in custom AArch64 assembly code.
-        BF.Islands.Dependency.insert(IslandIter->second);
-        BF.Islands.ProxySymbols[IslandSym] = IslandIter->second;
+        BF.Islands->Dependency.insert(IslandIter->second);
+        BF.Islands->ProxySymbols[IslandSym] = IslandIter->second;
         return std::make_pair(IslandSym, Addend);
       }
     }

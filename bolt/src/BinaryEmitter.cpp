@@ -496,6 +496,9 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
 
 void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
                                         BinaryFunction *OnBehalfOf) {
+  if (!BF.hasConstantIsland())
+    return;
+
   BinaryFunction::IslandInfo &Islands = BF.getIslandInfo();
   if (Islands.DataOffsets.empty() && Islands.Dependency.empty())
     return;

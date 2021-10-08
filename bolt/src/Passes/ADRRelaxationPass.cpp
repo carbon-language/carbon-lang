@@ -37,6 +37,9 @@ void ADRRelaxationPass::runOnFunction(BinaryContext &BC, BinaryFunction &BF) {
       if (!Symbol)
         continue;
 
+      if (!BF.hasConstantIsland())
+        continue;
+
       BinaryFunction::IslandInfo &Islands = BF.getIslandInfo();
       if (Islands.Symbols.count(Symbol) || Islands.ProxySymbols.count(Symbol))
         continue;

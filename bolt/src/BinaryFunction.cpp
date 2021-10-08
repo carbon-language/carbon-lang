@@ -1016,11 +1016,14 @@ ErrorOr<ArrayRef<uint8_t>> BinaryFunction::getData() const {
 }
 
 size_t BinaryFunction::getSizeOfDataInCodeAt(uint64_t Offset) const {
-  if (Islands.DataOffsets.find(Offset) == Islands.DataOffsets.end())
+  if (!Islands)
     return 0;
 
-  auto Iter = Islands.CodeOffsets.upper_bound(Offset);
-  if (Iter != Islands.CodeOffsets.end()) {
+  if (Islands->DataOffsets.find(Offset) == Islands->DataOffsets.end())
+    return 0;
+
+  auto Iter = Islands->CodeOffsets.upper_bound(Offset);
+  if (Iter != Islands->CodeOffsets.end()) {
     return *Iter - Offset;
   }
   return getSize() - Offset;
@@ -1029,9 +1032,11 @@ size_t BinaryFunction::getSizeOfDataInCodeAt(uint64_t Offset) const {
 bool BinaryFunction::isZeroPaddingAt(uint64_t Offset) const {
   ArrayRef<uint8_t> FunctionData = *getData();
   uint64_t EndOfCode = getSize();
-  auto Iter = Islands.DataOffsets.upper_bound(Offset);
-  if (Iter != Islands.DataOffsets.end())
-    EndOfCode = *Iter;
+  if (Islands) {
+    auto Iter = Islands->DataOffsets.upper_bound(Offset);
+    if (Iter != Islands->DataOffsets.end())
+      EndOfCode = *Iter;
+  }
   for (uint64_t I = Offset; I < EndOfCode; ++I) {
     if (FunctionData[I] != 0) {
       return false;
@@ -3007,6 +3012,8 @@ void BinaryFunction::setIgnored() {
 }
 
 void BinaryFunction::duplicateConstantIslands() {
+  assert(Islands && "function expected to have constant islands");
+
   for (BinaryBasicBlock *BB : layout()) {
     if (!BB->isCold())
       continue;
@@ -3020,24 +3027,23 @@ void BinaryFunction::duplicateConstantIslands() {
         }
         const MCSymbol *Symbol = BC.MIB->getTargetSymbol(Inst, OpNum);
         // Check if this is an island symbol
-        if (!Islands.Symbols.count(Symbol) &&
-            !Islands.ProxySymbols.count(Symbol))
+        if (!Islands->Symbols.count(Symbol) &&
+            !Islands->ProxySymbols.count(Symbol))
           continue;
 
         // Create cold symbol, if missing
-        auto ISym = Islands.ColdSymbols.find(Symbol);
+        auto ISym = Islands->ColdSymbols.find(Symbol);
         MCSymbol *ColdSymbol;
-        if (ISym != Islands.ColdSymbols.end()) {
+        if (ISym != Islands->ColdSymbols.end()) {
           ColdSymbol = ISym->second;
         } else {
           ColdSymbol = BC.Ctx->getOrCreateSymbol(Symbol->getName() + ".cold");
-          Islands.ColdSymbols[Symbol] = ColdSymbol;
+          Islands->ColdSymbols[Symbol] = ColdSymbol;
           // Check if this is a proxy island symbol and update owner proxy map
-          if (Islands.ProxySymbols.count(Symbol)) {
-            BinaryFunction *Owner = Islands.ProxySymbols[Symbol];
-            auto IProxiedSym = Owner->Islands.Proxies[this].find(Symbol);
-            Owner->Islands.ColdProxies[this][IProxiedSym->second] =
-              ColdSymbol;
+          if (Islands->ProxySymbols.count(Symbol)) {
+            BinaryFunction *Owner = Islands->ProxySymbols[Symbol];
+            auto IProxiedSym = Owner->Islands->Proxies[this].find(Symbol);
+            Owner->Islands->ColdProxies[this][IProxiedSym->second] = ColdSymbol;
           }
         }
 

@@ -161,6 +161,9 @@ public:
     /// to the constant islands in them.
     IslandProxiesType Proxies, ColdProxies;
     std::set<BinaryFunction *> Dependency; // The other way around
+
+    mutable MCSymbol *FunctionConstantIslandLabel{nullptr};
+    mutable MCSymbol *FunctionColdConstantIslandLabel{nullptr};
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =
@@ -534,7 +537,7 @@ private:
   std::map<uint64_t, Relocation> Relocations;
 
   /// Information on function constant islands.
-  IslandInfo Islands;
+  std::unique_ptr<IslandInfo> Islands;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
@@ -567,9 +570,6 @@ private:
   /// Symbol at the end of the cold part of split function.
   mutable MCSymbol *FunctionColdEndLabel{nullptr};
 
-  mutable MCSymbol *FunctionConstantIslandLabel{nullptr};
-  mutable MCSymbol *FunctionColdConstantIslandLabel{nullptr};
-
   /// Unique number associated with the function.
   uint64_t  FunctionNumber;
 
@@ -593,14 +593,18 @@ private:
   ///       a global symbol that corresponds to an entry at this address.
   MCSymbol *getOrCreateLocalLabel(uint64_t Address, bool CreatePastEnd = false);
 
-  /// Register an entry point at a given \p Offset into the function.
+  /// Register an data entry at a given \p Offset into the function.
   void markDataAtOffset(uint64_t Offset) {
-    Islands.DataOffsets.emplace(Offset);
+    if (!Islands)
+      Islands = std::make_unique<IslandInfo>();
+    Islands->DataOffsets.emplace(Offset);
   }
 
   /// Register an entry point at a given \p Offset into the function.
   void markCodeAtOffset(uint64_t Offset) {
-    Islands.CodeOffsets.emplace(Offset);
+    if (!Islands)
+      Islands = std::make_unique<IslandInfo>();
+    Islands->CodeOffsets.emplace(Offset);
   }
 
   /// Register secondary entry point at a given \p Offset into the function.
@@ -1246,19 +1250,23 @@ public:
   /// (AArch only). This is used to update the symbol table accordingly,
   /// emitting data marker symbols as required by the ABI.
   MCSymbol *getFunctionConstantIslandLabel() const {
-    if (!FunctionConstantIslandLabel) {
-      FunctionConstantIslandLabel =
+    assert(Islands && "function expected to have constant islands");
+
+    if (!Islands->FunctionConstantIslandLabel) {
+      Islands->FunctionConstantIslandLabel =
           BC.Ctx->createNamedTempSymbol("func_const_island");
     }
-    return FunctionConstantIslandLabel;
+    return Islands->FunctionConstantIslandLabel;
   }
 
   MCSymbol *getFunctionColdConstantIslandLabel() const {
-    if (!FunctionColdConstantIslandLabel) {
-      FunctionColdConstantIslandLabel =
+    assert(Islands && "function expected to have constant islands");
+
+    if (!Islands->FunctionColdConstantIslandLabel) {
+      Islands->FunctionColdConstantIslandLabel =
           BC.Ctx->createNamedTempSymbol("func_cold_const_island");
     }
-    return FunctionColdConstantIslandLabel;
+    return Islands->FunctionColdConstantIslandLabel;
   }
 
   /// Return true if this is a function representing a PLT entry.
@@ -1563,11 +1571,13 @@ public:
   }
 
   IslandInfo &getIslandInfo() {
-    return Islands;
+    assert(Islands && "function expected to have constant islands");
+    return *Islands;
   }
 
   const IslandInfo &getIslandInfo() const {
-    return Islands;
+    assert(Islands && "function expected to have constant islands");
+    return *Islands;
   }
 
   /// Return true if the function has CFI instructions
@@ -2123,6 +2133,9 @@ public:
   /// in the cold code area, as when the function is split the islands are
   /// duplicated.
   MCSymbol *getOrCreateIslandAccess(uint64_t Address) {
+    if (!Islands)
+      return nullptr;
+
     MCSymbol *Symbol;
     if (!isInConstantIsland(Address))
       return nullptr;
@@ -2132,12 +2145,12 @@ public:
 
     // Internal bookkeeping
     const uint64_t Offset = Address - getAddress();
-    assert((!Islands.Offsets.count(Offset) ||
-            Islands.Offsets[Offset] == Symbol) &&
+    assert((!Islands->Offsets.count(Offset) ||
+            Islands->Offsets[Offset] == Symbol) &&
            "Inconsistent island symbol management");
-    if (!Islands.Offsets.count(Offset)) {
-      Islands.Offsets[Offset] = Symbol;
-      Islands.Symbols.insert(Symbol);
+    if (!Islands->Offsets.count(Offset)) {
+      Islands->Offsets[Offset] = Symbol;
+      Islands->Symbols.insert(Symbol);
     }
     return Symbol;
   }
@@ -2153,20 +2166,23 @@ public:
       return nullptr;
 
     MCSymbol *Proxy;
-    if (!Islands.Proxies[&Referrer].count(Symbol)) {
+    if (!Islands->Proxies[&Referrer].count(Symbol)) {
       Proxy =
           BC.Ctx->getOrCreateSymbol(Symbol->getName() +
                                     ".proxy.for." + Referrer.getPrintName());
-      Islands.Proxies[&Referrer][Symbol] = Proxy;
-      Islands.Proxies[&Referrer][Proxy] = Symbol;
+      Islands->Proxies[&Referrer][Symbol] = Proxy;
+      Islands->Proxies[&Referrer][Proxy] = Symbol;
     }
-    Proxy = Islands.Proxies[&Referrer][Symbol];
+    Proxy = Islands->Proxies[&Referrer][Symbol];
     return Proxy;
   }
 
   /// Detects whether \p Address is inside a data region in this function
   /// (constant islands).
   bool isInConstantIsland(uint64_t Address) const {
+    if (!Islands)
+      return false;
+
     if (Address < getAddress())
       return false;
 
@@ -2175,13 +2191,13 @@ public:
     if (Offset >= getMaxSize())
       return false;
 
-    auto DataIter = Islands.DataOffsets.upper_bound(Offset);
-    if (DataIter == Islands.DataOffsets.begin())
+    auto DataIter = Islands->DataOffsets.upper_bound(Offset);
+    if (DataIter == Islands->DataOffsets.begin())
       return false;
     DataIter = std::prev(DataIter);
 
-    auto CodeIter = Islands.CodeOffsets.upper_bound(Offset);
-    if (CodeIter == Islands.CodeOffsets.begin())
+    auto CodeIter = Islands->CodeOffsets.upper_bound(Offset);
+    if (CodeIter == Islands->CodeOffsets.begin())
       return true;
 
     return *std::prev(CodeIter) <= *DataIter;
@@ -2189,22 +2205,24 @@ public:
 
   uint64_t
   estimateConstantIslandSize(const BinaryFunction *OnBehalfOf = nullptr) const {
+    if (!Islands)
+      return 0;
+
     uint64_t Size = 0;
-    for (auto DataIter = Islands.DataOffsets.begin();
-         DataIter != Islands.DataOffsets.end();
-         ++DataIter) {
+    for (auto DataIter = Islands->DataOffsets.begin();
+         DataIter != Islands->DataOffsets.end(); ++DataIter) {
       auto NextData = std::next(DataIter);
-      auto CodeIter = Islands.CodeOffsets.lower_bound(*DataIter);
-      if (CodeIter == Islands.CodeOffsets.end() &&
-          NextData == Islands.DataOffsets.end()) {
+      auto CodeIter = Islands->CodeOffsets.lower_bound(*DataIter);
+      if (CodeIter == Islands->CodeOffsets.end() &&
+          NextData == Islands->DataOffsets.end()) {
         Size += getMaxSize() - *DataIter;
         continue;
       }
 
       uint64_t NextMarker;
-      if (CodeIter == Islands.CodeOffsets.end())
+      if (CodeIter == Islands->CodeOffsets.end())
         NextMarker = *NextData;
-      else if (NextData == Islands.DataOffsets.end())
+      else if (NextData == Islands->DataOffsets.end())
         NextMarker = *CodeIter;
       else
         NextMarker = (*CodeIter > *NextData) ? *NextData : *CodeIter;
@@ -2213,14 +2231,14 @@ public:
     }
 
     if (!OnBehalfOf) {
-      for (BinaryFunction *ExternalFunc : Islands.Dependency)
+      for (BinaryFunction *ExternalFunc : Islands->Dependency)
         Size += ExternalFunc->estimateConstantIslandSize(this);
     }
     return Size;
   }
 
   bool hasConstantIsland() const {
-    return !Islands.DataOffsets.empty();
+    return Islands && !Islands->DataOffsets.empty();
   }
 
   /// Return true iff the symbol could be seen inside this function otherwise
