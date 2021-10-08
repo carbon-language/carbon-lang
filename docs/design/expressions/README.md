@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Names](#names)
 -   [Implicit conversions](#implicit-conversions)
 
 <!-- tocstop -->
@@ -28,6 +29,23 @@ fn Foo(a: i32*) -> i32 {
 
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
+
+## Names
+
+Names are a primitive component of Carbon expressions. They come in two forms:
+
+-   Any word that is not a keyword and not preceded by a `.` is an
+    [unqualified name](unqualified_names.md), and is looked up in the enclosing
+    scopes.
+-   Any word that is preceded by a `.` is a qualified name, and is looked up in
+    the value to the left of the `.`.
+
+```
+// `F`, `a`, and `b` are unqualified names. `c` is a qualified name.
+F(a + b.c);
+// `x` and `y` are unqualified names. `z` is a qualified name.
+x.(y.z)();
+```
 
 ## Implicit conversions
 
