@@ -18,6 +18,8 @@ ExternalProject_Add(bolt_rt
   BUILD_ALWAYS True
   )
 
+include_directories( ${BOLT_SOURCE_DIR}/include )
+
 install(CODE "execute_process\(COMMAND \${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX} -P ${CMAKE_CURRENT_BINARY_DIR}/bolt_rt-bins/cmake_install.cmake \)"
   COMPONENT bolt_rt)
 
@@ -25,5 +27,6 @@ add_llvm_install_targets(install-bolt_rt
   DEPENDS bolt_rt
   COMPONENT bolt_rt)
 
-add_subdirectory(src)
+add_subdirectory(lib)
 add_subdirectory(test)
+add_subdirectory(tools)
