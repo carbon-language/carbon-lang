@@ -55,8 +55,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Must be legal type argument](#must-be-legal-type-argument)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
-        -   [Type inequality](#type-inequality)
+        -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
     -   [Implied constraints](#implied-constraints)
+    -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
+    -   [Manual type equality](#manual-type-equality)
     -   [Restrictions](#restrictions)
         -   [Normalized form](#normalized-form)
         -   [Recursive constraints](#recursive-constraints-1)
@@ -363,7 +365,7 @@ class GameBoard {
     // ❌ Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     fn Draw[me: Self]() { ... }
-    fn Winner[me: Self](player: Int) { ... }
+    fn Winner[me: Self](player: i32) { ... }
   }
 }
 ```
@@ -777,7 +779,7 @@ fn Identity[T:! Type](x: T) -> T {
   return x;
 }
 
-var i: Int = Identity(3);
+var i: i32 = Identity(3);
 var s: String = Identity("string");
 ```
 
@@ -890,7 +892,7 @@ interface Printable {
   fn Print[me: Self]();
 }
 interface Renderable {
-  fn Center[me: Self]() -> (Int, Int);
+  fn Center[me: Self]() -> (i32, i32);
   fn Draw[me: Self]();
 }
 
@@ -915,7 +917,7 @@ class Sprite {
     fn Print[me: Self]() { ... }
   }
   impl as Renderable {
-    fn Center[me: Self]() -> (Int, Int) { ... }
+    fn Center[me: Self]() -> (i32, i32) { ... }
     fn Draw[me: Self]() { ... }
   }
 }
@@ -929,12 +931,12 @@ error to use.
 
 ```
 interface Renderable {
-  fn Center[me: Self]() -> (Int, Int);
+  fn Center[me: Self]() -> (i32, i32);
   fn Draw[me: Self]();
 }
 interface EndOfGame {
   fn Draw[me: Self]();
-  fn Winner[me: Self](player: Int);
+  fn Winner[me: Self](player: i32);
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
 constraint {
@@ -1042,10 +1044,10 @@ will use the same semantics and syntax as we do for
 [named constraints](#named-constraints):
 
 ```
-interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
+interface Equatable { fn Equals[me: Self](that: Self) -> bool; }
 
 interface Iterable {
-  fn Advance[addr me: Self*]() -> Bool;
+  fn Advance[addr me: Self*]() -> bool;
   impl as Equatable;
 }
 
@@ -1059,7 +1061,7 @@ def DoAdvanceAndEquals[T:! Iterable](x: T) {
 
 class Iota {
   impl as Iterable { fn Advance[me: Self]() { ... } }
-  impl as Equatable { fn Equals[me: Self](that: Self) -> Bool { ... } }
+  impl as Equatable { fn Equals[me: Self](that: Self) -> bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1071,7 +1073,7 @@ declarations:
 
 ```
 interface Hashable {
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
   impl as Equatable;
   alias Equals = Equatable.Equals;
 }
@@ -1095,8 +1097,8 @@ as well. In the case of `Hashable` above, this includes all the members of
 ```
 class Song {
   impl as Hashable {
-    fn Hash[me: Self]() -> UInt64 { ... }
-    fn Equals[me: Self](that: Self) -> Bool { ... }
+    fn Hash[me: Self]() -> u64 { ... }
+    fn Equals[me: Self](that: Self) -> bool { ... }
   }
 }
 var y: Song;
@@ -1115,17 +1117,17 @@ benefits:
 We expect this concept to be common enough to warrant dedicated syntax:
 
 ```
-interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
+interface Equatable { fn Equals[me: Self](that: Self) -> bool; }
 
 interface Hashable {
   extends Equatable;
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
 //   impl as Equatable;
 //   alias Equals = Equatable.Equals;
-//   fn Hash[me: Self]() -> UInt64;
+//   fn Hash[me: Self]() -> u64;
 // }
 ```
 
@@ -1380,7 +1382,7 @@ the capabilities of the iterator being passed in:
 ```
 interface ForwardIntIterator {
   fn Advance[addr me: Self*]();
-  fn Get[me: Self]() -> Int;
+  fn Get[me: Self]() -> i32;
 }
 interface BidirectionalIntIterator {
   extends ForwardIntIterator;
@@ -1388,18 +1390,18 @@ interface BidirectionalIntIterator {
 }
 interface RandomAccessIntIterator {
   extends BidirectionalIntIterator;
-  fn Skip[addr me: Self*](offset: Int);
-  fn Difference[me: Self](that: Self) -> Int;
+  fn Skip[addr me: Self*](offset: i32);
+  fn Difference[me: Self](that: Self) -> i32;
 }
 
 fn SearchInSortedList[IterT:! ForwardIntIterator]
-    (begin: IterT, end: IterT, needle: Int) -> Bool {
+    (begin: IterT, end: IterT, needle: i32) -> bool {
   ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
 fn SearchInSortedList[IterT:! RandomAccessIntIterator]
-    (begin: IterT, end: IterT, needle: Int) -> Bool {
+    (begin: IterT, end: IterT, needle: i32) -> bool {
   ... // does binary search
 }
 ```
@@ -1426,19 +1428,19 @@ interface Hashable { ... }
 class HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
 ```
 
-If we write something like `HashMap(String, Int)` the type we actually get is:
+If we write something like `HashMap(String, i32)` the type we actually get is:
 
 ```
-HashMap(String as Hashable, Int as Type)
+HashMap(String as Hashable, i32 as Type)
 ```
 
 This is the same type we will get if we pass in some other facet types in, so
 all of these types are equal:
 
--   `HashMap(String, Int)`
--   `HashMap(String as Hashable, Int as Type)`
--   `HashMap((String as Printable) as Hashable, Int)`
--   `HashMap((String as Printable & Hashable) as Hashable, Int)`
+-   `HashMap(String, i32)`
+-   `HashMap(String as Hashable, i32 as Type)`
+-   `HashMap((String as Printable) as Hashable, i32)`
+-   `HashMap((String as Printable & Hashable) as Hashable, i32)`
 
 This means we don't generally need to worry about getting the wrong facet type
 as the argument for a generic type. This means we don't get type mismatches when
@@ -1450,7 +1452,7 @@ fn PrintValue
     [KeyT:! Printable & Hashable, ValueT:! Printable]
     (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
 
-var m: HashMap(String, Int);
+var m: HashMap(String, i32);
 PrintValue(m, "key");
 ```
 
@@ -1469,14 +1471,14 @@ interface Printable {
   fn Print[me: Self]();
 }
 interface Comparable {
-  fn Less[me: Self](that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> bool;
 }
 class Song {
   impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter SongByTitle for Song {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool { ... }
+    fn Less[me: Self](that: Self) -> bool { ... }
   }
 }
 adapter FormattedSong for Song {
@@ -1513,7 +1515,7 @@ type may be accessed like any other facet type; either by a cast:
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> bool {
       return (this as Song).Title() < (that as Song).Title();
     }
   }
@@ -1525,7 +1527,7 @@ or using qualified names:
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> bool {
       return this.(Song.Title)() < that(Song.Title)();
     }
   }
@@ -1599,10 +1601,10 @@ one difference between them is that `Song as Hashable` may be implicitly
 converted to `Song`, which implements interface `Printable`, and
 `PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
 implements interface `Media`. This means that it is safe to convert between
-`HashMap(Song, Int) == HashMap(Song as Hashable, Int)` and
-`HashMap(PlayableSong, Int) == HashMap(PlayableSong as Hashable, Int)` (though
+`HashMap(Song, i32) == HashMap(Song as Hashable, i32)` and
+`HashMap(PlayableSong, i32) == HashMap(PlayableSong as Hashable, i32)` (though
 maybe only with an explicit cast) but
-`HashMap(SongHashedByTitle, Int) == HashMap(SongHashByTitle as Hashable, Int)`
+`HashMap(SongHashedByTitle, i32) == HashMap(SongHashByTitle as Hashable, i32)`
 is incompatible. This is a relief, because we know that in practice the
 invariants of a `HashMap` implementation rely on the hashing function staying
 the same.
@@ -1705,18 +1707,18 @@ syntax.
 
 ```
 interface Comparable {
-  fn Less[me: Self](that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> bool;
 }
 adapter ComparableFromDifferenceFn
-    (T:! Type, Difference:! fnty(T, T)->Int) for T {
+    (T:! Type, Difference:! fnty(T, T)->i32) for T {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> bool {
       return Difference(this, that) < 0;
     }
   }
 }
 class IntWrapper {
-  var x: Int;
+  var x: i32;
   fn Difference(this: Self, that: Self) {
     return that.x - this.x;
   }
@@ -1737,12 +1739,12 @@ associated constant.
 
 ```
 interface NSpacePoint {
-  let N:! Int;
+  let N:! i32;
   // The following require: 0 <= i < N.
-  fn Get[addr me: Self*](i: Int) -> Float64;
-  fn Set[addr me: Self*](i: Int, value: Float64);
+  fn Get[addr me: Self*](i: i32) -> f64;
+  fn Set[addr me: Self*](i: i32, value: f64);
   // Associated constants may be used in signatures:
-  fn SetAll[addr me: Self*](value: Array(Float64, N));
+  fn SetAll[addr me: Self*](value: Array(f64, N));
 }
 ```
 
@@ -1752,19 +1754,19 @@ for `N`:
 ```
 class Point2D {
   impl as NSpacePoint {
-    let N:! Int = 2;
-    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
-    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
-    fn SetAll[addr me: Self*](value: Array(Float64, 2)) { ... }
+    let N:! i32 = 2;
+    fn Get[addr me: Self*](i: i32) -> f64 { ... }
+    fn Set[addr me: Self*](i: i32, value: f64) { ... }
+    fn SetAll[addr me: Self*](value: Array(f64, 2)) { ... }
   }
 }
 
 class Point3D {
   impl as NSpacePoint {
-    let N:! Int = 3;
-    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
-    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
-    fn SetAll[addr me: Self*](value: Array(Float64, 3)) { ... }
+    let N:! i32 = 3;
+    fn Get[addr me: Self*](i: i32) -> f64 { ... }
+    fn Set[addr me: Self*](i: i32, value: f64) { ... }
+    fn SetAll[addr me: Self*](value: Array(f64, 3)) { ... }
   }
 }
 ```
@@ -1776,7 +1778,7 @@ Assert(Point2D.N == 2);
 Assert(Point3D.N == 3);
 
 fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
-  for (var i: Int = 0; i < PointT.N; ++i) {
+  for (var i: i32 = 0; i < PointT.N; ++i) {
     if (i > 0) { Print(", "); }
     Print(p.Get(i));
   }
@@ -1784,8 +1786,8 @@ fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
 
 fn ExtractPoint[PointT:! NSpacePoint](
     p: PointT,
-    dest: Array(Float64, PointT.N)*) {
-  for (var i: Int = 0; i < PointT.N; ++i) {
+    dest: Array(f64, PointT.N)*) {
+  for (var i: i32 = 0; i < PointT.N; ++i) {
     (*dest)[i] = p.Get(i);
   }
 }
@@ -1809,7 +1811,7 @@ interface DeserializeFromString {
 }
 
 class MySerializableType {
-  var i: Int;
+  var i: i32;
 
   impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
@@ -1849,7 +1851,7 @@ interface StackAssociatedType {
   let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> Bool;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -1881,7 +1883,7 @@ class DynamicArray(T:! Type) {
       this->Remove(pos);
       return var;
     }
-    fn IsEmpty[addr me: Self*]() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> bool {
       return this->Begin() == this->End();
     }
   }
@@ -1988,7 +1990,7 @@ name of the interface instead of the associated type declaration:
 interface StackParameterized(ElementType:! Type) {
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> Bool;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -2006,7 +2008,7 @@ class Produce {
     fn Pop[addr me: Self*]() -> Fruit {
       return this->fruit.Pop();
     }
-    fn IsEmpty[addr me: Self*]() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> bool {
       return this->fruit.IsEmpty();
     }
   }
@@ -2017,7 +2019,7 @@ class Produce {
     fn Pop[addr me: Self*]() -> Veggie {
       return this->veggie.Pop();
     }
-    fn IsEmpty[addr me: Self*]() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> bool {
       return this->veggie.IsEmpty();
     }
   }
@@ -2066,7 +2068,7 @@ be comparable with multiple other types, and in fact interfaces for
 
 ```
 interface EquatableWith(T:! Type) {
-  fn Equals[me: Self](that: T) -> Bool;
+  fn Equals[me: Self](that: T) -> bool;
   ...
 }
 class Complex {
@@ -2449,7 +2451,7 @@ being constrained. For example, if `SortedContainer.ElementType` is
 fn Contains
     [SC:! SortedContainer,
      CT:! Container where .ElementType == SC.ElementType]
-    (haystack: SC, needles: CT) -> Bool;
+    (haystack: SC, needles: CT) -> bool;
 ```
 
 the `where` constraint will cause `CT.ElementType` to be `Comparable` as well.
@@ -2460,7 +2462,7 @@ When the two generic type parameters are swapped:
 fn Contains
     [CT:! Container,
      SC:! SortedContainer where .ElementType == CT.ElementType]
-    (haystack: SC, needles: CT) -> Bool;
+    (haystack: SC, needles: CT) -> bool;
 ```
 
 then `CT.ElementType` will still end up implementing `Comparable`, but it will
@@ -2480,7 +2482,7 @@ fn EqualContainers
     [CT1:! Container,
      CT2:! Container where .ElementType is HasEquality
                        and .ElementType == CT1.ElementType]
-    (c1: CT1*, c2: CT2*) -> Bool;
+    (c1: CT1*, c2: CT2*) -> bool;
 ```
 
 **Comparison with other languages:** Swift and Rust use commas `,` to separate
@@ -2525,7 +2527,7 @@ fn Relu[T:! HasAbs where .MagnitudeType == .Self](x: T) {
   // T.MagnitudeType == T so the following is allowed:
   return (x.Abs() + x) / 2;
 }
-fn UseContainer[T:! Container where .SliceType == .Self](c: T) -> Bool {
+fn UseContainer[T:! Container where .SliceType == .Self](c: T) -> bool {
   // T.SliceType == T so `c` and `c.Slice(...)` can be compared:
   return c == c.Slice(...);
 }
@@ -2642,7 +2644,10 @@ This redundancy is undesirable since it means if the needed constraints for
 is only used in the body of the function, not in the parameter list.
 
 **Open question:** How should this constraint be spelled?
-`T:! Type where Vector(T)` or `T:! Type where Vector(T) legal`?
+
+-   `T:! Type where Vector(T)`
+-   `T:! Type where Vector(T) legal`
+-   `T:! Type where Vector(T) is Type`
 
 #### Parameterized type implements interface
 
@@ -2686,46 +2691,21 @@ interface RestatesConstraint {
 **Comparison with other languages:** This use case was part of the
 [Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
 
-#### Type inequality
+#### Another type implements parameterized interface
 
-**Open question:** It isn't clear if we should support this in Carbon, since it
-isn't in either Swift or Rust.
-
-You might need an inequality type constraint, for example, to control overload
-resolution:
-
-```
-fn F[T:! Type](x: T) -> T { return x; }
-fn F(x: Bool) -> String {
-  if (x) return "True"; else return "False";
-}
-
-fn G[T:! Type where .Self != Bool](x: T) -> T {
-  // We need T != Bool for this to type check.
-  return F(x);
-}
-```
-
-Another use case for inequality type constraints would be to say something like
-"define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
-and `T1 != T2`".
-
-Like a
-[parameterized type implements interface](#parameterized-type-implements-interface)
-constraint, inequality constraints need to be restated when it is on an
-associated type in a referenced interface, as in this example:
+In this case, we need some other type to implement an interface parameterized by
+a generic type parameter. The syntax for this case follows the previous case,
+except now the `.Self` parameter is on the interface to the right of the `is`.
+For example, we might need a type parameter `T` to support implicit conversion
+from an integer type like `i32`:
 
 ```
-interface HasConstraint {
-  let T:! Type where .Self != Bool;
+interface As(T:! Type) {
+  fn Convert[me: Self]() -> T;
 }
 
-interface RestatesConstraint {
-  // This works, since it restates the constraint on
-  // `HasConstraint.T` that `U` is equal to.
-  let U:! Type where .Self != Bool;
-  // This doesn't: let U:! Type;
-  let V:! HasConstraint where .T == U;
+fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
+  return x * (2 as T);
 }
 ```
 
@@ -2734,8 +2714,8 @@ interface RestatesConstraint {
 Imagine we have a generic function that accepts an arbitrary `HashMap`:
 
 ```
-fn LookUp[KeyType:! Type](hm: HashMap(KeyType, Int)*,
-                          k: KeyType) -> Int;
+fn LookUp[KeyType:! Type](hm: HashMap(KeyType, i32)*,
+                          k: KeyType) -> i32;
 
 fn PrintValueOrDefault[KeyType:! Printable,
                        ValueT:! Printable & HasDefault]
@@ -2757,9 +2737,9 @@ Effectively that means that these functions are automatically rewritten to add a
 
 ```
 fn LookUp[KeyType:! Type]
-    (hm: HashMap(KeyType, Int)*
+    (hm: HashMap(KeyType, i32)*
         where KeyType is Hashable & EqualityComparable & Movable,
-     k: KeyType) -> Int;
+     k: KeyType) -> i32;
 
 fn PrintValueOrDefault[KeyType:! Printable,
                        ValueT:! Printable & HasDefault]
@@ -2783,6 +2763,27 @@ parameter, but not its _unqualified member names_. This way you can always look
 at the declaration to see how name resolution works, without having to look up
 the definitions of everything it is used as an argument to.
 
+**Limitation:** To limit readability concerns and ambiguity, this feature is
+limited to a single signature. Consider this interface declaration:
+
+```
+interface GraphNode {
+  let Edge:! Type;
+  fn EdgesFrom[me: Self]() -> HashSet(Edge);
+}
+```
+
+One approach would be to say the use of `HashSet(Edge)` in the signature of the
+`EdgesFrom` function would imply that `Edge` satisfies the requirements of an
+argument to `HashSet`, such as being `Hashable`. Another approach would be to
+say that the `EdgesFrom` would only be conditionally available when `Edge` does
+satisfy the constraints on `HashSet` arguments. Instead, Carbon will reject this
+definition, requiring the user to include all the constraints required for the
+other declarations in the interface in the declaration of the `Edge` associated
+type. Similarly, a parameter to a class must be declared with all the
+constraints needed to declare the members of the class that depend on that
+parameter.
+
 **Comparison with other languages:** Both Swift
 ([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
 [2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
@@ -2793,6 +2794,30 @@ support some form of this feature as part of their type inference.
 FIXME: Not for interfaces. Maybe: The initial declaration part of an
 `interface`, type definition, or associated type declaration should include
 complete description of all needed constraints.
+
+### Open question: referencing names in the interface being defined
+
+FIXME
+
+```
+interface Graph {
+  let E: Edge;
+  let V: Vert where .E == E and .Self == E.V;
+}
+```
+
+versus:
+
+```
+interface Graph {
+  let E: Edge where .V == V;
+  let V: Vert where .E == E;
+}
+```
+
+### Manual type equality
+
+FIXME
 
 ### Restrictions
 
@@ -3010,7 +3035,7 @@ interface Comparable {
 }
 fn CombinedLess[T:! Type](a: T, b: T,
                           U:! CompatibleWith(T) & Comparable,
-                          V:! CompatibleWith(T) & Comparable) -> Bool {
+                          V:! CompatibleWith(T) & Comparable) -> bool {
   match ((a as U).Compare(b)) {
     case CompareResult.Less => { return True; }
     case CompareResult.Greater => { return False; }
