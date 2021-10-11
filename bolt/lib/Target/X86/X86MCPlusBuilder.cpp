@@ -3509,6 +3509,90 @@ public:
     return createPopRegister(Inst, X86::EFLAGS, Size);
   }
 
+  void createAddRegImm(MCInst &Inst, MCPhysReg Reg, int64_t Value,
+                       unsigned Size) const {
+    unsigned int Opcode;
+    switch (Size) {
+    case 1: Opcode = X86::ADD8ri; break;
+    case 2: Opcode = X86::ADD16ri; break;
+    case 4: Opcode = X86::ADD32ri; break;
+    default:
+      llvm_unreachable("Unexpected size");
+    }
+    Inst.setOpcode(Opcode);
+    Inst.clear();
+    Inst.addOperand(MCOperand::createReg(Reg));
+    Inst.addOperand(MCOperand::createReg(Reg));
+    Inst.addOperand(MCOperand::createImm(Value));
+  }
+
+  void createClearRegWithNoEFlagsUpdate(MCInst &Inst, MCPhysReg Reg,
+                                        unsigned Size) const {
+    unsigned int Opcode;
+    switch (Size) {
+    case 1: Opcode = X86::MOV8ri; break;
+    case 2: Opcode = X86::MOV16ri; break;
+    case 4: Opcode = X86::MOV32ri; break;
+    case 8: Opcode = X86::MOV64ri; break;
+    default:
+      llvm_unreachable("Unexpected size");
+    }
+    Inst.setOpcode(Opcode);
+    Inst.clear();
+    Inst.addOperand(MCOperand::createReg(Reg));
+    Inst.addOperand(MCOperand::createImm(0));
+  }
+
+  void createX86SaveOVFlagToRegister(MCInst &Inst, MCPhysReg Reg) const {
+    Inst.setOpcode(X86::SETCCr);
+    Inst.clear();
+    Inst.addOperand(MCOperand::createReg(Reg));
+    Inst.addOperand(MCOperand::createImm(X86::COND_O));
+  }
+
+  void createX86Lahf(MCInst &Inst) const {
+    Inst.setOpcode(X86::LAHF);
+    Inst.clear();
+  }
+
+  void createX86Sahf(MCInst &Inst) const {
+    Inst.setOpcode(X86::SAHF);
+    Inst.clear();
+  }
+
+  void createInstrIncMemory(std::vector<MCInst> &Instrs, const MCSymbol *Target,
+                            MCContext *Ctx, bool IsLeaf) const override {
+    unsigned int I = 0;
+
+    Instrs.resize(IsLeaf ? 13 : 11);
+    // Don't clobber application red zone (ABI dependent)
+    if (IsLeaf)
+      createStackPointerIncrement(Instrs[I++], 128,
+                                  /*NoFlagsClobber=*/true);
+
+    // Performance improvements based on the optimization discussed at
+    // https://reviews.llvm.org/D6629
+    // LAHF/SAHF are used instead of PUSHF/POPF
+    // PUSHF
+    createPushRegister(Instrs[I++], X86::RAX, 8);
+    createClearRegWithNoEFlagsUpdate(Instrs[I++], X86::RAX, 8);
+    createX86Lahf(Instrs[I++]);
+    createPushRegister(Instrs[I++], X86::RAX, 8);
+    createClearRegWithNoEFlagsUpdate(Instrs[I++], X86::RAX, 8);
+    createX86SaveOVFlagToRegister(Instrs[I++], X86::AL);
+    // LOCK INC
+    createIncMemory(Instrs[I++], Target, Ctx);
+    // POPF
+    createAddRegImm(Instrs[I++], X86::AL, 127, 1);
+    createPopRegister(Instrs[I++], X86::RAX, 8);
+    createX86Sahf(Instrs[I++]);
+    createPopRegister(Instrs[I++], X86::RAX, 8);
+
+    if (IsLeaf)
+      createStackPointerDecrement(Instrs[I], 128,
+                                  /*NoFlagsClobber=*/true);
+  }
+
   void createSwap(MCInst &Inst, MCPhysReg Source, MCPhysReg MemBaseReg,
                   int64_t Disp) const {
     Inst.setOpcode(X86::XCHG64rm);

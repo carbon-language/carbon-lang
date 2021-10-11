@@ -428,6 +428,13 @@ public:
     llvm_unreachable("not implemented");
   }
 
+  /// Create increment contents of target by 1 for Instrumentation
+  virtual void createInstrIncMemory(std::vector<MCInst> &Instrs,
+                                    const MCSymbol *Target, MCContext *Ctx,
+                                    bool IsLeaf) const {
+    llvm_unreachable("not implemented");
+  }
+
   /// Return a register number that is guaranteed to not match with
   /// any real register on the underlying architecture.
   virtual MCPhysReg getNoRegister() const {

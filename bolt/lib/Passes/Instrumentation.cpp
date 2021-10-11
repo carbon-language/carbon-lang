@@ -177,18 +177,7 @@ Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   Label = BC.Ctx->createNamedTempSymbol("InstrEntry");
   Summary->Counters.emplace_back(Label);
   std::vector<MCInst> CounterInstrs;
-  CounterInstrs.resize(IsLeaf? 5 : 3);
-  uint32_t I = 0;
-  // Don't clobber application red zone (ABI dependent)
-  if (IsLeaf)
-    BC.MIB->createStackPointerIncrement(CounterInstrs[I++], 128,
-                                        /*NoFlagsClobber=*/true);
-  BC.MIB->createPushFlags(CounterInstrs[I++], 2);
-  BC.MIB->createIncMemory(CounterInstrs[I++], Label, &*BC.Ctx);
-  BC.MIB->createPopFlags(CounterInstrs[I++], 2);
-  if (IsLeaf)
-    BC.MIB->createStackPointerDecrement(CounterInstrs[I++], 128,
-                                        /*NoFlagsClobber=*/true);
+  BC.MIB->createInstrIncMemory(CounterInstrs, Label, &*BC.Ctx, IsLeaf);
   return CounterInstrs;
 }
 
