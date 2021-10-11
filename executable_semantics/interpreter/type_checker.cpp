@@ -89,6 +89,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringType:
       return true;
     case Value::Kind::AutoType:
+      // `auto` isn't a concrete type, it's a pattern that matches types.
       return false;
     case Value::Kind::TupleValue:
       for (const TupleElement& field : cast<TupleValue>(*value).Elements()) {
@@ -98,7 +99,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
       }
       return true;
   }
-  FATAL() << *value;
 }
 
 void TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,

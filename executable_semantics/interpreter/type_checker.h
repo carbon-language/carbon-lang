@@ -134,9 +134,6 @@ class TypeChecker {
   void ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value);
 
-  auto ReifyType(Nonnull<const Value*> t, SourceLocation source_loc)
-      -> Nonnull<Expression*>;
-
   auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
       -> Nonnull<const Value*>;
 
