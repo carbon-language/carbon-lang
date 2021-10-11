@@ -493,15 +493,12 @@ class VariableType : public Value {
 };
 
 // A first-class continuation representation of a fragment of the stack.
-// A continuation value behaves like a reference to the underlying stack
+// A continuation value behaves like a pointer to the underlying stack
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  // This should be called only when creating an entirely new continuation.
-  // To update an existing continuation, mutate the value returned from Stack().
-  // To copy an existing ContinuationValue, copy the pointer to it.
-  explicit ContinuationValue(std::vector<Nonnull<Frame*>> stack)
-      : Value(Kind::ContinuationValue), stack(std::move(stack)) {}
+  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Frame*>>*> stack)
+      : Value(Kind::ContinuationValue), stack(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
@@ -511,10 +508,10 @@ class ContinuationValue : public Value {
   // frame (the reverse of the usual order). Note that this provides mutable
   // access, even when *this is const, because of the reference-like semantics
   // of ContinuationValue.
-  auto Stack() const -> std::vector<Nonnull<Frame*>>& { return stack; }
+  auto Stack() const -> Nonnull<std::vector<Nonnull<Frame*>>*> { return stack; }
 
  private:
-  mutable std::vector<Nonnull<Frame*>> stack;
+  Nonnull<std::vector<Nonnull<Frame*>>*> stack;
 };
 
 // The String type.

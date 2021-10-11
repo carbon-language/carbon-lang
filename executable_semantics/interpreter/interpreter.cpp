@@ -1002,11 +1002,12 @@ auto Interpreter::StepStmt() -> Transition {
       todo.Push(arena->New<StatementAction>(
           arena->New<Return>(arena, stmt->source_loc())));
       todo.Push(arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
+      auto continuation_stack = arena->New<std::vector<Nonnull<Frame*>>>();
       auto continuation_frame =
           arena->New<Frame>("__continuation", scopes, todo);
+      continuation_stack->push_back(continuation_frame);
       Address continuation_address =
-          heap.AllocateValue(arena->New<ContinuationValue>(
-              std::vector<Nonnull<Frame*>>({continuation_frame})));
+          heap.AllocateValue(arena->New<ContinuationValue>(continuation_stack));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -1032,7 +1033,7 @@ auto Interpreter::StepStmt() -> Transition {
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
         std::vector<Nonnull<Frame*>>& continuation_vector =
-            cast<ContinuationValue>(*act->results()[0]).Stack();
+            *cast<ContinuationValue>(*act->results()[0]).Stack();
         while (!continuation_vector.empty()) {
           stack.Push(continuation_vector.back());
           continuation_vector.pop_back();
@@ -1050,8 +1051,8 @@ auto Interpreter::StepStmt() -> Transition {
       // Update the continuation with the paused stack.
       const auto& continuation = cast<ContinuationValue>(
           *heap.Read(*paused.back()->continuation, stmt->source_loc()));
-      CHECK(continuation.Stack().empty());
-      continuation.Stack() = std::move(paused);
+      CHECK(continuation.Stack()->empty());
+      *continuation.Stack() = std::move(paused);
       return ManualTransition{};
   }
 }
