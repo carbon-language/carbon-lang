@@ -92,7 +92,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Field requirements](#field-requirements)
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
-    -   [Reverse generics for return types](#reverse-generics-for-return-types)
     -   [Variadic arguments](#variadic-arguments)
     -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
 -   [References](#references)
@@ -3260,9 +3259,17 @@ values they could have different real types.
 
 ### Abstract return types
 
-This lets you return am anonymous type implementing an interface from a
-function.
-[Rust has this feature](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+This lets you return an anonymous type implementing an interface from a
+function. In Rust this is
+[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+
+In Swift, there are discussions about implementing this feature under the name
+"reverse generics" or "opaque result types":
+[1](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics),
+[2](https://forums.swift.org/t/reverse-generics-and-opaque-result-types/21608),
+[3](https://forums.swift.org/t/se-0244-opaque-result-types/21252),
+[4](https://forums.swift.org/t/se-0244-opaque-result-types-reopened/22942),
+Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 ### Interface defaults
 
@@ -3306,11 +3313,13 @@ a type to an implementation of an interface parameterized by that type.
 #### Generic associated types
 
 Generic associated types are about when this is a requirement of an interface.
+These are also called associated type constructors.
 
 #### Higher-ranked types
 
 Higher-ranked types are used to represent this requirement in a function
-signature.
+signature. They can be
+[emulated using associated type constructors](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
 
 ### Field requirements
 
@@ -3327,14 +3336,6 @@ description of what this might involve.
 ### Bridge for C++ customization points
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
-
-### Reverse generics for return types
-
-In Rust this is
-[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
-In Swift,
-[this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
-Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 ### Variadic arguments
 
