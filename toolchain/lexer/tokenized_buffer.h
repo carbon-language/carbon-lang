@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
@@ -15,6 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -194,6 +196,9 @@ class TokenizedBuffer {
       token.index -= n;
       return *this;
     }
+
+    // Prints the raw token index.
+    auto Print(llvm::raw_ostream& output) const -> void;
 
    private:
     friend class TokenizedBuffer;

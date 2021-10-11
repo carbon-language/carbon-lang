@@ -27,10 +27,8 @@ cc_test(
         ":driver",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 

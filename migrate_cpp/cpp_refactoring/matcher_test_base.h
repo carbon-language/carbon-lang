@@ -5,11 +5,12 @@
 #ifndef MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
 #define MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "clang/Tooling/Tooling.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "migrate_cpp/cpp_refactoring/matcher_manager.h"
 
 namespace Carbon {

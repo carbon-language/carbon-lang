@@ -23,10 +23,15 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: '^(.*\.patch)$'
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
-        exclude: '^(.*/testdata/.*\.golden)$'
+        exclude: |
+          (?x)^(
+              .*\.patch|
+              .*/testdata/.*\.golden
+          )$
   - repo: https://github.com/mattlqx/pre-commit-search-and-replace
     rev: 417c99dafb534d7517d9abc17f0293de3c915a72 # frozen: v1.0.5
     hooks:
@@ -73,6 +78,7 @@ repos:
               compile_flags.txt|
               third_party/examples/.*/compile_flags.carbon.txt|
               .*\.def|
+              .*\.patch|
               .*\.svg|
               .*/testdata/.*\.golden
           )$

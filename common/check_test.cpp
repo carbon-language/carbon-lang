@@ -4,7 +4,7 @@
 
 #include "common/check.h"
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 namespace Carbon {
 

@@ -4,7 +4,8 @@
 
 #include "toolchain/source/source_buffer.h"
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FileSystem.h"
@@ -49,7 +50,7 @@ TEST(SourceBufferTest, FileRep) {
 
   auto expected_buffer = SourceBuffer::CreateFromFile(test_file_path);
   ASSERT_TRUE(static_cast<bool>(expected_buffer))
-      << "Error message: " << expected_buffer.takeError();
+      << "Error message: " << toString(expected_buffer.takeError());
 
   SourceBuffer& buffer = *expected_buffer;
 

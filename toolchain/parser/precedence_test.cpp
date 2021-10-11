@@ -4,8 +4,9 @@
 
 #include "toolchain/parser/precedence.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include "toolchain/lexer/token_kind.h"
 
 namespace Carbon {

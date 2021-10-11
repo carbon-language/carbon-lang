@@ -5,7 +5,8 @@
 #ifndef TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
 #define TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
 
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
+
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {

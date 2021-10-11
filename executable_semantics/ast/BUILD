@@ -62,8 +62,7 @@ cc_test(
     deps = [
         ":expression",
         ":paren_contents",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -124,9 +123,8 @@ cc_test(
     deps = [
         ":paren_contents",
         ":pattern",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 

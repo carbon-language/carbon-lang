@@ -4,7 +4,7 @@
 
 #include "executable_semantics/common/error.h"
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 namespace Carbon {
 namespace {

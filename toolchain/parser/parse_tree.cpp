@@ -199,4 +199,18 @@ auto ParseTree::Verify() const -> bool {
   return true;
 }
 
+auto ParseTree::Node::Print(llvm::raw_ostream& output) const -> void {
+  output << GetIndex();
+}
+
+auto ParseTree::PostorderIterator::Print(llvm::raw_ostream& output) const
+    -> void {
+  output << node.GetIndex();
+}
+
+auto ParseTree::SiblingIterator::Print(llvm::raw_ostream& output) const
+    -> void {
+  output << node.GetIndex();
+}
+
 }  // namespace Carbon
