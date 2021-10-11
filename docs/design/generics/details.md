@@ -4845,6 +4845,8 @@ needs a reference to a key -> info map.
 
 TODO: Used for "property maps" in the Boost.Graph library.
 
+Also called "associated type constructors."
+
 See
 [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
 for context.
@@ -4897,12 +4899,19 @@ TODO: Challenging! Probably needs something like
 Generic associated types and higher-ranked (or is it higher-kinded?) types solve
 the same problem in two different contexts. Generic associated types are about
 members of interfaces and higher-ranked types are about function parameters.
+There are use cases for higher-ranked types that can be solved by using generic
+associated types creatively
+([1](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/),
+[2](https://smallcultfollowing.com/babysteps//blog/2016/11/04/associated-type-constructors-part-3-what-higher-kinded-types-might-look-like/)).
 
 Swift proposals:
 [1](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#higher-kinded-types),
 [2](https://forums.swift.org/t/higher-kinded-types-monads-functors-etc/4691),
 [3](https://forums.swift.org/t/proposal-higher-kinded-types-monads-functors-etc/559),
-[4](https://github.com/typelift/swift/issues/1). These correspond roughly to
+[4](https://github.com/typelift/swift/issues/1). Rust proposals:
+[1](https://smallcultfollowing.com/babysteps//blog/2016/11/04/associated-type-constructors-part-3-what-higher-kinded-types-might-look-like/),
+[2](https://smallcultfollowing.com/babysteps//blog/2016/11/09/associated-type-constructors-part-4-unifying-atc-and-hkt/).
+These correspond roughly to
 [C++ template template parameters](https://en.cppreference.com/w/cpp/language/template_parameters#Template_template_parameter).
 
 ### Field requirements
