@@ -173,8 +173,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
   }
 }
 
-void Interpreter::InitGlobals(
-    const std::vector<Nonnull<const Declaration*>>& fs) {
+void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
   for (const auto d : fs) {
     InitEnv(*d, &globals);
   }
@@ -1150,8 +1149,9 @@ class Interpreter::DoTransition {
 void Interpreter::Step() {
   Nonnull<Frame*> frame = stack.Top();
   if (frame->todo.IsEmpty()) {
-    FATAL_RUNTIME_ERROR_NO_LINE()
-        << "fell off end of function " << frame->name << " without `return`";
+    std::visit(DoTransition(this),
+               Transition{UnwindFunctionCall{TupleValue::Empty()}});
+    return;
   }
 
   Nonnull<Action*> act = frame->todo.Top();
@@ -1171,9 +1171,8 @@ void Interpreter::Step() {
   }  // switch
 }
 
-auto Interpreter::InterpProgram(
-    const std::vector<Nonnull<const Declaration*>>& fs,
-    Nonnull<const Expression*> call_main) -> int {
+auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
+                                Nonnull<const Expression*> call_main) -> int {
   // Check that the interpreter is in a clean state.
   CHECK(globals.IsEmpty());
   CHECK(stack.IsEmpty());
