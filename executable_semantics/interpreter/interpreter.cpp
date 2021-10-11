@@ -200,11 +200,11 @@ auto Interpreter::CreateTuple(Nonnull<Action*> act,
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   const auto& tup_lit = cast<TupleLiteral>(*exp);
-  CHECK(act->results().size() == tup_lit.Fields().size());
+  CHECK(act->results().size() == tup_lit.fields().size());
   std::vector<TupleElement> elements;
   for (size_t i = 0; i < act->results().size(); ++i) {
     elements.push_back(
-        {.name = tup_lit.Fields()[i].name, .value = act->results()[i]});
+        {.name = tup_lit.fields()[i].name(), .value = act->results()[i]});
   }
 
   return arena->New<TupleValue>(std::move(elements));
@@ -216,7 +216,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   CHECK(fields.size() == values.size());
   std::vector<TupleElement> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
-    elements.push_back({.name = fields[i].name, .value = values[i]});
+    elements.push_back({.name = fields[i].name(), .value = values[i]});
   }
 
   return arena->New<StructValue>(std::move(elements));
@@ -447,13 +447,13 @@ auto Interpreter::StepLvalue() -> Transition {
     }
     case Expression::Kind::TupleLiteral: {
       if (act->pos() <
-          static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
+          static_cast<int>(cast<TupleLiteral>(*exp).fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).Fields()[act->pos()].expression;
+            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
         return Spawn{arena->New<LValAction>(elt)};
       } else {
         return Done{CreateTuple(act, exp)};
@@ -515,13 +515,13 @@ auto Interpreter::StepExp() -> Transition {
     }
     case Expression::Kind::TupleLiteral: {
       if (act->pos() <
-          static_cast<int>(cast<TupleLiteral>(*exp).Fields().size())) {
+          static_cast<int>(cast<TupleLiteral>(*exp).fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).Fields()[act->pos()].expression;
+            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
         return Spawn{arena->New<ExpressionAction>(elt)};
       } else {
         return Done{CreateTuple(act, exp)};
@@ -531,7 +531,7 @@ auto Interpreter::StepExp() -> Transition {
       const auto& literal = cast<StructLiteral>(*exp);
       if (act->pos() < static_cast<int>(literal.fields().size())) {
         Nonnull<const Expression*> elt =
-            literal.fields()[act->pos()].expression;
+            literal.fields()[act->pos()].expression();
         return Spawn{arena->New<ExpressionAction>(elt)};
       } else {
         return Done{CreateStruct(literal.fields(), act->results())};
@@ -541,11 +541,11 @@ auto Interpreter::StepExp() -> Transition {
       const auto& struct_type = cast<StructTypeLiteral>(*exp);
       if (act->pos() < static_cast<int>(struct_type.fields().size())) {
         return Spawn{arena->New<ExpressionAction>(
-            struct_type.fields()[act->pos()].expression)};
+            struct_type.fields()[act->pos()].expression())};
       } else {
         VarValues fields;
         for (size_t i = 0; i < struct_type.fields().size(); ++i) {
-          fields.push_back({struct_type.fields()[i].name, act->results()[i]});
+          fields.push_back({struct_type.fields()[i].name(), act->results()[i]});
         }
         return Done{arena->New<StructType>(std::move(fields))};
       }
@@ -1001,11 +1001,12 @@ auto Interpreter::StepStmt() -> Transition {
       todo.Push(arena->New<StatementAction>(
           arena->New<Return>(arena, stmt->source_loc())));
       todo.Push(arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
+      auto continuation_stack = arena->New<std::vector<Nonnull<Frame*>>>();
       auto continuation_frame =
           arena->New<Frame>("__continuation", scopes, todo);
+      continuation_stack->push_back(continuation_frame);
       Address continuation_address =
-          heap.AllocateValue(arena->New<ContinuationValue>(
-              std::vector<Nonnull<Frame*>>({continuation_frame})));
+          heap.AllocateValue(arena->New<ContinuationValue>(continuation_stack));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -1030,11 +1031,11 @@ auto Interpreter::StepStmt() -> Transition {
                 arena->New<TupleLiteral>(stmt->source_loc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
-        const std::vector<Nonnull<Frame*>>& continuation_vector =
-            cast<ContinuationValue>(*act->results()[0]).Stack();
-        for (auto frame_iter = continuation_vector.rbegin();
-             frame_iter != continuation_vector.rend(); ++frame_iter) {
-          stack.Push(*frame_iter);
+        std::vector<Nonnull<Frame*>>& continuation_vector =
+            *cast<ContinuationValue>(*act->results()[0]).Stack();
+        while (!continuation_vector.empty()) {
+          stack.Push(continuation_vector.back());
+          continuation_vector.pop_back();
         }
         return ManualTransition{};
       }
@@ -1047,8 +1048,10 @@ auto Interpreter::StepStmt() -> Transition {
         paused.push_back(stack.Pop());
       } while (paused.back()->continuation == std::nullopt);
       // Update the continuation with the paused stack.
-      heap.Write(*paused.back()->continuation,
-                 arena->New<ContinuationValue>(paused), stmt->source_loc());
+      const auto& continuation = cast<ContinuationValue>(
+          *heap.Read(*paused.back()->continuation, stmt->source_loc()));
+      CHECK(continuation.Stack()->empty());
+      *continuation.Stack() = std::move(paused);
       return ManualTransition{};
   }
 }

@@ -14,7 +14,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Integer literals](#integer-literals)
     -   [Real number literals](#real-number-literals)
-        -   [Ties](#ties)
     -   [Digit separators](#digit-separators)
 -   [Divergence from other languages](#divergence-from-other-languages)
 -   [Alternatives considered](#alternatives-considered)
@@ -87,7 +86,7 @@ example, `3e10` is not a valid literal.
 
 When a real number literal is interpreted as a value of a real number type, its
 value is the representable real number closest to the value of the literal. In
-the case of a [tie](#ties), the conversion to the real number type is invalid.
+the case of a tie, the nearest value whose mantissa is even is selected.
 
 The decimal real number syntax allows for any decimal fraction to be expressed
 -- that is, any number of the form _a_ x 10<sup>-_b_</sup>, where _a_ is an
@@ -99,29 +98,6 @@ intended real number representation may be more convenient than producing a
 decimal equivalent that is known to convert to the intended value. Hexadecimal
 real number literals are provided in order to permit values of binary floating
 or fixed point real number types to be expressed directly.
-
-#### Ties
-
-As described above, a real number literal that lies exactly between two
-representable values for its target type is invalid. Such ties are extremely
-unlikely to occur by accident: for example, when interpreting a literal as
-`Float64`, `1.` would need to be followed by exactly 53 decimal digits (followed
-by zero or more `0`s) to land exactly half-way between two representable values,
-and the probability of `1.` followed by a random 53-digit sequence resulting in
-such a tie is one in 5<sup>53</sup>, or about
-0.000000000000000000000000000000000009%. For `Float32`, it's about
-0.000000000000001%, and even for a typical `Float16` implementation with 10
-fractional bits, it's around 0.00001%.
-
-Ties are much easier to express as hexadecimal floating-point literals: for
-example, `0x1.0000_0000_0000_08p+0` is exactly half way between `1.0` and the
-smallest `Float64` value greater than `1.0`, which is `0x1.0000_0000_0000_1p+0`.
-
-Whether written in decimal or hexadecimal, a tie provides very strong evidence
-that the developer intended to express a precise floating-point value, and
-provided one bit too much precision (or one bit too little, depending on whether
-they expected some rounding to occur), so rejecting the literal is preferred
-over making an arbitrary choice between the two possible values.
 
 ### Digit separators
 
@@ -165,9 +141,12 @@ cases for the goal of not leaving room for a lower level language:
     -   [Decimal literals](/proposals/p0143.md#decimal-literals)
     -   [Case sensitivity](/proposals/p0143.md#case-sensitivity)
 -   [Real number syntax](/proposals/p0143.md#real-number-syntax)
+    -   [Disallow ties](/proposals/p0866.md)
 -   [Digit separator syntax](/proposals/p0143.md#digit-separator-syntax)
 
 ## References
 
 -   Proposal
     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
+-   Proposal
+    [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)

@@ -76,16 +76,24 @@ auto TupleExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
     const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
 
-// A FieldInitializer represents the initialization of a single tuple field.
-struct FieldInitializer {
+// A FieldInitializer represents the initialization of a single tuple or
+// struct field.
+class FieldInitializer {
+ public:
   FieldInitializer(std::string name, Nonnull<Expression*> expression)
-      : name(std::move(name)), expression(expression) {}
+      : name_(std::move(name)), expression_(expression) {}
 
+  auto name() const -> const std::string& { return name_; }
+
+  auto expression() const -> Nonnull<const Expression*> { return expression_; }
+  auto expression() -> Nonnull<Expression*> { return expression_; }
+
+ private:
   // The field name. Cannot be empty.
-  std::string name;
+  std::string name_;
 
   // The expression that initializes the field.
-  Nonnull<Expression*> expression;
+  Nonnull<Expression*> expression_;
 };
 
 enum class Operator {
@@ -224,16 +232,18 @@ class TupleLiteral : public Expression {
 
   explicit TupleLiteral(SourceLocation source_loc,
                         std::vector<FieldInitializer> fields)
-      : Expression(Kind::TupleLiteral, source_loc), fields(std::move(fields)) {}
+      : Expression(Kind::TupleLiteral, source_loc),
+        fields_(std::move(fields)) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::TupleLiteral;
   }
 
-  auto Fields() const -> const std::vector<FieldInitializer>& { return fields; }
+  auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
+  auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
 
  private:
-  std::vector<FieldInitializer> fields;
+  std::vector<FieldInitializer> fields_;
 };
 
 // A non-empty literal value of a struct type.
@@ -255,9 +265,8 @@ class StructLiteral : public Expression {
     return exp->kind() == Kind::StructLiteral;
   }
 
-  auto fields() const -> const std::vector<FieldInitializer>& {
-    return fields_;
-  }
+  auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
+  auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
 
  private:
   std::vector<FieldInitializer> fields_;
@@ -279,9 +288,8 @@ class StructTypeLiteral : public Expression {
     return exp->kind() == Kind::StructTypeLiteral;
   }
 
-  auto fields() const -> const std::vector<FieldInitializer>& {
-    return fields_;
-  }
+  auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
+  auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
 
  private:
   std::vector<FieldInitializer> fields_;

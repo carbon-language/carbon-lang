@@ -131,12 +131,18 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::TupleValue: {
       if (arg->kind() != Value::Kind::TupleValue) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       const auto& param_tup = cast<TupleValue>(*param);
       const auto& arg_tup = cast<TupleValue>(*arg);
       if (param_tup.Elements().size() != arg_tup.Elements().size()) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "mismatch in tuple sizes, expected "
+            << param_tup.Elements().size() << " but got "
+            << arg_tup.Elements().size();
       }
       for (size_t i = 0; i < param_tup.Elements().size(); ++i) {
         if (param_tup.Elements()[i].name != arg_tup.Elements()[i].name) {
@@ -152,12 +158,18 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::StructType: {
       if (arg->kind() != Value::Kind::StructType) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       const auto& param_struct = cast<StructType>(*param);
       const auto& arg_struct = cast<StructType>(*arg);
       if (param_struct.fields().size() != arg_struct.fields().size()) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "mismatch in struct field counts, expected "
+            << param_struct.fields().size() << " but got "
+            << arg_struct.fields().size();
       }
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
         if (param_struct.fields()[i].first != arg_struct.fields()[i].first) {
@@ -173,7 +185,10 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::FunctionType: {
       if (arg->kind() != Value::Kind::FunctionType) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       const auto& param_fn = cast<FunctionType>(*param);
       const auto& arg_fn = cast<FunctionType>(*arg);
@@ -186,7 +201,10 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     }
     case Value::Kind::PointerType: {
       if (arg->kind() != Value::Kind::PointerType) {
-        ExpectType(source_loc, "argument deduction", param, arg);
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "type error in argument deduction\n"
+            << "expected: " << *param << "\n"
+            << "actual: " << *arg;
       }
       return ArgumentDeduction(source_loc, deduced,
                                cast<PointerType>(*param).Type(),
@@ -322,11 +340,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<FieldInitializer> new_args;
       std::vector<TupleElement> arg_types;
       auto new_types = types;
-      for (const auto& arg : cast<TupleLiteral>(*e).Fields()) {
-        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+      for (auto& arg : cast<TupleLiteral>(*e).fields()) {
+        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name, arg.expression));
-        arg_types.push_back({.name = arg.name, .value = arg_res.type});
+        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
+        arg_types.push_back({.name = arg.name(), .value = arg_res.type});
       }
       auto tuple_t = arena->New<TupleValue>(std::move(arg_types));
       return TCResult(tuple_t, new_types);
@@ -335,25 +353,25 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<FieldInitializer> new_args;
       VarValues arg_types;
       auto new_types = types;
-      for (const auto& arg : cast<StructLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+      for (auto& arg : cast<StructLiteral>(*e).fields()) {
+        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name, arg.expression));
-        arg_types.push_back({arg.name, arg_res.type});
+        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
+        arg_types.push_back({arg.name(), arg_res.type});
       }
       auto type = arena->New<StructType>(std::move(arg_types));
       return TCResult(type, new_types);
     }
     case Expression::Kind::StructTypeLiteral: {
-      const auto& struct_type = cast<StructTypeLiteral>(*e);
+      auto& struct_type = cast<StructTypeLiteral>(*e);
       std::vector<FieldInitializer> new_args;
       auto new_types = types;
-      for (const auto& arg : struct_type.fields()) {
-        auto arg_res = TypeCheckExp(arg.expression, new_types, values);
+      for (auto& arg : struct_type.fields()) {
+        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
         new_types = arg_res.types;
-        ExpectIsConcreteType(arg.expression->source_loc(),
-                             interpreter.InterpExp(values, arg.expression));
-        new_args.push_back(FieldInitializer(arg.name, arg.expression));
+        ExpectIsConcreteType(arg.expression()->source_loc(),
+                             interpreter.InterpExp(values, arg.expression()));
+        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
       }
       Nonnull<const Value*> type;
       if (struct_type.fields().empty()) {
