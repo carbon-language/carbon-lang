@@ -1540,19 +1540,41 @@ void BinaryContext::preprocessDebugInfo() {
     }
   }
 
+  // Discover units with debug info that needs to be updated.
+  for (const auto &KV : BinaryFunctions) {
+    const BinaryFunction &BF = KV.second;
+    if (shouldEmit(BF) && BF.getDWARFUnit())
+      ProcessedCUs.insert(BF.getDWARFUnit());
+  }
+
+  // Clear debug info for functions from units that we are not going to process.
+  for (auto &KV : BinaryFunctions) {
+    BinaryFunction &BF = KV.second;
+    if (BF.getDWARFUnit() && !ProcessedCUs.count(BF.getDWARFUnit()))
+      BF.setDWARFUnit(nullptr);
+  }
+
+  if (opts::Verbosity >= 1) {
+    outs() << "BOLT-INFO: " << ProcessedCUs.size() << " out of "
+           << DwCtx->getNumCompileUnits() << " CUs will be updated\n";
+  }
+
   // Populate MCContext with DWARF files from all units.
   StringRef GlobalPrefix = AsmInfo->getPrivateGlobalPrefix();
   for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {
     const uint64_t CUID = CU->getOffset();
+    getDwarfLineTable(CUID).setLabel(Ctx->getOrCreateSymbol(
+        GlobalPrefix + "line_table_start" + Twine(CUID)));
+
+    if (!ProcessedCUs.count(CU.get()))
+      continue;
+
     const DWARFDebugLine::LineTable *LineTable =
-      DwCtx->getLineTableForUnit(CU.get());
+        DwCtx->getLineTableForUnit(CU.get());
     const std::vector<DWARFDebugLine::FileNameEntry> &FileNames =
         LineTable->Prologue.FileNames;
 
     // Assign a unique label to every line table, one per CU.
-    getDwarfLineTable(CUID).setLabel(Ctx->getOrCreateSymbol(
-        GlobalPrefix + "line_table_start" + Twine(CUID)));
-
     // Make sure empty debug line tables are registered too.
     if (FileNames.empty()) {
       cantFail(getDwarfFile("", "<unknown>", 0, None, None, CUID));

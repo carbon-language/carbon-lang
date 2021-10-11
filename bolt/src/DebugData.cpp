@@ -737,6 +737,16 @@ static inline void emitDwarfLineTable(
 
 void DwarfLineTable::emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
                             Optional<MCDwarfLineStr> &LineStr) const {
+  if (!RawData.empty()) {
+    assert(MCLineSections.getMCLineEntries().empty() &&
+           InputSequences.empty() &&
+           "cannot combine raw data with new line entries");
+    MCOS->emitLabel(getLabel());
+    MCOS->emitBytes(RawData);
+
+    return;
+  }
+
   MCSymbol *LineEndSym = Header.Emit(MCOS, Params, LineStr).second;
 
   // Put out the line tables.

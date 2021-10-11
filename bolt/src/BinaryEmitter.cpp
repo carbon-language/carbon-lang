@@ -186,8 +186,12 @@ private:
   /// when it needs it.
   void emitLineInfoEnd(const BinaryFunction &BF, MCSymbol *FunctionEndSymbol);
 
-  /// Emit debug line information for functions that were not emitted.
+  /// Emit debug line info for unprocessed functions from CUs that include
+  /// emitted functions.
   void emitDebugLineInfoForOriginalFunctions();
+
+  /// Emit debug line for CUs that were not modified.
+  void emitDebugLineInfoForUnprocessedCUs();
 
   /// Emit data sections that have code references in them.
   void emitDataSections(StringRef OrgSecPrefix);
@@ -1053,6 +1057,9 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
 }
 
 void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
+  // If a function is in a CU containing at least one processed function, we
+  // have to rewrite the whole line table for that CU. For unprocessed functions
+  // we use data from the input line table.
   for (auto &It : BC.getBinaryFunctions()) {
     const BinaryFunction &Function = It.second;
 
@@ -1090,6 +1097,51 @@ void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
     BC.getDwarfLineTable(Function.getDWARFUnit()->getOffset())
         .addLineTableSequence(LineTable, FirstRow, Results.back(),
                               EndOfSequenceAddress);
+  }
+
+  // For units that are completely unprocessed, use original debug line contents
+  // eliminating the need to regenerate line info program.
+  emitDebugLineInfoForUnprocessedCUs();
+}
+
+void BinaryEmitter::emitDebugLineInfoForUnprocessedCUs() {
+  // Sorted list of section offsets provides boundaries for section fragments,
+  // where each fragment is the unit's contribution to debug line section.
+  std::vector<uint64_t> StmtListOffsets;
+  StmtListOffsets.reserve(BC.DwCtx->getNumCompileUnits());
+  for (const std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units()) {
+    DWARFDie CUDie = CU->getUnitDIE();
+    auto StmtList = dwarf::toSectionOffset(CUDie.find(dwarf::DW_AT_stmt_list));
+    if (!StmtList)
+      continue;
+
+    StmtListOffsets.push_back(*StmtList);
+  }
+  std::sort(StmtListOffsets.begin(), StmtListOffsets.end());
+
+  // For each CU that was not processed, emit its line info as a binary blob.
+  for (const std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units()) {
+    if (BC.ProcessedCUs.count(CU.get()))
+      continue;
+
+    DWARFDie CUDie = CU->getUnitDIE();
+    auto StmtList = dwarf::toSectionOffset(CUDie.find(dwarf::DW_AT_stmt_list));
+    if (!StmtList)
+      continue;
+
+    StringRef DebugLineContents = CU->getLineSection().Data;
+
+    const uint64_t Begin = *StmtList;
+
+    // Statement list ends where the next unit contribution begins, or at the
+    // end of the section.
+    auto It =
+        std::upper_bound(StmtListOffsets.begin(), StmtListOffsets.end(), Begin);
+    const uint64_t End =
+        It == StmtListOffsets.end() ? DebugLineContents.size() : *It;
+
+    BC.getDwarfLineTable(CU->getOffset())
+        .addRawContents(DebugLineContents.slice(Begin, End));
   }
 }
 

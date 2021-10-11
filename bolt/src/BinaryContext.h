@@ -216,6 +216,11 @@ public:
   createBinaryContext(const ObjectFile *File, bool IsPIC,
                       std::unique_ptr<DWARFContext> DwCtx);
 
+  /// Superset of compiler units that will contain overwritten code that needs
+  /// new debug info. In a few cases, functions may end up not being
+  /// overwritten, but it is okay to re-generate debug info for them.
+  std::set<const DWARFUnit *> ProcessedCUs;
+
   /// Given DWOId returns CU if it exists in DWOCUs.
   Optional<DWARFUnit *> getDWOCU(uint64_t DWOId);
 

@@ -539,11 +539,18 @@ public:
   uint64_t getAddress() const { return Address; }
 };
 
-/// Line number information for all parts of the binary.
+/// Line number information for the output binary. One instance per CU.
+///
+/// For any given CU, we may:
+///   1. Generate new line table using:
+///     a) emitted code: getMCLineSections().addEntry()
+///     b) information from the input line table: addLineTableSequence()
+/// or
+///   2. Copy line table from the input file: addRawContents().
 class DwarfLineTable {
 public:
-  /// Line number information on contiguous code region from the original
-  /// binary. Represented by [FirstIndex, LastIndex] rows range in the binary
+  /// Line number information on contiguous code region from the input binary.
+  /// It is represented by [FirstIndex, LastIndex] rows range in the input
   /// line table, and the end address of the sequence used for issuing the end
   /// of the sequence directive.
   struct RowSequence {
@@ -555,12 +562,15 @@ public:
 private:
   MCDwarfLineTableHeader Header;
 
-  /// Line tables for generated code.
+  /// MC line tables for the code generated via MC layer.
   MCLineSection MCLineSections;
 
-  /// Line info for the original code to be merged with tables for new code.
+  /// Line info for the original code. To be merged with tables for new code.
   const DWARFDebugLine::LineTable *InputTable{nullptr};
   std::vector<RowSequence> InputSequences;
+
+  /// Raw data representing complete debug line section for the unit.
+  StringRef RawData;
 
 public:
   /// Emit line info for all units in the binary context.
@@ -575,25 +585,34 @@ public:
                                 Optional<StringRef> Source,
                                 uint16_t DwarfVersion,
                                 unsigned FileNumber = 0) {
+    assert(RawData.empty() && "cannot use with raw data");
     return Header.tryGetFile(Directory, FileName, Checksum, Source,
                              DwarfVersion, FileNumber);
   }
 
+  /// Return label at the start of the emitted debug line for the unit.
   MCSymbol *getLabel() const { return Header.Label; }
 
   void setLabel(MCSymbol *Label) { Header.Label = Label; }
 
+  /// Access to MC line info.
   MCLineSection &getMCLineSections() { return MCLineSections; }
 
   /// Add line information using the sequence from the input line \p Table.
   void addLineTableSequence(const DWARFDebugLine::LineTable *Table,
                             uint32_t FirstRow, uint32_t LastRow,
                             uint64_t EndOfSequenceAddress) {
-    assert((!InputTable || InputTable == Table) && "expected same table for CU");
+    assert((!InputTable || InputTable == Table) &&
+           "expected same table for CU");
     InputTable = Table;
-
     InputSequences.emplace_back(
         RowSequence{FirstRow, LastRow, EndOfSequenceAddress});
+  }
+
+  /// Indicate that for the unit we should emit specified contents instead of
+  /// generating a new line info table.
+  void addRawContents(StringRef DebugLineContents) {
+    RawData = DebugLineContents;
   }
 };
 
