@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_access_mismatch.carbon:21: struct {.x: i32, .y: i32} does not have a field named z
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_access_mismatch.carbon:21: class Point does not have a field named z
 
 package ExecutableSemanticsTest api;
 

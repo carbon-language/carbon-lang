@@ -168,16 +168,15 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
 }
 
 // Returns true if *source is implicitly convertible to *destination. *source
-// and *destination must be types.
-static auto IsImplicitlyConvertibleTo(Nonnull<const Value*> source,
-                                      Nonnull<const Value*> destination)
-    -> bool;
+// and *destination must be concrete types.
+static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                                    Nonnull<const Value*> destination) -> bool;
 
 // Returns true if source_fields and destination_fields contain the same set
 // of names, and each value in source_fields is implicitly convertible to
 // the corresponding value in destination_fields. All values in both arguments
 // must be types.
-static auto FieldTypesImplicitlyConvertibleTo(
+static auto FieldTypesImplicitlyConvertible(
     const VarValues& source_fields, const VarValues& destination_fields) {
   if (source_fields.size() != destination_fields.size()) {
     return false;
@@ -186,17 +185,17 @@ static auto FieldTypesImplicitlyConvertibleTo(
     std::optional<Nonnull<const Value*>> destination_field_type =
         FindInVarValues(field_name, destination_fields);
     if (!destination_field_type.has_value() ||
-        !IsImplicitlyConvertibleTo(source_field_type,
-                                   *destination_field_type)) {
+        !IsImplicitlyConvertible(source_field_type, *destination_field_type)) {
       return false;
     }
   }
   return true;
 }
 
-static auto IsImplicitlyConvertibleTo(Nonnull<const Value*> source,
-                                      Nonnull<const Value*> destination)
-    -> bool {
+static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                                    Nonnull<const Value*> destination) -> bool {
+  CHECK(IsConcreteType(source));
+  CHECK(IsConcreteType(destination));
   if (TypeEqual(source, destination)) {
     return true;
   }
@@ -204,11 +203,11 @@ static auto IsImplicitlyConvertibleTo(Nonnull<const Value*> source,
     case Value::Kind::StructType:
       switch (destination->kind()) {
         case Value::Kind::StructType:
-          return FieldTypesImplicitlyConvertibleTo(
+          return FieldTypesImplicitlyConvertible(
               cast<StructType>(*source).fields(),
               cast<StructType>(*destination).fields());
         case Value::Kind::NominalClassType:
-          return FieldTypesImplicitlyConvertibleTo(
+          return FieldTypesImplicitlyConvertible(
               cast<StructType>(*source).fields(),
               cast<NominalClassType>(*destination).Fields());
         default:
@@ -226,8 +225,8 @@ static auto IsImplicitlyConvertibleTo(Nonnull<const Value*> source,
           }
           for (size_t i = 0; i < source_elements.size(); ++i) {
             if (source_elements[i].name != destination_elements[i].name ||
-                !IsImplicitlyConvertibleTo(source_elements[i].value,
-                                           destination_elements[i].value)) {
+                !IsImplicitlyConvertible(source_elements[i].value,
+                                         destination_elements[i].value)) {
               return false;
             }
           }
@@ -244,7 +243,7 @@ static auto IsImplicitlyConvertibleTo(Nonnull<const Value*> source,
 static void ExpectType(SourceLocation source_loc, const std::string& context,
                        Nonnull<const Value*> expected,
                        Nonnull<const Value*> actual) {
-  if (!IsImplicitlyConvertibleTo(actual, expected)) {
+  if (!IsImplicitlyConvertible(actual, expected)) {
     FATAL_COMPILATION_ERROR(source_loc)
         << "type error in " << context << ": "
         << "'" << *actual << "' is not implicitly convertible to '" << *expected
@@ -759,11 +758,7 @@ auto TypeChecker::TypeCheckPattern(
           interpreter.InterpPattern(values, binding_type_result.pattern);
       if (expected) {
         if (IsConcreteType(type)) {
-          if (!IsImplicitlyConvertibleTo(*expected, type)) {
-            FATAL_COMPILATION_ERROR(binding.Type()->source_loc())
-                << "Cannot implicitly convert '" << **expected << "' to '"
-                << *type << "'";
-          }
+          ExpectType(p->source_loc(), "name binding", type, *expected);
         } else {
           std::optional<Env> values = interpreter.PatternMatch(
               type, *expected, binding.Type()->source_loc());
@@ -774,8 +769,8 @@ auto TypeChecker::TypeCheckPattern(
           }
           CHECK(values->begin() == values->end())
               << "Name bindings within type patterns are unsupported";
+          type = *expected;
         }
-        type = *expected;
       }
       auto new_p = arena->New<BindingPattern>(
           binding.source_loc(), binding.Name(),
