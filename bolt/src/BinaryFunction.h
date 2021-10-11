@@ -1300,7 +1300,7 @@ public:
   void addRelocationAArch64(uint64_t Offset, MCSymbol *Symbol, uint64_t RelType,
                             uint64_t Addend, uint64_t Value, bool IsCI) {
     std::map<uint64_t, Relocation> &Rels =
-        (IsCI) ? Islands.Relocations : Relocations;
+        (IsCI) ? Islands->Relocations : Relocations;
     switch (RelType) {
     case ELF::R_AARCH64_ABS64:
     case ELF::R_AARCH64_ADD_ABS_LO12_NC:
