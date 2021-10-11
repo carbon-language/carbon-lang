@@ -1002,11 +1002,12 @@ auto Interpreter::StepStmt() -> Transition {
       todo.Push(arena->New<StatementAction>(
           arena->New<Return>(arena, stmt->source_loc())));
       todo.Push(arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
+      auto continuation_stack = arena->New<std::vector<Nonnull<Frame*>>>();
       auto continuation_frame =
           arena->New<Frame>("__continuation", scopes, todo);
+      continuation_stack->push_back(continuation_frame);
       Address continuation_address =
-          heap.AllocateValue(arena->New<ContinuationValue>(
-              std::vector<Nonnull<Frame*>>({continuation_frame})));
+          heap.AllocateValue(arena->New<ContinuationValue>(continuation_stack));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -1031,11 +1032,11 @@ auto Interpreter::StepStmt() -> Transition {
                 arena->New<TupleLiteral>(stmt->source_loc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
-        const std::vector<Nonnull<Frame*>>& continuation_vector =
-            cast<ContinuationValue>(*act->results()[0]).Stack();
-        for (auto frame_iter = continuation_vector.rbegin();
-             frame_iter != continuation_vector.rend(); ++frame_iter) {
-          stack.Push(*frame_iter);
+        std::vector<Nonnull<Frame*>>& continuation_vector =
+            *cast<ContinuationValue>(*act->results()[0]).Stack();
+        while (!continuation_vector.empty()) {
+          stack.Push(continuation_vector.back());
+          continuation_vector.pop_back();
         }
         return ManualTransition{};
       }
@@ -1048,8 +1049,10 @@ auto Interpreter::StepStmt() -> Transition {
         paused.push_back(stack.Pop());
       } while (paused.back()->continuation == std::nullopt);
       // Update the continuation with the paused stack.
-      heap.Write(*paused.back()->continuation,
-                 arena->New<ContinuationValue>(paused), stmt->source_loc());
+      const auto& continuation = cast<ContinuationValue>(
+          *heap.Read(*paused.back()->continuation, stmt->source_loc()));
+      CHECK(continuation.Stack()->empty());
+      *continuation.Stack() = std::move(paused);
       return ManualTransition{};
   }
 }
