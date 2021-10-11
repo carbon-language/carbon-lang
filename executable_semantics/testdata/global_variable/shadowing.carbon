@@ -7,8 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/shadowing.carbon:20: type error in return
-// CHECK: 'i32' is not implicitly convertible to '()'
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/shadowing.carbon:19: type error in return: 'i32' is not implicitly convertible to '()'
 
 package ExecutableSemanticsTest api;
 
