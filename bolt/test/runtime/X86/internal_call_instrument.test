@@ -4,7 +4,8 @@ REQUIRES: x86_64-linux
 
 RUN: %clang -O3 %S/Inputs/internalcall-main.c %S/Inputs/internalcall.S -Wl,-q \
 RUN:   -o %t.exe
-RUN: llvm-bolt -instrument %t.exe -o %t -relocs -lite=0
+RUN: llvm-bolt -instrument %t.exe -instrumentation-file=%t.fdata \
+RUN:   -o %t -relocs -lite=0
 RUN: %t | FileCheck %s
 
 CHECK:   Case 1: Result is: DEADBEEF
