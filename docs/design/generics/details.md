@@ -119,7 +119,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Field requirements](#field-requirements)
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
-    -   [Reverse generics for return types](#reverse-generics-for-return-types)
     -   [Variadic arguments](#variadic-arguments)
     -   [Interaction with inheritance](#interaction-with-inheritance)
 -   [Notes](#notes)
@@ -4595,13 +4594,21 @@ to the generic parameters.
 ### Abstract return types
 
 This lets you return an anonymous type implementing an interface from a
-function.
-[Rust has this feature](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+function. In Rust this is
+[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
 Also see:
 
 -   [https://rust-lang.github.io/rfcs/1951-expand-impl-trait.html]
 -   [https://rust-lang.github.io/rfcs/2071-impl-trait-existential-types.html]
 -   [https://rust-lang.github.io/rfcs/2515-type_alias_impl_trait.html]
+
+In Swift, there are discussions about implementing this feature under the name
+"reverse generics" or "opaque result types":
+[1](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics),
+[2](https://forums.swift.org/t/reverse-generics-and-opaque-result-types/21608),
+[3](https://forums.swift.org/t/se-0244-opaque-result-types/21252),
+[4](https://forums.swift.org/t/se-0244-opaque-result-types-reopened/22942),
+Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 ### Interface defaults
 
@@ -4953,14 +4960,6 @@ supporting this with the dynamic strategy.
 ### Bridge for C++ customization points
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
-
-### Reverse generics for return types
-
-In Rust this is
-[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
-In Swift,
-[this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
-Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 ### Variadic arguments
 
