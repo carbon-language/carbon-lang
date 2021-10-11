@@ -185,10 +185,8 @@ static auto FieldTypesImplicitlyConvertibleTo(
   for (const auto& [field_name, source_field_type] : source_fields) {
     std::optional<Nonnull<const Value*>> destination_field_type =
         FindInVarValues(field_name, destination_fields);
-    if (!destination_field_type.has_value()) {
-      return false;
-    }
-    if (!IsImplicitlyConvertibleTo(source_field_type,
+    if (!destination_field_type.has_value() ||
+        !IsImplicitlyConvertibleTo(source_field_type,
                                    *destination_field_type)) {
       return false;
     }
@@ -248,7 +246,7 @@ static void ExpectType(SourceLocation source_loc, const std::string& context,
                        Nonnull<const Value*> actual) {
   if (!IsImplicitlyConvertibleTo(actual, expected)) {
     FATAL_COMPILATION_ERROR(source_loc)
-        << "type error in " << context << "\n"
+        << "type error in " << context << ": "
         << "'" << *actual << "' is not implicitly convertible to '" << *expected
         << "'";
   }
