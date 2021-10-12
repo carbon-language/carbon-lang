@@ -126,8 +126,8 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
       // `auto` isn't a concrete type, it's a pattern that matches types.
       return false;
     case Value::Kind::TupleValue:
-      for (const TupleElement& field : cast<TupleValue>(*value).Elements()) {
-        if (!IsConcreteType(field.value)) {
+      for (Nonnull<const Value*> field : cast<TupleValue>(*value).Elements()) {
+        if (!IsConcreteType(field)) {
           return false;
         }
       }
@@ -192,17 +192,16 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
     case Value::Kind::TupleValue:
       switch (destination->kind()) {
         case Value::Kind::TupleValue: {
-          const std::vector<TupleElement>& source_elements =
+          const std::vector<Nonnull<const Value*>>& source_elements =
               cast<TupleValue>(*source).Elements();
-          const std::vector<TupleElement>& destination_elements =
+          const std::vector<Nonnull<const Value*>>& destination_elements =
               cast<TupleValue>(*destination).Elements();
           if (source_elements.size() != destination_elements.size()) {
             return false;
           }
           for (size_t i = 0; i < source_elements.size(); ++i) {
-            if (source_elements[i].name != destination_elements[i].name ||
-                !IsImplicitlyConvertible(source_elements[i].value,
-                                         destination_elements[i].value)) {
+            if (!IsImplicitlyConvertible(source_elements[i],
+                                         destination_elements[i])) {
               return false;
             }
           }
@@ -264,14 +263,9 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
             << arg_tup.Elements().size();
       }
       for (size_t i = 0; i < param_tup.Elements().size(); ++i) {
-        if (param_tup.Elements()[i].name != arg_tup.Elements()[i].name) {
-          FATAL_COMPILATION_ERROR(source_loc)
-              << "mismatch in tuple names, " << param_tup.Elements()[i].name
-              << " != " << arg_tup.Elements()[i].name;
-        }
-        deduced = ArgumentDeduction(source_loc, deduced,
-                                    param_tup.Elements()[i].value,
-                                    arg_tup.Elements()[i].value);
+        deduced =
+            ArgumentDeduction(source_loc, deduced, param_tup.Elements()[i],
+                              arg_tup.Elements()[i]);
       }
       return deduced;
     }
@@ -372,10 +366,9 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
       }
     }
     case Value::Kind::TupleValue: {
-      std::vector<TupleElement> elts;
+      std::vector<Nonnull<const Value*>> elts;
       for (const auto& elt : cast<TupleValue>(*type).Elements()) {
-        auto t = Substitute(dict, elt.value);
-        elts.push_back({.name = elt.name, .value = t});
+        elts.push_back(Substitute(dict, elt));
       }
       return arena->New<TupleValue>(elts);
     }
@@ -439,17 +432,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       Nonnull<const Value*> aggregate_type = index.Aggregate()->static_type();
       switch (aggregate_type->kind()) {
         case Value::Kind::TupleValue: {
-          auto i =
-              cast<IntValue>(*interpreter.InterpExp(values, index.Offset()))
-                  .Val();
-          std::string f = std::to_string(i);
-          std::optional<Nonnull<const Value*>> field_t =
-              cast<TupleValue>(*aggregate_type).FindField(f);
-          if (!field_t) {
+          const auto& tuple_type = cast<TupleValue>(*aggregate_type);
+          int i = cast<IntValue>(*interpreter.InterpExp(values, index.Offset()))
+                      .Val();
+          if (i < 0 || i >= static_cast<int>(tuple_type.Elements().size())) {
             FATAL_COMPILATION_ERROR(e->source_loc())
-                << "field " << f << " is not in the tuple " << *aggregate_type;
+                << "index " << i << " is out of range for type " << tuple_type;
           }
-          SetStaticType(&index, *field_t);
+          SetStaticType(&index, tuple_type.Elements()[i]);
           return TCResult(res.types);
         }
         default:
@@ -457,13 +447,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       }
     }
     case Expression::Kind::TupleLiteral: {
-      std::vector<TupleElement> arg_types;
+      std::vector<Nonnull<const Value*>> arg_types;
       auto new_types = types;
       int i = 0;
       for (auto& arg : cast<TupleLiteral>(*e).fields()) {
         auto arg_res = TypeCheckExp(arg, new_types, values);
         new_types = arg_res.types;
-        arg_types.push_back({.name = std::to_string(i), .value = arg->static_type()});
+        arg_types.push_back(arg->static_type());
         ++i;
       }
       SetStaticType(e, arena->New<TupleValue>(std::move(arg_types)));
@@ -539,18 +529,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
               << "class " << t_class.Name() << " does not have a field named "
-              << access.Field();
-        }
-        case Value::Kind::TupleValue: {
-          const auto& tup = cast<TupleValue>(*aggregate_type);
-          for (const TupleElement& field : tup.Elements()) {
-            if (access.Field() == field.name) {
-              SetStaticType(&access, field.value);
-              return TCResult(res.types);
-            }
-          }
-          FATAL_COMPILATION_ERROR(e->source_loc())
-              << "tuple " << tup << " does not have a field named "
               << access.Field();
         }
         case Value::Kind::ChoiceType: {
@@ -778,7 +756,7 @@ auto TypeChecker::TypeCheckPattern(
     }
     case Pattern::Kind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
-      std::vector<TupleElement> field_types;
+      std::vector<Nonnull<const Value*>> field_types;
       auto new_types = types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
@@ -792,20 +770,12 @@ auto TypeChecker::TypeCheckPattern(
         Nonnull<Pattern*> field = tuple.Fields()[i];
         std::optional<Nonnull<const Value*>> expected_field_type;
         if (expected) {
-          const TupleElement& expected_element =
-              cast<TupleValue>(**expected).Elements()[i];
-          if (expected_element.name != std::to_string(i)) {
-            FATAL_COMPILATION_ERROR(tuple.source_loc())
-                << "field names do not match, expected "
-                << expected_element.name << " but got " << std::to_string(i);
-          }
-          expected_field_type = expected_element.value;
+          expected_field_type = cast<TupleValue>(**expected).Elements()[i];
         }
         auto field_result =
             TypeCheckPattern(field, new_types, values, expected_field_type);
         new_types = field_result.types;
-        field_types.push_back(
-            {.name = std::to_string(i), .value = field->static_type()});
+        field_types.push_back(field->static_type());
       }
       SetStaticType(&tuple, arena->New<TupleValue>(std::move(field_types)));
       return TCResult(new_types);
@@ -1219,11 +1189,12 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
       Address a = interpreter.AllocateValue(st);
       tops->values.Set(class_def.name(), a);  // Is this obsolete?
-      std::vector<TupleElement> field_types;
+      std::vector<Nonnull<const Value*>> field_types;
       for (const auto& [field_name, field_value] :
            cast<NominalClassType>(*st).Fields()) {
-        field_types.push_back({.name = field_name, .value = field_value});
+        field_types.push_back(field_value);
       }
+      // FIXME do we need this?
       auto fun_ty = arena->New<FunctionType>(
           std::vector<GenericBinding>(),
           arena->New<TupleValue>(std::move(field_types)), st);
