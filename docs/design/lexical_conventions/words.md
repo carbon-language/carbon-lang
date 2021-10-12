@@ -38,7 +38,6 @@ The following words are interpreted as keywords:
 -   `and`
 -   `api`
 -   `as`
--   `assume_as`
 -   `auto`
 -   `base`
 -   `break`
