@@ -203,8 +203,7 @@ auto Interpreter::CreateTuple(Nonnull<Action*> act,
   CHECK(act->results().size() == tup_lit.fields().size());
   std::vector<TupleElement> elements;
   for (size_t i = 0; i < act->results().size(); ++i) {
-    elements.push_back(
-        {.name = tup_lit.fields()[i].name(), .value = act->results()[i]});
+    elements.push_back({.name = std::to_string(i), .value = act->results()[i]});
   }
 
   return arena->New<TupleValue>(std::move(elements));
@@ -453,7 +452,7 @@ auto Interpreter::StepLvalue() -> Transition {
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
+            cast<TupleLiteral>(*exp).fields()[act->pos()];
         return Spawn{arena->New<LValAction>(elt)};
       } else {
         return Done{CreateTuple(act, exp)};
@@ -521,7 +520,7 @@ auto Interpreter::StepExp() -> Transition {
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
+            cast<TupleLiteral>(*exp).fields()[act->pos()];
         return Spawn{arena->New<ExpressionAction>(elt)};
       } else {
         return Done{CreateTuple(act, exp)};
@@ -719,13 +718,13 @@ auto Interpreter::StepPattern() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Pattern*> elt = tuple.Fields()[act->pos()].pattern;
+        Nonnull<const Pattern*> elt = tuple.Fields()[act->pos()];
         return Spawn{arena->New<PatternAction>(elt)};
       } else {
         std::vector<TupleElement> elements;
         for (size_t i = 0; i < tuple.Fields().size(); ++i) {
           elements.push_back(
-              {.name = tuple.Fields()[i].name, .value = act->results()[i]});
+              {.name = std::to_string(i), .value = act->results()[i]});
         }
         return Done{arena->New<TupleValue>(std::move(elements))};
       }

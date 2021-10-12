@@ -532,7 +532,7 @@ maybe_empty_tuple_pattern:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
     {
       $$ = arena->New<TuplePattern>(context.source_loc(),
-                                    std::vector<TuplePattern::Field>());
+                                    std::vector<Nonnull<Pattern*>>());
     }
 | tuple_pattern
     { $$ = $1; }

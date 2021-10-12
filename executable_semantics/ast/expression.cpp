@@ -30,8 +30,7 @@ auto ExpressionFromParenContents(
 auto TupleExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
     const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*> {
-  return arena->New<TupleLiteral>(
-      source_loc, paren_contents.TupleElements<FieldInitializer>(source_loc));
+  return arena->New<TupleLiteral>(source_loc, paren_contents.elements);
 }
 
 static void PrintOp(llvm::raw_ostream& out, Operator op) {
@@ -84,11 +83,16 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << *access.Aggregate() << "." << access.Field();
       break;
     }
-    case Expression::Kind::TupleLiteral:
+    case Expression::Kind::TupleLiteral: {
       out << "(";
-      PrintFields(out, cast<TupleLiteral>(*this).fields(), " = ");
+      llvm::ListSeparator sep;
+      for (Nonnull<const Expression*> field :
+           cast<TupleLiteral>(*this).fields()) {
+        out << sep << *field;
+      }
       out << ")";
       break;
+    }
     case Expression::Kind::StructLiteral:
       out << "{";
       PrintFields(out, cast<StructLiteral>(*this).fields(), " = ");

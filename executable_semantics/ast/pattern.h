@@ -114,30 +114,20 @@ class BindingPattern : public Pattern {
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:
-  // Represents a portion of a tuple pattern corresponding to a single field.
-  struct Field {
-    Field(std::string name, Nonnull<Pattern*> pattern)
-        : name(std::move(name)), pattern(pattern) {}
-
-    // The field name. Cannot be empty
-    std::string name;
-
-    // The pattern the field must match.
-    Nonnull<Pattern*> pattern;
-  };
-
-  TuplePattern(SourceLocation source_loc, std::vector<Field> fields)
+  TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
       : Pattern(Kind::TuplePattern, source_loc), fields(std::move(fields)) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->kind() == Kind::TuplePattern;
   }
 
-  auto Fields() const -> llvm::ArrayRef<Field> { return fields; }
-  auto Fields() -> llvm::MutableArrayRef<Field> { return fields; }
+  auto Fields() const -> llvm::ArrayRef<Nonnull<const Pattern*>> {
+    return fields;
+  }
+  auto Fields() -> llvm::ArrayRef<Nonnull<Pattern*>> { return fields; }
 
  private:
-  std::vector<Field> fields;
+  std::vector<Nonnull<Pattern*>> fields;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as

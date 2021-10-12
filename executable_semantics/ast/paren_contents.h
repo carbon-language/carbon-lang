@@ -31,14 +31,6 @@ struct ParenContents {
   // interpreted as grouping.
   auto SingleTerm() const -> std::optional<Nonnull<Term*>>;
 
-  // Converts `elements` to std::vector<TupleElement>. TupleElement must
-  // have a constructor that takes a std::string and a Nonnull<Term*>.
-  //
-  // TODO: Find a way to deduce TupleElement from Term.
-  template <typename TupleElement>
-  auto TupleElements(SourceLocation source_loc) const
-      -> std::vector<TupleElement>;
-
   std::vector<Nonnull<Term*>> elements;
   bool has_trailing_comma;
 };
@@ -52,19 +44,6 @@ auto ParenContents<Term>::SingleTerm() const -> std::optional<Nonnull<Term*>> {
   } else {
     return std::nullopt;
   }
-}
-
-template <typename Term>
-template <typename TupleElement>
-auto ParenContents<Term>::TupleElements(SourceLocation source_loc) const
-    -> std::vector<TupleElement> {
-  std::vector<TupleElement> result;
-  int i = 0;
-  for (auto element : elements) {
-    result.push_back(TupleElement(std::to_string(i), element));
-    ++i;
-  }
-  return result;
 }
 
 }  // namespace Carbon

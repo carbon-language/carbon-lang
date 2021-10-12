@@ -19,11 +19,9 @@ using llvm::isa;
 using testing::ElementsAre;
 using testing::IsEmpty;
 
-// Matches a TuplePattern::Field named `name` whose `pattern` is an
-// `AutoPattern`.
-MATCHER_P(AutoFieldNamed, name, "") {
-  return arg.name == std::string(name) && isa<AutoPattern>(*arg.pattern);
-}
+// Matches a Pattern whose kind is `AutoPattern`.
+// FIXME do we need this?
+MATCHER(AutoField, "") { return isa<AutoPattern>(*arg); }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
   return SourceLocation("<test>", line_num);
@@ -78,7 +76,7 @@ TEST_F(PatternTest, UnaryNoCommaAsTuplePattern) {
   Nonnull<const TuplePattern*> tuple =
       TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
-  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
+  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoField()));
 }
 
 TEST_F(PatternTest, UnaryWithCommaAsPattern) {
@@ -90,8 +88,7 @@ TEST_F(PatternTest, UnaryWithCommaAsPattern) {
       PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
-  EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
-              ElementsAre(AutoFieldNamed("0")));
+  EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(), ElementsAre(AutoField()));
 }
 
 TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
@@ -102,7 +99,7 @@ TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
   Nonnull<const TuplePattern*> tuple =
       TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
-  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
+  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoField()));
 }
 
 TEST_F(PatternTest, BinaryAsPattern) {
@@ -116,7 +113,7 @@ TEST_F(PatternTest, BinaryAsPattern) {
   EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
-              ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));
+              ElementsAre(AutoField(), AutoField()));
 }
 
 TEST_F(PatternTest, BinaryAsTuplePattern) {
@@ -128,8 +125,7 @@ TEST_F(PatternTest, BinaryAsTuplePattern) {
   Nonnull<const TuplePattern*> tuple =
       TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
-  EXPECT_THAT(tuple->Fields(),
-              ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));
+  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoField(), AutoField()));
 }
 
 }  // namespace

@@ -457,15 +457,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       }
     }
     case Expression::Kind::TupleLiteral: {
-      std::vector<FieldInitializer> new_args;
       std::vector<TupleElement> arg_types;
       auto new_types = types;
+      int i = 0;
       for (auto& arg : cast<TupleLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(arg, new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
-        arg_types.push_back(
-            {.name = arg.name(), .value = arg.expression()->static_type()});
+        arg_types.push_back({.name = std::to_string(i), .value = arg->static_type()});
+        ++i;
       }
       SetStaticType(e, arena->New<TupleValue>(std::move(arg_types)));
       return TCResult(new_types);
@@ -779,7 +778,6 @@ auto TypeChecker::TypeCheckPattern(
     }
     case Pattern::Kind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
-      std::vector<TuplePattern::Field> new_fields;
       std::vector<TupleElement> field_types;
       auto new_types = types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
@@ -791,24 +789,23 @@ auto TypeChecker::TypeCheckPattern(
             << "tuples of different length";
       }
       for (size_t i = 0; i < tuple.Fields().size(); ++i) {
-        TuplePattern::Field& field = tuple.Fields()[i];
+        Nonnull<Pattern*> field = tuple.Fields()[i];
         std::optional<Nonnull<const Value*>> expected_field_type;
         if (expected) {
           const TupleElement& expected_element =
               cast<TupleValue>(**expected).Elements()[i];
-          if (expected_element.name != field.name) {
+          if (expected_element.name != std::to_string(i)) {
             FATAL_COMPILATION_ERROR(tuple.source_loc())
                 << "field names do not match, expected "
-                << expected_element.name << " but got " << field.name;
+                << expected_element.name << " but got " << std::to_string(i);
           }
           expected_field_type = expected_element.value;
         }
-        auto field_result = TypeCheckPattern(field.pattern, new_types, values,
-                                             expected_field_type);
+        auto field_result =
+            TypeCheckPattern(field, new_types, values, expected_field_type);
         new_types = field_result.types;
-        new_fields.push_back(TuplePattern::Field(field.name, field.pattern));
         field_types.push_back(
-            {.name = field.name, .value = field.pattern->static_type()});
+            {.name = std::to_string(i), .value = field->static_type()});
       }
       SetStaticType(&tuple, arena->New<TupleValue>(std::move(field_types)));
       return TCResult(new_types);
