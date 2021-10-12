@@ -101,8 +101,7 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
       .elements = {}, .has_trailing_comma = contents.has_trailing_comma};
   for (const auto& element : contents.elements) {
     result.elements.push_back(
-        {.name = element.name,
-         .term = arena->New<ExpressionPattern>(element.term)});
+        {.term = arena->New<ExpressionPattern>(element.term)});
   }
   return result;
 }

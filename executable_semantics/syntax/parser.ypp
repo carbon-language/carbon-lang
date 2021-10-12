@@ -398,9 +398,7 @@ tuple: paren_expression_base
 ;
 paren_expression_element:
   expression
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL expression
-    { $$ = {.name = $1, .term = $3}; }
+    { $$ = {.term = $1}; }
 ;
 paren_expression_base:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -511,8 +509,7 @@ paren_pattern_contents:
 | paren_pattern_contents COMMA paren_expression_element
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name,
-                             .term = arena->New<ExpressionPattern>($3.term)});
+      $$.elements.push_back({.term = arena->New<ExpressionPattern>($3.term)});
     }
 | paren_pattern_contents COMMA paren_pattern_element
     {
@@ -522,9 +519,7 @@ paren_pattern_contents:
 ;
 paren_pattern_element:
   non_expression_pattern
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL non_expression_pattern
-    { $$ = {.name = $1, .term = $3}; }
+    { $$ = {.term = $1}; }
 ;
 tuple_pattern: paren_pattern_base
     { $$ = TuplePatternFromParenContents(arena, context.source_loc(), $1); }
