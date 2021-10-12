@@ -46,11 +46,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Where constraints](#where-constraints)
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
-        -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
+        -   [Same type constraints](#same-type-constraints)
+            -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
+            -   [Equal generic types](#equal-generic-types)
+                -   [Satisfying both type-of-types](#satisfying-both-type-of-types)
         -   [Type bound for associated type](#type-bound-for-associated-type)
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
-        -   [Same type constraints](#same-type-constraints)
         -   [Combining constraints](#combining-constraints)
         -   [Recursive constraints](#recursive-constraints)
         -   [Must be legal type argument](#must-be-legal-type-argument)
@@ -2204,13 +2206,16 @@ The where operator can be applied to a type-of-type in a declaration context:
 fn F[V:! D where ...](v: V) { ... }
 
 // Constraints on a class parameter:
-class S(T:! B where ...) { ... }
+class S(T:! B where ...) {
+  // Constraints on a method:
+  fn G[me: Self, V:! D where ...](v: V);
+}
 
 // Constraints on an interface parameter:
 interface A(T:! B where ...) {
-  // Constraints on an associated type or constant:
+  // Constraints on an associated type:
   let U:! C where ...;
-  // Constraints on a method:
+  // Constraints on an associated method:
   fn G[me: Self, V:! D where ...](v: V);
 }
 ```
@@ -2223,7 +2228,9 @@ generally look like boolean expressions that should evaluate to `true`.
 The result of applying a `where` operator to a type-of-type is another
 type-of-type. Note that this expands the kinds of requirements that
 type-of-types can have from just interface requirements to also include the
-various kinds of constraints discussed later in this section.
+various kinds of constraints discussed later in this section. In addition, it
+can introduce relationships between different type variables, such as that a
+member of one is equal to the member of another.
 
 **Comparison to other languages:** Both Swift and Rust use `where` clauses on
 declarations instead of in the expression syntax. These happen after the type
@@ -2262,7 +2269,7 @@ interface {
 }
 ```
 
-To name such a constraint:
+To name such a constraint, you may use a `let` or a `constraint` declaration:
 
 ```
 let Point2DInterface:! auto = NSpacePoint where .N == 2;
@@ -2271,26 +2278,13 @@ constraint Point2DInterface {
 }
 ```
 
-#### Set an associated type to a specific value
+#### Same type constraints
 
-For example, we could make a the `ElementType` of an `Iterator` interface equal
-to the `ElementType` of a `Container` interface as follows:
+##### Set an associated type to a specific value
 
-```
-interface Iterator {
-  let ElementType:! Type;
-  ...
-}
-interface Container {
-  let ElementType:! Type;
-  let IteratorType:! Iterator where .ElementType == ElementType;
-  ...
-}
-```
-
-Functions accepting a generic type might also want to constrain an associated
-type. For example, we might want to have a function only accept stacks
-containing integers:
+Functions accepting a generic type might also want to constrain one of its
+associated types to be a specific, concrete type. For example, we might want to
+have a function only accept stacks containing integers:
 
 ```
 fn SumIntStack[T:! Stack where .ElementType == i32](s: T*) -> i32 {
@@ -2303,7 +2297,7 @@ fn SumIntStack[T:! Stack where .ElementType == i32](s: T*) -> i32 {
 ```
 
 To name these sorts of constraints, we could use `let` statements or
-`constraint` definitions.
+`constraint` definitions:
 
 ```
 let IntStack:! auto = Stack where .ElementType == i32;
@@ -2312,92 +2306,24 @@ constraint IntStack {
 }
 ```
 
-#### Type bound for associated type
+##### Equal generic types
 
-Type restrictions in Carbon are represented by a type-of-type. So to express a
-bound on an associated type, we need some way to
-
-The type bounds that we might want to express on an associated type
-
--
-
-FIXME: Already have a way to express this on types, but this section is about
-doing the same for associated types.
-
-##### Type bounds on associated types in declarations
-
-You might constrain the element type to satisfy an interface (`Comparable` in
-this example) without saying exactly what type it is:
+Alternatively, two generic types could be constrained to be equal to each other,
+without specifying what that type is. For example, we could make a the
+`ElementType` of an `Iterator` interface equal to the `ElementType` of a
+`Container` interface as follows:
 
 ```
-interface Container {
+interface Iterator {
   let ElementType:! Type;
   ...
 }
-
-fn SortContainer
-    [ContainerType:! Container where .ElementType is Comparable]
-    (container_to_sort: ContainerType*);
-```
-
-**Open question:** How do you spell that? This proposal provisionally uses `is`,
-which matches Swift, but maybe we should have another operator that more clearly
-returns a boolean like `has_type`?
-
-**Note:** `Container` defines `ElementType` as having type `Type`, but
-`ContainerType.ElementType` has type `Comparable`. This is because
-`ContainerType` has type `Container where .ElementType is Comparable`, not
-`Container`. This means we need to be a bit careful when talking about the type
-of `ContainerType` when there is a `where` clause modifying it.
-
-##### Type bounds on associated types in interfaces
-
-Given these definitions (omitting `ElementType` for brevity):
-
-```
-interface IteratorInterface { ... }
-interface ContainerInterface {
-  let IteratorType:! IteratorInterface;
-  ...
-}
-interface RandomAccessIterator {
-  extends IteratorInterface;
+interface Container {
+  let ElementType:! Type;
+  let IteratorType:! Iterator where .ElementType == ElementType;
   ...
 }
 ```
-
-We can then define a function that only accepts types that implement
-`ContainerInterface` where its `IteratorType` associated type implements
-`RandomAccessIterator`:
-
-```
-fn F[ContainerType:! ContainerInterface
-     where .IteratorType is RandomAccessIterator]
-    (c: ContainerType);
-```
-
-We would like to be able to define a `RandomAccessContainer` to be a
-type-of-type whose types satisfy `ContainerInterface` with an `IteratorType`
-satisfying `RandomAccessIterator`.
-
-```
-let RandomAccessContainer:! auto =
-    ContainerInterface where .IteratorType is RandomAccessIterator;
-// or
-constraint RandomAccessContainer {
-  extends ContainerInterface
-      where .IteratorType is RandomAccessIterator;
-}
-
-// With the above definition:
-fn F[ContainerType:! RandomAccessContainer](c: ContainerType);
-// is equivalent to:
-fn F[ContainerType:! ContainerInterface
-     where .IteratorType is RandomAccessIterator]
-    (c: ContainerType);
-```
-
-#### Same type constraints
 
 Given an interface with two associated types
 
@@ -2442,9 +2368,12 @@ fn Map[CT:! Container,
       (c: CT, f: FT) -> Vector(FT.OutputType);
 ```
 
-In either situation, this can affect the type-of-type on the associated type
-being constrained. For example, if `SortedContainer.ElementType` is
-`Comparable`, then in this declaration
+###### Satisfying both type-of-types
+
+If the two types being constrained to be equal have been declared with different
+type-of-types, then the actual type value they are set to will have to satisfy
+both constraints. For example, if `SortedContainer.ElementType` is declared to
+be `Comparable`, then in this declaration:
 
 ```
 fn Contains
@@ -2453,9 +2382,18 @@ fn Contains
     (haystack: SC, needles: CT) -> bool;
 ```
 
-the `where` constraint will cause `CT.ElementType` to be `Comparable` as well.
+the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
+However, inside the body of `Contains`, `CT.ElementType` will only act like the
+implementation of `Comparable` is [external](#external-impl). That is, items
+from the `needles` container won't have an unqualified `Compare` method member,
+but can still be implicitly converted to `Comparable` and can still call
+`Compare` using the qualified member syntax, `needle.(Comparable.Compare)(elt)`.
+The rule is that an `==` `where` constraint does not modify the set of
+unqualified member names of either type.
 
-When the two generic type parameters are swapped:
+Note that `==` constraints are symmetric, so the previous declaration of
+`Contains` is equivalent to an alternative declaration where `CT` is declared
+first and the `where` clause is attached to `SortedContainer`:
 
 ```
 fn Contains
@@ -2464,11 +2402,90 @@ fn Contains
     (haystack: SC, needles: CT) -> bool;
 ```
 
-then `CT.ElementType` will still end up implementing `Comparable`, but it will
-act like an [external implementation](#external-impl). That is, the type `CT`
-won't have an unqualified `Compare` method, but can still be cast to
-`Comparable`. The rule is that the `where` constraint only modifies the names
-that can be accessed unqualified of the current type.
+#### Type bound for associated type
+
+A `where` clause can express that a type must implement an interface. This is
+more flexible than the usual approach of including that interface in the type
+since it can be applied to associated type members as well.
+
+##### Type bounds on associated types in declarations
+
+In the following example, normally the `ElementType` of a `Container` can be any
+type. The `SortContainer` function, however, takes a pointer to a type
+satisfying `Container` with the additional constraint that its `ElementType`
+must satisfy the `Comparable` interface.
+
+```
+interface Container {
+  let ElementType:! Type;
+  ...
+}
+
+fn SortContainer
+    [ContainerType:! Container where .ElementType is Comparable]
+    (container_to_sort: ContainerType*);
+```
+
+In contrast to [a same type constraints](#same-type-constraints), this does not
+say what type `ElementType` exactly is, just that it must satisfy some
+type-of-type.
+
+**Open question:** How do you spell that? Provisionally we are writing `is`,
+following Swift, but maybe we should have another operator that more clearly
+returns a boolean like `has_type`?
+
+**Note:** `Container` defines `ElementType` as having type `Type`, but
+`ContainerType.ElementType` has type `Comparable`. This is because
+`ContainerType` has type `Container where .ElementType is Comparable`, not
+`Container`. This means we need to be a bit careful when talking about the type
+of `ContainerType` when there is a `where` clause modifying it.
+
+##### Type bounds on associated types in interfaces
+
+Given these definitions (omitting `ElementType` for brevity):
+
+```
+interface IteratorInterface { ... }
+interface ContainerInterface {
+  let IteratorType:! IteratorInterface;
+  ...
+}
+interface RandomAccessIterator {
+  extends IteratorInterface;
+  ...
+}
+```
+
+We can then define a function that only accepts types that implement
+`ContainerInterface` where its `IteratorType` associated type implements
+`RandomAccessIterator`:
+
+```
+fn F[ContainerType:! ContainerInterface
+     where .IteratorType is RandomAccessIterator]
+    (c: ContainerType);
+```
+
+We would like to be able to name this constraint, defining a
+`RandomAccessContainer` to be a type-of-type whose types satisfy
+`ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
+
+```
+let RandomAccessContainer:! auto =
+    ContainerInterface where .IteratorType is RandomAccessIterator;
+// or
+constraint RandomAccessContainer {
+  extends ContainerInterface
+      where .IteratorType is RandomAccessIterator;
+}
+
+// With the above definition:
+fn F[ContainerType:! RandomAccessContainer](c: ContainerType);
+// is equivalent to:
+fn F[ContainerType:! ContainerInterface
+     where .IteratorType is RandomAccessIterator]
+    (c: ContainerType);
+```
 
 #### Combining constraints
 
@@ -2564,55 +2581,7 @@ constraint ContainerIsSlice {
 ```
 
 Note that using the `constraint` approach we can name these constraints using
-`Self` instead of `.Self`.
-
-FIXME: There is an important difference here, constraints equating `.Self` or
-`Self` to some other type don't change the interfaces that are implemented like
-[same type constraints](#same-type-constraints). Instead it will just check that
-the type represented by `Self` or `.Self` satisfies the constraints on the other
-type.
-
-Example: This does not type check:
-
-```
-interface A {
-    let Q:! E;
-    let P:! E;
-    let Y:! A where .Q == Q and .P == Q;
-}
-
-interface B {
-    let X:! A where .Y == .Self;
-}
-```
-
-But this does:
-
-```
-interface A {
-    let Q:! E;
-    let P:! E;
-    let Y:! A where .Q == Q and .P == Q;
-}
-
-interface B {
-    let X:! A where .Y == .Self and .P == .Q;
-}
-```
-
-And this does:
-
-```
-interface A {
-    let Q:! E;
-    let P:! E;
-    let Y:! A where .Q == Q;
-}
-
-interface B {
-    let X:! A where .Y == .Self;
-}
-```
+`Self` instead of `.Self`, though `.Self` is equivalent.
 
 #### Must be legal type argument
 
