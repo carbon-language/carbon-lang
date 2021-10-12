@@ -68,20 +68,6 @@ class DWARFRewriter {
   /// Binary patchers for DWO debug_info sections.
   DebugInfoDWOPatchers BinaryDWODebugInfoPatchers;
 
-  struct LocListDebugInfoPatchType {
-    uint64_t DebugInfoOffset;
-    size_t CUIndex;
-    uint64_t CUWriterOffset;
-  };
-  using VectorLocListDebugInfoPatchType =
-      std::vector<LocListDebugInfoPatchType>;
-  /// The list of debug info patches to be made once individual
-  /// location list writers have been filled
-  VectorLocListDebugInfoPatchType LocListDebugInfoPatches;
-
-  std::unordered_map<uint64_t, VectorLocListDebugInfoPatchType>
-      DwoLocListDebugInfoPatches;
-
   std::mutex LocListDebugInfoPatchesMutex;
 
   /// Update debug info for all DIEs in \p Unit.

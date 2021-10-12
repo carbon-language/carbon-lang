@@ -287,25 +287,25 @@ private:
 enum class LocWriterKind { DebugLocWriter, DebugLoclistWriter };
 
 /// Serializes part of a .debug_loc DWARF section with LocationLists.
+class SimpleBinaryPatcher;
 class DebugLocWriter {
 public:
   DebugLocWriter() = delete;
   DebugLocWriter(BinaryContext *BC);
   virtual ~DebugLocWriter(){};
 
-  virtual uint64_t addList(const DebugLocationsVector &LocList);
+  /// Writes out location lists and stores internal patches.
+  virtual void addList(uint64_t AttrOffset, DebugLocationsVector &&LocList);
 
-  virtual std::unique_ptr<DebugBufferVector> finalize() {
-    return std::move(LocBuffer);
-  }
+  /// Writes out locations in to a local buffer, and adds Debug Info patches.
+  virtual void finalize(uint64_t SectionOffset,
+                        SimpleBinaryPatcher &DebugInfoPatcher);
+
+  /// Return internal buffer.
+  virtual std::unique_ptr<DebugBufferVector> getBuffer();
 
   /// Offset of an empty location list.
   static constexpr uint32_t EmptyListOffset = 0;
-
-  /// Value returned by addList if list is empty
-  /// Use 64 bits here so that a max 32 bit value can still
-  /// be stored while we use max 64 bit value as empty tag
-  static constexpr uint64_t EmptyListTag = -1;
 
   LocWriterKind getKind() const { return Kind; }
 
@@ -323,6 +323,21 @@ protected:
   /// empty list.
   uint32_t SectionOffset{0};
   LocWriterKind Kind{LocWriterKind::DebugLocWriter};
+
+private:
+  struct LocListDebugInfoPatchType {
+    uint64_t DebugInfoAttrOffset;
+    uint64_t LocListOffset;
+  };
+  using VectorLocListDebugInfoPatchType =
+      std::vector<LocListDebugInfoPatchType>;
+  /// The list of debug info patches to be made once individual
+  /// location list writers have been filled
+  VectorLocListDebugInfoPatchType LocListDebugInfoPatches;
+
+  using VectorEmptyLocListAttributes = std::vector<uint64_t>;
+  /// Contains all the attributes pointing to empty location list.
+  VectorEmptyLocListAttributes EmptyAttrLists;
 };
 
 class DebugLoclistWriter : public DebugLocWriter {
@@ -339,17 +354,29 @@ public:
 
   static void setAddressWriter(DebugAddrWriter *AddrW) { AddrWriter = AddrW; }
 
-  /// Writes out locationList, with index in to .debug_addr to be patched later.
-  uint64_t addList(const DebugLocationsVector &LocList) override;
+  /// Stores location lists internally to be written out during finalize phase.
+  virtual void addList(uint64_t AttrOffset,
+                       DebugLocationsVector &&LocList) override;
 
-  /// Finalizes all the location by patching correct index in to .debug_addr.
-  void finalizePatches();
+  /// Writes out locations in to a local buffer and applies debug info patches.
+  void finalize(uint64_t SectionOffset,
+                SimpleBinaryPatcher &DebugInfoPatcher) override;
+
+  /// Returns DWO ID.
+  uint64_t getDWOID() const { return DWOId; }
 
   static bool classof(const DebugLocWriter *Writer) {
     return Writer->getKind() == LocWriterKind::DebugLoclistWriter;
   }
 
 private:
+  struct LocPatch {
+    uint64_t AttrOffset{0};
+    DebugLocationsVector LocList;
+  };
+  using LocPatchVec = SmallVector<LocPatch, 4>;
+  LocPatchVec Patches;
+
   class Patch {
   public:
     Patch() = delete;
@@ -359,9 +386,6 @@ private:
   };
   static DebugAddrWriter *AddrWriter;
   uint64_t DWOId{0};
-  std::unordered_map<uint64_t, uint32_t> AddressMap;
-  std::vector<Patch> IndexPatches;
-  constexpr static uint32_t NumBytesForIndex{3};
 };
 
 /// Abstract interface for classes that apply modifications to a binary string.

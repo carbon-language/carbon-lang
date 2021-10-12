@@ -244,8 +244,6 @@ void DWARFRewriter::updateDebugInfo() {
       DebugAbbrevWriter *DWOAbbrevWriter = getBinaryDWOAbbrevWriter(*DWOId);
       updateUnitDebugInfo(*DWOId, *(*SplitCU), *DwoDebugInfoPatcher,
                           *DWOAbbrevWriter);
-      static_cast<DebugLoclistWriter *>(LocListWritersByCU[*DWOId].get())
-          ->finalizePatches();
       if (!DwoDebugInfoPatcher->getWasRangBasedUsed())
         RangesBase = None;
     }
@@ -477,7 +475,6 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
                 return true;
               });
 
-          uint64_t OutputLocListOffset = DebugLocWriter::EmptyListTag;
           if (E || InputLL.empty()) {
             errs() << "BOLT-WARNING: empty location list detected at 0x"
                    << Twine::utohexstr(Offset) << " for DIE at 0x"
@@ -487,34 +484,16 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
             const uint64_t Address = InputLL.front().LowPC;
             if (const BinaryFunction *Function =
                     BC.getBinaryFunctionContainingAddress(Address)) {
-              const DebugLocationsVector OutputLL = Function
-                  ->translateInputToOutputLocationList(InputLL);
+              DebugLocationsVector OutputLL =
+                  Function->translateInputToOutputLocationList(InputLL);
               LLVM_DEBUG(if (OutputLL.empty()) {
                 dbgs() << "BOLT-DEBUG: location list translated to an empty "
                           "one at 0x"
                        << Twine::utohexstr(DIE.getOffset()) << " in CU at 0x"
                        << Twine::utohexstr(Unit.getOffset()) << '\n';
               });
-              OutputLocListOffset = DebugLocWriter.addList(OutputLL);
+              DebugLocWriter.addList(AttrOffset, std::move(OutputLL));
             }
-          }
-
-          if (OutputLocListOffset != DebugLocWriter::EmptyListTag) {
-            std::lock_guard<std::mutex> Lock(LocListDebugInfoPatchesMutex);
-            if (Unit.isDWOUnit()) {
-              // Not sure if better approach is to hide all of this away in a
-              // class. Also re-using LocListDebugInfoPatchType. Wasting some
-              // space for DWOID/CUIndex.
-              DwoLocListDebugInfoPatches[CUIndex].push_back(
-                  {AttrOffset, CUIndex, OutputLocListOffset});
-            } else {
-              LocListDebugInfoPatches.push_back(
-                  {AttrOffset, CUIndex, OutputLocListOffset});
-            }
-          } else {
-            std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
-            DebugInfoPatcher.addLE32Patch(AttrOffset,
-                                          DebugLocWriter::EmptyListOffset);
           }
         } else {
           assert((Value.isFormClass(DWARFFormValue::FC_Exprloc) ||
@@ -768,6 +747,20 @@ void DWARFRewriter::finalizeDebugSections(
                                    DebugStrSectionContents->size());
   }
 
+  std::unique_ptr<DebugBufferVector> RangesSectionContents =
+      RangesSectionWriter->finalize();
+  BC.registerOrUpdateNoteSection(".debug_ranges",
+                                 copyByteArray(*RangesSectionContents),
+                                 RangesSectionContents->size());
+
+  std::unique_ptr<DebugBufferVector> LocationListSectionContents =
+      makeFinalLocListsSection(DebugInfoPatcher);
+  BC.registerOrUpdateNoteSection(".debug_loc",
+                                 copyByteArray(*LocationListSectionContents),
+                                 LocationListSectionContents->size());
+
+  // AddrWriter should be finalized after debug_loc since more addresses can be
+  // added there.
   if (AddrWriter->isInitialized()) {
     AddressSectionBuffer AddressSectionContents = AddrWriter->finalize();
     BC.registerOrUpdateNoteSection(".debug_addr",
@@ -783,18 +776,6 @@ void DWARFRewriter::finalizeDebugSections(
       }
     }
   }
-
-  std::unique_ptr<DebugBufferVector> RangesSectionContents =
-      RangesSectionWriter->finalize();
-  BC.registerOrUpdateNoteSection(".debug_ranges",
-                                 copyByteArray(*RangesSectionContents),
-                                 RangesSectionContents->size());
-
-  std::unique_ptr<DebugBufferVector> LocationListSectionContents =
-      makeFinalLocListsSection(DebugInfoPatcher);
-  BC.registerOrUpdateNoteSection(".debug_loc",
-                                 copyByteArray(*LocationListSectionContents),
-                                 LocationListSectionContents->size());
 
   std::unique_ptr<DebugBufferVector> AbbrevSectionContents =
       AbbrevWriter->finalize();
@@ -943,7 +924,7 @@ updateDebugData(std::string &Storage, const SectionRef &Section,
   }
   case DWARFSectionKind::DW_SECT_EXT_LOC: {
     DebugLocWriter *LocWriter = Writer.getDebugLocWriter(DWOId);
-    OutputBuffer = LocWriter->finalize();
+    OutputBuffer = LocWriter->getBuffer();
     // Creating explicit StringRef here, otherwise
     // with impicit conversion it will take null byte as end of
     // string.
@@ -1339,37 +1320,20 @@ DWARFRewriter::makeFinalLocListsSection(SimpleBinaryPatcher &DebugInfoPatcher) {
   *LocStream << StringRef(Zeroes, 16);
   SectionOffset += 2 * 8;
 
-  std::unordered_map<uint64_t, uint64_t> SectionOffsetByCU(
-      LocListWritersByCU.size());
-
   for (std::pair<const uint64_t, std::unique_ptr<DebugLocWriter>> &Loc :
        LocListWritersByCU) {
-    uint64_t CUIndex = Loc.first;
     DebugLocWriter *LocWriter = Loc.second.get();
-    if (llvm::isa<DebugLoclistWriter>(*LocWriter))
+    if (auto *LocListWriter = llvm::dyn_cast<DebugLoclistWriter>(LocWriter)) {
+      SimpleBinaryPatcher *Patcher =
+          getBinaryDWODebugInfoPatcher(LocListWriter->getDWOID());
+      LocListWriter->finalize(0, *Patcher);
       continue;
-    SectionOffsetByCU[CUIndex] = SectionOffset;
+    }
+    LocWriter->finalize(SectionOffset, DebugInfoPatcher);
     std::unique_ptr<DebugBufferVector> CurrCULocationLists =
-        LocWriter->finalize();
+        LocWriter->getBuffer();
     *LocStream << *CurrCULocationLists;
     SectionOffset += CurrCULocationLists->size();
-  }
-
-  for (std::pair<const uint64_t, VectorLocListDebugInfoPatchType> &Iter :
-       DwoLocListDebugInfoPatches) {
-    uint64_t DWOId = Iter.first;
-    SimpleBinaryPatcher *Patcher = getBinaryDWODebugInfoPatcher(DWOId);
-    for (LocListDebugInfoPatchType &Patch : Iter.second) {
-      Patcher->addLE32Patch(Patch.DebugInfoOffset,
-                            SectionOffsetByCU[Patch.CUIndex] +
-                                Patch.CUWriterOffset);
-    }
-  }
-
-  for (LocListDebugInfoPatchType &Patch : LocListDebugInfoPatches) {
-    DebugInfoPatcher.addLE32Patch(Patch.DebugInfoOffset,
-                                  SectionOffsetByCU[Patch.CUIndex] +
-                                      Patch.CUWriterOffset);
   }
 
   return LocBuffer;

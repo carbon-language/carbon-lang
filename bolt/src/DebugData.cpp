@@ -11,6 +11,7 @@
 #include "DebugData.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include "Utils.h"
 
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -262,12 +263,12 @@ DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
   LocStream = std::make_unique<raw_svector_ostream>(*LocBuffer);
 }
 
-// DWARF 4: 2.6.2
-uint64_t
-DebugLocWriter::addList(const DebugLocationsVector &LocList) {
-  if (LocList.empty())
-    return EmptyListTag;
-
+void DebugLocWriter::addList(uint64_t AttrOffset,
+                             DebugLocationsVector &&LocList) {
+  if (LocList.empty()) {
+    EmptyAttrLists.push_back(AttrOffset);
+    return;
+  }
   // Since there is a separate DebugLocWriter for each thread,
   // we don't need a lock to read the SectionOffset and update it.
   const uint32_t EntryOffset = SectionOffset;
@@ -285,58 +286,68 @@ DebugLocWriter::addList(const DebugLocationsVector &LocList) {
   }
   LocStream->write_zeros(16);
   SectionOffset += 16;
+  LocListDebugInfoPatches.push_back({AttrOffset, EntryOffset});
+}
 
-  return EntryOffset;
+void DebugLoclistWriter::addList(uint64_t AttrOffset,
+                                 DebugLocationsVector &&LocList) {
+  Patches.push_back({AttrOffset, std::move(LocList)});
+}
+
+std::unique_ptr<DebugBufferVector> DebugLocWriter::getBuffer() {
+  return std::move(LocBuffer);
+}
+
+// DWARF 4: 2.6.2
+void DebugLocWriter::finalize(uint64_t SectionOffset,
+                              SimpleBinaryPatcher &DebugInfoPatcher) {
+  for (const auto LocListDebugInfoPatchType : LocListDebugInfoPatches) {
+    uint64_t Offset = SectionOffset + LocListDebugInfoPatchType.LocListOffset;
+    DebugInfoPatcher.addLE32Patch(LocListDebugInfoPatchType.DebugInfoAttrOffset,
+                                  Offset);
+  }
+
+  for (uint64_t DebugInfoAttrOffset : EmptyAttrLists)
+    DebugInfoPatcher.addLE32Patch(DebugInfoAttrOffset,
+                                  DebugLocWriter::EmptyListOffset);
+}
+
+void DebugLoclistWriter::finalize(uint64_t SectionOffset,
+                                  SimpleBinaryPatcher &DebugInfoPatcher) {
+  for (LocPatch &Patch : Patches) {
+    if (Patch.LocList.empty()) {
+      DebugInfoPatcher.addLE32Patch(Patch.AttrOffset,
+                                    DebugLocWriter::EmptyListOffset);
+      continue;
+    }
+    const uint32_t EntryOffset = LocBuffer->size();
+    for (const DebugLocationEntry &Entry : Patch.LocList) {
+      support::endian::write(*LocStream,
+                             static_cast<uint8_t>(dwarf::DW_LLE_startx_length),
+                             support::little);
+      uint32_t Index = AddrWriter->getIndexFromAddress(Entry.LowPC, DWOId);
+      encodeULEB128(Index, *LocStream);
+
+      // TODO: Support DWARF5
+      support::endian::write(*LocStream,
+                             static_cast<uint32_t>(Entry.HighPC - Entry.LowPC),
+                             support::little);
+      support::endian::write(*LocStream,
+                             static_cast<uint16_t>(Entry.Expr.size()),
+                             support::little);
+      *LocStream << StringRef(reinterpret_cast<const char *>(Entry.Expr.data()),
+                              Entry.Expr.size());
+    }
+    support::endian::write(*LocStream,
+                           static_cast<uint8_t>(dwarf::DW_LLE_end_of_list),
+                           support::little);
+    DebugInfoPatcher.addLE32Patch(Patch.AttrOffset, EntryOffset);
+    clearList(Patch.LocList);
+  }
+  clearList(Patches);
 }
 
 DebugAddrWriter *DebugLoclistWriter::AddrWriter = nullptr;
-void DebugLoclistWriter::finalizePatches() {
-  auto numOfBytes = [](uint32_t Val) -> uint32_t {
-    int LogVal = (int)std::log2(Val) + 1;
-    uint32_t CeilVal = (LogVal + 8 - 1) / 8;
-    return !Val ? 1 : CeilVal;
-  };
-  (void)numOfBytes;
-
-  for (const auto &Patch : IndexPatches) {
-    uint32_t Index = AddrWriter->getIndexFromAddress(Patch.Address, DWOId);
-    assert(numOfBytes(Index) <= DebugLoclistWriter::NumBytesForIndex &&
-           "Index size in DebugLocation too large.");
-    std::string Buff;
-    raw_string_ostream OS(Buff);
-    encodeULEB128(Index, OS, DebugLoclistWriter::NumBytesForIndex);
-    for (uint32_t I = 0; I < DebugLoclistWriter::NumBytesForIndex; ++I) {
-      (*LocBuffer)[Patch.Offset + I] = Buff[I];
-    }
-  }
-}
-
-uint64_t DebugLoclistWriter::addList(const DebugLocationsVector &LocList) {
-  if (LocList.empty())
-    return EmptyListTag;
-  uint64_t EntryOffset = LocBuffer->size();
-
-  for (const DebugLocationEntry &Entry : LocList) {
-    support::endian::write(*LocStream,
-                           static_cast<uint8_t>(dwarf::DW_LLE_startx_length),
-                           support::little);
-    IndexPatches.emplace_back(static_cast<uint32_t>(LocBuffer->size()),
-                              Entry.LowPC);
-    LocStream->write_zeros(DebugLoclistWriter::NumBytesForIndex);
-    // TODO: Support DWARF5
-    support::endian::write(*LocStream,
-                           static_cast<uint32_t>(Entry.HighPC - Entry.LowPC),
-                           support::little);
-    support::endian::write(*LocStream, static_cast<uint16_t>(Entry.Expr.size()),
-                           support::little);
-    *LocStream << StringRef(reinterpret_cast<const char *>(Entry.Expr.data()),
-                            Entry.Expr.size());
-  }
-  support::endian::write(*LocStream,
-                         static_cast<uint8_t>(dwarf::DW_LLE_end_of_list),
-                         support::little);
-  return EntryOffset;
-}
 
 void SimpleBinaryPatcher::addBinaryPatch(uint32_t Offset,
                                          const std::string &NewValue) {
