@@ -54,10 +54,7 @@ class Expression {
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
   // The static type of this expression. Cannot be called before typechecking.
-  auto static_type() const -> Nonnull<const Value*> {
-    CHECK(static_type_.has_value());  // FIXME drop this
-    return *static_type_;
-  }
+  auto static_type() const -> Nonnull<const Value*> { return *static_type_; }
 
  protected:
   // Constructs an Expression representing syntax at the given line number.
