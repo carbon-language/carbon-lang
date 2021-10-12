@@ -61,10 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Implied constraints](#implied-constraints)
     -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
     -   [Manual type equality](#manual-type-equality)
-    -   [Restrictions](#restrictions)
-        -   [Normalized form](#normalized-form)
-        -   [Recursive constraints](#recursive-constraints-1)
-        -   [Terminating recursion](#terminating-recursion)
+        -   [`observe` declarations](#observe-declarations)
 -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
     -   [Is a derived class](#is-a-derived-class)
     -   [Type compatible with another type](#type-compatible-with-another-type)
@@ -2508,11 +2505,10 @@ type in a parameter list that is already using commas to separate parameters.
 
 #### Recursive constraints
 
-Just like we use `Self` to refer to the type implementing an interface, we
-sometimes need to constrain a type to equal one of its associated types. In this
-first example, we want to represent the function `Abs` which will return `Self`
-for some but not all types, so we use an associated type `MagnitudeType` to
-encode the return type:
+We sometimes need to constrain a type to equal one of its associated types. In
+this first example, we want to represent the function `Abs` which will return
+`Self` for some but not all types, so we use an associated type `MagnitudeType`
+to encode the return type:
 
 ```
 interface HasAbs {
@@ -2523,10 +2519,10 @@ interface HasAbs {
 ```
 
 For types representing subsets of the real numbers, such as `i32` or `f32`, the
-`MagnitudeType` will match `Self`. For types representing complex numbers, the
-types will be different. For example, the `Abs()` applied to a `Complex64` value
-would produce a `f32` result. The goal is to write a constraint to restrict to
-the first case.
+`MagnitudeType` will match `Self`, the type implementing an interface. For types
+representing complex numbers, the types will be different. For example, the
+`Abs()` applied to a `Complex64` value would produce a `f32` result. The goal is
+to write a constraint to restrict to the first case.
 
 In a second example, when you take the slice of a type implementing `Container`
 you get a type implementing `Container` which may or may not be the same type as
@@ -2535,8 +2531,8 @@ you the same type, and some functions want to only operate on containers whose
 slice type is the same.
 
 To solve this problem, we think of `Self` as an actual associated type member of
-every interface. We can then address it using `.Self` like any other associated
-type.
+every interface. We can then address it using `.Self` in a `where` clause, like
+any other associated type member.
 
 ```
 fn Relu[T:! HasAbs where .MagnitudeType == .Self](x: T) {
@@ -2566,7 +2562,7 @@ interface Container {
 }
 ```
 
-These constraints can be named:
+These recursive constraints can be named:
 
 ```
 let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
@@ -2613,9 +2609,9 @@ is only used in the body of the function, not in the parameter list.
 
 **Open question:** How should this constraint be spelled?
 
--   `T:! Type where Vector(T)`
--   `T:! Type where Vector(T) legal`
--   `T:! Type where Vector(T) is Type`
+-   `T:! Type where HashSet(T)`
+-   `T:! Type where HashSet(T) legal`
+-   `T:! Type where HashSet(T) is Type`
 
 #### Parameterized type implements interface
 
@@ -2651,7 +2647,7 @@ interface RestatesConstraint {
   // This works, since it restates the constraint on
   // `HasConstraint.T` that `U` is equal to.
   let U:! Type where Vector(.Self) is Printable;
-  // This doesn't: let U:! Type;
+  // This doesn't: ❌ let U:! Type;
   let V:! HasConstraint where .T == U;
 }
 ```
@@ -2726,6 +2722,17 @@ Further it can add noise that obscures relevant information. In practice, any
 user of these functions will have to pass in a valid `HashMap` instance, and so
 will have already satisfied these constraints.
 
+This implied constraint is equivalent to the explicit constraint that each
+parameter and return type [is legal](#must-be-legal-type-argument). So the
+actual rewrite for the `LookUp` declaration may more properly be thought of as
+to:
+
+```
+fn LookUp[KeyType:! Type]
+    (hm: HashMap(KeyType, i32)* where HashMap(KeyType, i32)* is Type,
+     k: KeyType) -> i32;
+```
+
 **Note:** These implied constraints affect the _requirements_ of a generic type
 parameter, but not its _unqualified member names_. This way you can always look
 at the declaration to see how name resolution works, without having to look up
@@ -2785,9 +2792,18 @@ interface Graph {
 
 ### Manual type equality
 
-FIXME
+Imagine we have some function with generic parameters:
 
-### Restrictions
+```
+fn F1[T:! SomeInterface](x: T) {
+  x.G(x.H());
+}
+```
+
+We want to know if the return type of method `T.H` is the same as the parameter
+type of `T.G` in order to typecheck the function.
+
+FIXME
 
 With the full expressive power of `where` clauses, determining whether two type
 expressions are equal is in general undecidable, as
@@ -2806,103 +2822,11 @@ The intent is that these restrictions:
 -   when users hit the restrictions there is a clear path of action for
     resolving the issue.
 
-The restrictions arise from the the algorithm used to answer type questions. It
-works by first rewriting `where` operations to put a declaration, like a
-function signature or interface definition, into a normalized form. FIXME:
-triggered by type checking. This normalized form can then be lazily evaluated to
-answer queries. Queries take a dotted name and return an archetype that has a
-canonical type name and a type-of-type.
+FIXME
 
-A more complete description of the normalization rewrite and querying algorithms
-can be found in [this appendix](appendix-archetype-algorithm.md).
+#### `observe` declarations
 
-#### Normalized form
-
-The normalized form for a function declaration includes generic type parameters
-and any associated types mentioned in a `where` constraint.
-
-```
-fn Sort[C:! Container where .Elt is Comparable](c: C*)
-```
-
-normalizes to:
-
-```
-* $2 :! Comparable
-  - C.Elt as Comparable
-* $1 :! Container{.Elt = $2}
-  - C as Container
-```
-
-The normalized form for an interface includes the associated types as well as
-dotted names mentioned in `where` constraints. It includes the interface's
-`Self` type and interface name to support recursive references. Given these
-interface definitions,
-
-```
-interface P {
-  let T:! F;
-}
-
-interface Q {
-  let Y:! H;
-}
-
-interface R {
-  let X:! Q;
-}
-
-interface S {
-  let A:! P;
-  let B:! R where .X.Y == A.T;
-}
-```
-
-the interface `S` normalizes to:
-
-```
-S
-* $4 :! F & H
-  - A.T as F
-  - B.X.Y as F & H
-* $3 :! Q{.Y = $4}
-  - B.X as Q
-* $2 :! P{.T = $4}
-  - A as P
-* $1 :! R{.X = $3}
-  - B as R
-* $0 :! S{.A = $2, .B = $1}
-  - Self as S
-```
-
-Note that `A.T` and `B.X.Y` both correspond to `$4`, but their types are
-slightly different, reflecting the fact that the `where` clause modifies the API
-of ` B.X.Y` but not `A.T`. The type of `A.T` is `$4 as F`, while the type of
-`B.X.Y` is just `$4` or equivalently `$4 as F & H`.
-
-Also note that `B.X` gets its own entry, as a result of `B.X.Y` being mentioned
-in a `where` constraint.
-
-#### Recursive constraints
-
-FIXME: Cases which might be rejected due to recursion
-
-#### Terminating recursion
-
-This restriction comes from the query algorithm. It imposes a condition on
-recursive references to the same interface. The rewrite to normalized form tries
-to avoid triggering this condition, so the only known examples hitting this
-restriction require mutually recursive interfaces. That would require forward
-declaration of interfaces, which is not permitted at this time, but we may add
-in the future.
-
-The query algorithm allows us to determine if two dotted names represent equal
-types by querying both and comparing canonical type names. It establishes what
-type should be used for a dotted name after constraints are taken into
-consideration. For example, in the `Sort` function declaration above, this would
-determine that `C.Elt`, `C.Iter.Elt`, `C.Slice.Elt`, and so on are all equal and
-implement `Comparable`. This is despite `Elt` as being declared `let Elt:! Type`
-in the definition of `Container`.
+FIXME
 
 ## Other constraints as type-of-types
 
