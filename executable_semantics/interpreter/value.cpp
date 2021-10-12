@@ -292,7 +292,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ContinuationValue: {
       out << "{";
       llvm::ListSeparator sep(" :: ");
-      for (Nonnull<Frame*> frame : cast<ContinuationValue>(*this).Stack()) {
+      for (Nonnull<Frame*> frame : *cast<ContinuationValue>(*this).Stack()) {
         out << sep << *frame;
       }
       out << "}";
@@ -352,8 +352,8 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
     case Value::Kind::PointerValue:
       return arena->New<PointerValue>(cast<PointerValue>(*val).Val());
     case Value::Kind::ContinuationValue:
-      // Copying a continuation is "shallow".
-      return val;
+      return arena->New<ContinuationValue>(
+          cast<ContinuationValue>(*val).Stack());
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*val);
       return arena->New<FunctionType>(

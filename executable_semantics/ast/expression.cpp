@@ -68,7 +68,7 @@ static void PrintFields(llvm::raw_ostream& out,
                         std::string_view separator) {
   llvm::ListSeparator sep;
   for (const auto& field : fields) {
-    out << sep << "." << field.name << separator << *field.expression;
+    out << sep << "." << field.name() << separator << *field.expression();
   }
 }
 
@@ -86,7 +86,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case Expression::Kind::TupleLiteral:
       out << "(";
-      PrintFields(out, cast<TupleLiteral>(*this).Fields(), " = ");
+      PrintFields(out, cast<TupleLiteral>(*this).fields(), " = ");
       out << ")";
       break;
     case Expression::Kind::StructLiteral:
