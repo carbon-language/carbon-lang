@@ -17,6 +17,7 @@
 #include "executable_semantics/interpreter/heap.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
@@ -28,7 +29,7 @@ class Interpreter {
       : arena(arena), globals(arena), heap(arena) {}
 
   // Interpret the whole program.
-  auto InterpProgram(const std::vector<Nonnull<const Declaration*>>& fs,
+  auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
                      Nonnull<const Expression*> call_main) -> int;
 
   // Interpret an expression at compile-time.
@@ -129,7 +130,7 @@ class Interpreter {
   // State transition for statements.
   auto StepStmt() -> Transition;
 
-  void InitGlobals(const std::vector<Nonnull<const Declaration*>>& fs);
+  void InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs);
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;

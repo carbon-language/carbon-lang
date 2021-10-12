@@ -49,14 +49,13 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast) {
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);
   TypeEnv top = p.types;
   Env ct_top = p.values;
-  std::vector<Nonnull<const Declaration*>> new_decls;
   for (const auto decl : ast.declarations) {
-    new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
+    type_checker.TypeCheck(decl, top, ct_top);
   }
   if (tracing_output) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
-    for (const auto decl : new_decls) {
+    for (const auto decl : ast.declarations) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** starting execution **********\n";
@@ -66,7 +65,7 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast) {
   Nonnull<Expression*> call_main = arena->New<CallExpression>(
       source_loc, arena->New<IdentifierExpression>(source_loc, "main"),
       arena->New<TupleLiteral>(source_loc));
-  int result = Interpreter(arena).InterpProgram(new_decls, call_main);
+  int result = Interpreter(arena).InterpProgram(ast.declarations, call_main);
   llvm::outs() << "result: " << result << "\n";
 }
 
