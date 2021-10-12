@@ -90,13 +90,15 @@ static void ResolveControlFlow(
   }
 }
 
-void ResolveControlFlow(Nonnull<Declaration*> declaration) {
-  if (declaration->kind() != Declaration::Kind::FunctionDeclaration) {
-    return;
-  }
-  auto& definition = cast<FunctionDeclaration>(*declaration).definition();
-  if (definition.body().has_value()) {
-    ResolveControlFlow(*definition.body(), &definition, std::nullopt);
+void ResolveControlFlow(AST& ast) {
+  for (auto declaration : ast.declarations) {
+    if (declaration->kind() != Declaration::Kind::FunctionDeclaration) {
+      continue;
+    }
+    auto& definition = cast<FunctionDeclaration>(*declaration).definition();
+    if (definition.body().has_value()) {
+      ResolveControlFlow(*definition.body(), &definition, std::nullopt);
+    }
   }
 }
 

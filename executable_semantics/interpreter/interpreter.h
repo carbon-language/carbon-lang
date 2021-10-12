@@ -153,6 +153,9 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
+  auto RunAction(Nonnull<Action*> action, Env values, bool trace_steps)
+      -> Nonnull<const Value*>;
+
   Nonnull<Arena*> arena;
 
   // Globally-defined entities, such as functions, structs, or choices.

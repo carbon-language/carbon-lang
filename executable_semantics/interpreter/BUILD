@@ -109,7 +109,7 @@ cc_library(
     hdrs = ["resolve_control_flow.h"],
     deps = [
         "//common:check",
-        "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
         "@llvm-project//llvm:Support",

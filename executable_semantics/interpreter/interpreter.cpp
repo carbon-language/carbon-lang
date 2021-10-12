@@ -71,7 +71,7 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
     out << sep << *action;
   }
   out << "\nheap: " << heap;
-  if (!todo.IsEmpty() /* && !stack.Top()->scopes.IsEmpty()*/) {
+  if (!todo.IsEmpty()) {
     out << "\nvalues: ";
     PrintEnv(CurrentEnv(), out);
   }
@@ -632,7 +632,7 @@ auto Interpreter::StepExp() -> Transition {
         }
       } else if (act->pos() == 3) {
         if (act->results().size() < 3) {
-          // Control fell through without explicit return
+          // Control fell through without explicit return.
           return Done{TupleValue::Empty()};
         } else {
           return Done{act->results()[2]};
@@ -756,6 +756,14 @@ auto Interpreter::StepPattern() -> Transition {
   }
 }
 
+static auto IsRunAction(Nonnull<Action*> action) -> bool {
+  const auto* statement = dyn_cast<StatementAction>(action);
+  if (statement == nullptr) {
+    return false;
+  }
+  return llvm::isa<Run>(*statement->Stmt());
+}
+
 auto Interpreter::StepStmt() -> Transition {
   Nonnull<Action*> act = todo.Top();
   Nonnull<const Statement*> stmt = cast<StatementAction>(*act).Stmt();
@@ -802,8 +810,8 @@ auto Interpreter::StepStmt() -> Transition {
             act->set_pos(2 * match_stmt.clauses().size() + 1);
 
             for (const auto& [name, value] : *matches) {
-              (*act->scope()).values.Set(name, value);
-              (*act->scope()).locals.push_back(name);
+              act->scope()->values.Set(name, value);
+              act->scope()->locals.push_back(name);
             }
             return Spawn{arena->New<StatementAction>(&c.statement())};
           } else {
@@ -992,16 +1000,9 @@ auto Interpreter::StepStmt() -> Transition {
       // Pause the current continuation
       todo.Pop();
       std::vector<Nonnull<Action*>> paused;
-      auto is_run = [&]() -> bool {
-        const auto* act = dyn_cast<StatementAction>(todo.Top());
-        if (act == nullptr) {
-          return false;
-        }
-        return llvm::isa<Run>(*act->Stmt());
-      };
-      while (!is_run()) {
+      while (!IsRunAction(todo.Top())) {
         paused.push_back(todo.Pop());
-      };
+      }
       const auto& continuation =
           cast<const ContinuationValue>(*todo.Top()->results()[0]);
       CHECK(continuation.Stack()->empty());
@@ -1017,21 +1018,21 @@ class Interpreter::DoTransition {
   DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
-    if (interpreter->todo.Top()->scope().has_value()) {
-      interpreter->DeallocateScope(*interpreter->todo.Top()->scope());
+    Nonnull<Action*> act = interpreter->todo.Pop();
+    if (act->scope().has_value()) {
+      interpreter->DeallocateScope(*act->scope());
     }
-    switch (interpreter->todo.Top()->kind()) {
+    switch (act->kind()) {
       case Action::Kind::ExpressionAction:
       case Action::Kind::LValAction:
       case Action::Kind::PatternAction:
         CHECK(done.result.has_value());
-        interpreter->todo.Pop();
-        CHECK(!interpreter->todo.IsEmpty());
         interpreter->todo.Top()->AddResult(*done.result);
         break;
       case Action::Kind::StatementAction:
+        CHECK(!done.result.has_value());
+        break;
       case Action::Kind::ScopeAction:
-        interpreter->todo.Pop();
         if (done.result.has_value()) {
           interpreter->todo.Top()->AddResult(*done.result);
         }
@@ -1132,6 +1133,28 @@ void Interpreter::Step() {
   }  // switch
 }
 
+// Runs `action` in a scope consisting of `values`, and returns the result.
+// `action` must produce a result. In other words, it must not be a
+// StatementAction or ScopeAction.
+//
+// TODO: consider whether to use this->tracing_output rather than a separate
+// trace_steps parameter.
+auto Interpreter::RunAction(Nonnull<Action*> action, Env values,
+                            bool trace_steps) -> Nonnull<const Value*> {
+  todo = {};
+  todo.Push(arena->New<ScopeAction>(Scope(values)));
+  todo.Push(action);
+
+  while (todo.Count() > 1) {
+    Step();
+    if (trace_steps) {
+      PrintState(llvm::outs());
+    }
+  }
+  CHECK(todo.Top()->results().size() == 1);
+  return todo.Top()->results()[0];
+}
+
 auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
                                 Nonnull<const Expression*> call_main) -> int {
   // Check that the interpreter is in a clean state.
@@ -1143,49 +1166,25 @@ auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
   }
   InitGlobals(fs);
 
-  todo = {};
-  todo.Push(arena->New<ScopeAction>(Scope(globals)));
-  todo.Push(arena->New<ExpressionAction>(call_main));
-
   if (tracing_output) {
     llvm::outs() << "********** calling main function **********\n";
     PrintState(llvm::outs());
   }
 
-  while (todo.Count() > 1) {
-    Step();
-    if (tracing_output) {
-      PrintState(llvm::outs());
-    }
-  }
-  CHECK(todo.Top()->results().size() == 1);
-  return cast<IntValue>(*todo.Top()->results()[0]).Val();
+  return cast<IntValue>(*RunAction(arena->New<ExpressionAction>(call_main),
+                                   globals, tracing_output))
+      .Val();
 }
 
 auto Interpreter::InterpExp(Env values, Nonnull<const Expression*> e)
     -> Nonnull<const Value*> {
-  todo = {};
-  todo.Push(arena->New<ScopeAction>(Scope(values)));
-  todo.Push(arena->New<ExpressionAction>(e));
-
-  while (todo.Count() > 1) {
-    Step();
-  }
-  CHECK(todo.Top()->results().size() == 1);
-  return todo.Top()->results()[0];
+  return RunAction(arena->New<ExpressionAction>(e), values,
+                   /*trace_steps=*/false);
 }
 
 auto Interpreter::InterpPattern(Env values, Nonnull<const Pattern*> p)
     -> Nonnull<const Value*> {
-  todo = {};
-  todo.Push(arena->New<ScopeAction>(Scope(values)));
-  todo.Push(arena->New<PatternAction>(p));
-
-  while (todo.Count() > 1) {
-    Step();
-  }
-  CHECK(todo.Top()->results().size() == 1);
-  return todo.Top()->results()[0];
+  return RunAction(arena->New<PatternAction>(p), values, /*trace_steps=*/false);
 }
 
 }  // namespace Carbon
