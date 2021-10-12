@@ -2905,6 +2905,54 @@ interface Container {
 name first instead of the type, we could use that name inside the type
 declaration, as in `T:! HasAbs(.MagnitudeType = T)`.
 
+FIXME: There is an important difference here, constraints equating `.Self` or
+`Self` to some other type don't change the interfaces that are implemented like
+[same type constraints](#same-type-constraints). Instead it will just check that
+the type represented by `Self` or `.Self` satisfies the constraints on the other
+type.
+
+Example: This does not type check:
+
+```
+interface A {
+    let Q:! E;
+    let P:! E;
+    let Y:! A where .Q == Q and .P == Q;
+}
+
+interface B {
+    let X:! A where .Y == .Self;
+}
+```
+
+But this does:
+
+```
+interface A {
+    let Q:! E;
+    let P:! E;
+    let Y:! A where .Q == Q and .P == Q;
+}
+
+interface B {
+    let X:! A where .Y == .Self and .P == .Q;
+}
+```
+
+And this does:
+
+```
+interface A {
+    let Q:! E;
+    let P:! E;
+    let Y:! A where .Q == Q;
+}
+
+interface B {
+    let X:! A where .Y == .Self;
+}
+```
+
 #### Type inequality
 
 TODO: inequality type constraints (for example "type is not `Bool`").
