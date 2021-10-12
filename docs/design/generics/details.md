@@ -2795,34 +2795,48 @@ interface Graph {
 Imagine we have some function with generic parameters:
 
 ```
-fn F1[T:! SomeInterface](x: T) {
+fn F[T:! SomeInterface](x: T) {
   x.G(x.H());
 }
 ```
 
 We want to know if the return type of method `T.H` is the same as the parameter
-type of `T.G` in order to typecheck the function.
-
-FIXME
-
-With the full expressive power of `where` clauses, determining whether two type
-expressions are equal is in general undecidable, as
+type of `T.G` in order to typecheck the function. However, determining whether
+two type expressions are transitively equal is in general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
-In practice this means that a compiler would reject some legal programs based on
-heuristics simply to avoid running for an unbounded length of time.
 
-For Carbon, we instead introduce restrictions on `where` clauses so that type
-questions can be decided by an efficient algorithm. This is an important part of
-achieving
-[Carbon's goal of fast and scalable development](/docs/project/goals.md#fast-and-scalable-development).
-The intent is that these restrictions:
+Carbon's approach is to only allow implicit conversions between two type
+expressions that are constrained to be equal in a single where clause. This
+means that if two type expressions are only transitively equal, the user will
+need to include a sequence of casts or use an
+[`observe` declaration](#observe-declarations) to convert between them.
 
--   are understandable to users,
--   allow most use cases that arise in practice, and
--   when users hit the restrictions there is a clear path of action for
-    resolving the issue.
+FIXME: Examples of what this means in practice
 
-FIXME
+**Comparison to other languages:** Other languages such as Swift and Rust
+instead perform automatic type equality. In practice this means that their
+compiler can reject some legal programs based on heuristics simply to avoid
+running for an unbounded length of time.
+
+The benefits of the manual approach include:
+
+-   fast compilation, since the compiler does not need to explore a potentially
+    large set of combinations of equality restrictions, supporting
+    [Carbon's goal of fast and scalable development](/docs/project/goals.md#fast-and-scalable-development);
+-   expressive and predictable semantics, since there are no limitations on how
+    complex a set of constraints can be supported; and
+-   simplicity.
+
+The main downsides are:
+
+-   manual work for the source code author to prove to the compiler that types
+    are equal; and
+-   verbosity.
+
+We expect that rich error messages and IDE tooling will be able to suggest
+changes to the source code when a single equality constraint is not sufficient
+to show two type expressions are equal, but a more extensive automated search
+can find a sequence that prove they are equal.
 
 #### `observe` declarations
 
