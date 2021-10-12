@@ -61,7 +61,7 @@ TEST_F(PatternTest, UnaryNoCommaAsPattern) {
   // )
   // ```
   ParenContents<Pattern> contents = {
-      .elements = {{.term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = false};
 
   Nonnull<const Pattern*> pattern =
@@ -72,7 +72,7 @@ TEST_F(PatternTest, UnaryNoCommaAsPattern) {
 
 TEST_F(PatternTest, UnaryNoCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = false};
 
   Nonnull<const TuplePattern*> tuple =
@@ -83,7 +83,7 @@ TEST_F(PatternTest, UnaryNoCommaAsTuplePattern) {
 
 TEST_F(PatternTest, UnaryWithCommaAsPattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const Pattern*> pattern =
@@ -96,7 +96,7 @@ TEST_F(PatternTest, UnaryWithCommaAsPattern) {
 
 TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const TuplePattern*> tuple =
@@ -107,8 +107,8 @@ TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
 
 TEST_F(PatternTest, BinaryAsPattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.term = arena.New<AutoPattern>(FakeSourceLoc(2))},
-                   {.term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2)),
+                   arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const Pattern*> pattern =
@@ -121,8 +121,8 @@ TEST_F(PatternTest, BinaryAsPattern) {
 
 TEST_F(PatternTest, BinaryAsTuplePattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.term = arena.New<AutoPattern>(FakeSourceLoc(2))},
-                   {.term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2)),
+                   arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const TuplePattern*> tuple =

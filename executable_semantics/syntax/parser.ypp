@@ -127,14 +127,14 @@
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <Nonnull<Member*>> member
 %type <std::vector<Nonnull<Member*>>> member_list
-%type <ParenContents<Expression>::Element> paren_expression_element
+%type <Nonnull<Expression*>> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
 %type <Nonnull<Pattern*>> paren_pattern
 %type <Nonnull<TuplePattern*>> tuple_pattern
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
-%type <ParenContents<Pattern>::Element> paren_pattern_element
+%type <Nonnull<Pattern*>> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
 %type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
@@ -396,9 +396,10 @@ paren_expression: paren_expression_base
 tuple: paren_expression_base
     { $$ = TupleExpressionFromParenContents(arena, context.source_loc(), $1); }
 ;
+// FIXME drop this rule?
 paren_expression_element:
   expression
-    { $$ = {.term = $1}; }
+    { $$ = $1; }
 ;
 paren_expression_base:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -509,7 +510,7 @@ paren_pattern_contents:
 | paren_pattern_contents COMMA paren_expression_element
     {
       $$ = $1;
-      $$.elements.push_back({.term = arena->New<ExpressionPattern>($3.term)});
+      $$.elements.push_back(arena->New<ExpressionPattern>($3));
     }
 | paren_pattern_contents COMMA paren_pattern_element
     {
@@ -519,7 +520,7 @@ paren_pattern_contents:
 ;
 paren_pattern_element:
   non_expression_pattern
-    { $$ = {.term = $1}; }
+    { $$ = $1; }
 ;
 tuple_pattern: paren_pattern_base
     { $$ = TuplePatternFromParenContents(arena, context.source_loc(), $1); }

@@ -63,7 +63,7 @@ TEST_F(ExpressionTest, UnaryNoCommaAsExpression) {
   // )
   // ```
   ParenContents<Expression> contents = {
-      .elements = {{.term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
+      .elements = {arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
       .has_trailing_comma = false};
 
   Nonnull<const Expression*> expression =
@@ -74,7 +74,7 @@ TEST_F(ExpressionTest, UnaryNoCommaAsExpression) {
 
 TEST_F(ExpressionTest, UnaryNoCommaAsTuple) {
   ParenContents<Expression> contents = {
-      .elements = {{.term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
+      .elements = {arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
       .has_trailing_comma = false};
 
   Nonnull<const Expression*> tuple =
@@ -87,7 +87,7 @@ TEST_F(ExpressionTest, UnaryNoCommaAsTuple) {
 
 TEST_F(ExpressionTest, UnaryWithCommaAsExpression) {
   ParenContents<Expression> contents = {
-      .elements = {{.term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
+      .elements = {arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
       .has_trailing_comma = true};
 
   Nonnull<const Expression*> expression =
@@ -100,7 +100,7 @@ TEST_F(ExpressionTest, UnaryWithCommaAsExpression) {
 
 TEST_F(ExpressionTest, UnaryWithCommaAsTuple) {
   ParenContents<Expression> contents = {
-      .elements = {{.term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)}},
+      .elements = {arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
       .has_trailing_comma = true};
 
   Nonnull<const Expression*> tuple =
@@ -113,8 +113,8 @@ TEST_F(ExpressionTest, UnaryWithCommaAsTuple) {
 
 TEST_F(ExpressionTest, BinaryAsExpression) {
   ParenContents<Expression> contents = {
-      .elements = {{.term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
-                   {.term = arena.New<IntLiteral>(FakeSourceLoc(3), 42)}},
+      .elements = {arena.New<IntLiteral>(FakeSourceLoc(2), 42),
+                   arena.New<IntLiteral>(FakeSourceLoc(3), 42)},
       .has_trailing_comma = true};
 
   Nonnull<const Expression*> expression =
@@ -127,8 +127,8 @@ TEST_F(ExpressionTest, BinaryAsExpression) {
 
 TEST_F(ExpressionTest, BinaryAsTuple) {
   ParenContents<Expression> contents = {
-      .elements = {{.term = arena.New<IntLiteral>(FakeSourceLoc(2), 42)},
-                   {.term = arena.New<IntLiteral>(FakeSourceLoc(3), 42)}},
+      .elements = {arena.New<IntLiteral>(FakeSourceLoc(2), 42),
+                   arena.New<IntLiteral>(FakeSourceLoc(3), 42)},
       .has_trailing_comma = true};
 
   Nonnull<const Expression*> tuple =
