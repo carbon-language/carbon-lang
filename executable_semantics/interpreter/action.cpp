@@ -22,7 +22,7 @@ namespace Carbon {
 using llvm::cast;
 
 void Action::Print(llvm::raw_ostream& out) const {
-  switch (Tag()) {
+  switch (kind()) {
     case Action::Kind::LValAction:
       out << *cast<LValAction>(*this).Exp();
       break;
@@ -36,11 +36,11 @@ void Action::Print(llvm::raw_ostream& out) const {
       cast<StatementAction>(*this).Stmt()->PrintDepth(1, out);
       break;
   }
-  out << "<" << pos << ">";
-  if (results.size() > 0) {
+  out << "<" << pos_ << ">";
+  if (results_.size() > 0) {
     out << "(";
     llvm::ListSeparator sep;
-    for (auto& result : results) {
+    for (auto& result : results_) {
       out << sep << *result;
     }
     out << ")";

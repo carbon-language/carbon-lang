@@ -7,14 +7,10 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/return/fail_auto.carbon:14: syntax error, unexpected AUTO
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/struct/fail_field_access_mismatch.carbon:15: struct {.x: i32, .y: i32} does not have a field named z
 
 package ExecutableSemanticsTest api;
 
-fn F() -> auto {
-  return 0;
-}
-
 fn main() -> i32 {
-  return F();
+  return {.x = 1, .y = 2}.z - 1;
 }

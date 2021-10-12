@@ -28,20 +28,21 @@ template <typename Term>
 struct ParenContents {
   struct Element {
     std::optional<std::string> name;
-    Nonnull<const Term*> term;
+    Nonnull<Term*> term;
   };
 
   // If this object represents a single term, with no name and no trailing
   // comma, this method returns that term. This typically means the parentheses
   // can be interpreted as grouping.
-  auto SingleTerm() const -> std::optional<Nonnull<const Term*>>;
+  auto SingleTerm() const -> std::optional<Nonnull<Term*>>;
 
   // Converts `elements` to std::vector<TupleElement>. TupleElement must
-  // have a constructor that takes a std::string and a Nonnull<const Term*>.
+  // have a constructor that takes a std::string and a Nonnull<Term*>.
   //
   // TODO: Find a way to deduce TupleElement from Term.
   template <typename TupleElement>
-  auto TupleElements(SourceLocation loc) const -> std::vector<TupleElement>;
+  auto TupleElements(SourceLocation source_loc) const
+      -> std::vector<TupleElement>;
 
   std::vector<Element> elements;
   bool has_trailing_comma;
@@ -50,8 +51,7 @@ struct ParenContents {
 // Implementation details only below here.
 
 template <typename Term>
-auto ParenContents<Term>::SingleTerm() const
-    -> std::optional<Nonnull<const Term*>> {
+auto ParenContents<Term>::SingleTerm() const -> std::optional<Nonnull<Term*>> {
   if (elements.size() == 1 && !elements.front().name.has_value() &&
       !has_trailing_comma) {
     return elements.front().term;
@@ -62,7 +62,7 @@ auto ParenContents<Term>::SingleTerm() const
 
 template <typename Term>
 template <typename TupleElement>
-auto ParenContents<Term>::TupleElements(SourceLocation loc) const
+auto ParenContents<Term>::TupleElements(SourceLocation source_loc) const
     -> std::vector<TupleElement> {
   std::vector<TupleElement> result;
   int i = 0;
@@ -73,7 +73,7 @@ auto ParenContents<Term>::TupleElements(SourceLocation loc) const
       result.push_back(TupleElement(*element.name, element.term));
     } else {
       if (seen_named_member) {
-        FATAL_PROGRAM_ERROR(loc)
+        FATAL_PROGRAM_ERROR(source_loc)
             << "positional members must come before named members";
       }
       result.push_back(TupleElement(std::to_string(i), element.term));

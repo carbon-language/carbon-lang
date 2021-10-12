@@ -11,7 +11,9 @@ namespace Carbon {
 TEST(CheckTest, CheckTrue) { CHECK(true); }
 
 TEST(CheckTest, CheckFalse) {
-  ASSERT_DEATH({ CHECK(false); }, "CHECK failure: false\n");
+  // TODO: figure out why we can't use \\d+ instead of .+ in these patterns.
+  ASSERT_DEATH({ CHECK(false); },
+               "CHECK failure at common/check_test.cpp:.+: false\n");
 }
 
 TEST(CheckTest, CheckTrueCallbackNotUsed) {
@@ -25,7 +27,8 @@ TEST(CheckTest, CheckTrueCallbackNotUsed) {
 }
 
 TEST(CheckTest, CheckFalseMessage) {
-  ASSERT_DEATH({ CHECK(false) << "msg"; }, "CHECK failure: false: msg\n");
+  ASSERT_DEATH({ CHECK(false) << "msg"; },
+               "CHECK failure at common/check_test.cpp:.+: false: msg\n");
 }
 
 TEST(CheckTest, CheckOutputForms) {
@@ -36,13 +39,15 @@ TEST(CheckTest, CheckOutputForms) {
 }
 
 TEST(CheckTest, Fatal) {
-  ASSERT_DEATH({ FATAL() << "msg"; }, "FATAL: msg\n");
+  ASSERT_DEATH({ FATAL() << "msg"; },
+               "FATAL failure at common/check_test.cpp:.+: msg\n");
 }
 
 auto FatalNoReturnRequired() -> int { FATAL() << "msg"; }
 
 TEST(ErrorTest, FatalNoReturnRequired) {
-  ASSERT_DEATH({ FatalNoReturnRequired(); }, "FATAL: msg\n");
+  ASSERT_DEATH({ FatalNoReturnRequired(); },
+               "FATAL failure at common/check_test.cpp:.+: msg\n");
 }
 
 }  // namespace Carbon

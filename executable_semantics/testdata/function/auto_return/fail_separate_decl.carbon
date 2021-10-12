@@ -2,17 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_separate_decl.carbon:15: syntax error, unexpected SEMICOLON, expecting LEFT_CURLY_BRACE
 
 package ExecutableSemanticsTest api;
 
-fn add(x: i32, y: i32) => x + y;
+// This declaration is not allowed.
+fn Add(x: i32, y: i32) -> auto;
+
+fn Add(x: i32, y: i32) -> auto { return x + y; }
 
 fn main() -> i32 {
-  return add(1, 2) - 3;
+  return Add(1, 2) - 3;
 }

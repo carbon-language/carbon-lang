@@ -7,26 +7,10 @@
 // RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: 3
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
-// Test the way in which copying of continuations interacts with data
-// on the stack such as the variable `x`. In this example the copy
-// happens after the variable `x` is created.
-
-var y: i32 = 0;
-
 fn main() -> i32 {
-  __continuation k1 {
-    var x: i32 = 0;
-    x = x + 1;
-    __await;
-    x = x + 2;
-    y = x;
-  }
-  __run k1;
-  var k2: __Continuation = k1;
-  __run k2;
-  return y;
+  return {.x = 1, .y = 2}.x - 1;
 }

@@ -32,35 +32,47 @@ class TypeChecker {
     Env values;
   };
 
-  auto MakeTypeChecked(const Nonnull<const Declaration*> d,
-                       const TypeEnv& types, const Env& values)
-      -> Nonnull<const Declaration*>;
+  void TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
+                 const Env& values);
 
-  auto TopLevel(const std::vector<Nonnull<const Declaration*>>& fs)
-      -> TypeCheckContext;
+  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
 
  private:
-  struct TCExpression {
-    TCExpression(Nonnull<const Expression*> e, Nonnull<const Value*> t,
-                 TypeEnv types)
-        : exp(e), type(t), types(types) {}
+  // Context about the return type, which may be updated during type checking.
+  class ReturnTypeContext {
+   public:
+    // If orig_return_type is auto, deduced_return_type_ will be nullopt;
+    // otherwise, it's orig_return_type. is_auto_ is set accordingly.
+    ReturnTypeContext(Nonnull<const Value*> orig_return_type, bool is_omitted);
 
-    Nonnull<const Expression*> exp;
-    Nonnull<const Value*> type;
-    TypeEnv types;
+    auto is_auto() const -> bool { return is_auto_; }
+
+    auto deduced_return_type() const -> std::optional<Nonnull<const Value*>> {
+      return deduced_return_type_;
+    }
+    void set_deduced_return_type(Nonnull<const Value*> type) {
+      deduced_return_type_ = type;
+    }
+
+    auto is_omitted() const -> bool { return is_omitted_; }
+
+   private:
+    // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.
+    const bool is_auto_;
+
+    // The actual return type. May be nullopt for an `auto` return type that has
+    // yet to be determined.
+    std::optional<Nonnull<const Value*>> deduced_return_type_;
+
+    // Indicates the return type was omitted and is implicitly the empty tuple,
+    // as in `fn Foo() {}`.
+    const bool is_omitted_;
   };
 
-  struct TCPattern {
-    Nonnull<const Pattern*> pattern;
+  struct TCResult {
+    TCResult(Nonnull<const Value*> t, TypeEnv types) : type(t), types(types) {}
+
     Nonnull<const Value*> type;
-    TypeEnv types;
-  };
-
-  struct TCStatement {
-    TCStatement(Nonnull<const Statement*> s, TypeEnv types)
-        : stmt(s), types(types) {}
-
-    Nonnull<const Statement*> stmt;
     TypeEnv types;
   };
 
@@ -75,16 +87,16 @@ class TypeChecker {
   // types maps variable names to the type of their run-time value.
   // values maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  auto TypeCheckExp(Nonnull<const Expression*> e, TypeEnv types, Env values)
-      -> TCExpression;
+  auto TypeCheckExp(Nonnull<Expression*> e, TypeEnv types, Env values)
+      -> TCResult;
 
   // Equivalent to TypeCheckExp, but operates on Patterns instead of
   // Expressions. `expected` is the type that this pattern is expected to have,
   // if the surrounding context gives us that information. Otherwise, it is
   // nullopt.
-  auto TypeCheckPattern(Nonnull<const Pattern*> p, TypeEnv types, Env values,
+  auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
                         std::optional<Nonnull<const Value*>> expected)
-      -> TCPattern;
+      -> TCResult;
 
   // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
   // version of the statement and a new type environment.
@@ -93,33 +105,34 @@ class TypeChecker {
   // declared return type of the enclosing function definition.  If the return
   // type is "auto", then the return type is inferred from the first return
   // statement.
-  auto TypeCheckStmt(Nonnull<const Statement*> s, TypeEnv types, Env values,
-                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
-      -> TCStatement;
+  auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values,
+                     Nonnull<ReturnTypeContext*> return_type_context)
+      -> TCResult;
 
-  auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
-      -> Nonnull<const FunctionDefinition*>;
+  auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
+      -> TCResult;
 
-  auto TypeCheckCase(Nonnull<const Value*> expected,
-                     Nonnull<const Pattern*> pat,
-                     Nonnull<const Statement*> body, TypeEnv types, Env values,
-                     Nonnull<const Value*>& ret_type, bool is_omitted_ret_type)
-      -> std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>;
+  auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
+                     Nonnull<Statement*> body, TypeEnv types, Env values,
+                     Nonnull<ReturnTypeContext*> return_type_context)
+      -> Match::Clause;
 
-  auto TypeOfFunDef(TypeEnv types, Env values,
-                    const FunctionDefinition* fun_def) -> Nonnull<const Value*>;
+  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDefinition* fun_def)
+      -> Nonnull<const Value*>;
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
       -> Nonnull<const Value*>;
 
-  void TopLevel(const Declaration& d, TypeCheckContext* tops);
+  void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
-  auto CheckOrEnsureReturn(std::optional<Nonnull<const Statement*>> opt_stmt,
-                           bool omitted_ret_type, SourceLocation loc)
-      -> Nonnull<const Statement*>;
+  // Verifies that opt_stmt holds a statement, and it is structurally impossible
+  // for control flow to leave that statement except via a `return`.
+  void ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
+                              SourceLocation source_loc);
 
-  // Reify type to type expression.
-  auto ReifyType(Nonnull<const Value*> t, SourceLocation loc)
-      -> Nonnull<const Expression*>;
+  // Verifies that *value represents a concrete type, as opposed to a
+  // type pattern or a non-type value.
+  void ExpectIsConcreteType(SourceLocation source_loc,
+                            Nonnull<const Value*> value);
 
   auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
       -> Nonnull<const Value*>;
