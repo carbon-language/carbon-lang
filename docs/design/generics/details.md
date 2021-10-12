@@ -3313,7 +3313,7 @@ a type to an implementation of an interface parameterized by that type.
 #### Generic associated types
 
 Generic associated types are about when this is a requirement of an interface.
-These are also called associated type constructors.
+These are also called "associated type constructors."
 
 #### Higher-ranked types
 
