@@ -1046,10 +1046,9 @@ class Interpreter::DoTransition {
   }
 
   void operator()(const Delegate& delegate) {
-    std::optional<Scope>& scope = interpreter->todo.Top()->scope();
-    interpreter->todo.Pop();
-    if (scope.has_value()) {
-      delegate.delegate->StartScope(*scope);
+    Nonnull<Action*> act = interpreter->todo.Pop();
+    if (act->scope().has_value()) {
+      delegate.delegate->StartScope(*act->scope());
     }
     interpreter->todo.Push(delegate.delegate);
   }
