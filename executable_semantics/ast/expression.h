@@ -19,6 +19,8 @@
 
 namespace Carbon {
 
+class Value;
+
 class Expression {
  public:
   enum class Kind {
@@ -51,6 +53,18 @@ class Expression {
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
+  // The static type of this expression. Cannot be called before typechecking.
+  auto static_type() const -> Nonnull<const Value*> { return *static_type_; }
+
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -61,6 +75,8 @@ class Expression {
  private:
   const Kind kind_;
   SourceLocation source_loc_;
+
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
