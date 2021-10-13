@@ -946,8 +946,7 @@ void TypeChecker::ExpectReturnOnAllPaths(
       if (!IsExhaustive(match)) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "non-exhaustive match may allow control-flow to reach the end "
-               "of "
-               "function that provides a `->` return type";
+               "of a function that provides a `->` return type";
       }
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
