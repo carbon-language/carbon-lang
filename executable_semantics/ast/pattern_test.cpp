@@ -19,8 +19,7 @@ using llvm::isa;
 using testing::ElementsAre;
 using testing::IsEmpty;
 
-// Matches a Pattern whose kind is `AutoPattern`.
-// FIXME do we need this?
+// Matches any `AutoPattern`.
 MATCHER(AutoField, "") { return isa<AutoPattern>(*arg); }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {

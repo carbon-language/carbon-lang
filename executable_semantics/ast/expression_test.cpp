@@ -19,8 +19,7 @@ using llvm::cast;
 using testing::ElementsAre;
 using testing::IsEmpty;
 
-// Matches a an `IntLiteral`.
-// FIXME do we need this?
+// Matches any `IntLiteral`.
 MATCHER(IntField, "") { return arg->kind() == Expression::Kind::IntLiteral; }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {

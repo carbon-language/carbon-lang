@@ -133,9 +133,9 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValue>(*value).Elements();
-      // FIXME yuck
-      size_t index = static_cast<size_t>(std::atoi(path_begin->c_str()));
-      if (index >= elements.size()) {
+      // TODO(geoffromer): update FieldPath to hold integers as well as strings.
+      int index = std::stoi(*path_begin);
+      if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
         FATAL_RUNTIME_ERROR(source_loc)
             << "index " << *path_begin << " out of range in " << *value;
       }

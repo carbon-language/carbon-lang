@@ -1189,16 +1189,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
       Address a = interpreter.AllocateValue(st);
       tops->values.Set(class_def.name(), a);  // Is this obsolete?
-      std::vector<Nonnull<const Value*>> field_types;
-      for (const auto& [field_name, field_value] :
-           cast<NominalClassType>(*st).Fields()) {
-        field_types.push_back(field_value);
-      }
-      // FIXME do we need this?
-      auto fun_ty = arena->New<FunctionType>(
-          std::vector<GenericBinding>(),
-          arena->New<TupleValue>(std::move(field_types)), st);
-      tops->types.Set(class_def.name(), fun_ty);
+      tops->types.Set(class_def.name(), st);
       break;
     }
 
