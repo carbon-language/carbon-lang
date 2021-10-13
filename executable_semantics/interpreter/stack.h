@@ -16,8 +16,8 @@ namespace Carbon {
 // A stack data structure.
 template <class T>
 struct Stack {
-  using const_iterator =  // NOLINT
-      typename std::vector<T>::const_reverse_iterator;
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  using const_iterator = typename std::vector<T>::const_reverse_iterator;
 
   // Creates an empty instance.
   Stack() = default;

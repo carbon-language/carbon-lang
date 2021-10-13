@@ -33,11 +33,16 @@ class Dictionary {
 
   // A forward iterator over elements of a `Node` list.
   struct Iterator {
-    using value_type = typename Node::ValueType;          // NOLINT
-    using difference_type = std::ptrdiff_t;               // NOLINT
-    using pointer = const value_type*;                    // NOLINT
-    using reference = const value_type&;                  // NOLINT
-    using iterator_category = std::forward_iterator_tag;  // NOLINT
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    using value_type = typename Node::ValueType;
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    using difference_type = std::ptrdiff_t;
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    using pointer = const value_type*;
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    using reference = const value_type&;
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    using iterator_category = std::forward_iterator_tag;
 
     explicit Iterator(std::optional<Nonnull<Node*>> x) : p(x) {}
     Iterator(const Iterator& iter) : p(iter.p) {}
