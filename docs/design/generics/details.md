@@ -2811,7 +2811,111 @@ means that if two type expressions are only transitively equal, the user will
 need to include a sequence of casts or use an
 [`observe` declaration](#observe-declarations) to convert between them.
 
-FIXME: Examples of what this means in practice
+Given this interface `Transitive` that has associated types that are constrained
+to all be equal, with interfaces `P`, `Q`, and `R`:
+
+```
+interface P { fn InP[me:Self](); }
+interface Q { fn InQ[me:Self](); }
+interface R { fn InR[me:Self](); }
+
+interface Transitive {
+  let A:! P;
+  let B:! Q where .Self == A;
+  let C:! R where .Self == B;
+
+  fn GetA[me: Self]() -> A;
+  fn TakesC[me:Self](c: C);
+}
+```
+
+A cast to `B` is needed to call `TakesC` with a value of type `A`, so each step
+only relies on one equality:
+
+```
+fn F[T:! Transitive](t: T) {
+  // Allowed
+  t.TakesC(t.GetA() as T.B);
+
+  // Allowed
+  let b: T.B = t.GetA();
+  t.TakesC(b);
+
+  // Not allowed: t.TakesC(t.GetA());
+}
+```
+
+A value of type `A`, such as the return value of `GetA()`, has the API of `P`.
+Any such value also implements `Q`, and since the compiler can see that by way
+of a single `where` equality, values of type `A` are treated as if they
+implement `Q` externally. However, the compiler will require a cast to `B` or
+`C` to see that the type implements `R`.
+
+```
+fn TakesPQR[U:! P & Q & R](u: U);
+
+fn G[T:! Transitive](t: T) {
+  var a: T.A = t.GetA();
+
+  // Allowed: `T.A` implements `P`.
+  a.InP();
+
+  // Allowed: `T.A` implements `Q` externally.
+  a.(Q.InQ)();
+
+  // Not allowed: a.InQ();
+
+  // Allowed: values of type `T.A` may be cast
+  // to `T.B`, which implements `Q`.
+  (a as T.B).InQ();
+
+  // Allowed: `T.B` implements `R` externally.
+  (a as T.B).(R.InR)();
+
+  // Not allowed: TakesPQR(a);
+
+  // Allowed: `T.B` implements `P`, `Q`, and
+  // `R`, though the implementations of `P`
+  // and `R` are external.
+  TakesPQR(a as T.B);
+}
+```
+
+The compiler may have several different `where` clauses to consider,
+particularly when an interface has associated types that recursively satisfy the
+same interface. For example, given this interface `Commute`:
+
+```
+interface Commute {
+  let X:! Commute;
+  let Y:! Commute where .X == X.Y;
+
+  fn GetX[me: Self]() -> X;
+  fn GetY[me: Self]() -> Y;
+  fn TakesXXY[me:Self](xxy: X.X.Y);
+}
+```
+
+and a function `H` taking a value with some type implementing this interface,
+then the following would be legal statements in `H`:
+
+```
+fn H[C: Commute](c: C) {
+  // Legal: argument has type `C.X.X.Y`
+  c.TakesXXY(c.GetX().GetX().GetY());
+
+  // Legal: argument has type `C.X.Y.X` which is equal
+  // to `C.X.X.Y` following only one `where` clause.
+  c.TakesXXY(c.GetX().GetY().GetX());
+
+  // Legal: cast is legal since it matches a `where`
+  // clause, and produces an argument that has type
+  // `C.X.Y.X`.
+  c.TakesXXY(c.GetY().GetX().GetX() as C.X.Y.X);
+}
+```
+
+That last call would not be legal without the cast, though.
 
 **Comparison to other languages:** Other languages such as Swift and Rust
 instead perform automatic type equality. In practice this means that their
@@ -2840,13 +2944,87 @@ can find a sequence that prove they are equal.
 
 #### `observe` declarations
 
-FIXME
+An `observe` declaration lists a sequence of type expressions that are equal by
+some same-type `where` constraints. These `observe` declarations may be included
+in an `interface` definition or a function body, as in:
+
+```
+interface Commute {
+  let X:! Commute;
+  let Y:! Commute where .X == X.Y;
+  ...
+  observe X.X.Y == X.Y.X == Y.X.X;
+}
+
+fn H[C: Commute](c: C) {
+  observe C.X.Y.Y == C.Y.X.Y == C.Y.Y.X;
+  ...
+}
+```
+
+Every type expression after the first must be equal to some earlier type
+expression in the sequence by a single `where` equality constraint. In this
+example,
+
+```
+interface Commute {
+  let X:! Commute;
+  let Y:! Commute where .X == X.Y;
+  ...
+  // Legal:
+  observe X.X.Y.Y == X.Y.X.Y == Y.X.X.Y == X.Y.Y.X;
+}
+```
+
+the expression `X.Y.Y.X` is one equality away from `X.Y.X.Y` and so it is
+allowed. This is even though `X.Y.X.Y` isn't the type expression immediately
+prior to `X.Y.Y.X`.
+
+After an `observe` declaration, all of the listed type expressions are
+considered equal to each other using a single `where` equality. In this example,
+the `observe` declaration in the `Transitive` interface definition provides the
+link between associated types `A` and `C` that allows function `F` to type
+check.
+
+```
+interface P { fn InP[me:Self](); }
+interface Q { fn InQ[me:Self](); }
+interface R { fn InR[me:Self](); }
+
+interface Transitive {
+  let A:! P;
+  let B:! Q where .Self == A;
+  let C:! R where .Self == B;
+
+  fn GetA[me: Self]() -> A;
+  fn TakesC[me:Self](c: C);
+
+  // Without this `observe` statement, the
+  // calls in `F` below would not be allowed.
+  observe A == B == C;
+}
+
+fn TakesPQR[U:! P & Q & R](u: U);
+
+fn F[T:! Transitive](t: T) {
+  var a: T.A = t.GetA();
+
+  // Allowed: `T.A` == `T.C`
+  t.TakesC(a);
+  a.(R.InR());
+
+  // Allowed: `T.A` implements `P`,
+  // `T.A` == `T.B` that implements `Q`, and
+  // `T.A` == `T.C` that implements `R`.
+  TakesPQR(a);
+}
+```
 
 ## Other constraints as type-of-types
 
 There are some constraints that we will naturally represent as named
 type-of-types. These can either be used directly to constrain a generic type
-parameter, or in a `where` clause to constrain an associated type.
+parameter, or in a `where ... is ...` clause to constrain an associated type.
 
 ### Is a derived class
 
@@ -2958,7 +3136,9 @@ Used as:
 class Song { ... }
 adapter SongByArtist for Song { impl as Comparable { ... } }
 adapter SongByTitle for Song { impl as Comparable { ... } }
-assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
+var s1: Song = ...;
+var s2: Song = ...;
+assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
 ```
 
 We might generalize this to a list of implementations:
@@ -3002,9 +3182,9 @@ adapter ThenCompare(T:! Type,
 }
 
 let SongByArtistThenTitle = ThenCompare(Song, (SongByArtist, SongByTitle));
-var song: Song = ...;
-var song2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
-assert((song as SongByArtistThenTitle).Compare(song2) == CaompareResult.Less);
+var s1: Song = ...;
+var s2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
+assert((s1 as SongByArtistThenTitle).Compare(s2) == CompareResult.Less);
 ```
 
 ### Type facet of another type
@@ -3118,8 +3298,11 @@ pointers to the type, you would write `T:! Type` and get the efficiency of
 fn SortByAddress[T:! Type](v: Vector(T*)*) { ... }
 ```
 
-In particular, we should in general avoid monomorphizing to generate multiple
-instantiations of the function in this case.
+In particular, the compiler should in general avoid monomorphizing to generate
+multiple instantiations of the function in this case.
+
+**Note:** To achieve this goal, the user will not even be allowed to destroy a
+value of type `T` in this case.
 
 **Open question:** Should `TypeId` be implemented externally for types to avoid
 name pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
