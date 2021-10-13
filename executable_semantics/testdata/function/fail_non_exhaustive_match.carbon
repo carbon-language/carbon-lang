@@ -2,20 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_non_exhaustive_match.carbon:18: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
 
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {
-  var t: auto = (1, 2, 3, 4);
-  match (t) {
-    case (_: i32, _: auto, x: i32, y: auto) =>
-      return y - x - 1;
+  match (0) {
+    case 1 => return 0;
   }
-  return 1;
 }
