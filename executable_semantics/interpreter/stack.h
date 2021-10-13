@@ -16,7 +16,8 @@ namespace Carbon {
 // A stack data structure.
 template <class T>
 struct Stack {
-  using ConstIterator = typename std::vector<T>::const_reverse_iterator;
+  using const_iterator =  // NOLINT
+      typename std::vector<T>::const_reverse_iterator;
 
   // Creates an empty instance.
   Stack() = default;
@@ -62,8 +63,8 @@ struct Stack {
   [[nodiscard]] auto Count() const -> int { return elements.size(); }
 
   // Iterates over the Stack from top to bottom.
-  ConstIterator begin() const { return elements.crbegin(); }
-  ConstIterator end() const { return elements.crend(); }
+  auto begin() const -> const_iterator { return elements.crbegin(); }
+  auto end() const -> const_iterator { return elements.crend(); }
 
  private:
   std::vector<T> elements;
