@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Keywords](#keywords)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -26,6 +27,50 @@ follow lexical conventions for identifiers based on
 [Unicode Annex #31](https://unicode.org/reports/tr31/). TODO: Update this once
 the precise rules are decided; see the
 [Unicode source files](/proposals/p0142.md#characters-in-identifiers) proposal.
+
+## Keywords
+
+The following words are interpreted as keywords:
+
+-   `abstract`
+-   `addr`
+-   `alias`
+-   `and`
+-   `api`
+-   `auto`
+-   `base`
+-   `break`
+-   `case`
+-   `class`
+-   `continue`
+-   `default`
+-   `else`
+-   `extends`
+-   `external`
+-   `fn`
+-   `for`
+-   `friend`
+-   `if`
+-   `impl`
+-   `import`
+-   `interface`
+-   `let`
+-   `library`
+-   `match`
+-   `namespace`
+-   `not`
+-   `or`
+-   `override`
+-   `package`
+-   `partial`
+-   `private`
+-   `protected`
+-   `return`
+-   `returned`
+-   `var`
+-   `virtual`
+-   `where`
+-   `while`
 
 ## Alternatives considered
 

@@ -22,8 +22,8 @@ using testing::IsEmpty;
 // Matches a FieldInitializer named `name` whose `expression` is an
 // `IntLiteral`
 MATCHER_P(IntFieldNamed, name, "") {
-  return arg.name == std::string(name) &&
-         arg.expression->Tag() == Expression::Kind::IntLiteral;
+  return arg.name() == std::string(name) &&
+         arg.expression()->kind() == Expression::Kind::IntLiteral;
 }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
@@ -40,9 +40,9 @@ TEST_F(ExpressionTest, EmptyAsExpression) {
                                         .has_trailing_comma = false};
   Nonnull<const Expression*> expression =
       ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*expression).Fields(), IsEmpty());
+  EXPECT_EQ(expression->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(expression->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*expression).fields(), IsEmpty());
 }
 
 TEST_F(ExpressionTest, EmptyAsTuple) {
@@ -50,9 +50,9 @@ TEST_F(ExpressionTest, EmptyAsTuple) {
                                         .has_trailing_comma = false};
   Nonnull<const Expression*> tuple =
       TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(), IsEmpty());
+  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(tuple->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*tuple).fields(), IsEmpty());
 }
 
 TEST_F(ExpressionTest, UnaryNoCommaAsExpression) {
@@ -69,8 +69,8 @@ TEST_F(ExpressionTest, UnaryNoCommaAsExpression) {
 
   Nonnull<const Expression*> expression =
       ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(2));
-  ASSERT_EQ(expression->Tag(), Expression::Kind::IntLiteral);
+  EXPECT_EQ(expression->source_loc(), FakeSourceLoc(2));
+  ASSERT_EQ(expression->kind(), Expression::Kind::IntLiteral);
 }
 
 TEST_F(ExpressionTest, UnaryNoCommaAsTuple) {
@@ -81,9 +81,9 @@ TEST_F(ExpressionTest, UnaryNoCommaAsTuple) {
 
   Nonnull<const Expression*> tuple =
       TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(),
+  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(tuple->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*tuple).fields(),
               ElementsAre(IntFieldNamed("0")));
 }
 
@@ -95,9 +95,9 @@ TEST_F(ExpressionTest, UnaryWithCommaAsExpression) {
 
   Nonnull<const Expression*> expression =
       ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*expression).Fields(),
+  EXPECT_EQ(expression->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(expression->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*expression).fields(),
               ElementsAre(IntFieldNamed("0")));
 }
 
@@ -109,9 +109,9 @@ TEST_F(ExpressionTest, UnaryWithCommaAsTuple) {
 
   Nonnull<const Expression*> tuple =
       TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(),
+  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(tuple->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*tuple).fields(),
               ElementsAre(IntFieldNamed("0")));
 }
 
@@ -125,9 +125,9 @@ TEST_F(ExpressionTest, BinaryAsExpression) {
 
   Nonnull<const Expression*> expression =
       ExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(expression->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(expression->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*expression).Fields(),
+  EXPECT_EQ(expression->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(expression->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*expression).fields(),
               ElementsAre(IntFieldNamed("0"), IntFieldNamed("1")));
 }
 
@@ -141,9 +141,9 @@ TEST_F(ExpressionTest, BinaryAsTuple) {
 
   Nonnull<const Expression*> tuple =
       TupleExpressionFromParenContents(&arena, FakeSourceLoc(1), contents);
-  EXPECT_EQ(tuple->SourceLoc(), FakeSourceLoc(1));
-  ASSERT_EQ(tuple->Tag(), Expression::Kind::TupleLiteral);
-  EXPECT_THAT(cast<TupleLiteral>(*tuple).Fields(),
+  EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
+  ASSERT_EQ(tuple->kind(), Expression::Kind::TupleLiteral);
+  EXPECT_THAT(cast<TupleLiteral>(*tuple).fields(),
               ElementsAre(IntFieldNamed("0"), IntFieldNamed("1")));
 }
 

@@ -37,33 +37,35 @@ class Pattern {
   Pattern(const Pattern&) = delete;
   Pattern& operator=(const Pattern&) = delete;
 
-  // Returns the enumerator corresponding to the most-derived type of this
-  // object.
-  auto Tag() const -> Kind { return tag; }
-
-  auto SourceLoc() const -> SourceLocation { return loc; }
-
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto kind() const -> Kind { return kind_; }
+
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+
  protected:
   // Constructs a Pattern representing syntax at the given line number.
-  // `tag` must be the enumerator corresponding to the most-derived type being
+  // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+  Pattern(Kind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  const Kind tag;
-  SourceLocation loc;
+  const Kind kind_;
+  SourceLocation source_loc_;
 };
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
-  explicit AutoPattern(SourceLocation loc) : Pattern(Kind::AutoPattern, loc) {}
+  explicit AutoPattern(SourceLocation source_loc)
+      : Pattern(Kind::AutoPattern, source_loc) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::AutoPattern;
+    return pattern->kind() == Kind::AutoPattern;
   }
 };
 
@@ -71,12 +73,14 @@ class AutoPattern : public Pattern {
 // a name to it.
 class BindingPattern : public Pattern {
  public:
-  BindingPattern(SourceLocation loc, std::optional<std::string> name,
+  BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)
-      : Pattern(Kind::BindingPattern, loc), name(std::move(name)), type(type) {}
+      : Pattern(Kind::BindingPattern, source_loc),
+        name(std::move(name)),
+        type(type) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::BindingPattern;
+    return pattern->kind() == Kind::BindingPattern;
   }
 
   // The name this pattern binds, if any.
@@ -106,11 +110,11 @@ class TuplePattern : public Pattern {
     Nonnull<Pattern*> pattern;
   };
 
-  TuplePattern(SourceLocation loc, std::vector<Field> fields)
-      : Pattern(Kind::TuplePattern, loc), fields(std::move(fields)) {}
+  TuplePattern(SourceLocation source_loc, std::vector<Field> fields)
+      : Pattern(Kind::TuplePattern, source_loc), fields(std::move(fields)) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::TuplePattern;
+    return pattern->kind() == Kind::TuplePattern;
   }
 
   auto Fields() const -> llvm::ArrayRef<Field> { return fields; }
@@ -123,13 +127,14 @@ class TuplePattern : public Pattern {
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Nonnull<Pattern*>;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
-auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
+                                   SourceLocation source_loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> Nonnull<TuplePattern*>;
 
@@ -145,21 +150,23 @@ class AlternativePattern : public Pattern {
   // Constructs an AlternativePattern that matches a value of the type
   // specified by choice_type if it represents an alternative named
   // alternative_name, and its arguments match `arguments`.
-  AlternativePattern(SourceLocation loc, Nonnull<Expression*> choice_type,
+  AlternativePattern(SourceLocation source_loc,
+                     Nonnull<Expression*> choice_type,
                      std::string alternative_name,
                      Nonnull<TuplePattern*> arguments)
-      : Pattern(Kind::AlternativePattern, loc),
+      : Pattern(Kind::AlternativePattern, source_loc),
         choice_type(choice_type),
         alternative_name(std::move(alternative_name)),
         arguments(arguments) {}
 
   // Constructs an AlternativePattern that matches the alternative specified
   // by `alternative`, if its arguments match `arguments`.
-  AlternativePattern(SourceLocation loc, Nonnull<Expression*> alternative,
+  AlternativePattern(SourceLocation source_loc,
+                     Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments);
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::AlternativePattern;
+    return pattern->kind() == Kind::AlternativePattern;
   }
 
   auto ChoiceType() const -> Nonnull<const Expression*> { return choice_type; }
@@ -181,11 +188,11 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   ExpressionPattern(Nonnull<Expression*> expression)
-      : Pattern(Kind::ExpressionPattern, expression->SourceLoc()),
+      : Pattern(Kind::ExpressionPattern, expression->source_loc()),
         expression(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::ExpressionPattern;
+    return pattern->kind() == Kind::ExpressionPattern;
   }
 
   auto Expression() const -> Nonnull<const Expression*> { return expression; }

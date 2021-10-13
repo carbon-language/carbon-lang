@@ -7,14 +7,10 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_call_with_tuple.carbon:19: type error in call: '(0 = (0 = i32, 1 = i32))' is not implicitly convertible to '(0 = i32, 1 = i32)'
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/struct/fail_field_access_mismatch.carbon:15: struct {.x: i32, .y: i32} does not have a field named z
 
 package ExecutableSemanticsTest api;
 
-fn f(x: i32, y: i32) -> i32 { return x + y; }
-
 fn main() -> i32 {
-  var xy: (i32, i32) = (1, 2);
-  // should fail to type-check
-  return f(xy);
+  return {.x = 1, .y = 2}.z - 1;
 }
