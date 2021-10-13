@@ -3020,6 +3020,9 @@ fn F[T:! Transitive](t: T) {
 }
 ```
 
+Since adding an `observe` statement only adds external implementations of
+interfaces to generic types, they may be added without breaking existing code.
+
 ## Other constraints as type-of-types
 
 There are some constraints that we will naturally represent as named
