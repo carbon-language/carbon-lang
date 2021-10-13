@@ -406,7 +406,7 @@ auto Interpreter::StepLvalue() -> Transition {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
       Address pointer = GetFromEnv(exp->source_loc(),
-                                   cast<IdentifierExpression>(*exp).Name());
+                                   cast<IdentifierExpression>(*exp).name());
       Nonnull<const Value*> v = arena->New<PointerValue>(pointer);
       return Done{v};
     }
@@ -415,13 +415,13 @@ auto Interpreter::StepLvalue() -> Transition {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         return Spawn{arena->New<LValAction>(
-            cast<FieldAccessExpression>(*exp).Aggregate())};
+            &cast<FieldAccessExpression>(*exp).aggregate())};
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address aggregate = cast<PointerValue>(*act->results()[0]).Val();
         Address field = aggregate.SubobjectAddress(
-            cast<FieldAccessExpression>(*exp).Field());
+            cast<FieldAccessExpression>(*exp).field());
         return Done{arena->New<PointerValue>(field)};
       }
     }
@@ -430,11 +430,11 @@ auto Interpreter::StepLvalue() -> Transition {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
         return Spawn{
-            arena->New<LValAction>(cast<IndexExpression>(*exp).Aggregate())};
+            arena->New<LValAction>(&cast<IndexExpression>(*exp).aggregate())};
 
       } else if (act->pos() == 1) {
-        return Spawn{
-            arena->New<ExpressionAction>(cast<IndexExpression>(*exp).Offset())};
+        return Spawn{arena->New<ExpressionAction>(
+            &cast<IndexExpression>(*exp).offset())};
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
@@ -452,9 +452,8 @@ auto Interpreter::StepLvalue() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
-        return Spawn{arena->New<LValAction>(elt)};
+        return Spawn{arena->New<LValAction>(
+            &cast<TupleLiteral>(*exp).fields()[act->pos()].expression())};
       } else {
         return Done{CreateTuple(act, exp)};
       }
@@ -491,10 +490,10 @@ auto Interpreter::StepExp() -> Transition {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(
-            cast<IndexExpression>(*exp).Aggregate())};
+            &cast<IndexExpression>(*exp).aggregate())};
       } else if (act->pos() == 1) {
-        return Spawn{
-            arena->New<ExpressionAction>(cast<IndexExpression>(*exp).Offset())};
+        return Spawn{arena->New<ExpressionAction>(
+            &cast<IndexExpression>(*exp).offset())};
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
@@ -520,9 +519,8 @@ auto Interpreter::StepExp() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
-        return Spawn{arena->New<ExpressionAction>(elt)};
+        return Spawn{arena->New<ExpressionAction>(
+            &cast<TupleLiteral>(*exp).fields()[act->pos()].expression())};
       } else {
         return Done{CreateTuple(act, exp)};
       }
@@ -530,9 +528,8 @@ auto Interpreter::StepExp() -> Transition {
     case Expression::Kind::StructLiteral: {
       const auto& literal = cast<StructLiteral>(*exp);
       if (act->pos() < static_cast<int>(literal.fields().size())) {
-        Nonnull<const Expression*> elt =
-            literal.fields()[act->pos()].expression();
-        return Spawn{arena->New<ExpressionAction>(elt)};
+        return Spawn{arena->New<ExpressionAction>(
+            &literal.fields()[act->pos()].expression())};
       } else {
         return Done{CreateStruct(literal.fields(), act->results())};
       }
@@ -541,7 +538,7 @@ auto Interpreter::StepExp() -> Transition {
       const auto& struct_type = cast<StructTypeLiteral>(*exp);
       if (act->pos() < static_cast<int>(struct_type.fields().size())) {
         return Spawn{arena->New<ExpressionAction>(
-            struct_type.fields()[act->pos()].expression())};
+            &struct_type.fields()[act->pos()].expression())};
       } else {
         VarValues fields;
         for (size_t i = 0; i < struct_type.fields().size(); ++i) {
@@ -555,40 +552,40 @@ auto Interpreter::StepExp() -> Transition {
       if (act->pos() == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(access.Aggregate())};
+        return Spawn{arena->New<ExpressionAction>(&access.aggregate())};
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
         return Done{act->results()[0]->GetField(
-            arena, FieldPath(access.Field()), exp->source_loc())};
+            arena, FieldPath(access.field()), exp->source_loc())};
       }
     }
     case Expression::Kind::IdentifierExpression: {
       CHECK(act->pos() == 0);
       const auto& ident = cast<IdentifierExpression>(*exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address pointer = GetFromEnv(exp->source_loc(), ident.Name());
+      Address pointer = GetFromEnv(exp->source_loc(), ident.name());
       return Done{heap.Read(pointer, exp->source_loc())};
     }
     case Expression::Kind::IntLiteral:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      return Done{arena->New<IntValue>(cast<IntLiteral>(*exp).Val())};
+      return Done{arena->New<IntValue>(cast<IntLiteral>(*exp).value())};
     case Expression::Kind::BoolLiteral:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      return Done{arena->New<BoolValue>(cast<BoolLiteral>(*exp).Val())};
+      return Done{arena->New<BoolValue>(cast<BoolLiteral>(*exp).value())};
     case Expression::Kind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(*exp);
-      if (act->pos() != static_cast<int>(op.Arguments().size())) {
+      if (act->pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        Nonnull<const Expression*> arg = op.Arguments()[act->pos()];
+        Nonnull<const Expression*> arg = op.arguments()[act->pos()];
         return Spawn{arena->New<ExpressionAction>(arg)};
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        return Done{EvalPrim(op.Op(), act->results(), exp->source_loc())};
+        return Done{EvalPrim(op.op(), act->results(), exp->source_loc())};
       }
     }
     case Expression::Kind::CallExpression:
@@ -596,12 +593,12 @@ auto Interpreter::StepExp() -> Transition {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(
-            cast<CallExpression>(*exp).Function())};
+            &cast<CallExpression>(*exp).function())};
       } else if (act->pos() == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(
-            cast<CallExpression>(*exp).Argument())};
+            &cast<CallExpression>(*exp).argument())};
       } else if (act->pos() == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -637,8 +634,8 @@ auto Interpreter::StepExp() -> Transition {
     case Expression::Kind::IntrinsicExpression:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
-        case IntrinsicExpression::IntrinsicKind::Print:
+      switch (cast<IntrinsicExpression>(*exp).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
           Address pointer = GetFromEnv(exp->source_loc(), "format_str");
           Nonnull<const Value*> pointee = heap.Read(pointer, exp->source_loc());
           CHECK(pointee->kind() == Value::Kind::StringValue);
@@ -662,12 +659,12 @@ auto Interpreter::StepExp() -> Transition {
     case Expression::Kind::FunctionTypeLiteral: {
       if (act->pos() == 0) {
         return Spawn{arena->New<ExpressionAction>(
-            cast<FunctionTypeLiteral>(*exp).Parameter())};
+            &cast<FunctionTypeLiteral>(*exp).parameter())};
       } else if (act->pos() == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(
-            cast<FunctionTypeLiteral>(*exp).ReturnType())};
+            &cast<FunctionTypeLiteral>(*exp).return_type())};
       } else {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
@@ -683,7 +680,7 @@ auto Interpreter::StepExp() -> Transition {
     case Expression::Kind::StringLiteral:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      return Done{arena->New<StringValue>(cast<StringLiteral>(*exp).Val())};
+      return Done{arena->New<StringValue>(cast<StringLiteral>(*exp).value())};
     case Expression::Kind::StringTypeLiteral: {
       CHECK(act->pos() == 0);
       return Done{arena->New<StringType>()};
@@ -719,8 +716,8 @@ auto Interpreter::StepPattern() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Pattern*> elt = tuple.Fields()[act->pos()].pattern;
-        return Spawn{arena->New<PatternAction>(elt)};
+        return Spawn{
+            arena->New<PatternAction>(tuple.Fields()[act->pos()].pattern)};
       } else {
         std::vector<TupleElement> elements;
         for (size_t i = 0; i < tuple.Fields().size(); ++i) {

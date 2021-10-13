@@ -435,12 +435,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
   switch (e->kind()) {
     case Expression::Kind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
-      auto res = TypeCheckExp(index.Aggregate(), types, values);
-      Nonnull<const Value*> aggregate_type = index.Aggregate()->static_type();
+      auto res = TypeCheckExp(&index.aggregate(), types, values);
+      Nonnull<const Value*> aggregate_type = index.aggregate().static_type();
       switch (aggregate_type->kind()) {
         case Value::Kind::TupleValue: {
           auto i =
-              cast<IntValue>(*interpreter.InterpExp(values, index.Offset()))
+              cast<IntValue>(*interpreter.InterpExp(values, &index.offset()))
                   .Val();
           std::string f = std::to_string(i);
           std::optional<Nonnull<const Value*>> field_t =
@@ -461,11 +461,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<TupleElement> arg_types;
       auto new_types = types;
       for (auto& arg : cast<TupleLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(&arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
+        new_args.push_back(FieldInitializer(arg.name(), &arg.expression()));
         arg_types.push_back(
-            {.name = arg.name(), .value = arg.expression()->static_type()});
+            {.name = arg.name(), .value = arg.expression().static_type()});
       }
       SetStaticType(e, arena->New<TupleValue>(std::move(arg_types)));
       return TCResult(new_types);
@@ -475,10 +475,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       VarValues arg_types;
       auto new_types = types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(&arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
-        arg_types.push_back({arg.name(), arg.expression()->static_type()});
+        new_args.push_back(FieldInitializer(arg.name(), &arg.expression()));
+        arg_types.push_back({arg.name(), arg.expression().static_type()});
       }
       SetStaticType(e, arena->New<StructType>(std::move(arg_types)));
       return TCResult(new_types);
@@ -488,11 +488,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<FieldInitializer> new_args;
       auto new_types = types;
       for (auto& arg : struct_type.fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(&arg.expression(), new_types, values);
         new_types = arg_res.types;
-        ExpectIsConcreteType(arg.expression()->source_loc(),
-                             interpreter.InterpExp(values, arg.expression()));
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
+        ExpectIsConcreteType(arg.expression().source_loc(),
+                             interpreter.InterpExp(values, &arg.expression()));
+        new_args.push_back(FieldInitializer(arg.name(), &arg.expression()));
       }
       if (struct_type.fields().empty()) {
         // `{}` is the type of `{}`, just as `()` is the type of `()`.
@@ -507,57 +507,57 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::FieldAccessExpression: {
       auto& access = cast<FieldAccessExpression>(*e);
-      auto res = TypeCheckExp(access.Aggregate(), types, values);
-      Nonnull<const Value*> aggregate_type = access.Aggregate()->static_type();
+      auto res = TypeCheckExp(&access.aggregate(), types, values);
+      Nonnull<const Value*> aggregate_type = access.aggregate().static_type();
       switch (aggregate_type->kind()) {
         case Value::Kind::StructType: {
           const auto& struct_type = cast<StructType>(*aggregate_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
-            if (access.Field() == field_name) {
+            if (access.field() == field_name) {
               SetStaticType(&access, field_type);
               return TCResult(res.types);
             }
           }
           FATAL_COMPILATION_ERROR(access.source_loc())
               << "struct " << struct_type << " does not have a field named "
-              << access.Field();
+              << access.field();
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(*aggregate_type);
           // Search for a field
           for (auto& field : t_class.Fields()) {
-            if (access.Field() == field.first) {
+            if (access.field() == field.first) {
               SetStaticType(&access, field.second);
               return TCResult(res.types);
             }
           }
           // Search for a method
           for (auto& method : t_class.Methods()) {
-            if (access.Field() == method.first) {
+            if (access.field() == method.first) {
               SetStaticType(&access, method.second);
               return TCResult(res.types);
             }
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
               << "class " << t_class.Name() << " does not have a field named "
-              << access.Field();
+              << access.field();
         }
         case Value::Kind::TupleValue: {
           const auto& tup = cast<TupleValue>(*aggregate_type);
           for (const TupleElement& field : tup.Elements()) {
-            if (access.Field() == field.name) {
+            if (access.field() == field.name) {
               SetStaticType(&access, field.value);
               return TCResult(res.types);
             }
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
               << "tuple " << tup << " does not have a field named "
-              << access.Field();
+              << access.field();
         }
         case Value::Kind::ChoiceType: {
           const auto& choice = cast<ChoiceType>(*aggregate_type);
           for (const auto& vt : choice.Alternatives()) {
-            if (access.Field() == vt.first) {
+            if (access.field() == vt.first) {
               SetStaticType(&access, arena->New<FunctionType>(
                                          std::vector<GenericBinding>(),
                                          vt.second, aggregate_type));
@@ -566,7 +566,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
               << "choice " << choice.Name() << " does not have a field named "
-              << access.Field();
+              << access.field();
         }
         default:
           FATAL_COMPILATION_ERROR(e->source_loc())
@@ -576,13 +576,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
-      std::optional<Nonnull<const Value*>> type = types.Get(ident.Name());
+      std::optional<Nonnull<const Value*>> type = types.Get(ident.name());
       if (type) {
         SetStaticType(&ident, *type);
         return TCResult(types);
       } else {
         FATAL_COMPILATION_ERROR(e->source_loc())
-            << "could not find `" << ident.Name() << "`";
+            << "could not find `" << ident.name() << "`";
       }
     }
     case Expression::Kind::IntLiteral:
@@ -596,13 +596,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::vector<Nonnull<Expression*>> es;
       std::vector<Nonnull<const Value*>> ts;
       auto new_types = types;
-      for (Nonnull<Expression*> argument : op.Arguments()) {
+      for (Nonnull<Expression*> argument : op.arguments()) {
         auto res = TypeCheckExp(argument, types, values);
         new_types = res.types;
         es.push_back(argument);
         ts.push_back(argument->static_type());
       }
-      switch (op.Op()) {
+      switch (op.op()) {
         case Operator::Neg:
           ExpectExactType(e->source_loc(), "negation", arena->New<IntType>(),
                           ts[0]);
@@ -664,18 +664,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
-      auto fun_res = TypeCheckExp(call.Function(), types, values);
-      switch (call.Function()->static_type()->kind()) {
+      auto fun_res = TypeCheckExp(&call.function(), types, values);
+      switch (call.function().static_type()->kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t =
-              cast<FunctionType>(*call.Function()->static_type());
-          auto arg_res = TypeCheckExp(call.Argument(), fun_res.types, values);
+              cast<FunctionType>(*call.function().static_type());
+          auto arg_res = TypeCheckExp(&call.argument(), fun_res.types, values);
           auto parameter_type = fun_t.Param();
           auto return_type = fun_t.Ret();
           if (!fun_t.Deduced().empty()) {
             auto deduced_args = ArgumentDeduction(
                 e->source_loc(), TypeEnv(arena), parameter_type,
-                call.Argument()->static_type());
+                call.argument().static_type());
             for (auto& deduced_param : fun_t.Deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
@@ -689,7 +689,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             return_type = Substitute(deduced_args, return_type);
           } else {
             ExpectType(e->source_loc(), "call", parameter_type,
-                       call.Argument()->static_type());
+                       call.argument().static_type());
           }
           SetStaticType(&call, return_type);
           return TCResult(arg_res.types);
@@ -704,10 +704,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
-      ExpectIsConcreteType(fn.Parameter()->source_loc(),
-                           interpreter.InterpExp(values, fn.Parameter()));
-      ExpectIsConcreteType(fn.ReturnType()->source_loc(),
-                           interpreter.InterpExp(values, fn.ReturnType()));
+      ExpectIsConcreteType(fn.parameter().source_loc(),
+                           interpreter.InterpExp(values, &fn.parameter()));
+      ExpectIsConcreteType(fn.return_type().source_loc(),
+                           interpreter.InterpExp(values, &fn.return_type()));
       SetStaticType(&fn, arena->New<TypeType>());
       return TCResult(types);
     }
@@ -715,8 +715,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       SetStaticType(e, arena->New<StringType>());
       return TCResult(types);
     case Expression::Kind::IntrinsicExpression:
-      switch (cast<IntrinsicExpression>(*e).Intrinsic()) {
-        case IntrinsicExpression::IntrinsicKind::Print:
+      switch (cast<IntrinsicExpression>(*e).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
           SetStaticType(e, TupleValue::Empty());
           return TCResult(types);
       }
