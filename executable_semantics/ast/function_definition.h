@@ -49,6 +49,7 @@ class FunctionDefinition {
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_type() const -> const Pattern& { return *return_type_; }
+  auto return_type() -> Pattern& { return *return_type_; }
   auto is_omitted_return_type() const -> bool {
     return is_omitted_return_type_;
   }

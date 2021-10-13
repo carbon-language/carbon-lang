@@ -17,15 +17,15 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
     out << " ... ";
     return;
   }
-  switch (Tag()) {
+  switch (kind()) {
     case Kind::Match: {
       const auto& match = cast<Match>(*this);
-      out << "match (" << *match.Exp() << ") {";
+      out << "match (" << match.expression() << ") {";
       if (depth < 0 || depth > 1) {
         out << "\n";
-        for (auto& clause : match.Clauses()) {
-          out << "case " << *clause.first << " =>\n";
-          clause.second->PrintDepth(depth - 1, out);
+        for (auto& clause : match.clauses()) {
+          out << "case " << clause.pattern() << " =>\n";
+          clause.statement().PrintDepth(depth - 1, out);
           out << "\n";
         }
       } else {

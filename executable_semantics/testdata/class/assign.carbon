@@ -11,10 +11,14 @@
 
 package ExecutableSemanticsTest api;
 
-fn Id(t: Type) => t;
+class Point {
+  var x: i32;
+  var y: i32;
+}
 
-// Test non-trivial type expression in return type.
-
-fn main() -> Id(i32) {
-  return 0;
+fn main() -> i32 {
+  var p1: Point = {.x = 1, .y = 2};
+  var p2: auto = p1;
+  p2 = {.x = 3, .y = 2};
+  return p1.x - 1;
 }

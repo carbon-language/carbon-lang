@@ -41,7 +41,8 @@ struct ParenContents {
   //
   // TODO: Find a way to deduce TupleElement from Term.
   template <typename TupleElement>
-  auto TupleElements(SourceLocation loc) const -> std::vector<TupleElement>;
+  auto TupleElements(SourceLocation source_loc) const
+      -> std::vector<TupleElement>;
 
   std::vector<Element> elements;
   bool has_trailing_comma;
@@ -61,7 +62,7 @@ auto ParenContents<Term>::SingleTerm() const -> std::optional<Nonnull<Term*>> {
 
 template <typename Term>
 template <typename TupleElement>
-auto ParenContents<Term>::TupleElements(SourceLocation loc) const
+auto ParenContents<Term>::TupleElements(SourceLocation source_loc) const
     -> std::vector<TupleElement> {
   std::vector<TupleElement> result;
   int i = 0;
@@ -72,7 +73,7 @@ auto ParenContents<Term>::TupleElements(SourceLocation loc) const
       result.push_back(TupleElement(*element.name, element.term));
     } else {
       if (seen_named_member) {
-        FATAL_PROGRAM_ERROR(loc)
+        FATAL_PROGRAM_ERROR(source_loc)
             << "positional members must come before named members";
       }
       result.push_back(TupleElement(std::to_string(i), element.term));

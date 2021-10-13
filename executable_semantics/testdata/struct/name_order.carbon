@@ -11,8 +11,9 @@
 
 package ExecutableSemanticsTest api;
 
-fn add(x: i32, y: i32) => x + y;
+// Test the that field order doesn't matter for structs.
 
 fn main() -> i32 {
-  return add(1, 2) - 3;
+  var t: {.x: i32, .y: i32} = {.y = 2, .x = 3};
+  return 0;
 }

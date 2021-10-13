@@ -20,21 +20,24 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> Address {
   return a;
 }
 
-auto Heap::Read(const Address& a, SourceLocation loc) -> Nonnull<const Value*> {
-  this->CheckAlive(a, loc);
-  return values[a.index]->GetField(arena, a.field_path, loc);
+auto Heap::Read(const Address& a, SourceLocation source_loc)
+    -> Nonnull<const Value*> {
+  this->CheckAlive(a, source_loc);
+  return values[a.index]->GetField(arena, a.field_path, source_loc);
 }
 
 void Heap::Write(const Address& a, Nonnull<const Value*> v,
-                 SourceLocation loc) {
-  this->CheckAlive(a, loc);
-  values[a.index] = values[a.index]->SetField(arena, a.field_path, v, loc);
+                 SourceLocation source_loc) {
+  this->CheckAlive(a, source_loc);
+  values[a.index] =
+      values[a.index]->SetField(arena, a.field_path, v, source_loc);
 }
 
-void Heap::CheckAlive(const Address& address, SourceLocation loc) {
+void Heap::CheckAlive(const Address& address, SourceLocation source_loc) {
   if (!alive[address.index]) {
-    FATAL_RUNTIME_ERROR(loc) << "undefined behavior: access to dead value "
-                             << *values[address.index];
+    FATAL_RUNTIME_ERROR(source_loc)
+        << "undefined behavior: access to dead value "
+        << *values[address.index];
   }
 }
 

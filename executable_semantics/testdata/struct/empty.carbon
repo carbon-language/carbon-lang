@@ -11,14 +11,15 @@
 
 package ExecutableSemanticsTest api;
 
-fn Id(t: Type) => t;
-
-// Test non-trivial type expression in parameter type.
-
-fn f(x: Id(i32)) -> i32 {
-  return x;
-}
-
 fn main() -> i32 {
-  return f(0);
+  var empty: {} = {};
+  empty = {};
+  if (not (empty == {})) {
+    return 1;
+  }
+  match (empty) {
+    case {} => {
+      return 0;
+    }
+  }
 }

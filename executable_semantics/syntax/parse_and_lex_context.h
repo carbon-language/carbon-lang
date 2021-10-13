@@ -23,7 +23,7 @@ class ParseAndLexContext {
   // Writes a syntax error diagnostic containing message to standard error.
   auto PrintDiagnostic(const std::string& message) -> void;
 
-  auto SourceLoc() -> SourceLocation {
+  auto source_loc() -> SourceLocation {
     return SourceLocation(input_file_name,
                           static_cast<int>(current_token_position.begin.line));
   }

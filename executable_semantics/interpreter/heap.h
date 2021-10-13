@@ -25,11 +25,13 @@ class Heap {
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
-  auto Read(const Address& a, SourceLocation loc) -> Nonnull<const Value*>;
+  auto Read(const Address& a, SourceLocation source_loc)
+      -> Nonnull<const Value*>;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  void Write(const Address& a, Nonnull<const Value*> v, SourceLocation loc);
+  void Write(const Address& a, Nonnull<const Value*> v,
+             SourceLocation source_loc);
 
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> Address;
@@ -47,7 +49,7 @@ class Heap {
 
  private:
   // Signal an error if the address is no longer alive.
-  void CheckAlive(const Address& address, SourceLocation loc);
+  void CheckAlive(const Address& address, SourceLocation source_loc);
 
   Nonnull<Arena*> arena;
   std::vector<Nonnull<const Value*>> values;

@@ -11,10 +11,12 @@
 
 package ExecutableSemanticsTest api;
 
+fn DoNothing() {
+  // Empty block
+}
+
 fn main() -> i32 {
   var x: i32 = 0;
-  {
-    // empty block
-  }
+  DoNothing();
   return x;
 }
