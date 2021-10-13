@@ -20,6 +20,7 @@
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -674,13 +675,7 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
   }
 }
 
-void DWARFRewriter::updateLineTableOffsets() {
-  const MCSection *LineSection =
-    BC.Ctx->getObjectFileInfo()->getDwarfLineSection();
-  auto CurrentFragment = LineSection->begin();
-  uint64_t CurrentOffset = 0;
-  uint64_t Offset = 0;
-
+void DWARFRewriter::updateLineTableOffsets(const MCAsmLayout &Layout) {
   ErrorOr<BinarySection &> DbgInfoSection =
       BC.getUniqueSectionByName(".debug_info");
   ErrorOr<BinarySection &> TypeInfoSection =
@@ -713,45 +708,13 @@ void DWARFRewriter::updateLineTableOffsets() {
         findAttributeInfo(CU.get()->getUnitDIE(), dwarf::DW_AT_stmt_list);
     if (!AttrVal)
       continue;
-    const uint64_t LTOffset = AttrVal->Offset;
 
-    // Line tables are stored in MCContext in ascending order of offset in the
-    // output file, thus we can compute all table's offset by passing through
-    // each fragment at most once, continuing from the last CU's beginning
-    // instead of from the first fragment.
-    MCFragment *Fragment = Label->getFragment();
-    while (&*CurrentFragment != Fragment) {
-      switch (CurrentFragment->getKind()) {
-      case MCFragment::FT_Dwarf:
-        Offset += cast<MCDwarfLineAddrFragment>(*CurrentFragment)
-          .getContents().size() - CurrentOffset;
-        break;
-      case MCFragment::FT_Data:
-        Offset += cast<MCDataFragment>(*CurrentFragment)
-          .getContents().size() - CurrentOffset;
-        break;
-      default:
-        llvm_unreachable(".debug_line section shouldn't contain other types "
-                         "of fragments.");
-      }
-      ++CurrentFragment;
-      CurrentOffset = 0;
-    }
-
-    Offset += Label->getOffset() - CurrentOffset;
-    CurrentOffset = Label->getOffset();
-
-    DebugLineOffsetMap[GetStatementListValue(CU.get())] = Offset;
+    const uint64_t AttributeOffset = AttrVal->Offset;
+    const uint64_t LineTableOffset = Layout.getSymbolOffset(*Label);
+    DebugLineOffsetMap[GetStatementListValue(CU.get())] = LineTableOffset;
     assert(DbgInfoSection && ".debug_info section must exist");
-    DbgInfoSection->addRelocation(LTOffset,
-                                  nullptr,
-                                  ELF::R_X86_64_32,
-                                  Offset,
-                                  0,
-                                  /*Pending=*/true);
-
-    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: CU " << CUID
-                      << " has line table at " << Offset << "\n");
+    DbgInfoSection->addRelocation(AttributeOffset, nullptr, ELF::R_X86_64_32,
+                                  LineTableOffset, 0, /*Pending=*/true);
   }
 
   for (const std::unique_ptr<DWARFUnit> &TU : BC.DwCtx->types_section_units()) {
@@ -760,16 +723,16 @@ void DWARFRewriter::updateLineTableOffsets() {
         findAttributeInfo(TU.get()->getUnitDIE(), dwarf::DW_AT_stmt_list);
     if (!AttrVal)
       continue;
-    const uint64_t LTOffset = AttrVal->Offset;
+    const uint64_t AttributeOffset = AttrVal->Offset;
     auto Iter = DebugLineOffsetMap.find(GetStatementListValue(Unit));
     assert(Iter != DebugLineOffsetMap.end() &&
            "Type Unit Updated Line Number Entry does not exist.");
-    TypeInfoSection->addRelocation(LTOffset, nullptr, ELF::R_X86_64_32,
+    TypeInfoSection->addRelocation(AttributeOffset, nullptr, ELF::R_X86_64_32,
                                    Iter->second, 0, /*Pending=*/true);
   }
 
   // Set .debug_info as finalized so it won't be skipped over when
-  // we process sections while writing out the new binary.  This ensures
+  // we process sections while writing out the new binary. This ensures
   // that the pending relocations will be processed and not ignored.
   if(DbgInfoSection)
     DbgInfoSection->setIsFinalized();

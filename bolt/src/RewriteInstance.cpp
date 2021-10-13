@@ -3103,11 +3103,6 @@ void RewriteInstance::emitAndLink() {
   // Assign addresses to new sections.
   //////////////////////////////////////////////////////////////////////////////
 
-  if (opts::UpdateDebugSections) {
-    // Compute offsets of tables in .debug_line for each compile unit.
-    DebugInfoRewriter->updateLineTableOffsets();
-  }
-
   // Get output object as ObjectFile.
   std::unique_ptr<MemoryBuffer> ObjectMemBuffer =
       MemoryBuffer::getMemBuffer(BOS->str(), "in-memory object file", false);
@@ -3139,6 +3134,9 @@ void RewriteInstance::emitAndLink() {
   // Update output addresses based on the new section map and
   // layout. Only do this for the object created by ourselves.
   updateOutputValues(FinalLayout);
+
+  if (opts::UpdateDebugSections)
+    DebugInfoRewriter->updateLineTableOffsets(FinalLayout);
 
   if (RuntimeLibrary *RtLibrary = BC->getRuntimeLibrary()) {
     RtLibrary->link(*BC, ToolPath, *RTDyld, [this](RuntimeDyld &R) {

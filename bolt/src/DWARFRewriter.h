@@ -217,9 +217,8 @@ public:
   /// Main function for updating the DWARF debug info.
   void updateDebugInfo();
 
-  /// Computes output .debug_line line table offsets for each compile unit,
-  /// and updates stmt_list for a corresponding compile unit.
-  void updateLineTableOffsets();
+  /// Update stmt_list for CUs based on the new .debug_line \p Layout.
+  void updateLineTableOffsets(const MCAsmLayout &Layout);
 
   /// Returns a DWO Debug Info Patcher for DWO ID.
   /// Creates a new instance if it does not already exist.
