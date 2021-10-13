@@ -26,32 +26,36 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Sets the static type of `expression`.
-void set_static_type(Nonnull<Expression*> expression,
-                     Nonnull<const Value*> type) {
-  if (expression->static_type_.has_value()) {
+// Sets the static type of `expression`. Can be called multiple times on
+// the same node, so long as the types are the same on each call.
+static void SetStaticType(Nonnull<Expression*> expression,
+                          Nonnull<const Value*> type) {
+  if (expression->has_static_type()) {
     CHECK(TypeEqual(expression->static_type(), type));
   } else {
-    expression->static_type_ = type;
+    expression->set_static_type(type);
   }
 }
 
-// Sets the static type of `pattern`.
-void set_static_type(Nonnull<Pattern*> pattern, Nonnull<const Value*> type) {
-  if (pattern->static_type_.has_value()) {
+// Sets the static type of `pattern`. Can be called multiple times on
+// the same node, so long as the types are the same on each call.
+static void SetStaticType(Nonnull<Pattern*> pattern,
+                          Nonnull<const Value*> type) {
+  if (pattern->has_static_type()) {
     CHECK(TypeEqual(pattern->static_type(), type));
   } else {
-    pattern->static_type_ = type;
+    pattern->set_static_type(type);
   }
 }
 
-// Sets the static type of `definition`.
-void set_static_type(Nonnull<FunctionDefinition*> definition,
-                     Nonnull<const Value*> type) {
-  if (definition->static_type_.has_value()) {
+// Sets the static type of `definition`. Can be called multiple times on
+// the same node, so long as the types are the same on each call.
+static void SetStaticType(Nonnull<FunctionDefinition*> definition,
+                          Nonnull<const Value*> type) {
+  if (definition->has_static_type()) {
     CHECK(TypeEqual(definition->static_type(), type));
   } else {
-    definition->static_type_ = type;
+    definition->set_static_type(type);
   }
 }
 
@@ -359,7 +363,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             FATAL_COMPILATION_ERROR(e->source_loc())
                 << "field " << f << " is not in the tuple " << *aggregate_type;
           }
-          set_static_type(&index, *field_t);
+          SetStaticType(&index, *field_t);
           return TCResult(res.types);
         }
         default:
@@ -377,7 +381,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         arg_types.push_back(
             {.name = arg.name(), .value = arg.expression()->static_type()});
       }
-      set_static_type(e, arena->New<TupleValue>(std::move(arg_types)));
+      SetStaticType(e, arena->New<TupleValue>(std::move(arg_types)));
       return TCResult(new_types);
     }
     case Expression::Kind::StructLiteral: {
@@ -390,7 +394,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
         arg_types.push_back({arg.name(), arg.expression()->static_type()});
       }
-      set_static_type(e, arena->New<StructType>(std::move(arg_types)));
+      SetStaticType(e, arena->New<StructType>(std::move(arg_types)));
       return TCResult(new_types);
     }
     case Expression::Kind::StructTypeLiteral: {
@@ -409,9 +413,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         // This applies only if there are no fields, because (unlike with
         // tuples) non-empty struct types are syntactically disjoint
         // from non-empty struct values.
-        set_static_type(&struct_type, arena->New<StructType>());
+        SetStaticType(&struct_type, arena->New<StructType>());
       } else {
-        set_static_type(&struct_type, arena->New<TypeType>());
+        SetStaticType(&struct_type, arena->New<TypeType>());
       }
       return TCResult(new_types);
     }
@@ -424,7 +428,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           const auto& struct_type = cast<StructType>(*aggregate_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
             if (access.Field() == field_name) {
-              set_static_type(&access, field_type);
+              SetStaticType(&access, field_type);
               return TCResult(res.types);
             }
           }
@@ -437,14 +441,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           // Search for a field
           for (auto& field : t_class.Fields()) {
             if (access.Field() == field.first) {
-              set_static_type(&access, field.second);
+              SetStaticType(&access, field.second);
               return TCResult(res.types);
             }
           }
           // Search for a method
           for (auto& method : t_class.Methods()) {
             if (access.Field() == method.first) {
-              set_static_type(&access, method.second);
+              SetStaticType(&access, method.second);
               return TCResult(res.types);
             }
           }
@@ -456,7 +460,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           const auto& tup = cast<TupleValue>(*aggregate_type);
           for (const TupleElement& field : tup.Elements()) {
             if (access.Field() == field.name) {
-              set_static_type(&access, field.value);
+              SetStaticType(&access, field.value);
               return TCResult(res.types);
             }
           }
@@ -468,9 +472,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           const auto& choice = cast<ChoiceType>(*aggregate_type);
           for (const auto& vt : choice.Alternatives()) {
             if (access.Field() == vt.first) {
-              set_static_type(&access, arena->New<FunctionType>(
-                                           std::vector<GenericBinding>(),
-                                           vt.second, aggregate_type));
+              SetStaticType(&access, arena->New<FunctionType>(
+                                         std::vector<GenericBinding>(),
+                                         vt.second, aggregate_type));
               return TCResult(res.types);
             }
           }
@@ -488,7 +492,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       auto& ident = cast<IdentifierExpression>(*e);
       std::optional<Nonnull<const Value*>> type = types.Get(ident.Name());
       if (type) {
-        set_static_type(&ident, *type);
+        SetStaticType(&ident, *type);
         return TCResult(types);
       } else {
         FATAL_COMPILATION_ERROR(e->source_loc())
@@ -496,10 +500,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       }
     }
     case Expression::Kind::IntLiteral:
-      set_static_type(e, arena->New<IntType>());
+      SetStaticType(e, arena->New<IntType>());
       return TCResult(types);
     case Expression::Kind::BoolLiteral:
-      set_static_type(e, arena->New<BoolType>());
+      SetStaticType(e, arena->New<BoolType>());
       return TCResult(types);
     case Expression::Kind::PrimitiveOperatorExpression: {
       auto& op = cast<PrimitiveOperatorExpression>(*e);
@@ -515,54 +519,54 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       switch (op.Op()) {
         case Operator::Neg:
           ExpectType(e->source_loc(), "negation", arena->New<IntType>(), ts[0]);
-          set_static_type(&op, arena->New<IntType>());
+          SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::Add:
           ExpectType(e->source_loc(), "addition(1)", arena->New<IntType>(),
                      ts[0]);
           ExpectType(e->source_loc(), "addition(2)", arena->New<IntType>(),
                      ts[1]);
-          set_static_type(&op, arena->New<IntType>());
+          SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::Sub:
           ExpectType(e->source_loc(), "subtraction(1)", arena->New<IntType>(),
                      ts[0]);
           ExpectType(e->source_loc(), "subtraction(2)", arena->New<IntType>(),
                      ts[1]);
-          set_static_type(&op, arena->New<IntType>());
+          SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::Mul:
           ExpectType(e->source_loc(), "multiplication(1)",
                      arena->New<IntType>(), ts[0]);
           ExpectType(e->source_loc(), "multiplication(2)",
                      arena->New<IntType>(), ts[1]);
-          set_static_type(&op, arena->New<IntType>());
+          SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::And:
           ExpectType(e->source_loc(), "&&(1)", arena->New<BoolType>(), ts[0]);
           ExpectType(e->source_loc(), "&&(2)", arena->New<BoolType>(), ts[1]);
-          set_static_type(&op, arena->New<BoolType>());
+          SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Or:
           ExpectType(e->source_loc(), "||(1)", arena->New<BoolType>(), ts[0]);
           ExpectType(e->source_loc(), "||(2)", arena->New<BoolType>(), ts[1]);
-          set_static_type(&op, arena->New<BoolType>());
+          SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Not:
           ExpectType(e->source_loc(), "!", arena->New<BoolType>(), ts[0]);
-          set_static_type(&op, arena->New<BoolType>());
+          SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Eq:
           ExpectType(e->source_loc(), "==", ts[0], ts[1]);
-          set_static_type(&op, arena->New<BoolType>());
+          SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Deref:
           ExpectPointerType(e->source_loc(), "*", ts[0]);
-          set_static_type(&op, cast<PointerType>(*ts[0]).Type());
+          SetStaticType(&op, cast<PointerType>(*ts[0]).Type());
           return TCResult(new_types);
         case Operator::Ptr:
           ExpectType(e->source_loc(), "*", arena->New<TypeType>(), ts[0]);
-          set_static_type(&op, arena->New<TypeType>());
+          SetStaticType(&op, arena->New<TypeType>());
           return TCResult(new_types);
       }
       break;
@@ -596,7 +600,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             ExpectType(e->source_loc(), "call", parameter_type,
                        call.Argument()->static_type());
           }
-          set_static_type(&call, return_type);
+          SetStaticType(&call, return_type);
           return TCResult(arg_res.types);
         }
         default: {
@@ -613,16 +617,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                            interpreter.InterpExp(values, fn.Parameter()));
       ExpectIsConcreteType(fn.ReturnType()->source_loc(),
                            interpreter.InterpExp(values, fn.ReturnType()));
-      set_static_type(&fn, arena->New<TypeType>());
+      SetStaticType(&fn, arena->New<TypeType>());
       return TCResult(types);
     }
     case Expression::Kind::StringLiteral:
-      set_static_type(e, arena->New<StringType>());
+      SetStaticType(e, arena->New<StringType>());
       return TCResult(types);
     case Expression::Kind::IntrinsicExpression:
       switch (cast<IntrinsicExpression>(*e).Intrinsic()) {
         case IntrinsicExpression::IntrinsicKind::Print:
-          set_static_type(e, TupleValue::Empty());
+          SetStaticType(e, TupleValue::Empty());
           return TCResult(types);
       }
     case Expression::Kind::IntTypeLiteral:
@@ -630,7 +634,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     case Expression::Kind::StringTypeLiteral:
     case Expression::Kind::TypeTypeLiteral:
     case Expression::Kind::ContinuationTypeLiteral:
-      set_static_type(e, arena->New<TypeType>());
+      SetStaticType(e, arena->New<TypeType>());
       return TCResult(types);
   }
 }
@@ -651,7 +655,7 @@ auto TypeChecker::TypeCheckPattern(
   }
   switch (p->kind()) {
     case Pattern::Kind::AutoPattern: {
-      set_static_type(p, arena->New<TypeType>());
+      SetStaticType(p, arena->New<TypeType>());
       return TCResult(types);
     }
     case Pattern::Kind::BindingPattern: {
@@ -675,7 +679,7 @@ auto TypeChecker::TypeCheckPattern(
       if (binding.Name().has_value()) {
         types.Set(*binding.Name(), type);
       }
-      set_static_type(&binding, type);
+      SetStaticType(&binding, type);
       return TCResult(types);
     }
     case Pattern::Kind::TuplePattern: {
@@ -711,7 +715,7 @@ auto TypeChecker::TypeCheckPattern(
         field_types.push_back(
             {.name = field.name, .value = field.pattern->static_type()});
       }
-      set_static_type(&tuple, arena->New<TupleValue>(std::move(field_types)));
+      SetStaticType(&tuple, arena->New<TupleValue>(std::move(field_types)));
       return TCResult(new_types);
     }
     case Pattern::Kind::AlternativePattern: {
@@ -736,13 +740,13 @@ auto TypeChecker::TypeCheckPattern(
       }
       TCResult arg_results = TypeCheckPattern(alternative.Arguments(), types,
                                               values, *parameter_types);
-      set_static_type(&alternative, choice_type);
+      SetStaticType(&alternative, choice_type);
       return TCResult(arg_results.types);
     }
     case Pattern::Kind::ExpressionPattern: {
       const auto& expression = cast<ExpressionPattern>(*p).Expression();
       TCResult result = TypeCheckExp(expression, types, values);
-      set_static_type(p, expression->static_type());
+      SetStaticType(p, expression->static_type());
       return TCResult(result.types);
     }
   }
@@ -974,9 +978,9 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
     ExpectReturnOnAllPaths(body_stmt, f->source_loc());
   }
   ExpectIsConcreteType(f->return_type().source_loc(), return_type);
-  set_static_type(f, arena->New<FunctionType>(f->deduced_parameters(),
-                                              f->param_pattern().static_type(),
-                                              return_type));
+  SetStaticType(f, arena->New<FunctionType>(f->deduced_parameters(),
+                                            f->param_pattern().static_type(),
+                                            return_type));
   return TCResult(types);
 }
 

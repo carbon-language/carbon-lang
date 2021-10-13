@@ -61,16 +61,18 @@ class FunctionDefinition {
   auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
 
   // The static type of this function. Cannot be called before typechecking.
-  auto static_type() const -> Nonnull<const Value*> {
-    CHECK(static_type_.has_value());  // FIXME drop this
-    return *static_type_;
-  }
+  auto static_type() const -> Nonnull<const Value*> { return *static_type_; }
+
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
 
  private:
-  // Defined in type_checker.cpp to avoid circular dependencies.
-  friend void set_static_type(Nonnull<FunctionDefinition*> definition,
-                              Nonnull<const Value*> type);
-
   SourceLocation source_loc_;
   std::string name_;
   std::vector<GenericBinding> deduced_parameters_;

@@ -56,6 +56,15 @@ class Expression {
   // The static type of this expression. Cannot be called before typechecking.
   auto static_type() const -> Nonnull<const Value*> { return *static_type_; }
 
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -64,10 +73,6 @@ class Expression {
       : kind_(kind), source_loc_(source_loc) {}
 
  private:
-  // Defined in type_checker.cpp to avoid circular dependencies.
-  friend void set_static_type(Nonnull<Expression*> expression,
-                              Nonnull<const Value*> type);
-
   const Kind kind_;
   SourceLocation source_loc_;
 
