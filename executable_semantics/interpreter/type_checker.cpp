@@ -73,9 +73,10 @@ void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
   }
 }
 
-static void ExpectType(SourceLocation source_loc, const std::string& context,
-                       Nonnull<const Value*> expected,
-                       Nonnull<const Value*> actual) {
+static void ExpectExactType(SourceLocation source_loc,
+                            const std::string& context,
+                            Nonnull<const Value*> expected,
+                            Nonnull<const Value*> actual) {
   if (!TypeEqual(expected, actual)) {
     FATAL_COMPILATION_ERROR(source_loc) << "type error in " << context << "\n"
                                         << "expected: " << *expected << "\n"
@@ -142,6 +143,90 @@ void TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
   }
 }
 
+// Returns true if *source is implicitly convertible to *destination. *source
+// and *destination must be concrete types.
+static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                                    Nonnull<const Value*> destination) -> bool;
+
+// Returns true if source_fields and destination_fields contain the same set
+// of names, and each value in source_fields is implicitly convertible to
+// the corresponding value in destination_fields. All values in both arguments
+// must be types.
+static auto FieldTypesImplicitlyConvertible(
+    const VarValues& source_fields, const VarValues& destination_fields) {
+  if (source_fields.size() != destination_fields.size()) {
+    return false;
+  }
+  for (const auto& [field_name, source_field_type] : source_fields) {
+    std::optional<Nonnull<const Value*>> destination_field_type =
+        FindInVarValues(field_name, destination_fields);
+    if (!destination_field_type.has_value() ||
+        !IsImplicitlyConvertible(source_field_type, *destination_field_type)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                                    Nonnull<const Value*> destination) -> bool {
+  CHECK(IsConcreteType(source));
+  CHECK(IsConcreteType(destination));
+  if (TypeEqual(source, destination)) {
+    return true;
+  }
+  switch (source->kind()) {
+    case Value::Kind::StructType:
+      switch (destination->kind()) {
+        case Value::Kind::StructType:
+          return FieldTypesImplicitlyConvertible(
+              cast<StructType>(*source).fields(),
+              cast<StructType>(*destination).fields());
+        case Value::Kind::NominalClassType:
+          return FieldTypesImplicitlyConvertible(
+              cast<StructType>(*source).fields(),
+              cast<NominalClassType>(*destination).Fields());
+        default:
+          return false;
+      }
+    case Value::Kind::TupleValue:
+      switch (destination->kind()) {
+        case Value::Kind::TupleValue: {
+          const std::vector<TupleElement>& source_elements =
+              cast<TupleValue>(*source).Elements();
+          const std::vector<TupleElement>& destination_elements =
+              cast<TupleValue>(*destination).Elements();
+          if (source_elements.size() != destination_elements.size()) {
+            return false;
+          }
+          for (size_t i = 0; i < source_elements.size(); ++i) {
+            if (source_elements[i].name != destination_elements[i].name ||
+                !IsImplicitlyConvertible(source_elements[i].value,
+                                         destination_elements[i].value)) {
+              return false;
+            }
+          }
+          return true;
+        }
+        default:
+          return false;
+      }
+    default:
+      return false;
+  }
+}
+
+static void ExpectType(SourceLocation source_loc, const std::string& context,
+                       Nonnull<const Value*> expected,
+                       Nonnull<const Value*> actual) {
+  if (!IsImplicitlyConvertible(actual, expected)) {
+    FATAL_COMPILATION_ERROR(source_loc)
+        << "type error in " << context << ": "
+        << "'" << *actual << "' is not implicitly convertible to '" << *expected
+        << "'";
+  }
+}
+
 // Perform type argument deduction, matching the parameter type `param`
 // against the argument type `arg`. Whenever there is an VariableType
 // in the parameter type, it is deduced to be the corresponding type
@@ -158,7 +243,8 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       if (!d) {
         deduced.Set(var_type.Name(), arg);
       } else {
-        ExpectType(source_loc, "argument deduction", *d, arg);
+        // TODO: can we allow implicit conversions here?
+        ExpectExactType(source_loc, "argument deduction", *d, arg);
       }
       return deduced;
     }
@@ -247,7 +333,7 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     case Value::Kind::AutoType: {
       return deduced;
     }
-    // For the following cases, we check for type equality.
+    // For the following cases, we check for type convertability.
     case Value::Kind::ContinuationType:
     case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
@@ -518,46 +604,51 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       }
       switch (op.Op()) {
         case Operator::Neg:
-          ExpectType(e->source_loc(), "negation", arena->New<IntType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "negation", arena->New<IntType>(),
+                          ts[0]);
           SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::Add:
-          ExpectType(e->source_loc(), "addition(1)", arena->New<IntType>(),
-                     ts[0]);
-          ExpectType(e->source_loc(), "addition(2)", arena->New<IntType>(),
-                     ts[1]);
+          ExpectExactType(e->source_loc(), "addition(1)", arena->New<IntType>(),
+                          ts[0]);
+          ExpectExactType(e->source_loc(), "addition(2)", arena->New<IntType>(),
+                          ts[1]);
           SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::Sub:
-          ExpectType(e->source_loc(), "subtraction(1)", arena->New<IntType>(),
-                     ts[0]);
-          ExpectType(e->source_loc(), "subtraction(2)", arena->New<IntType>(),
-                     ts[1]);
+          ExpectExactType(e->source_loc(), "subtraction(1)",
+                          arena->New<IntType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "subtraction(2)",
+                          arena->New<IntType>(), ts[1]);
           SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::Mul:
-          ExpectType(e->source_loc(), "multiplication(1)",
-                     arena->New<IntType>(), ts[0]);
-          ExpectType(e->source_loc(), "multiplication(2)",
-                     arena->New<IntType>(), ts[1]);
+          ExpectExactType(e->source_loc(), "multiplication(1)",
+                          arena->New<IntType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "multiplication(2)",
+                          arena->New<IntType>(), ts[1]);
           SetStaticType(&op, arena->New<IntType>());
           return TCResult(new_types);
         case Operator::And:
-          ExpectType(e->source_loc(), "&&(1)", arena->New<BoolType>(), ts[0]);
-          ExpectType(e->source_loc(), "&&(2)", arena->New<BoolType>(), ts[1]);
+          ExpectExactType(e->source_loc(), "&&(1)", arena->New<BoolType>(),
+                          ts[0]);
+          ExpectExactType(e->source_loc(), "&&(2)", arena->New<BoolType>(),
+                          ts[1]);
           SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Or:
-          ExpectType(e->source_loc(), "||(1)", arena->New<BoolType>(), ts[0]);
-          ExpectType(e->source_loc(), "||(2)", arena->New<BoolType>(), ts[1]);
+          ExpectExactType(e->source_loc(), "||(1)", arena->New<BoolType>(),
+                          ts[0]);
+          ExpectExactType(e->source_loc(), "||(2)", arena->New<BoolType>(),
+                          ts[1]);
           SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Not:
-          ExpectType(e->source_loc(), "!", arena->New<BoolType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "!", arena->New<BoolType>(), ts[0]);
           SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Eq:
-          ExpectType(e->source_loc(), "==", ts[0], ts[1]);
+          ExpectExactType(e->source_loc(), "==", ts[0], ts[1]);
           SetStaticType(&op, arena->New<BoolType>());
           return TCResult(new_types);
         case Operator::Deref:
@@ -565,7 +656,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           SetStaticType(&op, cast<PointerType>(*ts[0]).Type());
           return TCResult(new_types);
         case Operator::Ptr:
-          ExpectType(e->source_loc(), "*", arena->New<TypeType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "*", arena->New<TypeType>(), ts[0]);
           SetStaticType(&op, arena->New<TypeType>());
           return TCResult(new_types);
       }
@@ -664,16 +755,20 @@ auto TypeChecker::TypeCheckPattern(
       Nonnull<const Value*> type =
           interpreter.InterpPattern(values, binding.Type());
       if (expected) {
-        std::optional<Env> values = interpreter.PatternMatch(
-            type, *expected, binding.Type()->source_loc());
-        if (values == std::nullopt) {
-          FATAL_COMPILATION_ERROR(binding.Type()->source_loc())
-              << "Type pattern '" << *type << "' does not match actual type '"
-              << **expected << "'";
+        if (IsConcreteType(type)) {
+          ExpectType(p->source_loc(), "name binding", type, *expected);
+        } else {
+          std::optional<Env> values = interpreter.PatternMatch(
+              type, *expected, binding.Type()->source_loc());
+          if (values == std::nullopt) {
+            FATAL_COMPILATION_ERROR(binding.Type()->source_loc())
+                << "Type pattern '" << *type << "' does not match actual type '"
+                << **expected << "'";
+          }
+          CHECK(values->begin() == values->end())
+              << "Name bindings within type patterns are unsupported";
+          type = *expected;
         }
-        CHECK(values->begin() == values->end())
-            << "Name bindings within type patterns are unsupported";
-        type = *expected;
       }
       ExpectIsConcreteType(binding.source_loc(), type);
       if (binding.Name().has_value()) {
@@ -727,8 +822,8 @@ auto TypeChecker::TypeCheckPattern(
             << "alternative pattern does not name a choice type.";
       }
       if (expected) {
-        ExpectType(alternative.source_loc(), "alternative pattern", *expected,
-                   choice_type);
+        ExpectExactType(alternative.source_loc(), "alternative pattern",
+                        *expected, choice_type);
       }
       std::optional<Nonnull<const Value*>> parameter_types =
           FindInVarValues(alternative.AlternativeName(),
