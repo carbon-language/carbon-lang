@@ -23,7 +23,7 @@ using testing::IsEmpty;
 // `IntLiteral`
 MATCHER_P(IntFieldNamed, name, "") {
   return arg.name() == std::string(name) &&
-         arg.expression()->kind() == Expression::Kind::IntLiteral;
+         arg.expression().kind() == Expression::Kind::IntLiteral;
 }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {

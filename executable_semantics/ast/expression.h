@@ -85,8 +85,8 @@ class FieldInitializer {
 
   auto name() const -> const std::string& { return name_; }
 
-  auto expression() const -> Nonnull<const Expression*> { return expression_; }
-  auto expression() -> Nonnull<Expression*> { return expression_; }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
 
  private:
   // The field name. Cannot be empty.
@@ -113,16 +113,16 @@ class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)
       : Expression(Kind::IdentifierExpression, source_loc),
-        name(std::move(name)) {}
+        name_(std::move(name)) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::IdentifierExpression;
   }
 
-  auto Name() const -> const std::string& { return name; }
+  auto name() const -> const std::string& { return name_; }
 
  private:
-  std::string name;
+  std::string name_;
 };
 
 class FieldAccessExpression : public Expression {
@@ -131,20 +131,20 @@ class FieldAccessExpression : public Expression {
                                  Nonnull<Expression*> aggregate,
                                  std::string field)
       : Expression(Kind::FieldAccessExpression, source_loc),
-        aggregate(aggregate),
-        field(std::move(field)) {}
+        aggregate_(aggregate),
+        field_(std::move(field)) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::FieldAccessExpression;
   }
 
-  auto Aggregate() const -> Nonnull<const Expression*> { return aggregate; }
-  auto Aggregate() -> Nonnull<Expression*> { return aggregate; }
-  auto Field() const -> const std::string& { return field; }
+  auto aggregate() const -> const Expression& { return *aggregate_; }
+  auto aggregate() -> Expression& { return *aggregate_; }
+  auto field() const -> const std::string& { return field_; }
 
  private:
-  Nonnull<Expression*> aggregate;
-  std::string field;
+  Nonnull<Expression*> aggregate_;
+  std::string field_;
 };
 
 class IndexExpression : public Expression {
@@ -153,66 +153,66 @@ class IndexExpression : public Expression {
                            Nonnull<Expression*> aggregate,
                            Nonnull<Expression*> offset)
       : Expression(Kind::IndexExpression, source_loc),
-        aggregate(aggregate),
-        offset(offset) {}
+        aggregate_(aggregate),
+        offset_(offset) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::IndexExpression;
   }
 
-  auto Aggregate() const -> Nonnull<const Expression*> { return aggregate; }
-  auto Aggregate() -> Nonnull<Expression*> { return aggregate; }
-  auto Offset() const -> Nonnull<const Expression*> { return offset; }
-  auto Offset() -> Nonnull<Expression*> { return offset; }
+  auto aggregate() const -> const Expression& { return *aggregate_; }
+  auto aggregate() -> Expression& { return *aggregate_; }
+  auto offset() const -> const Expression& { return *offset_; }
+  auto offset() -> Expression& { return *offset_; }
 
  private:
-  Nonnull<Expression*> aggregate;
-  Nonnull<Expression*> offset;
+  Nonnull<Expression*> aggregate_;
+  Nonnull<Expression*> offset_;
 };
 
 class IntLiteral : public Expression {
  public:
-  explicit IntLiteral(SourceLocation source_loc, int val)
-      : Expression(Kind::IntLiteral, source_loc), val(val) {}
+  explicit IntLiteral(SourceLocation source_loc, int value)
+      : Expression(Kind::IntLiteral, source_loc), value_(value) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::IntLiteral;
   }
 
-  auto Val() const -> int { return val; }
+  auto value() const -> int { return value_; }
 
  private:
-  int val;
+  int value_;
 };
 
 class BoolLiteral : public Expression {
  public:
-  explicit BoolLiteral(SourceLocation source_loc, bool val)
-      : Expression(Kind::BoolLiteral, source_loc), val(val) {}
+  explicit BoolLiteral(SourceLocation source_loc, bool value)
+      : Expression(Kind::BoolLiteral, source_loc), value_(value) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::BoolLiteral;
   }
 
-  auto Val() const -> bool { return val; }
+  auto value() const -> bool { return value_; }
 
  private:
-  bool val;
+  bool value_;
 };
 
 class StringLiteral : public Expression {
  public:
-  explicit StringLiteral(SourceLocation source_loc, std::string val)
-      : Expression(Kind::StringLiteral, source_loc), val(std::move(val)) {}
+  explicit StringLiteral(SourceLocation source_loc, std::string value)
+      : Expression(Kind::StringLiteral, source_loc), value_(std::move(value)) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::StringLiteral;
   }
 
-  auto Val() const -> const std::string& { return val; }
+  auto value() const -> const std::string& { return value_; }
 
  private:
-  std::string val;
+  std::string value_;
 };
 
 class StringTypeLiteral : public Expression {
@@ -301,24 +301,24 @@ class PrimitiveOperatorExpression : public Expression {
       SourceLocation source_loc, Operator op,
       std::vector<Nonnull<Expression*>> arguments)
       : Expression(Kind::PrimitiveOperatorExpression, source_loc),
-        op(op),
-        arguments(std::move(arguments)) {}
+        op_(op),
+        arguments_(std::move(arguments)) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::PrimitiveOperatorExpression;
   }
 
-  auto Op() const -> Operator { return op; }
-  auto Arguments() const -> llvm::ArrayRef<Nonnull<Expression*>> {
-    return arguments;
+  auto op() const -> Operator { return op_; }
+  auto arguments() const -> llvm::ArrayRef<Nonnull<Expression*>> {
+    return arguments_;
   }
-  auto Arguments() -> llvm::MutableArrayRef<Nonnull<Expression*>> {
-    return arguments;
+  auto arguments() -> llvm::MutableArrayRef<Nonnull<Expression*>> {
+    return arguments_;
   }
 
  private:
-  Operator op;
-  std::vector<Nonnull<Expression*>> arguments;
+  Operator op_;
+  std::vector<Nonnull<Expression*>> arguments_;
 };
 
 class CallExpression : public Expression {
@@ -327,21 +327,21 @@ class CallExpression : public Expression {
                           Nonnull<Expression*> function,
                           Nonnull<Expression*> argument)
       : Expression(Kind::CallExpression, source_loc),
-        function(function),
-        argument(argument) {}
+        function_(function),
+        argument_(argument) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::CallExpression;
   }
 
-  auto Function() const -> Nonnull<const Expression*> { return function; }
-  auto Function() -> Nonnull<Expression*> { return function; }
-  auto Argument() const -> Nonnull<const Expression*> { return argument; }
-  auto Argument() -> Nonnull<Expression*> { return argument; }
+  auto function() const -> const Expression& { return *function_; }
+  auto function() -> Expression& { return *function_; }
+  auto argument() const -> const Expression& { return *argument_; }
+  auto argument() -> Expression& { return *argument_; }
 
  private:
-  Nonnull<Expression*> function;
-  Nonnull<Expression*> argument;
+  Nonnull<Expression*> function_;
+  Nonnull<Expression*> argument_;
 };
 
 class FunctionTypeLiteral : public Expression {
@@ -351,24 +351,26 @@ class FunctionTypeLiteral : public Expression {
                                Nonnull<Expression*> return_type,
                                bool is_omitted_return_type)
       : Expression(Kind::FunctionTypeLiteral, source_loc),
-        parameter(parameter),
-        return_type(return_type),
-        is_omitted_return_type(is_omitted_return_type) {}
+        parameter_(parameter),
+        return_type_(return_type),
+        is_omitted_return_type_(is_omitted_return_type) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::FunctionTypeLiteral;
   }
 
-  auto Parameter() const -> Nonnull<const Expression*> { return parameter; }
-  auto Parameter() -> Nonnull<Expression*> { return parameter; }
-  auto ReturnType() const -> Nonnull<const Expression*> { return return_type; }
-  auto ReturnType() -> Nonnull<Expression*> { return return_type; }
-  auto IsOmittedReturnType() const -> bool { return is_omitted_return_type; }
+  auto parameter() const -> const Expression& { return *parameter_; }
+  auto parameter() -> Expression& { return *parameter_; }
+  auto return_type() const -> const Expression& { return *return_type_; }
+  auto return_type() -> Expression& { return *return_type_; }
+  auto is_omitted_return_type() const -> bool {
+    return is_omitted_return_type_;
+  }
 
  private:
-  Nonnull<Expression*> parameter;
-  Nonnull<Expression*> return_type;
-  bool is_omitted_return_type;
+  Nonnull<Expression*> parameter_;
+  Nonnull<Expression*> return_type_;
+  bool is_omitted_return_type_;
 };
 
 class BoolTypeLiteral : public Expression {
@@ -413,22 +415,22 @@ class TypeTypeLiteral : public Expression {
 
 class IntrinsicExpression : public Expression {
  public:
-  enum class IntrinsicKind {
+  enum class Intrinsic {
     Print,
   };
 
-  explicit IntrinsicExpression(IntrinsicKind intrinsic)
+  explicit IntrinsicExpression(Intrinsic intrinsic)
       : Expression(Kind::IntrinsicExpression, SourceLocation("<intrinsic>", 0)),
-        intrinsic(intrinsic) {}
+        intrinsic_(intrinsic) {}
 
   static auto classof(const Expression* exp) -> bool {
     return exp->kind() == Kind::IntrinsicExpression;
   }
 
-  auto Intrinsic() const -> IntrinsicKind { return intrinsic; }
+  auto intrinsic() const -> Intrinsic { return intrinsic_; }
 
  private:
-  IntrinsicKind intrinsic;
+  Intrinsic intrinsic_;
 };
 
 }  // namespace Carbon
