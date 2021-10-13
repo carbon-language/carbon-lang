@@ -24,7 +24,8 @@ class TypeChecker {
       : arena(arena), interpreter(arena) {}
 
   struct TypeCheckContext {
-    TypeCheckContext(Nonnull<Arena*> arena) : types(arena), values(arena) {}
+    explicit TypeCheckContext(Nonnull<Arena*> arena)
+        : types(arena), values(arena) {}
 
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
@@ -45,16 +46,17 @@ class TypeChecker {
     // otherwise, it's orig_return_type. is_auto_ is set accordingly.
     ReturnTypeContext(Nonnull<const Value*> orig_return_type, bool is_omitted);
 
-    auto is_auto() const -> bool { return is_auto_; }
+    [[nodiscard]] auto is_auto() const -> bool { return is_auto_; }
 
-    auto deduced_return_type() const -> std::optional<Nonnull<const Value*>> {
+    [[nodiscard]] auto deduced_return_type() const
+        -> std::optional<Nonnull<const Value*>> {
       return deduced_return_type_;
     }
     void set_deduced_return_type(Nonnull<const Value*> type) {
       deduced_return_type_ = type;
     }
 
-    auto is_omitted() const -> bool { return is_omitted_; }
+    [[nodiscard]] auto is_omitted() const -> bool { return is_omitted_; }
 
    private:
     // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.

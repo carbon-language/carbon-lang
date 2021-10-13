@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_FRAME_H_
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/ostream.h"
@@ -31,10 +32,13 @@ struct Scope {
 // A frame represents either a function call or a delimited continuation.
 struct Frame {
   Frame(const Frame&) = delete;
-  Frame& operator=(const Frame&) = delete;
+  auto operator=(const Frame&) -> Frame& = delete;
 
   Frame(std::string n, Stack<Nonnull<Scope*>> s, Stack<Nonnull<Action*>> c)
-      : name(std::move(std::move(n))), scopes(s), todo(c), continuation() {}
+      : name(std::move(std::move(n))),
+        scopes(std::move(std::move(s))),
+        todo(std::move(std::move(c))),
+        continuation() {}
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }

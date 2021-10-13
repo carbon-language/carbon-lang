@@ -27,7 +27,7 @@ class Action {
   };
 
   Action(const Value&) = delete;
-  Action& operator=(const Value&) = delete;
+  auto operator=(const Value&) -> Action& = delete;
 
   void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 
@@ -44,7 +44,7 @@ class Action {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto kind() const -> Kind { return kind_; }
+  [[nodiscard]] auto kind() const -> Kind { return kind_; }
 
   // The position or state of the action. Starts at 0 and goes up to the number
   // of subexpressions.
@@ -52,12 +52,13 @@ class Action {
   // pos indicates how many of the entries in the following `results` vector
   // will be filled in the next time this action is active.
   // For each i < pos, results[i] contains a pointer to a Value.
-  auto pos() const -> int { return pos_; }
+  [[nodiscard]] auto pos() const -> int { return pos_; }
 
   void set_pos(int pos) { this->pos_ = pos; }
 
   // Results from a subexpression.
-  auto results() const -> const std::vector<Nonnull<const Value*>>& {
+  [[nodiscard]] auto results() const
+      -> const std::vector<Nonnull<const Value*>>& {
     return results_;
   }
 
@@ -82,7 +83,7 @@ class LValAction : public Action {
     return action->kind() == Kind::LValAction;
   }
 
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  [[nodiscard]] auto Exp() const -> Nonnull<const Expression*> { return exp; }
 
  private:
   Nonnull<const Expression*> exp;
@@ -97,7 +98,7 @@ class ExpressionAction : public Action {
     return action->kind() == Kind::ExpressionAction;
   }
 
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  [[nodiscard]] auto Exp() const -> Nonnull<const Expression*> { return exp; }
 
  private:
   Nonnull<const Expression*> exp;
@@ -112,7 +113,7 @@ class PatternAction : public Action {
     return action->kind() == Kind::PatternAction;
   }
 
-  auto Pat() const -> Nonnull<const Pattern*> { return pat; }
+  [[nodiscard]] auto Pat() const -> Nonnull<const Pattern*> { return pat; }
 
  private:
   Nonnull<const Pattern*> pat;
@@ -127,7 +128,7 @@ class StatementAction : public Action {
     return action->kind() == Kind::StatementAction;
   }
 
-  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
+  [[nodiscard]] auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
 
  private:
   Nonnull<const Statement*> stmt;
