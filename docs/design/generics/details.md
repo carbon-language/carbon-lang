@@ -4753,6 +4753,7 @@ Also see:
 -   [https://rust-lang.github.io/rfcs/1951-expand-impl-trait.html]
 -   [https://rust-lang.github.io/rfcs/2071-impl-trait-existential-types.html]
 -   [https://rust-lang.github.io/rfcs/2515-type_alias_impl_trait.html]
+-   [https://www.ncameron.org/blog/abstract-return-types-aka--impl-trait-/]
 
 In Swift, there are discussions about implementing this feature under the name
 "reverse generics" or "opaque result types":
