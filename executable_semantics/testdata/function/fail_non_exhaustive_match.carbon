@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_non_exhaustive_match.carbon:18: non-exhaustive match may allow control-flow to reach the end of function that provides a `->` return type
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_non_exhaustive_match.carbon:18: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
 
 package ExecutableSemanticsTest api;
 
