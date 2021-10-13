@@ -982,6 +982,21 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
   }  // switch
 }
 
+// Returns true if we can statically verify that `match` is exhaustive, meaning
+// that one of its clauses will be executed for any possible operand value.
+//
+// TODO: the current rule is an extremely simplistic placeholder, with
+// many false negatives.
+static auto IsExhaustive(const Match& match) -> bool {
+  for (const Match::Clause& clause : match.clauses()) {
+    // A pattern consisting of a single variable binding is guaranteed to match.
+    if (clause.pattern().kind() == Pattern::Kind::BindingPattern) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void TypeChecker::ExpectReturnOnAllPaths(
     std::optional<Nonnull<Statement*>> opt_stmt, SourceLocation source_loc) {
   if (!opt_stmt) {
@@ -993,6 +1008,11 @@ void TypeChecker::ExpectReturnOnAllPaths(
   switch (stmt->kind()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*stmt);
+      if (!IsExhaustive(match)) {
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "non-exhaustive match may allow control-flow to reach the end "
+               "of a function that provides a `->` return type";
+      }
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
         ExpectReturnOnAllPaths(&clause.statement(), stmt->source_loc());

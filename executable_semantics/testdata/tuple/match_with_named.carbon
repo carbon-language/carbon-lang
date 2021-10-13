@@ -19,4 +19,5 @@ fn main() -> i32 {
     case (a: auto, .x = b: auto) =>
       return a - b + 3;
   }
+  return 1;
 }
