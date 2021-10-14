@@ -61,7 +61,7 @@ class FunctionDefinition {
   auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
 
   // The static type of this function. Cannot be called before typechecking.
-  auto static_type() const -> Nonnull<const Value*> { return *static_type_; }
+  auto static_type() const -> const Value& { return **static_type_; }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
