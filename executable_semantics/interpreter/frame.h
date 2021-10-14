@@ -35,9 +35,9 @@ struct Frame {
   auto operator=(const Frame&) -> Frame& = delete;
 
   Frame(std::string n, Stack<Nonnull<Scope*>> s, Stack<Nonnull<Action*>> c)
-      : name(std::move(std::move(n))),
-        scopes(std::move(std::move(s))),
-        todo(std::move(std::move(c))),
+      : name(std::move(n)),
+        scopes(std::move(s)),
+        todo(std::move(c)),
         continuation() {}
 
   void Print(llvm::raw_ostream& out) const;
