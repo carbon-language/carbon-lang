@@ -83,10 +83,11 @@ class Interpreter {
   // and increments its position counter.
   struct RunAgain {};
 
-  // Transition type which unwinds the `todo` stack until it reaches the Action
-  // associated with the given AST node. Execution then resumes with that
-  // Action.
+  // Transition type which unwinds the `todo` stack until it reaches an Action
+  // that implements a given AST node. Execution then resumes with that Action.
   struct UnwindTo {
+    // Unwinding stops when it reaches an `Action` whose `ast_node()` is equal
+    // to this field.
     Nonnull<const void*> ast_node;
   };
 
@@ -153,7 +154,7 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
-  auto RunAction(Nonnull<Action*> action, Env values, bool trace_steps)
+  auto ExecuteAction(Nonnull<Action*> action, Env values, bool trace_steps)
       -> Nonnull<const Value*>;
 
   Nonnull<Arena*> arena;

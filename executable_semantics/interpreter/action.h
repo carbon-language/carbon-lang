@@ -66,7 +66,7 @@ class Action {
   // The address of the AST node that this action implements, if any.
   // The return value should be treated as an opaque identifier, and only
   // used in comparisons.
-  auto AstNode() const -> const void*;
+  auto ast_node() const -> const void*;
 
   static void PrintList(const Stack<Nonnull<Action*>>& ls,
                         llvm::raw_ostream& out);
@@ -106,6 +106,9 @@ class Action {
   const Kind kind_;
 };
 
+// An Action which implements evaluation of an Expression to produce an
+// lvalue. The result be expressed as a PointerValue which points to the
+// Expression's value.
 class LValAction : public Action {
  public:
   explicit LValAction(Nonnull<const Expression*> exp)
@@ -115,12 +118,15 @@ class LValAction : public Action {
     return action->kind() == Kind::LValAction;
   }
 
+  // The Expression this Action evaluates.
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
 
  private:
   Nonnull<const Expression*> exp;
 };
 
+// An Action which implements evaluation of an Expression to produce an
+// rvalue. The result is expressed as a Value.
 class ExpressionAction : public Action {
  public:
   explicit ExpressionAction(Nonnull<const Expression*> exp)
@@ -130,12 +136,15 @@ class ExpressionAction : public Action {
     return action->kind() == Kind::ExpressionAction;
   }
 
+  // The Expression this Action evaluates.
   auto Exp() const -> Nonnull<const Expression*> { return exp; }
 
  private:
   Nonnull<const Expression*> exp;
 };
 
+// An Action which implements evaluation of a Pattern. The result is expressed
+// as a Value.
 class PatternAction : public Action {
  public:
   explicit PatternAction(Nonnull<const Pattern*> pat)
@@ -145,12 +154,15 @@ class PatternAction : public Action {
     return action->kind() == Kind::PatternAction;
   }
 
+  // The Pattern this Action evaluates.
   auto Pat() const -> Nonnull<const Pattern*> { return pat; }
 
  private:
   Nonnull<const Pattern*> pat;
 };
 
+// An Action which implements execution of a Statement. Does not produce a
+// result.
 class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> stmt)
@@ -160,6 +172,7 @@ class StatementAction : public Action {
     return action->kind() == Kind::StatementAction;
   }
 
+  // The Statement this Action executes.
   auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
 
  private:
@@ -168,7 +181,8 @@ class StatementAction : public Action {
 
 // Action which does nothing except introduce a new scope into the action
 // stack. This is useful when a distinct scope doesn't otherwise have an
-// Action it can naturally be associated with.
+// Action it can naturally be associated with. ScopeActions are not associated
+// with AST nodes.
 class ScopeAction : public Action {
  public:
   ScopeAction(Scope scope) : Action(Kind::ScopeAction) {

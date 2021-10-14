@@ -758,10 +758,7 @@ auto Interpreter::StepPattern() -> Transition {
 
 static auto IsRunAction(Nonnull<Action*> action) -> bool {
   const auto* statement = dyn_cast<StatementAction>(action);
-  if (statement == nullptr) {
-    return false;
-  }
-  return llvm::isa<Run>(*statement->Stmt());
+  return statement != nullptr && llvm::isa<Run>(*statement->Stmt());
 }
 
 auto Interpreter::StepStmt() -> Transition {
@@ -1060,7 +1057,7 @@ class Interpreter::DoTransition {
   }
 
   void operator()(const UnwindTo& unwind_to) {
-    while (interpreter->todo.Top()->AstNode() != unwind_to.ast_node) {
+    while (interpreter->todo.Top()->ast_node() != unwind_to.ast_node) {
       if (interpreter->todo.Top()->scope().has_value()) {
         interpreter->DeallocateScope(*interpreter->todo.Top()->scope());
       }
@@ -1075,7 +1072,7 @@ class Interpreter::DoTransition {
       if (action->scope().has_value()) {
         interpreter->DeallocateScope(*action->scope());
       }
-    } while (action->AstNode() != unwind_past.ast_node);
+    } while (action->ast_node() != unwind_past.ast_node);
     if (unwind_past.result.has_value()) {
       interpreter->todo.Top()->AddResult(*unwind_past.result);
     }
@@ -1139,8 +1136,8 @@ void Interpreter::Step() {
 //
 // TODO: consider whether to use this->tracing_output rather than a separate
 // trace_steps parameter.
-auto Interpreter::RunAction(Nonnull<Action*> action, Env values,
-                            bool trace_steps) -> Nonnull<const Value*> {
+auto Interpreter::ExecuteAction(Nonnull<Action*> action, Env values,
+                                bool trace_steps) -> Nonnull<const Value*> {
   todo = {};
   todo.Push(arena->New<ScopeAction>(Scope(values)));
   todo.Push(action);
@@ -1171,20 +1168,21 @@ auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
     PrintState(llvm::outs());
   }
 
-  return cast<IntValue>(*RunAction(arena->New<ExpressionAction>(call_main),
-                                   globals, tracing_output))
+  return cast<IntValue>(*ExecuteAction(arena->New<ExpressionAction>(call_main),
+                                       globals, tracing_output))
       .Val();
 }
 
 auto Interpreter::InterpExp(Env values, Nonnull<const Expression*> e)
     -> Nonnull<const Value*> {
-  return RunAction(arena->New<ExpressionAction>(e), values,
-                   /*trace_steps=*/false);
+  return ExecuteAction(arena->New<ExpressionAction>(e), values,
+                       /*trace_steps=*/false);
 }
 
 auto Interpreter::InterpPattern(Env values, Nonnull<const Pattern*> p)
     -> Nonnull<const Value*> {
-  return RunAction(arena->New<PatternAction>(p), values, /*trace_steps=*/false);
+  return ExecuteAction(arena->New<PatternAction>(p), values,
+                       /*trace_steps=*/false);
 }
 
 }  // namespace Carbon

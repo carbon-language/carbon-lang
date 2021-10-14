@@ -21,7 +21,7 @@ namespace Carbon {
 
 using llvm::cast;
 
-auto Action::AstNode() const -> const void* {
+auto Action::ast_node() const -> const void* {
   switch (kind()) {
     case Action::Kind::LValAction:
       return cast<LValAction>(*this).Exp();
