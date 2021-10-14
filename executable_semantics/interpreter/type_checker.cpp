@@ -449,12 +449,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     case Expression::Kind::TupleLiteral: {
       std::vector<Nonnull<const Value*>> arg_types;
       auto new_types = types;
-      int i = 0;
       for (auto& arg : cast<TupleLiteral>(*e).fields()) {
         auto arg_res = TypeCheckExp(arg, new_types, values);
         new_types = arg_res.types;
         arg_types.push_back(arg->static_type());
-        ++i;
       }
       SetStaticType(e, arena->New<TupleValue>(std::move(arg_types)));
       return TCResult(new_types);
