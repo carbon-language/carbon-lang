@@ -77,7 +77,7 @@ class Value {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  [[nodiscard]] auto kind() const -> Kind { return kind_; }
+  auto kind() const -> Kind { return kind_; }
 
  protected:
   // Constructs a Value. `kind` must be the enumerator corresponding to the
@@ -118,7 +118,7 @@ class IntValue : public Value {
     return value->kind() == Kind::IntValue;
   }
 
-  [[nodiscard]] auto Val() const -> int { return val; }
+  auto Val() const -> int { return val; }
 
  private:
   int val;
@@ -138,11 +138,9 @@ class FunctionValue : public Value {
     return value->kind() == Kind::FunctionValue;
   }
 
-  [[nodiscard]] auto Name() const -> const std::string& { return name; }
-  [[nodiscard]] auto Param() const -> Nonnull<const Value*> { return param; }
-  [[nodiscard]] auto Body() const -> std::optional<Nonnull<const Statement*>> {
-    return body;
-  }
+  auto Name() const -> const std::string& { return name; }
+  auto Param() const -> Nonnull<const Value*> { return param; }
+  auto Body() const -> std::optional<Nonnull<const Statement*>> { return body; }
 
  private:
   std::string name;
@@ -160,7 +158,7 @@ class PointerValue : public Value {
     return value->kind() == Kind::PointerValue;
   }
 
-  [[nodiscard]] auto Val() const -> const Address& { return val; }
+  auto Val() const -> const Address& { return val; }
 
  private:
   Address val;
@@ -175,7 +173,7 @@ class BoolValue : public Value {
     return value->kind() == Kind::BoolValue;
   }
 
-  [[nodiscard]] auto Val() const -> bool { return val; }
+  auto Val() const -> bool { return val; }
 
  private:
   bool val;
@@ -200,13 +198,13 @@ class StructValue : public Value {
     return value->kind() == Kind::StructValue;
   }
 
-  [[nodiscard]] auto elements() const -> const std::vector<TupleElement>& {
+  auto elements() const -> const std::vector<TupleElement>& {
     return elements_;
   }
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
-  [[nodiscard]] auto FindField(const std::string& name) const
+  auto FindField(const std::string& name) const
       -> std::optional<Nonnull<const Value*>>;
 
  private:
@@ -223,8 +221,8 @@ class NominalClassValue : public Value {
     return value->kind() == Kind::NominalClassValue;
   }
 
-  [[nodiscard]] auto Type() const -> Nonnull<const Value*> { return type; }
-  [[nodiscard]] auto Inits() const -> Nonnull<const Value*> { return inits; }
+  auto Type() const -> Nonnull<const Value*> { return type; }
+  auto Inits() const -> Nonnull<const Value*> { return inits; }
 
  private:
   Nonnull<const Value*> type;
@@ -243,10 +241,8 @@ class AlternativeConstructorValue : public Value {
     return value->kind() == Kind::AlternativeConstructorValue;
   }
 
-  [[nodiscard]] auto AltName() const -> const std::string& { return alt_name; }
-  [[nodiscard]] auto ChoiceName() const -> const std::string& {
-    return choice_name;
-  }
+  auto AltName() const -> const std::string& { return alt_name; }
+  auto ChoiceName() const -> const std::string& { return choice_name; }
 
  private:
   std::string alt_name;
@@ -267,13 +263,9 @@ class AlternativeValue : public Value {
     return value->kind() == Kind::AlternativeValue;
   }
 
-  [[nodiscard]] auto AltName() const -> const std::string& { return alt_name; }
-  [[nodiscard]] auto ChoiceName() const -> const std::string& {
-    return choice_name;
-  }
-  [[nodiscard]] auto Argument() const -> Nonnull<const Value*> {
-    return argument;
-  }
+  auto AltName() const -> const std::string& { return alt_name; }
+  auto ChoiceName() const -> const std::string& { return choice_name; }
+  auto Argument() const -> Nonnull<const Value*> { return argument; }
 
  private:
   std::string alt_name;
@@ -297,13 +289,11 @@ class TupleValue : public Value {
     return value->kind() == Kind::TupleValue;
   }
 
-  [[nodiscard]] auto Elements() const -> const std::vector<TupleElement>& {
-    return elements;
-  }
+  auto Elements() const -> const std::vector<TupleElement>& { return elements; }
 
   // Returns the value of the field named `name` in this tuple, or
   // nullopt if there is no such field.
-  [[nodiscard]] auto FindField(const std::string& name) const
+  auto FindField(const std::string& name) const
       -> std::optional<Nonnull<const Value*>>;
 
  private:
@@ -324,10 +314,8 @@ class BindingPlaceholderValue : public Value {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  [[nodiscard]] auto Name() const -> const std::optional<std::string>& {
-    return name;
-  }
-  [[nodiscard]] auto Type() const -> Nonnull<const Value*> { return type; }
+  auto Name() const -> const std::optional<std::string>& { return name; }
+  auto Type() const -> Nonnull<const Value*> { return type; }
 
  private:
   std::optional<std::string> name;
@@ -378,11 +366,9 @@ class FunctionType : public Value {
     return value->kind() == Kind::FunctionType;
   }
 
-  [[nodiscard]] auto Deduced() const -> const std::vector<GenericBinding>& {
-    return deduced;
-  }
-  [[nodiscard]] auto Param() const -> Nonnull<const Value*> { return param; }
-  [[nodiscard]] auto Ret() const -> Nonnull<const Value*> { return ret; }
+  auto Deduced() const -> const std::vector<GenericBinding>& { return deduced; }
+  auto Param() const -> Nonnull<const Value*> { return param; }
+  auto Ret() const -> Nonnull<const Value*> { return ret; }
 
  private:
   std::vector<GenericBinding> deduced;
@@ -400,7 +386,7 @@ class PointerType : public Value {
     return value->kind() == Kind::PointerType;
   }
 
-  [[nodiscard]] auto Type() const -> Nonnull<const Value*> { return type; }
+  auto Type() const -> Nonnull<const Value*> { return type; }
 
  private:
   Nonnull<const Value*> type;
@@ -431,7 +417,7 @@ class StructType : public Value {
     return value->kind() == Kind::StructType;
   }
 
-  [[nodiscard]] auto fields() const -> const VarValues& { return fields_; }
+  auto fields() const -> const VarValues& { return fields_; }
 
  private:
   VarValues fields_;
@@ -450,9 +436,9 @@ class NominalClassType : public Value {
     return value->kind() == Kind::NominalClassType;
   }
 
-  [[nodiscard]] auto Name() const -> const std::string& { return name; }
-  [[nodiscard]] auto Fields() const -> const VarValues& { return fields; }
-  [[nodiscard]] auto Methods() const -> const VarValues& { return methods; }
+  auto Name() const -> const std::string& { return name; }
+  auto Fields() const -> const VarValues& { return fields; }
+  auto Methods() const -> const VarValues& { return methods; }
 
  private:
   std::string name;
@@ -472,10 +458,8 @@ class ChoiceType : public Value {
     return value->kind() == Kind::ChoiceType;
   }
 
-  [[nodiscard]] auto Name() const -> const std::string& { return name; }
-  [[nodiscard]] auto Alternatives() const -> const VarValues& {
-    return alternatives;
-  }
+  auto Name() const -> const std::string& { return name; }
+  auto Alternatives() const -> const VarValues& { return alternatives; }
 
  private:
   std::string name;
@@ -502,7 +486,7 @@ class VariableType : public Value {
     return value->kind() == Kind::VariableType;
   }
 
-  [[nodiscard]] auto Name() const -> const std::string& { return name; }
+  auto Name() const -> const std::string& { return name; }
 
  private:
   std::string name;
@@ -524,9 +508,7 @@ class ContinuationValue : public Value {
   // frame (the reverse of the usual order). Note that this provides mutable
   // access, even when *this is const, because of the reference-like semantics
   // of ContinuationValue.
-  [[nodiscard]] auto Stack() const -> Nonnull<std::vector<Nonnull<Frame*>>*> {
-    return stack;
-  }
+  auto Stack() const -> Nonnull<std::vector<Nonnull<Frame*>>*> { return stack; }
 
  private:
   Nonnull<std::vector<Nonnull<Frame*>>*> stack;
@@ -552,7 +534,7 @@ class StringValue : public Value {
     return value->kind() == Kind::StringValue;
   }
 
-  [[nodiscard]] auto Val() const -> const std::string& { return val; }
+  auto Val() const -> const std::string& { return val; }
 
  private:
   std::string val;

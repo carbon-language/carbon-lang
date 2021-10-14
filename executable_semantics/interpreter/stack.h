@@ -57,10 +57,10 @@ struct Stack {
   }
 
   // Returns `true` iff `Count() > 0`.
-  [[nodiscard]] auto IsEmpty() const -> bool { return elements.empty(); }
+  auto IsEmpty() const -> bool { return elements.empty(); }
 
   // Returns the number of elements in `*this`.
-  [[nodiscard]] auto Count() const -> int { return elements.size(); }
+  auto Count() const -> int { return elements.size(); }
 
   // Iterates over the Stack from top to bottom.
   auto begin() const -> const_iterator { return elements.crbegin(); }

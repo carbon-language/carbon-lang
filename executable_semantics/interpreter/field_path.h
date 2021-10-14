@@ -38,7 +38,7 @@ class FieldPath {
   auto operator=(FieldPath&&) -> FieldPath& = default;
 
   // Returns whether *this is empty.
-  [[nodiscard]] auto IsEmpty() const -> bool { return components.empty(); }
+  auto IsEmpty() const -> bool { return components.empty(); }
 
   // Appends `name` to the end of *this.
   auto Append(std::string name) -> void {
