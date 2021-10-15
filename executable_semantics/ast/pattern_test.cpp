@@ -19,11 +19,8 @@ using llvm::isa;
 using testing::ElementsAre;
 using testing::IsEmpty;
 
-// Matches a TuplePattern::Field named `name` whose `pattern` is an
-// `AutoPattern`.
-MATCHER_P(AutoFieldNamed, name, "") {
-  return arg.name == std::string(name) && isa<AutoPattern>(*arg.pattern);
-}
+// Matches any `AutoPattern`.
+MATCHER(AutoField, "") { return isa<AutoPattern>(*arg); }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
   return SourceLocation("<test>", line_num);
@@ -61,8 +58,7 @@ TEST_F(PatternTest, UnaryNoCommaAsPattern) {
   // )
   // ```
   ParenContents<Pattern> contents = {
-      .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = false};
 
   Nonnull<const Pattern*> pattern =
@@ -73,48 +69,42 @@ TEST_F(PatternTest, UnaryNoCommaAsPattern) {
 
 TEST_F(PatternTest, UnaryNoCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = false};
 
   Nonnull<const TuplePattern*> tuple =
       TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
-  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
+  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoField()));
 }
 
 TEST_F(PatternTest, UnaryWithCommaAsPattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const Pattern*> pattern =
       PatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
-  EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
-              ElementsAre(AutoFieldNamed("0")));
+  EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(), ElementsAre(AutoField()));
 }
 
 TEST_F(PatternTest, UnaryWithCommaAsTuplePattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const TuplePattern*> tuple =
       TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
-  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoFieldNamed("0")));
+  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoField()));
 }
 
 TEST_F(PatternTest, BinaryAsPattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))},
-                   {.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2)),
+                   arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const Pattern*> pattern =
@@ -122,22 +112,19 @@ TEST_F(PatternTest, BinaryAsPattern) {
   EXPECT_EQ(pattern->source_loc(), FakeSourceLoc(1));
   ASSERT_TRUE(isa<TuplePattern>(*pattern));
   EXPECT_THAT(cast<TuplePattern>(*pattern).Fields(),
-              ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));
+              ElementsAre(AutoField(), AutoField()));
 }
 
 TEST_F(PatternTest, BinaryAsTuplePattern) {
   ParenContents<Pattern> contents = {
-      .elements = {{.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))},
-                   {.name = std::nullopt,
-                    .term = arena.New<AutoPattern>(FakeSourceLoc(2))}},
+      .elements = {arena.New<AutoPattern>(FakeSourceLoc(2)),
+                   arena.New<AutoPattern>(FakeSourceLoc(2))},
       .has_trailing_comma = true};
 
   Nonnull<const TuplePattern*> tuple =
       TuplePatternFromParenContents(&arena, FakeSourceLoc(1), contents);
   EXPECT_EQ(tuple->source_loc(), FakeSourceLoc(1));
-  EXPECT_THAT(tuple->Fields(),
-              ElementsAre(AutoFieldNamed("0"), AutoFieldNamed("1")));
+  EXPECT_THAT(tuple->Fields(), ElementsAre(AutoField(), AutoField()));
 }
 
 }  // namespace

@@ -1,4 +1,4 @@
-# Carbon deep dive: combined interfaces
+# Carbon generics details
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -65,8 +65,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Field requirements](#field-requirements)
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
-    -   [Reverse generics for return types](#reverse-generics-for-return-types)
     -   [Variadic arguments](#variadic-arguments)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -336,7 +336,7 @@ class GameBoard {
     // ❌ Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     fn Draw[me: Self]() { ... }
-    fn Winner[me: Self](player: Int) { ... }
+    fn Winner[me: Self](player: i32) { ... }
   }
 }
 ```
@@ -751,7 +751,7 @@ fn Identity[T:! Type](x: T) -> T {
   return x;
 }
 
-var i: Int = Identity(3);
+var i: i32 = Identity(3);
 var s: String = Identity("string");
 ```
 
@@ -865,7 +865,7 @@ interface Printable {
   fn Print[me: Self]();
 }
 interface Renderable {
-  fn Center[me: Self]() -> (Int, Int);
+  fn Center[me: Self]() -> (i32, i32);
   fn Draw[me: Self]();
 }
 
@@ -890,7 +890,7 @@ class Sprite {
     fn Print[me: Self]() { ... }
   }
   impl as Renderable {
-    fn Center[me: Self]() -> (Int, Int) { ... }
+    fn Center[me: Self]() -> (i32, i32) { ... }
     fn Draw[me: Self]() { ... }
   }
 }
@@ -904,12 +904,12 @@ error to use.
 
 ```
 interface Renderable {
-  fn Center[me: Self]() -> (Int, Int);
+  fn Center[me: Self]() -> (i32, i32);
   fn Draw[me: Self]();
 }
 interface EndOfGame {
   fn Draw[me: Self]();
-  fn Winner[me: Self](player: Int);
+  fn Winner[me: Self](player: i32);
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
 structural interface {
@@ -1017,10 +1017,10 @@ will use the same semantics and syntax as we do for
 [structural interfaces](#structural-interfaces):
 
 ```
-interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
+interface Equatable { fn Equals[me: Self](that: Self) -> bool; }
 
 interface Iterable {
-  fn Advance[addr me: Self*]() -> Bool;
+  fn Advance[addr me: Self*]() -> bool;
   impl as Equatable;
 }
 
@@ -1034,7 +1034,7 @@ def DoAdvanceAndEquals[T:! Iterable](x: T) {
 
 class Iota {
   impl as Iterable { fn Advance[me: Self]() { ... } }
-  impl as Equatable { fn Equals[me: Self](that: Self) -> Bool { ... } }
+  impl as Equatable { fn Equals[me: Self](that: Self) -> bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1046,7 +1046,7 @@ by itself add any names to the interface, but again those can be added with
 
 ```
 interface Hashable {
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
   impl as Equatable;
   alias Equals = Equatable.Equals;
 }
@@ -1070,8 +1070,8 @@ as well. In the case of `Hashable` above, this includes all the members of
 ```
 class Song {
   impl as Hashable {
-    fn Hash[me: Self]() -> UInt64 { ... }
-    fn Equals[me: Self](that: Self) -> Bool { ... }
+    fn Hash[me: Self]() -> u64 { ... }
+    fn Equals[me: Self](that: Self) -> bool { ... }
   }
 }
 var y: Song;
@@ -1090,17 +1090,17 @@ benefits:
 We expect this concept to be common enough to warrant dedicated syntax:
 
 ```
-interface Equatable { fn Equals[me: Self](that: Self) -> Bool; }
+interface Equatable { fn Equals[me: Self](that: Self) -> bool; }
 
 interface Hashable {
   extends Equatable;
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
 //   impl as Equatable;
 //   alias Equals = Equatable.Equals;
-//   fn Hash[me: Self]() -> UInt64;
+//   fn Hash[me: Self]() -> u64;
 // }
 ```
 
@@ -1355,7 +1355,7 @@ the capabilities of the iterator being passed in:
 ```
 interface ForwardIntIterator {
   fn Advance[addr me: Self*]();
-  fn Get[me: Self]() -> Int;
+  fn Get[me: Self]() -> i32;
 }
 interface BidirectionalIntIterator {
   extends ForwardIntIterator;
@@ -1363,18 +1363,18 @@ interface BidirectionalIntIterator {
 }
 interface RandomAccessIntIterator {
   extends BidirectionalIntIterator;
-  fn Skip[addr me: Self*](offset: Int);
-  fn Difference[me: Self](that: Self) -> Int;
+  fn Skip[addr me: Self*](offset: i32);
+  fn Difference[me: Self](that: Self) -> i32;
 }
 
 fn SearchInSortedList[IterT:! ForwardIntIterator]
-    (begin: IterT, end: IterT, needle: Int) -> Bool {
+    (begin: IterT, end: IterT, needle: i32) -> bool {
   ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
 fn SearchInSortedList[IterT:! RandomAccessIntIterator]
-    (begin: IterT, end: IterT, needle: Int) -> Bool {
+    (begin: IterT, end: IterT, needle: i32) -> bool {
   ... // does binary search
 }
 ```
@@ -1401,19 +1401,19 @@ interface Hashable { ... }
 class HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
 ```
 
-If we write something like `HashMap(String, Int)` the type we actually get is:
+If we write something like `HashMap(String, i32)` the type we actually get is:
 
 ```
-HashMap(String as Hashable, Int as Type)
+HashMap(String as Hashable, i32 as Type)
 ```
 
 This is the same type we will get if we pass in some other facet types in, so
 all of these types are equal:
 
--   `HashMap(String, Int)`
--   `HashMap(String as Hashable, Int as Type)`
--   `HashMap((String as Printable) as Hashable, Int)`
--   `HashMap((String as Printable & Hashable) as Hashable, Int)`
+-   `HashMap(String, i32)`
+-   `HashMap(String as Hashable, i32 as Type)`
+-   `HashMap((String as Printable) as Hashable, i32)`
+-   `HashMap((String as Printable & Hashable) as Hashable, i32)`
 
 This means we don't generally need to worry about getting the wrong facet type
 as the argument for a generic type. This means we don't get type mismatches when
@@ -1425,7 +1425,7 @@ fn PrintValue
     [KeyT:! Printable & Hashable, ValueT:! Printable]
     (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
 
-var m: HashMap(String, Int);
+var m: HashMap(String, i32);
 PrintValue(m, "key");
 ```
 
@@ -1444,14 +1444,14 @@ interface Printable {
   fn Print[me: Self]();
 }
 interface Comparable {
-  fn Less[me: Self](that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> bool;
 }
 class Song {
   impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter SongByTitle for Song {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool { ... }
+    fn Less[me: Self](that: Self) -> bool { ... }
   }
 }
 adapter FormattedSong for Song {
@@ -1488,7 +1488,7 @@ type may be accessed like any other facet type; either by a cast:
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> bool {
       return (this as Song).Title() < (that as Song).Title();
     }
   }
@@ -1500,7 +1500,7 @@ or using qualified names:
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> bool {
       return this.(Song.Title)() < that(Song.Title)();
     }
   }
@@ -1574,10 +1574,10 @@ one difference between them is that `Song as Hashable` may be implicitly
 converted to `Song`, which implements interface `Printable`, and
 `PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
 implements interface `Media`. This means that it is safe to convert between
-`HashMap(Song, Int) == HashMap(Song as Hashable, Int)` and
-`HashMap(PlayableSong, Int) == HashMap(PlayableSong as Hashable, Int)` (though
+`HashMap(Song, i32) == HashMap(Song as Hashable, i32)` and
+`HashMap(PlayableSong, i32) == HashMap(PlayableSong as Hashable, i32)` (though
 maybe only with an explicit cast) but
-`HashMap(SongHashedByTitle, Int) == HashMap(SongHashByTitle as Hashable, Int)`
+`HashMap(SongHashedByTitle, i32) == HashMap(SongHashByTitle as Hashable, i32)`
 is incompatible. This is a relief, because we know that in practice the
 invariants of a `HashMap` implementation rely on the hashing function staying
 the same.
@@ -1680,18 +1680,18 @@ syntax.
 
 ```
 interface Comparable {
-  fn Less[me: Self](that: Self) -> Bool;
+  fn Less[me: Self](that: Self) -> bool;
 }
 adapter ComparableFromDifferenceFn
-    (T:! Type, Difference:! fnty(T, T)->Int) for T {
+    (T:! Type, Difference:! fnty(T, T)->i32) for T {
   impl as Comparable {
-    fn Less[me: Self](that: Self) -> Bool {
+    fn Less[me: Self](that: Self) -> bool {
       return Difference(this, that) < 0;
     }
   }
 }
 class IntWrapper {
-  var x: Int;
+  var x: i32;
   fn Difference(this: Self, that: Self) {
     return that.x - this.x;
   }
@@ -1712,12 +1712,12 @@ associated constant.
 
 ```
 interface NSpacePoint {
-  let N:! Int;
+  let N:! i32;
   // The following require: 0 <= i < N.
-  fn Get[addr me: Self*](i: Int) -> Float64;
-  fn Set[addr me: Self*](i: Int, value: Float64);
+  fn Get[addr me: Self*](i: i32) -> f64;
+  fn Set[addr me: Self*](i: i32, value: f64);
   // Associated constants may be used in signatures:
-  fn SetAll[addr me: Self*](value: Array(Float64, N));
+  fn SetAll[addr me: Self*](value: Array(f64, N));
 }
 ```
 
@@ -1727,19 +1727,19 @@ for `N`:
 ```
 class Point2D {
   impl as NSpacePoint {
-    let N:! Int = 2;
-    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
-    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
-    fn SetAll[addr me: Self*](value: Array(Float64, 2)) { ... }
+    let N:! i32 = 2;
+    fn Get[addr me: Self*](i: i32) -> f64 { ... }
+    fn Set[addr me: Self*](i: i32, value: f64) { ... }
+    fn SetAll[addr me: Self*](value: Array(f64, 2)) { ... }
   }
 }
 
 class Point3D {
   impl as NSpacePoint {
-    let N:! Int = 3;
-    fn Get[addr me: Self*](i: Int) -> Float64 { ... }
-    fn Set[addr me: Self*](i: Int, value: Float64) { ... }
-    fn SetAll[addr me: Self*](value: Array(Float64, 3)) { ... }
+    let N:! i32 = 3;
+    fn Get[addr me: Self*](i: i32) -> f64 { ... }
+    fn Set[addr me: Self*](i: i32, value: f64) { ... }
+    fn SetAll[addr me: Self*](value: Array(f64, 3)) { ... }
   }
 }
 ```
@@ -1751,7 +1751,7 @@ Assert(Point2D.N == 2);
 Assert(Point3D.N == 3);
 
 fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
-  for (var i: Int = 0; i < PointT.N; ++i) {
+  for (var i: i32 = 0; i < PointT.N; ++i) {
     if (i > 0) { Print(", "); }
     Print(p.Get(i));
   }
@@ -1759,8 +1759,8 @@ fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
 
 fn ExtractPoint[PointT:! NSpacePoint](
     p: PointT,
-    dest: Array(Float64, PointT.N)*) {
-  for (var i: Int = 0; i < PointT.N; ++i) {
+    dest: Array(f64, PointT.N)*) {
+  for (var i: i32 = 0; i < PointT.N; ++i) {
     (*dest)[i] = p.Get(i);
   }
 }
@@ -1784,7 +1784,7 @@ interface DeserializeFromString {
 }
 
 class MySerializableType {
-  var i: Int;
+  var i: i32;
 
   impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
@@ -1824,7 +1824,7 @@ interface StackAssociatedType {
   let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> Bool;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -1856,7 +1856,7 @@ class DynamicArray(T:! Type) {
       this->Remove(pos);
       return var;
     }
-    fn IsEmpty[addr me: Self*]() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> bool {
       return this->Begin() == this->End();
     }
   }
@@ -1963,7 +1963,7 @@ name of the interface instead of the associated type declaration:
 interface StackParameterized(ElementType:! Type) {
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> Bool;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -1981,7 +1981,7 @@ class Produce {
     fn Pop[addr me: Self*]() -> Fruit {
       return this->fruit.Pop();
     }
-    fn IsEmpty[addr me: Self*]() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> bool {
       return this->fruit.IsEmpty();
     }
   }
@@ -1992,7 +1992,7 @@ class Produce {
     fn Pop[addr me: Self*]() -> Veggie {
       return this->veggie.Pop();
     }
-    fn IsEmpty[addr me: Self*]() -> Bool {
+    fn IsEmpty[addr me: Self*]() -> bool {
       return this->veggie.IsEmpty();
     }
   }
@@ -2041,7 +2041,7 @@ be comparable with multiple other types, and in fact interfaces for
 
 ```
 interface EquatableWith(T:! Type) {
-  fn Equals[me: Self](that: T) -> Bool;
+  fn Equals[me: Self](that: T) -> bool;
   ...
 }
 class Complex {
@@ -2220,9 +2220,17 @@ values they could have different real types.
 
 ### Abstract return types
 
-This lets you return am anonymous type implementing an interface from a
-function.
-[Rust has this feature](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+This lets you return an anonymous type implementing an interface from a
+function. In Rust this is the
+[`impl Trait` return type](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+
+In Swift, there are discussions about implementing this feature under the name
+"reverse generics" or "opaque result types":
+[1](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics),
+[2](https://forums.swift.org/t/reverse-generics-and-opaque-result-types/21608),
+[3](https://forums.swift.org/t/se-0244-opaque-result-types/21252),
+[4](https://forums.swift.org/t/se-0244-opaque-result-types-reopened/22942),
+Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 ### Interface defaults
 
@@ -2266,11 +2274,13 @@ a type to an implementation of an interface parameterized by that type.
 #### Generic associated types
 
 Generic associated types are about when this is a requirement of an interface.
+These are also called "associated type constructors."
 
 #### Higher-ranked types
 
 Higher-ranked types are used to represent this requirement in a function
-signature.
+signature. They can be
+[emulated using generic associated types](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
 
 ### Field requirements
 
@@ -2288,15 +2298,12 @@ description of what this might involve.
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
 
-### Reverse generics for return types
-
-In Rust this is
-[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
-In Swift,
-[this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
-Swift is considering spelling this `<V: Collection> V` or `some Collection`.
-
 ### Variadic arguments
 
 Some facility for allowing a function to generically take a variable number of
 arguments.
+
+## References
+
+-   [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)

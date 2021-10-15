@@ -94,12 +94,11 @@ auto FindInVarValues(const std::string& field, const VarValues& inits)
     -> std::optional<Nonnull<const Value*>>;
 auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
 
-// A TupleElement represents the value of a single tuple or struct field.
+// A StructElement represents the value of a single struct field.
 //
-// TODO(geoffromer): Rename this, and look for ways to eliminate duplication
-// among TupleElement, VarValues::value_type, FieldInitializer,
-// TuplePattern::Field, and any similar types.
-struct TupleElement {
+// TODO(geoffromer): Look for ways to eliminate duplication among StructElement,
+// VarValues::value_type, FieldInitializer, and any similar types.
+struct StructElement {
   // The field name.
   std::string name;
 
@@ -190,7 +189,7 @@ class BoolValue : public Value {
 // StructType instances.
 class StructValue : public Value {
  public:
-  explicit StructValue(std::vector<TupleElement> elements)
+  explicit StructValue(std::vector<StructElement> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
     CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
@@ -200,7 +199,7 @@ class StructValue : public Value {
     return value->kind() == Kind::StructValue;
   }
 
-  auto elements() const -> const std::vector<TupleElement>& {
+  auto elements() const -> const std::vector<StructElement>& {
     return elements_;
   }
 
@@ -210,7 +209,7 @@ class StructValue : public Value {
       -> std::optional<Nonnull<const Value*>>;
 
  private:
-  std::vector<TupleElement> elements_;
+  std::vector<StructElement> elements_;
 };
 
 // A value of a nominal class type.
@@ -280,26 +279,24 @@ class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
   static auto Empty() -> Nonnull<const TupleValue*> {
-    static const TupleValue empty = TupleValue(std::vector<TupleElement>());
+    static const TupleValue empty =
+        TupleValue(std::vector<Nonnull<const Value*>>());
     return Nonnull<const TupleValue*>(&empty);
   }
 
-  explicit TupleValue(std::vector<TupleElement> elements)
+  explicit TupleValue(std::vector<Nonnull<const Value*>> elements)
       : Value(Kind::TupleValue), elements_(std::move(elements)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TupleValue;
   }
 
-  auto elements() const -> llvm::ArrayRef<TupleElement> { return elements_; }
-
-  // Returns the value of the field named `name` in this tuple, or
-  // nullopt if there is no such field.
-  auto FindField(const std::string& name) const
-      -> std::optional<Nonnull<const Value*>>;
+  auto elements() const -> llvm::ArrayRef<Nonnull<const Value*>> {
+    return elements_;
+  }
 
  private:
-  std::vector<TupleElement> elements_;
+  std::vector<Nonnull<const Value*>> elements_;
 };
 
 // A binding placeholder value.

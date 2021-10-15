@@ -46,17 +46,7 @@ auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
 
 auto StructValue::FindField(const std::string& name) const
     -> std::optional<Nonnull<const Value*>> {
-  for (const TupleElement& element : elements_) {
-    if (element.name == name) {
-      return element.value;
-    }
-  }
-  return std::nullopt;
-}
-
-auto TupleValue::FindField(const std::string& name) const
-    -> std::optional<Nonnull<const Value*>> {
-  for (const TupleElement& element : elements_) {
+  for (const StructElement& element : elements_) {
     if (element.name == name) {
       return element.value;
     }
@@ -80,17 +70,9 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassValue: {
       std::optional<Nonnull<const Value*>> field =
-          cast<TupleValue>(cast<NominalClassValue>(*v).inits()).FindField(f);
+          cast<StructValue>(cast<NominalClassValue>(*v).inits()).FindField(f);
       if (field == std::nullopt) {
         FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v;
-      }
-      return *field;
-    }
-    case Value::Kind::TupleValue: {
-      std::optional<Nonnull<const Value*>> field =
-          cast<TupleValue>(*v).FindField(f);
-      if (!field) {
-        FATAL_RUNTIME_ERROR(source_loc) << "field " << f << " not in " << *v;
       }
       return *field;
     }
@@ -130,9 +112,10 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
   }
   switch (value->kind()) {
     case Value::Kind::StructValue: {
-      std::vector<TupleElement> elements = cast<StructValue>(*value).elements();
+      std::vector<StructElement> elements =
+          cast<StructValue>(*value).elements();
       auto it = std::find_if(elements.begin(), elements.end(),
-                             [path_begin](const TupleElement& element) {
+                             [path_begin](const StructElement& element) {
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
@@ -148,17 +131,16 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
                           path_begin, path_end, field_value, source_loc);
     }
     case Value::Kind::TupleValue: {
-      std::vector<TupleElement> elements = cast<TupleValue>(*value).elements();
-      auto it = std::find_if(elements.begin(), elements.end(),
-                             [path_begin](const TupleElement& element) {
-                               return element.name == *path_begin;
-                             });
-      if (it == elements.end()) {
+      std::vector<Nonnull<const Value*>> elements =
+          cast<TupleValue>(*value).elements();
+      // TODO(geoffromer): update FieldPath to hold integers as well as strings.
+      int index = std::stoi(*path_begin);
+      if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
         FATAL_RUNTIME_ERROR(source_loc)
-            << "field " << *path_begin << " not in " << *value;
+            << "index " << *path_begin << " out of range in " << *value;
       }
-      it->value = SetFieldImpl(arena, it->value, path_begin + 1, path_end,
-                               field_value, source_loc);
+      elements[index] = SetFieldImpl(arena, elements[index], path_begin + 1,
+                                     path_end, field_value, source_loc);
       return arena->New<TupleValue>(elements);
     }
     default:
@@ -203,7 +185,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& struct_val = cast<StructValue>(*this);
       out << "{";
       llvm::ListSeparator sep;
-      for (const TupleElement& element : struct_val.elements()) {
+      for (const StructElement& element : struct_val.elements()) {
         out << sep << "." << element.name << " = " << *element.value;
       }
       out << "}";
@@ -217,8 +199,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::TupleValue: {
       out << "(";
       llvm::ListSeparator sep;
-      for (const TupleElement& element : cast<TupleValue>(*this).elements()) {
-        out << sep << element.name << " = " << *element.value;
+      for (Nonnull<const Value*> element : cast<TupleValue>(*this).elements()) {
+        out << sep << *element;
       }
       out << ")";
       break;
@@ -313,11 +295,9 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
              SourceLocation source_loc) -> Nonnull<const Value*> {
   switch (val->kind()) {
     case Value::Kind::TupleValue: {
-      std::vector<TupleElement> elements;
-      for (const TupleElement& element : cast<TupleValue>(*val).elements()) {
-        elements.push_back(
-            {.name = element.name,
-             .value = CopyVal(arena, element.value, source_loc)});
+      std::vector<Nonnull<const Value*>> elements;
+      for (Nonnull<const Value*> element : cast<TupleValue>(*val).elements()) {
+        elements.push_back(CopyVal(arena, element, source_loc));
       }
       return arena->New<TupleValue>(std::move(elements));
     }
@@ -328,8 +308,8 @@ auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
                                           arg);
     }
     case Value::Kind::StructValue: {
-      std::vector<TupleElement> elements;
-      for (const TupleElement& element : cast<StructValue>(*val).elements()) {
+      std::vector<StructElement> elements;
+      for (const StructElement& element : cast<StructValue>(*val).elements()) {
         elements.push_back(
             {.name = element.name,
              .value = CopyVal(arena, element.value, source_loc)});
@@ -436,8 +416,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
         return false;
       }
       for (size_t i = 0; i < tup1.elements().size(); ++i) {
-        if (tup1.elements()[i].name != tup2.elements()[i].name ||
-            !TypeEqual(tup1.elements()[i].value, tup2.elements()[i].value)) {
+        if (!TypeEqual(tup1.elements()[i], tup2.elements()[i])) {
           return false;
         }
       }
@@ -460,16 +439,16 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
 
 // Returns true if all the fields of the two tuples contain equal values
 // and returns false otherwise.
-static auto FieldsValueEqual(const std::vector<TupleElement>& ts1,
-                             const std::vector<TupleElement>& ts2,
+static auto FieldsValueEqual(const std::vector<StructElement>& ts1,
+                             const std::vector<StructElement>& ts2,
                              SourceLocation source_loc) -> bool {
   if (ts1.size() != ts2.size()) {
     return false;
   }
-  for (const TupleElement& element : ts1) {
+  for (const StructElement& element : ts1) {
     auto iter = std::find_if(
         ts2.begin(), ts2.end(),
-        [&](const TupleElement& e2) { return e2.name == element.name; });
+        [&](const StructElement& e2) { return e2.name == element.name; });
     if (iter == ts2.end()) {
       return false;
     }
@@ -503,9 +482,21 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
-    case Value::Kind::TupleValue:
-      return FieldsValueEqual(cast<TupleValue>(*v1).elements(),
-                              cast<TupleValue>(*v2).elements(), source_loc);
+    case Value::Kind::TupleValue: {
+      const std::vector<Nonnull<const Value*>>& elements1 =
+          cast<TupleValue>(*v1).elements();
+      const std::vector<Nonnull<const Value*>>& elements2 =
+          cast<TupleValue>(*v2).elements();
+      if (elements1.size() != elements2.size()) {
+        return false;
+      }
+      for (size_t i = 0; i < elements1.size(); ++i) {
+        if (!ValueEqual(elements1[i], elements2[i], source_loc)) {
+          return false;
+        }
+      }
+      return true;
+    }
     case Value::Kind::StructValue:
       return FieldsValueEqual(cast<StructValue>(*v1).elements(),
                               cast<StructValue>(*v2).elements(), source_loc);
