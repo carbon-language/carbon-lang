@@ -49,7 +49,7 @@ class Pattern {
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
   // The static type of this pattern. Cannot be called before typechecking.
-  auto static_type() const -> Nonnull<const Value*> { return *static_type_; }
+  auto static_type() const -> const Value& { return **static_type_; }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.

@@ -27,7 +27,7 @@ class Action {
   };
 
   Action(const Value&) = delete;
-  Action& operator=(const Value&) = delete;
+  auto operator=(const Value&) -> Action& = delete;
 
   void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 

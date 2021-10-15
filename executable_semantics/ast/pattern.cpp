@@ -88,8 +88,8 @@ AlternativePattern::AlternativePattern(SourceLocation source_loc,
                                        Nonnull<Expression*> alternative,
                                        Nonnull<TuplePattern*> arguments)
     : Pattern(Kind::AlternativePattern, source_loc),
-      choice_type(RequireFieldAccess(alternative).Aggregate()),
-      alternative_name(RequireFieldAccess(alternative).Field()),
+      choice_type(&RequireFieldAccess(alternative).aggregate()),
+      alternative_name(RequireFieldAccess(alternative).field()),
       arguments(arguments) {}
 
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
