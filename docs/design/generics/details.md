@@ -4338,9 +4338,11 @@ Note that Swift's approach of directly using the interface name as the type of a
 value is incompatible with Carbon's approach as using interface names as the
 type of generic type parameters. As a result, Carbon's approach will have to be
 more similar to Rust's approach of using a keyword to distinguish this case.
-Swift has
-[considered switching to this approach](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--clarifying-existentials),
-using the keyword "`any`", instead of Rust's "`dyn`".
+Swift has found its approach
+[has been a common source of confusion](https://forums.swift.org/t/improving-the-ui-of-generics/22814),
+and has
+[considered switching to using the keyword "`any`"](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--clarifying-existentials),
+analogous to Rust's "`dyn`".
 
 #### Dynamic pointer type
 
