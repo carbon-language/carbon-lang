@@ -59,7 +59,7 @@ class Value {
   };
 
   Value(const Value&) = delete;
-  Value& operator=(const Value&) = delete;
+  auto operator=(const Value&) -> Value& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -277,7 +277,7 @@ class AlternativeValue : public Value {
 class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
-  static Nonnull<const TupleValue*> Empty() {
+  static auto Empty() -> Nonnull<const TupleValue*> {
     static const TupleValue empty = TupleValue(std::vector<TupleElement>());
     return Nonnull<const TupleValue*>(&empty);
   }
