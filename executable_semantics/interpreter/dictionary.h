@@ -27,33 +27,38 @@ class Dictionary {
 
     // Node cells are part of a "persistent data structure" and are thus
     // immutable.
-    Node& operator=(const Node&) = delete;
-    Node& operator=(Node&&) = delete;
+    auto operator=(const Node&) -> Node& = delete;
+    auto operator=(Node&&) -> Node& = delete;
   };
 
   // A forward iterator over elements of a `Node` list.
   struct Iterator {
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using value_type = typename Node::ValueType;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using difference_type = std::ptrdiff_t;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using pointer = const value_type*;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using reference = const value_type&;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using iterator_category = std::forward_iterator_tag;
 
-    Iterator(std::optional<Nonnull<Node*>> x) : p(x) {}
+    explicit Iterator(std::optional<Nonnull<Node*>> x) : p(x) {}
     Iterator(const Iterator& iter) : p(iter.p) {}
-    Iterator& operator++() {
+    auto operator++() -> Iterator& {
       p = (*p)->next;
       return *this;
     }
-    Iterator operator++(int) {
+    auto operator++(int) -> Iterator {
       Iterator tmp(*this);
       operator++();
       return tmp;
     }
-    bool operator==(const Iterator& rhs) const { return p == rhs.p; }
-    bool operator!=(const Iterator& rhs) const { return p != rhs.p; }
-    const value_type& operator*() { return (*p)->curr; }
-    const value_type* operator->() { return &(*p)->curr; }
+    auto operator==(const Iterator& rhs) const -> bool { return p == rhs.p; }
+    auto operator!=(const Iterator& rhs) const -> bool { return p != rhs.p; }
+    auto operator*() -> const value_type& { return (*p)->curr; }
+    auto operator->() -> const value_type* { return &(*p)->curr; }
 
    private:
     std::optional<Nonnull<Node*>> p;
@@ -80,7 +85,7 @@ class Dictionary {
     head = arena->New<Node>(std::make_pair(k, v), head);
   }
 
-  bool IsEmpty() { return !head; }
+  auto IsEmpty() -> bool { return !head; }
 
   // The position of the first element of the dictionary
   // or `end()` if the dictionary is empty.

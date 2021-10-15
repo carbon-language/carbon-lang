@@ -878,7 +878,7 @@ auto Interpreter::StepStmt() -> Transition {
     }
     case Statement::Kind::Block: {
       if (act->pos() == 0) {
-        const Block& block = cast<Block>(*stmt);
+        const auto& block = cast<Block>(*stmt);
         if (block.statement()) {
           frame->scopes.Push(arena->New<Scope>(CurrentEnv()));
           return Spawn{arena->New<StatementAction>(*block.statement())};
@@ -980,7 +980,7 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Sequence: {
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
-      const Sequence& seq = cast<Sequence>(*stmt);
+      const auto& seq = cast<Sequence>(*stmt);
       if (act->pos() == 0) {
         return Spawn{arena->New<StatementAction>(&seq.statement())};
       } else {
@@ -1060,7 +1060,7 @@ auto Interpreter::StepStmt() -> Transition {
 class Interpreter::DoTransition {
  public:
   // Does not take ownership of interpreter.
-  DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
+  explicit DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
     Nonnull<Frame*> frame = interpreter->stack.Top();
