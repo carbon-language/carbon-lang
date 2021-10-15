@@ -24,7 +24,8 @@ class TypeChecker {
       : arena(arena), interpreter(arena) {}
 
   struct TypeCheckContext {
-    TypeCheckContext(Nonnull<Arena*> arena) : types(arena), values(arena) {}
+    explicit TypeCheckContext(Nonnull<Arena*> arena)
+        : types(arena), values(arena) {}
 
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
@@ -70,9 +71,8 @@ class TypeChecker {
   };
 
   struct TCResult {
-    TCResult(Nonnull<const Value*> t, TypeEnv types) : type(t), types(types) {}
+    TCResult(TypeEnv types) : types(types) {}
 
-    Nonnull<const Value*> type;
     TypeEnv types;
   };
 

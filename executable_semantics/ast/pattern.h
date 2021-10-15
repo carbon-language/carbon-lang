@@ -16,6 +16,8 @@
 
 namespace Carbon {
 
+class Value;
+
 // Abstract base class of all AST nodes representing patterns.
 //
 // Pattern and its derived classes support LLVM-style RTTI, including
@@ -46,6 +48,18 @@ class Pattern {
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
+  // The static type of this pattern. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  protected:
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -56,6 +70,8 @@ class Pattern {
  private:
   const Kind kind_;
   SourceLocation source_loc_;
+
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // A pattern consisting of the `auto` keyword.
@@ -98,30 +114,20 @@ class BindingPattern : public Pattern {
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:
-  // Represents a portion of a tuple pattern corresponding to a single field.
-  struct Field {
-    Field(std::string name, Nonnull<Pattern*> pattern)
-        : name(std::move(name)), pattern(pattern) {}
-
-    // The field name. Cannot be empty
-    std::string name;
-
-    // The pattern the field must match.
-    Nonnull<Pattern*> pattern;
-  };
-
-  TuplePattern(SourceLocation source_loc, std::vector<Field> fields)
+  TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
       : Pattern(Kind::TuplePattern, source_loc), fields(std::move(fields)) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->kind() == Kind::TuplePattern;
   }
 
-  auto Fields() const -> llvm::ArrayRef<Field> { return fields; }
-  auto Fields() -> llvm::MutableArrayRef<Field> { return fields; }
+  auto Fields() const -> llvm::ArrayRef<Nonnull<const Pattern*>> {
+    return fields;
+  }
+  auto Fields() -> llvm::ArrayRef<Nonnull<Pattern*>> { return fields; }
 
  private:
-  std::vector<Field> fields;
+  std::vector<Nonnull<Pattern*>> fields;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as
