@@ -18,19 +18,17 @@ namespace Carbon {
 static void AddIntrinsics(Nonnull<Arena*> arena,
                           std::vector<Nonnull<Declaration*>>* declarations) {
   SourceLocation source_loc("<intrinsic>", 0);
-  std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
-      "0", arena->New<BindingPattern>(
-               source_loc, "format_str",
-               arena->New<ExpressionPattern>(
-                   arena->New<StringTypeLiteral>(source_loc))))};
-  auto print_return =
-      arena->New<Return>(source_loc,
-                         arena->New<IntrinsicExpression>(
-                             IntrinsicExpression::IntrinsicKind::Print),
-                         false);
+  std::vector<Nonnull<Pattern*>> print_params = {arena->New<BindingPattern>(
+      source_loc, "format_str",
+      arena->New<ExpressionPattern>(
+          arena->New<StringTypeLiteral>(source_loc)))};
+  auto print_return = arena->New<Return>(
+      source_loc,
+      arena->New<IntrinsicExpression>(IntrinsicExpression::Intrinsic::Print),
+      false);
   auto print = arena->New<FunctionDeclaration>(arena->New<FunctionDefinition>(
       source_loc, "Print", std::vector<GenericBinding>(),
-      arena->New<TuplePattern>(source_loc, print_fields),
+      arena->New<TuplePattern>(source_loc, print_params),
       arena->New<ExpressionPattern>(arena->New<TupleLiteral>(source_loc)),
       /*is_omitted_return_type=*/false, print_return));
   declarations->insert(declarations->begin(), print);
