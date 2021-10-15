@@ -750,17 +750,17 @@ auto TypeChecker::TypeCheckPattern(
     }
     case Pattern::Kind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      TypeCheckPattern(binding.Type(), types, values, std::nullopt);
+      TypeCheckPattern(&binding.type(), types, values, std::nullopt);
       Nonnull<const Value*> type =
-          interpreter.InterpPattern(values, binding.Type());
+          interpreter.InterpPattern(values, &binding.type());
       if (expected) {
         if (IsConcreteType(type)) {
           ExpectType(p->source_loc(), "name binding", type, *expected);
         } else {
           std::optional<Env> values = interpreter.PatternMatch(
-              type, *expected, binding.Type()->source_loc());
+              type, *expected, binding.type().source_loc());
           if (values == std::nullopt) {
-            FATAL_COMPILATION_ERROR(binding.Type()->source_loc())
+            FATAL_COMPILATION_ERROR(binding.type().source_loc())
                 << "Type pattern '" << *type << "' does not match actual type '"
                 << **expected << "'";
           }
@@ -770,8 +770,8 @@ auto TypeChecker::TypeCheckPattern(
         }
       }
       ExpectIsConcreteType(binding.source_loc(), type);
-      if (binding.Name().has_value()) {
-        types.Set(*binding.Name(), type);
+      if (binding.name().has_value()) {
+        types.Set(*binding.name(), type);
       }
       SetStaticType(&binding, type);
       return TCResult(types);
@@ -784,13 +784,13 @@ auto TypeChecker::TypeCheckPattern(
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
       }
-      if (expected && tuple.Fields().size() !=
+      if (expected && tuple.fields().size() !=
                           cast<TupleValue>(**expected).Elements().size()) {
         FATAL_COMPILATION_ERROR(tuple.source_loc())
             << "tuples of different length";
       }
-      for (size_t i = 0; i < tuple.Fields().size(); ++i) {
-        TuplePattern::Field& field = tuple.Fields()[i];
+      for (size_t i = 0; i < tuple.fields().size(); ++i) {
+        TuplePattern::Field& field = tuple.fields()[i];
         std::optional<Nonnull<const Value*>> expected_field_type;
         if (expected) {
           const TupleElement& expected_element =
@@ -815,7 +815,7 @@ auto TypeChecker::TypeCheckPattern(
     case Pattern::Kind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
       Nonnull<const Value*> choice_type =
-          interpreter.InterpExp(values, alternative.ChoiceType());
+          interpreter.InterpExp(values, &alternative.choice_type());
       if (choice_type->kind() != Value::Kind::ChoiceType) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "alternative pattern does not name a choice type.";
@@ -825,22 +825,22 @@ auto TypeChecker::TypeCheckPattern(
                         *expected, choice_type);
       }
       std::optional<Nonnull<const Value*>> parameter_types =
-          FindInVarValues(alternative.AlternativeName(),
+          FindInVarValues(alternative.alternative_name(),
                           cast<ChoiceType>(*choice_type).Alternatives());
       if (parameter_types == std::nullopt) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
-            << "'" << alternative.AlternativeName()
+            << "'" << alternative.alternative_name()
             << "' is not an alternative of " << *choice_type;
       }
-      TCResult arg_results = TypeCheckPattern(alternative.Arguments(), types,
+      TCResult arg_results = TypeCheckPattern(&alternative.arguments(), types,
                                               values, *parameter_types);
       SetStaticType(&alternative, choice_type);
       return TCResult(arg_results.types);
     }
     case Pattern::Kind::ExpressionPattern: {
-      const auto& expression = cast<ExpressionPattern>(*p).Expression();
-      TCResult result = TypeCheckExp(expression, types, values);
-      SetStaticType(p, &expression->static_type());
+      auto& expression = cast<ExpressionPattern>(*p).expression();
+      TCResult result = TypeCheckExp(&expression, types, values);
+      SetStaticType(p, &expression.static_type());
       return TCResult(result.types);
     }
   }
@@ -1129,19 +1129,18 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
   for (Nonnull<const Member*> m : sd->members()) {
     switch (m->kind()) {
       case Member::Kind::FieldMember: {
-        Nonnull<const BindingPattern*> binding =
-            cast<FieldMember>(*m).Binding();
-        if (!binding->Name().has_value()) {
-          FATAL_COMPILATION_ERROR(binding->source_loc())
+        const BindingPattern& binding = cast<FieldMember>(*m).binding();
+        if (!binding.name().has_value()) {
+          FATAL_COMPILATION_ERROR(binding.source_loc())
               << "Struct members must have names";
         }
-        const auto* binding_type = dyn_cast<ExpressionPattern>(binding->Type());
+        const auto* binding_type = dyn_cast<ExpressionPattern>(&binding.type());
         if (binding_type == nullptr) {
-          FATAL_COMPILATION_ERROR(binding->source_loc())
+          FATAL_COMPILATION_ERROR(binding.source_loc())
               << "Struct members must have explicit types";
         }
-        auto type = interpreter.InterpExp(ct_top, binding_type->Expression());
-        fields.push_back(std::make_pair(*binding->Name(), type));
+        auto type = interpreter.InterpExp(ct_top, &binding_type->expression());
+        fields.push_back(std::make_pair(*binding.name(), type));
         break;
       }
     }
@@ -1160,11 +1159,11 @@ static auto GetName(const Declaration& d) -> const std::string& {
       return cast<ChoiceDeclaration>(d).name();
     case Declaration::Kind::VariableDeclaration: {
       const BindingPattern& binding = cast<VariableDeclaration>(d).binding();
-      if (!binding.Name().has_value()) {
+      if (!binding.name().has_value()) {
         FATAL_COMPILATION_ERROR(binding.source_loc())
             << "Top-level variable declarations must have names";
       }
-      return *binding.Name();
+      return *binding.name();
     }
   }
 }
@@ -1191,14 +1190,14 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
       // declaration with annotated types.
       TypeCheckExp(&var.initializer(), types, values);
       const auto* binding_type =
-          dyn_cast<ExpressionPattern>(var.binding().Type());
+          dyn_cast<ExpressionPattern>(&var.binding().type());
       if (binding_type == nullptr) {
         // TODO: consider adding support for `auto`
         FATAL_COMPILATION_ERROR(var.source_loc())
             << "Type of a top-level variable must be an expression.";
       }
       Nonnull<const Value*> declared_type =
-          interpreter.InterpExp(values, binding_type->Expression());
+          interpreter.InterpExp(values, &binding_type->expression());
       ExpectType(var.source_loc(), "initializer of variable", declared_type,
                  &var.initializer().static_type());
       return;
@@ -1252,11 +1251,11 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
-      Nonnull<Expression*> type =
-          cast<ExpressionPattern>(*var.binding().Type()).Expression();
+      Expression& type =
+          cast<ExpressionPattern>(var.binding().type()).expression();
       Nonnull<const Value*> declared_type =
-          interpreter.InterpExp(tops->values, type);
-      tops->types.Set(*var.binding().Name(), declared_type);
+          interpreter.InterpExp(tops->values, &type);
+      tops->types.Set(*var.binding().name(), declared_type);
       break;
     }
   }

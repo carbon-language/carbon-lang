@@ -131,12 +131,11 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       for (Nonnull<const Member*> m : class_def.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
-            Nonnull<const BindingPattern*> binding =
-                cast<FieldMember>(*m).Binding();
-            Nonnull<const Expression*> type_expression =
-                cast<ExpressionPattern>(*binding->Type()).Expression();
-            auto type = InterpExp(Env(arena), type_expression);
-            fields.push_back(make_pair(*binding->Name(), type));
+            const BindingPattern& binding = cast<FieldMember>(*m).binding();
+            const Expression& type_expression =
+                cast<ExpressionPattern>(binding.type()).expression();
+            auto type = InterpExp(Env(arena), &type_expression);
+            fields.push_back(make_pair(*binding.name(), type));
             break;
           }
         }
@@ -167,7 +166,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       // result of evaluating the initializer.
       auto v = InterpExp(*env, &var.initializer());
       Address a = heap.AllocateValue(v);
-      env->Set(*var.binding().Name(), a);
+      env->Set(*var.binding().name(), a);
       break;
     }
   }
@@ -703,26 +702,26 @@ auto Interpreter::StepPattern() -> Transition {
     case Pattern::Kind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*pattern);
       if (act->pos() == 0) {
-        return Spawn{arena->New<PatternAction>(binding.Type())};
+        return Spawn{arena->New<PatternAction>(&binding.type())};
       } else {
-        return Done{arena->New<BindingPlaceholderValue>(binding.Name(),
+        return Done{arena->New<BindingPlaceholderValue>(binding.name(),
                                                         act->results()[0])};
       }
     }
     case Pattern::Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*pattern);
-      if (act->pos() < static_cast<int>(tuple.Fields().size())) {
+      if (act->pos() < static_cast<int>(tuple.fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         return Spawn{
-            arena->New<PatternAction>(tuple.Fields()[act->pos()].pattern)};
+            arena->New<PatternAction>(tuple.fields()[act->pos()].pattern)};
       } else {
         std::vector<TupleElement> elements;
-        for (size_t i = 0; i < tuple.Fields().size(); ++i) {
+        for (size_t i = 0; i < tuple.fields().size(); ++i) {
           elements.push_back(
-              {.name = tuple.Fields()[i].name, .value = act->results()[i]});
+              {.name = tuple.fields()[i].name, .value = act->results()[i]});
         }
         return Done{arena->New<TupleValue>(std::move(elements))};
       }
@@ -730,20 +729,20 @@ auto Interpreter::StepPattern() -> Transition {
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*pattern);
       if (act->pos() == 0) {
-        return Spawn{arena->New<ExpressionAction>(alternative.ChoiceType())};
+        return Spawn{arena->New<ExpressionAction>(&alternative.choice_type())};
       } else if (act->pos() == 1) {
-        return Spawn{arena->New<PatternAction>(alternative.Arguments())};
+        return Spawn{arena->New<PatternAction>(&alternative.arguments())};
       } else {
         CHECK(act->pos() == 2);
         const auto& choice_type = cast<ChoiceType>(*act->results()[0]);
-        return Done{arena->New<AlternativeValue>(alternative.AlternativeName(),
+        return Done{arena->New<AlternativeValue>(alternative.alternative_name(),
                                                  choice_type.Name(),
                                                  act->results()[1])};
       }
     }
     case Pattern::Kind::ExpressionPattern:
       return Delegate{arena->New<ExpressionAction>(
-          cast<ExpressionPattern>(*pattern).Expression())};
+          &cast<ExpressionPattern>(*pattern).expression())};
   }
 }
 
