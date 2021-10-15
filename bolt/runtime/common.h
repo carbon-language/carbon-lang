@@ -443,6 +443,16 @@ int __kill(uint64_t pid, int sig) {
   return ret;
 }
 
+int __fsync(int fd) {
+  int ret;
+  __asm__ __volatile__("movq $74, %%rax\n"
+                       "syscall\n"
+                       : "=a"(ret)
+                       : "D"(fd)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
 #endif
 
 void reportError(const char *Msg, uint64_t Size) {

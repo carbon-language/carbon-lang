@@ -1485,6 +1485,7 @@ __bolt_instr_data_dump() {
   writeIndirectCallProfile(FD, Ctx);
   Ctx.CallFlowTable->forEachElement(visitCallFlowEntry, FD, &Ctx);
 
+  __fsync(FD);
   __close(FD);
   __munmap(Ctx.MMapPtr, Ctx.MMapSize);
   __close(Ctx.FileDesc);
@@ -1509,6 +1510,7 @@ void watchProcess() {
     ppid = __getppid();
     if (ppid == 1) {
       // Parent already dead
+      __bolt_instr_data_dump();
       goto out;
     }
   }
