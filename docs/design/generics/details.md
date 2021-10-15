@@ -2229,7 +2229,7 @@ various kinds of constraints discussed later in this section. In addition, it
 can introduce relationships between different type variables, such as that a
 member of one is equal to the member of another.
 
-**Comparison to other languages:** Both Swift and Rust use `where` clauses on
+**Comparison with other languages:** Both Swift and Rust use `where` clauses on
 declarations instead of in the expression syntax. These happen after the type
 that is being constrained has been given a name and use that name to express the
 constraint.
@@ -2766,13 +2766,10 @@ and
 [Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
 support some form of this feature as part of their type inference.
 
-FIXME: Not for interfaces. Maybe: The initial declaration part of an
-`interface`, type definition, or associated type declaration should include
-complete description of all needed constraints.
-
 ### Open question: referencing names in the interface being defined
 
-FIXME
+Should the constraint in a `where` clause be required to only reference earlier
+names from this scope, as in this example?
 
 ```
 interface Graph {
@@ -2781,7 +2778,8 @@ interface Graph {
 }
 ```
 
-versus:
+The downside is that if you could reference later names, there is a more
+pleasingly symmetric formulation of those same constraints:
 
 ```
 interface Graph {
@@ -2917,7 +2915,7 @@ fn H[C: Commute](c: C) {
 
 That last call would not be legal without the cast, though.
 
-**Comparison to other languages:** Other languages such as Swift and Rust
+**Comparison with other languages:** Other languages such as Swift and Rust
 instead perform automatic type equality. In practice this means that their
 compiler can reject some legal programs based on heuristics simply to avoid
 running for an unbounded length of time.

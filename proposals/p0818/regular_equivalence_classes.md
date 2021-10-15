@@ -58,6 +58,8 @@ unpleasant options:
     complicated", due to "running for too many steps", based on some arbitrary
     threshold.
 
+Furthermore, the algorithms are expensive and perform extensive searches.
+
 ### Goal
 
 The goal is to identify some restrictions such that:
