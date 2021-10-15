@@ -200,20 +200,14 @@ auto Interpreter::CreateTuple(Nonnull<Action*> act,
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   const auto& tup_lit = cast<TupleLiteral>(*exp);
   CHECK(act->results().size() == tup_lit.fields().size());
-  std::vector<TupleElement> elements;
-  for (size_t i = 0; i < act->results().size(); ++i) {
-    elements.push_back(
-        {.name = tup_lit.fields()[i].name(), .value = act->results()[i]});
-  }
-
-  return arena->New<TupleValue>(std::move(elements));
+  return arena->New<TupleValue>(act->results());
 }
 
 auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
   CHECK(fields.size() == values.size());
-  std::vector<TupleElement> elements;
+  std::vector<StructElement> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
     elements.push_back({.name = fields[i].name(), .value = values[i]});
   }
@@ -246,15 +240,8 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           }
           Env values(arena);
           for (size_t i = 0; i < p_tup.Elements().size(); ++i) {
-            if (p_tup.Elements()[i].name != v_tup.Elements()[i].name) {
-              FATAL_PROGRAM_ERROR(source_loc)
-                  << "Tuple field name '" << v_tup.Elements()[i].name
-                  << "' does not match pattern field name '"
-                  << p_tup.Elements()[i].name << "'";
-            }
-            std::optional<Env> matches =
-                PatternMatch(p_tup.Elements()[i].value,
-                             v_tup.Elements()[i].value, source_loc);
+            std::optional<Env> matches = PatternMatch(
+                p_tup.Elements()[i], v_tup.Elements()[i], source_loc);
             if (!matches) {
               return std::nullopt;
             }
@@ -355,14 +342,9 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
                 << "arity mismatch in tuple pattern assignment:\n  pattern: "
                 << pat_tup << "\n  value: " << val_tup;
           }
-          for (const TupleElement& pattern_element : pat_tup.Elements()) {
-            std::optional<Nonnull<const Value*>> value_field =
-                val_tup.FindField(pattern_element.name);
-            if (!value_field) {
-              FATAL_RUNTIME_ERROR(source_loc)
-                  << "field " << pattern_element.name << "not in " << *val;
-            }
-            PatternAssignment(pattern_element.value, *value_field, source_loc);
+          for (size_t i = 0; i < pat_tup.Elements().size(); ++i) {
+            PatternAssignment(pat_tup.Elements()[i], val_tup.Elements()[i],
+                              source_loc);
           }
           break;
         }
@@ -452,7 +434,7 @@ auto Interpreter::StepLvalue() -> Transition {
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         return Spawn{arena->New<LValAction>(
-            &cast<TupleLiteral>(*exp).fields()[act->pos()].expression())};
+            cast<TupleLiteral>(*exp).fields()[act->pos()])};
       } else {
         return Done{CreateTuple(act, exp)};
       }
@@ -496,19 +478,13 @@ auto Interpreter::StepExp() -> Transition {
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
-        auto* tuple = dyn_cast<TupleValue>(act->results()[0]);
-        if (tuple == nullptr) {
+        const auto& tuple = cast<TupleValue>(*act->results()[0]);
+        int i = cast<IntValue>(*act->results()[1]).Val();
+        if (i < 0 || i >= static_cast<int>(tuple.Elements().size())) {
           FATAL_RUNTIME_ERROR_NO_LINE()
-              << "expected a tuple in field access, not " << *act->results()[0];
+              << "index " << i << " out of range in " << tuple;
         }
-        std::string f =
-            std::to_string(cast<IntValue>(*act->results()[1]).Val());
-        std::optional<Nonnull<const Value*>> field = tuple->FindField(f);
-        if (!field) {
-          FATAL_RUNTIME_ERROR_NO_LINE()
-              << "field " << f << " not in " << *tuple;
-        }
-        return Done{*field};
+        return Done{tuple.Elements()[i]};
       }
     }
     case Expression::Kind::TupleLiteral: {
@@ -519,7 +495,7 @@ auto Interpreter::StepExp() -> Transition {
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
         return Spawn{arena->New<ExpressionAction>(
-            &cast<TupleLiteral>(*exp).fields()[act->pos()].expression())};
+            cast<TupleLiteral>(*exp).fields()[act->pos()])};
       } else {
         return Done{CreateTuple(act, exp)};
       }
@@ -602,11 +578,6 @@ auto Interpreter::StepExp() -> Transition {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->results()[0]->kind()) {
-          case Value::Kind::NominalClassType: {
-            Nonnull<const Value*> arg =
-                CopyVal(arena, act->results()[1], exp->source_loc());
-            return Done{arena->New<NominalClassValue>(act->results()[0], arg)};
-          }
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
                 cast<AlternativeConstructorValue>(*act->results()[0]);
@@ -715,15 +686,9 @@ auto Interpreter::StepPattern() -> Transition {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        return Spawn{
-            arena->New<PatternAction>(tuple.fields()[act->pos()].pattern)};
+        return Spawn{arena->New<PatternAction>(tuple.fields()[act->pos()])};
       } else {
-        std::vector<TupleElement> elements;
-        for (size_t i = 0; i < tuple.fields().size(); ++i) {
-          elements.push_back(
-              {.name = tuple.fields()[i].name, .value = act->results()[i]});
-        }
-        return Done{arena->New<TupleValue>(std::move(elements))};
+        return Done{arena->New<TupleValue>(act->results())};
       }
     }
     case Pattern::Kind::AlternativePattern: {

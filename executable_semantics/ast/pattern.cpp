@@ -36,8 +36,8 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       const auto& tuple = cast<TuplePattern>(*this);
       out << "(";
       llvm::ListSeparator sep;
-      for (const TuplePattern::Field& field : tuple.fields()) {
-        out << sep << field.name << " = " << *field.pattern;
+      for (Nonnull<const Pattern*> field : tuple.fields()) {
+        out << sep << *field;
       }
       out << ")";
       break;
@@ -69,9 +69,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
                                    SourceLocation source_loc,
                                    const ParenContents<Pattern>& paren_contents)
     -> Nonnull<TuplePattern*> {
-  return arena->New<TuplePattern>(
-      source_loc,
-      paren_contents.TupleElements<TuplePattern::Field>(source_loc));
+  return arena->New<TuplePattern>(source_loc, paren_contents.elements);
 }
 
 // Used by AlternativePattern for constructor initialization. Produces a helpful
@@ -100,9 +98,7 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
   ParenContents<Pattern> result = {
       .elements = {}, .has_trailing_comma = contents.has_trailing_comma};
   for (const auto& element : contents.elements) {
-    result.elements.push_back(
-        {.name = element.name,
-         .term = arena->New<ExpressionPattern>(element.term)});
+    result.elements.push_back(arena->New<ExpressionPattern>(element));
   }
   return result;
 }
