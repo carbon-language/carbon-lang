@@ -16,7 +16,6 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -379,7 +378,7 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
 auto Interpreter::StepLvalue() -> Transition {
   Nonnull<Action*> act = stack.Top()->todo.Top();
   Nonnull<const Expression*> exp = cast<LValAction>(*act).Exp();
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "--- step lvalue " << *exp << " (" << exp->source_loc()
                  << ") --->\n";
   }
@@ -462,7 +461,7 @@ auto Interpreter::StepLvalue() -> Transition {
 auto Interpreter::StepExp() -> Transition {
   Nonnull<Action*> act = stack.Top()->todo.Top();
   Nonnull<const Expression*> exp = cast<ExpressionAction>(*act).Exp();
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "--- step exp " << *exp << " (" << exp->source_loc()
                  << ") --->\n";
   }
@@ -662,7 +661,7 @@ auto Interpreter::StepExp() -> Transition {
 auto Interpreter::StepPattern() -> Transition {
   Nonnull<Action*> act = stack.Top()->todo.Top();
   Nonnull<const Pattern*> pattern = cast<PatternAction>(*act).Pat();
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "--- step pattern " << *pattern << " ("
                  << pattern->source_loc() << ") --->\n";
   }
@@ -745,7 +744,7 @@ auto Interpreter::StepStmt() -> Transition {
   Nonnull<Frame*> frame = stack.Top();
   Nonnull<Action*> act = frame->todo.Top();
   Nonnull<const Statement*> stmt = cast<StatementAction>(*act).Stmt();
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "--- step stmt ";
     stmt->PrintDepth(1, llvm::outs());
     llvm::outs() << " (" << stmt->source_loc() << ") --->\n";
@@ -1140,7 +1139,7 @@ auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
   CHECK(stack.IsEmpty());
   CHECK(program_value == std::nullopt);
 
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "********** initializing globals **********\n";
   }
   InitGlobals(fs);
@@ -1149,14 +1148,14 @@ auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
   auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(globals));
   stack = Stack<Nonnull<Frame*>>(arena->New<Frame>("top", scopes, todo));
 
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "********** calling main function **********\n";
     PrintState(llvm::outs());
   }
 
   while (stack.Count() > 1 || !stack.Top()->todo.IsEmpty()) {
     Step();
-    if (tracing_output) {
+    if (trace_) {
       PrintState(llvm::outs());
     }
   }

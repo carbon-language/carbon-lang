@@ -99,7 +99,6 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:tracing_flag",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -122,7 +121,6 @@ cc_library(
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:tracing_flag",
         "@llvm-project//llvm:Support",
     ],
 )

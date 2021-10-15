@@ -17,8 +17,8 @@ namespace Carbon {
 class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  ParseAndLexContext(Nonnull<const std::string*> input_file_name)
-      : input_file_name(input_file_name) {}
+  ParseAndLexContext(Nonnull<const std::string*> input_file_name, bool trace)
+      : input_file_name(input_file_name), trace_(trace) {}
 
   // Writes a syntax error diagnostic containing message to standard error.
   auto PrintDiagnostic(const std::string& message) -> void;
@@ -28,6 +28,8 @@ class ParseAndLexContext {
                           static_cast<int>(current_token_position.begin.line));
   }
 
+  auto trace() -> bool { return trace_; }
+
   // The source range of the token being (or just) lex'd.
   location current_token_position;
 
@@ -35,6 +37,8 @@ class ParseAndLexContext {
   // A path to the file processed, relative to the current working directory
   // when *this is called.
   Nonnull<const std::string*> input_file_name;
+
+  bool trace_;
 };
 
 }  // namespace Carbon
