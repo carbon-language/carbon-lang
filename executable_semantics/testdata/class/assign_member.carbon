@@ -17,7 +17,7 @@ class Point {
 }
 
 fn main() -> i32 {
-  var p1: auto = Point(.x = 1, .y = 2);
+  var p1: Point = {.x = 1, .y = 2};
   var p2: auto = p1;
   p2.x = 3;
   return p1.x - 1;

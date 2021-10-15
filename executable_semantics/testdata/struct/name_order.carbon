@@ -11,11 +11,9 @@
 
 package ExecutableSemanticsTest api;
 
+// Test the that field order doesn't matter for structs.
+
 fn main() -> i32 {
-  var t: auto = (1, 2, 3, 4);
-  match (t) {
-    case (_: i32, _: auto, x: i32, y: auto) =>
-      return y - x - 1;
-  }
-  return 1;
+  var t: {.x: i32, .y: i32} = {.y = 2, .x = 3};
+  return 0;
 }

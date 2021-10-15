@@ -15,6 +15,8 @@
 
 namespace Carbon {
 
+class Value;
+
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
 struct GenericBinding {
@@ -58,6 +60,18 @@ class FunctionDefinition {
   }
   auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
 
+  // The static type of this function. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  private:
   SourceLocation source_loc_;
   std::string name_;
@@ -66,6 +80,8 @@ class FunctionDefinition {
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
   std::optional<Nonnull<Statement*>> body_;
+
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 }  // namespace Carbon

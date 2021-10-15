@@ -21,7 +21,7 @@ class Heap {
   explicit Heap(Nonnull<Arena*> arena) : arena(arena){};
 
   Heap(const Heap&) = delete;
-  Heap& operator=(const Heap&) = delete;
+  auto operator=(const Heap&) -> Heap& = delete;
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.

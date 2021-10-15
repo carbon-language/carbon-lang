@@ -3351,8 +3351,8 @@ values they could have different real types.
 ### Abstract return types
 
 This lets you return an anonymous type implementing an interface from a
-function. In Rust this is
-[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+function. In Rust this is the
+[`impl Trait` return type](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
 
 In Swift, there are discussions about implementing this feature under the name
 "reverse generics" or "opaque result types":
