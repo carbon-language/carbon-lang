@@ -2221,8 +2221,8 @@ values they could have different real types.
 ### Abstract return types
 
 This lets you return an anonymous type implementing an interface from a
-function. In Rust this is
-[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+function. In Rust this is the
+[`impl Trait` return type](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
 
 In Swift, there are discussions about implementing this feature under the name
 "reverse generics" or "opaque result types":
@@ -2280,7 +2280,7 @@ These are also called "associated type constructors."
 
 Higher-ranked types are used to represent this requirement in a function
 signature. They can be
-[emulated using associated type constructors](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
+[emulated using generic associated types](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
 
 ### Field requirements
 
