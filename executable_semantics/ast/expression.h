@@ -92,8 +92,7 @@ auto TupleExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
     const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
 
-// A FieldInitializer represents the initialization of a single tuple or
-// struct field.
+// A FieldInitializer represents the initialization of a single struct field.
 class FieldInitializer {
  public:
   FieldInitializer(std::string name, Nonnull<Expression*> expression)
@@ -247,7 +246,7 @@ class TupleLiteral : public Expression {
       : TupleLiteral(source_loc, {}) {}
 
   explicit TupleLiteral(SourceLocation source_loc,
-                        std::vector<FieldInitializer> fields)
+                        std::vector<Nonnull<Expression*>> fields)
       : Expression(Kind::TupleLiteral, source_loc),
         fields_(std::move(fields)) {}
 
@@ -255,11 +254,13 @@ class TupleLiteral : public Expression {
     return exp->kind() == Kind::TupleLiteral;
   }
 
-  auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
-  auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
+  auto fields() const -> llvm::ArrayRef<Nonnull<const Expression*>> {
+    return fields_;
+  }
+  auto fields() -> llvm::ArrayRef<Nonnull<Expression*>> { return fields_; }
 
  private:
-  std::vector<FieldInitializer> fields_;
+  std::vector<Nonnull<Expression*>> fields_;
 };
 
 // A non-empty literal value of a struct type.
