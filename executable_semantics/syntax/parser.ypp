@@ -127,14 +127,12 @@
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <Nonnull<Member*>> member
 %type <std::vector<Nonnull<Member*>>> member_list
-%type <ParenContents<Expression>::Element> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
 %type <Nonnull<Pattern*>> paren_pattern
 %type <Nonnull<TuplePattern*>> tuple_pattern
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
-%type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
 %type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
@@ -396,12 +394,6 @@ paren_expression: paren_expression_base
 tuple: paren_expression_base
     { $$ = TupleExpressionFromParenContents(arena, context.source_loc(), $1); }
 ;
-paren_expression_element:
-  expression
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL expression
-    { $$ = {.name = $1, .term = $3}; }
-;
 paren_expression_base:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
     { $$ = {.elements = {}, .has_trailing_comma = false}; }
@@ -414,9 +406,9 @@ paren_expression_base:
     }
 ;
 paren_expression_contents:
-  paren_expression_element
+  expression
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA paren_expression_element
+| paren_expression_contents COMMA expression
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -501,30 +493,23 @@ paren_pattern_base:
 // is very different from the corresponding expression rule because is has to
 // enforce that requirement.
 paren_pattern_contents:
-  paren_pattern_element
+  non_expression_pattern
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA paren_pattern_element
+| paren_expression_contents COMMA non_expression_pattern
     {
       $$ = ParenExpressionToParenPattern(arena, $1);
       $$.elements.push_back($3);
     }
-| paren_pattern_contents COMMA paren_expression_element
+| paren_pattern_contents COMMA expression
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name,
-                             .term = arena->New<ExpressionPattern>($3.term)});
+      $$.elements.push_back(arena->New<ExpressionPattern>($3));
     }
-| paren_pattern_contents COMMA paren_pattern_element
+| paren_pattern_contents COMMA non_expression_pattern
     {
       $$ = $1;
       $$.elements.push_back($3);
     }
-;
-paren_pattern_element:
-  non_expression_pattern
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL non_expression_pattern
-    { $$ = {.name = $1, .term = $3}; }
 ;
 tuple_pattern: paren_pattern_base
     { $$ = TuplePatternFromParenContents(arena, context.source_loc(), $1); }
@@ -536,7 +521,7 @@ maybe_empty_tuple_pattern:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
     {
       $$ = arena->New<TuplePattern>(context.source_loc(),
-                                    std::vector<TuplePattern::Field>());
+                                    std::vector<Nonnull<Pattern*>>());
     }
 | tuple_pattern
     { $$ = $1; }
