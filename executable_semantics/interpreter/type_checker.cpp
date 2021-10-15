@@ -126,7 +126,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
       // `auto` isn't a concrete type, it's a pattern that matches types.
       return false;
     case Value::Kind::TupleValue:
-      for (const TupleElement& field : cast<TupleValue>(*value).Elements()) {
+      for (const TupleElement& field : cast<TupleValue>(*value).elements()) {
         if (!IsConcreteType(field.value)) {
           return false;
         }
@@ -185,7 +185,7 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
         case Value::Kind::NominalClassType:
           return FieldTypesImplicitlyConvertible(
               cast<StructType>(*source).fields(),
-              cast<NominalClassType>(*destination).Fields());
+              cast<NominalClassType>(*destination).fields());
         default:
           return false;
       }
@@ -193,9 +193,9 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
       switch (destination->kind()) {
         case Value::Kind::TupleValue: {
           const std::vector<TupleElement>& source_elements =
-              cast<TupleValue>(*source).Elements();
+              cast<TupleValue>(*source).elements();
           const std::vector<TupleElement>& destination_elements =
-              cast<TupleValue>(*destination).Elements();
+              cast<TupleValue>(*destination).elements();
           if (source_elements.size() != destination_elements.size()) {
             return false;
           }
@@ -239,9 +239,9 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
-      std::optional<Nonnull<const Value*>> d = deduced.Get(var_type.Name());
+      std::optional<Nonnull<const Value*>> d = deduced.Get(var_type.name());
       if (!d) {
-        deduced.Set(var_type.Name(), arg);
+        deduced.Set(var_type.name(), arg);
       } else {
         // TODO: can we allow implicit conversions here?
         ExpectExactType(source_loc, "argument deduction", *d, arg);
@@ -257,21 +257,21 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       }
       const auto& param_tup = cast<TupleValue>(*param);
       const auto& arg_tup = cast<TupleValue>(*arg);
-      if (param_tup.Elements().size() != arg_tup.Elements().size()) {
+      if (param_tup.elements().size() != arg_tup.elements().size()) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "mismatch in tuple sizes, expected "
-            << param_tup.Elements().size() << " but got "
-            << arg_tup.Elements().size();
+            << param_tup.elements().size() << " but got "
+            << arg_tup.elements().size();
       }
-      for (size_t i = 0; i < param_tup.Elements().size(); ++i) {
-        if (param_tup.Elements()[i].name != arg_tup.Elements()[i].name) {
+      for (size_t i = 0; i < param_tup.elements().size(); ++i) {
+        if (param_tup.elements()[i].name != arg_tup.elements()[i].name) {
           FATAL_COMPILATION_ERROR(source_loc)
-              << "mismatch in tuple names, " << param_tup.Elements()[i].name
-              << " != " << arg_tup.Elements()[i].name;
+              << "mismatch in tuple names, " << param_tup.elements()[i].name
+              << " != " << arg_tup.elements()[i].name;
         }
         deduced = ArgumentDeduction(source_loc, deduced,
-                                    param_tup.Elements()[i].value,
-                                    arg_tup.Elements()[i].value);
+                                    param_tup.elements()[i].value,
+                                    arg_tup.elements()[i].value);
       }
       return deduced;
     }
@@ -312,10 +312,10 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       const auto& param_fn = cast<FunctionType>(*param);
       const auto& arg_fn = cast<FunctionType>(*arg);
       // TODO: handle situation when arg has deduced parameters.
-      deduced = ArgumentDeduction(source_loc, deduced, param_fn.Param(),
-                                  arg_fn.Param());
-      deduced =
-          ArgumentDeduction(source_loc, deduced, param_fn.Ret(), arg_fn.Ret());
+      deduced = ArgumentDeduction(source_loc, deduced, &param_fn.parameters(),
+                                  &arg_fn.parameters());
+      deduced = ArgumentDeduction(source_loc, deduced, &param_fn.return_type(),
+                                  &arg_fn.return_type());
       return deduced;
     }
     case Value::Kind::PointerType: {
@@ -326,8 +326,8 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
             << "actual: " << *arg;
       }
       return ArgumentDeduction(source_loc, deduced,
-                               cast<PointerType>(*param).Type(),
-                               cast<PointerType>(*arg).Type());
+                               &cast<PointerType>(*param).type(),
+                               &cast<PointerType>(*arg).type());
     }
     // Nothing to do in the case for `auto`.
     case Value::Kind::AutoType: {
@@ -364,7 +364,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       std::optional<Nonnull<const Value*>> t =
-          dict.Get(cast<VariableType>(*type).Name());
+          dict.Get(cast<VariableType>(*type).name());
       if (!t) {
         return type;
       } else {
@@ -373,7 +373,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     }
     case Value::Kind::TupleValue: {
       std::vector<TupleElement> elts;
-      for (const auto& elt : cast<TupleValue>(*type).Elements()) {
+      for (const auto& elt : cast<TupleValue>(*type).elements()) {
         auto t = Substitute(dict, elt.value);
         elts.push_back({.name = elt.name, .value = t});
       }
@@ -389,14 +389,14 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     }
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*type);
-      auto param = Substitute(dict, fn_type.Param());
-      auto ret = Substitute(dict, fn_type.Ret());
+      auto param = Substitute(dict, &fn_type.parameters());
+      auto ret = Substitute(dict, &fn_type.return_type());
       return arena->New<FunctionType>(std::vector<GenericBinding>(), param,
                                       ret);
     }
     case Value::Kind::PointerType: {
       return arena->New<PointerType>(
-          Substitute(dict, cast<PointerType>(*type).Type()));
+          Substitute(dict, &cast<PointerType>(*type).type()));
     }
     case Value::Kind::AutoType:
     case Value::Kind::IntType:
@@ -441,7 +441,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         case Value::Kind::TupleValue: {
           auto i =
               cast<IntValue>(*interpreter.InterpExp(values, &index.offset()))
-                  .Val();
+                  .value();
           std::string f = std::to_string(i);
           std::optional<Nonnull<const Value*>> field_t =
               cast<TupleValue>(aggregate_type).FindField(f);
@@ -525,26 +525,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(aggregate_type);
           // Search for a field
-          for (auto& field : t_class.Fields()) {
+          for (auto& field : t_class.fields()) {
             if (access.field() == field.first) {
               SetStaticType(&access, field.second);
               return TCResult(res.types);
             }
           }
           // Search for a method
-          for (auto& method : t_class.Methods()) {
+          for (auto& method : t_class.methods()) {
             if (access.field() == method.first) {
               SetStaticType(&access, method.second);
               return TCResult(res.types);
             }
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
-              << "class " << t_class.Name() << " does not have a field named "
+              << "class " << t_class.name() << " does not have a field named "
               << access.field();
         }
         case Value::Kind::TupleValue: {
           const auto& tup = cast<TupleValue>(aggregate_type);
-          for (const TupleElement& field : tup.Elements()) {
+          for (const TupleElement& field : tup.elements()) {
             if (access.field() == field.name) {
               SetStaticType(&access, field.value);
               return TCResult(res.types);
@@ -556,7 +556,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         }
         case Value::Kind::ChoiceType: {
           const auto& choice = cast<ChoiceType>(aggregate_type);
-          for (const auto& vt : choice.Alternatives()) {
+          for (const auto& vt : choice.alternatives()) {
             if (access.field() == vt.first) {
               SetStaticType(&access, arena->New<FunctionType>(
                                          std::vector<GenericBinding>(),
@@ -565,7 +565,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             }
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
-              << "choice " << choice.Name() << " does not have a field named "
+              << "choice " << choice.name() << " does not have a field named "
               << access.field();
         }
         default:
@@ -653,7 +653,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           return TCResult(new_types);
         case Operator::Deref:
           ExpectPointerType(e->source_loc(), "*", ts[0]);
-          SetStaticType(&op, cast<PointerType>(*ts[0]).Type());
+          SetStaticType(&op, &cast<PointerType>(*ts[0]).type());
           return TCResult(new_types);
         case Operator::Ptr:
           ExpectExactType(e->source_loc(), "*", arena->New<TypeType>(), ts[0]);
@@ -669,13 +669,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
           auto arg_res = TypeCheckExp(&call.argument(), fun_res.types, values);
-          auto parameter_type = fun_t.Param();
-          auto return_type = fun_t.Ret();
-          if (!fun_t.Deduced().empty()) {
-            auto deduced_args = ArgumentDeduction(
-                e->source_loc(), TypeEnv(arena), parameter_type,
-                &call.argument().static_type());
-            for (auto& deduced_param : fun_t.Deduced()) {
+          Nonnull<const Value*> parameters = &fun_t.parameters();
+          Nonnull<const Value*> return_type = &fun_t.return_type();
+          if (!fun_t.deduced().empty()) {
+            auto deduced_args =
+                ArgumentDeduction(e->source_loc(), TypeEnv(arena), parameters,
+                                  &call.argument().static_type());
+            for (auto& deduced_param : fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
               if (!deduced_args.Get(deduced_param.name)) {
@@ -684,10 +684,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                     << deduced_param.name;
               }
             }
-            parameter_type = Substitute(deduced_args, parameter_type);
+            parameters = Substitute(deduced_args, parameters);
             return_type = Substitute(deduced_args, return_type);
           } else {
-            ExpectType(e->source_loc(), "call", parameter_type,
+            ExpectType(e->source_loc(), "call", parameters,
                        &call.argument().static_type());
           }
           SetStaticType(&call, return_type);
@@ -785,7 +785,7 @@ auto TypeChecker::TypeCheckPattern(
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
       }
       if (expected && tuple.Fields().size() !=
-                          cast<TupleValue>(**expected).Elements().size()) {
+                          cast<TupleValue>(**expected).elements().size()) {
         FATAL_COMPILATION_ERROR(tuple.source_loc())
             << "tuples of different length";
       }
@@ -794,7 +794,7 @@ auto TypeChecker::TypeCheckPattern(
         std::optional<Nonnull<const Value*>> expected_field_type;
         if (expected) {
           const TupleElement& expected_element =
-              cast<TupleValue>(**expected).Elements()[i];
+              cast<TupleValue>(**expected).elements()[i];
           if (expected_element.name != field.name) {
             FATAL_COMPILATION_ERROR(tuple.source_loc())
                 << "field names do not match, expected "
@@ -826,7 +826,7 @@ auto TypeChecker::TypeCheckPattern(
       }
       std::optional<Nonnull<const Value*>> parameter_types =
           FindInVarValues(alternative.AlternativeName(),
-                          cast<ChoiceType>(*choice_type).Alternatives());
+                          cast<ChoiceType>(*choice_type).alternatives());
       if (parameter_types == std::nullopt) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "'" << alternative.AlternativeName()
@@ -1224,7 +1224,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       tops->values.Set(class_def.name(), a);  // Is this obsolete?
       std::vector<TupleElement> field_types;
       for (const auto& [field_name, field_value] :
-           cast<NominalClassType>(*st).Fields()) {
+           cast<NominalClassType>(*st).fields()) {
         field_types.push_back({.name = field_name, .value = field_value});
       }
       auto fun_ty = arena->New<FunctionType>(
