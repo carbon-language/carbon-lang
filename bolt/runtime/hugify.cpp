@@ -6,6 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined (__x86_64__)
 #if !defined(__APPLE__)
 
 #include "common.h"
@@ -124,4 +125,5 @@ extern "C" __attribute((naked)) void __bolt_hugify_self() {
                        :::);
 }
 
+#endif
 #endif

@@ -40,6 +40,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined (__x86_64__)
 #include "common.h"
 
 // Enables a very verbose logging to stderr useful when debugging
@@ -1670,4 +1671,5 @@ void _bolt_instr_fini() {
   __bolt_instr_data_dump();
 }
 
+#endif
 #endif
