@@ -441,12 +441,7 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
     if (IslandIter != AddressToConstantIslandMap.end()) {
       if (MCSymbol *IslandSym =
               IslandIter->second->getOrCreateProxyIslandAccess(Address, BF)) {
-        /// Make this function depend on IslandIter->second because we have
-        /// a reference to its constant island. When emitting this function,
-        /// we will also emit IslandIter->second's constants. This only
-        /// happens in custom AArch64 assembly code.
-        BF.Islands->Dependency.insert(IslandIter->second);
-        BF.Islands->ProxySymbols[IslandSym] = IslandIter->second;
+        BF.createIslandDependency(IslandSym, IslandIter->second);
         return std::make_pair(IslandSym, Addend);
       }
     }

@@ -2177,6 +2177,17 @@ public:
     return Proxy;
   }
 
+  /// Make this function depend on \p BF because we have a reference to its
+  /// constant island. When emitting this function,  we will also emit
+  //  \p BF's constants. This only happens in custom AArch64 assembly code.
+  void createIslandDependency(MCSymbol *Island, BinaryFunction *BF) {
+    if (!Islands)
+      Islands = std::make_unique<IslandInfo>();
+
+    Islands->Dependency.insert(BF);
+    Islands->ProxySymbols[Island] = BF;
+  }
+
   /// Detects whether \p Address is inside a data region in this function
   /// (constant islands).
   bool isInConstantIsland(uint64_t Address) const {
@@ -2235,6 +2246,10 @@ public:
         Size += ExternalFunc->estimateConstantIslandSize(this);
     }
     return Size;
+  }
+
+  bool hasIslandsInfo() const {
+    return !!Islands;
   }
 
   bool hasConstantIsland() const {
