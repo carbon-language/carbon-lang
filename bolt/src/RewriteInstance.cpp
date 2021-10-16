@@ -356,6 +356,10 @@ EnableBAT("enable-bat",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
+cl::opt<bool> RemoveSymtab("remove-symtab", cl::desc("Remove .symtab section"),
+                           cl::init(false), cl::ZeroOrMore,
+                           cl::cat(BoltCategory));
+
 static cl::opt<bool>
 UseGnuStack("use-gnu-stack",
   cl::desc("use GNU_STACK program header for new segment (workaround for "
@@ -4200,6 +4204,10 @@ bool RewriteInstance::shouldStrip(const ELFShdrTy &Section,
   if (isDebugSection(SectionName) && !opts::UpdateDebugSections)
     return true;
 
+  // Strip symtab section if needed
+  if (opts::RemoveSymtab && Section.sh_type == ELF::SHT_SYMTAB)
+    return true;
+
   return false;
 }
 
@@ -4837,6 +4845,9 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         [](StringRef) -> size_t { return 0; });
   }
 
+  if (opts::RemoveSymtab)
+    return;
+
   // (re)create regular symbol table.
   const ELFShdrTy *SymTabSection = nullptr;
   for (const ELFShdrTy &Section : cantFail(Obj.sections())) {
@@ -5434,8 +5445,9 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
 }
 
 bool RewriteInstance::isDebugSection(StringRef SectionName) {
-  if (SectionName.startswith(".debug_") || SectionName == ".gdb_index" ||
-      SectionName == ".stab" || SectionName == ".stabstr")
+  if (SectionName.startswith(".debug_") || SectionName.startswith(".zdebug_") ||
+      SectionName == ".gdb_index" || SectionName == ".stab" ||
+      SectionName == ".stabstr")
     return true;
 
   return false;
