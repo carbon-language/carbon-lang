@@ -852,6 +852,8 @@ private:
       case MergeTypeTy::X2_X1_Y:
         return MergedChain(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
     }
+
+    llvm_unreachable("unexpected merge type");
   }
 
   /// Merge chain From into chain Into, update the list of active chains,
