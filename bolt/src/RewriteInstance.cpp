@@ -2308,6 +2308,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     SmallString<16> TypeName;
     Rel.getTypeName(TypeName);
     uint64_t RType = Rel.getType();
+    if (Relocation::isNone(RType))
+      continue;
 
     // Adjust the relocation type as the linker might have skewed it.
     if (BC->isX86() && (RType & ELF::R_X86_64_converted_reloc_bit)) {
