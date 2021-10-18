@@ -206,6 +206,8 @@ endlessly.
 -   `AB == AA`, has equivalence classes: `A(A|B)`, `A(A|B)(A|B)`,
     `A(A|B)(A|B)(A|B)`, ...
 -   `AB == BB`, similarly
+-   `AB == BC`, has equivalence classes: `(AB|BC)`, `(AAB|ABC|BCC)`, ...,
+    `A`^i`BC`^(N-i)
 -   `A == AAB` and `A == BAA`
 
 ## References

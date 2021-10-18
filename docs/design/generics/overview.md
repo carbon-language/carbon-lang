@@ -33,6 +33,7 @@ pointers to other design documents that dive deeper into individual topics.
     -   [Interface input and output types](#interface-input-and-output-types)
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
+    -   [Constraints](#constraints)
 -   [Future work](#future-work)
 -   [References](#references)
 
@@ -561,9 +562,30 @@ fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
 fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 ```
 
+### Constraints
+
+Type-of-types can be further constrained using a `where` clause:
+
+```
+fn FindFirstPrime[T:! Container where .Element == i32]
+    (c: T, i: i32) -> Optional(i32) {
+  // The elements of `c` have type `T.Element`, which is `i32`.
+  ...
+}
+
+fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+  // The type of the elements of `c` is not known, but we do know
+  // that type satisfies the `Printable` interface.
+  ...
+}
+```
+
+Constraints limit the types that the generic function can operate on, but
+increase the knowledge that may be used in the body of the function to operate
+on values of those types.
+
 ## Future work
 
--   Other kinds of constraints will be finalized.
 -   Implementations can be parameterized to apply to multiple types. These
     implementations would be restricted to various conditions are true for the
     parameters. When there are two implementations that can apply, there is a
@@ -583,3 +605,4 @@ fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 
 -   [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
