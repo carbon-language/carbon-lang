@@ -3046,8 +3046,8 @@ fn DownCast[T:! Type](p: T*, U:! Extends(T)) -> U*;
 
 ```
 fn F[T:! Type where .Self is BaseType](p: T*);
-fn UpCast[T:! Type](p: T*, U:! Type where T extends .Self) -> U*;
-fn DownCast[T:! Type](p: T*, U:! Type where .Self extends T) -> U*;
+fn UpCast[T:! Type](p: T*, U:! Type where T is .Self) -> U*;
+fn DownCast[T:! Type](p: T*, U:! Type where .Self is T) -> U*;
 ```
 
 or define a new `extends` operator:
