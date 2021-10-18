@@ -54,19 +54,19 @@ class Member {
 class FieldMember : public Member {
  public:
   FieldMember(SourceLocation source_loc, Nonnull<const BindingPattern*> binding)
-      : Member(Kind::FieldMember, source_loc), binding(binding) {}
+      : Member(Kind::FieldMember, source_loc), binding_(binding) {}
 
   static auto classof(const Member* member) -> bool {
     return member->kind() == Kind::FieldMember;
   }
 
-  auto Binding() const -> Nonnull<const BindingPattern*> { return binding; }
+  auto binding() const -> const BindingPattern& { return *binding_; }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
-  Nonnull<const BindingPattern*> binding;
+  Nonnull<const BindingPattern*> binding_;
 };
 
 }  // namespace Carbon
