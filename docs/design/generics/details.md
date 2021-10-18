@@ -743,6 +743,9 @@ same definition are equivalent even if they have different names. This is
 because types don't explicitly specify which named constraints they implement,
 types automatically implement any named constraints they can satisfy.
 
+**Open question:** Should these be called "named type constraints" instead of
+"named constraints"?
+
 A named constraint definition can contain interface requirements using `impl`
 declarations and names using `alias` declarations. Note that this allows us to
 declare the aspects of a type-of-type directly.
