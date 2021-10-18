@@ -537,9 +537,6 @@ class StringValue : public Value {
   std::string val;
 };
 
-auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
-             SourceLocation source_loc) -> Nonnull<const Value*>;
-
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
 auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
                 SourceLocation source_loc) -> bool;

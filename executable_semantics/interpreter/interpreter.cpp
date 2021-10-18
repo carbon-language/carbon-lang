@@ -224,7 +224,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       Env values(arena);
       if (placeholder.Name().has_value()) {
-        Address a = heap.AllocateValue(CopyVal(arena, v, source_loc));
+        Address a = heap.AllocateValue(v);
         values.Set(*placeholder.Name(), a);
       }
       return values;
@@ -330,8 +330,7 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
                                     SourceLocation source_loc) {
   switch (pat->kind()) {
     case Value::Kind::PointerValue:
-      heap.Write(cast<PointerValue>(*pat).Val(),
-                 CopyVal(arena, val, source_loc), source_loc);
+      heap.Write(cast<PointerValue>(*pat).Val(), val, source_loc);
       break;
     case Value::Kind::TupleValue: {
       switch (val->kind()) {
@@ -582,10 +581,8 @@ auto Interpreter::StepExp() -> Transition {
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
                 cast<AlternativeConstructorValue>(*act->results()[0]);
-            Nonnull<const Value*> arg =
-                CopyVal(arena, act->results()[1], exp->source_loc());
-            return Done{arena->New<AlternativeValue>(alt.AltName(),
-                                                     alt.ChoiceName(), arg)};
+            return Done{arena->New<AlternativeValue>(
+                alt.AltName(), alt.ChoiceName(), act->results()[1])};
           }
           case Value::Kind::FunctionValue:
             return CallFunction{
@@ -935,9 +932,7 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        Nonnull<const Value*> ret_val =
-            CopyVal(arena, act->results()[0], stmt->source_loc());
-        return UnwindFunctionCall{ret_val};
+        return UnwindFunctionCall{act->results()[0]};
       }
     case Statement::Kind::Sequence: {
       //    { { (s1,s2) :: C, E, F} :: S, H}
