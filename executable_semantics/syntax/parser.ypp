@@ -68,7 +68,6 @@
   #include "executable_semantics/ast/ast.h"
   #include "executable_semantics/ast/declaration.h"
   #include "executable_semantics/ast/expression.h"
-  #include "executable_semantics/ast/function_definition.h"
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
   #include "executable_semantics/common/arena.h"
@@ -99,8 +98,7 @@
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
 %type <Nonnull<Declaration*>> declaration
-%type <Nonnull<FunctionDefinition*>> function_declaration
-%type <Nonnull<FunctionDefinition*>> function_definition
+%type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <Nonnull<Statement*>> statement
 %type <Nonnull<Statement*>> if_statement
@@ -651,28 +649,26 @@ deduced_params:
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
-function_definition:
+function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
       auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDefinition>(
+      $$ = arena->New<FunctionDeclaration>(
           context.source_loc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern ARROW AUTO block
     {
       // The return type is not considered "omitted" because it's `auto`.
-      $$ = arena->New<FunctionDefinition>(
+      $$ = arena->New<FunctionDeclaration>(
           context.source_loc(), $2, $3, $4,
           arena->New<AutoPattern>(context.source_loc()),
           /*is_omitted_exp=*/false, $7);
     }
-;
-function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
+| FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
     {
       auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDefinition>(
+      $$ = arena->New<FunctionDeclaration>(
           context.source_loc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp,
           std::nullopt);
@@ -720,10 +716,8 @@ alternative_list_contents:
     }
 ;
 declaration:
-  function_definition
-    { $$ = arena->New<FunctionDeclaration>($1); }
-| function_declaration
-    { $$ = arena->New<FunctionDeclaration>($1); }
+  function_declaration
+    { $$ = $1; }
 | CLASS identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $4); }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE

@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"

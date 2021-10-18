@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/common/tracing_flag.h"
@@ -50,7 +50,7 @@ static void SetStaticType(Nonnull<Pattern*> pattern,
 
 // Sets the static type of `definition`. Can be called multiple times on
 // the same node, so long as the types are the same on each call.
-static void SetStaticType(Nonnull<FunctionDefinition*> definition,
+static void SetStaticType(Nonnull<FunctionDeclaration*> definition,
                           Nonnull<const Value*> type) {
   if (definition->has_static_type()) {
     CHECK(TypeEqual(&definition->static_type(), type));
@@ -1027,7 +1027,7 @@ void TypeChecker::ExpectReturnOnAllPaths(
 // a function.
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
-auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
+auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
                                   Env values) -> TCResult {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters()) {
@@ -1068,7 +1068,7 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
 }
 
 auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
-                               FunctionDefinition* fun_def)
+                               FunctionDeclaration* fun_def)
     -> Nonnull<const Value*> {
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters()) {
@@ -1120,7 +1120,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
 static auto GetName(const Declaration& d) -> const std::string& {
   switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(d).definition().name();
+      return cast<FunctionDeclaration>(d).name();
     case Declaration::Kind::ClassDeclaration:
       return cast<ClassDeclaration>(d).definition().name();
     case Declaration::Kind::ChoiceDeclaration:
@@ -1140,8 +1140,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
                             const Env& values) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      TypeCheckFunDef(&cast<FunctionDeclaration>(*d).definition(), types,
-                      values);
+      TypeCheckFunDef(&cast<FunctionDeclaration>(*d), types, values);
       return;
     case Declaration::Kind::ClassDeclaration:
       // TODO
@@ -1176,7 +1175,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      FunctionDefinition& func_def = cast<FunctionDeclaration>(*d).definition();
+      FunctionDeclaration& func_def = cast<FunctionDeclaration>(*d);
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
       tops->types.Set(func_def.name(), t);
       interpreter.InitEnv(*d, &tops->values);
