@@ -24,16 +24,16 @@ using llvm::cast;
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:
-      out << *cast<LValAction>(*this).Exp();
+      out << cast<LValAction>(*this).expression();
       break;
     case Action::Kind::ExpressionAction:
-      out << *cast<ExpressionAction>(*this).Exp();
+      out << cast<ExpressionAction>(*this).expression();
       break;
     case Action::Kind::PatternAction:
-      out << *cast<PatternAction>(*this).Pat();
+      out << cast<PatternAction>(*this).pattern();
       break;
     case Action::Kind::StatementAction:
-      cast<StatementAction>(*this).Stmt()->PrintDepth(1, out);
+      cast<StatementAction>(*this).statement().PrintDepth(1, out);
       break;
   }
   out << "<" << pos_ << ">";
