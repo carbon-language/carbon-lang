@@ -26,11 +26,11 @@ static void AddIntrinsics(Nonnull<Arena*> arena,
       source_loc,
       arena->New<IntrinsicExpression>(IntrinsicExpression::Intrinsic::Print),
       false);
-  auto print = arena->New<FunctionDeclaration>(arena->New<FunctionDefinition>(
+  auto print = arena->New<FunctionDeclaration>(
       source_loc, "Print", std::vector<GenericBinding>(),
       arena->New<TuplePattern>(source_loc, print_params),
       arena->New<ExpressionPattern>(arena->New<TupleLiteral>(source_loc)),
-      /*is_omitted_return_type=*/false, print_return));
+      /*is_omitted_return_type=*/false, print_return);
   declarations->insert(declarations->begin(), print);
 }
 

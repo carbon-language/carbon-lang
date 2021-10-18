@@ -109,7 +109,7 @@ class TypeChecker {
                      Nonnull<ReturnTypeContext*> return_type_context)
       -> TCResult;
 
-  auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
+  auto TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types, Env values)
       -> TCResult;
 
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
@@ -117,7 +117,7 @@ class TypeChecker {
                      Nonnull<ReturnTypeContext*> return_type_context)
       -> Match::Clause;
 
-  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDefinition* fun_def)
+  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDeclaration* fun_def)
       -> Nonnull<const Value*>;
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
       -> Nonnull<const Value*>;

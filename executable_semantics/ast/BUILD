@@ -32,10 +32,10 @@ cc_library(
     ],
     deps = [
         ":class_definition",
-        ":function_definition",
         ":member",
         ":pattern",
         ":source_location",
+        ":statement",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -64,18 +64,6 @@ cc_test(
         ":paren_contents",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "function_definition",
-    srcs = ["function_definition.cpp"],
-    hdrs = ["function_definition.h"],
-    deps = [
-        ":expression",
-        ":source_location",
-        ":statement",
-        "@llvm-project//llvm:Support",
     ],
 )
 

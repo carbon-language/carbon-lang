@@ -10,10 +10,10 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/class_definition.h"
-#include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -61,21 +61,72 @@ class Declaration {
   SourceLocation source_loc_;
 };
 
+// TODO: expand the kinds of things that can be deduced parameters.
+//   For now, only generic parameters are supported.
+struct GenericBinding {
+  std::string name;
+  Nonnull<const Expression*> type;
+};
+
 class FunctionDeclaration : public Declaration {
  public:
-  FunctionDeclaration(Nonnull<FunctionDefinition*> definition)
-      : Declaration(Kind::FunctionDeclaration, definition->source_loc()),
-        definition_(definition) {}
+  FunctionDeclaration(SourceLocation source_loc, std::string name,
+                      std::vector<GenericBinding> deduced_params,
+                      Nonnull<TuplePattern*> param_pattern,
+                      Nonnull<Pattern*> return_type,
+                      bool is_omitted_return_type,
+                      std::optional<Nonnull<Statement*>> body)
+      : Declaration(Kind::FunctionDeclaration, source_loc),
+        name_(std::move(name)),
+        deduced_parameters_(std::move(deduced_params)),
+        param_pattern_(param_pattern),
+        return_type_(return_type),
+        is_omitted_return_type_(is_omitted_return_type),
+        body_(body) {}
 
   static auto classof(const Declaration* decl) -> bool {
     return decl->kind() == Kind::FunctionDeclaration;
   }
 
-  auto definition() const -> const FunctionDefinition& { return *definition_; }
-  auto definition() -> FunctionDefinition& { return *definition_; }
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
+
+  auto name() const -> const std::string& { return name_; }
+  auto deduced_parameters() const -> llvm::ArrayRef<GenericBinding> {
+    return deduced_parameters_;
+  }
+  auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
+  auto param_pattern() -> TuplePattern& { return *param_pattern_; }
+  auto return_type() const -> const Pattern& { return *return_type_; }
+  auto return_type() -> Pattern& { return *return_type_; }
+  auto is_omitted_return_type() const -> bool {
+    return is_omitted_return_type_;
+  }
+  auto body() const -> std::optional<Nonnull<const Statement*>> {
+    return body_;
+  }
+  auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
+
+  // The static type of this function. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
 
  private:
-  Nonnull<FunctionDefinition*> definition_;
+  std::string name_;
+  std::vector<GenericBinding> deduced_parameters_;
+  Nonnull<TuplePattern*> param_pattern_;
+  Nonnull<Pattern*> return_type_;
+  bool is_omitted_return_type_;
+  std::optional<Nonnull<Statement*>> body_;
+
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 class ClassDeclaration : public Declaration {
