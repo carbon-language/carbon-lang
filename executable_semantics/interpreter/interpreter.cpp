@@ -131,12 +131,11 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       for (Nonnull<const Member*> m : class_def.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
-            Nonnull<const BindingPattern*> binding =
-                cast<FieldMember>(*m).Binding();
-            Nonnull<const Expression*> type_expression =
-                cast<ExpressionPattern>(*binding->Type()).Expression();
-            auto type = InterpExp(Env(arena), type_expression);
-            fields.push_back(make_pair(*binding->Name(), type));
+            const BindingPattern& binding = cast<FieldMember>(*m).binding();
+            const Expression& type_expression =
+                cast<ExpressionPattern>(binding.type()).expression();
+            auto type = InterpExp(Env(arena), &type_expression);
+            fields.push_back(make_pair(*binding.name(), type));
             break;
           }
         }
@@ -167,7 +166,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       // result of evaluating the initializer.
       auto v = InterpExp(*env, &var.initializer());
       Address a = heap.AllocateValue(v);
-      env->Set(*var.binding().Name(), a);
+      env->Set(*var.binding().name(), a);
       break;
     }
   }
@@ -675,20 +674,20 @@ auto Interpreter::StepPattern() -> Transition {
     case Pattern::Kind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*pattern);
       if (act->pos() == 0) {
-        return Spawn{arena->New<PatternAction>(binding.Type())};
+        return Spawn{arena->New<PatternAction>(&binding.type())};
       } else {
-        return Done{arena->New<BindingPlaceholderValue>(binding.Name(),
+        return Done{arena->New<BindingPlaceholderValue>(binding.name(),
                                                         act->results()[0])};
       }
     }
     case Pattern::Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*pattern);
-      if (act->pos() < static_cast<int>(tuple.Fields().size())) {
+      if (act->pos() < static_cast<int>(tuple.fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        return Spawn{arena->New<PatternAction>(tuple.Fields()[act->pos()])};
+        return Spawn{arena->New<PatternAction>(tuple.fields()[act->pos()])};
       } else {
         return Done{arena->New<TupleValue>(act->results())};
       }
@@ -696,20 +695,20 @@ auto Interpreter::StepPattern() -> Transition {
     case Pattern::Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*pattern);
       if (act->pos() == 0) {
-        return Spawn{arena->New<ExpressionAction>(alternative.ChoiceType())};
+        return Spawn{arena->New<ExpressionAction>(&alternative.choice_type())};
       } else if (act->pos() == 1) {
-        return Spawn{arena->New<PatternAction>(alternative.Arguments())};
+        return Spawn{arena->New<PatternAction>(&alternative.arguments())};
       } else {
         CHECK(act->pos() == 2);
         const auto& choice_type = cast<ChoiceType>(*act->results()[0]);
-        return Done{arena->New<AlternativeValue>(alternative.AlternativeName(),
+        return Done{arena->New<AlternativeValue>(alternative.alternative_name(),
                                                  choice_type.name(),
                                                  act->results()[1])};
       }
     }
     case Pattern::Kind::ExpressionPattern:
       return Delegate{arena->New<ExpressionAction>(
-          cast<ExpressionPattern>(*pattern).Expression())};
+          &cast<ExpressionPattern>(*pattern).expression())};
   }
 }
 
@@ -806,11 +805,12 @@ auto Interpreter::StepStmt() -> Transition {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         act->Clear();
-        return Spawn{arena->New<ExpressionAction>(cast<While>(*stmt).Cond())};
+        return Spawn{
+            arena->New<ExpressionAction>(&cast<While>(*stmt).condition())};
       } else if (cast<BoolValue>(*act->results().back()).value()) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-        return Spawn{arena->New<StatementAction>(cast<While>(*stmt).Body())};
+        return Spawn{arena->New<StatementAction>(&cast<While>(*stmt).body())};
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { C, E, F } :: S, H}
@@ -844,9 +844,9 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Block: {
       if (act->pos() == 0) {
         const auto& block = cast<Block>(*stmt);
-        if (block.Stmt()) {
+        if (block.statement()) {
           frame->scopes.Push(arena->New<Scope>(CurrentEnv()));
-          return Spawn{arena->New<StatementAction>(*block.Stmt())};
+          return Spawn{arena->New<StatementAction>(*block.statement())};
         } else {
           return Done{};
         }
@@ -862,10 +862,10 @@ auto Interpreter::StepStmt() -> Transition {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(
-            cast<VariableDefinition>(*stmt).Init())};
+            &cast<VariableDefinition>(*stmt).init())};
       } else if (act->pos() == 1) {
-        return Spawn{
-            arena->New<PatternAction>(cast<VariableDefinition>(*stmt).Pat())};
+        return Spawn{arena->New<PatternAction>(
+            &cast<VariableDefinition>(*stmt).pattern())};
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -887,7 +887,7 @@ auto Interpreter::StepStmt() -> Transition {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(
-            cast<ExpressionStatement>(*stmt).Exp())};
+            &cast<ExpressionStatement>(*stmt).expression())};
       } else {
         return Done{};
       }
@@ -895,11 +895,11 @@ auto Interpreter::StepStmt() -> Transition {
       if (act->pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        return Spawn{arena->New<LValAction>(cast<Assign>(*stmt).Lhs())};
+        return Spawn{arena->New<LValAction>(&cast<Assign>(*stmt).lhs())};
       } else if (act->pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(cast<Assign>(*stmt).Rhs())};
+        return Spawn{arena->New<ExpressionAction>(&cast<Assign>(*stmt).rhs())};
       } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
@@ -912,19 +912,20 @@ auto Interpreter::StepStmt() -> Transition {
       if (act->pos() == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(cast<If>(*stmt).Cond())};
+        return Spawn{
+            arena->New<ExpressionAction>(&cast<If>(*stmt).condition())};
       } else if (cast<BoolValue>(*act->results()[0]).value()) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { then_stmt :: C, E, F } :: S, H}
         return Delegate{
-            arena->New<StatementAction>(cast<If>(*stmt).ThenStmt())};
-      } else if (cast<If>(*stmt).ElseStmt()) {
+            arena->New<StatementAction>(&cast<If>(*stmt).then_statement())};
+      } else if (cast<If>(*stmt).else_statement()) {
         //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
         //      S, H}
         // -> { { else_stmt :: C, E, F } :: S, H}
         return Delegate{
-            arena->New<StatementAction>(*cast<If>(*stmt).ElseStmt())};
+            arena->New<StatementAction>(*cast<If>(*stmt).else_statement())};
       } else {
         return Done{};
       }
@@ -932,7 +933,8 @@ auto Interpreter::StepStmt() -> Transition {
       if (act->pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(cast<Return>(*stmt).Exp())};
+        return Spawn{
+            arena->New<ExpressionAction>(&cast<Return>(*stmt).expression())};
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
@@ -945,11 +947,11 @@ auto Interpreter::StepStmt() -> Transition {
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       const auto& seq = cast<Sequence>(*stmt);
       if (act->pos() == 0) {
-        return Spawn{arena->New<StatementAction>(seq.Stmt())};
+        return Spawn{arena->New<StatementAction>(&seq.statement())};
       } else {
-        if (seq.Next()) {
+        if (seq.next()) {
           return Delegate{
-              arena->New<StatementAction>(*cast<Sequence>(*stmt).Next())};
+              arena->New<StatementAction>(*cast<Sequence>(*stmt).next())};
         } else {
           return Done{};
         }
@@ -963,7 +965,7 @@ auto Interpreter::StepStmt() -> Transition {
       Stack<Nonnull<Action*>> todo;
       todo.Push(arena->New<StatementAction>(
           arena->New<Return>(arena, stmt->source_loc())));
-      todo.Push(arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
+      todo.Push(arena->New<StatementAction>(&cast<Continuation>(*stmt).body()));
       auto continuation_stack = arena->New<std::vector<Nonnull<Frame*>>>();
       auto continuation_frame =
           arena->New<Frame>("__continuation", scopes, todo);
@@ -974,7 +976,7 @@ auto Interpreter::StepStmt() -> Transition {
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
       frame->scopes.Top()->values.Set(
-          cast<Continuation>(*stmt).ContinuationVariable(),
+          cast<Continuation>(*stmt).continuation_variable(),
           continuation_address);
       // Pop the continuation statement.
       frame->todo.Pop();
@@ -983,7 +985,8 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Run:
       if (act->pos() == 0) {
         // Evaluate the argument of the run statement.
-        return Spawn{arena->New<ExpressionAction>(cast<Run>(*stmt).Argument())};
+        return Spawn{
+            arena->New<ExpressionAction>(&cast<Run>(*stmt).argument())};
       } else {
         frame->todo.Pop(1);
         // Push an expression statement action to ignore the result
