@@ -6,15 +6,14 @@
 
 #include "common/check.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/syntax/lexer.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
 
 namespace Carbon {
 
-auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name)
-    -> std::variant<AST, SyntaxErrorCode> {
+auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name,
+           bool trace) -> std::variant<AST, SyntaxErrorCode> {
   FILE* input_file = fopen(input_file_name.c_str(), "r");
   if (input_file == nullptr) {
     FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
@@ -28,11 +27,11 @@ auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name)
 
   // Prepare other parser arguments.
   std::optional<AST> ast = std::nullopt;
-  ParseAndLexContext context(arena->New<std::string>(input_file_name));
+  ParseAndLexContext context(arena->New<std::string>(input_file_name), trace);
 
   // Do the parse.
   auto parser = Parser(arena, scanner, context, &ast);
-  if (tracing_output) {
+  if (trace) {
     parser.set_debug_level(1);
   }
   auto syntax_error_code = parser();

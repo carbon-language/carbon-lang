@@ -43,7 +43,6 @@ cc_library(
         "//executable_semantics/ast:paren_contents",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
-        "//executable_semantics/common:tracing_flag",
     ],
 )
 

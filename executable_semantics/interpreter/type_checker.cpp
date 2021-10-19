@@ -14,7 +14,6 @@
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
@@ -418,7 +417,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
 
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                                Env values) -> TCResult {
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "checking expression " << *e << "\ntypes: ";
     PrintTypeEnv(types, llvm::outs());
     llvm::outs() << "\nvalues: ";
@@ -708,7 +707,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, TypeEnv types, Env values,
     std::optional<Nonnull<const Value*>> expected) -> TCResult {
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
       llvm::outs() << ", expecting " << **expected;

@@ -25,8 +25,8 @@ using Env = Dictionary<std::string, Address>;
 
 class Interpreter {
  public:
-  explicit Interpreter(Nonnull<Arena*> arena)
-      : arena(arena), globals(arena), heap(arena) {}
+  explicit Interpreter(Nonnull<Arena*> arena, bool trace)
+      : arena(arena), globals(arena), heap(arena), trace_(trace) {}
 
   // Interpret the whole program.
   auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
@@ -160,6 +160,8 @@ class Interpreter {
   Stack<Nonnull<Frame*>> stack;
   Heap heap;
   std::optional<Nonnull<const Value*>> program_value;
+
+  bool trace_;
 };
 
 }  // namespace Carbon
