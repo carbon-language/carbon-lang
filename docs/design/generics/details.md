@@ -1283,62 +1283,62 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 -   `IncidenceGraph` implements all methods of `Graph`, `EdgeListGraph`
     implements none of them.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn OutEdges[addr me: Self*](u: VertexDescriptor)
-        -> (EdgeIterator, EdgeIterator) { ... }
-  }
-  impl as EdgeListGraph {
-    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
-  }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn OutEdges[addr me: Self*](u: VertexDescriptor)
+            -> (EdgeIterator, EdgeIterator) { ... }
+      }
+      impl as EdgeListGraph {
+        fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+      }
+    }
+    ```
 
 -   `IncidenceGraph` and `EdgeListGraph` implement all methods of `Graph`
     between them, but with no overlap.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn OutEdges[addr me: Self*](u: VertexDescriptor)
-        -> (EdgeIterator, EdgeIterator) { ... }
-  }
-  impl as EdgeListGraph {
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
-  }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn OutEdges[addr me: Self*](u: VertexDescriptor)
+            -> (EdgeIterator, EdgeIterator) { ... }
+      }
+      impl as EdgeListGraph {
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+      }
+    }
+    ```
 
 -   Explicitly implementing `Graph`.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as Graph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-  }
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as Graph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+      }
+      impl as IncidenceGraph { ... }
+      impl as EdgeListGraph { ... }
+    }
+    ```
 
 -   Implementing `Graph` externally.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
-}
-external impl as Graph {
-  fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-  fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph { ... }
+      impl as EdgeListGraph { ... }
+    }
+    external impl as Graph {
+      fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+      fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    }
+    ```
 
 This last point means that there are situations where we can only detect a
 missing method definition by the end of the file. This doesn't delay other
