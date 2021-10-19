@@ -162,7 +162,7 @@ class Interpreter {
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals;
 
-  Stack<Nonnull<Action*>> todo;
+  Stack<Nonnull<Action*>> todo_;
   Heap heap;
 };
 

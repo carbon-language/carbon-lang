@@ -44,7 +44,7 @@ void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
 //
 
 auto Interpreter::CurrentScope() -> Scope& {
-  for (Nonnull<Action*> action : todo) {
+  for (Nonnull<Action*> action : todo_) {
     if (action->scope().has_value()) {
       return *action->scope();
     }
@@ -67,11 +67,11 @@ auto Interpreter::GetFromEnv(SourceLocation source_loc, const std::string& name)
 void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "{\nstack: ";
   llvm::ListSeparator sep(" :: ");
-  for (Nonnull<const Action*> action : todo) {
+  for (Nonnull<const Action*> action : todo_) {
     out << sep << *action;
   }
   out << "\nheap: " << heap;
-  if (!todo.IsEmpty()) {
+  if (!todo_.IsEmpty()) {
     out << "\nvalues: ";
     PrintEnv(CurrentEnv(), out);
   }
@@ -394,7 +394,7 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
 }
 
 auto Interpreter::StepLvalue() -> Transition {
-  Nonnull<Action*> act = todo.Top();
+  Nonnull<Action*> act = todo_.Top();
   Nonnull<const Expression*> exp = cast<LValAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step lvalue " << *exp << " (" << exp->source_loc()
@@ -478,7 +478,7 @@ auto Interpreter::StepLvalue() -> Transition {
 }
 
 auto Interpreter::StepExp() -> Transition {
-  Nonnull<Action*> act = todo.Top();
+  Nonnull<Action*> act = todo_.Top();
   Nonnull<const Expression*> exp = cast<ExpressionAction>(*act).Exp();
   if (tracing_output) {
     llvm::outs() << "--- step exp " << *exp << " (" << exp->source_loc()
@@ -698,7 +698,7 @@ auto Interpreter::StepExp() -> Transition {
 }
 
 auto Interpreter::StepPattern() -> Transition {
-  Nonnull<Action*> act = todo.Top();
+  Nonnull<Action*> act = todo_.Top();
   Nonnull<const Pattern*> pattern = cast<PatternAction>(*act).Pat();
   if (tracing_output) {
     llvm::outs() << "--- step pattern " << *pattern << " ("
@@ -762,7 +762,7 @@ static auto IsRunAction(Nonnull<Action*> action) -> bool {
 }
 
 auto Interpreter::StepStmt() -> Transition {
-  Nonnull<Action*> act = todo.Top();
+  Nonnull<Action*> act = todo_.Top();
   Nonnull<const Statement*> stmt = cast<StatementAction>(*act).Stmt();
   if (tracing_output) {
     llvm::outs() << "--- step stmt ";
@@ -983,7 +983,7 @@ auto Interpreter::StepStmt() -> Transition {
         std::vector<Nonnull<Action*>>& continuation_vector =
             *cast<const ContinuationValue>(*act->results()[0]).Stack();
         while (!continuation_vector.empty()) {
-          todo.Push(continuation_vector.back());
+          todo_.Push(continuation_vector.back());
           continuation_vector.pop_back();
         }
         act->set_pos(2);
@@ -995,13 +995,13 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Await:
       CHECK(act->pos() == 0);
       // Pause the current continuation
-      todo.Pop();
+      todo_.Pop();
       std::vector<Nonnull<Action*>> paused;
-      while (!IsRunAction(todo.Top())) {
-        paused.push_back(todo.Pop());
+      while (!IsRunAction(todo_.Top())) {
+        paused.push_back(todo_.Pop());
       }
       const auto& continuation =
-          cast<const ContinuationValue>(*todo.Top()->results()[0]);
+          cast<const ContinuationValue>(*todo_.Top()->results()[0]);
       CHECK(continuation.Stack()->empty());
       // Update the continuation with the paused stack.
       *continuation.Stack() = std::move(paused);
@@ -1015,7 +1015,7 @@ class Interpreter::DoTransition {
   DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
-    Nonnull<Action*> act = interpreter->todo.Pop();
+    Nonnull<Action*> act = interpreter->todo_.Pop();
     if (act->scope().has_value()) {
       interpreter->DeallocateScope(*act->scope());
     }
@@ -1024,62 +1024,62 @@ class Interpreter::DoTransition {
       case Action::Kind::LValAction:
       case Action::Kind::PatternAction:
         CHECK(done.result.has_value());
-        interpreter->todo.Top()->AddResult(*done.result);
+        interpreter->todo_.Top()->AddResult(*done.result);
         break;
       case Action::Kind::StatementAction:
         CHECK(!done.result.has_value());
         break;
       case Action::Kind::ScopeAction:
         if (done.result.has_value()) {
-          interpreter->todo.Top()->AddResult(*done.result);
+          interpreter->todo_.Top()->AddResult(*done.result);
         }
         break;
     }
   }
 
   void operator()(const Spawn& spawn) {
-    Nonnull<Action*> action = interpreter->todo.Top();
+    Nonnull<Action*> action = interpreter->todo_.Top();
     action->set_pos(action->pos() + 1);
-    interpreter->todo.Push(spawn.child);
+    interpreter->todo_.Push(spawn.child);
   }
 
   void operator()(const Delegate& delegate) {
-    Nonnull<Action*> act = interpreter->todo.Pop();
+    Nonnull<Action*> act = interpreter->todo_.Pop();
     if (act->scope().has_value()) {
       delegate.delegate->StartScope(*act->scope());
     }
-    interpreter->todo.Push(delegate.delegate);
+    interpreter->todo_.Push(delegate.delegate);
   }
 
   void operator()(const RunAgain&) {
-    Nonnull<Action*> action = interpreter->todo.Top();
+    Nonnull<Action*> action = interpreter->todo_.Top();
     action->set_pos(action->pos() + 1);
   }
 
   void operator()(const UnwindTo& unwind_to) {
-    while (interpreter->todo.Top()->ast_node() != unwind_to.ast_node) {
-      if (interpreter->todo.Top()->scope().has_value()) {
-        interpreter->DeallocateScope(*interpreter->todo.Top()->scope());
+    while (interpreter->todo_.Top()->ast_node() != unwind_to.ast_node) {
+      if (interpreter->todo_.Top()->scope().has_value()) {
+        interpreter->DeallocateScope(*interpreter->todo_.Top()->scope());
       }
-      interpreter->todo.Pop();
+      interpreter->todo_.Pop();
     }
   }
 
   void operator()(const UnwindPast& unwind_past) {
     Nonnull<Action*> action;
     do {
-      action = interpreter->todo.Pop();
+      action = interpreter->todo_.Pop();
       if (action->scope().has_value()) {
         interpreter->DeallocateScope(*action->scope());
       }
     } while (action->ast_node() != unwind_past.ast_node);
     if (unwind_past.result.has_value()) {
-      interpreter->todo.Top()->AddResult(*unwind_past.result);
+      interpreter->todo_.Top()->AddResult(*unwind_past.result);
     }
   }
 
   void operator()(const CallFunction& call) {
-    Nonnull<Action*> action = interpreter->todo.Top();
+    Nonnull<Action*> action = interpreter->todo_.Top();
     action->set_pos(action->pos() + 1);
     std::optional<Env> matches = interpreter->PatternMatch(
         call.function->Param(), call.args, call.source_loc);
@@ -1091,10 +1091,10 @@ class Interpreter::DoTransition {
       new_scope.values.Set(name, value);
       new_scope.locals.push_back(name);
     }
-    interpreter->todo.Push(
+    interpreter->todo_.Push(
         interpreter->arena->New<ScopeAction>(std::move(new_scope)));
     CHECK(call.function->Body()) << "Calling a function that's missing a body";
-    interpreter->todo.Push(
+    interpreter->todo_.Push(
         interpreter->arena->New<StatementAction>(*call.function->Body()));
   }
 
@@ -1106,7 +1106,7 @@ class Interpreter::DoTransition {
 
 // State transition.
 void Interpreter::Step() {
-  Nonnull<Action*> act = todo.Top();
+  Nonnull<Action*> act = todo_.Top();
   switch (act->kind()) {
     case Action::Kind::LValAction:
       std::visit(DoTransition(this), StepLvalue());
@@ -1138,25 +1138,25 @@ void Interpreter::Step() {
 // trace_steps parameter.
 auto Interpreter::ExecuteAction(Nonnull<Action*> action, Env values,
                                 bool trace_steps) -> Nonnull<const Value*> {
-  todo = {};
-  todo.Push(arena->New<ScopeAction>(Scope(values)));
-  todo.Push(action);
+  todo_ = {};
+  todo_.Push(arena->New<ScopeAction>(Scope(values)));
+  todo_.Push(action);
 
-  while (todo.Count() > 1) {
+  while (todo_.Count() > 1) {
     Step();
     if (trace_steps) {
       PrintState(llvm::outs());
     }
   }
-  CHECK(todo.Top()->results().size() == 1);
-  return todo.Top()->results()[0];
+  CHECK(todo_.Top()->results().size() == 1);
+  return todo_.Top()->results()[0];
 }
 
 auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
                                 Nonnull<const Expression*> call_main) -> int {
   // Check that the interpreter is in a clean state.
   CHECK(globals.IsEmpty());
-  CHECK(todo.IsEmpty());
+  CHECK(todo_.IsEmpty());
 
   if (tracing_output) {
     llvm::outs() << "********** initializing globals **********\n";
