@@ -150,6 +150,9 @@ class Interpreter {
   void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
                          SourceLocation source_loc);
 
+  auto Convert(Nonnull<const Value*> value, Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
+
   void PrintState(llvm::raw_ostream& out);
 
   Nonnull<Arena*> arena;

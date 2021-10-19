@@ -116,7 +116,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
         new_env.Set(deduced.name, a);
       }
       auto pt = InterpPattern(new_env, &func_def.param_pattern());
-      auto f = arena->New<FunctionValue>(func_def.name(), pt, func_def.body());
+      auto f = arena->New<FunctionValue>(&func_def, pt);
       Address a = heap.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
@@ -162,7 +162,8 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const auto& var = cast<VariableDeclaration>(d);
       // Adds an entry in `globals` mapping the variable's name to the
       // result of evaluating the initializer.
-      auto v = InterpExp(*env, &var.initializer());
+      Nonnull<const Value*> v =
+          Convert(InterpExp(*env, &var.initializer()), &var.static_type());
       Address a = heap.AllocateValue(v);
       env->Set(*var.binding().name(), a);
       break;
@@ -453,6 +454,71 @@ auto Interpreter::StepLvalue() -> Transition {
     case Expression::Kind::IntrinsicExpression:
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << exp;
+  }
+}
+
+// Returns the result of converting `value` to type `type`.
+auto Interpreter::Convert(Nonnull<const Value*> value,
+                          Nonnull<const Value*> type) const
+    -> Nonnull<const Value*> {
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::TypeType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::AutoType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringType:
+    case Value::Kind::StringValue:
+      // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
+      // have Value::dynamic_type.
+      return value;
+    case Value::Kind::StructValue: {
+      const auto& struct_val = cast<StructValue>(*value);
+      switch (type->kind()) {
+        case Value::Kind::StructType: {
+          const auto& destination_type = cast<StructType>(*type);
+          std::vector<StructElement> new_elements;
+          for (const auto& [field_name, field_type] :
+               destination_type.fields()) {
+            std::optional<Nonnull<const Value*>> old_value =
+                struct_val.FindField(field_name);
+            new_elements.push_back(
+                {.name = field_name, .value = Convert(*old_value, field_type)});
+          }
+          return arena->New<StructValue>(std::move(new_elements));
+        }
+        case Value::Kind::NominalClassType:
+          return arena->New<NominalClassValue>(type, value);
+        default:
+          FATAL() << "Can't convert value " << *value << " to type " << *type;
+      }
+    }
+    case Value::Kind::TupleValue: {
+      const auto& tuple = cast<TupleValue>(value);
+      const auto& destination_type = cast<TupleValue>(type);
+      CHECK(tuple->elements().size() == destination_type->elements().size());
+      std::vector<Nonnull<const Value*>> new_elements;
+      for (size_t i = 0; i < tuple->elements().size(); ++i) {
+        new_elements.push_back(
+            Convert(tuple->elements()[i], destination_type->elements()[i]));
+      }
+      return arena->New<TupleValue>(std::move(new_elements));
+    }
   }
 }
 
@@ -777,7 +843,7 @@ auto Interpreter::StepStmt() -> Transition {
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
           return Spawn{arena->New<PatternAction>(&c.pattern())};
         } else {  // try to match
-          auto v = act->results()[0];
+          auto v = Convert(act->results()[0], &c.pattern().static_type());
           auto pat = act->results()[clause_num + 1];
           std::optional<Env> matches = PatternMatch(pat, v, stmt.source_loc());
           if (matches) {  // we have a match, start the body
@@ -802,14 +868,18 @@ auto Interpreter::StepStmt() -> Transition {
         act->Clear();
         return Spawn{
             arena->New<ExpressionAction>(&cast<While>(stmt).condition())};
-      } else if (cast<BoolValue>(*act->results().back()).value()) {
-        //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
-        // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-        return Spawn{arena->New<StatementAction>(&cast<While>(stmt).body())};
       } else {
-        //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
-        // -> { { C, E, F } :: S, H}
-        return Done{};
+        Nonnull<const Value*> condition =
+            Convert(act->results().back(), arena->New<BoolType>());
+        if (cast<BoolValue>(*condition).value()) {
+          //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
+          // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
+          return Spawn{arena->New<StatementAction>(&cast<While>(stmt).body())};
+        } else {
+          //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
+          // -> { { C, E, F } :: S, H}
+          return Done{};
+        }
       }
     case Statement::Kind::Break: {
       CHECK(act->pos() == 0);
@@ -852,19 +922,19 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     }
-    case Statement::Kind::VariableDefinition:
+    case Statement::Kind::VariableDefinition: {
+      const auto& definition = cast<VariableDefinition>(stmt);
       if (act->pos() == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            &cast<VariableDefinition>(stmt).init())};
+        return Spawn{arena->New<ExpressionAction>(&definition.init())};
       } else if (act->pos() == 1) {
-        return Spawn{arena->New<PatternAction>(
-            &cast<VariableDefinition>(stmt).pattern())};
+        return Spawn{arena->New<PatternAction>(&definition.pattern())};
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        Nonnull<const Value*> v = act->results()[0];
+        Nonnull<const Value*> v =
+            Convert(act->results()[0], &definition.pattern().static_type());
         Nonnull<const Value*> p = act->results()[1];
 
         std::optional<Env> matches = PatternMatch(p, v, stmt.source_loc());
@@ -877,6 +947,7 @@ auto Interpreter::StepStmt() -> Transition {
         }
         return Done{};
       }
+    }
     case Statement::Kind::ExpressionStatement:
       if (act->pos() == 0) {
         //    { {e :: C, E, F} :: S, H}
@@ -886,42 +957,48 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         return Done{};
       }
-    case Statement::Kind::Assign:
+    case Statement::Kind::Assign: {
+      const auto& assign = cast<Assign>(stmt);
       if (act->pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        return Spawn{arena->New<LValAction>(&cast<Assign>(stmt).lhs())};
+        return Spawn{arena->New<LValAction>(&assign.lhs())};
       } else if (act->pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(&cast<Assign>(stmt).rhs())};
+        return Spawn{arena->New<ExpressionAction>(&assign.rhs())};
       } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
         auto pat = act->results()[0];
-        auto val = act->results()[1];
+        auto val = Convert(act->results()[1], &assign.lhs().static_type());
         PatternAssignment(pat, val, stmt.source_loc());
         return Done{};
       }
+    }
     case Statement::Kind::If:
       if (act->pos() == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         return Spawn{arena->New<ExpressionAction>(&cast<If>(stmt).condition())};
-      } else if (cast<BoolValue>(*act->results()[0]).value()) {
-        //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
-        //      S, H}
-        // -> { { then_stmt :: C, E, F } :: S, H}
-        return Delegate{
-            arena->New<StatementAction>(&cast<If>(stmt).then_statement())};
-      } else if (cast<If>(stmt).else_statement()) {
-        //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
-        //      S, H}
-        // -> { { else_stmt :: C, E, F } :: S, H}
-        return Delegate{
-            arena->New<StatementAction>(*cast<If>(stmt).else_statement())};
       } else {
-        return Done{};
+        Nonnull<const Value*> condition =
+            Convert(act->results()[0], arena->New<BoolType>());
+        if (cast<BoolValue>(*condition).value()) {
+          //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
+          //      S, H}
+          // -> { { then_stmt :: C, E, F } :: S, H}
+          return Delegate{
+              arena->New<StatementAction>(&cast<If>(stmt).then_statement())};
+        } else if (cast<If>(stmt).else_statement()) {
+          //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
+          //      S, H}
+          // -> { { else_stmt :: C, E, F } :: S, H}
+          return Delegate{
+              arena->New<StatementAction>(*cast<If>(stmt).else_statement())};
+        } else {
+          return Done{};
+        }
       }
     case Statement::Kind::Return:
       if (act->pos() == 0) {
@@ -932,6 +1009,8 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
+        // TODO(geoffromer): convert the result to the function's return type,
+        // once #880 gives us a way to find that type.
         return UnwindFunctionCall{act->results()[0]};
       }
     case Statement::Kind::Sequence: {
@@ -988,8 +1067,10 @@ auto Interpreter::StepStmt() -> Transition {
                 arena->New<TupleLiteral>(stmt.source_loc())));
         frame->todo.Push(ignore_result);
         // Push the continuation onto the current stack.
+        Nonnull<const Value*> arg =
+            Convert(act->results()[0], arena->New<ContinuationType>());
         std::vector<Nonnull<Frame*>>& continuation_vector =
-            cast<ContinuationValue>(*act->results()[0]).stack();
+            cast<ContinuationValue>(*arg).stack();
         while (!continuation_vector.empty()) {
           stack.Push(continuation_vector.back());
           continuation_vector.pop_back();
@@ -1075,8 +1156,10 @@ class Interpreter::DoTransition {
 
   void operator()(const CallFunction& call) {
     interpreter->stack.Top()->todo.Pop();
+    Nonnull<const Value*> converted_args = interpreter->Convert(
+        call.args, &call.function->declaration().param_pattern().static_type());
     std::optional<Env> matches = interpreter->PatternMatch(
-        &call.function->parameters(), call.args, call.source_loc);
+        &call.function->parameters(), converted_args, call.source_loc);
     CHECK(matches.has_value())
         << "internal error in call_function, pattern match failed";
     // Create the new frame and push it on the stack
@@ -1088,11 +1171,13 @@ class Interpreter::DoTransition {
     }
     auto scopes =
         Stack<Nonnull<Scope*>>(interpreter->arena->New<Scope>(values, params));
-    CHECK(call.function->body()) << "Calling a function that's missing a body";
-    auto todo = Stack<Nonnull<Action*>>(
-        interpreter->arena->New<StatementAction>(*call.function->body()));
-    auto frame =
-        interpreter->arena->New<Frame>(call.function->name(), scopes, todo);
+    CHECK(call.function->declaration().body())
+        << "Calling a function that's missing a body";
+    auto todo =
+        Stack<Nonnull<Action*>>(interpreter->arena->New<StatementAction>(
+            *call.function->declaration().body()));
+    auto frame = interpreter->arena->New<Frame>(
+        call.function->declaration().name(), scopes, todo);
     interpreter->stack.Push(frame);
   }
 
