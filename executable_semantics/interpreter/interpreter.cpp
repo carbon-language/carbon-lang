@@ -24,7 +24,6 @@
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
-using llvm::dyn_cast;
 
 namespace Carbon {
 

@@ -37,7 +37,7 @@ class Pattern {
   };
 
   Pattern(const Pattern&) = delete;
-  Pattern& operator=(const Pattern&) = delete;
+  auto operator=(const Pattern&) -> Pattern& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -193,7 +193,7 @@ class AlternativePattern : public Pattern {
 // expression.
 class ExpressionPattern : public Pattern {
  public:
-  ExpressionPattern(Nonnull<Expression*> expression)
+  explicit ExpressionPattern(Nonnull<Expression*> expression)
       : Pattern(Kind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
 

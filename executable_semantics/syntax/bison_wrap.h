@@ -24,6 +24,7 @@ class BisonWrap {
   }
 
   // Support transparent conversion to the wrapped type.
+  // NOLINTNEXTLINE(google-explicit-constructor)
   operator T() { return Release(); }
 
   // Deliberately releases the contained value. Errors if not initialized.

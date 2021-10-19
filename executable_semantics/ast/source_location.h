@@ -26,7 +26,7 @@ class SourceLocation {
   auto operator=(const SourceLocation&) -> SourceLocation& = default;
   auto operator=(SourceLocation&&) -> SourceLocation& = default;
 
-  bool operator==(SourceLocation other) const {
+  auto operator==(SourceLocation other) const -> bool {
     return filename_ == other.filename_ && line_num_ == other.line_num_;
   }
 

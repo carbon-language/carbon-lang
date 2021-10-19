@@ -1177,7 +1177,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      FunctionDeclaration& func_def = cast<FunctionDeclaration>(*d);
+      auto& func_def = cast<FunctionDeclaration>(*d);
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
       tops->types.Set(func_def.name(), t);
       interpreter_.InitEnv(*d, &tops->values);
@@ -1185,8 +1185,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*d).definition();
+      const auto& class_def = cast<ClassDeclaration>(*d).definition();
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
       Address a = interpreter_.AllocateValue(st);
       tops->values.Set(class_def.name(), a);  // Is this obsolete?
