@@ -34,7 +34,7 @@ class ExitingStream {
   // Indicates that the program is exiting due to a bug in the program, rather
   // than, e.g., invalid input.
   ExitingStream& TreatAsBug() {
-    treat_as_bug = true;
+    treat_as_bug_ = true;
     return *this;
   }
 
@@ -45,16 +45,16 @@ class ExitingStream {
   // Forward output to llvm::errs.
   template <typename T>
   ExitingStream& operator<<(const T& message) {
-    if (separator) {
+    if (separator_) {
       llvm::errs() << ": ";
-      separator = false;
+      separator_ = false;
     }
     llvm::errs() << message;
     return *this;
   }
 
   ExitingStream& operator<<(AddSeparator /*unused*/) {
-    separator = true;
+    separator_ = true;
     return *this;
   }
 
@@ -64,7 +64,7 @@ class ExitingStream {
   [[noreturn]] friend auto operator|(Helper /*unused*/, ExitingStream& rhs) {
     // Finish with a newline.
     llvm::errs() << "\n";
-    if (rhs.treat_as_bug) {
+    if (rhs.treat_as_bug_) {
       std::abort();
     } else {
       std::exit(-1);
@@ -73,10 +73,10 @@ class ExitingStream {
 
  private:
   // Whether a separator should be printed if << is used again.
-  bool separator = false;
+  bool separator_ = false;
 
   // Whether the program is exiting due to a bug.
-  bool treat_as_bug = false;
+  bool treat_as_bug_ = false;
 };
 
 }  // namespace Internal
