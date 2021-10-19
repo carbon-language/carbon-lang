@@ -30,7 +30,7 @@ class FieldPath {
   FieldPath() = default;
 
   // Constructs a FieldPath consisting of a single step.
-  explicit FieldPath(std::string name) : components({std::move(name)}) {}
+  explicit FieldPath(std::string name) : components_({std::move(name)}) {}
 
   FieldPath(const FieldPath&) = default;
   FieldPath(FieldPath&&) = default;
@@ -38,15 +38,15 @@ class FieldPath {
   auto operator=(FieldPath&&) -> FieldPath& = default;
 
   // Returns whether *this is empty.
-  auto IsEmpty() const -> bool { return components.empty(); }
+  auto IsEmpty() const -> bool { return components_.empty(); }
 
   // Appends `name` to the end of *this.
   auto Append(std::string name) -> void {
-    components.push_back(std::move(name));
+    components_.push_back(std::move(name));
   }
 
   void Print(llvm::raw_ostream& out) const {
-    for (const std::string& component : components) {
+    for (const std::string& component : components_) {
       out << "." << component;
     }
   }
@@ -58,7 +58,7 @@ class FieldPath {
   // another Value, so its implementation details are tied to the implementation
   // details of Value.
   friend class Value;
-  std::vector<std::string> components;
+  std::vector<std::string> components_;
 };
 
 }  // namespace Carbon

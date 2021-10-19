@@ -18,7 +18,7 @@ namespace Carbon {
 class Heap {
  public:
   // Constructs an empty Heap.
-  explicit Heap(Nonnull<Arena*> arena) : arena(arena){};
+  explicit Heap(Nonnull<Arena*> arena) : arena_(arena){};
 
   Heap(const Heap&) = delete;
   auto operator=(const Heap&) -> Heap& = delete;
@@ -51,9 +51,9 @@ class Heap {
   // Signal an error if the address is no longer alive.
   void CheckAlive(const Address& address, SourceLocation source_loc);
 
-  Nonnull<Arena*> arena;
-  std::vector<Nonnull<const Value*>> values;
-  std::vector<bool> alive;
+  Nonnull<Arena*> arena_;
+  std::vector<Nonnull<const Value*>> values_;
+  std::vector<bool> alive_;
 };
 
 }  // namespace Carbon
