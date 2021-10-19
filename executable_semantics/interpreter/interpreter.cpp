@@ -116,8 +116,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      const Value& pt = func_def.param_pattern().value();
-      auto f = arena_->New<FunctionValue>(func_def.name(), &pt, func_def.body());
+      Nonnull<const Value*> f = arena_->New<FunctionValue>(&func_def);
       Address a = heap_.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
@@ -585,10 +584,8 @@ auto Interpreter::StepExp() -> Transition {
           }
           case Value::Kind::FunctionValue:
             return CallFunction{
-                // TODO: Think about a cleaner way to cast between Ptr types.
-                // (multiple TODOs)
-                .function = Nonnull<const FunctionValue*>(
-                    cast<FunctionValue>(act->results()[0])),
+                .function =
+                    &cast<FunctionValue>(*act->results()[0]).declaration(),
                 .args = act->results()[1],
                 .source_loc = exp.source_loc()};
           default:
@@ -1059,7 +1056,7 @@ class Interpreter::DoTransition {
   void operator()(const CallFunction& call) {
     interpreter->stack_.Top()->todo.Pop();
     std::optional<Env> matches = interpreter->PatternMatch(
-        &call.function->parameters(), call.args, call.source_loc);
+        &call.function->param_pattern().value(), call.args, call.source_loc);
     CHECK(matches.has_value())
         << "internal error in call_function, pattern match failed";
     // Create the new frame and push it on the stack

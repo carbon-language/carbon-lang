@@ -101,7 +101,7 @@ class Interpreter {
   // stack, then creates a new stack frame which calls the specified function
   // with the specified arguments.
   struct CallFunction {
-    Nonnull<const FunctionValue*> function;
+    Nonnull<const FunctionDeclaration*> function;
     Nonnull<const Value*> args;
     SourceLocation source_loc;
   };
