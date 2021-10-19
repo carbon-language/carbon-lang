@@ -6,7 +6,6 @@
 #include <cstring>
 #include <iostream>
 
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
 #include "llvm/Support/CommandLine.h"
@@ -30,13 +29,10 @@ int main(int argc, char* argv[]) {
                                    llvm::cl::Required);
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
-  if (trace_option) {
-    Carbon::tracing_output = true;
-  }
 
   Carbon::Arena arena;
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::Parse(&arena, input_file_name);
+      Carbon::Parse(&arena, input_file_name, trace_option);
 
   if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
@@ -44,5 +40,6 @@ int main(int argc, char* argv[]) {
   }
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error));
+  Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error),
+                      trace_option);
 }

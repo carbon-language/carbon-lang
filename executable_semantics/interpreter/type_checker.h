@@ -20,8 +20,8 @@ using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 
 class TypeChecker {
  public:
-  explicit TypeChecker(Nonnull<Arena*> arena)
-      : arena(arena), interpreter(arena) {}
+  explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
+      : arena(arena), interpreter(arena, trace), trace_(trace) {}
 
   struct TypeCheckContext {
     explicit TypeCheckContext(Nonnull<Arena*> arena)
@@ -139,6 +139,8 @@ class TypeChecker {
 
   Nonnull<Arena*> arena;
   Interpreter interpreter;
+
+  bool trace_;
 };
 
 }  // namespace Carbon
