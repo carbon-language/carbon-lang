@@ -60,12 +60,12 @@ class IndirectValue {
       : value_(std::make_unique<T>(std::move(*other))) {}
 
   auto operator=(const IndirectValue& other) -> IndirectValue& {
-    *value_ = *other.value;
+    *value_ = *other.value_;
     return *this;
   }
 
   auto operator=(IndirectValue&& other) -> IndirectValue& {
-    *value_ = std::move(*other.value);
+    *value_ = std::move(*other.value_);
     return *this;
   }
 
