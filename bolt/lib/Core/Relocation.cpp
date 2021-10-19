@@ -70,6 +70,8 @@ bool isSupportedAArch64(uint64_t Type) {
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_PREL32:
+  case ELF::R_AARCH64_ABS16:
+  case ELF::R_AARCH64_ABS32:
   case ELF::R_AARCH64_ABS64:
   case ELF::R_AARCH64_MOVW_UABS_G0:
   case ELF::R_AARCH64_MOVW_UABS_G0_NC:
@@ -112,6 +114,8 @@ size_t getSizeForTypeAArch64(uint64_t Type) {
   default:
     dbgs() << "Reloc num: " << Type << "\n";
     llvm_unreachable("unsupported relocation type");
+  case ELF::R_AARCH64_ABS16:
+    return 2;
   case ELF::R_AARCH64_CALL26:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_TSTBR14:
@@ -144,6 +148,7 @@ size_t getSizeForTypeAArch64(uint64_t Type) {
   case ELF::R_AARCH64_MOVW_UABS_G2:
   case ELF::R_AARCH64_MOVW_UABS_G2_NC:
   case ELF::R_AARCH64_MOVW_UABS_G3:
+  case ELF::R_AARCH64_ABS32:
     return 4;
   case ELF::R_AARCH64_ABS64:
     return 8;
@@ -227,6 +232,8 @@ uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
   switch (Type) {
   default:
     llvm_unreachable("unsupported relocation type");
+  case ELF::R_AARCH64_ABS16:
+  case ELF::R_AARCH64_ABS32:
   case ELF::R_AARCH64_ABS64:
     return Contents;
   case ELF::R_AARCH64_PREL32:
@@ -415,6 +422,8 @@ bool isPCRelativeAArch64(uint64_t Type) {
   switch (Type) {
   default:
     llvm_unreachable("Unknown relocation type");
+  case ELF::R_AARCH64_ABS16:
+  case ELF::R_AARCH64_ABS32:
   case ELF::R_AARCH64_ABS64:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC:
