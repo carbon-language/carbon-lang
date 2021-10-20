@@ -63,11 +63,6 @@ class Action {
   // Returns the scope associated with this Action, if any.
   auto scope() -> std::optional<Scope>& { return scope_; }
 
-  // The address of the AST node that this action implements, if any.
-  // The return value should be treated as an opaque identifier, and only
-  // used in comparisons.
-  auto ast_node() const -> const void*;
-
   static void PrintList(const Stack<Nonnull<Action*>>& ls,
                         llvm::raw_ostream& out);
 

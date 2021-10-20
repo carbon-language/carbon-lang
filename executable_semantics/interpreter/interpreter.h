@@ -83,17 +83,16 @@ class Interpreter {
   // and increments its position counter.
   struct RunAgain {};
 
-  // Transition type which unwinds the `todo` stack until it reaches an Action
-  // that implements a given AST node. Execution then resumes with that Action.
+  // Transition type which unwinds the `todo` stack until it reaches the
+  // StatementAction associated with `ast_node`. Execution then resumes with
+  // that StatementAction.
   struct UnwindTo {
-    // Unwinding stops when it reaches an `Action` whose `ast_node()` is equal
-    // to this field.
     Nonnull<const Statement*> ast_node;
   };
 
   // Transition type which unwinds the `todo` stack down to and including the
-  // Action associated with `ast_node`. If `result` is set, it will be treated
-  // as the result of that Action.
+  // StatementAction associated with `ast_node`. If `result` is set, it will be
+  // treated as the result of that StatementAction.
   struct UnwindPast {
     Nonnull<const Statement*> ast_node;
     std::optional<Nonnull<const Value*>> result;
@@ -154,6 +153,12 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
+  // Runs `action` in a scope consisting of `values`, and returns the result.
+  // `action` must produce a result. In other words, it must not be a
+  // StatementAction or ScopeAction.
+  //
+  // TODO: consider whether to use this->tracing_output rather than a separate
+  // trace_steps parameter.
   auto ExecuteAction(Nonnull<Action*> action, Env values, bool trace_steps)
       -> Nonnull<const Value*>;
 

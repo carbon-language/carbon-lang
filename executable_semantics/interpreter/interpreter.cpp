@@ -1057,22 +1057,32 @@ class Interpreter::DoTransition {
   }
 
   void operator()(const UnwindTo& unwind_to) {
-    while (interpreter->todo_.Top()->ast_node() != unwind_to.ast_node) {
-      if (interpreter->todo_.Top()->scope().has_value()) {
-        interpreter->DeallocateScope(*interpreter->todo_.Top()->scope());
+    while (true) {
+      if (const auto* statement_action =
+              dyn_cast<StatementAction>(interpreter->todo_.Top());
+          statement_action != nullptr &&
+          statement_action->Stmt() == unwind_to.ast_node) {
+        break;
       }
-      interpreter->todo_.Pop();
+      Nonnull<Action*> action = interpreter->todo_.Pop();
+      if (action->scope().has_value()) {
+        interpreter->DeallocateScope(*action->scope());
+      }
     }
   }
 
   void operator()(const UnwindPast& unwind_past) {
-    Nonnull<Action*> action;
-    do {
-      action = interpreter->todo_.Pop();
+    while (true) {
+      Nonnull<Action*> action = interpreter->todo_.Pop();
       if (action->scope().has_value()) {
         interpreter->DeallocateScope(*action->scope());
       }
-    } while (action->ast_node() != unwind_past.ast_node);
+      if (const auto* statement_action = dyn_cast<StatementAction>(action);
+          statement_action != nullptr &&
+          statement_action->Stmt() == unwind_past.ast_node) {
+        break;
+      }
+    }
     if (unwind_past.result.has_value()) {
       interpreter->todo_.Top()->AddResult(*unwind_past.result);
     }
@@ -1130,12 +1140,6 @@ void Interpreter::Step() {
   }  // switch
 }
 
-// Runs `action` in a scope consisting of `values`, and returns the result.
-// `action` must produce a result. In other words, it must not be a
-// StatementAction or ScopeAction.
-//
-// TODO: consider whether to use this->tracing_output rather than a separate
-// trace_steps parameter.
 auto Interpreter::ExecuteAction(Nonnull<Action*> action, Env values,
                                 bool trace_steps) -> Nonnull<const Value*> {
   todo_ = {};
