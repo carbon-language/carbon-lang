@@ -60,7 +60,9 @@ static void SetStaticType(Nonnull<FunctionDeclaration*> definition,
 
 static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
   // TODO: find some way to CHECK that `value` is identical to pattern->value(),
-  // if it's already set.
+  // if it's already set. Unclear if `ValueEqual` is suitable, because it
+  // currently focuses more on "real" values, and disallows the pseudo-values
+  // like `BindingPlaceholderValue` that we get in pattern evaluation.
   if (!pattern->has_value()) {
     pattern->set_value(value);
   }
