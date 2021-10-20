@@ -1283,62 +1283,62 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 -   `IncidenceGraph` implements all methods of `Graph`, `EdgeListGraph`
     implements none of them.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn OutEdges[addr me: Self*](u: VertexDescriptor)
-        -> (EdgeIterator, EdgeIterator) { ... }
-  }
-  impl as EdgeListGraph {
-    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
-  }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn OutEdges[addr me: Self*](u: VertexDescriptor)
+            -> (EdgeIterator, EdgeIterator) { ... }
+      }
+      impl as EdgeListGraph {
+        fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+      }
+    }
+    ```
 
 -   `IncidenceGraph` and `EdgeListGraph` implement all methods of `Graph`
     between them, but with no overlap.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn OutEdges[addr me: Self*](u: VertexDescriptor)
-        -> (EdgeIterator, EdgeIterator) { ... }
-  }
-  impl as EdgeListGraph {
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
-  }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn OutEdges[addr me: Self*](u: VertexDescriptor)
+            -> (EdgeIterator, EdgeIterator) { ... }
+      }
+      impl as EdgeListGraph {
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+      }
+    }
+    ```
 
 -   Explicitly implementing `Graph`.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as Graph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-  }
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as Graph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+      }
+      impl as IncidenceGraph { ... }
+      impl as EdgeListGraph { ... }
+    }
+    ```
 
 -   Implementing `Graph` externally.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
-}
-external impl as Graph {
-  fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-  fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph { ... }
+      impl as EdgeListGraph { ... }
+    }
+    external impl as Graph {
+      fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+      fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    }
+    ```
 
 This last point means that there are situations where we can only detect a
 missing method definition by the end of the file. This doesn't delay other
@@ -1398,22 +1398,33 @@ Now consider a type with a generic type parameter, like a hash map type:
 
 ```
 interface Hashable { ... }
-class HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
+class HashMap(KeyT:! Hashable, ValueT:! Type) {
+  fn Find[me:Self](key: KeyT) -> Optional(ValueT);
+  // ...
+}
 ```
 
-If we write something like `HashMap(String, i32)` the type we actually get is:
+A user of this type will provide specific values for the key and value types:
 
 ```
-HashMap(String as Hashable, i32 as Type)
+var hm: HashMap(String, i32) = ...;
+var result: Optional(i32) = hm.Find("Needle");
 ```
 
-This is the same type we will get if we pass in some other facet types in, so
-all of these types are equal:
+Since the `Find` function is generic, it can only use the capabilities that
+`HashMap` requires of `KeyT` and `ValueT`. This implies that the
+_implementation_ of `HashMap(String, i32).Find` and
+`HashMap(String as Hashable, i32).Find` are the same. In fact, we could
+substitute any facet of `String`, and `Find` would still use
+`String as Hashable` in its implementation. So these types:
 
 -   `HashMap(String, i32)`
 -   `HashMap(String as Hashable, i32 as Type)`
--   `HashMap((String as Printable) as Hashable, i32)`
+-   `HashMap(String as Printable, i32)`
 -   `HashMap((String as Printable & Hashable) as Hashable, i32)`
+
+are also facets of each other, and Carbon can freely allow casts and implicit
+conversions between them.
 
 This means we don't generally need to worry about getting the wrong facet type
 as the argument for a generic type. This means we don't get type mismatches when
@@ -1425,9 +1436,15 @@ fn PrintValue
     [KeyT:! Printable & Hashable, ValueT:! Printable]
     (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
 
-var m: HashMap(String, i32);
+var m: HashMap(String, i32) = ...;
 PrintValue(m, "key");
 ```
+
+However, those types are still different. A caller of `Find` observes that its
+signature reflects the actual type parameters passed to `HashMap`, not their
+projection onto the `Hashable` or `Type` facets. In particular, the return type
+of `hm.Find` is `Optional(i32)`, not `Optional(i32 as Type)`. (Incidentally,
+`Optional(i32)` and `Optional(i32 as Type)` are also facets of each other.)
 
 ## Adapting types
 
@@ -1574,13 +1591,12 @@ one difference between them is that `Song as Hashable` may be implicitly
 converted to `Song`, which implements interface `Printable`, and
 `PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
 implements interface `Media`. This means that it is safe to convert between
-`HashMap(Song, i32) == HashMap(Song as Hashable, i32)` and
-`HashMap(PlayableSong, i32) == HashMap(PlayableSong as Hashable, i32)` (though
-maybe only with an explicit cast) but
-`HashMap(SongHashedByTitle, i32) == HashMap(SongHashByTitle as Hashable, i32)`
-is incompatible. This is a relief, because we know that in practice the
-invariants of a `HashMap` implementation rely on the hashing function staying
-the same.
+`HashMap(Song, i32)` and `HashMap(PlayableSong, i32)` (though maybe only with an
+explicit cast), since the implementation of all the methods will use the same
+implementation of the `Hashable` interface. But
+`HashMap(SongHashedByTitle, i32)` is incompatible. This is a relief, because we
+know that in practice the invariants of a `HashMap` implementation rely on the
+hashing function staying the same.
 
 ### Extending adapter
 

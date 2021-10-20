@@ -94,7 +94,7 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
                      SourceLocation source_loc) const -> Nonnull<const Value*> {
   Nonnull<const Value*> value(this);
-  for (const std::string& field : path.components) {
+  for (const std::string& field : path.components_) {
     value = GetMember(arena, value, field, source_loc);
   }
   return value;
@@ -154,7 +154,7 @@ auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,
                      SourceLocation source_loc) const -> Nonnull<const Value*> {
   return SetFieldImpl(arena, Nonnull<const Value*>(this),
-                      path.components.begin(), path.components.end(),
+                      path.components_.begin(), path.components_.end(),
                       field_value, source_loc);
 }
 

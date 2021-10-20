@@ -26,7 +26,7 @@ using Env = Dictionary<std::string, Address>;
 class Interpreter {
  public:
   explicit Interpreter(Nonnull<Arena*> arena, bool trace)
-      : arena(arena), globals(arena), heap(arena), trace_(trace) {}
+      : arena_(arena), globals_(arena), heap_(arena), trace_(trace) {}
 
   // Interpret the whole program.
   auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
@@ -47,7 +47,7 @@ class Interpreter {
 
   // Support TypeChecker allocating values on the heap.
   auto AllocateValue(Nonnull<const Value*> v) -> Address {
-    return heap.AllocateValue(v);
+    return heap_.AllocateValue(v);
   }
 
   void InitEnv(const Declaration& d, Env* env);
@@ -101,7 +101,7 @@ class Interpreter {
   // stack, then creates a new stack frame which calls the specified function
   // with the specified arguments.
   struct CallFunction {
-    Nonnull<const FunctionValue*> function;
+    Nonnull<const FunctionDeclaration*> function;
     Nonnull<const Value*> args;
     SourceLocation source_loc;
   };
@@ -155,14 +155,14 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
-  Nonnull<Arena*> arena;
+  Nonnull<Arena*> arena_;
 
   // Globally-defined entities, such as functions, structs, or choices.
-  Env globals;
+  Env globals_;
 
-  Stack<Nonnull<Frame*>> stack;
-  Heap heap;
-  std::optional<Nonnull<const Value*>> program_value;
+  Stack<Nonnull<Frame*>> stack_;
+  Heap heap_;
+  std::optional<Nonnull<const Value*>> program_value_;
 
   bool trace_;
 };

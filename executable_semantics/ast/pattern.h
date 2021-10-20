@@ -37,7 +37,7 @@ class Pattern {
   };
 
   Pattern(const Pattern&) = delete;
-  Pattern& operator=(const Pattern&) = delete;
+  auto operator=(const Pattern&) -> Pattern& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -60,6 +60,18 @@ class Pattern {
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
+  // The value of this pattern. Cannot be called before typechecking.
+  auto value() const -> const Value& { return **value_; }
+
+  // Sets the value of this pattern. Can only be called once, during
+  // typechecking.
+  void set_value(Nonnull<const Value*> value) { value_ = value; }
+
+  // Returns whether the value has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_value() const -> bool { return value_.has_value(); }
+
  protected:
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -72,6 +84,7 @@ class Pattern {
   SourceLocation source_loc_;
 
   std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const Value*>> value_;
 };
 
 // A pattern consisting of the `auto` keyword.
@@ -193,7 +206,7 @@ class AlternativePattern : public Pattern {
 // expression.
 class ExpressionPattern : public Pattern {
  public:
-  ExpressionPattern(Nonnull<Expression*> expression)
+  explicit ExpressionPattern(Nonnull<Expression*> expression)
       : Pattern(Kind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
 

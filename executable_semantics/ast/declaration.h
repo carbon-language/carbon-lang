@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/ostream.h"
@@ -38,7 +39,7 @@ class Declaration {
   };
 
   Declaration(const Member&) = delete;
-  Declaration& operator=(const Member&) = delete;
+  auto operator=(const Member&) -> Declaration& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -152,7 +153,7 @@ class ChoiceDeclaration : public Declaration {
   class Alternative {
    public:
     Alternative(std::string name, Nonnull<Expression*> signature)
-        : name_(name), signature_(signature) {}
+        : name_(std::move(name)), signature_(signature) {}
 
     auto name() const -> const std::string& { return name_; }
     auto signature() const -> const Expression& { return *signature_; }

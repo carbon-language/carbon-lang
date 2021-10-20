@@ -11,12 +11,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[]) -> int {
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
-  llvm::InitLLVM(argc, argv);
+  llvm::InitLLVM init_llvm(argc, argv);
 
   // Printing to stderr should flush stdout. This is most noticeable when stderr
   // is piped to stdout.

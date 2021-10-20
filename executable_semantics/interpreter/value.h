@@ -126,11 +126,8 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
-                Nonnull<const Value*> parameters)
-      : Value(Kind::FunctionValue),
-        declaration_(declaration),
-        parameters_(parameters) {}
+  FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+      : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
@@ -139,11 +136,9 @@ class FunctionValue : public Value {
   auto declaration() const -> const FunctionDeclaration& {
     return *declaration_;
   }
-  auto parameters() const -> const Value& { return *parameters_; }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
-  Nonnull<const Value*> parameters_;
 };
 
 // A pointer value.

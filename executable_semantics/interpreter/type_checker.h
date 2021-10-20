@@ -21,7 +21,7 @@ using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
-      : arena(arena), interpreter(arena, trace), trace_(trace) {}
+      : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
 
   struct TypeCheckContext {
     explicit TypeCheckContext(Nonnull<Arena*> arena)
@@ -71,7 +71,7 @@ class TypeChecker {
   };
 
   struct TCResult {
-    TCResult(TypeEnv types) : types(types) {}
+    explicit TCResult(TypeEnv types) : types(types) {}
 
     TypeEnv types;
   };
@@ -137,8 +137,8 @@ class TypeChecker {
   auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
       -> Nonnull<const Value*>;
 
-  Nonnull<Arena*> arena;
-  Interpreter interpreter;
+  Nonnull<Arena*> arena_;
+  Interpreter interpreter_;
 
   bool trace_;
 };
