@@ -3813,6 +3813,44 @@ guaranteed to be able to implement `I2`, if there are concerns that the
 implementation of `I2` by `T` might be blocked by having multiple
 implementations to choose from without a clear rule of how to pick a winner.
 
+Use cases:
+
+-   If `T` implements `As(U)`, then `Optional(T)` should implement
+    `As(Optional(U))`.
+-   If `T` implements `ComparableWith(U)`, then `U` should implement
+    `ComparableWith(T)`.
+-   Any type implementing `Ordered` should get an implementation of
+    `PartiallyOrdered`. Question: do we want to guarantee those two must be
+    consistent by forbidding any overriding of the `PartiallyOrdered`
+    implementation? In other cases, we will want to support overriding for
+    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
+
+Allowed patterns and their prioritization, where `LocalType` and `LocalTrait`
+are defined in this library, `ForeignType` and `ForeignTrait` are defined in
+something this library depends on, `T` and `U` are type variables:
+
+-   High priority: implementation for a local type or a foreign type with a
+    local type parameter
+-   `impl LocalType as AnyTrait(...)`
+-   `impl ForeignType(LocalType) as AnyTrait(...)`
+-   `impl ForeignType(LocalType(T)) as AnyTrait(...)`
+-   `impl ForeignType(LocalType, T) as AnyTrait(...)`
+-   `impl ForeignType(T, LocalType) as AnyTrait(...)`
+-   `impl LocalType(T, T) as AnyTrait(...)`
+-   `impl LocalType(T, U) as AnyTrait(...)`
+-   Medium priority: implementation for a foreign trait with a local type
+    parameter
+-   `impl ... as ForeignTrait(LocalType)`
+    -   `impl ForeignType(T) as ...` prioritized higher than `impl T as ...`
+-   `impl ... as ForeignTrait(LocalType(T))`
+    -   `impl T as ...` prioritized higher than `impl U as ...`
+-   `impl ... as ForeignTrait(LocalType, T)`
+-   `impl T as ForeignTrait(T, LocalType)`
+-   Low priority: implementation for a local trait
+-   `impl ForeignType as LocalTrait(...)`
+-   `impl ForeignType(T) as LocalTrait(...)`
+-   `impl T as LocalTrait(...)`
+
 ### Bridge for C++ templates
 
 #### Calling C++ template code from Carbon
