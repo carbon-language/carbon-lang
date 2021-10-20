@@ -88,14 +88,14 @@ class Interpreter {
   struct UnwindTo {
     // Unwinding stops when it reaches an `Action` whose `ast_node()` is equal
     // to this field.
-    Nonnull<const void*> ast_node;
+    Nonnull<const Statement*> ast_node;
   };
 
   // Transition type which unwinds the `todo` stack down to and including the
   // Action associated with `ast_node`. If `result` is set, it will be treated
   // as the result of that Action.
   struct UnwindPast {
-    Nonnull<const void*> ast_node;
+    Nonnull<const Statement*> ast_node;
     std::optional<Nonnull<const Value*>> result;
   };
 
