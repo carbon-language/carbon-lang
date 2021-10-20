@@ -71,7 +71,7 @@ class TypeChecker {
   };
 
   struct TCResult {
-    TCResult(TypeEnv types) : types(types) {}
+    explicit TCResult(TypeEnv types) : types(types) {}
 
     TypeEnv types;
   };
