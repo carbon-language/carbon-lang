@@ -761,7 +761,7 @@ auto Interpreter::StepStmt() -> Transition {
         auto c = match_stmt.clauses()[clause_num];
         std::optional<Env> matches = PatternMatch(
             &c.pattern().value(), act->results()[0], stmt.source_loc());
-        if (matches) {  // we have a match, start the body
+        if (matches) {  // We have a match, start the body.
           // Ensure we don't process any more clauses.
           act->set_pos(match_stmt.clauses().size() + 1);
 
