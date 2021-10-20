@@ -9,8 +9,7 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace Carbon {
-namespace Internal {
+namespace Carbon::Internal {
 
 // Wraps a stream and exiting for fatal errors. Should only be used by the
 // macros below.
@@ -33,7 +32,7 @@ class ExitingStream {
 
   // Indicates that the program is exiting due to a bug in the program, rather
   // than, e.g., invalid input.
-  ExitingStream& TreatAsBug() {
+  auto TreatAsBug() -> ExitingStream& {
     treat_as_bug_ = true;
     return *this;
   }
@@ -44,7 +43,7 @@ class ExitingStream {
 
   // Forward output to llvm::errs.
   template <typename T>
-  ExitingStream& operator<<(const T& message) {
+  auto operator<<(const T& message) -> ExitingStream& {
     if (separator_) {
       llvm::errs() << ": ";
       separator_ = false;
@@ -53,7 +52,7 @@ class ExitingStream {
     return *this;
   }
 
-  ExitingStream& operator<<(AddSeparator /*unused*/) {
+  auto operator<<(AddSeparator /*unused*/) -> ExitingStream& {
     separator_ = true;
     return *this;
   }
@@ -79,7 +78,7 @@ class ExitingStream {
   bool treat_as_bug_ = false;
 };
 
-}  // namespace Internal
+}  // namespace Carbon::Internal
 
 // Raw exiting stream. This should be used when building other forms of exiting
 // macros like those below. It evaluates to a temporary `ExitingStream` object
@@ -108,7 +107,5 @@ class ExitingStream {
 #define FATAL()                     \
   RAW_EXITING_STREAM().TreatAsBug() \
       << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
-
-}  // namespace Carbon
 
 #endif  // COMMON_CHECK_H_
