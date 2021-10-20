@@ -3813,44 +3813,6 @@ guaranteed to be able to implement `I2`, if there are concerns that the
 implementation of `I2` by `T` might be blocked by having multiple
 implementations to choose from without a clear rule of how to pick a winner.
 
-Use cases:
-
--   If `T` implements `As(U)`, then `Optional(T)` should implement
-    `As(Optional(U))`.
--   If `T` implements `ComparableWith(U)`, then `U` should implement
-    `ComparableWith(T)`.
--   Any type implementing `Ordered` should get an implementation of
-    `PartiallyOrdered`. Question: do we want to guarantee those two must be
-    consistent by forbidding any overriding of the `PartiallyOrdered`
-    implementation? In other cases, we will want to support overriding for
-    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
-
-Allowed patterns and their prioritization, where `LocalType` and `LocalTrait`
-are defined in this library, `ForeignType` and `ForeignTrait` are defined in
-something this library depends on, `T` and `U` are type variables:
-
--   High priority: implementation for a local type or a foreign type with a
-    local type parameter
--   `impl LocalType as AnyTrait(...)`
--   `impl ForeignType(LocalType) as AnyTrait(...)`
--   `impl ForeignType(LocalType(T)) as AnyTrait(...)`
--   `impl ForeignType(LocalType, T) as AnyTrait(...)`
--   `impl ForeignType(T, LocalType) as AnyTrait(...)`
--   `impl LocalType(T, T) as AnyTrait(...)`
--   `impl LocalType(T, U) as AnyTrait(...)`
--   Medium priority: implementation for a foreign trait with a local type
-    parameter
--   `impl ... as ForeignTrait(LocalType)`
-    -   `impl ForeignType(T) as ...` prioritized higher than `impl T as ...`
--   `impl ... as ForeignTrait(LocalType(T))`
-    -   `impl T as ...` prioritized higher than `impl U as ...`
--   `impl ... as ForeignTrait(LocalType, T)`
--   `impl T as ForeignTrait(T, LocalType)`
--   Low priority: implementation for a local trait
--   `impl ForeignType as LocalTrait(...)`
--   `impl ForeignType(T) as LocalTrait(...)`
--   `impl T as LocalTrait(...)`
-
 ### Bridge for C++ templates
 
 #### Calling C++ template code from Carbon
@@ -3961,14 +3923,61 @@ types that have been imported / have visible definitions.
 
 ### Lookup resolution and specialization
 
-**Rule:** Can have multiple `impl` definitions that match, as long as there is a
-single best match. Best is defined using the "more specific" partial ordering:
+Use cases:
 
--   Matching a descendant type or descendant interface is more specific and
-    therefore a closer match than a parent type or interface.
+-   If `T` implements `As(U)`, then `Optional(T)` should implement
+    `As(Optional(U))`.
+-   If `T` implements `ComparableWith(U)`, then `U` should implement
+    `ComparableWith(T)`.
+-   Any type implementing `Ordered` should get an implementation of
+    `PartiallyOrdered`. Question: do we want to guarantee those two must be
+    consistent by forbidding any overriding of the `PartiallyOrdered`
+    implementation? In other cases, we will want to support overriding for
+    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
+
+Allowed patterns and their prioritization, where `LocalType` and `LocalTrait`
+are defined in this library, `ForeignType` and `ForeignTrait` are defined in
+something this library depends on, `T` and `U` are type variables:
+
+-   Highest priority: implementation for a type expression involving a local
+    type without any type variables
+-   `impl LocalType as AnyTrait(...)`
+-   `impl LocalType(ForeignType) as AnyTrait(...)`
+-   `impl ForeignType(LocalType) as AnyTrait(...)`
+-   High priority: implementation for a local type or a foreign type with a
+    local type parameter
+-   `impl ForeignType(LocalType(T)) as AnyTrait(...)`
+-   `impl ForeignType(LocalType, T) as AnyTrait(...)`
+-   `impl ForeignType(T, LocalType) as AnyTrait(...)`
+-   `impl LocalType(T, T) as AnyTrait(...)`
+-   `impl LocalType(T, U) as AnyTrait(...)`
+-   Medium priority: implementation for a foreign trait with a local type
+    parameter
+-   `impl ... as ForeignTrait(LocalType)`
+    -   `impl ForeignType(T) as ...` prioritized higher than `impl T as ...`
+-   `impl ... as ForeignTrait(LocalType(T))`
+    -   `impl T as ...` prioritized higher than `impl U as ...`
+-   `impl ... as ForeignTrait(LocalType, T)`
+-   `impl ... as ForeignTrait(T, LocalType)`
+-   Low priority: implementation for a local trait
+-   `impl ForeignType as LocalTrait(...)`
+-   `impl ForeignType(T) as LocalTrait(...)`
+-   `impl T as LocalTrait(...)`
+
+**Overlap rule:** Can have multiple `impl` definitions that match, as long as
+there is a single best match. Best is defined using the "more specific" partial
+ordering:
+
 -   Matching an exact type (`Foo` or `Foo(Bar)`) is more specific than a
     parameterized family of types (`Foo(T)` for any type `T`) is more specific
     than a generic type (`T` for any type `T`).
+-   If one type family is contained within another, the smaller type family is
+    more specific, so `Foo(T, T)` is more specific than `Foo(T, U)`.
+-   Matching a derived interface is more specific and therefore a closer match
+    than the interface being extended.
+-   We may want to do the same thing for a derived type, but we might also want
+    to forbid that as a conflict to improve substitutability. Instead, we would
+    allow the interface to be implemented with virtual functions.
 -   A more restrictive constraint is more specific. In particular, a
     type-of-type `T` is more restrictive than a type-of-type `U` if the set of
     restrictions for `T` is a superset of those for `U`. So `Foo(T)` for
@@ -3978,6 +3987,10 @@ single best match. Best is defined using the "more specific" partial ordering:
 
 The ability to have a more specific implementation used in place of a more
 general is commonly called _[specialization](terminology.md#specialization)_.
+
+**CONCERN:** We should restrict what is allowed in a library to prevent the case
+where two impls from different libraries can match without one of them being
+considered more specific.
 
 TODO: Examples
 
