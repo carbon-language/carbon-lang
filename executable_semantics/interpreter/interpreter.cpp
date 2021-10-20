@@ -116,8 +116,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      auto pt = InterpPattern(new_env, &func_def.param_pattern());
-      auto f = arena_->New<FunctionValue>(func_def.name(), pt, func_def.body());
+      Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
       Address a = heap_.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
@@ -585,10 +584,8 @@ auto Interpreter::StepExp() -> Transition {
           }
           case Value::Kind::FunctionValue:
             return CallFunction{
-                // TODO: Think about a cleaner way to cast between Ptr types.
-                // (multiple TODOs)
-                .function = Nonnull<const FunctionValue*>(
-                    cast<FunctionValue>(act->results()[0])),
+                .function =
+                    &cast<FunctionValue>(*act->results()[0]).declaration(),
                 .args = act->results()[1],
                 .source_loc = exp.source_loc()};
           default:
@@ -755,44 +752,26 @@ auto Interpreter::StepStmt() -> Transition {
         frame->scopes.Push(arena_->New<Scope>(CurrentEnv()));
         return Spawn{arena_->New<ExpressionAction>(&match_stmt.expression())};
       } else {
-        // Regarding act->pos():
-        // * odd: start interpreting the pattern of a clause
-        // * even: finished interpreting the pattern, now try to match
-        //
-        // Regarding act->results():
-        // * 0: the value that we're matching
-        // * 1: the pattern for clause 0
-        // * 2: the pattern for clause 1
-        // * ...
-        auto clause_num = (act->pos() - 1) / 2;
+        int clause_num = act->pos() - 1;
         if (clause_num >= static_cast<int>(match_stmt.clauses().size())) {
           DeallocateScope(frame->scopes.Top());
           frame->scopes.Pop();
           return Done{};
         }
         auto c = match_stmt.clauses()[clause_num];
+        std::optional<Env> matches = PatternMatch(
+            &c.pattern().value(), act->results()[0], stmt.source_loc());
+        if (matches) {  // We have a match, start the body.
+          // Ensure we don't process any more clauses.
+          act->set_pos(match_stmt.clauses().size() + 1);
 
-        if (act->pos() % 2 == 1) {
-          // start interpreting the pattern of the clause
-          //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
-          // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          return Spawn{arena_->New<PatternAction>(&c.pattern())};
-        } else {  // try to match
-          auto v = act->results()[0];
-          auto pat = act->results()[clause_num + 1];
-          std::optional<Env> matches = PatternMatch(pat, v, stmt.source_loc());
-          if (matches) {  // we have a match, start the body
-            // Ensure we don't process any more clauses.
-            act->set_pos(2 * match_stmt.clauses().size() + 1);
-
-            for (const auto& [name, value] : *matches) {
-              frame->scopes.Top()->values.Set(name, value);
-              frame->scopes.Top()->locals.push_back(name);
-            }
-            return Spawn{arena_->New<StatementAction>(&c.statement())};
-          } else {
-            return RunAgain{};
+          for (const auto& [name, value] : *matches) {
+            frame->scopes.Top()->values.Set(name, value);
+            frame->scopes.Top()->locals.push_back(name);
           }
+          return Spawn{arena_->New<StatementAction>(&c.statement())};
+        } else {
+          return RunAgain{};
         }
       }
     }
@@ -859,14 +838,12 @@ auto Interpreter::StepStmt() -> Transition {
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return Spawn{arena_->New<ExpressionAction>(
             &cast<VariableDefinition>(stmt).init())};
-      } else if (act->pos() == 1) {
-        return Spawn{arena_->New<PatternAction>(
-            &cast<VariableDefinition>(stmt).pattern())};
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
         Nonnull<const Value*> v = act->results()[0];
-        Nonnull<const Value*> p = act->results()[1];
+        Nonnull<const Value*> p =
+            &cast<VariableDefinition>(stmt).pattern().value();
 
         std::optional<Env> matches = PatternMatch(p, v, stmt.source_loc());
         CHECK(matches)
@@ -1079,7 +1056,7 @@ class Interpreter::DoTransition {
   void operator()(const CallFunction& call) {
     interpreter->stack_.Top()->todo.Pop();
     std::optional<Env> matches = interpreter->PatternMatch(
-        &call.function->parameters(), call.args, call.source_loc);
+        &call.function->param_pattern().value(), call.args, call.source_loc);
     CHECK(matches.has_value())
         << "internal error in call_function, pattern match failed";
     // Create the new frame and push it on the stack
@@ -1153,6 +1130,10 @@ auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
   }
 
   while (stack_.Count() > 1 || !stack_.Top()->todo.IsEmpty()) {
+    if (!stack_.Top()->todo.IsEmpty()) {
+      CHECK(stack_.Top()->todo.Top()->kind() != Action::Kind::PatternAction)
+          << "Pattern evaluation must happen before run-time.";
+    }
     Step();
     if (trace_) {
       PrintState(llvm::outs());

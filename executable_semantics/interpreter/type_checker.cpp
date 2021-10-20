@@ -58,6 +58,16 @@ static void SetStaticType(Nonnull<FunctionDeclaration*> definition,
   }
 }
 
+static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
+  // TODO: find some way to CHECK that `value` is identical to pattern->value(),
+  // if it's already set. Unclear if `ValueEqual` is suitable, because it
+  // currently focuses more on "real" values, and disallows the pseudo-values
+  // like `BindingPlaceholderValue` that we get in pattern evaluation.
+  if (!pattern->has_value()) {
+    pattern->set_value(value);
+  }
+}
+
 TypeChecker::ReturnTypeContext::ReturnTypeContext(
     Nonnull<const Value*> orig_return_type, bool is_omitted)
     : is_auto_(isa<AutoType>(orig_return_type)),
@@ -749,6 +759,7 @@ auto TypeChecker::TypeCheckPattern(
         types.Set(*binding.name(), type);
       }
       SetStaticType(&binding, type);
+      SetValue(&binding, interpreter_.InterpPattern(values, &binding));
       return TCResult(types);
     }
     case Pattern::Kind::TuplePattern: {
@@ -775,6 +786,7 @@ auto TypeChecker::TypeCheckPattern(
         field_types.push_back(&field->static_type());
       }
       SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
+      SetValue(&tuple, interpreter_.InterpPattern(values, &tuple));
       return TCResult(new_types);
     }
     case Pattern::Kind::AlternativePattern: {
@@ -800,12 +812,14 @@ auto TypeChecker::TypeCheckPattern(
       TCResult arg_results = TypeCheckPattern(&alternative.arguments(), types,
                                               values, *parameter_types);
       SetStaticType(&alternative, choice_type);
+      SetValue(&alternative, interpreter_.InterpPattern(values, &alternative));
       return TCResult(arg_results.types);
     }
     case Pattern::Kind::ExpressionPattern: {
       auto& expression = cast<ExpressionPattern>(*p).expression();
       TCResult result = TypeCheckExp(&expression, types, values);
       SetStaticType(p, &expression.static_type());
+      SetValue(p, interpreter_.InterpPattern(values, p));
       return TCResult(result.types);
     }
   }
