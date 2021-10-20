@@ -116,7 +116,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      Nonnull<const Value*> f = arena_->New<FunctionValue>(&func_def);
+      Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
       Address a = heap_.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
