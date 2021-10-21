@@ -3946,9 +3946,12 @@ something this library depends on, `T` and `U` are type variables:
 -   `impl ForeignType(LocalType) as AnyTrait(...)`
 -   High priority: implementation for a local type or a foreign type with a
     local type parameter
--   `impl ForeignType(LocalType(T)) as AnyTrait(...)`
--   `impl ForeignType(LocalType, T) as AnyTrait(...)`
--   `impl ForeignType(T, LocalType) as AnyTrait(...)`
+-   `impl ForeignType(LocalType(T)) as AnyTrait(...)` or
+    `impl LocalType(ForeignType(T)) as AnyTrait(...)`
+-   `impl ForeignType(LocalType, T) as AnyTrait(...)` or
+    `impl LocalType(ForeignType, T) as AnyTrait(...)`
+-   `impl ForeignType(T, LocalType) as AnyTrait(...)` or
+    `impl LocalType(T, ForeignType) as AnyTrait(...)`
 -   `impl LocalType(T, T) as AnyTrait(...)`
 -   `impl LocalType(T, U) as AnyTrait(...)`
 -   Medium priority: implementation for a foreign trait with a local type
@@ -3964,10 +3967,63 @@ something this library depends on, `T` and `U` are type variables:
 -   `impl ForeignType(T) as LocalTrait(...)`
 -   `impl T as LocalTrait(...)`
 
+Constraints are only considered as a tie-breaker after all type structure rules
+are applied.
+
+**Orphan rule:** An `impl` may only be defined in a library that must be a
+dependency of any query where that `impl` could apply. This is accomplished by
+only allowing `impl` signatures involving a _local_ type or interface outside of
+constraints. Here "local" is a type or interface defined in the same library as
+the `impl`.
+
+To see that the local type or interface can't just be in a constraint, imagine
+we have three libraries, with one a common library imported by the other two:
+
+```
+// library Common
+interface ICommon { ... }
+struct S { ... }
+```
+
+```
+// library A
+import Common
+interface IA { ... }
+// Local interface only used as a constraint
+impl [T:! IA] T as ICommon { ... }
+// Fine: implementation of a local interface
+impl S as IA { ... }
+```
+
+```
+// library B
+import Common
+interface IB { ... }
+// Local interface only used as a constraint
+impl [T:! IB] T as ICommon { ... }
+// Fine: implementation of a local interface
+impl S as IB { ... }
+```
+
+Not imagine another library imports the `Common` library. Inside this new
+library:
+
+-   Does `S` implement `ICommon`? If you just import `ICommon`, no
+    implementations are visible
+-   Does the answer change if you import libraries `A` or `B`?
+-   Which implementation of `ICommon` should `S` use if you import both?
+
+We avoid these problems by requiring the use of a local type or interface
+outside of constraints.
+
 **Overlap rule:** Can have multiple `impl` definitions that match, as long as
 there is a single best match. Best is defined using the "more specific" partial
 ordering:
 
+-   A more specific constraint on the `Self` type is more specific than
+    constraints on the interface parameters.
+-   A more specific constraint on earlier type or interface parameters is more
+    specific than constraints on later parameters.
 -   Matching an exact type (`Foo` or `Foo(Bar)`) is more specific than a
     parameterized family of types (`Foo(T)` for any type `T`) is more specific
     than a generic type (`T` for any type `T`).
@@ -3981,8 +4037,8 @@ ordering:
 -   A more restrictive constraint is more specific. In particular, a
     type-of-type `T` is more restrictive than a type-of-type `U` if the set of
     restrictions for `T` is a superset of those for `U`. So `Foo(T)` for
-    `Comparable & Printable:! T` is more specific than `Comparable:! T`, which
-    is more specific than `Type:! T`.
+    `T:! Comparable & Printable` is more specific than `T:! Comparable`, which
+    is more specific than `T:! Type`.
 -   TODO: others?
 
 The ability to have a more specific implementation used in place of a more
@@ -3991,6 +4047,32 @@ general is commonly called _[specialization](terminology.md#specialization)_.
 **CONCERN:** We should restrict what is allowed in a library to prevent the case
 where two impls from different libraries can match without one of them being
 considered more specific.
+
+**CONCERN:** We should forbid two overlapping `impl`s being defined in the same
+library unless it also defines an `impl` matching the exact overlap.
+
+Example: Two impls of the same local interface:
+
+```
+interface LocalInterface { ... }
+impl [T:! A] T as LocalInterface { ... }
+impl [T:! B] T as LocalInterface { ... }
+```
+
+Either one of `A` or `B` has to require/imply the other, or the library has to
+define another blanket `impl`:
+
+```
+impl [T:! A & B] T as LocalInterface { ... }
+```
+
+**Open question:** Should we have a
+["child trumps parent" rule](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/)
+where we say library `Child` importing library `Parent` is enough to prioritize
+`impl` definitions in `Child` over `Parent` when they would otherwise overlap?
+How should we prioritize this rule? Perhaps it is more important than order, so
+given an implementation for `MyInterface(ParentType, T)` and one for
+`MyInterface(T, ChildType)`, we would choose the latter?
 
 TODO: Examples
 
