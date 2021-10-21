@@ -2388,8 +2388,10 @@ implementation of `Comparable` is [external](#external-impl). That is, items
 from the `needles` container won't have an unqualified `Compare` method member,
 but can still be implicitly converted to `Comparable` and can still call
 `Compare` using the qualified member syntax, `needle.(Comparable.Compare)(elt)`.
-The rule is that an `==` `where` constraint does not modify the set of
-unqualified member names of either type.
+The rule is that an `==` `where` constraint between two type variables does not
+modify the set of unqualified member names of either type. (If you write
+`where .ElementType == String`, then `.ElementType` is actually set to `String`
+including the complete unqualified `String` API.)
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
@@ -2580,7 +2582,9 @@ constraint ContainerIsSlice {
 ```
 
 Note that using the `constraint` approach we can name these constraints using
-`Self` instead of `.Self`, though `.Self` is equivalent.
+`Self` instead of `.Self`, since they are facets of the same type: `Self` is the
+facet corresponding to the containing interface and `.Self` is the facet
+corresponding to the interface being extended.
 
 #### Parameterized type implements interface
 
