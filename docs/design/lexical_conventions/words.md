@@ -42,6 +42,7 @@ The following words are interpreted as keywords:
 -   `break`
 -   `case`
 -   `class`
+-   `constraint`
 -   `continue`
 -   `default`
 -   `else`
@@ -54,11 +55,13 @@ The following words are interpreted as keywords:
 -   `impl`
 -   `import`
 -   `interface`
+-   `is`
 -   `let`
 -   `library`
 -   `match`
 -   `namespace`
 -   `not`
+-   `observe`
 -   `or`
 -   `override`
 -   `package`
