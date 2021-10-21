@@ -47,7 +47,7 @@ class ParseAndLexContext {
 #define YY_DECL                                                         \
   auto yylex(Carbon::Nonnull<Carbon::Arena*> arena, yyscan_t yyscanner, \
              Carbon::ParseAndLexContext& context)                       \
-      -> Carbon::Parser::symbol_type
+      ->Carbon::Parser::symbol_type
 
 // Declares yylex for the parser's sake.
 YY_DECL;
