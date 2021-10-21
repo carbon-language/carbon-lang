@@ -9,8 +9,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace Carbon {
-
 // Raw exiting stream. This should be used when building other forms of exiting
 // macros like those below. It evaluates to a temporary `ExitingStream` object
 // that can be manipulated, streamed into, and then will exit the program.
@@ -38,8 +36,6 @@ namespace Carbon {
 #define FATAL()                     \
   RAW_EXITING_STREAM().TreatAsBug() \
       << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
-
-}  // namespace Carbon
 
 namespace Carbon::Internal {
 
