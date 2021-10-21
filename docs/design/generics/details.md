@@ -1685,7 +1685,7 @@ adapter SongRenderToPrintDriver extends Song {
 
   // Avoid name conflict with new `Print` function by making
   // the implementation of the `Printable` interface external.
-  external impl as Printable;
+  external impl as Printable = Song as Printable;
 
   // Make the `Print` function from `Printable` available
   // under the name `PrintToScreen`.
