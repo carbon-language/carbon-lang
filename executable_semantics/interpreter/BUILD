@@ -7,15 +7,13 @@ package(default_visibility = ["//executable_semantics:__pkg__"])
 # These currently have to be a single build rule because of a dependency cycle
 # in printing.
 cc_library(
-    name = "action_frame_and_value",
+    name = "action_and_value",
     srcs = [
         "action.cpp",
-        "frame.cpp",
         "value.cpp",
     ],
     hdrs = [
         "action.h",
-        "frame.h",
         "value.h",
     ],
     deps = [
@@ -55,6 +53,7 @@ cc_library(
     hdrs = ["exec_program.h"],
     deps = [
         ":interpreter",
+        ":resolve_control_flow",
         ":type_checker",
         "//executable_semantics/ast",
     ],
@@ -74,7 +73,7 @@ cc_library(
     srcs = ["heap.cpp"],
     hdrs = ["heap.h"],
     deps = [
-        ":action_frame_and_value",
+        ":action_and_value",
         ":address",
         "//common:ostream",
         "@llvm-project//llvm:Support",
@@ -90,7 +89,7 @@ cc_library(
         "interpreter.h",
     ],
     deps = [
-        ":action_frame_and_value",
+        ":action_and_value",
         ":address",
         ":heap",
         "//common:check",
@@ -98,6 +97,19 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/common:arena",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "resolve_control_flow",
+    srcs = ["resolve_control_flow.cpp"],
+    hdrs = ["resolve_control_flow.h"],
+    deps = [
+        "//common:check",
+        "//executable_semantics/ast",
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:statement",
         "@llvm-project//llvm:Support",
     ],
 )

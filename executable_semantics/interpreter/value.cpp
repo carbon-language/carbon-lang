@@ -9,7 +9,7 @@
 #include "common/check.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/interpreter/frame.h"
+#include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -274,8 +274,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ContinuationValue: {
       out << "{";
       llvm::ListSeparator sep(" :: ");
-      for (Nonnull<Frame*> frame : cast<ContinuationValue>(*this).stack()) {
-        out << sep << *frame;
+      for (Nonnull<const Action*> action :
+           cast<ContinuationValue>(*this).stack()) {
+        out << sep << *action;
       }
       out << "}";
       break;
