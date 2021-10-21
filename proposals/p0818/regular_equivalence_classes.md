@@ -155,13 +155,12 @@ endlessly.
 
 ### Regular single rules
 
--   Anything where there are no shared letters between the two sides
+-   Anything where there are no shared letters between the two sides, and no
+    side has a prefix matching a suffix
     -   `A == B` => `A|B`
     -   `A == BC` => `A|BC`
-    -   `A == BB` => `A|BB`
-    -   `A == BBB` => `A|BBB`
     -   `A == BBC` => `A|BBC`
-    -   `AA == BB` => `AA|BB`
+    -   `A == BCC` => `A|BCC`
 -   `A == AB` => `AB*`
 -   `A == BA` => `B*A`
 -   `A == AA` => `AA*` or `A*A` or `A+`
@@ -186,7 +185,8 @@ endlessly.
     `A(C*B)*`
 -   `A==AB` + `B==CB` + `C==CD` => `AB*` + `C*B` + `CD*` => `A((CD*)*B)*`,
     `(CD*)*B`, `CD*`
--   `A==ABC` + `D==CB` => `A(BC)*` + `(CB|D)` => `A(BD*C)*`, `(CB|D)`
+-   `A==ABC` + `D==CB` => `A(BC)*` + `(CB|D)` => `A(BD*C)*`, `A(BD*C)*BD*`,
+    `(CB|D)`
 -   `A==ABBBBB` + `A==ABBBBBBBB` (or `A==AB^5` + `A==AB^8`)=> `A(BBBBB)*` +
     `A(BBBBBBBB)*` => `AB*`, since `A=AB^8=AB^16=AB^11=AB^6=AB`
 
@@ -203,6 +203,12 @@ endlessly.
     `A|BAC|BBACC|BBBACCC|`...
 -   `A == BCB`, has equivalence classes: `BCB|A`, `BCBCB|ACB|BCA`,
     `BCBCBCB|ACBCB|ACA|BCACB|BCBCA`, ...
+-   `A == BB`, has equivalence classes: `A|BB`, `BBB|AB|BA`, `(A|BB)(A|BB)|BAB`,
+    ...
+-   `A == BBB`, has equivalence classes: `A|BBB`, `BBBB|AB|BA`,
+    `BBBBB|ABB|BAB|BBA`, ...
+-   `AA == BB`, has equivalence classes: `AA|BB`, `AAA|ABB|BBA`, `BAA|BBB|AAB`,
+    ...
 -   `AB == AA`, has equivalence classes: `A(A|B)`, `A(A|B)(A|B)`,
     `A(A|B)(A|B)(A|B)`, ...
 -   `AB == BB`, similarly
