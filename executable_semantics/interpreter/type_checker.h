@@ -20,11 +20,12 @@ using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 
 class TypeChecker {
  public:
-  explicit TypeChecker(Nonnull<Arena*> arena)
-      : arena(arena), interpreter(arena) {}
+  explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
+      : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
 
   struct TypeCheckContext {
-    TypeCheckContext(Nonnull<Arena*> arena) : types(arena), values(arena) {}
+    explicit TypeCheckContext(Nonnull<Arena*> arena)
+        : types(arena), values(arena) {}
 
     // Symbol table mapping names of runtime entities to their type.
     TypeEnv types;
@@ -70,9 +71,8 @@ class TypeChecker {
   };
 
   struct TCResult {
-    TCResult(Nonnull<const Value*> t, TypeEnv types) : type(t), types(types) {}
+    explicit TCResult(TypeEnv types) : types(types) {}
 
-    Nonnull<const Value*> type;
     TypeEnv types;
   };
 
@@ -109,7 +109,7 @@ class TypeChecker {
                      Nonnull<ReturnTypeContext*> return_type_context)
       -> TCResult;
 
-  auto TypeCheckFunDef(FunctionDefinition* f, TypeEnv types, Env values)
+  auto TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types, Env values)
       -> TCResult;
 
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
@@ -117,7 +117,7 @@ class TypeChecker {
                      Nonnull<ReturnTypeContext*> return_type_context)
       -> Match::Clause;
 
-  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDefinition* fun_def)
+  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDeclaration* fun_def)
       -> Nonnull<const Value*>;
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
       -> Nonnull<const Value*>;
@@ -137,8 +137,10 @@ class TypeChecker {
   auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
       -> Nonnull<const Value*>;
 
-  Nonnull<Arena*> arena;
-  Interpreter interpreter;
+  Nonnull<Arena*> arena_;
+  Interpreter interpreter_;
+
+  bool trace_;
 };
 
 }  // namespace Carbon

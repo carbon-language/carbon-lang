@@ -20,7 +20,7 @@ class Arena {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
     Nonnull<T*> ptr = smart_ptr->Instance();
-    arena.push_back(std::move(smart_ptr));
+    arena_.push_back(std::move(smart_ptr));
     return ptr;
   }
 
@@ -38,16 +38,16 @@ class Arena {
    public:
     template <typename... Args>
     explicit ArenaEntryTyped(Args&&... args)
-        : instance(std::forward<Args>(args)...) {}
+        : instance_(std::forward<Args>(args)...) {}
 
-    auto Instance() -> Nonnull<T*> { return Nonnull<T*>(&instance); }
+    auto Instance() -> Nonnull<T*> { return Nonnull<T*>(&instance_); }
 
    private:
-    T instance;
+    T instance_;
   };
 
   // Manages allocations in an arena for destruction at shutdown.
-  std::vector<std::unique_ptr<ArenaEntry>> arena;
+  std::vector<std::unique_ptr<ArenaEntry>> arena_;
 };
 
 }  // namespace Carbon

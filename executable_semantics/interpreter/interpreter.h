@@ -23,8 +23,8 @@ namespace Carbon {
 
 class Interpreter {
  public:
-  explicit Interpreter(Nonnull<Arena*> arena)
-      : arena(arena), globals(arena), heap(arena) {}
+  explicit Interpreter(Nonnull<Arena*> arena, bool trace)
+      : arena_(arena), globals_(arena), heap_(arena), trace_(trace) {}
 
   // Interpret the whole program.
   auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
@@ -45,7 +45,7 @@ class Interpreter {
 
   // Support TypeChecker allocating values on the heap.
   auto AllocateValue(Nonnull<const Value*> v) -> Address {
-    return heap.AllocateValue(v);
+    return heap_.AllocateValue(v);
   }
 
   void InitEnv(const Declaration& d, Env* env);
@@ -102,7 +102,7 @@ class Interpreter {
   // stack, then creates a new stack frame which calls the specified function
   // with the specified arguments.
   struct CallFunction {
-    Nonnull<const FunctionValue*> function;
+    Nonnull<const FunctionDeclaration*> function;
     Nonnull<const Value*> args;
     SourceLocation source_loc;
   };
@@ -151,24 +151,31 @@ class Interpreter {
   void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
                          SourceLocation source_loc);
 
+  // Returns the result of converting `value` to type `destination_type`.
+  auto Convert(Nonnull<const Value*> value,
+               Nonnull<const Value*> destination_type) const
+      -> Nonnull<const Value*>;
+
   void PrintState(llvm::raw_ostream& out);
 
   // Runs `action` in a scope consisting of `values`, and returns the result.
   // `action` must produce a result. In other words, it must not be a
   // StatementAction or ScopeAction.
   //
-  // TODO: consider whether to use this->tracing_output rather than a separate
+  // TODO: consider whether to use this->trace_ rather than a separate
   // trace_steps parameter.
   auto ExecuteAction(Nonnull<Action*> action, Env values, bool trace_steps)
       -> Nonnull<const Value*>;
 
-  Nonnull<Arena*> arena;
+  Nonnull<Arena*> arena_;
 
   // Globally-defined entities, such as functions, structs, or choices.
-  Env globals;
+  Env globals_;
 
   Stack<Nonnull<Action*>> todo_;
-  Heap heap;
+  Heap heap_;
+
+  bool trace_;
 };
 
 }  // namespace Carbon

@@ -7,14 +7,14 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/executable_semantics/testdata/function/fail_named_params_order.carbon:14: positional members must come before named members
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_match_no_return.carbon:17: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
 package ExecutableSemanticsTest api;
 
-fn f(x: i32, .d = y: i32, z: i32, .e = a: i32) -> i32 {
-  return (x + y) - (z + a);
-}
-
 fn main() -> i32 {
-  return 0;
+  var x: i32 = 0;
+  match(0) {
+    case 1 => { x = 1; }
+    case _: auto => { x = 2; }
+  }
 }

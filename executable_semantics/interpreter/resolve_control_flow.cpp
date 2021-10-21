@@ -5,7 +5,6 @@
 #include "executable_semantics/interpreter/resolve_control_flow.h"
 
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/Support/Casting.h"
@@ -20,7 +19,7 @@ namespace Carbon {
 // indicates a context where the corresponding statements are not permitted.
 static void ResolveControlFlow(
     Nonnull<Statement*> statement,
-    std::optional<Nonnull<const FunctionDefinition*>> function,
+    std::optional<Nonnull<const FunctionDeclaration*>> function,
     std::optional<Nonnull<const Statement*>> loop) {
   switch (statement->kind()) {
     case Statement::Kind::Return:
@@ -46,29 +45,29 @@ static void ResolveControlFlow(
       return;
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*statement);
-      ResolveControlFlow(if_stmt.ThenStmt(), function, loop);
-      if (if_stmt.ElseStmt().has_value()) {
-        ResolveControlFlow(*if_stmt.ElseStmt(), function, loop);
+      ResolveControlFlow(&if_stmt.then_statement(), function, loop);
+      if (if_stmt.else_statement().has_value()) {
+        ResolveControlFlow(*if_stmt.else_statement(), function, loop);
       }
       return;
     }
     case Statement::Kind::Sequence: {
       auto& seq = cast<Sequence>(*statement);
-      ResolveControlFlow(seq.Stmt(), function, loop);
-      if (seq.Next().has_value()) {
-        ResolveControlFlow(*seq.Next(), function, loop);
+      ResolveControlFlow(&seq.statement(), function, loop);
+      if (seq.next().has_value()) {
+        ResolveControlFlow(*seq.next(), function, loop);
       }
       return;
     }
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*statement);
-      if (block.Stmt().has_value()) {
-        ResolveControlFlow(*block.Stmt(), function, loop);
+      if (block.statement().has_value()) {
+        ResolveControlFlow(*block.statement(), function, loop);
       }
       return;
     }
     case Statement::Kind::While:
-      ResolveControlFlow(cast<While>(*statement).Body(), function, statement);
+      ResolveControlFlow(&cast<While>(*statement).body(), function, statement);
       return;
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*statement);
@@ -78,7 +77,7 @@ static void ResolveControlFlow(
       return;
     }
     case Statement::Kind::Continuation:
-      ResolveControlFlow(cast<Continuation>(*statement).Body(), std::nullopt,
+      ResolveControlFlow(&cast<Continuation>(*statement).body(), std::nullopt,
                          std::nullopt);
       return;
     case Statement::Kind::ExpressionStatement:
@@ -95,9 +94,9 @@ void ResolveControlFlow(AST& ast) {
     if (declaration->kind() != Declaration::Kind::FunctionDeclaration) {
       continue;
     }
-    auto& definition = cast<FunctionDeclaration>(*declaration).definition();
-    if (definition.body().has_value()) {
-      ResolveControlFlow(*definition.body(), &definition, std::nullopt);
+    auto& function = cast<FunctionDeclaration>(*declaration);
+    if (function.body().has_value()) {
+      ResolveControlFlow(*function.body(), &function, std::nullopt);
     }
   }
 }

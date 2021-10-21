@@ -11,11 +11,13 @@
 
 package ExecutableSemanticsTest api;
 
+class Point {
+  var x: i32;
+  var y: i32;
+}
+
+var p: Point = {.x = 1, .y = 2};
+
 fn main() -> i32 {
-  var t: auto = (1, 2, 3, 4);
-  match (t) {
-    case (_: i32, _: auto, x: i32, y: auto) =>
-      return y - x - 1;
-  }
-  return 1;
+  return p.y - p.x - 1;
 }

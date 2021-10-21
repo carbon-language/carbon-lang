@@ -1,4 +1,4 @@
-# Carbon generics overview
+# Generics: Overview
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -34,6 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
 -   [Future work](#future-work)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -577,3 +578,8 @@ fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
     interfaces and other ways to reuse code across implementations.
 -   There should be a way to define generic associated and higher-ranked/kinded
     types.
+
+## References
+
+-   [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)

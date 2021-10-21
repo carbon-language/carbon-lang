@@ -41,7 +41,7 @@ class Action {
   };
 
   Action(const Value&) = delete;
-  Action& operator=(const Value&) = delete;
+  auto operator=(const Value&) -> Action& = delete;
 
   void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 
@@ -106,72 +106,72 @@ class Action {
 // Expression's value.
 class LValAction : public Action {
  public:
-  explicit LValAction(Nonnull<const Expression*> exp)
-      : Action(Kind::LValAction), exp(exp) {}
+  explicit LValAction(Nonnull<const Expression*> expression)
+      : Action(Kind::LValAction), expression_(expression) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::LValAction;
   }
 
   // The Expression this Action evaluates.
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  auto expression() const -> const Expression& { return *expression_; }
 
  private:
-  Nonnull<const Expression*> exp;
+  Nonnull<const Expression*> expression_;
 };
 
 // An Action which implements evaluation of an Expression to produce an
 // rvalue. The result is expressed as a Value.
 class ExpressionAction : public Action {
  public:
-  explicit ExpressionAction(Nonnull<const Expression*> exp)
-      : Action(Kind::ExpressionAction), exp(exp) {}
+  explicit ExpressionAction(Nonnull<const Expression*> expression)
+      : Action(Kind::ExpressionAction), expression_(expression) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionAction;
   }
 
   // The Expression this Action evaluates.
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
+  auto expression() const -> const Expression& { return *expression_; }
 
  private:
-  Nonnull<const Expression*> exp;
+  Nonnull<const Expression*> expression_;
 };
 
 // An Action which implements evaluation of a Pattern. The result is expressed
 // as a Value.
 class PatternAction : public Action {
  public:
-  explicit PatternAction(Nonnull<const Pattern*> pat)
-      : Action(Kind::PatternAction), pat(pat) {}
+  explicit PatternAction(Nonnull<const Pattern*> pattern)
+      : Action(Kind::PatternAction), pattern_(pattern) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::PatternAction;
   }
 
   // The Pattern this Action evaluates.
-  auto Pat() const -> Nonnull<const Pattern*> { return pat; }
+  auto pattern() const -> const Pattern& { return *pattern_; }
 
  private:
-  Nonnull<const Pattern*> pat;
+  Nonnull<const Pattern*> pattern_;
 };
 
 // An Action which implements execution of a Statement. Does not produce a
 // result.
 class StatementAction : public Action {
  public:
-  explicit StatementAction(Nonnull<const Statement*> stmt)
-      : Action(Kind::StatementAction), stmt(stmt) {}
+  explicit StatementAction(Nonnull<const Statement*> statement)
+      : Action(Kind::StatementAction), statement_(statement) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
   }
 
   // The Statement this Action executes.
-  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
+  auto statement() const -> const Statement& { return *statement_; }
 
  private:
-  Nonnull<const Statement*> stmt;
+  Nonnull<const Statement*> statement_;
 };
 
 // Action which does nothing except introduce a new scope into the action

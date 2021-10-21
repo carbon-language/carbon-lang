@@ -17,16 +17,18 @@ namespace Carbon {
 class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  ParseAndLexContext(Nonnull<const std::string*> input_file_name)
-      : input_file_name(input_file_name) {}
+  ParseAndLexContext(Nonnull<const std::string*> input_file_name, bool trace)
+      : input_file_name_(input_file_name), trace_(trace) {}
 
   // Writes a syntax error diagnostic containing message to standard error.
   auto PrintDiagnostic(const std::string& message) -> void;
 
   auto source_loc() -> SourceLocation {
-    return SourceLocation(input_file_name,
+    return SourceLocation(input_file_name_,
                           static_cast<int>(current_token_position.begin.line));
   }
+
+  auto trace() -> bool { return trace_; }
 
   // The source range of the token being (or just) lex'd.
   location current_token_position;
@@ -34,16 +36,18 @@ class ParseAndLexContext {
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
-  Nonnull<const std::string*> input_file_name;
+  Nonnull<const std::string*> input_file_name_;
+
+  bool trace_;
 };
 
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL                                                            \
-  Carbon::Parser::symbol_type yylex(Carbon::Nonnull<Carbon::Arena*> arena, \
-                                    yyscan_t yyscanner,                    \
-                                    Carbon::ParseAndLexContext& context)
+#define YY_DECL                                                         \
+  auto yylex(Carbon::Nonnull<Carbon::Arena*> arena, yyscan_t yyscanner, \
+             Carbon::ParseAndLexContext& context)                       \
+      ->Carbon::Parser::symbol_type
 
 // Declares yylex for the parser's sake.
 YY_DECL;
