@@ -48,6 +48,7 @@ class IndirectValue {
   IndirectValue() : value_(std::make_unique<T>()) {}
 
   // Initializes the underlying T object as if by `T(std::move(value))`.
+  // NOLINTNEXTLINE(google-explicit-constructor): Implicit constructor.
   IndirectValue(T value) : value_(std::make_unique<T>(std::move(value))) {}
 
   // TODO(geoffromer): consider defining implicit conversions from
@@ -56,7 +57,7 @@ class IndirectValue {
   IndirectValue(const IndirectValue& other)
       : value_(std::make_unique<T>(*other)) {}
 
-  IndirectValue(IndirectValue&& other)
+  IndirectValue(IndirectValue&& other) noexcept
       : value_(std::make_unique<T>(std::move(*other))) {}
 
   auto operator=(const IndirectValue& other) -> IndirectValue& {
@@ -64,7 +65,7 @@ class IndirectValue {
     return *this;
   }
 
-  auto operator=(IndirectValue&& other) -> IndirectValue& {
+  auto operator=(IndirectValue&& other) noexcept -> IndirectValue& {
     *value_ = std::move(*other.value_);
     return *this;
   }
@@ -91,7 +92,7 @@ class IndirectValue {
       -> IndirectValue<std::decay_t<decltype(callable())>>;
 
   template <typename... Args>
-  IndirectValue(std::unique_ptr<T> value) : value_(std::move(value)) {}
+  explicit IndirectValue(std::unique_ptr<T> value) : value_(std::move(value)) {}
 
   const std::unique_ptr<T> value_;
 };
