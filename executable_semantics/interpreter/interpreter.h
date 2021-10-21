@@ -150,7 +150,9 @@ class Interpreter {
   void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
                          SourceLocation source_loc);
 
-  auto Convert(Nonnull<const Value*> value, Nonnull<const Value*> type) const
+  // Returns the result of converting `value` to type `destination_type`.
+  auto Convert(Nonnull<const Value*> value,
+               Nonnull<const Value*> destination_type) const
       -> Nonnull<const Value*>;
 
   void PrintState(llvm::raw_ostream& out);

@@ -456,9 +456,8 @@ auto Interpreter::StepLvalue() -> Transition {
   }
 }
 
-// Returns the result of converting `value` to type `type`.
 auto Interpreter::Convert(Nonnull<const Value*> value,
-                          Nonnull<const Value*> type) const
+                          Nonnull<const Value*> destination_type) const
     -> Nonnull<const Value*> {
   switch (value->kind()) {
     case Value::Kind::IntValue:
@@ -488,12 +487,13 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       return value;
     case Value::Kind::StructValue: {
       const auto& struct_val = cast<StructValue>(*value);
-      switch (type->kind()) {
+      switch (destination_type->kind()) {
         case Value::Kind::StructType: {
-          const auto& destination_type = cast<StructType>(*type);
+          const auto& destination_struct_type =
+              cast<StructType>(*destination_type);
           std::vector<StructElement> new_elements;
           for (const auto& [field_name, field_type] :
-               destination_type.fields()) {
+               destination_struct_type.fields()) {
             std::optional<Nonnull<const Value*>> old_value =
                 struct_val.FindField(field_name);
             new_elements.push_back(
@@ -502,19 +502,21 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType:
-          return arena_->New<NominalClassValue>(type, value);
+          return arena_->New<NominalClassValue>(destination_type, value);
         default:
-          FATAL() << "Can't convert value " << *value << " to type " << *type;
+          FATAL() << "Can't convert value " << *value << " to type "
+                  << *destination_type;
       }
     }
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(value);
-      const auto& destination_type = cast<TupleValue>(type);
-      CHECK(tuple->elements().size() == destination_type->elements().size());
+      const auto& destination_tuple_type = cast<TupleValue>(destination_type);
+      CHECK(tuple->elements().size() ==
+            destination_tuple_type->elements().size());
       std::vector<Nonnull<const Value*>> new_elements;
       for (size_t i = 0; i < tuple->elements().size(); ++i) {
-        new_elements.push_back(
-            Convert(tuple->elements()[i], destination_type->elements()[i]));
+        new_elements.push_back(Convert(tuple->elements()[i],
+                                       destination_tuple_type->elements()[i]));
       }
       return arena_->New<TupleValue>(std::move(new_elements));
     }
