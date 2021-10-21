@@ -762,7 +762,7 @@ constraint VectorLegoFish {
 }
 ```
 
-We don't expect users do directly define many named constraints, but other
+We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
 example, we can define the Carbon builtin `Type` as:
 
@@ -2196,7 +2196,7 @@ support parameters. Parameters would work the same way as for interfaces.
 So far, we have restricted a generic type parameter by saying it has to
 implement an interface or a set of interfaces. There are a variety of other
 constraints we would like to be able to express, such as applying restrictions
-to their associated types and associated constants. This is done using the
+to its associated types and associated constants. This is done using the
 `where` operator that adds constraints to a type-of-type.
 
 The where operator can be applied to a type-of-type in a declaration context:
@@ -2309,7 +2309,7 @@ constraint IntStack {
 ##### Equal generic types
 
 Alternatively, two generic types could be constrained to be equal to each other,
-without specifying what that type is. For example, we could make a the
+without specifying what that type is. For example, we could make the
 `ElementType` of an `Iterator` interface equal to the `ElementType` of a
 `Container` interface as follows:
 
@@ -2426,7 +2426,7 @@ fn SortContainer
     (container_to_sort: ContainerType*);
 ```
 
-In contrast to [a same type constraints](#same-type-constraints), this does not
+In contrast to [a same type constraint](#same-type-constraints), this does not
 say what type `ElementType` exactly is, just that it must satisfy some
 type-of-type.
 
@@ -2531,7 +2531,7 @@ In a second example, when you take the slice of a type implementing `Container`
 you get a type implementing `Container` which may or may not be the same type as
 the original container type. However, taking the slice of a slice always gives
 you the same type, and some functions want to only operate on containers whose
-slice type is the same.
+slice type is the same as the container type.
 
 To solve this problem, we think of `Self` as an actual associated type member of
 every interface. We can then address it using `.Self` in a `where` clause, like
@@ -2650,7 +2650,9 @@ interface RestatesConstraint {
   // This works, since it restates the constraint on
   // `HasConstraint.T` that `U` is equal to.
   let U:! Type where Vector(.Self) is Printable;
-  // This doesn't: ❌ let U:! Type;
+  // This doesn't work:
+  // ❌ let U:! Type;
+  
   let V:! HasConstraint where .T == U;
 }
 ```
@@ -3151,7 +3153,7 @@ We might generalize this to a list of implementations:
 fn CombinedCompare[T:! Type]
     (a: T, b: T, CompareList:! List(CompatibleWith(T) & Comparable))
     -> CompareResult {
-  for (U: auto) in CompareList {
+  for (let U:! auto in CompareList) {
     var result: CompareResult = (a as U).Compare(b);
     if (result != CompareResult.Equal) {
       return result;
@@ -3185,7 +3187,7 @@ adapter ThenCompare(T:! Type,
   }
 }
 
-let SongByArtistThenTitle = ThenCompare(Song, (SongByArtist, SongByTitle));
+let SongByArtistThenTitle: auto = ThenCompare(Song, (SongByArtist, SongByTitle));
 var s1: Song = ...;
 var s2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
 assert((s1 as SongByArtistThenTitle).Compare(s2) == CompareResult.Less);
@@ -3444,8 +3446,8 @@ value is the ability to do comparisons like `<`, or `>=`. For example, you might
 constrain the `N` member of [`NSpacePoint`](#associated-constants) using an
 expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
 
-The concern here is supporting this at compile time without more complexity than
-benefit. For example, we probably don't want to support integer-range based
+The concern here is supporting this at compile time with more benefit than
+complexity. For example, we probably don't want to support integer-range based
 types at runtime, and there are also concerns about reasoning about comparisons
 between multiple generic integer parameters. For example, if `J < K` and
 `K <= L`, can we call a function that requires `J < L`? There is also a
