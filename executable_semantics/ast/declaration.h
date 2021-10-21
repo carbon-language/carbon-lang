@@ -50,6 +50,19 @@ class Declaration {
 
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
+  // The static type of the declared entity. Cannot be called before
+  // typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the declared entity. Can only be called once,
+  // during typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -60,6 +73,7 @@ class Declaration {
  private:
   const Kind kind_;
   SourceLocation source_loc_;
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // TODO: expand the kinds of things that can be deduced parameters.
@@ -107,18 +121,6 @@ class FunctionDeclaration : public Declaration {
   }
   auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
 
-  // The static type of this function. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the static type of this expression. Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
-
  private:
   std::string name_;
   std::vector<GenericBinding> deduced_parameters_;
@@ -126,8 +128,6 @@ class FunctionDeclaration : public Declaration {
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
   std::optional<Nonnull<Statement*>> body_;
-
-  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 class ClassDeclaration : public Declaration {

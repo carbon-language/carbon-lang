@@ -49,7 +49,7 @@ static void SetStaticType(Nonnull<Pattern*> pattern,
 
 // Sets the static type of `definition`. Can be called multiple times on
 // the same node, so long as the types are the same on each call.
-static void SetStaticType(Nonnull<FunctionDeclaration*> definition,
+static void SetStaticType(Nonnull<Declaration*> definition,
                           Nonnull<const Value*> type) {
   if (definition->has_static_type()) {
     CHECK(TypeEqual(&definition->static_type(), type));
@@ -1057,8 +1057,8 @@ auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
   // Evaluate the return type expression
   auto return_type = interpreter_.InterpPattern(values, &f->return_type());
   if (f->name() == "main") {
-    ExpectType(f->source_loc(), "return type of `main`", arena_->New<IntType>(),
-               return_type);
+    ExpectExactType(f->source_loc(), "return type of `main`",
+                    arena_->New<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
   std::optional<Nonnull<Statement*>> body_stmt;
@@ -1181,6 +1181,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
       }
       Nonnull<const Value*> declared_type =
           interpreter_.InterpExp(values, &binding_type->expression());
+      SetStaticType(&var, declared_type);
       ExpectType(var.source_loc(), "initializer of variable", declared_type,
                  &var.initializer().static_type());
       return;
