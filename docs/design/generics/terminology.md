@@ -302,10 +302,10 @@ same terms being used in a
 ### Named constraints
 
 Named constraints are "structural" in the sense that they match a type based on
-meeting some criteria rather than an explicit statement in the type's definition.
-The criteria for a named constraint, however, are less focused on the type's API
-and instead might include a set of nominal interfaces that the type must
-implement.
+meeting some criteria rather than an explicit statement in the type's
+definition. The criteria for a named constraint, however, are less focused on
+the type's API and instead might include a set of nominal interfaces that the
+type must implement.
 
 ## Associated entity
 

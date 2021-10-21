@@ -2196,8 +2196,8 @@ support parameters. Parameters would work the same way as for interfaces.
 So far, we have restricted a generic type parameter by saying it has to
 implement an interface or a set of interfaces. There are a variety of other
 constraints we would like to be able to express, such as applying restrictions
-to its associated types and associated constants. This is done using the
-`where` operator that adds constraints to a type-of-type.
+to its associated types and associated constants. This is done using the `where`
+operator that adds constraints to a type-of-type.
 
 The where operator can be applied to a type-of-type in a declaration context:
 
@@ -2652,7 +2652,7 @@ interface RestatesConstraint {
   let U:! Type where Vector(.Self) is Printable;
   // This doesn't work:
   // ❌ let U:! Type;
-  
+
   let V:! HasConstraint where .T == U;
 }
 ```
