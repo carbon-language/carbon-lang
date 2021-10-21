@@ -55,9 +55,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
         -   [Combining constraints](#combining-constraints)
         -   [Recursive constraints](#recursive-constraints)
-        -   [Must be legal type argument](#must-be-legal-type-argument)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
+        -   [Must be legal type argument](#must-be-legal-type-argument)
     -   [Implied constraints](#implied-constraints)
     -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
     -   [Manual type equality](#manual-type-equality)
@@ -2582,40 +2582,6 @@ constraint ContainerIsSlice {
 Note that using the `constraint` approach we can name these constraints using
 `Self` instead of `.Self`, though `.Self` is equivalent.
 
-#### Must be legal type argument
-
-If a function body is going to use a generic type parameter as an argument to a
-parameterized type, it needs to ensure that the parameter satisfies all the
-requirements of the parameterized type. For example, a function that adds its
-parameters to a `HashSet` to deduplicate them, needs them to be `Hashable` and
-so on.
-
-```
-fn NumDistinct[T:! ...](a: T, b: T, c: T) -> i32 {
-  var set: HashSet(T);
-  set.Add(a);
-  set.Add(b);
-  set.Add(c);
-  return set.Size();
-}
-```
-
-Repeating the constraints on `HashSet` arguments in the type of `T` would
-violate the
-["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
-This redundancy is undesirable since it means if the needed constraints for
-`HashSet` are changed, then the code has to be updated in more locations.
-
-**Note:** This is the explicit version of
-[implied constraints](#implied-constraints), useful when the parameterized type
-is only used in the body of the function, not in the parameter list.
-
-**Open question:** How should this constraint be spelled?
-
--   `T:! Type where HashSet(T)`
--   `T:! Type where HashSet(T) legal`
--   `T:! Type where HashSet(T) is Type`
-
 #### Parameterized type implements interface
 
 There are times when a function will pass a generic type parameter of the
@@ -2677,6 +2643,36 @@ fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
   return x * (2 as T);
 }
 ```
+
+#### Must be legal type argument
+
+If a function body is going to use a generic type parameter as an argument to a
+parameterized type, it needs to ensure that the parameter satisfies all the
+requirements of the parameterized type. For example, a function that adds its
+parameters to a `HashSet` to deduplicate them, needs them to be `Hashable` and
+so on. We write this constraint as a special case of saying the type must
+satisfy the constraint of implementing `Type`, which all legal types satisfy:
+
+```
+fn NumDistinct[T:! Type where HashSet(.Self) is Type]
+    (a: T, b: T, c: T) -> i32 {
+  var set: HashSet(T);
+  set.Add(a);
+  set.Add(b);
+  set.Add(c);
+  return set.Size();
+}
+```
+
+Repeating the constraints on `HashSet` arguments in the type of `T` would
+violate the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+This redundancy is undesirable since it means if the needed constraints for
+`HashSet` are changed, then the code has to be updated in more locations.
+
+**Note:** This is the explicit version of
+[implied constraints](#implied-constraints), useful when the parameterized type
+is only used in the body of the function, not in the parameter list.
 
 ### Implied constraints
 
@@ -3032,6 +3028,8 @@ There are some constraints that we will naturally represent as named
 type-of-types. These can either be used directly to constrain a generic type
 parameter, or in a `where ... is ...` clause to constrain an associated type.
 
+**Open question:** Are these names part of the prelude or in a standard library?
+
 ### Is a derived class
 
 Given a type `T`, `Extends(T)` is a type-of-type whose values are types that are
@@ -3040,19 +3038,11 @@ subtypes of `T`.
 
 ```
 fn F[T:! Extends(BaseType)](p: T*);
-fn UpCast[U:! Type, T:! Extends(U)](p: T*, _:! singleton_type_of(U)) -> U*;
+fn UpCast[T:! Type](p: T*, U:! Type where T is Extends(.Self)) -> U*;
 fn DownCast[T:! Type](p: T*, U:! Extends(T)) -> U*;
 ```
 
-**Open question:** Alternatively, we could overload the `is` operator for this,
-
-```
-fn F[T:! Type where .Self is BaseType](p: T*);
-fn UpCast[T:! Type](p: T*, U:! Type where T is .Self) -> U*;
-fn DownCast[T:! Type](p: T*, U:! Type where .Self is T) -> U*;
-```
-
-or define a new `extends` operator:
+**Open question:** Alternatively, we could define a new `extends` operator:
 
 ```
 fn F[T:! Type where .Self extends BaseType](p: T*);
@@ -3166,6 +3156,10 @@ assert(CombinedCompare(Song(...), Song(...), (SongByArtist, SongByTitle)) ==
        CompareResult.Less);
 ```
 
+**Open question:** How are compile-time lists of types declared and iterated
+through? They will also be needed for
+[variadic argument support](#variadic-arguments).
+
 #### Example: Creating an impl out of other impls
 
 And then to package this functionality as an implementation of `Comparable`, we
@@ -3176,7 +3170,7 @@ adapter ThenCompare(T:! Type,
                     CompareList:! List(CompatibleWith(T) & Comparable)) for T {
   impl as Comparable {
     fn Compare[me: Self](that: Self) -> CompareResult {
-      for (U: auto) in CompareList {
+      for (let U:! auto in CompareList) {
         var result: CompareResult = (this as U).Compare(that);
         if (result != CompareResult.Equal) {
           return result;
