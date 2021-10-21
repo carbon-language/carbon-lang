@@ -450,6 +450,8 @@ class ChoiceType : public Value {
 
   auto name() const -> const std::string& { return name_; }
 
+  // Returns the parameter types of the alternative with the given name,
+  // or nullopt if no such alternative is present.
   auto FindAlternative(std::string_view name) const
       -> std::optional<Nonnull<const Value*>>;
 
