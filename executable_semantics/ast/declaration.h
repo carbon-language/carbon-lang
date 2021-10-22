@@ -109,14 +109,14 @@ class ReturnTerm {
     return ReturnTerm(type_expression);
   }
 
-  // Returns true if this represents an omitted return type.
+  // Returns true if this represents an omitted return term.
   auto is_omitted() const -> bool { return form_ == Form::Omitted; }
 
-  // Returns true if this represents `-> auto`
+  // Returns true if this represents an auto return term.
   auto is_auto() const -> bool { return form_ == Form::Auto; }
 
-  // The return type expression that was explicitly specified, or nullopt if
-  // this represents an omitted or `auto` return type.
+  // If this represents an explicit return term, returns the type expression.
+  // Otherwise, returns nullopt.
   auto type_expression() const -> std::optional<Nonnull<const Expression*>> {
     return type_expression_;
   }
@@ -124,12 +124,12 @@ class ReturnTerm {
     return type_expression_;
   }
 
-  // The static return type this represents. Cannot be called before
+  // The static return type this term resolves to. Cannot be called before
   // typechecking.
   auto static_type() const -> const Value& { return **static_type_; }
 
-  // Sets the static return type this represents. Can only be called once,
-  // during typechecking.
+  // Sets the value of static_type(). Can only be called once, during
+  // typechecking.
   void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
 
   // Returns whether static_type() has been set. Should only be called
