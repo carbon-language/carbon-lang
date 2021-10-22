@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Implicit conversions](#implicit-conversions)
+-   [`if` expressions](#if-expressions)
 
 <!-- tocstop -->
 
@@ -42,3 +43,15 @@ fn Baz(n: i64) {
   Bar(n);
 }
 ```
+
+## `if` expressions
+
+An [`if` expression](if.md) chooses between two expressions.
+
+```
+fn Run(args: Span(StringView)) {
+  var file: StringView = if args.size() > 1 then args[1] else "/dev/stdin";
+}
+```
+
+`if` expressions are analogous to `?:` ternary expressions in C and C++.
