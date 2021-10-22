@@ -13,22 +13,48 @@ using llvm::cast;
 
 namespace Carbon {
 
+// Aggregate information about a function being analyzed.
+struct FunctionData {
+  // The function declaration.
+  Nonnull<FunctionDeclaration*> declaration;
+
+  // True if the function has a deduced return type, and we've already seen
+  // a `return` statement in its body.
+  bool saw_return_in_auto = false;
+};
+
 // Resolves control-flow edges in the AST rooted at `statement`. `return`
 // statements will resolve to `*function`, and `break` and `continue`
 // statements will resolve to `*loop`. If either parameter is nullopt, that
 // indicates a context where the corresponding statements are not permitted.
-static void ResolveControlFlow(
-    Nonnull<Statement*> statement,
-    std::optional<Nonnull<const FunctionDeclaration*>> function,
-    std::optional<Nonnull<const Statement*>> loop) {
+static void ResolveControlFlow(Nonnull<Statement*> statement,
+                               std::optional<Nonnull<FunctionData*>> function,
+                               std::optional<Nonnull<const Statement*>> loop) {
   switch (statement->kind()) {
-    case Statement::Kind::Return:
+    case Statement::Kind::Return: {
       if (!function.has_value()) {
         FATAL_COMPILATION_ERROR(statement->source_loc())
             << "return is not within a function body";
       }
-      cast<Return>(*statement).set_function(*function);
+      const ReturnTerm& function_return =
+          (*function)->declaration->return_term();
+      if (function_return.is_auto()) {
+        if ((*function)->saw_return_in_auto) {
+          FATAL_COMPILATION_ERROR(statement->source_loc())
+              << "Only one return is allowed in a function with an `auto` "
+                 "return type.";
+        }
+        (*function)->saw_return_in_auto = true;
+      }
+      auto& ret = cast<Return>(*statement);
+      ret.set_function((*function)->declaration);
+      if (ret.is_omitted_expression() != function_return.is_omitted()) {
+        FATAL_COMPILATION_ERROR(ret.source_loc())
+            << ret << " should" << (function_return.is_omitted() ? " not" : "")
+            << " provide a return value, to match the function's signature.";
+      }
       return;
+    }
     case Statement::Kind::Break:
       if (!loop.has_value()) {
         FATAL_COMPILATION_ERROR(statement->source_loc())
@@ -96,7 +122,8 @@ void ResolveControlFlow(AST& ast) {
     }
     auto& function = cast<FunctionDeclaration>(*declaration);
     if (function.body().has_value()) {
-      ResolveControlFlow(*function.body(), &function, std::nullopt);
+      FunctionData data = {.declaration = &function};
+      ResolveControlFlow(*function.body(), &data, std::nullopt);
     }
   }
 }

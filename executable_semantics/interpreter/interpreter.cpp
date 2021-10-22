@@ -957,10 +957,10 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        // TODO(geoffromer): convert the result to the function's return type,
-        // once #880 gives us a way to find that type.
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return UnwindPast{*function.body(), act->results()[0]};
+        return UnwindPast{
+            *function.body(),
+            Convert(act->results()[0], &function.return_term().static_type())};
       }
     case Statement::Kind::Sequence: {
       //    { { (s1,s2) :: C, E, F} :: S, H}

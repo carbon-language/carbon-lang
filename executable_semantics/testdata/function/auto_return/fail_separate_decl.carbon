@@ -7,7 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_separate_decl.carbon:15: syntax error, unexpected SEMICOLON, expecting LEFT_CURLY_BRACE
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_separate_decl.carbon:15: Function declaration has deduced return type but no body
 
 package ExecutableSemanticsTest api;
 
