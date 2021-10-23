@@ -3120,11 +3120,11 @@ interface Comparable {
 fn CombinedLess[T:! Type](a: T, b: T,
                           U:! CompatibleWith(T) & Comparable,
                           V:! CompatibleWith(T) & Comparable) -> bool {
-  match ((a as U).Compare(b)) {
+  match ((a as U).Compare(b as U)) {
     case CompareResult.Less => { return True; }
     case CompareResult.Greater => { return False; }
     case CompareResult.Equal => {
-      return (a as V).Compare(b) == CompareResult.Less;
+      return (a as V).Compare(b as V) == CompareResult.Less;
     }
   }
 }
