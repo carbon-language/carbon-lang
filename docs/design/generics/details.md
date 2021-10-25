@@ -2608,25 +2608,6 @@ fn PrintThree
 }
 ```
 
-This constraint needs to be restated when it is on an associated type in a
-referenced interface, as in this example:
-
-```
-interface HasConstraint {
-  let T:! Type where Vector(.Self) is Printable;
-}
-
-interface RestatesConstraint {
-  // This works, since it restates the constraint on
-  // `HasConstraint.T` that `U` is equal to.
-  let U:! Type where Vector(.Self) is Printable;
-  // This doesn't work:
-  // ❌ let U:! Type;
-
-  let V:! HasConstraint where .T == U;
-}
-```
-
 **Comparison with other languages:** This use case was part of the
 [Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
 
