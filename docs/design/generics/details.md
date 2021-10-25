@@ -4005,7 +4005,7 @@ impl [T:! IB] T as ICommon { ... }
 impl S as IB { ... }
 ```
 
-Not imagine another library imports the `Common` library. Inside this new
+Now imagine another library imports the `Common` library. Inside this new
 library:
 
 -   Does `S` implement `ICommon`? If you just import `ICommon`, no
