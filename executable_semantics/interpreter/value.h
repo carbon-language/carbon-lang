@@ -21,6 +21,8 @@
 
 namespace Carbon {
 
+class Action;
+
 // Abstract base class of all AST nodes representing values.
 //
 // Value and its derived classes support LLVM-style RTTI, including
@@ -106,8 +108,6 @@ struct StructElement {
   Nonnull<const Value*> value;
 };
 
-struct Frame;  // Used by continuation.
-
 // An integer value.
 class IntValue : public Value {
  public:
@@ -126,27 +126,19 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(std::string name, Nonnull<const Value*> parameters,
-                std::optional<Nonnull<const Statement*>> body)
-      : Value(Kind::FunctionValue),
-        name_(std::move(name)),
-        parameters_(parameters),
-        body_(body) {}
+  FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+      : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
   }
 
-  auto name() const -> const std::string& { return name_; }
-  auto parameters() const -> const Value& { return *parameters_; }
-  auto body() const -> std::optional<Nonnull<const Statement*>> {
-    return body_;
+  auto declaration() const -> const FunctionDeclaration& {
+    return *declaration_;
   }
 
  private:
-  std::string name_;
-  Nonnull<const Value*> parameters_;
-  std::optional<Nonnull<const Statement*>> body_;
+  Nonnull<const FunctionDeclaration*> declaration_;
 };
 
 // A pointer value.
@@ -497,21 +489,21 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Frame*>>*> stack)
+  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Action*>>*> stack)
       : Value(Kind::ContinuationValue), stack_(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
   }
 
-  // The call stack of the suspended continuation, starting with the top
-  // frame (the reverse of the usual order). Note that this provides mutable
+  // The todo stack of the suspended continuation, starting with the top
+  // Action (the reverse of the usual order). Note that this provides mutable
   // access, even when *this is const, because of the reference-like semantics
   // of ContinuationValue.
-  auto stack() const -> std::vector<Nonnull<Frame*>>& { return *stack_; }
+  auto stack() const -> std::vector<Nonnull<Action*>>& { return *stack_; }
 
  private:
-  Nonnull<std::vector<Nonnull<Frame*>>*> stack_;
+  Nonnull<std::vector<Nonnull<Action*>>*> stack_;
 };
 
 // The String type.

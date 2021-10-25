@@ -49,12 +49,22 @@ static void SetStaticType(Nonnull<Pattern*> pattern,
 
 // Sets the static type of `definition`. Can be called multiple times on
 // the same node, so long as the types are the same on each call.
-static void SetStaticType(Nonnull<FunctionDeclaration*> definition,
+static void SetStaticType(Nonnull<Declaration*> definition,
                           Nonnull<const Value*> type) {
   if (definition->has_static_type()) {
     CHECK(TypeEqual(&definition->static_type(), type));
   } else {
     definition->set_static_type(type);
+  }
+}
+
+static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
+  // TODO: find some way to CHECK that `value` is identical to pattern->value(),
+  // if it's already set. Unclear if `ValueEqual` is suitable, because it
+  // currently focuses more on "real" values, and disallows the pseudo-values
+  // like `BindingPlaceholderValue` that we get in pattern evaluation.
+  if (!pattern->has_value()) {
+    pattern->set_value(value);
   }
 }
 
@@ -749,6 +759,7 @@ auto TypeChecker::TypeCheckPattern(
         types.Set(*binding.name(), type);
       }
       SetStaticType(&binding, type);
+      SetValue(&binding, interpreter_.InterpPattern(values, &binding));
       return TCResult(types);
     }
     case Pattern::Kind::TuplePattern: {
@@ -775,6 +786,7 @@ auto TypeChecker::TypeCheckPattern(
         field_types.push_back(&field->static_type());
       }
       SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
+      SetValue(&tuple, interpreter_.InterpPattern(values, &tuple));
       return TCResult(new_types);
     }
     case Pattern::Kind::AlternativePattern: {
@@ -800,12 +812,14 @@ auto TypeChecker::TypeCheckPattern(
       TCResult arg_results = TypeCheckPattern(&alternative.arguments(), types,
                                               values, *parameter_types);
       SetStaticType(&alternative, choice_type);
+      SetValue(&alternative, interpreter_.InterpPattern(values, &alternative));
       return TCResult(arg_results.types);
     }
     case Pattern::Kind::ExpressionPattern: {
       auto& expression = cast<ExpressionPattern>(*p).expression();
       TCResult result = TypeCheckExp(&expression, types, values);
       SetStaticType(p, &expression.static_type());
+      SetValue(p, interpreter_.InterpPattern(values, p));
       return TCResult(result.types);
     }
   }
@@ -1043,8 +1057,8 @@ auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
   // Evaluate the return type expression
   auto return_type = interpreter_.InterpPattern(values, &f->return_type());
   if (f->name() == "main") {
-    ExpectType(f->source_loc(), "return type of `main`", arena_->New<IntType>(),
-               return_type);
+    ExpectExactType(f->source_loc(), "return type of `main`",
+                    arena_->New<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
   std::optional<Nonnull<Statement*>> body_stmt;
@@ -1167,6 +1181,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
       }
       Nonnull<const Value*> declared_type =
           interpreter_.InterpExp(values, &binding_type->expression());
+      SetStaticType(&var, declared_type);
       ExpectType(var.source_loc(), "initializer of variable", declared_type,
                  &var.initializer().static_type());
       return;
@@ -1177,7 +1192,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      FunctionDeclaration& func_def = cast<FunctionDeclaration>(*d);
+      auto& func_def = cast<FunctionDeclaration>(*d);
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
       tops->types.Set(func_def.name(), t);
       interpreter_.InitEnv(*d, &tops->values);
@@ -1185,8 +1200,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*d).definition();
+      const auto& class_def = cast<ClassDeclaration>(*d).definition();
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
       Address a = interpreter_.AllocateValue(st);
       tops->values.Set(class_def.name(), a);  // Is this obsolete?

@@ -9,7 +9,7 @@
 #include "common/check.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/interpreter/frame.h"
+#include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -212,7 +212,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
     case Value::Kind::FunctionValue:
-      out << "fun<" << cast<FunctionValue>(*this).name() << ">";
+      out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::PointerValue:
       out << "ptr<" << cast<PointerValue>(*this).value() << ">";
@@ -274,8 +274,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ContinuationValue: {
       out << "{";
       llvm::ListSeparator sep(" :: ");
-      for (Nonnull<Frame*> frame : cast<ContinuationValue>(*this).stack()) {
-        out << sep << *frame;
+      for (Nonnull<const Action*> action :
+           cast<ContinuationValue>(*this).stack()) {
+        out << sep << *action;
       }
       out << "}";
       break;
@@ -392,9 +393,9 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       return cast<PointerValue>(*v1).value() == cast<PointerValue>(*v2).value();
     case Value::Kind::FunctionValue: {
       std::optional<Nonnull<const Statement*>> body1 =
-          cast<FunctionValue>(*v1).body();
+          cast<FunctionValue>(*v1).declaration().body();
       std::optional<Nonnull<const Statement*>> body2 =
-          cast<FunctionValue>(*v2).body();
+          cast<FunctionValue>(*v2).declaration().body();
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }

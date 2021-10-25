@@ -28,7 +28,7 @@ class Member {
   enum class Kind { FieldMember };
 
   Member(const Member&) = delete;
-  Member& operator=(const Member&) = delete;
+  auto operator=(const Member&) -> Member& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
