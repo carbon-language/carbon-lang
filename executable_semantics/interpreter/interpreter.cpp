@@ -32,9 +32,9 @@ namespace Carbon {
 
 void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
-  for (const auto& [name, address] : values) {
+  for (const auto& [name, allocation] : values) {
     out << sep << name << ": ";
-    heap_.PrintAddress(address, out);
+    heap_.PrintAllocation(allocation, out);
   }
 }
 
@@ -56,11 +56,11 @@ auto Interpreter::CurrentEnv() -> Env { return CurrentScope().values; }
 // Returns the given name from the environment, printing an error if not found.
 auto Interpreter::GetFromEnv(SourceLocation source_loc, const std::string& name)
     -> Address {
-  std::optional<Address> pointer = CurrentEnv().Get(name);
+  std::optional<AllocationId> pointer = CurrentEnv().Get(name);
   if (!pointer) {
     FATAL_RUNTIME_ERROR(source_loc) << "could not find `" << name << "`";
   }
-  return *pointer;
+  return Address(*pointer);
 }
 
 void Interpreter::PrintState(llvm::raw_ostream& out) {
@@ -116,12 +116,12 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
-        Address a =
+        AllocationId a =
             heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
-      Address a = heap_.AllocateValue(f);
+      AllocationId a = heap_.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
     }
@@ -144,7 +144,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       }
       auto st = arena_->New<NominalClassType>(
           class_def.name(), std::move(fields), std::move(methods));
-      auto a = heap_.AllocateValue(st);
+      AllocationId a = heap_.AllocateValue(st);
       env->Set(class_def.name(), a);
       break;
     }
@@ -157,7 +157,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
         alts.push_back(make_pair(alternative.name(), t));
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
-      auto a = heap_.AllocateValue(ct);
+      AllocationId a = heap_.AllocateValue(ct);
       env->Set(choice.name(), a);
       break;
     }
@@ -168,7 +168,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       // result of evaluating the initializer.
       Nonnull<const Value*> v =
           Convert(InterpExp(*env, &var.initializer()), &var.static_type());
-      Address a = heap_.AllocateValue(v);
+      AllocationId a = heap_.AllocateValue(v);
       env->Set(*var.binding().name(), a);
       break;
     }
@@ -184,7 +184,7 @@ void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
 void Interpreter::DeallocateScope(Scope& scope) {
   CHECK(!scope.deallocated);
   for (const auto& l : scope.locals) {
-    std::optional<Address> a = scope.values.Get(l);
+    std::optional<AllocationId> a = scope.values.Get(l);
     CHECK(a);
     heap_.Deallocate(*a);
   }
@@ -221,7 +221,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       Env values(arena_);
       if (placeholder.name().has_value()) {
-        Address a = heap_.AllocateValue(v);
+        AllocationId a = heap_.AllocateValue(v);
         values.Set(*placeholder.name(), a);
       }
       return values;
@@ -986,7 +986,7 @@ auto Interpreter::StepStmt() -> Transition {
           arena_->New<StatementAction>(&cast<Continuation>(stmt).body()));
       continuation_stack->push_back(
           arena_->New<ScopeAction>(Scope(CurrentEnv())));
-      Address continuation_address = heap_.AllocateValue(
+      AllocationId continuation_address = heap_.AllocateValue(
           arena_->New<ContinuationValue>(continuation_stack));
       // Bind the continuation object to the continuation variable
       CurrentScope().values.Set(

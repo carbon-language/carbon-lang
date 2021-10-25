@@ -1048,7 +1048,7 @@ auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
   for (const auto& deduced : f->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
     types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
-    Address a = interpreter_.AllocateValue(*types.Get(deduced.name));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
@@ -1089,7 +1089,7 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
   for (const auto& deduced : fun_def->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
     types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
-    Address a = interpreter_.AllocateValue(*types.Get(deduced.name));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
@@ -1202,7 +1202,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     case Declaration::Kind::ClassDeclaration: {
       const auto& class_def = cast<ClassDeclaration>(*d).definition();
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
-      Address a = interpreter_.AllocateValue(st);
+      AllocationId a = interpreter_.AllocateValue(st);
       tops->values.Set(class_def.name(), a);  // Is this obsolete?
       tops->types.Set(class_def.name(), st);
       break;
@@ -1216,7 +1216,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
         alts.push_back(std::make_pair(alternative.name(), t));
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
-      Address a = interpreter_.AllocateValue(ct);
+      AllocationId a = interpreter_.AllocateValue(ct);
       tops->values.Set(choice.name(), a);  // Is this obsolete?
       tops->types.Set(choice.name(), ct);
       break;
