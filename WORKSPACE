@@ -95,12 +95,8 @@ configure_clang_toolchain(name = "bazel_cc_toolchain")
 
 abseil_version = "4a995b1eaa4a602f0d3a9ff8eac89d4649cd2fe8"
 
-# Note that we patch this to ensure it is only used in tests. Carbon code proper
-# should not use Abseil.
 http_archive(
     name = "com_google_absl",
-    patch_args = ["-p1"],
-    patches = ["@carbon//:bazel/abseil-cpp.patch"],
     sha256 = "f5021900ff9a6b8f39406d15f460714660ab6b3e727754663d786d75ecad5ee0",
     strip_prefix = "abseil-cpp-%s" % abseil_version,
     urls = ["https://github.com/abseil/abseil-cpp/archive/%s.zip" % abseil_version],
