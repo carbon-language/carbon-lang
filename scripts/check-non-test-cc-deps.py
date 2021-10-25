@@ -42,9 +42,11 @@ for dep in deps:
         # These are stubs wrapping system libraries for LLVM. They aren't
         # distributed and so should be fine.
         continue
-    if (dep.startswith("@com_google_absl//") or
-        dep.startswith("@com_google_googletest//") or
-        dep.startswith("@com_github_google_benchmark//")):
+    if (
+        dep.startswith("@com_google_absl//")
+        or dep.startswith("@com_google_googletest//")
+        or dep.startswith("@com_github_google_benchmark//")
+    ):
         # This should never be reached from non-test code, but these targets do
         # exist. Specially diagnose them to try to provide a more helpful
         # message.
