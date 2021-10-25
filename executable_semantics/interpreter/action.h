@@ -18,7 +18,7 @@
 
 namespace Carbon {
 
-using Env = Dictionary<std::string, Address>;
+using Env = Dictionary<std::string, AllocationId>;
 
 struct Scope {
   explicit Scope(Env values) : Scope(values, std::vector<std::string>()) {}

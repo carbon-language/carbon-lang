@@ -44,7 +44,7 @@ class Interpreter {
                     SourceLocation source_loc) -> std::optional<Env>;
 
   // Support TypeChecker allocating values on the heap.
-  auto AllocateValue(Nonnull<const Value*> v) -> Address {
+  auto AllocateValue(Nonnull<const Value*> v) -> AllocationId {
     return heap_.AllocateValue(v);
   }
 
