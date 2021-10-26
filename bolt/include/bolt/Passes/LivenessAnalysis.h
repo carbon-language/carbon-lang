@@ -35,9 +35,10 @@ class LivenessAnalysis
                                 RegStatePrinter>;
 
 public:
-  LivenessAnalysis(const RegAnalysis &RA, const BinaryContext &BC,
-                   BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId)
-      : Parent(BC, BF, AllocId), RA(RA), NumRegs(BC.MRI->getNumRegs()) {}
+  LivenessAnalysis(const RegAnalysis &RA, BinaryFunction &BF,
+                   MCPlusBuilder::AllocatorIdTy AllocId)
+      : Parent(BF, AllocId), RA(RA),
+        NumRegs(BF.getBinaryContext().MRI->getNumRegs()) {}
   virtual ~LivenessAnalysis();
 
   bool isAlive(ProgramPoint PP, MCPhysReg Reg) const {

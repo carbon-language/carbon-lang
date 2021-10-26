@@ -30,7 +30,7 @@ class StackAvailableExpressions
 
 public:
   StackAvailableExpressions(const RegAnalysis &RA, const FrameAnalysis &FA,
-                            const BinaryContext &BC, BinaryFunction &BF);
+                            BinaryFunction &BF);
   virtual ~StackAvailableExpressions() {}
 
   void run() {

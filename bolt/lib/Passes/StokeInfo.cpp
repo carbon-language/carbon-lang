@@ -46,26 +46,25 @@ void getRegNameFromBitVec(const BinaryContext &BC, const BitVector &RegV,
   LLVM_DEBUG(dbgs() << "\n");
 }
 
-void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
-    StokeFuncInfo &FuncInfo) {
-
+void StokeInfo::checkInstr(const BinaryFunction &BF, StokeFuncInfo &FuncInfo) {
+  MCPlusBuilder *MIB = BF.getBinaryContext().MIB.get();
   BitVector RegV(NumRegs, false);
   for (BinaryBasicBlock *BB : BF.layout()) {
     if (BB->empty()) {
       continue;
     }
     for (MCInst &It : *BB) {
-      if (BC.MIB->isPseudo(It))
+      if (MIB->isPseudo(It))
         continue;
       // skip function with exception handling yet
-      if (BC.MIB->isEHLabel(It) || BC.MIB->isInvoke(It)) {
+      if (MIB->isEHLabel(It) || MIB->isInvoke(It)) {
         FuncInfo.Omitted = true;
         return;
       }
       // check if this function contains call instruction
-      if (BC.MIB->isCall(It)) {
+      if (MIB->isCall(It)) {
         FuncInfo.HasCall = true;
-        const MCSymbol *TargetSymbol = BC.MIB->getTargetSymbol(It);
+        const MCSymbol *TargetSymbol = MIB->getTargetSymbol(It);
         // if it is an indirect call, skip
         if (TargetSymbol == nullptr) {
           FuncInfo.Omitted = true;
@@ -74,12 +73,12 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       }
       // check if this function modify stack or heap
       // TODO: more accurate analysis
-      bool IsPush = BC.MIB->isPush(It);
-      bool IsRipAddr = BC.MIB->hasPCRelOperand(It);
+      bool IsPush = MIB->isPush(It);
+      bool IsRipAddr = MIB->hasPCRelOperand(It);
       if (IsPush) {
         FuncInfo.StackOut = true;
       }
-      if (BC.MIB->isStore(It) && !IsPush && !IsRipAddr) {
+      if (MIB->isStore(It) && !IsPush && !IsRipAddr) {
         FuncInfo.HeapOut = true;
       }
       if (IsRipAddr) {
@@ -90,9 +89,8 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
   } // end of for (auto *BB : ...)
 }
 
-bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
-    DataflowInfoManager &DInfo, RegAnalysis &RA,
-    StokeFuncInfo &FuncInfo) {
+bool StokeInfo::checkFunction(BinaryFunction &BF, DataflowInfoManager &DInfo,
+                              RegAnalysis &RA, StokeFuncInfo &FuncInfo) {
 
   std::string Name = BF.getSymbol()->getName().str();
 
@@ -122,7 +120,7 @@ bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
   FuncInfo.TotalSize = BF.estimateSize();
   FuncInfo.Score = BF.getFunctionScore();
 
-  checkInstr(BC, BF, FuncInfo);
+  checkInstr(BF, FuncInfo);
 
   // register analysis
   BinaryBasicBlock &EntryBB = BF.front();
@@ -137,12 +135,12 @@ bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
   BitVector LiveInBV =
       *(DInfo.getLivenessAnalysis().getStateAt(FirstNonPseudo));
   LiveInBV &= DefaultDefInMask;
-  getRegNameFromBitVec(BC, LiveInBV, &FuncInfo.DefIn);
+  getRegNameFromBitVec(BF.getBinaryContext(), LiveInBV, &FuncInfo.DefIn);
 
   LLVM_DEBUG(dbgs() << "\t [LiveOut]\n\t ");
   BitVector LiveOutBV = RA.getFunctionClobberList(&BF);
   LiveOutBV &= DefaultLiveOutMask;
-  getRegNameFromBitVec(BC, LiveOutBV, &FuncInfo.LiveOut);
+  getRegNameFromBitVec(BF.getBinaryContext(), LiveOutBV, &FuncInfo.LiveOut);
 
   outs() << " STOKE-INFO: end function \n";
   return true;
@@ -183,9 +181,9 @@ void StokeInfo::runOnFunctions(BinaryContext &BC) {
   // analyze all functions
   FuncInfo.printCsvHeader(Outfile);
   for (auto &BF : BC.getBinaryFunctions()) {
-    DataflowInfoManager DInfo(BC, BF.second, &RA/*RA.get()*/, nullptr);
+    DataflowInfoManager DInfo(BF.second, &RA, nullptr);
     FuncInfo.reset();
-    if (checkFunction(BC, BF.second, DInfo, RA, FuncInfo)) {
+    if (checkFunction(BF.second, DInfo, RA, FuncInfo)) {
       FuncInfo.printData(Outfile);
     }
   }

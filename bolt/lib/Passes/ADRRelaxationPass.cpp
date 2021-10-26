@@ -26,7 +26,8 @@ static cl::opt<bool>
 namespace llvm {
 namespace bolt {
 
-void ADRRelaxationPass::runOnFunction(BinaryContext &BC, BinaryFunction &BF) {
+void ADRRelaxationPass::runOnFunction(BinaryFunction &BF) {
+  BinaryContext &BC = BF.getBinaryContext();
   for (BinaryBasicBlock *BB : BF.layout()) {
     for (auto It = BB->begin(); It != BB->end(); ++It) {
       MCInst &Inst = *It;
@@ -62,7 +63,7 @@ void ADRRelaxationPass::runOnFunctions(BinaryContext &BC) {
     return;
 
   ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
-    runOnFunction(BC, BF);
+    runOnFunction(BF);
   };
 
   ParallelUtilities::runOnEachFunction(

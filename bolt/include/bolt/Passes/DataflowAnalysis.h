@@ -93,7 +93,7 @@ public:
 
 /// Convenience function to operate on all predecessors of a BB, as viewed
 /// by a dataflow analysis. This includes throw sites if it is a landing pad.
-void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
+void doForAllPreds(const BinaryBasicBlock &BB,
                    std::function<void(ProgramPoint)> Task);
 
 /// Operates on all successors of a basic block.
@@ -264,15 +264,15 @@ public:
   void doForAllSuccsOrPreds(const BinaryBasicBlock &BB,
                             std::function<void(ProgramPoint)> Task) {
     if (!Backward)
-      return doForAllPreds(BC, BB, Task);
+      return doForAllPreds(BB, Task);
     return doForAllSuccs(BB, Task);
   }
 
   /// We need the current binary context and the function that will be processed
   /// in this dataflow analysis.
-  DataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF,
+  DataflowAnalysis(BinaryFunction &BF,
                    MCPlusBuilder::AllocatorIdTy AllocatorId = 0)
-      : BC(BC), Func(BF), AllocatorId(AllocatorId) {}
+      : BC(BF.getBinaryContext()), Func(BF), AllocatorId(AllocatorId) {}
 
   virtual ~DataflowAnalysis() {
     cleanAnnotations();
@@ -550,10 +550,10 @@ public:
     return count(*Expressions[PointIdx], Expr);
   }
 
-  InstrsDataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF,
+  InstrsDataflowAnalysis(BinaryFunction &BF,
                          MCPlusBuilder::AllocatorIdTy AllocId = 0)
       : DataflowAnalysis<Derived, BitVector, Backward, StatePrinterTy>(
-            BC, BF, AllocId) {}
+            BF, AllocId) {}
   virtual ~InstrsDataflowAnalysis() {}
 };
 

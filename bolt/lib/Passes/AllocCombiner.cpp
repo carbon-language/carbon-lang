@@ -66,8 +66,8 @@ void runForAllWeCare(std::map<uint64_t, BinaryFunction> &BFs,
 
 } // end anonymous namespace
 
-void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
-                                           BinaryFunction &BF) {
+void AllocCombinerPass::combineAdjustments(BinaryFunction &BF) {
+  BinaryContext &BC = BF.getBinaryContext();
   for (BinaryBasicBlock &BB : BF) {
     MCInst *Prev = nullptr;
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
@@ -112,9 +112,9 @@ void AllocCombinerPass::runOnFunctions(BinaryContext &BC) {
   if (opts::FrameOptimization == FOP_NONE)
     return;
 
-  runForAllWeCare(
-      BC.getBinaryFunctions(),
-      [&](BinaryFunction &Function) { combineAdjustments(BC, Function); });
+  runForAllWeCare(BC.getBinaryFunctions(), [&](BinaryFunction &Function) {
+    combineAdjustments(Function);
+  });
 
   outs() << "BOLT-INFO: Allocation combiner: " << NumCombined
          << " empty spaces coalesced.\n";

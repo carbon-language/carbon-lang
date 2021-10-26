@@ -29,10 +29,9 @@ class StackReachingUses
   friend class DataflowAnalysis<StackReachingUses, BitVector, true>;
 
 public:
-  StackReachingUses(const FrameAnalysis &FA, const BinaryContext &BC,
-                    BinaryFunction &BF,
+  StackReachingUses(const FrameAnalysis &FA, BinaryFunction &BF,
                     MCPlusBuilder::AllocatorIdTy AllocId = 0)
-      : InstrsDataflowAnalysis(BC, BF, AllocId), FA(FA) {}
+      : InstrsDataflowAnalysis(BF, AllocId), FA(FA) {}
   virtual ~StackReachingUses() {}
 
   /// Return true if the stack position written by the store in \p StoreFIE was

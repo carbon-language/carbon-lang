@@ -56,15 +56,15 @@ namespace bolt {
 
 void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
                                                 const FrameAnalysis &FA,
-                                                const BinaryContext &BC,
                                                 BinaryFunction &BF) {
-  StackAvailableExpressions SAE(RA, FA, BC, BF);
+  StackAvailableExpressions SAE(RA, FA, BF);
   SAE.run();
 
   LLVM_DEBUG(dbgs() << "Performing unnecessary loads removal\n");
   std::deque<std::pair<BinaryBasicBlock *, MCInst *>> ToErase;
   bool Changed = false;
   const auto ExprEnd = SAE.expr_end();
+  MCPlusBuilder *MIB = BF.getBinaryContext().MIB.get();
   for (BinaryBasicBlock &BB : BF) {
     LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
@@ -105,7 +105,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
         if (FIEX->StackOffset != FIEY->StackOffset || FIEX->Size != FIEY->Size)
           continue;
         // TODO: Change push/pops to stack adjustment instruction
-        if (BC.MIB->isPop(Inst))
+        if (MIB->isPop(Inst))
           continue;
 
         ++NumRedundantLoads;
@@ -117,14 +117,14 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
         LLVM_DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
         // Replace load
         if (FIEY->IsStoreFromReg) {
-          if (!BC.MIB->replaceMemOperandWithReg(Inst, FIEY->RegOrImm)) {
+          if (!MIB->replaceMemOperandWithReg(Inst, FIEY->RegOrImm)) {
             LLVM_DEBUG(dbgs() << "FAILED to change operand to a reg\n");
             break;
           }
           ++NumLoadsChangedToReg;
-          BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
+          MIB->removeAnnotation(Inst, "FrameAccessEntry");
           LLVM_DEBUG(dbgs() << "Changed operand to a reg\n");
-          if (BC.MIB->isRedundantMove(Inst)) {
+          if (MIB->isRedundantMove(Inst)) {
             ++NumLoadsDeleted;
             LLVM_DEBUG(dbgs() << "Created a redundant move\n");
             // Delete it!
@@ -134,11 +134,11 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
           char Buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
           support::ulittle64_t::ref(Buf + 0) = FIEY->RegOrImm;
           LLVM_DEBUG(dbgs() << "Changing operand to an imm... ");
-          if (!BC.MIB->replaceMemOperandWithImm(Inst, StringRef(Buf, 8), 0)) {
+          if (!MIB->replaceMemOperandWithImm(Inst, StringRef(Buf, 8), 0)) {
             LLVM_DEBUG(dbgs() << "FAILED\n");
           } else {
             ++NumLoadsChangedToImm;
-            BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
+            MIB->removeAnnotation(Inst, "FrameAccessEntry");
             LLVM_DEBUG(dbgs() << "Ok\n");
           }
         }
@@ -160,9 +160,8 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
 }
 
 void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
-                                            const BinaryContext &BC,
                                             BinaryFunction &BF) {
-  StackReachingUses SRU(FA, BC, BF);
+  StackReachingUses SRU(FA, BF);
   SRU.run();
 
   LLVM_DEBUG(dbgs() << "Performing unused stores removal\n");
@@ -198,7 +197,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
         continue;
       }
       // TODO: Change push/pops to stack adjustment instruction
-      if (BC.MIB->isPush(Inst))
+      if (BF.getBinaryContext().MIB->isPush(Inst))
         continue;
 
       ++NumRedundantStores;
@@ -268,13 +267,13 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     {
       NamedRegionTimer T1("removeloads", "remove loads", "FOP", "FOP breakdown",
                           opts::TimeOpts);
-      removeUnnecessaryLoads(*RA, *FA, BC, I.second);
+      removeUnnecessaryLoads(*RA, *FA, I.second);
     }
 
     if (opts::RemoveStores) {
       NamedRegionTimer T1("removestores", "remove stores", "FOP",
                           "FOP breakdown", opts::TimeOpts);
-      removeUnusedStores(*FA, BC, I.second);
+      removeUnusedStores(*FA, I.second);
     }
     // Don't even start shrink wrapping if no profiling info is available
     if (I.second.getKnownExecutionCount() == 0)
@@ -344,8 +343,8 @@ void FrameOptimizerPass::performShrinkWrapping(const RegAnalysis &RA,
 
   ParallelUtilities::WorkFuncWithAllocTy WorkFunction =
       [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocatorId) {
-        DataflowInfoManager Info(BC, BF, &RA, &FA, AllocatorId);
-        ShrinkWrapping SW(FA, BC, BF, Info, AllocatorId);
+        DataflowInfoManager Info(BF, &RA, &FA, AllocatorId);
+        ShrinkWrapping SW(FA, BF, Info, AllocatorId);
 
         if (SW.perform()) {
           std::lock_guard<std::mutex> Lock(FuncsChangedMutex);

@@ -34,8 +34,7 @@ public:
   const char *getName() const override { return "instrumentation"; }
 
 private:
-
-  void instrumentFunction(BinaryContext &BC, BinaryFunction &Function,
+  void instrumentFunction(BinaryFunction &Function,
                           MCPlusBuilder::AllocatorIdTy = 0);
 
   /// Retrieve the string table index for the name of \p Function. We encode
@@ -90,9 +89,9 @@ private:
                            FunctionDescription *FuncDesc,
                            uint32_t FromNodeID, uint32_t ToNodeID = 0);
 
-  void instrumentLeafNode(BinaryContext &BC, BinaryBasicBlock &BB,
-                          BinaryBasicBlock::iterator Iter, bool IsLeaf,
-                          FunctionDescription &FuncDesc, uint32_t Node);
+  void instrumentLeafNode(BinaryBasicBlock &BB, BinaryBasicBlock::iterator Iter,
+                          bool IsLeaf, FunctionDescription &FuncDesc,
+                          uint32_t Node);
 
   void instrumentIndirectTarget(BinaryBasicBlock &BB,
                                 BinaryBasicBlock::iterator &Iter,

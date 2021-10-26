@@ -19,9 +19,8 @@ namespace bolt {
 
 StackAvailableExpressions::StackAvailableExpressions(const RegAnalysis &RA,
                                                      const FrameAnalysis &FA,
-                                                     const BinaryContext &BC,
                                                      BinaryFunction &BF)
-    : InstrsDataflowAnalysis(BC, BF), RA(RA), FA(FA) {}
+    : InstrsDataflowAnalysis(BF), RA(RA), FA(FA) {}
 
 void StackAvailableExpressions::preflight() {
   LLVM_DEBUG(dbgs() << "Starting StackAvailableExpressions on \""

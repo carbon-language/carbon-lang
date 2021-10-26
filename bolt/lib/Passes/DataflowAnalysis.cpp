@@ -42,8 +42,9 @@ raw_ostream &operator<<(raw_ostream &OS, const BitVector &State) {
 
 namespace bolt {
 
-void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
+void doForAllPreds(const BinaryBasicBlock &BB,
                    std::function<void(ProgramPoint)> Task) {
+  MCPlusBuilder *MIB = BB.getFunction()->getBinaryContext().MIB.get();
   for (BinaryBasicBlock *Pred : BB.predecessors()) {
     if (Pred->isValid())
       Task(ProgramPoint::getLastPointAt(*Pred));
@@ -52,9 +53,9 @@ void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
     return;
   for (BinaryBasicBlock *Thrower : BB.throwers()) {
     for (MCInst &Inst : *Thrower) {
-      if (!BC.MIB->isInvoke(Inst))
+      if (!MIB->isInvoke(Inst))
         continue;
-      const Optional<MCPlus::MCLandingPad> EHInfo = BC.MIB->getEHInfo(Inst);
+      const Optional<MCPlus::MCLandingPad> EHInfo = MIB->getEHInfo(Inst);
       if (!EHInfo || EHInfo->first != BB.getLabel())
         continue;
       Task(ProgramPoint(&Inst));

@@ -32,7 +32,7 @@ public:
 
   /// Pass entry point
   void runOnFunctions(BinaryContext &BC) override;
-  void runOnFunction(BinaryContext &BC, BinaryFunction &BF);
+  void runOnFunction(BinaryFunction &BF);
 };
 
 } // namespace bolt

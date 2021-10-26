@@ -34,12 +34,10 @@ class RegReAssign : public BinaryFunctionPass {
   int64_t StaticBytesSaved{0};
   int64_t DynBytesSaved{0};
 
-  void swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
-            MCPhysReg B);
-  void rankRegisters(BinaryContext &BC, BinaryFunction &Function);
-  void aggressivePassOverFunction(BinaryContext &BC, BinaryFunction &Function);
-  bool conservativePassOverFunction(BinaryContext &BC,
-                                    BinaryFunction &Function);
+  void swap(BinaryFunction &Function, MCPhysReg A, MCPhysReg B);
+  void rankRegisters(BinaryFunction &Function);
+  void aggressivePassOverFunction(BinaryFunction &Function);
+  bool conservativePassOverFunction(BinaryFunction &Function);
   void setupAggressivePass(BinaryContext &BC,
                            std::map<uint64_t, BinaryFunction> &BFs);
   void setupConservativePass(BinaryContext &BC,

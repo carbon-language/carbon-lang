@@ -208,14 +208,14 @@ insertInstructions(std::vector<MCInst>& Instrs,
 
 }
 
-void Instrumentation::instrumentLeafNode(BinaryContext &BC,
-                                         BinaryBasicBlock &BB,
+void Instrumentation::instrumentLeafNode(BinaryBasicBlock &BB,
                                          BinaryBasicBlock::iterator Iter,
                                          bool IsLeaf,
                                          FunctionDescription &FuncDesc,
                                          uint32_t Node) {
   createLeafNodeDescription(FuncDesc, Node);
-  std::vector<MCInst> CounterInstrs = createInstrumentationSnippet(BC, IsLeaf);
+  std::vector<MCInst> CounterInstrs = createInstrumentationSnippet(
+      BB.getFunction()->getBinaryContext(), IsLeaf);
   insertInstructions(CounterInstrs, BB, Iter);
 }
 
@@ -297,12 +297,12 @@ bool Instrumentation::instrumentOneTarget(
   return true;
 }
 
-void Instrumentation::instrumentFunction(BinaryContext &BC,
-                                         BinaryFunction &Function,
+void Instrumentation::instrumentFunction(BinaryFunction &Function,
                                          MCPlusBuilder::AllocatorIdTy AllocId) {
   if (Function.hasUnknownControlFlow())
     return;
 
+  BinaryContext &BC = Function.getBinaryContext();
   if (BC.isMachO() && Function.hasName("___GLOBAL_init_65535/1"))
     return;
 
@@ -503,7 +503,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
     for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
       BinaryBasicBlock &BB = *BBI;
       if (STOutSet[&BB].size() == 0)
-        instrumentLeafNode(BC, BB, BB.begin(), IsLeafFunction, *FuncDesc,
+        instrumentLeafNode(BB, BB.begin(), IsLeafFunction, *FuncDesc,
                            BBToID[&BB]);
     }
   }
@@ -551,7 +551,7 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
 
   ParallelUtilities::WorkFuncWithAllocTy WorkFun =
       [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocatorId) {
-        instrumentFunction(BC, BF, AllocatorId);
+        instrumentFunction(BF, AllocatorId);
       };
 
   ParallelUtilities::runOnEachFunctionWithUniqueAllocId(

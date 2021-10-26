@@ -23,9 +23,7 @@ class AllocCombinerPass : public BinaryFunctionPass {
   uint64_t NumCombined{0};
   DenseSet<const BinaryFunction *> FuncsChanged;
 
-  void combineAdjustments(BinaryContext &BC, BinaryFunction &BF);
-  void coalesceEmptySpace(BinaryContext &BC, BinaryFunction &BF,
-                          DataflowInfoManager &Info, FrameAnalysis &FA);
+  void combineAdjustments(BinaryFunction &BF);
 
 public:
   explicit AllocCombinerPass(const cl::opt<bool> &PrintPass)

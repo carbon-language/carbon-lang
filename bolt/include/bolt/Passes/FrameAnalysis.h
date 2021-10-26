@@ -209,7 +209,7 @@ public:
   /// Get or create an SPT object and run the analysis
   StackPointerTracking &getSPT(BinaryFunction &BF) {
     if (!SPTMap.count(&BF)) {
-      SPTMap.emplace(&BF, std::make_unique<StackPointerTracking>(BC, BF));
+      SPTMap.emplace(&BF, std::make_unique<StackPointerTracking>(BF));
       auto Iter = SPTMap.find(&BF);
       assert(Iter != SPTMap.end() && "item should exist");
       Iter->second->run();

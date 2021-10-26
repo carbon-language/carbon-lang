@@ -37,8 +37,8 @@ AggressiveReAssign("use-aggr-reg-reassign",
 namespace llvm {
 namespace bolt {
 
-void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
-                      MCPhysReg B) {
+void RegReAssign::swap(BinaryFunction &Function, MCPhysReg A, MCPhysReg B) {
+  BinaryContext &BC = Function.getBinaryContext();
   const BitVector &AliasA = BC.MIB->getAliases(A, false);
   const BitVector &AliasB = BC.MIB->getAliases(B, false);
 
@@ -138,7 +138,8 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
   }
 }
 
-void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
+void RegReAssign::rankRegisters(BinaryFunction &Function) {
+  BinaryContext &BC = Function.getBinaryContext();
   std::fill(RegScore.begin(), RegScore.end(), 0);
   std::fill(RankedRegs.begin(), RankedRegs.end(), 0);
 
@@ -215,9 +216,9 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
   });
 }
 
-void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
-                                            BinaryFunction &Function) {
-  rankRegisters(BC, Function);
+void RegReAssign::aggressivePassOverFunction(BinaryFunction &Function) {
+  BinaryContext &BC = Function.getBinaryContext();
+  rankRegisters(Function);
 
   // Bail early if our registers are all black listed, before running expensive
   // analysis passes
@@ -251,7 +252,7 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
     return;
 
   // -- expensive pass -- determine all regs alive during func start
-  DataflowInfoManager Info(BC, Function, RA.get(), nullptr);
+  DataflowInfoManager Info(Function, RA.get(), nullptr);
   BitVector AliveAtStart = *Info.getLivenessAnalysis().getStateAt(
       ProgramPoint::getFirstPointAt(*Function.begin()));
   for (BinaryBasicBlock &BB : Function) {
@@ -309,7 +310,7 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
     // Opportunity detected. Swap.
     LLVM_DEBUG(dbgs() << "\n ** Swapping " << BC.MRI->getName(ClassicReg)
                       << " with " << BC.MRI->getName(ExtReg) << "\n\n");
-    swap(BC, Function, ClassicReg, ExtReg);
+    swap(Function, ClassicReg, ExtReg);
     FuncsChanged.insert(&Function);
     ++Begin;
     if (Begin == End)
@@ -318,9 +319,9 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
   }
 }
 
-bool RegReAssign::conservativePassOverFunction(BinaryContext &BC,
-                                              BinaryFunction &Function) {
-  rankRegisters(BC, Function);
+bool RegReAssign::conservativePassOverFunction(BinaryFunction &Function) {
+  BinaryContext &BC = Function.getBinaryContext();
+  rankRegisters(Function);
 
   // Try swapping R12, R13, R14 or R15 with RBX (we work with all callee-saved
   // regs except RBP)
@@ -352,7 +353,7 @@ bool RegReAssign::conservativePassOverFunction(BinaryContext &BC,
 
   LLVM_DEBUG(dbgs() << "\n ** Swapping " << BC.MRI->getName(RBX) << " with "
                     << BC.MRI->getName(Candidate) << "\n\n");
-  swap(BC, Function, RBX, Candidate);
+  swap(Function, RBX, Candidate);
   FuncsChanged.insert(&Function);
   return true;
 }
@@ -418,9 +419,8 @@ void RegReAssign::runOnFunctions(BinaryContext &BC) {
 
     LLVM_DEBUG(dbgs() << "====================================\n");
     LLVM_DEBUG(dbgs() << " - " << Function.getPrintName() << "\n");
-    if (!conservativePassOverFunction(BC, Function) &&
-        opts::AggressiveReAssign) {
-      aggressivePassOverFunction(BC, Function);
+    if (!conservativePassOverFunction(Function) && opts::AggressiveReAssign) {
+      aggressivePassOverFunction(Function);
       LLVM_DEBUG({
         if (FuncsChanged.count(&Function)) {
           dbgs() << "Aggressive pass successful on " << Function.getPrintName()

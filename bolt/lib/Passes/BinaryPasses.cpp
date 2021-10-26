@@ -588,11 +588,11 @@ namespace {
 // B0: ...
 //     jmp  B2   (or jcc B2)
 //
-uint64_t fixDoubleJumps(BinaryContext &BC,
-                        BinaryFunction &Function,
-                        bool MarkInvalid) {
+uint64_t fixDoubleJumps(BinaryFunction &Function, bool MarkInvalid) {
   uint64_t NumDoubleJumps = 0;
 
+  MCContext *Ctx = Function.getBinaryContext().Ctx.get();
+  MCPlusBuilder *MIB = Function.getBinaryContext().MIB.get();
   for (BinaryBasicBlock &BB : Function) {
     auto checkAndPatch = [&](BinaryBasicBlock *Pred,
                              BinaryBasicBlock *Succ,
@@ -616,15 +616,13 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
 
         // We must patch up any existing branch instructions to match up
         // with the new successor.
-        MCContext *Ctx = BC.Ctx.get();
         assert((CondBranch || (!CondBranch && Pred->succ_size() == 1)) &&
                "Predecessor block has inconsistent number of successors");
-        if (CondBranch &&
-            BC.MIB->getTargetSymbol(*CondBranch) == BB.getLabel()) {
-          BC.MIB->replaceBranchTarget(*CondBranch, Succ->getLabel(), Ctx);
+        if (CondBranch && MIB->getTargetSymbol(*CondBranch) == BB.getLabel()) {
+          MIB->replaceBranchTarget(*CondBranch, Succ->getLabel(), Ctx);
         } else if (UncondBranch &&
-                   BC.MIB->getTargetSymbol(*UncondBranch) == BB.getLabel()) {
-          BC.MIB->replaceBranchTarget(*UncondBranch, Succ->getLabel(), Ctx);
+                   MIB->getTargetSymbol(*UncondBranch) == BB.getLabel()) {
+          MIB->replaceBranchTarget(*UncondBranch, Succ->getLabel(), Ctx);
         } else if (!UncondBranch) {
           assert(Function.getBasicBlockAfter(Pred, false) != Succ &&
                  "Don't add an explicit jump to a fallthrough block.");
@@ -634,8 +632,8 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         // Succ will be null in the tail call case.  In this case we
         // need to explicitly add a tail call instruction.
         MCInst *Branch = Pred->getLastNonPseudoInstr();
-        if (Branch && BC.MIB->isUnconditionalBranch(*Branch)) {
-          assert(BC.MIB->getTargetSymbol(*Branch) == BB.getLabel());
+        if (Branch && MIB->isUnconditionalBranch(*Branch)) {
+          assert(MIB->getTargetSymbol(*Branch) == BB.getLabel());
           Pred->removeSuccessor(&BB);
           Pred->eraseInstruction(Pred->findInstruction(Branch));
           Pred->addTailCallInstruction(SuccSym);
@@ -657,16 +655,16 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
       continue;
 
     MCInst *Inst = BB.getFirstNonPseudoInstr();
-    const bool IsTailCall = BC.MIB->isTailCall(*Inst);
+    const bool IsTailCall = MIB->isTailCall(*Inst);
 
-    if (!BC.MIB->isUnconditionalBranch(*Inst) && !IsTailCall)
+    if (!MIB->isUnconditionalBranch(*Inst) && !IsTailCall)
       continue;
 
     // If we operate after SCTC make sure it's not a conditional tail call.
-    if (IsTailCall && BC.MIB->isConditionalBranch(*Inst))
+    if (IsTailCall && MIB->isConditionalBranch(*Inst))
       continue;
 
-    const MCSymbol *SuccSym = BC.MIB->getTargetSymbol(*Inst);
+    const MCSymbol *SuccSym = MIB->getTargetSymbol(*Inst);
     BinaryBasicBlock *Succ = BB.getSuccessor();
 
     if (((!Succ || &BB == Succ) && !IsTailCall) || (IsTailCall && !SuccSym))
@@ -692,7 +690,6 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
 
   return NumDoubleJumps;
 }
-
 }
 
 bool SimplifyConditionalTailCalls::shouldRewriteBranch(
@@ -736,13 +733,13 @@ bool SimplifyConditionalTailCalls::shouldRewriteBranch(
   return Result == DirectionFlag;
 }
 
-uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
-                                                    BinaryFunction &BF) {
+uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryFunction &BF) {
   // Need updated indices to correctly detect branch' direction.
   BF.updateLayoutIndices();
   BF.markUnreachableBlocks();
 
-  auto &MIB = BC.MIB;
+  MCPlusBuilder *MIB = BF.getBinaryContext().MIB.get();
+  MCContext *Ctx = BF.getBinaryContext().Ctx.get();
   uint64_t NumLocalCTCCandidates = 0;
   uint64_t NumLocalCTCs = 0;
   uint64_t LocalCTCTakenCount = 0;
@@ -763,7 +760,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       continue;
 
     MCInst *Instr = BB->getFirstNonPseudoInstr();
-    if (!MIB->isTailCall(*Instr) || BC.MIB->isConditionalBranch(*Instr))
+    if (!MIB->isTailCall(*Instr) || MIB->isConditionalBranch(*Instr))
       continue;
 
     const MCSymbol *CalleeSymbol = MIB->getTargetSymbol(*Instr);
@@ -819,7 +816,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       uint64_t Count = 0;
       if (CondSucc != BB) {
         // Patch the new target address into the conditional branch.
-        MIB->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
+        MIB->reverseBranchCondition(*CondBranch, CalleeSymbol, Ctx);
         // Since we reversed the condition on the branch we need to change
         // the target for the unconditional branch or add a unconditional
         // branch to the old target.  This has to be done manually since
@@ -828,7 +825,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         Count = PredBB->getFallthroughBranchInfo().Count;
       } else {
         // Change destination of the conditional branch.
-        MIB->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
+        MIB->replaceBranchTarget(*CondBranch, CalleeSymbol, Ctx);
         Count = PredBB->getTakenBranchInfo().Count;
       }
       const uint64_t CTCTakenFreq =
@@ -838,8 +835,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       MIB->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
       // info will be lost when we delete the associated BranchInfo entry
-      auto &CTCAnnotation = BC.MIB->getOrCreateAnnotationAs<uint64_t>(
-          *CondBranch, "CTCTakenCount");
+      auto &CTCAnnotation =
+          MIB->getOrCreateAnnotationAs<uint64_t>(*CondBranch, "CTCTakenCount");
       CTCAnnotation = CTCTakenFreq;
 
       // Remove the unused successor which may be eliminated later
@@ -890,18 +887,16 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       if (HasFallthrough)
         PredBB->eraseInstruction(PredBB->findInstruction(UncondBranch));
       else
-        MIB->replaceBranchTarget(*UncondBranch,
-                                 CondSucc->getLabel(),
-                                 BC.Ctx.get());
+        MIB->replaceBranchTarget(*UncondBranch, CondSucc->getLabel(), Ctx);
     } else if (!HasFallthrough) {
       MCInst Branch;
-      MIB->createUncondBranch(Branch, CondSucc->getLabel(), BC.Ctx.get());
+      MIB->createUncondBranch(Branch, CondSucc->getLabel(), Ctx);
       PredBB->addInstruction(Branch);
     }
   }
 
   if (NumLocalCTCs > 0) {
-    NumDoubleJumps += fixDoubleJumps(BC, BF, true);
+    NumDoubleJumps += fixDoubleJumps(BF, true);
     // Clean-up unreachable tail-call blocks.
     const std::pair<unsigned, uint64_t> Stats = BF.eraseInvalidBBs();
     DeletedBlocks += Stats.first;
@@ -935,7 +930,7 @@ void SimplifyConditionalTailCalls::runOnFunctions(BinaryContext &BC) {
     if (!shouldOptimize(Function))
       continue;
 
-    if (fixTailCalls(BC, Function)) {
+    if (fixTailCalls(Function)) {
       Modified.insert(&Function);
       Function.setHasCanonicalCFG(false);
     }
@@ -977,13 +972,13 @@ uint64_t Peepholes::shortenInstructions(BinaryContext &BC,
   return Count;
 }
 
-void Peepholes::addTailcallTraps(BinaryContext &BC,
-                                 BinaryFunction &Function) {
+void Peepholes::addTailcallTraps(BinaryFunction &Function) {
+  MCPlusBuilder *MIB = Function.getBinaryContext().MIB.get();
   for (BinaryBasicBlock &BB : Function) {
     MCInst *Inst = BB.getLastNonPseudoInstr();
-    if (Inst && BC.MIB->isTailCall(*Inst) && BC.MIB->isIndirectBranch(*Inst)) {
+    if (Inst && MIB->isTailCall(*Inst) && MIB->isIndirectBranch(*Inst)) {
       MCInst Trap;
-      if (BC.MIB->createTrap(Trap)) {
+      if (MIB->createTrap(Trap)) {
         BB.addInstruction(Trap);
         ++TailCallTraps;
       }
@@ -991,8 +986,7 @@ void Peepholes::addTailcallTraps(BinaryContext &BC,
   }
 }
 
-void Peepholes::removeUselessCondBranches(BinaryContext &BC,
-                                          BinaryFunction &Function) {
+void Peepholes::removeUselessCondBranches(BinaryFunction &Function) {
   for (BinaryBasicBlock &BB : Function) {
     if (BB.succ_size() != 2)
       continue;
@@ -1035,11 +1029,11 @@ void Peepholes::runOnFunctions(BinaryContext &BC) {
       if (Opts & opts::PEEP_SHORTEN)
         NumShortened += shortenInstructions(BC, Function);
       if (Opts & opts::PEEP_DOUBLE_JUMPS)
-        NumDoubleJumps += fixDoubleJumps(BC, Function, false);
+        NumDoubleJumps += fixDoubleJumps(Function, false);
       if (Opts & opts::PEEP_TAILCALL_TRAPS)
-        addTailcallTraps(BC, Function);
+        addTailcallTraps(Function);
       if (Opts & opts::PEEP_USELESS_BRANCHES)
-        removeUselessCondBranches(BC, Function);
+        removeUselessCondBranches(Function);
       assert(Function.validateCFG());
     }
   }
@@ -1053,9 +1047,9 @@ void Peepholes::runOnFunctions(BinaryContext &BC) {
          << " useless conditional branches removed.\n";
 }
 
-bool SimplifyRODataLoads::simplifyRODataLoads(
-    BinaryContext &BC, BinaryFunction &BF) {
-  auto &MIB = BC.MIB;
+bool SimplifyRODataLoads::simplifyRODataLoads(BinaryFunction &BF) {
+  BinaryContext &BC = BF.getBinaryContext();
+  MCPlusBuilder *MIB = BC.MIB.get();
 
   uint64_t NumLocalLoadsSimplified = 0;
   uint64_t NumDynamicLocalLoadsSimplified = 0;
@@ -1086,7 +1080,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
         uint64_t DisplOffset;
 
         std::tie(DisplSymbol, DisplOffset) =
-          BC.MIB->getTargetSymbolInfo(DispOpI->getExpr());
+            MIB->getTargetSymbolInfo(DispOpI->getExpr());
 
         if (!DisplSymbol)
           continue;
@@ -1138,7 +1132,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 void SimplifyRODataLoads::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction &Function = It.second;
-    if (shouldOptimize(Function) && simplifyRODataLoads(BC, Function)) {
+    if (shouldOptimize(Function) && simplifyRODataLoads(Function)) {
       Modified.insert(&Function);
     }
   }

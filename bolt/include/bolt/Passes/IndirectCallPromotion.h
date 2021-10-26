@@ -183,56 +183,38 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   std::vector<Callsite> getCallTargets(BinaryBasicBlock &BB,
                                        const MCInst &Inst) const;
 
-  size_t canPromoteCallsite(const BinaryBasicBlock *BB,
-                            const MCInst &Inst,
+  size_t canPromoteCallsite(const BinaryBasicBlock &BB, const MCInst &Inst,
                             const std::vector<Callsite> &Targets,
                             uint64_t NumCalls);
 
-  void printCallsiteInfo(const BinaryBasicBlock *BB,
-                         const MCInst &Inst,
-                         const std::vector<Callsite> &Targets,
-                         const size_t N,
+  void printCallsiteInfo(const BinaryBasicBlock &BB, const MCInst &Inst,
+                         const std::vector<Callsite> &Targets, const size_t N,
                          uint64_t NumCalls) const;
 
-  JumpTableInfoType
-  maybeGetHotJumpTableTargets(BinaryContext &BC,
-                              BinaryFunction &Function,
-                              BinaryBasicBlock *BB,
-                              MCInst &Inst,
-                              MCInst *&TargetFetchInst,
-                              const JumpTable *JT) const;
+  JumpTableInfoType maybeGetHotJumpTableTargets(BinaryBasicBlock &BB,
+                                                MCInst &Inst,
+                                                MCInst *&TargetFetchInst,
+                                                const JumpTable *JT) const;
 
-  SymTargetsType findCallTargetSymbols(BinaryContext &BC,
-                                       std::vector<Callsite> &Targets,
-                                       size_t &N,
-                                       BinaryFunction &Function,
-                                       BinaryBasicBlock *BB,
+  SymTargetsType findCallTargetSymbols(std::vector<Callsite> &Targets,
+                                       size_t &N, BinaryBasicBlock &BB,
                                        MCInst &Inst,
                                        MCInst *&TargetFetchInst) const;
 
-  MethodInfoType maybeGetVtableSyms(BinaryContext &BC,
-                                    BinaryFunction &Function,
-                                    BinaryBasicBlock *BB,
-                                    MCInst &Inst,
+  MethodInfoType maybeGetVtableSyms(BinaryBasicBlock &BB, MCInst &Inst,
                                     const SymTargetsType &SymTargets) const;
 
   std::vector<std::unique_ptr<BinaryBasicBlock>>
-  rewriteCall(BinaryContext &BC,
-              BinaryFunction &Function,
-              BinaryBasicBlock *IndCallBlock,
-              const MCInst &CallInst,
+  rewriteCall(BinaryBasicBlock &IndCallBlock, const MCInst &CallInst,
               MCPlusBuilder::BlocksVectorTy &&ICPcode,
               const std::vector<MCInst *> &MethodFetchInsns) const;
 
-  BinaryBasicBlock *fixCFG(BinaryContext &BC,
-                           BinaryFunction &Function,
-                           BinaryBasicBlock *IndCallBlock,
-                           const bool IsTailCall,
-                           const bool IsJumpTable,
+  BinaryBasicBlock *fixCFG(BinaryBasicBlock &IndCallBlock,
+                           const bool IsTailCall, const bool IsJumpTable,
                            BasicBlocksVector &&NewBBs,
                            const std::vector<Callsite> &Targets) const;
 
- public:
+public:
   explicit IndirectCallPromotion(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 

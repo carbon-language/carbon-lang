@@ -32,10 +32,9 @@ class StackAllocationAnalysis
   StackPointerTracking &SPT;
 
 public:
-  StackAllocationAnalysis(const BinaryContext &BC, BinaryFunction &BF,
-                          StackPointerTracking &SPT,
+  StackAllocationAnalysis(BinaryFunction &BF, StackPointerTracking &SPT,
                           MCPlusBuilder::AllocatorIdTy AllocId)
-      : InstrsDataflowAnalysis<StackAllocationAnalysis, false>(BC, BF, AllocId),
+      : InstrsDataflowAnalysis<StackAllocationAnalysis, false>(BF, AllocId),
         SPT(SPT) {}
   virtual ~StackAllocationAnalysis() {}
 

@@ -34,9 +34,8 @@ class DominatorAnalysis
                                 Backward>;
 
 public:
-  DominatorAnalysis(const BinaryContext &BC, BinaryFunction &BF,
-                    MCPlusBuilder::AllocatorIdTy AllocId)
-      : InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>(BC, BF,
+  DominatorAnalysis(BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId)
+      : InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>(BF,
                                                                       AllocId) {
   }
   virtual ~DominatorAnalysis() {}

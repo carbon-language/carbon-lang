@@ -92,12 +92,10 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   /// immediate loads. Delete redundant register moves.
   void removeUnnecessaryLoads(const RegAnalysis &RA,
                               const FrameAnalysis &FA,
-                              const BinaryContext &BC,
                               BinaryFunction &BF);
 
   /// Use information from stack frame usage to delete unused stores.
   void removeUnusedStores(const FrameAnalysis &FA,
-                          const BinaryContext &BC,
                           BinaryFunction &BF);
 
   /// Perform shrinkwrapping step

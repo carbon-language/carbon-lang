@@ -34,10 +34,10 @@ class ReachingDefOrUse
   friend class DataflowAnalysis<ReachingDefOrUse<Def>, BitVector, !Def>;
 
 public:
-  ReachingDefOrUse(const RegAnalysis &RA, const BinaryContext &BC,
-                   BinaryFunction &BF, Optional<MCPhysReg> TrackingReg = None,
+  ReachingDefOrUse(const RegAnalysis &RA, BinaryFunction &BF,
+                   Optional<MCPhysReg> TrackingReg = None,
                    MCPlusBuilder::AllocatorIdTy AllocId = 0)
-      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF, AllocId),
+      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BF, AllocId),
         RA(RA), TrackingReg(TrackingReg) {}
   virtual ~ReachingDefOrUse() {}
 

@@ -61,11 +61,11 @@ public:
   std::vector<const FrameIndexEntry*> SaveFIEByReg;
   std::vector<const FrameIndexEntry*> LoadFIEByReg;
 
-  CalleeSavedAnalysis(const FrameAnalysis &FA, const BinaryContext &BC,
-                      BinaryFunction &BF, DataflowInfoManager &Info,
+  CalleeSavedAnalysis(const FrameAnalysis &FA, BinaryFunction &BF,
+                      DataflowInfoManager &Info,
                       MCPlusBuilder::AllocatorIdTy AllocId)
-      : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId),
-        CalleeSaved(BC.MRI->getNumRegs(), false),
+      : FA(FA), BC(BF.getBinaryContext()), BF(BF), Info(Info),
+        AllocatorId(AllocId), CalleeSaved(BC.MRI->getNumRegs(), false),
         OffsetsByReg(BC.MRI->getNumRegs(), 0LL),
         HasRestores(BC.MRI->getNumRegs(), false),
         SavingCost(BC.MRI->getNumRegs(), 0ULL),
@@ -221,10 +221,11 @@ private:
   }
 
 public:
-  StackLayoutModifier(const FrameAnalysis &FA, const BinaryContext &BC,
-                      BinaryFunction &BF, DataflowInfoManager &Info,
+  StackLayoutModifier(const FrameAnalysis &FA, BinaryFunction &BF,
+                      DataflowInfoManager &Info,
                       MCPlusBuilder::AllocatorIdTy AllocId)
-      : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId) {}
+      : FA(FA), BC(BF.getBinaryContext()), BF(BF), Info(Info),
+        AllocatorId(AllocId) {}
 
   ~StackLayoutModifier() {
     for (BinaryBasicBlock &BB : BF) {
@@ -516,11 +517,12 @@ private:
   void processDeletions();
 
 public:
-  ShrinkWrapping(const FrameAnalysis &FA, const BinaryContext &BC,
-                 BinaryFunction &BF, DataflowInfoManager &Info,
+  ShrinkWrapping(const FrameAnalysis &FA, BinaryFunction &BF,
+                 DataflowInfoManager &Info,
                  MCPlusBuilder::AllocatorIdTy AllocId)
-      : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId),
-        SLM(FA, BC, BF, Info, AllocId), CSA(FA, BC, BF, Info, AllocId) {}
+      : FA(FA), BC(BF.getBinaryContext()), BF(BF), Info(Info),
+        AllocatorId(AllocId), SLM(FA, BF, Info, AllocId),
+        CSA(FA, BF, Info, AllocId) {}
 
   ~ShrinkWrapping() {
     for (BinaryBasicBlock &BB : BF) {

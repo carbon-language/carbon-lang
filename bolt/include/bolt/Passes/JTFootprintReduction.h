@@ -39,8 +39,7 @@ class JTFootprintReduction : public BinaryFunctionPass {
   /// Check if \p Function presents jump tables where all jump locations can
   /// be safely changed to use a different code sequence. If this is true, we
   /// will be able to emit the whole table with a smaller entry size.
-  void checkOpportunities(BinaryContext &BC, BinaryFunction &Function,
-                          DataflowInfoManager &Info);
+  void checkOpportunities(BinaryFunction &Function, DataflowInfoManager &Info);
 
   /// The Non-PIC jump table optimization consists of reducing the jump table
   /// entry size from 8 to 4 bytes. For that, we need to change the jump code
@@ -60,8 +59,7 @@ class JTFootprintReduction : public BinaryFunctionPass {
                       DataflowInfoManager &Info);
 
   /// Run a pass for \p Function
-  void optimizeFunction(BinaryContext &BC, BinaryFunction &Function,
-                        DataflowInfoManager &Info);
+  void optimizeFunction(BinaryFunction &Function, DataflowInfoManager &Info);
 
 public:
   explicit JTFootprintReduction(const cl::opt<bool> &PrintPass)

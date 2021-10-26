@@ -130,13 +130,11 @@ public:
     return "stoke-get-stat";
   }
 
-  void checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
-    StokeFuncInfo &FuncInfo);
+  void checkInstr(const BinaryFunction &BF, StokeFuncInfo &FuncInfo);
 
   /// Get all required information for the stoke optimization
-  bool checkFunction(const BinaryContext &BC, BinaryFunction &BF,
-    DataflowInfoManager &DInfo, RegAnalysis &RA,
-    StokeFuncInfo &FuncInfo);
+  bool checkFunction(BinaryFunction &BF, DataflowInfoManager &DInfo,
+                     RegAnalysis &RA, StokeFuncInfo &FuncInfo);
 
   void runOnFunctions(BinaryContext &BC) override;
 };

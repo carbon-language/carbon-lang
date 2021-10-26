@@ -265,8 +265,9 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
                            const BinaryBasicBlock *BB,
                            const bool DirectionFlag);
 
-  uint64_t fixTailCalls(BinaryContext &BC, BinaryFunction &BF);
- public:
+  uint64_t fixTailCalls(BinaryFunction &BF);
+
+public:
   explicit SimplifyConditionalTailCalls(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
@@ -293,12 +294,13 @@ class Peepholes : public BinaryFunctionPass {
   /// Add trap instructions immediately after indirect tail calls to prevent
   /// the processor from decoding instructions immediate following the
   /// tailcall.
-  void addTailcallTraps(BinaryContext &BC, BinaryFunction &Function);
+  void addTailcallTraps(BinaryFunction &Function);
 
   /// Remove useless duplicate successors.  When the conditional
   /// successor is the same as the unconditional successor, we can
   /// remove the conditional successor and branch instruction.
-  void removeUselessCondBranches(BinaryContext &BC, BinaryFunction &Function);
+  void removeUselessCondBranches(BinaryFunction &Function);
+
 public:
   explicit Peepholes(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
@@ -327,7 +329,7 @@ class SimplifyRODataLoads : public BinaryFunctionPass {
   uint64_t NumDynamicLoadsFound{0};
   std::unordered_set<const BinaryFunction *> Modified;
 
-  bool simplifyRODataLoads(BinaryContext &BC, BinaryFunction &BF);
+  bool simplifyRODataLoads(BinaryFunction &BF);
 
 public:
   explicit SimplifyRODataLoads(const cl::opt<bool> &PrintPass)

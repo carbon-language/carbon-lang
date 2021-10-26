@@ -381,7 +381,7 @@ createLoopNestLevelMap(BinaryFunction &BF) {
 /// equal if we show that A dominates B, B post-dominates A and they are in the
 /// same loop and same loop nesting level.
 void equalizeBBCounts(BinaryFunction &BF) {
-  auto Info = DataflowInfoManager(BF.getBinaryContext(), BF, nullptr, nullptr);
+  auto Info = DataflowInfoManager(BF, nullptr, nullptr);
   DominatorAnalysis<false> &DA = Info.getDominatorAnalysis();
   DominatorAnalysis<true> &PDA = Info.getPostDominatorAnalysis();
   auto &InsnToBB = Info.getInsnToBBMap();

@@ -17,7 +17,7 @@ ReachingDefOrUse</*Def=*/true> &DataflowInfoManager::getReachingDefs() {
   if (RD)
     return *RD;
   assert(RA && "RegAnalysis required");
-  RD.reset(new ReachingDefOrUse<true>(*RA, BC, BF, None, AllocatorId));
+  RD.reset(new ReachingDefOrUse<true>(*RA, BF, None, AllocatorId));
   RD->run();
   return *RD;
 }
@@ -30,7 +30,7 @@ ReachingDefOrUse</*Def=*/false> &DataflowInfoManager::getReachingUses() {
   if (RU)
     return *RU;
   assert(RA && "RegAnalysis required");
-  RU.reset(new ReachingDefOrUse<false>(*RA, BC, BF, None, AllocatorId));
+  RU.reset(new ReachingDefOrUse<false>(*RA, BF, None, AllocatorId));
   RU->run();
   return *RU;
 }
@@ -43,7 +43,7 @@ LivenessAnalysis &DataflowInfoManager::getLivenessAnalysis() {
   if (LA)
     return *LA;
   assert(RA && "RegAnalysis required");
-  LA.reset(new LivenessAnalysis(*RA, BC, BF, AllocatorId));
+  LA.reset(new LivenessAnalysis(*RA, BF, AllocatorId));
   LA->run();
   return *LA;
 }
@@ -56,7 +56,7 @@ StackReachingUses &DataflowInfoManager::getStackReachingUses() {
   if (SRU)
     return *SRU;
   assert(FA && "FrameAnalysis required");
-  SRU.reset(new StackReachingUses(*FA, BC, BF, AllocatorId));
+  SRU.reset(new StackReachingUses(*FA, BF, AllocatorId));
   SRU->run();
   return *SRU;
 }
@@ -68,7 +68,7 @@ void DataflowInfoManager::invalidateStackReachingUses() {
 DominatorAnalysis<false> &DataflowInfoManager::getDominatorAnalysis() {
   if (DA)
     return *DA;
-  DA.reset(new DominatorAnalysis<false>(BC, BF, AllocatorId));
+  DA.reset(new DominatorAnalysis<false>(BF, AllocatorId));
   DA->run();
   return *DA;
 }
@@ -80,7 +80,7 @@ void DataflowInfoManager::invalidateDominatorAnalysis() {
 DominatorAnalysis<true> &DataflowInfoManager::getPostDominatorAnalysis() {
   if (PDA)
     return *PDA;
-  PDA.reset(new DominatorAnalysis<true>(BC, BF, AllocatorId));
+  PDA.reset(new DominatorAnalysis<true>(BF, AllocatorId));
   PDA->run();
   return *PDA;
 }
@@ -92,7 +92,7 @@ void DataflowInfoManager::invalidatePostDominatorAnalysis() {
 StackPointerTracking &DataflowInfoManager::getStackPointerTracking() {
   if (SPT)
     return *SPT;
-  SPT.reset(new StackPointerTracking(BC, BF, AllocatorId));
+  SPT.reset(new StackPointerTracking(BF, AllocatorId));
   SPT->run();
   return *SPT;
 }
@@ -105,7 +105,7 @@ void DataflowInfoManager::invalidateStackPointerTracking() {
 ReachingInsns<false> &DataflowInfoManager::getReachingInsns() {
   if (RI)
     return *RI;
-  RI.reset(new ReachingInsns<false>(BC, BF, AllocatorId));
+  RI.reset(new ReachingInsns<false>(BF, AllocatorId));
   RI->run();
   return *RI;
 }
@@ -117,7 +117,7 @@ void DataflowInfoManager::invalidateReachingInsns() {
 ReachingInsns<true> &DataflowInfoManager::getReachingInsnsBackwards() {
   if (RIB)
     return *RIB;
-  RIB.reset(new ReachingInsns<true>(BC, BF, AllocatorId));
+  RIB.reset(new ReachingInsns<true>(BF, AllocatorId));
   RIB->run();
   return *RIB;
 }
@@ -129,8 +129,8 @@ void DataflowInfoManager::invalidateReachingInsnsBackwards() {
 StackAllocationAnalysis &DataflowInfoManager::getStackAllocationAnalysis() {
   if (SAA)
     return *SAA;
-  SAA.reset(new StackAllocationAnalysis(BC, BF, getStackPointerTracking(),
-                                        AllocatorId));
+  SAA.reset(
+      new StackAllocationAnalysis(BF, getStackPointerTracking(), AllocatorId));
   SAA->run();
   return *SAA;
 }

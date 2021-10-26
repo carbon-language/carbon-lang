@@ -165,9 +165,8 @@ class FrameAccessAnalysis {
   }
 
 public:
-  FrameAccessAnalysis(const BinaryContext &BC, BinaryFunction &BF,
-                      StackPointerTracking &SPT)
-      : SPT(SPT), BC(BC), BF(BF) {}
+  FrameAccessAnalysis(BinaryFunction &BF, StackPointerTracking &SPT)
+      : SPT(SPT), BC(BF.getBinaryContext()), BF(BF) {}
 
   void enterNewBB() { Prev = nullptr; }
   const FrameIndexEntry &getFIE() const { return FIE; }
@@ -406,7 +405,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
                     << "\n");
   bool UpdatedArgsTouched = false;
   bool NoInfo = false;
-  FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
+  FrameAccessAnalysis FAA(BF, getSPT(BF));
 
   for (BinaryBasicBlock *BB : BF.layout()) {
     FAA.enterNewBB();
@@ -465,7 +464,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
 }
 
 bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
-  FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
+  FrameAccessAnalysis FAA(BF, getSPT(BF));
 
   LLVM_DEBUG(dbgs() << "Restoring frame indices for \"" << BF.getPrintName()
                     << "\"\n");
@@ -630,7 +629,7 @@ void FrameAnalysis::preComputeSPT() {
       [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
         std::unique_ptr<StackPointerTracking> &SPTPtr =
             SPTMap.find(&BF)->second;
-        SPTPtr = std::make_unique<StackPointerTracking>(BC, BF, AllocId);
+        SPTPtr = std::make_unique<StackPointerTracking>(BF, AllocId);
         SPTPtr->run();
       };
 

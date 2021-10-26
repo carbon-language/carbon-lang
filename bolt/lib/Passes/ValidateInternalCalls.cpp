@@ -79,10 +79,8 @@ protected:
   }
 
 public:
-  StackPointerTrackingForInternalCalls(const BinaryContext &BC,
-                                       BinaryFunction &BF)
-      : StackPointerTrackingBase<StackPointerTrackingForInternalCalls>(BC, BF) {
-  }
+  StackPointerTrackingForInternalCalls(BinaryFunction &BF)
+      : StackPointerTrackingBase<StackPointerTrackingForInternalCalls>(BF) {}
 
   void run() {
     StackPointerTrackingBase<StackPointerTrackingForInternalCalls>::run();
@@ -123,16 +121,16 @@ bool ValidateInternalCalls::fixCFGForPIC(BinaryFunction &Function) const {
 bool ValidateInternalCalls::fixCFGForIC(BinaryFunction &Function) const {
   const BinaryContext &BC = Function.getBinaryContext();
   // Track SP value
-  StackPointerTrackingForInternalCalls SPTIC(BC, Function);
+  StackPointerTrackingForInternalCalls SPTIC(Function);
   SPTIC.run();
 
   // Track instructions reaching a given point of the CFG to answer
   // "There is a path from entry to point A that contains instruction B"
-  ReachingInsns<false> RI(BC, Function);
+  ReachingInsns<false> RI(Function);
   RI.run();
 
   // We use the InsnToBB map that DataflowInfoManager provides us
-  DataflowInfoManager Info(BC, Function, nullptr, nullptr);
+  DataflowInfoManager Info(Function, nullptr, nullptr);
 
   bool Updated = false;
 
@@ -244,7 +242,7 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
       }
       // Now track how the return address is used by tracking uses of Reg
       ReachingDefOrUse</*Def=*/false> RU =
-        ReachingDefOrUse<false>(RA, BC, Function, Reg);
+          ReachingDefOrUse<false>(RA, Function, Reg);
       RU.run();
 
       int64_t Offset = static_cast<int64_t>(Target->getInputOffset());

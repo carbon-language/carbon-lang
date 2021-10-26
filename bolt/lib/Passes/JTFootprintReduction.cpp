@@ -39,9 +39,9 @@ JTFootprintOnlyPIC("jt-footprint-optimize-for-icache",
 namespace llvm {
 namespace bolt {
 
-void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
-                                              BinaryFunction &Function,
+void JTFootprintReduction::checkOpportunities(BinaryFunction &Function,
                                               DataflowInfoManager &Info) {
+  BinaryContext &BC = Function.getBinaryContext();
   std::map<JumpTable *, uint64_t> AllJTs;
 
   for (BinaryBasicBlock &BB : Function) {
@@ -210,9 +210,9 @@ bool JTFootprintReduction::tryOptimizePIC(
   return true;
 }
 
-void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
-                                            BinaryFunction &Function,
+void JTFootprintReduction::optimizeFunction(BinaryFunction &Function,
                                             DataflowInfoManager &Info) {
+  BinaryContext &BC = Function.getBinaryContext();
   for (BinaryBasicBlock &BB : Function) {
     if (!BB.getNumNonPseudos())
       continue;
@@ -269,10 +269,10 @@ void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
     if (Function.getKnownExecutionCount() == 0)
       continue;
 
-    DataflowInfoManager Info(BC, Function, RA.get(), nullptr);
+    DataflowInfoManager Info(Function, RA.get(), nullptr);
     BlacklistedJTs.clear();
-    checkOpportunities(BC, Function, Info);
-    optimizeFunction(BC, Function, Info);
+    checkOpportunities(Function, Info);
+    optimizeFunction(Function, Info);
   }
 
   if (TotalJTs == TotalJTsDenied) {
