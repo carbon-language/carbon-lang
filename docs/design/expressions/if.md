@@ -1,4 +1,4 @@
-# Implicit conversions
+# `if` expressions
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -98,10 +98,14 @@ impl [U:! Type, T:! ImplicitAs(U)] T as CommonType(U) {
 impl [T:! Type, U:! ImplicitAs(T)] T as CommonType(U) {
   let Result:! Type = T;
 }
+impl [template T:! Type, template U:! ImplicitAs(T) where T is ImplicitAs(U)]
+    T as CommonType(U) {
+  // Produce an ambiguity error.
+}
 ```
 
-**TODO:** This should result in ambiguity if a conversion in both directions is
-possible.
+**Note:** The intent is that the result is an ambiguity error if an implicit
+conversion in both directions is possible and no more specific rule matches.
 
 ### Facet types
 
@@ -111,18 +115,19 @@ If `T` and `U` are both facets of the same type, corresponding to constraints
 
 ```
 impl [T:! Type, U:! FacetOf(T)] T as CommonType(U) {
-  let Result:! Type = T as typeof(T) & typeof(U);
+  let Result:! Type = T as (typeof(T) & typeof(U));
 }
 ```
 
-**TODO:** This needs to be more specialized than the implicit conversion case
-above, because there are implicit conversions in both directions here.
+**Note:** The intent is that this should be considered more specialized than the
+implicit conversion case above, because `U:! FacetOf(T)` implies that there are
+implicit conversions in both directions.
 
 ## Alternatives considered
 
--   [Provide no conditional operator](/docs/proposals/p0911.md#no-conditional-operator)
--   [Use `?:`, like in C and C++](/docs/proposals/p0911.md#use-c-syntax)
--   [Use `if (...) expr1 else expr2`](/docs/proposals/p0911.md#no-then)
+-   [Provide no conditional operator](/proposals/p0911.md#no-conditional-operator)
+-   [Use `?:`, like in C and C++](/proposals/p0911.md#use-c-syntax)
+-   [Use `if (...) expr1 else expr2`](/proposals/p0911.md#no-then)
 
 ## References
 
