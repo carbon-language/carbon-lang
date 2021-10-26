@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 }
 
 /*
-REQUIRES: system-linux
+REQUIRES: system-linux,bolt-runtime
 
 RUN: %clang %cflags %s -o %t.exe -Wl,-q
 

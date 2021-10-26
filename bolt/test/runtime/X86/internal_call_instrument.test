@@ -1,6 +1,6 @@
 # Verify that instrumentation pass handles internal calls
 
-REQUIRES: x86_64-linux
+REQUIRES: x86_64-linux,bolt-runtime
 
 RUN: %clang -O3 %S/Inputs/internalcall-main.c %S/Inputs/internalcall.S -Wl,-q \
 RUN:   -o %t.exe

@@ -50,6 +50,9 @@ else:
     lit_config.warning('Setting a timeout per test not supported. ' + errormsg
                        + ' Some tests will be skipped.')
 
+if config.bolt_enable_runtime:
+    config.available_features.add("bolt-runtime")
+
 llvm_config.use_default_substitutions()
 
 llvm_config.use_clang()

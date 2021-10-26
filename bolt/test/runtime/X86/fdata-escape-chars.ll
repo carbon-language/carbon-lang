@@ -50,7 +50,7 @@ define internal void @static_symb_backslash_b() #0 {
   ret void
 }
 
-; REQUIRES: system-linux
+; REQUIRES: system-linux,bolt-runtime
 
 ; RUN: llc %s -o %t.s
 ; RUN: %clang %cflags -O0 %t.s -o %t.exe -Wl,-q

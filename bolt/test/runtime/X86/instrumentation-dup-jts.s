@@ -42,7 +42,7 @@
 #}
 
 
-# REQUIRES: system-linux
+# REQUIRES: system-linux,bolt-runtime
 
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown \
 # RUN:   %s -o %t.o

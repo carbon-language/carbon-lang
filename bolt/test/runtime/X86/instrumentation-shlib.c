@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 #endif
 
 /*
-REQUIRES: system-linux
+REQUIRES: system-linux,bolt-runtime
 
 RUN: %clang %cflags %s -o %t.so -Wl,-q -fpie -fPIC -shared -DLIB
 RUN: %clang %cflags %s -o %t.exe -Wl,-q -ldl

@@ -8,11 +8,17 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
+if (BOLT_ENABLE_RUNTIME)
+  set(BOLT_DRIVER_DEPS "bolt_rt")
+else()
+  set(BOLT_DRIVER_DEPS "")
+endif()
+
 add_llvm_tool(llvm-bolt
   llvm-bolt.cpp
 
   DEPENDS
-  bolt_rt
+  ${BOLT_DRIVER_DEPS}
   )
 
 add_llvm_tool_symlink(perf2bolt llvm-bolt)
