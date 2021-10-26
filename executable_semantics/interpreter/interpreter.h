@@ -14,7 +14,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/heap.h"
+#include "executable_semantics/interpreter/heap_impl.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -173,7 +173,7 @@ class Interpreter {
   Env globals_;
 
   Stack<Nonnull<Action*>> todo_;
-  Heap heap_;
+  HeapImpl heap_;
 
   bool trace_;
 };
