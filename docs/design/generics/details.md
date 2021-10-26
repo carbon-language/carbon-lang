@@ -842,6 +842,11 @@ class ImplementsS {
 }
 ```
 
+Named constraints used with generics, as opposed to templates, should not
+include declarations of any named members. This means no methods, associated
+types, associated functions, and so on. Instead, the names will only arise from
+aliases to named members of required interfaces.
+
 ### Subtyping between type-of-types
 
 There is a subtyping relationship between type-of-types that allows you to call
