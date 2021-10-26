@@ -9,16 +9,20 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/interpreter/address.h"
+#include "executable_semantics/interpreter/raw_heap.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-// A Heap represents the abstract machine's dynamically allocated memory.
-class Heap {
+// A Heap represents the abstract machine's dynamically allocated memory. It
+// extends `RawHeap` with the ability to read and write individual addresses,
+// not just whole allocations. It also provides some convenience functionality
+// such as printing that can't be in `RawHeap` for layering reasons.
+class Heap : public RawHeap {
  public:
   // Constructs an empty Heap.
-  explicit Heap(Nonnull<Arena*> arena) : arena_(arena){};
+  explicit Heap(Nonnull<Arena*> arena) : RawHeap(), arena_(arena){};
 
   Heap(const Heap&) = delete;
   auto operator=(const Heap&) -> Heap& = delete;
@@ -33,16 +37,10 @@ class Heap {
   void Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc);
 
-  // Put the given value on the heap and mark it as alive.
-  auto AllocateValue(Nonnull<const Value*> v) -> AllocationId;
-
-  // Marks this allocation, and all of its sub-objects, as dead.
-  void Deallocate(AllocationId allocation);
-
   // Print the value at the given allocation to the stream `out`.
   void PrintAllocation(AllocationId allocation, llvm::raw_ostream& out) const;
 
-  // Print all the values on the heap to the stream `out`.
+  // Print all the allocations on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
 
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -52,8 +50,6 @@ class Heap {
   void CheckAlive(AllocationId allocation, SourceLocation source_loc);
 
   Nonnull<Arena*> arena_;
-  std::vector<Nonnull<const Value*>> values_;
-  std::vector<bool> alive_;
 };
 
 }  // namespace Carbon

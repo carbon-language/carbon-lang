@@ -32,9 +32,9 @@ class AllocationId {
 
  private:
   // The representation of AllocationId describes how to locate an object within
-  // a Heap, so its implementation details are tied to the implementation
-  // details of Heap.
-  friend class Heap;
+  // a RawHeap, so its implementation details are tied to the implementation
+  // details of RawHeap.
+  friend class RawHeap;
 
   AllocationId(size_t index) : index_(index) {}
 

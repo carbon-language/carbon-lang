@@ -75,6 +75,7 @@ cc_library(
     deps = [
         ":action_and_value",
         ":address",
+        ":raw_heap",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -98,6 +99,17 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "raw_heap",
+    srcs = ["raw_heap.cpp"],
+    hdrs = ["raw_heap.h"],
+    deps = [
+        ":address",
+        "//executable_semantics/common:error",
+        "//executable_semantics/common:nonnull",
     ],
 )
 
