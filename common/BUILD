@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "check",
+    srcs = ["check_internal.h"],
     hdrs = ["check.h"],
     deps = [
         "@llvm-project//llvm:Support",
