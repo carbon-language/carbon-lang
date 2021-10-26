@@ -3013,6 +3013,9 @@ There are some constraints that we will naturally represent as named
 type-of-types. These can either be used directly to constrain a generic type
 parameter, or in a `where ... is ...` clause to constrain an associated type.
 
+The compiler determines which types implement these interfaces, developers can
+not explicitly implement these interfaces for their own types.
+
 **Open question:** Are these names part of the prelude or in a standard library?
 
 ### Is a derived class
