@@ -1017,8 +1017,6 @@ void TypeChecker::ExpectReturnOnAllPaths(
   }
 }
 
-// TODO: factor common parts of TypeCheckFunDef and TypeOfFunDef into
-// a function.
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,

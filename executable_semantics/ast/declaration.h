@@ -96,12 +96,12 @@ class ReturnTerm {
 
   // Represents an omitted return term at `source_loc`.
   static auto Omitted(SourceLocation source_loc) -> ReturnTerm {
-    return ReturnTerm(Form::Omitted, source_loc);
+    return ReturnTerm(ReturnKind::Omitted, source_loc);
   }
 
   // Represents an auto return term at `source_loc`.
   static auto Auto(SourceLocation source_loc) -> ReturnTerm {
-    return ReturnTerm(Form::Auto, source_loc);
+    return ReturnTerm(ReturnKind::Auto, source_loc);
   }
 
   // Represents an explicit return term with the given type expression.
@@ -110,10 +110,10 @@ class ReturnTerm {
   }
 
   // Returns true if this represents an omitted return term.
-  auto is_omitted() const -> bool { return form_ == Form::Omitted; }
+  auto is_omitted() const -> bool { return form_ == ReturnKind::Omitted; }
 
   // Returns true if this represents an auto return term.
-  auto is_auto() const -> bool { return form_ == Form::Auto; }
+  auto is_auto() const -> bool { return form_ == ReturnKind::Auto; }
 
   // If this represents an explicit return term, returns the type expression.
   // Otherwise, returns nullopt.
@@ -142,19 +142,19 @@ class ReturnTerm {
   void Print(llvm::raw_ostream& out) const;
 
  private:
-  enum class Form { Omitted, Auto, Expression };
+  enum class ReturnKind { Omitted, Auto, Expression };
 
-  explicit ReturnTerm(Form form, SourceLocation source_loc)
+  explicit ReturnTerm(ReturnKind form, SourceLocation source_loc)
       : form_(form), source_loc_(source_loc) {
-    CHECK(form != Form::Expression);
+    CHECK(form != ReturnKind::Expression);
   }
 
   explicit ReturnTerm(Nonnull<Expression*> type_expression)
-      : form_(Form::Expression),
+      : form_(ReturnKind::Expression),
         type_expression_(type_expression),
         source_loc_(type_expression->source_loc()) {}
 
-  Form form_;
+  ReturnKind form_;
   std::optional<Nonnull<Expression*>> type_expression_;
   std::optional<Nonnull<const Value*>> static_type_;
 

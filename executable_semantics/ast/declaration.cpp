@@ -47,12 +47,12 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
 void ReturnTerm::Print(llvm::raw_ostream& out) const {
   switch (form_) {
-    case Form::Omitted:
+    case ReturnKind::Omitted:
       return;
-    case Form::Auto:
+    case ReturnKind::Auto:
       out << "-> auto";
       return;
-    case Form::Expression:
+    case ReturnKind::Expression:
       out << "-> " << **type_expression_;
       return;
   }
