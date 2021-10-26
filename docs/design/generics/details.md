@@ -449,7 +449,49 @@ external impl Point3 as Vector {
 
 With this definition, `Point3` includes `Add` in its API but not `Scale`, while
 `Point3 as Vector` includes both. This maintains the property that you can
-determine the API of a type by looking at its definition.
+determine the API of a type by looking at its definition. In this case, the
+`external impl` may be defined lexically inside the scope of the class.
+
+```
+class Point3 {
+  var x: Double;
+  var y: Double;
+  fn Add[me: Self](b: Self) -> Self {
+    return {.x = a.x + b.x, .y = a.y + b.y};
+  }
+  // Type before `as` is optional and defaults to the current class.
+  external impl as Vector {
+    alias Add = Point3.Add;  // Syntax TBD
+    fn Scale[me: Self](v: Double) -> Self {
+      return {.x = a.x * v, .y = a.y * v};
+    }
+  }
+}
+
+// OR:
+
+class Point3 {
+  var x: Double;
+  var y: Double;
+  external impl as Vector {
+    fn Add[me: Self](b: Self) -> Self {
+      return {.x = a.x + b.x, .y = a.y + b.y};
+    }
+    fn Scale[me: Self](v: Double) -> Self {
+      return {.x = a.x * v, .y = a.y * v};
+    }
+  }
+  alias Add = Vector.Add;  // Syntax TBD
+}
+```
+
+Being defined lexically inside the class means that implementation is available
+to other members defined in the class. For example, it would allow implementing
+another interface or method that requires this interface to be implemented.
+
+**Open question:** Do implementations need to be defined lexically inside the
+class to get access to private members, or is it sufficient to be defined in the
+same library as the class?
 
 **Rejected alternative:** We could allow types to have different APIs in
 different files based on explicit configuration in that file. For example, we
@@ -1632,9 +1674,24 @@ Unlike the similar `class B extends A` notation, `adaptor B extends A` is
 permitted even if `A` is a final class. Also, there is no implicit conversion
 from `B` to `A`, matching `adapter`...`for` but unlike class extension.
 
-**Future work:** We may need additional mechanisms for changing the API in the
-adapter. For example, to resolve conflicts we might want to be able to move the
-implementation of a specific interface into an [external impl](#external-impl).
+To avoid or resolve name conflicts between interfaces, an `impl` may be declared
+[`external`](#external-impl). The names in that interface may then be pulled in
+individually or renamed using `alias` declarations.
+
+```
+adapter SongRenderToPrintDriver extends Song {
+  // Add a new `Print()` member function.
+  fn Print[me: Self]() { ... }
+
+  // Avoid name conflict with new `Print` function by making
+  // the implementation of the `Printable` interface external.
+  external impl as Printable = Song as Printable;
+
+  // Make the `Print` function from `Printable` available
+  // under the name `PrintToScreen`.
+  alias PrintToScreen = Printable.Print;
+}
+```
 
 ### Use case: Using independent libraries together
 
