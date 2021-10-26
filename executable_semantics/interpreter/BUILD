@@ -70,9 +70,12 @@ cc_library(
 
 cc_library(
     name = "heap",
+    srcs = ["heap.cpp"],
     hdrs = ["heap.h"],
     deps = [
+        ":action_and_value",
         ":address",
+        ":heap_allocation_interface",
         "//common:ostream",
         "//executable_semantics/ast:source_location",
         "//executable_semantics/common:nonnull",
@@ -81,17 +84,11 @@ cc_library(
 )
 
 cc_library(
-    name = "heap_impl",
-    srcs = ["heap_impl.cpp"],
-    hdrs = ["heap_impl.h"],
+    name = "heap_allocation_interface",
+    hdrs = ["heap_allocation_interface.h"],
     deps = [
-        ":action_and_value",
         ":address",
-        ":heap",
-        "//common:ostream",
-        "//executable_semantics/ast:source_location",
         "//executable_semantics/common:nonnull",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -106,7 +103,7 @@ cc_library(
     deps = [
         ":action_and_value",
         ":address",
-        ":heap_impl",
+        ":heap",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/ast:declaration",

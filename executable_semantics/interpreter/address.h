@@ -34,7 +34,7 @@ class AllocationId {
   // The representation of AllocationId describes how to locate an object within
   // a Heap, so its implementation details are tied to the implementation
   // details of Heap.
-  friend class HeapImpl;
+  friend class Heap;
 
   AllocationId(size_t index) : index_(index) {}
 
@@ -76,7 +76,7 @@ class Address {
   // The representation of Address describes how to locate an object within
   // the Heap, so its implementation details are tied to the implementation
   // details of the Heap.
-  friend class HeapImpl;
+  friend class Heap;
 
   AllocationId allocation_;
   FieldPath field_path_;
