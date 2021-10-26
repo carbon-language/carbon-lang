@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["ast.h"],
     deps = [
         ":declaration",
+        ":declared_names",
         ":library_name",
     ],
 )
@@ -40,6 +41,11 @@ cc_library(
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "declared_names",
+    hdrs = ["declared_names.h"],
 )
 
 cc_library(

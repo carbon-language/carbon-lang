@@ -54,6 +54,7 @@ cc_library(
     deps = [
         ":interpreter",
         ":resolve_control_flow",
+        ":resolve_names",
         ":type_checker",
         "//executable_semantics/ast",
     ],
@@ -110,6 +111,17 @@ cc_library(
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:statement",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "resolve_names",
+    srcs = ["resolve_names.cpp"],
+    hdrs = ["resolve_names.h"],
+    deps = [
+        "//common:check",
+        "//executable_semantics/ast",
         "@llvm-project//llvm:Support",
     ],
 )
