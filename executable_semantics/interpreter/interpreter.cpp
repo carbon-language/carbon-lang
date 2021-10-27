@@ -128,8 +128,8 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
 
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def = cast<ClassDeclaration>(d).definition();
-      VarValues fields;
-      VarValues methods;
+      std::vector<NamedValue> fields;
+      std::vector<NamedValue> methods;
       for (Nonnull<const Member*> m : class_def.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
@@ -137,7 +137,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             const Expression& type_expression =
                 cast<ExpressionPattern>(binding.type()).expression();
             auto type = InterpExp(Env(arena_), &type_expression);
-            fields.push_back(make_pair(*binding.name(), type));
+            fields.push_back({.name = *binding.name(), .value = type});
             break;
           }
         }
@@ -151,10 +151,10 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
-      VarValues alts;
+      std::vector<NamedValue> alts;
       for (const auto& alternative : choice.alternatives()) {
         auto t = InterpExp(Env(arena_), &alternative.signature());
-        alts.push_back(make_pair(alternative.name(), t));
+        alts.push_back({.name = alternative.name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
       auto a = heap_.AllocateValue(ct);
@@ -205,7 +205,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
   CHECK(fields.size() == values.size());
-  std::vector<StructElement> elements;
+  std::vector<NamedValue> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
     elements.push_back({.name = fields[i].name(), .value = values[i]});
   }
@@ -580,7 +580,7 @@ auto Interpreter::StepExp() -> Transition {
         return Spawn{arena_->New<ExpressionAction>(
             &struct_type.fields()[act->pos()].expression())};
       } else {
-        VarValues fields;
+        std::vector<NamedValue> fields;
         for (size_t i = 0; i < struct_type.fields().size(); ++i) {
           fields.push_back({struct_type.fields()[i].name(), act->results()[i]});
         }

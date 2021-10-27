@@ -162,15 +162,18 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
 // the corresponding value in destination_fields. All values in both arguments
 // must be types.
 static auto FieldTypesImplicitlyConvertible(
-    const VarValues& source_fields, const VarValues& destination_fields) {
+    llvm::ArrayRef<NamedValue> source_fields,
+    llvm::ArrayRef<NamedValue> destination_fields) {
   if (source_fields.size() != destination_fields.size()) {
     return false;
   }
-  for (const auto& [field_name, source_field_type] : source_fields) {
-    std::optional<Nonnull<const Value*>> destination_field_type =
-        FindInVarValues(field_name, destination_fields);
-    if (!destination_field_type.has_value() ||
-        !IsImplicitlyConvertible(source_field_type, *destination_field_type)) {
+  for (const auto& source_field : source_fields) {
+    auto it = std::find_if(destination_fields.begin(), destination_fields.end(),
+                           [&](const NamedValue& field) {
+                             return field.name == source_field.name;
+                           });
+    if (it == destination_fields.end() ||
+        !IsImplicitlyConvertible(source_field.value, it->value)) {
       return false;
     }
   }
@@ -294,14 +297,14 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
             << arg_struct.fields().size();
       }
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
-        if (param_struct.fields()[i].first != arg_struct.fields()[i].first) {
+        if (param_struct.fields()[i].name != arg_struct.fields()[i].name) {
           FATAL_COMPILATION_ERROR(source_loc)
-              << "mismatch in field names, " << param_struct.fields()[i].first
-              << " != " << arg_struct.fields()[i].first;
+              << "mismatch in field names, " << param_struct.fields()[i].name
+              << " != " << arg_struct.fields()[i].name;
         }
         deduced = ArgumentDeduction(source_loc, deduced,
-                                    param_struct.fields()[i].second,
-                                    arg_struct.fields()[i].second);
+                                    param_struct.fields()[i].value,
+                                    arg_struct.fields()[i].value);
       }
       return deduced;
     }
@@ -382,7 +385,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
       return arena_->New<TupleValue>(elts);
     }
     case Value::Kind::StructType: {
-      VarValues fields;
+      std::vector<NamedValue> fields;
       for (const auto& [name, value] : cast<StructType>(*type).fields()) {
         auto new_type = Substitute(dict, value);
         fields.push_back({name, new_type});
@@ -469,7 +472,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::StructLiteral: {
       std::vector<FieldInitializer> new_args;
-      VarValues arg_types;
+      std::vector<NamedValue> arg_types;
       auto new_types = types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
         auto arg_res = TypeCheckExp(&arg.expression(), new_types, values);
@@ -523,15 +526,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           const auto& t_class = cast<NominalClassType>(aggregate_type);
           // Search for a field
           for (auto& field : t_class.fields()) {
-            if (access.field() == field.first) {
-              SetStaticType(&access, field.second);
+            if (access.field() == field.name) {
+              SetStaticType(&access, field.value);
               return TCResult(res.types);
             }
           }
           // Search for a method
           for (auto& method : t_class.methods()) {
-            if (access.field() == method.first) {
-              SetStaticType(&access, method.second);
+            if (access.field() == method.name) {
+              SetStaticType(&access, method.value);
               return TCResult(res.types);
             }
           }
@@ -541,17 +544,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         }
         case Value::Kind::ChoiceType: {
           const auto& choice = cast<ChoiceType>(aggregate_type);
-          for (const auto& vt : choice.alternatives()) {
-            if (access.field() == vt.first) {
-              SetStaticType(&access, arena_->New<FunctionType>(
-                                         std::vector<GenericBinding>(),
-                                         vt.second, &aggregate_type));
-              return TCResult(res.types);
-            }
+          std::optional<Nonnull<const Value*>> parameter_types =
+              choice.FindAlternative(access.field());
+          if (!parameter_types.has_value()) {
+            FATAL_COMPILATION_ERROR(e->source_loc())
+                << "choice " << choice.name() << " does not have a field named "
+                << access.field();
           }
-          FATAL_COMPILATION_ERROR(e->source_loc())
-              << "choice " << choice.name() << " does not have a field named "
-              << access.field();
+          SetStaticType(&access, arena_->New<FunctionType>(
+                                     std::vector<GenericBinding>(),
+                                     *parameter_types, &aggregate_type));
+          return TCResult(res.types);
         }
         default:
           FATAL_COMPILATION_ERROR(e->source_loc())
@@ -802,8 +805,8 @@ auto TypeChecker::TypeCheckPattern(
                         *expected, choice_type);
       }
       std::optional<Nonnull<const Value*>> parameter_types =
-          FindInVarValues(alternative.alternative_name(),
-                          cast<ChoiceType>(*choice_type).alternatives());
+          cast<ChoiceType>(*choice_type)
+              .FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "'" << alternative.alternative_name()
@@ -1108,8 +1111,8 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
 
 auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
                                  Env ct_top) -> Nonnull<const Value*> {
-  VarValues fields;
-  VarValues methods;
+  std::vector<NamedValue> fields;
+  std::vector<NamedValue> methods;
   for (Nonnull<const Member*> m : sd->members()) {
     switch (m->kind()) {
       case Member::Kind::FieldMember: {
@@ -1124,7 +1127,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
               << "Struct members must have explicit types";
         }
         auto type = interpreter_.InterpExp(ct_top, &binding_type->expression());
-        fields.push_back(std::make_pair(*binding.name(), type));
+        fields.push_back({.name = *binding.name(), .value = type});
         break;
       }
     }
@@ -1210,10 +1213,10 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*d);
-      VarValues alts;
+      std::vector<NamedValue> alts;
       for (const auto& alternative : choice.alternatives()) {
         auto t = interpreter_.InterpExp(tops->values, &alternative.signature());
-        alts.push_back(std::make_pair(alternative.name(), t));
+        alts.push_back({.name = alternative.name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
       Address a = interpreter_.AllocateValue(ct);
