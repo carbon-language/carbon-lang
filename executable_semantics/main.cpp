@@ -25,6 +25,9 @@ auto main(int argc, char* argv[]) -> int {
   using llvm::cl::desc;
   using llvm::cl::opt;
   opt<bool> trace_option("trace", desc("Enable tracing"));
+  opt<bool> parse_and_print(
+      "unparse",
+      desc("Parse and then unparse the input, without executing it"));
   opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
                                    llvm::cl::Required);
 
@@ -39,6 +42,10 @@ auto main(int argc, char* argv[]) -> int {
     return *error;
   }
 
+  if (parse_and_print.getValue()) {
+    llvm::outs() << std::get<Carbon::AST>(ast_or_error);
+    return 0;
+  }
   // Typecheck and run the parsed program.
   Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error),
                       trace_option);

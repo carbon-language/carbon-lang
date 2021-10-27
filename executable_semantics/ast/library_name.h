@@ -7,11 +7,20 @@
 
 #include <string>
 
+#include "common/ostream.h"
+
 namespace Carbon {
 
 // Identifies a particular library. For example, "Geometry//Objects/FourSides"
 // will have package="Geometry" and path="Objects/FourSides".
 struct LibraryName {
+  void Print(llvm::raw_ostream& out) const {
+    out << package;
+    if (!path.empty()) {
+      out << "//" << path;
+    }
+  }
+
   // The library's package.
   std::string package;
 

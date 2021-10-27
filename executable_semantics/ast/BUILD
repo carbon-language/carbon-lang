@@ -6,10 +6,12 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
     name = "ast",
+    srcs = ["ast.cpp"],
     hdrs = ["ast.h"],
     deps = [
         ":declaration",
         ":library_name",
+        "//common:ostream",
     ],
 )
 
@@ -81,6 +83,7 @@ cc_library(
 cc_library(
     name = "library_name",
     hdrs = ["library_name.h"],
+    deps = ["//common:ostream"],
 )
 
 cc_library(

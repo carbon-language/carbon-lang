@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "common/ostream.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/library_name.h"
 #include "executable_semantics/common/nonnull.h"
@@ -15,6 +16,8 @@ namespace Carbon {
 
 // A Carbon file's AST.
 struct AST {
+  void Print(llvm::raw_ostream& out) const;
+
   // The package directive's library.
   LibraryName package;
   // The package directive's API or impl state.
