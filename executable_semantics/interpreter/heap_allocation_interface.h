@@ -28,7 +28,7 @@ class HeapAllocationInterface {
 
  protected:
   HeapAllocationInterface() = default;
-  ~HeapAllocationInterface() = default;
+  virtual ~HeapAllocationInterface() = default;
 };
 
 }  // namespace Carbon
