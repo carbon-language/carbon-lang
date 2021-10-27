@@ -36,6 +36,7 @@ class Declaration {
     ClassDeclaration,
     ChoiceDeclaration,
     VariableDeclaration,
+    Unimplemented,
   };
 
   Declaration(const Member&) = delete;

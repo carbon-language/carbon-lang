@@ -6,6 +6,7 @@
 
 #include <optional>
 
+#include "executable_semantics/ast/unimplemented.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
@@ -177,6 +178,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
           out << "print";
       }
       out << ")";
+      break;
+    case Expression::Kind::Unimplemented: {
+      cast<Unimplemented<Expression>>(*this).PrintImpl(out);
+      break;
+    }
   }
 }
 

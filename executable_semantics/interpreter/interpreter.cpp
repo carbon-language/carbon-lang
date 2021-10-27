@@ -172,6 +172,9 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       env->Set(*var.binding().name(), a);
       break;
     }
+
+    case Declaration::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << d;
   }
 }
 
@@ -453,6 +456,8 @@ auto Interpreter::StepLvalue() -> Transition {
     case Expression::Kind::IntrinsicExpression:
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << exp;
+    case Expression::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << exp;
   }
 }
 
@@ -723,6 +728,8 @@ auto Interpreter::StepExp() -> Transition {
       CHECK(act->pos() == 0);
       return Done{arena_->New<StringType>()};
     }
+    case Expression::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << exp;
   }  // switch (exp->kind)
 }
 
@@ -776,6 +783,9 @@ auto Interpreter::StepPattern() -> Transition {
     case Pattern::Kind::ExpressionPattern:
       return Delegate{arena_->New<ExpressionAction>(
           &cast<ExpressionPattern>(pattern).expression())};
+
+    case Pattern::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << pattern;
   }
 }
 
@@ -1013,7 +1023,7 @@ auto Interpreter::StepStmt() -> Transition {
         return Done{};
       }
     }
-    case Statement::Kind::Await:
+    case Statement::Kind::Await: {
       CHECK(act->pos() == 0);
       // Pause the current continuation
       todo_.Pop();
@@ -1027,6 +1037,9 @@ auto Interpreter::StepStmt() -> Transition {
       // Update the continuation with the paused stack.
       continuation.stack() = std::move(paused);
       return ManualTransition{};
+    }
+    case Statement::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << stmt;
   }
 }
 

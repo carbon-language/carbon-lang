@@ -8,6 +8,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/unimplemented.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
@@ -51,6 +52,8 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     case Kind::ExpressionPattern:
       out << cast<ExpressionPattern>(*this).expression();
       break;
+    case Kind::Unimplemented:
+      cast<Unimplemented<Pattern>>(*this).PrintImpl(out);
   }
 }
 

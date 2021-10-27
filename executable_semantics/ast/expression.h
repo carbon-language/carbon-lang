@@ -42,6 +42,7 @@ class Expression {
     TypeTypeLiteral,
     IdentifierExpression,
     IntrinsicExpression,
+    Unimplemented,
   };
 
   void Print(llvm::raw_ostream& out) const;

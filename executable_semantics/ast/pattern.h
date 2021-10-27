@@ -34,6 +34,7 @@ class Pattern {
     TuplePattern,
     AlternativePattern,
     ExpressionPattern,
+    Unimplemented,
   };
 
   Pattern(const Pattern&) = delete;

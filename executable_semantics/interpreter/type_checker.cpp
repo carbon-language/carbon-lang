@@ -711,6 +711,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     case Expression::Kind::ContinuationTypeLiteral:
       SetStaticType(e, arena_->New<TypeType>());
       return TCResult(types);
+    case Expression::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *e;
   }
 }
 
@@ -822,6 +824,8 @@ auto TypeChecker::TypeCheckPattern(
       SetValue(p, interpreter_.InterpPattern(values, p));
       return TCResult(result.types);
     }
+    case Pattern::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *p;
   }
 }
 
@@ -961,6 +965,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       // nothing to do here
       return TCResult(types);
     }
+    case Statement::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *s;
   }  // switch
 }
 
@@ -1035,6 +1041,8 @@ void TypeChecker::ExpectReturnOnAllPaths(
       FATAL_COMPILATION_ERROR(stmt->source_loc())
           << "control-flow reaches end of function that provides a `->` "
              "return type without reaching a return statement";
+    case Statement::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *stmt;
   }
 }
 
@@ -1149,6 +1157,8 @@ static auto GetName(const Declaration& d) -> const std::string& {
       }
       return *binding.name();
     }
+    case Declaration::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << d;
   }
 }
 
@@ -1186,6 +1196,8 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
                  &var.initializer().static_type());
       return;
     }
+    case Declaration::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *d;
   }
 }
 
@@ -1233,6 +1245,9 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       tops->types.Set(*var.binding().name(), declared_type);
       break;
     }
+
+    case Declaration::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *d;
   }
 }
 

@@ -4,6 +4,7 @@
 
 #include "executable_semantics/ast/declaration.h"
 
+#include "executable_semantics/ast/unimplemented.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
@@ -42,6 +43,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "var " << var.binding() << " = " << var.initializer() << "\n";
       break;
     }
+
+    case Kind::Unimplemented:
+      cast<Unimplemented<Declaration>>(*this).PrintImpl(out);
   }
 }
 

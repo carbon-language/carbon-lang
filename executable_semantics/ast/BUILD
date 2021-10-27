@@ -38,6 +38,7 @@ cc_library(
         ":pattern",
         ":source_location",
         ":statement",
+        ":unimplemented",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -50,6 +51,7 @@ cc_library(
     hdrs = ["expression.h"],
     deps = [
         ":paren_contents",
+        ":unimplemented",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",
@@ -102,6 +104,7 @@ cc_library(
     deps = [
         ":expression",
         ":source_location",
+        ":unimplemented",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -135,9 +138,20 @@ cc_library(
         ":expression",
         ":pattern",
         ":source_location",
+        ":unimplemented",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "unimplemented",
+    hdrs = ["unimplemented.h"],
+    deps = [
+        ":source_location",
+        "//executable_semantics/common:any_printable_ptr",
         "@llvm-project//llvm:Support",
     ],
 )

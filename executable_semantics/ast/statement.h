@@ -36,6 +36,7 @@ class Statement {
     Continuation,  // Create a first-class continuation.
     Run,           // Run a continuation to the next await or until it finishes.
     Await,         // Pause execution of the continuation.
+    Unimplemented,
   };
 
   void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }

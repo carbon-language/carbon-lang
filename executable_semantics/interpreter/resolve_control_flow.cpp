@@ -86,6 +86,8 @@ static void ResolveControlFlow(
     case Statement::Kind::Run:
     case Statement::Kind::Await:
       return;
+    case Statement::Kind::Unimplemented:
+      FATAL() << "Unimplemented: " << *statement;
   }
 }
 

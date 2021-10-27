@@ -5,6 +5,7 @@
 #include "executable_semantics/ast/statement.h"
 
 #include "common/check.h"
+#include "executable_semantics/ast/unimplemented.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/Support/Casting.h"
 
@@ -127,6 +128,8 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
     case Kind::Await:
       out << "await;";
       break;
+    case Kind::Unimplemented:
+      cast<Unimplemented<Statement>>(*this).PrintImpl(out);
   }
 }
 
