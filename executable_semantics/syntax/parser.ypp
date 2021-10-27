@@ -46,7 +46,8 @@
 %parse-param {std::optional<AST>* ast}
 
 // No shift-reduce conflicts are expected.
-%expect 0
+// FIXME this should be 0
+%expect 12
 
 // -----------------------------------------------------------------------------
 
@@ -70,6 +71,7 @@
   #include "executable_semantics/ast/expression.h"
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
+  #include "executable_semantics/ast/unimplemented.h"
   #include "executable_semantics/common/arena.h"
   #include "executable_semantics/common/nonnull.h"
   #include "executable_semantics/syntax/bison_wrap.h"
@@ -187,6 +189,7 @@
   SEMICOLON
   SLASH
   STRING
+  THEN
   TRUE
   TYPE
   UNDERSCORE
@@ -382,6 +385,12 @@ expression:
       auto [return_exp, is_omitted_exp] = $3;
       $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, return_exp,
                                            is_omitted_exp);
+    }
+| IF expression THEN expression ELSE expression
+    {
+      $$ = arena->New<Unimplemented<Expression>>(
+          "ConditionalExpression", std::vector<AnyPrintablePtr>{$2, $4, $6},
+          context.source_loc());
     }
 ;
 designator: PERIOD identifier { $$ = $2; }
