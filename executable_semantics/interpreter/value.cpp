@@ -338,8 +338,6 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       return cast<IntValue>(*v1).value() == cast<IntValue>(*v2).value();
     case Value::Kind::BoolValue:
       return cast<BoolValue>(*v1).value() == cast<BoolValue>(*v2).value();
-    case Value::Kind::PointerValue:
-      return cast<PointerValue>(*v1).value() == cast<PointerValue>(*v2).value();
     case Value::Kind::FunctionValue: {
       std::optional<Nonnull<const Statement*>> body1 =
           cast<FunctionValue>(*v1).declaration().body();
@@ -396,6 +394,9 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::PointerValue:
+      // TODO: support pointer comparisons once we have a clearer distinction
+      // between pointers and lvalues.
       FATAL() << "ValueEqual does not support this kind of value: " << *v1;
   }
 }
