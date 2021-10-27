@@ -436,6 +436,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
+      // TODO: support pointer comparisons once we have a clearer distinction
+      // between pointers and lvalues.
       FATAL() << "ValueEqual does not support this kind of value: " << *v1;
   }
 }
