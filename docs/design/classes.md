@@ -22,7 +22,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
     -   [Mixins](#mixins)
 -   [Background](#background)
--   [Overview](#overview-1)
 -   [Members](#members)
     -   [Data members have an order](#data-members-have-an-order)
 -   [Struct types](#struct-types)
@@ -80,13 +79,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-A Carbon `class` is a user-defined
-[record type](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
-is the primary mechanism for users to define new types in Carbon. A `class` has
-members that are referenced by their names, in contrast to a
+A Carbon _class_ is a user-defined
+[record type](<https://en.wikipedia.org/wiki/Record_(computer_science)>). A
+class has members that are referenced by their names, in contrast to a
 [Carbon tuple](tuples.md) which defines a
 [product type](https://en.wikipedia.org/wiki/Product_type) whose members are
 referenced positionally.
+
+Classes are the primary mechanism for users to extend the Carbon type system and
+are deeply rooted in C++ and its history (C and Simula). We call them classes
+rather than other terms as that is both familiar to existing programmers and
+accurately captures their essence: they define the types of objects with
+(optional) support for methods, encapsulation, and so on.
 
 Carbon supports both named, or "nominal", and unnamed, anonymous, or
 "structural", class types. Nominal class types are all distinct, but structural
@@ -94,14 +98,20 @@ types are equal if they have the same sequence of member types and names.
 Structural class literals may be used to initialize or assign values to nominal
 class variables.
 
+A class type defines the interpretation of the bytes of a value of that type,
+including the size, data members, and layout. It defines the operations that may
+be performed on those values, including what methods may be called. A class type
+may directly have constant members. The type itself is a compile-time immutable
+constant value.
+
 ## Use cases
 
 The use cases for classes include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
 **This design currently only attempts to address the "data classes" and
-"encapsulated types without inheritance" use cases.** Addressing the other use
-cases is future work.
+"encapsulated types" use cases.** Addressing the "interface as base class",
+"interop with C++ multiple inheritance" and "mixin" use cases is future work.
 
 ### Data classes
 
@@ -477,22 +487,6 @@ See how other languages tackle this problem:
         and returning types
     -   [supports default field values](https://ziglang.org/documentation/0.6.0/#toc-Default-Field-Values)
     -   [has no properties or operator overloading -- Zig does not like hidden control flow](https://ziglang.org/#Small-simple-language)
-
-## Overview
-
-Beyond tuples, Carbon allows defining
-[record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
-is the primary mechanism for users to extend the Carbon type system and is
-deeply rooted in C++ and its history (C and Simula). We call them _classes_
-rather than other terms as that is both familiar to existing programmers and
-accurately captures their essence: they define the types of objects with
-(optional) support for methods, encapsulation, and so on.
-
-A class type defines the interpretation of the bytes of a value of that type,
-including the size, data members, and layout. It defines the operations that may
-be performed on those values, including what methods may be called. A class type
-may directly have constant members. The type itself is a compile-time immutable
-constant value.
 
 ## Members
 

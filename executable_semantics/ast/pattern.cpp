@@ -24,19 +24,19 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       break;
     case Kind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*this);
-      if (binding.Name().has_value()) {
-        out << *binding.Name();
+      if (binding.name().has_value()) {
+        out << *binding.name();
       } else {
         out << "_";
       }
-      out << ": " << *binding.Type();
+      out << ": " << binding.type();
       break;
     }
     case Kind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*this);
       out << "(";
       llvm::ListSeparator sep;
-      for (Nonnull<const Pattern*> field : tuple.Fields()) {
+      for (Nonnull<const Pattern*> field : tuple.fields()) {
         out << sep << *field;
       }
       out << ")";
@@ -44,12 +44,12 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     }
     case Kind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*this);
-      out << *alternative.ChoiceType() << "." << alternative.AlternativeName()
-          << *alternative.Arguments();
+      out << alternative.choice_type() << "." << alternative.alternative_name()
+          << alternative.arguments();
       break;
     }
     case Kind::ExpressionPattern:
-      out << *cast<ExpressionPattern>(*this).Expression();
+      out << cast<ExpressionPattern>(*this).expression();
       break;
   }
 }
@@ -88,9 +88,9 @@ AlternativePattern::AlternativePattern(SourceLocation source_loc,
                                        Nonnull<Expression*> alternative,
                                        Nonnull<TuplePattern*> arguments)
     : Pattern(Kind::AlternativePattern, source_loc),
-      choice_type(&RequireFieldAccess(alternative).aggregate()),
-      alternative_name(RequireFieldAccess(alternative).field()),
-      arguments(arguments) {}
+      choice_type_(&RequireFieldAccess(alternative).aggregate()),
+      alternative_name_(RequireFieldAccess(alternative).field()),
+      arguments_(arguments) {}
 
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
                                    const ParenContents<Expression>& contents)

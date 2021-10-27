@@ -37,7 +37,7 @@ class Pattern {
   };
 
   Pattern(const Pattern&) = delete;
-  Pattern& operator=(const Pattern&) = delete;
+  auto operator=(const Pattern&) -> Pattern& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -60,6 +60,18 @@ class Pattern {
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
+  // The value of this pattern. Cannot be called before typechecking.
+  auto value() const -> const Value& { return **value_; }
+
+  // Sets the value of this pattern. Can only be called once, during
+  // typechecking.
+  void set_value(Nonnull<const Value*> value) { value_ = value; }
+
+  // Returns whether the value has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_value() const -> bool { return value_.has_value(); }
+
  protected:
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -72,6 +84,7 @@ class Pattern {
   SourceLocation source_loc_;
 
   std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const Value*>> value_;
 };
 
 // A pattern consisting of the `auto` keyword.
@@ -92,42 +105,42 @@ class BindingPattern : public Pattern {
   BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)
       : Pattern(Kind::BindingPattern, source_loc),
-        name(std::move(name)),
-        type(type) {}
+        name_(std::move(name)),
+        type_(type) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->kind() == Kind::BindingPattern;
   }
 
   // The name this pattern binds, if any.
-  auto Name() const -> const std::optional<std::string>& { return name; }
+  auto name() const -> const std::optional<std::string>& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.
-  auto Type() const -> Nonnull<const Pattern*> { return type; }
-  auto Type() -> Nonnull<Pattern*> { return type; }
+  auto type() const -> const Pattern& { return *type_; }
+  auto type() -> Pattern& { return *type_; }
 
  private:
-  std::optional<std::string> name;
-  Nonnull<Pattern*> type;
+  std::optional<std::string> name_;
+  Nonnull<Pattern*> type_;
 };
 
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:
   TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
-      : Pattern(Kind::TuplePattern, source_loc), fields(std::move(fields)) {}
+      : Pattern(Kind::TuplePattern, source_loc), fields_(std::move(fields)) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->kind() == Kind::TuplePattern;
   }
 
-  auto Fields() const -> llvm::ArrayRef<Nonnull<const Pattern*>> {
-    return fields;
+  auto fields() const -> llvm::ArrayRef<Nonnull<const Pattern*>> {
+    return fields_;
   }
-  auto Fields() -> llvm::ArrayRef<Nonnull<Pattern*>> { return fields; }
+  auto fields() -> llvm::ArrayRef<Nonnull<Pattern*>> { return fields_; }
 
  private:
-  std::vector<Nonnull<Pattern*>> fields;
+  std::vector<Nonnull<Pattern*>> fields_;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as
@@ -161,9 +174,9 @@ class AlternativePattern : public Pattern {
                      std::string alternative_name,
                      Nonnull<TuplePattern*> arguments)
       : Pattern(Kind::AlternativePattern, source_loc),
-        choice_type(choice_type),
-        alternative_name(std::move(alternative_name)),
-        arguments(arguments) {}
+        choice_type_(choice_type),
+        alternative_name_(std::move(alternative_name)),
+        arguments_(arguments) {}
 
   // Constructs an AlternativePattern that matches the alternative specified
   // by `alternative`, if its arguments match `arguments`.
@@ -175,37 +188,37 @@ class AlternativePattern : public Pattern {
     return pattern->kind() == Kind::AlternativePattern;
   }
 
-  auto ChoiceType() const -> Nonnull<const Expression*> { return choice_type; }
-  auto ChoiceType() -> Nonnull<Expression*> { return choice_type; }
-  auto AlternativeName() const -> const std::string& {
-    return alternative_name;
+  auto choice_type() const -> const Expression& { return *choice_type_; }
+  auto choice_type() -> Expression& { return *choice_type_; }
+  auto alternative_name() const -> const std::string& {
+    return alternative_name_;
   }
-  auto Arguments() const -> Nonnull<const TuplePattern*> { return arguments; }
-  auto Arguments() -> Nonnull<TuplePattern*> { return arguments; }
+  auto arguments() const -> const TuplePattern& { return *arguments_; }
+  auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
-  Nonnull<Expression*> choice_type;
-  std::string alternative_name;
-  Nonnull<TuplePattern*> arguments;
+  Nonnull<Expression*> choice_type_;
+  std::string alternative_name_;
+  Nonnull<TuplePattern*> arguments_;
 };
 
 // A pattern that matches a value if it is equal to the value of a given
 // expression.
 class ExpressionPattern : public Pattern {
  public:
-  ExpressionPattern(Nonnull<Expression*> expression)
+  explicit ExpressionPattern(Nonnull<Expression*> expression)
       : Pattern(Kind::ExpressionPattern, expression->source_loc()),
-        expression(expression) {}
+        expression_(expression) {}
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->kind() == Kind::ExpressionPattern;
   }
 
-  auto Expression() const -> Nonnull<const Expression*> { return expression; }
-  auto Expression() -> Nonnull<Carbon::Expression*> { return expression; }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
 
  private:
-  Nonnull<Carbon::Expression*> expression;
+  Nonnull<Expression*> expression_;
 };
 
 }  // namespace Carbon

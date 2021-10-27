@@ -251,10 +251,10 @@ class Point {
   impl as Vector {
     // In this scope, "Self" is an alias for "Point".
     fn Add[me: Self](b: Self) -> Self {
-      return Point(.x = a.x + b.x, .y = a.y + b.y);
+      return {.x = a.x + b.x, .y = a.y + b.y};
     }
     fn Scale[me: Self](v: Double) -> Self {
-      return Point(.x = a.x * v, .y = a.y * v);
+      return {.x = a.x * v, .y = a.y * v};
     }
   }
 }
@@ -263,8 +263,8 @@ class Point {
 Interfaces that are implemented inline contribute to the type's API:
 
 ```
-var p1: Point = (.x = 1.0, .y = 2.0);
-var p2: Point = (.x = 2.0, .y = 4.0);
+var p1: Point = {.x = 1.0, .y = 2.0};
+var p2: Point = {.x = 2.0, .y = 4.0};
 Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
@@ -290,7 +290,7 @@ meaning their data representations are the same, so we allow you to convert
 between the two freely:
 
 ```
-var a: Point = (.x = 1.0, .y = 2.0);
+var a: Point = {.x = 1.0, .y = 2.0};
 // `a` has `Add` and `Scale` methods:
 a.Add(a.Scale(2.0));
 
@@ -403,10 +403,10 @@ class Point2 {
 external impl Point2 as Vector {
   // In this scope, "Self" is an alias for "Point2".
   fn Add[me: Self](b: Self) -> Self {
-    return Point2(.x = a.x + b.x, .y = a.y + b.y);
+    return {.x = a.x + b.x, .y = a.y + b.y};
   }
   fn Scale[me: Self](v: Double) -> Self {
-    return Point2(.x = a.x * v, .y = a.y * v);
+    return {.x = a.x * v, .y = a.y * v};
   }
 }
 ```
@@ -436,7 +436,7 @@ On the other hand, if we convert to the facet type, those methods do become
 visible:
 
 ```
-var a: Point2 = (.x = 1.0, .y = 2.0);
+var a: Point2 = {.x = 1.0, .y = 2.0};
 // `a` does *not* have `Add` and `Scale` methods:
 // ❌ Error: a.Add(a.Scale(2.0));
 
@@ -462,21 +462,63 @@ class Point3 {
   var x: Double;
   var y: Double;
   fn Add[me: Self](b: Self) -> Self {
-    return Point3(.x = a.x + b.x, .y = a.y + b.y);
+    return {.x = a.x + b.x, .y = a.y + b.y};
   }
 }
 
-external Point3 as Vector {
+external impl Point3 as Vector {
   alias Add = Point3.Add;  // Syntax TBD
   fn Scale[me: Self](v: Double) -> Self {
-    return Point3(.x = a.x * v, .y = a.y * v);
+    return {.x = a.x * v, .y = a.y * v};
   }
 }
 ```
 
 With this definition, `Point3` includes `Add` in its API but not `Scale`, while
 `Point3 as Vector` includes both. This maintains the property that you can
-determine the API of a type by looking at its definition.
+determine the API of a type by looking at its definition. In this case, the
+`external impl` may be defined lexically inside the scope of the class.
+
+```
+class Point3 {
+  var x: Double;
+  var y: Double;
+  fn Add[me: Self](b: Self) -> Self {
+    return {.x = a.x + b.x, .y = a.y + b.y};
+  }
+  // Type before `as` is optional and defaults to the current class.
+  external impl as Vector {
+    alias Add = Point3.Add;  // Syntax TBD
+    fn Scale[me: Self](v: Double) -> Self {
+      return {.x = a.x * v, .y = a.y * v};
+    }
+  }
+}
+
+// OR:
+
+class Point3 {
+  var x: Double;
+  var y: Double;
+  external impl as Vector {
+    fn Add[me: Self](b: Self) -> Self {
+      return {.x = a.x + b.x, .y = a.y + b.y};
+    }
+    fn Scale[me: Self](v: Double) -> Self {
+      return {.x = a.x * v, .y = a.y * v};
+    }
+  }
+  alias Add = Vector.Add;  // Syntax TBD
+}
+```
+
+Being defined lexically inside the class means that implementation is available
+to other members defined in the class. For example, it would allow implementing
+another interface or method that requires this interface to be implemented.
+
+**Open question:** Do implementations need to be defined lexically inside the
+class to get access to private members, or is it sufficient to be defined in the
+same library as the class?
 
 **Rejected alternative:** We could allow types to have different APIs in
 different files based on explicit configuration in that file. For example, we
@@ -509,8 +551,8 @@ _qualified name_, whether or not the implementation is done externally with an
 `external impl` statement:
 
 ```
-var p1: Point2 = (.x = 1.0, .y = 2.0);
-var p2: Point2 = (.x = 2.0, .y = 4.0);
+var p1: Point2 = {.x = 1.0, .y = 2.0};
+var p2: Point2 = {.x = 2.0, .y = 4.0};
 Assert(p1.(Vector.Scale)(2.0) == p2);
 Assert(p1.(Vector.Add)(p1) == p2);
 ```
@@ -537,7 +579,7 @@ You could access `Draw` with a qualified name:
 import Plot;
 import Points;
 
-var p: Points.Point2 = (.x = 1.0, .y = 2.0);
+var p: Points.Point2 = {.x = 1.0, .y = 2.0};
 p.(Plot.Drawable.Draw)();
 ```
 
@@ -609,8 +651,8 @@ Even though `Point2` doesn't have `Add` and `Scale` methods, it still implements
 `Vector` and so can still call `AddAndScaleGeneric`:
 
 ```
-var a2: Point2 = (.x = 1.0, .y = 2.0);
-var w2: Point2 = (.x = 3.0, .y = 4.0);
+var a2: Point2 = {.x = 1.0, .y = 2.0};
+var w2: Point2 = {.x = 3.0, .y = 4.0};
 var v3: Point2 = AddAndScaleGeneric(a, w, 2.5);
 ```
 
@@ -657,10 +699,10 @@ var VectorForPoint: Vector  = {
     // `lambda` is **placeholder** syntax for defining a
     // function value.
     .Add = lambda(a: Point, b: Point) -> Point {
-      return Point(.x = a.x + b.x, .y = a.y + b.y);
+      return {.x = a.x + b.x, .y = a.y + b.y};
     },
     .Scale = lambda(a: Point, v: Double) -> Point {
-      return Point(.x = a.x * v, .y = a.y * v);
+      return {.x = a.x * v, .y = a.y * v};
     },
 };
 ```
@@ -1320,62 +1362,62 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 -   `IncidenceGraph` implements all methods of `Graph`, `EdgeListGraph`
     implements none of them.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn OutEdges[addr me: Self*](u: VertexDescriptor)
-        -> (EdgeIterator, EdgeIterator) { ... }
-  }
-  impl as EdgeListGraph {
-    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
-  }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn OutEdges[addr me: Self*](u: VertexDescriptor)
+            -> (EdgeIterator, EdgeIterator) { ... }
+      }
+      impl as EdgeListGraph {
+        fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+      }
+    }
+    ```
 
 -   `IncidenceGraph` and `EdgeListGraph` implement all methods of `Graph`
     between them, but with no overlap.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn OutEdges[addr me: Self*](u: VertexDescriptor)
-        -> (EdgeIterator, EdgeIterator) { ... }
-  }
-  impl as EdgeListGraph {
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
-  }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn OutEdges[addr me: Self*](u: VertexDescriptor)
+            -> (EdgeIterator, EdgeIterator) { ... }
+      }
+      impl as EdgeListGraph {
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Edges[addr me: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+      }
+    }
+    ```
 
 -   Explicitly implementing `Graph`.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as Graph {
-    fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-    fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-  }
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as Graph {
+        fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+        fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+      }
+      impl as IncidenceGraph { ... }
+      impl as EdgeListGraph { ... }
+    }
+    ```
 
 -   Implementing `Graph` externally.
 
-```
-class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
-}
-external impl as Graph {
-  fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-  fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-}
-```
+    ```
+    class MyEdgeListIncidenceGraph {
+      impl as IncidenceGraph { ... }
+      impl as EdgeListGraph { ... }
+    }
+    external impl as Graph {
+      fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+      fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
+    }
+    ```
 
 This last point means that there are situations where we can only detect a
 missing method definition by the end of the file. This doesn't delay other
@@ -1435,22 +1477,33 @@ Now consider a type with a generic type parameter, like a hash map type:
 
 ```
 interface Hashable { ... }
-class HashMap(KeyT:! Hashable, ValueT:! Type) { ... }
+class HashMap(KeyT:! Hashable, ValueT:! Type) {
+  fn Find[me:Self](key: KeyT) -> Optional(ValueT);
+  // ...
+}
 ```
 
-If we write something like `HashMap(String, i32)` the type we actually get is:
+A user of this type will provide specific values for the key and value types:
 
 ```
-HashMap(String as Hashable, i32 as Type)
+var hm: HashMap(String, i32) = ...;
+var result: Optional(i32) = hm.Find("Needle");
 ```
 
-This is the same type we will get if we pass in some other facet types in, so
-all of these types are equal:
+Since the `Find` function is generic, it can only use the capabilities that
+`HashMap` requires of `KeyT` and `ValueT`. This implies that the
+_implementation_ of `HashMap(String, i32).Find` and
+`HashMap(String as Hashable, i32).Find` are the same. In fact, we could
+substitute any facet of `String`, and `Find` would still use
+`String as Hashable` in its implementation. So these types:
 
 -   `HashMap(String, i32)`
 -   `HashMap(String as Hashable, i32 as Type)`
--   `HashMap((String as Printable) as Hashable, i32)`
+-   `HashMap(String as Printable, i32)`
 -   `HashMap((String as Printable & Hashable) as Hashable, i32)`
+
+are also facets of each other, and Carbon can freely allow casts and implicit
+conversions between them.
 
 This means we don't generally need to worry about getting the wrong facet type
 as the argument for a generic type. This means we don't get type mismatches when
@@ -1462,9 +1515,15 @@ fn PrintValue
     [KeyT:! Printable & Hashable, ValueT:! Printable]
     (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
 
-var m: HashMap(String, i32);
+var m: HashMap(String, i32) = ...;
 PrintValue(m, "key");
 ```
+
+However, those types are still different. A caller of `Find` observes that its
+signature reflects the actual type parameters passed to `HashMap`, not their
+projection onto the `Hashable` or `Type` facets. In particular, the return type
+of `hm.Find` is `Optional(i32)`, not `Optional(i32 as Type)`. (Incidentally,
+`Optional(i32)` and `Optional(i32 as Type)` are also facets of each other.)
 
 ## Adapting types
 
@@ -1538,7 +1597,7 @@ or using qualified names:
 adapter SongByTitle for Song {
   impl as Comparable {
     fn Less[me: Self](that: Self) -> bool {
-      return this.(Song.Title)() < that(Song.Title)();
+      return this.(Song.Title)() < that.(Song.Title)();
     }
   }
 }
@@ -1611,13 +1670,12 @@ one difference between them is that `Song as Hashable` may be implicitly
 converted to `Song`, which implements interface `Printable`, and
 `PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
 implements interface `Media`. This means that it is safe to convert between
-`HashMap(Song, i32) == HashMap(Song as Hashable, i32)` and
-`HashMap(PlayableSong, i32) == HashMap(PlayableSong as Hashable, i32)` (though
-maybe only with an explicit cast) but
-`HashMap(SongHashedByTitle, i32) == HashMap(SongHashByTitle as Hashable, i32)`
-is incompatible. This is a relief, because we know that in practice the
-invariants of a `HashMap` implementation rely on the hashing function staying
-the same.
+`HashMap(Song, i32)` and `HashMap(PlayableSong, i32)` (though maybe only with an
+explicit cast), since the implementation of all the methods will use the same
+implementation of the `Hashable` interface. But
+`HashMap(SongHashedByTitle, i32)` is incompatible. This is a relief, because we
+know that in practice the invariants of a `HashMap` implementation rely on the
+hashing function staying the same.
 
 ### Extending adapter
 
@@ -1653,9 +1711,24 @@ Unlike the similar `class B extends A` notation, `adaptor B extends A` is
 permitted even if `A` is a final class. Also, there is no implicit conversion
 from `B` to `A`, matching `adapter`...`for` but unlike class extension.
 
-**Future work:** We may need additional mechanisms for changing the API in the
-adapter. For example, to resolve conflicts we might want to be able to move the
-implementation of a specific interface into an [external impl](#external-impl).
+To avoid or resolve name conflicts between interfaces, an `impl` may be declared
+[`external`](#external-impl). The names in that interface may then be pulled in
+individually or renamed using `alias` declarations.
+
+```
+adapter SongRenderToPrintDriver extends Song {
+  // Add a new `Print()` member function.
+  fn Print[me: Self]() { ... }
+
+  // Avoid name conflict with new `Print` function by making
+  // the implementation of the `Printable` interface external.
+  external impl as Printable = Song as Printable;
+
+  // Make the `Print` function from `Printable` available
+  // under the name `PrintToScreen`.
+  alias PrintToScreen = Printable.Print;
+}
+```
 
 ### Use case: Using independent libraries together
 

@@ -27,7 +27,7 @@ class Address {
 
   // Returns true if the two addresses refer to the same memory location.
   friend auto operator==(const Address& lhs, const Address& rhs) -> bool {
-    return lhs.index == rhs.index;
+    return lhs.index_ == rhs.index_;
   }
 
   friend auto operator!=(const Address& lhs, const Address& rhs) -> bool {
@@ -40,7 +40,7 @@ class Address {
   // the whole memory allocation, and an optional FieldPath specifying a
   // particular field within that allocation.
   void Print(llvm::raw_ostream& out) const {
-    out << "Address(" << index << ")" << field_path;
+    out << "Address(" << index_ << ")" << field_path_;
   }
 
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -49,7 +49,7 @@ class Address {
   // `field_name`, this method returns the address of that field.
   auto SubobjectAddress(std::string field_name) const -> Address {
     Address result = *this;
-    result.field_path.Append(std::move(field_name));
+    result.field_path_.Append(std::move(field_name));
     return result;
   }
 
@@ -59,10 +59,10 @@ class Address {
   // details of the Heap.
   friend class Heap;
 
-  explicit Address(uint64_t index) : index(index) {}
+  explicit Address(uint64_t index) : index_(index) {}
 
-  uint64_t index;
-  FieldPath field_path;
+  uint64_t index_;
+  FieldPath field_path_;
 };
 
 }  // namespace Carbon

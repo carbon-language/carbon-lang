@@ -9,7 +9,7 @@
 #include "common/check.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/interpreter/frame.h"
+#include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -70,7 +70,7 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassValue: {
       std::optional<Nonnull<const Value*>> field =
-          cast<StructValue>(*cast<NominalClassValue>(*v).Inits()).FindField(f);
+          cast<StructValue>(cast<NominalClassValue>(*v).inits()).FindField(f);
       if (field == std::nullopt) {
         FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v;
       }
@@ -78,11 +78,11 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
-      if (!FindInVarValues(f, choice.Alternatives())) {
+      if (!FindInVarValues(f, choice.alternatives())) {
         FATAL_RUNTIME_ERROR(source_loc)
             << "alternative " << f << " not in " << *v;
       }
-      return arena->New<AlternativeConstructorValue>(f, choice.Name());
+      return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -94,7 +94,7 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
                      SourceLocation source_loc) const -> Nonnull<const Value*> {
   Nonnull<const Value*> value(this);
-  for (const std::string& field : path.components) {
+  for (const std::string& field : path.components_) {
     value = GetMember(arena, value, field, source_loc);
   }
   return value;
@@ -127,12 +127,12 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
-      return SetFieldImpl(arena, cast<NominalClassValue>(*value).Inits(),
+      return SetFieldImpl(arena, &cast<NominalClassValue>(*value).inits(),
                           path_begin, path_end, field_value, source_loc);
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
-          cast<TupleValue>(*value).Elements();
+          cast<TupleValue>(*value).elements();
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi(*path_begin);
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
@@ -154,7 +154,7 @@ auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,
                      SourceLocation source_loc) const -> Nonnull<const Value*> {
   return SetFieldImpl(arena, Nonnull<const Value*>(this),
-                      path.components.begin(), path.components.end(),
+                      path.components_.begin(), path.components_.end(),
                       field_value, source_loc);
 }
 
@@ -162,23 +162,23 @@ void Value::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Value::Kind::AlternativeConstructorValue: {
       const auto& alt = cast<AlternativeConstructorValue>(*this);
-      out << alt.ChoiceName() << "." << alt.AltName();
+      out << alt.choice_name() << "." << alt.alt_name();
       break;
     }
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*this);
-      if (placeholder.Name().has_value()) {
-        out << *placeholder.Name();
+      if (placeholder.name().has_value()) {
+        out << *placeholder.name();
       } else {
         out << "_";
       }
-      out << ": " << *placeholder.Type();
+      out << ": " << placeholder.type();
       break;
     }
     case Value::Kind::AlternativeValue: {
       const auto& alt = cast<AlternativeValue>(*this);
-      out << "alt " << alt.ChoiceName() << "." << alt.AltName() << " "
-          << *alt.Argument();
+      out << "alt " << alt.choice_name() << "." << alt.alt_name() << " "
+          << alt.argument();
       break;
     }
     case Value::Kind::StructValue: {
@@ -193,29 +193,29 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::NominalClassValue: {
       const auto& s = cast<NominalClassValue>(*this);
-      out << cast<NominalClassType>(*s.Type()).Name() << *s.Inits();
+      out << cast<NominalClassType>(s.type()).name() << s.inits();
       break;
     }
     case Value::Kind::TupleValue: {
       out << "(";
       llvm::ListSeparator sep;
-      for (Nonnull<const Value*> element : cast<TupleValue>(*this).Elements()) {
+      for (Nonnull<const Value*> element : cast<TupleValue>(*this).elements()) {
         out << sep << *element;
       }
       out << ")";
       break;
     }
     case Value::Kind::IntValue:
-      out << cast<IntValue>(*this).Val();
+      out << cast<IntValue>(*this).value();
       break;
     case Value::Kind::BoolValue:
-      out << (cast<BoolValue>(*this).Val() ? "true" : "false");
+      out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
     case Value::Kind::FunctionValue:
-      out << "fun<" << cast<FunctionValue>(*this).Name() << ">";
+      out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::PointerValue:
-      out << "ptr<" << cast<PointerValue>(*this).Val() << ">";
+      out << "ptr<" << cast<PointerValue>(*this).value() << ">";
       break;
     case Value::Kind::BoolType:
       out << "Bool";
@@ -233,15 +233,15 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "Continuation";
       break;
     case Value::Kind::PointerType:
-      out << *cast<PointerType>(*this).Type() << "*";
+      out << cast<PointerType>(*this).type() << "*";
       break;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (fn_type.Deduced().size() > 0) {
+      if (fn_type.deduced().size() > 0) {
         out << "[";
         unsigned int i = 0;
-        for (const auto& deduced : fn_type.Deduced()) {
+        for (const auto& deduced : fn_type.deduced()) {
           if (i != 0) {
             out << ", ";
           }
@@ -250,7 +250,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         }
         out << "]";
       }
-      out << *fn_type.Param() << " -> " << *fn_type.Ret();
+      out << fn_type.parameters() << " -> " << fn_type.return_type();
       break;
     }
     case Value::Kind::StructType: {
@@ -263,19 +263,20 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::NominalClassType:
-      out << "class " << cast<NominalClassType>(*this).Name();
+      out << "class " << cast<NominalClassType>(*this).name();
       break;
     case Value::Kind::ChoiceType:
-      out << "choice " << cast<ChoiceType>(*this).Name();
+      out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).Name();
+      out << cast<VariableType>(*this).name();
       break;
     case Value::Kind::ContinuationValue: {
       out << "{";
       llvm::ListSeparator sep(" :: ");
-      for (Nonnull<Frame*> frame : *cast<ContinuationValue>(*this).Stack()) {
-        out << sep << *frame;
+      for (Nonnull<const Action*> action :
+           cast<ContinuationValue>(*this).stack()) {
+        out << sep << *action;
       }
       out << "}";
       break;
@@ -285,92 +286,9 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::StringValue:
       out << "\"";
-      out.write_escaped(cast<StringValue>(*this).Val());
+      out.write_escaped(cast<StringValue>(*this).value());
       out << "\"";
       break;
-  }
-}
-
-auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
-             SourceLocation source_loc) -> Nonnull<const Value*> {
-  switch (val->kind()) {
-    case Value::Kind::TupleValue: {
-      std::vector<Nonnull<const Value*>> elements;
-      for (Nonnull<const Value*> element : cast<TupleValue>(*val).Elements()) {
-        elements.push_back(CopyVal(arena, element, source_loc));
-      }
-      return arena->New<TupleValue>(std::move(elements));
-    }
-    case Value::Kind::AlternativeValue: {
-      const auto& alt = cast<AlternativeValue>(*val);
-      Nonnull<const Value*> arg = CopyVal(arena, alt.Argument(), source_loc);
-      return arena->New<AlternativeValue>(alt.AltName(), alt.ChoiceName(), arg);
-    }
-    case Value::Kind::StructValue: {
-      std::vector<StructElement> elements;
-      for (const StructElement& element : cast<StructValue>(*val).elements()) {
-        elements.push_back(
-            {.name = element.name,
-             .value = CopyVal(arena, element.value, source_loc)});
-      }
-      return arena->New<StructValue>(std::move(elements));
-    }
-    case Value::Kind::NominalClassValue: {
-      const auto& s = cast<NominalClassValue>(*val);
-      Nonnull<const Value*> inits = CopyVal(arena, s.Inits(), source_loc);
-      return arena->New<NominalClassValue>(s.Type(), inits);
-    }
-    case Value::Kind::IntValue:
-      return arena->New<IntValue>(cast<IntValue>(*val).Val());
-    case Value::Kind::BoolValue:
-      return arena->New<BoolValue>(cast<BoolValue>(*val).Val());
-    case Value::Kind::FunctionValue: {
-      const auto& fn_value = cast<FunctionValue>(*val);
-      return arena->New<FunctionValue>(fn_value.Name(), fn_value.Param(),
-                                       fn_value.Body());
-    }
-    case Value::Kind::PointerValue:
-      return arena->New<PointerValue>(cast<PointerValue>(*val).Val());
-    case Value::Kind::ContinuationValue:
-      return arena->New<ContinuationValue>(
-          cast<ContinuationValue>(*val).Stack());
-    case Value::Kind::FunctionType: {
-      const auto& fn_type = cast<FunctionType>(*val);
-      return arena->New<FunctionType>(
-          fn_type.Deduced(), CopyVal(arena, fn_type.Param(), source_loc),
-          CopyVal(arena, fn_type.Ret(), source_loc));
-    }
-    case Value::Kind::PointerType:
-      return arena->New<PointerType>(
-          CopyVal(arena, cast<PointerType>(*val).Type(), source_loc));
-    case Value::Kind::IntType:
-      return arena->New<IntType>();
-    case Value::Kind::BoolType:
-      return arena->New<BoolType>();
-    case Value::Kind::TypeType:
-      return arena->New<TypeType>();
-    case Value::Kind::AutoType:
-      return arena->New<AutoType>();
-    case Value::Kind::ContinuationType:
-      return arena->New<ContinuationType>();
-    case Value::Kind::StringType:
-      return arena->New<StringType>();
-    case Value::Kind::StringValue:
-      return arena->New<StringValue>(cast<StringValue>(*val).Val());
-    case Value::Kind::StructType: {
-      VarValues fields;
-      for (const auto& [name, type] : cast<StructType>(*val).fields()) {
-        fields.push_back({name, CopyVal(arena, type, source_loc)});
-      }
-      return arena->New<StructType>(fields);
-    }
-    case Value::Kind::VariableType:
-    case Value::Kind::NominalClassType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AlternativeConstructorValue:
-      // TODO: These should be copied so that they don't get destructed.
-      return val;
   }
 }
 
@@ -380,13 +298,13 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
   }
   switch (t1->kind()) {
     case Value::Kind::PointerType:
-      return TypeEqual(cast<PointerType>(*t1).Type(),
-                       cast<PointerType>(*t2).Type());
+      return TypeEqual(&cast<PointerType>(*t1).type(),
+                       &cast<PointerType>(*t2).type());
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
-      return TypeEqual(fn1.Param(), fn2.Param()) &&
-             TypeEqual(fn1.Ret(), fn2.Ret());
+      return TypeEqual(&fn1.parameters(), &fn2.parameters()) &&
+             TypeEqual(&fn1.return_type(), &fn2.return_type());
     }
     case Value::Kind::StructType: {
       const auto& struct1 = cast<StructType>(*t1);
@@ -404,18 +322,18 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return true;
     }
     case Value::Kind::NominalClassType:
-      return cast<NominalClassType>(*t1).Name() ==
-             cast<NominalClassType>(*t2).Name();
+      return cast<NominalClassType>(*t1).name() ==
+             cast<NominalClassType>(*t2).name();
     case Value::Kind::ChoiceType:
-      return cast<ChoiceType>(*t1).Name() == cast<ChoiceType>(*t2).Name();
+      return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {
       const auto& tup1 = cast<TupleValue>(*t1);
       const auto& tup2 = cast<TupleValue>(*t2);
-      if (tup1.Elements().size() != tup2.Elements().size()) {
+      if (tup1.elements().size() != tup2.elements().size()) {
         return false;
       }
-      for (size_t i = 0; i < tup1.Elements().size(); ++i) {
-        if (!TypeEqual(tup1.Elements()[i], tup2.Elements()[i])) {
+      for (size_t i = 0; i < tup1.elements().size(); ++i) {
+        if (!TypeEqual(tup1.elements()[i], tup2.elements()[i])) {
           return false;
         }
       }
@@ -428,7 +346,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::StringType:
       return true;
     case Value::Kind::VariableType:
-      return cast<VariableType>(*t1).Name() == cast<VariableType>(*t2).Name();
+      return cast<VariableType>(*t1).name() == cast<VariableType>(*t2).name();
     default:
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
@@ -468,24 +386,24 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
   }
   switch (v1->kind()) {
     case Value::Kind::IntValue:
-      return cast<IntValue>(*v1).Val() == cast<IntValue>(*v2).Val();
+      return cast<IntValue>(*v1).value() == cast<IntValue>(*v2).value();
     case Value::Kind::BoolValue:
-      return cast<BoolValue>(*v1).Val() == cast<BoolValue>(*v2).Val();
+      return cast<BoolValue>(*v1).value() == cast<BoolValue>(*v2).value();
     case Value::Kind::PointerValue:
-      return cast<PointerValue>(*v1).Val() == cast<PointerValue>(*v2).Val();
+      return cast<PointerValue>(*v1).value() == cast<PointerValue>(*v2).value();
     case Value::Kind::FunctionValue: {
       std::optional<Nonnull<const Statement*>> body1 =
-          cast<FunctionValue>(*v1).Body();
+          cast<FunctionValue>(*v1).declaration().body();
       std::optional<Nonnull<const Statement*>> body2 =
-          cast<FunctionValue>(*v2).Body();
+          cast<FunctionValue>(*v2).declaration().body();
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
     case Value::Kind::TupleValue: {
       const std::vector<Nonnull<const Value*>>& elements1 =
-          cast<TupleValue>(*v1).Elements();
+          cast<TupleValue>(*v1).elements();
       const std::vector<Nonnull<const Value*>>& elements2 =
-          cast<TupleValue>(*v2).Elements();
+          cast<TupleValue>(*v2).elements();
       if (elements1.size() != elements2.size()) {
         return false;
       }
@@ -500,7 +418,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       return FieldsValueEqual(cast<StructValue>(*v1).elements(),
                               cast<StructValue>(*v2).elements(), source_loc);
     case Value::Kind::StringValue:
-      return cast<StringValue>(*v1).Val() == cast<StringValue>(*v2).Val();
+      return cast<StringValue>(*v1).value() == cast<StringValue>(*v2).value();
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:

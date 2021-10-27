@@ -8,7 +8,6 @@ cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
     deps = [
-        "//executable_semantics/common:tracing_flag",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
         "@llvm-project//llvm:Support",

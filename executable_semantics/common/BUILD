@@ -38,10 +38,3 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
-
-cc_library(
-    name = "tracing_flag",
-    srcs = ["tracing_flag.cpp"],
-    hdrs = ["tracing_flag.h"],
-    visibility = ["//executable_semantics:__subpackages__"],
-)

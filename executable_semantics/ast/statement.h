@@ -17,6 +17,8 @@
 
 namespace Carbon {
 
+class FunctionDeclaration;
+
 class Statement {
  public:
   enum class Kind {
@@ -60,166 +62,195 @@ class Statement {
 
 class ExpressionStatement : public Statement {
  public:
-  ExpressionStatement(SourceLocation source_loc, Nonnull<Expression*> exp)
-      : Statement(Kind::ExpressionStatement, source_loc), exp(exp) {}
+  ExpressionStatement(SourceLocation source_loc,
+                      Nonnull<Expression*> expression)
+      : Statement(Kind::ExpressionStatement, source_loc),
+        expression_(expression) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::ExpressionStatement;
   }
 
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
-  auto Exp() -> Nonnull<Expression*> { return exp; }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
 
  private:
-  Nonnull<Expression*> exp;
+  Nonnull<Expression*> expression_;
 };
 
 class Assign : public Statement {
  public:
   Assign(SourceLocation source_loc, Nonnull<Expression*> lhs,
          Nonnull<Expression*> rhs)
-      : Statement(Kind::Assign, source_loc), lhs(lhs), rhs(rhs) {}
+      : Statement(Kind::Assign, source_loc), lhs_(lhs), rhs_(rhs) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Assign;
   }
 
-  auto Lhs() const -> Nonnull<const Expression*> { return lhs; }
-  auto Lhs() -> Nonnull<Expression*> { return lhs; }
-  auto Rhs() const -> Nonnull<const Expression*> { return rhs; }
-  auto Rhs() -> Nonnull<Expression*> { return rhs; }
+  auto lhs() const -> const Expression& { return *lhs_; }
+  auto lhs() -> Expression& { return *lhs_; }
+  auto rhs() const -> const Expression& { return *rhs_; }
+  auto rhs() -> Expression& { return *rhs_; }
 
  private:
-  Nonnull<Expression*> lhs;
-  Nonnull<Expression*> rhs;
+  Nonnull<Expression*> lhs_;
+  Nonnull<Expression*> rhs_;
 };
 
 class VariableDefinition : public Statement {
  public:
-  VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pat,
+  VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
                      Nonnull<Expression*> init)
-      : Statement(Kind::VariableDefinition, source_loc), pat(pat), init(init) {}
+      : Statement(Kind::VariableDefinition, source_loc),
+        pattern_(pattern),
+        init_(init) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::VariableDefinition;
   }
 
-  auto Pat() const -> Nonnull<const Pattern*> { return pat; }
-  auto Pat() -> Nonnull<Pattern*> { return pat; }
-  auto Init() const -> Nonnull<const Expression*> { return init; }
-  auto Init() -> Nonnull<Expression*> { return init; }
+  auto pattern() const -> const Pattern& { return *pattern_; }
+  auto pattern() -> Pattern& { return *pattern_; }
+  auto init() const -> const Expression& { return *init_; }
+  auto init() -> Expression& { return *init_; }
 
  private:
-  Nonnull<Pattern*> pat;
-  Nonnull<Expression*> init;
+  Nonnull<Pattern*> pattern_;
+  Nonnull<Expression*> init_;
 };
 
 class If : public Statement {
  public:
-  If(SourceLocation source_loc, Nonnull<Expression*> cond,
-     Nonnull<Statement*> then_stmt,
-     std::optional<Nonnull<Statement*>> else_stmt)
+  If(SourceLocation source_loc, Nonnull<Expression*> condition,
+     Nonnull<Statement*> then_statement,
+     std::optional<Nonnull<Statement*>> else_statement)
       : Statement(Kind::If, source_loc),
-        cond(cond),
-        then_stmt(then_stmt),
-        else_stmt(else_stmt) {}
+        condition_(condition),
+        then_statement_(then_statement),
+        else_statement_(else_statement) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::If;
   }
 
-  auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto Cond() -> Nonnull<Expression*> { return cond; }
-  auto ThenStmt() const -> Nonnull<const Statement*> { return then_stmt; }
-  auto ThenStmt() -> Nonnull<Statement*> { return then_stmt; }
-  auto ElseStmt() const -> std::optional<Nonnull<const Statement*>> {
-    return else_stmt;
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+  auto then_statement() const -> const Statement& { return *then_statement_; }
+  auto then_statement() -> Statement& { return *then_statement_; }
+  auto else_statement() const -> std::optional<Nonnull<const Statement*>> {
+    return else_statement_;
   }
-  auto ElseStmt() -> std::optional<Nonnull<Statement*>> { return else_stmt; }
+  auto else_statement() -> std::optional<Nonnull<Statement*>> {
+    return else_statement_;
+  }
 
  private:
-  Nonnull<Expression*> cond;
-  Nonnull<Statement*> then_stmt;
-  std::optional<Nonnull<Statement*>> else_stmt;
+  Nonnull<Expression*> condition_;
+  Nonnull<Statement*> then_statement_;
+  std::optional<Nonnull<Statement*>> else_statement_;
 };
 
 class Return : public Statement {
  public:
   Return(Nonnull<Arena*> arena, SourceLocation source_loc)
       : Return(source_loc, arena->New<TupleLiteral>(source_loc), true) {}
-  Return(SourceLocation source_loc, Nonnull<Expression*> exp,
-         bool is_omitted_exp)
+  Return(SourceLocation source_loc, Nonnull<Expression*> expression,
+         bool is_omitted_expression)
       : Statement(Kind::Return, source_loc),
-        exp(exp),
-        is_omitted_exp(is_omitted_exp) {}
+        expression_(expression),
+        is_omitted_expression_(is_omitted_expression) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Return;
   }
 
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
-  auto Exp() -> Nonnull<Expression*> { return exp; }
-  auto IsOmittedExp() const -> bool { return is_omitted_exp; }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
+  auto is_omitted_expression() const -> bool { return is_omitted_expression_; }
+
+  // The AST node representing the function body this statement returns from.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto function() const -> const FunctionDeclaration& { return **function_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_function(Nonnull<const FunctionDeclaration*> function) {
+    CHECK(!function_.has_value());
+    function_ = function;
+  }
 
  private:
-  Nonnull<Expression*> exp;
-  bool is_omitted_exp;
+  Nonnull<Expression*> expression_;
+  bool is_omitted_expression_;
+  std::optional<Nonnull<const FunctionDeclaration*>> function_;
 };
 
 class Sequence : public Statement {
  public:
-  Sequence(SourceLocation source_loc, Nonnull<Statement*> stmt,
+  Sequence(SourceLocation source_loc, Nonnull<Statement*> statement,
            std::optional<Nonnull<Statement*>> next)
-      : Statement(Kind::Sequence, source_loc), stmt(stmt), next(next) {}
+      : Statement(Kind::Sequence, source_loc),
+        statement_(statement),
+        next_(next) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Sequence;
   }
 
-  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
-  auto Stmt() -> Nonnull<Statement*> { return stmt; }
-  auto Next() const -> std::optional<Nonnull<const Statement*>> { return next; }
-  auto Next() -> std::optional<Nonnull<Statement*>> { return next; }
+  auto statement() const -> const Statement& { return *statement_; }
+  auto statement() -> Statement& { return *statement_; }
+  auto next() const -> std::optional<Nonnull<const Statement*>> {
+    return next_;
+  }
+  auto next() -> std::optional<Nonnull<Statement*>> { return next_; }
 
  private:
-  Nonnull<Statement*> stmt;
-  std::optional<Nonnull<Statement*>> next;
+  Nonnull<Statement*> statement_;
+  std::optional<Nonnull<Statement*>> next_;
 };
 
 class Block : public Statement {
  public:
-  Block(SourceLocation source_loc, std::optional<Nonnull<Statement*>> stmt)
-      : Statement(Kind::Block, source_loc), stmt(stmt) {}
+  Block(SourceLocation source_loc, std::optional<Nonnull<Statement*>> statement)
+      : Statement(Kind::Block, source_loc), statement_(statement) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Block;
   }
 
-  auto Stmt() const -> std::optional<Nonnull<const Statement*>> { return stmt; }
-  auto Stmt() -> std::optional<Nonnull<Statement*>> { return stmt; }
+  auto statement() const -> std::optional<Nonnull<const Statement*>> {
+    return statement_;
+  }
+  auto statement() -> std::optional<Nonnull<Statement*>> { return statement_; }
 
  private:
-  std::optional<Nonnull<Statement*>> stmt;
+  std::optional<Nonnull<Statement*>> statement_;
 };
 
 class While : public Statement {
  public:
-  While(SourceLocation source_loc, Nonnull<Expression*> cond,
+  While(SourceLocation source_loc, Nonnull<Expression*> condition,
         Nonnull<Statement*> body)
-      : Statement(Kind::While, source_loc), cond(cond), body(body) {}
+      : Statement(Kind::While, source_loc),
+        condition_(condition),
+        body_(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::While;
   }
 
-  auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto Cond() -> Nonnull<Expression*> { return cond; }
-  auto Body() const -> Nonnull<const Statement*> { return body; }
-  auto Body() -> Nonnull<Statement*> { return body; }
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+  auto body() const -> const Statement& { return *body_; }
+  auto body() -> Statement& { return *body_; }
 
  private:
-  Nonnull<Expression*> cond;
-  Nonnull<Statement*> body;
+  Nonnull<Expression*> condition_;
+  Nonnull<Statement*> body_;
 };
 
 class Break : public Statement {
@@ -230,6 +261,23 @@ class Break : public Statement {
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Break;
   }
+
+  // The AST node representing the loop this statement breaks out of.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto loop() const -> const Statement& { return **loop_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_loop(Nonnull<const Statement*> loop) {
+    CHECK(!loop_.has_value());
+    loop_ = loop;
+  }
+
+ private:
+  std::optional<Nonnull<const Statement*>> loop_;
 };
 
 class Continue : public Statement {
@@ -240,6 +288,23 @@ class Continue : public Statement {
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Continue;
   }
+
+  // The AST node representing the loop this statement continues.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto loop() const -> const Statement& { return **loop_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_loop(Nonnull<const Statement*> loop) {
+    CHECK(!loop_.has_value());
+    loop_ = loop;
+  }
+
+ private:
+  std::optional<Nonnull<const Statement*>> loop_;
 };
 
 class Match : public Statement {
@@ -289,22 +354,22 @@ class Continuation : public Statement {
   Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Statement*> body)
       : Statement(Kind::Continuation, source_loc),
-        continuation_variable(std::move(continuation_variable)),
-        body(body) {}
+        continuation_variable_(std::move(continuation_variable)),
+        body_(body) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Continuation;
   }
 
-  auto ContinuationVariable() const -> const std::string& {
-    return continuation_variable;
+  auto continuation_variable() const -> const std::string& {
+    return continuation_variable_;
   }
-  auto Body() const -> Nonnull<const Statement*> { return body; }
-  auto Body() -> Nonnull<Statement*> { return body; }
+  auto body() const -> const Statement& { return *body_; }
+  auto body() -> Statement& { return *body_; }
 
  private:
-  std::string continuation_variable;
-  Nonnull<Statement*> body;
+  std::string continuation_variable_;
+  Nonnull<Statement*> body_;
 };
 
 // A run statement.
@@ -313,17 +378,17 @@ class Continuation : public Statement {
 class Run : public Statement {
  public:
   Run(SourceLocation source_loc, Nonnull<Expression*> argument)
-      : Statement(Kind::Run, source_loc), argument(argument) {}
+      : Statement(Kind::Run, source_loc), argument_(argument) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Run;
   }
 
-  auto Argument() const -> Nonnull<const Expression*> { return argument; }
-  auto Argument() -> Nonnull<Expression*> { return argument; }
+  auto argument() const -> const Expression& { return *argument_; }
+  auto argument() -> Expression& { return *argument_; }
 
  private:
-  Nonnull<Expression*> argument;
+  Nonnull<Expression*> argument_;
 };
 
 // An await statement.

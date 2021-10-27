@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
@@ -24,17 +24,19 @@ using llvm::cast;
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:
-      out << *cast<LValAction>(*this).Exp();
+      out << cast<LValAction>(*this).expression();
       break;
     case Action::Kind::ExpressionAction:
-      out << *cast<ExpressionAction>(*this).Exp();
+      out << cast<ExpressionAction>(*this).expression();
       break;
     case Action::Kind::PatternAction:
-      out << *cast<PatternAction>(*this).Pat();
+      out << cast<PatternAction>(*this).pattern();
       break;
     case Action::Kind::StatementAction:
-      cast<StatementAction>(*this).Stmt()->PrintDepth(1, out);
+      cast<StatementAction>(*this).statement().PrintDepth(1, out);
       break;
+    case Action::Kind::ScopeAction:
+      out << "ScopeAction";
   }
   out << "<" << pos_ << ">";
   if (results_.size() > 0) {

@@ -7,8 +7,8 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/interpreter/resolve_control_flow.h"
 #include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
@@ -26,31 +26,32 @@ static void AddIntrinsics(Nonnull<Arena*> arena,
       source_loc,
       arena->New<IntrinsicExpression>(IntrinsicExpression::Intrinsic::Print),
       false);
-  auto print = arena->New<FunctionDeclaration>(arena->New<FunctionDefinition>(
+  auto print = arena->New<FunctionDeclaration>(
       source_loc, "Print", std::vector<GenericBinding>(),
       arena->New<TuplePattern>(source_loc, print_params),
       arena->New<ExpressionPattern>(arena->New<TupleLiteral>(source_loc)),
-      /*is_omitted_return_type=*/false, print_return));
+      /*is_omitted_return_type=*/false, print_return);
   declarations->insert(declarations->begin(), print);
 }
 
-void ExecProgram(Nonnull<Arena*> arena, AST ast) {
+void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
   AddIntrinsics(arena, &ast.declarations);
-  if (tracing_output) {
+  if (trace) {
     llvm::outs() << "********** source program **********\n";
     for (const auto decl : ast.declarations) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** type checking **********\n";
   }
-  TypeChecker type_checker(arena);
+  ResolveControlFlow(ast);
+  TypeChecker type_checker(arena, trace);
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);
   TypeEnv top = p.types;
   Env ct_top = p.values;
   for (const auto decl : ast.declarations) {
     type_checker.TypeCheck(decl, top, ct_top);
   }
-  if (tracing_output) {
+  if (trace) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
     for (const auto decl : ast.declarations) {
@@ -63,7 +64,8 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast) {
   Nonnull<Expression*> call_main = arena->New<CallExpression>(
       source_loc, arena->New<IdentifierExpression>(source_loc, "main"),
       arena->New<TupleLiteral>(source_loc));
-  int result = Interpreter(arena).InterpProgram(ast.declarations, call_main);
+  int result =
+      Interpreter(arena, trace).InterpProgram(ast.declarations, call_main);
   llvm::outs() << "result: " << result << "\n";
 }
 

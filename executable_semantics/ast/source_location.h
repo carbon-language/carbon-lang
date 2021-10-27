@@ -17,27 +17,27 @@ class SourceLocation {
  public:
   // The filename should be eternal or arena-allocated to eliminate copies.
   SourceLocation(const char* filename, int line_num)
-      : filename(filename), line_num(line_num) {}
+      : filename_(filename), line_num_(line_num) {}
   SourceLocation(Nonnull<const std::string*> filename, int line_num)
-      : filename(filename->c_str()), line_num(line_num) {}
+      : filename_(filename->c_str()), line_num_(line_num) {}
 
   SourceLocation(const SourceLocation&) = default;
   SourceLocation(SourceLocation&&) = default;
   auto operator=(const SourceLocation&) -> SourceLocation& = default;
   auto operator=(SourceLocation&&) -> SourceLocation& = default;
 
-  bool operator==(SourceLocation other) const {
-    return filename == other.filename && line_num == other.line_num;
+  auto operator==(SourceLocation other) const -> bool {
+    return filename_ == other.filename_ && line_num_ == other.line_num_;
   }
 
   void Print(llvm::raw_ostream& out) const {
-    out << filename << ":" << line_num;
+    out << filename_ << ":" << line_num_;
   }
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
-  std::string_view filename;
-  int line_num;
+  std::string_view filename_;
+  int line_num_;
 };
 
 }  // namespace Carbon

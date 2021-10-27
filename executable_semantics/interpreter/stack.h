@@ -26,15 +26,15 @@ struct Stack {
   explicit Stack(T x) : Stack() { Push(std::move(x)); }
 
   // Pushes `x` onto the top of the stack.
-  void Push(T x) { elements.push_back(std::move(x)); }
+  void Push(T x) { elements_.push_back(std::move(x)); }
 
   // Removes and returns the top element of the stack.
   //
   // - Requires: !this->IsEmpty()
   auto Pop() -> T {
     CHECK(!IsEmpty()) << "Can't pop from empty stack.";
-    auto r = std::move(elements.back());
-    elements.pop_back();
+    auto r = std::move(elements_.back());
+    elements_.pop_back();
     return r;
   }
 
@@ -43,9 +43,9 @@ struct Stack {
   // - Requires: n >= 0 && n <= Count()
   void Pop(int n) {
     CHECK(n >= 0) << "Negative pop count disallowed.";
-    CHECK(static_cast<size_t>(n) <= elements.size())
+    CHECK(static_cast<size_t>(n) <= elements_.size())
         << "Can only pop as many elements as stack has.";
-    elements.erase(elements.end() - n, elements.end());
+    elements_.erase(elements_.end() - n, elements_.end());
   }
 
   // Returns the top element of the stack.
@@ -53,21 +53,21 @@ struct Stack {
   // - Requires: !this->IsEmpty()
   auto Top() const -> T {
     CHECK(!IsEmpty()) << "Empty stack has no Top().";
-    return elements.back();
+    return elements_.back();
   }
 
   // Returns `true` iff `Count() > 0`.
-  auto IsEmpty() const -> bool { return elements.empty(); }
+  auto IsEmpty() const -> bool { return elements_.empty(); }
 
   // Returns the number of elements in `*this`.
-  auto Count() const -> int { return elements.size(); }
+  auto Count() const -> int { return elements_.size(); }
 
   // Iterates over the Stack from top to bottom.
-  auto begin() const -> const_iterator { return elements.crbegin(); }
-  auto end() const -> const_iterator { return elements.crend(); }
+  auto begin() const -> const_iterator { return elements_.crbegin(); }
+  auto end() const -> const_iterator { return elements_.crend(); }
 
  private:
-  std::vector<T> elements;
+  std::vector<T> elements_;
 };
 
 }  // namespace Carbon
