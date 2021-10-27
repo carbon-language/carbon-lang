@@ -17,7 +17,7 @@ namespace Carbon {
 // This doesn't currently recurse into expressions, but likely will in the
 // future in order to resolve names in lambdas.
 void PopulateNamesInDeclaration(Declaration& declaration,
-                                DeclaredNames& declared_names) {
+                                ScopedNames& scoped_names) {
   switch (declaration.kind()) {
     case Declaration::Kind::FunctionDeclaration:
       // Populate name into declared_names.
@@ -49,7 +49,7 @@ void PopulateNamesInDeclaration(Declaration& declaration,
 // Recurses through a declaration to find and resolve IdentifierExpressions
 // using declared_names.
 void ResolveNamesInDeclaration(Declaration& declaration,
-                               const DeclaredNames& declared_names) {
+                               const ScopedNames& scoped_names) {
   switch (declaration.kind()) {
     case Declaration::Kind::FunctionDeclaration:
     case Declaration::Kind::ClassDeclaration:
@@ -61,10 +61,10 @@ void ResolveNamesInDeclaration(Declaration& declaration,
 
 void ResolveNames(AST& ast) {
   for (auto declaration : ast.declarations) {
-    PopulateNamesInDeclaration(*declaration, ast.declared_names);
+    PopulateNamesInDeclaration(*declaration, ast.scoped_names);
   }
   for (auto declaration : ast.declarations) {
-    ResolveNamesInDeclaration(*declaration, ast.declared_names);
+    ResolveNamesInDeclaration(*declaration, ast.scoped_names);
   }
 }
 

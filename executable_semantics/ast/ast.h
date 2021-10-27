@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/declared_names.h"
 #include "executable_semantics/ast/library_name.h"
+#include "executable_semantics/ast/scoped_names.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
@@ -25,7 +25,7 @@ struct AST {
   // The file's ordered declarations.
   std::vector<Nonnull<Declaration*>> declarations;
   // Names declared at the top level of the file.
-  DeclaredNames declared_names;
+  ScopedNames scoped_names;
 };
 
 }  // namespace Carbon
