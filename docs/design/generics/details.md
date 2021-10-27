@@ -3903,11 +3903,12 @@ class Complex {
   impl as EquatableWith(Float64) { ... }
 }
 // Some other interface with a type parameter.
-interface Foo(T:! Type) { ... }
-// This provides an impl of Foo(T) for U if U is EquatableWith(T).
-// In the case of Complex, this provides two impls, one for T == Complex,
-// and one for T == Float64.
-external impl [U:! EquatableWith(template T:! Type)] U as Foo(T) {
+interface PartiallyEquatable(T:! Type) { ... }
+// This provides an impl of PartiallyEquatable(T) for U if U
+// is EquatableWith(T). In the case of Complex, this provides
+// two impls, one for T == Complex, and one for T == Float64.
+external impl [T:! Type, U:! EquatableWith(T)] U
+    as PartiallyEquatable(T) {
   ...
 }
 ```
@@ -3934,6 +3935,7 @@ Use cases:
     consistent by forbidding any overriding of the `PartiallyOrdered`
     implementation? In other cases, we will want to support overriding for
     efficiency, such as an implementation of `+=` in terms of `+` and `=`.
+-   `T` should implement `CommonType(T)` for all `T`
 
 Allowed patterns and their prioritization, where `LocalType` and `LocalTrait`
 are defined in this library, `ForeignType` and `ForeignTrait` are defined in
