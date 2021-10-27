@@ -30,7 +30,7 @@ auto ExpressionFromParenContents(
 
 auto TupleExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
-    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*> {
+    const ParenContents<Expression>& paren_contents) -> Nonnull<TupleLiteral*> {
   return arena->New<TupleLiteral>(source_loc, paren_contents.elements);
 }
 
