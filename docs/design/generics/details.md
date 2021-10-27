@@ -2265,7 +2265,7 @@ We might need to write a function that only works with a specific value of an
 [associated constant](#associated-constants) `N`.
 
 ```
-fn PrintPoint2D[PointT:! NSpacePoint where .N == 2](p: PointT) {
+fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
   Print(p.Get(0), ", ", p.Get(1));
 }
 ```
@@ -2274,16 +2274,27 @@ Similarly in an interface definition:
 
 ```
 interface {
-  let PointT:! NSpacePoint where .N == 2;
+  let PointT:! NSpacePoint where .N = 2;
 }
 ```
 
 To name such a constraint, you may use a `let` or a `constraint` declaration:
 
 ```
-let Point2DInterface:! auto = NSpacePoint where .N == 2;
+let Point2DInterface:! auto = NSpacePoint where .N = 2;
 constraint Point2DInterface {
-  extends NSpacePoint where .N == 2;
+  extends NSpacePoint where .N = 2;
+}
+```
+
+A constraint to say that two associated constants should have the same value
+without specifying what specific value they should have must use `==` instead of
+`=`:
+
+```
+interface PointCloud {
+  let Dim:! i32;
+  let PointT:! NSpacePoint where .N == Dim;
 }
 ```
 
@@ -2296,9 +2307,10 @@ associated types to be a specific, concrete type. For example, we might want to
 have a function only accept stacks containing integers:
 
 ```
-fn SumIntStack[T:! Stack where .ElementType == i32](s: T*) -> i32 {
+fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
   var sum: i32 = 0;
   while (!s->IsEmpty()) {
+    // s->Pop() has type `T.ElementType` == i32:
     sum += s->Pop();
   }
   return sum;
@@ -2318,9 +2330,9 @@ constraint IntStack {
 ##### Equal generic types
 
 Alternatively, two generic types could be constrained to be equal to each other,
-without specifying what that type is. For example, we could make the
-`ElementType` of an `Iterator` interface equal to the `ElementType` of a
-`Container` interface as follows:
+without specifying what that type is. This uses `==` instead of `=`. For
+example, we could make the `ElementType` of an `Iterator` interface equal to the
+`ElementType` of a `Container` interface as follows:
 
 ```
 interface Iterator {
@@ -2399,8 +2411,9 @@ but can still be implicitly converted to `Comparable` and can still call
 `Compare` using the qualified member syntax, `needle.(Comparable.Compare)(elt)`.
 The rule is that an `==` `where` constraint between two type variables does not
 modify the set of unqualified member names of either type. (If you write
-`where .ElementType == String`, then `.ElementType` is actually set to `String`
-including the complete unqualified `String` API.)
+`where .ElementType = String` with a `=` and a concrete type, then
+`.ElementType` is actually set to `String` including the complete unqualified
+`String` API.)
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
