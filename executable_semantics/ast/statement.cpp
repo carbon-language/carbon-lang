@@ -62,10 +62,10 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
     case Kind::If: {
       const auto& if_stmt = cast<If>(*this);
       out << "if (" << if_stmt.condition() << ")\n";
-      if_stmt.then_statement().PrintDepth(depth - 1, out);
-      if (if_stmt.else_statement()) {
+      if_stmt.then_block().PrintDepth(depth - 1, out);
+      if (if_stmt.else_block()) {
         out << "\nelse\n";
-        (*if_stmt.else_statement())->PrintDepth(depth - 1, out);
+        (*if_stmt.else_block())->PrintDepth(depth - 1, out);
       }
       break;
     }

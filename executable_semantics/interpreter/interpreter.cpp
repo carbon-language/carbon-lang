@@ -940,13 +940,13 @@ auto Interpreter::StepStmt() -> Transition {
           //      S, H}
           // -> { { then_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(&cast<If>(stmt).then_statement())};
-        } else if (cast<If>(stmt).else_statement()) {
+              arena_->New<StatementAction>(&cast<If>(stmt).then_block())};
+        } else if (cast<If>(stmt).else_block()) {
           //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { else_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(*cast<If>(stmt).else_statement())};
+              arena_->New<StatementAction>(*cast<If>(stmt).else_block())};
         } else {
           return Done{};
         }

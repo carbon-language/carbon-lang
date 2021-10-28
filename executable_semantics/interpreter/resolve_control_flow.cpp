@@ -45,9 +45,9 @@ static void ResolveControlFlow(
       return;
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*statement);
-      ResolveControlFlow(&if_stmt.then_statement(), function, loop);
-      if (if_stmt.else_statement().has_value()) {
-        ResolveControlFlow(*if_stmt.else_statement(), function, loop);
+      ResolveControlFlow(&if_stmt.then_block(), function, loop);
+      if (if_stmt.else_block().has_value()) {
+        ResolveControlFlow(*if_stmt.else_block(), function, loop);
       }
       return;
     }

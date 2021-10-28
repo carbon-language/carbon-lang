@@ -59,6 +59,26 @@ class Statement {
   SourceLocation source_loc_;
 };
 
+class Block : public Statement {
+ public:
+  Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
+      : Statement(Kind::Block, source_loc), statements_(statements) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->kind() == Kind::Block;
+  }
+
+  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
+    return statements_;
+  }
+  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
+    return statements_;
+  }
+
+ private:
+  std::vector<Nonnull<Statement*>> statements_;
+};
+
 class ExpressionStatement : public Statement {
  public:
   ExpressionStatement(SourceLocation source_loc,
@@ -122,12 +142,11 @@ class VariableDefinition : public Statement {
 class If : public Statement {
  public:
   If(SourceLocation source_loc, Nonnull<Expression*> condition,
-     Nonnull<Statement*> then_statement,
-     std::optional<Nonnull<Statement*>> else_statement)
+     Nonnull<Block*> then_block, std::optional<Nonnull<Block*>> else_block)
       : Statement(Kind::If, source_loc),
         condition_(condition),
-        then_statement_(then_statement),
-        else_statement_(else_statement) {}
+        then_block_(then_block),
+        else_block_(else_block) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::If;
@@ -135,19 +154,17 @@ class If : public Statement {
 
   auto condition() const -> const Expression& { return *condition_; }
   auto condition() -> Expression& { return *condition_; }
-  auto then_statement() const -> const Statement& { return *then_statement_; }
-  auto then_statement() -> Statement& { return *then_statement_; }
-  auto else_statement() const -> std::optional<Nonnull<const Statement*>> {
-    return else_statement_;
+  auto then_block() const -> const Block& { return *then_block_; }
+  auto then_block() -> Block& { return *then_block_; }
+  auto else_block() const -> std::optional<Nonnull<const Block*>> {
+    return else_block_;
   }
-  auto else_statement() -> std::optional<Nonnull<Statement*>> {
-    return else_statement_;
-  }
+  auto else_block() -> std::optional<Nonnull<Block*>> { return else_block_; }
 
  private:
   Nonnull<Expression*> condition_;
-  Nonnull<Statement*> then_statement_;
-  std::optional<Nonnull<Statement*>> else_statement_;
+  Nonnull<Block*> then_block_;
+  std::optional<Nonnull<Block*>> else_block_;
 };
 
 class Return : public Statement {
@@ -188,30 +205,10 @@ class Return : public Statement {
   std::optional<Nonnull<const FunctionDeclaration*>> function_;
 };
 
-class Block : public Statement {
- public:
-  Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
-      : Statement(Kind::Block, source_loc), statements_(statements) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->kind() == Kind::Block;
-  }
-
-  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
-    return statements_;
-  }
-  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
-    return statements_;
-  }
-
- private:
-  std::vector<Nonnull<Statement*>> statements_;
-};
-
 class While : public Statement {
  public:
   While(SourceLocation source_loc, Nonnull<Expression*> condition,
-        Nonnull<Statement*> body)
+        Nonnull<Block*> body)
       : Statement(Kind::While, source_loc),
         condition_(condition),
         body_(body) {}
@@ -222,12 +219,12 @@ class While : public Statement {
 
   auto condition() const -> const Expression& { return *condition_; }
   auto condition() -> Expression& { return *condition_; }
-  auto body() const -> const Statement& { return *body_; }
-  auto body() -> Statement& { return *body_; }
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
 
  private:
   Nonnull<Expression*> condition_;
-  Nonnull<Statement*> body_;
+  Nonnull<Block*> body_;
 };
 
 class Break : public Statement {
@@ -329,7 +326,7 @@ class Match : public Statement {
 class Continuation : public Statement {
  public:
   Continuation(SourceLocation source_loc, std::string continuation_variable,
-               Nonnull<Statement*> body)
+               Nonnull<Block*> body)
       : Statement(Kind::Continuation, source_loc),
         continuation_variable_(std::move(continuation_variable)),
         body_(body) {}
@@ -341,12 +338,12 @@ class Continuation : public Statement {
   auto continuation_variable() const -> const std::string& {
     return continuation_variable_;
   }
-  auto body() const -> const Statement& { return *body_; }
-  auto body() -> Statement& { return *body_; }
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
 
  private:
   std::string continuation_variable_;
-  Nonnull<Statement*> body_;
+  Nonnull<Block*> body_;
 };
 
 // A run statement.

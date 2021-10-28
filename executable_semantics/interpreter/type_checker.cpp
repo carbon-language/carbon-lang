@@ -900,10 +900,9 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       TypeCheckExp(&if_stmt.condition(), types, values);
       ExpectType(s->source_loc(), "condition of `if`", arena_->New<BoolType>(),
                  &if_stmt.condition().static_type());
-      TypeCheckStmt(&if_stmt.then_statement(), types, values,
-                    return_type_context);
-      if (if_stmt.else_statement()) {
-        TypeCheckStmt(*if_stmt.else_statement(), types, values,
+      TypeCheckStmt(&if_stmt.then_block(), types, values, return_type_context);
+      if (if_stmt.else_block()) {
+        TypeCheckStmt(*if_stmt.else_block(), types, values,
                       return_type_context);
       }
       return TCResult(types);
@@ -1006,8 +1005,8 @@ void TypeChecker::ExpectReturnOnAllPaths(
     }
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*stmt);
-      ExpectReturnOnAllPaths(&if_stmt.then_statement(), stmt->source_loc());
-      ExpectReturnOnAllPaths(if_stmt.else_statement(), stmt->source_loc());
+      ExpectReturnOnAllPaths(&if_stmt.then_block(), stmt->source_loc());
+      ExpectReturnOnAllPaths(if_stmt.else_block(), stmt->source_loc());
       return;
     }
     case Statement::Kind::Return:
