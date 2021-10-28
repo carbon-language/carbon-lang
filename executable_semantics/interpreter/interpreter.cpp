@@ -859,9 +859,9 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Block: {
       if (act->pos() == 0) {
         const Block& block = cast<Block>(stmt);
-        if (block.statement()) {
+        if (block.sequence()) {
           act->StartScope(Scope(CurrentEnv()));
-          return Spawn{arena_->New<StatementAction>(*block.statement())};
+          return Spawn{arena_->New<StatementAction>(*block.sequence())};
         } else {
           return Done{};
         }
@@ -937,13 +937,13 @@ auto Interpreter::StepStmt() -> Transition {
           //      S, H}
           // -> { { then_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(&cast<If>(stmt).then_statement())};
-        } else if (cast<If>(stmt).else_statement()) {
+              arena_->New<StatementAction>(&cast<If>(stmt).then_block())};
+        } else if (cast<If>(stmt).else_block()) {
           //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { else_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(*cast<If>(stmt).else_statement())};
+              arena_->New<StatementAction>(*cast<If>(stmt).else_block())};
         } else {
           return Done{};
         }
