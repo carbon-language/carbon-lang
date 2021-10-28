@@ -8,14 +8,16 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/address.h"
+#include "executable_semantics/interpreter/heap_allocation_interface.h"
 #include "executable_semantics/interpreter/value.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 // A Heap represents the abstract machine's dynamically allocated memory.
-class Heap {
+class Heap : public HeapAllocationInterface {
  public:
   // Constructs an empty Heap.
   explicit Heap(Nonnull<Arena*> arena) : arena_(arena){};
@@ -34,10 +36,10 @@ class Heap {
              SourceLocation source_loc);
 
   // Put the given value on the heap and mark it as alive.
-  auto AllocateValue(Nonnull<const Value*> v) -> AllocationId;
+  auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
 
   // Marks this allocation, and all of its sub-objects, as dead.
-  void Deallocate(AllocationId allocation);
+  void Deallocate(AllocationId allocation) override;
 
   // Print the value at the given allocation to the stream `out`.
   void PrintAllocation(AllocationId allocation, llvm::raw_ostream& out) const;
