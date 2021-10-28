@@ -491,7 +491,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::StructType: {
           const auto& destination_struct_type =
               cast<StructType>(*destination_type);
-          std::vector<StructElement> new_elements;
+          std::vector<NamedValue> new_elements;
           for (const auto& [field_name, field_type] :
                destination_struct_type.fields()) {
             std::optional<Nonnull<const Value*>> old_value =
