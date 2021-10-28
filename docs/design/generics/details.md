@@ -3694,12 +3694,6 @@ conformance is very similar. This makes it straightforward to refactor between
 those two choices (add or remove `external` and any type parameters from the
 context), and is easier to learn.
 
-**Note:** This conditional interface implementation syntax was decided in
-[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
-Additional context for alternatives considered are in
-[an appendix](appendix-impl-syntax.md). FIXME: Address these questions in a
-proposal doc.
-
 **Example:** [Same-type constraint] We implement interface `Foo(T)` for
 `Pair(T, U)` when `T` and `U` are the same. Using external impl we can write
 this either directly, or using deduced parameters in square brackets.
@@ -3893,22 +3887,22 @@ interface, as in this example:
 
 ```
 // Some interfaces with type parameters.
-interface EquatableWith(T:! Type) { ... }
+interface Equals(T:! Type) { ... }
 // Types can implement parameterized interfaces more than once as long as the
 // templated arguments differ.
 class Complex {
   var r: Float64;
   var i: Float64;
-  impl as EquatableWith(Complex) { ... }
-  impl as EquatableWith(Float64) { ... }
+  impl as Equals(Complex) { ... }
+  impl as Equals(Float64) { ... }
 }
 // Some other interface with a type parameter.
-interface PartiallyEquatable(T:! Type) { ... }
-// This provides an impl of PartiallyEquatable(T) for U if U
-// is EquatableWith(T). In the case of Complex, this provides
-// two impls, one for T == Complex, and one for T == Float64.
-external impl [T:! Type, U:! EquatableWith(T)] U
-    as PartiallyEquatable(T) {
+interface PartiallyEquals(T:! Type) { ... }
+// This provides an impl of PartiallyEquals(T) for U if U
+// is Equals(T). In the case of Complex, this provides two
+// impls, one for T == Complex, and one for T == Float64.
+external impl [T:! Type, U:! Equals(T)]
+    U as PartiallyEquals(T) {
   ...
 }
 ```
@@ -4918,6 +4912,9 @@ In fact, defaults are a generalization of
 [here](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls),
 as long as we allow more specific implementations to be incomplete and reuse
 more general implementations for anything unspecified.
+
+More background in
+[this "Specialize to reuse" blog post](http://aturon.github.io/tech/2015/09/18/reuse/).
 
 One variation on this may be default implementations of entire interfaces. For
 example, `RandomAccessContainer` extends `Container` with an `IteratorType`
