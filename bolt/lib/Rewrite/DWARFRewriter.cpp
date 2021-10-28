@@ -175,7 +175,7 @@ void DWARFRewriter::updateDebugInfo() {
   ARangesSectionWriter = std::make_unique<DebugARangesSectionWriter>();
   RangesSectionWriter = std::make_unique<DebugRangesSectionWriter>();
   StrWriter = std::make_unique<DebugStrWriter>(&BC);
-  AbbrevWriter = std::make_unique<DebugAbbrevWriter>();
+  AbbrevWriter = std::make_unique<DebugAbbrevWriter>(*BC.DwCtx);
 
   AddrWriter = std::make_unique<DebugAddrWriter>(&BC);
   DebugLoclistWriter::setAddressWriter(AddrWriter.get());
@@ -241,7 +241,8 @@ void DWARFRewriter::updateDebugInfo() {
           getBinaryDWODebugInfoPatcher(*DWOId);
       RangesBase = RangesSectionWriter->getSectionOffset();
       DwoDebugInfoPatcher->setRangeBase(*RangesBase);
-      DebugAbbrevWriter *DWOAbbrevWriter = getBinaryDWOAbbrevWriter(*DWOId);
+      DebugAbbrevWriter *DWOAbbrevWriter =
+          createBinaryDWOAbbrevWriter((*SplitCU)->getContext(), *DWOId);
       updateUnitDebugInfo(*DWOId, *(*SplitCU), *DwoDebugInfoPatcher,
                           *DWOAbbrevWriter);
       if (!DwoDebugInfoPatcher->getWasRangBasedUsed())
@@ -569,8 +570,6 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
     errs() << "BOLT-WARNING: corrupt DWARF detected at 0x"
            << Twine::utohexstr(Unit.getOffset()) << '\n';
   }
-
-  AbbrevWriter.addUnitAbbreviations(Unit);
 }
 
 void DWARFRewriter::updateDWARFObjectAddressRanges(
@@ -783,14 +782,12 @@ void DWARFRewriter::finalizeDebugSections(
                                  copyByteArray(*AbbrevSectionContents),
                                  AbbrevSectionContents->size());
 
-  // Update abbreviation offsets if they were changed.
+  // Update abbreviation offsets for CUs/TUs if they were changed.
   SimpleBinaryPatcher *DebugTypesPatcher = nullptr;
-  for (auto &CU : BC.DwCtx->normal_units()) {
-    assert(!CU->isDWOUnit());
-
+  for (auto &Unit : BC.DwCtx->normal_units()) {
     const uint64_t NewAbbrevOffset =
-        AbbrevWriter->getAbbreviationsOffsetForUnit(*CU);
-    if (CU->getAbbreviationsOffset() == NewAbbrevOffset)
+        AbbrevWriter->getAbbreviationsOffsetForUnit(*Unit);
+    if (Unit->getAbbreviationsOffset() == NewAbbrevOffset)
       continue;
 
     // DWARFv4
@@ -798,8 +795,8 @@ void DWARFRewriter::finalizeDebugSections(
     // version - 2 bytes
     // So + 6 to patch debug_abbrev_offset
     constexpr uint64_t AbbrevFieldOffset = 6;
-    if (!CU->isTypeUnit()) {
-      DebugInfoPatcher.addLE32Patch(CU->getOffset() + AbbrevFieldOffset,
+    if (!Unit->isTypeUnit()) {
+      DebugInfoPatcher.addLE32Patch(Unit->getOffset() + AbbrevFieldOffset,
                                     static_cast<uint32_t>(NewAbbrevOffset));
       continue;
     }
@@ -811,7 +808,7 @@ void DWARFRewriter::finalizeDebugSections(
       DebugTypesPatcher =
           static_cast<SimpleBinaryPatcher *>(DebugTypes->getPatcher());
     }
-    DebugTypesPatcher->addLE32Patch(CU->getOffset() + AbbrevFieldOffset,
+    DebugTypesPatcher->addLE32Patch(Unit->getOffset() + AbbrevFieldOffset,
                                     static_cast<uint32_t>(NewAbbrevOffset));
   }
 }

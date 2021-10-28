@@ -423,15 +423,14 @@ void DebugAbbrevWriter::addUnitAbbreviations(DWARFUnit &Unit) {
   // Multiple units may share the same abbreviations. Only add abbreviations
   // for the first unit and reuse them.
   const uint64_t AbbrevOffset = Unit.getAbbreviationsOffset();
-  if (CUAbbrevData.find(AbbrevOffset) != CUAbbrevData.end())
+  if (UnitsAbbrevData.find(AbbrevOffset) != UnitsAbbrevData.end())
     return;
 
-  std::lock_guard<std::mutex> Lock(WriterMutex);
-  AbbrevData &UnitData = CUAbbrevData[AbbrevOffset];
+  AbbrevData &UnitData = UnitsAbbrevData[AbbrevOffset];
   UnitData.Buffer = std::make_unique<DebugBufferVector>();
   UnitData.Stream = std::make_unique<raw_svector_ostream>(*UnitData.Buffer);
 
-  const auto &UnitPatches = Patches[&Unit];
+  const PatchesTy &UnitPatches = Patches[&Unit];
 
   raw_svector_ostream &OS = *UnitData.Stream.get();
 
@@ -455,13 +454,32 @@ void DebugAbbrevWriter::addUnitAbbreviations(DWARFUnit &Unit) {
           DWOEntry->getContribution(DWARFSectionKind::DW_SECT_ABBREV);
       AbbrevContents = AbbrevSectionContents.substr(DWOContrubution->Offset,
                                                     DWOContrubution->Length);
-    } else {
-      DWARFCompileUnit *NextUnit =
-          Unit.getContext().getCompileUnitForOffset(Unit.getNextUnitOffset());
+    } else if (!Unit.isDWOUnit()) {
       const uint64_t StartOffset = Unit.getAbbreviationsOffset();
-      const uint64_t EndOffset = NextUnit ? NextUnit->getAbbreviationsOffset()
-                                          : AbbrevSectionContents.size();
+
+      // We know where the unit's abbreviation set starts, but not where it ends
+      // as such data is not readily available. Hence, we have to build a sorted
+      // list of start addresses and find the next starting address to determine
+      // the set boundaries.
+      //
+      // FIXME: if we had a full access to DWARFDebugAbbrev::AbbrDeclSets
+      // we wouldn't have to build our own sorted list for the quick lookup.
+      if (AbbrevSetOffsets.empty()) {
+        llvm::for_each(
+            *Unit.getContext().getDebugAbbrev(),
+            [&](const std::pair<uint64_t, DWARFAbbreviationDeclarationSet> &P) {
+              AbbrevSetOffsets.push_back(P.first);
+            });
+        llvm::sort(AbbrevSetOffsets);
+      }
+      auto It = llvm::upper_bound(AbbrevSetOffsets, StartOffset);
+      const uint64_t EndOffset =
+          It == AbbrevSetOffsets.end() ? AbbrevSectionContents.size() : *It;
       AbbrevContents = AbbrevSectionContents.slice(StartOffset, EndOffset);
+    } else {
+      // For DWO unit outside of DWP, we expect the entire section to hold
+      // abbreviations for this unit only.
+      AbbrevContents = AbbrevSectionContents;
     }
 
     OS.reserveExtraSpace(AbbrevContents.size());
@@ -509,18 +527,47 @@ void DebugAbbrevWriter::addUnitAbbreviations(DWARFUnit &Unit) {
 }
 
 std::unique_ptr<DebugBufferVector> DebugAbbrevWriter::finalize() {
+  if (DWOId) {
+    // We expect abbrev_offset to always be zero for DWO units as there
+    // should be one CU per DWO, and TUs should share the same abbreviation
+    // set with the CU.
+    // NOTE: this check could be expensive for DWPs as it iterates over
+    //       all units and we invoke it for every unit. Hence only run
+    //       it once per DWP.
+    bool IsDWP = !Context.getCUIndex().getRows().empty();
+    static bool CheckedDWP = false;
+    if (!IsDWP || !CheckedDWP) {
+      for (const std::unique_ptr<DWARFUnit> &Unit : Context.dwo_units()) {
+        if (Unit->getAbbreviationsOffset() != 0) {
+          errs() << "BOLT-ERROR: detected DWO unit with non-zero abbr_offset. "
+                    "Unable to update debug info.\n";
+          exit(1);
+        }
+      }
+      if (IsDWP)
+        CheckedDWP = true;
+    }
+
+    // Issue abbreviations for the DWO CU only.
+    addUnitAbbreviations(*Context.getDWOCompileUnitForHash(*DWOId));
+  } else {
+    // Add abbreviations from compile and type non-DWO units.
+    for (const std::unique_ptr<DWARFUnit> &Unit : Context.normal_units())
+      addUnitAbbreviations(*Unit);
+  }
+
   DebugBufferVector ReturnBuffer;
 
   // Pre-calculate the total size of abbrev section.
   uint64_t Size = 0;
-  for (const auto &KV : CUAbbrevData) {
+  for (const auto &KV : UnitsAbbrevData) {
     const AbbrevData &UnitData = KV.second;
     Size += UnitData.Buffer->size();
   }
   ReturnBuffer.reserve(Size);
 
   uint64_t Pos = 0;
-  for (auto &KV : CUAbbrevData) {
+  for (auto &KV : UnitsAbbrevData) {
     AbbrevData &UnitData = KV.second;
     ReturnBuffer.append(*UnitData.Buffer);
     UnitData.Offset = Pos;

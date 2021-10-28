@@ -213,14 +213,22 @@ public:
         BinaryDWODebugInfoPatchers, DwoId);
   }
 
-  /// Returns a DWO abbrev writer for DWO ID.
-  /// Creates a new instance if it does not already exists.
-  DebugAbbrevWriter *getBinaryDWOAbbrevWriter(uint64_t DwoId) {
-    return getBinaryDWOPatcherHelper<DebugAbbrevDWOWriters, DebugAbbrevWriter>(
-        BinaryDWOAbbrevWriters, DwoId);
+  /// Creates abbrev writer for DWO unit with \p DWOId.
+  DebugAbbrevWriter *createBinaryDWOAbbrevWriter(DWARFContext &Context,
+                                                 uint64_t DWOId) {
+    auto &Entry = BinaryDWOAbbrevWriters[DWOId];
+    Entry = std::make_unique<DebugAbbrevWriter>(Context, DWOId);
+    return Entry.get();
   }
 
-  /// Given a DWO ID, return its DebugLocWriter if it exists.
+  /// Returns DWO abbrev writer for \p DWOId. The writer must exist.
+  DebugAbbrevWriter *getBinaryDWOAbbrevWriter(uint64_t DWOId) {
+    auto Iter = BinaryDWOAbbrevWriters.find(DWOId);
+    assert(Iter != BinaryDWOAbbrevWriters.end() && "writer does not exist");
+    return Iter->second.get();
+  }
+
+  /// Given a \p DWOId, return its DebugLocWriter if it exists.
   DebugLocWriter *getDebugLocWriter(uint64_t DWOId) {
     auto Iter = LocListWritersByCU.find(DWOId);
     return Iter == LocListWritersByCU.end() ? nullptr

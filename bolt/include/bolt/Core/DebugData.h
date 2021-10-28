@@ -458,23 +458,24 @@ public:
                            uint32_t DWPOffset) override;
 };
 
-/// Class to facilitate modifying and writing abbreviations for compilation
-/// units. One class instance manages all abbreviation sections in a file
-/// or in a section contribution for DWPs.
+/// Class to facilitate modifying and writing abbreviation sections.
 class DebugAbbrevWriter {
-
+  /// Mutex used for parallel processing of debug info.
   std::mutex WriterMutex;
 
+  /// Offsets of abbreviation sets in normal .debug_abbrev section.
+  std::vector<uint64_t> AbbrevSetOffsets;
+
+  /// Abbrev data set for a single unit.
   struct AbbrevData {
-    /// Offset in the final section.
-    uint64_t Offset{0};
+    uint64_t Offset{0}; ///< Offset of the data in the final section.
     std::unique_ptr<DebugBufferVector> Buffer;
     std::unique_ptr<raw_svector_ostream> Stream;
   };
-  /// Map original CU abbrev offset to abbreviations data.
-  std::map<uint64_t, AbbrevData> CUAbbrevData;
+  /// Map original unit abbrev offset to abbreviations data.
+  std::map<uint64_t, AbbrevData> UnitsAbbrevData;
 
-  /// Attributes Substitution information.
+  /// Attributes substitution (patch) information.
   struct PatchInfo {
     dwarf::Attribute OldAttr;
     dwarf::Attribute NewAttr;
@@ -485,8 +486,28 @@ class DebugAbbrevWriter {
                                        SmallVector<PatchInfo, 2>>;
   std::unordered_map<const DWARFUnit *, PatchesTy> Patches;
 
+  /// DWARF context containing abbreviations.
+  DWARFContext &Context;
+
+  /// DWO ID used to identify unit contribution in DWP.
+  Optional<uint64_t> DWOId;
+
+  /// Add abbreviations from compile/type \p Unit to the writer.
+  void addUnitAbbreviations(DWARFUnit &Unit);
+
 public:
-  DebugAbbrevWriter() = default;
+  /// Create an abbrev section writer for abbreviations in \p Context.
+  /// If no \p DWOId is given, all normal (non-DWO) abbreviations in the
+  /// \p Context are handled. Otherwise, only abbreviations associated with
+  /// the compile unit matching \p DWOId in DWP or DWO will be covered by
+  /// an instance of this class.
+  ///
+  /// NOTE: Type unit abbreviations are not handled separately for DWOs.
+  ///       Most of the time, using type units with DWO is not a good idea.
+  ///       If type units are used, the caller is responsible for verifying
+  ///       that abbreviations are shared by CU and TUs.
+  DebugAbbrevWriter(DWARFContext &Context, Optional<uint64_t> DWOId = None)
+      : Context(Context), DWOId(DWOId) {}
 
   DebugAbbrevWriter(const DebugAbbrevWriter &) = delete;
   DebugAbbrevWriter &operator=(const DebugAbbrevWriter &) = delete;
@@ -503,25 +524,26 @@ public:
                          const DWARFAbbreviationDeclaration *Abbrev,
                          dwarf::Attribute AttrTag, dwarf::Attribute NewAttrTag,
                          uint8_t NewAttrForm) {
+    assert(&Unit.getContext() == &Context &&
+           "cannot update attribute from a different DWARF context");
     std::lock_guard<std::mutex> Lock(WriterMutex);
     Patches[&Unit][Abbrev].emplace_back(
         PatchInfo{AttrTag, NewAttrTag, NewAttrForm});
   }
 
-  /// Add abbreviations from CU \p Unit to the writer.
-  void addUnitAbbreviations(DWARFUnit &Unit);
-
-  /// Return a buffer with concatenated abbrev sections for all added CUs.
-  /// Section offsets for CUs could be queried using
-  /// getAbbreviationsOffsetForUnit() interface.
+  /// Return a buffer with concatenated abbrev sections for all CUs and TUs
+  /// in the associated DWARF context. Section offsets could be queried using
+  /// getAbbreviationsOffsetForUnit() interface. For DWP, we are using DWOId
+  /// to return only that unit's contribution to abbrev section.
   std::unique_ptr<DebugBufferVector> finalize();
 
-  /// Return an offset in the finalized section corresponding to CU \p Unit.
+  /// Return an offset in the finalized abbrev section corresponding to CU/TU.
   uint64_t getAbbreviationsOffsetForUnit(const DWARFUnit &Unit) {
-    assert(CUAbbrevData.find(Unit.getAbbreviationsOffset()) !=
-               CUAbbrevData.end() &&
+    assert(!DWOId && "offsets are tracked for non-DWO units only");
+    assert(UnitsAbbrevData.find(Unit.getAbbreviationsOffset()) !=
+               UnitsAbbrevData.end() &&
            "no abbrev data found for unit");
-    return CUAbbrevData[Unit.getAbbreviationsOffset()].Offset;
+    return UnitsAbbrevData[Unit.getAbbreviationsOffset()].Offset;
   }
 };
 
