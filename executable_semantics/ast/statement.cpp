@@ -78,27 +78,14 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Kind::Sequence: {
-      const auto& seq = cast<Sequence>(*this);
-      seq.statement().PrintDepth(depth, out);
-      if (depth < 0 || depth > 1) {
-        out << "\n";
-      } else {
-        out << " ";
-      }
-      if (seq.next()) {
-        (*seq.next())->PrintDepth(depth - 1, out);
-      }
-      break;
-    }
     case Kind::Block: {
       const auto& block = cast<Block>(*this);
       out << "{";
       if (depth < 0 || depth > 1) {
         out << "\n";
       }
-      if (block.statement()) {
-        (*block.statement())->PrintDepth(depth, out);
+      for (const auto* statement : block.statements()) {
+        statement->PrintDepth(depth, out);
         if (depth < 0 || depth > 1) {
           out << "\n";
         }

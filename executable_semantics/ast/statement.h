@@ -27,7 +27,6 @@ class Statement {
     VariableDefinition,
     If,
     Return,
-    Sequence,
     Block,
     While,
     Break,
@@ -189,46 +188,24 @@ class Return : public Statement {
   std::optional<Nonnull<const FunctionDeclaration*>> function_;
 };
 
-class Sequence : public Statement {
- public:
-  Sequence(SourceLocation source_loc, Nonnull<Statement*> statement,
-           std::optional<Nonnull<Statement*>> next)
-      : Statement(Kind::Sequence, source_loc),
-        statement_(statement),
-        next_(next) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->kind() == Kind::Sequence;
-  }
-
-  auto statement() const -> const Statement& { return *statement_; }
-  auto statement() -> Statement& { return *statement_; }
-  auto next() const -> std::optional<Nonnull<const Statement*>> {
-    return next_;
-  }
-  auto next() -> std::optional<Nonnull<Statement*>> { return next_; }
-
- private:
-  Nonnull<Statement*> statement_;
-  std::optional<Nonnull<Statement*>> next_;
-};
-
 class Block : public Statement {
  public:
-  Block(SourceLocation source_loc, std::optional<Nonnull<Statement*>> statement)
-      : Statement(Kind::Block, source_loc), statement_(statement) {}
+  Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
+      : Statement(Kind::Block, source_loc), statements_(statements) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Block;
   }
 
-  auto statement() const -> std::optional<Nonnull<const Statement*>> {
-    return statement_;
+  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
+    return statements_;
   }
-  auto statement() -> std::optional<Nonnull<Statement*>> { return statement_; }
+  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
+    return statements_;
+  }
 
  private:
-  std::optional<Nonnull<Statement*>> statement_;
+  std::vector<Nonnull<Statement*>> statements_;
 };
 
 class While : public Statement {
