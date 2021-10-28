@@ -26,8 +26,8 @@ auto main(int argc, char* argv[]) -> int {
   using llvm::cl::opt;
   opt<bool> trace_option("trace", desc("Enable tracing"));
   opt<bool> parse_and_print(
-      "unparse",
-      desc("Parse and then unparse the input, without executing it"));
+      "dump_ast",
+      desc("Parse the input and dump the resulting AST, without executing it"));
   opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
                                    llvm::cl::Required);
 

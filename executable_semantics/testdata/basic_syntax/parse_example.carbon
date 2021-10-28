@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: split-file %s %t
-// RUN: executable_semantics --unparse %t/a.carbon 2>&1 > %t.a.unparsed
-// RUN: executable_semantics --unparse %t/b.carbon 2>&1 | diff %t.a.unparsed -
+// RUN: executable_semantics --dump_ast %t/a.carbon 2>&1 > %t.a.ast
+// RUN: executable_semantics --dump_ast %t/b.carbon 2>&1 | diff %t.a.ast -
 
 //--- a.carbon
 
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {
-  return a + b + c;
+  return a __unimplemented_example_infix b + c;
 }
 
 //--- b.carbon
@@ -19,5 +19,5 @@ fn main() -> i32 {
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {
-  return a + b + c;
+  return (a __unimplemented_example_infix b) + c;
 }

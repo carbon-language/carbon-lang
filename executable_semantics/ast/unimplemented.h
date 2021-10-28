@@ -39,11 +39,10 @@ class Unimplemented : public NodeBase {
 
   // Prints an unambiguous representation of this node to `out`. Equivalent
   // to `Print`, but with a separate name to avoid colliding with
-  // NodeBase::Print. Note that unlike other AST node types, the printed form
-  // of Unimplemented cannot be re-parsed.
+  // NodeBase::Print.
   void PrintImpl(llvm::raw_ostream& out) const {
     llvm::ListSeparator sep;
-    out << "Unimplemented " << kind_str_ << "(";
+    out << "Unimplemented" << kind_str_ << "(";
     for (const AnyPrintablePtr& child : children()) {
       out << sep << child;
     }

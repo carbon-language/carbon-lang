@@ -41,7 +41,7 @@ def _update_check(test):
     with open(test) as f:
         orig_lines = f.readlines()
     if _AUTOUPDATE_MARKER not in orig_lines:
-        raise ValueError("No autoupdate marker in %s" % test)
+        return
     # Run executable_semantics to general output.
     # (`bazel run` would serialize)
     p = subprocess.run(

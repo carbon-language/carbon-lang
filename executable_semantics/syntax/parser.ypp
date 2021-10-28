@@ -70,6 +70,8 @@
   #include "executable_semantics/ast/expression.h"
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
+  #include "executable_semantics/ast/unimplemented.h"
+  #include "executable_semantics/common/any_printable_ptr.h"
   #include "executable_semantics/common/arena.h"
   #include "executable_semantics/common/nonnull.h"
   #include "executable_semantics/syntax/bison_wrap.h"
@@ -190,6 +192,7 @@
   TRUE
   TYPE
   UNDERSCORE
+  UNIMPL_EXAMPLE
   VAR
   WHILE
   // table-end
@@ -223,6 +226,7 @@
 // same precedence as POSTFIX_STAR.
 %precedence POSTFIX_STAR UNARY_STAR
 %left PERIOD ARROW
+%nonassoc UNIMPL_EXAMPLE
 %precedence
   LEFT_PARENTHESIS
   RIGHT_PARENTHESIS
@@ -382,6 +386,12 @@ expression:
       auto [return_exp, is_omitted_exp] = $3;
       $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, return_exp,
                                            is_omitted_exp);
+    }
+| expression UNIMPL_EXAMPLE expression
+    {
+      $$ = arena->New<Unimplemented<Expression>>(
+          "ExampleInfix", std::vector<AnyPrintablePtr>{$1, $3},
+          context.source_loc());
     }
 ;
 designator: PERIOD identifier { $$ = $2; }
