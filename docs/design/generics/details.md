@@ -2394,9 +2394,9 @@ To name these sorts of constraints, we could use `let` statements or
 `constraint` definitions:
 
 ```
-let IntStack:! auto = Stack where .ElementType == i32;
+let IntStack:! auto = Stack where .ElementType = i32;
 constraint IntStack {
-  extends Stack where .ElementType == i32;
+  extends Stack where .ElementType = i32;
 }
 ```
 
@@ -2711,7 +2711,7 @@ fn PrintThree
 In this case, we need some other type to implement an interface parameterized by
 a generic type parameter. The syntax for this case follows the previous case,
 except now the `.Self` parameter is on the interface to the right of the `is`.
-For example, we might need a type parameter `T` to support implicit conversion
+For example, we might need a type parameter `T` to support explicit conversion
 from an integer type like `i32`:
 
 ```
