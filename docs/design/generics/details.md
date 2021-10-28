@@ -884,10 +884,10 @@ class ImplementsS {
 }
 ```
 
-Named constraints used with generics, as opposed to templates, should not
-include declarations of any named members. This means no methods, associated
+Named constraints used with generics, as opposed to templates, should only
+include required interfaces and aliases to named members of those interfaces. This means no methods, associated
 types, associated functions, and so on. Instead, the names will only arise from
-aliases to named members of required interfaces. A template can care about
+aliases. A template can care about
 member names that happen to exist in a type, whereas a generic can only care
 about member names that are actually part of an interface implementation for the
 type. Constraints subject to this restriction have the advantage of matching all
