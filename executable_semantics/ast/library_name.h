@@ -17,7 +17,7 @@ struct LibraryName {
   void Print(llvm::raw_ostream& out) const {
     out << package;
     if (!path.empty()) {
-      out << "//" << path;
+      out << " library \"" << path << "\"";
     }
   }
 

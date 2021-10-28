@@ -7,11 +7,7 @@
 namespace Carbon {
 
 void AST::Print(llvm::raw_ostream& out) const {
-  out << "package " << package;
-  if (is_api) {
-    out << "api";
-  }
-  out << ";\n";
+  out << "package " << package << " " << (is_api ? "api" : "impl") << ";\n";
 
   for (const LibraryName& import : imports) {
     out << "import " << import << ";\n";

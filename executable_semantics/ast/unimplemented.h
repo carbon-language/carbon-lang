@@ -31,8 +31,8 @@ class Unimplemented : public NodeBase {
         kind_str_(std::move(kind)),
         children_(std::move(children)) {}
 
-  static auto classof(const NodeBase* exp) -> bool {
-    return exp->kind() == NodeBase::Kind::Unimplemented;
+  static auto classof(const NodeBase* other) -> bool {
+    return other->kind() == NodeBase::Kind::Unimplemented;
   }
 
   auto children() const -> llvm::ArrayRef<AnyPrintablePtr> { return children_; }
