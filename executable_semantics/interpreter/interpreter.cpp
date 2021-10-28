@@ -181,14 +181,18 @@ void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
   }
 }
 
-void Interpreter::DeallocateScope(Scope& scope) {
-  CHECK(!scope.deallocated);
-  for (const auto& l : scope.locals) {
-    std::optional<Address> a = scope.values.Get(l);
-    CHECK(a);
-    heap_.Deallocate(*a);
+auto Interpreter::PopAndDeallocateScope() -> Nonnull<Action*> {
+  Nonnull<Action*> act = todo_.Pop();
+  if (act->scope().has_value()) {
+    CHECK(!act->scope()->deallocated);
+    for (const auto& l : act->scope()->locals) {
+      std::optional<Address> a = act->scope()->values.Get(l);
+      CHECK(a);
+      heap_.Deallocate(*a);
+    }
+    act->scope()->deallocated = true;
   }
-  scope.deallocated = true;
+  return act;
 }
 
 auto Interpreter::CreateTuple(Nonnull<Action*> act,
@@ -848,13 +852,15 @@ auto Interpreter::StepStmt() -> Transition {
       CHECK(act->pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      return UnwindPast{&cast<Break>(stmt).loop()};
+      return Unwind{.ast_node = &cast<Break>(stmt).loop(),
+                    .unwind_ast_node = true};
     }
     case Statement::Kind::Continue: {
       CHECK(act->pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      return UnwindTo{&cast<Continue>(stmt).loop()};
+      return Unwind{.ast_node = &cast<Continue>(stmt).loop(),
+                    .unwind_ast_node = false};
     }
     case Statement::Kind::Block: {
       if (act->pos() == 0) {
@@ -960,7 +966,9 @@ auto Interpreter::StepStmt() -> Transition {
         // TODO(geoffromer): convert the result to the function's return type,
         // once #880 gives us a way to find that type.
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return UnwindPast{*function.body(), act->results()[0]};
+        return Unwind{.ast_node = *function.body(),
+                      .unwind_ast_node = true,
+                      .result = act->results()[0]};
       }
     case Statement::Kind::Sequence: {
       //    { { (s1,s2) :: C, E, F} :: S, H}
@@ -1036,10 +1044,7 @@ class Interpreter::DoTransition {
   explicit DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
-    Nonnull<Action*> act = interpreter->todo_.Pop();
-    if (act->scope().has_value()) {
-      interpreter->DeallocateScope(*act->scope());
-    }
+    Nonnull<Action*> act = interpreter->PopAndDeallocateScope();
     switch (act->kind()) {
       case Action::Kind::ExpressionAction:
       case Action::Kind::LValAction:
@@ -1077,35 +1082,24 @@ class Interpreter::DoTransition {
     action->set_pos(action->pos() + 1);
   }
 
-  void operator()(const UnwindTo& unwind_to) {
+  void operator()(const Unwind& unwind) {
     while (true) {
       if (const auto* statement_action =
               dyn_cast<StatementAction>(interpreter->todo_.Top());
           statement_action != nullptr &&
-          &statement_action->statement() == unwind_to.ast_node) {
+          &statement_action->statement() == unwind.ast_node) {
         break;
       }
-      Nonnull<Action*> action = interpreter->todo_.Pop();
-      if (action->scope().has_value()) {
-        interpreter->DeallocateScope(*action->scope());
-      }
+      interpreter->PopAndDeallocateScope();
     }
-  }
-
-  void operator()(const UnwindPast& unwind_past) {
-    while (true) {
-      Nonnull<Action*> action = interpreter->todo_.Pop();
-      if (action->scope().has_value()) {
-        interpreter->DeallocateScope(*action->scope());
+    if (unwind.unwind_ast_node) {
+      interpreter->PopAndDeallocateScope();
+      if (unwind.result.has_value()) {
+        interpreter->todo_.Top()->AddResult(*unwind.result);
       }
-      if (const auto* statement_action = dyn_cast<StatementAction>(action);
-          statement_action != nullptr &&
-          &statement_action->statement() == unwind_past.ast_node) {
-        break;
-      }
-    }
-    if (unwind_past.result.has_value()) {
-      interpreter->todo_.Top()->AddResult(*unwind_past.result);
+    } else {
+      CHECK(!unwind.result.has_value())
+          << "result is never used when !unwind_ast_node";
     }
   }
 
