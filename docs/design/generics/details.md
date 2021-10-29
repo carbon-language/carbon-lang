@@ -17,7 +17,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
     -   [Qualified member names](#qualified-member-names)
-    -   [Access control](#access-control)
 -   [Generics](#generics)
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
@@ -36,7 +35,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
-    -   [Use case: Private impl](#use-case-private-impl)
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
@@ -559,15 +557,6 @@ p.(Plot.Drawable.Draw)();
 **Comparison with other languages:** This is intended to be analogous to, in
 C++, adding `ClassName::` in front of a member name to disambiguate, such as
 [names defined in both a parent and child class](https://stackoverflow.com/questions/357307/how-to-call-a-parent-class-function-from-derived-class-function).
-
-### Access control
-
-An `impl` must be as public as the type and interface being implemented. If
-either the type or interface is private to a library, then since the only way to
-define the `impl` is to use that private name, the `impl` must be defined
-private to the library as well. Otherwise, the `impl` must be defined in the
-public API file of the library, so it is visible in all places that might use
-it.
 
 ## Generics
 
@@ -1767,42 +1756,6 @@ class IntWrapper {
   impl as Comparable =
       ComparableFromDifferenceFn(IntWrapper, Difference)
       as Comparable;
-}
-```
-
-### Use case: Private impl
-
-Adapter types can be used when a library publicly exposes a type, but only wants
-to say that type implements an interface as a private detail internal to the
-implementation of the type. In that case, instead of implementing the interface
-for the public type, create a private adapter for that type and implement the
-interface on that instead. Any member of the class can cast its `me` parameter
-to the adapter type when it wants to make use of the private impl.
-
-```
-// Public, in API file
-class Complex64 {
-  // ...
-  fn CloserToOrigin[me: Self](them: Self) -> bool;
-}
-
-// Private
-
-adapter ByReal extends Complex64 {
-  // Complex numbers are not generally comparable,
-  // but this comparison function is useful for some
-  // method implementations.
-  impl as Comparable {
-    fn Less[me: Self](that: Self) -> bool {
-      return me.Real() < that.Real();
-    }
-  }
-}
-
-fn Complex64.CloserToOrigin[me: Self](them: Self) -> bool {
-  var me_mag: ByReal = me * me.Conj() as ByReal;
-  var them_mag: ByReal = them * them.Conj() as ByReal;
-  return me_mag.Less(them_mag);
 }
 ```
 
