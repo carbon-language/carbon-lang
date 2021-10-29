@@ -57,8 +57,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
-        -   [Must be legal type argument](#must-be-legal-type-argument)
     -   [Implied constraints](#implied-constraints)
+        -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
     -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
     -   [Manual type equality](#manual-type-equality)
         -   [`observe` declarations](#observe-declarations)
@@ -2730,36 +2730,6 @@ fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
 }
 ```
 
-#### Must be legal type argument
-
-If a function body is going to use a generic type parameter as an argument to a
-parameterized type, it needs to ensure that the parameter satisfies all the
-requirements of the parameterized type. For example, a function that adds its
-parameters to a `HashSet` to deduplicate them, needs them to be `Hashable` and
-so on. We write this constraint as a special case of saying the type must
-satisfy the constraint of implementing `Type`, which all legal types satisfy:
-
-```
-fn NumDistinct[T:! Type where HashSet(.Self) is Type]
-    (a: T, b: T, c: T) -> i32 {
-  var set: HashSet(T);
-  set.Add(a);
-  set.Add(b);
-  set.Add(c);
-  return set.Size();
-}
-```
-
-Repeating the constraints on `HashSet` arguments in the type of `T` would
-violate the
-["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
-This redundancy is undesirable since it means if the needed constraints for
-`HashSet` are changed, then the code has to be updated in more locations.
-
-**Note:** This is the explicit version of
-[implied constraints](#implied-constraints), useful when the parameterized type
-is only used in the body of the function, not in the parameter list.
-
 ### Implied constraints
 
 Imagine we have a generic function that accepts an arbitrary `HashMap`:
@@ -2810,15 +2780,7 @@ user of these functions will have to pass in a valid `HashMap` instance, and so
 will have already satisfied these constraints.
 
 This implied constraint is equivalent to the explicit constraint that each
-parameter and return type [is legal](#must-be-legal-type-argument). So the
-actual rewrite for the `LookUp` declaration may more properly be thought of as
-to:
-
-```
-fn LookUp[KeyType:! Type]
-    (hm: HashMap(KeyType, i32)* where HashMap(KeyType, i32)* is Type,
-     k: KeyType) -> i32;
-```
+parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
 **Note:** These implied constraints affect the _requirements_ of a generic type
 parameter, but not its _unqualified member names_. This way you can always look
@@ -2852,6 +2814,38 @@ parameter.
 and
 [Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
 support some form of this feature as part of their type inference.
+
+#### Must be legal type argument constraints
+
+Now consider the case that the generic type parameter is going to be used as an
+argument to a parameterized type in a function body, not in the signature. If
+the parameterized type was explicitly mentioned in the signature, the implied
+constraint feature would ensure all of its requirements were met. The developer
+can create a trivial
+[parameterized type implements interface](#parameterized-type-implements-interface)
+`where` constraint to just say the type is a legal with this argument, by saying
+that the parameterized type implements `Type`, which all types do.
+
+For example, a function that adds its parameters to a `HashSet` to deduplicate
+them, needs them to be `Hashable` and so on. To say "`T` is a type where
+`HashSet(T)` is legal," we can write:
+
+```
+fn NumDistinct[T:! Type where HashSet(.Self) is Type]
+    (a: T, b: T, c: T) -> i32 {
+  var set: HashSet(T);
+  set.Add(a);
+  set.Add(b);
+  set.Add(c);
+  return set.Size();
+}
+```
+
+This the advantage over repeating the constraints on `HashSet` arguments in the
+type of `T` since it doesn't violate the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+Repeating constraints is undesirable since it means if the needed constraints
+for `HashSet` are changed, then the code has to be updated in more locations.
 
 ### Open question: referencing names in the interface being defined
 
