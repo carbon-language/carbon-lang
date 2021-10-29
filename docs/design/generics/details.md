@@ -778,15 +778,12 @@ others described in the rest of this document.
 ## Named constraints
 
 If the interfaces discussed above are the building blocks for type-of-types,
-[named constraints](terminology.md#named-constraints) describe how they may be
-composed together. Unlike interfaces which are nominal, the name of a named
-constraint is not a part of its value. Two different named constraints with the
-same definition are equivalent even if they have different names. This is
-because types don't explicitly specify which named constraints they implement,
-types automatically implement any named constraints they can satisfy.
-
-**Open question:** Should these be called "named type constraints" instead of
-"named constraints"?
+[generic named constraints](terminology.md#named-constraints) describe how they
+may be composed together. Unlike interfaces which are nominal, the name of a
+named constraint is not a part of its value. Two different named constraints
+with the same definition are equivalent even if they have different names. This
+is because types don't explicitly specify which named constraints they
+implement, types automatically implement any named constraints they can satisfy.
 
 A named constraint definition can contain interface requirements using `impl`
 declarations and names using `alias` declarations. Note that this allows us to
@@ -834,10 +831,21 @@ type, and this function will be instantiated separately for every different
 type." This is consistent with the
 [use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
 
-In general we should support the same kinds of declarations in a `constraint`
-definitions as in an `interface`. Generally speaking declarations in one kind of
-interface make sense in the other, and there is an analogy between them. If an
-`interface` `I` has (non-`alias`) declarations `X`, `Y`, and `Z`, like so:
+In general, the declarations in `constraint` definition match a subset of the
+declarations in an `interface`. Named constraints used with generics, as opposed
+to templates, should only include required interfaces and aliases to named
+members of those interfaces.
+
+To declare a named constraint that includes other declarations for use with
+template parameters, use the `template` keyword before `constraint`. Method,
+associated type, and associated function requirements may only be declared
+inside a `template constraint`. Note that a generic constraint matches all
+facets of a type if it matches any, but a template constraint can depend on the
+specific names of members used in a particular facet.
+
+There is an analogy between declarations used in a `constraint` and in an
+`interface` definition. If an `interface` `I` has (non-`alias`) declarations
+`X`, `Y`, and `Z`, like so:
 
 ```
 interface I {
@@ -846,8 +854,6 @@ interface I {
   Z;
 }
 ```
-
-(Here, `X` could be something like `fn F[me: Self]()`.)
 
 Then a type implementing `I` would have `impl as I` with definitions for `X`,
 `Y`, and `Z`, as in:
@@ -863,9 +869,10 @@ class ImplementsI {
 }
 ```
 
-But the corresponding `constraint`, `S`:
+But the corresponding `constraint` or `template constraint`, `S`:
 
 ```
+// or template constraint S {
 constraint S {
   X;
   Y;
@@ -884,14 +891,8 @@ class ImplementsS {
 }
 ```
 
-Named constraints used with generics, as opposed to templates, should only
-include required interfaces and aliases to named members of those interfaces. This means no methods, associated
-types, associated functions, and so on. Instead, the names will only arise from
-aliases. A template can care about
-member names that happen to exist in a type, whereas a generic can only care
-about member names that are actually part of an interface implementation for the
-type. Constraints subject to this restriction have the advantage of matching all
-facets of a type if it matches any.
+**TODO:** Move the `template constraint` and `auto` content to the template
+design document, once it exists.
 
 ### Subtyping between type-of-types
 
