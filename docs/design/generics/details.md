@@ -2336,7 +2336,8 @@ naming some classes of constraints.
 #### Set an associated constant to a specific value
 
 We might need to write a function that only works with a specific value of an
-[associated constant](#associated-constants) `N`.
+[associated constant](#associated-constants) `N`. In this case, the name of the
+associated constant is written first, followed by an `=`, and then the value:
 
 ```
 fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
@@ -2360,6 +2361,10 @@ constraint Point2DInterface {
   extends NSpacePoint where .N = 2;
 }
 ```
+
+**Concern:** Using `=` for this use case is not consistent with other `where`
+clauses that write a boolean expression that evaluates to `true` when the
+constraint is satisfied.
 
 A constraint to say that two associated constants should have the same value
 without specifying what specific value they should have must use `==` instead of
@@ -2870,6 +2875,12 @@ interface Graph {
 }
 ```
 
+**TODO:** Revisit this question once issue
+[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472)
+and proposal
+[#875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
+are resolved.
+
 ### Manual type equality
 
 Imagine we have some function with generic parameters:
@@ -3294,9 +3305,9 @@ What is the size of a type?
 -   It could be unknown which category the type is in. In practice this will be
     essentially equivalent to having dynamic size.
 
-I'm going to call a type "sized" if it is in the first two categories, and
-"unsized" otherwise. Note: something with size 0 is still considered "sized".
-The type-of-type `Sized` is defined as follows:
+A type is called "sized" if it is in the first two categories, and "unsized"
+otherwise. Note: something with size 0 is still considered "sized". The
+type-of-type `Sized` is defined as follows:
 
 > `Sized` is a type whose values are types `T` that are "sized" -- that is the
 > size of `T` is known, though possibly only generically.
