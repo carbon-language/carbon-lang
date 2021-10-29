@@ -32,9 +32,9 @@ namespace Carbon {
 
 void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
-  for (const auto& [name, address] : values) {
+  for (const auto& [name, allocation] : values) {
     out << sep << name << ": ";
-    heap_.PrintAddress(address, out);
+    heap_.PrintAllocation(allocation, out);
   }
 }
 
@@ -56,11 +56,11 @@ auto Interpreter::CurrentEnv() -> Env { return CurrentScope().values; }
 // Returns the given name from the environment, printing an error if not found.
 auto Interpreter::GetFromEnv(SourceLocation source_loc, const std::string& name)
     -> Address {
-  std::optional<Address> pointer = CurrentEnv().Get(name);
+  std::optional<AllocationId> pointer = CurrentEnv().Get(name);
   if (!pointer) {
     FATAL_RUNTIME_ERROR(source_loc) << "could not find `" << name << "`";
   }
-  return *pointer;
+  return Address(*pointer);
 }
 
 void Interpreter::PrintState(llvm::raw_ostream& out) {
@@ -116,20 +116,20 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
-        Address a =
+        AllocationId a =
             heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
-      Address a = heap_.AllocateValue(f);
+      AllocationId a = heap_.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
     }
 
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def = cast<ClassDeclaration>(d).definition();
-      VarValues fields;
-      VarValues methods;
+      std::vector<NamedValue> fields;
+      std::vector<NamedValue> methods;
       for (Nonnull<const Member*> m : class_def.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
@@ -137,27 +137,27 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             const Expression& type_expression =
                 cast<ExpressionPattern>(binding.type()).expression();
             auto type = InterpExp(Env(arena_), &type_expression);
-            fields.push_back(make_pair(*binding.name(), type));
+            fields.push_back({.name = *binding.name(), .value = type});
             break;
           }
         }
       }
       auto st = arena_->New<NominalClassType>(
           class_def.name(), std::move(fields), std::move(methods));
-      auto a = heap_.AllocateValue(st);
+      AllocationId a = heap_.AllocateValue(st);
       env->Set(class_def.name(), a);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
-      VarValues alts;
+      std::vector<NamedValue> alts;
       for (const auto& alternative : choice.alternatives()) {
         auto t = InterpExp(Env(arena_), &alternative.signature());
-        alts.push_back(make_pair(alternative.name(), t));
+        alts.push_back({.name = alternative.name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
-      auto a = heap_.AllocateValue(ct);
+      AllocationId a = heap_.AllocateValue(ct);
       env->Set(choice.name(), a);
       break;
     }
@@ -168,7 +168,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       // result of evaluating the initializer.
       Nonnull<const Value*> v =
           Convert(InterpExp(*env, &var.initializer()), &var.static_type());
-      Address a = heap_.AllocateValue(v);
+      AllocationId a = heap_.AllocateValue(v);
       env->Set(*var.binding().name(), a);
       break;
     }
@@ -184,7 +184,7 @@ void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
 void Interpreter::DeallocateScope(Scope& scope) {
   CHECK(!scope.deallocated);
   for (const auto& l : scope.locals) {
-    std::optional<Address> a = scope.values.Get(l);
+    std::optional<AllocationId> a = scope.values.Get(l);
     CHECK(a);
     heap_.Deallocate(*a);
   }
@@ -205,7 +205,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
   CHECK(fields.size() == values.size());
-  std::vector<StructElement> elements;
+  std::vector<NamedValue> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
     elements.push_back({.name = fields[i].name(), .value = values[i]});
   }
@@ -221,7 +221,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       Env values(arena_);
       if (placeholder.name().has_value()) {
-        Address a = heap_.AllocateValue(v);
+        AllocationId a = heap_.AllocateValue(v);
         values.Set(*placeholder.name(), a);
       }
       return values;
@@ -491,7 +491,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::StructType: {
           const auto& destination_struct_type =
               cast<StructType>(*destination_type);
-          std::vector<StructElement> new_elements;
+          std::vector<NamedValue> new_elements;
           for (const auto& [field_name, field_type] :
                destination_struct_type.fields()) {
             std::optional<Nonnull<const Value*>> old_value =
@@ -580,7 +580,7 @@ auto Interpreter::StepExp() -> Transition {
         return Spawn{arena_->New<ExpressionAction>(
             &struct_type.fields()[act->pos()].expression())};
       } else {
-        VarValues fields;
+        std::vector<NamedValue> fields;
         for (size_t i = 0; i < struct_type.fields().size(); ++i) {
           fields.push_back({struct_type.fields()[i].name(), act->results()[i]});
         }
@@ -859,9 +859,9 @@ auto Interpreter::StepStmt() -> Transition {
     case Statement::Kind::Block: {
       if (act->pos() == 0) {
         const Block& block = cast<Block>(stmt);
-        if (block.statement()) {
+        if (block.sequence()) {
           act->StartScope(Scope(CurrentEnv()));
-          return Spawn{arena_->New<StatementAction>(*block.statement())};
+          return Spawn{arena_->New<StatementAction>(*block.sequence())};
         } else {
           return Done{};
         }
@@ -937,13 +937,13 @@ auto Interpreter::StepStmt() -> Transition {
           //      S, H}
           // -> { { then_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(&cast<If>(stmt).then_statement())};
-        } else if (cast<If>(stmt).else_statement()) {
+              arena_->New<StatementAction>(&cast<If>(stmt).then_block())};
+        } else if (cast<If>(stmt).else_block()) {
           //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { else_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(*cast<If>(stmt).else_statement())};
+              arena_->New<StatementAction>(*cast<If>(stmt).else_block())};
         } else {
           return Done{};
         }
@@ -986,7 +986,7 @@ auto Interpreter::StepStmt() -> Transition {
           arena_->New<StatementAction>(&cast<Continuation>(stmt).body()));
       continuation_stack->push_back(
           arena_->New<ScopeAction>(Scope(CurrentEnv())));
-      Address continuation_address = heap_.AllocateValue(
+      AllocationId continuation_address = heap_.AllocateValue(
           arena_->New<ContinuationValue>(continuation_stack));
       // Bind the continuation object to the continuation variable
       CurrentScope().values.Set(

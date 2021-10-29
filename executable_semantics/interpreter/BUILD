@@ -76,8 +76,20 @@ cc_library(
     deps = [
         ":action_and_value",
         ":address",
+        ":heap_allocation_interface",
         "//common:ostream",
+        "//executable_semantics/ast:source_location",
+        "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "heap_allocation_interface",
+    hdrs = ["heap_allocation_interface.h"],
+    deps = [
+        ":address",
+        "//executable_semantics/common:nonnull",
     ],
 )
 

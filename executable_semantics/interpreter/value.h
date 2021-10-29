@@ -90,17 +90,8 @@ class Value {
   const Kind kind_;
 };
 
-using VarValues = std::vector<std::pair<std::string, Nonnull<const Value*>>>;
-
-auto FindInVarValues(const std::string& field, const VarValues& inits)
-    -> std::optional<Nonnull<const Value*>>;
-auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
-
-// A StructElement represents the value of a single struct field.
-//
-// TODO(geoffromer): Look for ways to eliminate duplication among StructElement,
-// VarValues::value_type, FieldInitializer, and any similar types.
-struct StructElement {
+// A NamedValue represents a value with a name, such as a single struct field.
+struct NamedValue {
   // The field name.
   std::string name;
 
@@ -181,7 +172,7 @@ class BoolValue : public Value {
 // StructType instances.
 class StructValue : public Value {
  public:
-  explicit StructValue(std::vector<StructElement> elements)
+  explicit StructValue(std::vector<NamedValue> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
     CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
@@ -191,9 +182,7 @@ class StructValue : public Value {
     return value->kind() == Kind::StructValue;
   }
 
-  auto elements() const -> const std::vector<StructElement>& {
-    return elements_;
-  }
+  auto elements() const -> llvm::ArrayRef<NamedValue> { return elements_; }
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
@@ -201,7 +190,7 @@ class StructValue : public Value {
       -> std::optional<Nonnull<const Value*>>;
 
  private:
-  std::vector<StructElement> elements_;
+  std::vector<NamedValue> elements_;
 };
 
 // A value of a nominal class type.
@@ -400,25 +389,26 @@ class AutoType : public Value {
 // for `{}`, which is a struct value in addition to being a struct type.
 class StructType : public Value {
  public:
-  StructType() : StructType(VarValues{}) {}
+  StructType() : StructType(std::vector<NamedValue>{}) {}
 
-  explicit StructType(VarValues fields)
+  explicit StructType(std::vector<NamedValue> fields)
       : Value(Kind::StructType), fields_(std::move(fields)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StructType;
   }
 
-  auto fields() const -> const VarValues& { return fields_; }
+  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
 
  private:
-  VarValues fields_;
+  std::vector<NamedValue> fields_;
 };
 
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(std::string name, VarValues fields, VarValues methods)
+  NominalClassType(std::string name, std::vector<NamedValue> fields,
+                   std::vector<NamedValue> methods)
       : Value(Kind::NominalClassType),
         name_(std::move(name)),
         fields_(std::move(fields)),
@@ -429,19 +419,19 @@ class NominalClassType : public Value {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto fields() const -> const VarValues& { return fields_; }
-  auto methods() const -> const VarValues& { return methods_; }
+  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
+  auto methods() const -> llvm::ArrayRef<NamedValue> { return methods_; }
 
  private:
   std::string name_;
-  VarValues fields_;
-  VarValues methods_;
+  std::vector<NamedValue> fields_;
+  std::vector<NamedValue> methods_;
 };
 
 // A choice type.
 class ChoiceType : public Value {
  public:
-  ChoiceType(std::string name, VarValues alternatives)
+  ChoiceType(std::string name, std::vector<NamedValue> alternatives)
       : Value(Kind::ChoiceType),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
@@ -451,11 +441,15 @@ class ChoiceType : public Value {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto alternatives() const -> const VarValues& { return alternatives_; }
+
+  // Returns the parameter types of the alternative with the given name,
+  // or nullopt if no such alternative is present.
+  auto FindAlternative(std::string_view name) const
+      -> std::optional<Nonnull<const Value*>>;
 
  private:
   std::string name_;
-  VarValues alternatives_;
+  std::vector<NamedValue> alternatives_;
 };
 
 // A continuation type.
