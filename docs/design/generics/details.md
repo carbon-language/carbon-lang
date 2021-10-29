@@ -1631,7 +1631,7 @@ addition to using the same data representation, they both implement one
 interface, `Hashable`, and use the same implementation for that interface. The
 one difference between them is that `Song as Hashable` may be implicitly
 converted to `Song`, which implements interface `Printable`, and
-`PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
+`PlayableSong as Hashable` may be implicitly converted to `PlayableSong`, which
 implements interface `Media`. This means that it is safe to convert between
 `HashMap(Song, i32)` and `HashMap(PlayableSong, i32)` (though maybe only with an
 explicit cast), since the implementation of all the methods will use the same

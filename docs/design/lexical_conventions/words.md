@@ -37,6 +37,7 @@ The following words are interpreted as keywords:
 -   `alias`
 -   `and`
 -   `api`
+-   `as`
 -   `auto`
 -   `base`
 -   `break`
