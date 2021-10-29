@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
     -   [Qualified member names](#qualified-member-names)
+    -   [Access](#access)
 -   [Generics](#generics)
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
@@ -34,8 +35,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Adapter compatibility](#adapter-compatibility)
     -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
+    -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
+    -   [Use case: Private impl](#use-case-private-impl)
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
-    -   [Application: Defining an impl for use by other types](#application-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
@@ -559,6 +561,19 @@ p.(Plot.Drawable.Draw)();
 **Comparison with other languages:** This is intended to be analogous to, in
 C++, adding `ClassName::` in front of a member name to disambiguate, such as
 [names defined in both a parent and child class](https://stackoverflow.com/questions/357307/how-to-call-a-parent-class-function-from-derived-class-function).
+
+### Access
+
+An `impl` must be as public as the type and interface being implemented. If
+either the type or interface is private to a library, then since the only way to
+define the `impl` is to use that private name, the `impl` must be defined
+private to the library as well. Otherwise, the `impl` must be defined in the
+public API file of the library, so it is visible in all places that might use
+it.
+
+No access control modifiers are allowed on `impl` declarations, an `impl` is
+always visible to the intersection of the visibility of all names used in the
+declaration of the `impl`.
 
 ## Generics
 
@@ -1730,20 +1745,7 @@ var song: Song = ...;
 CompareLib.Sort((song,));
 ```
 
-### Adapter with stricter invariants
-
-**Future work:** Rust also uses the newtype idiom to create types with
-additional invariants or other information encoded in the type
-([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
-This is used to record in the type system that some data has passed validation
-checks, like `ValidDate` with the same data layout as `Date`. Or to record the
-units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. We should have some way of restricting the casts between a type
-and an adapter to address this use case.
-
-### Application: Defining an impl for use by other types
+### Use case: Defining an impl for use by other types
 
 Let's say we want to provide a possible implementation of an interface for use
 by types for which that implementation would be appropriate. We can do that by
@@ -1773,6 +1775,55 @@ class IntWrapper {
       as Comparable;
 }
 ```
+
+### Use case: Private impl
+
+Adapter types can be used when a library publicly exposes a type, but only wants
+to say that type implements an interface as a private detail internal to the
+implementation of the type. In that case, instead of implementing the interface
+for the public type, create a private adapter for that type and implement the
+interface on that instead. Any member of the class can cast its `me` parameter
+to the adapter type when it wants to make use of the private impl.
+
+```
+// Public, in API file
+class Complex64 {
+  // ...
+  fn CloserToOrigin[me: Self](them: Self) -> bool;
+}
+
+// Private
+
+adapter ByReal extends Complex64 {
+  // Complex numbers are not generally comparable,
+  // but this comparison function is useful for some
+  // method implementations.
+  impl as Comparable {
+    fn Less[me: Self](that: Self) -> bool {
+      return me.Real() < that.Real();
+    }
+  }
+}
+
+fn Complex64.CloserToOrigin[me: Self](them: Self) -> bool {
+  var me_mag: ByReal = me * me.Conj() as ByReal;
+  var them_mag: ByReal = them * them.Conj() as ByReal;
+  return me_mag.Less(them_mag);
+}
+```
+
+### Adapter with stricter invariants
+
+**Future work:** Rust also uses the newtype idiom to create types with
+additional invariants or other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`. We should have some way of restricting the casts between a type
+and an adapter to address this use case.
 
 ## Associated constants
 
