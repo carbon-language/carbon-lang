@@ -3759,6 +3759,19 @@ combination. These are in many ways similar to implementations with
 -   Since multiple blanket `impl`s could apply to a particular type and
     interface combination, we need rules to resolve those cases of overlap.
 
+Example use cases:
+
+-   If `T` implements `As(U)`, then `Optional(T)` should implement
+    `As(Optional(U))`.
+-   If `T` implements `ComparableWith(U)`, then `U` should implement
+    `ComparableWith(T)`.
+-   Any type implementing `Ordered` should get an implementation of
+    `PartiallyOrdered`. Question: do we want to guarantee those two must be
+    consistent by forbidding any overriding of the `PartiallyOrdered`
+    implementation? In other cases, we will want to support overriding for
+    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
+-   `T` should implement `CommonType(T)` for all `T`
+
 FIXME: This section should be rewritten to be about parameterized `impl` in
 general, not just templated. For example, the
 ["lookup resolution and specialization" section](#lookup-resolution-and-specialization)
@@ -3917,19 +3930,6 @@ isn't a problem -- you will always be able to see the _relevant_ impls given the
 types that have been imported / have visible definitions.
 
 ### Lookup resolution and specialization
-
-Use cases:
-
--   If `T` implements `As(U)`, then `Optional(T)` should implement
-    `As(Optional(U))`.
--   If `T` implements `ComparableWith(U)`, then `U` should implement
-    `ComparableWith(T)`.
--   Any type implementing `Ordered` should get an implementation of
-    `PartiallyOrdered`. Question: do we want to guarantee those two must be
-    consistent by forbidding any overriding of the `PartiallyOrdered`
-    implementation? In other cases, we will want to support overriding for
-    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
--   `T` should implement `CommonType(T)` for all `T`
 
 Allowed patterns and their prioritization, where `LocalType` and `LocalTrait`
 are defined in this library, `ForeignType` and `ForeignTrait` are defined in
