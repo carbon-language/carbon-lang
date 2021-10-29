@@ -10,19 +10,86 @@ using llvm::cast;
 
 namespace Carbon {
 
-// TODO: PopulateNames for Statement will be needed for recursion.
+namespace {
+
+void PopulateNamesInStatement(Arena* arena,
+                              std::optional<Nonnull<Statement*>> opt_statement,
+                              ScopedNames& scoped_names) {
+  if (!opt_statement.has_value()) {
+    return;
+  }
+  Statement& statement = **opt_statement;
+  switch (statement.kind()) {
+    case Statement::Kind::Block: {
+      // Defines a new scope for names.
+      auto& block = cast<Block>(statement);
+      block.set_scoped_names(arena->New<ScopedNames>());
+      PopulateNamesInStatement(arena, block.sequence(), block.scoped_names());
+      break;
+    }
+    case Statement::Kind::Sequence: {
+      // Hopefully collapse into Block.
+      auto& seq = cast<Sequence>(statement);
+      PopulateNamesInStatement(arena, &seq.statement(), scoped_names);
+      PopulateNamesInStatement(arena, seq.next(), scoped_names);
+      break;
+    }
+    case Statement::Kind::Continuation: {
+      // Defines a new name.
+      auto& cont = cast<Continuation>(statement);
+      scoped_names.Add(cont.continuation_variable(), &cont);
+      break;
+    }
+    case Statement::Kind::VariableDefinition: {
+      // Defines a new name.
+      auto& var = cast<VariableDefinition>(statement);
+      scoped_names.Add(var.pattern()
+      break;
+    }
+    case Statement::Kind::If: {
+      // Contains statements that need to be populated.
+      auto& if_stmt = cast<If>(statement);
+      PopulateNamesInStatement(arena, &if_stmt.then_block(), scoped_names);
+      PopulateNamesInStatement(arena, if_stmt.else_block(), scoped_names);
+      break;
+    }
+    case Statement::Kind::While: {
+      // Contains statements that need to be populated.
+      auto& while_stmt = cast<While>(statement);
+      PopulateNamesInStatement(arena, &while_stmt.body(), scoped_names);
+      break;
+    }
+    case Statement::Kind::Match: {
+      // Contains statements that need to be populated.
+      // TODO
+      break;
+    }
+    case Statement::Kind::Assign:
+    case Statement::Kind::Await:
+    case Statement::Kind::Break:
+    case Statement::Kind::Continue:
+    case Statement::Kind::ExpressionStatement:
+    case Statement::Kind::Return:
+    case Statement::Kind::Run:
+      // Neither contains names nor a scope.
+      break;
+  }
+}
 
 // Populates declared names at scoped boundaries, such as file-level or function
 // bodies.
 // This doesn't currently recurse into expressions, but likely will in the
 // future in order to resolve names in lambdas.
-void PopulateNamesInDeclaration(Declaration& declaration,
+void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
                                 ScopedNames& scoped_names) {
   switch (declaration.kind()) {
-    case Declaration::Kind::FunctionDeclaration:
-      // Populate name into declared_names.
-      // params
+    case Declaration::Kind::FunctionDeclaration: {
+      auto& func = cast<FunctionDeclaration>(declaration);
+      scoped_names.Add(func.name(), &declaration);
+      // TODO: Add function parameters to func.scoped_names.
+      PopulateNamesInStatement(arena, func.body(), scoped_names);
       break;
+    }
     case Declaration::Kind::ClassDeclaration:
       // Populate name into declared_names.
       // Init the class's declared_names, and populate it with members.
@@ -36,10 +103,11 @@ void PopulateNamesInDeclaration(Declaration& declaration,
       // alternatives.
       break;
     case Declaration::Kind::VariableDeclaration:
-      // Populate name into declared_names.
-      // No need to recurse (maybe in the future when expressions may contain
-      // lambdas, but not right now).
-      break;
+      auto& var = cast<VariableDeclaration>(declaration);
+      if (var.binding().name().has_value()) {
+        scoped_names.Add(*(var.binding().name()), &declaration);
+      }
+      return;
   }
 }
 
@@ -59,9 +127,11 @@ void ResolveNamesInDeclaration(Declaration& declaration,
   }
 }
 
-void ResolveNames(AST& ast) {
+}  // namespace
+
+void ResolveNames(Arena* arena, AST& ast) {
   for (auto declaration : ast.declarations) {
-    PopulateNamesInDeclaration(*declaration, ast.scoped_names);
+    PopulateNamesInDeclaration(arena, *declaration, ast.scoped_names);
   }
   for (auto declaration : ast.declarations) {
     ResolveNamesInDeclaration(*declaration, ast.scoped_names);

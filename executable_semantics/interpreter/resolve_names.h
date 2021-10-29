@@ -6,11 +6,12 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_RESOLVE_NAMES_H_
 
 #include "executable_semantics/ast/ast.h"
+#include "executable_semantics/common/arena.h"
 
 namespace Carbon {
 
 // Resolves names (IdentifierExpressions) in the AST.
-void ResolveNames(AST& ast);
+void ResolveNames(Nonnull<Arena*>, AST& ast);
 
 }  // namespace Carbon
 

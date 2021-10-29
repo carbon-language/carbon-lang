@@ -21,6 +21,8 @@
 
 namespace Carbon {
 
+class ScopedNames;
+
 // Abstract base class of all AST nodes representing patterns.
 //
 // Declaration and its derived classes support LLVM-style RTTI, including
@@ -119,6 +121,18 @@ class FunctionDeclaration : public Declaration {
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
+  // For a FunctionDeclaration, this only contains parameters. Scoped variables
+  // are in the body.
+  // scoped_names_ should only be accessed after initialization.
+  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
+  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+
+  // scoped_names_ should only be set once during name resolution.
+  auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+    CHECK(!scoped_names_.has_value());
+    scoped_names_ = scoped_names;
+  }
+
  private:
   std::string name_;
   std::vector<GenericBinding> deduced_parameters_;
@@ -126,6 +140,7 @@ class FunctionDeclaration : public Declaration {
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
   std::optional<Nonnull<Block*>> body_;
+  std::optional<Nonnull<ScopedNames*>> scoped_names_;
 };
 
 class ClassDeclaration : public Declaration {

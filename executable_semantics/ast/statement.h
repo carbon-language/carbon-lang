@@ -18,6 +18,7 @@
 namespace Carbon {
 
 class FunctionDeclaration;
+class ScopedNames;
 
 class Statement {
  public:
@@ -98,8 +99,19 @@ class Block : public Statement {
   }
   auto sequence() -> std::optional<Nonnull<Sequence*>> { return sequence_; }
 
+  // scoped_names_ should only be accessed after initialization.
+  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
+  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+
+  // scoped_names_ should only be set once during name resolution.
+  auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+    CHECK(!scoped_names_.has_value());
+    scoped_names_ = scoped_names;
+  }
+
  private:
   std::optional<Nonnull<Sequence*>> sequence_;
+  std::optional<Nonnull<ScopedNames*>> scoped_names_;
 };
 
 class ExpressionStatement : public Statement {

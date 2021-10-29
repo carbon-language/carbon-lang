@@ -51,7 +51,7 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
   }
   // Although name resolution is currently done once, generic programming
   // (particularly templates) may require more passes.
-  ResolveNames(ast);
+  ResolveNames(arena, ast);
   ResolveControlFlow(ast);
   TypeChecker type_checker(arena, trace);
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);

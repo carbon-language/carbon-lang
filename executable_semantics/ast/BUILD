@@ -121,13 +121,23 @@ cc_test(
 
 cc_library(
     name = "scoped_names",
+    srcs = ["scoped_names.cpp"],
     hdrs = ["scoped_names.h"],
+    deps = [
+        ":declaration",
+        ":source_location",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
+    ],
 )
 
 cc_library(
     name = "source_location",
     hdrs = ["source_location.h"],
-    deps = ["//common:ostream"],
+    deps = [
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+    ],
 )
 
 cc_library(
