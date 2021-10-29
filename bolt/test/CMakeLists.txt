@@ -22,6 +22,7 @@ list(APPEND BOLT_TEST_DEPS
   merge-fdata
   llvm-nm
   llvm-objdump
+  llvm-readelf
   llvm-readobj
   yaml2obj
   llvm-strip
