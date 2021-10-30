@@ -34,7 +34,7 @@ except FileNotFoundError:
 for dep in deps:
     print("Checking dependency: " + dep)
     repo, _, rule = dep.partition("//")
-    if repo == "" and not dep.startswith("third_party"):
+    if repo == "" and not rule.startswith("third_party"):
         # Carbon code is always allowed.
         continue
     if repo == "@llvm-project":
