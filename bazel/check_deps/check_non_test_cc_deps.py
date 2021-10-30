@@ -38,7 +38,18 @@ for dep in deps:
         # Carbon code is always allowed.
         continue
     if repo == "@llvm-project":
-        # LLVM itself is fine to depend on as it has the same license as Carbon.
+        package, _, rule = rule.partition(":")
+
+        # Other packages in the LLVM project shouldn't be accidentally used
+        # in Carbon. We can expand the above list if use cases emerge.
+        if package not in ("llvm", "lld", "clang"):
+            sys.exit("ERROR: unexpected dependency into the LLVM project: %s" % dep)
+
+        # Check for accidentally using the copy of GoogleTest in LLVM.
+        if rule in ("gmock", "gtest", "gtest_main"):
+            sys.exit("ERROR: dependency on LLVM's GoogleTest from non-test code: %s" % dep)
+
+        # The rest of LLVM, LLD, and Clang themselves are safe to depend on.
         continue
     if repo in ("@llvm_terminfo", "@llvm_zlib"):
         # These are stubs wrapping system libraries for LLVM. They aren't
