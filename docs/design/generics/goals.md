@@ -532,7 +532,8 @@ are complicated and
 
 ### Interfaces are nominal
 
-Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
+Interfaces can either be [structural](terminology.md#structural-interfaces), as
+in Go, or [nominal](terminology.md#nominal-interfaces), as in Rust and Swift.
 Structural interfaces match any type that has the required methods, whereas
 nominal interfaces only match if there is an explicit declaration stating that
 the interface is implemented for that specific type. Carbon will support nominal
