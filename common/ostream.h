@@ -52,7 +52,7 @@ operator<<(std::ostream& out, const T* /*obj*/) -> std::ostream&;
 template <typename T, typename std::enable_if<std::is_member_function_pointer<
                           decltype(&T::Print)>::value>::type* = nullptr>
 void PrintTo(const T* p, std::ostream* out) {
-  *out << static_cast<const void *>(p);
+  *out << static_cast<const void*>(p);
 
   // Also print the object if non-null.
   if (p) {
