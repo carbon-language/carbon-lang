@@ -8,8 +8,6 @@
 
 namespace Carbon::Internal {
 
-void PrintNullPointer(std::ostream &out) {
-  out << "NULL";
-}
+void PrintNullPointer(std::ostream& out) { out << "NULL"; }
 
 }  // namespace Carbon::Internal

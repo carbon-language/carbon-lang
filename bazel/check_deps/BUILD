@@ -64,8 +64,11 @@ filegroup(
 genquery(
     name = "non_test_cc_deps.txt",
     expression = "kind('cc.* rule', deps(//bazel/check_deps:non_test_cc_rules))",
+    opts = [
+        "--notool_deps",
+        "--noimplicit_deps",
+    ],
     scope = [":non_test_cc_rules"],
-    opts = ["--notool_deps", "--noimplicit_deps"],
 )
 
 py_test(
