@@ -47,6 +47,27 @@ __attribute__((unavailable(
     "To print as a pointer, cast to void*."))) auto
 operator<<(std::ostream& out, const T* /*obj*/) -> std::ostream&;
 
+namespace Internal {
+
+void PrintNullPointer(std::ostream& out);
+
+}
+
+// Allow GoogleTest and GoogleMock to print even pointers by dereferencing them.
+// This is important to allow automatic printing of arguments of mocked APIs.
+template <typename T, typename std::enable_if<std::is_member_function_pointer<
+                          decltype(&T::Print)>::value>::type* = nullptr>
+void PrintTo(const T* p, std::ostream* out) {
+  // Handle null pointers directly.
+  if (!p) {
+    Internal::PrintNullPointer(*out);
+    return;
+  }
+
+  // For non-null pointers, dereference and delegate.
+  *out << *p;
+}
+
 }  // namespace Carbon
 
 namespace llvm {

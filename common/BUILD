@@ -39,6 +39,7 @@ cc_test(
 cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
+    srcs = ["ostream.cpp"],
     deps = [
         "@llvm-project//llvm:Support",
     ],
