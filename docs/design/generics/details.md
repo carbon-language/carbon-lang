@@ -2841,11 +2841,8 @@ fn NumDistinct[T:! Type where HashSet(.Self) is Type]
 }
 ```
 
-This the advantage over repeating the constraints on `HashSet` arguments in the
-type of `T` since it doesn't violate the
-["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
-Repeating constraints is undesirable since it means if the needed constraints
-for `HashSet` are changed, then the code has to be updated in more locations.
+This has the same advantages over repeating the constraints on `HashSet` arguments
+in the type of `T` as the general implied constraints above.
 
 ### Open question: referencing names in the interface being defined
 
