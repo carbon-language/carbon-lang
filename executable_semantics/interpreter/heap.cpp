@@ -9,42 +9,42 @@
 
 namespace Carbon {
 
-auto Heap::AllocateValue(Nonnull<const Value*> v) -> Address {
+auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  Address a(values.size());
-  values.push_back(v);
-  alive.push_back(true);
+  AllocationId a(values_.size());
+  values_.push_back(v);
+  alive_.push_back(true);
   return a;
 }
 
 auto Heap::Read(const Address& a, SourceLocation source_loc)
     -> Nonnull<const Value*> {
-  this->CheckAlive(a, source_loc);
-  return values[a.index]->GetField(arena, a.field_path, source_loc);
+  this->CheckAlive(a.allocation_, source_loc);
+  return values_[a.allocation_.index_]->GetField(arena_, a.field_path_,
+                                                 source_loc);
 }
 
 void Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) {
-  this->CheckAlive(a, source_loc);
-  values[a.index] =
-      values[a.index]->SetField(arena, a.field_path, v, source_loc);
+  this->CheckAlive(a.allocation_, source_loc);
+  values_[a.allocation_.index_] = values_[a.allocation_.index_]->SetField(
+      arena_, a.field_path_, v, source_loc);
 }
 
-void Heap::CheckAlive(const Address& address, SourceLocation source_loc) {
-  if (!alive[address.index]) {
+void Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) {
+  if (!alive_[allocation.index_]) {
     FATAL_RUNTIME_ERROR(source_loc)
         << "undefined behavior: access to dead value "
-        << *values[address.index];
+        << *values_[allocation.index_];
   }
 }
 
-void Heap::Deallocate(const Address& address) {
-  CHECK(address.field_path.IsEmpty());
-  if (alive[address.index]) {
-    alive[address.index] = false;
+void Heap::Deallocate(AllocationId allocation) {
+  if (alive_[allocation.index_]) {
+    alive_[allocation.index_] = false;
   } else {
     FATAL_RUNTIME_ERROR_NO_LINE() << "deallocating an already dead value";
   }
@@ -52,17 +52,18 @@ void Heap::Deallocate(const Address& address) {
 
 void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
-  for (size_t i = 0; i < values.size(); ++i) {
+  for (size_t i = 0; i < values_.size(); ++i) {
     out << sep;
-    PrintAddress(Address(i), out);
+    PrintAllocation(AllocationId(i), out);
   }
 }
 
-void Heap::PrintAddress(const Address& a, llvm::raw_ostream& out) const {
-  if (!alive[a.index]) {
+void Heap::PrintAllocation(AllocationId allocation,
+                           llvm::raw_ostream& out) const {
+  if (!alive_[allocation.index_]) {
     out << "!!";
   }
-  out << *values[a.index];
+  out << *values_[allocation.index_];
 }
 
 }  // namespace Carbon

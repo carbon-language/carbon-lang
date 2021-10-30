@@ -23,17 +23,19 @@ namespace Carbon {
 
 #define FATAL_PROGRAM_ERROR_NO_LINE() RAW_EXITING_STREAM() << "PROGRAM ERROR: "
 
-#define FATAL_PROGRAM_ERROR(line) FATAL_PROGRAM_ERROR_NO_LINE() << line << ": "
+#define FATAL_PROGRAM_ERROR(line) \
+  FATAL_PROGRAM_ERROR_NO_LINE() << (line) << ": "
 
 #define FATAL_COMPILATION_ERROR_NO_LINE() \
   RAW_EXITING_STREAM() << "COMPILATION ERROR: "
 
 #define FATAL_COMPILATION_ERROR(line) \
-  FATAL_COMPILATION_ERROR_NO_LINE() << line << ": "
+  FATAL_COMPILATION_ERROR_NO_LINE() << (line) << ": "
 
 #define FATAL_RUNTIME_ERROR_NO_LINE() RAW_EXITING_STREAM() << "RUNTIME ERROR: "
 
-#define FATAL_RUNTIME_ERROR(line) FATAL_RUNTIME_ERROR_NO_LINE() << line << ": "
+#define FATAL_RUNTIME_ERROR(line) \
+  FATAL_RUNTIME_ERROR_NO_LINE() << (line) << ": "
 
 }  // namespace Carbon
 

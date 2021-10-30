@@ -9,7 +9,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
   #include "common/check.h"
   #include "common/string_helpers.h"
-  #include "executable_semantics/common/tracing_flag.h"
   #include "executable_semantics/syntax/parse_and_lex_context.h"
   #include "executable_semantics/syntax/parser.h"
   #include "llvm/ADT/StringExtras.h"
@@ -246,8 +245,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
-    if (Carbon::tracing_output) {
-      // Print a newline because tracing prints an incomplete line
+    if (context.trace()) {
+      // Print a newline because trace prints an incomplete line
       // "Reading a token: ".
       llvm::errs() << "\n";
     }
@@ -279,8 +278,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 . {
-  if (Carbon::tracing_output) {
-    // Print a newline because tracing prints an incomplete line
+  if (context.trace()) {
+    // Print a newline because trace prints an incomplete line
     // "Reading a token: ".
     llvm::errs() << "\n";
   }

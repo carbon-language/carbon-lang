@@ -2,16 +2,24 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
+// RUN: executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
+// RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: PROGRAM ERROR: {{.*}}/executable_semantics/testdata/tuple/fail_positional_order.carbon:15: positional members must come before named members
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
+class Point {
+  var x: i32;
+  var y: i32;
+}
+
+fn GetX(p: Point) -> i32 {
+  return p.x;
+}
+
 fn main() -> i32 {
-  var t: auto = (.x = 2, 3);
-  return 0;
+  return GetX({.x = 1, .y = 2}) - 1;
 }

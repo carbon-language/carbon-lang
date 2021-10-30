@@ -7,9 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_mismatch.carbon:22: type error in call
-// CHECK: expected: (x = i32, y = i32)
-// CHECK: actual: (x = i32, z = i32)
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_mismatch.carbon:20: type error in name binding: '{.x: i32, .z: i32}' is not implicitly convertible to 'class Point'
 
 package ExecutableSemanticsTest api;
 
@@ -19,5 +17,6 @@ class Point {
 }
 
 fn main() -> i32 {
-  return Point(.x = 1, .z = 2).x - 1;
+  var p: Point = {.x = 1, .z = 2};
+  return p.x - 1;
 }

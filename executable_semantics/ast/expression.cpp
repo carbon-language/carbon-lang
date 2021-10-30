@@ -15,6 +15,7 @@
 namespace Carbon {
 
 using llvm::cast;
+using llvm::isa;
 
 auto ExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
@@ -29,9 +30,8 @@ auto ExpressionFromParenContents(
 
 auto TupleExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
-    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*> {
-  return arena->New<TupleLiteral>(
-      source_loc, paren_contents.TupleElements<FieldInitializer>(source_loc));
+    const ParenContents<Expression>& paren_contents) -> Nonnull<TupleLiteral*> {
+  return arena->New<TupleLiteral>(source_loc, paren_contents.elements);
 }
 
 static void PrintOp(llvm::raw_ostream& out, Operator op) {
@@ -68,7 +68,7 @@ static void PrintFields(llvm::raw_ostream& out,
                         std::string_view separator) {
   llvm::ListSeparator sep;
   for (const auto& field : fields) {
-    out << sep << "." << field.name() << separator << *field.expression();
+    out << sep << "." << field.name() << separator << field.expression();
   }
 }
 
@@ -76,19 +76,24 @@ void Expression::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Expression::Kind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
-      out << *index.Aggregate() << "[" << *index.Offset() << "]";
+      out << index.aggregate() << "[" << index.offset() << "]";
       break;
     }
     case Expression::Kind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*this);
-      out << *access.Aggregate() << "." << access.Field();
+      out << access.aggregate() << "." << access.field();
       break;
     }
-    case Expression::Kind::TupleLiteral:
+    case Expression::Kind::TupleLiteral: {
       out << "(";
-      PrintFields(out, cast<TupleLiteral>(*this).fields(), " = ");
+      llvm::ListSeparator sep;
+      for (Nonnull<const Expression*> field :
+           cast<TupleLiteral>(*this).fields()) {
+        out << sep << *field;
+      }
       out << ")";
       break;
+    }
     case Expression::Kind::StructLiteral:
       out << "{";
       PrintFields(out, cast<StructLiteral>(*this).fields(), " = ");
@@ -100,37 +105,43 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "}";
       break;
     case Expression::Kind::IntLiteral:
-      out << cast<IntLiteral>(*this).Val();
+      out << cast<IntLiteral>(*this).value();
       break;
     case Expression::Kind::BoolLiteral:
-      out << (cast<BoolLiteral>(*this).Val() ? "true" : "false");
+      out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
       break;
     case Expression::Kind::PrimitiveOperatorExpression: {
       out << "(";
       PrimitiveOperatorExpression op = cast<PrimitiveOperatorExpression>(*this);
-      if (op.Arguments().size() == 0) {
-        PrintOp(out, op.Op());
-      } else if (op.Arguments().size() == 1) {
-        PrintOp(out, op.Op());
-        out << " " << *op.Arguments()[0];
-      } else if (op.Arguments().size() == 2) {
-        out << *op.Arguments()[0] << " ";
-        PrintOp(out, op.Op());
-        out << " " << *op.Arguments()[1];
+      switch (op.arguments().size()) {
+        case 0:
+          PrintOp(out, op.op());
+          break;
+        case 1:
+          PrintOp(out, op.op());
+          out << " " << *op.arguments()[0];
+          break;
+        case 2:
+          out << *op.arguments()[0] << " ";
+          PrintOp(out, op.op());
+          out << " " << *op.arguments()[1];
+          break;
+        default:
+          FATAL() << "Unexpected argument count: " << op.arguments().size();
       }
       out << ")";
       break;
     }
     case Expression::Kind::IdentifierExpression:
-      out << cast<IdentifierExpression>(*this).Name();
+      out << cast<IdentifierExpression>(*this).name();
       break;
     case Expression::Kind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
-      out << *call.Function();
-      if (call.Argument()->kind() == Expression::Kind::TupleLiteral) {
-        out << *call.Argument();
+      out << call.function();
+      if (isa<TupleLiteral>(call.argument())) {
+        out << call.argument();
       } else {
-        out << "(" << *call.Argument() << ")";
+        out << "(" << call.argument() << ")";
       }
       break;
     }
@@ -142,7 +153,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case Expression::Kind::StringLiteral:
       out << "\"";
-      out.write_escaped(cast<StringLiteral>(*this).Val());
+      out.write_escaped(cast<StringLiteral>(*this).value());
       out << "\"";
       break;
     case Expression::Kind::StringTypeLiteral:
@@ -156,13 +167,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case Expression::Kind::FunctionTypeLiteral: {
       const auto& fn = cast<FunctionTypeLiteral>(*this);
-      out << "fn " << *fn.Parameter() << " -> " << *fn.ReturnType();
+      out << "fn " << fn.parameter() << " -> " << fn.return_type();
       break;
     }
     case Expression::Kind::IntrinsicExpression:
       out << "intrinsic_expression(";
-      switch (cast<IntrinsicExpression>(*this).Intrinsic()) {
-        case IntrinsicExpression::IntrinsicKind::Print:
+      switch (cast<IntrinsicExpression>(*this).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
           out << "print";
       }
       out << ")";

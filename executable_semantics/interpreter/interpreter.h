@@ -13,7 +13,7 @@
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/interpreter/frame.h"
+#include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/heap.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
@@ -21,12 +21,10 @@
 
 namespace Carbon {
 
-using Env = Dictionary<std::string, Address>;
-
 class Interpreter {
  public:
-  explicit Interpreter(Nonnull<Arena*> arena)
-      : arena(arena), globals(arena), heap(arena) {}
+  explicit Interpreter(Nonnull<Arena*> arena, bool trace)
+      : arena_(arena), globals_(arena), heap_(arena), trace_(trace) {}
 
   // Interpret the whole program.
   auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
@@ -46,8 +44,8 @@ class Interpreter {
                     SourceLocation source_loc) -> std::optional<Env>;
 
   // Support TypeChecker allocating values on the heap.
-  auto AllocateValue(Nonnull<const Value*> v) -> Address {
-    return heap.AllocateValue(v);
+  auto AllocateValue(Nonnull<const Value*> v) -> AllocationId {
+    return heap_.AllocateValue(v);
   }
 
   void InitEnv(const Declaration& d, Env* env);
@@ -85,23 +83,26 @@ class Interpreter {
   // and increments its position counter.
   struct RunAgain {};
 
-  // Transition type which unwinds the `todo` and `scopes` stacks until it
-  // reaches a specified Action lower in the stack.
+  // Transition type which unwinds the `todo` stack until it reaches the
+  // StatementAction associated with `ast_node`. Execution then resumes with
+  // that StatementAction.
   struct UnwindTo {
-    const Nonnull<Action*> new_top;
+    Nonnull<const Statement*> ast_node;
   };
 
-  // Transition type which unwinds the entire current stack frame, and returns
-  // a specified value to the caller.
-  struct UnwindFunctionCall {
-    Nonnull<const Value*> return_val;
+  // Transition type which unwinds the `todo` stack down to and including the
+  // StatementAction associated with `ast_node`. If `result` is set, it will be
+  // treated as the result of that StatementAction.
+  struct UnwindPast {
+    Nonnull<const Statement*> ast_node;
+    std::optional<Nonnull<const Value*>> result;
   };
 
   // Transition type which removes the current action from the top of the todo
   // stack, then creates a new stack frame which calls the specified function
   // with the specified arguments.
   struct CallFunction {
-    Nonnull<const FunctionValue*> function;
+    Nonnull<const FunctionDeclaration*> function;
     Nonnull<const Value*> args;
     SourceLocation source_loc;
   };
@@ -112,12 +113,12 @@ class Interpreter {
   // uses of this type should be replaced with meaningful transitions.
   struct ManualTransition {};
 
-  using Transition =
-      std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
-                   UnwindFunctionCall, CallFunction, ManualTransition>;
+  using Transition = std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
+                                  UnwindPast, CallFunction, ManualTransition>;
 
   // Visitor which implements the behavior associated with each transition type.
   class DoTransition;
+  friend class DoTransition;
 
   void Step();
 
@@ -131,12 +132,12 @@ class Interpreter {
   auto StepStmt() -> Transition;
 
   void InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs);
+  auto CurrentScope() -> Scope&;
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
 
-  void DeallocateScope(Nonnull<Scope*> scope);
-  void DeallocateLocals(Nonnull<Frame*> frame);
+  void DeallocateScope(Scope& scope);
 
   auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
       -> Nonnull<const Value*>;
@@ -150,16 +151,31 @@ class Interpreter {
   void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
                          SourceLocation source_loc);
 
+  // Returns the result of converting `value` to type `destination_type`.
+  auto Convert(Nonnull<const Value*> value,
+               Nonnull<const Value*> destination_type) const
+      -> Nonnull<const Value*>;
+
   void PrintState(llvm::raw_ostream& out);
 
-  Nonnull<Arena*> arena;
+  // Runs `action` in a scope consisting of `values`, and returns the result.
+  // `action` must produce a result. In other words, it must not be a
+  // StatementAction or ScopeAction.
+  //
+  // TODO: consider whether to use this->trace_ rather than a separate
+  // trace_steps parameter.
+  auto ExecuteAction(Nonnull<Action*> action, Env values, bool trace_steps)
+      -> Nonnull<const Value*>;
+
+  Nonnull<Arena*> arena_;
 
   // Globally-defined entities, such as functions, structs, or choices.
-  Env globals;
+  Env globals_;
 
-  Stack<Nonnull<Frame*>> stack;
-  Heap heap;
-  std::optional<Nonnull<const Value*>> program_value;
+  Stack<Nonnull<Action*>> todo_;
+  Heap heap_;
+
+  bool trace_;
 };
 
 }  // namespace Carbon

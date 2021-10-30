@@ -17,4 +17,5 @@ fn main() -> i32 {
     case (a: auto, b: auto) =>
       return a + b - 7;
   }
+  return 1;
 }

@@ -11,12 +11,14 @@
 
 package ExecutableSemanticsTest api;
 
-// Test matching with a mixture of positional and named fields.
+class Point {
+  var x: i32;
+  var y: i32;
+}
 
 fn main() -> i32 {
-  var t: auto = (2, .x = 5);
-  match (t) {
-    case (a: auto, .x = b: auto) =>
-      return a - b + 3;
-  }
+  var p1: Point = {.x = 1, .y = 2};
+  var p2: auto = p1;
+  p2 = {.x = 3, .y = 2};
+  return p1.x - 1;
 }

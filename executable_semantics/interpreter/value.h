@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/address.h"
@@ -20,6 +20,8 @@
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
+
+class Action;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -59,7 +61,7 @@ class Value {
   };
 
   Value(const Value&) = delete;
-  Value& operator=(const Value&) = delete;
+  auto operator=(const Value&) -> Value& = delete;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -88,18 +90,8 @@ class Value {
   const Kind kind_;
 };
 
-using VarValues = std::vector<std::pair<std::string, Nonnull<const Value*>>>;
-
-auto FindInVarValues(const std::string& field, const VarValues& inits)
-    -> std::optional<Nonnull<const Value*>>;
-auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
-
-// A TupleElement represents the value of a single tuple or struct field.
-//
-// TODO(geoffromer): Rename this, and look for ways to eliminate duplication
-// among TupleElement, VarValues::value_type, FieldInitializer,
-// TuplePattern::Field, and any similar types.
-struct TupleElement {
+// A NamedValue represents a value with a name, such as a single struct field.
+struct NamedValue {
   // The field name.
   std::string name;
 
@@ -107,76 +99,68 @@ struct TupleElement {
   Nonnull<const Value*> value;
 };
 
-struct Frame;  // Used by continuation.
-
 // An integer value.
 class IntValue : public Value {
  public:
-  explicit IntValue(int val) : Value(Kind::IntValue), val(val) {}
+  explicit IntValue(int value) : Value(Kind::IntValue), value_(value) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::IntValue;
   }
 
-  auto Val() const -> int { return val; }
+  auto value() const -> int { return value_; }
 
  private:
-  int val;
+  int value_;
 };
 
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(std::string name, Nonnull<const Value*> param,
-                std::optional<Nonnull<const Statement*>> body)
-      : Value(Kind::FunctionValue),
-        name(std::move(name)),
-        param(param),
-        body(body) {}
+  FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+      : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
   }
 
-  auto Name() const -> const std::string& { return name; }
-  auto Param() const -> Nonnull<const Value*> { return param; }
-  auto Body() const -> std::optional<Nonnull<const Statement*>> { return body; }
+  auto declaration() const -> const FunctionDeclaration& {
+    return *declaration_;
+  }
 
  private:
-  std::string name;
-  Nonnull<const Value*> param;
-  std::optional<Nonnull<const Statement*>> body;
+  Nonnull<const FunctionDeclaration*> declaration_;
 };
 
 // A pointer value.
 class PointerValue : public Value {
  public:
-  explicit PointerValue(Address val)
-      : Value(Kind::PointerValue), val(std::move(val)) {}
+  explicit PointerValue(Address value)
+      : Value(Kind::PointerValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::PointerValue;
   }
 
-  auto Val() const -> const Address& { return val; }
+  auto value() const -> const Address& { return value_; }
 
  private:
-  Address val;
+  Address value_;
 };
 
 // A bool value.
 class BoolValue : public Value {
  public:
-  explicit BoolValue(bool val) : Value(Kind::BoolValue), val(val) {}
+  explicit BoolValue(bool value) : Value(Kind::BoolValue), value_(value) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoolValue;
   }
 
-  auto Val() const -> bool { return val; }
+  auto value() const -> bool { return value_; }
 
  private:
-  bool val;
+  bool value_;
 };
 
 // A non-empty value of a struct type.
@@ -188,7 +172,7 @@ class BoolValue : public Value {
 // StructType instances.
 class StructValue : public Value {
  public:
-  explicit StructValue(std::vector<TupleElement> elements)
+  explicit StructValue(std::vector<NamedValue> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
     CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
@@ -198,9 +182,7 @@ class StructValue : public Value {
     return value->kind() == Kind::StructValue;
   }
 
-  auto elements() const -> const std::vector<TupleElement>& {
-    return elements_;
-  }
+  auto elements() const -> llvm::ArrayRef<NamedValue> { return elements_; }
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
@@ -208,25 +190,25 @@ class StructValue : public Value {
       -> std::optional<Nonnull<const Value*>>;
 
  private:
-  std::vector<TupleElement> elements_;
+  std::vector<NamedValue> elements_;
 };
 
 // A value of a nominal class type.
 class NominalClassValue : public Value {
  public:
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits)
-      : Value(Kind::NominalClassValue), type(type), inits(inits) {}
+      : Value(Kind::NominalClassValue), type_(type), inits_(inits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
   }
 
-  auto Type() const -> Nonnull<const Value*> { return type; }
-  auto Inits() const -> Nonnull<const Value*> { return inits; }
+  auto type() const -> const Value& { return *type_; }
+  auto inits() const -> const Value& { return *inits_; }
 
  private:
-  Nonnull<const Value*> type;
-  Nonnull<const Value*> inits;
+  Nonnull<const Value*> type_;
+  Nonnull<const Value*> inits_;
 };
 
 // An alternative constructor value.
@@ -234,19 +216,19 @@ class AlternativeConstructorValue : public Value {
  public:
   AlternativeConstructorValue(std::string alt_name, std::string choice_name)
       : Value(Kind::AlternativeConstructorValue),
-        alt_name(std::move(alt_name)),
-        choice_name(std::move(choice_name)) {}
+        alt_name_(std::move(alt_name)),
+        choice_name_(std::move(choice_name)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeConstructorValue;
   }
 
-  auto AltName() const -> const std::string& { return alt_name; }
-  auto ChoiceName() const -> const std::string& { return choice_name; }
+  auto alt_name() const -> const std::string& { return alt_name_; }
+  auto choice_name() const -> const std::string& { return choice_name_; }
 
  private:
-  std::string alt_name;
-  std::string choice_name;
+  std::string alt_name_;
+  std::string choice_name_;
 };
 
 // An alternative value.
@@ -255,49 +237,47 @@ class AlternativeValue : public Value {
   AlternativeValue(std::string alt_name, std::string choice_name,
                    Nonnull<const Value*> argument)
       : Value(Kind::AlternativeValue),
-        alt_name(std::move(alt_name)),
-        choice_name(std::move(choice_name)),
-        argument(argument) {}
+        alt_name_(std::move(alt_name)),
+        choice_name_(std::move(choice_name)),
+        argument_(argument) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeValue;
   }
 
-  auto AltName() const -> const std::string& { return alt_name; }
-  auto ChoiceName() const -> const std::string& { return choice_name; }
-  auto Argument() const -> Nonnull<const Value*> { return argument; }
+  auto alt_name() const -> const std::string& { return alt_name_; }
+  auto choice_name() const -> const std::string& { return choice_name_; }
+  auto argument() const -> const Value& { return *argument_; }
 
  private:
-  std::string alt_name;
-  std::string choice_name;
-  Nonnull<const Value*> argument;
+  std::string alt_name_;
+  std::string choice_name_;
+  Nonnull<const Value*> argument_;
 };
 
 // A function value.
 class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
-  static Nonnull<const TupleValue*> Empty() {
-    static const TupleValue empty = TupleValue(std::vector<TupleElement>());
+  static auto Empty() -> Nonnull<const TupleValue*> {
+    static const TupleValue empty =
+        TupleValue(std::vector<Nonnull<const Value*>>());
     return Nonnull<const TupleValue*>(&empty);
   }
 
-  explicit TupleValue(std::vector<TupleElement> elements)
-      : Value(Kind::TupleValue), elements(std::move(elements)) {}
+  explicit TupleValue(std::vector<Nonnull<const Value*>> elements)
+      : Value(Kind::TupleValue), elements_(std::move(elements)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TupleValue;
   }
 
-  auto Elements() const -> const std::vector<TupleElement>& { return elements; }
-
-  // Returns the value of the field named `name` in this tuple, or
-  // nullopt if there is no such field.
-  auto FindField(const std::string& name) const
-      -> std::optional<Nonnull<const Value*>>;
+  auto elements() const -> llvm::ArrayRef<Nonnull<const Value*>> {
+    return elements_;
+  }
 
  private:
-  std::vector<TupleElement> elements;
+  std::vector<Nonnull<const Value*>> elements_;
 };
 
 // A binding placeholder value.
@@ -307,19 +287,19 @@ class BindingPlaceholderValue : public Value {
   BindingPlaceholderValue(std::optional<std::string> name,
                           Nonnull<const Value*> type)
       : Value(Kind::BindingPlaceholderValue),
-        name(std::move(name)),
-        type(type) {}
+        name_(std::move(name)),
+        type_(type) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto Name() const -> const std::optional<std::string>& { return name; }
-  auto Type() const -> Nonnull<const Value*> { return type; }
+  auto name() const -> const std::optional<std::string>& { return name_; }
+  auto type() const -> const Value& { return *type_; }
 
  private:
-  std::optional<std::string> name;
-  Nonnull<const Value*> type;
+  std::optional<std::string> name_;
+  Nonnull<const Value*> type_;
 };
 
 // The int type.
@@ -355,41 +335,42 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<GenericBinding> deduced, Nonnull<const Value*> param,
-               Nonnull<const Value*> ret)
+  FunctionType(std::vector<GenericBinding> deduced,
+               Nonnull<const Value*> parameters,
+               Nonnull<const Value*> return_type)
       : Value(Kind::FunctionType),
-        deduced(std::move(deduced)),
-        param(param),
-        ret(ret) {}
+        deduced_(std::move(deduced)),
+        parameters_(parameters),
+        return_type_(return_type) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
   }
 
-  auto Deduced() const -> const std::vector<GenericBinding>& { return deduced; }
-  auto Param() const -> Nonnull<const Value*> { return param; }
-  auto Ret() const -> Nonnull<const Value*> { return ret; }
+  auto deduced() const -> llvm::ArrayRef<GenericBinding> { return deduced_; }
+  auto parameters() const -> const Value& { return *parameters_; }
+  auto return_type() const -> const Value& { return *return_type_; }
 
  private:
-  std::vector<GenericBinding> deduced;
-  Nonnull<const Value*> param;
-  Nonnull<const Value*> ret;
+  std::vector<GenericBinding> deduced_;
+  Nonnull<const Value*> parameters_;
+  Nonnull<const Value*> return_type_;
 };
 
 // A pointer type.
 class PointerType : public Value {
  public:
   explicit PointerType(Nonnull<const Value*> type)
-      : Value(Kind::PointerType), type(type) {}
+      : Value(Kind::PointerType), type_(type) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::PointerType;
   }
 
-  auto Type() const -> Nonnull<const Value*> { return type; }
+  auto type() const -> const Value& { return *type_; }
 
  private:
-  Nonnull<const Value*> type;
+  Nonnull<const Value*> type_;
 };
 
 // The `auto` type.
@@ -408,62 +389,67 @@ class AutoType : public Value {
 // for `{}`, which is a struct value in addition to being a struct type.
 class StructType : public Value {
  public:
-  StructType() : StructType(VarValues{}) {}
+  StructType() : StructType(std::vector<NamedValue>{}) {}
 
-  explicit StructType(VarValues fields)
+  explicit StructType(std::vector<NamedValue> fields)
       : Value(Kind::StructType), fields_(std::move(fields)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StructType;
   }
 
-  auto fields() const -> const VarValues& { return fields_; }
+  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
 
  private:
-  VarValues fields_;
+  std::vector<NamedValue> fields_;
 };
 
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(std::string name, VarValues fields, VarValues methods)
+  NominalClassType(std::string name, std::vector<NamedValue> fields,
+                   std::vector<NamedValue> methods)
       : Value(Kind::NominalClassType),
-        name(std::move(name)),
-        fields(std::move(fields)),
-        methods(std::move(methods)) {}
+        name_(std::move(name)),
+        fields_(std::move(fields)),
+        methods_(std::move(methods)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
-  auto Name() const -> const std::string& { return name; }
-  auto Fields() const -> const VarValues& { return fields; }
-  auto Methods() const -> const VarValues& { return methods; }
+  auto name() const -> const std::string& { return name_; }
+  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
+  auto methods() const -> llvm::ArrayRef<NamedValue> { return methods_; }
 
  private:
-  std::string name;
-  VarValues fields;
-  VarValues methods;
+  std::string name_;
+  std::vector<NamedValue> fields_;
+  std::vector<NamedValue> methods_;
 };
 
 // A choice type.
 class ChoiceType : public Value {
  public:
-  ChoiceType(std::string name, VarValues alternatives)
+  ChoiceType(std::string name, std::vector<NamedValue> alternatives)
       : Value(Kind::ChoiceType),
-        name(std::move(name)),
-        alternatives(std::move(alternatives)) {}
+        name_(std::move(name)),
+        alternatives_(std::move(alternatives)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
   }
 
-  auto Name() const -> const std::string& { return name; }
-  auto Alternatives() const -> const VarValues& { return alternatives; }
+  auto name() const -> const std::string& { return name_; }
+
+  // Returns the parameter types of the alternative with the given name,
+  // or nullopt if no such alternative is present.
+  auto FindAlternative(std::string_view name) const
+      -> std::optional<Nonnull<const Value*>>;
 
  private:
-  std::string name;
-  VarValues alternatives;
+  std::string name_;
+  std::vector<NamedValue> alternatives_;
 };
 
 // A continuation type.
@@ -480,16 +466,16 @@ class ContinuationType : public Value {
 class VariableType : public Value {
  public:
   explicit VariableType(std::string name)
-      : Value(Kind::VariableType), name(std::move(name)) {}
+      : Value(Kind::VariableType), name_(std::move(name)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::VariableType;
   }
 
-  auto Name() const -> const std::string& { return name; }
+  auto name() const -> const std::string& { return name_; }
 
  private:
-  std::string name;
+  std::string name_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -497,21 +483,21 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Frame*>>*> stack)
-      : Value(Kind::ContinuationValue), stack(stack) {}
+  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Action*>>*> stack)
+      : Value(Kind::ContinuationValue), stack_(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
   }
 
-  // The call stack of the suspended continuation, starting with the top
-  // frame (the reverse of the usual order). Note that this provides mutable
+  // The todo stack of the suspended continuation, starting with the top
+  // Action (the reverse of the usual order). Note that this provides mutable
   // access, even when *this is const, because of the reference-like semantics
   // of ContinuationValue.
-  auto Stack() const -> Nonnull<std::vector<Nonnull<Frame*>>*> { return stack; }
+  auto stack() const -> std::vector<Nonnull<Action*>>& { return *stack_; }
 
  private:
-  Nonnull<std::vector<Nonnull<Frame*>>*> stack;
+  Nonnull<std::vector<Nonnull<Action*>>*> stack_;
 };
 
 // The String type.
@@ -527,21 +513,18 @@ class StringType : public Value {
 // A string value.
 class StringValue : public Value {
  public:
-  explicit StringValue(std::string val)
-      : Value(Kind::StringValue), val(std::move(val)) {}
+  explicit StringValue(std::string value)
+      : Value(Kind::StringValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StringValue;
   }
 
-  auto Val() const -> const std::string& { return val; }
+  auto value() const -> const std::string& { return value_; }
 
  private:
-  std::string val;
+  std::string value_;
 };
-
-auto CopyVal(Nonnull<Arena*> arena, Nonnull<const Value*> val,
-             SourceLocation source_loc) -> Nonnull<const Value*>;
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
 auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,

@@ -12,15 +12,12 @@
 #include <vector>
 
 #include "common/check.h"
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/frame.h"
 #include "executable_semantics/interpreter/stack.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -35,9 +32,9 @@ namespace Carbon {
 
 void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
-  for (const auto& [name, address] : values) {
+  for (const auto& [name, allocation] : values) {
     out << sep << name << ": ";
-    heap.PrintAddress(address, out);
+    heap_.PrintAllocation(allocation, out);
   }
 }
 
@@ -45,29 +42,35 @@ void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
 // State Operations
 //
 
-auto Interpreter::CurrentEnv() -> Env {
-  Nonnull<Frame*> frame = stack.Top();
-  return frame->scopes.Top()->values;
+auto Interpreter::CurrentScope() -> Scope& {
+  for (Nonnull<Action*> action : todo_) {
+    if (action->scope().has_value()) {
+      return *action->scope();
+    }
+  }
+  FATAL() << "No current scope";
 }
+
+auto Interpreter::CurrentEnv() -> Env { return CurrentScope().values; }
 
 // Returns the given name from the environment, printing an error if not found.
 auto Interpreter::GetFromEnv(SourceLocation source_loc, const std::string& name)
     -> Address {
-  std::optional<Address> pointer = CurrentEnv().Get(name);
+  std::optional<AllocationId> pointer = CurrentEnv().Get(name);
   if (!pointer) {
     FATAL_RUNTIME_ERROR(source_loc) << "could not find `" << name << "`";
   }
-  return *pointer;
+  return Address(*pointer);
 }
 
 void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "{\nstack: ";
   llvm::ListSeparator sep(" :: ");
-  for (const auto& frame : stack) {
-    out << sep << *frame;
+  for (Nonnull<const Action*> action : todo_) {
+    out << sep << *action;
   }
-  out << "\nheap: " << heap;
-  if (!stack.IsEmpty() && !stack.Top()->scopes.IsEmpty()) {
+  out << "\nheap: " << heap_;
+  if (!todo_.IsEmpty()) {
     out << "\nvalues: ";
     PrintEnv(CurrentEnv(), out);
   }
@@ -79,28 +82,28 @@ auto Interpreter::EvalPrim(Operator op,
                            SourceLocation source_loc) -> Nonnull<const Value*> {
   switch (op) {
     case Operator::Neg:
-      return arena->New<IntValue>(-cast<IntValue>(*args[0]).Val());
+      return arena_->New<IntValue>(-cast<IntValue>(*args[0]).value());
     case Operator::Add:
-      return arena->New<IntValue>(cast<IntValue>(*args[0]).Val() +
-                                  cast<IntValue>(*args[1]).Val());
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() +
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Sub:
-      return arena->New<IntValue>(cast<IntValue>(*args[0]).Val() -
-                                  cast<IntValue>(*args[1]).Val());
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() -
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Mul:
-      return arena->New<IntValue>(cast<IntValue>(*args[0]).Val() *
-                                  cast<IntValue>(*args[1]).Val());
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Not:
-      return arena->New<BoolValue>(!cast<BoolValue>(*args[0]).Val());
+      return arena_->New<BoolValue>(!cast<BoolValue>(*args[0]).value());
     case Operator::And:
-      return arena->New<BoolValue>(cast<BoolValue>(*args[0]).Val() &&
-                                   cast<BoolValue>(*args[1]).Val());
+      return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() &&
+                                    cast<BoolValue>(*args[1]).value());
     case Operator::Or:
-      return arena->New<BoolValue>(cast<BoolValue>(*args[0]).Val() ||
-                                   cast<BoolValue>(*args[1]).Val());
+      return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
+                                    cast<BoolValue>(*args[1]).value());
     case Operator::Eq:
-      return arena->New<BoolValue>(ValueEqual(args[0], args[1], source_loc));
+      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], source_loc));
     case Operator::Ptr:
-      return arena->New<PointerType>(args[0]);
+      return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
       FATAL() << "dereference not implemented yet";
   }
@@ -109,54 +112,52 @@ auto Interpreter::EvalPrim(Operator op,
 void Interpreter::InitEnv(const Declaration& d, Env* env) {
   switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      const FunctionDefinition& func_def =
-          cast<FunctionDeclaration>(d).definition();
+      const auto& func_def = cast<FunctionDeclaration>(d);
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
-        Address a = heap.AllocateValue(arena->New<VariableType>(deduced.name));
+        AllocationId a =
+            heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
         new_env.Set(deduced.name, a);
       }
-      auto pt = InterpPattern(new_env, &func_def.param_pattern());
-      auto f = arena->New<FunctionValue>(func_def.name(), pt, func_def.body());
-      Address a = heap.AllocateValue(f);
+      Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
+      AllocationId a = heap_.AllocateValue(f);
       env->Set(func_def.name(), a);
       break;
     }
 
     case Declaration::Kind::ClassDeclaration: {
       const ClassDefinition& class_def = cast<ClassDeclaration>(d).definition();
-      VarValues fields;
-      VarValues methods;
+      std::vector<NamedValue> fields;
+      std::vector<NamedValue> methods;
       for (Nonnull<const Member*> m : class_def.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
-            Nonnull<const BindingPattern*> binding =
-                cast<FieldMember>(*m).Binding();
-            Nonnull<const Expression*> type_expression =
-                cast<ExpressionPattern>(*binding->Type()).Expression();
-            auto type = InterpExp(Env(arena), type_expression);
-            fields.push_back(make_pair(*binding->Name(), type));
+            const BindingPattern& binding = cast<FieldMember>(*m).binding();
+            const Expression& type_expression =
+                cast<ExpressionPattern>(binding.type()).expression();
+            auto type = InterpExp(Env(arena_), &type_expression);
+            fields.push_back({.name = *binding.name(), .value = type});
             break;
           }
         }
       }
-      auto st = arena->New<NominalClassType>(
+      auto st = arena_->New<NominalClassType>(
           class_def.name(), std::move(fields), std::move(methods));
-      auto a = heap.AllocateValue(st);
+      AllocationId a = heap_.AllocateValue(st);
       env->Set(class_def.name(), a);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
-      VarValues alts;
+      std::vector<NamedValue> alts;
       for (const auto& alternative : choice.alternatives()) {
-        auto t = InterpExp(Env(arena), &alternative.signature());
-        alts.push_back(make_pair(alternative.name(), t));
+        auto t = InterpExp(Env(arena_), &alternative.signature());
+        alts.push_back({.name = alternative.name(), .value = t});
       }
-      auto ct = arena->New<ChoiceType>(choice.name(), std::move(alts));
-      auto a = heap.AllocateValue(ct);
+      auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
+      AllocationId a = heap_.AllocateValue(ct);
       env->Set(choice.name(), a);
       break;
     }
@@ -165,9 +166,10 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const auto& var = cast<VariableDeclaration>(d);
       // Adds an entry in `globals` mapping the variable's name to the
       // result of evaluating the initializer.
-      auto v = InterpExp(*env, &var.initializer());
-      Address a = heap.AllocateValue(v);
-      env->Set(*var.binding().Name(), a);
+      Nonnull<const Value*> v =
+          Convert(InterpExp(*env, &var.initializer()), &var.static_type());
+      AllocationId a = heap_.AllocateValue(v);
+      env->Set(*var.binding().name(), a);
       break;
     }
   }
@@ -175,23 +177,18 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
 
 void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
   for (const auto d : fs) {
-    InitEnv(*d, &globals);
+    InitEnv(*d, &globals_);
   }
 }
 
-void Interpreter::DeallocateScope(Nonnull<Scope*> scope) {
-  for (const auto& l : scope->locals) {
-    std::optional<Address> a = scope->values.Get(l);
+void Interpreter::DeallocateScope(Scope& scope) {
+  CHECK(!scope.deallocated);
+  for (const auto& l : scope.locals) {
+    std::optional<AllocationId> a = scope.values.Get(l);
     CHECK(a);
-    heap.Deallocate(*a);
+    heap_.Deallocate(*a);
   }
-}
-
-void Interpreter::DeallocateLocals(Nonnull<Frame*> frame) {
-  while (!frame->scopes.IsEmpty()) {
-    DeallocateScope(frame->scopes.Top());
-    frame->scopes.Pop();
-  }
+  scope.deallocated = true;
 }
 
 auto Interpreter::CreateTuple(Nonnull<Action*> act,
@@ -201,25 +198,19 @@ auto Interpreter::CreateTuple(Nonnull<Action*> act,
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   const auto& tup_lit = cast<TupleLiteral>(*exp);
   CHECK(act->results().size() == tup_lit.fields().size());
-  std::vector<TupleElement> elements;
-  for (size_t i = 0; i < act->results().size(); ++i) {
-    elements.push_back(
-        {.name = tup_lit.fields()[i].name(), .value = act->results()[i]});
-  }
-
-  return arena->New<TupleValue>(std::move(elements));
+  return arena_->New<TupleValue>(act->results());
 }
 
 auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
   CHECK(fields.size() == values.size());
-  std::vector<TupleElement> elements;
+  std::vector<NamedValue> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
     elements.push_back({.name = fields[i].name(), .value = values[i]});
   }
 
-  return arena->New<StructValue>(std::move(elements));
+  return arena_->New<StructValue>(std::move(elements));
 }
 
 auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
@@ -228,10 +219,10 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      Env values(arena);
-      if (placeholder.Name().has_value()) {
-        Address a = heap.AllocateValue(CopyVal(arena, v, source_loc));
-        values.Set(*placeholder.Name(), a);
+      Env values(arena_);
+      if (placeholder.name().has_value()) {
+        AllocationId a = heap_.AllocateValue(v);
+        values.Set(*placeholder.name(), a);
       }
       return values;
     }
@@ -240,22 +231,15 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::TupleValue: {
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
-          if (p_tup.Elements().size() != v_tup.Elements().size()) {
+          if (p_tup.elements().size() != v_tup.elements().size()) {
             FATAL_PROGRAM_ERROR(source_loc)
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
           }
-          Env values(arena);
-          for (size_t i = 0; i < p_tup.Elements().size(); ++i) {
-            if (p_tup.Elements()[i].name != v_tup.Elements()[i].name) {
-              FATAL_PROGRAM_ERROR(source_loc)
-                  << "Tuple field name '" << v_tup.Elements()[i].name
-                  << "' does not match pattern field name '"
-                  << p_tup.Elements()[i].name << "'";
-            }
-            std::optional<Env> matches =
-                PatternMatch(p_tup.Elements()[i].value,
-                             v_tup.Elements()[i].value, source_loc);
+          Env values(arena_);
+          for (size_t i = 0; i < p_tup.elements().size(); ++i) {
+            std::optional<Env> matches = PatternMatch(
+                p_tup.elements()[i], v_tup.elements()[i], source_loc);
             if (!matches) {
               return std::nullopt;
             }
@@ -272,7 +256,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       const auto& p_struct = cast<StructValue>(*p);
       const auto& v_struct = cast<StructValue>(*v);
       CHECK(p_struct.elements().size() == v_struct.elements().size());
-      Env values(arena);
+      Env values(arena_);
       for (size_t i = 0; i < p_struct.elements().size(); ++i) {
         CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
         std::optional<Env> matches =
@@ -292,11 +276,11 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::AlternativeValue: {
           const auto& p_alt = cast<AlternativeValue>(*p);
           const auto& v_alt = cast<AlternativeValue>(*v);
-          if (p_alt.ChoiceName() != v_alt.ChoiceName() ||
-              p_alt.AltName() != v_alt.AltName()) {
+          if (p_alt.choice_name() != v_alt.choice_name() ||
+              p_alt.alt_name() != v_alt.alt_name()) {
             return std::nullopt;
           }
-          return PatternMatch(p_alt.Argument(), v_alt.Argument(), source_loc);
+          return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc);
         }
         default:
           FATAL() << "expected a choice alternative in pattern, not " << *v;
@@ -307,12 +291,12 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
           std::optional<Env> param_matches =
-              PatternMatch(p_fn.Param(), v_fn.Param(), source_loc);
+              PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc);
           if (!param_matches) {
             return std::nullopt;
           }
-          std::optional<Env> ret_matches =
-              PatternMatch(p_fn.Ret(), v_fn.Ret(), source_loc);
+          std::optional<Env> ret_matches = PatternMatch(
+              &p_fn.return_type(), &v_fn.return_type(), source_loc);
           if (!ret_matches) {
             return std::nullopt;
           }
@@ -328,10 +312,10 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
     case Value::Kind::AutoType:
       // `auto` matches any type, without binding any new names. We rely
       // on the typechecker to ensure that `v` is a type.
-      return Env(arena);
+      return Env(arena_);
     default:
       if (ValueEqual(p, v, source_loc)) {
-        return Env(arena);
+        return Env(arena_);
       } else {
         return std::nullopt;
       }
@@ -343,27 +327,21 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
                                     SourceLocation source_loc) {
   switch (pat->kind()) {
     case Value::Kind::PointerValue:
-      heap.Write(cast<PointerValue>(*pat).Val(),
-                 CopyVal(arena, val, source_loc), source_loc);
+      heap_.Write(cast<PointerValue>(*pat).value(), val, source_loc);
       break;
     case Value::Kind::TupleValue: {
       switch (val->kind()) {
         case Value::Kind::TupleValue: {
           const auto& pat_tup = cast<TupleValue>(*pat);
           const auto& val_tup = cast<TupleValue>(*val);
-          if (pat_tup.Elements().size() != val_tup.Elements().size()) {
+          if (pat_tup.elements().size() != val_tup.elements().size()) {
             FATAL_RUNTIME_ERROR(source_loc)
                 << "arity mismatch in tuple pattern assignment:\n  pattern: "
                 << pat_tup << "\n  value: " << val_tup;
           }
-          for (const TupleElement& pattern_element : pat_tup.Elements()) {
-            std::optional<Nonnull<const Value*>> value_field =
-                val_tup.FindField(pattern_element.name);
-            if (!value_field) {
-              FATAL_RUNTIME_ERROR(source_loc)
-                  << "field " << pattern_element.name << "not in " << *val;
-            }
-            PatternAssignment(pattern_element.value, *value_field, source_loc);
+          for (size_t i = 0; i < pat_tup.elements().size(); ++i) {
+            PatternAssignment(pat_tup.elements()[i], val_tup.elements()[i],
+                              source_loc);
           }
           break;
         }
@@ -377,10 +355,11 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
         case Value::Kind::AlternativeValue: {
           const auto& pat_alt = cast<AlternativeValue>(*pat);
           const auto& val_alt = cast<AlternativeValue>(*val);
-          CHECK(val_alt.ChoiceName() == pat_alt.ChoiceName() &&
-                val_alt.AltName() == pat_alt.AltName())
+          CHECK(val_alt.choice_name() == pat_alt.choice_name() &&
+                val_alt.alt_name() == pat_alt.alt_name())
               << "internal error in pattern assignment";
-          PatternAssignment(pat_alt.Argument(), val_alt.Argument(), source_loc);
+          PatternAssignment(&pat_alt.argument(), &val_alt.argument(),
+                            source_loc);
           break;
         }
         default:
@@ -395,34 +374,34 @@ void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
 }
 
 auto Interpreter::StepLvalue() -> Transition {
-  Nonnull<Action*> act = stack.Top()->todo.Top();
-  Nonnull<const Expression*> exp = cast<LValAction>(*act).Exp();
-  if (tracing_output) {
-    llvm::outs() << "--- step lvalue " << *exp << " (" << exp->source_loc()
+  Nonnull<Action*> act = todo_.Top();
+  const Expression& exp = cast<LValAction>(*act).expression();
+  if (trace_) {
+    llvm::outs() << "--- step lvalue " << exp << " (" << exp.source_loc()
                  << ") --->\n";
   }
-  switch (exp->kind()) {
+  switch (exp.kind()) {
     case Expression::Kind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Address pointer = GetFromEnv(exp->source_loc(),
-                                   cast<IdentifierExpression>(*exp).Name());
-      Nonnull<const Value*> v = arena->New<PointerValue>(pointer);
+      Address pointer =
+          GetFromEnv(exp.source_loc(), cast<IdentifierExpression>(exp).name());
+      Nonnull<const Value*> v = arena_->New<PointerValue>(pointer);
       return Done{v};
     }
     case Expression::Kind::FieldAccessExpression: {
       if (act->pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        return Spawn{arena->New<LValAction>(
-            cast<FieldAccessExpression>(*exp).Aggregate())};
+        return Spawn{arena_->New<LValAction>(
+            &cast<FieldAccessExpression>(exp).aggregate())};
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
-        Address aggregate = cast<PointerValue>(*act->results()[0]).Val();
+        Address aggregate = cast<PointerValue>(*act->results()[0]).value();
         Address field = aggregate.SubobjectAddress(
-            cast<FieldAccessExpression>(*exp).Field());
-        return Done{arena->New<PointerValue>(field)};
+            cast<FieldAccessExpression>(exp).field());
+        return Done{arena_->New<PointerValue>(field)};
       }
     }
     case Expression::Kind::IndexExpression: {
@@ -430,33 +409,32 @@ auto Interpreter::StepLvalue() -> Transition {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
         return Spawn{
-            arena->New<LValAction>(cast<IndexExpression>(*exp).Aggregate())};
+            arena_->New<LValAction>(&cast<IndexExpression>(exp).aggregate())};
 
       } else if (act->pos() == 1) {
-        return Spawn{
-            arena->New<ExpressionAction>(cast<IndexExpression>(*exp).Offset())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<IndexExpression>(exp).offset())};
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
-        Address aggregate = cast<PointerValue>(*act->results()[0]).Val();
+        Address aggregate = cast<PointerValue>(*act->results()[0]).value();
         std::string f =
-            std::to_string(cast<IntValue>(*act->results()[1]).Val());
+            std::to_string(cast<IntValue>(*act->results()[1]).value());
         Address field = aggregate.SubobjectAddress(f);
-        return Done{arena->New<PointerValue>(field)};
+        return Done{arena_->New<PointerValue>(field)};
       }
     }
     case Expression::Kind::TupleLiteral: {
       if (act->pos() <
-          static_cast<int>(cast<TupleLiteral>(*exp).fields().size())) {
+          static_cast<int>(cast<TupleLiteral>(exp).fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
-        return Spawn{arena->New<LValAction>(elt)};
+        return Spawn{arena_->New<LValAction>(
+            cast<TupleLiteral>(exp).fields()[act->pos()])};
       } else {
-        return Done{CreateTuple(act, exp)};
+        return Done{CreateTuple(act, &exp)};
       }
     }
     case Expression::Kind::StructLiteral:
@@ -474,162 +452,219 @@ auto Interpreter::StepLvalue() -> Transition {
     case Expression::Kind::StringTypeLiteral:
     case Expression::Kind::IntrinsicExpression:
       FATAL_RUNTIME_ERROR_NO_LINE()
-          << "Can't treat expression as lvalue: " << *exp;
+          << "Can't treat expression as lvalue: " << exp;
+  }
+}
+
+auto Interpreter::Convert(Nonnull<const Value*> value,
+                          Nonnull<const Value*> destination_type) const
+    -> Nonnull<const Value*> {
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::TypeType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::AutoType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringType:
+    case Value::Kind::StringValue:
+      // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
+      // have Value::dynamic_type.
+      return value;
+    case Value::Kind::StructValue: {
+      const auto& struct_val = cast<StructValue>(*value);
+      switch (destination_type->kind()) {
+        case Value::Kind::StructType: {
+          const auto& destination_struct_type =
+              cast<StructType>(*destination_type);
+          std::vector<NamedValue> new_elements;
+          for (const auto& [field_name, field_type] :
+               destination_struct_type.fields()) {
+            std::optional<Nonnull<const Value*>> old_value =
+                struct_val.FindField(field_name);
+            new_elements.push_back(
+                {.name = field_name, .value = Convert(*old_value, field_type)});
+          }
+          return arena_->New<StructValue>(std::move(new_elements));
+        }
+        case Value::Kind::NominalClassType:
+          return arena_->New<NominalClassValue>(destination_type, value);
+        default:
+          FATAL() << "Can't convert value " << *value << " to type "
+                  << *destination_type;
+      }
+    }
+    case Value::Kind::TupleValue: {
+      const auto& tuple = cast<TupleValue>(value);
+      const auto& destination_tuple_type = cast<TupleValue>(destination_type);
+      CHECK(tuple->elements().size() ==
+            destination_tuple_type->elements().size());
+      std::vector<Nonnull<const Value*>> new_elements;
+      for (size_t i = 0; i < tuple->elements().size(); ++i) {
+        new_elements.push_back(Convert(tuple->elements()[i],
+                                       destination_tuple_type->elements()[i]));
+      }
+      return arena_->New<TupleValue>(std::move(new_elements));
+    }
   }
 }
 
 auto Interpreter::StepExp() -> Transition {
-  Nonnull<Action*> act = stack.Top()->todo.Top();
-  Nonnull<const Expression*> exp = cast<ExpressionAction>(*act).Exp();
-  if (tracing_output) {
-    llvm::outs() << "--- step exp " << *exp << " (" << exp->source_loc()
+  Nonnull<Action*> act = todo_.Top();
+  const Expression& exp = cast<ExpressionAction>(*act).expression();
+  if (trace_) {
+    llvm::outs() << "--- step exp " << exp << " (" << exp.source_loc()
                  << ") --->\n";
   }
-  switch (exp->kind()) {
+  switch (exp.kind()) {
     case Expression::Kind::IndexExpression: {
       if (act->pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            cast<IndexExpression>(*exp).Aggregate())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<IndexExpression>(exp).aggregate())};
       } else if (act->pos() == 1) {
-        return Spawn{
-            arena->New<ExpressionAction>(cast<IndexExpression>(*exp).Offset())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<IndexExpression>(exp).offset())};
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
-        auto* tuple = dyn_cast<TupleValue>(act->results()[0]);
-        if (tuple == nullptr) {
+        const auto& tuple = cast<TupleValue>(*act->results()[0]);
+        int i = cast<IntValue>(*act->results()[1]).value();
+        if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
           FATAL_RUNTIME_ERROR_NO_LINE()
-              << "expected a tuple in field access, not " << *act->results()[0];
+              << "index " << i << " out of range in " << tuple;
         }
-        std::string f =
-            std::to_string(cast<IntValue>(*act->results()[1]).Val());
-        std::optional<Nonnull<const Value*>> field = tuple->FindField(f);
-        if (!field) {
-          FATAL_RUNTIME_ERROR_NO_LINE()
-              << "field " << f << " not in " << *tuple;
-        }
-        return Done{*field};
+        return Done{tuple.elements()[i]};
       }
     }
     case Expression::Kind::TupleLiteral: {
       if (act->pos() <
-          static_cast<int>(cast<TupleLiteral>(*exp).fields().size())) {
+          static_cast<int>(cast<TupleLiteral>(exp).fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Expression*> elt =
-            cast<TupleLiteral>(*exp).fields()[act->pos()].expression();
-        return Spawn{arena->New<ExpressionAction>(elt)};
+        return Spawn{arena_->New<ExpressionAction>(
+            cast<TupleLiteral>(exp).fields()[act->pos()])};
       } else {
-        return Done{CreateTuple(act, exp)};
+        return Done{CreateTuple(act, &exp)};
       }
     }
     case Expression::Kind::StructLiteral: {
-      const auto& literal = cast<StructLiteral>(*exp);
+      const auto& literal = cast<StructLiteral>(exp);
       if (act->pos() < static_cast<int>(literal.fields().size())) {
-        Nonnull<const Expression*> elt =
-            literal.fields()[act->pos()].expression();
-        return Spawn{arena->New<ExpressionAction>(elt)};
+        return Spawn{arena_->New<ExpressionAction>(
+            &literal.fields()[act->pos()].expression())};
       } else {
         return Done{CreateStruct(literal.fields(), act->results())};
       }
     }
     case Expression::Kind::StructTypeLiteral: {
-      const auto& struct_type = cast<StructTypeLiteral>(*exp);
+      const auto& struct_type = cast<StructTypeLiteral>(exp);
       if (act->pos() < static_cast<int>(struct_type.fields().size())) {
-        return Spawn{arena->New<ExpressionAction>(
-            struct_type.fields()[act->pos()].expression())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &struct_type.fields()[act->pos()].expression())};
       } else {
-        VarValues fields;
+        std::vector<NamedValue> fields;
         for (size_t i = 0; i < struct_type.fields().size(); ++i) {
           fields.push_back({struct_type.fields()[i].name(), act->results()[i]});
         }
-        return Done{arena->New<StructType>(std::move(fields))};
+        return Done{arena_->New<StructType>(std::move(fields))};
       }
     }
     case Expression::Kind::FieldAccessExpression: {
-      const auto& access = cast<FieldAccessExpression>(*exp);
+      const auto& access = cast<FieldAccessExpression>(exp);
       if (act->pos() == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(access.Aggregate())};
+        return Spawn{arena_->New<ExpressionAction>(&access.aggregate())};
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
         return Done{act->results()[0]->GetField(
-            arena, FieldPath(access.Field()), exp->source_loc())};
+            arena_, FieldPath(access.field()), exp.source_loc())};
       }
     }
     case Expression::Kind::IdentifierExpression: {
       CHECK(act->pos() == 0);
-      const auto& ident = cast<IdentifierExpression>(*exp);
+      const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address pointer = GetFromEnv(exp->source_loc(), ident.Name());
-      return Done{heap.Read(pointer, exp->source_loc())};
+      Address pointer = GetFromEnv(exp.source_loc(), ident.name());
+      return Done{heap_.Read(pointer, exp.source_loc())};
     }
     case Expression::Kind::IntLiteral:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      return Done{arena->New<IntValue>(cast<IntLiteral>(*exp).Val())};
+      return Done{arena_->New<IntValue>(cast<IntLiteral>(exp).value())};
     case Expression::Kind::BoolLiteral:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      return Done{arena->New<BoolValue>(cast<BoolLiteral>(*exp).Val())};
+      return Done{arena_->New<BoolValue>(cast<BoolLiteral>(exp).value())};
     case Expression::Kind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(*exp);
-      if (act->pos() != static_cast<int>(op.Arguments().size())) {
+      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+      if (act->pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-        Nonnull<const Expression*> arg = op.Arguments()[act->pos()];
-        return Spawn{arena->New<ExpressionAction>(arg)};
+        Nonnull<const Expression*> arg = op.arguments()[act->pos()];
+        return Spawn{arena_->New<ExpressionAction>(arg)};
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        return Done{EvalPrim(op.Op(), act->results(), exp->source_loc())};
+        return Done{EvalPrim(op.op(), act->results(), exp.source_loc())};
       }
     }
     case Expression::Kind::CallExpression:
       if (act->pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            cast<CallExpression>(*exp).Function())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<CallExpression>(exp).function())};
       } else if (act->pos() == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            cast<CallExpression>(*exp).Argument())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<CallExpression>(exp).argument())};
       } else if (act->pos() == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         switch (act->results()[0]->kind()) {
-          case Value::Kind::NominalClassType: {
-            Nonnull<const Value*> arg =
-                CopyVal(arena, act->results()[1], exp->source_loc());
-            return Done{arena->New<NominalClassValue>(act->results()[0], arg)};
-          }
           case Value::Kind::AlternativeConstructorValue: {
             const auto& alt =
                 cast<AlternativeConstructorValue>(*act->results()[0]);
-            Nonnull<const Value*> arg =
-                CopyVal(arena, act->results()[1], exp->source_loc());
-            return Done{arena->New<AlternativeValue>(alt.AltName(),
-                                                     alt.ChoiceName(), arg)};
+            return Done{arena_->New<AlternativeValue>(
+                alt.alt_name(), alt.choice_name(), act->results()[1])};
           }
           case Value::Kind::FunctionValue:
             return CallFunction{
-                // TODO: Think about a cleaner way to cast between Ptr types.
-                // (multiple TODOs)
-                .function = Nonnull<const FunctionValue*>(
-                    cast<FunctionValue>(act->results()[0])),
+                .function =
+                    &cast<FunctionValue>(*act->results()[0]).declaration(),
                 .args = act->results()[1],
-                .source_loc = exp->source_loc()};
+                .source_loc = exp.source_loc()};
           default:
-            FATAL_RUNTIME_ERROR(exp->source_loc())
+            FATAL_RUNTIME_ERROR(exp.source_loc())
                 << "in call, expected a function, not " << *act->results()[0];
+        }
+      } else if (act->pos() == 3) {
+        if (act->results().size() < 3) {
+          // Control fell through without explicit return.
+          return Done{TupleValue::Empty()};
+        } else {
+          return Done{act->results()[2]};
         }
       } else {
         FATAL() << "in handle_value with Call pos " << act->pos();
@@ -637,204 +672,155 @@ auto Interpreter::StepExp() -> Transition {
     case Expression::Kind::IntrinsicExpression:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      switch (cast<IntrinsicExpression>(*exp).Intrinsic()) {
-        case IntrinsicExpression::IntrinsicKind::Print:
-          Address pointer = GetFromEnv(exp->source_loc(), "format_str");
-          Nonnull<const Value*> pointee = heap.Read(pointer, exp->source_loc());
+      switch (cast<IntrinsicExpression>(exp).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
+          Address pointer = GetFromEnv(exp.source_loc(), "format_str");
+          Nonnull<const Value*> pointee = heap_.Read(pointer, exp.source_loc());
           CHECK(pointee->kind() == Value::Kind::StringValue);
           // TODO: This could eventually use something like llvm::formatv.
-          llvm::outs() << cast<StringValue>(*pointee).Val();
+          llvm::outs() << cast<StringValue>(*pointee).value();
           return Done{TupleValue::Empty()};
       }
 
     case Expression::Kind::IntTypeLiteral: {
       CHECK(act->pos() == 0);
-      return Done{arena->New<IntType>()};
+      return Done{arena_->New<IntType>()};
     }
     case Expression::Kind::BoolTypeLiteral: {
       CHECK(act->pos() == 0);
-      return Done{arena->New<BoolType>()};
+      return Done{arena_->New<BoolType>()};
     }
     case Expression::Kind::TypeTypeLiteral: {
       CHECK(act->pos() == 0);
-      return Done{arena->New<TypeType>()};
+      return Done{arena_->New<TypeType>()};
     }
     case Expression::Kind::FunctionTypeLiteral: {
       if (act->pos() == 0) {
-        return Spawn{arena->New<ExpressionAction>(
-            cast<FunctionTypeLiteral>(*exp).Parameter())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<FunctionTypeLiteral>(exp).parameter())};
       } else if (act->pos() == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            cast<FunctionTypeLiteral>(*exp).ReturnType())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<FunctionTypeLiteral>(exp).return_type())};
       } else {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        return Done{arena->New<FunctionType>(std::vector<GenericBinding>(),
-                                             act->results()[0],
-                                             act->results()[1])};
+        return Done{arena_->New<FunctionType>(std::vector<GenericBinding>(),
+                                              act->results()[0],
+                                              act->results()[1])};
       }
     }
     case Expression::Kind::ContinuationTypeLiteral: {
       CHECK(act->pos() == 0);
-      return Done{arena->New<ContinuationType>()};
+      return Done{arena_->New<ContinuationType>()};
     }
     case Expression::Kind::StringLiteral:
       CHECK(act->pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-      return Done{arena->New<StringValue>(cast<StringLiteral>(*exp).Val())};
+      return Done{arena_->New<StringValue>(cast<StringLiteral>(exp).value())};
     case Expression::Kind::StringTypeLiteral: {
       CHECK(act->pos() == 0);
-      return Done{arena->New<StringType>()};
+      return Done{arena_->New<StringType>()};
     }
   }  // switch (exp->kind)
 }
 
 auto Interpreter::StepPattern() -> Transition {
-  Nonnull<Action*> act = stack.Top()->todo.Top();
-  Nonnull<const Pattern*> pattern = cast<PatternAction>(*act).Pat();
-  if (tracing_output) {
-    llvm::outs() << "--- step pattern " << *pattern << " ("
-                 << pattern->source_loc() << ") --->\n";
+  Nonnull<Action*> act = todo_.Top();
+  const Pattern& pattern = cast<PatternAction>(*act).pattern();
+  if (trace_) {
+    llvm::outs() << "--- step pattern " << pattern << " ("
+                 << pattern.source_loc() << ") --->\n";
   }
-  switch (pattern->kind()) {
+  switch (pattern.kind()) {
     case Pattern::Kind::AutoPattern: {
       CHECK(act->pos() == 0);
-      return Done{arena->New<AutoType>()};
+      return Done{arena_->New<AutoType>()};
     }
     case Pattern::Kind::BindingPattern: {
-      const auto& binding = cast<BindingPattern>(*pattern);
+      const auto& binding = cast<BindingPattern>(pattern);
       if (act->pos() == 0) {
-        return Spawn{arena->New<PatternAction>(binding.Type())};
+        return Spawn{arena_->New<PatternAction>(&binding.type())};
       } else {
-        return Done{arena->New<BindingPlaceholderValue>(binding.Name(),
-                                                        act->results()[0])};
+        return Done{arena_->New<BindingPlaceholderValue>(binding.name(),
+                                                         act->results()[0])};
       }
     }
     case Pattern::Kind::TuplePattern: {
-      const auto& tuple = cast<TuplePattern>(*pattern);
-      if (act->pos() < static_cast<int>(tuple.Fields().size())) {
+      const auto& tuple = cast<TuplePattern>(pattern);
+      if (act->pos() < static_cast<int>(tuple.fields().size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        Nonnull<const Pattern*> elt = tuple.Fields()[act->pos()].pattern;
-        return Spawn{arena->New<PatternAction>(elt)};
+        return Spawn{arena_->New<PatternAction>(tuple.fields()[act->pos()])};
       } else {
-        std::vector<TupleElement> elements;
-        for (size_t i = 0; i < tuple.Fields().size(); ++i) {
-          elements.push_back(
-              {.name = tuple.Fields()[i].name, .value = act->results()[i]});
-        }
-        return Done{arena->New<TupleValue>(std::move(elements))};
+        return Done{arena_->New<TupleValue>(act->results())};
       }
     }
     case Pattern::Kind::AlternativePattern: {
-      const auto& alternative = cast<AlternativePattern>(*pattern);
+      const auto& alternative = cast<AlternativePattern>(pattern);
       if (act->pos() == 0) {
-        return Spawn{arena->New<ExpressionAction>(alternative.ChoiceType())};
+        return Spawn{arena_->New<ExpressionAction>(&alternative.choice_type())};
       } else if (act->pos() == 1) {
-        return Spawn{arena->New<PatternAction>(alternative.Arguments())};
+        return Spawn{arena_->New<PatternAction>(&alternative.arguments())};
       } else {
         CHECK(act->pos() == 2);
         const auto& choice_type = cast<ChoiceType>(*act->results()[0]);
-        return Done{arena->New<AlternativeValue>(alternative.AlternativeName(),
-                                                 choice_type.Name(),
-                                                 act->results()[1])};
+        return Done{arena_->New<AlternativeValue>(
+            alternative.alternative_name(), choice_type.name(),
+            act->results()[1])};
       }
     }
     case Pattern::Kind::ExpressionPattern:
-      return Delegate{arena->New<ExpressionAction>(
-          cast<ExpressionPattern>(*pattern).Expression())};
+      return Delegate{arena_->New<ExpressionAction>(
+          &cast<ExpressionPattern>(pattern).expression())};
   }
 }
 
-static auto IsWhileAct(Nonnull<Action*> act) -> bool {
-  switch (act->kind()) {
-    case Action::Kind::StatementAction:
-      switch (cast<StatementAction>(*act).Stmt()->kind()) {
-        case Statement::Kind::While:
-          return true;
-        default:
-          return false;
-      }
-    default:
-      return false;
-  }
-}
-
-static auto HasLocalScope(Nonnull<Action*> act) -> bool {
-  switch (act->kind()) {
-    case Action::Kind::StatementAction:
-      switch (cast<StatementAction>(*act).Stmt()->kind()) {
-        case Statement::Kind::Block:
-        case Statement::Kind::Match:
-          return true;
-        default:
-          return false;
-      }
-    default:
-      return false;
-  }
+static auto IsRunAction(Nonnull<Action*> action) -> bool {
+  const auto* statement = dyn_cast<StatementAction>(action);
+  return statement != nullptr && llvm::isa<Run>(statement->statement());
 }
 
 auto Interpreter::StepStmt() -> Transition {
-  Nonnull<Frame*> frame = stack.Top();
-  Nonnull<Action*> act = frame->todo.Top();
-  Nonnull<const Statement*> stmt = cast<StatementAction>(*act).Stmt();
-  if (tracing_output) {
+  Nonnull<Action*> act = todo_.Top();
+  const Statement& stmt = cast<StatementAction>(*act).statement();
+  if (trace_) {
     llvm::outs() << "--- step stmt ";
-    stmt->PrintDepth(1, llvm::outs());
-    llvm::outs() << " (" << stmt->source_loc() << ") --->\n";
+    stmt.PrintDepth(1, llvm::outs());
+    llvm::outs() << " (" << stmt.source_loc() << ") --->\n";
   }
-  switch (stmt->kind()) {
+  switch (stmt.kind()) {
     case Statement::Kind::Match: {
-      const auto& match_stmt = cast<Match>(*stmt);
+      const auto& match_stmt = cast<Match>(stmt);
       if (act->pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-        frame->scopes.Push(arena->New<Scope>(CurrentEnv()));
-        return Spawn{arena->New<ExpressionAction>(&match_stmt.expression())};
+        act->StartScope(Scope(CurrentEnv()));
+        return Spawn{arena_->New<ExpressionAction>(&match_stmt.expression())};
       } else {
-        // Regarding act->pos():
-        // * odd: start interpreting the pattern of a clause
-        // * even: finished interpreting the pattern, now try to match
-        //
-        // Regarding act->results():
-        // * 0: the value that we're matching
-        // * 1: the pattern for clause 0
-        // * 2: the pattern for clause 1
-        // * ...
-        auto clause_num = (act->pos() - 1) / 2;
+        int clause_num = act->pos() - 1;
         if (clause_num >= static_cast<int>(match_stmt.clauses().size())) {
-          DeallocateScope(frame->scopes.Top());
-          frame->scopes.Pop();
           return Done{};
         }
         auto c = match_stmt.clauses()[clause_num];
+        std::optional<Env> matches =
+            PatternMatch(&c.pattern().value(),
+                         Convert(act->results()[0], &c.pattern().static_type()),
+                         stmt.source_loc());
+        if (matches) {  // We have a match, start the body.
+          // Ensure we don't process any more clauses.
+          act->set_pos(match_stmt.clauses().size() + 1);
 
-        if (act->pos() % 2 == 1) {
-          // start interpreting the pattern of the clause
-          //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
-          // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-          return Spawn{arena->New<PatternAction>(&c.pattern())};
-        } else {  // try to match
-          auto v = act->results()[0];
-          auto pat = act->results()[clause_num + 1];
-          std::optional<Env> matches = PatternMatch(pat, v, stmt->source_loc());
-          if (matches) {  // we have a match, start the body
-            // Ensure we don't process any more clauses.
-            act->set_pos(2 * match_stmt.clauses().size() + 1);
-
-            for (const auto& [name, value] : *matches) {
-              frame->scopes.Top()->values.Set(name, value);
-              frame->scopes.Top()->locals.push_back(name);
-            }
-            return Spawn{arena->New<StatementAction>(&c.statement())};
-          } else {
-            return RunAgain{};
+          for (const auto& [name, value] : *matches) {
+            act->scope()->values.Set(name, value);
+            act->scope()->locals.push_back(name);
           }
+          return Spawn{arena_->New<StatementAction>(&c.statement())};
+        } else {
+          return RunAgain{};
         }
       }
     }
@@ -843,150 +829,149 @@ auto Interpreter::StepStmt() -> Transition {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         act->Clear();
-        return Spawn{arena->New<ExpressionAction>(cast<While>(*stmt).Cond())};
-      } else if (cast<BoolValue>(*act->results().back()).Val()) {
-        //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
-        // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-        return Spawn{arena->New<StatementAction>(cast<While>(*stmt).Body())};
+        return Spawn{
+            arena_->New<ExpressionAction>(&cast<While>(stmt).condition())};
       } else {
-        //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
-        // -> { { C, E, F } :: S, H}
-        return Done{};
+        Nonnull<const Value*> condition =
+            Convert(act->results().back(), arena_->New<BoolType>());
+        if (cast<BoolValue>(*condition).value()) {
+          //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
+          // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
+          return Spawn{arena_->New<StatementAction>(&cast<While>(stmt).body())};
+        } else {
+          //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
+          // -> { { C, E, F } :: S, H}
+          return Done{};
+        }
       }
     case Statement::Kind::Break: {
       CHECK(act->pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      auto it =
-          std::find_if(frame->todo.begin(), frame->todo.end(), &IsWhileAct);
-      if (it == frame->todo.end()) {
-        FATAL_RUNTIME_ERROR(stmt->source_loc())
-            << "`break` not inside `while` statement";
-      }
-      ++it;
-      return UnwindTo{*it};
+      return UnwindPast{&cast<Break>(stmt).loop()};
     }
     case Statement::Kind::Continue: {
       CHECK(act->pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      auto it =
-          std::find_if(frame->todo.begin(), frame->todo.end(), &IsWhileAct);
-      if (it == frame->todo.end()) {
-        FATAL_RUNTIME_ERROR(stmt->source_loc())
-            << "`continue` not inside `while` statement";
-      }
-      return UnwindTo{*it};
+      return UnwindTo{&cast<Continue>(stmt).loop()};
     }
     case Statement::Kind::Block: {
       if (act->pos() == 0) {
-        const Block& block = cast<Block>(*stmt);
-        if (block.Stmt()) {
-          frame->scopes.Push(arena->New<Scope>(CurrentEnv()));
-          return Spawn{arena->New<StatementAction>(*block.Stmt())};
+        const Block& block = cast<Block>(stmt);
+        if (block.sequence()) {
+          act->StartScope(Scope(CurrentEnv()));
+          return Spawn{arena_->New<StatementAction>(*block.sequence())};
         } else {
           return Done{};
         }
       } else {
-        Nonnull<Scope*> scope = frame->scopes.Top();
-        DeallocateScope(scope);
-        frame->scopes.Pop(1);
         return Done{};
       }
     }
-    case Statement::Kind::VariableDefinition:
+    case Statement::Kind::VariableDefinition: {
+      const auto& definition = cast<VariableDefinition>(stmt);
       if (act->pos() == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            cast<VariableDefinition>(*stmt).Init())};
-      } else if (act->pos() == 1) {
-        return Spawn{
-            arena->New<PatternAction>(cast<VariableDefinition>(*stmt).Pat())};
+        return Spawn{arena_->New<ExpressionAction>(&definition.init())};
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        Nonnull<const Value*> v = act->results()[0];
-        Nonnull<const Value*> p = act->results()[1];
+        Nonnull<const Value*> v =
+            Convert(act->results()[0], &definition.pattern().static_type());
+        Nonnull<const Value*> p =
+            &cast<VariableDefinition>(stmt).pattern().value();
 
-        std::optional<Env> matches = PatternMatch(p, v, stmt->source_loc());
+        std::optional<Env> matches = PatternMatch(p, v, stmt.source_loc());
         CHECK(matches)
-            << stmt->source_loc()
+            << stmt.source_loc()
             << ": internal error in variable definition, match failed";
         for (const auto& [name, value] : *matches) {
-          frame->scopes.Top()->values.Set(name, value);
-          frame->scopes.Top()->locals.push_back(name);
+          Scope& current_scope = CurrentScope();
+          current_scope.values.Set(name, value);
+          current_scope.locals.push_back(name);
         }
         return Done{};
       }
+    }
     case Statement::Kind::ExpressionStatement:
       if (act->pos() == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(
-            cast<ExpressionStatement>(*stmt).Exp())};
+        return Spawn{arena_->New<ExpressionAction>(
+            &cast<ExpressionStatement>(stmt).expression())};
       } else {
         return Done{};
       }
-    case Statement::Kind::Assign:
+    case Statement::Kind::Assign: {
+      const auto& assign = cast<Assign>(stmt);
       if (act->pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        return Spawn{arena->New<LValAction>(cast<Assign>(*stmt).Lhs())};
+        return Spawn{arena_->New<LValAction>(&assign.lhs())};
       } else if (act->pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(cast<Assign>(*stmt).Rhs())};
+        return Spawn{arena_->New<ExpressionAction>(&assign.rhs())};
       } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
         auto pat = act->results()[0];
-        auto val = act->results()[1];
-        PatternAssignment(pat, val, stmt->source_loc());
+        auto val = Convert(act->results()[1], &assign.lhs().static_type());
+        PatternAssignment(pat, val, stmt.source_loc());
         return Done{};
       }
+    }
     case Statement::Kind::If:
       if (act->pos() == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(cast<If>(*stmt).Cond())};
-      } else if (cast<BoolValue>(*act->results()[0]).Val()) {
-        //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
-        //      S, H}
-        // -> { { then_stmt :: C, E, F } :: S, H}
-        return Delegate{
-            arena->New<StatementAction>(cast<If>(*stmt).ThenStmt())};
-      } else if (cast<If>(*stmt).ElseStmt()) {
-        //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
-        //      S, H}
-        // -> { { else_stmt :: C, E, F } :: S, H}
-        return Delegate{
-            arena->New<StatementAction>(*cast<If>(*stmt).ElseStmt())};
+        return Spawn{
+            arena_->New<ExpressionAction>(&cast<If>(stmt).condition())};
       } else {
-        return Done{};
+        Nonnull<const Value*> condition =
+            Convert(act->results()[0], arena_->New<BoolType>());
+        if (cast<BoolValue>(*condition).value()) {
+          //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
+          //      S, H}
+          // -> { { then_stmt :: C, E, F } :: S, H}
+          return Delegate{
+              arena_->New<StatementAction>(&cast<If>(stmt).then_block())};
+        } else if (cast<If>(stmt).else_block()) {
+          //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
+          //      S, H}
+          // -> { { else_stmt :: C, E, F } :: S, H}
+          return Delegate{
+              arena_->New<StatementAction>(*cast<If>(stmt).else_block())};
+        } else {
+          return Done{};
+        }
       }
     case Statement::Kind::Return:
       if (act->pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        return Spawn{arena->New<ExpressionAction>(cast<Return>(*stmt).Exp())};
+        return Spawn{
+            arena_->New<ExpressionAction>(&cast<Return>(stmt).expression())};
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        Nonnull<const Value*> ret_val =
-            CopyVal(arena, act->results()[0], stmt->source_loc());
-        return UnwindFunctionCall{ret_val};
+        // TODO(geoffromer): convert the result to the function's return type,
+        // once #880 gives us a way to find that type.
+        const FunctionDeclaration& function = cast<Return>(stmt).function();
+        return UnwindPast{*function.body(), act->results()[0]};
       }
     case Statement::Kind::Sequence: {
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
-      const Sequence& seq = cast<Sequence>(*stmt);
+      const auto& seq = cast<Sequence>(stmt);
       if (act->pos() == 0) {
-        return Spawn{arena->New<StatementAction>(seq.Stmt())};
+        return Spawn{arena_->New<StatementAction>(&seq.statement())};
       } else {
-        if (seq.Next()) {
+        if (seq.next()) {
           return Delegate{
-              arena->New<StatementAction>(*cast<Sequence>(*stmt).Next())};
+              arena_->New<StatementAction>(*cast<Sequence>(stmt).next())};
         } else {
           return Done{};
         }
@@ -996,62 +981,51 @@ auto Interpreter::StepStmt() -> Transition {
       CHECK(act->pos() == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
-      auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(CurrentEnv()));
-      Stack<Nonnull<Action*>> todo;
-      todo.Push(arena->New<StatementAction>(
-          arena->New<Return>(arena, stmt->source_loc())));
-      todo.Push(arena->New<StatementAction>(cast<Continuation>(*stmt).Body()));
-      auto continuation_stack = arena->New<std::vector<Nonnull<Frame*>>>();
-      auto continuation_frame =
-          arena->New<Frame>("__continuation", scopes, todo);
-      continuation_stack->push_back(continuation_frame);
-      Address continuation_address =
-          heap.AllocateValue(arena->New<ContinuationValue>(continuation_stack));
-      // Store the continuation's address in the frame.
-      continuation_frame->continuation = continuation_address;
+      auto continuation_stack = arena_->New<std::vector<Nonnull<Action*>>>();
+      continuation_stack->push_back(
+          arena_->New<StatementAction>(&cast<Continuation>(stmt).body()));
+      continuation_stack->push_back(
+          arena_->New<ScopeAction>(Scope(CurrentEnv())));
+      AllocationId continuation_address = heap_.AllocateValue(
+          arena_->New<ContinuationValue>(continuation_stack));
       // Bind the continuation object to the continuation variable
-      frame->scopes.Top()->values.Set(
-          cast<Continuation>(*stmt).ContinuationVariable(),
+      CurrentScope().values.Set(
+          cast<Continuation>(stmt).continuation_variable(),
           continuation_address);
-      // Pop the continuation statement.
-      frame->todo.Pop();
-      return ManualTransition{};
+      return Done{};
     }
-    case Statement::Kind::Run:
+    case Statement::Kind::Run: {
+      auto& run = cast<Run>(stmt);
       if (act->pos() == 0) {
         // Evaluate the argument of the run statement.
-        return Spawn{arena->New<ExpressionAction>(cast<Run>(*stmt).Argument())};
-      } else {
-        frame->todo.Pop(1);
-        // Push an expression statement action to ignore the result
-        // value from the continuation.
-        auto ignore_result =
-            arena->New<StatementAction>(arena->New<ExpressionStatement>(
-                stmt->source_loc(),
-                arena->New<TupleLiteral>(stmt->source_loc())));
-        frame->todo.Push(ignore_result);
+        return Spawn{arena_->New<ExpressionAction>(&run.argument())};
+      } else if (act->pos() == 1) {
         // Push the continuation onto the current stack.
-        std::vector<Nonnull<Frame*>>& continuation_vector =
-            *cast<ContinuationValue>(*act->results()[0]).Stack();
+        std::vector<Nonnull<Action*>>& continuation_vector =
+            cast<const ContinuationValue>(*act->results()[0]).stack();
         while (!continuation_vector.empty()) {
-          stack.Push(continuation_vector.back());
+          todo_.Push(continuation_vector.back());
           continuation_vector.pop_back();
         }
+        act->set_pos(2);
         return ManualTransition{};
+      } else {
+        return Done{};
       }
+    }
     case Statement::Kind::Await:
       CHECK(act->pos() == 0);
       // Pause the current continuation
-      frame->todo.Pop();
-      std::vector<Nonnull<Frame*>> paused;
-      do {
-        paused.push_back(stack.Pop());
-      } while (paused.back()->continuation == std::nullopt);
+      todo_.Pop();
+      std::vector<Nonnull<Action*>> paused;
+      while (!IsRunAction(todo_.Top())) {
+        paused.push_back(todo_.Pop());
+      }
+      const auto& continuation =
+          cast<const ContinuationValue>(*todo_.Top()->results()[0]);
+      CHECK(continuation.stack().empty());
       // Update the continuation with the paused stack.
-      const auto& continuation = cast<ContinuationValue>(
-          *heap.Read(*paused.back()->continuation, stmt->source_loc()));
-      CHECK(continuation.Stack()->empty());
-      *continuation.Stack() = std::move(paused);
+      continuation.stack() = std::move(paused);
       return ManualTransition{};
   }
 }
@@ -1059,84 +1033,103 @@ auto Interpreter::StepStmt() -> Transition {
 class Interpreter::DoTransition {
  public:
   // Does not take ownership of interpreter.
-  DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
+  explicit DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
-    Nonnull<Frame*> frame = interpreter->stack.Top();
-    if (frame->todo.Top()->kind() != Action::Kind::StatementAction) {
-      CHECK(done.result);
-      frame->todo.Pop();
-      if (frame->todo.IsEmpty()) {
-        interpreter->program_value = *done.result;
-      } else {
-        frame->todo.Top()->AddResult(*done.result);
-      }
-    } else {
-      CHECK(!done.result);
-      frame->todo.Pop();
+    Nonnull<Action*> act = interpreter->todo_.Pop();
+    if (act->scope().has_value()) {
+      interpreter->DeallocateScope(*act->scope());
+    }
+    switch (act->kind()) {
+      case Action::Kind::ExpressionAction:
+      case Action::Kind::LValAction:
+      case Action::Kind::PatternAction:
+        CHECK(done.result.has_value());
+        interpreter->todo_.Top()->AddResult(*done.result);
+        break;
+      case Action::Kind::StatementAction:
+        CHECK(!done.result.has_value());
+        break;
+      case Action::Kind::ScopeAction:
+        if (done.result.has_value()) {
+          interpreter->todo_.Top()->AddResult(*done.result);
+        }
+        break;
     }
   }
 
   void operator()(const Spawn& spawn) {
-    Nonnull<Frame*> frame = interpreter->stack.Top();
-    Nonnull<Action*> action = frame->todo.Top();
+    Nonnull<Action*> action = interpreter->todo_.Top();
     action->set_pos(action->pos() + 1);
-    frame->todo.Push(spawn.child);
+    interpreter->todo_.Push(spawn.child);
   }
 
   void operator()(const Delegate& delegate) {
-    Nonnull<Frame*> frame = interpreter->stack.Top();
-    frame->todo.Pop();
-    frame->todo.Push(delegate.delegate);
+    Nonnull<Action*> act = interpreter->todo_.Pop();
+    if (act->scope().has_value()) {
+      delegate.delegate->StartScope(*act->scope());
+    }
+    interpreter->todo_.Push(delegate.delegate);
   }
 
   void operator()(const RunAgain&) {
-    Nonnull<Action*> action = interpreter->stack.Top()->todo.Top();
+    Nonnull<Action*> action = interpreter->todo_.Top();
     action->set_pos(action->pos() + 1);
   }
 
   void operator()(const UnwindTo& unwind_to) {
-    Nonnull<Frame*> frame = interpreter->stack.Top();
-    while (frame->todo.Top() != unwind_to.new_top) {
-      if (HasLocalScope(frame->todo.Top())) {
-        interpreter->DeallocateScope(frame->scopes.Top());
-        frame->scopes.Pop();
+    while (true) {
+      if (const auto* statement_action =
+              dyn_cast<StatementAction>(interpreter->todo_.Top());
+          statement_action != nullptr &&
+          &statement_action->statement() == unwind_to.ast_node) {
+        break;
       }
-      frame->todo.Pop();
+      Nonnull<Action*> action = interpreter->todo_.Pop();
+      if (action->scope().has_value()) {
+        interpreter->DeallocateScope(*action->scope());
+      }
     }
   }
 
-  void operator()(const UnwindFunctionCall& unwind) {
-    interpreter->DeallocateLocals(interpreter->stack.Top());
-    interpreter->stack.Pop();
-    if (interpreter->stack.Top()->todo.IsEmpty()) {
-      interpreter->program_value = unwind.return_val;
-    } else {
-      interpreter->stack.Top()->todo.Top()->AddResult(unwind.return_val);
+  void operator()(const UnwindPast& unwind_past) {
+    while (true) {
+      Nonnull<Action*> action = interpreter->todo_.Pop();
+      if (action->scope().has_value()) {
+        interpreter->DeallocateScope(*action->scope());
+      }
+      if (const auto* statement_action = dyn_cast<StatementAction>(action);
+          statement_action != nullptr &&
+          &statement_action->statement() == unwind_past.ast_node) {
+        break;
+      }
+    }
+    if (unwind_past.result.has_value()) {
+      interpreter->todo_.Top()->AddResult(*unwind_past.result);
     }
   }
 
   void operator()(const CallFunction& call) {
-    interpreter->stack.Top()->todo.Pop();
-    std::optional<Env> matches = interpreter->PatternMatch(
-        call.function->Param(), call.args, call.source_loc);
+    Nonnull<Action*> action = interpreter->todo_.Top();
+    action->set_pos(action->pos() + 1);
+    Nonnull<const Value*> converted_args = interpreter->Convert(
+        call.args, &call.function->param_pattern().static_type());
+    std::optional<Env> matches =
+        interpreter->PatternMatch(&call.function->param_pattern().value(),
+                                  converted_args, call.source_loc);
     CHECK(matches.has_value())
         << "internal error in call_function, pattern match failed";
     // Create the new frame and push it on the stack
-    Env values = interpreter->globals;
-    std::vector<std::string> params;
+    Scope new_scope(interpreter->globals_);
     for (const auto& [name, value] : *matches) {
-      values.Set(name, value);
-      params.push_back(name);
+      new_scope.values.Set(name, value);
+      new_scope.locals.push_back(name);
     }
-    auto scopes =
-        Stack<Nonnull<Scope*>>(interpreter->arena->New<Scope>(values, params));
-    CHECK(call.function->Body()) << "Calling a function that's missing a body";
-    auto todo = Stack<Nonnull<Action*>>(
-        interpreter->arena->New<StatementAction>(*call.function->Body()));
-    auto frame =
-        interpreter->arena->New<Frame>(call.function->Name(), scopes, todo);
-    interpreter->stack.Push(frame);
+    interpreter->todo_.Push(
+        interpreter->arena_->New<ScopeAction>(std::move(new_scope)));
+    CHECK(call.function->body()) << "Calling a function that's missing a body";
+    interpreter->todo_.Push(
+        interpreter->arena_->New<StatementAction>(*call.function->body()));
   }
 
   void operator()(const ManualTransition&) {}
@@ -1147,14 +1140,7 @@ class Interpreter::DoTransition {
 
 // State transition.
 void Interpreter::Step() {
-  Nonnull<Frame*> frame = stack.Top();
-  if (frame->todo.IsEmpty()) {
-    std::visit(DoTransition(this),
-               Transition{UnwindFunctionCall{TupleValue::Empty()}});
-    return;
-  }
-
-  Nonnull<Action*> act = frame->todo.Top();
+  Nonnull<Action*> act = todo_.Top();
   switch (act->kind()) {
     case Action::Kind::LValAction:
       std::visit(DoTransition(this), StepLvalue());
@@ -1168,70 +1154,63 @@ void Interpreter::Step() {
     case Action::Kind::StatementAction:
       std::visit(DoTransition(this), StepStmt());
       break;
+    case Action::Kind::ScopeAction:
+      if (act->results().empty()) {
+        std::visit(DoTransition(this), Transition{Done{}});
+      } else {
+        CHECK(act->results().size() == 1);
+        std::visit(DoTransition(this), Transition{Done{act->results()[0]}});
+      }
   }  // switch
+}
+
+auto Interpreter::ExecuteAction(Nonnull<Action*> action, Env values,
+                                bool trace_steps) -> Nonnull<const Value*> {
+  todo_ = {};
+  todo_.Push(arena_->New<ScopeAction>(Scope(values)));
+  todo_.Push(action);
+
+  while (todo_.Count() > 1) {
+    Step();
+    if (trace_steps) {
+      PrintState(llvm::outs());
+    }
+  }
+  CHECK(todo_.Top()->results().size() == 1);
+  return todo_.Top()->results()[0];
 }
 
 auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
                                 Nonnull<const Expression*> call_main) -> int {
   // Check that the interpreter is in a clean state.
-  CHECK(globals.IsEmpty());
-  CHECK(stack.IsEmpty());
-  CHECK(program_value == std::nullopt);
+  CHECK(globals_.IsEmpty());
+  CHECK(todo_.IsEmpty());
 
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "********** initializing globals **********\n";
   }
   InitGlobals(fs);
 
-  auto todo = Stack<Nonnull<Action*>>(arena->New<ExpressionAction>(call_main));
-  auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(globals));
-  stack = Stack<Nonnull<Frame*>>(arena->New<Frame>("top", scopes, todo));
-
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "********** calling main function **********\n";
     PrintState(llvm::outs());
   }
 
-  while (stack.Count() > 1 || !stack.Top()->todo.IsEmpty()) {
-    Step();
-    if (tracing_output) {
-      PrintState(llvm::outs());
-    }
-  }
-  return cast<IntValue>(**program_value).Val();
+  return cast<IntValue>(*ExecuteAction(arena_->New<ExpressionAction>(call_main),
+                                       globals_, trace_))
+      .value();
 }
 
 auto Interpreter::InterpExp(Env values, Nonnull<const Expression*> e)
     -> Nonnull<const Value*> {
-  CHECK(program_value == std::nullopt);
-  auto program_value_guard =
-      llvm::make_scope_exit([&] { program_value = std::nullopt; });
-  auto todo = Stack<Nonnull<Action*>>(arena->New<ExpressionAction>(e));
-  auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(values));
-  stack = Stack<Nonnull<Frame*>>(arena->New<Frame>("InterpExp", scopes, todo));
-
-  while (stack.Count() > 1 || !stack.Top()->todo.IsEmpty()) {
-    Step();
-  }
-  CHECK(program_value != std::nullopt);
-  return *program_value;
+  return ExecuteAction(arena_->New<ExpressionAction>(e), values,
+                       /*trace_steps=*/false);
 }
 
 auto Interpreter::InterpPattern(Env values, Nonnull<const Pattern*> p)
     -> Nonnull<const Value*> {
-  CHECK(program_value == std::nullopt);
-  auto program_value_guard =
-      llvm::make_scope_exit([&] { program_value = std::nullopt; });
-  auto todo = Stack<Nonnull<Action*>>(arena->New<PatternAction>(p));
-  auto scopes = Stack<Nonnull<Scope*>>(arena->New<Scope>(values));
-  stack =
-      Stack<Nonnull<Frame*>>(arena->New<Frame>("InterpPattern", scopes, todo));
-
-  while (stack.Count() > 1 || !stack.Top()->todo.IsEmpty()) {
-    Step();
-  }
-  CHECK(program_value != std::nullopt);
-  return *program_value;
+  return ExecuteAction(arena_->New<PatternAction>(p), values,
+                       /*trace_steps=*/false);
 }
 
 }  // namespace Carbon

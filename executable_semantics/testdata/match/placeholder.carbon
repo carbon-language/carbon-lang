@@ -17,4 +17,5 @@ fn main() -> i32 {
     case (_: i32, _: auto, x: i32, y: auto) =>
       return y - x - 1;
   }
+  return 1;
 }

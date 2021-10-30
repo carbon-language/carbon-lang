@@ -16,6 +16,10 @@ class Point {
   var y: i32;
 }
 
+fn MakePoint() -> Point {
+  return {.x = 1, .y = 2};
+}
+
 fn main() -> i32 {
-  return Point(.x = 1, .y = 2).x - 1;
+  return MakePoint().x - 1;
 }

@@ -1,4 +1,4 @@
-# Carbon: Generics - Terminology
+# Generics: Terminology
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
     -   [Nominal interfaces](#nominal-interfaces)
+    -   [Named constraints](#named-constraints)
 -   [Associated entity](#associated-entity)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
@@ -43,6 +44,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
 -   [Type-of-type](#type-of-type)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -297,6 +299,14 @@ We use the "structural" versus "nominal" terminology as a generalization of the
 same terms being used in a
 [subtyping context](https://en.wikipedia.org/wiki/Subtyping#Subtyping_schemes).
 
+### Named constraints
+
+Named constraints are "structural" in the sense that they match a type based on
+meeting some criteria rather than an explicit statement in the type's
+definition. The criteria for a named constraint, however, are less focused on
+the type's API and instead might include a set of nominal interfaces that the
+type must implement.
+
 ## Associated entity
 
 An _associated entity_ is a requirement in an interface that a type's
@@ -319,8 +329,10 @@ instead of associated entity.
 An _impl_ is an implementation of an interface for a specific type. It is the
 place where the function bodies are defined, values for associated types, etc.
 are given. Impls are needed for [nominal interfaces](#nominal-interfaces);
-[structural interfaces](#structural-interfaces) define conformance implicitly
-instead of by requiring an impl to be defined.
+[structural interfaces](#structural-interfaces) and
+[named constraints](#named-constraints) define conformance implicitly instead of
+by requiring an impl to be defined. In can still make sense to implement a named
+constraint as a way to implement all of the interfaces it requires.
 
 ## Compatible types
 
@@ -682,3 +694,8 @@ available in the body of the function. Calling a function with a type `T` passed
 to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
 the facet type `T as I`. This has the API determined by `I`, with the
 implementation of that API coming from `T`.
+
+## References
+
+-   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)

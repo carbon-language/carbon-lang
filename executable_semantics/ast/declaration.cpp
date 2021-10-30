@@ -13,7 +13,7 @@ using llvm::cast;
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Kind::FunctionDeclaration:
-      out << cast<FunctionDeclaration>(*this).definition();
+      cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
 
     case Kind::ClassDeclaration: {
@@ -42,6 +42,34 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "var " << var.binding() << " = " << var.initializer() << "\n";
       break;
     }
+  }
+}
+
+void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
+  out << "fn " << name_ << " ";
+  if (!deduced_parameters_.empty()) {
+    out << "[";
+    unsigned int i = 0;
+    for (const auto& deduced : deduced_parameters_) {
+      if (i != 0) {
+        out << ", ";
+      }
+      out << deduced.name << ":! ";
+      deduced.type->Print(out);
+      ++i;
+    }
+    out << "]";
+  }
+  out << *param_pattern_;
+  if (!is_omitted_return_type_) {
+    out << " -> " << *return_type_;
+  }
+  if (body_) {
+    out << " {\n";
+    (*body_)->PrintDepth(depth, out);
+    out << "\n}\n";
+  } else {
+    out << ";\n";
   }
 }
 

@@ -68,7 +68,6 @@
   #include "executable_semantics/ast/ast.h"
   #include "executable_semantics/ast/declaration.h"
   #include "executable_semantics/ast/expression.h"
-  #include "executable_semantics/ast/function_definition.h"
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
   #include "executable_semantics/common/arena.h"
@@ -99,17 +98,16 @@
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
 %type <Nonnull<Declaration*>> declaration
-%type <Nonnull<FunctionDefinition*>> function_declaration
-%type <Nonnull<FunctionDefinition*>> function_definition
+%type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <Nonnull<Statement*>> statement
-%type <Nonnull<Statement*>> if_statement
-%type <std::optional<Nonnull<Statement*>>> optional_else
+%type <Nonnull<If*>> if_statement
+%type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
-%type <Nonnull<Statement*>> nonempty_block
-%type <Nonnull<Statement*>> block
-%type <Nonnull<Statement*>> nonempty_statement_list
-%type <std::optional<Nonnull<Statement*>>> statement_list
+%type <Nonnull<Block*>> nonempty_block
+%type <Nonnull<Block*>> block
+%type <Nonnull<Sequence*>> nonempty_statement_list
+%type <std::optional<Nonnull<Sequence*>>> statement_list
 %type <Nonnull<Expression*>> expression
 %type <GenericBinding> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
@@ -118,23 +116,21 @@
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <std::pair<Nonnull<Expression*>, bool>> return_type
 %type <Nonnull<Expression*>> paren_expression
-%type <Nonnull<Expression*>> struct_literal
+%type <Nonnull<StructLiteral*>> struct_literal
 %type <std::vector<FieldInitializer>> struct_literal_contents
-%type <Nonnull<Expression*>> struct_type_literal
+%type <Nonnull<StructTypeLiteral*>> struct_type_literal
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
-%type <Nonnull<Expression*>> tuple
+%type <Nonnull<TupleLiteral*>> tuple
 %type <std::optional<std::string>> binding_lhs
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <Nonnull<Member*>> member
 %type <std::vector<Nonnull<Member*>>> member_list
-%type <ParenContents<Expression>::Element> paren_expression_element
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
 %type <Nonnull<Pattern*>> paren_pattern
 %type <Nonnull<TuplePattern*>> tuple_pattern
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
-%type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
 %type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
@@ -396,12 +392,6 @@ paren_expression: paren_expression_base
 tuple: paren_expression_base
     { $$ = TupleExpressionFromParenContents(arena, context.source_loc(), $1); }
 ;
-paren_expression_element:
-  expression
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL expression
-    { $$ = {.name = $1, .term = $3}; }
-;
 paren_expression_base:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
     { $$ = {.elements = {}, .has_trailing_comma = false}; }
@@ -414,9 +404,9 @@ paren_expression_base:
     }
 ;
 paren_expression_contents:
-  paren_expression_element
+  expression
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA paren_expression_element
+| paren_expression_contents COMMA expression
     {
       $$ = $1;
       $$.elements.push_back($3);
@@ -501,30 +491,23 @@ paren_pattern_base:
 // is very different from the corresponding expression rule because is has to
 // enforce that requirement.
 paren_pattern_contents:
-  paren_pattern_element
+  non_expression_pattern
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA paren_pattern_element
+| paren_expression_contents COMMA non_expression_pattern
     {
       $$ = ParenExpressionToParenPattern(arena, $1);
       $$.elements.push_back($3);
     }
-| paren_pattern_contents COMMA paren_expression_element
+| paren_pattern_contents COMMA expression
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name,
-                             .term = arena->New<ExpressionPattern>($3.term)});
+      $$.elements.push_back(arena->New<ExpressionPattern>($3));
     }
-| paren_pattern_contents COMMA paren_pattern_element
+| paren_pattern_contents COMMA non_expression_pattern
     {
       $$ = $1;
       $$.elements.push_back($3);
     }
-;
-paren_pattern_element:
-  non_expression_pattern
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL non_expression_pattern
-    { $$ = {.name = $1, .term = $3}; }
 ;
 tuple_pattern: paren_pattern_base
     { $$ = TuplePatternFromParenContents(arena, context.source_loc(), $1); }
@@ -536,7 +519,7 @@ maybe_empty_tuple_pattern:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
     {
       $$ = arena->New<TuplePattern>(context.source_loc(),
-                                    std::vector<TuplePattern::Field>());
+                                    std::vector<Nonnull<Pattern*>>());
     }
 | tuple_pattern
     { $$ = $1; }
@@ -594,7 +577,7 @@ statement:
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
-| CONTINUATION identifier statement
+| CONTINUATION identifier block
     { $$ = arena->New<Continuation>(context.source_loc(), $2, $3); }
 | RUN expression SEMICOLON
     { $$ = arena->New<Run>(context.source_loc(), $2); }
@@ -609,7 +592,11 @@ optional_else:
   // Empty
     { $$ = std::nullopt; }
 | ELSE if_statement
-    { $$ = $2; }
+    {
+      $$ = arena->New<Block>(
+          context.source_loc(),
+          arena->New<Sequence>(context.source_loc(), $2, std::nullopt));
+    }
 | ELSE block
     { $$ = $2; }
 ;
@@ -666,28 +653,26 @@ deduced_params:
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
-function_definition:
+function_declaration:
   FN identifier deduced_params maybe_empty_tuple_pattern return_type block
     {
       auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDefinition>(
+      $$ = arena->New<FunctionDeclaration>(
           context.source_loc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
     }
 | FN identifier deduced_params maybe_empty_tuple_pattern ARROW AUTO block
     {
       // The return type is not considered "omitted" because it's `auto`.
-      $$ = arena->New<FunctionDefinition>(
+      $$ = arena->New<FunctionDeclaration>(
           context.source_loc(), $2, $3, $4,
           arena->New<AutoPattern>(context.source_loc()),
           /*is_omitted_exp=*/false, $7);
     }
-;
-function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
+| FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
     {
       auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDefinition>(
+      $$ = arena->New<FunctionDeclaration>(
           context.source_loc(), $2, $3, $4,
           arena->New<ExpressionPattern>(return_exp), is_omitted_exp,
           std::nullopt);
@@ -735,10 +720,8 @@ alternative_list_contents:
     }
 ;
 declaration:
-  function_definition
-    { $$ = arena->New<FunctionDeclaration>($1); }
-| function_declaration
-    { $$ = arena->New<FunctionDeclaration>($1); }
+  function_declaration
+    { $$ = $1; }
 | CLASS identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $4); }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE

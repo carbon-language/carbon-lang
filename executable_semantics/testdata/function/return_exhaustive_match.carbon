@@ -7,11 +7,13 @@
 // RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0
+// CHECK: result: 1
 
 package ExecutableSemanticsTest api;
 
 fn main() -> i32 {
-  var t: (i32, .x = i32) = (3, .x = 2);
-  return t.x + 1 - t[0];
+  match (0) {
+    case _: auto => return 1;
+  }
+  // We don't need a `return` here because the match is exhaustive.
 }

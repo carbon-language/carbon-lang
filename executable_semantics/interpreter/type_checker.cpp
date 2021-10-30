@@ -11,10 +11,9 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
@@ -25,6 +24,49 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
+
+// Sets the static type of `expression`. Can be called multiple times on
+// the same node, so long as the types are the same on each call.
+static void SetStaticType(Nonnull<Expression*> expression,
+                          Nonnull<const Value*> type) {
+  if (expression->has_static_type()) {
+    CHECK(TypeEqual(&expression->static_type(), type));
+  } else {
+    expression->set_static_type(type);
+  }
+}
+
+// Sets the static type of `pattern`. Can be called multiple times on
+// the same node, so long as the types are the same on each call.
+static void SetStaticType(Nonnull<Pattern*> pattern,
+                          Nonnull<const Value*> type) {
+  if (pattern->has_static_type()) {
+    CHECK(TypeEqual(&pattern->static_type(), type));
+  } else {
+    pattern->set_static_type(type);
+  }
+}
+
+// Sets the static type of `definition`. Can be called multiple times on
+// the same node, so long as the types are the same on each call.
+static void SetStaticType(Nonnull<Declaration*> definition,
+                          Nonnull<const Value*> type) {
+  if (definition->has_static_type()) {
+    CHECK(TypeEqual(&definition->static_type(), type));
+  } else {
+    definition->set_static_type(type);
+  }
+}
+
+static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
+  // TODO: find some way to CHECK that `value` is identical to pattern->value(),
+  // if it's already set. Unclear if `ValueEqual` is suitable, because it
+  // currently focuses more on "real" values, and disallows the pseudo-values
+  // like `BindingPlaceholderValue` that we get in pattern evaluation.
+  if (!pattern->has_value()) {
+    pattern->set_value(value);
+  }
+}
 
 TypeChecker::ReturnTypeContext::ReturnTypeContext(
     Nonnull<const Value*> orig_return_type, bool is_omitted)
@@ -40,9 +82,10 @@ void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
   }
 }
 
-static void ExpectType(SourceLocation source_loc, const std::string& context,
-                       Nonnull<const Value*> expected,
-                       Nonnull<const Value*> actual) {
+static void ExpectExactType(SourceLocation source_loc,
+                            const std::string& context,
+                            Nonnull<const Value*> expected,
+                            Nonnull<const Value*> actual) {
   if (!TypeEqual(expected, actual)) {
     FATAL_COMPILATION_ERROR(source_loc) << "type error in " << context << "\n"
                                         << "expected: " << *expected << "\n"
@@ -92,8 +135,8 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
       // `auto` isn't a concrete type, it's a pattern that matches types.
       return false;
     case Value::Kind::TupleValue:
-      for (const TupleElement& field : cast<TupleValue>(*value).Elements()) {
-        if (!IsConcreteType(field.value)) {
+      for (Nonnull<const Value*> field : cast<TupleValue>(*value).elements()) {
+        if (!IsConcreteType(field)) {
           return false;
         }
       }
@@ -109,6 +152,92 @@ void TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
   }
 }
 
+// Returns true if *source is implicitly convertible to *destination. *source
+// and *destination must be concrete types.
+static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                                    Nonnull<const Value*> destination) -> bool;
+
+// Returns true if source_fields and destination_fields contain the same set
+// of names, and each value in source_fields is implicitly convertible to
+// the corresponding value in destination_fields. All values in both arguments
+// must be types.
+static auto FieldTypesImplicitlyConvertible(
+    llvm::ArrayRef<NamedValue> source_fields,
+    llvm::ArrayRef<NamedValue> destination_fields) {
+  if (source_fields.size() != destination_fields.size()) {
+    return false;
+  }
+  for (const auto& source_field : source_fields) {
+    auto it = std::find_if(destination_fields.begin(), destination_fields.end(),
+                           [&](const NamedValue& field) {
+                             return field.name == source_field.name;
+                           });
+    if (it == destination_fields.end() ||
+        !IsImplicitlyConvertible(source_field.value, it->value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                                    Nonnull<const Value*> destination) -> bool {
+  CHECK(IsConcreteType(source));
+  CHECK(IsConcreteType(destination));
+  if (TypeEqual(source, destination)) {
+    return true;
+  }
+  switch (source->kind()) {
+    case Value::Kind::StructType:
+      switch (destination->kind()) {
+        case Value::Kind::StructType:
+          return FieldTypesImplicitlyConvertible(
+              cast<StructType>(*source).fields(),
+              cast<StructType>(*destination).fields());
+        case Value::Kind::NominalClassType:
+          return FieldTypesImplicitlyConvertible(
+              cast<StructType>(*source).fields(),
+              cast<NominalClassType>(*destination).fields());
+        default:
+          return false;
+      }
+    case Value::Kind::TupleValue:
+      switch (destination->kind()) {
+        case Value::Kind::TupleValue: {
+          const std::vector<Nonnull<const Value*>>& source_elements =
+              cast<TupleValue>(*source).elements();
+          const std::vector<Nonnull<const Value*>>& destination_elements =
+              cast<TupleValue>(*destination).elements();
+          if (source_elements.size() != destination_elements.size()) {
+            return false;
+          }
+          for (size_t i = 0; i < source_elements.size(); ++i) {
+            if (!IsImplicitlyConvertible(source_elements[i],
+                                         destination_elements[i])) {
+              return false;
+            }
+          }
+          return true;
+        }
+        default:
+          return false;
+      }
+    default:
+      return false;
+  }
+}
+
+static void ExpectType(SourceLocation source_loc, const std::string& context,
+                       Nonnull<const Value*> expected,
+                       Nonnull<const Value*> actual) {
+  if (!IsImplicitlyConvertible(actual, expected)) {
+    FATAL_COMPILATION_ERROR(source_loc)
+        << "type error in " << context << ": "
+        << "'" << *actual << "' is not implicitly convertible to '" << *expected
+        << "'";
+  }
+}
+
 // Perform type argument deduction, matching the parameter type `param`
 // against the argument type `arg`. Whenever there is an VariableType
 // in the parameter type, it is deduced to be the corresponding type
@@ -121,11 +250,12 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
-      std::optional<Nonnull<const Value*>> d = deduced.Get(var_type.Name());
+      std::optional<Nonnull<const Value*>> d = deduced.Get(var_type.name());
       if (!d) {
-        deduced.Set(var_type.Name(), arg);
+        deduced.Set(var_type.name(), arg);
       } else {
-        ExpectType(source_loc, "argument deduction", *d, arg);
+        // TODO: can we allow implicit conversions here?
+        ExpectExactType(source_loc, "argument deduction", *d, arg);
       }
       return deduced;
     }
@@ -138,21 +268,16 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       }
       const auto& param_tup = cast<TupleValue>(*param);
       const auto& arg_tup = cast<TupleValue>(*arg);
-      if (param_tup.Elements().size() != arg_tup.Elements().size()) {
+      if (param_tup.elements().size() != arg_tup.elements().size()) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "mismatch in tuple sizes, expected "
-            << param_tup.Elements().size() << " but got "
-            << arg_tup.Elements().size();
+            << param_tup.elements().size() << " but got "
+            << arg_tup.elements().size();
       }
-      for (size_t i = 0; i < param_tup.Elements().size(); ++i) {
-        if (param_tup.Elements()[i].name != arg_tup.Elements()[i].name) {
-          FATAL_COMPILATION_ERROR(source_loc)
-              << "mismatch in tuple names, " << param_tup.Elements()[i].name
-              << " != " << arg_tup.Elements()[i].name;
-        }
-        deduced = ArgumentDeduction(source_loc, deduced,
-                                    param_tup.Elements()[i].value,
-                                    arg_tup.Elements()[i].value);
+      for (size_t i = 0; i < param_tup.elements().size(); ++i) {
+        deduced =
+            ArgumentDeduction(source_loc, deduced, param_tup.elements()[i],
+                              arg_tup.elements()[i]);
       }
       return deduced;
     }
@@ -172,14 +297,14 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
             << arg_struct.fields().size();
       }
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
-        if (param_struct.fields()[i].first != arg_struct.fields()[i].first) {
+        if (param_struct.fields()[i].name != arg_struct.fields()[i].name) {
           FATAL_COMPILATION_ERROR(source_loc)
-              << "mismatch in field names, " << param_struct.fields()[i].first
-              << " != " << arg_struct.fields()[i].first;
+              << "mismatch in field names, " << param_struct.fields()[i].name
+              << " != " << arg_struct.fields()[i].name;
         }
         deduced = ArgumentDeduction(source_loc, deduced,
-                                    param_struct.fields()[i].second,
-                                    arg_struct.fields()[i].second);
+                                    param_struct.fields()[i].value,
+                                    arg_struct.fields()[i].value);
       }
       return deduced;
     }
@@ -193,10 +318,10 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
       const auto& param_fn = cast<FunctionType>(*param);
       const auto& arg_fn = cast<FunctionType>(*arg);
       // TODO: handle situation when arg has deduced parameters.
-      deduced = ArgumentDeduction(source_loc, deduced, param_fn.Param(),
-                                  arg_fn.Param());
-      deduced =
-          ArgumentDeduction(source_loc, deduced, param_fn.Ret(), arg_fn.Ret());
+      deduced = ArgumentDeduction(source_loc, deduced, &param_fn.parameters(),
+                                  &arg_fn.parameters());
+      deduced = ArgumentDeduction(source_loc, deduced, &param_fn.return_type(),
+                                  &arg_fn.return_type());
       return deduced;
     }
     case Value::Kind::PointerType: {
@@ -207,14 +332,14 @@ static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
             << "actual: " << *arg;
       }
       return ArgumentDeduction(source_loc, deduced,
-                               cast<PointerType>(*param).Type(),
-                               cast<PointerType>(*arg).Type());
+                               &cast<PointerType>(*param).type(),
+                               &cast<PointerType>(*arg).type());
     }
     // Nothing to do in the case for `auto`.
     case Value::Kind::AutoType: {
       return deduced;
     }
-    // For the following cases, we check for type equality.
+    // For the following cases, we check for type convertability.
     case Value::Kind::ContinuationType:
     case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
@@ -245,7 +370,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       std::optional<Nonnull<const Value*>> t =
-          dict.Get(cast<VariableType>(*type).Name());
+          dict.Get(cast<VariableType>(*type).name());
       if (!t) {
         return type;
       } else {
@@ -253,31 +378,30 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
       }
     }
     case Value::Kind::TupleValue: {
-      std::vector<TupleElement> elts;
-      for (const auto& elt : cast<TupleValue>(*type).Elements()) {
-        auto t = Substitute(dict, elt.value);
-        elts.push_back({.name = elt.name, .value = t});
+      std::vector<Nonnull<const Value*>> elts;
+      for (const auto& elt : cast<TupleValue>(*type).elements()) {
+        elts.push_back(Substitute(dict, elt));
       }
-      return arena->New<TupleValue>(elts);
+      return arena_->New<TupleValue>(elts);
     }
     case Value::Kind::StructType: {
-      VarValues fields;
+      std::vector<NamedValue> fields;
       for (const auto& [name, value] : cast<StructType>(*type).fields()) {
         auto new_type = Substitute(dict, value);
         fields.push_back({name, new_type});
       }
-      return arena->New<StructType>(std::move(fields));
+      return arena_->New<StructType>(std::move(fields));
     }
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*type);
-      auto param = Substitute(dict, fn_type.Param());
-      auto ret = Substitute(dict, fn_type.Ret());
-      return arena->New<FunctionType>(std::vector<GenericBinding>(), param,
-                                      ret);
+      auto param = Substitute(dict, &fn_type.parameters());
+      auto ret = Substitute(dict, &fn_type.return_type());
+      return arena_->New<FunctionType>(std::vector<GenericBinding>(), param,
+                                       ret);
     }
     case Value::Kind::PointerType: {
-      return arena->New<PointerType>(
-          Substitute(dict, cast<PointerType>(*type).Type()));
+      return arena_->New<PointerType>(
+          Substitute(dict, &cast<PointerType>(*type).type()));
     }
     case Value::Kind::AutoType:
     case Value::Kind::IntType:
@@ -306,142 +430,131 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
 
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                                Env values) -> TCResult {
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "checking expression " << *e << "\ntypes: ";
     PrintTypeEnv(types, llvm::outs());
     llvm::outs() << "\nvalues: ";
-    interpreter.PrintEnv(values, llvm::outs());
+    interpreter_.PrintEnv(values, llvm::outs());
     llvm::outs() << "\n";
   }
   switch (e->kind()) {
     case Expression::Kind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
-      auto res = TypeCheckExp(index.Aggregate(), types, values);
-      auto t = res.type;
-      switch (t->kind()) {
+      auto res = TypeCheckExp(&index.aggregate(), types, values);
+      const Value& aggregate_type = index.aggregate().static_type();
+      switch (aggregate_type.kind()) {
         case Value::Kind::TupleValue: {
-          auto i =
-              cast<IntValue>(*interpreter.InterpExp(values, index.Offset()))
-                  .Val();
-          std::string f = std::to_string(i);
-          std::optional<Nonnull<const Value*>> field_t =
-              cast<TupleValue>(*t).FindField(f);
-          if (!field_t) {
+          const auto& tuple_type = cast<TupleValue>(aggregate_type);
+          int i =
+              cast<IntValue>(*interpreter_.InterpExp(values, &index.offset()))
+                  .value();
+          if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
             FATAL_COMPILATION_ERROR(e->source_loc())
-                << "field " << f << " is not in the tuple " << *t;
+                << "index " << i << " is out of range for type " << tuple_type;
           }
-          return TCResult(*field_t, res.types);
+          SetStaticType(&index, tuple_type.elements()[i]);
+          return TCResult(res.types);
         }
         default:
           FATAL_COMPILATION_ERROR(e->source_loc()) << "expected a tuple";
       }
     }
     case Expression::Kind::TupleLiteral: {
-      std::vector<FieldInitializer> new_args;
-      std::vector<TupleElement> arg_types;
+      std::vector<Nonnull<const Value*>> arg_types;
       auto new_types = types;
       for (auto& arg : cast<TupleLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(arg, new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
-        arg_types.push_back({.name = arg.name(), .value = arg_res.type});
+        arg_types.push_back(&arg->static_type());
       }
-      auto tuple_t = arena->New<TupleValue>(std::move(arg_types));
-      return TCResult(tuple_t, new_types);
+      SetStaticType(e, arena_->New<TupleValue>(std::move(arg_types)));
+      return TCResult(new_types);
     }
     case Expression::Kind::StructLiteral: {
       std::vector<FieldInitializer> new_args;
-      VarValues arg_types;
+      std::vector<NamedValue> arg_types;
       auto new_types = types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(&arg.expression(), new_types, values);
         new_types = arg_res.types;
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
-        arg_types.push_back({arg.name(), arg_res.type});
+        new_args.push_back(FieldInitializer(arg.name(), &arg.expression()));
+        arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
-      auto type = arena->New<StructType>(std::move(arg_types));
-      return TCResult(type, new_types);
+      SetStaticType(e, arena_->New<StructType>(std::move(arg_types)));
+      return TCResult(new_types);
     }
     case Expression::Kind::StructTypeLiteral: {
       auto& struct_type = cast<StructTypeLiteral>(*e);
       std::vector<FieldInitializer> new_args;
       auto new_types = types;
       for (auto& arg : struct_type.fields()) {
-        auto arg_res = TypeCheckExp(arg.expression(), new_types, values);
+        auto arg_res = TypeCheckExp(&arg.expression(), new_types, values);
         new_types = arg_res.types;
-        ExpectIsConcreteType(arg.expression()->source_loc(),
-                             interpreter.InterpExp(values, arg.expression()));
-        new_args.push_back(FieldInitializer(arg.name(), arg.expression()));
+        ExpectIsConcreteType(arg.expression().source_loc(),
+                             interpreter_.InterpExp(values, &arg.expression()));
+        new_args.push_back(FieldInitializer(arg.name(), &arg.expression()));
       }
-      Nonnull<const Value*> type;
       if (struct_type.fields().empty()) {
         // `{}` is the type of `{}`, just as `()` is the type of `()`.
         // This applies only if there are no fields, because (unlike with
         // tuples) non-empty struct types are syntactically disjoint
         // from non-empty struct values.
-        type = arena->New<StructType>();
+        SetStaticType(&struct_type, arena_->New<StructType>());
       } else {
-        type = arena->New<TypeType>();
+        SetStaticType(&struct_type, arena_->New<TypeType>());
       }
-      return TCResult(type, new_types);
+      return TCResult(new_types);
     }
     case Expression::Kind::FieldAccessExpression: {
       auto& access = cast<FieldAccessExpression>(*e);
-      auto res = TypeCheckExp(access.Aggregate(), types, values);
-      auto t = res.type;
-      switch (t->kind()) {
+      auto res = TypeCheckExp(&access.aggregate(), types, values);
+      const Value& aggregate_type = access.aggregate().static_type();
+      switch (aggregate_type.kind()) {
         case Value::Kind::StructType: {
-          const auto& struct_type = cast<StructType>(*t);
+          const auto& struct_type = cast<StructType>(aggregate_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
-            if (access.Field() == field_name) {
-              return TCResult(field_type, res.types);
+            if (access.field() == field_name) {
+              SetStaticType(&access, field_type);
+              return TCResult(res.types);
             }
           }
           FATAL_COMPILATION_ERROR(access.source_loc())
               << "struct " << struct_type << " does not have a field named "
-              << access.Field();
+              << access.field();
         }
         case Value::Kind::NominalClassType: {
-          const auto& t_class = cast<NominalClassType>(*t);
+          const auto& t_class = cast<NominalClassType>(aggregate_type);
           // Search for a field
-          for (auto& field : t_class.Fields()) {
-            if (access.Field() == field.first) {
-              return TCResult(field.second, res.types);
+          for (auto& field : t_class.fields()) {
+            if (access.field() == field.name) {
+              SetStaticType(&access, field.value);
+              return TCResult(res.types);
             }
           }
           // Search for a method
-          for (auto& method : t_class.Methods()) {
-            if (access.Field() == method.first) {
-              return TCResult(method.second, res.types);
+          for (auto& method : t_class.methods()) {
+            if (access.field() == method.name) {
+              SetStaticType(&access, method.value);
+              return TCResult(res.types);
             }
           }
           FATAL_COMPILATION_ERROR(e->source_loc())
-              << "class " << t_class.Name() << " does not have a field named "
-              << access.Field();
-        }
-        case Value::Kind::TupleValue: {
-          const auto& tup = cast<TupleValue>(*t);
-          for (const TupleElement& field : tup.Elements()) {
-            if (access.Field() == field.name) {
-              return TCResult(field.value, res.types);
-            }
-          }
-          FATAL_COMPILATION_ERROR(e->source_loc())
-              << "tuple " << tup << " does not have a field named "
-              << access.Field();
+              << "class " << t_class.name() << " does not have a field named "
+              << access.field();
         }
         case Value::Kind::ChoiceType: {
-          const auto& choice = cast<ChoiceType>(*t);
-          for (const auto& vt : choice.Alternatives()) {
-            if (access.Field() == vt.first) {
-              auto fun_ty = arena->New<FunctionType>(
-                  std::vector<GenericBinding>(), vt.second, t);
-              return TCResult(fun_ty, res.types);
-            }
+          const auto& choice = cast<ChoiceType>(aggregate_type);
+          std::optional<Nonnull<const Value*>> parameter_types =
+              choice.FindAlternative(access.field());
+          if (!parameter_types.has_value()) {
+            FATAL_COMPILATION_ERROR(e->source_loc())
+                << "choice " << choice.name() << " does not have a field named "
+                << access.field();
           }
-          FATAL_COMPILATION_ERROR(e->source_loc())
-              << "choice " << choice.Name() << " does not have a field named "
-              << access.Field();
+          SetStaticType(&access, arena_->New<FunctionType>(
+                                     std::vector<GenericBinding>(),
+                                     *parameter_types, &aggregate_type));
+          return TCResult(res.types);
         }
         default:
           FATAL_COMPILATION_ERROR(e->source_loc())
@@ -450,88 +563,107 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       }
     }
     case Expression::Kind::IdentifierExpression: {
-      const auto& ident = cast<IdentifierExpression>(*e);
-      std::optional<Nonnull<const Value*>> type = types.Get(ident.Name());
+      auto& ident = cast<IdentifierExpression>(*e);
+      std::optional<Nonnull<const Value*>> type = types.Get(ident.name());
       if (type) {
-        return TCResult(*type, types);
+        SetStaticType(&ident, *type);
+        return TCResult(types);
       } else {
         FATAL_COMPILATION_ERROR(e->source_loc())
-            << "could not find `" << ident.Name() << "`";
+            << "could not find `" << ident.name() << "`";
       }
     }
     case Expression::Kind::IntLiteral:
-      return TCResult(arena->New<IntType>(), types);
+      SetStaticType(e, arena_->New<IntType>());
+      return TCResult(types);
     case Expression::Kind::BoolLiteral:
-      return TCResult(arena->New<BoolType>(), types);
+      SetStaticType(e, arena_->New<BoolType>());
+      return TCResult(types);
     case Expression::Kind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(*e);
+      auto& op = cast<PrimitiveOperatorExpression>(*e);
       std::vector<Nonnull<Expression*>> es;
       std::vector<Nonnull<const Value*>> ts;
       auto new_types = types;
-      for (Nonnull<Expression*> argument : op.Arguments()) {
+      for (Nonnull<Expression*> argument : op.arguments()) {
         auto res = TypeCheckExp(argument, types, values);
         new_types = res.types;
         es.push_back(argument);
-        ts.push_back(res.type);
+        ts.push_back(&argument->static_type());
       }
-      switch (op.Op()) {
+      switch (op.op()) {
         case Operator::Neg:
-          ExpectType(e->source_loc(), "negation", arena->New<IntType>(), ts[0]);
-          return TCResult(arena->New<IntType>(), new_types);
+          ExpectExactType(e->source_loc(), "negation", arena_->New<IntType>(),
+                          ts[0]);
+          SetStaticType(&op, arena_->New<IntType>());
+          return TCResult(new_types);
         case Operator::Add:
-          ExpectType(e->source_loc(), "addition(1)", arena->New<IntType>(),
-                     ts[0]);
-          ExpectType(e->source_loc(), "addition(2)", arena->New<IntType>(),
-                     ts[1]);
-          return TCResult(arena->New<IntType>(), new_types);
+          ExpectExactType(e->source_loc(), "addition(1)",
+                          arena_->New<IntType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "addition(2)",
+                          arena_->New<IntType>(), ts[1]);
+          SetStaticType(&op, arena_->New<IntType>());
+          return TCResult(new_types);
         case Operator::Sub:
-          ExpectType(e->source_loc(), "subtraction(1)", arena->New<IntType>(),
-                     ts[0]);
-          ExpectType(e->source_loc(), "subtraction(2)", arena->New<IntType>(),
-                     ts[1]);
-          return TCResult(arena->New<IntType>(), new_types);
+          ExpectExactType(e->source_loc(), "subtraction(1)",
+                          arena_->New<IntType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "subtraction(2)",
+                          arena_->New<IntType>(), ts[1]);
+          SetStaticType(&op, arena_->New<IntType>());
+          return TCResult(new_types);
         case Operator::Mul:
-          ExpectType(e->source_loc(), "multiplication(1)",
-                     arena->New<IntType>(), ts[0]);
-          ExpectType(e->source_loc(), "multiplication(2)",
-                     arena->New<IntType>(), ts[1]);
-          return TCResult(arena->New<IntType>(), new_types);
+          ExpectExactType(e->source_loc(), "multiplication(1)",
+                          arena_->New<IntType>(), ts[0]);
+          ExpectExactType(e->source_loc(), "multiplication(2)",
+                          arena_->New<IntType>(), ts[1]);
+          SetStaticType(&op, arena_->New<IntType>());
+          return TCResult(new_types);
         case Operator::And:
-          ExpectType(e->source_loc(), "&&(1)", arena->New<BoolType>(), ts[0]);
-          ExpectType(e->source_loc(), "&&(2)", arena->New<BoolType>(), ts[1]);
-          return TCResult(arena->New<BoolType>(), new_types);
+          ExpectExactType(e->source_loc(), "&&(1)", arena_->New<BoolType>(),
+                          ts[0]);
+          ExpectExactType(e->source_loc(), "&&(2)", arena_->New<BoolType>(),
+                          ts[1]);
+          SetStaticType(&op, arena_->New<BoolType>());
+          return TCResult(new_types);
         case Operator::Or:
-          ExpectType(e->source_loc(), "||(1)", arena->New<BoolType>(), ts[0]);
-          ExpectType(e->source_loc(), "||(2)", arena->New<BoolType>(), ts[1]);
-          return TCResult(arena->New<BoolType>(), new_types);
+          ExpectExactType(e->source_loc(), "||(1)", arena_->New<BoolType>(),
+                          ts[0]);
+          ExpectExactType(e->source_loc(), "||(2)", arena_->New<BoolType>(),
+                          ts[1]);
+          SetStaticType(&op, arena_->New<BoolType>());
+          return TCResult(new_types);
         case Operator::Not:
-          ExpectType(e->source_loc(), "!", arena->New<BoolType>(), ts[0]);
-          return TCResult(arena->New<BoolType>(), new_types);
+          ExpectExactType(e->source_loc(), "!", arena_->New<BoolType>(), ts[0]);
+          SetStaticType(&op, arena_->New<BoolType>());
+          return TCResult(new_types);
         case Operator::Eq:
-          ExpectType(e->source_loc(), "==", ts[0], ts[1]);
-          return TCResult(arena->New<BoolType>(), new_types);
+          ExpectExactType(e->source_loc(), "==", ts[0], ts[1]);
+          SetStaticType(&op, arena_->New<BoolType>());
+          return TCResult(new_types);
         case Operator::Deref:
           ExpectPointerType(e->source_loc(), "*", ts[0]);
-          return TCResult(cast<PointerType>(*ts[0]).Type(), new_types);
+          SetStaticType(&op, &cast<PointerType>(*ts[0]).type());
+          return TCResult(new_types);
         case Operator::Ptr:
-          ExpectType(e->source_loc(), "*", arena->New<TypeType>(), ts[0]);
-          return TCResult(arena->New<TypeType>(), new_types);
+          ExpectExactType(e->source_loc(), "*", arena_->New<TypeType>(), ts[0]);
+          SetStaticType(&op, arena_->New<TypeType>());
+          return TCResult(new_types);
       }
       break;
     }
     case Expression::Kind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
-      auto fun_res = TypeCheckExp(call.Function(), types, values);
-      switch (fun_res.type->kind()) {
+      auto fun_res = TypeCheckExp(&call.function(), types, values);
+      switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
-          const auto& fun_t = cast<FunctionType>(*fun_res.type);
-          auto arg_res = TypeCheckExp(call.Argument(), fun_res.types, values);
-          auto parameter_type = fun_t.Param();
-          auto return_type = fun_t.Ret();
-          if (!fun_t.Deduced().empty()) {
-            auto deduced_args = ArgumentDeduction(
-                e->source_loc(), TypeEnv(arena), parameter_type, arg_res.type);
-            for (auto& deduced_param : fun_t.Deduced()) {
+          const auto& fun_t = cast<FunctionType>(call.function().static_type());
+          auto arg_res = TypeCheckExp(&call.argument(), fun_res.types, values);
+          Nonnull<const Value*> parameters = &fun_t.parameters();
+          Nonnull<const Value*> return_type = &fun_t.return_type();
+          if (!fun_t.deduced().empty()) {
+            auto deduced_args =
+                ArgumentDeduction(e->source_loc(), TypeEnv(arena_), parameters,
+                                  &call.argument().static_type());
+            for (auto& deduced_param : fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
               if (!deduced_args.Get(deduced_param.name)) {
@@ -540,12 +672,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                     << deduced_param.name;
               }
             }
-            parameter_type = Substitute(deduced_args, parameter_type);
+            parameters = Substitute(deduced_args, parameters);
             return_type = Substitute(deduced_args, return_type);
           } else {
-            ExpectType(e->source_loc(), "call", parameter_type, arg_res.type);
+            ExpectType(e->source_loc(), "call", parameters,
+                       &call.argument().static_type());
           }
-          return TCResult(return_type, arg_res.types);
+          SetStaticType(&call, return_type);
+          return TCResult(arg_res.types);
         }
         default: {
           FATAL_COMPILATION_ERROR(e->source_loc())
@@ -557,32 +691,36 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case Expression::Kind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
-      ExpectIsConcreteType(fn.Parameter()->source_loc(),
-                           interpreter.InterpExp(values, fn.Parameter()));
-      ExpectIsConcreteType(fn.ReturnType()->source_loc(),
-                           interpreter.InterpExp(values, fn.ReturnType()));
-      return TCResult(arena->New<TypeType>(), types);
+      ExpectIsConcreteType(fn.parameter().source_loc(),
+                           interpreter_.InterpExp(values, &fn.parameter()));
+      ExpectIsConcreteType(fn.return_type().source_loc(),
+                           interpreter_.InterpExp(values, &fn.return_type()));
+      SetStaticType(&fn, arena_->New<TypeType>());
+      return TCResult(types);
     }
     case Expression::Kind::StringLiteral:
-      return TCResult(arena->New<StringType>(), types);
+      SetStaticType(e, arena_->New<StringType>());
+      return TCResult(types);
     case Expression::Kind::IntrinsicExpression:
-      switch (cast<IntrinsicExpression>(*e).Intrinsic()) {
-        case IntrinsicExpression::IntrinsicKind::Print:
-          return TCResult(TupleValue::Empty(), types);
+      switch (cast<IntrinsicExpression>(*e).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
+          SetStaticType(e, TupleValue::Empty());
+          return TCResult(types);
       }
     case Expression::Kind::IntTypeLiteral:
     case Expression::Kind::BoolTypeLiteral:
     case Expression::Kind::StringTypeLiteral:
     case Expression::Kind::TypeTypeLiteral:
     case Expression::Kind::ContinuationTypeLiteral:
-      return TCResult(arena->New<TypeType>(), types);
+      SetStaticType(e, arena_->New<TypeType>());
+      return TCResult(types);
   }
 }
 
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, TypeEnv types, Env values,
     std::optional<Nonnull<const Value*>> expected) -> TCResult {
-  if (tracing_output) {
+  if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
       llvm::outs() << ", expecting " << **expected;
@@ -590,99 +728,102 @@ auto TypeChecker::TypeCheckPattern(
     llvm::outs() << "\ntypes: ";
     PrintTypeEnv(types, llvm::outs());
     llvm::outs() << "\nvalues: ";
-    interpreter.PrintEnv(values, llvm::outs());
+    interpreter_.PrintEnv(values, llvm::outs());
     llvm::outs() << "\n";
   }
   switch (p->kind()) {
     case Pattern::Kind::AutoPattern: {
-      return TCResult(arena->New<TypeType>(), types);
+      SetStaticType(p, arena_->New<TypeType>());
+      return TCResult(types);
     }
     case Pattern::Kind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      TypeCheckPattern(binding.Type(), types, values, std::nullopt);
+      TypeCheckPattern(&binding.type(), types, values, std::nullopt);
       Nonnull<const Value*> type =
-          interpreter.InterpPattern(values, binding.Type());
+          interpreter_.InterpPattern(values, &binding.type());
       if (expected) {
-        std::optional<Env> values = interpreter.PatternMatch(
-            type, *expected, binding.Type()->source_loc());
-        if (values == std::nullopt) {
-          FATAL_COMPILATION_ERROR(binding.Type()->source_loc())
-              << "Type pattern '" << *type << "' does not match actual type '"
-              << **expected << "'";
+        if (IsConcreteType(type)) {
+          ExpectType(p->source_loc(), "name binding", type, *expected);
+        } else {
+          std::optional<Env> values = interpreter_.PatternMatch(
+              type, *expected, binding.type().source_loc());
+          if (values == std::nullopt) {
+            FATAL_COMPILATION_ERROR(binding.type().source_loc())
+                << "Type pattern '" << *type << "' does not match actual type '"
+                << **expected << "'";
+          }
+          CHECK(values->begin() == values->end())
+              << "Name bindings within type patterns are unsupported";
+          type = *expected;
         }
-        CHECK(values->begin() == values->end())
-            << "Name bindings within type patterns are unsupported";
-        type = *expected;
       }
       ExpectIsConcreteType(binding.source_loc(), type);
-      if (binding.Name().has_value()) {
-        types.Set(*binding.Name(), type);
+      if (binding.name().has_value()) {
+        types.Set(*binding.name(), type);
       }
-      return TCResult(type, types);
+      SetStaticType(&binding, type);
+      SetValue(&binding, interpreter_.InterpPattern(values, &binding));
+      return TCResult(types);
     }
     case Pattern::Kind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
-      std::vector<TuplePattern::Field> new_fields;
-      std::vector<TupleElement> field_types;
+      std::vector<Nonnull<const Value*>> field_types;
       auto new_types = types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
       }
-      if (expected && tuple.Fields().size() !=
-                          cast<TupleValue>(**expected).Elements().size()) {
+      if (expected && tuple.fields().size() !=
+                          cast<TupleValue>(**expected).elements().size()) {
         FATAL_COMPILATION_ERROR(tuple.source_loc())
             << "tuples of different length";
       }
-      for (size_t i = 0; i < tuple.Fields().size(); ++i) {
-        TuplePattern::Field& field = tuple.Fields()[i];
+      for (size_t i = 0; i < tuple.fields().size(); ++i) {
+        Nonnull<Pattern*> field = tuple.fields()[i];
         std::optional<Nonnull<const Value*>> expected_field_type;
         if (expected) {
-          const TupleElement& expected_element =
-              cast<TupleValue>(**expected).Elements()[i];
-          if (expected_element.name != field.name) {
-            FATAL_COMPILATION_ERROR(tuple.source_loc())
-                << "field names do not match, expected "
-                << expected_element.name << " but got " << field.name;
-          }
-          expected_field_type = expected_element.value;
+          expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
-        auto field_result = TypeCheckPattern(field.pattern, new_types, values,
-                                             expected_field_type);
+        auto field_result =
+            TypeCheckPattern(field, new_types, values, expected_field_type);
         new_types = field_result.types;
-        new_fields.push_back(TuplePattern::Field(field.name, field.pattern));
-        field_types.push_back({.name = field.name, .value = field_result.type});
+        field_types.push_back(&field->static_type());
       }
-      auto tuple_t = arena->New<TupleValue>(std::move(field_types));
-      return TCResult(tuple_t, new_types);
+      SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
+      SetValue(&tuple, interpreter_.InterpPattern(values, &tuple));
+      return TCResult(new_types);
     }
     case Pattern::Kind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
       Nonnull<const Value*> choice_type =
-          interpreter.InterpExp(values, alternative.ChoiceType());
+          interpreter_.InterpExp(values, &alternative.choice_type());
       if (choice_type->kind() != Value::Kind::ChoiceType) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "alternative pattern does not name a choice type.";
       }
       if (expected) {
-        ExpectType(alternative.source_loc(), "alternative pattern", *expected,
-                   choice_type);
+        ExpectExactType(alternative.source_loc(), "alternative pattern",
+                        *expected, choice_type);
       }
       std::optional<Nonnull<const Value*>> parameter_types =
-          FindInVarValues(alternative.AlternativeName(),
-                          cast<ChoiceType>(*choice_type).Alternatives());
+          cast<ChoiceType>(*choice_type)
+              .FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
-            << "'" << alternative.AlternativeName()
+            << "'" << alternative.alternative_name()
             << "' is not an alternative of " << *choice_type;
       }
-      TCResult arg_results = TypeCheckPattern(alternative.Arguments(), types,
+      TCResult arg_results = TypeCheckPattern(&alternative.arguments(), types,
                                               values, *parameter_types);
-      return TCResult(choice_type, arg_results.types);
+      SetStaticType(&alternative, choice_type);
+      SetValue(&alternative, interpreter_.InterpPattern(values, &alternative));
+      return TCResult(arg_results.types);
     }
     case Pattern::Kind::ExpressionPattern: {
-      TCResult result =
-          TypeCheckExp(cast<ExpressionPattern>(*p).Expression(), types, values);
-      return TCResult(result.type, result.types);
+      auto& expression = cast<ExpressionPattern>(*p).expression();
+      TCResult result = TypeCheckExp(&expression, types, values);
+      SetStaticType(p, &expression.static_type());
+      SetValue(p, interpreter_.InterpPattern(values, p));
+      return TCResult(result.types);
     }
   }
 }
@@ -704,82 +845,82 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
   switch (s->kind()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*s);
-      auto res = TypeCheckExp(&match.expression(), types, values);
-      auto res_type = res.type;
+      TypeCheckExp(&match.expression(), types, values);
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
-        new_clauses.push_back(TypeCheckCase(res_type, &clause.pattern(),
-                                            &clause.statement(), types, values,
-                                            return_type_context));
+        new_clauses.push_back(TypeCheckCase(
+            &match.expression().static_type(), &clause.pattern(),
+            &clause.statement(), types, values, return_type_context));
       }
-      return TCResult(TupleValue::Empty(), types);
+      return TCResult(types);
     }
     case Statement::Kind::While: {
       auto& while_stmt = cast<While>(*s);
-      auto cnd_res = TypeCheckExp(while_stmt.Cond(), types, values);
+      TypeCheckExp(&while_stmt.condition(), types, values);
       ExpectType(s->source_loc(), "condition of `while`",
-                 arena->New<BoolType>(), cnd_res.type);
-      TypeCheckStmt(while_stmt.Body(), types, values, return_type_context);
-      return TCResult(TupleValue::Empty(), types);
+                 arena_->New<BoolType>(),
+                 &while_stmt.condition().static_type());
+      TypeCheckStmt(&while_stmt.body(), types, values, return_type_context);
+      return TCResult(types);
     }
     case Statement::Kind::Break:
     case Statement::Kind::Continue:
-      return TCResult(TupleValue::Empty(), types);
+      return TCResult(types);
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*s);
-      if (block.Stmt()) {
-        TypeCheckStmt(*block.Stmt(), types, values, return_type_context);
-        return TCResult(TupleValue::Empty(), types);
+      if (block.sequence()) {
+        TypeCheckStmt(*block.sequence(), types, values, return_type_context);
+        return TCResult(types);
       } else {
-        return TCResult(TupleValue::Empty(), types);
+        return TCResult(types);
       }
     }
     case Statement::Kind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
-      auto res = TypeCheckExp(var.Init(), types, values);
-      Nonnull<const Value*> rhs_ty = res.type;
-      auto lhs_res = TypeCheckPattern(var.Pat(), types, values, rhs_ty);
-      return TCResult(TupleValue::Empty(), lhs_res.types);
+      TypeCheckExp(&var.init(), types, values);
+      const Value& rhs_ty = var.init().static_type();
+      auto lhs_res = TypeCheckPattern(&var.pattern(), types, values, &rhs_ty);
+      return TCResult(lhs_res.types);
     }
     case Statement::Kind::Sequence: {
       auto& seq = cast<Sequence>(*s);
       auto stmt_res =
-          TypeCheckStmt(seq.Stmt(), types, values, return_type_context);
+          TypeCheckStmt(&seq.statement(), types, values, return_type_context);
       auto checked_types = stmt_res.types;
-      if (seq.Next()) {
-        auto next_res = TypeCheckStmt(*seq.Next(), checked_types, values,
+      if (seq.next()) {
+        auto next_res = TypeCheckStmt(*seq.next(), checked_types, values,
                                       return_type_context);
         checked_types = next_res.types;
       }
-      return TCResult(TupleValue::Empty(), checked_types);
+      return TCResult(checked_types);
     }
     case Statement::Kind::Assign: {
       auto& assign = cast<Assign>(*s);
-      auto rhs_res = TypeCheckExp(assign.Rhs(), types, values);
-      auto rhs_t = rhs_res.type;
-      auto lhs_res = TypeCheckExp(assign.Lhs(), types, values);
-      auto lhs_t = lhs_res.type;
-      ExpectType(s->source_loc(), "assign", lhs_t, rhs_t);
-      return TCResult(TupleValue::Empty(), lhs_res.types);
+      TypeCheckExp(&assign.rhs(), types, values);
+      auto lhs_res = TypeCheckExp(&assign.lhs(), types, values);
+      ExpectType(s->source_loc(), "assign", &assign.lhs().static_type(),
+                 &assign.rhs().static_type());
+      return TCResult(lhs_res.types);
     }
     case Statement::Kind::ExpressionStatement: {
-      TypeCheckExp(cast<ExpressionStatement>(*s).Exp(), types, values);
-      return TCResult(TupleValue::Empty(), types);
+      TypeCheckExp(&cast<ExpressionStatement>(*s).expression(), types, values);
+      return TCResult(types);
     }
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*s);
-      auto cnd_res = TypeCheckExp(if_stmt.Cond(), types, values);
-      ExpectType(s->source_loc(), "condition of `if`", arena->New<BoolType>(),
-                 cnd_res.type);
-      TypeCheckStmt(if_stmt.ThenStmt(), types, values, return_type_context);
-      if (if_stmt.ElseStmt()) {
-        TypeCheckStmt(*if_stmt.ElseStmt(), types, values, return_type_context);
+      TypeCheckExp(&if_stmt.condition(), types, values);
+      ExpectType(s->source_loc(), "condition of `if`", arena_->New<BoolType>(),
+                 &if_stmt.condition().static_type());
+      TypeCheckStmt(&if_stmt.then_block(), types, values, return_type_context);
+      if (if_stmt.else_block()) {
+        TypeCheckStmt(*if_stmt.else_block(), types, values,
+                      return_type_context);
       }
-      return TCResult(TupleValue::Empty(), types);
+      return TCResult(types);
     }
     case Statement::Kind::Return: {
       auto& ret = cast<Return>(*s);
-      auto res = TypeCheckExp(ret.Exp(), types, values);
+      TypeCheckExp(&ret.expression(), types, values);
       if (return_type_context->is_auto()) {
         if (return_type_context->deduced_return_type()) {
           // Only one return is allowed when the return type is `auto`.
@@ -788,38 +929,56 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
                  "return type.";
         } else {
           // Infer the auto return from the first `return` statement.
-          return_type_context->set_deduced_return_type(res.type);
+          return_type_context->set_deduced_return_type(
+              &ret.expression().static_type());
         }
       } else {
         ExpectType(s->source_loc(), "return",
-                   *return_type_context->deduced_return_type(), res.type);
+                   *return_type_context->deduced_return_type(),
+                   &ret.expression().static_type());
       }
-      if (ret.IsOmittedExp() != return_type_context->is_omitted()) {
+      if (ret.is_omitted_expression() != return_type_context->is_omitted()) {
         FATAL_COMPILATION_ERROR(s->source_loc())
             << *s << " should"
             << (return_type_context->is_omitted() ? " not" : "")
             << " provide a return value, to match the function's signature.";
       }
-      return TCResult(TupleValue::Empty(), types);
+      return TCResult(types);
     }
     case Statement::Kind::Continuation: {
       auto& cont = cast<Continuation>(*s);
-      TypeCheckStmt(cont.Body(), types, values, return_type_context);
-      types.Set(cont.ContinuationVariable(), arena->New<ContinuationType>());
-      return TCResult(TupleValue::Empty(), types);
+      TypeCheckStmt(&cont.body(), types, values, return_type_context);
+      types.Set(cont.continuation_variable(), arena_->New<ContinuationType>());
+      return TCResult(types);
     }
     case Statement::Kind::Run: {
-      TCResult argument_result =
-          TypeCheckExp(cast<Run>(*s).Argument(), types, values);
+      auto& run = cast<Run>(*s);
+      TypeCheckExp(&run.argument(), types, values);
       ExpectType(s->source_loc(), "argument of `run`",
-                 arena->New<ContinuationType>(), argument_result.type);
-      return TCResult(TupleValue::Empty(), types);
+                 arena_->New<ContinuationType>(),
+                 &run.argument().static_type());
+      return TCResult(types);
     }
     case Statement::Kind::Await: {
       // nothing to do here
-      return TCResult(TupleValue::Empty(), types);
+      return TCResult(types);
     }
   }  // switch
+}
+
+// Returns true if we can statically verify that `match` is exhaustive, meaning
+// that one of its clauses will be executed for any possible operand value.
+//
+// TODO: the current rule is an extremely simplistic placeholder, with
+// many false negatives.
+static auto IsExhaustive(const Match& match) -> bool {
+  for (const Match::Clause& clause : match.clauses()) {
+    // A pattern consisting of a single variable binding is guaranteed to match.
+    if (clause.pattern().kind() == Pattern::Kind::BindingPattern) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void TypeChecker::ExpectReturnOnAllPaths(
@@ -833,6 +992,11 @@ void TypeChecker::ExpectReturnOnAllPaths(
   switch (stmt->kind()) {
     case Statement::Kind::Match: {
       auto& match = cast<Match>(*stmt);
+      if (!IsExhaustive(match)) {
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "non-exhaustive match may allow control-flow to reach the end "
+               "of a function that provides a `->` return type";
+      }
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
         ExpectReturnOnAllPaths(&clause.statement(), stmt->source_loc());
@@ -840,22 +1004,22 @@ void TypeChecker::ExpectReturnOnAllPaths(
       return;
     }
     case Statement::Kind::Block:
-      ExpectReturnOnAllPaths(cast<Block>(*stmt).Stmt(), stmt->source_loc());
+      ExpectReturnOnAllPaths(cast<Block>(*stmt).sequence(), stmt->source_loc());
       return;
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*stmt);
-      ExpectReturnOnAllPaths(if_stmt.ThenStmt(), stmt->source_loc());
-      ExpectReturnOnAllPaths(if_stmt.ElseStmt(), stmt->source_loc());
+      ExpectReturnOnAllPaths(&if_stmt.then_block(), stmt->source_loc());
+      ExpectReturnOnAllPaths(if_stmt.else_block(), stmt->source_loc());
       return;
     }
     case Statement::Kind::Return:
       return;
     case Statement::Kind::Sequence: {
       auto& seq = cast<Sequence>(*stmt);
-      if (seq.Next()) {
-        ExpectReturnOnAllPaths(seq.Next(), stmt->source_loc());
+      if (seq.next()) {
+        ExpectReturnOnAllPaths(seq.next(), stmt->source_loc());
       } else {
-        ExpectReturnOnAllPaths(seq.Stmt(), stmt->source_loc());
+        ExpectReturnOnAllPaths(&seq.statement(), stmt->source_loc());
       }
       return;
     }
@@ -879,23 +1043,23 @@ void TypeChecker::ExpectReturnOnAllPaths(
 // a function.
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
-auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
+auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
                                   Env values) -> TCResult {
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters()) {
-    // auto t = interpreter.InterpExp(values, deduced.type);
-    types.Set(deduced.name, arena->New<VariableType>(deduced.name));
-    Address a = interpreter.AllocateValue(*types.Get(deduced.name));
+    // auto t = interpreter_.InterpExp(values, deduced.type);
+    types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
   auto param_res =
       TypeCheckPattern(&f->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
-  auto return_type = interpreter.InterpPattern(values, &f->return_type());
+  auto return_type = interpreter_.InterpPattern(values, &f->return_type());
   if (f->name() == "main") {
-    ExpectType(f->source_loc(), "return type of `main`", arena->New<IntType>(),
-               return_type);
+    ExpectExactType(f->source_loc(), "return type of `main`",
+                    arena_->New<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
   std::optional<Nonnull<Statement*>> body_stmt;
@@ -913,76 +1077,78 @@ auto TypeChecker::TypeCheckFunDef(FunctionDefinition* f, TypeEnv types,
     ExpectReturnOnAllPaths(body_stmt, f->source_loc());
   }
   ExpectIsConcreteType(f->return_type().source_loc(), return_type);
-  return TCResult(arena->New<FunctionType>(f->deduced_parameters(),
-                                           param_res.type, return_type),
-                  types);
+  SetStaticType(f, arena_->New<FunctionType>(f->deduced_parameters(),
+                                             &f->param_pattern().static_type(),
+                                             return_type));
+  return TCResult(types);
 }
 
 auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
-                               FunctionDefinition* fun_def)
+                               FunctionDeclaration* fun_def)
     -> Nonnull<const Value*> {
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters()) {
-    // auto t = interpreter.InterpExp(values, deduced.type);
-    types.Set(deduced.name, arena->New<VariableType>(deduced.name));
-    Address a = interpreter.AllocateValue(*types.Get(deduced.name));
+    // auto t = interpreter_.InterpExp(values, deduced.type);
+    types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
     values.Set(deduced.name, a);
   }
   // Type check the parameter pattern
-  auto param_res =
-      TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);
+  TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
-  auto ret = interpreter.InterpPattern(values, &fun_def->return_type());
+  auto ret = interpreter_.InterpPattern(values, &fun_def->return_type());
   if (ret->kind() == Value::Kind::AutoType) {
-    return TypeCheckFunDef(fun_def, types, values).type;
+    // FIXME do this unconditionally?
+    TypeCheckFunDef(fun_def, types, values);
+    return &fun_def->static_type();
   }
-  return arena->New<FunctionType>(fun_def->deduced_parameters(), param_res.type,
-                                  ret);
+  return arena_->New<FunctionType>(fun_def->deduced_parameters(),
+                                   &fun_def->param_pattern().static_type(),
+                                   ret);
 }
 
 auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
                                  Env ct_top) -> Nonnull<const Value*> {
-  VarValues fields;
-  VarValues methods;
+  std::vector<NamedValue> fields;
+  std::vector<NamedValue> methods;
   for (Nonnull<const Member*> m : sd->members()) {
     switch (m->kind()) {
       case Member::Kind::FieldMember: {
-        Nonnull<const BindingPattern*> binding =
-            cast<FieldMember>(*m).Binding();
-        if (!binding->Name().has_value()) {
-          FATAL_COMPILATION_ERROR(binding->source_loc())
+        const BindingPattern& binding = cast<FieldMember>(*m).binding();
+        if (!binding.name().has_value()) {
+          FATAL_COMPILATION_ERROR(binding.source_loc())
               << "Struct members must have names";
         }
-        const auto* binding_type = dyn_cast<ExpressionPattern>(binding->Type());
+        const auto* binding_type = dyn_cast<ExpressionPattern>(&binding.type());
         if (binding_type == nullptr) {
-          FATAL_COMPILATION_ERROR(binding->source_loc())
+          FATAL_COMPILATION_ERROR(binding.source_loc())
               << "Struct members must have explicit types";
         }
-        auto type = interpreter.InterpExp(ct_top, binding_type->Expression());
-        fields.push_back(std::make_pair(*binding->Name(), type));
+        auto type = interpreter_.InterpExp(ct_top, &binding_type->expression());
+        fields.push_back({.name = *binding.name(), .value = type});
         break;
       }
     }
   }
-  return arena->New<NominalClassType>(sd->name(), std::move(fields),
-                                      std::move(methods));
+  return arena_->New<NominalClassType>(sd->name(), std::move(fields),
+                                       std::move(methods));
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
   switch (d.kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(d).definition().name();
+      return cast<FunctionDeclaration>(d).name();
     case Declaration::Kind::ClassDeclaration:
       return cast<ClassDeclaration>(d).definition().name();
     case Declaration::Kind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(d).name();
     case Declaration::Kind::VariableDeclaration: {
       const BindingPattern& binding = cast<VariableDeclaration>(d).binding();
-      if (!binding.Name().has_value()) {
+      if (!binding.name().has_value()) {
         FATAL_COMPILATION_ERROR(binding.source_loc())
             << "Top-level variable declarations must have names";
       }
-      return *binding.Name();
+      return *binding.name();
     }
   }
 }
@@ -991,8 +1157,7 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
                             const Env& values) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
-      TypeCheckFunDef(&cast<FunctionDeclaration>(*d).definition(), types,
-                      values);
+      TypeCheckFunDef(&cast<FunctionDeclaration>(*d), types, values);
       return;
     case Declaration::Kind::ClassDeclaration:
       // TODO
@@ -1007,19 +1172,19 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
       // Signals a type error if the initializing expression does not have
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
-      TCResult type_checked_initializer =
-          TypeCheckExp(&var.initializer(), types, values);
+      TypeCheckExp(&var.initializer(), types, values);
       const auto* binding_type =
-          dyn_cast<ExpressionPattern>(var.binding().Type());
+          dyn_cast<ExpressionPattern>(&var.binding().type());
       if (binding_type == nullptr) {
         // TODO: consider adding support for `auto`
         FATAL_COMPILATION_ERROR(var.source_loc())
             << "Type of a top-level variable must be an expression.";
       }
       Nonnull<const Value*> declared_type =
-          interpreter.InterpExp(values, binding_type->Expression());
+          interpreter_.InterpExp(values, &binding_type->expression());
+      SetStaticType(&var, declared_type);
       ExpectType(var.source_loc(), "initializer of variable", declared_type,
-                 type_checked_initializer.type);
+                 &var.initializer().static_type());
       return;
     }
   }
@@ -1028,40 +1193,31 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
 void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration: {
-      FunctionDefinition& func_def = cast<FunctionDeclaration>(*d).definition();
+      auto& func_def = cast<FunctionDeclaration>(*d);
       auto t = TypeOfFunDef(tops->types, tops->values, &func_def);
       tops->types.Set(func_def.name(), t);
-      interpreter.InitEnv(*d, &tops->values);
+      interpreter_.InitEnv(*d, &tops->values);
       break;
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*d).definition();
+      const auto& class_def = cast<ClassDeclaration>(*d).definition();
       auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
-      Address a = interpreter.AllocateValue(st);
+      AllocationId a = interpreter_.AllocateValue(st);
       tops->values.Set(class_def.name(), a);  // Is this obsolete?
-      std::vector<TupleElement> field_types;
-      for (const auto& [field_name, field_value] :
-           cast<NominalClassType>(*st).Fields()) {
-        field_types.push_back({.name = field_name, .value = field_value});
-      }
-      auto fun_ty = arena->New<FunctionType>(
-          std::vector<GenericBinding>(),
-          arena->New<TupleValue>(std::move(field_types)), st);
-      tops->types.Set(class_def.name(), fun_ty);
+      tops->types.Set(class_def.name(), st);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*d);
-      VarValues alts;
+      std::vector<NamedValue> alts;
       for (const auto& alternative : choice.alternatives()) {
-        auto t = interpreter.InterpExp(tops->values, &alternative.signature());
-        alts.push_back(std::make_pair(alternative.name(), t));
+        auto t = interpreter_.InterpExp(tops->values, &alternative.signature());
+        alts.push_back({.name = alternative.name(), .value = t});
       }
-      auto ct = arena->New<ChoiceType>(choice.name(), std::move(alts));
-      Address a = interpreter.AllocateValue(ct);
+      auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
+      AllocationId a = interpreter_.AllocateValue(ct);
       tops->values.Set(choice.name(), a);  // Is this obsolete?
       tops->types.Set(choice.name(), ct);
       break;
@@ -1071,11 +1227,11 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
-      Nonnull<Expression*> type =
-          cast<ExpressionPattern>(*var.binding().Type()).Expression();
+      Expression& type =
+          cast<ExpressionPattern>(var.binding().type()).expression();
       Nonnull<const Value*> declared_type =
-          interpreter.InterpExp(tops->values, type);
-      tops->types.Set(*var.binding().Name(), declared_type);
+          interpreter_.InterpExp(tops->values, &type);
+      tops->types.Set(*var.binding().name(), declared_type);
       break;
     }
   }
@@ -1083,7 +1239,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
 
 auto TypeChecker::TopLevel(std::vector<Nonnull<Declaration*>>* fs)
     -> TypeCheckContext {
-  TypeCheckContext tops(arena);
+  TypeCheckContext tops(arena_);
   bool found_main = false;
 
   for (auto const& d : *fs) {

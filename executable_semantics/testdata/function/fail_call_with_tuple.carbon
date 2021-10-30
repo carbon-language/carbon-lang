@@ -7,9 +7,7 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_call_with_tuple.carbon:21: type error in call
-// CHECK: expected: (0 = i32, 1 = i32)
-// CHECK: actual: (0 = (0 = i32, 1 = i32))
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_call_with_tuple.carbon:19: type error in call: '((i32, i32))' is not implicitly convertible to '(i32, i32)'
 
 package ExecutableSemanticsTest api;
 

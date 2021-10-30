@@ -1,4 +1,4 @@
-# Carbon: Low context-sensitivity principle
+# Principle: Low context-sensitivity
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
