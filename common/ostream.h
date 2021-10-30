@@ -5,7 +5,7 @@
 #ifndef COMMON_OSTREAM_H_
 #define COMMON_OSTREAM_H_
 
-#include <iosfwd>
+#include <ostream>
 
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
@@ -47,39 +47,47 @@ __attribute__((unavailable(
     "To print as a pointer, cast to void*."))) auto
 operator<<(std::ostream& out, const T* /*obj*/) -> std::ostream&;
 
-namespace Internal {
-
-void PrintNullPointer(std::ostream& out);
-
-}
-
 // Allow GoogleTest and GoogleMock to print even pointers by dereferencing them.
 // This is important to allow automatic printing of arguments of mocked APIs.
 template <typename T, typename std::enable_if<std::is_member_function_pointer<
                           decltype(&T::Print)>::value>::type* = nullptr>
 void PrintTo(const T* p, std::ostream* out) {
-  // Handle null pointers directly.
-  if (!p) {
-    Internal::PrintNullPointer(*out);
-    return;
-  }
+  *out << static_cast<const void *>(p);
 
-  // For non-null pointers, dereference and delegate.
-  *out << *p;
+  // Also print the object if non-null.
+  if (p) {
+    *out << " pointing to " << *p;
+  }
 }
 
 }  // namespace Carbon
 
 namespace llvm {
 
+// Injects an `operator<<` overload into the `llvm` namespace which detects LLVM
+// types with `raw_ostream` overloads and uses that to map to a `std::ostream`
+// overload. This allows LLVM types to be printed to `std::ostream` via their
+// `raw_ostream` operator overloads, which is needed both for logging and
+// testing.
+//
+// To make this overload be unusually low priority, it is designed to take even
+// the `std::ostream` parameter as a template, and SFINAE disable itself unless
+// that template parameter matches `std::ostream`. This ensures that an
+// *explicit* operator will be preferred when provided. Some LLVM types may have
+// this, and so we want to prioritize accordingly.
+//
+// It would be slightly cleaner for LLVM itself to provide this overload in
+// `raw_os_ostream.h` so that we wouldn't need to inject into its namespace, but
+// supporting `std::ostream` isn't a priority for LLVM so we handle it locally
+// instead.
 template <typename S, typename T,
           typename = std::enable_if_t<std::is_base_of_v<
               std::ostream, std::remove_reference_t<std::remove_cv_t<S>>>>,
           typename = std::enable_if_t<!std::is_same_v<
               std::remove_reference_t<std::remove_cv_t<T>>, raw_ostream>>>
-S& operator<<(S& StandardOS, const T& Value) {
-  raw_os_ostream(StandardOS) << Value;
-  return StandardOS;
+auto operator<<(S& standard_out, const T& value) -> S& {
+  raw_os_ostream(standard_out) << value;
+  return standard_out;
 }
 
 }  // namespace llvm
