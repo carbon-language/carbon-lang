@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 package(default_visibility = [
-    "//:__pkg__",
+    "//bazel/check_deps:__pkg__",
     "//executable_semantics:__pkg__",
 ])
 

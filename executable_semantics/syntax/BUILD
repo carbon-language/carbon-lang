@@ -5,7 +5,7 @@
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
 package(default_visibility = [
-    "//:__pkg__",
+    "//bazel/check_deps:__pkg__",
     "//executable_semantics:__pkg__",
 ])
 

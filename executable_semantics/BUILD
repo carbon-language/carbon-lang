@@ -5,7 +5,7 @@
 load("//bazel/testing:lit_test.bzl", "lit_test")
 
 package(default_visibility = [
-    "//:__pkg__",
+    "//bazel/check_deps:__pkg__",
     "//executable_semantics:__subpackages__",
 ])
 
