@@ -695,11 +695,12 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = ChoiceDeclaration::Alternative($1, $2); }
+    { $$ = ChoiceDeclaration::Alternative(context.source_loc(), $1, $2); }
 | identifier
     {
       $$ = ChoiceDeclaration::Alternative(
-          $1, arena->New<TupleLiteral>(context.source_loc()));
+          context.source_loc(), $1,
+          arena->New<TupleLiteral>(context.source_loc()));
     }
 ;
 alternative_list:

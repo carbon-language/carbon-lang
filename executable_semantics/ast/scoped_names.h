@@ -17,15 +17,18 @@
 
 namespace Carbon {
 
-// In NamedEntity, members include:
-// - Declarations, including variables and functions.
+// NamedEntity includes:
+// - BindingPattern, including variable definitions and matching contexts.
+// - ChoiceDeclaration::Alternative, for entries in choices.
+// - Declarations, including choices, classes, and functions.
+//   - Variaables are handled through BindingPattern.
+// - Member, for entries in classes.
 // - Statements, including continuations.
-// - BindingPattern, for matching contexts.
-//
-// May want to add ChoiceDeclaration::Alternative, although that would need to
-// be refactored for forward declarations.
-using NamedEntity = std::variant<Nonnull<Declaration*>,
-                                 Nonnull<BindingPattern*>, Nonnull<Statement*>>;
+using NamedEntity =
+    std::variant<Nonnull<const BindingPattern*>,
+                 Nonnull<const ChoiceDeclaration::Alternative*>,
+                 Nonnull<const Declaration*>, Nonnull<const Member*>,
+                 Nonnull<const Statement*>>;
 
 // The set of declared names in a scope. This is not aware of child scopes, but
 // does include directions to parent or related scopes for lookup purposes.

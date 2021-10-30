@@ -13,6 +13,8 @@
 
 namespace Carbon {
 
+class ScopedNames;
+
 class ClassDefinition {
  public:
   ClassDefinition(SourceLocation source_loc, std::string name,
@@ -25,10 +27,22 @@ class ClassDefinition {
   auto name() const -> const std::string& { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
 
+  // Contains class members.
+  // scoped_names_ should only be accessed after set_scoped_names is called.
+  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
+  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+
+  // scoped_names_ should only be set once during name resolution.
+  auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+    CHECK(!scoped_names_.has_value());
+    scoped_names_ = scoped_names;
+  }
+
  private:
   SourceLocation source_loc_;
   std::string name_;
   std::vector<Nonnull<Member*>> members_;
+  std::optional<Nonnull<ScopedNames*>> scoped_names_;
 };
 
 }  // namespace Carbon

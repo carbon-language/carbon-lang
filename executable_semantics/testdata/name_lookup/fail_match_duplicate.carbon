@@ -7,13 +7,14 @@
 // RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/name_lookup/fail_global_duplicate.carbon:15: Duplicate name `x` also found at {{.*}}/executable_semantics/testdata/name_lookup/fail_global_duplicate.carbon:14
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/name_lookup/fail_match_duplicate.carbon:17: Duplicate name `x` also found at {{.*}}/executable_semantics/testdata/name_lookup/fail_match_duplicate.carbon:16
 
 package ExecutableSemanticsTest api;
 
-var x: i32 = 0;
-var x: i32 = 0;
-
 fn main() -> i32 {
+  match (0) {
+    case x: i32 =>
+      var x: i32 = 0;
+  }
   return 0;
 }

@@ -121,9 +121,8 @@ class FunctionDeclaration : public Declaration {
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
-  // For a FunctionDeclaration, this only contains parameters. Scoped variables
-  // are in the body.
-  // scoped_names_ should only be accessed after initialization.
+  // Only contains function parameters. Scoped variables are in the body.
+  // scoped_names_ should only be accessed after set_scoped_names is called.
   auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
   auto scoped_names() -> ScopedNames& { return **scoped_names_; }
 
@@ -165,13 +164,18 @@ class ChoiceDeclaration : public Declaration {
  public:
   class Alternative {
    public:
-    Alternative(std::string name, Nonnull<Expression*> signature)
-        : name_(std::move(name)), signature_(signature) {}
+    Alternative(SourceLocation source_loc, std::string name,
+                Nonnull<Expression*> signature)
+        : source_loc_(source_loc),
+          name_(std::move(name)),
+          signature_(signature) {}
 
+    auto source_loc() const -> SourceLocation { return source_loc_; }
     auto name() const -> const std::string& { return name_; }
     auto signature() const -> const Expression& { return *signature_; }
 
    private:
+    SourceLocation source_loc_;
     std::string name_;
     Nonnull<Expression*> signature_;
   };
@@ -191,9 +195,21 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
+  // Contains the alternatives.
+  // scoped_names_ should only be accessed after set_scoped_names is called.
+  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
+  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+
+  // scoped_names_ should only be set once during name resolution.
+  auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+    CHECK(!scoped_names_.has_value());
+    scoped_names_ = scoped_names;
+  }
+
  private:
   std::string name_;
   std::vector<Alternative> alternatives_;
+  std::optional<Nonnull<ScopedNames*>> scoped_names_;
 };
 
 // Global variable definition implements the Declaration concept.

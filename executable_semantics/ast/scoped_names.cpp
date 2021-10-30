@@ -15,7 +15,8 @@ auto GetSourceLoc(NamedEntity entity) -> SourceLocation {
 void ScopedNames::Add(std::string name, NamedEntity entity) {
   if (!declared_names_.insert({name, entity}).second) {
     FATAL_COMPILATION_ERROR(GetSourceLoc(entity))
-        << "Duplicate name `" << name << "`";
+        << "Duplicate name `" << name << "` also found at "
+        << GetSourceLoc(declared_names_[name]);
   }
 }
 

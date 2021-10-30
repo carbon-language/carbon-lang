@@ -99,7 +99,7 @@ class Block : public Statement {
   }
   auto sequence() -> std::optional<Nonnull<Sequence*>> { return sequence_; }
 
-  // scoped_names_ should only be accessed after initialization.
+  // scoped_names_ should only be accessed after set_scoped_names is called.
   auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
   auto scoped_names() -> ScopedNames& { return **scoped_names_; }
 
@@ -328,9 +328,22 @@ class Match : public Statement {
     auto statement() const -> const Statement& { return *statement_; }
     auto statement() -> Statement& { return *statement_; }
 
+    // Contains names for the pattern and statement. Note that when the
+    // statement is a block, it gains its own scope.
+    // scoped_names_ should only be accessed after set_scoped_names is called.
+    auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
+    auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+
+    // scoped_names_ should only be set once during name resolution.
+    auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+      CHECK(!scoped_names_.has_value());
+      scoped_names_ = scoped_names;
+    }
+
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
+    std::optional<Nonnull<ScopedNames*>> scoped_names_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,
