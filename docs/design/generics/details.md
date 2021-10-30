@@ -2841,8 +2841,8 @@ fn NumDistinct[T:! Type where HashSet(.Self) is Type]
 }
 ```
 
-This has the same advantages over repeating the constraints on `HashSet` arguments
-in the type of `T` as the general implied constraints above.
+This has the same advantages over repeating the constraints on `HashSet`
+arguments in the type of `T` as the general implied constraints above.
 
 ### Open question: referencing names in the interface being defined
 
