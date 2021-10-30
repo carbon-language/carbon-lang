@@ -81,8 +81,19 @@ class Declaration {
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
 struct GenericBinding {
-  std::string name;
-  Nonnull<const Expression*> type;
+ public:
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : source_loc_(source_loc), name_(std::move(name)), type_(type) {}
+
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto name() const -> const std::string& { return name_; }
+  auto type() const -> const Expression& { return *type_; }
+
+ private:
+  SourceLocation source_loc_;
+  std::string name_;
+  Nonnull<Expression*> type_;
 };
 
 class FunctionDeclaration : public Declaration {

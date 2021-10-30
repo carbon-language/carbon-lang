@@ -139,7 +139,11 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     case Declaration::Kind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       scoped_names.Add(func.name(), &declaration);
-      // TODO: Add function parameters to func.scoped_names.
+      func.set_scoped_names(arena->New<ScopedNames>());
+      for (const auto& param : func.deduced_parameters()) {
+        func.scoped_names().Add(param.name(), &param);
+      }
+      PopulateNamesInPattern(func.param_pattern(), func.scoped_names());
       PopulateNamesInStatement(arena, func.body(), scoped_names);
       break;
     }

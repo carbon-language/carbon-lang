@@ -666,10 +666,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             for (auto& deduced_param : fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
-              if (!deduced_args.Get(deduced_param.name)) {
+              if (!deduced_args.Get(deduced_param.name())) {
                 FATAL_COMPILATION_ERROR(e->source_loc())
                     << "could not deduce type argument for type parameter "
-                    << deduced_param.name;
+                    << deduced_param.name();
               }
             }
             parameters = Substitute(deduced_args, parameters);
@@ -1048,9 +1048,9 @@ auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
-    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
-    values.Set(deduced.name, a);
+    types.Set(deduced.name(), arena_->New<VariableType>(deduced.name()));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name()));
+    values.Set(deduced.name(), a);
   }
   // Type check the parameter pattern
   auto param_res =
@@ -1089,9 +1089,9 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
-    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
-    values.Set(deduced.name, a);
+    types.Set(deduced.name(), arena_->New<VariableType>(deduced.name()));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name()));
+    values.Set(deduced.name(), a);
   }
   // Type check the parameter pattern
   TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);

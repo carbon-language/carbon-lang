@@ -21,14 +21,15 @@ namespace Carbon {
 // - BindingPattern, including variable definitions and matching contexts.
 // - ChoiceDeclaration::Alternative, for entries in choices.
 // - Declarations, including choices, classes, and functions.
-//   - Variaables are handled through BindingPattern.
+//   - Variables are handled through BindingPattern.
+// - GenericBinding, for functions.
 // - Member, for entries in classes.
 // - Statements, including continuations.
 using NamedEntity =
     std::variant<Nonnull<const BindingPattern*>,
                  Nonnull<const ChoiceDeclaration::Alternative*>,
-                 Nonnull<const Declaration*>, Nonnull<const Member*>,
-                 Nonnull<const Statement*>>;
+                 Nonnull<const Declaration*>, Nonnull<const GenericBinding*>,
+                 Nonnull<const Member*>, Nonnull<const Statement*>>;
 
 // The set of declared names in a scope. This is not aware of child scopes, but
 // does include directions to parent or related scopes for lookup purposes.
