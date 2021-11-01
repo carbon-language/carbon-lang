@@ -23,12 +23,13 @@ template <typename NodeBase>
 class Unimplemented : public NodeBase {
  public:
   // Constructs an Unimplemented node standing in for a future node type named
-  // `kind`, with the given children.
+  // `kind`, with the given children. The children need not be AST nodes, but
+  // can be any type that supports streaming to llvm::raw_ostream.
   explicit Unimplemented(std::string kind,
                          std::vector<AnyPrintablePtr> children,
                          SourceLocation source_loc)
       : NodeBase(NodeBase::Kind::Unimplemented, source_loc),
-        kind_str_(std::move(kind)),
+        unimpl_kind_(std::move(kind)),
         children_(std::move(children)) {}
 
   static auto classof(const NodeBase* other) -> bool {
@@ -42,7 +43,7 @@ class Unimplemented : public NodeBase {
   // NodeBase::Print.
   void PrintImpl(llvm::raw_ostream& out) const {
     llvm::ListSeparator sep;
-    out << "Unimplemented" << kind_str_ << "(";
+    out << "Unimplemented" << unimpl_kind_ << "(";
     for (const AnyPrintablePtr& child : children()) {
       out << sep << child;
     }
@@ -50,7 +51,7 @@ class Unimplemented : public NodeBase {
   }
 
  private:
-  std::string kind_str_;
+  std::string unimpl_kind_;
   std::vector<AnyPrintablePtr> children_;
 };
 
