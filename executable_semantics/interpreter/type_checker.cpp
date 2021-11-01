@@ -868,13 +868,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       return TCResult(types);
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*s);
-      TypeEnv types_cursor = types;
       for (auto* block_statement : block.statements()) {
-        auto result = TypeCheckStmt(block_statement, types_cursor, values,
-                                    return_type_context);
-        types_cursor = result.types;
+        auto result =
+            TypeCheckStmt(block_statement, types, values, return_type_context);
+        types = result.types;
       }
-      return TCResult(types_cursor);
+      return TCResult(types);
     }
     case Statement::Kind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
