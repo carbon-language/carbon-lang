@@ -56,14 +56,9 @@ void PopulateNamesInStatement(Arena* arena,
       // Defines a new scope for names.
       auto& block = cast<Block>(statement);
       block.set_scoped_names(arena->New<ScopedNames>());
-      PopulateNamesInStatement(arena, block.sequence(), block.scoped_names());
-      break;
-    }
-    case Statement::Kind::Sequence: {
-      // Hopefully collapse into Block.
-      auto& seq = cast<Sequence>(statement);
-      PopulateNamesInStatement(arena, &seq.statement(), scoped_names);
-      PopulateNamesInStatement(arena, seq.next(), scoped_names);
+      for (const auto& statement : block.statements()) {
+        PopulateNamesInStatement(arena, statement, block.scoped_names());
+      }
       break;
     }
     case Statement::Kind::Continuation: {

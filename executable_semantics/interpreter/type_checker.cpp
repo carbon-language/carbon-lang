@@ -868,12 +868,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       return TCResult(types);
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*s);
-      if (block.sequence()) {
-        TypeCheckStmt(*block.sequence(), types, values, return_type_context);
-        return TCResult(types);
-      } else {
-        return TCResult(types);
+      for (auto* block_statement : block.statements()) {
+        auto result =
+            TypeCheckStmt(block_statement, types, values, return_type_context);
+        types = result.types;
       }
+      return TCResult(types);
     }
     case Statement::Kind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
@@ -881,18 +881,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       const Value& rhs_ty = var.init().static_type();
       auto lhs_res = TypeCheckPattern(&var.pattern(), types, values, &rhs_ty);
       return TCResult(lhs_res.types);
-    }
-    case Statement::Kind::Sequence: {
-      auto& seq = cast<Sequence>(*s);
-      auto stmt_res =
-          TypeCheckStmt(&seq.statement(), types, values, return_type_context);
-      auto checked_types = stmt_res.types;
-      if (seq.next()) {
-        auto next_res = TypeCheckStmt(*seq.next(), checked_types, values,
-                                      return_type_context);
-        checked_types = next_res.types;
-      }
-      return TCResult(checked_types);
     }
     case Statement::Kind::Assign: {
       auto& assign = cast<Assign>(*s);
@@ -1003,9 +991,17 @@ void TypeChecker::ExpectReturnOnAllPaths(
       }
       return;
     }
-    case Statement::Kind::Block:
-      ExpectReturnOnAllPaths(cast<Block>(*stmt).sequence(), stmt->source_loc());
+    case Statement::Kind::Block: {
+      auto& block = cast<Block>(*stmt);
+      if (block.statements().empty()) {
+        FATAL_COMPILATION_ERROR(stmt->source_loc())
+            << "control-flow reaches end of function that provides a `->` "
+               "return type without reaching a return statement";
+      }
+      ExpectReturnOnAllPaths(block.statements()[block.statements().size() - 1],
+                             block.source_loc());
       return;
+    }
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*stmt);
       ExpectReturnOnAllPaths(&if_stmt.then_block(), stmt->source_loc());
@@ -1014,15 +1010,6 @@ void TypeChecker::ExpectReturnOnAllPaths(
     }
     case Statement::Kind::Return:
       return;
-    case Statement::Kind::Sequence: {
-      auto& seq = cast<Sequence>(*stmt);
-      if (seq.next()) {
-        ExpectReturnOnAllPaths(seq.next(), stmt->source_loc());
-      } else {
-        ExpectReturnOnAllPaths(&seq.statement(), stmt->source_loc());
-      }
-      return;
-    }
     case Statement::Kind::Continuation:
     case Statement::Kind::Run:
     case Statement::Kind::Await:
