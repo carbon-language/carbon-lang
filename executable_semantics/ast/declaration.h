@@ -138,7 +138,7 @@ class FunctionDeclaration : public Declaration {
   auto scoped_names() -> ScopedNames& { return **scoped_names_; }
 
   // scoped_names_ should only be set once during name resolution.
-  auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+  void set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
     CHECK(!scoped_names_.has_value());
     scoped_names_ = scoped_names;
   }
@@ -212,7 +212,7 @@ class ChoiceDeclaration : public Declaration {
   auto scoped_names() -> ScopedNames& { return **scoped_names_; }
 
   // scoped_names_ should only be set once during name resolution.
-  auto set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
+  void set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
     CHECK(!scoped_names_.has_value());
     scoped_names_ = scoped_names;
   }
