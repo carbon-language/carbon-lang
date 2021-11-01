@@ -43,9 +43,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
--   [Conditional conformance](#conditional-conformance)
-    -   [Conditional methods](#conditional-methods)
 -   [Parameterized impls](#parameterized-impls)
+    -   [Conditional conformance](#conditional-conformance)
+        -   [Conditional methods](#conditional-methods)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -2235,7 +2235,18 @@ We should also allow the [structural interface](#structural-interfaces)
 construct to support parameters. Parameters would work the same way as for
 regular, that is nominal or non-structural, interfaces.
 
-## Conditional conformance
+## Parameterized impls
+
+FIXME: Add text here
+
+FIXME: Maybe "blanket `impl`s" are just the case where the `Self` type is a type
+variable?
+
+Also known as "blanket `impl`s", these are when you have an `impl` definition
+that is parameterized so it applies to more than a single type and interface
+combination.
+
+### Conditional conformance
 
 [The problem](terminology.md#conditional-conformance) we are trying to solve
 here is expressing that we have an `impl` of some interface for some type, but
@@ -2291,6 +2302,9 @@ both `P` and `T` refer to the same type, but `P` has the type-of-type of
 `Printable` and so has a `Print` member. The relationship between `T` and `P` is
 as if there was a `where P == T` clause.
 
+**TODO:** Need to resolve whether the `T` name can be reused, or if we require
+that you need to use new names, like `P`, when creating new type variables.
+
 **Example:** Consider a type with two parameters, like `Pair(T, U)`. In this
 example, the interface `Foo(T)` is only implemented when the two types are
 equal.
@@ -2312,15 +2326,15 @@ class Pair(T:! Type, U:! Type) {
 **Concern:** The conditional conformance feature makes the question "is this
 interface implemented for this type" undecidable in general.
 [This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
-This means we will likely need some heuristic like a limit on how many steps of
-recursion are allowed.
+The acyclic restriction may eliminate this issue, otherwise we will likely need
+some heuristic like a limit on how many steps of recursion are allowed.
 
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
 but bans cases where there could be ambiguity from overlap.
 [Rust also supports conditional conformance](https://doc.rust-lang.org/rust-by-example/generics/where.html).
 
-### Conditional methods
+#### Conditional methods
 
 A method could be defined conditionally for a type by using a more specific type
 in place of `Self` in the method declaration. For example, this is how to define
@@ -2341,12 +2355,6 @@ methods using
 [conditional extensions](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553)
 or
 [contextual where clauses](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID628).
-
-## Parameterized impls
-
-Also known as "blanket `impl`s", these are when you have an `impl` definition
-that is parameterized so it applies to more than a single type and interface
-combination.
 
 ### Lookup resolution and specialization
 
