@@ -81,8 +81,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints-1)
         -   [Terminating recursion](#terminating-recursion)
     -   [Options](#options)
--   [Conditional conformance](#conditional-conformance)
 -   [Parameterized impls](#parameterized-impls)
+    -   [Conditional conformance](#conditional-conformance)
     -   [Bridge for C++ templates](#bridge-for-c-templates)
         -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
@@ -3630,7 +3630,81 @@ syntax in some cases where we could rewrite it automatically to fit.
 TODO: fold in content from
 [this appendix arguing against `requires` clauses](appendix-requires-constraints.md)
 
-## Conditional conformance
+## Parameterized impls
+
+Also known as "blanket `impl`s", these are when you have an `impl` definition
+that is parameterized so it applies to more than a single type and interface
+combination. These are in many ways similar to implementations with
+[conditional conformance](#conditional-conformance), with two differences:
+
+-   Since they apply to more than one type they must always be defined as
+    [external impls](#external-impl).
+-   Since multiple blanket `impl`s could apply to a particular type and
+    interface combination, we need rules to resolve those cases of overlap.
+
+Example use cases:
+
+-   Declare an out-of-line external impl for a parameterized type.
+-   If `T` implements `As(U)`, then `Optional(T)` should implement
+    `As(Optional(U))`.
+-   If `T` implements `ComparableWith(U)`, then `U` should implement
+    `ComparableWith(T)`.
+-   Any type implementing `Ordered` should get an implementation of
+    `PartiallyOrdered`. Question: do we want to guarantee those two must be
+    consistent by forbidding any overriding of the `PartiallyOrdered`
+    implementation? In other cases, we will want to support overriding for
+    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
+-   `T` should implement `CommonType(T)` for all `T`
+
+FIXME: This section should be rewritten to be about parameterized `impl` in
+general, not just templated. For example, the
+["lookup resolution and specialization" section](#lookup-resolution-and-specialization)
+is applicable broadly.
+
+TODO: Clarify the difference between a `structural interface SI` that requires
+an interface `I` and a nominal `interface NI` that has a blanket implementation
+for any type implementing `I`:
+
+-   You can implement `NI` without implementing `I`, but you can't implement
+    `SI` without implementing `I`.
+-   You can provide a more specialized implementation of `NI` that overrides the
+    blanket implementation.
+
+Some things going on here:
+
+-   Our syntax for `external impl` statements already allows you to have a
+    (possibly templated) type parameter. This can be used to provide a general
+    `impl` that depends on templated access to the type, even though the
+    interface itself is defined generically.
+-   We very likely will want to restrict the `impl` in some ways.
+    -   Easy case: An `impl` for a family of parameterized types.
+    -   Trickier is "structural conformance": we might want to say "here is an
+        `impl` for interface `Foo` for any class implementing a method `Bar`".
+        This is particularly for C++ types, and for
+        [functions that are transitioning from templates into generics](goals.md#upgrade-path-from-templates).
+
+The approach here is a generalization of the approach for
+[conditional conformance](#conditional-conformance). Recall that conditional
+conformance is about restricting an `impl` to apply only to those types whose
+parameters meet a criteria. In this section, we extend the ways of
+parameterizing a single `impl` declaration so that it applies to multiple types
+or multiple interface arguments.
+
+FIXME: Open question whether a blanket impl saying anything implementing `I1`
+also implements `I2` is sufficient for a function `F` generically accepting a
+type `T` implementing `I1` to call a function `G` that requires it to implement
+`I2`. Two concerns: since `F` likely doesn't import the library defining the
+actual `T`, it won't see all relevant `impl` declarations so it won't itself be
+able to determine which `impl` will be used, that resolution will have to be
+deferred to code generation when the generic is instantiated for the right type.
+This is a problem for implementing dynamic dispatch cases, since it isn't
+obvious that the compiler will need to package a witness table for `I2` along
+with a witness table for `I1`. The other concern is whether it will in fact be
+guaranteed to be able to implement `I2`, if there are concerns that the
+implementation of `I2` by `T` might be blocked by having multiple
+implementations to choose from without a clear rule of how to pick a winner.
+
+### Conditional conformance
 
 [The problem](terminology.md#conditional-conformance) we are trying to solve
 here is expressing that we have an `impl` of some interface for some type, but
@@ -3746,79 +3820,6 @@ class FixedArray(T:! Type, N:! Int) {
 
 // FixedArray(T, N) has a `Print()` method if `T` is `Printable`.
 ```
-
-## Parameterized impls
-
-Also known as "blanket `impl`s", these are when you have an `impl` definition
-that is parameterized so it applies to more than a single type and interface
-combination. These are in many ways similar to implementations with
-[conditional conformance](#conditional-conformance), with two differences:
-
--   Since they apply to more than one type they must always be defined as
-    [external impls](#external-impl).
--   Since multiple blanket `impl`s could apply to a particular type and
-    interface combination, we need rules to resolve those cases of overlap.
-
-Example use cases:
-
--   If `T` implements `As(U)`, then `Optional(T)` should implement
-    `As(Optional(U))`.
--   If `T` implements `ComparableWith(U)`, then `U` should implement
-    `ComparableWith(T)`.
--   Any type implementing `Ordered` should get an implementation of
-    `PartiallyOrdered`. Question: do we want to guarantee those two must be
-    consistent by forbidding any overriding of the `PartiallyOrdered`
-    implementation? In other cases, we will want to support overriding for
-    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
--   `T` should implement `CommonType(T)` for all `T`
-
-FIXME: This section should be rewritten to be about parameterized `impl` in
-general, not just templated. For example, the
-["lookup resolution and specialization" section](#lookup-resolution-and-specialization)
-is applicable broadly.
-
-TODO: Clarify the difference between a `structural interface SI` that requires
-an interface `I` and a nominal `interface NI` that has a blanket implementation
-for any type implementing `I`:
-
--   You can implement `NI` without implementing `I`, but you can't implement
-    `SI` without implementing `I`.
--   You can provide a more specialized implementation of `NI` that overrides the
-    blanket implementation.
-
-Some things going on here:
-
--   Our syntax for `external impl` statements already allows you to have a
-    (possibly templated) type parameter. This can be used to provide a general
-    `impl` that depends on templated access to the type, even though the
-    interface itself is defined generically.
--   We very likely will want to restrict the `impl` in some ways.
-    -   Easy case: An `impl` for a family of parameterized types.
-    -   Trickier is "structural conformance": we might want to say "here is an
-        `impl` for interface `Foo` for any class implementing a method `Bar`".
-        This is particularly for C++ types, and for
-        [functions that are transitioning from templates into generics](goals.md#upgrade-path-from-templates).
-
-The approach here is a generalization of the approach for
-[conditional conformance](#conditional-conformance). Recall that conditional
-conformance is about restricting an `impl` to apply only to those types whose
-parameters meet a criteria. In this section, we extend the ways of
-parameterizing a single `impl` declaration so that it applies to multiple types
-or multiple interface arguments.
-
-FIXME: Open question whether a blanket impl saying anything implementing `I1`
-also implements `I2` is sufficient for a function `F` generically accepting a
-type `T` implementing `I1` to call a function `G` that requires it to implement
-`I2`. Two concerns: since `F` likely doesn't import the library defining the
-actual `T`, it won't see all relevant `impl` declarations so it won't itself be
-able to determine which `impl` will be used, that resolution will have to be
-deferred to code generation when the generic is instantiated for the right type.
-This is a problem for implementing dynamic dispatch cases, since it isn't
-obvious that the compiler will need to package a witness table for `I2` along
-with a witness table for `I1`. The other concern is whether it will in fact be
-guaranteed to be able to implement `I2`, if there are concerns that the
-implementation of `I2` by `T` might be blocked by having multiple
-implementations to choose from without a clear rule of how to pick a winner.
 
 ### Bridge for C++ templates
 
