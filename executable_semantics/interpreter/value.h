@@ -483,21 +483,26 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Action*>>*> stack)
+  struct StackFragment {
+    // The todo stack of a suspended continuation, starting with the top
+    // Action (the reverse of the usual order).
+    std::vector<std::unique_ptr<Action>> reversed_todo;
+  };
+
+  explicit ContinuationValue(Nonnull<StackFragment*> stack)
       : Value(Kind::ContinuationValue), stack_(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
   }
 
-  // The todo stack of the suspended continuation, starting with the top
-  // Action (the reverse of the usual order). Note that this provides mutable
-  // access, even when *this is const, because of the reference-like semantics
-  // of ContinuationValue.
-  auto stack() const -> std::vector<Nonnull<Action*>>& { return *stack_; }
+  // The todo stack of the suspended continuation. Note that this provides
+  // mutable access, even when *this is const, because of the reference-like
+  // semantics of ContinuationValue.
+  auto stack() const -> StackFragment& { return *stack_; }
 
  private:
-  Nonnull<std::vector<Nonnull<Action*>>*> stack_;
+  Nonnull<StackFragment*> stack_;
 };
 
 // The String type.

@@ -70,13 +70,13 @@ class Interpreter {
   // Transition type which spawns a new Action on the todo stack above the
   // current Action, and increments the current Action's position counter.
   struct Spawn {
-    Nonnull<Action*> child;
+    std::unique_ptr<Action> child;
   };
 
   // Transition type which spawns a new Action that replaces the current action
   // on the todo stack.
   struct Delegate {
-    Nonnull<Action*> delegate;
+    std::unique_ptr<Action> delegate;
   };
 
   // Transition type which keeps the current Action at the top of the stack,
@@ -137,10 +137,6 @@ class Interpreter {
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
 
-  void DeallocateScope(Scope& scope);
-
-  auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
-      -> Nonnull<const Value*>;
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
       -> Nonnull<const Value*>;
@@ -164,16 +160,20 @@ class Interpreter {
   //
   // TODO: consider whether to use this->trace_ rather than a separate
   // trace_steps parameter.
-  auto ExecuteAction(Nonnull<Action*> action, Env values, bool trace_steps)
-      -> Nonnull<const Value*>;
+  auto ExecuteAction(std::unique_ptr<Action> action, Env values,
+                     bool trace_steps) -> Nonnull<const Value*>;
 
   Nonnull<Arena*> arena_;
 
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals_;
 
-  Stack<Nonnull<Action*>> todo_;
+  // TODO: consider defining a non-nullable unique_ptr-like type to use here.
+  Stack<std::unique_ptr<Action>> todo_;
   Heap heap_;
+
+  // The underlying states of continuation values.
+  std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
 
   bool trace_;
 };

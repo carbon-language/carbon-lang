@@ -246,8 +246,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ContinuationValue: {
       out << "{";
       llvm::ListSeparator sep(" :: ");
-      for (Nonnull<const Action*> action :
-           cast<ContinuationValue>(*this).stack()) {
+      for (const std::unique_ptr<Action>& action :
+           cast<ContinuationValue>(*this).stack().reversed_todo) {
         out << sep << *action;
       }
       out << "}";
