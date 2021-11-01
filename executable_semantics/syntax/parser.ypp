@@ -163,7 +163,7 @@
   EQUAL_EQUAL
   FALSE
   FN
-  FNTY
+  FN_TYPE
   IF
   IMPL
   IMPORT
@@ -376,7 +376,7 @@ expression:
           context.source_loc(), Operator::Ptr,
           std::vector<Nonnull<Expression*>>({$1}));
     }
-| FNTY tuple return_type
+| FN_TYPE tuple return_type
     {
       auto [return_exp, is_omitted_exp] = $3;
       $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, return_exp,
