@@ -11,7 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn apply[T:! Type, U:! Type](f: fnty (T) -> U, x: T) -> U {
+fn apply[T:! Type, U:! Type](f: __Fn (T) -> U, x: T) -> U {
   return f(x);
 }
 
