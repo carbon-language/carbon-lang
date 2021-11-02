@@ -11,6 +11,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -76,19 +77,12 @@ class Block : public Statement {
     return statements_;
   }
 
-  // static_scope_ should only be accessed after set_static_scope is called.
-  auto static_scope() const -> const StaticScope& { return **static_scope_; }
-  auto static_scope() -> StaticScope& { return **static_scope_; }
-
-  // static_scope_ should only be set once during name resolution.
-  void set_static_scope(Nonnull<StaticScope*> static_scope) {
-    CHECK(!static_scope_.has_value());
-    static_scope_ = static_scope;
-  }
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
   std::vector<Nonnull<Statement*>> statements_;
-  std::optional<Nonnull<StaticScope*>> static_scope_;
+  StaticScope static_scope_;
 };
 
 class ExpressionStatement : public Statement {
@@ -307,20 +301,13 @@ class Match : public Statement {
 
     // Contains names for the pattern and statement. Note that when the
     // statement is a block, it gains its own scope.
-    // static_scope_ should only be accessed after set_static_scope is called.
-    auto static_scope() const -> const StaticScope& { return **static_scope_; }
-    auto static_scope() -> StaticScope& { return **static_scope_; }
-
-    // static_scope_ should only be set once during name resolution.
-    void set_static_scope(Nonnull<StaticScope*> static_scope) {
-      CHECK(!static_scope_.has_value());
-      static_scope_ = static_scope;
-    }
+    auto static_scope() const -> const StaticScope& { return static_scope_; }
+    auto static_scope() -> StaticScope& { return static_scope_; }
 
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
-    std::optional<Nonnull<StaticScope*>> static_scope_;
+    StaticScope static_scope_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,
@@ -348,13 +335,21 @@ class Match : public Statement {
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-class Continuation : public Statement {
+class Continuation : public Statement, public NamedEntityInterface {
  public:
   Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Block*> body)
       : Statement(Kind::Continuation, source_loc),
         continuation_variable_(std::move(continuation_variable)),
         body_(body) {}
+
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::Continuation;
+  }
+
+  auto source_loc() const -> SourceLocation override {
+    return Statement::source_loc();
+  }
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Continuation;

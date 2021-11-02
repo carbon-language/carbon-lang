@@ -8,15 +8,12 @@
 
 namespace Carbon {
 
-auto GetSourceLoc(NamedEntity entity) -> SourceLocation {
-  return std::visit([](auto&& arg) { return arg->source_loc(); }, entity);
-}
-
-void StaticScope::Add(std::string name, NamedEntity entity) {
+void StaticScope::Add(std::string name,
+                      Nonnull<const NamedEntityInterface*> entity) {
   if (!declared_names_.insert({name, entity}).second) {
-    FATAL_COMPILATION_ERROR(GetSourceLoc(entity))
+    FATAL_COMPILATION_ERROR(entity->source_loc())
         << "Duplicate name `" << name << "` also found at "
-        << GetSourceLoc(declared_names_[name]);
+        << declared_names_[name]->source_loc();
   }
 }
 

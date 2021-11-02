@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/resolve_names.h"
 
+#include "executable_semantics/ast/declaration.h"
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
@@ -55,7 +56,6 @@ void PopulateNamesInStatement(Arena* arena,
     case Statement::Kind::Block: {
       // Defines a new scope for names.
       auto& block = cast<Block>(statement);
-      block.set_static_scope(arena->New<StaticScope>());
       for (const auto& statement : block.statements()) {
         PopulateNamesInStatement(arena, statement, block.static_scope());
       }
@@ -91,7 +91,6 @@ void PopulateNamesInStatement(Arena* arena,
       // Contains blocks.
       auto& match = cast<Match>(statement);
       for (auto& clause : match.clauses()) {
-        clause.set_static_scope(arena->New<StaticScope>());
         PopulateNamesInPattern(clause.pattern(), clause.static_scope());
         PopulateNamesInStatement(arena, &clause.statement(),
                                  clause.static_scope());
@@ -134,7 +133,6 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     case Declaration::Kind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       static_scope.Add(func.name(), &declaration);
-      func.set_static_scope(arena->New<StaticScope>());
       for (const auto& param : func.deduced_parameters()) {
         func.static_scope().Add(param.name(), &param);
       }
@@ -145,7 +143,6 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     case Declaration::Kind::ClassDeclaration: {
       auto& class_def = cast<ClassDeclaration>(declaration).definition();
       static_scope.Add(class_def.name(), &declaration);
-      class_def.set_static_scope(arena->New<StaticScope>());
       for (auto* member : class_def.members()) {
         PopulateNamesInMember(arena, *member, class_def.static_scope());
       }
@@ -154,7 +151,6 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     case Declaration::Kind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
       static_scope.Add(choice.name(), &declaration);
-      choice.set_static_scope(arena->New<StaticScope>());
       for (auto& alt : choice.alternatives()) {
         choice.static_scope().Add(alt.name(), &alt);
       }

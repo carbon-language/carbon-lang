@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -31,7 +32,7 @@ class StaticScope;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration {
+class Declaration : public NamedEntityInterface {
  public:
   enum class Kind {
     FunctionDeclaration,
@@ -50,7 +51,11 @@ class Declaration {
   // object.
   auto kind() const -> Kind { return kind_; }
 
-  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::Declaration;
+  }
+
+  auto source_loc() const -> SourceLocation override { return source_loc_; }
 
   // The static type of the declared entity. Cannot be called before
   // typechecking.
@@ -80,13 +85,17 @@ class Declaration {
 
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
-struct GenericBinding {
+struct GenericBinding : public NamedEntityInterface {
  public:
   GenericBinding(SourceLocation source_loc, std::string name,
                  Nonnull<Expression*> type)
       : source_loc_(source_loc), name_(std::move(name)), type_(type) {}
 
-  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::GenericBinding;
+  }
+
+  auto source_loc() const -> SourceLocation override { return source_loc_; }
   auto name() const -> const std::string& { return name_; }
   auto type() const -> const Expression& { return *type_; }
 
@@ -133,15 +142,8 @@ class FunctionDeclaration : public Declaration {
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
   // Only contains function parameters. Scoped variables are in the body.
-  // static_scope_ should only be accessed after set_static_scope is called.
-  auto static_scope() const -> const StaticScope& { return **static_scope_; }
-  auto static_scope() -> StaticScope& { return **static_scope_; }
-
-  // static_scope_ should only be set once during name resolution.
-  void set_static_scope(Nonnull<StaticScope*> static_scope) {
-    CHECK(!static_scope_.has_value());
-    static_scope_ = static_scope;
-  }
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
   std::string name_;
@@ -150,7 +152,7 @@ class FunctionDeclaration : public Declaration {
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
   std::optional<Nonnull<Block*>> body_;
-  std::optional<Nonnull<StaticScope*>> static_scope_;
+  StaticScope static_scope_;
 };
 
 class ClassDeclaration : public Declaration {
@@ -173,7 +175,7 @@ class ClassDeclaration : public Declaration {
 
 class ChoiceDeclaration : public Declaration {
  public:
-  class Alternative {
+  class Alternative : public NamedEntityInterface {
    public:
     Alternative(SourceLocation source_loc, std::string name,
                 Nonnull<Expression*> signature)
@@ -181,7 +183,11 @@ class ChoiceDeclaration : public Declaration {
           name_(std::move(name)),
           signature_(signature) {}
 
-    auto source_loc() const -> SourceLocation { return source_loc_; }
+    auto named_entity_kind() const -> NamedEntityKind override {
+      return NamedEntityKind::ChoiceDeclarationAlternative;
+    }
+
+    auto source_loc() const -> SourceLocation override { return source_loc_; }
     auto name() const -> const std::string& { return name_; }
     auto signature() const -> const Expression& { return *signature_; }
 
@@ -207,20 +213,13 @@ class ChoiceDeclaration : public Declaration {
   }
 
   // Contains the alternatives.
-  // static_scope_ should only be accessed after set_static_scope is called.
-  auto static_scope() const -> const StaticScope& { return **static_scope_; }
-  auto static_scope() -> StaticScope& { return **static_scope_; }
-
-  // static_scope_ should only be set once during name resolution.
-  void set_static_scope(Nonnull<StaticScope*> static_scope) {
-    CHECK(!static_scope_.has_value());
-    static_scope_ = static_scope;
-  }
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
   std::string name_;
   std::vector<Alternative> alternatives_;
-  std::optional<Nonnull<StaticScope*>> static_scope_;
+  StaticScope static_scope_;
 };
 
 // Global variable definition implements the Declaration concept.

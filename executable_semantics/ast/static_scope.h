@@ -10,35 +10,48 @@
 #include <variant>
 #include <vector>
 
-#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/source_location.h"
-#include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 
-// NamedEntity includes:
-// - BindingPattern, including variable definitions and matching contexts.
-// - ChoiceDeclaration::Alternative, for entries in choices.
-// - Declarations, including choices, classes, and functions.
-//   - Variables are handled through BindingPattern.
-// - GenericBinding, for functions.
-// - Member, for entries in classes.
-// - Statements, including continuations.
-using NamedEntity =
-    std::variant<Nonnull<const BindingPattern*>,
-                 Nonnull<const ChoiceDeclaration::Alternative*>,
-                 Nonnull<const Declaration*>, Nonnull<const GenericBinding*>,
-                 Nonnull<const Member*>, Nonnull<const Statement*>>;
+class NamedEntityInterface {
+ public:
+  enum class NamedEntityKind {
+    // Includes variable definitions and matching contexts.
+    BindingPattern,
+    // Used by entries in choices.
+    ChoiceDeclarationAlternative,
+    // Used by continuations.
+    Continuation,
+    // Includes choices, classes, and functions. Variables are handled through
+    // BindingPattern.
+    Declaration,
+    // Used by functions.
+    GenericBinding,
+    // Used by entries in classes.
+    Member,
+  };
+
+  virtual ~NamedEntityInterface() = default;
+  // TODO: This is unused, but is intended for casts after lookup.
+  virtual auto named_entity_kind() const -> NamedEntityKind = 0;
+  virtual auto source_loc() const -> SourceLocation = 0;
+};
 
 // The set of declared names in a scope. This is not aware of child scopes, but
 // does include directions to parent or related scopes for lookup purposes.
 class StaticScope {
  public:
-  void Add(std::string name, NamedEntity entity);
+  void Add(std::string name, Nonnull<const NamedEntityInterface*> entity);
 
  private:
-  std::unordered_map<std::string, NamedEntity> declared_names_;
+  // Maps locally declared names to their entities.
+  std::unordered_map<std::string, Nonnull<const NamedEntityInterface*>>
+      declared_names_;
+
+  // A list of scopes used for name lookup within this scope.
+  // TODO: This is unused, but is intended for name lookup cross-scope.
   std::vector<Nonnull<StaticScope*>> parent_scopes_;
 };
 
