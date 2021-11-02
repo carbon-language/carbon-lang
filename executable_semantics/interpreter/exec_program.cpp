@@ -46,13 +46,7 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     llvm::outs() << "********** type checking **********\n";
   }
   ResolveControlFlow(ast);
-  TypeChecker type_checker(arena, trace);
-  TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);
-  TypeEnv top = p.types;
-  Env ct_top = p.values;
-  for (const auto decl : ast.declarations) {
-    type_checker.TypeCheck(decl, top, ct_top);
-  }
+  TypeChecker(arena, trace).TypeCheck(ast);
   if (trace) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
