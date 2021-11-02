@@ -23,7 +23,7 @@ using testing::IsEmpty;
 MATCHER(IntField, "") { return arg->kind() == Expression::Kind::IntLiteral; }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
-  return SourceLocation("<test>", line_num);
+  return {"<test>", line_num};
 }
 
 class ExpressionTest : public ::testing::Test {

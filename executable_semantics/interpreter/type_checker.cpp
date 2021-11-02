@@ -835,7 +835,7 @@ auto TypeChecker::TypeCheckCase(Nonnull<const Value*> expected,
     -> Match::Clause {
   auto pat_res = TypeCheckPattern(pat, types, values, expected);
   TypeCheckStmt(body, pat_res.types, values, return_type_context);
-  return Match::Clause(pat, body);
+  return {pat, body};
 }
 
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
@@ -1147,11 +1147,8 @@ void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
       TypeCheckFunDef(&cast<FunctionDeclaration>(*d), types, values);
       return;
     case Declaration::Kind::ClassDeclaration:
-      // TODO
-      return;
-
     case Declaration::Kind::ChoiceDeclaration:
-      // TODO
+      // TODO: Both of these need implementations.
       return;
 
     case Declaration::Kind::VariableDeclaration: {

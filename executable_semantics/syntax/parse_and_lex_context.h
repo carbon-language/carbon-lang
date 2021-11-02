@@ -24,8 +24,8 @@ class ParseAndLexContext {
   auto PrintDiagnostic(const std::string& message) -> void;
 
   auto source_loc() -> SourceLocation {
-    return SourceLocation(input_file_name_,
-                          static_cast<int>(current_token_position.begin.line));
+    return {input_file_name_,
+            static_cast<int>(current_token_position.begin.line)};
   }
 
   auto trace() -> bool { return trace_; }

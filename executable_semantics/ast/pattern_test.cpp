@@ -23,7 +23,7 @@ using testing::IsEmpty;
 MATCHER(AutoField, "") { return isa<AutoPattern>(*arg); }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
-  return SourceLocation("<test>", line_num);
+  return {"<test>", line_num};
 }
 
 class PatternTest : public ::testing::Test {
