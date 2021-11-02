@@ -62,9 +62,9 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     llvm::outs() << "********** starting execution **********\n";
   }
 
-  SourceLocation source_loc("<main()>", 0);
+  SourceLocation source_loc("<Main()>", 0);
   Nonnull<Expression*> call_main = arena->New<CallExpression>(
-      source_loc, arena->New<IdentifierExpression>(source_loc, "main"),
+      source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
       arena->New<TupleLiteral>(source_loc));
   int result =
       Interpreter(arena, trace).InterpProgram(ast.declarations, call_main);

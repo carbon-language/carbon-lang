@@ -20,7 +20,7 @@ fn flipFlag() {
   flag = 0;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   flipFlag();
   return flag;
 }

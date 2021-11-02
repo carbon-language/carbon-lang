@@ -13,7 +13,7 @@ package ExecutableSemanticsTest api;
 
 // Test that creating a continuation doesn't do anything.
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: i32 = 0;
   __continuation k {
     x = x + 1;

@@ -17,6 +17,6 @@ var x: i32 = 0;
 
 var y: i32 = x;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return y;
 }
