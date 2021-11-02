@@ -44,7 +44,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
 -   [Parameterized impls](#parameterized-impls)
-    -   [Out-of-line impl for a parameterized type](#out-of-line-impl-for-a-parameterized-type)
+    -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
         -   [Conditional methods](#conditional-methods)
     -   [Blanket impls](#blanket-impls)
@@ -2249,7 +2249,8 @@ There are cases where an impl definition should apply to more than a single type
 and interface combination. The solution is to parameterize the impl definition,
 so it applies to a family of types, interfaces, or both. This includes:
 
--   Declare an out-of-line external impl for a parameterized type.
+-   Declare an impl for a parameterized type, which may be external or declared
+    out-of-line.
 -   "Conditional conformance" where a parameterized type implements some
     interface if the parameter to the type satisfies some criteria, like
     implementing the same interface.
@@ -2257,16 +2258,74 @@ so it applies to a family of types, interfaces, or both. This includes:
     implement another interface, or some other criteria beyond being a specific
     type.
 
-### Out-of-line impl for a parameterized type
+### Impl for a parameterized type
 
-FIXME: Add text here
+Interfaces may be implemented for a parameterized type. This can be done
+lexically in the class' scope:
 
-FIXME: Maybe "blanket `impl`s" are just the case where the `Self` type is a type
-variable?
+```
+class Vector(T:! Type) {
+  impl as Iterable {
+    let ElementType:! Type = T;
+    ...
+  }
+}
+```
 
-Also known as "blanket `impl`s", these are when you have an `impl` definition
-that is parameterized so it applies to more than a single type and interface
-combination.
+This is equivalen to naming the type between `impl` and `as`:
+
+```
+class Vector(T:! Type) {
+  impl Vector(T) as Iterable {
+    let ElementType:! Type = T;
+    ...
+  }
+}
+```
+
+An impl may be declared [external](#external-impl) by adding an `external`
+keyword before `impl`. External impls may also be declared out-of-line:
+
+```
+external impl [T:! Type] Vector(T) as Iterable {
+  let ElementType:! Type = T;
+  ...
+}
+```
+
+or equivalently:
+
+```
+external impl Vector(T:! Type) as Iterable {
+  let ElementType:! Type = T;
+  ...
+}
+```
+
+The parameter for the type can be used as an argument to the interface being
+implemented:
+
+```
+class HashMap(Key:! Hashable, Value:! Type) {
+  impl as Has(Key) { ... }
+  impl as Contains(HashSet(Key)) { ... }
+}
+```
+
+or externally out-of-line:
+
+```
+class HashMap(Key:! Hashable, Value:! Type) { ... }
+external impl [Key:! Hashable, Value:! Type]
+    HashMap(Key, Value) as Has(Key) { ... }
+external impl [Key:! Hashable, Value:! Type]
+    HashMap(Key, Value) as Contains(HashSet(Key)) { ... }
+// OR:
+external impl HashMap(Key:! Hashable, Value:! Type)
+    as Has(Key) { ... }
+external impl HashMap(Key:! Hashable, Value:! Type)
+    as Contains(HashSet(Key)) { ... }
+```
 
 ### Conditional conformance
 
@@ -2379,6 +2438,13 @@ or
 [contextual where clauses](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID628).
 
 ### Blanket impls
+
+FIXME: Maybe "blanket `impl`s" are just the case where the `Self` type is a type
+variable?
+
+Also known as "blanket `impl`s", these are when you have an `impl` definition
+that is parameterized so it applies to more than a single type and interface
+combination.
 
 FIXME: Blanket impls:
 
