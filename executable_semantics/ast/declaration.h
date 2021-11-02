@@ -21,7 +21,7 @@
 
 namespace Carbon {
 
-class ScopedNames;
+class StaticScope;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -133,14 +133,14 @@ class FunctionDeclaration : public Declaration {
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
   // Only contains function parameters. Scoped variables are in the body.
-  // scoped_names_ should only be accessed after set_scoped_names is called.
-  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
-  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+  // static_scope_ should only be accessed after set_static_scope is called.
+  auto static_scope() const -> const StaticScope& { return **static_scope_; }
+  auto static_scope() -> StaticScope& { return **static_scope_; }
 
-  // scoped_names_ should only be set once during name resolution.
-  void set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
-    CHECK(!scoped_names_.has_value());
-    scoped_names_ = scoped_names;
+  // static_scope_ should only be set once during name resolution.
+  void set_static_scope(Nonnull<StaticScope*> static_scope) {
+    CHECK(!static_scope_.has_value());
+    static_scope_ = static_scope;
   }
 
  private:
@@ -150,7 +150,7 @@ class FunctionDeclaration : public Declaration {
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
   std::optional<Nonnull<Block*>> body_;
-  std::optional<Nonnull<ScopedNames*>> scoped_names_;
+  std::optional<Nonnull<StaticScope*>> static_scope_;
 };
 
 class ClassDeclaration : public Declaration {
@@ -207,20 +207,20 @@ class ChoiceDeclaration : public Declaration {
   }
 
   // Contains the alternatives.
-  // scoped_names_ should only be accessed after set_scoped_names is called.
-  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
-  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+  // static_scope_ should only be accessed after set_static_scope is called.
+  auto static_scope() const -> const StaticScope& { return **static_scope_; }
+  auto static_scope() -> StaticScope& { return **static_scope_; }
 
-  // scoped_names_ should only be set once during name resolution.
-  void set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
-    CHECK(!scoped_names_.has_value());
-    scoped_names_ = scoped_names;
+  // static_scope_ should only be set once during name resolution.
+  void set_static_scope(Nonnull<StaticScope*> static_scope) {
+    CHECK(!static_scope_.has_value());
+    static_scope_ = static_scope;
   }
 
  private:
   std::string name_;
   std::vector<Alternative> alternatives_;
-  std::optional<Nonnull<ScopedNames*>> scoped_names_;
+  std::optional<Nonnull<StaticScope*>> static_scope_;
 };
 
 // Global variable definition implements the Declaration concept.

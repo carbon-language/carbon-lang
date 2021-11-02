@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_SCOPED_NAMES_H_
-#define EXECUTABLE_SEMANTICS_AST_SCOPED_NAMES_H_
+#ifndef EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
+#define EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
 
 #include <string>
 #include <unordered_map>
@@ -33,15 +33,15 @@ using NamedEntity =
 
 // The set of declared names in a scope. This is not aware of child scopes, but
 // does include directions to parent or related scopes for lookup purposes.
-class ScopedNames {
+class StaticScope {
  public:
   void Add(std::string name, NamedEntity entity);
 
  private:
   std::unordered_map<std::string, NamedEntity> declared_names_;
-  std::vector<Nonnull<ScopedNames*>> parent_scopes_;
+  std::vector<Nonnull<StaticScope*>> parent_scopes_;
 };
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_SCOPED_NAMES_H_
+#endif  // EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_

@@ -18,7 +18,7 @@
 namespace Carbon {
 
 class FunctionDeclaration;
-class ScopedNames;
+class StaticScope;
 
 class Statement {
  public:
@@ -76,19 +76,19 @@ class Block : public Statement {
     return statements_;
   }
 
-  // scoped_names_ should only be accessed after set_scoped_names is called.
-  auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
-  auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+  // static_scope_ should only be accessed after set_static_scope is called.
+  auto static_scope() const -> const StaticScope& { return **static_scope_; }
+  auto static_scope() -> StaticScope& { return **static_scope_; }
 
-  // scoped_names_ should only be set once during name resolution.
-  void set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
-    CHECK(!scoped_names_.has_value());
-    scoped_names_ = scoped_names;
+  // static_scope_ should only be set once during name resolution.
+  void set_static_scope(Nonnull<StaticScope*> static_scope) {
+    CHECK(!static_scope_.has_value());
+    static_scope_ = static_scope;
   }
 
  private:
   std::vector<Nonnull<Statement*>> statements_;
-  std::optional<Nonnull<ScopedNames*>> scoped_names_;
+  std::optional<Nonnull<StaticScope*>> static_scope_;
 };
 
 class ExpressionStatement : public Statement {
@@ -307,20 +307,20 @@ class Match : public Statement {
 
     // Contains names for the pattern and statement. Note that when the
     // statement is a block, it gains its own scope.
-    // scoped_names_ should only be accessed after set_scoped_names is called.
-    auto scoped_names() const -> const ScopedNames& { return **scoped_names_; }
-    auto scoped_names() -> ScopedNames& { return **scoped_names_; }
+    // static_scope_ should only be accessed after set_static_scope is called.
+    auto static_scope() const -> const StaticScope& { return **static_scope_; }
+    auto static_scope() -> StaticScope& { return **static_scope_; }
 
-    // scoped_names_ should only be set once during name resolution.
-    void set_scoped_names(Nonnull<ScopedNames*> scoped_names) {
-      CHECK(!scoped_names_.has_value());
-      scoped_names_ = scoped_names;
+    // static_scope_ should only be set once during name resolution.
+    void set_static_scope(Nonnull<StaticScope*> static_scope) {
+      CHECK(!static_scope_.has_value());
+      static_scope_ = static_scope;
     }
 
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
-    std::optional<Nonnull<ScopedNames*>> scoped_names_;
+    std::optional<Nonnull<StaticScope*>> static_scope_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,

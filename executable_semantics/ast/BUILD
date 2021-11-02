@@ -10,7 +10,7 @@ cc_library(
     deps = [
         ":declaration",
         ":library_name",
-        ":scoped_names",
+        ":static_scope",
     ],
 )
 
@@ -120,9 +120,9 @@ cc_test(
 )
 
 cc_library(
-    name = "scoped_names",
-    srcs = ["scoped_names.cpp"],
-    hdrs = ["scoped_names.h"],
+    name = "static_scope",
+    srcs = ["static_scope.cpp"],
+    hdrs = ["static_scope.h"],
     deps = [
         ":declaration",
         ":source_location",
