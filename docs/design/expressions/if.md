@@ -61,7 +61,7 @@ the expression.
 
 ## Finding a common type
 
-The common type of two types `T` and `U` is `(T as CommonType(U)).Type`, where
+The common type of two types `T` and `U` is `(T as CommonType(U)).Result`, where
 `CommonType` is the `Carbon.CommonType` interface:
 
 ```
@@ -157,13 +157,6 @@ destination type:
 impl [U:! Type, T:! ImplicitAs(U)] T as CommonTypeWith(U) {
   let Result:! Type = U;
 }
-impl [T:! Type, U:! ImplicitAs(T)] T as CommonTypeWith(U) {
-  let Result:! Type = T;
-}
-impl [template T:! Type, template U:! ImplicitAs(T) where T is ImplicitAs(U)]
-    T as CommonTypeWith(U) {
-  let Result:! Type = T;
-}
 ```
 
 _Note:_ If an implicit conversion is possible in both directions, and no more
@@ -182,7 +175,7 @@ impl YourString as CommonTypeWith(MyString) {
 }
 var my_string: MyString;
 var your_string: YourString;
-var also_my_string: String = if cond then my_string else your_string;
+var also_my_string: MyString = if cond then my_string else your_string;
 ```
 
 ### Facet types
