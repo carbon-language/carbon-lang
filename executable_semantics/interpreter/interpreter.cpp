@@ -181,7 +181,7 @@ void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
   }
 }
 
-auto Interpreter::PopAndDeallocateScope() -> Nonnull<Action*> {
+auto Interpreter::UnwindTodoTop() -> Nonnull<Action*> {
   Nonnull<Action*> act = todo_.Pop();
   if (act->scope().has_value()) {
     CHECK(!act->scope()->deallocated);
@@ -852,15 +852,13 @@ auto Interpreter::StepStmt() -> Transition {
       CHECK(act->pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      return Unwind{.ast_node = &cast<Break>(stmt).loop(),
-                    .unwind_ast_node = true};
+      return UnwindPast{.ast_node = &cast<Break>(stmt).loop()};
     }
     case Statement::Kind::Continue: {
       CHECK(act->pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      return Unwind{.ast_node = &cast<Continue>(stmt).loop(),
-                    .unwind_ast_node = false};
+      return UnwindTo{.ast_node = &cast<Continue>(stmt).loop()};
     }
     case Statement::Kind::Block: {
       const auto& block = cast<Block>(stmt);
@@ -969,9 +967,8 @@ auto Interpreter::StepStmt() -> Transition {
         // TODO(geoffromer): convert the result to the function's return type,
         // once #880 gives us a way to find that type.
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return Unwind{.ast_node = *function.body(),
-                      .unwind_ast_node = true,
-                      .result = act->results()[0]};
+        return UnwindPast{.ast_node = *function.body(),
+                          .result = act->results()[0]};
       }
     case Statement::Kind::Continuation: {
       CHECK(act->pos() == 0);
@@ -1032,7 +1029,7 @@ class Interpreter::DoTransition {
   explicit DoTransition(Interpreter* interpreter) : interpreter(interpreter) {}
 
   void operator()(const Done& done) {
-    Nonnull<Action*> act = interpreter->PopAndDeallocateScope();
+    Nonnull<Action*> act = interpreter->UnwindTodoTop();
     switch (act->kind()) {
       case Action::Kind::ExpressionAction:
       case Action::Kind::LValAction:
@@ -1070,24 +1067,16 @@ class Interpreter::DoTransition {
     action->set_pos(action->pos() + 1);
   }
 
-  void operator()(const Unwind& unwind) {
-    while (true) {
-      if (const auto* statement_action =
-              dyn_cast<StatementAction>(interpreter->todo_.Top());
-          statement_action != nullptr &&
-          &statement_action->statement() == unwind.ast_node) {
-        break;
-      }
-      interpreter->PopAndDeallocateScope();
-    }
-    if (unwind.unwind_ast_node) {
-      interpreter->PopAndDeallocateScope();
-      if (unwind.result.has_value()) {
-        interpreter->todo_.Top()->AddResult(*unwind.result);
-      }
-    } else {
-      CHECK(!unwind.result.has_value())
-          << "result is never used when !unwind_ast_node";
+  void operator()(const UnwindTo& unwind_to) {
+    UnwindToHelper(unwind_to.ast_node);
+  }
+
+  void operator()(const UnwindPast& unwind_past) {
+    UnwindToHelper(unwind_past.ast_node);
+    // Unwind past the statement and return a result if needed.
+    interpreter->UnwindTodoTop();
+    if (unwind_past.result.has_value()) {
+      interpreter->todo_.Top()->AddResult(*unwind_past.result);
     }
   }
 
@@ -1117,6 +1106,19 @@ class Interpreter::DoTransition {
   void operator()(const ManualTransition&) {}
 
  private:
+  // Unwinds to the indicated node.
+  void UnwindToHelper(Nonnull<const Statement*> ast_node) {
+    while (true) {
+      if (const auto* statement_action =
+              dyn_cast<StatementAction>(interpreter->todo_.Top());
+          statement_action != nullptr &&
+          &statement_action->statement() == ast_node) {
+        break;
+      }
+      interpreter->UnwindTodoTop();
+    }
+  }
+
   Nonnull<Interpreter*> interpreter;
 };
 

@@ -83,12 +83,18 @@ class Interpreter {
   // and increments its position counter.
   struct RunAgain {};
 
-  // Transition type which unwinds the `todo` stack down to `ast_node`. If
-  // `unwind_ast_node` is true, it also unwinds `ast_node`; in that case,
-  // `result` is will be treated as the result of that StatementAction if set.
-  struct Unwind {
+  // Transition type which unwinds the `todo` stack until it reaches the
+  // StatementAction associated with `ast_node`. Execution then resumes with
+  // that StatementAction.
+  struct UnwindTo {
     Nonnull<const Statement*> ast_node;
-    bool unwind_ast_node;
+  };
+
+  // Transition type which unwinds the `todo` stack down to and including the
+  // StatementAction associated with `ast_node`. If `result` is set, it will be
+  // treated as the result of that StatementAction.
+  struct UnwindPast {
+    Nonnull<const Statement*> ast_node;
     std::optional<Nonnull<const Value*>> result;
   };
 
@@ -107,8 +113,8 @@ class Interpreter {
   // uses of this type should be replaced with meaningful transitions.
   struct ManualTransition {};
 
-  using Transition = std::variant<Done, Spawn, Delegate, RunAgain, Unwind,
-                                  CallFunction, ManualTransition>;
+  using Transition = std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
+                                  UnwindPast, CallFunction, ManualTransition>;
 
   // Visitor which implements the behavior associated with each transition type.
   class DoTransition;
@@ -131,7 +137,7 @@ class Interpreter {
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
 
-  auto PopAndDeallocateScope() -> Nonnull<Action*>;
+  auto UnwindTodoTop() -> Nonnull<Action*>;
 
   auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
       -> Nonnull<const Value*>;
