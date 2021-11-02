@@ -44,9 +44,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
 -   [Parameterized impls](#parameterized-impls)
+    -   [Out-of-line impl for a parameterized type](#out-of-line-impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
         -   [Conditional methods](#conditional-methods)
+    -   [Blanket impls](#blanket-impls)
+        -   [Difference between blanket impls and constraints](#difference-between-blanket-impls-and-constraints)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
+        -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
+        -   [Orphan rule](#orphan-rule)
+        -   [Overlap rule](#overlap-rule)
+        -   [Prioritization rule](#prioritization-rule)
+        -   [Acyclic rule](#acyclic-rule)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -2237,6 +2245,20 @@ regular, that is nominal or non-structural, interfaces.
 
 ## Parameterized impls
 
+There are cases where an impl definition should apply to more than a single type
+and interface combination. The solution is to parameterize the impl definition,
+so it applies to a family of types, interfaces, or both. This includes:
+
+-   Declare an out-of-line external impl for a parameterized type.
+-   "Conditional conformance" where a parameterized type implements some
+    interface if the parameter to the type satisfies some criteria, like
+    implementing the same interface.
+-   "Blanket" impls where an interface is implemented for all types that
+    implement another interface, or some other criteria beyond being a specific
+    type.
+
+### Out-of-line impl for a parameterized type
+
 FIXME: Add text here
 
 FIXME: Maybe "blanket `impl`s" are just the case where the `Self` type is a type
@@ -2356,11 +2378,65 @@ methods using
 or
 [contextual where clauses](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID628).
 
+### Blanket impls
+
+FIXME: Blanket impls:
+
+-   If `T` implements `As(U)`, then `Optional(T)` should implement
+    `As(Optional(U))`.
+-   Any type implementing `Ordered` should get an implementation of
+    `PartiallyOrdered`. Question: do we want to guarantee those two must be
+    consistent by forbidding any overriding of the `PartiallyOrdered`
+    implementation? In other cases, we will want to support overriding for
+    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
+-   `T` should implement `CommonType(T)` for all `T`
+
+FIXME: Exclude things that could introduce a cy
+
+-   If `T` implements `ComparableWith(U)`, then `U` should implement
+    `ComparableWith(T)`.
+
+#### Difference between blanket impls and constraints
+
+A blanket interface can be used to say "any type implementing `interface I` also
+implements `interface B`." Compare this with defining a `constraint C` that
+requires `I`. In that case, `C` will also be implemented any time `I` is. There
+are differences though:
+
+-   There can be other implementations of `interface B` without a corresponding
+    implementation of `I`, unless `B` has a requirement on `I`. However, the
+    types implementing `C` will be the same as the types implementing `I`.
+-   More specialized implementations of `B` can override the blanket
+    implementation.
+
 ### Lookup resolution and specialization
+
+As much as possible, we want rules that (a) give us coherence and (b) allow
+libraries to work together as long as they pass their separate checks.
 
 For this to work, we need a rule that picks a single `impl` in the case where
 there are multiple `impl` definitions that match a particular type and interface
 combination.
+
+#### Type structure of an impl declaration
+
+FIXME
+
+#### Orphan rule
+
+FIXME
+
+#### Overlap rule
+
+FIXME
+
+#### Prioritization rule
+
+FIXME
+
+#### Acyclic rule
+
+FIXME
 
 ## Future work
 
