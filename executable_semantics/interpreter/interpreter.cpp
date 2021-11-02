@@ -127,10 +127,10 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def = cast<ClassDeclaration>(d).definition();
+      const auto& class_decl = cast<ClassDeclaration>(d);
       std::vector<NamedValue> fields;
       std::vector<NamedValue> methods;
-      for (Nonnull<const Member*> m : class_def.members()) {
+      for (Nonnull<const Member*> m : class_decl.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
             const BindingPattern& binding = cast<FieldMember>(*m).binding();
@@ -143,9 +143,9 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
         }
       }
       auto st = arena_->New<NominalClassType>(
-          class_def.name(), std::move(fields), std::move(methods));
+          class_decl.name(), std::move(fields), std::move(methods));
       AllocationId a = heap_.AllocateValue(st);
-      env->Set(class_def.name(), a);
+      env->Set(class_decl.name(), a);
       break;
     }
 

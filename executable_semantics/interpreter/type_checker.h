@@ -119,8 +119,8 @@ class TypeChecker {
 
   auto TypeOfFunDef(TypeEnv types, Env values, FunctionDeclaration* fun_def)
       -> Nonnull<const Value*>;
-  auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
-      -> Nonnull<const Value*>;
+  auto TypeOfClassDecl(const ClassDeclaration& class_decl, TypeEnv /*types*/,
+                       Env ct_top) -> Nonnull<const Value*>;
 
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
