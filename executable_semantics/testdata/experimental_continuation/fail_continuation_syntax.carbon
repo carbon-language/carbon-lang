@@ -2,27 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: -2
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/experimental_continuation/fail_continuation_syntax.carbon:16: syntax error, unexpected identifier, expecting LEFT_CURLY_BRACE
 
 package ExecutableSemanticsTest api;
 
-fn apply[T:! Type, U:! Type](f: __Fn (T) -> U, x: T) -> U {
-  return f(x);
-}
-
-fn positive(x: Bool) -> i32 {
-  if (x) {
-    return 2;
-  } else {
-    return -2;
-  }
-}
-
 fn main() -> i32 {
-  return apply(positive, false);
+  var x: i32 = 0;
+  __continuation k x = 3;
+  __run k;
+  return x;
 }

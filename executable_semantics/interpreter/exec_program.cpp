@@ -22,10 +22,12 @@ static void AddIntrinsics(Nonnull<Arena*> arena,
       source_loc, "format_str",
       arena->New<ExpressionPattern>(
           arena->New<StringTypeLiteral>(source_loc)))};
-  auto print_return = arena->New<Return>(
-      source_loc,
-      arena->New<IntrinsicExpression>(IntrinsicExpression::Intrinsic::Print),
-      false);
+  auto print_return = arena->New<Block>(
+      source_loc, std::vector<Nonnull<Statement*>>({arena->New<Return>(
+                      source_loc,
+                      arena->New<IntrinsicExpression>(
+                          IntrinsicExpression::Intrinsic::Print),
+                      false)}));
   auto print = arena->New<FunctionDeclaration>(
       source_loc, "Print", std::vector<GenericBinding>(),
       arena->New<TuplePattern>(source_loc, print_params),

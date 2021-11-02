@@ -90,7 +90,7 @@ class FunctionDeclaration : public Declaration {
                       Nonnull<TuplePattern*> param_pattern,
                       Nonnull<Pattern*> return_type,
                       bool is_omitted_return_type,
-                      std::optional<Nonnull<Statement*>> body)
+                      std::optional<Nonnull<Block*>> body)
       : Declaration(Kind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
@@ -116,10 +116,8 @@ class FunctionDeclaration : public Declaration {
   auto is_omitted_return_type() const -> bool {
     return is_omitted_return_type_;
   }
-  auto body() const -> std::optional<Nonnull<const Statement*>> {
-    return body_;
-  }
-  auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
+  auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
+  auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
  private:
   std::string name_;
@@ -127,7 +125,7 @@ class FunctionDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
-  std::optional<Nonnull<Statement*>> body_;
+  std::optional<Nonnull<Block*>> body_;
 };
 
 class ClassDeclaration : public Declaration {

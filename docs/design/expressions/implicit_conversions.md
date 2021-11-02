@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Pointer conversions](#pointer-conversions)
         -   [Pointer conversion examples](#pointer-conversion-examples)
     -   [Type-of-types](#type-of-types)
--   [Semantics](#semantics)
+-   [Consistency with `as`](#consistency-with-as)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -245,36 +245,32 @@ can be implicitly converted to the type-of-type `TT2` if `T`
 [satisfies the requirements](../generics/details.md#subtyping-between-type-of-types)
 of `TT2`.
 
-## Semantics
+## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when
-permitted, always has the same meaning as the explicit cast expression `E as U`.
-Moreover, such an implicit conversion is expected to exactly preserve the value.
-For example, `(E as U) as T`, if valid, should be expected to result in the same
-value as produced by `E`.
-
-**Note:** The explicit cast expression syntax has not yet been decided. The use
-of `E as T` in this document is provisional.
+permitted, always has the same meaning as the
+[explicit cast expression `E as U`](as_expressions.md). Moreover, because such
+an implicit conversion is expected to exactly preserve the value,
+`(E as U) as T`, if valid, should be expected to result in the same value as
+produced by `E` even if the `as T` cast cannot be performed as an implicit
+conversion.
 
 ## Extensibility
 
 Implicit conversions can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `ImplicitAs` interface:
+[classes](../classes.md) by implementing the `ImplicitAs` interface, which
+extends
+[the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
 
 ```
-interface As(Dest:! Type) {
-  fn Convert[me: Self]() -> Dest;
+interface ImplicitAs(Dest:! Type) extends As(Dest) {
+  // Inherited from As(Dest):
+  // fn Convert[me: Self]() -> Dest;
 }
-interface ImplicitAs(Dest:! Type) extends As(Dest) {}
 ```
 
 When attempting to implicitly convert an expression `x` to type `U`, the
 expression is rewritten to `x.(ImplicitAs(U).Convert)()`.
-
-**Note:** The `As` interface is intended to be used as the implementation
-vehicle for explicit casts: `x as U` would be rewritten as
-`x.(As(U).Convert)()`. However, the explicit cast expression syntax has not yet
-been decided, so this rewrite is provisional.
 
 Note that implicit conversions are not transitive. Even if an
 `impl A as ImplicitAs(B)` and an `impl B as ImplicitAs(C)` are both provided, an

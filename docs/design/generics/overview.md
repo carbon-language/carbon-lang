@@ -27,12 +27,13 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Generic type parameters](#generic-type-parameters)
     -   [Requiring or extending another interface](#requiring-or-extending-another-interface)
     -   [Combining interfaces](#combining-interfaces)
-        -   [Structural interfaces](#structural-interfaces)
+        -   [Named constraints](#named-constraints)
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
     -   [Interface input and output types](#interface-input-and-output-types)
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
+    -   [Constraints](#constraints)
 -   [Future work](#future-work)
 -   [References](#references)
 
@@ -84,9 +85,9 @@ Summary of how Carbon generics work:
 -   The `&` operation on type-of-types allows you conveniently combine
     interfaces. It gives you all the names that don't conflict.
 -   You may also declare a new type-of-type directly using
-    ["structural interfaces"](terminology.md#structural-interfaces). Structural
-    interfaces can express requirements that multiple interfaces be implemented,
-    and give you control over how name conflicts are handled.
+    ["named constraints"](terminology.md#named-constraints). Named constraints
+    can express requirements that multiple interfaces be implemented, and give
+    you control over how name conflicts are handled.
 -   Alternatively, you may resolve name conflicts by using a qualified syntax to
     directly call a function from a specific interface.
 
@@ -251,7 +252,7 @@ the constraint on the type is that it must implement the interface `Comparable`.
 A type-of-type also defines a set of names and a mapping to corresponding
 qualified names. You may combine interfaces into new type-of-types using
 [the `&` operator](#combining-interfaces) or
-[structural interfaces](#structural-interfaces).
+[named constraints](#named-constraints).
 
 ### Generic functions
 
@@ -406,16 +407,16 @@ fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
 }
 ```
 
-#### Structural interfaces
+#### Named constraints
 
 You may also declare a new type-of-type directly using
-["structural interfaces"](terminology.md#structural-interfaces). Structural
-interfaces can express requirements that multiple interfaces be implemented, and
-give you control over how name conflicts are handled. Structural interfaces have
-other applications and capabilities not covered here.
+["named constraints"](terminology.md#named-constraints). Named constraints can
+express requirements that multiple interfaces be implemented, and give you
+control over how name conflicts are handled. Named constraints have other
+applications and capabilities not covered here.
 
 ```
-structural interface Combined {
+constraint Combined {
   impl as Renderable;
   impl as EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
@@ -431,7 +432,7 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
   }
   game_state->Draw_Renderable();
   // Can still use qualified syntax for names
-  // not defined in the structural interface
+  // not defined in the named constraint
   return game_state->(Renderable.Center)();
 }
 ```
@@ -561,9 +562,30 @@ fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
 fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 ```
 
+### Constraints
+
+Type-of-types can be further constrained using a `where` clause:
+
+```
+fn FindFirstPrime[T:! Container where .Element == i32]
+    (c: T, i: i32) -> Optional(i32) {
+  // The elements of `c` have type `T.Element`, which is `i32`.
+  ...
+}
+
+fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+  // The type of the elements of `c` is not known, but we do know
+  // that type satisfies the `Printable` interface.
+  ...
+}
+```
+
+Constraints limit the types that the generic function can operate on, but
+increase the knowledge that may be used in the body of the function to operate
+on values of those types.
+
 ## Future work
 
--   Other kinds of constraints will be finalized.
 -   Implementations can be parameterized to apply to multiple types. These
     implementations would be restricted to various conditions are true for the
     parameters. When there are two implementations that can apply, there is a
@@ -583,3 +605,4 @@ fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 
 -   [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)

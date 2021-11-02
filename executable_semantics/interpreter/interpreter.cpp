@@ -863,17 +863,20 @@ auto Interpreter::StepStmt() -> Transition {
                     .unwind_ast_node = false};
     }
     case Statement::Kind::Block: {
-      if (act->pos() == 0) {
-        const Block& block = cast<Block>(stmt);
-        if (block.statement()) {
-          act->StartScope(Scope(CurrentEnv()));
-          return Spawn{arena_->New<StatementAction>(*block.statement())};
-        } else {
-          return Done{};
-        }
-      } else {
+      const auto& block = cast<Block>(stmt);
+      if (act->pos() >= static_cast<int>(block.statements().size())) {
+        // If the position is past the end of the block, end processing. Note
+        // that empty blocks immediately end.
         return Done{};
       }
+      // Initialize a scope when starting a block.
+      if (act->pos() == 0) {
+        act->StartScope(Scope(CurrentEnv()));
+      }
+      // Process the next statement in the block. The position will be
+      // incremented as part of Spawn.
+      return Spawn{
+          arena_->New<StatementAction>(block.statements()[act->pos()])};
     }
     case Statement::Kind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
@@ -943,13 +946,13 @@ auto Interpreter::StepStmt() -> Transition {
           //      S, H}
           // -> { { then_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(&cast<If>(stmt).then_statement())};
-        } else if (cast<If>(stmt).else_statement()) {
+              arena_->New<StatementAction>(&cast<If>(stmt).then_block())};
+        } else if (cast<If>(stmt).else_block()) {
           //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { else_stmt :: C, E, F } :: S, H}
           return Delegate{
-              arena_->New<StatementAction>(*cast<If>(stmt).else_statement())};
+              arena_->New<StatementAction>(*cast<If>(stmt).else_block())};
         } else {
           return Done{};
         }
@@ -970,21 +973,6 @@ auto Interpreter::StepStmt() -> Transition {
                       .unwind_ast_node = true,
                       .result = act->results()[0]};
       }
-    case Statement::Kind::Sequence: {
-      //    { { (s1,s2) :: C, E, F} :: S, H}
-      // -> { { s1 :: s2 :: C, E, F} :: S, H}
-      const auto& seq = cast<Sequence>(stmt);
-      if (act->pos() == 0) {
-        return Spawn{arena_->New<StatementAction>(&seq.statement())};
-      } else {
-        if (seq.next()) {
-          return Delegate{
-              arena_->New<StatementAction>(*cast<Sequence>(stmt).next())};
-        } else {
-          return Done{};
-        }
-      }
-    }
     case Statement::Kind::Continuation: {
       CHECK(act->pos() == 0);
       // Create a continuation object by creating a frame similar the

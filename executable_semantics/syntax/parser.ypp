@@ -101,13 +101,12 @@
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <Nonnull<Statement*>> statement
-%type <Nonnull<Statement*>> if_statement
-%type <std::optional<Nonnull<Statement*>>> optional_else
+%type <Nonnull<If*>> if_statement
+%type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
-%type <Nonnull<Statement*>> nonempty_block
-%type <Nonnull<Statement*>> block
-%type <Nonnull<Statement*>> nonempty_statement_list
-%type <std::optional<Nonnull<Statement*>>> statement_list
+%type <Nonnull<Block*>> nonempty_block
+%type <Nonnull<Block*>> block
+%type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
 %type <GenericBinding> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
@@ -116,11 +115,11 @@
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <std::pair<Nonnull<Expression*>, bool>> return_type
 %type <Nonnull<Expression*>> paren_expression
-%type <Nonnull<Expression*>> struct_literal
+%type <Nonnull<StructLiteral*>> struct_literal
 %type <std::vector<FieldInitializer>> struct_literal_contents
-%type <Nonnull<Expression*>> struct_type_literal
+%type <Nonnull<StructTypeLiteral*>> struct_type_literal
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
-%type <Nonnull<Expression*>> tuple
+%type <Nonnull<TupleLiteral*>> tuple
 %type <std::optional<std::string>> binding_lhs
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <Nonnull<Member*>> member
@@ -164,7 +163,7 @@
   EQUAL_EQUAL
   FALSE
   FN
-  FNTY
+  FN_TYPE
   IF
   IMPL
   IMPORT
@@ -377,7 +376,7 @@ expression:
           context.source_loc(), Operator::Ptr,
           std::vector<Nonnull<Expression*>>({$1}));
     }
-| FNTY tuple return_type
+| FN_TYPE tuple return_type
     {
       auto [return_exp, is_omitted_exp] = $3;
       $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, return_exp,
@@ -577,7 +576,7 @@ statement:
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
-| CONTINUATION identifier statement
+| CONTINUATION identifier block
     { $$ = arena->New<Continuation>(context.source_loc(), $2, $3); }
 | RUN expression SEMICOLON
     { $$ = arena->New<Run>(context.source_loc(), $2); }
@@ -592,7 +591,10 @@ optional_else:
   // Empty
     { $$ = std::nullopt; }
 | ELSE if_statement
-    { $$ = $2; }
+    {
+      $$ = arena->New<Block>(context.source_loc(),
+                             std::vector<Nonnull<Statement*>>({$2}));
+    }
 | ELSE block
     { $$ = $2; }
 ;
@@ -604,21 +606,24 @@ return_expression:
 ;
 statement_list:
   // Empty
-    { $$ = std::nullopt; }
-| nonempty_statement_list
-    { $$ = $1; }
-;
-nonempty_statement_list:
-  statement statement_list
-    { $$ = arena->New<Sequence>(context.source_loc(), $1, $2); }
+    { $$ = {}; }
+| statement_list statement
+    {
+      $$ = std::move($1);
+      $$.push_back($2);
+    }
 ;
 block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.source_loc(), $2); }
+    { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
 ;
 nonempty_block:
-  LEFT_CURLY_BRACE nonempty_statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.source_loc(), $2); }
+  LEFT_CURLY_BRACE statement_list statement RIGHT_CURLY_BRACE
+    {
+      $2.push_back($3);
+      $$ = arena->New<Block>(context.source_loc(), std::move($2));
+    }
+;
 return_type:
   // Empty
     { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }
