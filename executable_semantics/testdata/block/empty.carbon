@@ -15,7 +15,7 @@ fn DoNothing() {
   // Empty block
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: i32 = 0;
   DoNothing();
   return x;

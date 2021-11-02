@@ -13,7 +13,7 @@ package ExecutableSemanticsTest api;
 
 fn f(x: i32, y: i32) -> i32 { return x + y; }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var xy: (i32, i32) = (1, 2);
   // should fail to type-check
   return f(xy);

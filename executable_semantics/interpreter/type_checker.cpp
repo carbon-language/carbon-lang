@@ -1044,8 +1044,8 @@ auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
       TypeCheckPattern(&f->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
   auto return_type = interpreter_.InterpPattern(values, &f->return_type());
-  if (f->name() == "main") {
-    ExpectExactType(f->source_loc(), "return type of `main`",
+  if (f->name() == "Main") {
+    ExpectExactType(f->source_loc(), "return type of `Main`",
                     arena_->New<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
@@ -1230,7 +1230,7 @@ auto TypeChecker::TopLevel(std::vector<Nonnull<Declaration*>>* fs)
   bool found_main = false;
 
   for (auto const& d : *fs) {
-    if (GetName(*d) == "main") {
+    if (GetName(*d) == "Main") {
       found_main = true;
     }
     TopLevel(d, &tops);
@@ -1238,7 +1238,7 @@ auto TypeChecker::TopLevel(std::vector<Nonnull<Declaration*>>* fs)
 
   if (found_main == false) {
     FATAL_COMPILATION_ERROR_NO_LINE()
-        << "program must contain a function named `main`";
+        << "program must contain a function named `Main`";
   }
   return tops;
 }

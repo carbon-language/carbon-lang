@@ -13,7 +13,7 @@ package ExecutableSemanticsTest api;
 
 // Test creating and running a continuation.
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: i32 = 0;
   __continuation k {
     x = x + 1;

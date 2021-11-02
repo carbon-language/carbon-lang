@@ -9,6 +9,6 @@
 // AUTOUPDATE: executable_semantics %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/package/fail_missing.carbon:12: syntax error, unexpected FN, expecting PACKAGE
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

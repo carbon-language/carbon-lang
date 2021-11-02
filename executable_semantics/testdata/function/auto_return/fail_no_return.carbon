@@ -14,6 +14,6 @@ package ExecutableSemanticsTest api;
 fn NoReturn() -> auto {
 }
 
-fn main() {
+fn Main() {
   NoReturn();
 }

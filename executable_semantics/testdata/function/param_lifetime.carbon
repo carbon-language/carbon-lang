@@ -19,7 +19,7 @@ fn f(x: i32) -> i32 {
   return 0;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var a: i32 = 0; var b: i32 = 1;
   f(a);
   b = a;

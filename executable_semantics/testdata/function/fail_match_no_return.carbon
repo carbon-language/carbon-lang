@@ -11,7 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: i32 = 0;
   match(0) {
     case 1 => { x = 1; }
