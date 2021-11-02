@@ -15,6 +15,6 @@ fn fst[T:! Type](x: T, y: T) -> T {
   return x;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return fst(0, 1);
 }

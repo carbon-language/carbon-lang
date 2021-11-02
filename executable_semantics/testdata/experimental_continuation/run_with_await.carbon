@@ -14,7 +14,7 @@ package ExecutableSemanticsTest api;
 // Test pausing a continuation with `__await` and restarting it with
 // `__run`.
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: i32 = 0;
   __continuation k {
     x = x + 1;

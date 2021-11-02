@@ -15,6 +15,6 @@ fn f(x: i32) -> i32 {
   return x - 1;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return f(1);
 }
