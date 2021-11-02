@@ -180,7 +180,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     case Expression::Kind::Unimplemented: {
-      cast<Unimplemented<Expression>>(*this).PrintImpl(out);
+      out << cast<Unimplemented<Expression>>(*this).printed_form();
       break;
     }
   }

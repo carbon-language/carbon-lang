@@ -45,7 +45,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     }
 
     case Kind::Unimplemented:
-      cast<Unimplemented<Declaration>>(*this).PrintImpl(out);
+      out << cast<Unimplemented<Declaration>>(*this).printed_form();
   }
 }
 

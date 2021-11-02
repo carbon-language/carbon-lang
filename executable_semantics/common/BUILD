@@ -5,26 +5,6 @@
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
-    name = "any_printable_ptr",
-    hdrs = ["any_printable_ptr.h"],
-    deps = [
-        ":nonnull",
-        "//common:ostream",
-    ],
-)
-
-cc_test(
-    name = "any_printable_ptr_test",
-    srcs = ["any_printable_ptr_test.cpp"],
-    deps = [
-        ":any_printable_ptr",
-        "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
-    ],
-)
-
-cc_library(
     name = "arena",
     hdrs = ["arena.h"],
     deps = [

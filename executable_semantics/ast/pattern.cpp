@@ -53,7 +53,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << cast<ExpressionPattern>(*this).expression();
       break;
     case Kind::Unimplemented:
-      cast<Unimplemented<Pattern>>(*this).PrintImpl(out);
+      out << cast<Unimplemented<Pattern>>(*this).printed_form();
   }
 }
 

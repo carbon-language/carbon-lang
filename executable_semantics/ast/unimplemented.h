@@ -10,7 +10,6 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/source_location.h"
-#include "executable_semantics/common/any_printable_ptr.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -23,37 +22,70 @@ template <typename NodeBase>
 class Unimplemented : public NodeBase {
  public:
   // Constructs an Unimplemented node standing in for a future node type named
-  // `kind`, with the given children. The children need not be AST nodes, but
-  // can be any type that supports streaming to llvm::raw_ostream.
-  explicit Unimplemented(std::string kind,
-                         std::vector<AnyPrintablePtr> children,
-                         SourceLocation source_loc)
-      : NodeBase(NodeBase::Kind::Unimplemented, source_loc),
-        unimpl_kind_(std::move(kind)),
-        children_(std::move(children)) {}
+  // `kind`, with the given children. Each child must be a pointer to an
+  // object that supports streaming to llvm::raw_ostream, or a movable value
+  // that supports such streaming.
+  template <typename... Children>
+  explicit Unimplemented(std::string_view kind, SourceLocation source_loc,
+                         const Children&... children);
 
   static auto classof(const NodeBase* other) -> bool {
     return other->kind() == NodeBase::Kind::Unimplemented;
   }
 
-  auto children() const -> llvm::ArrayRef<AnyPrintablePtr> { return children_; }
-
-  // Prints an unambiguous representation of this node to `out`. Equivalent
-  // to `Print`, but with a separate name to avoid colliding with
-  // NodeBase::Print.
-  void PrintImpl(llvm::raw_ostream& out) const {
-    llvm::ListSeparator sep;
-    out << "Unimplemented" << unimpl_kind_ << "(";
-    for (const AnyPrintablePtr& child : children()) {
-      out << sep << child;
-    }
-    out << ")";
-  }
+  // Returns a printable representation of the subtree rooted at this node.
+  auto printed_form() const -> std::string_view { return printed_form_; }
 
  private:
-  std::string unimpl_kind_;
-  std::vector<AnyPrintablePtr> children_;
+  std::string printed_form_;
 };
+
+// Implementation details only below here.
+
+namespace UnimplementedInternal {
+
+// PrintChild(out, child) prints `child` to `out`. If `child` is a pointer
+// to a printable type, the pointee will be printed.
+template <typename Child, typename = std::enable_if_t<IsPrintable<Child>>>
+void PrintChild(llvm::raw_ostream& out, Nonnull<const Child*> child) {
+  out << *child;
+}
+
+template <typename Child, typename = std::enable_if_t<IsPrintable<Child>>>
+void PrintChild(llvm::raw_ostream& out, const Child& child) {
+  out << child;
+}
+
+// PrintChildren(out, children...) prints each of `children` to `out`,
+// separated by commas.
+inline void PrintChildren(llvm::raw_ostream&) {}
+
+template <typename Child>
+void PrintChildren(llvm::raw_ostream& out, const Child& child) {
+  PrintChild(out, child);
+}
+
+template <typename Child, typename... Children>
+void PrintChildren(llvm::raw_ostream& out, const Child& child,
+                   const Children&... children) {
+  PrintChild(out, child);
+  out << ", ";
+  PrintChildren(out, children...);
+}
+
+}  // namespace UnimplementedInternal
+
+template <typename NodeBase>
+template <typename... Children>
+Unimplemented<NodeBase>::Unimplemented(std::string_view kind,
+                                       SourceLocation source_loc,
+                                       const Children&... children)
+    : NodeBase(NodeBase::Kind::Unimplemented, source_loc) {
+  printed_form_.append(llvm::join_items("", "Unimplemented", kind, "("));
+  llvm::raw_string_ostream out(printed_form_);
+  UnimplementedInternal::PrintChildren(out, children...);
+  printed_form_.append(")");
+}
 
 }  // namespace Carbon
 

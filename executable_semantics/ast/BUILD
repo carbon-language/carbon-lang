@@ -151,7 +151,19 @@ cc_library(
     hdrs = ["unimplemented.h"],
     deps = [
         ":source_location",
-        "//executable_semantics/common:any_printable_ptr",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "unimplemented_test",
+    srcs = ["unimplemented_test.cpp"],
+    deps = [
+        ":expression",
+        ":unimplemented",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
     ],
 )

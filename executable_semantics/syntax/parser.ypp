@@ -71,7 +71,6 @@
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
   #include "executable_semantics/ast/unimplemented.h"
-  #include "executable_semantics/common/any_printable_ptr.h"
   #include "executable_semantics/common/arena.h"
   #include "executable_semantics/common/nonnull.h"
   #include "executable_semantics/syntax/bison_wrap.h"
@@ -389,9 +388,8 @@ expression:
     }
 | expression UNIMPL_EXAMPLE expression
     {
-      $$ = arena->New<Unimplemented<Expression>>(
-          "ExampleInfix", std::vector<AnyPrintablePtr>{$1, $3},
-          context.source_loc());
+      $$ = arena->New<Unimplemented<Expression>>("ExampleInfix",
+                                                 context.source_loc(), $1, $3);
     }
 ;
 designator: PERIOD identifier { $$ = $2; }

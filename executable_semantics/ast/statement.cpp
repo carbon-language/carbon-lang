@@ -129,7 +129,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       out << "await;";
       break;
     case Kind::Unimplemented:
-      cast<Unimplemented<Statement>>(*this).PrintImpl(out);
+      out << cast<Unimplemented<Statement>>(*this).printed_form();
   }
 }
 
