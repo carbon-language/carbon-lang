@@ -8,14 +8,15 @@
 # - performance-unnecessary-value-param is disabled because it duplicate
 #   modernize-pass-by-value.
 Checks:
-  -*, bugprone-*, -bugprone-narrowing-conversions, google-*,
-  -google-readability-todo, misc-definitions-in-headers, misc-misplaced-const,
-  misc-redundant-expression, misc-static-assert,
-  misc-unconventional-assign-operator, misc-uniqueptr-reset-release,
-  misc-unused-*, modernize-*, -modernize-avoid-c-arrays,
-  -modernize-use-default-member-init, -modernize-use-emplace,
-  -modernize-use-nodiscard, performance-*, -performance-unnecessary-value-param,
-  readability-braces-around-statements, readability-identifier-naming
+  -*, bugprone-*, -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions, google-*, -google-readability-todo,
+  misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
+  misc-static-assert, misc-unconventional-assign-operator,
+  misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
+  -modernize-avoid-c-arrays, -modernize-use-default-member-init,
+  -modernize-use-emplace, -modernize-use-nodiscard, performance-*,
+  -performance-unnecessary-value-param, readability-braces-around-statements,
+  readability-identifier-naming
 WarningsAsErrors: true
 CheckOptions:
   - { key: readability-identifier-naming.ClassCase, value: CamelCase }
