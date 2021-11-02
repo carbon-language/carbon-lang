@@ -11,16 +11,18 @@ namespace Carbon {
 
 // Support ostream << for types which implement:
 //   void Print(llvm::raw_ostream& out) const;
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
+template <typename T,
+          typename std::enable_if_t<std::is_member_function_pointer_v<
+              decltype(&T::Print)>>* = nullptr>
 auto operator<<(llvm::raw_ostream& out, const T& obj) -> llvm::raw_ostream& {
   obj.Print(out);
   return out;
 }
 
 // Prevents ostream << for pointers to printable types.
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
+template <typename T,
+          typename std::enable_if_t<std::is_member_function_pointer_v<
+              decltype(&T::Print)>>* = nullptr>
 __attribute__((unavailable(
     "Received a pointer to a printable type, are you missing a `*`? "
     "To print as a pointer, cast to void*."))) auto
