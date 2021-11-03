@@ -13,6 +13,7 @@ cc_library(
     deps = [
         ":declaration",
         ":library_name",
+        ":static_scope",
     ],
 )
 
@@ -39,6 +40,7 @@ cc_library(
         ":pattern",
         ":source_location",
         ":statement",
+        ":static_scope",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -101,6 +103,7 @@ cc_library(
     deps = [
         ":expression",
         ":source_location",
+        ":static_scope",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -120,9 +123,23 @@ cc_test(
 )
 
 cc_library(
+    name = "static_scope",
+    srcs = ["static_scope.cpp"],
+    hdrs = ["static_scope.h"],
+    deps = [
+        ":source_location",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
+    ],
+)
+
+cc_library(
     name = "source_location",
     hdrs = ["source_location.h"],
-    deps = ["//common:ostream"],
+    deps = [
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+    ],
 )
 
 cc_library(

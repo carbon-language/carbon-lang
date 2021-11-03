@@ -117,8 +117,8 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
         AllocationId a =
-            heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
-        new_env.Set(deduced.name, a);
+            heap_.AllocateValue(arena_->New<VariableType>(deduced.name()));
+        new_env.Set(deduced.name(), a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
       AllocationId a = heap_.AllocateValue(f);
