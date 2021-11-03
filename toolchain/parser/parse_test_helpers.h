@@ -5,12 +5,13 @@
 #ifndef TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
 #define TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
 
+#include <gmock/gmock.h>
+
 #include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

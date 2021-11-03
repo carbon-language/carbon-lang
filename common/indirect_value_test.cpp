@@ -4,9 +4,9 @@
 
 #include "common/indirect_value.h"
 
-#include <string>
+#include <gtest/gtest.h>
 
-#include "gtest/gtest.h"
+#include <string>
 
 namespace Carbon {
 namespace {
