@@ -4,7 +4,8 @@
 
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
-# The filegroups establishing root rules for `genquery` invocations can be updaated by running:
+# The filegroups establishing root rules for `genquery` invocations can be
+# updated by running:
 #
 # ```
 # ./bazel/check_deps/update_roots.py
