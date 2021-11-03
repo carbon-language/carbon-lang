@@ -13,7 +13,7 @@ package ExecutableSemanticsTest api;
 
 // Test that assignment performs a copy and does not create an alias.
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: i32 = -1;
   {
      var y: i32 = 0;

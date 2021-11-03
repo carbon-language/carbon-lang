@@ -11,12 +11,12 @@
 
 package ExecutableSemanticsTest api;
 
-fn map[T:! Type](f: fnty (T) -> T, tuple: (T, T)) -> (T, T) {
+fn map[T:! Type](f: __Fn (T) -> T, tuple: (T, T)) -> (T, T) {
   return (f(tuple[0]), f(tuple[1]));
 }
 
 fn inc(x: i32) -> i32 { return x + 1; }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return map(inc, (0, 2))[0];
 }
