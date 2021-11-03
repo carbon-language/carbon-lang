@@ -125,7 +125,7 @@ The interface `SymmetricCommonTypeWith` is an implementation detail of the
 interface SymmetricCommonTypeWith(U:! Type) {
   let Result:! Type
     where Self is ImplicitAs(.Self) and
-          .Self is ImplicitAs(Self);
+          U is ImplicitAs(.Self);
 }
 impl [T:! Type, U:! CommonTypeWith(T)] T as SymmetricCommonTypeWith(U) {
   let Result:! Type = U.Result;
