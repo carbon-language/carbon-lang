@@ -80,12 +80,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Difference between blanket impls and named constraints](#difference-between-blanket-impls-and-named-constraints)
     -   [Wildcard impls](#wildcard-impls)
         -   [Automatic implicit conversion](#automatic-implicit-conversion)
+    -   [Combinations](#combinations)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
         -   [Orphan rule](#orphan-rule)
         -   [Overlap rule](#overlap-rule)
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
+        -   [Termination rule](#termination-rule)
         -   [Comparison to Rust](#comparison-to-rust)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -3605,12 +3607,24 @@ A _blanket impl_ is an `impl` that could apply to more than one type, so the
 `impl` will use a type variable for the `Self` type. Here are some examples
 where blanket impls arise:
 
--   If `T` implements `As(U)`, then `Optional(T)` should implement
-    `As(Optional(U))`.
 -   Any type implementing `Ordered` should get an implementation of
     `PartiallyOrdered`.
--   `T` should implement `CommonType(T)` for all `T`, with
-    `(T as CommonType(T)).Result == T`.
+
+    ```
+    external impl [T:! Ordered] T as PartiallyOrdered { ... }
+    ```
+
+-   `T` implements `CommonType(T)` for all `T`
+
+    ```
+    external impl [T:! Type] T as CommonType(T) {
+      let Result:! auto = T;
+    }
+    ```
+
+    This means that every type is the common type with itself.
+
+Blanket impls must always be [external](#external-impl).
 
 FIXME: Question: do we ever want to guarantee consistency by allowing a blanket
 impl to forbid any specialization. For example, forbidding any overriding of the
@@ -3618,11 +3632,6 @@ impl to forbid any specialization. For example, forbidding any overriding of the
 big concern is that we don't have a total order on impls, and this can easily In
 other cases, we will want to support overriding for efficiency, such as an
 implementation of `+=` in terms of `+` and `=`.
-
-FIXME: Exclude things that could introduce a cycle?
-
--   If `T` implements `ComparableWith(U)`, then `U` should implement
-    `ComparableWith(T)`.
 
 #### Difference between blanket impls and named constraints
 
@@ -3685,6 +3694,18 @@ parameters provided by the implementing function, and can implicitly convert
 from the return type of the implementing function to the return type expected by
 the interface.
 
+### Combinations
+
+The different kinds of parameters to impls may be combined. For example, if `T`
+implements `As(U)`, then this implements `As(Optional(U))` for `Optional(T)`:
+
+```
+external impl [U:! Type, T:! As(U)]
+  Optional(T) as As(Optional(U)) { ... }
+```
+
+This has a wildcard parameter `U`, and a condition on parameter `T`.
+
 ### Lookup resolution and specialization
 
 As much as possible, we want rules for where an impl is allowed to be defined
@@ -3716,6 +3737,12 @@ the same library. Combined with no cyclic library dependencies, we conclude that
 there is at most one library that can define impls with a particular type
 structure.
 
+**Orphan rule:** An `impl` may only be defined in a library that must be a
+dependency of any query where that `impl` could apply. This is accomplished by
+only allowing `impl` signatures involving a _local_ type or interface outside of
+constraints. Here "local" is a type or interface defined in the same library as
+the `impl`.
+
 FIXME **Future work:** Support the `&str + &str` -> `String` case. Also support,
 given two libraries A and B, would like to somehow have implementations of
 interfaces in A for types in B without a dependency relationship between A and
@@ -3740,6 +3767,39 @@ defined?
 **Open question:** How are prioritization blocks written?
 
 #### Acyclic rule
+
+FIXME: Exclude things that could introduce a cycle
+
+**Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
+`ComparableWith(T)`.
+
+```
+external impl [U:! Type, T:! ComparableWith(U)]
+    U as ComparableWith(T);
+```
+
+This is a cycle where which types implement `ComparableWith` determines which
+types implement the same interface. A query
+
+**Example:** Cycles can create contradictions in the type system. Consider these
+two blanket `impl` declarations:
+
+```
+impl [T:! Type, U:! ImplicitAs(T)] T as CommonTypeWith(U) { ... }
+impl [T:! Type, U:! ImplicitAs(T) & CommonTypeWith(T)]
+    T as CommonTypeWith(U) { ... }
+```
+
+If `U is ImplicitAs(T)`, then it will choose the second impl if
+`U is CommonTypeWith(T)`. If both `T is ImplicitAs(U)` and `U is ImplicitAs(T)`,
+then which of the two impls will be used?
+
+-   `U is ImplicitAs(T)` gives a definition of `T as CommonTypeWith(U)` using
+    the first impl as long as not `U is CommonTypeWith(T)`.
+-   `T is ImplicitAs(U)` gives a definition of `U as CommonTypeWith(T)` using
+    the first impl as long as not `T is CommonTypeWith(U)`.
+
+#### Termination rule
 
 FIXME
 
