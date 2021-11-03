@@ -49,12 +49,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Conditional methods](#conditional-methods)
     -   [Blanket impls](#blanket-impls)
         -   [Difference between blanket impls and constraints](#difference-between-blanket-impls-and-constraints)
+    -   [Wildcard impls](#wildcard-impls)
+        -   [Automatic implicit conversion](#automatic-implicit-conversion)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
         -   [Orphan rule](#orphan-rule)
         -   [Overlap rule](#overlap-rule)
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
+        -   [Comparison to Rust](#comparison-to-rust)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -2291,11 +2294,7 @@ external impl [T:! Type] Vector(T) as Iterable {
   let ElementType:! Type = T;
   ...
 }
-```
-
-or equivalently:
-
-```
+// This syntax is also allowed:
 external impl Vector(T:! Type) as Iterable {
   let ElementType:! Type = T;
   ...
@@ -2320,7 +2319,8 @@ external impl [Key:! Hashable, Value:! Type]
     HashMap(Key, Value) as Has(Key) { ... }
 external impl [Key:! Hashable, Value:! Type]
     HashMap(Key, Value) as Contains(HashSet(Key)) { ... }
-// OR:
+
+// This syntax is also allowed:
 external impl HashMap(Key:! Hashable, Value:! Type)
     as Has(Key) { ... }
 external impl HashMap(Key:! Hashable, Value:! Type)
@@ -2372,8 +2372,8 @@ type between the `impl` and `as` keywords.
 ```
 class Array(T:! Type, template N:! Int) {
   // These are both allowed:
-  impl Array(P:! Printable, N) as Printable { ... }
   impl [P:! Printable] Array(P, N) as Printable { ... }
+  impl Array(P:! Printable, N) as Printable { ... }
 }
 ```
 
@@ -2439,25 +2439,25 @@ or
 
 ### Blanket impls
 
-FIXME: Maybe "blanket `impl`s" are just the case where the `Self` type is a type
-variable?
-
-Also known as "blanket `impl`s", these are when you have an `impl` definition
-that is parameterized so it applies to more than a single type and interface
-combination.
-
-FIXME: Blanket impls:
+A _blanket impl_ is an `impl` that could apply to more than one type, so the
+`impl` will use a type variable for the `Self` type. Here are some examples
+where blanket impls arise:
 
 -   If `T` implements `As(U)`, then `Optional(T)` should implement
     `As(Optional(U))`.
 -   Any type implementing `Ordered` should get an implementation of
-    `PartiallyOrdered`. Question: do we want to guarantee those two must be
-    consistent by forbidding any overriding of the `PartiallyOrdered`
-    implementation? In other cases, we will want to support overriding for
-    efficiency, such as an implementation of `+=` in terms of `+` and `=`.
--   `T` should implement `CommonType(T)` for all `T`
+    `PartiallyOrdered`.
+-   `T` should implement `CommonType(T)` for all `T`, with
+    `(T as CommonType(T)).Result == T`.
 
-FIXME: Exclude things that could introduce a cy
+FIXME: Question: do we ever want to guarantee consistency by allowing a blanket
+impl to forbid any specialization. For example, forbidding any overriding of the
+`PartiallyOrdered` implementation provided for types that implement `Ordered`? A
+big concern is that we don't have a total order on impls, and this can easily In
+other cases, we will want to support overriding for efficiency, such as an
+implementation of `+=` in terms of `+` and `=`.
+
+FIXME: Exclude things that could introduce a cycle?
 
 -   If `T` implements `ComparableWith(U)`, then `U` should implement
     `ComparableWith(T)`.
@@ -2475,14 +2475,72 @@ are differences though:
 -   More specialized implementations of `B` can override the blanket
     implementation.
 
+### Wildcard impls
+
+A _wildcard impl_ is an impl that defines a family of interfaces for a single
+`Self` type. For example, the `BigInt` type might implement `AddTo(T)` for all
+`T` that implement `ImplicitAs(i32)`. The implementation would first convert `T`
+to `i32` and then add the `i32` to the `BigInt` value.
+
+```
+class BigInt {
+  impl [T:! ImplicitAs(i32)] as AddTo(T) { ... }
+  // Or:
+  impl as AddTo(T:! ImplicitAs(i32)) { ... }
+
+  // Or externally:
+  extern impl [T:! ImplicitAs(i32)] as AddTo(T) { ... }
+  // Or:
+  extern impl as AddTo(T:! ImplicitAs(i32)) { ... }
+}
+// Or out-of-line and external:
+extern impl [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
+// Or:
+extern impl BigInt as AddTo(T:! ImplicitAs(i32)) { ... }
+```
+
+#### Automatic implicit conversion
+
+In this case:
+
+```
+class BigInt {
+  impl [T:! ImplicitAs(i32)] as AddTo(T) {
+    let AddResult:! auto = Self;
+    fn Add[me: Self](x: i32) -> Self { ... }
+  }
+}
+```
+
+Carbon will automatically provide the wrapper with the signature for `Add` that
+the `AddTo(T)` interface expects, converting from `T` to `i32`. Note that this
+is only allowed because `T` is known to be implicitly convertible to `i32`, in
+this case since it has a constraint that it implements `ImplicitAs(i32)`.
+
+In general, Carbon allows an interface to be satisfied by a function as long as
+it can implicitly convert from the parameter types the interface expects to the
+parameters provided by the implementing function, and can implicitly convert
+from the return type of the implementing function to the return type expected by
+the interface.
+
 ### Lookup resolution and specialization
 
-As much as possible, we want rules that (a) give us coherence and (b) allow
-libraries to work together as long as they pass their separate checks.
+As much as possible, we want rules for where an impl is allowed to be defined
+and for selecting which impl to use that achieve these three goals:
+
+-   Implementations have coherence, as
+    [defined in terminology](terminology.md#coherence). This is
+    [a goal for Carbon](goals.md#coherence). More detail can be found in
+    [this appendix with the rationale and alternatives considered](appendix-coherence.md).
+-   Libraries will work together as long as they pass their separate checks.
+-   A generic function can assume that some impl will be successfully selected
+    if it can see an impl that applies, even though another more specific impl
+    may be selected.
 
 For this to work, we need a rule that picks a single `impl` in the case where
 there are multiple `impl` definitions that match a particular type and interface
-combination.
+combination. This is called _specialization_ when the rule is that most specific
+implementation is chosen, for some definition of specific.
 
 #### Type structure of an impl declaration
 
@@ -2490,19 +2548,67 @@ FIXME
 
 #### Orphan rule
 
-FIXME
+FIXME: An impl must only be defined in a library that must be imported for it to
+be used. This means that some name from the type structure must be defined in
+the same library. Combined with no cyclic library dependencies, we conclude that
+there is at most one library that can define impls with a particular type
+structure.
+
+FIXME **Future work:** Support the `&str + &str` -> `String` case. Also support,
+given two libraries A and B, would like to somehow have implementations of
+interfaces in A for types in B without a dependency relationship between A and
+B. See
+[Rust RFC #1856: "Orphan rules are stricter than we would like"](https://github.com/rust-lang/rfcs/issues/1856).
 
 #### Overlap rule
 
-FIXME
+FIXME: Given matching impls with different type structures, we pick the impl
+with the "most specific" type structure, under a particular ordering of type
+structures.
 
 #### Prioritization rule
 
-FIXME
+FIXME: Given impls with the same type structure, they all must be defined in the
+same library. Within that library,
+
+**Open question:** Do we require that impls with the same type structure are
+always in the same prioritization block, or just when the intersection isn't
+defined?
+
+**Open question:** How are prioritization blocks written?
 
 #### Acyclic rule
 
 FIXME
+
+#### Comparison to Rust
+
+FIXME: Rust has not yet shipped specialization. It is hampered by the need to
+maintain compatibility with existing Rust code, which motivates a number of Rust
+rules where Carbon can be simpler.
+
+FIXME: can always specialize, no opt-in or opt-out
+
+FIXME: no "fundamental" types or interfaces/traits, see
+[Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
+
+FIXME: no assumption that if a blanket impl matches that the associated types
+from the blanket impl will be used. If that is a requirement of the function, it
+needs to be stated as an explicit constraint.
+
+FIXME: no "covering" rules, see
+[Rust RFC 2451: "Re-Rebalancing Coherence"](https://rust-lang.github.io/rfcs/2451-re-rebalancing-coherence.html)
+and
+[Little Orphan Impls: The covered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-covered-rule).
+
+FIXME: Carbon does use ordering, favoring the `Self` type and then the
+parameters to the interface in left-to-right order, see
+[Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
+and
+[Little Orphan Impls: The ordered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-ordered-rule),
+but the specifics are different.
+
+FIXME: different plans for handling overlap
 
 ## Future work
 
