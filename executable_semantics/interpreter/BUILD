@@ -2,10 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = [
-    "//bazel/check_deps:__pkg__",
-    "//executable_semantics:__pkg__",
-])
+package(default_visibility = ["//executable_semantics:__pkg__"])
 
 # These currently have to be a single build rule because of a dependency cycle
 # in printing.
