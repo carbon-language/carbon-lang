@@ -172,7 +172,9 @@ class Interpreter {
   Stack<std::unique_ptr<Action>> todo_;
   Heap heap_;
 
-  // The underlying states of continuation values.
+  // The underlying states of continuation values. All StackFragments created
+  // during execution are tracked here, in order to safely deallocate the
+  // contents of any non-completed continuations at the end of execution.
   std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
 
   bool trace_;
