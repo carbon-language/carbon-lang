@@ -75,7 +75,7 @@ TypeChecker::ReturnTypeContext::ReturnTypeContext(
                                     : std::optional(orig_return_type)),
       is_omitted_(is_omitted) {}
 
-void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
+void TypeChecker::PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
   for (const auto& [name, type] : types) {
     out << sep << name << ": " << *type;
@@ -238,15 +238,9 @@ static void ExpectType(SourceLocation source_loc, const std::string& context,
   }
 }
 
-// Perform type argument deduction, matching the parameter type `param`
-// against the argument type `arg`. Whenever there is an VariableType
-// in the parameter type, it is deduced to be the corresponding type
-// inside the argument type.
-// The `deduced` parameter is an accumulator, that is, it holds the
-// results so-far.
-static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
-                              Nonnull<const Value*> param,
-                              Nonnull<const Value*> arg) -> TypeEnv {
+auto TypeChecker::ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
+                                    Nonnull<const Value*> param,
+                                    Nonnull<const Value*> arg) -> TypeEnv {
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
@@ -1140,8 +1134,18 @@ static auto GetName(const Declaration& d) -> const std::string& {
   }
 }
 
-void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
-                            const Env& values) {
+void TypeChecker::TypeCheck(AST& ast) {
+  TypeCheckContext p = TopLevel(&ast.declarations);
+  TypeEnv top = p.types;
+  Env ct_top = p.values;
+  for (const auto decl : ast.declarations) {
+    TypeCheckDeclaration(decl, top, ct_top);
+  }
+}
+
+void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
+                                       const TypeEnv& types,
+                                       const Env& values) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
       TypeCheckFunDef(&cast<FunctionDeclaration>(*d), types, values);
