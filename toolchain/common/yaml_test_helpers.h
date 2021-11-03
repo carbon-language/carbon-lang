@@ -47,13 +47,15 @@
 #ifndef TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
 #define TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <variant>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "common/ostream.h"
 
 namespace Carbon {
 namespace Testing {
