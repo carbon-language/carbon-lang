@@ -54,8 +54,8 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
       if (i != 0) {
         out << ", ";
       }
-      out << deduced.name << ":! ";
-      deduced.type->Print(out);
+      out << deduced.name() << ":! ";
+      deduced.type().Print(out);
       ++i;
     }
     out << "]";

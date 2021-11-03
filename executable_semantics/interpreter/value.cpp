@@ -217,7 +217,7 @@ void Value::Print(llvm::raw_ostream& out) const {
           if (i != 0) {
             out << ", ";
           }
-          out << deduced.name << ":! " << *deduced.type;
+          out << deduced.name() << ":! " << deduced.type();
           ++i;
         }
         out << "]";

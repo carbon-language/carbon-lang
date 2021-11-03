@@ -108,7 +108,7 @@
 %type <Nonnull<Block*>> block
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
-%type <GenericBinding> generic_binding
+%type <BisonWrap<GenericBinding>> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
 %type <std::vector<GenericBinding>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
@@ -632,7 +632,7 @@ return_type:
 ;
 generic_binding:
   identifier COLON_BANG expression
-    { $$ = GenericBinding({.name = std::move($1), .type = $3}); }
+    { $$ = GenericBinding(context.source_loc(), std::move($1), $3); }
 ;
 deduced_param_list:
   // Empty
@@ -696,11 +696,12 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = ChoiceDeclaration::Alternative($1, $2); }
+    { $$ = ChoiceDeclaration::Alternative(context.source_loc(), $1, $2); }
 | identifier
     {
       $$ = ChoiceDeclaration::Alternative(
-          $1, arena->New<TupleLiteral>(context.source_loc()));
+          context.source_loc(), $1,
+          arena->New<TupleLiteral>(context.source_loc()));
     }
 ;
 alternative_list:

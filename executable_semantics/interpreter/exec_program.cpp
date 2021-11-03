@@ -9,6 +9,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/resolve_control_flow.h"
+#include "executable_semantics/interpreter/resolve_names.h"
 #include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
@@ -45,6 +46,9 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
+  // Although name resolution is currently done once, generic programming
+  // (particularly templates) may require more passes.
+  ResolveNames(arena, ast);
   ResolveControlFlow(ast);
   TypeChecker type_checker(arena, trace);
   TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);
