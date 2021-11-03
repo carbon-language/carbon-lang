@@ -41,3 +41,14 @@ mypy_test(
     include_imports = True,
     deps = [":check_non_test_cc_deps"],
 )
+
+py_binary(
+    name = "update_roots",
+    srcs = ["update_roots.py"],
+)
+
+mypy_test(
+    name = "update_roots_mypy_test",
+    include_imports = True,
+    deps = [":update_roots"],
+)
