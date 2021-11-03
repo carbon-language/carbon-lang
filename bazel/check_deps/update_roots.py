@@ -46,6 +46,7 @@ non_test_cc_roots_query = subprocess.run(
     [
         bazel,
         "query",
+        "--noshow_progress",
         "--noimplicit_deps",
         "--notool_deps",
         "--output=minrank",
@@ -56,24 +57,23 @@ non_test_cc_roots_query = subprocess.run(
     ],
     check=True,
     stdout=subprocess.PIPE,
-    stderr=subprocess.DEVNULL,
     universal_newlines=True,
 ).stdout
-roots = [
-    target
-    for rank, target in [
-        line.split() for line in non_test_cc_roots_query.splitlines()
-    ]
-    if int(rank) == 0
-]
+ranked_targets = [line.split() for line in non_test_cc_roots_query.splitlines()]
+roots = [target for rank, target in ranked_targets if int(rank) == 0]
+print("Found roots:\n%s" % "\n".join(roots))
 
 print("Replace non-test C++ roots in the BUILD file...")
-subprocess.run(
+buildozer_run = subprocess.run(
     [
         buildozer,
         "remove data",
     ]
     + ["add data '%s'" % root for root in roots]
     + ["//bazel/check_deps:non_test_cc_rules"],
-    check=True,
 )
+if buildozer_run.returncode == 3:
+    print("No changes needed!")
+else:
+    buildozer_run.check_returncode()
+    print("Successfully updated roots in the BUILD file!")
