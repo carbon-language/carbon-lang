@@ -42,6 +42,8 @@ mypy_test(
     deps = [":check_non_test_cc_deps"],
 )
 
+# Note that this script expects to be run directly and not via Bazel as it in
+# turn invokes Bazel.
 py_binary(
     name = "update_roots",
     srcs = ["update_roots.py"],
