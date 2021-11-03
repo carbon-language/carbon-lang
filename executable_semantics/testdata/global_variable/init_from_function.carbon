@@ -19,6 +19,6 @@ fn f() -> i32 {
 
 var y: i32 = f();
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return y;
 }

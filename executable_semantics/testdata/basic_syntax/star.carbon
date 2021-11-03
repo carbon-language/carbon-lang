@@ -20,6 +20,6 @@ fn F(n: i32, p: i32*, q: i32***) -> i32* {
   return **q;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

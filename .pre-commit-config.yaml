@@ -89,7 +89,7 @@ repos:
         name: Format the executable_semantics grammar file
         entry: executable_semantics/syntax/format_grammar.py
         language: python
-        files: ^executable_semantics/syntax/parser.ypp$
+        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
