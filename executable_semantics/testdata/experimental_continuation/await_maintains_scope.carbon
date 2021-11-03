@@ -13,7 +13,7 @@ package ExecutableSemanticsTest api;
 
 // Test access to block-scoped variables upon resuming a continuation.
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var y: i32 = 0;
   __continuation k {
     var x: i32 = 0;

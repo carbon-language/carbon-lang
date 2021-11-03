@@ -15,6 +15,6 @@ fn Id(t: Type) -> auto { return t; }
 
 // Test non-trivial type expression in return type.
 
-fn main() -> Id(i32) {
+fn Main() -> Id(i32) {
   return 0;
 }

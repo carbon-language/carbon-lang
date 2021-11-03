@@ -20,6 +20,6 @@ fn GetX(p: Point) -> i32 {
   return p.x;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return GetX({.x = 1, .y = 2}) - 1;
 }

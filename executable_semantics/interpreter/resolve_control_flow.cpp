@@ -45,24 +45,16 @@ static void ResolveControlFlow(
       return;
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*statement);
-      ResolveControlFlow(&if_stmt.then_statement(), function, loop);
-      if (if_stmt.else_statement().has_value()) {
-        ResolveControlFlow(*if_stmt.else_statement(), function, loop);
-      }
-      return;
-    }
-    case Statement::Kind::Sequence: {
-      auto& seq = cast<Sequence>(*statement);
-      ResolveControlFlow(&seq.statement(), function, loop);
-      if (seq.next().has_value()) {
-        ResolveControlFlow(*seq.next(), function, loop);
+      ResolveControlFlow(&if_stmt.then_block(), function, loop);
+      if (if_stmt.else_block().has_value()) {
+        ResolveControlFlow(*if_stmt.else_block(), function, loop);
       }
       return;
     }
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*statement);
-      if (block.statement().has_value()) {
-        ResolveControlFlow(*block.statement(), function, loop);
+      for (auto* block_statement : block.statements()) {
+        ResolveControlFlow(block_statement, function, loop);
       }
       return;
     }

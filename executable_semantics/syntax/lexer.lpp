@@ -51,7 +51,7 @@ EQUAL                "="
 EQUAL_EQUAL          "=="
 FALSE                "false"
 FN                   "fn"
-FNTY                 "fnty"
+FN_TYPE              "__Fn"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
@@ -144,7 +144,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL);         }
 {EQUAL}               { return SIMPLE_TOKEN(EQUAL);               }
 {FALSE}               { return SIMPLE_TOKEN(FALSE);               }
-{FNTY}                { return SIMPLE_TOKEN(FNTY);                }
+{FN_TYPE}             { return SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }

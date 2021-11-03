@@ -26,8 +26,8 @@ cc_library(
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
     ],
 )
 
@@ -37,9 +37,7 @@ cc_test(
     deps = [
         ":diagnostic_emitter",
         ":mocks",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )

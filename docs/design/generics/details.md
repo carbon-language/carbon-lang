@@ -21,12 +21,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
 -   [Type-of-types and facet types](#type-of-types-and-facet-types)
--   [Structural interfaces](#structural-interfaces)
+-   [Named constraints](#named-constraints)
     -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
 -   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [`extends` and `impl` with structural interfaces](#extends-and-impl-with-structural-interfaces)
+        -   [`extends` and `impl` with named constraints](#extends-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
@@ -42,7 +42,36 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
-    -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
+    -   [Parameterized named constraints](#parameterized-named-constraints)
+-   [Where constraints](#where-constraints)
+    -   [Constraint use cases](#constraint-use-cases)
+        -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
+        -   [Same type constraints](#same-type-constraints)
+            -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
+            -   [Equal generic types](#equal-generic-types)
+                -   [Satisfying both type-of-types](#satisfying-both-type-of-types)
+        -   [Type bound for associated type](#type-bound-for-associated-type)
+            -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
+            -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
+        -   [Combining constraints](#combining-constraints)
+        -   [Recursive constraints](#recursive-constraints)
+        -   [Parameterized type implements interface](#parameterized-type-implements-interface)
+        -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
+    -   [Implied constraints](#implied-constraints)
+        -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
+    -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
+    -   [Manual type equality](#manual-type-equality)
+        -   [`observe` declarations](#observe-declarations)
+-   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
+    -   [Is a derived class](#is-a-derived-class)
+    -   [Type compatible with another type](#type-compatible-with-another-type)
+        -   [Same implementation restriction](#same-implementation-restriction)
+        -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
+        -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
+    -   [Type facet of another type](#type-facet-of-another-type)
+    -   [Sized types and type-of-types](#sized-types-and-type-of-types)
+        -   [Model](#model-2)
+    -   [`TypeId`](#typeid)
 -   [Parameterized impls](#parameterized-impls)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
@@ -75,6 +104,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
+    -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -757,23 +787,22 @@ type-of-type.
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
 
-## Structural interfaces
+## Named constraints
 
-If the nominal interfaces discussed above are the building blocks for
-type-of-types, [structural interfaces](terminology.md#structural-interfaces)
-describe how they may be composed together. Unlike nominal interfaces, the name
-of a structural interface is not a part of its value. Two different structural
-interfaces with the same definition are equivalent even if they have different
-names. This is because types don't explicitly specify which structural
-interfaces they implement, types automatically implement any structural
-interfaces they can satisfy.
+If the interfaces discussed above are the building blocks for type-of-types,
+[generic named constraints](terminology.md#named-constraints) describe how they
+may be composed together. Unlike interfaces which are nominal, the name of a
+named constraint is not a part of its value. Two different named constraints
+with the same definition are equivalent even if they have different names. This
+is because types don't explicitly specify which named constraints they
+implement, types automatically implement any named constraints they can satisfy.
 
-A structural interface definition can contain interface requirements using
-`impl` declarations and names using `alias` declarations. Note that this allows
-us to declare the aspects of a type-of-type directly.
+A named constraint definition can contain interface requirements using `impl`
+declarations and names using `alias` declarations. Note that this allows us to
+declare the aspects of a type-of-type directly.
 
 ```
-structural interface VectorLegoFish {
+constraint VectorLegoFish {
   // Interface implementation requirements
   impl as Vector;
   impl as LegoFish;
@@ -784,12 +813,12 @@ structural interface VectorLegoFish {
 }
 ```
 
-We don't expect users do directly define many structural interfaces, but other
+We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
 example, we can define the Carbon builtin `Type` as:
 
 ```
-structural interface Type { }
+constraint Type { }
 ```
 
 That is, `Type` is the type-of-type with no requirements (so matches every
@@ -814,11 +843,21 @@ type, and this function will be instantiated separately for every different
 type." This is consistent with the
 [use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
 
-In general we should support the same kinds of declarations in a
-`structural interface` definitions as in an `interface`. Generally speaking
-declarations in one kind of interface make sense in the other, and there is an
-analogy between them. If an `interface` `I` has (non-`alias`) declarations `X`,
-`Y`, and `Z`, like so:
+In general, the declarations in `constraint` definition match a subset of the
+declarations in an `interface`. Named constraints used with generics, as opposed
+to templates, should only include required interfaces and aliases to named
+members of those interfaces.
+
+To declare a named constraint that includes other declarations for use with
+template parameters, use the `template` keyword before `constraint`. Method,
+associated type, and associated function requirements may only be declared
+inside a `template constraint`. Note that a generic constraint matches all
+facets of a type if it matches any, but a template constraint can depend on the
+specific names of members used in a particular facet.
+
+There is an analogy between declarations used in a `constraint` and in an
+`interface` definition. If an `interface` `I` has (non-`alias`) declarations
+`X`, `Y`, and `Z`, like so:
 
 ```
 interface I {
@@ -827,8 +866,6 @@ interface I {
   Z;
 }
 ```
-
-(Here, `X` could be something like `fn F[me: Self]()`.)
 
 Then a type implementing `I` would have `impl as I` with definitions for `X`,
 `Y`, and `Z`, as in:
@@ -844,10 +881,11 @@ class ImplementsI {
 }
 ```
 
-But the corresponding `structural interface`, `S`:
+But the corresponding `constraint` or `template constraint`, `S`:
 
 ```
-structural interface S {
+// or template constraint S {
+constraint S {
   X;
   Y;
   Z;
@@ -865,6 +903,9 @@ class ImplementsS {
 }
 ```
 
+**TODO:** Move the `template constraint` and `auto` content to the template
+design document, once it exists.
+
 ### Subtyping between type-of-types
 
 There is a subtyping relationship between type-of-types that allows you to call
@@ -881,11 +922,11 @@ implicitly converted to `T as I2`. For example:
 interface Printable { fn Print[me: Self](); }
 interface Renderable { fn Draw[me: Self](); }
 
-structural interface PrintAndRender {
+constraint PrintAndRender {
   impl as Printable;
   impl as Renderable;
 }
-structural interface JustPrint {
+constraint JustPrint {
   impl as Printable;
 }
 
@@ -921,7 +962,7 @@ interface Renderable {
 }
 
 // `Printable & Renderable` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Printable;
   impl as Renderable;
   alias Print = Printable.Print;
@@ -963,7 +1004,7 @@ interface EndOfGame {
   fn Winner[me: Self](player: i32);
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Renderable;
   impl as EndOfGame;
   alias Center = Renderable.Center;
@@ -975,11 +1016,11 @@ structural interface {
 ```
 
 Conflicts can be resolved at the call site using
-[the qualified name syntax](#qualified-member-names), or by defining a
-structural interface explicitly and renaming the methods:
+[the qualified name syntax](#qualified-member-names), or by defining a named
+constraint explicitly and renaming the methods:
 
 ```
-structural interface RenderableAndEndOfGame {
+constraint RenderableAndEndOfGame {
   impl as Renderable;
   impl as EndOfGame;
   alias Center = Renderable.Center;
@@ -1022,14 +1063,14 @@ and `B [&] A` has the names of `B`.
 
 ```
 // `Printable [&] Renderable` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Printable;
   impl as Renderable;
   alias Print = Printable.Print;
 }
 
 // `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
-structural interface {
+constraint {
   impl as Renderable;
   impl as EndOfGame;
   alias Center = Renderable.Center;
@@ -1065,7 +1106,7 @@ requires all containers to also satisfy the requirements of
 `Swappable`. This is already a capability for
 [type-of-types in general](#type-of-types-and-facet-types). For consistency we
 will use the same semantics and syntax as we do for
-[structural interfaces](#structural-interfaces):
+[named constraints](#named-constraints):
 
 ```
 interface Equatable { fn Equals[me: Self](that: Self) -> bool; }
@@ -1091,9 +1132,9 @@ var x: Iota;
 DoAdvanceAndEquals(x);
 ```
 
-Like with structural interfaces, an interface implementation requirement doesn't
-by itself add any names to the interface, but again those can be added with
-`alias` declarations:
+Like with named constraints, an interface implementation requirement doesn't by
+itself add any names to the interface, but again those can be added with `alias`
+declarations:
 
 ```
 interface Hashable {
@@ -1207,10 +1248,10 @@ interface PreferredConversion {
 }
 ```
 
-#### `extends` and `impl` with structural interfaces
+#### `extends` and `impl` with named constraints
 
 The `extends` declaration makes sense with the same meaning inside a
-[`structural interface`](#structural-interfaces), and so is also supported.
+[`constraint`](#named-constraints) definition, and so is also supported.
 
 ```
 interface Media {
@@ -1220,7 +1261,7 @@ interface Job {
   fn Run[me: Self]();
 }
 
-structural interface Combined {
+constraint Combined {
   extends Media;
   extends Job;
 }
@@ -1231,7 +1272,7 @@ This definition of `Combined` is equivalent to requiring both the `Media` and
 
 ```
 // Equivalent
-structural interface Combined {
+constraint Combined {
   impl as Media;
   alias Play = Media.Play;
   impl as Job;
@@ -1240,8 +1281,8 @@ structural interface Combined {
 ```
 
 Notice how `Combined` has aliases for all the methods in the interfaces it
-requires. That condition is sufficient to allow a type to `impl` the structural
-interface:
+requires. That condition is sufficient to allow a type to `impl` the named
+constraint:
 
 ```
 class Song {
@@ -1269,7 +1310,7 @@ This is just like you get an implementation of `Equatable` by implementing
 `Hashable` when `Hashable` extends `Equatable`. This provides a tool useful for
 [evolution](#evolution).
 
-Conversely, an `interface` can extend a `structural interface`:
+Conversely, an `interface` can extend a `constraint`:
 
 ```
 interface MovieCodec {
@@ -1640,7 +1681,7 @@ addition to using the same data representation, they both implement one
 interface, `Hashable`, and use the same implementation for that interface. The
 one difference between them is that `Song as Hashable` may be implicitly
 converted to `Song`, which implements interface `Printable`, and
-`PlayableSong as Hashable` may be implicilty converted to `PlayableSong`, which
+`PlayableSong as Hashable` may be implicitly converted to `PlayableSong`, which
 implements interface `Media`. This means that it is safe to convert between
 `HashMap(Song, i32)` and `HashMap(PlayableSong, i32)` (though maybe only with an
 explicit cast), since the implementation of all the methods will use the same
@@ -2240,11 +2281,1130 @@ one can unambiguously be picked as most specific.
 [a goal for Carbon](goals.md#coherence). More detail can be found in
 [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
-### Parameterized structural interfaces
+### Parameterized named constraints
 
-We should also allow the [structural interface](#structural-interfaces)
-construct to support parameters. Parameters would work the same way as for
-regular, that is nominal or non-structural, interfaces.
+We should also allow the [named constraint](#named-constraints) construct to
+support parameters. Parameters would work the same way as for interfaces.
+
+## Where constraints
+
+So far, we have restricted a generic type parameter by saying it has to
+implement an interface or a set of interfaces. There are a variety of other
+constraints we would like to be able to express, such as applying restrictions
+to its associated types and associated constants. This is done using the `where`
+operator that adds constraints to a type-of-type.
+
+The where operator can be applied to a type-of-type in a declaration context:
+
+```
+// Constraints on function parameters:
+fn F[V:! D where ...](v: V) { ... }
+
+// Constraints on a class parameter:
+class S(T:! B where ...) {
+  // Constraints on a method:
+  fn G[me: Self, V:! D where ...](v: V);
+}
+
+// Constraints on an interface parameter:
+interface A(T:! B where ...) {
+  // Constraints on an associated type:
+  let U:! C where ...;
+  // Constraints on an associated method:
+  fn G[me: Self, V:! D where ...](v: V);
+}
+```
+
+We also allow you to name constraints using a `where` operator in a `let` or
+`constraint` definition. The expressions that can follow the `where` keyword are
+described in the ["constraint use cases"](#constraint-use-cases) section, but
+generally look like boolean expressions that should evaluate to `true`.
+
+The result of applying a `where` operator to a type-of-type is another
+type-of-type. Note that this expands the kinds of requirements that
+type-of-types can have from just interface requirements to also include the
+various kinds of constraints discussed later in this section. In addition, it
+can introduce relationships between different type variables, such as that a
+member of one is equal to the member of another.
+
+**Comparison with other languages:** Both Swift and Rust use `where` clauses on
+declarations instead of in the expression syntax. These happen after the type
+that is being constrained has been given a name and use that name to express the
+constraint.
+
+Rust also supports
+[directly passing in the values for associated types](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types)
+when using a trait as a constraint. This is helpful when specifying concrete
+types for all associated types in a trait in order to
+[make it object safe so it can be used to define a trait object type](https://rust-lang.github.io/rfcs/0195-associated-items.html#trait-objects).
+
+Rust is adding trait aliases
+([RFC](https://github.com/rust-lang/rfcs/blob/master/text/1733-trait-alias.md),
+[tracking issue](https://github.com/rust-lang/rust/issues/41517)) to support
+naming some classes of constraints.
+
+### Constraint use cases
+
+#### Set an associated constant to a specific value
+
+We might need to write a function that only works with a specific value of an
+[associated constant](#associated-constants) `N`. In this case, the name of the
+associated constant is written first, followed by an `=`, and then the value:
+
+```
+fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
+  Print(p.Get(0), ", ", p.Get(1));
+}
+```
+
+Similarly in an interface definition:
+
+```
+interface {
+  let PointT:! NSpacePoint where .N = 2;
+}
+```
+
+To name such a constraint, you may use a `let` or a `constraint` declaration:
+
+```
+let Point2DInterface:! auto = NSpacePoint where .N = 2;
+constraint Point2DInterface {
+  extends NSpacePoint where .N = 2;
+}
+```
+
+**Concern:** Using `=` for this use case is not consistent with other `where`
+clauses that write a boolean expression that evaluates to `true` when the
+constraint is satisfied.
+
+A constraint to say that two associated constants should have the same value
+without specifying what specific value they should have must use `==` instead of
+`=`:
+
+```
+interface PointCloud {
+  let Dim:! i32;
+  let PointT:! NSpacePoint where .N == Dim;
+}
+```
+
+#### Same type constraints
+
+##### Set an associated type to a specific value
+
+Functions accepting a generic type might also want to constrain one of its
+associated types to be a specific, concrete type. For example, we might want to
+have a function only accept stacks containing integers:
+
+```
+fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
+  var sum: i32 = 0;
+  while (!s->IsEmpty()) {
+    // s->Pop() has type `T.ElementType` == i32:
+    sum += s->Pop();
+  }
+  return sum;
+}
+```
+
+To name these sorts of constraints, we could use `let` statements or
+`constraint` definitions:
+
+```
+let IntStack:! auto = Stack where .ElementType = i32;
+constraint IntStack {
+  extends Stack where .ElementType = i32;
+}
+```
+
+##### Equal generic types
+
+Alternatively, two generic types could be constrained to be equal to each other,
+without specifying what that type is. This uses `==` instead of `=`. For
+example, we could make the `ElementType` of an `Iterator` interface equal to the
+`ElementType` of a `Container` interface as follows:
+
+```
+interface Iterator {
+  let ElementType:! Type;
+  ...
+}
+interface Container {
+  let ElementType:! Type;
+  let IteratorType:! Iterator where .ElementType == ElementType;
+  ...
+}
+```
+
+Given an interface with two associated types
+
+```
+interface PairInterface {
+  let Left:! Type;
+  let Right:! Type;
+}
+```
+
+we can constrain them to be equal in a function declaration:
+
+```
+fn F[MatchedPairType:! PairInterface where .Left == .Right]
+    (x: MatchedPairType*);
+```
+
+or in an interface definition:
+
+```
+interface HasEqualPair {
+  let P:! PairInterface where .Left == .Right;
+}
+```
+
+This kind of constraint can be named:
+
+```
+let EqualPair:! auto =
+    PairInterface where .Left == .Right;
+constraint EqualPair {
+  extends PairInterface where .Left == .Right;
+}
+```
+
+Another example of same type constraints is when associated types of two
+different interfaces are constrained to be equal:
+
+```
+fn Map[CT:! Container,
+       FT:! Function where .InputType == CT.ElementType]
+      (c: CT, f: FT) -> Vector(FT.OutputType);
+```
+
+###### Satisfying both type-of-types
+
+If the two types being constrained to be equal have been declared with different
+type-of-types, then the actual type value they are set to will have to satisfy
+both constraints. For example, if `SortedContainer.ElementType` is declared to
+be `Comparable`, then in this declaration:
+
+```
+fn Contains
+    [SC:! SortedContainer,
+     CT:! Container where .ElementType == SC.ElementType]
+    (haystack: SC, needles: CT) -> bool;
+```
+
+the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
+However, inside the body of `Contains`, `CT.ElementType` will only act like the
+implementation of `Comparable` is [external](#external-impl). That is, items
+from the `needles` container won't have an unqualified `Compare` method member,
+but can still be implicitly converted to `Comparable` and can still call
+`Compare` using the qualified member syntax, `needle.(Comparable.Compare)(elt)`.
+The rule is that an `==` `where` constraint between two type variables does not
+modify the set of unqualified member names of either type. (If you write
+`where .ElementType = String` with a `=` and a concrete type, then
+`.ElementType` is actually set to `String` including the complete unqualified
+`String` API.)
+
+Note that `==` constraints are symmetric, so the previous declaration of
+`Contains` is equivalent to an alternative declaration where `CT` is declared
+first and the `where` clause is attached to `SortedContainer`:
+
+```
+fn Contains
+    [CT:! Container,
+     SC:! SortedContainer where .ElementType == CT.ElementType]
+    (haystack: SC, needles: CT) -> bool;
+```
+
+#### Type bound for associated type
+
+A `where` clause can express that a type must implement an interface. This is
+more flexible than the usual approach of including that interface in the type
+since it can be applied to associated type members as well.
+
+##### Type bounds on associated types in declarations
+
+In the following example, normally the `ElementType` of a `Container` can be any
+type. The `SortContainer` function, however, takes a pointer to a type
+satisfying `Container` with the additional constraint that its `ElementType`
+must satisfy the `Comparable` interface.
+
+```
+interface Container {
+  let ElementType:! Type;
+  ...
+}
+
+fn SortContainer
+    [ContainerType:! Container where .ElementType is Comparable]
+    (container_to_sort: ContainerType*);
+```
+
+In contrast to [a same type constraint](#same-type-constraints), this does not
+say what type `ElementType` exactly is, just that it must satisfy some
+type-of-type.
+
+**Open question:** How do you spell that? Provisionally we are writing `is`,
+following Swift, but maybe we should have another operator that more clearly
+returns a boolean like `has_type`?
+
+**Note:** `Container` defines `ElementType` as having type `Type`, but
+`ContainerType.ElementType` has type `Comparable`. This is because
+`ContainerType` has type `Container where .ElementType is Comparable`, not
+`Container`. This means we need to be a bit careful when talking about the type
+of `ContainerType` when there is a `where` clause modifying it.
+
+##### Type bounds on associated types in interfaces
+
+Given these definitions (omitting `ElementType` for brevity):
+
+```
+interface IteratorInterface { ... }
+interface ContainerInterface {
+  let IteratorType:! IteratorInterface;
+  ...
+}
+interface RandomAccessIterator {
+  extends IteratorInterface;
+  ...
+}
+```
+
+We can then define a function that only accepts types that implement
+`ContainerInterface` where its `IteratorType` associated type implements
+`RandomAccessIterator`:
+
+```
+fn F[ContainerType:! ContainerInterface
+     where .IteratorType is RandomAccessIterator]
+    (c: ContainerType);
+```
+
+We would like to be able to name this constraint, defining a
+`RandomAccessContainer` to be a type-of-type whose types satisfy
+`ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
+
+```
+let RandomAccessContainer:! auto =
+    ContainerInterface where .IteratorType is RandomAccessIterator;
+// or
+constraint RandomAccessContainer {
+  extends ContainerInterface
+      where .IteratorType is RandomAccessIterator;
+}
+
+// With the above definition:
+fn F[ContainerType:! RandomAccessContainer](c: ContainerType);
+// is equivalent to:
+fn F[ContainerType:! ContainerInterface
+     where .IteratorType is RandomAccessIterator]
+    (c: ContainerType);
+```
+
+#### Combining constraints
+
+Constraints can be combined by separating constraint clauses with the `and`
+keyword. This example expresses a constraint that two associated types are equal
+and satisfy an interface:
+
+```
+fn EqualContainers
+    [CT1:! Container,
+     CT2:! Container where .ElementType is HasEquality
+                       and .ElementType == CT1.ElementType]
+    (c1: CT1*, c2: CT2*) -> bool;
+```
+
+**Comparison with other languages:** Swift and Rust use commas `,` to separate
+constraint clauses, but that only works because they place the `where` in a
+different position in a declaration. In Carbon, the `where` is attached to a
+type in a parameter list that is already using commas to separate parameters.
+
+#### Recursive constraints
+
+We sometimes need to constrain a type to equal one of its associated types. In
+this first example, we want to represent the function `Abs` which will return
+`Self` for some but not all types, so we use an associated type `MagnitudeType`
+to encode the return type:
+
+```
+interface HasAbs {
+  extends Numeric;
+  let MagnitudeType:! Numeric;
+  fn Abs[me: Self]() -> MagnitudeType;
+}
+```
+
+For types representing subsets of the real numbers, such as `i32` or `f32`, the
+`MagnitudeType` will match `Self`, the type implementing an interface. For types
+representing complex numbers, the types will be different. For example, the
+`Abs()` applied to a `Complex64` value would produce a `f32` result. The goal is
+to write a constraint to restrict to the first case.
+
+In a second example, when you take the slice of a type implementing `Container`
+you get a type implementing `Container` which may or may not be the same type as
+the original container type. However, taking the slice of a slice always gives
+you the same type, and some functions want to only operate on containers whose
+slice type is the same as the container type.
+
+To solve this problem, we think of `Self` as an actual associated type member of
+every interface. We can then address it using `.Self` in a `where` clause, like
+any other associated type member.
+
+```
+fn Relu[T:! HasAbs where .MagnitudeType == .Self](x: T) {
+  // T.MagnitudeType == T so the following is allowed:
+  return (x.Abs() + x) / 2;
+}
+fn UseContainer[T:! Container where .SliceType == .Self](c: T) -> bool {
+  // T.SliceType == T so `c` and `c.Slice(...)` can be compared:
+  return c == c.Slice(...);
+}
+```
+
+Notice that in an interface definition, `Self` refers to the type implementing
+this interface while `.Self` refers to the associated type currently being
+defined.
+
+```
+interface Container {
+  let ElementType:! Type;
+
+  let SliceType:! Container
+      where .ElementType == ElementType and
+            .SliceType == .Self;
+
+  fn GetSlice[addr me: Self*]
+      (start: IteratorType, end: IteratorType) -> SliceType;
+}
+```
+
+These recursive constraints can be named:
+
+```
+let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
+constraint RealAbs {
+  extends HasAbs where .MagnitudeType == Self;
+}
+let ContainerIsSlice:! auto =
+    Container where .SliceType == .Self;
+constraint ContainerIsSlice {
+  extends Container where .SliceType == Self;
+}
+```
+
+Note that using the `constraint` approach we can name these constraints using
+`Self` instead of `.Self`, since they are facets of the same type: `Self` is the
+facet corresponding to the containing interface and `.Self` is the facet
+corresponding to the interface being extended.
+
+#### Parameterized type implements interface
+
+There are times when a function will pass a generic type parameter of the
+function as an argument to a parameterized type, as in the previous case, and in
+addition the function needs the result to implement a specific interface.
+
+```
+// Some parametized type.
+class Vector(T:! Type) { ... }
+
+// Parameterized type implements interface only for some arguments.
+external impl Vector(String) as Printable { ... }
+
+// Constraint: `T` such that `Vector(T)` implements `Printable`
+fn PrintThree
+    [T:! Type where Vector(.Self) is Printable]
+    (a: T, b: T, c: T) {
+  var v: Vector(T) = (a, b, c);
+  Print(v);
+}
+```
+
+**Comparison with other languages:** This use case was part of the
+[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
+
+#### Another type implements parameterized interface
+
+In this case, we need some other type to implement an interface parameterized by
+a generic type parameter. The syntax for this case follows the previous case,
+except now the `.Self` parameter is on the interface to the right of the `is`.
+For example, we might need a type parameter `T` to support explicit conversion
+from an integer type like `i32`:
+
+```
+interface As(T:! Type) {
+  fn Convert[me: Self]() -> T;
+}
+
+fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
+  return x * (2 as T);
+}
+```
+
+### Implied constraints
+
+Imagine we have a generic function that accepts an arbitrary `HashMap`:
+
+```
+fn LookUp[KeyType:! Type](hm: HashMap(KeyType, i32)*,
+                          k: KeyType) -> i32;
+
+fn PrintValueOrDefault[KeyType:! Printable,
+                       ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT), key: KeyT);
+```
+
+The `KeyType` in these declarations does not satisfy the requirements of
+`HashMap`, which requires the type implement `Hashable` and other interfaces:
+
+```
+class HashMap(
+    KeyType:! Hashable & EqualityComparable & Movable,
+    ...) { ... }
+```
+
+In this case, `KeyType` gets `Hashable` and so on as _implied constraints_.
+Effectively that means that these functions are automatically rewritten to add a
+`where` constraint on `KeyType` attached to the `HashMap` type:
+
+```
+fn LookUp[KeyType:! Type]
+    (hm: HashMap(KeyType, i32)*
+        where KeyType is Hashable & EqualityComparable & Movable,
+     k: KeyType) -> i32;
+
+fn PrintValueOrDefault[KeyType:! Printable,
+                       ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT)
+        where KeyType is Hashable & EqualityComparable & Movable,
+     key: KeyT);
+```
+
+In this case, Carbon will accept the definition and infer the needed constraints
+on the generic type parameter. This is both more concise for the author of the
+code and follows the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+This redundancy is undesirable since it means if the needed constraints for
+`HashMap` are changed, then the code has to be updated in more locations.
+Further it can add noise that obscures relevant information. In practice, any
+user of these functions will have to pass in a valid `HashMap` instance, and so
+will have already satisfied these constraints.
+
+This implied constraint is equivalent to the explicit constraint that each
+parameter and return type [is legal](#must-be-legal-type-argument-constraints).
+
+**Note:** These implied constraints affect the _requirements_ of a generic type
+parameter, but not its _unqualified member names_. This way you can always look
+at the declaration to see how name resolution works, without having to look up
+the definitions of everything it is used as an argument to.
+
+**Limitation:** To limit readability concerns and ambiguity, this feature is
+limited to a single signature. Consider this interface declaration:
+
+```
+interface GraphNode {
+  let Edge:! Type;
+  fn EdgesFrom[me: Self]() -> HashSet(Edge);
+}
+```
+
+One approach would be to say the use of `HashSet(Edge)` in the signature of the
+`EdgesFrom` function would imply that `Edge` satisfies the requirements of an
+argument to `HashSet`, such as being `Hashable`. Another approach would be to
+say that the `EdgesFrom` would only be conditionally available when `Edge` does
+satisfy the constraints on `HashSet` arguments. Instead, Carbon will reject this
+definition, requiring the user to include all the constraints required for the
+other declarations in the interface in the declaration of the `Edge` associated
+type. Similarly, a parameter to a class must be declared with all the
+constraints needed to declare the members of the class that depend on that
+parameter.
+
+**Comparison with other languages:** Both Swift
+([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
+[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
+and
+[Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
+support some form of this feature as part of their type inference.
+
+#### Must be legal type argument constraints
+
+Now consider the case that the generic type parameter is going to be used as an
+argument to a parameterized type in a function body, not in the signature. If
+the parameterized type was explicitly mentioned in the signature, the implied
+constraint feature would ensure all of its requirements were met. The developer
+can create a trivial
+[parameterized type implements interface](#parameterized-type-implements-interface)
+`where` constraint to just say the type is a legal with this argument, by saying
+that the parameterized type implements `Type`, which all types do.
+
+For example, a function that adds its parameters to a `HashSet` to deduplicate
+them, needs them to be `Hashable` and so on. To say "`T` is a type where
+`HashSet(T)` is legal," we can write:
+
+```
+fn NumDistinct[T:! Type where HashSet(.Self) is Type]
+    (a: T, b: T, c: T) -> i32 {
+  var set: HashSet(T);
+  set.Add(a);
+  set.Add(b);
+  set.Add(c);
+  return set.Size();
+}
+```
+
+This has the same advantages over repeating the constraints on `HashSet`
+arguments in the type of `T` as the general implied constraints above.
+
+### Open question: referencing names in the interface being defined
+
+Should the constraint in a `where` clause be required to only reference earlier
+names from this scope, as in this example?
+
+```
+interface Graph {
+  let E: Edge;
+  let V: Vert where .E == E and .Self == E.V;
+}
+```
+
+The downside is that if you could reference later names, there is a more
+pleasingly symmetric formulation of those same constraints:
+
+```
+interface Graph {
+  let E: Edge where .V == V;
+  let V: Vert where .E == E;
+}
+```
+
+**TODO:** Revisit this question once issue
+[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472)
+and proposal
+[#875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
+are resolved.
+
+### Manual type equality
+
+Imagine we have some function with generic parameters:
+
+```
+fn F[T:! SomeInterface](x: T) {
+  x.G(x.H());
+}
+```
+
+We want to know if the return type of method `T.H` is the same as the parameter
+type of `T.G` in order to typecheck the function. However, determining whether
+two type expressions are transitively equal is in general undecidable, as
+[has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+
+Carbon's approach is to only allow implicit conversions between two type
+expressions that are constrained to be equal in a single where clause. This
+means that if two type expressions are only transitively equal, the user will
+need to include a sequence of casts or use an
+[`observe` declaration](#observe-declarations) to convert between them.
+
+Given this interface `Transitive` that has associated types that are constrained
+to all be equal, with interfaces `P`, `Q`, and `R`:
+
+```
+interface P { fn InP[me:Self](); }
+interface Q { fn InQ[me:Self](); }
+interface R { fn InR[me:Self](); }
+
+interface Transitive {
+  let A:! P;
+  let B:! Q where .Self == A;
+  let C:! R where .Self == B;
+
+  fn GetA[me: Self]() -> A;
+  fn TakesC[me:Self](c: C);
+}
+```
+
+A cast to `B` is needed to call `TakesC` with a value of type `A`, so each step
+only relies on one equality:
+
+```
+fn F[T:! Transitive](t: T) {
+  // Allowed
+  t.TakesC(t.GetA() as T.B);
+
+  // Allowed
+  let b: T.B = t.GetA();
+  t.TakesC(b);
+
+  // Not allowed: t.TakesC(t.GetA());
+}
+```
+
+A value of type `A`, such as the return value of `GetA()`, has the API of `P`.
+Any such value also implements `Q`, and since the compiler can see that by way
+of a single `where` equality, values of type `A` are treated as if they
+implement `Q` externally. However, the compiler will require a cast to `B` or
+`C` to see that the type implements `R`.
+
+```
+fn TakesPQR[U:! P & Q & R](u: U);
+
+fn G[T:! Transitive](t: T) {
+  var a: T.A = t.GetA();
+
+  // Allowed: `T.A` implements `P`.
+  a.InP();
+
+  // Allowed: `T.A` implements `Q` externally.
+  a.(Q.InQ)();
+
+  // Not allowed: a.InQ();
+
+  // Allowed: values of type `T.A` may be cast
+  // to `T.B`, which implements `Q`.
+  (a as T.B).InQ();
+
+  // Allowed: `T.B` implements `R` externally.
+  (a as T.B).(R.InR)();
+
+  // Not allowed: TakesPQR(a);
+
+  // Allowed: `T.B` implements `P`, `Q`, and
+  // `R`, though the implementations of `P`
+  // and `R` are external.
+  TakesPQR(a as T.B);
+}
+```
+
+The compiler may have several different `where` clauses to consider,
+particularly when an interface has associated types that recursively satisfy the
+same interface. For example, given this interface `Commute`:
+
+```
+interface Commute {
+  let X:! Commute;
+  let Y:! Commute where .X == X.Y;
+
+  fn GetX[me: Self]() -> X;
+  fn GetY[me: Self]() -> Y;
+  fn TakesXXY[me:Self](xxy: X.X.Y);
+}
+```
+
+and a function `H` taking a value with some type implementing this interface,
+then the following would be legal statements in `H`:
+
+```
+fn H[C: Commute](c: C) {
+  // Legal: argument has type `C.X.X.Y`
+  c.TakesXXY(c.GetX().GetX().GetY());
+
+  // Legal: argument has type `C.X.Y.X` which is equal
+  // to `C.X.X.Y` following only one `where` clause.
+  c.TakesXXY(c.GetX().GetY().GetX());
+
+  // Legal: cast is legal since it matches a `where`
+  // clause, and produces an argument that has type
+  // `C.X.Y.X`.
+  c.TakesXXY(c.GetY().GetX().GetX() as C.X.Y.X);
+}
+```
+
+That last call would not be legal without the cast, though.
+
+**Comparison with other languages:** Other languages such as Swift and Rust
+instead perform automatic type equality. In practice this means that their
+compiler can reject some legal programs based on heuristics simply to avoid
+running for an unbounded length of time.
+
+The benefits of the manual approach include:
+
+-   fast compilation, since the compiler does not need to explore a potentially
+    large set of combinations of equality restrictions, supporting
+    [Carbon's goal of fast and scalable development](/docs/project/goals.md#fast-and-scalable-development);
+-   expressive and predictable semantics, since there are no limitations on how
+    complex a set of constraints can be supported; and
+-   simplicity.
+
+The main downsides are:
+
+-   manual work for the source code author to prove to the compiler that types
+    are equal; and
+-   verbosity.
+
+We expect that rich error messages and IDE tooling will be able to suggest
+changes to the source code when a single equality constraint is not sufficient
+to show two type expressions are equal, but a more extensive automated search
+can find a sequence that prove they are equal.
+
+#### `observe` declarations
+
+An `observe` declaration lists a sequence of type expressions that are equal by
+some same-type `where` constraints. These `observe` declarations may be included
+in an `interface` definition or a function body, as in:
+
+```
+interface Commute {
+  let X:! Commute;
+  let Y:! Commute where .X == X.Y;
+  ...
+  observe X.X.Y == X.Y.X == Y.X.X;
+}
+
+fn H[C: Commute](c: C) {
+  observe C.X.Y.Y == C.Y.X.Y == C.Y.Y.X;
+  ...
+}
+```
+
+Every type expression after the first must be equal to some earlier type
+expression in the sequence by a single `where` equality constraint. In this
+example,
+
+```
+interface Commute {
+  let X:! Commute;
+  let Y:! Commute where .X == X.Y;
+  ...
+  // Legal:
+  observe X.X.Y.Y == X.Y.X.Y == Y.X.X.Y == X.Y.Y.X;
+}
+```
+
+the expression `X.Y.Y.X` is one equality away from `X.Y.X.Y` and so it is
+allowed. This is even though `X.Y.X.Y` isn't the type expression immediately
+prior to `X.Y.Y.X`.
+
+After an `observe` declaration, all of the listed type expressions are
+considered equal to each other using a single `where` equality. In this example,
+the `observe` declaration in the `Transitive` interface definition provides the
+link between associated types `A` and `C` that allows function `F` to type
+check.
+
+```
+interface P { fn InP[me:Self](); }
+interface Q { fn InQ[me:Self](); }
+interface R { fn InR[me:Self](); }
+
+interface Transitive {
+  let A:! P;
+  let B:! Q where .Self == A;
+  let C:! R where .Self == B;
+
+  fn GetA[me: Self]() -> A;
+  fn TakesC[me:Self](c: C);
+
+  // Without this `observe` statement, the
+  // calls in `F` below would not be allowed.
+  observe A == B == C;
+}
+
+fn TakesPQR[U:! P & Q & R](u: U);
+
+fn F[T:! Transitive](t: T) {
+  var a: T.A = t.GetA();
+
+  // Allowed: `T.A` == `T.C`
+  t.TakesC(a);
+  a.(R.InR());
+
+  // Allowed: `T.A` implements `P`,
+  // `T.A` == `T.B` that implements `Q`, and
+  // `T.A` == `T.C` that implements `R`.
+  TakesPQR(a);
+}
+```
+
+Since adding an `observe` statement only adds external implementations of
+interfaces to generic types, they may be added without breaking existing code.
+
+## Other constraints as type-of-types
+
+There are some constraints that we will naturally represent as named
+type-of-types. These can either be used directly to constrain a generic type
+parameter, or in a `where ... is ...` clause to constrain an associated type.
+
+The compiler determines which types implement these interfaces, developers can
+not explicitly implement these interfaces for their own types.
+
+**Open question:** Are these names part of the prelude or in a standard library?
+
+### Is a derived class
+
+Given a type `T`, `Extends(T)` is a type-of-type whose values are types that are
+derived from `T`. That is, `Extends(T)` is the set of all types `U` that are
+subtypes of `T`.
+
+```
+fn F[T:! Extends(BaseType)](p: T*);
+fn UpCast[T:! Type](p: T*, U:! Type where T is Extends(.Self)) -> U*;
+fn DownCast[T:! Type](p: T*, U:! Extends(T)) -> U*;
+```
+
+**Open question:** Alternatively, we could define a new `extends` operator:
+
+```
+fn F[T:! Type where .Self extends BaseType](p: T*);
+fn UpCast[T:! Type](p: T*, U:! Type where T extends .Self) -> U*;
+fn DownCast[T:! Type](p: T*, U:! Type where .Self extends T) -> U*;
+```
+
+**Comparison to other languages:** In Swift, you can
+[add a required superclass to a type bound using `&`](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282).
+
+### Type compatible with another type
+
+Given a type `U`, define the type-of-type `CompatibleWith(U)` as follows:
+
+> `CompatibleWith(U)` is a type whose values are types `T` such that `T` and `U`
+> are [compatible](terminology.md#compatible-types). That is values of types `T`
+> and `U` can be cast back and forth without any change in representation (for
+> example `T` is an [adapter](#adapting-types) for `U`).
+
+To support this, we extend the requirements that type-of-types are allowed to
+have to include a "data representation requirement" option.
+
+`CompatibleWith` determines an equivalence relationship between types.
+Specifically, given two types `T1` and `T2`, they are equivalent if
+`T1 is CompatibleWith(T2)`. That is, if `T1` has the type `CompatibleWith(T2)`.
+
+**Note:** Just like interface parameters, we require the user to supply `U`,
+they may not be deduced. Specifically, this code would be illegal:
+
+```
+fn Illegal[U:! Type, T:! CompatibleWith(U)](x: T*) ...
+```
+
+In general there would be multiple choices for `U` given a specific `T` here,
+and no good way of picking one. However, similar code is allowed if there is
+another way of determining `U`:
+
+```
+fn Allowed[U:! Type, T:! CompatibleWith(U)](x: U*, y: T*) ...
+```
+
+#### Same implementation restriction
+
+In some cases, we need to restrict to types that implement certain interfaces
+the same way as the type `U`.
+
+> The values of type `CompatibleWith(U, TT)` are types satisfying
+> `CompatibleWith(U)` that have the same implementation of `TT` as `U`.
+
+For example, if we have a type `HashSet(T)`:
+
+```
+class HashSet(T:! Hashable) { ... }
+```
+
+Then `HashSet(T)` may be cast to `HashSet(U)` if
+`T is CompatibleWith(U, Hashable)`. The one-parameter interpretation of
+`CompatibleWith(U)` is recovered by letting the default for the second `TT`
+parameter be `Type`.
+
+#### Example: Multiple implementations of the same interface
+
+This allows us to represent functions that accept multiple implementations of
+the same interface for a type.
+
+```
+enum CompareResult { Less, Equal, Greater }
+interface Comparable {
+  fn Compare[me: Self](that: Self) -> CompareResult;
+}
+fn CombinedLess[T:! Type](a: T, b: T,
+                          U:! CompatibleWith(T) & Comparable,
+                          V:! CompatibleWith(T) & Comparable) -> bool {
+  match ((a as U).Compare(b as U)) {
+    case CompareResult.Less => { return True; }
+    case CompareResult.Greater => { return False; }
+    case CompareResult.Equal => {
+      return (a as V).Compare(b as V) == CompareResult.Less;
+    }
+  }
+}
+```
+
+Used as:
+
+```
+class Song { ... }
+adapter SongByArtist for Song { impl as Comparable { ... } }
+adapter SongByTitle for Song { impl as Comparable { ... } }
+var s1: Song = ...;
+var s2: Song = ...;
+assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
+```
+
+We might generalize this to a list of implementations:
+
+```
+fn CombinedCompare[T:! Type]
+    (a: T, b: T, CompareList:! List(CompatibleWith(T) & Comparable))
+    -> CompareResult {
+  for (let U:! auto in CompareList) {
+    var result: CompareResult = (a as U).Compare(b);
+    if (result != CompareResult.Equal) {
+      return result;
+    }
+  }
+  return CompareResult.Equal;
+}
+
+assert(CombinedCompare(Song(...), Song(...), (SongByArtist, SongByTitle)) ==
+       CompareResult.Less);
+```
+
+**Open question:** How are compile-time lists of types declared and iterated
+through? They will also be needed for
+[variadic argument support](#variadic-arguments).
+
+#### Example: Creating an impl out of other impls
+
+And then to package this functionality as an implementation of `Comparable`, we
+combine `CompatibleWith` with [type adaptation](#adapting-types):
+
+```
+adapter ThenCompare(T:! Type,
+                    CompareList:! List(CompatibleWith(T) & Comparable)) for T {
+  impl as Comparable {
+    fn Compare[me: Self](that: Self) -> CompareResult {
+      for (let U:! auto in CompareList) {
+        var result: CompareResult = (this as U).Compare(that);
+        if (result != CompareResult.Equal) {
+          return result;
+        }
+      }
+      return CompareResult.Equal;
+    }
+  }
+}
+
+let SongByArtistThenTitle: auto = ThenCompare(Song, (SongByArtist, SongByTitle));
+var s1: Song = ...;
+var s2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
+assert((s1 as SongByArtistThenTitle).Compare(s2) == CompareResult.Less);
+```
+
+### Type facet of another type
+
+Similar to `CompatibleWith(T)`, `FacetOf(T)` introduces an equivalence
+relationship between types. `T1 is FacetOf(T2)` if both `T1` and `T2` are facets
+of the same type.
+
+### Sized types and type-of-types
+
+What is the size of a type?
+
+-   It could be fully known and fixed at compile time -- this is true of
+    primitive types (`i32`, `f64`, and so on), most
+    [classes](/docs/design/classes.md), and most other concrete types.
+-   It could be known generically. This means that it will be known at codegen
+    time, but not at type-checking time.
+-   It could be dynamic. For example, it could be a
+    [dynamic type](#runtime-type-fields), a slice, variable-sized type (such as
+    [found in Rust](https://doc.rust-lang.org/nomicon/exotic-sizes.html#dynamically-sized-types-dsts)),
+    or you could dereference a pointer to a base class that could actually point
+    to a [derived class](/docs/design/classes.md#inheritance).
+-   It could be unknown which category the type is in. In practice this will be
+    essentially equivalent to having dynamic size.
+
+A type is called "sized" if it is in the first two categories, and "unsized"
+otherwise. Note: something with size 0 is still considered "sized". The
+type-of-type `Sized` is defined as follows:
+
+> `Sized` is a type whose values are types `T` that are "sized" -- that is the
+> size of `T` is known, though possibly only generically.
+
+Knowing a type is sized is a precondition to declaring variables of that type,
+taking values of that type as parameters, returning values of that type, and
+defining arrays of that type. Users will not typically need to express the
+`Sized` constraint explicitly, though, since it will usually be a dependency of
+some other constraint the type will need such as `Movable`.
+
+**Note:** The compiler will determine which types are "sized", this is not
+something types will implement explicitly like ordinary interfaces.
+
+Example:
+
+```
+// In the Carbon standard library
+interface DefaultConstructible {
+  // Types must be sized to be default constructible.
+  impl as Sized;
+  fn Default() -> Self;
+}
+
+// Classes are "sized" by default.
+class Name {
+  impl as DefaultConstructible {
+    fn Default() -> Self { ... }
+  }
+  ...
+}
+
+fn F[T:! Type](x: T*) {  // T is unsized.
+  // ✅ Allowed: may access unsized values through a pointer.
+  var y: T* = x;
+  // ❌ Illegal: T is unsized.
+  var z: T;
+}
+
+// T is sized, but its size is only known generically.
+fn G[T: DefaultConstructible](x: T*) {
+  // ✅ Allowed: T is default constructible, which means sized.
+  var y: T = T.Default();
+}
+
+var z: Name;
+// ✅ Allowed: `Name` is sized and implements `DefaultConstructible`.
+G(&z);
+```
+
+**Open question:** Even if the size is fixed, it won't be known at the time of
+compiling the generic function if we are using the dynamic strategy. Should we
+automatically
+[box](<https://en.wikipedia.org/wiki/Object_type_(object-oriented_programming)#Boxing>)
+local variables when using the dynamic strategy? Or should we only allow
+`MaybeBox` values to be instantiated locally? Or should this just be a case
+where the compiler won't necessarily use the dynamic strategy?
+
+**Open question:** Should the `Sized` type-of-type expose an associated constant
+with the size? So you could say `T.ByteSize` in the above example to get a
+generic int value with the size of `T`. Similarly you might say `T.ByteStride`
+to get the number of bytes used for each element of an array of `T`.
+
+#### Model
+
+This requires a special integer field be included in the witness table type to
+hold the size of the type. This field will only be known generically, so if its
+value is used for type checking, we need some way of evaluating those type tests
+symbolically.
+
+### `TypeId`
+
+There are some capabilities every type can provide. For example, every type
+should be able to return its name or identify whether it is equal to another
+type. It is rare, however, for code to need to access these capabilities, so we
+relegate these capabilities to an interface called `TypeId` that all types
+automatically implement. This way generic code can indicate that it needs those
+capabilities by including `TypeId` in the list of requirements. In the case
+where no type capabilities are needed, for example the code is only manipulating
+pointers to the type, you would write `T:! Type` and get the efficiency of
+`void*` but without giving up type safety.
+
+```
+fn SortByAddress[T:! Type](v: Vector(T*)*) { ... }
+```
+
+In particular, the compiler should in general avoid monomorphizing to generate
+multiple instantiations of the function in this case.
+
+**Note:** To achieve this goal, the user will not even be allowed to destroy a
+value of type `T` in this case.
+
+**Open question:** Should `TypeId` be implemented externally for types to avoid
+name pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
+requests those capabilities?
 
 ## Parameterized impls
 
@@ -2718,7 +3878,24 @@ See details in [the goals document](goals.md#bridge-for-c-customization-points).
 Some facility for allowing a function to generically take a variable number of
 arguments.
 
+### Range constraints on generic integers
+
+We currently only support `where` clauses on type-of-types. We may want to also
+support constraints on generic integers. The constraint with the most expected
+value is the ability to do comparisons like `<`, or `>=`. For example, you might
+constrain the `N` member of [`NSpacePoint`](#associated-constants) using an
+expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
+
+The concern here is supporting this at compile time with more benefit than
+complexity. For example, we probably don't want to support integer-range based
+types at runtime, and there are also concerns about reasoning about comparisons
+between multiple generic integer parameters. For example, if `J < K` and
+`K <= L`, can we call a function that requires `J < L`? There is also a
+secondary syntactic concern about how to write this kind of constraint on a
+parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
+
 ## References
 
 -   [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)

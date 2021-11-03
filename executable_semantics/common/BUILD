@@ -2,7 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//executable_semantics:__subpackages__"])
+package(default_visibility = [
+    "//bazel/check_deps:__pkg__",
+    "//executable_semantics:__subpackages__",
+])
 
 cc_library(
     name = "arena",
@@ -25,8 +28,7 @@ cc_test(
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

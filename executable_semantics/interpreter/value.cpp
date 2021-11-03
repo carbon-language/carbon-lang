@@ -17,36 +17,9 @@ namespace Carbon {
 
 using llvm::cast;
 
-auto FindInVarValues(const std::string& field, const VarValues& inits)
-    -> std::optional<Nonnull<const Value*>> {
-  for (auto& i : inits) {
-    if (i.first == field) {
-      return i.second;
-    }
-  }
-  return std::nullopt;
-}
-
-auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool {
-  if (ts1.size() == ts2.size()) {
-    for (auto& iter1 : ts1) {
-      auto t2 = FindInVarValues(iter1.first, ts2);
-      if (!t2) {
-        return false;
-      }
-      if (!TypeEqual(iter1.second, *t2)) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
 auto StructValue::FindField(const std::string& name) const
     -> std::optional<Nonnull<const Value*>> {
-  for (const StructElement& element : elements_) {
+  for (const NamedValue& element : elements_) {
     if (element.name == name) {
       return element.value;
     }
@@ -78,7 +51,7 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
-      if (!FindInVarValues(f, choice.alternatives())) {
+      if (!choice.FindAlternative(f)) {
         FATAL_RUNTIME_ERROR(source_loc)
             << "alternative " << f << " not in " << *v;
       }
@@ -112,10 +85,9 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
   }
   switch (value->kind()) {
     case Value::Kind::StructValue: {
-      std::vector<StructElement> elements =
-          cast<StructValue>(*value).elements();
+      std::vector<NamedValue> elements = cast<StructValue>(*value).elements();
       auto it = std::find_if(elements.begin(), elements.end(),
-                             [path_begin](const StructElement& element) {
+                             [path_begin](const NamedValue& element) {
                                return element.name == *path_begin;
                              });
       if (it == elements.end()) {
@@ -185,7 +157,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& struct_val = cast<StructValue>(*this);
       out << "{";
       llvm::ListSeparator sep;
-      for (const StructElement& element : struct_val.elements()) {
+      for (const NamedValue& element : struct_val.elements()) {
         out << sep << "." << element.name << " = " << *element.value;
       }
       out << "}";
@@ -245,7 +217,7 @@ void Value::Print(llvm::raw_ostream& out) const {
           if (i != 0) {
             out << ", ";
           }
-          out << deduced.name << ":! " << *deduced.type;
+          out << deduced.name() << ":! " << deduced.type();
           ++i;
         }
         out << "]";
@@ -313,9 +285,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
         return false;
       }
       for (size_t i = 0; i < struct1.fields().size(); ++i) {
-        if (struct1.fields()[i].first != struct2.fields()[i].first ||
-            !TypeEqual(struct1.fields()[i].second,
-                       struct2.fields()[i].second)) {
+        if (struct1.fields()[i].name != struct2.fields()[i].name ||
+            !TypeEqual(struct1.fields()[i].value, struct2.fields()[i].value)) {
           return false;
         }
       }
@@ -354,28 +325,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
   }
 }
 
-// Returns true if all the fields of the two tuples contain equal values
-// and returns false otherwise.
-static auto FieldsValueEqual(const std::vector<StructElement>& ts1,
-                             const std::vector<StructElement>& ts2,
-                             SourceLocation source_loc) -> bool {
-  if (ts1.size() != ts2.size()) {
-    return false;
-  }
-  for (const StructElement& element : ts1) {
-    auto iter = std::find_if(
-        ts2.begin(), ts2.end(),
-        [&](const StructElement& e2) { return e2.name == element.name; });
-    if (iter == ts2.end()) {
-      return false;
-    }
-    if (!ValueEqual(element.value, iter->value, source_loc)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // Returns true if the two values are equal and returns false otherwise.
 //
 // This function implements the `==` operator of Carbon.
@@ -389,8 +338,6 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       return cast<IntValue>(*v1).value() == cast<IntValue>(*v2).value();
     case Value::Kind::BoolValue:
       return cast<BoolValue>(*v1).value() == cast<BoolValue>(*v2).value();
-    case Value::Kind::PointerValue:
-      return cast<PointerValue>(*v1).value() == cast<PointerValue>(*v2).value();
     case Value::Kind::FunctionValue: {
       std::optional<Nonnull<const Statement*>> body1 =
           cast<FunctionValue>(*v1).declaration().body();
@@ -414,9 +361,19 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       }
       return true;
     }
-    case Value::Kind::StructValue:
-      return FieldsValueEqual(cast<StructValue>(*v1).elements(),
-                              cast<StructValue>(*v2).elements(), source_loc);
+    case Value::Kind::StructValue: {
+      const auto& struct_v1 = cast<StructValue>(*v1);
+      const auto& struct_v2 = cast<StructValue>(*v2);
+      CHECK(struct_v1.elements().size() == struct_v2.elements().size());
+      for (size_t i = 0; i < struct_v1.elements().size(); ++i) {
+        CHECK(struct_v1.elements()[i].name == struct_v2.elements()[i].name);
+        if (!ValueEqual(struct_v1.elements()[i].value,
+                        struct_v2.elements()[i].value, source_loc)) {
+          return false;
+        }
+      }
+      return true;
+    }
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).value() == cast<StringValue>(*v2).value();
     case Value::Kind::IntType:
@@ -437,8 +394,21 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::PointerValue:
+      // TODO: support pointer comparisons once we have a clearer distinction
+      // between pointers and lvalues.
       FATAL() << "ValueEqual does not support this kind of value: " << *v1;
   }
+}
+
+auto ChoiceType::FindAlternative(std::string_view name) const
+    -> std::optional<Nonnull<const Value*>> {
+  for (const NamedValue& alternative : alternatives_) {
+    if (alternative.name == name) {
+      return alternative.value;
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon

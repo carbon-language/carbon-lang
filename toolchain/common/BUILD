@@ -10,7 +10,7 @@ cc_library(
     srcs = ["yaml_test_helpers.cpp"],
     hdrs = ["yaml_test_helpers.h"],
     deps = [
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
+        "//common:ostream",
+        "@com_google_googletest//:gtest",
     ],
 )

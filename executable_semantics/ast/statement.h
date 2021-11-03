@@ -11,6 +11,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -18,6 +19,7 @@
 namespace Carbon {
 
 class FunctionDeclaration;
+class StaticScope;
 
 class Statement {
  public:
@@ -27,7 +29,6 @@ class Statement {
     VariableDefinition,
     If,
     Return,
-    Sequence,
     Block,
     While,
     Break,
@@ -58,6 +59,30 @@ class Statement {
  private:
   const Kind kind_;
   SourceLocation source_loc_;
+};
+
+class Block : public Statement {
+ public:
+  Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
+      : Statement(Kind::Block, source_loc), statements_(statements) {}
+
+  static auto classof(const Statement* stmt) -> bool {
+    return stmt->kind() == Kind::Block;
+  }
+
+  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
+    return statements_;
+  }
+  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
+    return statements_;
+  }
+
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
+
+ private:
+  std::vector<Nonnull<Statement*>> statements_;
+  StaticScope static_scope_;
 };
 
 class ExpressionStatement : public Statement {
@@ -123,12 +148,11 @@ class VariableDefinition : public Statement {
 class If : public Statement {
  public:
   If(SourceLocation source_loc, Nonnull<Expression*> condition,
-     Nonnull<Statement*> then_statement,
-     std::optional<Nonnull<Statement*>> else_statement)
+     Nonnull<Block*> then_block, std::optional<Nonnull<Block*>> else_block)
       : Statement(Kind::If, source_loc),
         condition_(condition),
-        then_statement_(then_statement),
-        else_statement_(else_statement) {}
+        then_block_(then_block),
+        else_block_(else_block) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::If;
@@ -136,19 +160,17 @@ class If : public Statement {
 
   auto condition() const -> const Expression& { return *condition_; }
   auto condition() -> Expression& { return *condition_; }
-  auto then_statement() const -> const Statement& { return *then_statement_; }
-  auto then_statement() -> Statement& { return *then_statement_; }
-  auto else_statement() const -> std::optional<Nonnull<const Statement*>> {
-    return else_statement_;
+  auto then_block() const -> const Block& { return *then_block_; }
+  auto then_block() -> Block& { return *then_block_; }
+  auto else_block() const -> std::optional<Nonnull<const Block*>> {
+    return else_block_;
   }
-  auto else_statement() -> std::optional<Nonnull<Statement*>> {
-    return else_statement_;
-  }
+  auto else_block() -> std::optional<Nonnull<Block*>> { return else_block_; }
 
  private:
   Nonnull<Expression*> condition_;
-  Nonnull<Statement*> then_statement_;
-  std::optional<Nonnull<Statement*>> else_statement_;
+  Nonnull<Block*> then_block_;
+  std::optional<Nonnull<Block*>> else_block_;
 };
 
 class Return : public Statement {
@@ -189,52 +211,10 @@ class Return : public Statement {
   std::optional<Nonnull<const FunctionDeclaration*>> function_;
 };
 
-class Sequence : public Statement {
- public:
-  Sequence(SourceLocation source_loc, Nonnull<Statement*> statement,
-           std::optional<Nonnull<Statement*>> next)
-      : Statement(Kind::Sequence, source_loc),
-        statement_(statement),
-        next_(next) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->kind() == Kind::Sequence;
-  }
-
-  auto statement() const -> const Statement& { return *statement_; }
-  auto statement() -> Statement& { return *statement_; }
-  auto next() const -> std::optional<Nonnull<const Statement*>> {
-    return next_;
-  }
-  auto next() -> std::optional<Nonnull<Statement*>> { return next_; }
-
- private:
-  Nonnull<Statement*> statement_;
-  std::optional<Nonnull<Statement*>> next_;
-};
-
-class Block : public Statement {
- public:
-  Block(SourceLocation source_loc, std::optional<Nonnull<Statement*>> statement)
-      : Statement(Kind::Block, source_loc), statement_(statement) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->kind() == Kind::Block;
-  }
-
-  auto statement() const -> std::optional<Nonnull<const Statement*>> {
-    return statement_;
-  }
-  auto statement() -> std::optional<Nonnull<Statement*>> { return statement_; }
-
- private:
-  std::optional<Nonnull<Statement*>> statement_;
-};
-
 class While : public Statement {
  public:
   While(SourceLocation source_loc, Nonnull<Expression*> condition,
-        Nonnull<Statement*> body)
+        Nonnull<Block*> body)
       : Statement(Kind::While, source_loc),
         condition_(condition),
         body_(body) {}
@@ -245,12 +225,12 @@ class While : public Statement {
 
   auto condition() const -> const Expression& { return *condition_; }
   auto condition() -> Expression& { return *condition_; }
-  auto body() const -> const Statement& { return *body_; }
-  auto body() -> Statement& { return *body_; }
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
 
  private:
   Nonnull<Expression*> condition_;
-  Nonnull<Statement*> body_;
+  Nonnull<Block*> body_;
 };
 
 class Break : public Statement {
@@ -319,9 +299,15 @@ class Match : public Statement {
     auto statement() const -> const Statement& { return *statement_; }
     auto statement() -> Statement& { return *statement_; }
 
+    // Contains names for the pattern and statement. Note that when the
+    // statement is a block, it gains its own scope.
+    auto static_scope() const -> const StaticScope& { return static_scope_; }
+    auto static_scope() -> StaticScope& { return static_scope_; }
+
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
+    StaticScope static_scope_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,
@@ -349,13 +335,21 @@ class Match : public Statement {
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-class Continuation : public Statement {
+class Continuation : public Statement, public NamedEntityInterface {
  public:
   Continuation(SourceLocation source_loc, std::string continuation_variable,
-               Nonnull<Statement*> body)
+               Nonnull<Block*> body)
       : Statement(Kind::Continuation, source_loc),
         continuation_variable_(std::move(continuation_variable)),
         body_(body) {}
+
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::Continuation;
+  }
+
+  auto source_loc() const -> SourceLocation override {
+    return Statement::source_loc();
+  }
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Continuation;
@@ -364,12 +358,12 @@ class Continuation : public Statement {
   auto continuation_variable() const -> const std::string& {
     return continuation_variable_;
   }
-  auto body() const -> const Statement& { return *body_; }
-  auto body() -> Statement& { return *body_; }
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
 
  private:
   std::string continuation_variable_;
-  Nonnull<Statement*> body_;
+  Nonnull<Block*> body_;
 };
 
 // A run statement.

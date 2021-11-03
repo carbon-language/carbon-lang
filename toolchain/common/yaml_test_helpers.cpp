@@ -4,6 +4,7 @@
 
 #include "toolchain/common/yaml_test_helpers.h"
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/YAMLParser.h"
 
 namespace Carbon::Testing::Yaml {
