@@ -21,7 +21,7 @@ import os
 import sys
 from pathlib import Path
 
-runfiles = Path(os.environ.get("TEST_SRCDIR"))
+runfiles = Path(os.environ["TEST_SRCDIR"])
 deps_path = (
     runfiles / "carbon" / "bazel" / "check_deps" / "non_test_cc_deps.txt"
 )
