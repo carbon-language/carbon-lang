@@ -155,6 +155,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         "//common:ostream",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:statement",
