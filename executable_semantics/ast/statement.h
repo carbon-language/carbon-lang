@@ -11,6 +11,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -18,6 +19,7 @@
 namespace Carbon {
 
 class FunctionDeclaration;
+class StaticScope;
 
 class Statement {
  public:
@@ -27,7 +29,6 @@ class Statement {
     VariableDefinition,
     If,
     Return,
-    Sequence,
     Block,
     While,
     Break,
@@ -60,46 +61,28 @@ class Statement {
   SourceLocation source_loc_;
 };
 
-class Sequence : public Statement {
- public:
-  Sequence(SourceLocation source_loc, Nonnull<Statement*> statement,
-           std::optional<Nonnull<Statement*>> next)
-      : Statement(Kind::Sequence, source_loc),
-        statement_(statement),
-        next_(next) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->kind() == Kind::Sequence;
-  }
-
-  auto statement() const -> const Statement& { return *statement_; }
-  auto statement() -> Statement& { return *statement_; }
-  auto next() const -> std::optional<Nonnull<const Statement*>> {
-    return next_;
-  }
-  auto next() -> std::optional<Nonnull<Statement*>> { return next_; }
-
- private:
-  Nonnull<Statement*> statement_;
-  std::optional<Nonnull<Statement*>> next_;
-};
-
 class Block : public Statement {
  public:
-  Block(SourceLocation source_loc, std::optional<Nonnull<Sequence*>> sequence)
-      : Statement(Kind::Block, source_loc), sequence_(sequence) {}
+  Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
+      : Statement(Kind::Block, source_loc), statements_(statements) {}
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Block;
   }
 
-  auto sequence() const -> std::optional<Nonnull<const Sequence*>> {
-    return sequence_;
+  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
+    return statements_;
   }
-  auto sequence() -> std::optional<Nonnull<Sequence*>> { return sequence_; }
+  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
+    return statements_;
+  }
+
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
-  std::optional<Nonnull<Sequence*>> sequence_;
+  std::vector<Nonnull<Statement*>> statements_;
+  StaticScope static_scope_;
 };
 
 class ExpressionStatement : public Statement {
@@ -316,9 +299,15 @@ class Match : public Statement {
     auto statement() const -> const Statement& { return *statement_; }
     auto statement() -> Statement& { return *statement_; }
 
+    // Contains names for the pattern and statement. Note that when the
+    // statement is a block, it gains its own scope.
+    auto static_scope() const -> const StaticScope& { return static_scope_; }
+    auto static_scope() -> StaticScope& { return static_scope_; }
+
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
+    StaticScope static_scope_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,
@@ -346,13 +335,21 @@ class Match : public Statement {
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-class Continuation : public Statement {
+class Continuation : public Statement, public NamedEntityInterface {
  public:
   Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Block*> body)
       : Statement(Kind::Continuation, source_loc),
         continuation_variable_(std::move(continuation_variable)),
         body_(body) {}
+
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::Continuation;
+  }
+
+  auto source_loc() const -> SourceLocation override {
+    return Statement::source_loc();
+  }
 
   static auto classof(const Statement* stmt) -> bool {
     return stmt->kind() == Kind::Continuation;

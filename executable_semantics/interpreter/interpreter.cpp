@@ -117,8 +117,8 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       // Bring the deduced parameters into scope.
       for (const auto& deduced : func_def.deduced_parameters()) {
         AllocationId a =
-            heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
-        new_env.Set(deduced.name, a);
+            heap_.AllocateValue(arena_->New<VariableType>(deduced.name()));
+        new_env.Set(deduced.name(), a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
       AllocationId a = heap_.AllocateValue(f);
@@ -857,17 +857,20 @@ auto Interpreter::StepStmt() -> Transition {
       return UnwindTo{&cast<Continue>(stmt).loop()};
     }
     case Statement::Kind::Block: {
-      if (act->pos() == 0) {
-        const Block& block = cast<Block>(stmt);
-        if (block.sequence()) {
-          act->StartScope(Scope(CurrentEnv()));
-          return Spawn{arena_->New<StatementAction>(*block.sequence())};
-        } else {
-          return Done{};
-        }
-      } else {
+      const auto& block = cast<Block>(stmt);
+      if (act->pos() >= static_cast<int>(block.statements().size())) {
+        // If the position is past the end of the block, end processing. Note
+        // that empty blocks immediately end.
         return Done{};
       }
+      // Initialize a scope when starting a block.
+      if (act->pos() == 0) {
+        act->StartScope(Scope(CurrentEnv()));
+      }
+      // Process the next statement in the block. The position will be
+      // incremented as part of Spawn.
+      return Spawn{
+          arena_->New<StatementAction>(block.statements()[act->pos()])};
     }
     case Statement::Kind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
@@ -962,21 +965,6 @@ auto Interpreter::StepStmt() -> Transition {
         const FunctionDeclaration& function = cast<Return>(stmt).function();
         return UnwindPast{*function.body(), act->results()[0]};
       }
-    case Statement::Kind::Sequence: {
-      //    { { (s1,s2) :: C, E, F} :: S, H}
-      // -> { { s1 :: s2 :: C, E, F} :: S, H}
-      const auto& seq = cast<Sequence>(stmt);
-      if (act->pos() == 0) {
-        return Spawn{arena_->New<StatementAction>(&seq.statement())};
-      } else {
-        if (seq.next()) {
-          return Delegate{
-              arena_->New<StatementAction>(*cast<Sequence>(stmt).next())};
-        } else {
-          return Done{};
-        }
-      }
-    }
     case Statement::Kind::Continuation: {
       CHECK(act->pos() == 0);
       // Create a continuation object by creating a frame similar the

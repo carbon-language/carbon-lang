@@ -14,7 +14,7 @@ package ExecutableSemanticsTest api;
 // Test empty parameters and return type
 fn f() { }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   f();
   return 0;
 }

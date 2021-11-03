@@ -8,6 +8,7 @@
 #include <set>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
@@ -16,12 +17,15 @@
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
-
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
       : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
+
+  void TypeCheck(AST& ast);
+
+ private:
+  using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 
   struct TypeCheckContext {
     explicit TypeCheckContext(Nonnull<Arena*> arena)
@@ -33,12 +37,6 @@ class TypeChecker {
     Env values;
   };
 
-  void TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
-                 const Env& values);
-
-  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
-
- private:
   // Context about the return type, which may be updated during type checking.
   class ReturnTypeContext {
    public:
@@ -76,6 +74,18 @@ class TypeChecker {
     TypeEnv types;
   };
 
+  static void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out);
+
+  // Perform type argument deduction, matching the parameter type `param`
+  // against the argument type `arg`. Whenever there is an VariableType
+  // in the parameter type, it is deduced to be the corresponding type
+  // inside the argument type.
+  // The `deduced` parameter is an accumulator, that is, it holds the
+  // results so-far.
+  static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
+                                Nonnull<const Value*> param,
+                                Nonnull<const Value*> arg) -> TypeEnv;
+
   // TypeCheckExp performs semantic analysis on an expression.  It returns a new
   // version of the expression, its type, and an updated environment which are
   // bundled into a TCResult object.  The purpose of the updated environment is
@@ -97,6 +107,9 @@ class TypeChecker {
   auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
                         std::optional<Nonnull<const Value*>> expected)
       -> TCResult;
+
+  void TypeCheckDeclaration(Nonnull<Declaration*> d, const TypeEnv& types,
+                            const Env& values);
 
   // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
   // version of the statement and a new type environment.
@@ -122,6 +135,7 @@ class TypeChecker {
   auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
       -> Nonnull<const Value*>;
 
+  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible

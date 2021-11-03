@@ -75,7 +75,7 @@ TypeChecker::ReturnTypeContext::ReturnTypeContext(
                                     : std::optional(orig_return_type)),
       is_omitted_(is_omitted) {}
 
-void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
+void TypeChecker::PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
   for (const auto& [name, type] : types) {
     out << sep << name << ": " << *type;
@@ -238,15 +238,9 @@ static void ExpectType(SourceLocation source_loc, const std::string& context,
   }
 }
 
-// Perform type argument deduction, matching the parameter type `param`
-// against the argument type `arg`. Whenever there is an VariableType
-// in the parameter type, it is deduced to be the corresponding type
-// inside the argument type.
-// The `deduced` parameter is an accumulator, that is, it holds the
-// results so-far.
-static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
-                              Nonnull<const Value*> param,
-                              Nonnull<const Value*> arg) -> TypeEnv {
+auto TypeChecker::ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
+                                    Nonnull<const Value*> param,
+                                    Nonnull<const Value*> arg) -> TypeEnv {
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
@@ -666,10 +660,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             for (auto& deduced_param : fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
-              if (!deduced_args.Get(deduced_param.name)) {
+              if (!deduced_args.Get(deduced_param.name())) {
                 FATAL_COMPILATION_ERROR(e->source_loc())
                     << "could not deduce type argument for type parameter "
-                    << deduced_param.name;
+                    << deduced_param.name();
               }
             }
             parameters = Substitute(deduced_args, parameters);
@@ -868,12 +862,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       return TCResult(types);
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*s);
-      if (block.sequence()) {
-        TypeCheckStmt(*block.sequence(), types, values, return_type_context);
-        return TCResult(types);
-      } else {
-        return TCResult(types);
+      for (auto* block_statement : block.statements()) {
+        auto result =
+            TypeCheckStmt(block_statement, types, values, return_type_context);
+        types = result.types;
       }
+      return TCResult(types);
     }
     case Statement::Kind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
@@ -881,18 +875,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       const Value& rhs_ty = var.init().static_type();
       auto lhs_res = TypeCheckPattern(&var.pattern(), types, values, &rhs_ty);
       return TCResult(lhs_res.types);
-    }
-    case Statement::Kind::Sequence: {
-      auto& seq = cast<Sequence>(*s);
-      auto stmt_res =
-          TypeCheckStmt(&seq.statement(), types, values, return_type_context);
-      auto checked_types = stmt_res.types;
-      if (seq.next()) {
-        auto next_res = TypeCheckStmt(*seq.next(), checked_types, values,
-                                      return_type_context);
-        checked_types = next_res.types;
-      }
-      return TCResult(checked_types);
     }
     case Statement::Kind::Assign: {
       auto& assign = cast<Assign>(*s);
@@ -1003,9 +985,17 @@ void TypeChecker::ExpectReturnOnAllPaths(
       }
       return;
     }
-    case Statement::Kind::Block:
-      ExpectReturnOnAllPaths(cast<Block>(*stmt).sequence(), stmt->source_loc());
+    case Statement::Kind::Block: {
+      auto& block = cast<Block>(*stmt);
+      if (block.statements().empty()) {
+        FATAL_COMPILATION_ERROR(stmt->source_loc())
+            << "control-flow reaches end of function that provides a `->` "
+               "return type without reaching a return statement";
+      }
+      ExpectReturnOnAllPaths(block.statements()[block.statements().size() - 1],
+                             block.source_loc());
       return;
+    }
     case Statement::Kind::If: {
       auto& if_stmt = cast<If>(*stmt);
       ExpectReturnOnAllPaths(&if_stmt.then_block(), stmt->source_loc());
@@ -1014,15 +1004,6 @@ void TypeChecker::ExpectReturnOnAllPaths(
     }
     case Statement::Kind::Return:
       return;
-    case Statement::Kind::Sequence: {
-      auto& seq = cast<Sequence>(*stmt);
-      if (seq.next()) {
-        ExpectReturnOnAllPaths(seq.next(), stmt->source_loc());
-      } else {
-        ExpectReturnOnAllPaths(&seq.statement(), stmt->source_loc());
-      }
-      return;
-    }
     case Statement::Kind::Continuation:
     case Statement::Kind::Run:
     case Statement::Kind::Await:
@@ -1048,17 +1029,17 @@ auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
   // Bring the deduced parameters into scope
   for (const auto& deduced : f->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
-    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
-    values.Set(deduced.name, a);
+    types.Set(deduced.name(), arena_->New<VariableType>(deduced.name()));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name()));
+    values.Set(deduced.name(), a);
   }
   // Type check the parameter pattern
   auto param_res =
       TypeCheckPattern(&f->param_pattern(), types, values, std::nullopt);
   // Evaluate the return type expression
   auto return_type = interpreter_.InterpPattern(values, &f->return_type());
-  if (f->name() == "main") {
-    ExpectExactType(f->source_loc(), "return type of `main`",
+  if (f->name() == "Main") {
+    ExpectExactType(f->source_loc(), "return type of `Main`",
                     arena_->New<IntType>(), return_type);
     // TODO: Check that main doesn't have any parameters.
   }
@@ -1089,9 +1070,9 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
   // Bring the deduced parameters into scope
   for (const auto& deduced : fun_def->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced.name, arena_->New<VariableType>(deduced.name));
-    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name));
-    values.Set(deduced.name, a);
+    types.Set(deduced.name(), arena_->New<VariableType>(deduced.name()));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name()));
+    values.Set(deduced.name(), a);
   }
   // Type check the parameter pattern
   TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);
@@ -1153,8 +1134,18 @@ static auto GetName(const Declaration& d) -> const std::string& {
   }
 }
 
-void TypeChecker::TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
-                            const Env& values) {
+void TypeChecker::TypeCheck(AST& ast) {
+  TypeCheckContext p = TopLevel(&ast.declarations);
+  TypeEnv top = p.types;
+  Env ct_top = p.values;
+  for (const auto decl : ast.declarations) {
+    TypeCheckDeclaration(decl, top, ct_top);
+  }
+}
+
+void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
+                                       const TypeEnv& types,
+                                       const Env& values) {
   switch (d->kind()) {
     case Declaration::Kind::FunctionDeclaration:
       TypeCheckFunDef(&cast<FunctionDeclaration>(*d), types, values);
@@ -1243,7 +1234,7 @@ auto TypeChecker::TopLevel(std::vector<Nonnull<Declaration*>>* fs)
   bool found_main = false;
 
   for (auto const& d : *fs) {
-    if (GetName(*d) == "main") {
+    if (GetName(*d) == "Main") {
       found_main = true;
     }
     TopLevel(d, &tops);
@@ -1251,7 +1242,7 @@ auto TypeChecker::TopLevel(std::vector<Nonnull<Declaration*>>* fs)
 
   if (found_main == false) {
     FATAL_COMPILATION_ERROR_NO_LINE()
-        << "program must contain a function named `main`";
+        << "program must contain a function named `Main`";
   }
   return tops;
 }

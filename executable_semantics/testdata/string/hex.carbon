@@ -18,6 +18,6 @@ fn CompareStr(s: String) -> i32 {
   return 1;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return CompareStr("\x73\x74\x72\x3B");
 }

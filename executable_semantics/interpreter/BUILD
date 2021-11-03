@@ -2,7 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//executable_semantics:__pkg__"])
+package(default_visibility = [
+    "//bazel/check_deps:__pkg__",
+    "//executable_semantics:__pkg__",
+])
 
 # These currently have to be a single build rule because of a dependency cycle
 # in printing.
@@ -54,6 +57,7 @@ cc_library(
     deps = [
         ":interpreter",
         ":resolve_control_flow",
+        ":resolve_names",
         ":type_checker",
         "//executable_semantics/ast",
     ],
@@ -127,6 +131,17 @@ cc_library(
 )
 
 cc_library(
+    name = "resolve_names",
+    srcs = ["resolve_names.cpp"],
+    hdrs = ["resolve_names.h"],
+    deps = [
+        "//common:check",
+        "//executable_semantics/ast",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "stack",
     hdrs = ["stack.h"],
     deps = ["//common:check"],
@@ -140,6 +155,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         "//common:ostream",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:statement",

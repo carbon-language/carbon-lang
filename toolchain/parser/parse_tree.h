@@ -7,10 +7,12 @@
 
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -249,6 +251,9 @@ class ParseTree::Node {
   // FIXME: Maybe we can switch to stream operator overloads?
   [[nodiscard]] auto GetIndex() const -> int { return index; }
 
+  // Prints the node index.
+  auto Print(llvm::raw_ostream& output) const -> void;
+
  private:
   friend ParseTree;
   friend Parser;
@@ -298,6 +303,9 @@ class ParseTree::PostorderIterator
     return *this;
   }
 
+  // Prints the underlying node index.
+  auto Print(llvm::raw_ostream& output) const -> void;
+
  private:
   friend class ParseTree;
 
@@ -339,6 +347,9 @@ class ParseTree::SiblingIterator
     node.index -= std::abs(tree->node_impls[node.index].subtree_size);
     return *this;
   }
+
+  // Prints the underlying node index.
+  auto Print(llvm::raw_ostream& output) const -> void;
 
  private:
   friend class ParseTree;

@@ -15,6 +15,6 @@ fn ReturnSecond(_: i32, x: i32) -> i32 {
   return x;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return ReturnSecond(1, 0);
 }

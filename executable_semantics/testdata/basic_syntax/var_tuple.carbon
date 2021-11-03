@@ -11,7 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var (x: auto, y: auto) = (2, 3);
   return y - x - 1;
 }
