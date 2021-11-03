@@ -82,7 +82,7 @@ that `A` would like to result from unifying `A` and `B`:
 interface CommonTypeWith(U:! Type) {
   let Result:! Type
     where Self is ImplicitAs(.Self) and
-          .Self is ImplicitAs(Self);
+          U is ImplicitAs(.Self);
 }
 ```
 
