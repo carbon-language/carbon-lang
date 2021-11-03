@@ -62,7 +62,21 @@ the expression.
 ## Finding a common type
 
 The common type of two types `T` and `U` is `(T as CommonType(U)).Result`, where
-`CommonType` is the `Carbon.CommonType` interface:
+`CommonType` is the `Carbon.CommonType` constraint. `CommonType` is notionally
+defined as follows:
+
+```
+constraint CommonType(U:! CommonTypeWith(Self)) {
+  impl as CommonTypeWith(U) where .Result == U.Result;
+}
+```
+
+The actual definition is a bit more complex than this, as described in
+[symmetry](#symmetry).
+
+The interface `CommonTypeWith` is used to customize the behavior of
+`CommonType`. The implementation `A as CommonTypeWith(B)` specifies the type
+that `A` would like to result from unifying `A` and `B`:
 
 ```
 interface CommonTypeWith(U:! Type) {
@@ -70,16 +84,12 @@ interface CommonTypeWith(U:! Type) {
     where Self is ImplicitAs(.Self) and
           .Self is ImplicitAs(Self);
 }
-constraint CommonType(U:! CommonTypeWith(Self)) {
-  extends CommonTypeWith(U) where .Result == U.Result;
-}
 ```
 
 _Note:_ It is required that both types implicitly convert to the common type.
 
-`CommonTypeWith` is described in [symmetry](#symmety). Some blanket `impl`s for
-these interfaces are provided as part of the prelude. These are described in the
-following sections.
+Some blanket `impl`s for `CommonTypeWith` are provided as part of the prelude.
+These are described in the following sections.
 
 When attempting to find a common type in an `if` expression:
 
@@ -98,24 +108,50 @@ types in other circumstances.
 
 ### Symmetry
 
-The common type of `T` and `U` is the same as the common type of `U` and `T`.
-This is guaranteed by providing two interfaces:
+The common type of `T` and `U` should always be the same as the common type of
+`U` and `T`. This is enforced in two steps:
 
--   `CommonTypeWith` is a primitive interface by which a type can suggest how to
-    find a common type with another type. It is not necessarily symmetric.
--   `CommonType` is a constraint expressing that two types have a single common
-    type, and that common type doesn't depend on the order in which the types
-    appear.
+-   A `SymmetricCommonTypeWith` interface implicitly provides a
+    `B as CommonTypeWith(A)` implementation whenever one doesn't exist but an
+    `A as CommonTypeWith(B)` implementation exists.
+-   `CommonType` is defined in terms of `SymmetricCommonTypeWith`, and requires
+    that both `A as SymmetricCommonTypeWith(B)` and
+    `B as SymmetricCommonTypeWith(A)` produce the same type.
 
-To avoid the need to define `CommonTypeWith` in both directions, a helper
-blanket `impl` is provided to generate the reversed form:
+The interface `SymmetricCommonTypeWith` is an implementation detail of the
+`CommonType` constraint. It is defined and implemented as follows:
 
 ```
-impl [T:! Type, U:! CommonTypeWith(T)] T as CommonTypeWith(U) {
+interface SymmetricCommonTypeWith(U:! Type) {
+  let Result:! Type
+    where Self is ImplicitAs(.Self) and
+          .Self is ImplicitAs(Self);
+}
+impl [T:! Type, U:! CommonTypeWith(T)] T as SymmetricCommonTypeWith(U) {
   let Result:! Type = U.Result;
+}
+impl [U:! Type, T:! CommonTypeWith(U)] T as SymmetricCommonTypeWith(U) {
+  let Result:! Type = T.Result;
+}
+impl [U:! Type, T:! CommonTypeWith(U) where U is CommonTypeWith(T)]
+    T as SymmetricCommonTypeWith(U) {
+  let Result:! Type = T.Result;
 }
 ```
 
+The `SymmetricCommonTypeWith` interface is not exported, so user-defined `impl`s
+can't be defined, and only the two blanket `impl`s above are used. The
+`CommonType` constraint is then defined as follows:
+
+```
+constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
+  impl as SymmetricCommonTypeWith(U) where .Result == U.Result;
+}
+```
+
+When computing the common type of `T` and `U`, if only one of the types provides
+a `CommonTypeWith` implementation, that determines the common type. If both
+types do, there is no common type, and the `CommonType` constraint is not met.
 For example, given:
 
 ```
@@ -150,12 +186,11 @@ rules in this document.
 
 ### Implicit conversions
 
-If one of `T` and `U` implicitly converts to the other, the result is the
-destination type:
+If `T` implicitly converts to `U`, the common type is `U`:
 
 ```
-impl [U:! Type, T:! ImplicitAs(U)] T as CommonTypeWith(U) {
-  let Result:! Type = U;
+impl [T:! Type, U:! ImplicitAs(T)] T as CommonTypeWith(U) {
+  let Result:! Type = T;
 }
 ```
 
@@ -175,7 +210,8 @@ impl YourString as CommonTypeWith(MyString) {
 }
 var my_string: MyString;
 var your_string: YourString;
-var also_my_string: MyString = if cond then my_string else your_string;
+// The type of `also_my_string` is `MyString`.
+var also_my_string: auto = if cond then my_string else your_string;
 ```
 
 ### Facet types
@@ -194,11 +230,16 @@ impl [T:! Type, U:! FacetOf(T)] T as CommonTypeWith(U) {
 implicit conversion case above, because `U:! FacetOf(T)` implies that there are
 implicit conversions in both directions.
 
+**FIXME:** Does this work? Converting `T as ...` to type-of-type `Type` seems
+like it should erase the custom type-of-type. Similarly, the type-of-type of `T`
+and `U` are erased before `impl` selection.
+
 ## Alternatives considered
 
 -   [Provide no conditional expression](/proposals/p0911.md#no-conditional-expression)
 -   [Use `?:`, like in C and C++](/proposals/p0911.md#use-c-syntax)
 -   [Use `if (...) expr1 else expr2`](/proposals/p0911.md#no-then)
+-   [Only require one `impl` to specify the common type if implicit conversions in both directions are possible](/proposals/p0911.md#implicit-conversions-in-both-directions)
 
 ## References
 
