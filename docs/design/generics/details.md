@@ -48,7 +48,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Conditional conformance](#conditional-conformance)
         -   [Conditional methods](#conditional-methods)
     -   [Blanket impls](#blanket-impls)
-        -   [Difference between blanket impls and constraints](#difference-between-blanket-impls-and-constraints)
+        -   [Difference between blanket impls and named constraints](#difference-between-blanket-impls-and-named-constraints)
     -   [Wildcard impls](#wildcard-impls)
         -   [Automatic implicit conversion](#automatic-implicit-conversion)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
@@ -2260,6 +2260,8 @@ so it applies to a family of types, interfaces, or both. This includes:
 -   "Blanket" impls where an interface is implemented for all types that
     implement another interface, or some other criteria beyond being a specific
     type.
+-   "Wildcard" impls where a family of interfaces are implemented for single
+    type.
 
 ### Impl for a parameterized type
 
@@ -2275,7 +2277,7 @@ class Vector(T:! Type) {
 }
 ```
 
-This is equivalen to naming the type between `impl` and `as`:
+This is equivalent to naming the type between `impl` and `as`:
 
 ```
 class Vector(T:! Type) {
@@ -2329,11 +2331,11 @@ external impl HashMap(Key:! Hashable, Value:! Type)
 
 ### Conditional conformance
 
-[The problem](terminology.md#conditional-conformance) we are trying to solve
-here is expressing that we have an `impl` of some interface for some type, but
-only if some additional type restrictions are met. Examples where this would be
-useful include being able to say that a container type, like vector, implements
-some interface when its element type satisfies the same interface:
+[Conditional conformance](terminology.md#conditional-conformance) is expressing
+that we have an `impl` of some interface for some type, but only if some
+additional type restrictions are met. Examples where this would be useful
+include being able to say that a container type, like `Vector`, implements some
+interface when its element type satisfies the same interface:
 
 -   A container is printable if its elements are.
 -   A container could be compared to another container with the same element
@@ -2462,7 +2464,7 @@ FIXME: Exclude things that could introduce a cycle?
 -   If `T` implements `ComparableWith(U)`, then `U` should implement
     `ComparableWith(T)`.
 
-#### Difference between blanket impls and constraints
+#### Difference between blanket impls and named constraints
 
 A blanket interface can be used to say "any type implementing `interface I` also
 implements `interface B`." Compare this with defining a `constraint C` that
