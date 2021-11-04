@@ -3729,6 +3729,20 @@ implementation is chosen, for some definition of specific.
 
 FIXME
 
+Given an impl declaration, find the type structure by deleting implicit
+parameters and replacing type parameters by a `?` (also replace `T*` by
+`Ptr(T)`) The type structure of this declaration:
+
+```
+impl [T:! ..., U:! ...] Foo(T, i32) as Bar(String, U) { ... }
+```
+
+is:
+
+```
+impl Foo(?, i32) as Bar(String, ?)
+```
+
 #### Orphan rule
 
 FIXME: An impl must only be defined in a library that must be imported for it to
@@ -3743,6 +3757,14 @@ only allowing `impl` signatures involving a _local_ type or interface outside of
 constraints. Here "local" is a type or interface defined in the same library as
 the `impl`.
 
+Orphan rule: given a specific type and specific interface, impl that can match
+can only be in libraries that must have been imported to name that type or
+interface.
+
+Only the implementing interface and types (self type and type parameters) in the
+type structure are relevant here; an interface mentioned in a constraint is not
+sufficient since it need not be imported.
+
 FIXME **Future work:** Support the `&str + &str` -> `String` case. Also support,
 given two libraries A and B, would like to somehow have implementations of
 interfaces in A for types in B without a dependency relationship between A and
@@ -3755,10 +3777,47 @@ FIXME: Given matching impls with different type structures, we pick the impl
 with the "most specific" type structure, under a particular ordering of type
 structures.
 
+At most one library can define any impls with a given type structure Consequence
+of both the orphan rule and no cyclic dependencies Corollary: two impls defined
+in different libraries must have different type structures Given a specific
+concrete type, say `Foo(bool, i32)`, and an interface, say `Bar(String, f32)`,
+want an overlap rule that selects the type structure of the impl to select
+
+1. Write down the _unique_ type structures of all _matching_ impls, for example:
+
+```
+impl Foo(?, i32) as Bar(String, ?)
+impl Foo(?, ?) as Bar(String, f32)
+```
+
+2. Our rule is to pick the type structure with a non-`?` at the first difference
+   Here we see a difference between `Foo(?, i32)` and `Foo(?, ?)`, so we select
+   the one with `Foo(?, i32)`, ignoring the fact that it has another `?` later
+   in its type structure
+
+Corresponds to a depth-first traversal of the type tree to identify the first
+difference. Could also do another order, such as breadth-first, but this order
+is both simple and reflects some experience from the Rust community that the
+Self type is particularly important to prioritize.
+
 #### Prioritization rule
 
 FIXME: Given impls with the same type structure, they all must be defined in the
-same library. Within that library,
+same library, and in fact by the access rules, must be defined in the API file
+for that library unless they could only be used from that library.
+
+Within that library,
+
+Same type structure --> 1) same library API file, 2) intersection requirement
+(or "semi-lattice" requirement) Once we've determined the type structure of the
+matching impl, we need to pick between the matching impls with that type
+structure These impls will necessarily be defined in the same library together
+Compiler will check that for every pair of overlapping impls in a given library,
+either: one matches a strict subset of the other there exists another impl
+exactly matching their intersection Result is there is a unique most specific
+impl with a type structure, using the partial ordering of impls by containment
+An impl mentioning a private type may be private to the file defining the
+private type, but otherwise impls must be declared publicly in an API file
 
 **Open question:** Do we require that impls with the same type structure are
 always in the same prioritization block, or just when the intersection isn't
@@ -3769,6 +3828,12 @@ defined?
 #### Acyclic rule
 
 FIXME: Exclude things that could introduce a cycle
+
+Options:
+
+-   Combining impls could give you an immediate error if there exists queries
+    that have cycles.
+-   A cyclic query could give you a late error.
 
 **Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
 `ComparableWith(T)`.
