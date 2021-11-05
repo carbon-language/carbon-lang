@@ -3624,14 +3624,8 @@ where blanket impls arise:
 
     This means that every type is the common type with itself.
 
-Blanket impls must always be [external](#external-impl).
-
-FIXME: Question: do we ever want to guarantee consistency by allowing a blanket
-impl to forbid any specialization. For example, forbidding any overriding of the
-`PartiallyOrdered` implementation provided for types that implement `Ordered`? A
-big concern is that we don't have a total order on impls, and this can easily In
-other cases, we will want to support overriding for efficiency, such as an
-implementation of `+=` in terms of `+` and `=`.
+Blanket impls must always be [external](#external-impl) and defined lexically
+out-of-line.
 
 #### Difference between blanket impls and named constraints
 
@@ -3727,11 +3721,9 @@ implementation is chosen, for some definition of specific.
 
 #### Type structure of an impl declaration
 
-FIXME
-
 Given an impl declaration, find the type structure by deleting implicit
-parameters and replacing type parameters by a `?` (also replace `T*` by
-`Ptr(T)`) The type structure of this declaration:
+parameters and replacing type parameters by a `?`. The type structure of this
+declaration:
 
 ```
 impl [T:! ..., U:! ...] Foo(T, i32) as Bar(String, U) { ... }
@@ -3743,33 +3735,40 @@ is:
 impl Foo(?, i32) as Bar(String, ?)
 ```
 
+To get a uniform representation across different `impl` definitions, before type
+parameters are replaced the declarations are normalized as follows:
+
+-   For impls declared lexically inline in a class definition, the type is added
+    between the `impl` and `as` keywords if the type is left out.
+-   Pointer types `T*` are replaced with `Ptr(T)`.
+-   The `external` keyword is removed, if present.
+
+The type structure will always contain a single interface name, which is the
+name of the interface being implemented, and some number of type names. Type
+names can be in the `Self` type to the left of the `as` keyword, or as
+parameters to other types or the interface. These names must always be defined
+either in the current library or be publicly defined in some library this
+library depends on.
+
 #### Orphan rule
 
-FIXME: An impl must only be defined in a library that must be imported for it to
-be used. This means that some name from the type structure must be defined in
-the same library. Combined with no cyclic library dependencies, we conclude that
-there is at most one library that can define impls with a particular type
-structure.
+To achieve coherence, we need to ensure that any given impl can only be defined
+in a library that must be imported for it to apply. Specifically, given a
+specific type and specific interface, impls that can match can only be in
+libraries that must have been imported to name that type or interface. This is
+achieved with the _orphan rule_.
 
-**Orphan rule:** An `impl` may only be defined in a library that must be a
-dependency of any query where that `impl` could apply. This is accomplished by
-only allowing `impl` signatures involving a _local_ type or interface outside of
-constraints. Here "local" is a type or interface defined in the same library as
-the `impl`.
-
-Orphan rule: given a specific type and specific interface, impl that can match
-can only be in libraries that must have been imported to name that type or
-interface.
+**Orphan rule:** Some name from the type structure of an `impl` declaration must
+be defined in the same library as the `impl`, that is some name must be _local_.
 
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
-sufficient since it need not be imported.
+sufficient since it
+[need not be imported](/proposals/p0920.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
 
-FIXME **Future work:** Support the `&str + &str` -> `String` case. Also support,
-given two libraries A and B, would like to somehow have implementations of
-interfaces in A for types in B without a dependency relationship between A and
-B. See
-[Rust RFC #1856: "Orphan rules are stricter than we would like"](https://github.com/rust-lang/rfcs/issues/1856).
+Since Carbon in addition requires there be no cyclic library dependencies, we
+conclude that there is at most one library that can define impls with a
+particular type structure.
 
 #### Overlap rule
 
@@ -3803,7 +3802,7 @@ Self type is particularly important to prioritize.
 #### Prioritization rule
 
 FIXME: Given impls with the same type structure, they all must be defined in the
-same library, and in fact by the access rules, must be defined in the API file
+same library. In fact, by the access rules, they must be defined in the API file
 for that library unless they could only be used from that library.
 
 Within that library,
@@ -3818,6 +3817,29 @@ exactly matching their intersection Result is there is a unique most specific
 impl with a type structure, using the partial ordering of impls by containment
 An impl mentioning a private type may be private to the file defining the
 private type, but otherwise impls must be declared publicly in an API file
+
+**Open question:** How do we pick between two different prioritization blocks?
+This is only a question when prioritization blocks contain a mixture of type
+structures. Options:
+
+-   Prioritization blocks implicitly define all non-empty intersections of
+    contained impls, which are then selected by their type structure.
+-   Pick the impl pattern most favored for the query, then pick the definition
+    of the highest priority matching impl in the block.
+
+To see the difference, consider two libraries with type structures as follows:
+
+-   Library B has `impl (A, ?, ?, D) as I` and `impl (?, B, ?, D) as I`
+-   Library C has `impl (A, ?, C, ?) as I`
+
+For the query `(A, B, C, D) as I`, using the intersection rule, library B is
+considered to have the intersection impl with type structure
+`impl (A, B, ?, D) as I` which is the most specific. If we instead just
+considered the rules mentioned explicitly, then `impl (A, ?, C, ?) as I` from
+library C is the most specific. The advantage of the implicit intersection rule
+is that if library B is changed to add an impl with type structure
+`impl (A, B, ?, D) as I` impl, it won't shift which library is serving that
+query.
 
 **Open question:** Do we require that impls with the same type structure are
 always in the same prioritization block, or just when the intersection isn't
@@ -3864,9 +3886,25 @@ then which of the two impls will be used?
 -   `T is ImplicitAs(U)` gives a definition of `U as CommonTypeWith(T)` using
     the first impl as long as not `T is CommonTypeWith(U)`.
 
+The compiler won't know which blanket impl to select unless it can determine
+whether a type implements an interface, but the answer to that question can be
+affected by which blanket impl we select.
+
+The workaround for this problem is to split an interface in the cycle in two.
+
 #### Termination rule
 
-FIXME
+FIXME: Need a recursion limit unless we can establish a criteria that
+establishes infinite application of rules.
+
+Example: `A is B` if `Optional(A) is B` if `Optional(Optional(A)) is B` if ...
+Could be the result of a single impl
+
+```
+impl [A:! Type where Optional(.Self) is B] A as B { ... }
+```
+
+or a chain of impls.
 
 #### Comparison to Rust
 
