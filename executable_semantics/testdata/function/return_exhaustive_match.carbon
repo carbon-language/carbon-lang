@@ -11,7 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   match (0) {
     case _: auto => return 1;
   }

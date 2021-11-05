@@ -51,18 +51,10 @@ static void ResolveControlFlow(
       }
       return;
     }
-    case Statement::Kind::Sequence: {
-      auto& seq = cast<Sequence>(*statement);
-      ResolveControlFlow(&seq.statement(), function, loop);
-      if (seq.next().has_value()) {
-        ResolveControlFlow(*seq.next(), function, loop);
-      }
-      return;
-    }
     case Statement::Kind::Block: {
       auto& block = cast<Block>(*statement);
-      if (block.sequence().has_value()) {
-        ResolveControlFlow(*block.sequence(), function, loop);
+      for (auto* block_statement : block.statements()) {
+        ResolveControlFlow(block_statement, function, loop);
       }
       return;
     }

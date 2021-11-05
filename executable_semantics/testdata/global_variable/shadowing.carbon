@@ -19,6 +19,6 @@ fn identity(x: i32) -> i32 {
   return x;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return identity(0);
 }

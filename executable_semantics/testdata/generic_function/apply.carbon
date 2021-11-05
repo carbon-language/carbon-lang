@@ -23,6 +23,6 @@ fn positive(x: Bool) -> i32 {
   }
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return apply(positive, false);
 }

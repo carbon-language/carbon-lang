@@ -15,6 +15,6 @@ package ExecutableSemanticsTest api;
 
 var flag: i32 = true;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

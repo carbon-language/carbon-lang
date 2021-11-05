@@ -106,8 +106,7 @@
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
 %type <Nonnull<Block*>> nonempty_block
 %type <Nonnull<Block*>> block
-%type <Nonnull<Sequence*>> nonempty_statement_list
-%type <std::optional<Nonnull<Sequence*>>> statement_list
+%type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
 %type <GenericBinding> generic_binding
 %type <std::vector<GenericBinding>> deduced_params
@@ -593,9 +592,8 @@ optional_else:
     { $$ = std::nullopt; }
 | ELSE if_statement
     {
-      $$ = arena->New<Block>(
-          context.source_loc(),
-          arena->New<Sequence>(context.source_loc(), $2, std::nullopt));
+      $$ = arena->New<Block>(context.source_loc(),
+                             std::vector<Nonnull<Statement*>>({$2}));
     }
 | ELSE block
     { $$ = $2; }
@@ -608,21 +606,24 @@ return_expression:
 ;
 statement_list:
   // Empty
-    { $$ = std::nullopt; }
-| nonempty_statement_list
-    { $$ = $1; }
-;
-nonempty_statement_list:
-  statement statement_list
-    { $$ = arena->New<Sequence>(context.source_loc(), $1, $2); }
+    { $$ = {}; }
+| statement_list statement
+    {
+      $$ = std::move($1);
+      $$.push_back($2);
+    }
 ;
 block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.source_loc(), $2); }
+    { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
 ;
 nonempty_block:
-  LEFT_CURLY_BRACE nonempty_statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.source_loc(), $2); }
+  LEFT_CURLY_BRACE statement_list statement RIGHT_CURLY_BRACE
+    {
+      $2.push_back($3);
+      $$ = arena->New<Block>(context.source_loc(), std::move($2));
+    }
+;
 return_type:
   // Empty
     { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }

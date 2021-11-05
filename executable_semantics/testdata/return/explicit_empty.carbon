@@ -15,7 +15,7 @@ fn F() -> () {
   return ();
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   F();
   return 0;
 }

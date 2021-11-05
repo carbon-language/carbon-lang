@@ -23,14 +23,11 @@ static void AddIntrinsics(Nonnull<Arena*> arena,
       arena->New<ExpressionPattern>(
           arena->New<StringTypeLiteral>(source_loc)))};
   auto print_return = arena->New<Block>(
-      source_loc,
-      arena->New<Sequence>(
-          source_loc,
-          arena->New<Return>(source_loc,
-                             arena->New<IntrinsicExpression>(
-                                 IntrinsicExpression::Intrinsic::Print),
-                             false),
-          std::nullopt));
+      source_loc, std::vector<Nonnull<Statement*>>({arena->New<Return>(
+                      source_loc,
+                      arena->New<IntrinsicExpression>(
+                          IntrinsicExpression::Intrinsic::Print),
+                      false)}));
   auto print = arena->New<FunctionDeclaration>(
       source_loc, "Print", std::vector<GenericBinding>(),
       arena->New<TuplePattern>(source_loc, print_params),
@@ -65,9 +62,9 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     llvm::outs() << "********** starting execution **********\n";
   }
 
-  SourceLocation source_loc("<main()>", 0);
+  SourceLocation source_loc("<Main()>", 0);
   Nonnull<Expression*> call_main = arena->New<CallExpression>(
-      source_loc, arena->New<IdentifierExpression>(source_loc, "main"),
+      source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
       arena->New<TupleLiteral>(source_loc));
   int result =
       Interpreter(arena, trace).InterpProgram(ast.declarations, call_main);

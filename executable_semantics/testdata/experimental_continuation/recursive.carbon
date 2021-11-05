@@ -27,7 +27,7 @@ fn CountUpTo(x: i32) -> i32 {
   }
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   __continuation k {
     CountUpTo(5);
   }
