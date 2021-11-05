@@ -19,7 +19,8 @@ using SyntaxErrorCode = int;
 // Returns the AST representing the contents of the named file, or an error code
 // if parsing fails. Allocations go into the provided arena.
 auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name,
-           bool trace) -> std::variant<Carbon::AST, SyntaxErrorCode>;
+           bool trace_carbon, bool trace_bison)
+    -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
 }  // namespace Carbon
 

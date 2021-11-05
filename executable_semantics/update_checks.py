@@ -83,6 +83,7 @@ def _update_check_once(test: str) -> bool:
     with open(test, "w") as f:
         f.writelines(lines_without_check[: autoupdate_index + 1])
         for line in out_lines:
+            line = line.rstrip()
             if line:
                 f.write("// CHECK: %s\n" % line)
             else:
@@ -116,8 +117,6 @@ def _update_checks() -> None:
     print("Updating %d lit tests..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
-        list(exec.map(_update_check, tests))
-        # Run again, because the previous run may have changed line numbers.
         list(exec.map(_update_check, tests))
     # Each update call indicates progress with a dot without a newline, so put a
     # newline to wrap.
