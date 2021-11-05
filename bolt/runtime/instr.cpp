@@ -626,7 +626,7 @@ static char *getBinaryPath() {
   uint64_t FDdir = __open(DirPath,
                           /*flags=*/0 /*O_RDONLY*/,
                           /*mode=*/0666);
-  assert(static_cast<int64_t>(FDdir) > 0,
+  assert(static_cast<int64_t>(FDdir) >= 0,
          "failed to open /proc/self/map_files");
 
   while (long Nread = __getdents(FDdir, (struct dirent *)Buf, BufSize)) {
@@ -662,7 +662,7 @@ ProfileWriterContext readDescriptions() {
   uint64_t FD = __open(BinPath,
                        /*flags=*/0 /*O_RDONLY*/,
                        /*mode=*/0666);
-  assert(static_cast<int64_t>(FD) > 0, "failed to open binary path");
+  assert(static_cast<int64_t>(FD) >= 0, "failed to open binary path");
 
   Result.FileDesc = FD;
 
