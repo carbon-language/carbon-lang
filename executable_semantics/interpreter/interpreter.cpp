@@ -1067,12 +1067,10 @@ class Interpreter::DoTransition {
     action->set_pos(action->pos() + 1);
   }
 
-  void operator()(const UnwindTo& unwind_to) {
-    UnwindToHelper(unwind_to.ast_node);
-  }
+  void operator()(const UnwindTo& unwind_to) { DoUnwindTo(unwind_to.ast_node); }
 
   void operator()(const UnwindPast& unwind_past) {
-    UnwindToHelper(unwind_past.ast_node);
+    DoUnwindTo(unwind_past.ast_node);
     // Unwind past the statement and return a result if needed.
     interpreter->UnwindTodoTop();
     if (unwind_past.result.has_value()) {
@@ -1107,7 +1105,7 @@ class Interpreter::DoTransition {
 
  private:
   // Unwinds to the indicated node.
-  void UnwindToHelper(Nonnull<const Statement*> ast_node) {
+  void DoUnwindTo(Nonnull<const Statement*> ast_node) {
     while (true) {
       if (const auto* statement_action =
               dyn_cast<StatementAction>(interpreter->todo_.Top());
