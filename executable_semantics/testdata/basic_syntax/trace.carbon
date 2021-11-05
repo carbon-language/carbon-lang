@@ -5,8 +5,8 @@
 // RUN: executable_semantics --trace --trace_bison=false %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
 //
-// The below output should only be used for basic validation -- changes are
-// okay.
+// When reviewing trace changes, keep in mind that changes are okay; focus on correctness and
+// usefulness of output.
 //
 // AUTOUPDATE: executable_semantics --trace --trace_bison=false %s
 // CHECK: ********** source program **********
