@@ -3772,60 +3772,57 @@ particular type structure.
 
 #### Overlap rule
 
-FIXME: Given matching impls with different type structures, we pick the impl
-with the "most specific" type structure, under a particular ordering of type
-structures.
+Given a specific concrete type, say `Foo(bool, i32)`, and an interface, say
+`Bar(String, f32)`, the overlap rule picks, among all the matching impls, which
+type structure is considered "most specific" to use as the implementation of
+that type for that interface.
 
-At most one library can define any impls with a given type structure Consequence
-of both the orphan rule and no cyclic dependencies Corollary: two impls defined
-in different libraries must have different type structures Given a specific
-concrete type, say `Foo(bool, i32)`, and an interface, say `Bar(String, f32)`,
-want an overlap rule that selects the type structure of the impl to select
-
-1. Write down the _unique_ type structures of all _matching_ impls, for example:
+Given two different type structures of impls matching a query, for example:
 
 ```
 impl Foo(?, i32) as Bar(String, ?)
 impl Foo(?, ?) as Bar(String, f32)
 ```
 
-2. Our rule is to pick the type structure with a non-`?` at the first difference
-   Here we see a difference between `Foo(?, i32)` and `Foo(?, ?)`, so we select
-   the one with `Foo(?, i32)`, ignoring the fact that it has another `?` later
-   in its type structure
+We pick the type structure with a non-`?` at the first difference as most
+specific. Here we see a difference between `Foo(?, i32)` and `Foo(?, ?)`, so we
+select the one with `Foo(?, i32)`, ignoring the fact that it has another `?`
+later in its type structure
 
-Corresponds to a depth-first traversal of the type tree to identify the first
-difference. Could also do another order, such as breadth-first, but this order
-is both simple and reflects some experience from the Rust community that the
-Self type is particularly important to prioritize.
+This rule corresponds to a depth-first traversal of the type tree to identify
+the first difference, and then picking the most specific choice at that
+difference.
 
 #### Prioritization rule
 
-FIXME: Given impls with the same type structure, they all must be defined in the
-same library. In fact, by the access rules, they must be defined in the API file
-for that library unless they could only be used from that library.
+Since at most one library can define impls with a given type structure, all
+impls with a given type structure must be in the same library. Furthermore by
+the [impl declaration access rules](#access), they will be defined in the API
+file for the library if they could match any query from outside the library. If
+there are more than one impls with that type structure, they must be written
+together in a prioritization block. Once a type structure is selected for a
+query, the first impl in the prioritization block that matches is selected.
 
-Within that library,
+**Open question:** How are prioritization blocks written? A block starts with a
+keyword like `match_first` or `impl_priority` and then a sequence of impl
+declarations inside matching curly braces `{` ... `}`.
 
-Same type structure --> 1) same library API file, 2) intersection requirement
-(or "semi-lattice" requirement) Once we've determined the type structure of the
-matching impl, we need to pick between the matching impls with that type
-structure These impls will necessarily be defined in the same library together
-Compiler will check that for every pair of overlapping impls in a given library,
-either: one matches a strict subset of the other there exists another impl
-exactly matching their intersection Result is there is a unique most specific
-impl with a type structure, using the partial ordering of impls by containment
-An impl mentioning a private type may be private to the file defining the
-private type, but otherwise impls must be declared publicly in an API file
+```
+match_first {
+  // If T is Foo prioritized ahead of T is Bar
+  impl [T:! Foo] T as Bar { ... }
+  impl [T:! Baz] T as Bar { ... }
+}
+```
 
-**Open question:** How do we pick between two different prioritization blocks?
-This is only a question when prioritization blocks contain a mixture of type
-structures. Options:
+**Open question:** How do we pick between two different prioritization blocks
+when they contain a mixture of type structures? There are two options:
 
 -   Prioritization blocks implicitly define all non-empty intersections of
     contained impls, which are then selected by their type structure.
--   Pick the impl pattern most favored for the query, then pick the definition
-    of the highest priority matching impl in the block.
+-   The compiler first picks the impl with the type pattern most favored for the
+    query, and then picks the definition of the highest priority matching impl
+    in the same prioritization block block.
 
 To see the difference, consider two libraries with type structures as follows:
 
@@ -3840,12 +3837,6 @@ library C is the most specific. The advantage of the implicit intersection rule
 is that if library B is changed to add an impl with type structure
 `impl (A, B, ?, D) as I` impl, it won't shift which library is serving that
 query.
-
-**Open question:** Do we require that impls with the same type structure are
-always in the same prioritization block, or just when the intersection isn't
-defined?
-
-**Open question:** How are prioritization blocks written?
 
 #### Acyclic rule
 
