@@ -18,6 +18,6 @@ class Point {
 
 var p: Point = {.x = 1, .y = 2};
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return p.y - p.x - 1;
 }

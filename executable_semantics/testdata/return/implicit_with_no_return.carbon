@@ -14,7 +14,7 @@ package ExecutableSemanticsTest api;
 fn F() {
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   F();
   return 0;
 }

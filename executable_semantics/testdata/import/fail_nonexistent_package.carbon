@@ -15,6 +15,6 @@ package ExecutableSemanticsTest api;
 
 import ExecutableSemanticsTest library "Nonexistent";
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

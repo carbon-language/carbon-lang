@@ -4,6 +4,11 @@
 
 load("//bazel/testing:lit_test.bzl", "lit_test")
 
+package(default_visibility = [
+    "//bazel/check_deps:__pkg__",
+    "//executable_semantics:__subpackages__",
+])
+
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],

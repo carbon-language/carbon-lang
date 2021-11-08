@@ -17,6 +17,6 @@ fn map[T:! Type](f: __Fn (T) -> T, tuple: (T, T)) -> (T, T) {
 
 fn inc(x: i32) -> i32 { return x + 1; }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return map(inc, (0, 2))[0];
 }

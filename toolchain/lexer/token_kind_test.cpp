@@ -4,10 +4,11 @@
 
 #include "toolchain/lexer/token_kind.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <cstring>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
