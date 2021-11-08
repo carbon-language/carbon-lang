@@ -77,7 +77,7 @@ tools = [
     ToolSubst('llvm-objcopy', unresolved='fatal'),
     ToolSubst('llvm-strip', unresolved='fatal'),
     ToolSubst('llvm-readelf', unresolved='fatal'),
-    ToolSubst('link_fdata', command=FindTool('link_fdata.sh'), unresolved='fatal'),
+    ToolSubst('link_fdata', command=FindTool('link_fdata.py'), unresolved='fatal'),
     ToolSubst('merge-fdata', unresolved='fatal'),
 ]
 llvm_config.add_tool_substitutions(tools, tool_dirs)
