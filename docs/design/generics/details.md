@@ -3649,20 +3649,18 @@ to `i32` and then add the `i32` to the `BigInt` value.
 
 ```
 class BigInt {
-  impl [T:! ImplicitAs(i32)] as AddTo(T) { ... }
-  // Or:
-  impl as AddTo(T:! ImplicitAs(i32)) { ... }
-
-  // Or externally:
   extern impl [T:! ImplicitAs(i32)] as AddTo(T) { ... }
   // Or:
   extern impl as AddTo(T:! ImplicitAs(i32)) { ... }
 }
-// Or out-of-line and external:
+// Or out-of-line:
 extern impl [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
 // Or:
 extern impl BigInt as AddTo(T:! ImplicitAs(i32)) { ... }
 ```
+
+Wildcard impls generally must be [external](#external-impl), to avoid having the
+names in the interface defined for the type multiple times.
 
 #### Automatic implicit conversion
 
@@ -3682,11 +3680,16 @@ the `AddTo(T)` interface expects, converting from `T` to `i32`. Note that this
 is only allowed because `T` is known to be implicitly convertible to `i32`, in
 this case since it has a constraint that it implements `ImplicitAs(i32)`.
 
+Note that the one case where a wildcard impl need not be external is when its
+definition does not depend on the wildcard parameter, as in the above example.
+
 In general, Carbon allows an interface to be satisfied by a function as long as
 it can implicitly convert from the parameter types the interface expects to the
 parameters provided by the implementing function, and can implicitly convert
 from the return type of the implementing function to the return type expected by
-the interface.
+the interface. So an interface requiring a method returning values of type `T`
+could be implemented by a method returning `i32` as long as `T` had a
+`where i32 is ImplicitAs(T)` constraint.
 
 ### Combinations
 
@@ -3840,13 +3843,37 @@ query.
 
 #### Acyclic rule
 
-FIXME: Exclude things that could introduce a cycle
+A cycle is when a query, such as "does type `T` implement interface `I`?",
+considers an impl that might match, and whether that impl matches is ultimately
+dependent on whether that query is true.
 
-Options:
+FIXME: These are cycles in the graph of (type, interface) pairs where there is
+an edge from pair A to pair B if whether type A implements interface A
+determines whether type B implements interface B.
 
--   Combining impls could give you an immediate error if there exists queries
-    that have cycles.
--   A cyclic query could give you a late error.
+FIXME: Have to be careful to be a bit precise here, and not to erase too much
+information when considering this graph, so that these implementations do not
+form cycles with themselves:
+
+```
+impl [T:! Printable] Optional(T) as Printable;
+impl [T:! Type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
+```
+
+**Open question:** Should Carbon reject cycles in the absence of a query? The
+two options here are:
+
+-   Combining impls gives you an immediate error if there exists queries that
+    have cycles.
+-   Only when a query reveals a cyclic dependency is an error reported.
+
+**Open question:** In the second case, should we ignore cycles if they don't
+affect the result of the query? For example, the cycle might be among
+implementations that are lower priority.
+
+**Concern:** Cycles could be spread out across libraries with no dependencies
+between them. This means there can be problems created by a library that are
+only detected by its users.
 
 **Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
 `ComparableWith(T)`.
@@ -3857,7 +3884,7 @@ external impl [U:! Type, T:! ComparableWith(U)]
 ```
 
 This is a cycle where which types implement `ComparableWith` determines which
-types implement the same interface. A query
+types implement the same interface.
 
 **Example:** Cycles can create contradictions in the type system. Consider these
 two blanket `impl` declarations:
@@ -3881,7 +3908,9 @@ The compiler won't know which blanket impl to select unless it can determine
 whether a type implements an interface, but the answer to that question can be
 affected by which blanket impl we select.
 
-The workaround for this problem is to split an interface in the cycle in two.
+The workaround for this problem is to either split an interface in the cycle in
+two, with a blanket implementation of one from the other, or move some of the
+criteria into a [named constraint](#named-constraints).
 
 #### Termination rule
 
