@@ -183,9 +183,10 @@ void dumpFunction(const BinaryFunction &BF) {
   OS << FunctionName << ":\n";
 
   // FDATA for the entry point
-  OS << "# FDATA: 0 [unknown] 0 "
-     << "1 " << FunctionName << " 0 "
-     << "0 " << BF.getKnownExecutionCount() << '\n';
+  if (uint64_t EntryExecCount = BF.getKnownExecutionCount())
+    OS << "# FDATA: 0 [unknown] 0 "
+       << "1 " << FunctionName << " 0 "
+       << "0 " << EntryExecCount << '\n';
 
   // Binary data references from the function.
   std::unordered_set<const BinaryData *> BDReferences;
@@ -202,9 +203,8 @@ void dumpFunction(const BinaryFunction &BF) {
     for (const MCInst &Instr : *BB) {
       // Dump pseudo instructions (CFI)
       if (BC.MIB->isPseudo(Instr)) {
-        if (BC.MIB->isCFI(Instr)) {
+        if (BC.MIB->isCFI(Instr))
           dumpCFI(BF, Instr, *MAP.get());
-        }
         continue;
       }
 
@@ -226,22 +226,25 @@ void dumpFunction(const BinaryFunction &BF) {
         }
       }
 
-      if (&Instr == LastInst && BB->succ_size())
-        OS << BranchLabel << ": ";
+      if (&Instr == LastInst && (BB->succ_size() || IsCall))
+        OS << BranchLabel << ":\n";
 
       BC.InstPrinter->printInst(&Instr, 0, "", *BC.STI, OS);
       OS << '\n';
 
-      // Dump profile data in FDATA format (as parsed by link_fdata.sh).
+      // Dump profile data in FDATA format (as parsed by link_fdata).
       if (BC.MIB->getJumpTable(Instr))
         dumpJumpTableFdata(OS, BF, Instr, BranchLabel);
       else if (BC.MIB->isTailCall(Instr))
         dumpTailCallFdata(OS, BF, Instr, BranchLabel);
     }
 
-    // Dump profile data in FDATA format (as parsed by link_fdata.sh).
+    // Dump profile data in FDATA format (as parsed by link_fdata).
     for (const BinaryBasicBlock *Succ : BB->successors()) {
       const BinaryBasicBlock::BinaryBranchInfo BI = BB->getBranchInfo(*Succ);
+      if (!BI.MispredictedCount && !BI.Count)
+        continue;
+
       OS << "# FDATA: 1 " << FunctionName << " #" << BranchLabel << "# "
          << "1 " << FunctionName << " #" << Succ->getName() << "# "
          << BI.MispredictedCount << " " << BI.Count << '\n';
