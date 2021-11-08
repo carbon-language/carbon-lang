@@ -952,10 +952,12 @@ auto Interpreter::StepStmt() -> Transition {
       // way one is created in a function call.
       auto fragment = arena_->New<ContinuationValue::StackFragment>();
       stack_fragments_.push_back(fragment);
-      fragment->reversed_todo.push_back(
+      std::vector<std::unique_ptr<Action>> reversed_todo;
+      reversed_todo.push_back(
           std::make_unique<StatementAction>(&cast<Continuation>(stmt).body()));
-      fragment->reversed_todo.push_back(
+      reversed_todo.push_back(
           std::make_unique<ScopeAction>(Scope(CurrentEnv(), &heap_)));
+      fragment->StoreReversed(std::move(reversed_todo));
       AllocationId continuation_address =
           heap_.AllocateValue(arena_->New<ContinuationValue>(fragment));
       // Bind the continuation object to the continuation variable
@@ -970,14 +972,9 @@ auto Interpreter::StepStmt() -> Transition {
         return Spawn{std::make_unique<ExpressionAction>(&run.argument())};
       } else if (act.pos() == 1) {
         // Push the continuation onto the current stack.
-        std::vector<std::unique_ptr<Action>>& reversed_todo =
-            cast<const ContinuationValue>(*act.results()[0])
-                .stack()
-                .reversed_todo;
-        while (!reversed_todo.empty()) {
-          todo_.Push(std::move(reversed_todo.back()));
-          reversed_todo.pop_back();
-        }
+        cast<const ContinuationValue>(*act.results()[0])
+            .stack()
+            .RestoreTo(todo_);
         act.set_pos(2);
         return ManualTransition{};
       } else {
@@ -994,9 +991,8 @@ auto Interpreter::StepStmt() -> Transition {
       }
       const auto& continuation =
           cast<const ContinuationValue>(*todo_.Top()->results()[0]);
-      CHECK(continuation.stack().reversed_todo.empty());
       // Update the continuation with the paused stack.
-      continuation.stack().reversed_todo = std::move(paused);
+      continuation.stack().StoreReversed(std::move(paused));
       return ManualTransition{};
   }
 }
@@ -1141,9 +1137,7 @@ auto Interpreter::ExecuteAction(std::unique_ptr<Action> action, Env values,
 
   // Clean up any remaining suspended continuations.
   for (Nonnull<ContinuationValue::StackFragment*> fragment : stack_fragments_) {
-    for (std::unique_ptr<Action>& action : fragment->reversed_todo) {
-      action.reset();
-    }
+    fragment->Clear();
   }
 
   CHECK(todo_.Top()->results().size() == 1);

@@ -483,10 +483,38 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  struct StackFragment {
+  class StackFragment {
+   public:
+    // Constructs an empty StackFragment.
+    StackFragment() = default;
+
+    // Requires *this to be empty, because by the time we're tearing down the
+    // Arena, it's no longer safe to invoke ~Action.
+    ~StackFragment();
+
+    StackFragment(StackFragment&&) = delete;
+    StackFragment& operator=(StackFragment&&) = delete;
+
+    // Store the given partial todo stack in *this, which must currently be
+    // empty. The stack is represented with the top of the stack at the
+    // beginning of the vector, the reverse of the usual order.
+    void StoreReversed(std::vector<std::unique_ptr<Action>> reversed_todo);
+
+    // Restore the currently stored stack fragment to the top of `todo`,
+    // leaving *this empty.
+    void RestoreTo(Stack<std::unique_ptr<Action>>& todo);
+
+    // Destroy the currently stored stack fragment, in order starting with the
+    // top.
+    void Clear();
+
+    void Print(llvm::raw_ostream& out) const;
+    LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+   private:
     // The todo stack of a suspended continuation, starting with the top
-    // Action (the reverse of the usual order).
-    std::vector<std::unique_ptr<Action>> reversed_todo;
+    // Action.
+    std::vector<std::unique_ptr<Action>> reversed_todo_;
   };
 
   explicit ContinuationValue(Nonnull<StackFragment*> stack)
