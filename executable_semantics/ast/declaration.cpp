@@ -30,8 +30,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
       out << "choice " << choice.name() << " {\n";
-      for (const auto& alt : choice.alternatives()) {
-        out << "alt " << alt.name() << " " << alt.signature() << ";\n";
+      for (Nonnull<const ChoiceDeclaration::Alternative*> alt :
+           choice.alternatives()) {
+        out << "alt " << alt->name() << " " << alt->signature() << ";\n";
       }
       out << "}\n";
       break;
@@ -50,12 +51,12 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   if (!deduced_parameters_.empty()) {
     out << "[";
     unsigned int i = 0;
-    for (const auto& deduced : deduced_parameters_) {
+    for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
       if (i != 0) {
         out << ", ";
       }
-      out << deduced.name() << ":! ";
-      deduced.type().Print(out);
+      out << deduced->name() << ":! ";
+      deduced->type().Print(out);
       ++i;
     }
     out << "]";

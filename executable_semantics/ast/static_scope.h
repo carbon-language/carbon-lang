@@ -33,7 +33,12 @@ class NamedEntityInterface {
     Member,
   };
 
+  NamedEntityInterface() = default;
   virtual ~NamedEntityInterface() = default;
+
+  NamedEntityInterface(NamedEntityInterface&&) = delete;
+  auto operator=(NamedEntityInterface&&) -> NamedEntityInterface& = delete;
+
   // TODO: This is unused, but is intended for casts after lookup.
   virtual auto named_entity_kind() const -> NamedEntityKind = 0;
   virtual auto source_loc() const -> SourceLocation = 0;
