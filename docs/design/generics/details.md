@@ -3924,8 +3924,8 @@ the result of a single impl:
 impl [A:! Type where Optional(.Self) is B] A as B { ... }
 ```
 
-This problem can also result from a chain of impls, as in `A is B` if `A* is C`
-if `Optional(A) is B` and so on.
+This problem can also result from a chain of impls, as in `A is B` if `A* is C`,
+if `Optional(A) is B`, and so on.
 
 Rust solves this problem by imposing a recursion limit, much like C++ compilers
 use to terminate template recursion. This goes against
@@ -3944,32 +3944,30 @@ cases?
 
 #### Comparison to Rust
 
-FIXME: Rust has not yet shipped specialization. It is hampered by the need to
-maintain compatibility with existing Rust code, which motivates a number of Rust
-rules where Carbon can be simpler.
+Rust has been designing a specialization feature, but it has not been completed.
+Luckily they have done a lot of blogging during their design process, so we can
+benefit from the work they have done. However, getting specialization to work
+for Rust is complicated by the need to maintain compatibility with existing Rust
+code. This motivates a number of Rust rules where Carbon can be simpler. As a
+result there are a number of differences between the Carbon and Rust plans:
 
-FIXME: can always specialize, no opt-in or opt-out
-
-FIXME: no "fundamental" types or interfaces/traits, see
-[Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
-
-FIXME: no assumption that if a blanket impl matches that the associated types
-from the blanket impl will be used. If that is a requirement of the function, it
-needs to be stated as an explicit constraint.
-
-FIXME: no "covering" rules, see
-[Rust RFC 2451: "Re-Rebalancing Coherence"](https://rust-lang.github.io/rfcs/2451-re-rebalancing-coherence.html)
-and
-[Little Orphan Impls: The covered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-covered-rule).
-
-FIXME: Carbon does use ordering, favoring the `Self` type and then the
-parameters to the interface in left-to-right order, see
-[Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
-and
-[Little Orphan Impls: The ordered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-ordered-rule),
-but the specifics are different.
-
-FIXME: different plans for handling overlap
+-   FIXME: can always specialize, no opt-in or opt-out
+-   FIXME: no "fundamental" types or interfaces/traits, see
+    [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
+-   FIXME: no assumption that if a blanket impl matches that the associated
+    types from the blanket impl will be used. If that is a requirement of the
+    function, it needs to be stated as an explicit constraint.
+-   FIXME: no "covering" rules, see
+    [Rust RFC 2451: "Re-Rebalancing Coherence"](https://rust-lang.github.io/rfcs/2451-re-rebalancing-coherence.html)
+    and
+    [Little Orphan Impls: The covered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-covered-rule).
+-   FIXME: Carbon does use ordering, favoring the `Self` type and then the
+    parameters to the interface in left-to-right order, see
+    [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
+    and
+    [Little Orphan Impls: The ordered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-ordered-rule),
+    but the specifics are different.
+-   FIXME: different plans for handling overlap
 
 ## Future work
 
