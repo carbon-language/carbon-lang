@@ -307,7 +307,7 @@ void BinaryFunction::markUnreachableBlocks() {
     }
     // FIXME:
     // Also mark BBs with indirect jumps as reachable, since we do not
-    // support removing unused jump tables yet (T29418024 / GH-issue20)
+    // support removing unused jump tables yet (GH-issue20).
     for (const MCInst &Inst : *BB) {
       if (BC.MIB->getJumpTable(Inst)) {
         Stack.push(BB);

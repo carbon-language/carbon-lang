@@ -1016,7 +1016,7 @@ bool BinaryContext::setBinaryDataSize(uint64_t Address, uint64_t Size) {
   // as a larger blob of private data.  When we set the size of the
   // jump table, it might be smaller than the total blob size.  In this
   // case we just leave the original size since (currently) it won't really
-  // affect anything.  See T26915981.
+  // affect anything.
   assert((!NI->second->Size || NI->second->Size == Size ||
           (NI->second->isJumpTable() && NI->second->Size > Size)) &&
          "can't change the size of a symbol that has already had its "

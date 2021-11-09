@@ -1751,9 +1751,9 @@ public:
     static BitVector SPAliases(getAliases(X86::RSP));
 
     // FIXME: PUSH can be technically a leak, but let's ignore this for now
-    // because a lot of harmless prologue code will spill SP to the stack
-    // (t15117648) - Unless push is clearly pushing an object address to the
-    // stack as demonstrated by having a MemOp.
+    // because a lot of harmless prologue code will spill SP to the stack.
+    // Unless push is clearly pushing an object address to the stack as
+    // demonstrated by having a MemOp.
     bool IsPush = isPush(Inst);
     if (IsPush && MemOpNo == -1)
       return false;
@@ -1762,7 +1762,7 @@ public:
     bool AccessMem = MCII.mayLoad() || MCII.mayStore();
     bool DoesLeak = false;
     for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
-      // Ignore if SP/BP is used to derefence memory -- that's fine
+      // Ignore if SP/BP is used to dereference memory -- that's fine
       if (MemOpNo != -1 && !IsPush && AccessMem && I >= MemOpNo &&
           I <= MemOpNo + 5)
         continue;

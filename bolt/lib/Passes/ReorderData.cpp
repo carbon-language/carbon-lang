@@ -366,7 +366,7 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
   for (; Begin != End; ++Begin) {
     BinaryData *BD = Begin->first;
 
-    // we can't move certain symbols because they are screwy, see T25076484.
+    // We can't move certain symbols.
     if (!filterSymbol(BD))
       continue;
 
