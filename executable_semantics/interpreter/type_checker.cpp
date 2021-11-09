@@ -1088,11 +1088,12 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
                                    ret);
 }
 
-auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
-                                 Env ct_top) -> Nonnull<const Value*> {
+auto TypeChecker::TypeOfClassDecl(const ClassDeclaration& class_decl,
+                                  TypeEnv /*types*/, Env ct_top)
+    -> Nonnull<const Value*> {
   std::vector<NamedValue> fields;
   std::vector<NamedValue> methods;
-  for (Nonnull<const Member*> m : sd->members()) {
+  for (Nonnull<const Member*> m : class_decl.members()) {
     switch (m->kind()) {
       case Member::Kind::FieldMember: {
         const BindingPattern& binding = cast<FieldMember>(*m).binding();
@@ -1111,7 +1112,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
       }
     }
   }
-  return arena_->New<NominalClassType>(sd->name(), std::move(fields),
+  return arena_->New<NominalClassType>(class_decl.name(), std::move(fields),
                                        std::move(methods));
 }
 
@@ -1120,7 +1121,7 @@ static auto GetName(const Declaration& d) -> const std::string& {
     case Declaration::Kind::FunctionDeclaration:
       return cast<FunctionDeclaration>(d).name();
     case Declaration::Kind::ClassDeclaration:
-      return cast<ClassDeclaration>(d).definition().name();
+      return cast<ClassDeclaration>(d).name();
     case Declaration::Kind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(d).name();
     case Declaration::Kind::VariableDeclaration: {
@@ -1192,11 +1193,11 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const auto& class_def = cast<ClassDeclaration>(*d).definition();
-      auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
+      const auto& class_decl = cast<ClassDeclaration>(*d);
+      auto st = TypeOfClassDecl(class_decl, tops->types, tops->values);
       AllocationId a = interpreter_.AllocateValue(st);
-      tops->values.Set(class_def.name(), a);  // Is this obsolete?
-      tops->types.Set(class_def.name(), st);
+      tops->values.Set(class_decl.name(), a);  // Is this obsolete?
+      tops->types.Set(class_decl.name(), st);
       break;
     }
 

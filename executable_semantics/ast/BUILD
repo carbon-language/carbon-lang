@@ -15,24 +15,12 @@ cc_library(
 )
 
 cc_library(
-    name = "class_definition",
-    hdrs = ["class_definition.h"],
-    deps = [
-        ":member",
-        ":source_location",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
         "declaration.h",
     ],
     deps = [
-        ":class_definition",
         ":member",
         ":pattern",
         ":source_location",
