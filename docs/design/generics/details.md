@@ -3845,35 +3845,18 @@ query.
 
 A cycle is when a query, such as "does type `T` implement interface `I`?",
 considers an impl that might match, and whether that impl matches is ultimately
-dependent on whether that query is true.
+dependent on whether that query is true. These are cycles in the graph of (type,
+interface) pairs where there is an edge from pair A to pair B if whether type A
+implements interface A determines whether type B implements interface B.
 
-FIXME: These are cycles in the graph of (type, interface) pairs where there is
-an edge from pair A to pair B if whether type A implements interface A
-determines whether type B implements interface B.
-
-FIXME: Have to be careful to be a bit precise here, and not to erase too much
-information when considering this graph, so that these implementations do not
-form cycles with themselves:
+The test for whether something forms a cycle needs to be precise enough, and not
+erase too much information when considering this graph, that these impls are not
+considered to form cycles with themselves:
 
 ```
 impl [T:! Printable] Optional(T) as Printable;
 impl [T:! Type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
 ```
-
-**Open question:** Should Carbon reject cycles in the absence of a query? The
-two options here are:
-
--   Combining impls gives you an immediate error if there exists queries that
-    have cycles.
--   Only when a query reveals a cyclic dependency is an error reported.
-
-**Open question:** In the second case, should we ignore cycles if they don't
-affect the result of the query? For example, the cycle might be among
-implementations that are lower priority.
-
-**Concern:** Cycles could be spread out across libraries with no dependencies
-between them. This means there can be problems created by a library that are
-only detected by its users.
 
 **Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
 `ComparableWith(T)`.
@@ -3912,19 +3895,52 @@ The workaround for this problem is to either split an interface in the cycle in
 two, with a blanket implementation of one from the other, or move some of the
 criteria into a [named constraint](#named-constraints).
 
+**Concern:** Cycles could be spread out across libraries with no dependencies
+between them. This means there can be problems created by a library that are
+only detected by its users.
+
+**Open question:** Should Carbon reject cycles in the absence of a query? The
+two options here are:
+
+-   Combining impls gives you an immediate error if there exists queries using
+    those impls that have cycles.
+-   Only when a query reveals a cyclic dependency is an error reported.
+
+**Open question:** In the second case, should we ignore cycles if they don't
+affect the result of the query? For example, the cycle might be among
+implementations that are lower priority.
+
 #### Termination rule
 
-FIXME: Need a recursion limit unless we can establish a criteria that
-establishes infinite application of rules.
+It is possible to define a set of impls where there isn't a cycle, but the graph
+is infinite. Without some rule to prevent exhaustive exploration of the graph,
+determining whether a type implements an interface could run forever.
 
-Example: `A is B` if `Optional(A) is B` if `Optional(Optional(A)) is B` if ...
-Could be the result of a single impl
+**Example:** It could be that `A` implements `B`, so `A is B` if
+`Optional(A) is B`, if `Optional(Optional(A)) is B`, and so on. This could be
+the result of a single impl:
 
 ```
 impl [A:! Type where Optional(.Self) is B] A as B { ... }
 ```
 
-or a chain of impls.
+This problem can also result from a chain of impls, as in `A is B` if `A* is C`
+if `Optional(A) is B` and so on.
+
+Rust solves this problem by imposing a recursion limit, much like C++ compilers
+use to terminate template recursion. This goes against
+[Carbon's goal of predictability in generics](goals.md#predictability), but at
+this time there are no known alternatives. Unfortunately, the approach Carbon
+uses to avoid undecidability for type equality,
+[providing an explicit proof in the source](#manual-type-equality), can't be
+used here. The code triggering the query asking whether some type implements an
+interface will typically be generic code with know specific knowledge about the
+types involved, and won't be in a position to provide a manual proof that the
+implementation should exist.
+
+**Open question:** Is there some restriction on `impl` declarations that would
+allow our desired use cases, but allow the compiler to detect non-terminating
+cases?
 
 #### Comparison to Rust
 
