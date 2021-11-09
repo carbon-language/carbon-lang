@@ -15,6 +15,27 @@ cc_library(
 )
 
 cc_library(
+    name = "ast_node",
+    srcs = ["ast_node.cpp"],
+    hdrs = [
+        "ast_node.h",
+        "ast_rtti.h",
+    ],
+    deps = [
+        ":source_location",
+    ],
+)
+
+genrule(
+    name = "ast_rtti",
+    srcs = ["ast_rtti.txt"],
+    outs = ["ast_rtti.h"],
+    cmd = "./$(location //executable_semantics:gen_rtti)" +
+          " $(location ast_rtti.txt) > \"$@\"",
+    tools = ["//executable_semantics:gen_rtti"],
+)
+
+cc_library(
     name = "class_definition",
     hdrs = ["class_definition.h"],
     deps = [
@@ -32,6 +53,7 @@ cc_library(
         "declaration.h",
     ],
     deps = [
+        ":ast_node",
         ":class_definition",
         ":member",
         ":pattern",
@@ -49,6 +71,7 @@ cc_library(
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
     deps = [
+        ":ast_node",
         ":paren_contents",
         "//common:indirect_value",
         "//common:ostream",
@@ -98,6 +121,7 @@ cc_library(
     srcs = ["pattern.cpp"],
     hdrs = ["pattern.h"],
     deps = [
+        ":ast_node",
         ":expression",
         ":source_location",
         ":static_scope",
@@ -124,6 +148,7 @@ cc_library(
     srcs = ["static_scope.cpp"],
     hdrs = ["static_scope.h"],
     deps = [
+        ":ast_node",
         ":source_location",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -144,6 +169,7 @@ cc_library(
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
     deps = [
+        ":ast_node",
         ":expression",
         ":pattern",
         ":source_location",

@@ -32,14 +32,9 @@ class StaticScope;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration : public NamedEntityInterface {
+class Declaration : public virtual AstNode, public NamedEntityInterface {
  public:
-  enum class Kind {
-    FunctionDeclaration,
-    ClassDeclaration,
-    ChoiceDeclaration,
-    VariableDeclaration,
-  };
+  ~Declaration() override = 0;
 
   Declaration(const Member&) = delete;
   auto operator=(const Member&) -> Declaration& = delete;
@@ -47,15 +42,15 @@ class Declaration : public NamedEntityInterface {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Returns the enumerator corresponding to the most-derived type of this
-  // object.
-  auto kind() const -> Kind { return kind_; }
-
-  auto named_entity_kind() const -> NamedEntityKind override {
-    return NamedEntityKind::Declaration;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDeclaration(node->kind());
   }
 
-  auto source_loc() const -> SourceLocation override { return source_loc_; }
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto kind() const -> DeclarationKind {
+    return static_cast<DeclarationKind>(root_kind());
+  }
 
   // The static type of the declared entity. Cannot be called before
   // typechecking.
@@ -74,33 +69,30 @@ class Declaration : public NamedEntityInterface {
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration(Kind kind, SourceLocation source_loc)
-      : kind_(kind), source_loc_(source_loc) {}
+  Declaration() = default;
 
  private:
-  const Kind kind_;
-  SourceLocation source_loc_;
   std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
-struct GenericBinding : public NamedEntityInterface {
+struct GenericBinding : public virtual AstNode, public NamedEntityInterface {
  public:
   GenericBinding(SourceLocation source_loc, std::string name,
                  Nonnull<Expression*> type)
-      : source_loc_(source_loc), name_(std::move(name)), type_(type) {}
+      : AstNode(AstNodeKind::GenericBinding, source_loc),
+        name_(std::move(name)),
+        type_(type) {}
 
-  auto named_entity_kind() const -> NamedEntityKind override {
-    return NamedEntityKind::GenericBinding;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromGenericBinding(node->kind());
   }
 
-  auto source_loc() const -> SourceLocation override { return source_loc_; }
   auto name() const -> const std::string& { return name_; }
   auto type() const -> const Expression& { return *type_; }
 
  private:
-  SourceLocation source_loc_;
   std::string name_;
   Nonnull<Expression*> type_;
 };
@@ -108,12 +100,12 @@ struct GenericBinding : public NamedEntityInterface {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<GenericBinding> deduced_params,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
                       Nonnull<TuplePattern*> param_pattern,
                       Nonnull<Pattern*> return_type,
                       bool is_omitted_return_type,
                       std::optional<Nonnull<Block*>> body)
-      : Declaration(Kind::FunctionDeclaration, source_loc),
+      : AstNode(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         param_pattern_(param_pattern),
@@ -121,14 +113,15 @@ class FunctionDeclaration : public Declaration {
         is_omitted_return_type_(is_omitted_return_type),
         body_(body) {}
 
-  static auto classof(const Declaration* decl) -> bool {
-    return decl->kind() == Kind::FunctionDeclaration;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFunctionDeclaration(node->kind());
   }
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
-  auto deduced_parameters() const -> llvm::ArrayRef<GenericBinding> {
+  auto deduced_parameters() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
   }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
@@ -147,7 +140,7 @@ class FunctionDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<GenericBinding> deduced_parameters_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<TuplePattern*> param_pattern_;
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
@@ -159,11 +152,11 @@ class ClassDeclaration : public Declaration {
  public:
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
-      : Declaration(Kind::ClassDeclaration, source_loc),
+      : AstNode(AstNodeKind::ClassDeclaration, source_loc),
         definition_(source_loc, std::move(name), std::move(members)) {}
 
-  static auto classof(const Declaration* decl) -> bool {
-    return decl->kind() == Kind::ClassDeclaration;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromClassDeclaration(node->kind());
   }
 
   auto definition() const -> const ClassDefinition& { return definition_; }
@@ -173,42 +166,42 @@ class ClassDeclaration : public Declaration {
   ClassDefinition definition_;
 };
 
-class ChoiceDeclaration : public Declaration {
+class AlternativeSignature : public virtual AstNode,
+                             public NamedEntityInterface {
  public:
-  class Alternative : public NamedEntityInterface {
-   public:
-    Alternative(SourceLocation source_loc, std::string name,
-                Nonnull<Expression*> signature)
-        : source_loc_(source_loc),
-          name_(std::move(name)),
-          signature_(signature) {}
-
-    auto named_entity_kind() const -> NamedEntityKind override {
-      return NamedEntityKind::ChoiceDeclarationAlternative;
-    }
-
-    auto source_loc() const -> SourceLocation override { return source_loc_; }
-    auto name() const -> const std::string& { return name_; }
-    auto signature() const -> const Expression& { return *signature_; }
-
-   private:
-    SourceLocation source_loc_;
-    std::string name_;
-    Nonnull<Expression*> signature_;
-  };
-
-  ChoiceDeclaration(SourceLocation source_loc, std::string name,
-                    std::vector<Alternative> alternatives)
-      : Declaration(Kind::ChoiceDeclaration, source_loc),
+  AlternativeSignature(SourceLocation source_loc, std::string name,
+                       Nonnull<Expression*> signature)
+      : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
-        alternatives_(std::move(alternatives)) {}
+        signature_(signature) {}
 
-  static auto classof(const Declaration* decl) -> bool {
-    return decl->kind() == Kind::ChoiceDeclaration;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAlternativeSignature(node->kind());
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto alternatives() const -> llvm::ArrayRef<Alternative> {
+  auto signature() const -> const Expression& { return *signature_; }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> signature_;
+};
+
+class ChoiceDeclaration : public Declaration {
+ public:
+  ChoiceDeclaration(SourceLocation source_loc, std::string name,
+                    std::vector<Nonnull<AlternativeSignature*>> alternatives)
+      : AstNode(AstNodeKind::ChoiceDeclaration, source_loc),
+        name_(std::move(name)),
+        alternatives_(std::move(alternatives)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromChoiceDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto alternatives() const
+      -> llvm::ArrayRef<Nonnull<const AlternativeSignature*>> {
     return alternatives_;
   }
 
@@ -218,7 +211,7 @@ class ChoiceDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<Alternative> alternatives_;
+  std::vector<Nonnull<AlternativeSignature*>> alternatives_;
   StaticScope static_scope_;
 };
 
@@ -228,12 +221,12 @@ class VariableDeclaration : public Declaration {
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
                       Nonnull<Expression*> initializer)
-      : Declaration(Kind::VariableDeclaration, source_loc),
+      : AstNode(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
         initializer_(initializer) {}
 
-  static auto classof(const Declaration* decl) -> bool {
-    return decl->kind() == Kind::VariableDeclaration;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromVariableDeclaration(node->kind());
   }
 
   auto binding() const -> const BindingPattern& { return *binding_; }

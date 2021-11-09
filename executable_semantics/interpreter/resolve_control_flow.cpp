@@ -22,28 +22,28 @@ static void ResolveControlFlow(
     std::optional<Nonnull<const FunctionDeclaration*>> function,
     std::optional<Nonnull<const Statement*>> loop) {
   switch (statement->kind()) {
-    case Statement::Kind::Return:
+    case StatementKind::Return:
       if (!function.has_value()) {
         FATAL_COMPILATION_ERROR(statement->source_loc())
             << "return is not within a function body";
       }
       cast<Return>(*statement).set_function(*function);
       return;
-    case Statement::Kind::Break:
+    case StatementKind::Break:
       if (!loop.has_value()) {
         FATAL_COMPILATION_ERROR(statement->source_loc())
             << "break is not within a loop body";
       }
       cast<Break>(*statement).set_loop(*loop);
       return;
-    case Statement::Kind::Continue:
+    case StatementKind::Continue:
       if (!loop.has_value()) {
         FATAL_COMPILATION_ERROR(statement->source_loc())
             << "continue is not within a loop body";
       }
       cast<Continue>(*statement).set_loop(*loop);
       return;
-    case Statement::Kind::If: {
+    case StatementKind::If: {
       auto& if_stmt = cast<If>(*statement);
       ResolveControlFlow(&if_stmt.then_block(), function, loop);
       if (if_stmt.else_block().has_value()) {
@@ -51,39 +51,39 @@ static void ResolveControlFlow(
       }
       return;
     }
-    case Statement::Kind::Block: {
+    case StatementKind::Block: {
       auto& block = cast<Block>(*statement);
       for (auto* block_statement : block.statements()) {
         ResolveControlFlow(block_statement, function, loop);
       }
       return;
     }
-    case Statement::Kind::While:
+    case StatementKind::While:
       ResolveControlFlow(&cast<While>(*statement).body(), function, statement);
       return;
-    case Statement::Kind::Match: {
+    case StatementKind::Match: {
       auto& match = cast<Match>(*statement);
       for (Match::Clause& clause : match.clauses()) {
         ResolveControlFlow(&clause.statement(), function, loop);
       }
       return;
     }
-    case Statement::Kind::Continuation:
+    case StatementKind::Continuation:
       ResolveControlFlow(&cast<Continuation>(*statement).body(), std::nullopt,
                          std::nullopt);
       return;
-    case Statement::Kind::ExpressionStatement:
-    case Statement::Kind::Assign:
-    case Statement::Kind::VariableDefinition:
-    case Statement::Kind::Run:
-    case Statement::Kind::Await:
+    case StatementKind::ExpressionStatement:
+    case StatementKind::Assign:
+    case StatementKind::VariableDefinition:
+    case StatementKind::Run:
+    case StatementKind::Await:
       return;
   }
 }
 
 void ResolveControlFlow(AST& ast) {
   for (auto declaration : ast.declarations) {
-    if (declaration->kind() != Declaration::Kind::FunctionDeclaration) {
+    if (declaration->kind() != DeclarationKind::FunctionDeclaration) {
       continue;
     }
     auto& function = cast<FunctionDeclaration>(*declaration);

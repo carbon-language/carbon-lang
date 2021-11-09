@@ -11,9 +11,11 @@ namespace Carbon {
 
 using llvm::cast;
 
+Member::~Member() = default;
+
 void Member::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case Kind::FieldMember:
+    case MemberKind::FieldMember:
       const auto& field = cast<FieldMember>(*this);
       out << "var " << field.binding() << ";\n";
       break;

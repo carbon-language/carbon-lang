@@ -34,6 +34,8 @@ auto TupleExpressionFromParenContents(
   return arena->New<TupleLiteral>(source_loc, paren_contents.elements);
 }
 
+Expression::~Expression() = default;
+
 static void PrintOp(llvm::raw_ostream& out, Operator op) {
   switch (op) {
     case Operator::Add:
@@ -74,17 +76,17 @@ static void PrintFields(llvm::raw_ostream& out,
 
 void Expression::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case Expression::Kind::IndexExpression: {
+    case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
       out << index.aggregate() << "[" << index.offset() << "]";
       break;
     }
-    case Expression::Kind::FieldAccessExpression: {
+    case ExpressionKind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(*this);
       out << access.aggregate() << "." << access.field();
       break;
     }
-    case Expression::Kind::TupleLiteral: {
+    case ExpressionKind::TupleLiteral: {
       out << "(";
       llvm::ListSeparator sep;
       for (Nonnull<const Expression*> field :
@@ -94,25 +96,25 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
-    case Expression::Kind::StructLiteral:
+    case ExpressionKind::StructLiteral:
       out << "{";
       PrintFields(out, cast<StructLiteral>(*this).fields(), " = ");
       out << "}";
       break;
-    case Expression::Kind::StructTypeLiteral:
+    case ExpressionKind::StructTypeLiteral:
       out << "{";
       PrintFields(out, cast<StructTypeLiteral>(*this).fields(), ": ");
       out << "}";
       break;
-    case Expression::Kind::IntLiteral:
+    case ExpressionKind::IntLiteral:
       out << cast<IntLiteral>(*this).value();
       break;
-    case Expression::Kind::BoolLiteral:
+    case ExpressionKind::BoolLiteral:
       out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
       break;
-    case Expression::Kind::PrimitiveOperatorExpression: {
+    case ExpressionKind::PrimitiveOperatorExpression: {
       out << "(";
-      PrimitiveOperatorExpression op = cast<PrimitiveOperatorExpression>(*this);
+      const auto& op = cast<PrimitiveOperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
           PrintOp(out, op.op());
@@ -132,10 +134,10 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
-    case Expression::Kind::IdentifierExpression:
+    case ExpressionKind::IdentifierExpression:
       out << cast<IdentifierExpression>(*this).name();
       break;
-    case Expression::Kind::CallExpression: {
+    case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
       out << call.function();
       if (isa<TupleLiteral>(call.argument())) {
@@ -145,32 +147,32 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Expression::Kind::BoolTypeLiteral:
+    case ExpressionKind::BoolTypeLiteral:
       out << "Bool";
       break;
-    case Expression::Kind::IntTypeLiteral:
+    case ExpressionKind::IntTypeLiteral:
       out << "i32";
       break;
-    case Expression::Kind::StringLiteral:
+    case ExpressionKind::StringLiteral:
       out << "\"";
       out.write_escaped(cast<StringLiteral>(*this).value());
       out << "\"";
       break;
-    case Expression::Kind::StringTypeLiteral:
+    case ExpressionKind::StringTypeLiteral:
       out << "String";
       break;
-    case Expression::Kind::TypeTypeLiteral:
+    case ExpressionKind::TypeTypeLiteral:
       out << "Type";
       break;
-    case Expression::Kind::ContinuationTypeLiteral:
+    case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
-    case Expression::Kind::FunctionTypeLiteral: {
+    case ExpressionKind::FunctionTypeLiteral: {
       const auto& fn = cast<FunctionTypeLiteral>(*this);
       out << "fn " << fn.parameter() << " -> " << fn.return_type();
       break;
     }
-    case Expression::Kind::IntrinsicExpression:
+    case ExpressionKind::IntrinsicExpression:
       out << "intrinsic_expression(";
       switch (cast<IntrinsicExpression>(*this).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:

@@ -213,11 +213,11 @@ void Value::Print(llvm::raw_ostream& out) const {
       if (fn_type.deduced().size() > 0) {
         out << "[";
         unsigned int i = 0;
-        for (const auto& deduced : fn_type.deduced()) {
+        for (Nonnull<const GenericBinding*> deduced : fn_type.deduced()) {
           if (i != 0) {
             out << ", ";
           }
-          out << deduced.name() << ":! " << deduced.type();
+          out << deduced->name() << ":! " << deduced->type();
           ++i;
         }
         out << "]";

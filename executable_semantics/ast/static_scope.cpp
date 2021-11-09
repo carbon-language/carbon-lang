@@ -8,6 +8,8 @@
 
 namespace Carbon {
 
+NamedEntityInterface::~NamedEntityInterface() = default;
+
 void StaticScope::Add(std::string name,
                       Nonnull<const NamedEntityInterface*> entity) {
   if (!declared_names_.insert({name, entity}).second) {

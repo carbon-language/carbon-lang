@@ -10,33 +10,20 @@
 #include <variant>
 #include <vector>
 
+#include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 
-class NamedEntityInterface {
+class NamedEntityInterface : public virtual AstNode {
  public:
-  enum class NamedEntityKind {
-    // Includes variable definitions and matching contexts.
-    BindingPattern,
-    // Used by entries in choices.
-    ChoiceDeclarationAlternative,
-    // Used by continuations.
-    Continuation,
-    // Includes choices, classes, and functions. Variables are handled through
-    // BindingPattern.
-    Declaration,
-    // Used by functions.
-    GenericBinding,
-    // Used by entries in classes.
-    Member,
-  };
+  virtual ~NamedEntityInterface() = 0;
 
-  virtual ~NamedEntityInterface() = default;
   // TODO: This is unused, but is intended for casts after lookup.
-  virtual auto named_entity_kind() const -> NamedEntityKind = 0;
-  virtual auto source_loc() const -> SourceLocation = 0;
+  auto kind() const -> NamedEntityInterfaceKind {
+    return static_cast<NamedEntityInterfaceKind>(root_kind());
+  }
 };
 
 // The set of declared names in a scope. This is not aware of child scopes, but

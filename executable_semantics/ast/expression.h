@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/arena.h"
@@ -21,37 +22,22 @@ namespace Carbon {
 
 class Value;
 
-class Expression {
+class Expression : public virtual AstNode {
  public:
-  enum class Kind {
-    BoolTypeLiteral,
-    BoolLiteral,
-    CallExpression,
-    FunctionTypeLiteral,
-    FieldAccessExpression,
-    IndexExpression,
-    IntTypeLiteral,
-    ContinuationTypeLiteral,  // The type of a continuation value.
-    IntLiteral,
-    PrimitiveOperatorExpression,
-    StringLiteral,
-    StringTypeLiteral,
-    TupleLiteral,
-    StructLiteral,
-    StructTypeLiteral,
-    TypeTypeLiteral,
-    IdentifierExpression,
-    IntrinsicExpression,
-  };
+  ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  static auto classof(const AstNode* node) {
+    return InheritsFromExpression(node->kind());
+  }
+
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto kind() const -> Kind { return kind_; }
-
-  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto kind() const -> ExpressionKind {
+    return static_cast<ExpressionKind>(root_kind());
+  }
 
   // The static type of this expression. Cannot be called before typechecking.
   auto static_type() const -> const Value& { return **static_type_; }
@@ -69,13 +55,9 @@ class Expression {
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Expression(Kind kind, SourceLocation source_loc)
-      : kind_(kind), source_loc_(source_loc) {}
+  Expression() = default;
 
  private:
-  const Kind kind_;
-  SourceLocation source_loc_;
-
   std::optional<Nonnull<const Value*>> static_type_;
 };
 
@@ -114,11 +96,11 @@ enum class Operator {
 class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)
-      : Expression(Kind::IdentifierExpression, source_loc),
+      : AstNode(AstNodeKind::IdentifierExpression, source_loc),
         name_(std::move(name)) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::IdentifierExpression;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIdentifierExpression(node->kind());
   }
 
   auto name() const -> const std::string& { return name_; }
@@ -132,12 +114,12 @@ class FieldAccessExpression : public Expression {
   explicit FieldAccessExpression(SourceLocation source_loc,
                                  Nonnull<Expression*> aggregate,
                                  std::string field)
-      : Expression(Kind::FieldAccessExpression, source_loc),
+      : AstNode(AstNodeKind::FieldAccessExpression, source_loc),
         aggregate_(aggregate),
         field_(std::move(field)) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::FieldAccessExpression;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFieldAccessExpression(node->kind());
   }
 
   auto aggregate() const -> const Expression& { return *aggregate_; }
@@ -154,12 +136,12 @@ class IndexExpression : public Expression {
   explicit IndexExpression(SourceLocation source_loc,
                            Nonnull<Expression*> aggregate,
                            Nonnull<Expression*> offset)
-      : Expression(Kind::IndexExpression, source_loc),
+      : AstNode(AstNodeKind::IndexExpression, source_loc),
         aggregate_(aggregate),
         offset_(offset) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::IndexExpression;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIndexExpression(node->kind());
   }
 
   auto aggregate() const -> const Expression& { return *aggregate_; }
@@ -175,10 +157,10 @@ class IndexExpression : public Expression {
 class IntLiteral : public Expression {
  public:
   explicit IntLiteral(SourceLocation source_loc, int value)
-      : Expression(Kind::IntLiteral, source_loc), value_(value) {}
+      : AstNode(AstNodeKind::IntLiteral, source_loc), value_(value) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::IntLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIntLiteral(node->kind());
   }
 
   auto value() const -> int { return value_; }
@@ -190,10 +172,10 @@ class IntLiteral : public Expression {
 class BoolLiteral : public Expression {
  public:
   explicit BoolLiteral(SourceLocation source_loc, bool value)
-      : Expression(Kind::BoolLiteral, source_loc), value_(value) {}
+      : AstNode(AstNodeKind::BoolLiteral, source_loc), value_(value) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::BoolLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBoolLiteral(node->kind());
   }
 
   auto value() const -> bool { return value_; }
@@ -205,10 +187,11 @@ class BoolLiteral : public Expression {
 class StringLiteral : public Expression {
  public:
   explicit StringLiteral(SourceLocation source_loc, std::string value)
-      : Expression(Kind::StringLiteral, source_loc), value_(std::move(value)) {}
+      : AstNode(AstNodeKind::StringLiteral, source_loc),
+        value_(std::move(value)) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::StringLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromStringLiteral(node->kind());
   }
 
   auto value() const -> const std::string& { return value_; }
@@ -220,10 +203,10 @@ class StringLiteral : public Expression {
 class StringTypeLiteral : public Expression {
  public:
   explicit StringTypeLiteral(SourceLocation source_loc)
-      : Expression(Kind::StringTypeLiteral, source_loc) {}
+      : AstNode(AstNodeKind::StringTypeLiteral, source_loc) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::StringTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromStringTypeLiteral(node->kind());
   }
 };
 
@@ -234,11 +217,11 @@ class TupleLiteral : public Expression {
 
   explicit TupleLiteral(SourceLocation source_loc,
                         std::vector<Nonnull<Expression*>> fields)
-      : Expression(Kind::TupleLiteral, source_loc),
+      : AstNode(AstNodeKind::TupleLiteral, source_loc),
         fields_(std::move(fields)) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::TupleLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromTupleLiteral(node->kind());
   }
 
   auto fields() const -> llvm::ArrayRef<Nonnull<const Expression*>> {
@@ -260,13 +243,13 @@ class StructLiteral : public Expression {
  public:
   explicit StructLiteral(SourceLocation loc,
                          std::vector<FieldInitializer> fields)
-      : Expression(Kind::StructLiteral, loc), fields_(std::move(fields)) {
+      : AstNode(AstNodeKind::StructLiteral, loc), fields_(std::move(fields)) {
     CHECK(!fields_.empty())
         << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
   }
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::StructLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromStructLiteral(node->kind());
   }
 
   auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
@@ -286,10 +269,11 @@ class StructTypeLiteral : public Expression {
 
   explicit StructTypeLiteral(SourceLocation loc,
                              std::vector<FieldInitializer> fields)
-      : Expression(Kind::StructTypeLiteral, loc), fields_(std::move(fields)) {}
+      : AstNode(AstNodeKind::StructTypeLiteral, loc),
+        fields_(std::move(fields)) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::StructTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromStructTypeLiteral(node->kind());
   }
 
   auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
@@ -304,12 +288,12 @@ class PrimitiveOperatorExpression : public Expression {
   explicit PrimitiveOperatorExpression(
       SourceLocation source_loc, Operator op,
       std::vector<Nonnull<Expression*>> arguments)
-      : Expression(Kind::PrimitiveOperatorExpression, source_loc),
+      : AstNode(AstNodeKind::PrimitiveOperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::PrimitiveOperatorExpression;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromPrimitiveOperatorExpression(node->kind());
   }
 
   auto op() const -> Operator { return op_; }
@@ -330,12 +314,12 @@ class CallExpression : public Expression {
   explicit CallExpression(SourceLocation source_loc,
                           Nonnull<Expression*> function,
                           Nonnull<Expression*> argument)
-      : Expression(Kind::CallExpression, source_loc),
+      : AstNode(AstNodeKind::CallExpression, source_loc),
         function_(function),
         argument_(argument) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::CallExpression;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromCallExpression(node->kind());
   }
 
   auto function() const -> const Expression& { return *function_; }
@@ -354,13 +338,13 @@ class FunctionTypeLiteral : public Expression {
                                Nonnull<Expression*> parameter,
                                Nonnull<Expression*> return_type,
                                bool is_omitted_return_type)
-      : Expression(Kind::FunctionTypeLiteral, source_loc),
+      : AstNode(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
         return_type_(return_type),
         is_omitted_return_type_(is_omitted_return_type) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::FunctionTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFunctionTypeLiteral(node->kind());
   }
 
   auto parameter() const -> const Expression& { return *parameter_; }
@@ -380,40 +364,40 @@ class FunctionTypeLiteral : public Expression {
 class BoolTypeLiteral : public Expression {
  public:
   explicit BoolTypeLiteral(SourceLocation source_loc)
-      : Expression(Kind::BoolTypeLiteral, source_loc) {}
+      : AstNode(AstNodeKind::BoolTypeLiteral, source_loc) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::BoolTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBoolTypeLiteral(node->kind());
   }
 };
 
 class IntTypeLiteral : public Expression {
  public:
   explicit IntTypeLiteral(SourceLocation source_loc)
-      : Expression(Kind::IntTypeLiteral, source_loc) {}
+      : AstNode(AstNodeKind::IntTypeLiteral, source_loc) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::IntTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIntTypeLiteral(node->kind());
   }
 };
 
 class ContinuationTypeLiteral : public Expression {
  public:
   explicit ContinuationTypeLiteral(SourceLocation source_loc)
-      : Expression(Kind::ContinuationTypeLiteral, source_loc) {}
+      : AstNode(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::ContinuationTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromContinuationTypeLiteral(node->kind());
   }
 };
 
 class TypeTypeLiteral : public Expression {
  public:
   explicit TypeTypeLiteral(SourceLocation source_loc)
-      : Expression(Kind::TypeTypeLiteral, source_loc) {}
+      : AstNode(AstNodeKind::TypeTypeLiteral, source_loc) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::TypeTypeLiteral;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromTypeTypeLiteral(node->kind());
   }
 };
 
@@ -424,11 +408,12 @@ class IntrinsicExpression : public Expression {
   };
 
   explicit IntrinsicExpression(Intrinsic intrinsic)
-      : Expression(Kind::IntrinsicExpression, SourceLocation("<intrinsic>", 0)),
+      : AstNode(AstNodeKind::IntrinsicExpression,
+                SourceLocation("<intrinsic>", 0)),
         intrinsic_(intrinsic) {}
 
-  static auto classof(const Expression* exp) -> bool {
-    return exp->kind() == Kind::IntrinsicExpression;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIntrinsicExpression(node->kind());
   }
 
   auto intrinsic() const -> Intrinsic { return intrinsic_; }
