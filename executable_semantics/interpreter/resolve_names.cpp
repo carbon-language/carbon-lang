@@ -141,10 +141,10 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
       break;
     }
     case Declaration::Kind::ClassDeclaration: {
-      auto& class_def = cast<ClassDeclaration>(declaration).definition();
-      static_scope.Add(class_def.name(), &declaration);
-      for (auto* member : class_def.members()) {
-        PopulateNamesInMember(arena, *member, class_def.static_scope());
+      auto& class_decl = cast<ClassDeclaration>(declaration);
+      static_scope.Add(class_decl.name(), &declaration);
+      for (auto* member : class_decl.members()) {
+        PopulateNamesInMember(arena, *member, class_decl.static_scope());
       }
       break;
     }
