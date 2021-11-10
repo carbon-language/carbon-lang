@@ -108,9 +108,9 @@
 %type <Nonnull<Block*>> block
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
-%type <BisonWrap<GenericBinding>> generic_binding
-%type <std::vector<GenericBinding>> deduced_params
-%type <std::vector<GenericBinding>> deduced_param_list
+%type <Nonnull<GenericBinding*>> generic_binding
+%type <std::vector<Nonnull<GenericBinding*>>> deduced_params
+%type <std::vector<Nonnull<GenericBinding*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <std::pair<Nonnull<Expression*>, bool>> return_type
@@ -131,9 +131,9 @@
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
-%type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
-%type <std::vector<ChoiceDeclaration::Alternative>> alternative_list_contents
+%type <Nonnull<ChoiceDeclaration::Alternative*>> alternative
+%type <std::vector<Nonnull<ChoiceDeclaration::Alternative*>>> alternative_list
+%type <std::vector<Nonnull<ChoiceDeclaration::Alternative*>>> alternative_list_contents
 %type <BisonWrap<Match::Clause>> clause
 %type <std::vector<Match::Clause>> clause_list
 
@@ -632,14 +632,16 @@ return_type:
 ;
 generic_binding:
   identifier COLON_BANG expression
-    { $$ = GenericBinding(context.source_loc(), std::move($1), $3); }
+    {
+      $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3);
+    }
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<GenericBinding>(); }
+    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
 | generic_binding
     {
-      $$ = std::vector<GenericBinding>();
+      $$ = std::vector<Nonnull<GenericBinding*>>();
       $$.push_back($1);
     }
 | generic_binding COMMA deduced_param_list
@@ -650,7 +652,7 @@ deduced_param_list:
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<GenericBinding>(); }
+    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
@@ -696,10 +698,13 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = ChoiceDeclaration::Alternative(context.source_loc(), $1, $2); }
+    {
+      $$ = arena->New<ChoiceDeclaration::Alternative>(context.source_loc(), $1,
+                                                      $2);
+    }
 | identifier
     {
-      $$ = ChoiceDeclaration::Alternative(
+      $$ = arena->New<ChoiceDeclaration::Alternative>(
           context.source_loc(), $1,
           arena->New<TupleLiteral>(context.source_loc()));
     }
