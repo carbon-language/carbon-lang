@@ -390,8 +390,8 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
-      return arena_->New<FunctionType>(std::vector<GenericBinding>(), param,
-                                       ret);
+      return arena_->New<FunctionType>(
+          std::vector<Nonnull<const GenericBinding*>>(), param, ret);
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
@@ -545,9 +545,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                 << "choice " << choice.name() << " does not have a field named "
                 << access.field();
           }
-          SetStaticType(&access, arena_->New<FunctionType>(
-                                     std::vector<GenericBinding>(),
-                                     *parameter_types, &aggregate_type));
+          SetStaticType(&access,
+                        arena_->New<FunctionType>(
+                            std::vector<Nonnull<const GenericBinding*>>(),
+                            *parameter_types, &aggregate_type));
           return TCResult(res.types);
         }
         default:
@@ -657,13 +658,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
             auto deduced_args =
                 ArgumentDeduction(e->source_loc(), TypeEnv(arena_), parameters,
                                   &call.argument().static_type());
-            for (auto& deduced_param : fun_t.deduced()) {
+            for (Nonnull<const GenericBinding*> deduced_param :
+                 fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
-              if (!deduced_args.Get(deduced_param.name())) {
+              if (!deduced_args.Get(deduced_param->name())) {
                 FATAL_COMPILATION_ERROR(e->source_loc())
                     << "could not deduce type argument for type parameter "
-                    << deduced_param.name();
+                    << deduced_param->name();
               }
             }
             parameters = Substitute(deduced_args, parameters);
@@ -1027,11 +1029,11 @@ void TypeChecker::ExpectReturnOnAllPaths(
 auto TypeChecker::TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types,
                                   Env values) -> TCResult {
   // Bring the deduced parameters into scope
-  for (const auto& deduced : f->deduced_parameters()) {
+  for (Nonnull<const GenericBinding*> deduced : f->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced.name(), arena_->New<VariableType>(deduced.name()));
-    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name()));
-    values.Set(deduced.name(), a);
+    types.Set(deduced->name(), arena_->New<VariableType>(deduced->name()));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced->name()));
+    values.Set(deduced->name(), a);
   }
   // Type check the parameter pattern
   auto param_res =
@@ -1068,11 +1070,11 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
                                FunctionDeclaration* fun_def)
     -> Nonnull<const Value*> {
   // Bring the deduced parameters into scope
-  for (const auto& deduced : fun_def->deduced_parameters()) {
+  for (Nonnull<const GenericBinding*> deduced : fun_def->deduced_parameters()) {
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced.name(), arena_->New<VariableType>(deduced.name()));
-    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced.name()));
-    values.Set(deduced.name(), a);
+    types.Set(deduced->name(), arena_->New<VariableType>(deduced->name()));
+    AllocationId a = interpreter_.AllocateValue(*types.Get(deduced->name()));
+    values.Set(deduced->name(), a);
   }
   // Type check the parameter pattern
   TypeCheckPattern(&fun_def->param_pattern(), types, values, std::nullopt);
@@ -1088,11 +1090,12 @@ auto TypeChecker::TypeOfFunDef(TypeEnv types, Env values,
                                    ret);
 }
 
-auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
-                                 Env ct_top) -> Nonnull<const Value*> {
+auto TypeChecker::TypeOfClassDecl(const ClassDeclaration& class_decl,
+                                  TypeEnv /*types*/, Env ct_top)
+    -> Nonnull<const Value*> {
   std::vector<NamedValue> fields;
   std::vector<NamedValue> methods;
-  for (Nonnull<const Member*> m : sd->members()) {
+  for (Nonnull<const Member*> m : class_decl.members()) {
     switch (m->kind()) {
       case Member::Kind::FieldMember: {
         const BindingPattern& binding = cast<FieldMember>(*m).binding();
@@ -1111,7 +1114,7 @@ auto TypeChecker::TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/,
       }
     }
   }
-  return arena_->New<NominalClassType>(sd->name(), std::move(fields),
+  return arena_->New<NominalClassType>(class_decl.name(), std::move(fields),
                                        std::move(methods));
 }
 
@@ -1120,7 +1123,7 @@ static auto GetName(const Declaration& d) -> const std::string& {
     case Declaration::Kind::FunctionDeclaration:
       return cast<FunctionDeclaration>(d).name();
     case Declaration::Kind::ClassDeclaration:
-      return cast<ClassDeclaration>(d).definition().name();
+      return cast<ClassDeclaration>(d).name();
     case Declaration::Kind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(d).name();
     case Declaration::Kind::VariableDeclaration: {
@@ -1192,20 +1195,22 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const auto& class_def = cast<ClassDeclaration>(*d).definition();
-      auto st = TypeOfClassDef(&class_def, tops->types, tops->values);
+      const auto& class_decl = cast<ClassDeclaration>(*d);
+      auto st = TypeOfClassDecl(class_decl, tops->types, tops->values);
       AllocationId a = interpreter_.AllocateValue(st);
-      tops->values.Set(class_def.name(), a);  // Is this obsolete?
-      tops->types.Set(class_def.name(), st);
+      tops->values.Set(class_decl.name(), a);  // Is this obsolete?
+      tops->types.Set(class_decl.name(), st);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*d);
       std::vector<NamedValue> alts;
-      for (const auto& alternative : choice.alternatives()) {
-        auto t = interpreter_.InterpExp(tops->values, &alternative.signature());
-        alts.push_back({.name = alternative.name(), .value = t});
+      for (Nonnull<const ChoiceDeclaration::Alternative*> alternative :
+           choice.alternatives()) {
+        auto t =
+            interpreter_.InterpExp(tops->values, &alternative->signature());
+        alts.push_back({.name = alternative->name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
       AllocationId a = interpreter_.AllocateValue(ct);

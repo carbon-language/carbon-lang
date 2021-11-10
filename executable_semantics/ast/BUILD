@@ -2,10 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = [
-    "//bazel/check_deps:__pkg__",
-    "//executable_semantics:__subpackages__",
-])
+package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
     name = "ast",
@@ -18,24 +15,12 @@ cc_library(
 )
 
 cc_library(
-    name = "class_definition",
-    hdrs = ["class_definition.h"],
-    deps = [
-        ":member",
-        ":source_location",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
         "declaration.h",
     ],
     deps = [
-        ":class_definition",
         ":member",
         ":pattern",
         ":source_location",

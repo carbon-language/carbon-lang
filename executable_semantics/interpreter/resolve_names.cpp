@@ -133,26 +133,27 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     case Declaration::Kind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       static_scope.Add(func.name(), &declaration);
-      for (const auto& param : func.deduced_parameters()) {
-        func.static_scope().Add(param.name(), &param);
+      for (Nonnull<const GenericBinding*> param : func.deduced_parameters()) {
+        func.static_scope().Add(param->name(), param);
       }
       PopulateNamesInPattern(func.param_pattern(), func.static_scope());
       PopulateNamesInStatement(arena, func.body(), static_scope);
       break;
     }
     case Declaration::Kind::ClassDeclaration: {
-      auto& class_def = cast<ClassDeclaration>(declaration).definition();
-      static_scope.Add(class_def.name(), &declaration);
-      for (auto* member : class_def.members()) {
-        PopulateNamesInMember(arena, *member, class_def.static_scope());
+      auto& class_decl = cast<ClassDeclaration>(declaration);
+      static_scope.Add(class_decl.name(), &declaration);
+      for (auto* member : class_decl.members()) {
+        PopulateNamesInMember(arena, *member, class_decl.static_scope());
       }
       break;
     }
     case Declaration::Kind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
       static_scope.Add(choice.name(), &declaration);
-      for (auto& alt : choice.alternatives()) {
-        choice.static_scope().Add(alt.name(), &alt);
+      for (Nonnull<const ChoiceDeclaration::Alternative*> alt :
+           choice.alternatives()) {
+        choice.static_scope().Add(alt->name(), alt);
       }
       // Populate name into declared_names.
       // Init the choice's declared_names, and populate it with the

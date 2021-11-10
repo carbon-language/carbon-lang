@@ -123,7 +123,7 @@ benchmark_version = "0baacde3618ca617da95375e0af13ce1baadea47"
 
 http_archive(
     name = "com_github_google_benchmark",
-    sha256 = "19949c33e795197dbb8610672c18bff447dc31faef3257665d69d1bf0884d67b",
+    sha256 = "62e2f2e6d8a744d67e4bbc212fcfd06647080de4253c97ad5c6749e09faf2cb0",
     strip_prefix = "benchmark-%s" % benchmark_version,
     urls = ["https://github.com/google/benchmark/archive/%s.zip" % benchmark_version],
 )

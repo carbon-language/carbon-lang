@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/class_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
@@ -108,7 +107,7 @@ struct GenericBinding : public NamedEntityInterface {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<GenericBinding> deduced_params,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
                       Nonnull<TuplePattern*> param_pattern,
                       Nonnull<Pattern*> return_type,
                       bool is_omitted_return_type,
@@ -128,7 +127,8 @@ class FunctionDeclaration : public Declaration {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
-  auto deduced_parameters() const -> llvm::ArrayRef<GenericBinding> {
+  auto deduced_parameters() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
   }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
@@ -147,7 +147,7 @@ class FunctionDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<GenericBinding> deduced_parameters_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<TuplePattern*> param_pattern_;
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
@@ -160,17 +160,24 @@ class ClassDeclaration : public Declaration {
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
       : Declaration(Kind::ClassDeclaration, source_loc),
-        definition_(source_loc, std::move(name), std::move(members)) {}
+        name_(std::move(name)),
+        members_(std::move(members)) {}
 
   static auto classof(const Declaration* decl) -> bool {
     return decl->kind() == Kind::ClassDeclaration;
   }
 
-  auto definition() const -> const ClassDefinition& { return definition_; }
-  auto definition() -> ClassDefinition& { return definition_; }
+  auto name() const -> const std::string& { return name_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+
+  // Contains class members. Scoped variables are in the body.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
-  ClassDefinition definition_;
+  std::string name_;
+  std::vector<Nonnull<Member*>> members_;
+  StaticScope static_scope_;
 };
 
 class ChoiceDeclaration : public Declaration {
@@ -198,7 +205,7 @@ class ChoiceDeclaration : public Declaration {
   };
 
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
-                    std::vector<Alternative> alternatives)
+                    std::vector<Nonnull<Alternative*>> alternatives)
       : Declaration(Kind::ChoiceDeclaration, source_loc),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
@@ -208,7 +215,7 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto alternatives() const -> llvm::ArrayRef<Alternative> {
+  auto alternatives() const -> llvm::ArrayRef<Nonnull<const Alternative*>> {
     return alternatives_;
   }
 
@@ -218,7 +225,7 @@ class ChoiceDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<Alternative> alternatives_;
+  std::vector<Nonnull<Alternative*>> alternatives_;
   StaticScope static_scope_;
 };
 
