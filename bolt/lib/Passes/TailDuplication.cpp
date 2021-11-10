@@ -416,7 +416,7 @@ void TailDuplication::runOnFunction(BinaryFunction &Function) {
 void TailDuplication::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction &Function = It.second;
-    if (Function.isIgnored())
+    if (!shouldOptimize(Function))
       continue;
     runOnFunction(Function);
   }
