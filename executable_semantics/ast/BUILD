@@ -36,17 +36,6 @@ genrule(
 )
 
 cc_library(
-    name = "class_definition",
-    hdrs = ["class_definition.h"],
-    deps = [
-        ":member",
-        ":source_location",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
@@ -54,7 +43,6 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":class_definition",
         ":member",
         ":pattern",
         ":source_location",

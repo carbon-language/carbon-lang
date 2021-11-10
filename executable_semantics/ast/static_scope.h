@@ -20,6 +20,8 @@ class NamedEntityInterface : public virtual AstNode {
  public:
   virtual ~NamedEntityInterface() = 0;
 
+  NamedEntityInterface() = default;
+
   // TODO: This is unused, but is intended for casts after lookup.
   auto kind() const -> NamedEntityInterfaceKind {
     return static_cast<NamedEntityInterfaceKind>(root_kind());

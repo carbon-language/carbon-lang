@@ -19,10 +19,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       break;
 
     case DeclarationKind::ClassDeclaration: {
-      const ClassDefinition& class_def =
-          cast<ClassDeclaration>(*this).definition();
-      out << "class " << class_def.name() << " {\n";
-      for (Nonnull<Member*> m : class_def.members()) {
+      const auto& class_decl = cast<ClassDeclaration>(*this);
+      out << "class " << class_decl.name() << " {\n";
+      for (Nonnull<Member*> m : class_decl.members()) {
         out << *m;
       }
       out << "}\n";

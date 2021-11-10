@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/class_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
@@ -153,17 +152,24 @@ class ClassDeclaration : public Declaration {
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
       : AstNode(AstNodeKind::ClassDeclaration, source_loc),
-        definition_(source_loc, std::move(name), std::move(members)) {}
+        name_(std::move(name)),
+        members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromClassDeclaration(node->kind());
   }
 
-  auto definition() const -> const ClassDefinition& { return definition_; }
-  auto definition() -> ClassDefinition& { return definition_; }
+  auto name() const -> const std::string& { return name_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+
+  // Contains class members. Scoped variables are in the body.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
-  ClassDefinition definition_;
+  std::string name_;
+  std::vector<Nonnull<Member*>> members_;
+  StaticScope static_scope_;
 };
 
 class AlternativeSignature : public virtual AstNode,

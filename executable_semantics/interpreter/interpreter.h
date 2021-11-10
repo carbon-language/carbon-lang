@@ -137,7 +137,7 @@ class Interpreter {
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
 
-  void DeallocateScope(Scope& scope);
+  auto UnwindTodoTop() -> Nonnull<Action*>;
 
   auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
       -> Nonnull<const Value*>;
