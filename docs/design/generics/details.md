@@ -3945,29 +3945,49 @@ cases?
 #### Comparison to Rust
 
 Rust has been designing a specialization feature, but it has not been completed.
-Luckily they have done a lot of blogging during their design process, so we can
-benefit from the work they have done. However, getting specialization to work
-for Rust is complicated by the need to maintain compatibility with existing Rust
-code. This motivates a number of Rust rules where Carbon can be simpler. As a
-result there are a number of differences between the Carbon and Rust plans:
+Luckily, Rust team membersy have done a lot of blogging during their design
+process, so Carbon can benefit from the work they have done. However, getting
+specialization to work for Rust is complicated by the need to maintain
+compatibility with existing Rust code. This motivates a number of Rust rules
+where Carbon can be simpler. As a result there are both similarites and
+differences between the Carbon and Rust plans:
 
--   FIXME: can always specialize, no opt-in or opt-out
--   FIXME: no "fundamental" types or interfaces/traits, see
-    [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
--   FIXME: no assumption that if a blanket impl matches that the associated
-    types from the blanket impl will be used. If that is a requirement of the
-    function, it needs to be stated as an explicit constraint.
--   FIXME: no "covering" rules, see
+-   A Rust impl defaults to not being able to be specialized, with a `default`
+    keyword used to opt-in to allowing specialization, reflecting the existing
+    code base developed without specialization. Carbon impls may always be
+    specialized.
+-   Since Rust impls are not specializable by default, generic functions can
+    assume that if a matching blanket impl is found, the associated types from
+    that impl will be used. In Carbon, if a generic function requires an
+    associated type to have a particular value, the function needs to state that
+    using an explicit constraint.
+-   Carbon will not have the "fundamental" attribute used by Rust on types or
+    traits, as described in
+    [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html).
+-   Carbon will not use "covering" rules, as described in
     [Rust RFC 2451: "Re-Rebalancing Coherence"](https://rust-lang.github.io/rfcs/2451-re-rebalancing-coherence.html)
     and
     [Little Orphan Impls: The covered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-covered-rule).
--   FIXME: Carbon does use ordering, favoring the `Self` type and then the
+-   Like Rust, Carbon does use ordering, favoring the `Self` type and then the
     parameters to the interface in left-to-right order, see
     [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
     and
     [Little Orphan Impls: The ordered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-ordered-rule),
     but the specifics are different.
--   FIXME: different plans for handling overlap
+-   Carbon is not planning to support any inheritance of implementation between
+    impls. This is more important to Rust since Rust does not support class
+    inheritance for implementation reuse. Rust has considered multiple
+    approaches here, see
+    [Aaron Turon: "Specialize to Reuse"](http://aturon.github.io/tech/2015/09/18/reuse/)
+    and
+    [Supporting blanket impls in specialization](http://smallcultfollowing.com/babysteps/blog/2016/10/24/supporting-blanket-impls-in-specialization/).
+-   [Supporting blanket impls in specialization](http://smallcultfollowing.com/babysteps/blog/2016/10/24/supporting-blanket-impls-in-specialization/)
+    proposes a specialization rule for Rust that considers type structure before
+    other constraints, as in Carbon, though the details differ.
+-   Rust has more orphan restrictions to avoid there being cases where it is
+    ambiguous which impl should be selected. Carbon instead has picked a total
+    ordering on type structures, picking one as higher priority even without one
+    being more specific in the sense of only applying to a subset of types.
 
 ## Future work
 
