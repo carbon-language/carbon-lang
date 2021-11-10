@@ -115,10 +115,11 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const auto& func_def = cast<FunctionDeclaration>(d);
       Env new_env = *env;
       // Bring the deduced parameters into scope.
-      for (const auto& deduced : func_def.deduced_parameters()) {
+      for (Nonnull<const GenericBinding*> deduced :
+           func_def.deduced_parameters()) {
         AllocationId a =
-            heap_.AllocateValue(arena_->New<VariableType>(deduced.name()));
-        new_env.Set(deduced.name(), a);
+            heap_.AllocateValue(arena_->New<VariableType>(deduced->name()));
+        new_env.Set(deduced->name(), a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
       AllocationId a = heap_.AllocateValue(f);
@@ -152,9 +153,10 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
       std::vector<NamedValue> alts;
-      for (const auto& alternative : choice.alternatives()) {
-        auto t = InterpExp(Env(arena_), &alternative.signature());
-        alts.push_back({.name = alternative.name(), .value = t});
+      for (Nonnull<const ChoiceDeclaration::Alternative*> alternative :
+           choice.alternatives()) {
+        auto t = InterpExp(Env(arena_), &alternative->signature());
+        alts.push_back({.name = alternative->name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
       AllocationId a = heap_.AllocateValue(ct);
@@ -710,9 +712,9 @@ auto Interpreter::StepExp() -> Transition {
       } else {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        return Done{arena_->New<FunctionType>(std::vector<GenericBinding>(),
-                                              act->results()[0],
-                                              act->results()[1])};
+        return Done{arena_->New<FunctionType>(
+            std::vector<Nonnull<const GenericBinding*>>(), act->results()[0],
+            act->results()[1])};
       }
     }
     case Expression::Kind::ContinuationTypeLiteral: {

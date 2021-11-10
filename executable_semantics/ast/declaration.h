@@ -107,7 +107,7 @@ struct GenericBinding : public NamedEntityInterface {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<GenericBinding> deduced_params,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
                       Nonnull<TuplePattern*> param_pattern,
                       Nonnull<Pattern*> return_type,
                       bool is_omitted_return_type,
@@ -127,7 +127,8 @@ class FunctionDeclaration : public Declaration {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
-  auto deduced_parameters() const -> llvm::ArrayRef<GenericBinding> {
+  auto deduced_parameters() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
   }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
@@ -146,7 +147,7 @@ class FunctionDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<GenericBinding> deduced_parameters_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<TuplePattern*> param_pattern_;
   Nonnull<Pattern*> return_type_;
   bool is_omitted_return_type_;
@@ -204,7 +205,7 @@ class ChoiceDeclaration : public Declaration {
   };
 
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
-                    std::vector<Alternative> alternatives)
+                    std::vector<Nonnull<Alternative*>> alternatives)
       : Declaration(Kind::ChoiceDeclaration, source_loc),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
@@ -214,7 +215,7 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto alternatives() const -> llvm::ArrayRef<Alternative> {
+  auto alternatives() const -> llvm::ArrayRef<Nonnull<const Alternative*>> {
     return alternatives_;
   }
 
@@ -224,7 +225,7 @@ class ChoiceDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<Alternative> alternatives_;
+  std::vector<Nonnull<Alternative*>> alternatives_;
   StaticScope static_scope_;
 };
 
