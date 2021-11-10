@@ -23,7 +23,7 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Member {
+class Member : public NamedEntityInterface {
  public:
   enum class Kind { FieldMember };
 
@@ -37,7 +37,11 @@ class Member {
   // object.
   auto kind() const -> Kind { return kind_; }
 
-  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::Member;
+  }
+
+  auto source_loc() const -> SourceLocation override { return source_loc_; }
 
  protected:
   // Constructs a Member representing syntax at the given line number.

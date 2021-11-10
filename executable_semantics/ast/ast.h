@@ -9,6 +9,7 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/library_name.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
@@ -23,6 +24,8 @@ struct AST {
   std::vector<LibraryName> imports;
   // The file's ordered declarations.
   std::vector<Nonnull<Declaration*>> declarations;
+  // Names declared at the top level of the file.
+  StaticScope static_scope;
 };
 
 }  // namespace Carbon

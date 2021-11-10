@@ -21,6 +21,6 @@ fn Add(x: i32, y: i32) -> auto {
   }
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return Add(1, 2) - 3;
 }

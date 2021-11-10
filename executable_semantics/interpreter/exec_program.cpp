@@ -9,6 +9,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/resolve_control_flow.h"
+#include "executable_semantics/interpreter/resolve_names.h"
 #include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
@@ -29,7 +30,7 @@ static void AddIntrinsics(Nonnull<Arena*> arena,
                           IntrinsicExpression::Intrinsic::Print),
                       false)}));
   auto print = arena->New<FunctionDeclaration>(
-      source_loc, "Print", std::vector<GenericBinding>(),
+      source_loc, "Print", std::vector<Nonnull<GenericBinding*>>(),
       arena->New<TuplePattern>(source_loc, print_params),
       arena->New<ExpressionPattern>(arena->New<TupleLiteral>(source_loc)),
       /*is_omitted_return_type=*/false, print_return);
@@ -45,14 +46,11 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
+  // Although name resolution is currently done once, generic programming
+  // (particularly templates) may require more passes.
+  ResolveNames(arena, ast);
   ResolveControlFlow(ast);
-  TypeChecker type_checker(arena, trace);
-  TypeChecker::TypeCheckContext p = type_checker.TopLevel(&ast.declarations);
-  TypeEnv top = p.types;
-  Env ct_top = p.values;
-  for (const auto decl : ast.declarations) {
-    type_checker.TypeCheck(decl, top, ct_top);
-  }
+  TypeChecker(arena, trace).TypeCheck(ast);
   if (trace) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
@@ -62,9 +60,9 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     llvm::outs() << "********** starting execution **********\n";
   }
 
-  SourceLocation source_loc("<main()>", 0);
+  SourceLocation source_loc("<Main()>", 0);
   Nonnull<Expression*> call_main = arena->New<CallExpression>(
-      source_loc, arena->New<IdentifierExpression>(source_loc, "main"),
+      source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
       arena->New<TupleLiteral>(source_loc));
   int result =
       Interpreter(arena, trace).InterpProgram(ast.declarations, call_main);

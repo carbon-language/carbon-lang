@@ -335,7 +335,7 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<GenericBinding> deduced,
+  FunctionType(std::vector<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
       : Value(Kind::FunctionType),
@@ -347,12 +347,14 @@ class FunctionType : public Value {
     return value->kind() == Kind::FunctionType;
   }
 
-  auto deduced() const -> llvm::ArrayRef<GenericBinding> { return deduced_; }
+  auto deduced() const -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return deduced_;
+  }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
 
  private:
-  std::vector<GenericBinding> deduced_;
+  std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
 };

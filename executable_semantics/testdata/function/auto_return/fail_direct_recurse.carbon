@@ -20,6 +20,6 @@ fn Recurse(x: i32, do_recurse: Bool) -> auto {
   return x;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return Recurse(1, true) - 3;
 }

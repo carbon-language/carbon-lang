@@ -15,6 +15,6 @@ fn snd[T:! Type](x: i32, y: T) -> T {
   return y;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return snd(0, 1);
 }

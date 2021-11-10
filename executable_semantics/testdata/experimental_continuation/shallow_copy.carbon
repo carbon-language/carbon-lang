@@ -22,7 +22,7 @@ fn Foo() {
   x = x + 2;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   __continuation k1 {
     Foo();
   }

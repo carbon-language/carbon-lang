@@ -11,6 +11,6 @@
 
 package ExecutableSemanticsTest library "Foo" api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

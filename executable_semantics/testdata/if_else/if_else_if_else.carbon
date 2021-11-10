@@ -11,7 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   if (0 == 1) {
     return 1;
   } else if (0 == 2) {

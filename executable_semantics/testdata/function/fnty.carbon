@@ -15,7 +15,7 @@ fn add1(x: i32) -> i32 {
   return x + 1;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var f: __Fn(i32)->i32 = add1;
   return f(-1);
 }

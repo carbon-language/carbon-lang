@@ -115,10 +115,11 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       const auto& func_def = cast<FunctionDeclaration>(d);
       Env new_env = *env;
       // Bring the deduced parameters into scope.
-      for (const auto& deduced : func_def.deduced_parameters()) {
+      for (Nonnull<const GenericBinding*> deduced :
+           func_def.deduced_parameters()) {
         AllocationId a =
-            heap_.AllocateValue(arena_->New<VariableType>(deduced.name));
-        new_env.Set(deduced.name, a);
+            heap_.AllocateValue(arena_->New<VariableType>(deduced->name()));
+        new_env.Set(deduced->name(), a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
       AllocationId a = heap_.AllocateValue(f);
@@ -127,10 +128,10 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
     }
 
     case Declaration::Kind::ClassDeclaration: {
-      const ClassDefinition& class_def = cast<ClassDeclaration>(d).definition();
+      const auto& class_decl = cast<ClassDeclaration>(d);
       std::vector<NamedValue> fields;
       std::vector<NamedValue> methods;
-      for (Nonnull<const Member*> m : class_def.members()) {
+      for (Nonnull<const Member*> m : class_decl.members()) {
         switch (m->kind()) {
           case Member::Kind::FieldMember: {
             const BindingPattern& binding = cast<FieldMember>(*m).binding();
@@ -143,18 +144,19 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
         }
       }
       auto st = arena_->New<NominalClassType>(
-          class_def.name(), std::move(fields), std::move(methods));
+          class_decl.name(), std::move(fields), std::move(methods));
       AllocationId a = heap_.AllocateValue(st);
-      env->Set(class_def.name(), a);
+      env->Set(class_decl.name(), a);
       break;
     }
 
     case Declaration::Kind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(d);
       std::vector<NamedValue> alts;
-      for (const auto& alternative : choice.alternatives()) {
-        auto t = InterpExp(Env(arena_), &alternative.signature());
-        alts.push_back({.name = alternative.name(), .value = t});
+      for (Nonnull<const ChoiceDeclaration::Alternative*> alternative :
+           choice.alternatives()) {
+        auto t = InterpExp(Env(arena_), &alternative->signature());
+        alts.push_back({.name = alternative->name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
       AllocationId a = heap_.AllocateValue(ct);
@@ -687,7 +689,8 @@ auto Interpreter::StepExp() -> Transition {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return Done{arena_->New<FunctionType>(
-            std::vector<GenericBinding>(), act.results()[0], act.results()[1])};
+            std::vector<Nonnull<const GenericBinding*>>(), act.results()[0],
+            act.results()[1])};
       }
     }
     case Expression::Kind::ContinuationTypeLiteral: {
@@ -830,13 +833,13 @@ auto Interpreter::StepStmt() -> Transition {
       CHECK(act.pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      return UnwindPast{&cast<Break>(stmt).loop()};
+      return UnwindPast{.ast_node = &cast<Break>(stmt).loop()};
     }
     case Statement::Kind::Continue: {
       CHECK(act.pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      return UnwindTo{&cast<Continue>(stmt).loop()};
+      return UnwindTo{.ast_node = &cast<Continue>(stmt).loop()};
     }
     case Statement::Kind::Block: {
       const auto& block = cast<Block>(stmt);
@@ -944,7 +947,8 @@ auto Interpreter::StepStmt() -> Transition {
         // TODO(geoffromer): convert the result to the function's return type,
         // once #880 gives us a way to find that type.
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return UnwindPast{*function.body(), act.results()[0]};
+        return UnwindPast{.ast_node = *function.body(),
+                          .result = act.results()[0]};
       }
     case Statement::Kind::Continuation: {
       CHECK(act.pos() == 0);
@@ -1041,28 +1045,12 @@ class Interpreter::DoTransition {
     action.set_pos(action.pos() + 1);
   }
 
-  void operator()(const UnwindTo& unwind_to) {
-    while (true) {
-      if (const auto* statement_action =
-              dyn_cast<StatementAction>(interpreter->todo_.Top().get());
-          statement_action != nullptr &&
-          &statement_action->statement() == unwind_to.ast_node) {
-        break;
-      }
-      interpreter->todo_.Pop();
-    }
-  }
+  void operator()(const UnwindTo& unwind_to) { DoUnwindTo(unwind_to.ast_node); }
 
   void operator()(const UnwindPast& unwind_past) {
-    while (true) {
-      std::unique_ptr<Action> action = interpreter->todo_.Pop();
-      if (const auto* statement_action =
-              dyn_cast<StatementAction>(action.get());
-          statement_action != nullptr &&
-          &statement_action->statement() == unwind_past.ast_node) {
-        break;
-      }
-    }
+    DoUnwindTo(unwind_past.ast_node);
+    // Unwind past the statement and return a result if needed.
+    interpreter->todo_.Pop();
     if (unwind_past.result.has_value()) {
       interpreter->todo_.Top()->AddResult(*unwind_past.result);
     }
@@ -1093,6 +1081,19 @@ class Interpreter::DoTransition {
   void operator()(const ManualTransition&) {}
 
  private:
+  // Unwinds to the indicated node.
+  void DoUnwindTo(Nonnull<const Statement*> ast_node) {
+    while (true) {
+      if (const auto* statement_action =
+              dyn_cast<StatementAction>(interpreter->todo_.Top().get());
+          statement_action != nullptr &&
+          &statement_action->statement() == ast_node) {
+        break;
+      }
+      interpreter->todo_.Pop();
+    }
+  }
+
   Nonnull<Interpreter*> interpreter;
 };
 

@@ -17,7 +17,7 @@ choice Ints {
   Two(i32,i32)
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var x: auto = Ints.None();
   var y: auto = Ints.One(42);
   var n: auto = 0;

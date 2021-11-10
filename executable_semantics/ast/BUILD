@@ -10,17 +10,7 @@ cc_library(
     deps = [
         ":declaration",
         ":library_name",
-    ],
-)
-
-cc_library(
-    name = "class_definition",
-    hdrs = ["class_definition.h"],
-    deps = [
-        ":member",
-        ":source_location",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
+        ":static_scope",
     ],
 )
 
@@ -31,11 +21,11 @@ cc_library(
         "declaration.h",
     ],
     deps = [
-        ":class_definition",
         ":member",
         ":pattern",
         ":source_location",
         ":statement",
+        ":static_scope",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -62,8 +52,7 @@ cc_test(
     deps = [
         ":expression",
         ":paren_contents",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -99,6 +88,7 @@ cc_library(
     deps = [
         ":expression",
         ":source_location",
+        ":static_scope",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -112,16 +102,29 @@ cc_test(
     deps = [
         ":paren_contents",
         ":pattern",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "static_scope",
+    srcs = ["static_scope.cpp"],
+    hdrs = ["static_scope.h"],
+    deps = [
+        ":source_location",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
     ],
 )
 
 cc_library(
     name = "source_location",
     hdrs = ["source_location.h"],
-    deps = ["//common:ostream"],
+    deps = [
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+    ],
 )
 
 cc_library(
