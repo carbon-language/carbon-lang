@@ -504,8 +504,7 @@ class ContinuationValue : public Value {
     // leaving *this empty.
     void RestoreTo(Stack<std::unique_ptr<Action>>& todo);
 
-    // Destroy the currently stored stack fragment, in order starting with the
-    // top.
+    // Destroy the currently stored stack fragment.
     void Clear();
 
     void Print(llvm::raw_ostream& out) const;
