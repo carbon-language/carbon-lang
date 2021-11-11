@@ -21,6 +21,26 @@ namespace Carbon {
 
 using llvm::cast;
 
+Scope::Scope(Scope&& other) noexcept
+    : values_(other.values_),
+      locals_(std::exchange(other.locals_, {})),
+      heap_(other.heap_) {}
+
+auto Scope::operator=(Scope&& rhs) noexcept -> Scope& {
+  values_ = rhs.values_;
+  locals_ = std::exchange(rhs.locals_, {});
+  heap_ = rhs.heap_;
+  return *this;
+}
+
+Scope::~Scope() {
+  for (const auto& l : locals_) {
+    std::optional<AllocationId> a = values_.Get(l);
+    CHECK(a.has_value());
+    heap_->Deallocate(*a);
+  }
+}
+
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:

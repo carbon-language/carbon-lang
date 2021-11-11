@@ -20,6 +20,7 @@ cc_library(
         ":address",
         ":dictionary",
         ":field_path",
+        ":heap_allocation_interface",
         ":stack",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
