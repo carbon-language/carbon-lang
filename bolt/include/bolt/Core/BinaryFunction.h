@@ -1685,15 +1685,6 @@ public:
     return getIndex(A) - getIndex(B);
   }
 
-  /// Return basic block range that originally contained offset \p Offset
-  /// from the function start to the function end.
-  iterator_range<iterator> getBasicBlockRangeFromOffsetToEnd(uint64_t Offset) {
-    BinaryBasicBlock *BB = getBasicBlockContainingOffset(Offset);
-    return BB
-      ? iterator_range<iterator>(BasicBlocks.begin() + getIndex(BB), end())
-      : iterator_range<iterator>(end(), end());
-  }
-
   /// Insert the BBs contained in NewBBs into the basic blocks for this
   /// function. Update the associated state of all blocks as needed, i.e.
   /// BB offsets and BB indices. The new BBs are inserted after Start.
