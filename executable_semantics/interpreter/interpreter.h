@@ -73,12 +73,6 @@ class Interpreter {
     std::unique_ptr<Action> child;
   };
 
-  // Transition type which spawns a new Action that replaces the current action
-  // on the todo stack.
-  struct Delegate {
-    std::unique_ptr<Action> delegate;
-  };
-
   // Transition type which keeps the current Action at the top of the stack,
   // and increments its position counter.
   struct RunAgain {};
@@ -98,13 +92,11 @@ class Interpreter {
     std::optional<Nonnull<const Value*>> result;
   };
 
-  // Transition type which removes the current action from the top of the todo
-  // stack, then creates a new stack frame which calls the specified function
-  // with the specified arguments.
-  struct CallFunction {
-    Nonnull<const FunctionDeclaration*> function;
-    Nonnull<const Value*> args;
-    SourceLocation source_loc;
+  // Transition type which has the same behavior as Spawn, but executes the
+  // child action in the given scope instead of CurrentScope().
+  struct SpawnWithScope {
+    Scope scope;
+    std::unique_ptr<Action> child;
   };
 
   // Transition type which does nothing.
@@ -113,8 +105,8 @@ class Interpreter {
   // uses of this type should be replaced with meaningful transitions.
   struct ManualTransition {};
 
-  using Transition = std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
-                                  UnwindPast, CallFunction, ManualTransition>;
+  using Transition = std::variant<Done, Spawn, RunAgain, UnwindTo, UnwindPast,
+                                  SpawnWithScope, ManualTransition>;
 
   // Visitor which implements the behavior associated with each transition type.
   class DoTransition;

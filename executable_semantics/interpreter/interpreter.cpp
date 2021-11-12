@@ -631,12 +631,26 @@ auto Interpreter::StepExp() -> Transition {
             return Done{arena_->New<AlternativeValue>(
                 alt.alt_name(), alt.choice_name(), act.results()[1])};
           }
-          case Value::Kind::FunctionValue:
-            return CallFunction{
-                .function =
-                    &cast<FunctionValue>(*act.results()[0]).declaration(),
-                .args = act.results()[1],
-                .source_loc = exp.source_loc()};
+          case Value::Kind::FunctionValue: {
+            const FunctionDeclaration& function =
+                cast<FunctionValue>(*act.results()[0]).declaration();
+            Nonnull<const Value*> converted_args = Convert(
+                act.results()[1], &function.param_pattern().static_type());
+            std::optional<Env> matches =
+                PatternMatch(&function.param_pattern().value(), converted_args,
+                             exp.source_loc());
+            CHECK(matches.has_value())
+                << "internal error in call_function, pattern match failed";
+            Scope new_scope(globals_, &heap_);
+            for (const auto& [name, value] : *matches) {
+              new_scope.AddLocal(name, value);
+            }
+            CHECK(function.body().has_value())
+                << "Calling a function that's missing a body";
+            return SpawnWithScope{
+                .scope = std::move(new_scope),
+                .child = std::make_unique<StatementAction>(*function.body())};
+          }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
                 << "in call, expected a function, not " << *act.results()[0];
@@ -758,8 +772,12 @@ auto Interpreter::StepPattern() -> Transition {
       }
     }
     case PatternKind::ExpressionPattern:
-      return Delegate{std::make_unique<ExpressionAction>(
-          &cast<ExpressionPattern>(pattern).expression())};
+      if (act.pos() == 0) {
+        return Spawn{std::make_unique<ExpressionAction>(
+            &cast<ExpressionPattern>(pattern).expression())};
+      } else {
+        return Done{act.results()[0]};
+      }
   }
 }
 
@@ -916,24 +934,26 @@ auto Interpreter::StepStmt() -> Transition {
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         return Spawn{
             std::make_unique<ExpressionAction>(&cast<If>(stmt).condition())};
-      } else {
+      } else if (act.pos() == 1) {
         Nonnull<const Value*> condition =
             Convert(act.results()[0], arena_->New<BoolType>());
         if (cast<BoolValue>(*condition).value()) {
           //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { then_stmt :: C, E, F } :: S, H}
-          return Delegate{
+          return Spawn{
               std::make_unique<StatementAction>(&cast<If>(stmt).then_block())};
         } else if (cast<If>(stmt).else_block()) {
           //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { else_stmt :: C, E, F } :: S, H}
-          return Delegate{
+          return Spawn{
               std::make_unique<StatementAction>(*cast<If>(stmt).else_block())};
         } else {
           return Done{};
         }
+      } else {
+        return Done{};
       }
     case StatementKind::Return:
       if (act.pos() == 0) {
@@ -1032,14 +1052,6 @@ class Interpreter::DoTransition {
     interpreter->todo_.Push(std::move(spawn.child));
   }
 
-  void operator()(Delegate delegate) {
-    std::unique_ptr<Action> act = interpreter->todo_.Pop();
-    if (act->scope().has_value()) {
-      delegate.delegate->StartScope(std::move(*act->scope()));
-    }
-    interpreter->todo_.Push(std::move(delegate.delegate));
-  }
-
   void operator()(const RunAgain&) {
     Action& action = *interpreter->todo_.Top();
     action.set_pos(action.pos() + 1);
@@ -1056,26 +1068,12 @@ class Interpreter::DoTransition {
     }
   }
 
-  void operator()(const CallFunction& call) {
+  void operator()(SpawnWithScope spawn) {
     Action& action = *interpreter->todo_.Top();
     action.set_pos(action.pos() + 1);
-    Nonnull<const Value*> converted_args = interpreter->Convert(
-        call.args, &call.function->param_pattern().static_type());
-    std::optional<Env> matches =
-        interpreter->PatternMatch(&call.function->param_pattern().value(),
-                                  converted_args, call.source_loc);
-    CHECK(matches.has_value())
-        << "internal error in call_function, pattern match failed";
-    // Create the new frame and push it on the stack
-    Scope new_scope(interpreter->globals_, &interpreter->heap_);
-    for (const auto& [name, value] : *matches) {
-      new_scope.AddLocal(name, value);
-    }
     interpreter->todo_.Push(
-        std::make_unique<ScopeAction>(std::move(new_scope)));
-    CHECK(call.function->body()) << "Calling a function that's missing a body";
-    interpreter->todo_.Push(
-        std::make_unique<StatementAction>(*call.function->body()));
+        std::make_unique<ScopeAction>(std::move(spawn.scope)));
+    interpreter->todo_.Push(std::move(spawn.child));
   }
 
   void operator()(const ManualTransition&) {}
