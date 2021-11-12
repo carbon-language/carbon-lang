@@ -863,7 +863,8 @@ IndirectCallPromotion::fixCFG(BinaryBasicBlock &IndCallBlock,
   std::vector<BinaryBranchInfo> BBI;
   std::vector<BinaryBranchInfo> ScaledBBI;
   for (const Callsite &Target : Targets) {
-    const size_t NumEntries = std::max(1UL, Target.JTIndices.size());
+    const size_t NumEntries =
+        std::max(static_cast<std::size_t>(1UL), Target.JTIndices.size());
     for (size_t I = 0; I < NumEntries; ++I) {
       BBI.push_back(
           BinaryBranchInfo{(Target.Branches + NumEntries - 1) / NumEntries,
@@ -882,7 +883,8 @@ IndirectCallPromotion::fixCFG(BinaryBasicBlock &IndCallBlock,
 
     std::vector<MCSymbol*> SymTargets;
     for (const Callsite &Target : Targets) {
-      const size_t NumEntries = std::max(1UL, Target.JTIndices.size());
+      const size_t NumEntries =
+          std::max(static_cast<std::size_t>(1UL), Target.JTIndices.size());
       for (size_t I = 0; I < NumEntries; ++I) {
         SymTargets.push_back(Target.To.Sym);
       }

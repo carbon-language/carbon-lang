@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/edit_distance.h"
+#include "llvm/Demangle/Demangle.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
@@ -34,7 +35,6 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cxxabi.h>
 #include <functional>
 #include <limits>
 #include <numeric>
@@ -259,12 +259,7 @@ BinaryFunction::hasRestoredNameRegex(const StringRef Name) const {
 
 std::string BinaryFunction::getDemangledName() const {
   StringRef MangledName = NameResolver::restore(getOneName());
-  int Status = 0;
-  char *const Name =
-      abi::__cxa_demangle(MangledName.str().c_str(), 0, 0, &Status);
-  const std::string NameStr(Status == 0 ? Name : MangledName);
-  ::free(Name);
-  return NameStr;
+  return demangle(MangledName.str());
 }
 
 BinaryBasicBlock *
@@ -3791,8 +3786,10 @@ void BinaryFunction::updateLayout(BinaryBasicBlock *Start,
   // Insert new blocks in the layout immediately after Start.
   auto Pos = std::find(layout_begin(), layout_end(), Start);
   assert(Pos != layout_end());
-  BinaryBasicBlock **Begin = &BasicBlocks[getIndex(Start) + 1];
-  BinaryBasicBlock **End = &BasicBlocks[getIndex(Start) + NumNewBlocks + 1];
+  BasicBlockListType::iterator Begin =
+      std::next(BasicBlocks.begin(), getIndex(Start) + 1);
+  BasicBlockListType::iterator End =
+      std::next(BasicBlocks.begin(), getIndex(Start) + NumNewBlocks + 1);
   BasicBlocksLayout.insert(Pos + 1, Begin, End);
   updateLayoutIndices();
 }

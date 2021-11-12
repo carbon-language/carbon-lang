@@ -3201,7 +3201,7 @@ void RewriteInstance::encodePseudoProbes() {
   SmallString<8> Contents;
   MCDecodedPseudoProbe *LastProbe = nullptr;
 
-  auto EmitInt = [&](uint64_t Value, uint Size) {
+  auto EmitInt = [&](uint64_t Value, uint32_t Size) {
     const bool IsLittleEndian = BC->AsmInfo->isLittleEndian();
     uint64_t Swapped = support::endian::byte_swap(
         Value, IsLittleEndian ? support::little : support::big);
@@ -3240,7 +3240,7 @@ void RewriteInstance::encodePseudoProbes() {
       EmitSLEB128IntValue(Delta);
     } else {
       // Emit absolute address for encoding the first pseudo probe.
-      unsigned AddrSize = BC->AsmInfo->getCodePointerSize();
+      uint32_t AddrSize = BC->AsmInfo->getCodePointerSize();
       EmitInt(CurProbe->getAddress(), AddrSize);
     }
   };

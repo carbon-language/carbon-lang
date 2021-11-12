@@ -81,8 +81,9 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
     // any overlapping jump tables.  We only look at the entries for the jump
     // table that is referenced at the last instruction.
     const auto Range = JT->getEntriesForAddress(BC.MIB->getJumpTable(*Inst));
-    const std::vector<const MCSymbol *> Entries(&JT->Entries[Range.first],
-                                                &JT->Entries[Range.second]);
+    const std::vector<const MCSymbol *> Entries(
+        std::next(JT->Entries.begin(), Range.first),
+        std::next(JT->Entries.begin(), Range.second));
     std::set<const MCSymbol *> UniqueSyms(Entries.begin(), Entries.end());
     for (BinaryBasicBlock *Succ : Successors) {
       auto Itr = UniqueSyms.find(Succ->getLabel());

@@ -18,6 +18,7 @@
 #include "bolt/Profile/Heatmap.h"
 #include "bolt/Utils/CommandLineOpts.h"
 #include "bolt/Utils/Utils.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
@@ -28,8 +29,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <unordered_map>
-
-#include <unistd.h>
 
 #define DEBUG_TYPE "aggregator"
 
@@ -329,18 +328,17 @@ bool DataAggregator::checkPerfDataMagic(StringRef FileName) {
   if (opts::ReadPreAggregated)
     return true;
 
-  int FD;
-  if (sys::fs::openFileForRead(FileName, FD)) {
+  Expected<sys::fs::file_t> FD = sys::fs::openNativeFileForRead(FileName);
+  if (!FD)
     return false;
-  }
 
   char Buf[7] = {0, 0, 0, 0, 0, 0, 0};
 
-  if (::read(FD, Buf, 7) == -1) {
-    ::close(FD);
+  auto Close = make_scope_exit([&] { sys::fs::closeFile(*FD); });
+  Expected<size_t> BytesRead = sys::fs::readNativeFileSlice(
+      *FD, makeMutableArrayRef(Buf, sizeof(Buf)), 0);
+  if (!BytesRead || *BytesRead != 7)
     return false;
-  }
-  ::close(FD);
 
   if (strncmp(Buf, "PERFILE", 7) == 0)
     return true;
@@ -1805,8 +1803,7 @@ void DataAggregator::processPreAggregated() {
   outs() << "\n";
 }
 
-Optional<pid_t>
-DataAggregator::parseCommExecEvent() {
+Optional<int32_t> DataAggregator::parseCommExecEvent() {
   size_t LineEnd = ParsingBuf.find_first_of("\n");
   if (LineEnd == StringRef::npos) {
     reportError("expected rest of line");
@@ -1824,7 +1821,7 @@ DataAggregator::parseCommExecEvent() {
   // Line:
   //  PERF_RECORD_COMM exec: <name>:<pid>/<tid>"
   StringRef PIDStr = Line.rsplit(':').second.split('/').first;
-  pid_t PID;
+  int32_t PID;
   if (PIDStr.getAsInteger(10, PID)) {
     reportError("expected PID");
     Diag << "Found: " << PIDStr << "in '" << Line << "'\n";
@@ -2077,7 +2074,7 @@ std::error_code DataAggregator::parseTaskEvents() {
                      TimerGroupDesc, opts::TimeAggregator);
 
   while (hasData()) {
-    if (Optional<pid_t> CommInfo = parseCommExecEvent()) {
+    if (Optional<int32_t> CommInfo = parseCommExecEvent()) {
       // Remove forked child that ran execve
       auto MMapInfoIter = BinaryMMapInfo.find(*CommInfo);
       if (MMapInfoIter != BinaryMMapInfo.end() &&

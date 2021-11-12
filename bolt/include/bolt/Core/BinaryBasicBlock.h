@@ -1012,8 +1012,11 @@ private:
   }
 };
 
-/// Keep the size of the BinaryBasicBlock within a reasonable size class.
+#if defined(LLVM_ON_UNIX)
+/// Keep the size of the BinaryBasicBlock within a reasonable size class
+/// (jemalloc bucket) on Linux
 static_assert(sizeof(BinaryBasicBlock) <= 256, "");
+#endif
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
