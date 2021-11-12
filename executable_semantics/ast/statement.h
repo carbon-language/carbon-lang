@@ -198,9 +198,10 @@ class Return : public Statement {
   // structure of the AST: the return value is not a child of this node,
   // but an ancestor.
   auto function() const -> const FunctionDeclaration& { return **function_; }
+  auto function() -> FunctionDeclaration& { return **function_; }
 
   // Can only be called once, by ResolveControlFlow.
-  void set_function(Nonnull<const FunctionDeclaration*> function) {
+  void set_function(Nonnull<FunctionDeclaration*> function) {
     CHECK(!function_.has_value());
     function_ = function;
   }
@@ -208,7 +209,7 @@ class Return : public Statement {
  private:
   Nonnull<Expression*> expression_;
   bool is_omitted_expression_;
-  std::optional<Nonnull<const FunctionDeclaration*>> function_;
+  std::optional<Nonnull<FunctionDeclaration*>> function_;
 };
 
 class While : public Statement {

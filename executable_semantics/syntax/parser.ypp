@@ -113,7 +113,7 @@
 %type <std::vector<Nonnull<GenericBinding*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
-%type <std::pair<Nonnull<Expression*>, bool>> return_type
+%type <BisonWrap<ReturnTerm>> return_term
 %type <Nonnull<Expression*>> paren_expression
 %type <Nonnull<StructLiteral*>> struct_literal
 %type <std::vector<FieldInitializer>> struct_literal_contents
@@ -376,12 +376,8 @@ expression:
           context.source_loc(), Operator::Ptr,
           std::vector<Nonnull<Expression*>>({$1}));
     }
-| FN_TYPE tuple return_type
-    {
-      auto [return_exp, is_omitted_exp] = $3;
-      $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, return_exp,
-                                           is_omitted_exp);
-    }
+| FN_TYPE tuple ARROW expression
+    { $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, $4); }
 ;
 designator: PERIOD identifier { $$ = $2; }
 ;
@@ -624,11 +620,13 @@ nonempty_block:
       $$ = arena->New<Block>(context.source_loc(), std::move($2));
     }
 ;
-return_type:
+return_term:
   // Empty
-    { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }
+    { $$ = ReturnTerm::Omitted(context.source_loc()); }
+| ARROW AUTO %prec FNARROW
+    { $$ = ReturnTerm::Auto(context.source_loc()); }
 | ARROW expression %prec FNARROW
-    { $$ = {$2, false}; }
+    { $$ = ReturnTerm::Explicit($2); }
 ;
 generic_binding:
   identifier COLON_BANG expression
@@ -657,28 +655,15 @@ deduced_params:
     { $$ = $2; }
 ;
 function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type block
+  FN identifier deduced_params maybe_empty_tuple_pattern return_term block
     {
-      auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDeclaration>(
-          context.source_loc(), $2, $3, $4,
-          arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
+      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
+                                           $6);
     }
-| FN identifier deduced_params maybe_empty_tuple_pattern ARROW AUTO block
+| FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      // The return type is not considered "omitted" because it's `auto`.
-      $$ = arena->New<FunctionDeclaration>(
-          context.source_loc(), $2, $3, $4,
-          arena->New<AutoPattern>(context.source_loc()),
-          /*is_omitted_exp=*/false, $7);
-    }
-| FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
-    {
-      auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDeclaration>(
-          context.source_loc(), $2, $3, $4,
-          arena->New<ExpressionPattern>(return_exp), is_omitted_exp,
-          std::nullopt);
+      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
+                                           std::nullopt);
     }
 ;
 variable_declaration: identifier COLON pattern
