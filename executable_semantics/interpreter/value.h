@@ -90,17 +90,8 @@ class Value {
   const Kind kind_;
 };
 
-using VarValues = std::vector<std::pair<std::string, Nonnull<const Value*>>>;
-
-auto FindInVarValues(const std::string& field, const VarValues& inits)
-    -> std::optional<Nonnull<const Value*>>;
-auto FieldsEqual(const VarValues& ts1, const VarValues& ts2) -> bool;
-
-// A StructElement represents the value of a single struct field.
-//
-// TODO(geoffromer): Look for ways to eliminate duplication among StructElement,
-// VarValues::value_type, FieldInitializer, and any similar types.
-struct StructElement {
+// A NamedValue represents a value with a name, such as a single struct field.
+struct NamedValue {
   // The field name.
   std::string name;
 
@@ -181,7 +172,7 @@ class BoolValue : public Value {
 // StructType instances.
 class StructValue : public Value {
  public:
-  explicit StructValue(std::vector<StructElement> elements)
+  explicit StructValue(std::vector<NamedValue> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
     CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
@@ -191,9 +182,7 @@ class StructValue : public Value {
     return value->kind() == Kind::StructValue;
   }
 
-  auto elements() const -> const std::vector<StructElement>& {
-    return elements_;
-  }
+  auto elements() const -> llvm::ArrayRef<NamedValue> { return elements_; }
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
@@ -201,7 +190,7 @@ class StructValue : public Value {
       -> std::optional<Nonnull<const Value*>>;
 
  private:
-  std::vector<StructElement> elements_;
+  std::vector<NamedValue> elements_;
 };
 
 // A value of a nominal class type.
@@ -346,7 +335,7 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<GenericBinding> deduced,
+  FunctionType(std::vector<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
       : Value(Kind::FunctionType),
@@ -358,12 +347,14 @@ class FunctionType : public Value {
     return value->kind() == Kind::FunctionType;
   }
 
-  auto deduced() const -> llvm::ArrayRef<GenericBinding> { return deduced_; }
+  auto deduced() const -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return deduced_;
+  }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
 
  private:
-  std::vector<GenericBinding> deduced_;
+  std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
 };
@@ -400,25 +391,26 @@ class AutoType : public Value {
 // for `{}`, which is a struct value in addition to being a struct type.
 class StructType : public Value {
  public:
-  StructType() : StructType(VarValues{}) {}
+  StructType() : StructType(std::vector<NamedValue>{}) {}
 
-  explicit StructType(VarValues fields)
+  explicit StructType(std::vector<NamedValue> fields)
       : Value(Kind::StructType), fields_(std::move(fields)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StructType;
   }
 
-  auto fields() const -> const VarValues& { return fields_; }
+  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
 
  private:
-  VarValues fields_;
+  std::vector<NamedValue> fields_;
 };
 
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(std::string name, VarValues fields, VarValues methods)
+  NominalClassType(std::string name, std::vector<NamedValue> fields,
+                   std::vector<NamedValue> methods)
       : Value(Kind::NominalClassType),
         name_(std::move(name)),
         fields_(std::move(fields)),
@@ -429,19 +421,19 @@ class NominalClassType : public Value {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto fields() const -> const VarValues& { return fields_; }
-  auto methods() const -> const VarValues& { return methods_; }
+  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
+  auto methods() const -> llvm::ArrayRef<NamedValue> { return methods_; }
 
  private:
   std::string name_;
-  VarValues fields_;
-  VarValues methods_;
+  std::vector<NamedValue> fields_;
+  std::vector<NamedValue> methods_;
 };
 
 // A choice type.
 class ChoiceType : public Value {
  public:
-  ChoiceType(std::string name, VarValues alternatives)
+  ChoiceType(std::string name, std::vector<NamedValue> alternatives)
       : Value(Kind::ChoiceType),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
@@ -451,11 +443,15 @@ class ChoiceType : public Value {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto alternatives() const -> const VarValues& { return alternatives_; }
+
+  // Returns the parameter types of the alternative with the given name,
+  // or nullopt if no such alternative is present.
+  auto FindAlternative(std::string_view name) const
+      -> std::optional<Nonnull<const Value*>>;
 
  private:
   std::string name_;
-  VarValues alternatives_;
+  std::vector<NamedValue> alternatives_;
 };
 
 // A continuation type.
@@ -489,21 +485,53 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Action*>>*> stack)
+  class StackFragment {
+   public:
+    // Constructs an empty StackFragment.
+    StackFragment() = default;
+
+    // Requires *this to be empty, because by the time we're tearing down the
+    // Arena, it's no longer safe to invoke ~Action.
+    ~StackFragment();
+
+    StackFragment(StackFragment&&) = delete;
+    StackFragment& operator=(StackFragment&&) = delete;
+
+    // Store the given partial todo stack in *this, which must currently be
+    // empty. The stack is represented with the top of the stack at the
+    // beginning of the vector, the reverse of the usual order.
+    void StoreReversed(std::vector<std::unique_ptr<Action>> reversed_todo);
+
+    // Restore the currently stored stack fragment to the top of `todo`,
+    // leaving *this empty.
+    void RestoreTo(Stack<std::unique_ptr<Action>>& todo);
+
+    // Destroy the currently stored stack fragment.
+    void Clear();
+
+    void Print(llvm::raw_ostream& out) const;
+    LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+   private:
+    // The todo stack of a suspended continuation, starting with the top
+    // Action.
+    std::vector<std::unique_ptr<Action>> reversed_todo_;
+  };
+
+  explicit ContinuationValue(Nonnull<StackFragment*> stack)
       : Value(Kind::ContinuationValue), stack_(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
   }
 
-  // The todo stack of the suspended continuation, starting with the top
-  // Action (the reverse of the usual order). Note that this provides mutable
-  // access, even when *this is const, because of the reference-like semantics
-  // of ContinuationValue.
-  auto stack() const -> std::vector<Nonnull<Action*>>& { return *stack_; }
+  // The todo stack of the suspended continuation. Note that this provides
+  // mutable access, even when *this is const, because of the reference-like
+  // semantics of ContinuationValue.
+  auto stack() const -> StackFragment& { return *stack_; }
 
  private:
-  Nonnull<std::vector<Nonnull<Action*>>*> stack_;
+  Nonnull<StackFragment*> stack_;
 };
 
 // The String type.

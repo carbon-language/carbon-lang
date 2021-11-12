@@ -20,6 +20,7 @@ cc_library(
         ":address",
         ":dictionary",
         ":field_path",
+        ":heap_allocation_interface",
         ":stack",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
@@ -54,6 +55,7 @@ cc_library(
     deps = [
         ":interpreter",
         ":resolve_control_flow",
+        ":resolve_names",
         ":type_checker",
         "//executable_semantics/ast",
     ],
@@ -75,8 +77,20 @@ cc_library(
     deps = [
         ":action_and_value",
         ":address",
+        ":heap_allocation_interface",
         "//common:ostream",
+        "//executable_semantics/ast:source_location",
+        "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "heap_allocation_interface",
+    hdrs = ["heap_allocation_interface.h"],
+    deps = [
+        ":address",
+        "//executable_semantics/common:nonnull",
     ],
 )
 
@@ -115,6 +129,17 @@ cc_library(
 )
 
 cc_library(
+    name = "resolve_names",
+    srcs = ["resolve_names.cpp"],
+    hdrs = ["resolve_names.h"],
+    deps = [
+        "//common:check",
+        "//executable_semantics/ast",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "stack",
     hdrs = ["stack.h"],
     deps = ["//common:check"],
@@ -128,6 +153,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         "//common:ostream",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:statement",

@@ -12,7 +12,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var s: auto = "Hello world!\n";
   Print(s);
   return 0;

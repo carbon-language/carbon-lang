@@ -10,16 +10,18 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/class_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
+
+class StaticScope;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -29,7 +31,7 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration {
+class Declaration : public NamedEntityInterface {
  public:
   enum class Kind {
     FunctionDeclaration,
@@ -48,7 +50,11 @@ class Declaration {
   // object.
   auto kind() const -> Kind { return kind_; }
 
-  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::Declaration;
+  }
+
+  auto source_loc() const -> SourceLocation override { return source_loc_; }
 
   // The static type of the declared entity. Cannot be called before
   // typechecking.
@@ -78,9 +84,24 @@ class Declaration {
 
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
-struct GenericBinding {
-  std::string name;
-  Nonnull<const Expression*> type;
+struct GenericBinding : public NamedEntityInterface {
+ public:
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : source_loc_(source_loc), name_(std::move(name)), type_(type) {}
+
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::GenericBinding;
+  }
+
+  auto source_loc() const -> SourceLocation override { return source_loc_; }
+  auto name() const -> const std::string& { return name_; }
+  auto type() const -> const Expression& { return *type_; }
+
+ private:
+  SourceLocation source_loc_;
+  std::string name_;
+  Nonnull<Expression*> type_;
 };
 
 // The syntactic representation of a function declaration's return type.
@@ -165,10 +186,10 @@ class ReturnTerm {
 class FunctionDeclaration : public Declaration {
  public:
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<GenericBinding> deduced_params,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Statement*>> body)
+                      std::optional<Nonnull<Block*>> body)
       : Declaration(Kind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
@@ -183,24 +204,28 @@ class FunctionDeclaration : public Declaration {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
-  auto deduced_parameters() const -> llvm::ArrayRef<GenericBinding> {
+  auto deduced_parameters() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
   }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
   auto return_term() -> ReturnTerm& { return return_term_; }
-  auto body() const -> std::optional<Nonnull<const Statement*>> {
-    return body_;
-  }
-  auto body() -> std::optional<Nonnull<Statement*>> { return body_; }
+  auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
+  auto body() -> std::optional<Nonnull<Block*>> { return body_; }
+
+  // Only contains function parameters. Scoped variables are in the body.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
   std::string name_;
-  std::vector<GenericBinding> deduced_parameters_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
-  std::optional<Nonnull<Statement*>> body_;
+  std::optional<Nonnull<Block*>> body_;
+  StaticScope static_scope_;
 };
 
 class ClassDeclaration : public Declaration {
@@ -208,36 +233,52 @@ class ClassDeclaration : public Declaration {
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
       : Declaration(Kind::ClassDeclaration, source_loc),
-        definition_(source_loc, std::move(name), std::move(members)) {}
+        name_(std::move(name)),
+        members_(std::move(members)) {}
 
   static auto classof(const Declaration* decl) -> bool {
     return decl->kind() == Kind::ClassDeclaration;
   }
 
-  auto definition() const -> const ClassDefinition& { return definition_; }
-  auto definition() -> ClassDefinition& { return definition_; }
+  auto name() const -> const std::string& { return name_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+
+  // Contains class members. Scoped variables are in the body.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
 
  private:
-  ClassDefinition definition_;
+  std::string name_;
+  std::vector<Nonnull<Member*>> members_;
+  StaticScope static_scope_;
 };
 
 class ChoiceDeclaration : public Declaration {
  public:
-  class Alternative {
+  class Alternative : public NamedEntityInterface {
    public:
-    Alternative(std::string name, Nonnull<Expression*> signature)
-        : name_(std::move(name)), signature_(signature) {}
+    Alternative(SourceLocation source_loc, std::string name,
+                Nonnull<Expression*> signature)
+        : source_loc_(source_loc),
+          name_(std::move(name)),
+          signature_(signature) {}
 
+    auto named_entity_kind() const -> NamedEntityKind override {
+      return NamedEntityKind::ChoiceDeclarationAlternative;
+    }
+
+    auto source_loc() const -> SourceLocation override { return source_loc_; }
     auto name() const -> const std::string& { return name_; }
     auto signature() const -> const Expression& { return *signature_; }
 
    private:
+    SourceLocation source_loc_;
     std::string name_;
     Nonnull<Expression*> signature_;
   };
 
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
-                    std::vector<Alternative> alternatives)
+                    std::vector<Nonnull<Alternative*>> alternatives)
       : Declaration(Kind::ChoiceDeclaration, source_loc),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
@@ -247,13 +288,18 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto alternatives() const -> llvm::ArrayRef<Alternative> {
+  auto alternatives() const -> llvm::ArrayRef<Nonnull<const Alternative*>> {
     return alternatives_;
   }
 
+  // Contains the alternatives.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
+
  private:
   std::string name_;
-  std::vector<Alternative> alternatives_;
+  std::vector<Nonnull<Alternative*>> alternatives_;
+  StaticScope static_scope_;
 };
 
 // Global variable definition implements the Declaration concept.

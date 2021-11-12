@@ -4,11 +4,12 @@
 
 #include "executable_semantics/ast/pattern.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/common/arena.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {

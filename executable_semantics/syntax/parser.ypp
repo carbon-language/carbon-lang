@@ -101,26 +101,25 @@
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <Nonnull<Statement*>> statement
-%type <Nonnull<Statement*>> if_statement
-%type <std::optional<Nonnull<Statement*>>> optional_else
+%type <Nonnull<If*>> if_statement
+%type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
-%type <Nonnull<Statement*>> nonempty_block
-%type <Nonnull<Statement*>> block
-%type <Nonnull<Statement*>> nonempty_statement_list
-%type <std::optional<Nonnull<Statement*>>> statement_list
+%type <Nonnull<Block*>> nonempty_block
+%type <Nonnull<Block*>> block
+%type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
-%type <GenericBinding> generic_binding
-%type <std::vector<GenericBinding>> deduced_params
-%type <std::vector<GenericBinding>> deduced_param_list
+%type <Nonnull<GenericBinding*>> generic_binding
+%type <std::vector<Nonnull<GenericBinding*>>> deduced_params
+%type <std::vector<Nonnull<GenericBinding*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <BisonWrap<ReturnTerm>> return_term
 %type <Nonnull<Expression*>> paren_expression
-%type <Nonnull<Expression*>> struct_literal
+%type <Nonnull<StructLiteral*>> struct_literal
 %type <std::vector<FieldInitializer>> struct_literal_contents
-%type <Nonnull<Expression*>> struct_type_literal
+%type <Nonnull<StructTypeLiteral*>> struct_type_literal
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
-%type <Nonnull<Expression*>> tuple
+%type <Nonnull<TupleLiteral*>> tuple
 %type <std::optional<std::string>> binding_lhs
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <Nonnull<Member*>> member
@@ -132,9 +131,9 @@
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <BisonWrap<ChoiceDeclaration::Alternative>> alternative
-%type <std::vector<ChoiceDeclaration::Alternative>> alternative_list
-%type <std::vector<ChoiceDeclaration::Alternative>> alternative_list_contents
+%type <Nonnull<ChoiceDeclaration::Alternative*>> alternative
+%type <std::vector<Nonnull<ChoiceDeclaration::Alternative*>>> alternative_list
+%type <std::vector<Nonnull<ChoiceDeclaration::Alternative*>>> alternative_list_contents
 %type <BisonWrap<Match::Clause>> clause
 %type <std::vector<Match::Clause>> clause_list
 
@@ -164,7 +163,7 @@
   EQUAL_EQUAL
   FALSE
   FN
-  FNTY
+  FN_TYPE
   IF
   IMPL
   IMPORT
@@ -377,7 +376,7 @@ expression:
           context.source_loc(), Operator::Ptr,
           std::vector<Nonnull<Expression*>>({$1}));
     }
-| FNTY tuple ARROW expression
+| FN_TYPE tuple ARROW expression
     { $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, $4); }
 ;
 designator: PERIOD identifier { $$ = $2; }
@@ -573,7 +572,7 @@ statement:
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
-| CONTINUATION identifier statement
+| CONTINUATION identifier block
     { $$ = arena->New<Continuation>(context.source_loc(), $2, $3); }
 | RUN expression SEMICOLON
     { $$ = arena->New<Run>(context.source_loc(), $2); }
@@ -588,7 +587,10 @@ optional_else:
   // Empty
     { $$ = std::nullopt; }
 | ELSE if_statement
-    { $$ = $2; }
+    {
+      $$ = arena->New<Block>(context.source_loc(),
+                             std::vector<Nonnull<Statement*>>({$2}));
+    }
 | ELSE block
     { $$ = $2; }
 ;
@@ -600,21 +602,24 @@ return_expression:
 ;
 statement_list:
   // Empty
-    { $$ = std::nullopt; }
-| nonempty_statement_list
-    { $$ = $1; }
-;
-nonempty_statement_list:
-  statement statement_list
-    { $$ = arena->New<Sequence>(context.source_loc(), $1, $2); }
+    { $$ = {}; }
+| statement_list statement
+    {
+      $$ = std::move($1);
+      $$.push_back($2);
+    }
 ;
 block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.source_loc(), $2); }
+    { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
 ;
 nonempty_block:
-  LEFT_CURLY_BRACE nonempty_statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.source_loc(), $2); }
+  LEFT_CURLY_BRACE statement_list statement RIGHT_CURLY_BRACE
+    {
+      $2.push_back($3);
+      $$ = arena->New<Block>(context.source_loc(), std::move($2));
+    }
+;
 return_term:
   // Empty
     { $$ = ReturnTerm::Omitted(context.source_loc()); }
@@ -625,14 +630,16 @@ return_term:
 ;
 generic_binding:
   identifier COLON_BANG expression
-    { $$ = GenericBinding({.name = std::move($1), .type = $3}); }
+    {
+      $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3);
+    }
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<GenericBinding>(); }
+    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
 | generic_binding
     {
-      $$ = std::vector<GenericBinding>();
+      $$ = std::vector<Nonnull<GenericBinding*>>();
       $$.push_back($1);
     }
 | generic_binding COMMA deduced_param_list
@@ -643,7 +650,7 @@ deduced_param_list:
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<GenericBinding>(); }
+    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
@@ -676,11 +683,15 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = ChoiceDeclaration::Alternative($1, $2); }
+    {
+      $$ = arena->New<ChoiceDeclaration::Alternative>(context.source_loc(), $1,
+                                                      $2);
+    }
 | identifier
     {
-      $$ = ChoiceDeclaration::Alternative(
-          $1, arena->New<TupleLiteral>(context.source_loc()));
+      $$ = arena->New<ChoiceDeclaration::Alternative>(
+          context.source_loc(), $1,
+          arena->New<TupleLiteral>(context.source_loc()));
     }
 ;
 alternative_list:

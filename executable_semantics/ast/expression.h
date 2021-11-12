@@ -79,19 +79,6 @@ class Expression {
   std::optional<Nonnull<const Value*>> static_type_;
 };
 
-// Converts paren_contents to an Expression, interpreting the parentheses as
-// grouping if their contents permit that interpretation, or as forming a
-// tuple otherwise.
-auto ExpressionFromParenContents(
-    Nonnull<Arena*> arena, SourceLocation source_loc,
-    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
-
-// Converts paren_contents to an Expression, interpreting the parentheses as
-// forming a tuple.
-auto TupleExpressionFromParenContents(
-    Nonnull<Arena*> arena, SourceLocation source_loc,
-    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
-
 // A FieldInitializer represents the initialization of a single struct field.
 class FieldInitializer {
  public:
@@ -443,6 +430,19 @@ class IntrinsicExpression : public Expression {
  private:
   Intrinsic intrinsic_;
 };
+
+// Converts paren_contents to an Expression, interpreting the parentheses as
+// grouping if their contents permit that interpretation, or as forming a
+// tuple otherwise.
+auto ExpressionFromParenContents(
+    Nonnull<Arena*> arena, SourceLocation source_loc,
+    const ParenContents<Expression>& paren_contents) -> Nonnull<Expression*>;
+
+// Converts paren_contents to an Expression, interpreting the parentheses as
+// forming a tuple.
+auto TupleExpressionFromParenContents(
+    Nonnull<Arena*> arena, SourceLocation source_loc,
+    const ParenContents<Expression>& paren_contents) -> Nonnull<TupleLiteral*>;
 
 }  // namespace Carbon
 

@@ -89,7 +89,7 @@ repos:
         name: Format the executable_semantics grammar file
         entry: executable_semantics/syntax/format_grammar.py
         language: python
-        files: ^executable_semantics/syntax/parser.ypp$
+        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
@@ -97,7 +97,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: a0f1c385f6a50581983008c8737ca72473ecf3ad
+    rev: fb5e481f35f5a9b32a06ccfc28b8d6dda4525f75
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
@@ -108,7 +108,7 @@ repos:
       - id: prettier
   # Run linters last, as formatters and other checks may fix issues.
   - repo: https://github.com/PyCQA/flake8
-    rev: dcd740bc0ebaf2b3d43e59a0060d157c97de13f3 # frozen: 3.9.2
+    rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
       - id: flake8
 

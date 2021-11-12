@@ -12,22 +12,50 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/dictionary.h"
+#include "executable_semantics/interpreter/heap_allocation_interface.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-using Env = Dictionary<std::string, Address>;
+using Env = Dictionary<std::string, AllocationId>;
 
-struct Scope {
-  explicit Scope(Env values) : Scope(values, std::vector<std::string>()) {}
-  Scope(Env values, std::vector<std::string> l)
-      : values(values), locals(std::move(l)) {}
+// A Scope represents the name lookup environment associated with an Action,
+// including any variables that are local to that action. Local variables
+// will be deallocated from the Carbon Heap when the Scope is destroyed.
+class Scope {
+ public:
+  // Constructs a Scope whose name environment is `values`, containing the local
+  // variables in `locals`. The elements of `locals` must also be keys in
+  // `values`, and their values must be allocated in `heap`.
+  Scope(Env values, std::vector<std::string> locals,
+        Nonnull<HeapAllocationInterface*> heap)
+      : values_(values), locals_(std::move(locals)), heap_(heap) {}
 
-  Env values;
-  std::vector<std::string> locals;
-  bool deallocated = false;
+  // Equivalent to `Scope(values, {}, heap)`.
+  Scope(Env values, Nonnull<HeapAllocationInterface*> heap)
+      : Scope(values, std::vector<std::string>(), heap) {}
+
+  // Moving a Scope transfers ownership of its local variables.
+  Scope(Scope&&) noexcept;
+  auto operator=(Scope&&) noexcept -> Scope&;
+
+  ~Scope();
+
+  // Binds `name` to the value of `allocation` in `heap`, and takes
+  // ownership of it.
+  void AddLocal(const std::string& name, AllocationId allocation) {
+    values_.Set(name, allocation);
+    locals_.push_back(name);
+  }
+
+  auto values() const -> Env { return values_; }
+
+ private:
+  Env values_;
+  std::vector<std::string> locals_;
+  Nonnull<HeapAllocationInterface*> heap_;
 };
 
 class Action {
@@ -87,6 +115,8 @@ class Action {
   auto results() const -> const std::vector<Nonnull<const Value*>>& {
     return results_;
   }
+
+  virtual ~Action() = default;
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the

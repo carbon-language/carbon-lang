@@ -20,6 +20,6 @@ fn MakePoint() -> Point {
   return {.x = 1, .y = 2};
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return MakePoint().x - 1;
 }

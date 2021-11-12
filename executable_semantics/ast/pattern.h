@@ -12,6 +12,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
@@ -100,13 +101,21 @@ class AutoPattern : public Pattern {
 
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
-class BindingPattern : public Pattern {
+class BindingPattern : public Pattern, public NamedEntityInterface {
  public:
   BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)
       : Pattern(Kind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type) {}
+
+  auto named_entity_kind() const -> NamedEntityKind override {
+    return NamedEntityKind::BindingPattern;
+  }
+
+  auto source_loc() const -> SourceLocation override {
+    return Pattern::source_loc();
+  }
 
   static auto classof(const Pattern* pattern) -> bool {
     return pattern->kind() == Kind::BindingPattern;

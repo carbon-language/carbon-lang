@@ -8,6 +8,7 @@
 #include <set>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
@@ -16,12 +17,15 @@
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
-
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
       : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
+
+  void TypeCheck(AST& ast);
+
+ private:
+  using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 
   struct TypeCheckContext {
     explicit TypeCheckContext(Nonnull<Arena*> arena)
@@ -33,17 +37,23 @@ class TypeChecker {
     Env values;
   };
 
-  void TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
-                 const Env& values);
-
-  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
-
- private:
   struct TCResult {
     explicit TCResult(TypeEnv types) : types(types) {}
 
     TypeEnv types;
   };
+
+  static void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out);
+
+  // Perform type argument deduction, matching the parameter type `param`
+  // against the argument type `arg`. Whenever there is an VariableType
+  // in the parameter type, it is deduced to be the corresponding type
+  // inside the argument type.
+  // The `deduced` parameter is an accumulator, that is, it holds the
+  // results so-far.
+  static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
+                                Nonnull<const Value*> param,
+                                Nonnull<const Value*> arg) -> TypeEnv;
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -63,6 +73,10 @@ class TypeChecker {
                         std::optional<Nonnull<const Value*>> expected)
       -> TCResult;
 
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
+  void TypeCheckDeclaration(Nonnull<Declaration*> d, const TypeEnv& types,
+                            const Env& values);
+
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
@@ -80,9 +94,10 @@ class TypeChecker {
                      Nonnull<Statement*> body, TypeEnv types, Env values)
       -> Match::Clause;
 
-  auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
-      -> Nonnull<const Value*>;
+  auto TypeOfClassDecl(const ClassDeclaration& class_decl, TypeEnv /*types*/,
+                       Env ct_top) -> Nonnull<const Value*>;
 
+  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
