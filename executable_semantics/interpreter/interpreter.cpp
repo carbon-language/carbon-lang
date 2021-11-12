@@ -944,11 +944,11 @@ auto Interpreter::StepStmt() -> Transition {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        // TODO(geoffromer): convert the result to the function's return type,
-        // once #880 gives us a way to find that type.
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return UnwindPast{.ast_node = *function.body(),
-                          .result = act.results()[0]};
+        return UnwindPast{
+            .ast_node = *function.body(),
+            .result = Convert(act.results()[0],
+                              &function.return_term().static_type())};
       }
     case Statement::Kind::Continuation: {
       CHECK(act.pos() == 0);

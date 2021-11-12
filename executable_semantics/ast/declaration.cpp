@@ -45,6 +45,19 @@ void Declaration::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void ReturnTerm::Print(llvm::raw_ostream& out) const {
+  switch (kind_) {
+    case ReturnKind::Omitted:
+      return;
+    case ReturnKind::Auto:
+      out << "-> auto";
+      return;
+    case ReturnKind::Expression:
+      out << "-> " << **type_expression_;
+      return;
+  }
+}
+
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   out << "fn " << name_ << " ";
   if (!deduced_parameters_.empty()) {
@@ -60,10 +73,7 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
     }
     out << "]";
   }
-  out << *param_pattern_;
-  if (!is_omitted_return_type_) {
-    out << " -> " << *return_type_;
-  }
+  out << *param_pattern_ << return_term_;
   if (body_) {
     out << " {\n";
     (*body_)->PrintDepth(depth, out);
