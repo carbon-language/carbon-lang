@@ -1852,9 +1852,9 @@ BBIterTy ShrinkWrapping::processInsertionsList(
         (B.Action != WorklistItem::InsertPushOrPop || !B.FIEToInsert.IsLoad))
       return false;
     if ((A.Action != WorklistItem::InsertPushOrPop || !A.FIEToInsert.IsLoad))
-      return false;
-    if ((B.Action != WorklistItem::InsertPushOrPop || !B.FIEToInsert.IsLoad))
       return true;
+    if ((B.Action != WorklistItem::InsertPushOrPop || !B.FIEToInsert.IsLoad))
+      return false;
     return DomOrder[B.AffectedReg] < DomOrder[A.AffectedReg];
   });
 
