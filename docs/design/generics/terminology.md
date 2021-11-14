@@ -27,10 +27,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Named constraints](#named-constraints)
 -   [Associated entity](#associated-entity)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
+    -   [Internal impl](#internal-impl)
+    -   [External impl](#external-impl)
+-   [Qualified an unqualified member names](#qualified-an-unqualified-member-names)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
+-   [Archetype](#archetype)
 -   [Facet type](#facet-type)
 -   [Extending an interface](#extending-an-interface)
 -   [Witness tables](#witness-tables)
@@ -291,7 +295,7 @@ A "nominal" interface is one where we say a type can only satisfy an interface
 if there is some explicit statement saying so, for example by defining an
 [impl](#impls-implementations-of-interfaces). This allows "satisfies the
 interface" to have additional semantic meaning beyond what is directly checkable
-by the compiler. For example, knowing whether the "Draw" function means "render
+by the compiler. For example, knowing whether the `Draw` function means "render
 an image to the screen" or "take a card from the top of a deck of cards"; or
 that a `+` operator is commutative (and not, say, string concatenation).
 
@@ -305,7 +309,9 @@ Named constraints are "structural" in the sense that they match a type based on
 meeting some criteria rather than an explicit statement in the type's
 definition. The criteria for a named constraint, however, are less focused on
 the type's API and instead might include a set of nominal interfaces that the
-type must implement.
+type must implement and constraints on the
+[associated entities](#associated-entity) and
+[interface type parameters](#interface-type-parameters-and-associated-types).
 
 ## Associated entity
 
@@ -333,6 +339,33 @@ are given. Impls are needed for [nominal interfaces](#nominal-interfaces);
 [named constraints](#named-constraints) define conformance implicitly instead of
 by requiring an impl to be defined. In can still make sense to implement a named
 constraint as a way to implement all of the interfaces it requires.
+
+### Internal impl
+
+A type that implements an interface _internally_, has all the named members of
+the interface as named members of the type. This means that the members of the
+interface may be accessed as either
+[unqualified or qualified members](#qualified-an-unqualified-member-names).
+
+### External impl
+
+In contrast, a type that implements an interface _externally_, does not include
+the named members of the interface in the type. The members of the interface are
+still implemented by the type, though, and so may be accessed using the
+[qualified names](#qualified-an-unqualified-member-names) of those members.
+
+## Qualified an unqualified member names
+
+A qualified member includes both the name of the interface defining the member
+and the name of the member. So if `String` implements `Comparable` which has a
+`Less` method, and `s1` and `s2` are variables of type `String`, then the `Less`
+method may be called using the qualified member name by writing
+`s1.(Comparable.Less)(s2)`.
+
+If the interface is implemented internally, then the method can be called using
+the unqualified syntax as well. If `String` implements `Printable` internally,
+then `s1.Print()` calls the `Print` method of `Printable` as an unqualified
+member.
 
 ## Compatible types
 
@@ -431,7 +464,22 @@ The term "type erasure" can also refer to
 which includes erasing the identity of type parameters. This is not the meaning
 of "type erasure" used in Carbon.
 
+## Archetype
+
+A placeholder type used when type checking a function in place of a generic type
+parameter. This allows type checking when the specific type to be used is not
+known at type checking time. The type is considered to satisfy just its
+constraint and no more, so it acts as the most general type satisfying the
+interface. In this way the archetype is the supertype of all types satisfying
+the interface.
+
+In addition to satisfying all the requirements of its constraint, the archetype
+also has the member names of its constraint. Effectively it is considered to
+[implement the constraint internally](#internal-impl).
+
 ## Facet type
+
+FIXME
 
 A facet type is a [compatible type](#compatible-types) of some original type
 written by the user, that has a specific API. This API might correspond to a
@@ -690,10 +738,7 @@ A type-of-type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
 as [type constraints](#type-constraints). For template parameters, that is all a
 type-of-type does. For generic parameters, it also determines the API that is
-available in the body of the function. Calling a function with a type `T` passed
-to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
-the facet type `T as I`. This has the API determined by `I`, with the
-implementation of that API coming from `T`.
+available in the body of the function.
 
 ## References
 

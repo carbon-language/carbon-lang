@@ -212,14 +212,17 @@ external impl Song as Comparable {
 }
 ```
 
-Implementations may be defined within the class definition itself or externally.
-External implementations may be defined in the library defining the interface.
+Implementations may be defined within the class definition itself or
+out-of-line. Implementations may optionally be start with the `external` keyword
+to say the members of the interface are not unqualified members of the class.
+Out-of-line implementations must be external. External implementations may be
+defined in the library defining either the class or the interface.
 
 #### Qualified and unqualified access
 
 The methods of an interface implemented within the class definition may be
-called with the unqualified syntax. All methods of implemented interfaces may be
-called with the qualified syntax, whether they are defined internally or
+called with the unqualified member syntax. All methods of implemented interfaces
+may be called with the qualified syntax, whether they are defined internally or
 externally.
 
 ```

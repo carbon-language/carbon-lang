@@ -27,6 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Predictability](#predictability)
     -   [Dispatch control](#dispatch-control)
     -   [Upgrade path from templates](#upgrade-path-from-templates)
+    -   [Path from regular functions](#path-from-regular-functions)
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
     -   [Learn from others](#learn-from-others)
@@ -436,6 +437,15 @@ Carbon. This gives us these sub-goals:
 
 If Carbon does not end up having direct support for templates, the transition
 will necessarily be less incremental.
+
+### Path from regular functions
+
+Replacing a regular, non-parameterized function with a generic function should
+be straightforward without affecting existing callers of the function. There may
+be some differences, such as when taking the address of the function, but
+ordinary calls should not see any difference. In particular, the return type of
+a generic function should match, without any type erasure or additional named
+members.
 
 ### Coherence
 
