@@ -3940,7 +3940,8 @@ implementation should exist.
 
 **Open question:** Is there some restriction on `impl` declarations that would
 allow our desired use cases, but allow the compiler to detect non-terminating
-cases?
+cases? Perhaps there is some sort of complexity measure Carbon can require
+doesn't increase when recursing?
 
 #### Comparison to Rust
 
