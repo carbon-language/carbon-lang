@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Compile-time duck typing](#compile-time-duck-typing)
         -   [Ad-hoc polymorphism](#ad-hoc-polymorphism)
     -   [Constrained genericity](#constrained-genericity)
+    -   [Dependent names](#dependent-names)
     -   [Definition checking](#definition-checking)
         -   [Complete definition checking](#complete-definition-checking)
         -   [Early versus late type checking](#early-versus-late-type-checking)
@@ -194,10 +195,12 @@ fn F(x: Int) -> Bool;
 A generic function `G` can call `F` with a type like `T*` that can not possibly
 call the `F(Int)` overload for `F`, and so it can consistently determine the
 return type of `F`. But `G` can't call `F` with an argument that could match
-either overload. (It is undecided what to do in the situation where `F` is
-overloaded, but the signatures are consistent and so callers could still
-typecheck calls to `F`. This still poses problems for the dynamic strategy for
-compiling generics.)
+either overload.
+
+**Note:** It is undecided what to do in the situation where `F` is overloaded,
+but the signatures are consistent and so callers could still typecheck calls to
+`F`. This still poses problems for the dynamic strategy for compiling generics,
+in a similar way to impl specialization.
 
 ### Constrained genericity
 
@@ -209,9 +212,10 @@ those operations that are guaranteed by the constraints.
 
 With templates using unconstrained genericity, you may perform any operation in
 the body of the function, and they will be checked against the specific types
-used in calls. You can still have constraints, but they are optional. They will
-only be used to resolve overloaded calls to the template and provide clearer
-error messages.
+used in calls. You can still have constraints, but they are optional in that
+they could be removed and the function would still have the same capabilities.
+Constraints only affect the caller, which will use them to resolve overloaded
+calls to the template and provide clearer error messages.
 
 With generics using constrained genericity, the function body can be checked
 against the signature at the time of definition. Note that it is still perfectly
@@ -219,16 +223,24 @@ permissible to have no constraints on a type; that just means that you can only
 perform operations that work for all types (such as manipulate pointers to
 values of that type) in the body of the function.
 
+### Dependent names
+
+A name is said to be _dependent_ if it depends on some generic or template
+parameter. Note: this matches
+[the use of the term "dependent" in C++](https://www.google.com/search?q=c%2B%2B+dependent+name),
+not as in [dependent types](https://en.wikipedia.org/wiki/Dependent_type).
+
 ### Definition checking
 
 Definition checking is the process of semantically checking the definition of
 parameterized code for correctness _independently_ of any particular arguments.
 It includes type checking and other semantic checks. It is possible, even with
-templates, to check semantics of expressions that are not dependent on any
-template parameter in the definition. Adding constraints to template parameters
-and/or switching them to be generic allows the compiler to increase how much of
-the definition can be checked. Any remaining checks are delayed until
-[instantiation](#instantiation), which can fail.
+templates, to check semantics of expressions that are not
+[dependent](#dependent-names) on any template parameter in the definition.
+Adding constraints to template parameters and/or switching them to be generic
+allows the compiler to increase how much of the definition can be checked. Any
+remaining checks are delayed until [instantiation](#instantiation), which can
+fail.
 
 #### Complete definition checking
 
@@ -247,7 +259,8 @@ This occurs for regular and generic values.
 
 Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
-complete definition checking. This occurs for template dependent values.
+complete definition checking. This occurs for
+[template-dependent](#dependent-names) values.
 
 ## Deduced parameter
 
