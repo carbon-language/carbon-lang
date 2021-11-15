@@ -35,7 +35,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Archetype](#archetype)
--   [Facet type](#facet-type)
 -   [Extending an interface](#extending-an-interface)
 -   [Witness tables](#witness-tables)
     -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
@@ -476,29 +475,6 @@ the interface.
 In addition to satisfying all the requirements of its constraint, the archetype
 also has the member names of its constraint. Effectively it is considered to
 [implement the constraint internally](#internal-impl).
-
-## Facet type
-
-FIXME
-
-A facet type is a [compatible type](#compatible-types) of some original type
-written by the user, that has a specific API. This API might correspond to a
-specific [interface](#interface), or the API required by particular
-[type constraints](#type-constraints). In either case, the API can be specified
-using a [type-of-type](#type-of-type). Casting a type to a type-of-type results
-in a facet type, with data representation matching the original type and API
-matching the type-of-type.
-
-Casting to a facet type is one way of modeling compile-time
-[type erasure](#type-erasure) when calling a generic function. It is also a way
-of accessing APIs for a type that would otherwise be hidden, possibly to avoid a
-name conflict or because the implementation of that API was external to the
-definition of the type.
-
-A facet type associated with a specific interface, corresponds to the
-[impl](#impls-implementations-of-interfaces) of that interface for the type.
-Using such a facet type removes ambiguity about where to find the declaration
-and definition of any accessed methods.
 
 ## Extending an interface
 

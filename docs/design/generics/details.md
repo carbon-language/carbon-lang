@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Generics](#generics)
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
--   [Type-of-types and facet types](#type-of-types-and-facet-types)
+-   [Type-of-types](#type-of-types)
 -   [Named constraints](#named-constraints)
     -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
 -   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
@@ -225,11 +225,8 @@ Each declaration in the interface defines an
 has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-of-type, that is a type whose values are types. The
-values of an interface are specifically
-[facet types](terminology.md#facet-type), by which we mean types that are
-declared as specifically implementing **exactly** this interface, and which
-provide definitions for all the functions (and other members) declared in the
-interface.
+values of an interface any types implementing the interface, and so provide
+definitions for all the functions (and other members) declared in the interface.
 
 ## Implementing interfaces
 
@@ -280,6 +277,8 @@ particular, see
 [the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
 
 ### Facet type
+
+FIXME
 
 The `impl` definition defines a [facet type](terminology.md#facet-type):
 `Point as Vector`. While the API of `Point` includes the two fields `x` and `y`
@@ -661,6 +660,8 @@ var v3: Point2 = AddAndScaleGeneric(a, w, 2.5);
 
 ### Model
 
+FIXME
+
 The underlying model here is interfaces are
 [type-of-types](terminology.md#type-of-type), in particular, the type of
 [facet types](terminology.md#facet-type):
@@ -754,7 +755,7 @@ An interface's name may be used in a few different contexts:
 While interfaces are examples of type-of-types, type-of-types are a more general
 concept, for which interfaces are a building block.
 
-## Type-of-types and facet types
+## Type-of-types
 
 A [type-of-type](terminology.md#type-of-type) consists of a set of requirements
 and a set of names. Requirements are typically a set of interfaces that a type
@@ -766,11 +767,9 @@ An interface is one particularly simple example of a type-of-type. For example,
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types may be converted to a given type-of-type.
-The result of converting a type `T` to a type-of-type `I` (written `T as I`) is
-called a facet type, you might say a facet type `F` is the `I` facet of `T` if
-`F` is `T as I`. The API of `F` is determined by the set of names in the
-type-of-type.
+The requirements determine which types are values of a given type-of-type. The
+set of names in a type-of-type determines the API of a generic type value and
+define the result of qualified member name lookup.
 
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
@@ -1092,9 +1091,8 @@ type. For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
 `Swappable`. This is already a capability for
-[type-of-types in general](#type-of-types-and-facet-types). For consistency we
-will use the same semantics and syntax as we do for
-[named constraints](#named-constraints):
+[type-of-types in general](#type-of-types). For consistency we will use the same
+semantics and syntax as we do for [named constraints](#named-constraints):
 
 ```
 interface Equatable { fn Equals[me: Self](that: Self) -> bool; }
