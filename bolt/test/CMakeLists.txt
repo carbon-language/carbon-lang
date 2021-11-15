@@ -18,6 +18,7 @@ list(APPEND BOLT_TEST_DEPS
   llvm-config
   FileCheck count not
   llvm-bolt
+  llvm-boltdiff
   perf2bolt
   merge-fdata
   llvm-nm
