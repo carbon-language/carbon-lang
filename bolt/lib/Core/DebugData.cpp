@@ -23,12 +23,13 @@
 #include <cassert>
 #include <cstdint>
 #include <limits>
+#include <unordered_map>
 
 #define DEBUG_TYPE "bolt-debug-info"
 
 namespace opts {
 extern llvm::cl::opt<unsigned> Verbosity;
-}
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -36,6 +37,15 @@ namespace bolt {
 const DebugLineTableRowRef DebugLineTableRowRef::NULL_ROW{0, 0};
 
 namespace {
+
+LLVM_ATTRIBUTE_UNUSED
+static void printLE64(const std::string &S) {
+  for (uint32_t I = 0, Size = S.size(); I < Size; ++I) {
+    errs() << Twine::utohexstr(S[I]);
+    errs() << Twine::utohexstr((int8_t)S[I]);
+  }
+  errs() << "\n";
+}
 
 // Writes address ranges to Writer as pairs of 64-bit (address, size).
 // If RelativeRange is true, assumes the address range to be written must be of
@@ -110,7 +120,8 @@ void DebugARangesSectionWriter::addCURanges(uint64_t CUOffset,
 }
 
 void DebugARangesSectionWriter::writeARangesSection(
-    raw_svector_ostream &RangesStream) const {
+    raw_svector_ostream &RangesStream,
+    const std::unordered_map<uint32_t, uint32_t> CUMap) const {
   // For reference on the format of the .debug_aranges section, see the DWARF4
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf
@@ -134,8 +145,10 @@ void DebugARangesSectionWriter::writeARangesSection(
     support::endian::write(RangesStream, static_cast<uint16_t>(2),
                            support::little);
 
+    assert(CUMap.count(Offset) && "Original CU offset is not found in CU Map");
     // Header field #3: debug info offset of the correspondent compile unit.
-    support::endian::write(RangesStream, static_cast<uint32_t>(Offset),
+    support::endian::write(RangesStream,
+                           static_cast<uint32_t>(CUMap.find(Offset)->second),
                            support::little);
 
     // Header field #4: address size.
@@ -349,53 +362,297 @@ void DebugLoclistWriter::finalize(uint64_t SectionOffset,
 
 DebugAddrWriter *DebugLoclistWriter::AddrWriter = nullptr;
 
-void SimpleBinaryPatcher::addBinaryPatch(uint32_t Offset,
-                                         const std::string &NewValue) {
-  Patches.emplace_back(Offset, NewValue);
+void DebugInfoBinaryPatcher::addUnitBaseOffsetLabel(uint64_t Offset) {
+  Offset -= DWPUnitOffset;
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  DebugPatches.emplace_back(std::make_unique<DWARFUnitOffsetBaseLabel>(Offset));
 }
 
-void SimpleBinaryPatcher::addBytePatch(uint32_t Offset, uint8_t Value) {
-  Patches.emplace_back(Offset, std::string(1, Value));
+void DebugInfoBinaryPatcher::addDestinationReferenceLabel(uint64_t Offset) {
+  Offset -= DWPUnitOffset;
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  auto RetVal = DestinationLabels.insert(Offset);
+  if (!RetVal.second)
+    return;
+
+  DebugPatches.emplace_back(
+      std::make_unique<DestinationReferenceLabel>(Offset));
 }
 
-void SimpleBinaryPatcher::addLEPatch(uint32_t Offset, uint64_t NewValue,
-                                     size_t ByteSize) {
+void DebugInfoBinaryPatcher::addReferenceToPatch(uint64_t Offset,
+                                                 uint32_t DestinationOffset,
+                                                 uint32_t OldValueSize,
+                                                 dwarf::Form Form) {
+  Offset -= DWPUnitOffset;
+  DestinationOffset -= DWPUnitOffset;
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  DebugPatches.emplace_back(std::make_unique<DebugPatchReference>(
+      Offset, OldValueSize, DestinationOffset, Form));
+}
+
+void DebugInfoBinaryPatcher::addUDataPatch(uint64_t Offset, uint64_t NewValue,
+                                           uint32_t OldValueSize) {
+  Offset -= DWPUnitOffset;
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  DebugPatches.emplace_back(
+      std::make_unique<DebugPatchVariableSize>(Offset, OldValueSize, NewValue));
+}
+
+void DebugInfoBinaryPatcher::addLE64Patch(uint64_t Offset, uint64_t NewValue) {
+  Offset -= DWPUnitOffset;
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  DebugPatches.emplace_back(std::make_unique<DebugPatch64>(Offset, NewValue));
+}
+
+void DebugInfoBinaryPatcher::addLE32Patch(uint64_t Offset, uint32_t NewValue,
+                                          uint32_t OldValueSize) {
+  Offset -= DWPUnitOffset;
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  if (OldValueSize == 4)
+    DebugPatches.emplace_back(std::make_unique<DebugPatch32>(Offset, NewValue));
+  else
+    DebugPatches.emplace_back(
+        std::make_unique<DebugPatch64to32>(Offset, NewValue));
+}
+
+void SimpleBinaryPatcher::addBinaryPatch(uint64_t Offset,
+                                         std::string &&NewValue,
+                                         uint32_t OldValueSize) {
+  Patches.emplace_back(Offset, std::move(NewValue));
+}
+
+void SimpleBinaryPatcher::addBytePatch(uint64_t Offset, uint8_t Value) {
+  auto Str = std::string(1, Value);
+  Patches.emplace_back(Offset, std::move(Str));
+}
+
+static std::string encodeLE(size_t ByteSize, uint64_t NewValue) {
   std::string LE64(ByteSize, 0);
   for (size_t I = 0; I < ByteSize; ++I) {
     LE64[I] = NewValue & 0xff;
     NewValue >>= 8;
   }
-  Patches.emplace_back(Offset, LE64);
+  return LE64;
 }
 
-void SimpleBinaryPatcher::addUDataPatch(uint32_t Offset, uint64_t Value,
-                                        uint64_t Size) {
+void SimpleBinaryPatcher::addLEPatch(uint64_t Offset, uint64_t NewValue,
+                                     size_t ByteSize) {
+  Patches.emplace_back(Offset, encodeLE(ByteSize, NewValue));
+}
+
+void SimpleBinaryPatcher::addUDataPatch(uint64_t Offset, uint64_t Value,
+                                        uint32_t OldValueSize) {
   std::string Buff;
   raw_string_ostream OS(Buff);
-  encodeULEB128(Value, OS, Size);
+  encodeULEB128(Value, OS, OldValueSize);
 
-  Patches.emplace_back(Offset, OS.str());
+  Patches.emplace_back(Offset, std::move(Buff));
 }
 
-void SimpleBinaryPatcher::addLE64Patch(uint32_t Offset, uint64_t NewValue) {
+void SimpleBinaryPatcher::addLE64Patch(uint64_t Offset, uint64_t NewValue) {
   addLEPatch(Offset, NewValue, 8);
 }
 
-void SimpleBinaryPatcher::addLE32Patch(uint32_t Offset, uint32_t NewValue) {
+void SimpleBinaryPatcher::addLE32Patch(uint64_t Offset, uint32_t NewValue,
+                                       uint32_t OldValueSize) {
   addLEPatch(Offset, NewValue, 4);
 }
 
-void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents,
-                                      uint32_t DWPOffset = 0) {
+std::string SimpleBinaryPatcher::patchBinary(StringRef BinaryContents) {
+  std::string BinaryContentsStr = std::string(BinaryContents);
   for (const auto &Patch : Patches) {
-    uint32_t Offset = Patch.first - DWPOffset;
+    uint32_t Offset = Patch.first;
     const std::string &ByteSequence = Patch.second;
     assert(Offset + ByteSequence.size() <= BinaryContents.size() &&
            "Applied patch runs over binary size.");
     for (uint64_t I = 0, Size = ByteSequence.size(); I < Size; ++I) {
-      BinaryContents[Offset + I] = ByteSequence[I];
+      BinaryContentsStr[Offset + I] = ByteSequence[I];
     }
   }
+  return BinaryContentsStr;
+}
+
+std::unordered_map<uint32_t, uint32_t>
+DebugInfoBinaryPatcher::computeNewOffsets() {
+  std::unordered_map<uint32_t, uint32_t> CUMap;
+  std::sort(
+      DebugPatches.begin(), DebugPatches.end(),
+      [](const std::unique_ptr<Patch> &V1, const std::unique_ptr<Patch> &V2) {
+        return V1.get()->Offset < V2.get()->Offset;
+      });
+
+  // Calculating changes in .debug_info size from Patches to build a map of old
+  // to updated reference destination offsets.
+  for (std::unique_ptr<Patch> &PatchBase : DebugPatches) {
+    Patch *P = PatchBase.get();
+    switch (P->Kind) {
+    default:
+      continue;
+    case DebugPatchKind::PatchValue64to32: {
+      ChangeInSize -= 4;
+      break;
+    }
+    case DebugPatchKind::PatchValueVariable: {
+      DebugPatchVariableSize *DPV =
+          reinterpret_cast<DebugPatchVariableSize *>(P);
+      std::string Temp;
+      raw_string_ostream OS(Temp);
+      encodeULEB128(DPV->Value, OS);
+      ChangeInSize += Temp.size() - DPV->OldValueSize;
+      break;
+    }
+    case DebugPatchKind::DestinationReferenceLabel: {
+      DestinationReferenceLabel *DRL =
+          reinterpret_cast<DestinationReferenceLabel *>(P);
+      OldToNewOffset[DRL->Offset] = DRL->Offset + ChangeInSize;
+      break;
+    }
+    case DebugPatchKind::ReferencePatchValue: {
+      // This doesn't look to be a common case, so will always encode as 4 bytes
+      // to reduce algorithmic complexity.
+      DebugPatchReference *RDP = reinterpret_cast<DebugPatchReference *>(P);
+      if (RDP->PatchInfo.IndirectRelative) {
+        ChangeInSize += 4 - RDP->PatchInfo.OldValueSize;
+        assert(RDP->PatchInfo.OldValueSize <= 4 &&
+               "Variable encoding reference greater than 4 bytes.");
+      }
+      break;
+    }
+    case DebugPatchKind::DWARFUnitOffsetBaseLabel: {
+      DWARFUnitOffsetBaseLabel *BaseLabel =
+          reinterpret_cast<DWARFUnitOffsetBaseLabel *>(P);
+      uint32_t CUOffset = BaseLabel->Offset;
+      uint32_t CUOffsetUpdate = CUOffset + ChangeInSize;
+      CUMap[CUOffset] = CUOffsetUpdate;
+    }
+    }
+  }
+  return CUMap;
+}
+
+std::string DebugInfoBinaryPatcher::patchBinary(StringRef BinaryContents) {
+  std::string NewBinaryContents;
+  NewBinaryContents.reserve(BinaryContents.size() + ChangeInSize);
+  uint32_t StartOffset = 0;
+  uint32_t DwarfUnitBaseOffset = 0;
+  uint32_t OldValueSize = 0;
+  uint32_t Offset = 0;
+  std::string ByteSequence;
+  std::vector<std::pair<uint32_t, uint32_t>> LengthPatches;
+  // Wasting one entry to avoid checks for first.
+  LengthPatches.push_back({0, 0});
+
+  // Applying all the patches replacing current entry.
+  // This might change the size of .debug_info section.
+  for (const std::unique_ptr<Patch> &PatchBase : DebugPatches) {
+    Patch *P = PatchBase.get();
+    switch (P->Kind) {
+    default:
+      continue;
+    case DebugPatchKind::ReferencePatchValue: {
+      DebugPatchReference *RDP = reinterpret_cast<DebugPatchReference *>(P);
+      uint32_t DestinationOffset = RDP->DestinationOffset;
+      assert(OldToNewOffset.count(DestinationOffset) &&
+             "Destination Offset for reference not updated.");
+      uint32_t UpdatedOffset = OldToNewOffset[DestinationOffset];
+      Offset = RDP->Offset;
+      OldValueSize = RDP->PatchInfo.OldValueSize;
+      if (RDP->PatchInfo.DirectRelative) {
+        UpdatedOffset -= DwarfUnitBaseOffset;
+        ByteSequence = encodeLE(OldValueSize, UpdatedOffset);
+        // In theory reference for DW_FORM_ref{1,2,4,8} can be right on the edge
+        // and overflow if later debug information grows.
+        if (ByteSequence.size() > OldValueSize)
+          errs() << "BOLT-ERROR: Relative reference of size "
+                 << Twine::utohexstr(OldValueSize)
+                 << " overflows with the new encoding.\n";
+      } else if (RDP->PatchInfo.DirectAbsolute) {
+        ByteSequence = encodeLE(OldValueSize, UpdatedOffset);
+      } else if (RDP->PatchInfo.IndirectRelative) {
+        UpdatedOffset -= DwarfUnitBaseOffset;
+        ByteSequence.clear();
+        raw_string_ostream OS(ByteSequence);
+        encodeULEB128(UpdatedOffset, OS, 4);
+      } else {
+        llvm_unreachable("Invalid Reference form.");
+      }
+      break;
+    }
+    case DebugPatchKind::PatchValue32: {
+      DebugPatch32 *P32 = reinterpret_cast<DebugPatch32 *>(P);
+      Offset = P32->Offset;
+      OldValueSize = 4;
+      ByteSequence = encodeLE(4, P32->Value);
+      break;
+    }
+    case DebugPatchKind::PatchValue64to32: {
+      DebugPatch64to32 *P64to32 = reinterpret_cast<DebugPatch64to32 *>(P);
+      Offset = P64to32->Offset;
+      OldValueSize = 8;
+      ByteSequence = encodeLE(4, P64to32->Value);
+      break;
+    }
+    case DebugPatchKind::PatchValueVariable: {
+      DebugPatchVariableSize *PV =
+          reinterpret_cast<DebugPatchVariableSize *>(P);
+      Offset = PV->Offset;
+      OldValueSize = PV->OldValueSize;
+      ByteSequence.clear();
+      raw_string_ostream OS(ByteSequence);
+      encodeULEB128(PV->Value, OS);
+      break;
+    }
+    case DebugPatchKind::PatchValue64: {
+      DebugPatch64 *P64 = reinterpret_cast<DebugPatch64 *>(P);
+      Offset = P64->Offset;
+      OldValueSize = 8;
+      ByteSequence = encodeLE(8, P64->Value);
+      break;
+    }
+    case DebugPatchKind::DWARFUnitOffsetBaseLabel: {
+      DWARFUnitOffsetBaseLabel *BaseLabel =
+          reinterpret_cast<DWARFUnitOffsetBaseLabel *>(P);
+      Offset = BaseLabel->Offset;
+      OldValueSize = 0;
+      ByteSequence.clear();
+      auto &Patch = LengthPatches.back();
+      // Length to copy between last patch entry and next compile unit.
+      uint32_t RemainingLength = Offset - StartOffset;
+      uint32_t NewCUOffset = NewBinaryContents.size() + RemainingLength;
+      DwarfUnitBaseOffset = NewCUOffset;
+      // Length of previous CU = This CU Offset - sizeof(length) - last CU
+      // Offset.
+      Patch.second = NewCUOffset - 4 - Patch.first;
+      LengthPatches.push_back({NewCUOffset, 0});
+      break;
+    }
+    }
+
+    assert(Offset + ByteSequence.size() <= BinaryContents.size() &&
+           "Applied patch runs over binary size.");
+    uint32_t Length = Offset - StartOffset;
+    NewBinaryContents.append(BinaryContents.substr(StartOffset, Length).data(),
+                             Length);
+    NewBinaryContents.append(ByteSequence.data(), ByteSequence.size());
+    StartOffset = Offset + OldValueSize;
+  }
+  uint32_t Length = BinaryContents.size() - StartOffset;
+  NewBinaryContents.append(BinaryContents.substr(StartOffset, Length).data(),
+                           Length);
+  DebugPatches.clear();
+
+  // Patching lengths of CUs
+  auto &Patch = LengthPatches.back();
+  Patch.second = NewBinaryContents.size() - 4 - Patch.first;
+  for (uint32_t J = 1, Size = LengthPatches.size(); J < Size; ++J) {
+    const auto &Patch = LengthPatches[J];
+    ByteSequence = encodeLE(4, Patch.second);
+    Offset = Patch.first;
+    for (uint64_t I = 0, Size = ByteSequence.size(); I < Size; ++I)
+      NewBinaryContents[Offset + I] = ByteSequence[I];
+  }
+
+  return NewBinaryContents;
 }
 
 void DebugStrWriter::create() {
@@ -467,14 +724,14 @@ void DebugAbbrevWriter::addUnitAbbreviations(DWARFUnit &Unit) {
       // FIXME: if we had a full access to DWARFDebugAbbrev::AbbrDeclSets
       // we wouldn't have to build our own sorted list for the quick lookup.
       if (AbbrevSetOffsets.empty()) {
-        llvm::for_each(
+        for_each(
             *Unit.getContext().getDebugAbbrev(),
             [&](const std::pair<uint64_t, DWARFAbbreviationDeclarationSet> &P) {
               AbbrevSetOffsets.push_back(P.first);
             });
-        llvm::sort(AbbrevSetOffsets);
+        sort(AbbrevSetOffsets);
       }
-      auto It = llvm::upper_bound(AbbrevSetOffsets, StartOffset);
+      auto It = upper_bound(AbbrevSetOffsets, StartOffset);
       const uint64_t EndOffset =
           It == AbbrevSetOffsets.end() ? AbbrevSectionContents.size() : *It;
       AbbrevContents = AbbrevSectionContents.slice(StartOffset, EndOffset);

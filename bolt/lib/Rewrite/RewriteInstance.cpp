@@ -3834,18 +3834,20 @@ void RewriteInstance::rewriteNoteSections() {
     // Copy over section contents unless it's one of the sections we overwrite.
     if (!willOverwriteSection(SectionName)) {
       Size = Section.sh_size;
-      std::string Data =
-          std::string(InputFile->getData().substr(Section.sh_offset, Size));
-      if (BSec && BSec->getPatcher())
-        BSec->getPatcher()->patchBinary(Data, 0);
+      StringRef Dataref = InputFile->getData().substr(Section.sh_offset, Size);
+      std::string Data;
+      if (BSec && BSec->getPatcher()) {
+        Data = BSec->getPatcher()->patchBinary(Dataref);
+        Dataref = StringRef(Data);
+      }
 
       // Section was expanded, so need to treat it as overwrite.
-      if (Size != Data.size()) {
-        BSec = BC->registerOrUpdateNoteSection(SectionName, copyByteArray(Data),
-                                               Data.size());
+      if (Size != Dataref.size()) {
+        BSec = BC->registerOrUpdateNoteSection(
+            SectionName, copyByteArray(Dataref), Dataref.size());
         Size = 0;
       } else {
-        OS << Data;
+        OS << Dataref;
         DataWritten = true;
 
         // Add padding as the section extension might rely on the alignment.

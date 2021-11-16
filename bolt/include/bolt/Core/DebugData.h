@@ -156,7 +156,11 @@ public:
   void addCURanges(uint64_t CUOffset, DebugAddressRangesVector &&Ranges);
 
   /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
-  void writeARangesSection(raw_svector_ostream &RangesStream) const;
+  /// Takes in \p RangesStream to write into, and \p CUMap which maps CU
+  /// original offsets to new ones.
+  void
+  writeARangesSection(raw_svector_ostream &RangesStream,
+                      const std::unordered_map<uint32_t, uint32_t> CUMap) const;
 
   /// Resets the writer to a clear state.
   void reset() { CUAddressRanges.clear(); }
@@ -387,13 +391,15 @@ private:
   uint64_t DWOId{0};
 };
 
+enum class PatcherKind { SimpleBinaryPatcher, DebugInfoBinaryPatcher };
 /// Abstract interface for classes that apply modifications to a binary string.
 class BinaryPatcher {
 public:
   virtual ~BinaryPatcher() {}
-  /// Applies in-place modifications to the binary string \p BinaryContents .
-  /// \p DWPOffset used to correctly patch sections that come from DWP file.
-  virtual void patchBinary(std::string &BinaryContents, uint32_t DWPOffset) = 0;
+  /// Applies modifications to the copy of binary string \p BinaryContents .
+  /// Implementations do not need to guarantee that size of a new \p
+  /// BinaryContents remains unchanged.
+  virtual std::string patchBinary(StringRef BinaryContents) = 0;
 };
 
 /// Applies simple modifications to a binary string, such as directly replacing
@@ -404,8 +410,8 @@ private:
 
   /// Adds a patch to replace the contents of \p ByteSize bytes with the integer
   /// \p NewValue encoded in little-endian, with the least-significant byte
-  /// being written at the offset \p Offset .
-  void addLEPatch(uint32_t Offset, uint64_t NewValue, size_t ByteSize);
+  /// being written at the offset \p Offset.
+  void addLEPatch(uint64_t Offset, uint64_t NewValue, size_t ByteSize);
 
   /// RangeBase for DWO DebugInfo Patcher.
   uint64_t RangeBase{0};
@@ -417,26 +423,39 @@ private:
 public:
   virtual ~SimpleBinaryPatcher() {}
 
+  virtual PatcherKind getKind() const {
+    return PatcherKind::SimpleBinaryPatcher;
+  }
+
+  static bool classof(const SimpleBinaryPatcher *Patcher) {
+    return Patcher->getKind() == PatcherKind::SimpleBinaryPatcher;
+  }
+
   /// Adds a patch to replace the contents of the binary string starting at the
   /// specified \p Offset with the string \p NewValue.
-  void addBinaryPatch(uint32_t Offset, const std::string &NewValue);
+  /// The \p OldValueSize is the size of the old value that will be replaced.
+  void addBinaryPatch(uint64_t Offset, std::string &&NewValue,
+                      uint32_t OldValueSize);
 
   /// Adds a patch to replace the contents of a single byte of the string, at
-  /// the offset \p Offset, with the value \Value .
-  void addBytePatch(uint32_t Offset, uint8_t Value);
+  /// the offset \p Offset, with the value \Value.
+  void addBytePatch(uint64_t Offset, uint8_t Value);
 
   /// Adds a patch to put the integer \p NewValue encoded as a 64-bit
   /// little-endian value at offset \p Offset.
-  void addLE64Patch(uint32_t Offset, uint64_t NewValue);
+  virtual void addLE64Patch(uint64_t Offset, uint64_t NewValue);
 
   /// Adds a patch to put the integer \p NewValue encoded as a 32-bit
   /// little-endian value at offset \p Offset.
-  void addLE32Patch(uint32_t Offset, uint32_t NewValue);
+  /// The \p OldValueSize is the size of the old value that will be replaced.
+  virtual void addLE32Patch(uint64_t Offset, uint32_t NewValue,
+                            uint32_t OldValueSize = 4);
 
   /// Add a patch at \p Offset with \p Value using unsigned LEB128 encoding with
-  /// size \p Size. \p Size should not be less than a minimum number of bytes
-  /// needed to encode \p Value.
-  void addUDataPatch(uint32_t Offset, uint64_t Value, uint64_t Size);
+  /// size \p OldValueSize.
+  /// The \p OldValueSize is the size of the old value that will be replaced.
+  virtual void addUDataPatch(uint64_t Offset, uint64_t Value,
+                             uint32_t OldValueSize);
 
   /// Setting DW_AT_GNU_ranges_base
   void setRangeBase(uint64_t Rb) {
@@ -453,8 +472,193 @@ public:
   /// Proxy for if we broke up low_pc/high_pc to ranges.
   bool getWasRangBasedUsed() const { return WasRangeBaseUsed; }
 
-  virtual void patchBinary(std::string &BinaryContents,
-                           uint32_t DWPOffset) override;
+  /// This function takes in \p BinaryContents, applies patches to it and
+  /// returns an updated string.
+  virtual std::string patchBinary(StringRef BinaryContents) override;
+};
+
+class DebugInfoBinaryPatcher : public SimpleBinaryPatcher {
+public:
+  enum class DebugPatchKind {
+    PatchBaseClass,
+    PatchValue32,
+    PatchValue64to32,
+    PatchValue64,
+    PatchValueVariable,
+    ReferencePatchValue,
+    DWARFUnitOffsetBaseLabel,
+    DestinationReferenceLabel
+  };
+
+  struct Patch {
+    Patch(uint32_t O, DebugPatchKind K) : Offset(O), Kind(K) {}
+    DebugPatchKind getKind() const { return Kind; }
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::PatchBaseClass;
+    }
+
+    uint32_t Offset;
+    DebugPatchKind Kind;
+  };
+
+  struct DebugPatch64to32 : public Patch {
+    DebugPatch64to32(uint32_t O, uint32_t V)
+        : Patch(O, DebugPatchKind::PatchValue64to32) {
+      Value = V;
+    }
+    DebugPatchKind getKind() const { return Kind; }
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::PatchValue64to32;
+    }
+    uint32_t Value;
+  };
+
+  struct DebugPatch32 : public Patch {
+    DebugPatch32(uint32_t O, uint32_t V)
+        : Patch(O, DebugPatchKind::PatchValue32) {
+      Value = V;
+    }
+    DebugPatchKind getKind() const { return Kind; }
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::PatchValue32;
+    }
+    uint32_t Value;
+  };
+
+  struct DebugPatch64 : public Patch {
+    DebugPatch64(uint32_t O, uint64_t V)
+        : Patch(O, DebugPatchKind::PatchValue64) {
+      Value = V;
+    }
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::PatchValue64;
+    }
+    uint64_t Value;
+  };
+
+  struct DebugPatchVariableSize : public Patch {
+    DebugPatchVariableSize(uint32_t O, uint32_t OVS, uint32_t V)
+        : Patch(O, DebugPatchKind::PatchValueVariable) {
+      OldValueSize = OVS;
+      Value = V;
+    }
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::PatchValueVariable;
+    }
+    uint32_t OldValueSize;
+    uint32_t Value;
+  };
+
+  struct DebugPatchReference : public Patch {
+    struct Data {
+      uint32_t OldValueSize : 4;
+      uint32_t DirectRelative : 1;
+      uint32_t IndirectRelative : 1;
+      uint32_t DirectAbsolute : 1;
+    };
+    DebugPatchReference(uint32_t O, uint32_t OVS, uint32_t DO, dwarf::Form F)
+        : Patch(O, DebugPatchKind::ReferencePatchValue) {
+      PatchInfo.OldValueSize = OVS;
+      DestinationOffset = DO;
+      PatchInfo.DirectRelative =
+          F == dwarf::DW_FORM_ref1 || F == dwarf::DW_FORM_ref2 ||
+          F == dwarf::DW_FORM_ref4 || F == dwarf::DW_FORM_ref8;
+      PatchInfo.IndirectRelative = F == dwarf::DW_FORM_ref_udata;
+      PatchInfo.DirectAbsolute = F == dwarf::DW_FORM_ref_addr;
+    }
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::ReferencePatchValue;
+    }
+    Data PatchInfo;
+    uint32_t DestinationOffset;
+  };
+
+  struct DWARFUnitOffsetBaseLabel : public Patch {
+    DWARFUnitOffsetBaseLabel(uint32_t O)
+        : Patch(O, DebugPatchKind::DWARFUnitOffsetBaseLabel) {}
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::DWARFUnitOffsetBaseLabel;
+    }
+  };
+
+  struct DestinationReferenceLabel : public Patch {
+    DestinationReferenceLabel() = delete;
+    DestinationReferenceLabel(uint32_t O)
+        : Patch(O, DebugPatchKind::DestinationReferenceLabel) {}
+
+    static bool classof(const Patch *Writer) {
+      return Writer->getKind() == DebugPatchKind::DestinationReferenceLabel;
+    }
+  };
+
+  virtual PatcherKind getKind() const override {
+    return PatcherKind::DebugInfoBinaryPatcher;
+  }
+
+  static bool classof(const SimpleBinaryPatcher *Patcher) {
+    return Patcher->getKind() == PatcherKind::DebugInfoBinaryPatcher;
+  }
+
+  /// This function takes in \p BinaryContents, and re-writes it with new
+  /// patches inserted into it. It returns an updated string.
+  virtual std::string patchBinary(StringRef BinaryContents) override;
+
+  /// Adds a patch to put the integer \p NewValue encoded as a 64-bit
+  /// little-endian value at offset \p Offset.
+  virtual void addLE64Patch(uint64_t Offset, uint64_t NewValue) override;
+
+  /// Adds a patch to put the integer \p NewValue encoded as a 32-bit
+  /// little-endian value at offset \p Offset.
+  /// The \p OldValueSize is the size of the old value that will be replaced.
+  virtual void addLE32Patch(uint64_t Offset, uint32_t NewValue,
+                            uint32_t OldValueSize = 4) override;
+
+  /// Add a patch at \p Offset with \p Value using unsigned LEB128 encoding with
+  /// size \p OldValueSize.
+  /// The \p OldValueSize is the size of the old value that will be replaced.
+  virtual void addUDataPatch(uint64_t Offset, uint64_t Value,
+                             uint32_t OldValueSize) override;
+
+  /// Adds a label \p Offset for DWARF UNit.
+  /// Used to recompute relative references.
+  void addUnitBaseOffsetLabel(uint64_t Offset);
+
+  /// Adds a Label for destination. Either relative or explicit reference.
+  void addDestinationReferenceLabel(uint64_t Offset);
+
+  /// Adds a reference at \p Offset to patch with new fully resolved \p
+  /// DestinationOffset . The \p OldValueSize is the original size of entry in
+  /// the DIE. The \p Form is the form of the entry.
+  void addReferenceToPatch(uint64_t Offset, uint32_t DestinationOffset,
+                           uint32_t OldValueSize, dwarf::Form Form);
+
+  /// Clears unordered set for DestinationLabels.
+  void clearDestinationLabels() { DestinationLabels.clear(); }
+
+  /// Sets DWARF Units offset, \p  DWPOffset , within DWP file.
+  void setDWPOffset(uint64_t DWPOffset) { DWPUnitOffset = DWPOffset; }
+
+  /// When this function is invoked all of the DebugInfo Patches must be done.
+  /// Returns a map of old CU offsets to new ones.
+  std::unordered_map<uint32_t, uint32_t> computeNewOffsets();
+
+private:
+  uint64_t DWPUnitOffset{0};
+  uint32_t ChangeInSize{0};
+  std::vector<std::unique_ptr<Patch>> DebugPatches;
+  /// Mutex used for parallel processing of debug info.
+  std::mutex WriterMutex;
+  /// Stores fully resolved addresses of DIEs that are being referenced.
+  std::unordered_set<uint32_t> DestinationLabels;
+  /// Map of original debug info references to new ones.
+  std::unordered_map<uint32_t, uint32_t> OldToNewOffset;
 };
 
 /// Class to facilitate modifying and writing abbreviation sections.
