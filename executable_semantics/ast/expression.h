@@ -336,12 +336,10 @@ class FunctionTypeLiteral : public Expression {
  public:
   explicit FunctionTypeLiteral(SourceLocation source_loc,
                                Nonnull<Expression*> parameter,
-                               Nonnull<Expression*> return_type,
-                               bool is_omitted_return_type)
+                               Nonnull<Expression*> return_type)
       : AstNode(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
-        return_type_(return_type),
-        is_omitted_return_type_(is_omitted_return_type) {}
+        return_type_(return_type) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionTypeLiteral(node->kind());
@@ -351,14 +349,10 @@ class FunctionTypeLiteral : public Expression {
   auto parameter() -> Expression& { return *parameter_; }
   auto return_type() const -> const Expression& { return *return_type_; }
   auto return_type() -> Expression& { return *return_type_; }
-  auto is_omitted_return_type() const -> bool {
-    return is_omitted_return_type_;
-  }
 
  private:
   Nonnull<Expression*> parameter_;
   Nonnull<Expression*> return_type_;
-  bool is_omitted_return_type_;
 };
 
 class BoolTypeLiteral : public Expression {
