@@ -97,7 +97,7 @@ class AutoPattern : public Pattern {
 
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
-class BindingPattern : public Pattern, public NamedEntityInterface {
+class BindingPattern : public Pattern, public NamedEntity {
  public:
   BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)

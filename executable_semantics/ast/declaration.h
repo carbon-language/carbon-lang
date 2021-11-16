@@ -31,7 +31,7 @@ class StaticScope;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration : public virtual AstNode, public NamedEntityInterface {
+class Declaration : public virtual AstNode, public NamedEntity {
  public:
   ~Declaration() override = 0;
 
@@ -76,7 +76,7 @@ class Declaration : public virtual AstNode, public NamedEntityInterface {
 
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
-struct GenericBinding : public virtual AstNode, public NamedEntityInterface {
+struct GenericBinding : public virtual AstNode, public NamedEntity {
  public:
   GenericBinding(SourceLocation source_loc, std::string name,
                  Nonnull<Expression*> type)
@@ -172,8 +172,7 @@ class ClassDeclaration : public Declaration {
   StaticScope static_scope_;
 };
 
-class AlternativeSignature : public virtual AstNode,
-                             public NamedEntityInterface {
+class AlternativeSignature : public virtual AstNode, public NamedEntity {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
                        Nonnull<Expression*> signature)

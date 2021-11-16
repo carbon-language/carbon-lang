@@ -16,15 +16,15 @@
 
 namespace Carbon {
 
-class NamedEntityInterface : public virtual AstNode {
+class NamedEntity : public virtual AstNode {
  public:
-  virtual ~NamedEntityInterface() = 0;
+  virtual ~NamedEntity() = 0;
 
-  NamedEntityInterface() = default;
+  NamedEntity() = default;
 
   // TODO: This is unused, but is intended for casts after lookup.
-  auto kind() const -> NamedEntityInterfaceKind {
-    return static_cast<NamedEntityInterfaceKind>(root_kind());
+  auto kind() const -> NamedEntityKind {
+    return static_cast<NamedEntityKind>(root_kind());
   }
 };
 
@@ -32,12 +32,11 @@ class NamedEntityInterface : public virtual AstNode {
 // does include directions to parent or related scopes for lookup purposes.
 class StaticScope {
  public:
-  void Add(std::string name, Nonnull<const NamedEntityInterface*> entity);
+  void Add(std::string name, Nonnull<const NamedEntity*> entity);
 
  private:
   // Maps locally declared names to their entities.
-  std::unordered_map<std::string, Nonnull<const NamedEntityInterface*>>
-      declared_names_;
+  std::unordered_map<std::string, Nonnull<const NamedEntity*>> declared_names_;
 
   // A list of scopes used for name lookup within this scope.
   // TODO: This is unused, but is intended for name lookup cross-scope.

@@ -317,7 +317,7 @@ class Match : public Statement {
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-class Continuation : public Statement, public NamedEntityInterface {
+class Continuation : public Statement, public NamedEntity {
  public:
   Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Block*> body)
