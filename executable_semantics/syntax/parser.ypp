@@ -131,9 +131,9 @@
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <Nonnull<ChoiceDeclaration::Alternative*>> alternative
-%type <std::vector<Nonnull<ChoiceDeclaration::Alternative*>>> alternative_list
-%type <std::vector<Nonnull<ChoiceDeclaration::Alternative*>>> alternative_list_contents
+%type <Nonnull<AlternativeSignature*>> alternative
+%type <std::vector<Nonnull<AlternativeSignature*>>> alternative_list
+%type <std::vector<Nonnull<AlternativeSignature*>>> alternative_list_contents
 %type <BisonWrap<Match::Clause>> clause
 %type <std::vector<Match::Clause>> clause_list
 
@@ -683,13 +683,10 @@ member_list:
 ;
 alternative:
   identifier tuple
-    {
-      $$ = arena->New<ChoiceDeclaration::Alternative>(context.source_loc(), $1,
-                                                      $2);
-    }
+    { $$ = arena->New<AlternativeSignature>(context.source_loc(), $1, $2); }
 | identifier
     {
-      $$ = arena->New<ChoiceDeclaration::Alternative>(
+      $$ = arena->New<AlternativeSignature>(
           context.source_loc(), $1,
           arena->New<TupleLiteral>(context.source_loc()));
     }

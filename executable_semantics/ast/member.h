@@ -23,9 +23,9 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Member : public NamedEntityInterface {
+class Member : public virtual AstNode, public NamedEntity {
  public:
-  enum class Kind { FieldMember };
+  ~Member() override = 0;
 
   Member(const Member&) = delete;
   auto operator=(const Member&) -> Member& = delete;
@@ -33,35 +33,27 @@ class Member : public NamedEntityInterface {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Returns the enumerator corresponding to the most-derived type of this
-  // object.
-  auto kind() const -> Kind { return kind_; }
-
-  auto named_entity_kind() const -> NamedEntityKind override {
-    return NamedEntityKind::Member;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMember(node->kind());
   }
 
-  auto source_loc() const -> SourceLocation override { return source_loc_; }
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto kind() const -> MemberKind {
+    return static_cast<MemberKind>(root_kind());
+  }
 
  protected:
-  // Constructs a Member representing syntax at the given line number.
-  // `kind` must be the enumerator corresponding to the most-derived type being
-  // constructed.
-  Member(Kind kind, SourceLocation source_loc)
-      : kind_(kind), source_loc_(source_loc) {}
-
- private:
-  const Kind kind_;
-  SourceLocation source_loc_;
+  Member() = default;
 };
 
 class FieldMember : public Member {
  public:
   FieldMember(SourceLocation source_loc, Nonnull<const BindingPattern*> binding)
-      : Member(Kind::FieldMember, source_loc), binding_(binding) {}
+      : AstNode(AstNodeKind::FieldMember, source_loc), binding_(binding) {}
 
-  static auto classof(const Member* member) -> bool {
-    return member->kind() == Kind::FieldMember;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFieldMember(node->kind());
   }
 
   auto binding() const -> const BindingPattern& { return *binding_; }

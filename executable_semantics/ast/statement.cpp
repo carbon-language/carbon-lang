@@ -12,13 +12,15 @@ namespace Carbon {
 
 using llvm::cast;
 
+Statement::~Statement() = default;
+
 void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   if (depth == 0) {
     out << " ... ";
     return;
   }
   switch (kind()) {
-    case Kind::Match: {
+    case StatementKind::Match: {
       const auto& match = cast<Match>(*this);
       out << "match (" << match.expression() << ") {";
       if (depth < 0 || depth > 1) {
@@ -34,32 +36,32 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       out << "}";
       break;
     }
-    case Kind::While: {
+    case StatementKind::While: {
       const auto& while_stmt = cast<While>(*this);
       out << "while (" << while_stmt.condition() << ")\n";
       while_stmt.body().PrintDepth(depth - 1, out);
       break;
     }
-    case Kind::Break:
+    case StatementKind::Break:
       out << "break;";
       break;
-    case Kind::Continue:
+    case StatementKind::Continue:
       out << "continue;";
       break;
-    case Kind::VariableDefinition: {
+    case StatementKind::VariableDefinition: {
       const auto& var = cast<VariableDefinition>(*this);
       out << "var " << var.pattern() << " = " << var.init() << ";";
       break;
     }
-    case Kind::ExpressionStatement:
+    case StatementKind::ExpressionStatement:
       out << cast<ExpressionStatement>(*this).expression() << ";";
       break;
-    case Kind::Assign: {
+    case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
       out << assign.lhs() << " = " << assign.rhs() << ";";
       break;
     }
-    case Kind::If: {
+    case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
       out << "if (" << if_stmt.condition() << ")\n";
       if_stmt.then_block().PrintDepth(depth - 1, out);
@@ -69,7 +71,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Kind::Return: {
+    case StatementKind::Return: {
       const auto& ret = cast<Return>(*this);
       if (ret.is_omitted_expression()) {
         out << "return;";
@@ -78,7 +80,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Kind::Block: {
+    case StatementKind::Block: {
       const auto& block = cast<Block>(*this);
       out << "{";
       if (depth < 0 || depth > 1) {
@@ -96,7 +98,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Kind::Continuation: {
+    case StatementKind::Continuation: {
       const auto& cont = cast<Continuation>(*this);
       out << "continuation " << cont.continuation_variable() << " ";
       if (depth < 0 || depth > 1) {
@@ -108,10 +110,10 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Kind::Run:
+    case StatementKind::Run:
       out << "run " << cast<Run>(*this).argument() << ";";
       break;
-    case Kind::Await:
+    case StatementKind::Await:
       out << "await;";
       break;
   }

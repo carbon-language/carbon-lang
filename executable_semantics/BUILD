@@ -24,3 +24,8 @@ lit_test(
     test_dir = "testdata",
     tools = [":executable_semantics"],
 )
+
+py_binary(
+    name = "gen_rtti",
+    srcs = ["gen_rtti.py"],
+)

@@ -8,8 +8,9 @@
 
 namespace Carbon {
 
-void StaticScope::Add(std::string name,
-                      Nonnull<const NamedEntityInterface*> entity) {
+NamedEntity::~NamedEntity() = default;
+
+void StaticScope::Add(std::string name, Nonnull<const NamedEntity*> entity) {
   if (!declared_names_.insert({name, entity}).second) {
     FATAL_COMPILATION_ERROR(entity->source_loc())
         << "Duplicate name `" << name << "` also found at "
