@@ -49,6 +49,7 @@ add_llvm_library(LLVMBOLTPasses
   ${LLVM_PTHREAD_LIB}
 
   LINK_COMPONENTS
+  AsmPrinter
   BOLTCore
   BOLTUtils
   MC

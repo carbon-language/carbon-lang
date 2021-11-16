@@ -1,6 +1,7 @@
 set(LLVM_LINK_COMPONENTS
   BOLTUtils
   DebugInfoDWARF
+  Demangle
   MC
   Object
   Support
