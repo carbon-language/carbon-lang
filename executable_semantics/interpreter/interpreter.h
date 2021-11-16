@@ -14,8 +14,8 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/interpreter/action.h"
+#include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/heap.h"
-#include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/ArrayRef.h"
 
@@ -52,79 +52,18 @@ class Interpreter {
   void PrintEnv(Env values, llvm::raw_ostream& out);
 
  private:
-  // State transition functions
-  //
-  // The `Step*` family of functions implement state transitions in the
-  // interpreter by executing a step of the Action at the top of the todo stack,
-  // and then returning a Transition that specifies how `state.stack` should be
-  // updated. `Transition` is a variant of several "transition types"
-  // representing the different kinds of state transition.
-
-  // Transition type which indicates that the current Action is now done.
-  struct Done {
-    // The value computed by the Action. Should always be nullopt for Statement
-    // Actions, and never null for any other kind of Action.
-    std::optional<Nonnull<const Value*>> result;
-  };
-
-  // Transition type which spawns a new Action on the todo stack above the
-  // current Action, and increments the current Action's position counter.
-  struct Spawn {
-    std::unique_ptr<Action> child;
-  };
-
-  // Transition type which keeps the current Action at the top of the stack,
-  // and increments its position counter.
-  struct RunAgain {};
-
-  // Transition type which unwinds the `todo` stack until it reaches the
-  // StatementAction associated with `ast_node`. Execution then resumes with
-  // that StatementAction.
-  struct UnwindTo {
-    Nonnull<const Statement*> ast_node;
-  };
-
-  // Transition type which unwinds the `todo` stack down to and including the
-  // StatementAction associated with `ast_node`. If `result` is set, it will be
-  // treated as the result of that StatementAction.
-  struct UnwindPast {
-    Nonnull<const Statement*> ast_node;
-    std::optional<Nonnull<const Value*>> result;
-  };
-
-  // Transition type which has the same behavior as Spawn, but executes the
-  // child action in the given scope instead of CurrentScope().
-  struct SpawnWithScope {
-    Scope scope;
-    std::unique_ptr<Action> child;
-  };
-
-  // Transition type which does nothing.
-  //
-  // TODO(geoffromer): This is a temporary placeholder during refactoring. All
-  // uses of this type should be replaced with meaningful transitions.
-  struct ManualTransition {};
-
-  using Transition = std::variant<Done, Spawn, RunAgain, UnwindTo, UnwindPast,
-                                  SpawnWithScope, ManualTransition>;
-
-  // Visitor which implements the behavior associated with each transition type.
-  class DoTransition;
-  friend class DoTransition;
-
   void Step();
 
   // State transitions for expressions.
-  auto StepExp() -> Transition;
+  void StepExp();
   // State transitions for lvalues.
-  auto StepLvalue() -> Transition;
+  void StepLvalue();
   // State transitions for patterns.
-  auto StepPattern() -> Transition;
+  void StepPattern();
   // State transition for statements.
-  auto StepStmt() -> Transition;
+  void StepStmt();
 
   void InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs);
-  auto CurrentScope() -> Scope&;
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
@@ -160,8 +99,7 @@ class Interpreter {
   // Globally-defined entities, such as functions, structs, or choices.
   Env globals_;
 
-  // TODO: consider defining a non-nullable unique_ptr-like type to use here.
-  Stack<std::unique_ptr<Action>> todo_;
+  ActionStack todo_;
   Heap heap_;
 
   // The underlying states of continuation values. All StackFragments created
