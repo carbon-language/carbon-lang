@@ -22,9 +22,9 @@ add_library(bolt_rt_hugify STATIC
   )
 
 # Don't let the compiler think it can create calls to standard libs
-target_compile_options(bolt_rt_instr PRIVATE -ffreestanding -fno-exceptions -fno-rtti -fPIE)
+target_compile_options(bolt_rt_instr PRIVATE -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fPIE)
 target_include_directories(bolt_rt_instr PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_options(bolt_rt_hugify PRIVATE -ffreestanding -fno-exceptions -fno-rtti)
+target_compile_options(bolt_rt_hugify PRIVATE -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector)
 target_include_directories(bolt_rt_hugify PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 install(TARGETS bolt_rt_instr DESTINATION lib)
