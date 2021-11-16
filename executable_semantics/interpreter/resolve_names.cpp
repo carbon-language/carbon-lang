@@ -17,27 +17,27 @@ namespace {
 // flow.
 void PopulateNamesInPattern(const Pattern& pattern, StaticScope& static_scope) {
   switch (pattern.kind()) {
-    case Pattern::Kind::AlternativePattern: {
+    case PatternKind::AlternativePattern: {
       const auto& alt = cast<AlternativePattern>(pattern);
       PopulateNamesInPattern(alt.arguments(), static_scope);
       break;
     }
-    case Pattern::Kind::BindingPattern: {
+    case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(pattern);
       if (binding.name().has_value()) {
         static_scope.Add(*binding.name(), &binding);
       }
       break;
     }
-    case Pattern::Kind::TuplePattern: {
+    case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(pattern);
       for (auto* field : tuple.fields()) {
         PopulateNamesInPattern(*field, static_scope);
       }
       break;
     }
-    case Pattern::Kind::AutoPattern:
-    case Pattern::Kind::ExpressionPattern:
+    case PatternKind::AutoPattern:
+    case PatternKind::ExpressionPattern:
       // These don't add names.
       break;
   }
@@ -53,7 +53,7 @@ void PopulateNamesInStatement(Arena* arena,
   }
   Statement& statement = **opt_statement;
   switch (statement.kind()) {
-    case Statement::Kind::Block: {
+    case StatementKind::Block: {
       // Defines a new scope for names.
       auto& block = cast<Block>(statement);
       for (const auto& statement : block.statements()) {
@@ -61,33 +61,33 @@ void PopulateNamesInStatement(Arena* arena,
       }
       break;
     }
-    case Statement::Kind::Continuation: {
+    case StatementKind::Continuation: {
       // Defines a new name and contains a block.
       auto& cont = cast<Continuation>(statement);
       static_scope.Add(cont.continuation_variable(), &cont);
       PopulateNamesInStatement(arena, &cont.body(), static_scope);
       break;
     }
-    case Statement::Kind::VariableDefinition: {
+    case StatementKind::VariableDefinition: {
       // Defines a new name.
       const auto& var = cast<VariableDefinition>(statement);
       PopulateNamesInPattern(var.pattern(), static_scope);
       break;
     }
-    case Statement::Kind::If: {
+    case StatementKind::If: {
       // Contains blocks.
       auto& if_stmt = cast<If>(statement);
       PopulateNamesInStatement(arena, &if_stmt.then_block(), static_scope);
       PopulateNamesInStatement(arena, if_stmt.else_block(), static_scope);
       break;
     }
-    case Statement::Kind::While: {
+    case StatementKind::While: {
       // Contains a block.
       auto& while_stmt = cast<While>(statement);
       PopulateNamesInStatement(arena, &while_stmt.body(), static_scope);
       break;
     }
-    case Statement::Kind::Match: {
+    case StatementKind::Match: {
       // Contains blocks.
       auto& match = cast<Match>(statement);
       for (auto& clause : match.clauses()) {
@@ -97,13 +97,13 @@ void PopulateNamesInStatement(Arena* arena,
       }
       break;
     }
-    case Statement::Kind::Assign:
-    case Statement::Kind::Await:
-    case Statement::Kind::Break:
-    case Statement::Kind::Continue:
-    case Statement::Kind::ExpressionStatement:
-    case Statement::Kind::Return:
-    case Statement::Kind::Run:
+    case StatementKind::Assign:
+    case StatementKind::Await:
+    case StatementKind::Break:
+    case StatementKind::Continue:
+    case StatementKind::ExpressionStatement:
+    case StatementKind::Return:
+    case StatementKind::Run:
       // Neither contains names nor a scope.
       break;
   }
@@ -114,7 +114,7 @@ void PopulateNamesInStatement(Arena* arena,
 void PopulateNamesInMember(Arena* arena, const Member& member,
                            StaticScope& static_scope) {
   switch (member.kind()) {
-    case Member::Kind::FieldMember: {
+    case MemberKind::FieldMember: {
       const auto& field = cast<FieldMember>(member);
       if (field.binding().name().has_value()) {
         static_scope.Add(*field.binding().name(), &member);
@@ -130,7 +130,7 @@ void PopulateNamesInMember(Arena* arena, const Member& member,
 void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
                                 StaticScope& static_scope) {
   switch (declaration.kind()) {
-    case Declaration::Kind::FunctionDeclaration: {
+    case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       static_scope.Add(func.name(), &declaration);
       for (Nonnull<const GenericBinding*> param : func.deduced_parameters()) {
@@ -140,7 +140,7 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
       PopulateNamesInStatement(arena, func.body(), static_scope);
       break;
     }
-    case Declaration::Kind::ClassDeclaration: {
+    case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
       static_scope.Add(class_decl.name(), &declaration);
       for (auto* member : class_decl.members()) {
@@ -148,11 +148,10 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
       }
       break;
     }
-    case Declaration::Kind::ChoiceDeclaration: {
+    case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
       static_scope.Add(choice.name(), &declaration);
-      for (Nonnull<const ChoiceDeclaration::Alternative*> alt :
-           choice.alternatives()) {
+      for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
         choice.static_scope().Add(alt->name(), alt);
       }
       // Populate name into declared_names.
@@ -160,7 +159,7 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
       // alternatives.
       break;
     }
-    case Declaration::Kind::VariableDeclaration:
+    case DeclarationKind::VariableDeclaration:
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name().has_value()) {
         static_scope.Add(*(var.binding().name()), &var.binding());
@@ -177,10 +176,10 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
 void ResolveNamesInDeclaration(Declaration& declaration,
                                const StaticScope& static_scope) {
   switch (declaration.kind()) {
-    case Declaration::Kind::FunctionDeclaration:
-    case Declaration::Kind::ClassDeclaration:
-    case Declaration::Kind::ChoiceDeclaration:
-    case Declaration::Kind::VariableDeclaration:
+    case DeclarationKind::FunctionDeclaration:
+    case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::ChoiceDeclaration:
+    case DeclarationKind::VariableDeclaration:
       break;
   }
 }
