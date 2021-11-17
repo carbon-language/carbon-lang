@@ -17,7 +17,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Symmetry](#symmetry)
     -   [Same type](#same-type)
     -   [Implicit conversions](#implicit-conversions)
-    -   [Facet types](#facet-types)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -67,7 +66,7 @@ defined as follows:
 
 ```
 constraint CommonType(U:! CommonTypeWith(Self)) {
-  impl as CommonTypeWith(U) where .Result == U.Result;
+  extend CommonTypeWith(U) where .Result == U.Result;
 }
 ```
 
@@ -145,7 +144,7 @@ can't be defined, and only the two blanket `impl`s above are used. The
 
 ```
 constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
-  impl as SymmetricCommonTypeWith(U) where .Result == U.Result;
+  extend SymmetricCommonTypeWith(U) where .Result == U.Result;
 }
 ```
 
@@ -177,12 +176,23 @@ If `T` is the same type as `U`, the result is that type:
 
 ```
 impl [T:! Type] T as CommonTypeWith(T) {
-  let Result:! Type = T;
+  final let Result:! Type = T;
 }
 ```
 
 _Note:_ This rule is intended to be considered more specialized than the other
 rules in this document.
+
+`T.(CommonType(T)).Result` is always assumed to be `T`, even in contexts where
+`T` involves a generic parameter and so the result would normally be an unknown
+type whose type-of-type is `Type`.
+
+```
+fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
+  // OK, type of `if` expression is `T`.
+  return (if c then x else y).Hash();
+}
+```
 
 ### Implicit conversions
 
@@ -214,31 +224,13 @@ var your_string: YourString;
 var also_my_string: auto = if cond then my_string else your_string;
 ```
 
-### Facet types
-
-If `T` and `U` are both facets of the same type, corresponding to constraints
-`C` and `D`, the result is the facet type corresponding to the constraint
-`C & D`.
-
-```
-impl [T:! Type, U:! FacetOf(T)] T as CommonTypeWith(U) {
-  let Result:! Type = T as (typeof(T) & typeof(U));
-}
-```
-
-**Note:** The intent is that this should be considered more specialized than the
-implicit conversion case above, because `U:! FacetOf(T)` implies that there are
-implicit conversions in both directions.
-
-**FIXME:** Does this work? Converting `T as ...` to type-of-type `Type` seems
-like it should erase the custom type-of-type. Similarly, the type-of-type of `T`
-and `U` are erased before `impl` selection.
-
 ## Alternatives considered
 
 -   [Provide no conditional expression](/proposals/p0911.md#no-conditional-expression)
--   [Use `?:`, like in C and C++](/proposals/p0911.md#use-c-syntax)
--   [Use `if (...) expr1 else expr2`](/proposals/p0911.md#no-then)
+-   [`cond ? expr1 : expr2`, like in C and C++](/proposals/p0911.md#use-c-syntax)
+-   [`if (cond) expr1 else expr2`](/proposals/p0911.md#no-then)
+-   [`if (cond) then expr1 else expr2`](/proposals/p0911.md#require-parentheses-around-the-condition)
+-   [`(if cond then expr1 else expr2)`](/proposals/p0911.md#require-enclosing-parentheses)
 -   [Only require one `impl` to specify the common type if implicit conversions in both directions are possible](/proposals/p0911.md#implicit-conversions-in-both-directions)
 
 ## References
