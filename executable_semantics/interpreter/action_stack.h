@@ -31,11 +31,6 @@ class ActionStack {
   // True if the stack is empty.
   auto IsEmpty() const -> bool { return todo_.IsEmpty(); }
 
-  // The result produced by the `action` argument of the most recent
-  // `Start` call. *this must be empty, signifying that the action has been
-  // fully executed.
-  auto result() const -> Nonnull<const Value*> { return *result_; }
-
   // The Action currently at the top of the stack. This will never be a
   // ScopeAction.
   auto CurrentAction() -> Action& { return *todo_.Top(); }
@@ -43,6 +38,11 @@ class ActionStack {
   // The scope that should be used to resolve name lookups in the current
   // action.
   auto CurrentScope() const -> Scope&;
+
+  // The result produced by the `action` argument of the most recent
+  // `Start` call. *this must be empty, signifying that the action has been
+  // fully executed.
+  auto result() const -> Nonnull<const Value*> { return *result_; }
 
   // The following methods, called "transition methods", update the state of
   // the ActionStack and/or the current Action to reflect the effects of
