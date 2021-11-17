@@ -1,8 +1,8 @@
-# Try to instrument a very fast test. varargs will not execute any code during
+# Try to instrument a very fast test. Input bin will not execute any code during
 # runtime besides returning zero in main, so it is a good trivial case.
 REQUIRES: system-linux
 
-RUN: %clang %p/../../Inputs/vararg.s -Wl,-q -o %t.exe
+RUN: %clang %p/Inputs/basic-instrumentation.s -Wl,-q -o %t.exe
 RUN: llvm-bolt %t.exe -o %t -instrument \
 RUN:   -instrumentation-file=%t \
 RUN:   -instrumentation-file-append-pid

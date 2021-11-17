@@ -15,3 +15,4 @@ bar:
 
 .globl moo
 moo:
+  nop
