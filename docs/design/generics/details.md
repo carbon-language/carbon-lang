@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [External impl](#external-impl)
     -   [Qualified member names](#qualified-member-names)
 -   [Generics](#generics)
-    -   [Model](#model)
+    -   [Implementation model](#implementation-model)
 -   [Interfaces recap](#interfaces-recap)
 -   [Type-of-types](#type-of-types)
 -   [Named constraints](#named-constraints)
@@ -39,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
-    -   [Model](#model-1)
+    -   [Implementation model](#implementation-model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized named constraints](#parameterized-named-constraints)
@@ -70,7 +70,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
     -   [Type facet of another type](#type-facet-of-another-type)
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
-        -   [Model](#model-2)
+        -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
 -   [Future work](#future-work)
     -   [Conditional conformance](#conditional-conformance)
@@ -123,7 +123,8 @@ of the interface as defining a struct type whose members are function pointers,
 and an implementation of an interface as a value of that struct with actual
 function pointer values. So an implementation is a table of function pointers
 (one per function defined in the interface) that gets passed into a function as
-the type argument. For more on this, see [the model section](#model) below.
+the type argument. For more on this, see
+[the implementation model section](#implementation-model) below.
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
@@ -475,7 +476,7 @@ unlike Swift and Rust.
 Given a value of type `Point3` and an interface `Vector` implemented for that
 type, you can access the methods from that interface using the member's
 _qualified name_, whether or not the implementation is done externally with an
-`external impl` statement:
+`external impl` declaration:
 
 ```
 var p1: Point3 = {.x = 1.0, .y = 2.0};
@@ -516,8 +517,8 @@ C++, adding `ClassName::` in front of a member name to disambiguate, such as
 
 ## Generics
 
-Now let us write a function that can accept values of any type that has
-implemented the `Vector` interface:
+Here is a function that can accept values of any type that has implemented the
+`Vector` interface:
 
 ```
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
@@ -529,75 +530,65 @@ var v: Point = AddAndScaleGeneric(a, w, 2.5);
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
 _[generic parameter](terminology.md#generic-versus-template-parameters)_, that
 is it must be known to the caller but we will only use the information present
-in the signature of the function to typecheck the body of `AddAndScaleGeneric`'s
-definition. In this case, we know that any value of type `T` implements the
-`Vector` interface and so has an `Add` and a `Scale` method.
+in the signature of the function to type check the body of
+`AddAndScaleGeneric`'s definition. In this case, we know that any value of type
+`T` implements the `Vector` interface and so has an `Add` and a `Scale` method.
 
-When we call `AddAndScaleGeneric`, we need to determine the value of `T` to use
-when passed values with type `Point`. Since `T` has type `Vector`, the compiler
-simply sets `T` to `Point as Vector`. This
-[cast](terminology.md#subtyping-and-casting)
-[erases](terminology.md#type-erasure) all of the API of `Point` and substitutes
-the api of `Vector`, without changing anything about the data representation. It
-acts like we called this non-generic function, found by setting `T` to
-`Point as Vector`:
+Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
+in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
+to adding a `Vector` qualification to all unqualified member accesses of `T`:
 
 ```
-fn AddAndScaleForPointAsVector(
-      a: Point as Vector, b: Point as Vector, s: Double)
-      -> Point as Vector {
-  return a.Add(b).Scale(s);
+fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
+  return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
-// May still be called with Point arguments, due to implicit conversions.
-// Similarly the return value can be implicitly converted to a Point.
-var v2: Point = AddAndScaleForPointAsVector(a, w, 2.5);
 ```
 
-Since `Point` implements `Vector` inline, `Point` also has definitions for `Add`
-and `Scale`:
+With these qualifications, the function can be type-checked for any `T`
+implementing `Vector`. This type checking is equivalent to type checking the
+function with `T` set to an [archetype](terminology.md#archetype) of `Vector`.
+An archetype is a placeholder type considered to satisfy its constraint, which
+is `Vector` in this case, and no more. It acts as the most general type
+satisfying the interface. For name lookup purposes, an archetype is considered
+to have [implemented its constraint internally](terminology.md#internal-impl).
+The effect of this is that an archetype of `Vector` acts like a
+[supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T` implementing
+`Vector`.
+
+The behavior of calling `AddAndScaleGeneric` with a value of a specific type
+like `Point` is to set `T` to `Point` after all the names have been qualified.
 
 ```
+// AddAndScaleGeneric with T = Point
 fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
-  return a.Add(b).Scale(s);
+  return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
-
-AddAndScaleForPoint(a, w, 2.5);
 ```
 
-However, for another type implementing `Vector` but out-of-line using an
-`external impl` statement, such as `Point3`, the situation is different:
+This qualification gives a consistent interpretation to the body of the function
+even when the type supplied by the caller
+[implements the interface externally](terminology.md#external-impl), as `Point3`
+does:
 
 ```
+// AddAndScaleGeneric with T = Point3
 fn AddAndScaleForPoint3(a: Point3, b: Point3, s: Double) -> Point3 {
-  // ❌ ERROR: `Point3` doesn't have `Add` or `Scale` methods.
-  return a.Add(b).Scale(s);
+  // This works even though a.Add(b).Scale(s) wouldn't.
+  return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
-```
-
-Even though `Point3` doesn't have `Add` and `Scale` methods, it still implements
-`Vector` and so can still call `AddAndScaleGeneric`:
-
-```
-var a2: Point3 = {.x = 1.0, .y = 2.0};
-var w2: Point3 = {.x = 3.0, .y = 4.0};
-var v3: Point3 = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 **References:** The `:!` syntax was accepted in
 [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
 
-### Model
+### Implementation model
 
-FIXME
+A possible model for generating code for a generic function is to use a
+[witness table](terminology.md#witness-tables) to represent how a type
+implements an interface:
 
-The underlying model here is interfaces are
-[type-of-types](terminology.md#type-of-type), in particular, the type of
-[facet types](terminology.md#facet-type):
-
--   [Interfaces](#interfaces) are types of
-    [witness tables](terminology.md#witness-tables)
--   Facet types (defined by [Impls](#implementing-interfaces)) are
-    [witness table](terminology.md#witness-tables) values
+-   [Interfaces](#interfaces) are types of witness tables.
+-   [Impls](#implementing-interfaces) are witness table values.
 -   The compiler rewrites functions with an implicit type argument
     (`fn Foo[InterfaceName:! T](...)`) to have an actual argument with type
     determined by the interface, and supplied at the callsite using a value
@@ -608,7 +599,7 @@ defining a witness table type like:
 
 ```
 class Vector {
-  // Self is the representation type, which is only
+  // `Self` is the representation type, which is only
   // known at compile time.
   var Self:! Type;
   // `fnty` is **placeholder** syntax for a "function type",
@@ -653,6 +644,9 @@ The rule is that generic arguments (declared using `:!`) are passed at compile
 time, so the actual value of the `t` argument here can be used to generate the
 code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 [static-dispatch witness table](terminology.md#static-dispatch-witness-table).
+
+Note that this implementation strategy only works for impls the caller knows
+that the callee needs.
 
 ## Interfaces recap
 
@@ -1954,7 +1948,7 @@ For context, see
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
 
-### Model
+### Implementation model
 
 The associated type can be modeled by a witness table field in the interface's
 witness table.
@@ -3291,7 +3285,7 @@ with the size? So you could say `T.ByteSize` in the above example to get a
 generic int value with the size of `T`. Similarly you might say `T.ByteStride`
 to get the number of bytes used for each element of an array of `T`.
 
-#### Model
+#### Implementation model
 
 This requires a special integer field be included in the witness table type to
 hold the size of the type. This field will only be known generically, so if its
