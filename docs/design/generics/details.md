@@ -1210,7 +1210,7 @@ class Song {
 }
 ```
 
-This is just like you get an implementation of `Equatable` by implementing
+This is just like when you get an implementation of `Equatable` by implementing
 `Hashable` when `Hashable` extends `Equatable`. This provides a tool useful for
 [evolution](#evolution).
 
@@ -1330,7 +1330,7 @@ though could be defined in the `impl` block of `IncidenceGraph`,
       impl as IncidenceGraph { ... }
       impl as EdgeListGraph { ... }
     }
-    external impl as Graph {
+    external impl MyEdgeListIncidenceGraph as Graph {
       fn Source[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
       fn Target[me: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
     }
@@ -1340,6 +1340,10 @@ This last point means that there are situations where we can only detect a
 missing method definition by the end of the file. This doesn't delay other
 aspects of semantic checking, which will just assume that these methods will
 eventually be provided.
+
+**Open question:** We could require that the `external impl` of the required
+interface be declared lexically in the class scope in this case. That would
+allow earlier detection of missing definitions.
 
 ### Use case: overload resolution
 
