@@ -681,7 +681,7 @@ concept, for which interfaces are a building block.
 
 A [type-of-type](terminology.md#type-of-type) consists of a set of requirements
 and a set of names. Requirements are typically a set of interfaces that a type
-must satisfy (though other kinds of requirements are added below). The names are
+must satisfy, though other kinds of requirements are added below. The names are
 aliases for qualified names in those interfaces.
 
 An interface is one particularly simple example of a type-of-type. For example,
@@ -735,7 +735,7 @@ type), and defines no names.
 
 ```
 fn Identity[T:! Type](x: T) -> T {
-  // Can accept values of any type. But, since we no nothing about the
+  // Can accept values of any type. But, since we know nothing about the
   // type, we don't know about any operations on `x` inside this function.
   return x;
 }
@@ -760,9 +760,9 @@ members of those interfaces.
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
 associated type, and associated function requirements may only be declared
-inside a `template constraint`. Note that a generic constraint matches all
-facets of a type if it matches any, but a template constraint can depend on the
-specific names of members used in a particular facet.
+inside a `template constraint`. Note that a generic constraint ignores the
+unqualified member names defined for a type, but a template constraint can
+depend on them.
 
 There is an analogy between declarations used in a `constraint` and in an
 `interface` definition. If an `interface` `I` has (non-`alias`) declarations
@@ -817,15 +817,13 @@ design document, once it exists.
 
 ### Subtyping between type-of-types
 
-There is a subtyping relationship between type-of-types that allows you to call
-one generic function from another as long as you are calling a function with a
-subset of your requirements.
+There is a subtyping relationship between type-of-types that allows calls of one
+generic function from another as long as it has a subset of the requirements.
 
-Given a generic type `T` with type-of-type `I1`, it may be
-[implicitly converted](../expressions/implicit_conversions.md) to a type-of-type
-`I2`, resulting in `T as I2`, as long as the requirements of `I1` are a superset
-of the requirements of `I2`. Further, given a value `x` of type `T`, it can be
-implicitly converted to `T as I2`. For example:
+Given a generic type variable `T` with type-of-type `I1`, it satisfies a
+type-of-type `I2` as long as the requirements of `I1` are a superset of the
+requirements of `I2`. This means a value `x` of type `T` may be passed to
+functions requiring types to satisfy `I2`, as in this example:
 
 ```
 interface Printable { fn Print[me: Self](); }
@@ -848,8 +846,6 @@ fn PrintDrawPrint[T1:! PrintAndRender](x1: T1) {
   x1.(Renderable.Draw)();
   // Can call `PrintIt` since `T1` satisfies `JustPrint` since
   // it implements `Printable` (in addition to `Renderable`).
-  // This calls `PrintIt` with `T2 == T1 as JustPrint` and
-  // `x2 == x1 as T2`.
   PrintIt(x1);
 }
 ```
