@@ -2906,10 +2906,8 @@ namespace {
 
 class BOLTSymbolResolver : public JITSymbolResolver {
   BinaryContext &BC;
-  RuntimeDyld &RTDyld;
 public:
-  BOLTSymbolResolver(BinaryContext &BC, RuntimeDyld &RTDyld)
-      : BC(BC), RTDyld(RTDyld) {}
+  BOLTSymbolResolver(BinaryContext &BC) : BC(BC) {}
 
   // We are responsible for all symbols
   Expected<LookupSet> getResponsibilitySet(const LookupSet &Symbols) override {
@@ -2928,20 +2926,16 @@ public:
       for (const StringRef &Symbol : Symbols) {
         std::string SymName = Symbol.str();
         LLVM_DEBUG(dbgs() << "BOLT: looking for " << SymName << "\n");
-        JITEvaluatedSymbol Result = RTDyld.getSymbol(SymName);
-        if (Result.getAddress() == 0) {
-          // Resolve to a PLT entry if possible
-          if (BinaryData *I = BC.getBinaryDataByName(SymName + "@PLT")) {
-            AllResults[Symbol] =
-                JITEvaluatedSymbol(I->getAddress(), JITSymbolFlags());
-            continue;
-          }
-          OnResolved(make_error<StringError>(
-              "Symbol not found required by runtime: " + Symbol,
-              inconvertibleErrorCode()));
-          return;
+        // Resolve to a PLT entry if possible
+        if (BinaryData *I = BC.getBinaryDataByName(SymName + "@PLT")) {
+          AllResults[Symbol] =
+              JITEvaluatedSymbol(I->getAddress(), JITSymbolFlags());
+          continue;
         }
-        AllResults[Symbol] = Result;
+        OnResolved(make_error<StringError>(
+            "Symbol not found required by runtime: " + Symbol,
+            inconvertibleErrorCode()));
+        return;
       }
       OnResolved(std::move(AllResults));
       return;
@@ -3018,7 +3012,7 @@ void RewriteInstance::emitAndLink() {
       object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef()),
       "error creating in-memory object");
 
-  BOLTSymbolResolver Resolver = BOLTSymbolResolver(*BC, *RTDyld);
+  BOLTSymbolResolver Resolver = BOLTSymbolResolver(*BC);
 
   MCAsmLayout FinalLayout(
         static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
