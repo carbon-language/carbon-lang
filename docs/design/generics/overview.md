@@ -112,7 +112,7 @@ fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
 The syntax above adds a `!` to indicate that the parameter named `T` is generic
-and the caller will have to provide a value known at compile-time.
+and the caller will have to provide a value known at compile time.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
