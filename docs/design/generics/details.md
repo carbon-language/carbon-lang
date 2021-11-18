@@ -28,7 +28,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`extends` and `impl` with named constraints](#extends-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
--   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Adapter compatibility](#adapter-compatibility)
     -   [Extending adapter](#extending-adapter)
@@ -577,6 +576,15 @@ fn AddAndScaleForPoint3(a: Point3, b: Point3, s: Double) -> Point3 {
   return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
 ```
+
+From the caller's perspective, the return type is the result of substituting the
+caller's values for the generic parameters into the return type expression. So
+`AddAndScaleGeneric` called with `Point` values returns a `Point` and called
+with `Point3` values returns a `Point3`. This is part of realizing
+[the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
+In this example, `AddAndScaleGeneric` can be substituted for
+`AddAndScaleForPoint` and `AddAndScaleForPoint3` without affecting the return
+types.
 
 **References:** The `:!` syntax was accepted in
 [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
@@ -1383,75 +1391,12 @@ This would be an example of the more general rule that an interface `A`
 requiring an implementation of interface `B` means `A` is more specific than
 `B`.
 
-## Type compatibility
-
-None of the conversions between facet types change the implementation of any
-interfaces for a type. So the result of a conversion does not depend on the
-sequence of conversions you perform, just the original type and the final
-type-of-type. That is, these types will all be equal:
-
--   `T as I`
--   `(T as A) as I`
--   `(((T as A) as B) as C) as I`
-
-Now consider a type with a generic type parameter, like a hash map type:
-
-```
-interface Hashable { ... }
-class HashMap(KeyT:! Hashable, ValueT:! Type) {
-  fn Find[me:Self](key: KeyT) -> Optional(ValueT);
-  // ...
-}
-```
-
-A user of this type will provide specific values for the key and value types:
-
-```
-var hm: HashMap(String, i32) = ...;
-var result: Optional(i32) = hm.Find("Needle");
-```
-
-Since the `Find` function is generic, it can only use the capabilities that
-`HashMap` requires of `KeyT` and `ValueT`. This implies that the
-_implementation_ of `HashMap(String, i32).Find` and
-`HashMap(String as Hashable, i32).Find` are the same. In fact, we could
-substitute any facet of `String`, and `Find` would still use
-`String as Hashable` in its implementation. So these types:
-
--   `HashMap(String, i32)`
--   `HashMap(String as Hashable, i32 as Type)`
--   `HashMap(String as Printable, i32)`
--   `HashMap((String as Printable & Hashable) as Hashable, i32)`
-
-are also facets of each other, and Carbon can freely allow casts and implicit
-conversions between them.
-
-This means we don't generally need to worry about getting the wrong facet type
-as the argument for a generic type. This means we don't get type mismatches when
-calling functions as in this example, where the type parameters have different
-constraints than the type requires:
-
-```
-fn PrintValue
-    [KeyT:! Printable & Hashable, ValueT:! Printable]
-    (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
-
-var m: HashMap(String, i32) = ...;
-PrintValue(m, "key");
-```
-
-However, those types are still different. A caller of `Find` observes that its
-signature reflects the actual type parameters passed to `HashMap`, not their
-projection onto the `Hashable` or `Type` facets. In particular, the return type
-of `hm.Find` is `Optional(i32)`, not `Optional(i32 as Type)`. (Incidentally,
-`Optional(i32)` and `Optional(i32 as Type)` are also facets of each other.)
-
 ## Adapting types
 
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
-switch the type of a value to access different interface implementations. We
-therefore provide a way to create new types
+switch the type of a value to access different interface implementations. Carbon
+therefore provides a way to create new types
 [compatible with](terminology.md#compatible-types) existing types with different
 APIs, in particular with different interface implementations, by
 [adapting](terminology.md#adapting-a-type) them:
@@ -1475,32 +1420,29 @@ adapter FormattedSong for Song {
   impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter FormattedSongByTitle for Song {
-  impl as Printable = FormattedSong as Printable;
-  impl as Comparable = SongByTitle as Comparable;
+  impl as Printable = FormattedSong;
+  impl as Comparable = SongByTitle;
 }
 ```
 
-This allows us to provide implementations of new interfaces (as in
+This allows developers to provide implementations of new interfaces (as in
 `SongByTitle`), provide different implementations of the same interface (as in
 `FormattedSong`), or mix and match implementations from other compatible types
 (as in `FormattedSongByTitle`). The rules are:
 
 -   You can add any declaration that you could add to a class except for
     declarations that would change the representation of the type. This means
-    you can add functions, interface implementations, and aliases, but not
-    fields, base classes, or virtual functions.
+    you can add methods, functions, interface implementations, and aliases, but
+    not fields, base classes, or virtual functions.
 -   The adapted type is compatible with the original type, and that relationship
     is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
     and `FormattedSongByTitle` end up compatible with each other.
 -   Since adapted types are compatible with the original type, you may
     explicitly cast between them, but there is no implicit conversion between
-    these types (unlike between a type and one of its facet types / impls).
--   For the purposes of generics, we only need to support adding interface
-    implementations. But this `adapter` feature could be used more generally,
-    such as to add methods.
+    these types.
 
 Inside an adapter, the `Self` type matches the adapter. Members of the original
-type may be accessed like any other facet type; either by a cast:
+type may be accessed either by a cast:
 
 ```
 adapter SongByTitle for Song {
@@ -1524,29 +1466,6 @@ adapter SongByTitle for Song {
 }
 ```
 
-**Open question:** As an alternative to:
-
-```
-impl as Printable = FormattedSong as Printable;
-```
-
-we could allow users to write:
-
-```
-impl as Printable = FormattedSong;
-```
-
-This would remove ceremony that the compiler doesn't need. The concern is
-whether it makes sense or is a category error. In this example, is
-`FormattedSong`, a type, a suitable value to provide when asking for a
-`Printable` implementation? An argument for this terser syntax is that the
-implicit conversion is legal in other contexts:
-
-```
-// ✅ Legal implicit conversion
-var v:! Printable = FormattedSong;
-```
-
 **Comparison with other languages:** This matches the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding coherence
 problems, see
@@ -1562,41 +1481,55 @@ compiler provides it as
 
 ### Adapter compatibility
 
-The framework from the [type compatibility section](#type-compatibility) allows
-us to evaluate when we can convert between two different arguments to a
-parameterized type. Consider three compatible types, all of which implement
-`Hashable`:
+Consider a type with a generic type parameter, like a hash map:
+
+```
+interface Hashable { ... }
+class HashMap(KeyT:! Hashable, ValueT:! Type) {
+  fn Find[me:Self](key: KeyT) -> Optional(ValueT);
+  // ...
+}
+```
+
+A user of this type will provide specific values for the key and value types:
 
 ```
 class Song {
   impl as Hashable { ... }
-  impl as Printable { ... }
+  // ...
+}
+
+var play_count: HashMap(Song, i32) = ...;
+var thriller_count: Optional(i32) =
+    play_count.Find(Song("Thriller"));
+```
+
+Since the `Find` function is generic, it can only use the capabilities that
+`HashMap` requires of `KeyT` and `ValueT`. This allows us to evaluate when we
+can convert between two different arguments to a parameterized type. Consider
+two adapters of `Song` that implement `Hashable`:
+
+```
+adapter PlayableSong for Song {
+  impl as Hashable = Song;
+  impl as Media { ... }
 }
 adapter SongHashedByTitle for Song {
   impl as Hashable { ... }
 }
-adapter PlayableSong for Song {
-  impl as Hashable = Song as Hashable;
-  impl as Media { ... }
-}
 ```
 
-Observe that `Song as Hashable` is different from
-`SongHashedByTitle as Hashable`, since they have different definitions of the
-`Hashable` interface even though they are compatible types. However
-`Song as Hashable` and `PlayableSong as Hashable` are almost the same. In
-addition to using the same data representation, they both implement one
-interface, `Hashable`, and use the same implementation for that interface. The
-one difference between them is that `Song as Hashable` may be implicitly
-converted to `Song`, which implements interface `Printable`, and
-`PlayableSong as Hashable` may be implicitly converted to `PlayableSong`, which
-implements interface `Media`. This means that it is safe to convert between
-`HashMap(Song, i32)` and `HashMap(PlayableSong, i32)` (though maybe only with an
-explicit cast), since the implementation of all the methods will use the same
-implementation of the `Hashable` interface. But
-`HashMap(SongHashedByTitle, i32)` is incompatible. This is a relief, because we
-know that in practice the invariants of a `HashMap` implementation rely on the
-hashing function staying the same.
+`Song` and `PlayableSong` have the same implementation of `Hashable` in addition
+to using the same data representation. This means that it is safe to convert
+between `HashMap(Song, i32)` and `HashMap(PlayableSong, i32)`, though Carbon
+requires an explicit cast, since the implementation of all the methods will use
+the same implementation of the `Hashable` interface.
+
+On the other hand, `SongHashedByTitle` has a different implementation of
+`Hashable` than `Song`. So even though `Song` and `SongHashedByTitle` are
+compatible types, `HashMap(Song, i32)` and `HashMap(SongHashedByTitle, i32)` are
+incompatible. This is important because we know that in practice the invariants
+of a `HashMap` implementation rely on the hashing function staying the same.
 
 ### Extending adapter
 
@@ -1643,7 +1576,7 @@ adapter SongRenderToPrintDriver extends Song {
 
   // Avoid name conflict with new `Print` function by making
   // the implementation of the `Printable` interface external.
-  external impl as Printable = Song as Printable;
+  external impl as Printable = Song;
 
   // Make the `Print` function from `Printable` available
   // under the name `PrintToScreen`.
@@ -1675,6 +1608,10 @@ adapter Song extends SongLib.Song {
 // Or, to keep the names from CompareLib.Comparable out of Song's API:
 adapter Song extends SongLib.Song { }
 external impl Song as CompareLib.Comparable { ... }
+// Or, equivalently:
+adapter Song extends SongLib.Song {
+  external impl as CompareLib.Comparable { ... }
+}
 ```
 
 The caller can either convert `SongLib.Song` values to `Song` when calling
@@ -1709,10 +1646,44 @@ defining an adapter implementing the interface that is parameterized on the type
 it is adapting. That impl may then be pulled in using the `impl as ... = ...;`
 syntax.
 
+For example, given an interface `Comparable` for deciding which value is
+smaller:
+
 ```
 interface Comparable {
   fn Less[me: Self](rhs: Self) -> bool;
 }
+```
+
+We might define an adapter that implements `Comparable` for types that define
+another interface `Difference`:
+
+```
+interface Difference {
+  fn Sub[me:Self](rhs: Self) -> i32;
+}
+adapter ComparableFromDifference(T:! Difference) for T {
+  impl as Comparable {
+    fn Less[me: Self](rhs: Self) -> bool {
+      return (me as T).Sub(rhs) < 0;
+    }
+  }
+}
+class IntWrapper {
+  var x: i32;
+  impl as Difference {
+    fn Sub[me: Self](rhs: Self) -> i32 {
+      return left.x - right.x;
+    }
+  }
+  impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
+}
+```
+
+**TODO:** If we support function types, we could potentially pass a function to
+use to the adapter instead:
+
+```
 adapter ComparableFromDifferenceFn
     (T:! Type, Difference:! fnty(T, T)->i32) for T {
   impl as Comparable {
@@ -1727,14 +1698,43 @@ class IntWrapper {
     return left.x - right.x;
   }
   impl as Comparable =
-      ComparableFromDifferenceFn(IntWrapper, Difference)
-      as Comparable;
+      ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
 
 ### Use case: Accessing external names
 
-FIXME
+Consider a case where a function will call several functions from an interface
+that is [implemented externally](terminology.md#external-impl) for a type.
+
+```
+interface DrawingContext {
+  fn SetPen[me: Self](...);
+  fn SetFill[me: Self](...);
+  fn DrawRectangle[me: Self](...);
+  fn DrawLine[me: Self](...);
+  ...
+}
+external impl Window as DrawingContext { ... }
+```
+
+An adapter can make that much more convenient by making a compatible type where
+the interface is [implemented internally](terminology.md#internal-impl). This
+avoids having to [qualify](terminology.md#qualified-an-unqualified-member-names)
+each call to methods in the interface.
+
+```
+adapter DrawInWindow for Window {
+  extends DrawingContext = Window;
+}
+fn Render(w: Window) {
+  let d: DrawInWindow = w as DrawInWindow;
+  d.SetPen(...);
+  d.SetFill(...);
+  d.DrawRectangle(...);
+  ...
+}
+```
 
 ## Associated constants
 
