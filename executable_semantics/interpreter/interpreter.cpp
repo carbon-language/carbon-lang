@@ -112,7 +112,7 @@ auto Interpreter::EvalPrim(Operator op,
 void Interpreter::InitEnv(const Declaration& d, Env* env) {
   switch (d.kind()) {
     case DeclarationKind::FunctionDeclaration: {
-      const auto& func_def = cast<FunctionDeclaration>(d);
+      auto& func_def = cast<FunctionDeclaration>(d);
       Env new_env = *env;
       // Bring the deduced parameters into scope.
       for (Nonnull<const GenericBinding*> deduced :
