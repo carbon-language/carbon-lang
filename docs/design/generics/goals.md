@@ -441,11 +441,10 @@ will necessarily be less incremental.
 ### Path from regular functions
 
 Replacing a regular, non-parameterized function with a generic function should
-be straightforward without affecting existing callers of the function. There may
-be some differences, such as when taking the address of the function, but
-ordinary calls should not see any difference. In particular, the return type of
-a generic function should match, without any type erasure or additional named
-members.
+not affect existing callers of the function. There may be some differences, such
+as when taking the address of the function, but ordinary calls should not see
+any difference. In particular, the return type of a generic function should
+match, without any type erasure or additional named members.
 
 ### Coherence
 

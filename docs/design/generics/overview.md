@@ -80,8 +80,9 @@ Summary of how Carbon generics work:
 -   A function with a generic type parameter can have the same function body as
     an unparameterized one. Functions can freely mix generic, template, and
     regular parameters.
--   Interfaces can require other interfaces be implemented or
-    [extend](terminology.md#extending-an-interface) them.
+-   Interfaces can require other interfaces be implemented.
+-   Interfaces can [extend](terminology.md#extending-an-interface) required
+    interfaces.
 -   The `&` operation on type-of-types allows you conveniently combine
     interfaces. It gives you all the names that don't conflict.
 -   You may also declare a new type-of-type directly using
