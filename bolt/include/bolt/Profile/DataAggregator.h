@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_DATA_AGGREGATOR_H
-#define LLVM_TOOLS_LLVM_BOLT_DATA_AGGREGATOR_H
+#ifndef BOLT_PROFILE_DATA_AGGREGATOR_H
+#define BOLT_PROFILE_DATA_AGGREGATOR_H
 
 #include "bolt/Profile/DataReader.h"
 #include "llvm/ADT/StringRef.h"

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_SPLIT_FUNCTIONS_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_SPLIT_FUNCTIONS_H
+#ifndef BOLT_PASSES_SPLIT_FUNCTIONS_H
+#define BOLT_PASSES_SPLIT_FUNCTIONS_H
 
 #include "bolt/Passes/BinaryPasses.h"
 #include "llvm/Support/CommandLine.h"

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_DATA_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_DATA_H
+#ifndef BOLT_CORE_BINARY_DATA_H
+#define BOLT_CORE_BINARY_DATA_H
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCStreamer.h"

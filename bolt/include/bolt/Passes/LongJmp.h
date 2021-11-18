@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_LONGJMP_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_LONGJMP_H
+#ifndef BOLT_PASSES_LONGJMP_H
+#define BOLT_PASSES_LONGJMP_H
 
 #include "bolt/Passes/BinaryPasses.h"
 

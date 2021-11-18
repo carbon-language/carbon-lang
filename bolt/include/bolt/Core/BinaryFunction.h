@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_H
+#ifndef BOLT_CORE_BINARY_FUNCTION_H
+#define BOLT_CORE_BINARY_FUNCTION_H
 
 #include "bolt/Core/BinaryBasicBlock.h"
 #include "bolt/Core/BinaryContext.h"

@@ -22,8 +22,8 @@
 //  Finally, these configure files are feed to the Stoke to do the job.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_STOKEINFO_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_STOKEINFO_H
+#ifndef BOLT_PASSES_STOKEINFO_H
+#define BOLT_PASSES_STOKEINFO_H
 
 #include "bolt/Passes/BinaryPasses.h"
 #include <fstream>

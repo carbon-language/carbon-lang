@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_EXCEPTIONS_H
-#define LLVM_TOOLS_LLVM_BOLT_EXCEPTIONS_H
+#ifndef BOLT_CORE_EXCEPTIONS_H
+#define BOLT_CORE_EXCEPTIONS_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"

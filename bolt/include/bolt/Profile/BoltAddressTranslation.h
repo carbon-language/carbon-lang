@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BOLTADDRESSTRANSLATION_H
-#define LLVM_TOOLS_LLVM_BOLT_BOLTADDRESSTRANSLATION_H
+#ifndef BOLT_PROFILE_BOLTADDRESSTRANSLATION_H
+#define BOLT_PROFILE_BOLTADDRESSTRANSLATION_H
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"

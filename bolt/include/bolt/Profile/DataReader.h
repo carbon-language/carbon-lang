@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
-#define LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
+#ifndef BOLT_PROFILE_DATA_READER_H
+#define BOLT_PROFILE_DATA_READER_H
 
 #include "bolt/Profile/ProfileReaderBase.h"
 #include "llvm/ADT/DenseMap.h"

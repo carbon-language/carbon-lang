@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_MCF_H
-#define LLVM_TOOLS_LLVM_BOLT_MCF_H
+#ifndef BOLT_PASSES_MCF_H
+#define BOLT_PASSES_MCF_H
 
 namespace llvm {
 namespace bolt {
@@ -44,8 +44,7 @@ void estimateEdgeCounts(BinaryFunction &BF);
 /// that do not account for them.
 void solveMCF(BinaryFunction &BF, MCFCostFunction CostFunction);
 
-}
-}
+} // end namespace bolt
+} // end namespace llvm
 
-
-#endif
+#endif // BOLT_PASSES_MCF_H

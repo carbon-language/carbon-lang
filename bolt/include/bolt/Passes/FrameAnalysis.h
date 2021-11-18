@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEANALYSIS_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEANALYSIS_H
+#ifndef BOLT_PASSES_FRAMEANALYSIS_H
+#define BOLT_PASSES_FRAMEANALYSIS_H
 
 #include "bolt/Passes/StackPointerTracking.h"
 

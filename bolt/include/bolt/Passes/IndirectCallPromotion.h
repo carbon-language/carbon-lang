@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_INDIRECT_CALL_PROMOTION_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_INDIRECT_CALL_PROMOTION_H
+#ifndef BOLT_PASSES_INDIRECT_CALL_PROMOTION_H
+#define BOLT_PASSES_INDIRECT_CALL_PROMOTION_H
 
 #include "bolt/Passes/BinaryPasses.h"
 

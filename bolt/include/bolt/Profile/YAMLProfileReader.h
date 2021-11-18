@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_READER_H
-#define LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_READER_H
+#ifndef BOLT_PROFILE_YAML_PROFILE_READER_H
+#define BOLT_PROFILE_YAML_PROFILE_READER_H
 
 #include "bolt/Profile/ProfileReaderBase.h"
 #include "bolt/Profile/ProfileYAMLMapping.h"

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_DATA_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_DATA_H
+#ifndef BOLT_PASSES_REORDER_DATA_H
+#define BOLT_PASSES_REORDER_DATA_H
 
 #include "bolt/Passes/BinaryPasses.h"
 #include <unordered_map>

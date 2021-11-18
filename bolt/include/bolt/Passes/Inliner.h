@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_INLINER_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_INLINER_H
+#ifndef BOLT_PASSES_INLINER_H
+#define BOLT_PASSES_INLINER_H
 
 #include "bolt/Passes/BinaryPasses.h"
 

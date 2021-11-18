@@ -33,8 +33,8 @@
    +----------------------------------------------------------------------+
 */
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_HFSORT_H
-#define LLVM_TOOLS_LLVM_BOLT_HFSORT_H
+#ifndef BOLT_PASSES_HFSORT_H
+#define BOLT_PASSES_HFSORT_H
 
 #include "bolt/Passes/CallGraph.h"
 
@@ -116,7 +116,7 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg);
 /* Group functions into clusters randomly. */
 std::vector<Cluster> randomClusters(const CallGraph &Cg);
 
-}
-}
+} // end namespace bolt
+} // end namespace llvm
 
-#endif
+#endif // BOLT_PASSES_HFSORT_H

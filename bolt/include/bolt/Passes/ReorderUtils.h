@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_UTILS_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_UTILS_H
+#ifndef BOLT_PASSES_REORDER_UTILS_H
+#define BOLT_PASSES_REORDER_UTILS_H
 
 #include <memory>
 #include <vector>

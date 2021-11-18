@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_IDENTICAL_CODE_FOLDING_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_IDENTICAL_CODE_FOLDING_H
+#ifndef BOLT_PASSES_IDENTICAL_CODE_FOLDING_H
+#define BOLT_PASSES_IDENTICAL_CODE_FOLDING_H
 
 #include "bolt/Core/BinaryFunction.h"
 #include "bolt/Passes/BinaryPasses.h"

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_MCPLUS_H
-#define LLVM_TOOLS_LLVM_BOLT_MCPLUS_H
+#ifndef BOLT_CORE_MCPLUS_H
+#define BOLT_CORE_MCPLUS_H
 
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/MC/MCExpr.h"

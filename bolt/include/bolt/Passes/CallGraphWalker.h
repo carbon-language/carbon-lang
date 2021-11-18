@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPHWALKER_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPHWALKER_H
+#ifndef BOLT_PASSES_CALLGRAPHWALKER_H
+#define BOLT_PASSES_CALLGRAPHWALKER_H
 
 #include <deque>
 #include <functional>

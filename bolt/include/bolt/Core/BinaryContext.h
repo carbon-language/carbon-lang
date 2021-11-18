@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
+#ifndef BOLT_CORE_BINARY_CONTEXT_H
+#define BOLT_CORE_BINARY_CONTEXT_H
 
 #include "bolt/Core/BinaryData.h"
 #include "bolt/Core/BinarySection.h"

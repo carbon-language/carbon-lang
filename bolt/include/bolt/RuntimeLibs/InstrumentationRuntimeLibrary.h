@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_INSTRUMENTATION_RUNTIME_LIBRARY_H
-#define LLVM_TOOLS_LLVM_BOLT_INSTRUMENTATION_RUNTIME_LIBRARY_H
+#ifndef BOLT_RUNTIMELIBS_INSTRUMENTATION_RUNTIME_LIBRARY_H
+#define BOLT_RUNTIMELIBS_INSTRUMENTATION_RUNTIME_LIBRARY_H
 
 #include "bolt/Passes/InstrumentationSummary.h"
 #include "bolt/RuntimeLibs/RuntimeLibrary.h"

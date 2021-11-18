@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_DWARF_REWRITER_H
-#define LLVM_TOOLS_LLVM_BOLT_DWARF_REWRITER_H
+#ifndef BOLT_REWRITE_DWARF_REWRITER_H
+#define BOLT_REWRITE_DWARF_REWRITER_H
 
 #include "bolt/Core/DebugData.h"
 #include "bolt/Rewrite/RewriteInstance.h"

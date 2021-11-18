@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_ALGORITHM_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_ALGORITHM_H
+#ifndef BOLT_PASSES_REORDER_ALGORITHM_H
+#define BOLT_PASSES_REORDER_ALGORITHM_H
 
 #include "bolt/Core/BinaryFunction.h"
 #include <memory>

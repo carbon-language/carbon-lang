@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REGANALYSIS_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REGANALYSIS_H
+#ifndef BOLT_PASSES_REGANALYSIS_H
+#define BOLT_PASSES_REGANALYSIS_H
 
 #include "llvm/ADT/BitVector.h"
 #include <cstdint>

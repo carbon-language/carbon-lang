@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_NAME_RESOLVER_H
-#define LLVM_TOOLS_LLVM_BOLT_NAME_RESOLVER_H
+#ifndef BOLT_UTILS_NAME_RESOLVER_H
+#define BOLT_UTILS_NAME_RESOLVER_H
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"

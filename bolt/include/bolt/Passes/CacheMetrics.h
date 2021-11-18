@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_CACHEMETRICS_H
-#define LLVM_TOOLS_LLVM_BOLT_CACHEMETRICS_H
+#ifndef BOLT_PASSES_CACHEMETRICS_H
+#define BOLT_PASSES_CACHEMETRICS_H
 
 #include <cstdint>
 #include <vector>
@@ -39,4 +39,4 @@ double extTSPScore(uint64_t SrcAddr,
 } // namespace bolt
 } // namespace llvm
 
-#endif //LLVM_CACHEMETRICS_H
+#endif // BOLT_PASSES_CACHEMETRICS_H

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_HEATMAP_H
-#define LLVM_TOOLS_LLVM_BOLT_HEATMAP_H
+#ifndef BOLT_PROFILE_HEATMAP_H
+#define BOLT_PROFILE_HEATMAP_H
 
 #include "llvm/ADT/StringRef.h"
 #include <cstdint>

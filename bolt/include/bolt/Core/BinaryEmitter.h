@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_EMITTER_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_EMITTER_H
+#ifndef BOLT_CORE_BINARY_EMITTER_H
+#define BOLT_CORE_BINARY_EMITTER_H
 
 #include "llvm/ADT/StringRef.h"
 

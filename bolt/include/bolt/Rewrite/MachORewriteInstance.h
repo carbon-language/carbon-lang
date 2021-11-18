@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_MACHO_REWRITE_INSTANCE_H
-#define LLVM_TOOLS_LLVM_BOLT_MACHO_REWRITE_INSTANCE_H
+#ifndef BOLT_REWRITE_MACHO_REWRITE_INSTANCE_H
+#define BOLT_REWRITE_MACHO_REWRITE_INSTANCE_H
 
 #include "bolt/Utils/NameResolver.h"
 #include "llvm/Support/Error.h"

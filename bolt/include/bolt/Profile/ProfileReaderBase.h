@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PROFILE_READER_BASE_H
-#define LLVM_TOOLS_LLVM_BOLT_PROFILE_READER_BASE_H
+#ifndef BOLT_PROFILE_PROFILE_READER_BASE_H
+#define BOLT_PROFILE_PROFILE_READER_BASE_H
 
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Error.h"

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_RETPOLINE_INSERTION_H
-#define LLVM_TOOLS_LLVM_BOLT_RETPOLINE_INSERTION_H
+#ifndef BOLT_PASSES_RETPOLINE_INSERTION_H
+#define BOLT_PASSES_RETPOLINE_INSERTION_H
 
 #include "bolt/Passes/BinaryPasses.h"
 #include <string>
@@ -73,7 +73,8 @@ public:
 
   void runOnFunctions(BinaryContext &BC) override;
 };
+
 } // namespace bolt
 } // namespace llvm
 
-#endif
+#endif // BOLT_PASSES_RETPOLINE_INSERTION_H

@@ -9,8 +9,8 @@
 // BOLT CLI options
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_LLVM_BOLT_COMMAND_LINE_OPTS_H
-#define LLVM_TOOLS_LLVM_BOLT_COMMAND_LINE_OPTS_H
+#ifndef BOLT_UTILS_COMMAND_LINE_OPTS_H
+#define BOLT_UTILS_COMMAND_LINE_OPTS_H
 
 #include "llvm/Support/CommandLine.h"
 

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_FNCTIONS_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_FNCTIONS_H
+#ifndef BOLT_PASSES_REORDER_FUNCTIONS_H
+#define BOLT_PASSES_REORDER_FUNCTIONS_H
 
 #include "bolt/Passes/BinaryFunctionCallGraph.h"
 #include "bolt/Passes/BinaryPasses.h"
@@ -47,4 +47,4 @@ public:
 } // namespace bolt
 } // namespace llvm
 
-#endif
+#endif // BOLT_PASSES_REORDER_FUNCTIONS_H

@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_NAME_SHORTENER_H
-#define LLVM_TOOLS_LLVM_BOLT_NAME_SHORTENER_H
+#ifndef BOLT_UTILS_NAME_SHORTENER_H
+#define BOLT_UTILS_NAME_SHORTENER_H
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"

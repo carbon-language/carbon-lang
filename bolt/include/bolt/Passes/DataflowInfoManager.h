@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_DATAFLOWINFOMANAGER_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_DATAFLOWINFOMANAGER_H
+#ifndef BOLT_PASSES_DATAFLOWINFOMANAGER_H
+#define BOLT_PASSES_DATAFLOWINFOMANAGER_H
 
 #include "bolt/Passes/DominatorAnalysis.h"
 #include "bolt/Passes/LivenessAnalysis.h"

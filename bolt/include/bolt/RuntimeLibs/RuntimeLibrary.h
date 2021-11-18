@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_LINKRUNTIME_H
-#define LLVM_TOOLS_LLVM_BOLT_LINKRUNTIME_H
+#ifndef BOLT_RUNTIMELIBS_RUNTIME_LIBRARY_H
+#define BOLT_RUNTIMELIBS_RUNTIME_LIBRARY_H
 
 #include <llvm/ADT/StringRef.h>
 #include <functional>
@@ -68,4 +68,4 @@ protected:
 } // namespace bolt
 } // namespace llvm
 
-#endif
+#endif // BOLT_RUNTIMELIBS_RUNTIME_LIBRARY_H

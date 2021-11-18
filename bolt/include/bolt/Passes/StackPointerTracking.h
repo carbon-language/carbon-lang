@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_STACKPOINTERTRACKING_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_STACKPOINTERTRACKING_H
+#ifndef BOLT_PASSES_STACKPOINTERTRACKING_H
+#define BOLT_PASSES_STACKPOINTERTRACKING_H
 
 #include "bolt/Passes/DataflowAnalysis.h"
 #include "llvm/Support/CommandLine.h"

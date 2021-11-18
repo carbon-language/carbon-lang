@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
-#define LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
+#ifndef BOLT_CORE_MCPLUSBUILDER_H
+#define BOLT_CORE_MCPLUSBUILDER_H
 
 #include "bolt/Core/MCPlus.h"
 #include "bolt/Core/Relocation.h"

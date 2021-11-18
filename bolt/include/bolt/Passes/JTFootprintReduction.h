@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_JT_FOOTPRINT_REDUCTION_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_JT_FOOTPRINT_REDUCTION_H
+#ifndef BOLT_PASSES_JT_FOOTPRINT_REDUCTION_H
+#define BOLT_PASSES_JT_FOOTPRINT_REDUCTION_H
 
 #include "bolt/Passes/BinaryPasses.h"
 

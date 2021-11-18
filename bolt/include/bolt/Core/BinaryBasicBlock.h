@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
+#ifndef BOLT_CORE_BINARY_BASIC_BLOCK_H
+#define BOLT_CORE_BINARY_BASIC_BLOCK_H
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/StringRef.h"

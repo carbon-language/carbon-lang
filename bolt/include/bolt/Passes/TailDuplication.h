@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_TAILDUPLICATION_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_TAILDUPLICATION_H
+#ifndef BOLT_PASSES_TAILDUPLICATION_H
+#define BOLT_PASSES_TAILDUPLICATION_H
 
 #include "bolt/Passes/BinaryPasses.h"
 

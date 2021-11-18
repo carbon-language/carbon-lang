@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_VENEER_ELIMINATION_H
-#define LLVM_TOOLS_LLVM_BOLT_VENEER_ELIMINATION_H
+#ifndef BOLT_PASSES_VENEER_ELIMINATION_H
+#define BOLT_PASSES_VENEER_ELIMINATION_H
 
 #include "bolt/Passes/BinaryPasses.h"
 
@@ -28,7 +28,8 @@ public:
 
   void runOnFunctions(BinaryContext &BC) override;
 };
+
 } // namespace bolt
 } // namespace llvm
 
-#endif
+#endif // BOLT_PASSES_VENEER_ELIMINATION_H

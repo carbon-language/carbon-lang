@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_DEBUG_DATA_H
-#define LLVM_TOOLS_LLVM_BOLT_DEBUG_DATA_H
+#ifndef BOLT_CORE_DEBUG_DATA_H
+#define BOLT_CORE_DEBUG_DATA_H
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"

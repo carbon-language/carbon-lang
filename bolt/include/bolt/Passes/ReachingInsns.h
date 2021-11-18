@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGINSNS_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGINSNS_H
+#ifndef BOLT_PASSES_REACHINGINSNS_H
+#define BOLT_PASSES_REACHINGINSNS_H
 
 #include "bolt/Passes/DataflowAnalysis.h"
 #include "llvm/Support/CommandLine.h"

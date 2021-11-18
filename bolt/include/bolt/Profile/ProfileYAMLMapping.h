@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PROFILEYAMLMAPPING_H
-#define LLVM_TOOLS_LLVM_BOLT_PROFILEYAMLMAPPING_H
+#ifndef BOLT_PROFILE_PROFILEYAMLMAPPING_H
+#define BOLT_PROFILE_PROFILEYAMLMAPPING_H
 
 #include "bolt/Core/BinaryFunction.h"
 #include "llvm/ADT/StringRef.h"

@@ -9,9 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#ifndef LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_WRITER_H
-#define LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_WRITER_H
+#ifndef BOLT_PROFILE_YAML_PROFILE_WRITER_H
+#define BOLT_PROFILE_YAML_PROFILE_WRITER_H
 
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>

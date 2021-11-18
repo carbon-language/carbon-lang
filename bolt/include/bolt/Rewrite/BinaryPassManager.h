@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_PASS_MANAGER_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_PASS_MANAGER_H
+#ifndef BOLT_REWRITE_BINARY_PASS_MANAGER_H
+#define BOLT_REWRITE_BINARY_PASS_MANAGER_H
 
 #include "bolt/Passes/BinaryPasses.h"
 #include <memory>
@@ -57,4 +57,4 @@ private:
 } // namespace bolt
 } // namespace llvm
 
-#endif
+#endif // BOLT_REWRITE_BINARY_PASS_MANAGER_H

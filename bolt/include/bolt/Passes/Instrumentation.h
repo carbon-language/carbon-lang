@@ -13,8 +13,8 @@
 // runtime/instr.cpp
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_INSTRUMENTATION_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_INSTRUMENTATION_H
+#ifndef BOLT_PASSES_INSTRUMENTATION_H
+#define BOLT_PASSES_INSTRUMENTATION_H
 
 #include "bolt/Passes/BinaryPasses.h"
 #include "bolt/Passes/InstrumentationSummary.h"

@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_EXECUTABLE_FILE_MEMORY_MANAGER_H
-#define LLVM_TOOLS_LLVM_BOLT_EXECUTABLE_FILE_MEMORY_MANAGER_H
+#ifndef BOLT_REWRITE_EXECUTABLE_FILE_MEMORY_MANAGER_H
+#define BOLT_REWRITE_EXECUTABLE_FILE_MEMORY_MANAGER_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"

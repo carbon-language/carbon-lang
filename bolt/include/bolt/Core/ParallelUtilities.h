@@ -12,8 +12,8 @@
 // If the NoThreads flags is passed, work will execute sequentially.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PARALLEL_UTILITIES_H
-#define LLVM_TOOLS_LLVM_BOLT_PARALLEL_UTILITIES_H
+#ifndef BOLT_CORE_PARALLEL_UTILITIES_H
+#define BOLT_CORE_PARALLEL_UTILITIES_H
 
 #include "bolt/Core/MCPlusBuilder.h"
 #include "llvm/Support/CommandLine.h"

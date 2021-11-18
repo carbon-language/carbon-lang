@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_JUMP_TABLE_H
-#define LLVM_TOOLS_LLVM_BOLT_JUMP_TABLE_H
+#ifndef BOLT_CORE_JUMP_TABLE_H
+#define BOLT_CORE_JUMP_TABLE_H
 
 #include "bolt/Core/BinaryData.h"
 #include <map>

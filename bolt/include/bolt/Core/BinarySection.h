@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_SECTION_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_SECTION_H
+#ifndef BOLT_CORE_BINARY_SECTION_H
+#define BOLT_CORE_BINARY_SECTION_H
 
 #include "bolt/Core/DebugData.h"
 #include "bolt/Core/Relocation.h"

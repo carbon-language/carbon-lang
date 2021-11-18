@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGDEFORUSE_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGDEFORUSE_H
+#ifndef BOLT_PASSES_REACHINGDEFORUSE_H
+#define BOLT_PASSES_REACHINGDEFORUSE_H
 
 #include "bolt/Passes/DataflowAnalysis.h"
 #include "bolt/Passes/RegAnalysis.h"

@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
-#define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
+#ifndef BOLT_REWRITE_REWRITE_INSTANCE_H
+#define BOLT_REWRITE_REWRITE_INSTANCE_H
 
 #include "bolt/Core/BinaryContext.h"
 #include "bolt/Utils/NameResolver.h"

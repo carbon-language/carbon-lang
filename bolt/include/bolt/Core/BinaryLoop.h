@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_LOOP_H
-#define LLVM_TOOLS_LLVM_BOLT_BINARY_LOOP_H
+#ifndef BOLT_CORE_BINARY_LOOP_H
+#define BOLT_CORE_BINARY_LOOP_H
 
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Analysis/LoopInfoImpl.h"

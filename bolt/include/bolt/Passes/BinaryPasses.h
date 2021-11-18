@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_BINARY_PASSES_H
-#define LLVM_TOOLS_LLVM_BOLT_PASSES_BINARY_PASSES_H
+#ifndef BOLT_PASSES_BINARY_PASSES_H
+#define BOLT_PASSES_BINARY_PASSES_H
 
 #include "bolt/Core/BinaryContext.h"
 #include "bolt/Core/BinaryFunction.h"

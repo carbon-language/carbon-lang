@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_RELOCATION_H
-#define LLVM_TOOLS_LLVM_BOLT_RELOCATION_H
+#ifndef BOLT_CORE_RELOCATION_H
+#define BOLT_CORE_RELOCATION_H
 
 #include "llvm/ADT/Triple.h"
 

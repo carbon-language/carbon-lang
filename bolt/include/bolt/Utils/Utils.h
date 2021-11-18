@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_UTILS_H
-#define LLVM_TOOLS_LLVM_BOLT_UTILS_H
+#ifndef BOLT_UTILS_UTILS_H
+#define BOLT_UTILS_UTILS_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"

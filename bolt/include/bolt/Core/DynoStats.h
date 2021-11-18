@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_BOLT_DYNO_STATS_H
-#define LLVM_TOOLS_LLVM_BOLT_DYNO_STATS_H
+#ifndef BOLT_CORE_DYNO_STATS_H
+#define BOLT_CORE_DYNO_STATS_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/MC/MCInstPrinter.h"
