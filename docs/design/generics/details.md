@@ -591,12 +591,12 @@ C++, adding `ClassName::` in front of a member name to disambiguate, such as
 
 ### Access
 
-An `impl` must be as public as the type and interface being implemented. If
-either the type or interface is private to a library, then since the only way to
-define the `impl` is to use that private name, the `impl` must be defined
-private to the library as well. Otherwise, the `impl` must be defined in the
-public API file of the library, so it is visible in all places that might use
-it.
+An `impl` must be visible to all code that can see both the type and the
+interface being implemented. If either the type or interface is private to a
+library, then since the only way to define the `impl` is to use that private
+name, the `impl` must be defined private to the library as well. Otherwise, the
+`impl` must be defined in the public API file of the library, so it is visible
+in all places that might use it.
 
 No access control modifiers are allowed on `impl` declarations, an `impl` is
 always visible to the intersection of the visibility of all names used in the
@@ -1819,9 +1819,10 @@ class IntWrapper {
 Adapter types can be used when a library publicly exposes a type, but only wants
 to say that type implements an interface as a private detail internal to the
 implementation of the type. In that case, instead of implementing the interface
-for the public type, create a private adapter for that type and implement the
-interface on that instead. Any member of the class can cast its `me` parameter
-to the adapter type when it wants to make use of the private impl.
+for the public type, the library can create a private adapter for that type and
+implement the interface on that instead. Any member of the class can cast its
+`me` parameter to the adapter type when it wants to make use of the private
+impl.
 
 ```
 // Public, in API file
