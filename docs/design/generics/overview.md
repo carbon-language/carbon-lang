@@ -224,7 +224,7 @@ defined in the library defining either the class or the interface.
 The methods of an interface implemented internally within the class definition
 may be called with the ordinary unqualified member syntax. Methods of all
 implemented interfaces may be called with the
-[qualified member syntax](terminology.md#qualified-an-unqualified-member-names),
+[qualified member syntax](terminology.md#qualified-and-unqualified-member-names),
 whether they are defined internally or externally.
 
 ```
@@ -256,7 +256,7 @@ type is that it must implement the interface `Comparable`.
 
 A type-of-type also defines a set of names and a mapping to corresponding
 qualified names. Those names are used for
-[unqualfied member lookup](terminology.md#qualified-an-unqualified-member-names)
+[unqualfied member lookup](terminology.md#qualified-and-unqualified-member-names)
 in scopes where the value of the type is not known, such as when the type is a
 generic parameter.
 

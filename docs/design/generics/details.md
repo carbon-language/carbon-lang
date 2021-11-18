@@ -168,8 +168,8 @@ the `impl` definition but have defaults. Whether the implementation is defined
 as [internal](terminology.md#internal-impl) or
 [external](terminology.md#external-impl), you may access the `ToString` function
 for a `Song` value `s` by writing a
-[qualified](terminology.md#qualified-an-unqualified-member-names) function call,
-like `s.(ConvertibleToString.ToString)()`.
+[qualified](terminology.md#qualified-and-unqualified-member-names) function
+call, like `s.(ConvertibleToString.ToString)()`.
 
 If `Song` doesn't implement an interface or we would like to use a different
 implementation of that interface, we can define another type that also has the
@@ -1720,8 +1720,9 @@ external impl Window as DrawingContext { ... }
 
 An adapter can make that much more convenient by making a compatible type where
 the interface is [implemented internally](terminology.md#internal-impl). This
-avoids having to [qualify](terminology.md#qualified-an-unqualified-member-names)
-each call to methods in the interface.
+avoids having to
+[qualify](terminology.md#qualified-and-unqualified-member-names) each call to
+methods in the interface.
 
 ```
 adapter DrawInWindow for Window {

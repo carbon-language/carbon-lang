@@ -30,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
     -   [Internal impl](#internal-impl)
     -   [External impl](#external-impl)
--   [Qualified an unqualified member names](#qualified-an-unqualified-member-names)
+-   [Qualified and unqualified member names](#qualified-and-unqualified-member-names)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
 -   [Adapting a type](#adapting-a-type)
@@ -357,14 +357,14 @@ constraint as a way to implement all of the interfaces it requires.
 A type that implements an interface _internally_ has all the named members of
 the interface as named members of the type. This means that the members of the
 interface may be accessed as either
-[unqualified or qualified members](#qualified-an-unqualified-member-names).
+[unqualified or qualified members](#qualified-and-unqualified-member-names).
 
 ### External impl
 
 In contrast, a type that implements an interface _externally_ does not include
 the named members of the interface in the type. The members of the interface are
 still implemented by the type, though, and so may be accessed using the
-[qualified names](#qualified-an-unqualified-member-names) of those members.
+[qualified names](#qualified-and-unqualified-member-names) of those members.
 
 ## Qualified and unqualified member names
 
@@ -478,12 +478,11 @@ of "type erasure" used in Carbon.
 
 ## Archetype
 
-A placeholder type is used when type checking a function in place of a generic type
-parameter. This allows type checking when the specific type to be used is not
-known at type checking time. The type satisfies just its
-constraint and no more, so it acts as the most general type satisfying the
-interface. In this way the archetype is the supertype of all types satisfying
-the interface.
+A placeholder type is used when type checking a function in place of a generic
+type parameter. This allows type checking when the specific type to be used is
+not known at type checking time. The type satisfies just its constraint and no
+more, so it acts as the most general type satisfying the interface. In this way
+the archetype is the supertype of all types satisfying the interface.
 
 In addition to satisfying all the requirements of its constraint, the archetype
 also has the member names of its constraint. Effectively it is considered to
