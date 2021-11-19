@@ -1812,7 +1812,7 @@ only have compile-time and not runtime storage associated with them.
 
 To be consistent with normal
 [class function](/docs/design/classes.md#class-functions) declaration syntax,
-associated class functions are written:
+associated class functions are written using a `fn` declaration:
 
 ```
 interface DeserializeFromString {
@@ -1851,9 +1851,9 @@ that happen to be types. These are particularly interesting since they can be
 used in the signatures of associated methods or functions, to allow the
 signatures of methods to vary from implementation to implementation. We already
 have one example of this: the `Self` type discussed
-[above in the "Interfaces" section](#interfaces). For other cases, we can say
-that the interface declares that each implementation will provide a type under a
-specific name. For example:
+[in the "Interfaces" section](#interfaces). For other cases, we can say that the
+interface declares that each implementation will provide a type under a specific
+name. For example:
 
 ```
 interface StackAssociatedType {
@@ -1900,7 +1900,7 @@ class DynamicArray(T:! Type) {
 ```
 
 **Alternatives considered:** See
-[other syntax options considered for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
+[other syntax options considered in #731 for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
 In particular, it was deemed that
 [Swift's approach of inferring the associated type from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
 was unneeded complexity.
@@ -1917,9 +1917,8 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
 }
 
 var my_array: DynamicArray(i32) = (1, 2, 3);
-// PeekAtTopOfStack's `StackType` is set to
-// `DynamicArray(i32) as StackAssociatedType`.
-// `StackType.ElementType` becomes `i32`.
+// PeekAtTopOfStack's `StackType` is set to `DynamicArray(i32)`
+// with `StackType.ElementType` set to `i32`.
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
@@ -1991,9 +1990,11 @@ interface at most once.
 
 If instead you want a family of related interfaces, one per possible value of a
 type parameter, multiple of which could be implemented for a single type, you
-would use parameterized interfaces. To write a parameterized version the stack
-interface instead of using associated types, write a parameter list after the
-name of the interface instead of the associated type declaration:
+would use
+[parameterized interfaces](terminology.md#interface-type-parameters-versus-associated-types).
+To write a parameterized version the stack interface, instead of using
+associated types, write a parameter list after the name of the interface instead
+of the associated type declaration:
 
 ```
 interface StackParameterized(ElementType:! Type) {
@@ -2055,7 +2056,7 @@ explicit parameters.
 ```
 fn PeekAtTopOfStackParameterized
     [T:! Type, StackType:! StackParameterized(T)]
-    (s: StackType*, _: singleton_type_of(T)) -> T { ... }
+    (s: StackType*, _:! singleton_type_of(T)) -> T { ... }
 
 var produce: Produce = ...;
 var top_fruit: Fruit =
@@ -2064,7 +2065,7 @@ var top_veggie: Veggie =
     PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
 
-The pattern `_: singleton_type_of(T)` is a placeholder syntax for an expression
+The pattern `_:! singleton_type_of(T)` is a placeholder syntax for an expression
 that will only match `T`, until issue
 [#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578)
 is resolved. Using that pattern in the explicit parameter list allows us to make
@@ -2083,8 +2084,8 @@ interface EquatableWith(T:! Type) {
 class Complex {
   var real: f64;
   var imag: f64;
-  // Can implement this interface more than once as long as it has different
-  // arguments.
+  // Can implement this interface more than once
+  // as long as it has different arguments.
   impl as EquatableWith(Complex) { ... }
   impl as EquatableWith(f64) { ... }
 }
@@ -2096,10 +2097,6 @@ This reflects these two properties of these parameters:
 -   They must be resolved at compile-time, and so can't be passed regular
     dynamic values.
 -   We allow either generic or template values to be passed in.
-
-**Context:** See
-[interface type parameters](terminology.md#interface-type-parameters-versus-associated-types)
-in the terminology doc.
 
 **Note:** Interface parameters aren't required to be types, but that is the vast
 majority of cases. As an example, if we had an interface that allowed a type to
@@ -2117,8 +2114,8 @@ interface ReadTupleMember(index:! u32) {
 This requires that the index be known at compile time, but allows different
 indices to be associated with different types.
 
-**Caveat:** When implementing an interface twice for a type, you need to be sure
-that the interface parameters will always be different. For example:
+**Caveat:** When implementing an interface twice for a type, the interface
+parameters are required to always be different. For example:
 
 ```
 interface Map(FromType:! Type, ToType:! Type) {
@@ -2150,8 +2147,6 @@ adapter ReverseLookup(FromType:! Type, ToType:! Type)
 [traits with type parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
 and
 [uses them for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
-Note that Rust further supports defaults for those type parameters (such as
-`Self`).
 
 [Rust uses the term "type parameters"](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#clearer-trait-matching)
 for both interface type parameters and associated types. The difference is that
