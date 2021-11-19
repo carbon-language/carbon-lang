@@ -93,6 +93,8 @@ enum class Operator {
   Ptr,
 };
 
+auto ToString(Operator op) -> std::string_view;
+
 class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)

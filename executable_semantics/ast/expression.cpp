@@ -36,32 +36,25 @@ auto TupleExpressionFromParenContents(
 
 Expression::~Expression() = default;
 
-static void PrintOp(llvm::raw_ostream& out, Operator op) {
+auto ToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
-      out << "+";
-      break;
+      return "+";
     case Operator::Neg:
     case Operator::Sub:
-      out << "-";
-      break;
+      return "-";
     case Operator::Mul:
     case Operator::Deref:
     case Operator::Ptr:
-      out << "*";
-      break;
+      return "*";
     case Operator::Not:
-      out << "not";
-      break;
+      return "not";
     case Operator::And:
-      out << "and";
-      break;
+      return "and";
     case Operator::Or:
-      out << "or";
-      break;
+      return "or";
     case Operator::Eq:
-      out << "==";
-      break;
+      return "==";
   }
 }
 
@@ -117,16 +110,14 @@ void Expression::Print(llvm::raw_ostream& out) const {
       const auto& op = cast<PrimitiveOperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
-          PrintOp(out, op.op());
+          out << ToString(op.op());
           break;
         case 1:
-          PrintOp(out, op.op());
-          out << " " << *op.arguments()[0];
+          out << ToString(op.op()) << " " << *op.arguments()[0];
           break;
         case 2:
-          out << *op.arguments()[0] << " ";
-          PrintOp(out, op.op());
-          out << " " << *op.arguments()[1];
+          out << *op.arguments()[0] << " " << ToString(op.op()) << " "
+              << *op.arguments()[1];
           break;
         default:
           FATAL() << "Unexpected argument count: " << op.arguments().size();

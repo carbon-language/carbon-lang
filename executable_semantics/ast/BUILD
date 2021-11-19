@@ -36,6 +36,38 @@ genrule(
 )
 
 cc_library(
+    name = "ast_test_matchers",
+    testonly = 1,
+    srcs = [
+        "ast_test_matchers_internal.cpp",
+        "ast_test_matchers_internal.h",
+    ],
+    hdrs = ["ast_test_matchers.h"],
+    deps = [
+        ":ast_node",
+        ":declaration",
+        ":expression",
+        ":statement",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "ast_test_matchers_test",
+    srcs = ["ast_test_matchers_test.cpp"],
+    deps = [
+        ":ast_test_matchers",
+        ":declaration",
+        ":expression",
+        ":pattern",
+        ":statement",
+        "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [

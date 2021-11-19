@@ -16,7 +16,8 @@ namespace Carbon {
 class SourceLocation {
  public:
   // The filename should be eternal or arena-allocated to eliminate copies.
-  SourceLocation(const char* filename, int line_num)
+
+  constexpr SourceLocation(const char* filename, int line_num)
       : filename_(filename), line_num_(line_num) {}
   SourceLocation(Nonnull<const std::string*> filename, int line_num)
       : filename_(filename->c_str()), line_num_(line_num) {}

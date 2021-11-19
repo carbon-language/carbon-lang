@@ -7,6 +7,7 @@
 
 #include "executable_semantics/ast/ast_rtti.h"
 #include "executable_semantics/ast/source_location.h"
+#include "llvm/Support/Casting.h"
 
 namespace Carbon {
 
@@ -70,5 +71,41 @@ class AstNode {
 };
 
 }  // namespace Carbon
+
+// Ensure that LLVM casts from AstNode use dynamic_cast, because static_cast
+// doesn't work with a virtual base class.
+namespace llvm {
+template <typename To>
+struct cast_convert_val<To, const Carbon::AstNode*, const Carbon::AstNode*> {
+  using ResultType = typename cast_retty<To, const Carbon::AstNode*>::ret_type;
+  static ResultType doit(const Carbon::AstNode* node) {
+    return dynamic_cast<ResultType>(node);
+  }
+};
+
+template <typename To>
+struct cast_convert_val<To, Carbon::AstNode*, Carbon::AstNode*> {
+  using ResultType = typename cast_retty<To, Carbon::AstNode*>::ret_type;
+  static ResultType doit(Carbon::AstNode* node) {
+    return dynamic_cast<ResultType>(node);
+  }
+};
+
+template <typename To>
+struct cast_convert_val<To, const Carbon::AstNode, const Carbon::AstNode> {
+  using ResultType = typename cast_retty<To, const Carbon::AstNode>::ret_type;
+  static ResultType doit(const Carbon::AstNode& node) {
+    return dynamic_cast<ResultType>(node);
+  }
+};
+
+template <typename To>
+struct cast_convert_val<To, Carbon::AstNode, Carbon::AstNode> {
+  using ResultType = typename cast_retty<To, Carbon::AstNode>::ret_type;
+  static ResultType doit(Carbon::AstNode& node) {
+    return dynamic_cast<ResultType>(node);
+  }
+};
+}  // namespace llvm
 
 #endif  // EXECUTABLE_SEMANTICS_AST_AST_NODE_H_
