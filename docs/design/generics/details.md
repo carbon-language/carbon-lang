@@ -2251,16 +2251,16 @@ but play no role in selecting the `impl`.
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
-defined in some library that must be imported in any code that looks up whether
-that interface is implemented for that type. This requires that `impl` is
-defined in the same library that defines the interface or one of the names
-needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
-`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
-this `impl` to import the _definitions_ of all of those names. Seeing a forward
-declaration of these names is insufficient, since you can presumably see forward
-declarations without seeing an `impl` with the definition. This accomplishes a
-few goals:
+`A(B(C(D), E))`. To satisfy the [orphan rule for coherence](#orphan-rule), that
+`impl` must be defined in some library that must be imported in any code that
+looks up whether that interface is implemented for that type. This requires that
+`impl` is defined in the same library that defines the interface or one of the
+names needed by the type. That is, the `impl` must be defined with one of `I`,
+`T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking
+up this `impl` to import the _definitions_ of all of those names. Seeing a
+forward declaration of these names is insufficient, since you can presumably see
+forward declarations without seeing an `impl` with the definition. This
+accomplishes a few goals:
 
 -   The compiler can check that there is only one definition of any `impl` that
     is actually used, avoiding
@@ -2275,8 +2275,8 @@ few goals:
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 Note that [the rules for specialization](#lookup-resolution-and-specialization)
-do allow there to be more than one `impl` to be defined for a type, as long as
-one can unambiguously be picked as most specific.
+do allow there to be more than one `impl` to be defined for a type, by
+unambiguously picking one as most specific.
 
 **References:** Implementation coherence is
 [defined in terminology](terminology.md#coherence), and is
