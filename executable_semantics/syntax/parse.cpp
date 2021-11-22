@@ -12,9 +12,9 @@
 
 namespace Carbon {
 
-auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name,
-           bool trace) -> std::variant<AST, SyntaxErrorCode> {
-  FILE* input_file = fopen(input_file_name.c_str(), "r");
+auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
+    -> std::variant<AST, SyntaxErrorCode> {
+  FILE* input_file = fopen(std::string(input_file_name).c_str(), "r");
   if (input_file == nullptr) {
     FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
                                   << "': " << std::strerror(errno);

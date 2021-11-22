@@ -4,6 +4,8 @@
 
 #include "executable_semantics/interpreter/exec_program.h"
 
+#include <variant>
+
 #include "common/check.h"
 #include "common/ostream.h"
 #include "executable_semantics/common/arena.h"
@@ -11,29 +13,26 @@
 #include "executable_semantics/interpreter/resolve_control_flow.h"
 #include "executable_semantics/interpreter/resolve_names.h"
 #include "executable_semantics/interpreter/type_checker.h"
+#include "executable_semantics/syntax/parse.h"
 
 namespace Carbon {
 
-// Adds builtins, currently only Print(). Note Print() is experimental, not
-// standardized, but is made available for printing state in tests.
+static constexpr std::string_view PreludeFile =
+    "executable_semantics/interpreter/prelude.carbon";
+
+// Adds the Carbon prelude to `declarations`.
 static void AddIntrinsics(Nonnull<Arena*> arena,
                           std::vector<Nonnull<Declaration*>>* declarations) {
-  SourceLocation source_loc("<intrinsic>", 0);
-  std::vector<Nonnull<Pattern*>> print_params = {arena->New<BindingPattern>(
-      source_loc, "format_str",
-      arena->New<ExpressionPattern>(
-          arena->New<StringTypeLiteral>(source_loc)))};
-  auto print_return = arena->New<Block>(
-      source_loc, std::vector<Nonnull<Statement*>>({arena->New<Return>(
-                      source_loc,
-                      arena->New<IntrinsicExpression>(
-                          IntrinsicExpression::Intrinsic::Print),
-                      false)}));
-  auto print = arena->New<FunctionDeclaration>(
-      source_loc, "Print", std::vector<Nonnull<GenericBinding*>>(),
-      arena->New<TuplePattern>(source_loc, print_params),
-      ReturnTerm::Explicit(arena->New<TupleLiteral>(source_loc)), print_return);
-  declarations->insert(declarations->begin(), print);
+  std::variant<AST, SyntaxErrorCode> parse_result =
+      Parse(arena, PreludeFile, false);
+  if (std::holds_alternative<SyntaxErrorCode>(parse_result)) {
+    // Try again with tracing, to help diagnose the problem.
+    Parse(arena, PreludeFile, true);
+    FATAL() << "Failed to parse prelude.";
+  }
+  const AST& prelude = std::get<AST>(parse_result);
+  declarations->insert(declarations->begin(), prelude.declarations.begin(),
+                       prelude.declarations.end());
 }
 
 void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {

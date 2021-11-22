@@ -401,19 +401,29 @@ class IntrinsicExpression : public Expression {
     Print,
   };
 
-  explicit IntrinsicExpression(Intrinsic intrinsic)
-      : AstNode(AstNodeKind::IntrinsicExpression,
-                SourceLocation("<intrinsic>", 0)),
-        intrinsic_(intrinsic) {}
+  explicit IntrinsicExpression(std::string_view intrinsic_name,
+                               Nonnull<TupleLiteral*> args,
+                               SourceLocation source_loc)
+      : AstNode(AstNodeKind::IntrinsicExpression, source_loc),
+        intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
+        args_(args) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntrinsicExpression(node->kind());
   }
 
   auto intrinsic() const -> Intrinsic { return intrinsic_; }
+  auto args() const -> const TupleLiteral& { return *args_; }
+  auto args() -> TupleLiteral& { return *args_; }
 
  private:
+  // Returns the enumerator corresponding to the intrinsic named `name`,
+  // or raises a fatal compile error if there is no such enumerator.
+  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
+      -> Intrinsic;
+
   Intrinsic intrinsic_;
+  Nonnull<TupleLiteral*> args_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as
