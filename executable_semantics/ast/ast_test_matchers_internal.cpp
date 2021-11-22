@@ -4,7 +4,11 @@
 
 #include "executable_semantics/ast/ast_test_matchers_internal.h"
 
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
+
 namespace Carbon {
+namespace TestingInternal {
 
 auto BlockContentsMatcher::MatchAndExplain(
     Nonnull<const AstNode*> node, ::testing::MatchResultListener* out) const
@@ -99,39 +103,51 @@ void MatchesReturnMatcher::DescribeToImpl(std::ostream* out,
 }
 
 namespace {
-// Equivalent to llvm::ListSeparator, but not limited to llvm streams.
-class ListSeparator {
+// llvm::raw_ostream implementation backed by a MatchResultListener, so
+// we can use tools like llvm::ListSeparator.
+class RawListenerOstream : public llvm::raw_ostream {
  public:
-  ListSeparator(std::string separator)
-      : separator_(std::move(separator)), should_print_(false) {}
+  explicit RawListenerOstream(Nonnull<::testing::MatchResultListener*> listener)
+      : out_(listener->stream()), fake_pos_(0) {}
 
-  template <typename OStream>
-  friend OStream& operator<<(OStream& out, ListSeparator& sep) {
-    if (sep.should_print_) {
-      out << sep.separator_;
+  void write_impl(const char* ptr, size_t size) override {
+    if (out_ == nullptr) {
+      fake_pos_ += size;
+    } else {
+      out_->write(ptr, size);
     }
-    sep.should_print_ = true;
-    return out;
   }
 
+  auto current_pos() const -> uint64_t override {
+    if (out_ == nullptr) {
+      return fake_pos_;
+    } else {
+      return out_->tellp();
+    }
+  }
+
+  ~RawListenerOstream() override { flush(); }
+
  private:
-  std::string separator_;
-  bool should_print_;
+  std::ostream* out_;
+  // fake_pos_ tracks the notional output position when out_ is null.
+  uint64_t fake_pos_;
 };
 }  // namespace
 
 auto MatchesFunctionDeclarationMatcher::MatchAndExplain(
     const AstNode* node, ::testing::MatchResultListener* listener) const
     -> bool {
+  RawListenerOstream out(listener);
   const auto* decl = llvm::dyn_cast<FunctionDeclaration>(node);
   if (decl == nullptr) {
-    *listener << "which is not a function declaration";
+    out << "which is not a function declaration";
     return false;
   }
-  *listener << "which is a function declaration ";
-  ListSeparator sep(", and");
+  out << "which is a function declaration ";
+  llvm::ListSeparator sep(", and");
   if (name_matcher_.has_value()) {
-    *listener << sep << "whose name ";
+    out << sep << "whose name ";
     if (!name_matcher_->MatchAndExplain(decl->name(), listener)) {
       // We short-circuit here because if the name doesn't match, that's
       // probably the only information the user cares about.
@@ -140,12 +156,12 @@ auto MatchesFunctionDeclarationMatcher::MatchAndExplain(
   }
   bool matched = true;
   if (body_matcher_.has_value()) {
-    *listener << sep;
+    out << sep;
     if (!decl->body().has_value()) {
-      *listener << "that doesn't have a body";
+      out << "that doesn't have a body";
       matched = false;
     } else {
-      *listener << "whose body ";
+      out << "whose body ";
       if (!body_matcher_->MatchAndExplain(**decl->body(), listener)) {
         matched = false;
       }
@@ -156,16 +172,18 @@ auto MatchesFunctionDeclarationMatcher::MatchAndExplain(
 
 void MatchesFunctionDeclarationMatcher::DescribeToImpl(std::ostream* out,
                                                        bool negated) const {
-  *out << "is " << (negated ? "not " : "") << "a function declaration ";
-  ListSeparator sep(", and");
+  llvm::raw_os_ostream raw_out(*out);
+  raw_out << "is " << (negated ? "not " : "") << "a function declaration ";
+  llvm::ListSeparator sep(", and");
   if (name_matcher_.has_value()) {
-    *out << sep << "whose name ";
+    raw_out << sep << "whose name ";
     name_matcher_->DescribeTo(out);
   }
   if (body_matcher_.has_value()) {
-    *out << sep << "whose body ";
+    raw_out << sep << "whose body ";
     body_matcher_->DescribeTo(out);
   }
 }
 
+}  // namespace TestingInternal
 }  // namespace Carbon
