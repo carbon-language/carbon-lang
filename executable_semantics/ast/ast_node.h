@@ -45,6 +45,9 @@ class AstNode {
   auto operator=(AstNode&&) -> AstNode& = delete;
   virtual ~AstNode() = 0;
 
+  virtual void Print(llvm::raw_ostream& out) const = 0;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
   // Returns an enumerator specifying the concrete type of this node.
   //
   // Abstract subclasses of AstNode will provide their own `kind()` method

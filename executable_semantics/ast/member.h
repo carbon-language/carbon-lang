@@ -30,8 +30,7 @@ class Member : public virtual AstNode, public NamedEntity {
   Member(const Member&) = delete;
   auto operator=(const Member&) -> Member& = delete;
 
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMember(node->kind());

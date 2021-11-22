@@ -435,6 +435,8 @@ auto Interpreter::StepLvalue() -> Transition {
     case ExpressionKind::IntrinsicExpression:
       FATAL_RUNTIME_ERROR_NO_LINE()
           << "Can't treat expression as lvalue: " << exp;
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented: " << exp;
   }
 }
 
@@ -705,6 +707,8 @@ auto Interpreter::StepExp() -> Transition {
       CHECK(act.pos() == 0);
       return Done{arena_->New<StringType>()};
     }
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented: " << exp;
   }  // switch (exp->kind)
 }
 

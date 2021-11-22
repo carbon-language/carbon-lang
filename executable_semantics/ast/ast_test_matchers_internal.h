@@ -12,6 +12,7 @@
 
 #include <ostream>
 
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
@@ -198,6 +199,69 @@ class MatchesFunctionDeclarationMatcher {
 
   std::optional<::testing::Matcher<std::string>> name_matcher_;
   std::optional<::testing::Matcher<AstNode>> body_matcher_;
+};
+
+class MatchesUnimplementedExpressionMatcher {
+ public:
+  using is_gtest_matcher = void;
+
+  MatchesUnimplementedExpressionMatcher(
+      std::string label,
+      ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>>
+          children_matcher)
+      : label_(std::move(label)),
+        children_matcher_(std::move(children_matcher)) {}
+
+  void DescribeTo(std::ostream* out) const {
+    DescribeToImpl(out, /*negated=*/false);
+  }
+
+  void DescribeNegationTo(std::ostream* out) const {
+    DescribeToImpl(out, /*negated=*/true);
+  }
+
+  auto MatchAndExplain(const AstNode& node,
+                       ::testing::MatchResultListener* listener) const -> bool {
+    return MatchAndExplain(&node, listener);
+  }
+
+  auto MatchAndExplain(const AstNode* node,
+                       ::testing::MatchResultListener* listener) const -> bool;
+
+ private:
+  void DescribeToImpl(std::ostream* out, bool negated) const;
+
+  std::string label_;
+  ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>> children_matcher_;
+};
+
+class ASTDeclarationsMatcher {
+ public:
+  using is_gtest_matcher = void;
+
+  explicit ASTDeclarationsMatcher(
+      ::testing::Matcher<std::vector<Nonnull<Declaration*>>>
+          declarations_matcher)
+      : declarations_matcher_(std::move(declarations_matcher)) {}
+
+  void DescribeTo(std::ostream* out) const {
+    *out << "AST declarations ";
+    declarations_matcher_.DescribeTo(out);
+  }
+
+  void DescribeNegationTo(std::ostream* out) const {
+    *out << "AST declarations ";
+    declarations_matcher_.DescribeNegationTo(out);
+  }
+
+  auto MatchAndExplain(const AST& ast,
+                       ::testing::MatchResultListener* listener) const -> bool {
+    *listener << "whose declarations ";
+    return declarations_matcher_.MatchAndExplain(ast.declarations, listener);
+  }
+
+ private:
+  ::testing::Matcher<std::vector<Nonnull<Declaration*>>> declarations_matcher_;
 };
 
 }  // namespace Carbon

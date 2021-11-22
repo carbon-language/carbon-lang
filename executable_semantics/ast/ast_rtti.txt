@@ -50,5 +50,6 @@ abstract class Expression : AstNode;
   class TypeTypeLiteral : Expression;
   class IdentifierExpression : Expression;
   class IntrinsicExpression : Expression;
+  class UnimplementedExpression : Expression;
 abstract class Member : AstNode;
   class FieldMember : Member, NamedEntity;

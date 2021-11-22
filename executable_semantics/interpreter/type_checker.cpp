@@ -712,6 +712,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     case ExpressionKind::ContinuationTypeLiteral:
       SetStaticType(e, arena_->New<TypeType>());
       return TCResult(types);
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented: " << *e;
   }
 }
 

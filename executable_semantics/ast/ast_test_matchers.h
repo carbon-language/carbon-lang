@@ -116,6 +116,24 @@ inline auto MatchesFunctionDeclaration() -> MatchesFunctionDeclarationMatcher {
   return MatchesFunctionDeclarationMatcher();
 }
 
+// Matches an UnimplementedExpression with the given label, whose children
+// match `children_matcher`.
+inline auto MatchesUnimplementedExpression(
+    std::string label,
+    ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>>
+        children_matcher) -> MatchesUnimplementedExpressionMatcher {
+  return MatchesUnimplementedExpressionMatcher(std::move(label),
+                                               std::move(children_matcher));
+}
+
+// Matches an `AST` whose declarations match the given matcher. Unlike other
+// matchers in this file, this matcher does not match pointers.
+inline auto ASTDeclarations(
+    ::testing::Matcher<std::vector<Nonnull<Declaration*>>> declarations_matcher)
+    -> ASTDeclarationsMatcher {
+  return ASTDeclarationsMatcher(std::move(declarations_matcher));
+}
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_AST_AST_TEST_MATCHERS_H_

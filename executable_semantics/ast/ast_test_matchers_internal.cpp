@@ -168,4 +168,27 @@ void MatchesFunctionDeclarationMatcher::DescribeToImpl(std::ostream* out,
   }
 }
 
+auto MatchesUnimplementedExpressionMatcher::MatchAndExplain(
+    const AstNode* node, ::testing::MatchResultListener* listener) const
+    -> bool {
+  const auto* unimplemented = llvm::dyn_cast<UnimplementedExpression>(node);
+  if (unimplemented == nullptr) {
+    *listener << "is not an UnimplementedExpression";
+    return false;
+  }
+  if (unimplemented->label() != label_) {
+    *listener << "is not labeled " << label_;
+    return false;
+  }
+  *listener << "is an unimplemented " << label_ << " node whose children ";
+  return children_matcher_.MatchAndExplain(unimplemented->children(), listener);
+}
+
+void MatchesUnimplementedExpressionMatcher::DescribeToImpl(std::ostream* out,
+                                                           bool negated) const {
+  *out << "is " << (negated ? "not " : "") << "an unimplemented " << label_
+       << " node whose children ";
+  children_matcher_.DescribeTo(out);
+}
+
 }  // namespace Carbon

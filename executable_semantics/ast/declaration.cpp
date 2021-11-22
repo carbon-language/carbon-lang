@@ -4,6 +4,7 @@
 
 #include "executable_semantics/ast/declaration.h"
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
@@ -32,7 +33,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       const auto& choice = cast<ChoiceDeclaration>(*this);
       out << "choice " << choice.name() << " {\n";
       for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
-        out << "alt " << alt->name() << " " << alt->signature() << ";\n";
+        out << *alt << ";\n";
       }
       out << "}\n";
       break;
@@ -44,6 +45,10 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       break;
     }
   }
+}
+
+void GenericBinding::Print(llvm::raw_ostream& out) const {
+  out << name() << ":! " << type();
 }
 
 void ReturnTerm::Print(llvm::raw_ostream& out) const {
@@ -63,14 +68,9 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   out << "fn " << name_ << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";
-    unsigned int i = 0;
+    llvm::ListSeparator sep;
     for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
-      if (i != 0) {
-        out << ", ";
-      }
-      out << deduced->name() << ":! ";
-      deduced->type().Print(out);
-      ++i;
+      out << sep << *deduced;
     }
     out << "]";
   }
@@ -82,6 +82,10 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   } else {
     out << ";\n";
   }
+}
+
+void AlternativeSignature::Print(llvm::raw_ostream& out) const {
+  out << "alt " << name() << " " << signature();
 }
 
 }  // namespace Carbon

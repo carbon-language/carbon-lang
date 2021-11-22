@@ -17,6 +17,7 @@ namespace Carbon {
 namespace {
 
 using ::testing::_;
+using ::testing::ElementsAre;
 using ::testing::IsEmpty;
 using ::testing::Not;
 
@@ -122,6 +123,39 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   EXPECT_THAT(forward_decl, Not(MatchesFunctionDeclaration().WithBody(_)));
 
   EXPECT_THAT(body, Not(MatchesFunctionDeclaration()));
+}
+
+TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
+  IntLiteral two(DummyLoc, 2);
+  IntLiteral three(DummyLoc, 3);
+  UnimplementedExpression unimplemented(DummyLoc, "DummyLabel", &two, &three);
+
+  EXPECT_THAT(unimplemented, MatchesUnimplementedExpression(
+                                 "DummyLabel", ElementsAre(MatchesLiteral(2),
+                                                           MatchesLiteral(3))));
+  EXPECT_THAT(
+      &unimplemented,
+      MatchesUnimplementedExpression(
+          "DummyLabel", ElementsAre(MatchesLiteral(2), MatchesLiteral(3))));
+  EXPECT_THAT(
+      unimplemented,
+      Not(MatchesUnimplementedExpression(
+          "WrongLabel", ElementsAre(MatchesLiteral(2), MatchesLiteral(3)))));
+  EXPECT_THAT(unimplemented,
+              Not(MatchesUnimplementedExpression("DummyLabel", IsEmpty())));
+  EXPECT_THAT(two,
+              Not(MatchesUnimplementedExpression("DummyLabel", IsEmpty())));
+}
+
+TEST(ASTDeclarationsTest, BasicUsage) {
+  TuplePattern params(DummyLoc, {});
+  Block body(DummyLoc, {});
+  FunctionDeclaration decl(DummyLoc, "Foo", {}, &params,
+                           ReturnTerm::Omitted(DummyLoc), &body);
+  AST ast = {.declarations = {&decl}};
+
+  EXPECT_THAT(ast, ASTDeclarations(ElementsAre(MatchesFunctionDeclaration())));
+  EXPECT_THAT(ast, Not(ASTDeclarations(IsEmpty())));
 }
 
 }  // namespace
