@@ -67,7 +67,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Same implementation restriction](#same-implementation-restriction)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
-    -   [Type facet of another type](#type-facet-of-another-type)
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
@@ -2273,10 +2272,11 @@ interface {
 }
 ```
 
-To name such a constraint, you may use a `let` or a `constraint` declaration:
+To name such a constraint, you may use a `let template` or a `constraint`
+declaration:
 
 ```
-let Point2DInterface:! auto = NSpacePoint where .N = 2;
+let template Point2DInterface:! auto = NSpacePoint where .N = 2;
 constraint Point2DInterface {
   extends NSpacePoint where .N = 2;
 }
@@ -2316,11 +2316,11 @@ fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
 }
 ```
 
-To name these sorts of constraints, we could use `let` statements or
+To name these sorts of constraints, we could use `let template` declarations or
 `constraint` definitions:
 
 ```
-let IntStack:! auto = Stack where .ElementType = i32;
+let template IntStack:! auto = Stack where .ElementType = i32;
 constraint IntStack {
   extends Stack where .ElementType = i32;
 }
@@ -2354,7 +2354,7 @@ interface PairInterface {
 }
 ```
 
-we can constrain them to be equal in a function declaration:
+we can constrain them to be equal in a function signature:
 
 ```
 fn F[MatchedPairType:! PairInterface where .Left == .Right]
@@ -2372,7 +2372,7 @@ interface HasEqualPair {
 This kind of constraint can be named:
 
 ```
-let EqualPair:! auto =
+let template EqualPair:! auto =
     PairInterface where .Left == .Right;
 constraint EqualPair {
   extends PairInterface where .Left == .Right;
@@ -2494,7 +2494,7 @@ We would like to be able to name this constraint, defining a
 `ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
 
 ```
-let RandomAccessContainer:! auto =
+let template RandomAccessContainer:! auto =
     ContainerInterface where .IteratorType is RandomAccessIterator;
 // or
 constraint RandomAccessContainer {
@@ -2591,11 +2591,11 @@ interface Container {
 These recursive constraints can be named:
 
 ```
-let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
+let template RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
 constraint RealAbs {
   extends HasAbs where .MagnitudeType == Self;
 }
-let ContainerIsSlice:! auto =
+let template ContainerIsSlice:! auto =
     Container where .SliceType == .Self;
 constraint ContainerIsSlice {
   extends Container where .SliceType == Self;
@@ -2603,9 +2603,7 @@ constraint ContainerIsSlice {
 ```
 
 Note that using the `constraint` approach we can name these constraints using
-`Self` instead of `.Self`, since they are facets of the same type: `Self` is the
-facet corresponding to the containing interface and `.Self` is the facet
-corresponding to the interface being extended.
+`Self` instead of `.Self`, since they refer to the same type.
 
 #### Parameterized type implements interface
 
@@ -2663,7 +2661,7 @@ fn PrintValueOrDefault[KeyType:! Printable,
     (map: HashMap(KeyType, ValueT), key: KeyT);
 ```
 
-The `KeyType` in these declarations does not satisfy the requirements of
+The `KeyType` in these declarations does not visibly satisfy the requirements of
 `HashMap`, which requires the type implement `Hashable` and other interfaces:
 
 ```
@@ -2836,22 +2834,22 @@ only relies on one equality:
 
 ```
 fn F[T:! Transitive](t: T) {
-  // Allowed
+  // ✅ Allowed
   t.TakesC(t.GetA() as T.B);
 
-  // Allowed
+  // ✅ Allowed
   let b: T.B = t.GetA();
   t.TakesC(b);
 
-  // Not allowed: t.TakesC(t.GetA());
+  // ❌ Not allowed: t.TakesC(t.GetA());
 }
 ```
 
 A value of type `A`, such as the return value of `GetA()`, has the API of `P`.
 Any such value also implements `Q`, and since the compiler can see that by way
 of a single `where` equality, values of type `A` are treated as if they
-implement `Q` externally. However, the compiler will require a cast to `B` or
-`C` to see that the type implements `R`.
+implement `Q` [externally](terminology.md#external-impl). However, the compiler
+will require a cast to `B` or `C` to see that the type implements `R`.
 
 ```
 fn TakesPQR[U:! P & Q & R](u: U);
@@ -2859,24 +2857,24 @@ fn TakesPQR[U:! P & Q & R](u: U);
 fn G[T:! Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // Allowed: `T.A` implements `P`.
+  // ✅ Allowed: `T.A` implements `P`.
   a.InP();
 
-  // Allowed: `T.A` implements `Q` externally.
+  // ✅ Allowed: `T.A` implements `Q` externally.
   a.(Q.InQ)();
 
-  // Not allowed: a.InQ();
+  // ❌ Not allowed: a.InQ();
 
-  // Allowed: values of type `T.A` may be cast
-  // to `T.B`, which implements `Q`.
+  // ✅ Allowed: values of type `T.A` may be cast
+  // to `T.B`, which implements `Q` internally.
   (a as T.B).InQ();
 
-  // Allowed: `T.B` implements `R` externally.
+  // ✅ Allowed: `T.B` implements `R` externally.
   (a as T.B).(R.InR)();
 
-  // Not allowed: TakesPQR(a);
+  // ❌ Not allowed: TakesPQR(a);
 
-  // Allowed: `T.B` implements `P`, `Q`, and
+  // ✅ Allowed: `T.B` implements `P`, `Q`, and
   // `R`, though the implementations of `P`
   // and `R` are external.
   TakesPQR(a as T.B);
@@ -2903,14 +2901,14 @@ then the following would be legal statements in `H`:
 
 ```
 fn H[C: Commute](c: C) {
-  // Legal: argument has type `C.X.X.Y`
+  // ✅ Legal: argument has type `C.X.X.Y`
   c.TakesXXY(c.GetX().GetX().GetY());
 
-  // Legal: argument has type `C.X.Y.X` which is equal
+  // ✅ Legal: argument has type `C.X.Y.X` which is equal
   // to `C.X.X.Y` following only one `where` clause.
   c.TakesXXY(c.GetX().GetY().GetX());
 
-  // Legal: cast is legal since it matches a `where`
+  // ✅ Legal: cast is legal since it matches a `where`
   // clause, and produces an argument that has type
   // `C.X.Y.X`.
   c.TakesXXY(c.GetY().GetX().GetX() as C.X.Y.X);
@@ -2973,7 +2971,7 @@ interface Commute {
   let X:! Commute;
   let Y:! Commute where .X == X.Y;
   ...
-  // Legal:
+  // ✅ Legal:
   observe X.X.Y.Y == X.Y.X.Y == Y.X.X.Y == X.Y.Y.X;
 }
 ```
@@ -3001,7 +2999,7 @@ interface Transitive {
   fn GetA[me: Self]() -> A;
   fn TakesC[me:Self](c: C);
 
-  // Without this `observe` statement, the
+  // Without this `observe` declaration, the
   // calls in `F` below would not be allowed.
   observe A == B == C;
 }
@@ -3011,18 +3009,18 @@ fn TakesPQR[U:! P & Q & R](u: U);
 fn F[T:! Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // Allowed: `T.A` == `T.C`
+  // ✅ Allowed: `T.A` == `T.C`
   t.TakesC(a);
   a.(R.InR());
 
-  // Allowed: `T.A` implements `P`,
+  // ✅ Allowed: `T.A` implements `P`,
   // `T.A` == `T.B` that implements `Q`, and
   // `T.A` == `T.C` that implements `R`.
   TakesPQR(a);
 }
 ```
 
-Since adding an `observe` statement only adds external implementations of
+Since adding an `observe` declaration only adds external implementations of
 interfaces to generic types, they may be added without breaking existing code.
 
 ## Other constraints as type-of-types
@@ -3172,8 +3170,10 @@ And then to package this functionality as an implementation of `Comparable`, we
 combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
-adapter ThenCompare(T:! Type,
-                    CompareList:! List(CompatibleWith(T) & Comparable)) for T {
+adapter ThenCompare(
+      T:! Type,
+      CompareList:! List(CompatibleWith(T) & Comparable))
+    for T {
   impl as Comparable {
     fn Compare[me: Self](rhs: Self) -> CompareResult {
       for (let U:! auto in CompareList) {
@@ -3187,17 +3187,14 @@ adapter ThenCompare(T:! Type,
   }
 }
 
-let SongByArtistThenTitle: auto = ThenCompare(Song, (SongByArtist, SongByTitle));
+let template SongByArtistThenTitle: auto =
+    ThenCompare(Song, (SongByArtist, SongByTitle));
 var s1: Song = ...;
-var s2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
-assert((s1 as SongByArtistThenTitle).Compare(s2) == CompareResult.Less);
+var s2: SongByArtistThenTitle =
+    Song(...) as SongByArtistThenTitle;
+assert((s1 as SongByArtistThenTitle).Compare(s2) ==
+       CompareResult.Less);
 ```
-
-### Type facet of another type
-
-Similar to `CompatibleWith(T)`, `FacetOf(T)` introduces an equivalence
-relationship between types. `T1 is FacetOf(T2)` if both `T1` and `T2` are facets
-of the same type.
 
 ### Sized types and type-of-types
 
