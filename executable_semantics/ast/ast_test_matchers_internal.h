@@ -20,6 +20,7 @@
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
+namespace TestingInternal {
 
 // Matches a Block based on its contents.
 class BlockContentsMatcher {
@@ -264,6 +265,7 @@ class ASTDeclarationsMatcher {
   ::testing::Matcher<std::vector<Nonnull<Declaration*>>> declarations_matcher_;
 };
 
+}  // namespace TestingInternal
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_AST_AST_TEST_MATCHERS_INTERNAL_H_
