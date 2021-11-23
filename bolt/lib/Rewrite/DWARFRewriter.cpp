@@ -839,8 +839,7 @@ createKnownSectionsMap(const MCObjectFileInfo &MCOFI) {
       {"debug_str.dwo", {MCOFI.getDwarfStrDWOSection(), DW_SECT_EXT_unknown}},
       {"debug_loc.dwo", {MCOFI.getDwarfLocDWOSection(), DW_SECT_EXT_LOC}},
       {"debug_abbrev.dwo", {MCOFI.getDwarfAbbrevDWOSection(), DW_SECT_ABBREV}},
-      {"debug_line.dwo",
-       {MCOFI.getDwarfLineDWOSection(), DW_SECT_EXT_unknown}}};
+      {"debug_line.dwo", {MCOFI.getDwarfLineDWOSection(), DW_SECT_LINE}}};
   return KnownSectionsTemp;
 }
 
