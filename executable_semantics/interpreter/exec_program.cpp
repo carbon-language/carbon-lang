@@ -17,17 +17,29 @@
 
 namespace Carbon {
 
-static constexpr std::string_view PreludeFile =
-    "executable_semantics/interpreter/prelude.carbon";
+// The Carbon prelude.
+//
+// TODO: Make this a separate source file that's embedded in the interpreter.
+// See https://github.com/bazelbuild/rules_cc/issues/41 for discussion of a
+// possible mechanism for doing that.
+static constexpr std::string_view Prelude = R"(
+package Carbon api;
+
+// Note that Print is experimental, and not part of an accepted proposal, but
+// is included here for printing state in tests.
+fn Print(format_str: String) {
+  __intrinsic_print(format_str);
+}
+)";
 
 // Adds the Carbon prelude to `declarations`.
 static void AddIntrinsics(Nonnull<Arena*> arena,
                           std::vector<Nonnull<Declaration*>>* declarations) {
   std::variant<AST, SyntaxErrorCode> parse_result =
-      Parse(arena, PreludeFile, false);
+      ParseFromString(arena, "<prelude>", Prelude, false);
   if (std::holds_alternative<SyntaxErrorCode>(parse_result)) {
     // Try again with tracing, to help diagnose the problem.
-    Parse(arena, PreludeFile, true);
+    ParseFromString(arena, "<prelude>", Prelude, true);
     FATAL() << "Failed to parse prelude.";
   }
   const AST& prelude = std::get<AST>(parse_result);
