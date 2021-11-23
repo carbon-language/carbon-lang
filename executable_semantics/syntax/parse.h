@@ -18,13 +18,13 @@ using SyntaxErrorCode = int;
 
 // Returns the AST representing the contents of the named file, or an error code
 // if parsing fails. Allocations go into the provided arena.
-auto Parse(Nonnull<Arena*> arena, const std::string& input_file_name,
-           bool trace) -> std::variant<Carbon::AST, SyntaxErrorCode>;
+auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
+    -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
 // Equivalent to `Parse`, but parses the contents of `file_contents`.
 // `input_file_name` is used only for reporting source locations, and does
 // not need to name a real file.
-auto ParseFromString(Nonnull<Arena*> arena, const std::string& input_file_name,
+auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
                      std::string_view file_contents, bool trace)
     -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
