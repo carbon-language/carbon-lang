@@ -19,9 +19,9 @@ namespace Carbon {
 
 // The Carbon prelude.
 //
-// TODO: Make this a separate source file that's embedded in the interpreter.
-// See https://github.com/bazelbuild/rules_cc/issues/41 for discussion of a
-// possible mechanism for doing that.
+// TODO: Make this a separate source file that's embedded in the interpreter
+// at build time. See https://github.com/bazelbuild/rules_cc/issues/41 for a
+// possible mechanism.
 static constexpr std::string_view Prelude = R"(
 package Carbon api;
 

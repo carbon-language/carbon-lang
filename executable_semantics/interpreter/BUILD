@@ -65,7 +65,6 @@ cc_library(
     name = "exec_program",
     srcs = ["exec_program.cpp"],
     hdrs = ["exec_program.h"],
-    data = ["prelude.carbon"],
     deps = [
         ":interpreter",
         ":resolve_control_flow",
