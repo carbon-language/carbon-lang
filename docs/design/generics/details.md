@@ -3177,7 +3177,7 @@ adapter ThenCompare(
   impl as Comparable {
     fn Compare[me: Self](rhs: Self) -> CompareResult {
       for (let U:! auto in CompareList) {
-        var result: CompareResult = (me as U).Compare(rhs);
+        var result: CompareResult = (me as U).Compare(rhs as U);
         if (result != CompareResult.Equal) {
           return result;
         }
@@ -3213,7 +3213,7 @@ What is the size of a type?
 -   It could be unknown which category the type is in. In practice this will be
     essentially equivalent to having dynamic size.
 
-A type is called "sized" if it is in the first two categories, and "unsized"
+A type is called _sized_ if it is in the first two categories, and _unsized_
 otherwise. Note: something with size 0 is still considered "sized". The
 type-of-type `Sized` is defined as follows:
 
@@ -3260,7 +3260,7 @@ fn G[T: DefaultConstructible](x: T*) {
   var y: T = T.Default();
 }
 
-var z: Name;
+var z: Name = Name.Default();;
 // ✅ Allowed: `Name` is sized and implements `DefaultConstructible`.
 G(&z);
 ```
@@ -3307,8 +3307,9 @@ multiple instantiations of the function in this case.
 **Note:** To achieve this goal, the user will not even be allowed to destroy a
 value of type `T` in this case.
 
-**Open question:** Should `TypeId` be implemented externally for types to avoid
-name pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
+**Open question:** Should `TypeId` be
+[implemented externally](terminology.md#external-impl) for types to avoid name
+pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
 
 ## Future work
