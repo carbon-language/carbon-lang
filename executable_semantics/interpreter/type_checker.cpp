@@ -111,7 +111,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -349,7 +349,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -412,7 +412,7 @@ auto TypeChecker::Substitute(TypeEnv dict, Nonnull<const Value*> type)
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
