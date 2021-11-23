@@ -93,6 +93,9 @@ enum class Operator {
   Ptr,
 };
 
+// Returns the lexical representation of `op`, such as "+" for `Add`.
+auto ToString(Operator op) -> std::string_view;
+
 class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)
