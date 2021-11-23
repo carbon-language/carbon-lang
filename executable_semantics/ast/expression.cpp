@@ -21,8 +21,8 @@ using llvm::isa;
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
     -> Intrinsic {
-  static const std::map<std::string_view, Intrinsic>& intrinsic_map = {
-      {"print", Intrinsic::Print}};
+  static const auto& intrinsic_map =
+      *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
