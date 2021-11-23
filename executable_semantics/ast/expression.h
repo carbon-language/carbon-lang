@@ -418,9 +418,15 @@ class IntrinsicExpression : public Expression {
   Intrinsic intrinsic_;
 };
 
+// An expression whose semantics have not been implemented. This can be used
+// as a placeholder during development, in order to implement and test parsing
+// of a new expression syntax without having to implement its semantics.
 class UnimplementedExpression : public Expression {
  public:
-  // All `children` must be convertible to Nonnull<AstNode*>.
+  // Constructs an UnimplementedExpression with the given label and the given
+  // children, which must all be convertible to Nonnull<AstNode*>. The label
+  // should correspond roughly to the name of the class that will eventually
+  // replace this usage of UnimplementedExpression.
   template <typename... Children>
   UnimplementedExpression(SourceLocation source_loc, std::string label,
                           Children... children)
