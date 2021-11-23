@@ -21,6 +21,13 @@ using SyntaxErrorCode = int;
 auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
     -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
+// Equivalent to `Parse`, but parses the contents of `file_contents`.
+// `input_file_name` is used only for reporting source locations, and does
+// not need to name a real file.
+auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
+                     std::string_view file_contents, bool trace)
+    -> std::variant<Carbon::AST, SyntaxErrorCode>;
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_SYNTAX_PARSE_H_
