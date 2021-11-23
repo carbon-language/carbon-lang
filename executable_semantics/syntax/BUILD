@@ -12,6 +12,16 @@ cc_library(
     deps = ["//common:check"],
 )
 
+cc_test(
+    name = "parse_test",
+    srcs = ["parse_test.cpp"],
+    deps = [
+        ":syntax",
+        "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "syntax",
     srcs = [
