@@ -71,7 +71,6 @@ cc_library(
         ":resolve_names",
         ":type_checker",
         "//executable_semantics/ast",
-        "//executable_semantics/syntax",
     ],
 )
 

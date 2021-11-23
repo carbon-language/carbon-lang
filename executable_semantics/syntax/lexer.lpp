@@ -227,9 +227,15 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
  /* `*` operator case 5: */
 <INITIAL,AFTER_OPERAND>"*" { return SIMPLE_TOKEN(UNARY_STAR); }
 
-{sized_type_literal} { return ARG_TOKEN(sized_type_literal, yytext); }
+{sized_type_literal} {
+  BEGIN(AFTER_OPERAND);
+  return ARG_TOKEN(sized_type_literal, yytext);
+}
 
-{intrinsic_identifier} { return ARG_TOKEN(intrinsic_identifier, yytext); }
+{intrinsic_identifier} {
+  BEGIN(AFTER_OPERAND);
+  return ARG_TOKEN(intrinsic_identifier, yytext);
+}
 
 {identifier} {
   BEGIN(AFTER_OPERAND);
