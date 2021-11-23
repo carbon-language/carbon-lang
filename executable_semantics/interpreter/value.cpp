@@ -186,8 +186,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionValue:
       out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
-    case Value::Kind::PointerValue:
-      out << "ptr<" << cast<PointerValue>(*this).value() << ">";
+    case Value::Kind::LValue:
+      out << "ptr<" << cast<LValue>(*this).address() << ">";
       break;
     case Value::Kind::BoolType:
       out << "Bool";
@@ -425,7 +425,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
       FATAL() << "ValueEqual does not support this kind of value: " << *v1;

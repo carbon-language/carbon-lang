@@ -36,7 +36,7 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
-    PointerValue,
+    LValue,
     BoolValue,
     StructValue,
     NominalClassValue,
@@ -132,17 +132,17 @@ class FunctionValue : public Value {
   Nonnull<const FunctionDeclaration*> declaration_;
 };
 
-// A pointer value.
-class PointerValue : public Value {
+// The value of a location in memory.
+class LValue : public Value {
  public:
-  explicit PointerValue(Address value)
-      : Value(Kind::PointerValue), value_(std::move(value)) {}
+  explicit LValue(Address value)
+      : Value(Kind::LValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::PointerValue;
+    return value->kind() == Kind::LValue;
   }
 
-  auto value() const -> const Address& { return value_; }
+  auto address() const -> const Address& { return value_; }
 
  private:
   Address value_;

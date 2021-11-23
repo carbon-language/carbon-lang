@@ -75,9 +75,6 @@ class Interpreter {
   auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
                 SourceLocation source_loc) -> Nonnull<const Value*>;
 
-  void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
-                         SourceLocation source_loc);
-
   // Returns the result of converting `value` to type `destination_type`.
   auto Convert(Nonnull<const Value*> value,
                Nonnull<const Value*> destination_type) const
