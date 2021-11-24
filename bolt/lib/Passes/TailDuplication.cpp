@@ -256,7 +256,7 @@ TailDuplication::aggressiveCodeToDuplicate(BinaryBasicBlock &BB) const {
   while (CurrBB) {
     BlocksToDuplicate.push_back(CurrBB);
 
-    if (BB.hasJumpTable()) {
+    if (CurrBB->hasJumpTable()) {
       BlocksToDuplicate.clear();
       break;
     }
