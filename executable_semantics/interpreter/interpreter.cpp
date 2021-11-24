@@ -302,6 +302,9 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
+      CHECK(cast<IdentifierExpression>(exp).has_named_entity())
+          << "Identifier '" << exp << "' at " << exp.source_loc()
+          << " was not resolved";
       Address pointer =
           GetFromEnv(exp.source_loc(), cast<IdentifierExpression>(exp).name());
       Nonnull<const Value*> v = arena_->New<LValue>(pointer);
@@ -511,6 +514,9 @@ void Interpreter::StepExp() {
     case ExpressionKind::IdentifierExpression: {
       CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
+      CHECK(ident.has_named_entity())
+          << "Identifier '" << exp << "' at " << exp.source_loc()
+          << " was not resolved";
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       Address pointer = GetFromEnv(exp.source_loc(), ident.name());
       return todo_.FinishAction(heap_.Read(pointer, exp.source_loc()));

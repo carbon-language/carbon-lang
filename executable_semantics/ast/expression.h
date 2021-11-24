@@ -21,6 +21,7 @@
 namespace Carbon {
 
 class Value;
+class NamedEntity;
 
 class Expression : public virtual AstNode {
  public:
@@ -108,8 +109,25 @@ class IdentifierExpression : public Expression {
 
   auto name() const -> const std::string& { return name_; }
 
+  // Returns the NamedEntity this identifier refers to. Cannot be called before
+  // name resolution.
+  auto named_entity() const -> const NamedEntity& { return **named_entity_; }
+
+  // Sets the value returned by named_entity. Can be called only once,
+  // during name resolution.
+  void set_named_entity(Nonnull<const NamedEntity*> named_entity) {
+    CHECK(!named_entity_.has_value());
+    named_entity_ = named_entity;
+  }
+
+  // Returns true if set_named_entity has been called. Should be used only
+  // for debugging purposes.
+  // TODO: remove this once we no longer need the CHECKs that use it.
+  auto has_named_entity() const -> bool { return named_entity_.has_value(); }
+
  private:
   std::string name_;
+  std::optional<Nonnull<const NamedEntity*>> named_entity_;
 };
 
 class FieldAccessExpression : public Expression {
