@@ -14,6 +14,6 @@ package ExecutableSemanticsTest api;
 var x: i32 = 0;
 var x: i32 = 0;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }
