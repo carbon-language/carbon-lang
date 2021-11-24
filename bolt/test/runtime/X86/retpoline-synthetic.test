@@ -5,14 +5,20 @@ REQUIRES: x86_64-linux
 
 RUN: %clangxx %S/Inputs/retpoline_synthetic.cpp -fno-jump-tables -Wl,-q,-znow \
 RUN:   -O2 -o %t.exe
-RUN: llvm-bolt %t.exe -o %t -insert-retpolines -trap-old-code &> %t.log &&\
-RUN: (echo "callq count:" ; (llvm-objdump -d %t | grep -c "callq  \*"))  &>>  %t.log ;\
-RUN: (echo "jmpq count:"  ; (llvm-objdump -d -j ".text"  %t | grep -c "jmpq   \*"))  &>> %t.log  ;\
-RUN: (echo "running binary" ; %t 1000 3  ) &>> %t.log &&  FileCheck %s -input-file %t.log
+RUN: llvm-bolt %t.exe -o %t -insert-retpolines -trap-old-code
 
-CHECK:      callq count:
-CHECK-NEXT: 0
-CHECK-NEXT: jmpq count:
-CHECK-NEXT: 0
-CHECK-NEXT: running binary
-CHECK-NEXT: 30000000
+# Check indirect calls in the original binary
+RUN: llvm-objdump -d %t.exe | FileCheck %s -check-prefix=CHECK-CALL-ORIG
+CHECK-CALL-ORIG: callq  *
+# No indirect jumps
+RUN: llvm-objdump -d -j ".text" %t | FileCheck %s -check-prefix=CHECK-JUMP-ORIG
+CHECK-JUMP-ORIG-NOT: jmpq   *
+
+# Check that there are no indirect calls or jumps in the resulting binary
+RUN: llvm-objdump -d %t | FileCheck %s -check-prefix=CHECK-CALL
+CHECK-CALL-NOT: callq  *
+RUN: llvm-objdump -d -j ".text" %t | FileCheck %s -check-prefix=CHECK-JUMP
+CHECK-JUMP-NOT: jmpq   *
+
+RUN: %t 1000 3 | FileCheck %s
+CHECK: 30000000
