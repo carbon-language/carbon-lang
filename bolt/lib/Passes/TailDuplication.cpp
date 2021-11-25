@@ -387,6 +387,10 @@ void TailDuplication::runOnFunction(BinaryFunction &Function) {
     if (BB->hasJumpTable())
       continue;
 
+    // Skip not-in-layout, i.e. unreachable, blocks.
+    if (BB->getLayoutIndex() >= BlockLayout.size())
+      continue;
+
     // and we are estimating that this sucessor is not already in the same cache
     // line
     BinaryBasicBlock *Succ = BB->getSuccessor();
