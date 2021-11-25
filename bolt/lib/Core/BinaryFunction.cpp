@@ -2176,12 +2176,6 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     PrevBB = BB;
   }
 
-  if (!IsPrevFT) {
-    // Possibly a call that does not return.
-    LLVM_DEBUG(dbgs() << "last block was marked as a fall-through in " << *this
-                      << '\n');
-  }
-
   // Assign landing pads and throwers info.
   recomputeLandingPads();
 
