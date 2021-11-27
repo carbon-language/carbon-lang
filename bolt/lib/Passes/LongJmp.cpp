@@ -131,15 +131,16 @@ BinaryBasicBlock *LongJmpPass::lookupStubFromGroup(
   const StubGroupTy &Candidates = CandidatesIter->second;
   if (Candidates.empty())
     return nullptr;
-  const StubTy *Cand = std::lower_bound(
+  auto Cand = std::lower_bound(
       Candidates.begin(), Candidates.end(), std::make_pair(DotAddress, nullptr),
       [&](const std::pair<uint64_t, BinaryBasicBlock *> &LHS,
           const std::pair<uint64_t, BinaryBasicBlock *> &RHS) {
         return LHS.first < RHS.first;
       });
+  if (Cand == Candidates.end())
+    return nullptr;
   if (Cand != Candidates.begin()) {
-    const StubTy *LeftCand = Cand;
-    --LeftCand;
+    const StubTy *LeftCand = std::prev(Cand);
     if (Cand->first - DotAddress > DotAddress - LeftCand->first)
       Cand = LeftCand;
   }
