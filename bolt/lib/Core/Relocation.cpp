@@ -11,6 +11,7 @@
 #include "bolt/Core/Relocation.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Object/ELF.h"
 
 using namespace llvm;
 using namespace bolt;
@@ -87,6 +88,7 @@ bool isSupportedAArch64(uint64_t Type) {
 size_t getSizeForTypeX86(uint64_t Type) {
   switch (Type) {
   default:
+    errs() << object::getELFRelocationTypeName(ELF::EM_X86_64, Type) << '\n';
     llvm_unreachable("unsupported relocation type");
   case ELF::R_X86_64_8:
   case ELF::R_X86_64_PC8:
@@ -112,7 +114,7 @@ size_t getSizeForTypeX86(uint64_t Type) {
 size_t getSizeForTypeAArch64(uint64_t Type) {
   switch (Type) {
   default:
-    dbgs() << "Reloc num: " << Type << "\n";
+    errs() << object::getELFRelocationTypeName(ELF::EM_AARCH64, Type) << '\n';
     llvm_unreachable("unsupported relocation type");
   case ELF::R_AARCH64_ABS16:
     return 2;
@@ -231,6 +233,7 @@ uint64_t extractValueX86(uint64_t Type, uint64_t Contents, uint64_t PC) {
 uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
   switch (Type) {
   default:
+    errs() << object::getELFRelocationTypeName(ELF::EM_AARCH64, Type) << '\n';
     llvm_unreachable("unsupported relocation type");
   case ELF::R_AARCH64_ABS16:
   case ELF::R_AARCH64_ABS32:
