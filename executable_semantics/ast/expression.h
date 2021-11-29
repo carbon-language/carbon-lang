@@ -431,8 +431,7 @@ class UnimplementedExpression : public Expression {
   UnimplementedExpression(SourceLocation source_loc, std::string label,
                           Children... children)
       : AstNode(AstNodeKind::UnimplementedExpression, source_loc),
-        label_(std::move(label)),
-        children_() {
+        label_(std::move(label)) {
     AddChildren(children...);
   }
 
