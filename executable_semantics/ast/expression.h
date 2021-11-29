@@ -22,18 +22,18 @@ namespace Carbon {
 
 class Value;
 
-// The value category of a Carbon expression indicates whether it evaluates
-// to a variable or a value. A variable can be mutated, and can have its
-// address taken, whereas a value cannot.
-enum class ValueCategory {
-  // A variable. This roughly corresponds to a C/C++ lvalue.
-  Var,
-  // A value. This roughly corresponds to a C/C++ rvalue.
-  Let,
-};
-
 class Expression : public virtual AstNode {
  public:
+  // The value category of a Carbon expression indicates whether it evaluates
+  // to a variable or a value. A variable can be mutated, and can have its
+  // address taken, whereas a value cannot.
+  enum class ValueCategory {
+    // A variable. This roughly corresponds to a C/C++ lvalue.
+    Var,
+    // A value. This roughly corresponds to a C/C++ rvalue.
+    Let,
+  };
+
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const;
