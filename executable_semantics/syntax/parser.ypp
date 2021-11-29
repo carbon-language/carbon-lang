@@ -89,6 +89,7 @@
 
 %token <int> integer_literal
 %token <std::string> identifier
+%token <std::string> intrinsic_identifier
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
@@ -302,6 +303,8 @@ expression:
 | paren_expression { $$ = $1; }
 | struct_literal { $$ = $1; }
 | struct_type_literal { $$ = $1; }
+| intrinsic_identifier tuple
+    { $$ = arena->New<IntrinsicExpression>($1, $2, context.source_loc()); }
 | expression EQUAL_EQUAL expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
