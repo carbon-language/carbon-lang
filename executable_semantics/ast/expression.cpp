@@ -4,6 +4,7 @@
 
 #include "executable_semantics/ast/expression.h"
 
+#include <map>
 #include <optional>
 
 #include "executable_semantics/common/arena.h"
@@ -16,6 +17,19 @@ namespace Carbon {
 
 using llvm::cast;
 using llvm::isa;
+
+auto IntrinsicExpression::FindIntrinsic(std::string_view name,
+                                        SourceLocation source_loc)
+    -> Intrinsic {
+  static const auto& intrinsic_map =
+      *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
+  name.remove_prefix(std::strlen("__intrinsic_"));
+  auto it = intrinsic_map.find(name);
+  if (it == intrinsic_map.end()) {
+    FATAL_COMPILATION_ERROR(source_loc) << "Unknown intrinsic '" << name << "'";
+  }
+  return it->second;
+}
 
 auto ExpressionFromParenContents(
     Nonnull<Arena*> arena, SourceLocation source_loc,
