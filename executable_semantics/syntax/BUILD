@@ -25,6 +25,7 @@ cc_test(
 cc_library(
     name = "parse_test_matchers",
     testonly = 1,
+    srcs = ["parse_test_matchers_internal.h"],
     hdrs = ["parse_test_matchers.h"],
     deps = [
         ":syntax",

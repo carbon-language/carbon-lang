@@ -16,11 +16,11 @@ using ::testing::ElementsAre;
 
 TEST(UnimplementedExampleTest, VerifyPrecedence) {
   static constexpr std::string_view Program = R"(
-package ExecutableSemanticsTest api;
-fn Main() -> i32 {
-  return 1 __unimplemented_example_infix 2 + 3;
-}
-)";
+    package ExecutableSemanticsTest api;
+    fn Main() -> i32 {
+      return 1 __unimplemented_example_infix 2 + 3;
+    }
+  )";
   Arena arena;
   EXPECT_THAT(ParseFromString(&arena, "dummy.carbon", Program, false),
               ParsedAs(ASTDeclarations(

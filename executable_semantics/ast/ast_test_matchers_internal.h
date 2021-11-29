@@ -22,30 +22,63 @@
 namespace Carbon {
 namespace TestingInternal {
 
-// Matches a Block based on its contents.
-class BlockContentsMatcher {
+// Googletest matcher which matches AstNodes according to a specified policy.
+// A MatchPolicy must provide two methods:
+//
+// void DescribeTo(std::ostream* out, bool negated)
+// auto MatchAndExplain(Nonnull<const AstNode*> node,
+//                      ::testing::MatchResultListener* out) const -> bool
+//
+// MatchAndExplain has the same requirements as in a GoogleTest matcher.
+// DescribeTo has the same requirements as in a GoogleTest matcher when
+// `negated` is false, and the same requirements as DescribeNegationTo when
+// `negated` is true.
+template <typename MatchPolicy>
+class AstNodeMatcher {
  public:
   using is_gtest_matcher = void;
 
-  // Constructs a matcher which matches a Block node whose .statements() matches
-  // `matcher`.
-  explicit BlockContentsMatcher(
-      ::testing::Matcher<llvm::ArrayRef<Nonnull<const Statement*>>> matcher)
-      : matcher_(std::move(matcher)) {}
+  explicit AstNodeMatcher(MatchPolicy policy) : policy_(std::move(policy)) {}
 
   void DescribeTo(std::ostream* out) const {
-    *out << "is a Block whose statements collection ";
-    matcher_.DescribeTo(out);
+    policy_.DescribeTo(out, /*negated=*/false);
   }
 
   void DescribeNegationTo(std::ostream* out) const {
-    *out << "is not a Block whose statements collection ";
-    matcher_.DescribeTo(out);
+    policy_.DescribeTo(out, /*negated=*/true);
   }
 
   auto MatchAndExplain(const AstNode& node,
                        ::testing::MatchResultListener* out) const -> bool {
-    return MatchAndExplain(&node, out);
+    return policy_.MatchAndExplain(&node, out);
+  }
+
+  auto MatchAndExplain(Nonnull<const AstNode*> node,
+                       ::testing::MatchResultListener* out) const -> bool {
+    return policy_.MatchAndExplain(node, out);
+  }
+
+ private:
+  MatchPolicy policy_;
+};
+
+// Explicit deduction guide, to document that CTAD support is intended.
+template <typename MatchPolicy>
+AstNodeMatcher(MatchPolicy policy) -> AstNodeMatcher<MatchPolicy>;
+
+// Matches a Block based on its contents.
+class BlockContentsMatchPolicy {
+ public:
+  // Constructs a policy which matches a Block node whose .statements() matches
+  // `matcher`.
+  explicit BlockContentsMatchPolicy(
+      ::testing::Matcher<llvm::ArrayRef<Nonnull<const Statement*>>> matcher)
+      : matcher_(std::move(matcher)) {}
+
+  void DescribeTo(std::ostream* out, bool negated) const {
+    *out << "is " << (negated ? "not " : "")
+         << "a Block whose statements collection ";
+    matcher_.DescribeTo(out);
   }
 
   auto MatchAndExplain(Nonnull<const AstNode*> node,
@@ -56,110 +89,65 @@ class BlockContentsMatcher {
 };
 
 // Matches an IntLiteral.
-class MatchesIntLiteralMatcher {
+class MatchesIntLiteralPolicy {
  public:
-  using is_gtest_matcher = void;
+  // Constructs a policy which matches an IntLiteral whose value() is `value`.
+  explicit MatchesIntLiteralPolicy(int value) : value_(value) {}
 
-  // Constructs a matcher which matches an IntLiteral whose value() is `value`.
-  explicit MatchesIntLiteralMatcher(int value) : value_(value) {}
-
-  void DescribeTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/false);
-  }
-
-  void DescribeNegationTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/true);
-  }
-
-  auto MatchAndExplain(const AstNode& node,
-                       ::testing::MatchResultListener* listener) const -> bool {
-    return MatchAndExplain(&node, listener);
+  void DescribeTo(std::ostream* out, bool negated) const {
+    *out << "is " << (negated ? "not " : "") << "a literal " << value_;
   }
 
   auto MatchAndExplain(const AstNode* node,
                        ::testing::MatchResultListener* listener) const -> bool;
 
  private:
-  void DescribeToImpl(std::ostream* out, bool negated) const {
-    *out << "is " << (negated ? "not " : "") << "a literal " << value_;
-  }
-
   int value_;
 };
 
 // Matches a PrimitiveOperatorExpression that has two operands.
-class BinaryOperatorExpressionMatcher {
+class BinaryOperatorExpressionMatchPolicy {
  public:
-  using is_gtest_matcher = void;
-
-  // Constructs a matcher which matches a PrimitiveOperatorExpression whose
+  // Constructs a policy which matches a PrimitiveOperatorExpression whose
   // operator is `op`, and which has two operands that match `lhs` and `rhs`
   // respectively.
-  explicit BinaryOperatorExpressionMatcher(Operator op,
-                                           ::testing::Matcher<AstNode> lhs,
-                                           ::testing::Matcher<AstNode> rhs)
+  explicit BinaryOperatorExpressionMatchPolicy(Operator op,
+                                               ::testing::Matcher<AstNode> lhs,
+                                               ::testing::Matcher<AstNode> rhs)
       : op_(op), lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
-  void DescribeTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/false);
-  }
-
-  void DescribeNegationTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/true);
-  }
-
-  auto MatchAndExplain(const AstNode& node,
-                       ::testing::MatchResultListener* out) const -> bool {
-    return MatchAndExplain(&node, out);
-  }
+  void DescribeTo(std::ostream* out, bool negated) const;
 
   auto MatchAndExplain(Nonnull<const AstNode*> node,
                        ::testing::MatchResultListener* out) const -> bool;
 
  private:
-  void DescribeToImpl(std::ostream* out, bool negated) const;
-
   Operator op_;
   ::testing::Matcher<AstNode> lhs_;
   ::testing::Matcher<AstNode> rhs_;
 };
 
 // Matches a Return node.
-class MatchesReturnMatcher {
+class MatchesReturnPolicy {
  public:
-  using is_gtest_matcher = void;
+  // Constructs a policy which matches a Return statement that has no operand.
+  explicit MatchesReturnPolicy() = default;
 
-  // Constructs a matcher which matches a Return statement that has no operand.
-  explicit MatchesReturnMatcher() = default;
-
-  // Constructs a matcher which matches a Return statement that has an explicit
+  // Constructs a policy which matches a Return statement that has an explicit
   // operand that matches `matcher`.
-  explicit MatchesReturnMatcher(::testing::Matcher<AstNode> matcher)
+  explicit MatchesReturnPolicy(::testing::Matcher<AstNode> matcher)
       : matcher_(std::move(matcher)) {}
 
-  void DescribeTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/false);
-  }
-
-  void DescribeNegationTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/true);
-  }
-
-  auto MatchAndExplain(const AstNode& node,
-                       ::testing::MatchResultListener* listener) const -> bool {
-    return MatchAndExplain(&node, listener);
-  }
+  void DescribeTo(std::ostream* out, bool negated) const;
 
   auto MatchAndExplain(const AstNode* node,
                        ::testing::MatchResultListener* listener) const -> bool;
 
  private:
-  void DescribeToImpl(std::ostream* out, bool negated) const;
-
   std::optional<::testing::Matcher<AstNode>> matcher_;
 };
 
-// Matches a FunctionDeclaration. See documentation for
+// Googletest matcher which matches a FunctionDeclaration. See documentation for
 // MatchesFunctionDeclaration in ast_test_matchers.h.
 class MatchesFunctionDeclarationMatcher {
  public:
@@ -202,44 +190,35 @@ class MatchesFunctionDeclarationMatcher {
   std::optional<::testing::Matcher<AstNode>> body_matcher_;
 };
 
-class MatchesUnimplementedExpressionMatcher {
+// Matches an UnimplementedExpression.
+class MatchesUnimplementedExpressionPolicy {
  public:
-  using is_gtest_matcher = void;
-
-  MatchesUnimplementedExpressionMatcher(
+  // Constructs a policy which matches an UnimplementedExpression that has the
+  // given label, and whose children match children_matcher.
+  MatchesUnimplementedExpressionPolicy(
       std::string label,
       ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>>
           children_matcher)
       : label_(std::move(label)),
         children_matcher_(std::move(children_matcher)) {}
 
-  void DescribeTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/false);
-  }
+  void DescribeTo(std::ostream* out, bool negated) const;
 
-  void DescribeNegationTo(std::ostream* out) const {
-    DescribeToImpl(out, /*negated=*/true);
-  }
-
-  auto MatchAndExplain(const AstNode& node,
-                       ::testing::MatchResultListener* listener) const -> bool {
-    return MatchAndExplain(&node, listener);
-  }
-
-  auto MatchAndExplain(const AstNode* node,
+  auto MatchAndExplain(Nonnull<const AstNode*> node,
                        ::testing::MatchResultListener* listener) const -> bool;
 
  private:
-  void DescribeToImpl(std::ostream* out, bool negated) const;
-
   std::string label_;
   ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>> children_matcher_;
 };
 
+// Googletest matcher which matches an `AST`.
 class ASTDeclarationsMatcher {
  public:
   using is_gtest_matcher = void;
 
+  // Constructs a matcher which matches an `AST` whose `declarations` member
+  // matches `declarations_matcher`
   explicit ASTDeclarationsMatcher(
       ::testing::Matcher<std::vector<Nonnull<Declaration*>>>
           declarations_matcher)

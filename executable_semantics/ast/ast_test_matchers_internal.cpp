@@ -10,7 +10,7 @@
 namespace Carbon {
 namespace TestingInternal {
 
-auto BlockContentsMatcher::MatchAndExplain(
+auto BlockContentsMatchPolicy::MatchAndExplain(
     Nonnull<const AstNode*> node, ::testing::MatchResultListener* out) const
     -> bool {
   const auto* block = llvm::dyn_cast<Block>(node);
@@ -22,7 +22,7 @@ auto BlockContentsMatcher::MatchAndExplain(
   return matcher_.MatchAndExplain(block->statements(), out);
 }
 
-auto MatchesIntLiteralMatcher::MatchAndExplain(
+auto MatchesIntLiteralPolicy::MatchAndExplain(
     const AstNode* node, ::testing::MatchResultListener* listener) const
     -> bool {
   const auto* literal = llvm::dyn_cast<IntLiteral>(node);
@@ -35,7 +35,7 @@ auto MatchesIntLiteralMatcher::MatchAndExplain(
   return matched;
 }
 
-auto BinaryOperatorExpressionMatcher::MatchAndExplain(
+auto BinaryOperatorExpressionMatchPolicy::MatchAndExplain(
     Nonnull<const AstNode*> node, ::testing::MatchResultListener* out) const
     -> bool {
   const auto* op = llvm::dyn_cast<PrimitiveOperatorExpression>(node);
@@ -60,7 +60,7 @@ auto BinaryOperatorExpressionMatcher::MatchAndExplain(
   return matched;
 }
 
-void BinaryOperatorExpressionMatcher::DescribeToImpl(std::ostream* out,
+void BinaryOperatorExpressionMatchPolicy::DescribeTo(std::ostream* out,
                                                      bool negated) const {
   *out << "is " << (negated ? "not " : "") << "a " << ToString(op_)
        << " expression whose ";
@@ -70,7 +70,7 @@ void BinaryOperatorExpressionMatcher::DescribeToImpl(std::ostream* out,
   rhs_.DescribeTo(out);
 }
 
-auto MatchesReturnMatcher::MatchAndExplain(
+auto MatchesReturnPolicy::MatchAndExplain(
     const AstNode* node, ::testing::MatchResultListener* listener) const
     -> bool {
   const auto* ret = llvm::dyn_cast<Return>(node);
@@ -91,8 +91,7 @@ auto MatchesReturnMatcher::MatchAndExplain(
   }
 }
 
-void MatchesReturnMatcher::DescribeToImpl(std::ostream* out,
-                                          bool negated) const {
+void MatchesReturnPolicy::DescribeTo(std::ostream* out, bool negated) const {
   *out << "is " << (negated ? "not " : "") << "a return statement ";
   if (matcher_.has_value()) {
     *out << "whose operand ";
@@ -185,7 +184,7 @@ void MatchesFunctionDeclarationMatcher::DescribeToImpl(std::ostream* out,
   }
 }
 
-auto MatchesUnimplementedExpressionMatcher::MatchAndExplain(
+auto MatchesUnimplementedExpressionPolicy::MatchAndExplain(
     const AstNode* node, ::testing::MatchResultListener* listener) const
     -> bool {
   const auto* unimplemented = llvm::dyn_cast<UnimplementedExpression>(node);
@@ -201,8 +200,8 @@ auto MatchesUnimplementedExpressionMatcher::MatchAndExplain(
   return children_matcher_.MatchAndExplain(unimplemented->children(), listener);
 }
 
-void MatchesUnimplementedExpressionMatcher::DescribeToImpl(std::ostream* out,
-                                                           bool negated) const {
+void MatchesUnimplementedExpressionPolicy::DescribeTo(std::ostream* out,
+                                                      bool negated) const {
   *out << "is " << (negated ? "not " : "") << "an unimplemented " << label_
        << " node whose children ";
   children_matcher_.DescribeTo(out);
