@@ -449,6 +449,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                 << "index " << i << " is out of range for type " << tuple_type;
           }
           SetStaticType(&index, tuple_type.elements()[i]);
+          index.set_value_category(index.aggregate().value_category());
           return TCResult(res.types);
         }
         default:
@@ -464,6 +465,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         arg_types.push_back(&arg->static_type());
       }
       SetStaticType(e, arena_->New<TupleValue>(std::move(arg_types)));
+      e->set_value_category(Expression::ValueCategory::Let);
       return TCResult(new_types);
     }
     case ExpressionKind::StructLiteral: {
@@ -477,6 +479,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
       SetStaticType(e, arena_->New<StructType>(std::move(arg_types)));
+      e->set_value_category(Expression::ValueCategory::Let);
       return TCResult(new_types);
     }
     case ExpressionKind::StructTypeLiteral: {
@@ -499,6 +502,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       } else {
         SetStaticType(&struct_type, arena_->New<TypeType>());
       }
+      e->set_value_category(Expression::ValueCategory::Let);
       return TCResult(new_types);
     }
     case ExpressionKind::FieldAccessExpression: {
@@ -511,6 +515,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           for (const auto& [field_name, field_type] : struct_type.fields()) {
             if (access.field() == field_name) {
               SetStaticType(&access, field_type);
+              access.set_value_category(access.aggregate().value_category());
               return TCResult(res.types);
             }
           }
@@ -524,6 +529,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           for (auto& field : t_class.fields()) {
             if (access.field() == field.name) {
               SetStaticType(&access, field.value);
+              access.set_value_category(access.aggregate().value_category());
               return TCResult(res.types);
             }
           }
@@ -531,6 +537,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           for (auto& method : t_class.methods()) {
             if (access.field() == method.name) {
               SetStaticType(&access, method.value);
+              access.set_value_category(Expression::ValueCategory::Let);
               return TCResult(res.types);
             }
           }
@@ -551,6 +558,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                         arena_->New<FunctionType>(
                             std::vector<Nonnull<const GenericBinding*>>(),
                             *parameter_types, &aggregate_type));
+          access.set_value_category(Expression::ValueCategory::Let);
           return TCResult(res.types);
         }
         default:
@@ -564,6 +572,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       std::optional<Nonnull<const Value*>> type = types.Get(ident.name());
       if (type) {
         SetStaticType(&ident, *type);
+        // TODO: this should depend on what entity this name resolves to, but
+        //   we don't have access to that information yet.
+        ident.set_value_category(Expression::ValueCategory::Var);
         return TCResult(types);
       } else {
         FATAL_COMPILATION_ERROR(e->source_loc())
@@ -571,9 +582,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       }
     }
     case ExpressionKind::IntLiteral:
+      e->set_value_category(Expression::ValueCategory::Let);
       SetStaticType(e, arena_->New<IntType>());
       return TCResult(types);
     case ExpressionKind::BoolLiteral:
+      e->set_value_category(Expression::ValueCategory::Let);
       SetStaticType(e, arena_->New<BoolType>());
       return TCResult(types);
     case ExpressionKind::PrimitiveOperatorExpression: {
@@ -592,6 +605,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           ExpectExactType(e->source_loc(), "negation", arena_->New<IntType>(),
                           ts[0]);
           SetStaticType(&op, arena_->New<IntType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Add:
           ExpectExactType(e->source_loc(), "addition(1)",
@@ -599,6 +613,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           ExpectExactType(e->source_loc(), "addition(2)",
                           arena_->New<IntType>(), ts[1]);
           SetStaticType(&op, arena_->New<IntType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Sub:
           ExpectExactType(e->source_loc(), "subtraction(1)",
@@ -606,6 +621,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           ExpectExactType(e->source_loc(), "subtraction(2)",
                           arena_->New<IntType>(), ts[1]);
           SetStaticType(&op, arena_->New<IntType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Mul:
           ExpectExactType(e->source_loc(), "multiplication(1)",
@@ -613,6 +629,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           ExpectExactType(e->source_loc(), "multiplication(2)",
                           arena_->New<IntType>(), ts[1]);
           SetStaticType(&op, arena_->New<IntType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::And:
           ExpectExactType(e->source_loc(), "&&(1)", arena_->New<BoolType>(),
@@ -620,6 +637,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           ExpectExactType(e->source_loc(), "&&(2)", arena_->New<BoolType>(),
                           ts[1]);
           SetStaticType(&op, arena_->New<BoolType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Or:
           ExpectExactType(e->source_loc(), "||(1)", arena_->New<BoolType>(),
@@ -627,22 +645,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
           ExpectExactType(e->source_loc(), "||(2)", arena_->New<BoolType>(),
                           ts[1]);
           SetStaticType(&op, arena_->New<BoolType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Not:
           ExpectExactType(e->source_loc(), "!", arena_->New<BoolType>(), ts[0]);
           SetStaticType(&op, arena_->New<BoolType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Eq:
           ExpectExactType(e->source_loc(), "==", ts[0], ts[1]);
           SetStaticType(&op, arena_->New<BoolType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
         case Operator::Deref:
           ExpectPointerType(e->source_loc(), "*", ts[0]);
           SetStaticType(&op, &cast<PointerType>(*ts[0]).type());
+          op.set_value_category(Expression::ValueCategory::Var);
           return TCResult(new_types);
         case Operator::Ptr:
           ExpectExactType(e->source_loc(), "*", arena_->New<TypeType>(), ts[0]);
           SetStaticType(&op, arena_->New<TypeType>());
+          op.set_value_category(Expression::ValueCategory::Let);
           return TCResult(new_types);
       }
       break;
@@ -677,6 +700,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                        &call.argument().static_type());
           }
           SetStaticType(&call, return_type);
+          call.set_value_category(Expression::ValueCategory::Let);
           return TCResult(arg_res.types);
         }
         default: {
@@ -694,10 +718,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       ExpectIsConcreteType(fn.return_type().source_loc(),
                            interpreter_.InterpExp(values, &fn.return_type()));
       SetStaticType(&fn, arena_->New<TypeType>());
+      fn.set_value_category(Expression::ValueCategory::Let);
       return TCResult(types);
     }
     case ExpressionKind::StringLiteral:
       SetStaticType(e, arena_->New<StringType>());
+      e->set_value_category(Expression::ValueCategory::Let);
       return TCResult(types);
     case ExpressionKind::IntrinsicExpression: {
       auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
@@ -712,6 +738,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
                      arena_->New<StringType>(),
                      &intrinsic_exp.args().fields()[0]->static_type());
           SetStaticType(e, TupleValue::Empty());
+          e->set_value_category(Expression::ValueCategory::Let);
           return TCResult(arg_res.types);
       }
     }
@@ -720,6 +747,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
+      e->set_value_category(Expression::ValueCategory::Let);
       SetStaticType(e, arena_->New<TypeType>());
       return TCResult(types);
   }
@@ -891,6 +919,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
       auto lhs_res = TypeCheckExp(&assign.lhs(), types, values);
       ExpectType(s->source_loc(), "assign", &assign.lhs().static_type(),
                  &assign.rhs().static_type());
+      if (assign.lhs().value_category() != Expression::ValueCategory::Var) {
+        FATAL_COMPILATION_ERROR(assign.source_loc())
+            << "Cannot assign to rvalue '" << assign.lhs() << "'";
+      }
       return TCResult(lhs_res.types);
     }
     case StatementKind::ExpressionStatement: {
