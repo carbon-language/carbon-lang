@@ -26,15 +26,13 @@ namespace Carbon {
 // Matches a Block node whose .statements() match `matcher`.
 inline auto BlockContentsAre(
     ::testing::Matcher<llvm::ArrayRef<Nonnull<const Statement*>>> matcher) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BlockContentsMatchPolicy(std::move(matcher)));
+  return TestingInternal::BlockContentsMatcher(std::move(matcher));
 }
 
 // Matches a literal with the given value.
 // TODO: add overload for string literals
 inline auto MatchesLiteral(int value) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::MatchesIntLiteralPolicy(value));
+  return TestingInternal::MatchesIntLiteralMatcher(value);
 }
 
 // The following functions all match a PrimitiveOperatorExpression with two
@@ -42,56 +40,48 @@ inline auto MatchesLiteral(int value) {
 // indicates what value of `.op()` they match.
 inline auto MatchesMul(::testing::Matcher<AstNode> lhs,
                        ::testing::Matcher<AstNode> rhs) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BinaryOperatorExpressionMatchPolicy(
-          Operator::Mul, std::move(lhs), std::move(rhs)));
+  return TestingInternal::BinaryOperatorExpressionMatcher(
+      Operator::Mul, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesAdd(::testing::Matcher<AstNode> lhs,
                        ::testing::Matcher<AstNode> rhs) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BinaryOperatorExpressionMatchPolicy(
-          Operator::Add, std::move(lhs), std::move(rhs)));
+  return TestingInternal::BinaryOperatorExpressionMatcher(
+      Operator::Add, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesAnd(::testing::Matcher<AstNode> lhs,
                        ::testing::Matcher<AstNode> rhs) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BinaryOperatorExpressionMatchPolicy(
-          Operator::And, std::move(lhs), std::move(rhs)));
+  return TestingInternal::BinaryOperatorExpressionMatcher(
+      Operator::And, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesEq(::testing::Matcher<AstNode> lhs,
                       ::testing::Matcher<AstNode> rhs) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BinaryOperatorExpressionMatchPolicy(
-          Operator::Eq, std::move(lhs), std::move(rhs)));
+  return TestingInternal::BinaryOperatorExpressionMatcher(
+      Operator::Eq, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesOr(::testing::Matcher<AstNode> lhs,
                       ::testing::Matcher<AstNode> rhs) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BinaryOperatorExpressionMatchPolicy(
-          Operator::Or, std::move(lhs), std::move(rhs)));
+  return TestingInternal::BinaryOperatorExpressionMatcher(
+      Operator::Or, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesSub(::testing::Matcher<AstNode> lhs,
                        ::testing::Matcher<AstNode> rhs) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::BinaryOperatorExpressionMatchPolicy(
-          Operator::Sub, std::move(lhs), std::move(rhs)));
+  return TestingInternal::BinaryOperatorExpressionMatcher(
+      Operator::Sub, std::move(lhs), std::move(rhs));
 }
 
 // Matches a return statement with no operand.
 inline auto MatchesEmptyReturn() {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::MatchesReturnPolicy());
+  return TestingInternal::MatchesReturnMatcher();
 }
 
 // Matches a return statement with an explicit operand that matches `matcher`.
 inline auto MatchesReturn(::testing::Matcher<AstNode> matcher) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::MatchesReturnPolicy(matcher));
+  return TestingInternal::MatchesReturnMatcher(matcher);
 }
 
 // Matches a FunctionDeclaration. By default the returned object matches any
@@ -124,9 +114,8 @@ inline auto MatchesUnimplementedExpression(
     std::string label,
     ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>>
         children_matcher) {
-  return TestingInternal::AstNodeMatcher(
-      TestingInternal::MatchesUnimplementedExpressionPolicy(
-          std::move(label), std::move(children_matcher)));
+  return TestingInternal::MatchesUnimplementedExpressionMatcher(
+      std::move(label), std::move(children_matcher));
 }
 
 // Matches an `AST` whose declarations match the given matcher. Unlike other
