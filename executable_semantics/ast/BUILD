@@ -44,6 +44,7 @@ cc_library(
     ],
     hdrs = ["ast_test_matchers.h"],
     deps = [
+        ":ast",
         ":ast_node",
         ":declaration",
         ":expression",

@@ -36,8 +36,7 @@ class Expression : public virtual AstNode {
 
   ~Expression() override = 0;
 
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) {
     return InheritsFromExpression(node->kind());
@@ -449,6 +448,45 @@ class IntrinsicExpression : public Expression {
 
   Intrinsic intrinsic_;
   Nonnull<TupleLiteral*> args_;
+};
+
+// An expression whose semantics have not been implemented. This can be used
+// as a placeholder during development, in order to implement and test parsing
+// of a new expression syntax without having to implement its semantics.
+class UnimplementedExpression : public Expression {
+ public:
+  // Constructs an UnimplementedExpression with the given label and the given
+  // children, which must all be convertible to Nonnull<AstNode*>. The label
+  // should correspond roughly to the name of the class that will eventually
+  // replace this usage of UnimplementedExpression.
+  template <typename... Children>
+  UnimplementedExpression(SourceLocation source_loc, std::string label,
+                          Children... children)
+      : AstNode(AstNodeKind::UnimplementedExpression, source_loc),
+        label_(std::move(label)) {
+    AddChildren(children...);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromUnimplementedExpression(node->kind());
+  }
+
+  auto label() const -> std::string_view { return label_; }
+  auto children() const -> llvm::ArrayRef<Nonnull<const AstNode*>> {
+    return children_;
+  }
+
+ private:
+  void AddChildren() {}
+
+  template <typename... Children>
+  void AddChildren(Nonnull<AstNode*> child, Children... children) {
+    children_.push_back(child);
+    AddChildren(children...);
+  }
+
+  std::string label_;
+  std::vector<Nonnull<AstNode*>> children_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

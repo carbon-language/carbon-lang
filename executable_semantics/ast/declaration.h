@@ -38,8 +38,7 @@ class Declaration : public virtual AstNode, public NamedEntity {
   Declaration(const Member&) = delete;
   auto operator=(const Member&) -> Declaration& = delete;
 
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDeclaration(node->kind());
@@ -83,6 +82,8 @@ struct GenericBinding : public virtual AstNode, public NamedEntity {
       : AstNode(AstNodeKind::GenericBinding, source_loc),
         name_(std::move(name)),
         type_(type) {}
+
+  void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromGenericBinding(node->kind());
@@ -252,6 +253,8 @@ class AlternativeSignature : public virtual AstNode, public NamedEntity {
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
         signature_(signature) {}
+
+  void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativeSignature(node->kind());

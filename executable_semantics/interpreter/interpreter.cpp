@@ -358,6 +358,8 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
       FATAL() << "Can't treat expression as lvalue: " << exp;
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented: " << exp;
   }
 }
 
@@ -651,6 +653,8 @@ void Interpreter::StepExp() {
       CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
     }
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented: " << exp;
   }  // switch (exp->kind)
 }
 

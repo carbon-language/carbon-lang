@@ -184,6 +184,17 @@ void Expression::Print(llvm::raw_ostream& out) const {
           out << "print";
       }
       out << ")";
+      break;
+    case ExpressionKind::UnimplementedExpression: {
+      const auto& unimplemented = cast<UnimplementedExpression>(*this);
+      out << "UnimplementedExpression<" << unimplemented.label() << ">(";
+      llvm::ListSeparator sep;
+      for (Nonnull<const AstNode*> child : unimplemented.children()) {
+        out << sep << *child;
+      }
+      out << ")";
+      break;
+    }
   }
 }
 

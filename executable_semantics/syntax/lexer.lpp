@@ -77,6 +77,7 @@ STRING               "String"
 TRUE                 "true"
 TYPE                 "Type"
 UNDERSCORE           "_"
+UNIMPL_EXAMPLE       "__unimplemented_example_infix"
 VAR                  "var"
 WHILE                "while"
 /* table-end */
@@ -169,6 +170,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {TRUE}                { return SIMPLE_TOKEN(TRUE);                }
 {TYPE}                { return SIMPLE_TOKEN(TYPE);                }
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
+{UNIMPL_EXAMPLE}      { return SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
 {VAR}                 { return SIMPLE_TOKEN(VAR);                 }
 {WHILE}               { return SIMPLE_TOKEN(WHILE);               }
  /* table-end */

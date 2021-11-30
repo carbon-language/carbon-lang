@@ -750,6 +750,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       e->set_value_category(Expression::ValueCategory::Let);
       SetStaticType(e, arena_->New<TypeType>());
       return TCResult(types);
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented: " << *e;
   }
 }
 

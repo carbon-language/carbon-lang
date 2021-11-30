@@ -190,6 +190,7 @@
   TRUE
   TYPE
   UNDERSCORE
+  UNIMPL_EXAMPLE
   VAR
   WHILE
   // table-end
@@ -223,6 +224,7 @@
 // same precedence as POSTFIX_STAR.
 %precedence POSTFIX_STAR UNARY_STAR
 %left PERIOD ARROW
+%nonassoc UNIMPL_EXAMPLE
 %precedence
   LEFT_PARENTHESIS
   RIGHT_PARENTHESIS
@@ -381,6 +383,11 @@ expression:
     }
 | FN_TYPE tuple ARROW expression
     { $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, $4); }
+| expression UNIMPL_EXAMPLE expression
+    {
+      $$ = arena->New<UnimplementedExpression>(context.source_loc(),
+                                               "ExampleInfix", $1, $3);
+    }
 ;
 designator: PERIOD identifier { $$ = $2; }
 ;
