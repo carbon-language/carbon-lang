@@ -134,8 +134,8 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
-      static_scope.Add(func.name(), &declaration);
       func.static_scope().AddParent(&static_scope);
+      static_scope.Add(func.name(), &declaration);
       for (Nonnull<const GenericBinding*> param : func.deduced_parameters()) {
         func.static_scope().Add(param->name(), param);
       }
@@ -145,8 +145,8 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      static_scope.Add(class_decl.name(), &declaration);
       class_decl.static_scope().AddParent(&static_scope);
+      static_scope.Add(class_decl.name(), &declaration);
       for (auto* member : class_decl.members()) {
         PopulateNamesInMember(arena, *member, class_decl.static_scope());
       }
@@ -154,8 +154,8 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
-      static_scope.Add(choice.name(), &declaration);
       choice.static_scope().AddParent(&static_scope);
+      static_scope.Add(choice.name(), &declaration);
       for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
         choice.static_scope().Add(alt->name(), alt);
       }
