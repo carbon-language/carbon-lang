@@ -291,57 +291,6 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
   }
 }
 
-void Interpreter::PatternAssignment(Nonnull<const Value*> pat,
-                                    Nonnull<const Value*> val,
-                                    SourceLocation source_loc) {
-  switch (pat->kind()) {
-    case Value::Kind::PointerValue:
-      heap_.Write(cast<PointerValue>(*pat).value(), val, source_loc);
-      break;
-    case Value::Kind::TupleValue: {
-      switch (val->kind()) {
-        case Value::Kind::TupleValue: {
-          const auto& pat_tup = cast<TupleValue>(*pat);
-          const auto& val_tup = cast<TupleValue>(*val);
-          if (pat_tup.elements().size() != val_tup.elements().size()) {
-            FATAL_RUNTIME_ERROR(source_loc)
-                << "arity mismatch in tuple pattern assignment:\n  pattern: "
-                << pat_tup << "\n  value: " << val_tup;
-          }
-          for (size_t i = 0; i < pat_tup.elements().size(); ++i) {
-            PatternAssignment(pat_tup.elements()[i], val_tup.elements()[i],
-                              source_loc);
-          }
-          break;
-        }
-        default:
-          FATAL() << "expected a tuple value on right-hand-side, not " << *val;
-      }
-      break;
-    }
-    case Value::Kind::AlternativeValue: {
-      switch (val->kind()) {
-        case Value::Kind::AlternativeValue: {
-          const auto& pat_alt = cast<AlternativeValue>(*pat);
-          const auto& val_alt = cast<AlternativeValue>(*val);
-          CHECK(val_alt.choice_name() == pat_alt.choice_name() &&
-                val_alt.alt_name() == pat_alt.alt_name())
-              << "internal error in pattern assignment";
-          PatternAssignment(&pat_alt.argument(), &val_alt.argument(),
-                            source_loc);
-          break;
-        }
-        default:
-          FATAL() << "expected an alternative in left-hand-side, not " << *val;
-      }
-      break;
-    }
-    default:
-      CHECK(ValueEqual(pat, val, source_loc))
-          << "internal error in pattern assignment";
-  }
-}
-
 void Interpreter::StepLvalue() {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LValAction>(act).expression();
@@ -355,7 +304,7 @@ void Interpreter::StepLvalue() {
       // -> { {E(x) :: C, E, F} :: S, H}
       Address pointer =
           GetFromEnv(exp.source_loc(), cast<IdentifierExpression>(exp).name());
-      Nonnull<const Value*> v = arena_->New<PointerValue>(pointer);
+      Nonnull<const Value*> v = arena_->New<LValue>(pointer);
       return todo_.FinishAction(v);
     }
     case ExpressionKind::FieldAccessExpression: {
@@ -367,10 +316,10 @@ void Interpreter::StepLvalue() {
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
-        Address aggregate = cast<PointerValue>(*act.results()[0]).value();
+        Address aggregate = cast<LValue>(*act.results()[0]).address();
         Address field = aggregate.SubobjectAddress(
             cast<FieldAccessExpression>(exp).field());
-        return todo_.FinishAction(arena_->New<PointerValue>(field));
+        return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
     case ExpressionKind::IndexExpression: {
@@ -386,26 +335,14 @@ void Interpreter::StepLvalue() {
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
-        Address aggregate = cast<PointerValue>(*act.results()[0]).value();
+        Address aggregate = cast<LValue>(*act.results()[0]).address();
         std::string f =
             std::to_string(cast<IntValue>(*act.results()[1]).value());
         Address field = aggregate.SubobjectAddress(f);
-        return todo_.FinishAction(arena_->New<PointerValue>(field));
+        return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
-    case ExpressionKind::TupleLiteral: {
-      if (act.pos() <
-          static_cast<int>(cast<TupleLiteral>(exp).fields().size())) {
-        //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
-        //    H}
-        // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
-        // H}
-        return todo_.Spawn(std::make_unique<LValAction>(
-            cast<TupleLiteral>(exp).fields()[act.pos()]));
-      } else {
-        return todo_.FinishAction(arena_->New<TupleValue>(act.results()));
-      }
-    }
+    case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntLiteral:
@@ -420,8 +357,7 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
-      FATAL_RUNTIME_ERROR_NO_LINE()
-          << "Can't treat expression as lvalue: " << exp;
+      FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
   }
@@ -433,7 +369,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -659,19 +595,22 @@ void Interpreter::StepExp() {
       } else {
         FATAL() << "in handle_value with Call pos " << act.pos();
       }
-    case ExpressionKind::IntrinsicExpression:
-      CHECK(act.pos() == 0);
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& intrinsic = cast<IntrinsicExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&intrinsic.args()));
+      }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          Address pointer = GetFromEnv(exp.source_loc(), "format_str");
-          Nonnull<const Value*> pointee = heap_.Read(pointer, exp.source_loc());
-          CHECK(pointee->kind() == Value::Kind::StringValue);
+        case IntrinsicExpression::Intrinsic::Print: {
+          const auto& args = cast<TupleValue>(*act.results()[0]);
           // TODO: This could eventually use something like llvm::formatv.
-          llvm::outs() << cast<StringValue>(*pointee).value();
+          llvm::outs() << cast<StringValue>(*args.elements()[0]).value();
           return todo_.FinishAction(TupleValue::Empty());
+        }
       }
-
+    }
     case ExpressionKind::IntTypeLiteral: {
       CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<IntType>());
@@ -916,9 +855,10 @@ void Interpreter::StepStmt() {
       } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
-        auto pat = act.results()[0];
-        auto val = Convert(act.results()[1], &assign.lhs().static_type());
-        PatternAssignment(pat, val, stmt.source_loc());
+        const auto& lval = cast<LValue>(*act.results()[0]);
+        Nonnull<const Value*> rval =
+            Convert(act.results()[1], &assign.lhs().static_type());
+        heap_.Write(lval.address(), rval, stmt.source_loc());
         return todo_.FinishAction();
       }
     }

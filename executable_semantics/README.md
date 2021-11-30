@@ -184,7 +184,7 @@ The first time increments `x` to `1` and the second time increments `x` to `2`,
 so the expected result of this program is `2`.
 
 ```carbon
-fn main() -> Int {
+fn Main() -> Int {
   var Int: x = 0;
   __continuation k {
     x = x + 1;

@@ -2,18 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: executable_semantics %s 2>&1 | \
+// RUN: not executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN: not executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_assign_to_rval.carbon:15: Cannot assign to rvalue '1'
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
-  var x: auto = 0;
-  var y: auto = 1;
-  (x, y) = (5, -5);
-  return x + y;
+  1 = 0;
+  return 0;
 }

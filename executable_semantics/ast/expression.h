@@ -24,6 +24,16 @@ class Value;
 
 class Expression : public virtual AstNode {
  public:
+  // The value category of a Carbon expression indicates whether it evaluates
+  // to a variable or a value. A variable can be mutated, and can have its
+  // address taken, whereas a value cannot.
+  enum class ValueCategory {
+    // A variable. This roughly corresponds to a C/C++ lvalue.
+    Var,
+    // A value. This roughly corresponds to a C/C++ rvalue.
+    Let,
+  };
+
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
@@ -50,6 +60,17 @@ class Expression : public virtual AstNode {
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
+  // The value category of this expression. Cannot be called before
+  // typechecking.
+  auto value_category() const -> ValueCategory { return *value_category_; }
+
+  // Sets the value category of this expression. Can be called multiple times,
+  // but the argument must have the same value each time.
+  void set_value_category(ValueCategory value_category) {
+    CHECK(!value_category_.has_value() || value_category == *value_category_);
+    value_category_ = value_category;
+  }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -58,6 +79,7 @@ class Expression : public virtual AstNode {
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<ValueCategory> value_category_;
 };
 
 // A FieldInitializer represents the initialization of a single struct field.
@@ -403,19 +425,29 @@ class IntrinsicExpression : public Expression {
     Print,
   };
 
-  explicit IntrinsicExpression(Intrinsic intrinsic)
-      : AstNode(AstNodeKind::IntrinsicExpression,
-                SourceLocation("<intrinsic>", 0)),
-        intrinsic_(intrinsic) {}
+  explicit IntrinsicExpression(std::string_view intrinsic_name,
+                               Nonnull<TupleLiteral*> args,
+                               SourceLocation source_loc)
+      : AstNode(AstNodeKind::IntrinsicExpression, source_loc),
+        intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
+        args_(args) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntrinsicExpression(node->kind());
   }
 
   auto intrinsic() const -> Intrinsic { return intrinsic_; }
+  auto args() const -> const TupleLiteral& { return *args_; }
+  auto args() -> TupleLiteral& { return *args_; }
 
  private:
+  // Returns the enumerator corresponding to the intrinsic named `name`,
+  // or raises a fatal compile error if there is no such enumerator.
+  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
+      -> Intrinsic;
+
   Intrinsic intrinsic_;
+  Nonnull<TupleLiteral*> args_;
 };
 
 // An expression whose semantics have not been implemented. This can be used
