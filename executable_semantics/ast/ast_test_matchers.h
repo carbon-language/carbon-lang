@@ -25,15 +25,13 @@ namespace Carbon {
 
 // Matches a Block node whose .statements() match `matcher`.
 inline auto BlockContentsAre(
-    ::testing::Matcher<llvm::ArrayRef<Nonnull<const Statement*>>> matcher)
-    -> TestingInternal::BlockContentsMatcher {
+    ::testing::Matcher<llvm::ArrayRef<Nonnull<const Statement*>>> matcher) {
   return TestingInternal::BlockContentsMatcher(std::move(matcher));
 }
 
 // Matches a literal with the given value.
 // TODO: add overload for string literals
-inline auto MatchesLiteral(int value)
-    -> TestingInternal::MatchesIntLiteralMatcher {
+inline auto MatchesLiteral(int value) {
   return TestingInternal::MatchesIntLiteralMatcher(value);
 }
 
@@ -41,55 +39,48 @@ inline auto MatchesLiteral(int value)
 // operands that match `lhs` and `rhs` (respectively). The name of the function
 // indicates what value of `.op()` they match.
 inline auto MatchesMul(::testing::Matcher<AstNode> lhs,
-                       ::testing::Matcher<AstNode> rhs)
-    -> TestingInternal::BinaryOperatorExpressionMatcher {
+                       ::testing::Matcher<AstNode> rhs) {
   return TestingInternal::BinaryOperatorExpressionMatcher(
       Operator::Mul, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesAdd(::testing::Matcher<AstNode> lhs,
-                       ::testing::Matcher<AstNode> rhs)
-    -> TestingInternal::BinaryOperatorExpressionMatcher {
+                       ::testing::Matcher<AstNode> rhs) {
   return TestingInternal::BinaryOperatorExpressionMatcher(
       Operator::Add, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesAnd(::testing::Matcher<AstNode> lhs,
-                       ::testing::Matcher<AstNode> rhs)
-    -> TestingInternal::BinaryOperatorExpressionMatcher {
+                       ::testing::Matcher<AstNode> rhs) {
   return TestingInternal::BinaryOperatorExpressionMatcher(
       Operator::And, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesEq(::testing::Matcher<AstNode> lhs,
-                      ::testing::Matcher<AstNode> rhs)
-    -> TestingInternal::BinaryOperatorExpressionMatcher {
+                      ::testing::Matcher<AstNode> rhs) {
   return TestingInternal::BinaryOperatorExpressionMatcher(
       Operator::Eq, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesOr(::testing::Matcher<AstNode> lhs,
-                      ::testing::Matcher<AstNode> rhs)
-    -> TestingInternal::BinaryOperatorExpressionMatcher {
+                      ::testing::Matcher<AstNode> rhs) {
   return TestingInternal::BinaryOperatorExpressionMatcher(
       Operator::Or, std::move(lhs), std::move(rhs));
 }
 
 inline auto MatchesSub(::testing::Matcher<AstNode> lhs,
-                       ::testing::Matcher<AstNode> rhs)
-    -> TestingInternal::BinaryOperatorExpressionMatcher {
+                       ::testing::Matcher<AstNode> rhs) {
   return TestingInternal::BinaryOperatorExpressionMatcher(
       Operator::Sub, std::move(lhs), std::move(rhs));
 }
 
 // Matches a return statement with no operand.
-inline auto MatchesEmptyReturn() -> TestingInternal::MatchesReturnMatcher {
+inline auto MatchesEmptyReturn() {
   return TestingInternal::MatchesReturnMatcher();
 }
 
 // Matches a return statement with an explicit operand that matches `matcher`.
-inline auto MatchesReturn(::testing::Matcher<AstNode> matcher)
-    -> TestingInternal::MatchesReturnMatcher {
+inline auto MatchesReturn(::testing::Matcher<AstNode> matcher) {
   return TestingInternal::MatchesReturnMatcher(matcher);
 }
 
@@ -113,9 +104,27 @@ inline auto MatchesReturn(::testing::Matcher<AstNode> matcher)
 // TODO: Add method for matching only if the declaration has no body.
 // TODO: Add methods for matching parameters, deduced parameters,
 //   and return term.
-inline auto MatchesFunctionDeclaration()
-    -> TestingInternal::MatchesFunctionDeclarationMatcher {
+inline auto MatchesFunctionDeclaration() {
   return TestingInternal::MatchesFunctionDeclarationMatcher();
+}
+
+// Matches an UnimplementedExpression with the given label, whose children
+// match `children_matcher`.
+inline auto MatchesUnimplementedExpression(
+    std::string label,
+    ::testing::Matcher<llvm::ArrayRef<Nonnull<const AstNode*>>>
+        children_matcher) {
+  return TestingInternal::MatchesUnimplementedExpressionMatcher(
+      std::move(label), std::move(children_matcher));
+}
+
+// Matches an `AST` whose declarations match the given matcher. Unlike other
+// matchers in this file, this matcher does not match pointers.
+inline auto ASTDeclarations(
+    ::testing::Matcher<std::vector<Nonnull<Declaration*>>>
+        declarations_matcher) {
+  return TestingInternal::ASTDeclarationsMatcher(
+      std::move(declarations_matcher));
 }
 
 }  // namespace Carbon

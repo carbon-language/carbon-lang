@@ -25,9 +25,8 @@ class Statement : public virtual AstNode {
  public:
   ~Statement() override = 0;
 
-  void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
+  void Print(llvm::raw_ostream& out) const override { PrintDepth(-1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   static auto classof(const AstNode* node) {
     return InheritsFromStatement(node->kind());

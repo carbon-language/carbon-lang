@@ -36,8 +36,7 @@ class Pattern : public virtual AstNode {
 
   ~Pattern() override = 0;
 
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromPattern(node->kind());

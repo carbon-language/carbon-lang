@@ -23,6 +23,17 @@ cc_test(
 )
 
 cc_library(
+    name = "parse_test_matchers",
+    testonly = 1,
+    srcs = ["parse_test_matchers_internal.h"],
+    hdrs = ["parse_test_matchers.h"],
+    deps = [
+        ":syntax",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "syntax",
     srcs = [
         "lexer.cpp",
@@ -107,4 +118,15 @@ mypy_test(
     name = "format_grammar_mypy_test",
     include_imports = True,
     deps = [":format_grammar_lib"],
+)
+
+cc_test(
+    name = "unimplemented_example_test",
+    srcs = ["unimplemented_example_test.cpp"],
+    deps = [
+        ":parse_test_matchers",
+        ":syntax",
+        "//executable_semantics/ast:ast_test_matchers",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
