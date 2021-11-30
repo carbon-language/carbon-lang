@@ -231,7 +231,9 @@ static void ResolveNamesInExpression(Expression& expression,
       break;
     }
     case ExpressionKind::IntrinsicExpression:
-      // FIXME implement this once #955 is merged
+      ResolveNamesInExpression(cast<IntrinsicExpression>(expression).args(),
+                               enclosing_scope);
+      break;
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
@@ -241,6 +243,8 @@ static void ResolveNamesInExpression(Expression& expression,
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
       break;
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented";
   }
 }
 
