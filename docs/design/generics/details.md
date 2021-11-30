@@ -4470,9 +4470,10 @@ type of generic type parameters. As a result, Carbon's approach will have to be
 more similar to Rust's approach of using a keyword to distinguish this case.
 Swift has found its approach
 [has been a common source of confusion](https://forums.swift.org/t/improving-the-ui-of-generics/22814),
-and has
-[considered switching to using the keyword "`any`"](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--clarifying-existentials),
-analogous to Rust's "`dyn`".
+and has considered switching to using the keyword "`any`"
+([1](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--clarifying-existentials),
+[2](https://forums.swift.org/t/pitch-introduce-existential-any/53520)) analogous
+to Rust's "`dyn`".
 
 #### Dynamic pointer type
 
