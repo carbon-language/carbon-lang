@@ -569,6 +569,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
+      CHECK(ident.has_named_entity()) << "Identifier '" << *e << "' at "
+                                      << e->source_loc() << " was not resolved";
       std::optional<Nonnull<const Value*>> type = types.Get(ident.name());
       if (type) {
         SetStaticType(&ident, *type);
@@ -1053,7 +1055,8 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                                TypeEnv types, Env values,
                                                bool check_body) -> TCResult {
   // Bring the deduced parameters into scope
-  for (Nonnull<const GenericBinding*> deduced : f->deduced_parameters()) {
+  for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
+    TypeCheckExp(&deduced->type(), types, values);
     // auto t = interpreter_.InterpExp(values, deduced.type);
     types.Set(deduced->name(), arena_->New<VariableType>(deduced->name()));
     AllocationId a = interpreter_.AllocateValue(*types.Get(deduced->name()));
@@ -1159,6 +1162,9 @@ void TypeChecker::TypeCheck(AST& ast) {
   Env ct_top = p.values;
   for (const auto decl : ast.declarations) {
     TypeCheckDeclaration(decl, top, ct_top);
+  }
+  if (ast.main_call.has_value()) {
+    TypeCheckExp(*ast.main_call, p.types, p.values);
   }
 }
 

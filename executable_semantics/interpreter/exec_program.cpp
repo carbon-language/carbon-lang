@@ -24,6 +24,10 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     }
     llvm::outs() << "********** type checking **********\n";
   }
+  SourceLocation source_loc("<Main()>", 0);
+  ast.main_call = arena->New<CallExpression>(
+      source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
+      arena->New<TupleLiteral>(source_loc));
   // Although name resolution is currently done once, generic programming
   // (particularly templates) may require more passes.
   ResolveNames(arena, ast);
@@ -37,13 +41,8 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-
-  SourceLocation source_loc("<Main()>", 0);
-  Nonnull<Expression*> call_main = arena->New<CallExpression>(
-      source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
-      arena->New<TupleLiteral>(source_loc));
   int result =
-      Interpreter(arena, trace).InterpProgram(ast.declarations, call_main);
+      Interpreter(arena, trace).InterpProgram(ast.declarations, *ast.main_call);
   llvm::outs() << "result: " << result << "\n";
 }
 
