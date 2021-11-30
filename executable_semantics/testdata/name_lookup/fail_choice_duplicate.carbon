@@ -16,6 +16,6 @@ choice Ints {
   None,
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

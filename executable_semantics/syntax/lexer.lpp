@@ -83,6 +83,7 @@ WHILE                "while"
 
 /* This should be kept table-like, but isn't automatic due to spaces. */
 identifier            [A-Za-z_][A-Za-z0-9_]*
+intrinsic_identifier  __intrinsic_[A-Za-z0-9_]*
 sized_type_literal    [iuf][1-9][0-9]*
 integer_literal       [0-9]+
 horizontal_whitespace [ \t\r]
@@ -226,7 +227,15 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
  /* `*` operator case 5: */
 <INITIAL,AFTER_OPERAND>"*" { return SIMPLE_TOKEN(UNARY_STAR); }
 
-{sized_type_literal} { return ARG_TOKEN(sized_type_literal, yytext); }
+{sized_type_literal} {
+  BEGIN(AFTER_OPERAND);
+  return ARG_TOKEN(sized_type_literal, yytext);
+}
+
+{intrinsic_identifier} {
+  BEGIN(AFTER_OPERAND);
+  return ARG_TOKEN(intrinsic_identifier, yytext);
+}
 
 {identifier} {
   BEGIN(AFTER_OPERAND);

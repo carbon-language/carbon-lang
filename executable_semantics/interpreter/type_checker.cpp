@@ -725,13 +725,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       SetStaticType(e, arena_->New<StringType>());
       e->set_value_category(Expression::ValueCategory::Let);
       return TCResult(types);
-    case ExpressionKind::IntrinsicExpression:
+    case ExpressionKind::IntrinsicExpression: {
+      auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
+      TCResult arg_res = TypeCheckExp(&intrinsic_exp.args(), types, values);
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
+          if (intrinsic_exp.args().fields().size() != 1) {
+            FATAL_COMPILATION_ERROR(e->source_loc())
+                << "__intrinsic_print takes 1 argument";
+          }
+          ExpectType(e->source_loc(), "__intrinsic_print argument",
+                     arena_->New<StringType>(),
+                     &intrinsic_exp.args().fields()[0]->static_type());
           SetStaticType(e, TupleValue::Empty());
           e->set_value_category(Expression::ValueCategory::Let);
-          return TCResult(types);
+          return TCResult(arg_res.types);
       }
+    }
     case ExpressionKind::IntTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::StringTypeLiteral:

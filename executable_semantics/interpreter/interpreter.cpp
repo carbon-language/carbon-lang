@@ -593,19 +593,22 @@ void Interpreter::StepExp() {
       } else {
         FATAL() << "in handle_value with Call pos " << act.pos();
       }
-    case ExpressionKind::IntrinsicExpression:
-      CHECK(act.pos() == 0);
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& intrinsic = cast<IntrinsicExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&intrinsic.args()));
+      }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          Address pointer = GetFromEnv(exp.source_loc(), "format_str");
-          Nonnull<const Value*> pointee = heap_.Read(pointer, exp.source_loc());
-          CHECK(pointee->kind() == Value::Kind::StringValue);
+        case IntrinsicExpression::Intrinsic::Print: {
+          const auto& args = cast<TupleValue>(*act.results()[0]);
           // TODO: This could eventually use something like llvm::formatv.
-          llvm::outs() << cast<StringValue>(*pointee).value();
+          llvm::outs() << cast<StringValue>(*args.elements()[0]).value();
           return todo_.FinishAction(TupleValue::Empty());
+        }
       }
-
+    }
     case ExpressionKind::IntTypeLiteral: {
       CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<IntType>());
