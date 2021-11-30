@@ -28,18 +28,38 @@ class NamedEntity : public virtual AstNode {
   }
 };
 
-// The set of declared names in a scope. This is not aware of child scopes, but
-// does include directions to parent or related scopes for lookup purposes.
+// Maps the names visible in a given scope to the entities they name.
+// A scope may have parent scopes, whose names will also be visible in the
+// child scope.
 class StaticScope {
  public:
+  // Defines `name` to be `entity` in this scope, or reports a compilation error
+  // if `name` is already defined in this scope.
   void Add(std::string name, Nonnull<const NamedEntity*> entity);
 
+  // Make `parent` a parent of this scope.
+  // REQUIRES: `parent` is not already a parent of this scope.
+  void AddParent(Nonnull<StaticScope*> parent) {
+    parent_scopes_.push_back(parent);
+  }
+
+  // Returns the nearest definition of `name` in the ancestor graph of this
+  // scope, or reports a compilation error at `source_loc` there isn't exactly
+  // one such definition.
+  auto Resolve(const std::string& name, SourceLocation source_loc) const
+      -> Nonnull<const NamedEntity*>;
+
  private:
+  // Equivalent to Resolve, but returns `nullopt` instead of raising an error
+  // if no definition can be found. Still raises a compilation error if more
+  // than one definition is found.
+  auto TryResolve(const std::string& name, SourceLocation source_loc) const
+      -> std::optional<Nonnull<const NamedEntity*>>;
+
   // Maps locally declared names to their entities.
   std::unordered_map<std::string, Nonnull<const NamedEntity*>> declared_names_;
 
   // A list of scopes used for name lookup within this scope.
-  // TODO: This is unused, but is intended for name lookup cross-scope.
   std::vector<Nonnull<StaticScope*>> parent_scopes_;
 };
 

@@ -335,11 +335,11 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<Nonnull<const GenericBinding*>> deduced,
+  FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
       : Value(Kind::FunctionType),
-        deduced_(std::move(deduced)),
+        deduced_(deduced),
         parameters_(parameters),
         return_type_(return_type) {}
 

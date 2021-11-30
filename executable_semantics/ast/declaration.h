@@ -91,6 +91,7 @@ struct GenericBinding : public virtual AstNode, public NamedEntity {
 
   auto name() const -> const std::string& { return name_; }
   auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
 
  private:
   std::string name_;
@@ -201,6 +202,9 @@ class FunctionDeclaration : public Declaration {
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
   }
+  auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
+    return deduced_parameters_;
+  }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -262,6 +266,7 @@ class AlternativeSignature : public virtual AstNode, public NamedEntity {
 
   auto name() const -> const std::string& { return name_; }
   auto signature() const -> const Expression& { return *signature_; }
+  auto signature() -> Expression& { return *signature_; }
 
  private:
   std::string name_;
@@ -285,6 +290,9 @@ class ChoiceDeclaration : public Declaration {
       -> llvm::ArrayRef<Nonnull<const AlternativeSignature*>> {
     return alternatives_;
   }
+  auto alternatives() -> llvm::ArrayRef<Nonnull<AlternativeSignature*>> {
+    return alternatives_;
+  }
 
   // Contains the alternatives.
   auto static_scope() const -> const StaticScope& { return static_scope_; }
@@ -297,6 +305,9 @@ class ChoiceDeclaration : public Declaration {
 };
 
 // Global variable definition implements the Declaration concept.
+//
+// TODO: this should not inherit from NamedEntity, because names should
+//   always resolve to the underlying binding, not the VariableDeclaration.
 class VariableDeclaration : public Declaration {
  public:
   VariableDeclaration(SourceLocation source_loc,
