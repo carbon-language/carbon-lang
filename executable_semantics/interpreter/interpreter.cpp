@@ -357,8 +357,7 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
-      FATAL_RUNTIME_ERROR_NO_LINE()
-          << "Can't treat expression as lvalue: " << exp;
+      FATAL() << "Can't treat expression as lvalue: " << exp;
   }
 }
 
