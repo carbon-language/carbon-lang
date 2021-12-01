@@ -8,4 +8,6 @@ namespace Carbon {
 
 AstNode::~AstNode() = default;
 
+StaticTyped::~StaticTyped() = default;
+
 }  // namespace Carbon

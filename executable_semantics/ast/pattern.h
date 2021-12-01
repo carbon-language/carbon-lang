@@ -29,7 +29,7 @@ class Value;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Pattern : public virtual AstNode {
+class Pattern : public virtual AstNode, public virtual StaticTyped {
  public:
   Pattern(const Pattern&) = delete;
   auto operator=(const Pattern&) -> Pattern& = delete;
@@ -49,7 +49,7 @@ class Pattern : public virtual AstNode {
   }
 
   // The static type of this pattern. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& override { return **static_type_; }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.

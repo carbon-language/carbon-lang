@@ -330,7 +330,7 @@ class Continuation : public Statement, public NamedEntity {
   //
   // This will always be ContinuationType, but we must set it dynamically in
   // the typechecker because this code can't depend on ContinuationType.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& override { return **static_type_; }
 
   // Sets the static type of the continuation. Can only be called once,
   // during typechecking.

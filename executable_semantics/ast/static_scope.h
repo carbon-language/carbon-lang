@@ -16,13 +16,12 @@
 
 namespace Carbon {
 
-class NamedEntity : public virtual AstNode {
+class NamedEntity : public virtual AstNode, public virtual StaticTyped {
  public:
   ~NamedEntity() override = 0;
 
   NamedEntity() = default;
 
-  // TODO: This is unused, but is intended for casts after lookup.
   auto kind() const -> NamedEntityKind {
     return static_cast<NamedEntityKind>(root_kind());
   }

@@ -73,6 +73,16 @@ class AstNode {
   SourceLocation source_loc_;
 };
 
+class Value;
+
+// FIXME find alternative approach, or add this to ast_rtti.txt
+class StaticTyped : public virtual AstNode {
+ public:
+  ~StaticTyped() override = 0;
+
+  virtual auto static_type() const -> const Value& = 0;
+};
+
 }  // namespace Carbon
 
 // Ensure that LLVM casts from AstNode use dynamic_cast, because static_cast

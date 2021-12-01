@@ -29,7 +29,7 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration : public virtual AstNode {
+class Declaration : public virtual AstNode, public virtual StaticTyped {
  public:
   ~Declaration() override = 0;
 
@@ -50,7 +50,7 @@ class Declaration : public virtual AstNode {
 
   // The static type of the declared entity. Cannot be called before
   // typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& override { return **static_type_; }
 
   // Sets the static type of the declared entity. Can only be called once,
   // during typechecking.
@@ -92,7 +92,7 @@ struct GenericBinding : public virtual AstNode, public NamedEntity {
   auto type() -> Expression& { return *type_; }
 
   // The static type of the binding. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& override { return **static_type_; }
 
   // Sets the static type of the binding. Can only be called once, during
   // typechecking.

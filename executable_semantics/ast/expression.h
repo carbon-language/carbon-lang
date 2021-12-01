@@ -23,7 +23,7 @@ namespace Carbon {
 class Value;
 class NamedEntity;
 
-class Expression : public virtual AstNode {
+class Expression : public virtual AstNode, public virtual StaticTyped {
  public:
   // The value category of a Carbon expression indicates whether it evaluates
   // to a variable or a value. A variable can be mutated, and can have its
@@ -50,7 +50,7 @@ class Expression : public virtual AstNode {
   }
 
   // The static type of this expression. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& override { return **static_type_; }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.

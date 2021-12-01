@@ -541,17 +541,19 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
       auto& ident = cast<IdentifierExpression>(*e);
       CHECK(ident.has_named_entity()) << "Identifier '" << *e << "' at "
                                       << e->source_loc() << " was not resolved";
-      std::optional<Nonnull<const Value*>> type = types.Get(ident.name());
-      if (type) {
-        SetStaticType(&ident, *type);
-        // TODO: this should depend on what entity this name resolves to, but
-        //   we don't have access to that information yet.
-        ident.set_value_category(Expression::ValueCategory::Var);
-        return TCResult(types);
-      } else {
-        FATAL_COMPILATION_ERROR(e->source_loc())
-            << "could not find `" << ident.name() << "`";
+      if (ident.named_entity().kind() == NamedEntityKind::FunctionDeclaration) {
+        const auto& function = cast<FunctionDeclaration>(ident.named_entity());
+        if (!function.has_static_type()) {
+          CHECK(function.return_term().is_auto());
+          FATAL_COMPILATION_ERROR(ident.source_loc())
+              << "Function calls itself, but has a deduced return type";
+        }
       }
+      SetStaticType(&ident, &ident.named_entity().static_type());
+      // TODO: this should depend on what entity this name resolves to, but
+      //   we don't have access to that information yet.
+      ident.set_value_category(Expression::ValueCategory::Var);
+      return TCResult(types);
     }
     case ExpressionKind::IntLiteral:
       e->set_value_category(Expression::ValueCategory::Let);
