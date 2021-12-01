@@ -592,11 +592,16 @@ C++, adding `ClassName::` in front of a member name to disambiguate, such as
 ### Access
 
 An `impl` must be visible to all code that can see both the type and the
-interface being implemented. If either the type or interface is private to a
-library, then since the only way to define the `impl` is to use that private
-name, the `impl` must be defined private to the library as well. Otherwise, the
-`impl` must be defined in the public API file of the library, so it is visible
-in all places that might use it.
+interface being implemented:
+
+-   If either the type or interface is private to a single file, then since the
+    only way to define the `impl` is to use that private name, the `impl` must
+    be defined private to that file as well.
+-   Otherwise, if the type or interface is private but declared in an API file,
+    then the `impl` must be declared in the same file so the existence of that
+    `impl` is visible to all files in that library.
+-   Otherwise, the `impl` must be defined in the public API file of the library,
+    so it is visible in all places that might use it.
 
 No access control modifiers are allowed on `impl` declarations, an `impl` is
 always visible to the intersection of the visibility of all names used in the
