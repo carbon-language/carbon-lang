@@ -12,6 +12,8 @@
 
 #include <numeric>
 
+#define DEBUG_TYPE "taildup"
+
 using namespace llvm;
 
 namespace opts {
@@ -36,6 +38,11 @@ static cl::opt<unsigned> TailDuplicationMaximumDuplication(
     "tail-duplication-maximum-duplication",
     cl::desc("maximum size of duplicated blocks (in bytes)"), cl::ZeroOrMore,
     cl::ReallyHidden, cl::init(64), cl::cat(BoltOptCategory));
+
+static cl::opt<bool> TailDuplicationConstCopyPropagation(
+    "tail-duplication-const-copy-propagation",
+    cl::desc("enable const and copy propagation after tail duplication"),
+    cl::ReallyHidden, cl::init(false), cl::cat(BoltOptCategory));
 
 } // namespace opts
 
@@ -254,9 +261,14 @@ TailDuplication::aggressiveCodeToDuplicate(BinaryBasicBlock &BB) const {
   std::vector<BinaryBasicBlock *> BlocksToDuplicate;
   BinaryBasicBlock *CurrBB = &BB;
   while (CurrBB) {
+    LLVM_DEBUG(dbgs() << "Aggressive tail duplication: adding "
+                      << CurrBB->getName() << " to duplication list\n";);
     BlocksToDuplicate.push_back(CurrBB);
 
     if (CurrBB->hasJumpTable()) {
+      LLVM_DEBUG(dbgs() << "Aggressive tail duplication: clearing duplication "
+                           "list due to a JT in "
+                        << CurrBB->getName() << '\n';);
       BlocksToDuplicate.clear();
       break;
     }
@@ -273,8 +285,12 @@ TailDuplication::aggressiveCodeToDuplicate(BinaryBasicBlock &BB) const {
       if (CurrBB->getConditionalSuccessor(false)->getLayoutIndex() ==
               CurrBB->getLayoutIndex() + 1 ||
           CurrBB->getConditionalSuccessor(true)->getLayoutIndex() ==
-              CurrBB->getLayoutIndex() + 1)
+              CurrBB->getLayoutIndex() + 1) {
+        LLVM_DEBUG(dbgs() << "Aggressive tail duplication: clearing "
+                             "duplication list, can't find a simple stream at "
+                          << CurrBB->getName() << '\n';);
         BlocksToDuplicate.clear();
+      }
       break;
     }
 
@@ -291,8 +307,14 @@ TailDuplication::aggressiveCodeToDuplicate(BinaryBasicBlock &BB) const {
       [](int value, BinaryBasicBlock *p) {
         return value + p->getOriginalSize();
       });
-  if (DuplicationByteCount > opts::TailDuplicationMaximumDuplication)
+  if (DuplicationByteCount > opts::TailDuplicationMaximumDuplication) {
+    LLVM_DEBUG(dbgs() << "Aggressive tail duplication: duplication byte count ("
+                      << DuplicationByteCount << ") exceeds maximum "
+                      << opts::TailDuplicationMaximumDuplication << '\n';);
     BlocksToDuplicate.clear();
+  }
+  LLVM_DEBUG(dbgs() << "Aggressive tail duplication: found "
+                    << BlocksToDuplicate.size() << " blocks to duplicate\n";);
   return BlocksToDuplicate;
 }
 
@@ -401,18 +423,22 @@ void TailDuplication::runOnFunction(BinaryFunction &Function) {
       BlocksToDuplicate = aggressiveCodeToDuplicate(*Succ);
     else
       BlocksToDuplicate = moderateCodeToDuplicate(*Succ);
-    if (BlocksToDuplicate.size() > 0) {
-      PossibleDuplications++;
-      PossibleDuplicationsDynamicCount += BB->getExecutionCount();
-      std::vector<BinaryBasicBlock *> DuplicatedBlocks =
-          tailDuplicate(*BB, BlocksToDuplicate);
-      constantAndCopyPropagate(*BB, DuplicatedBlocks);
-      BinaryBasicBlock *FirstBB = BlocksToDuplicate[0];
-      if (FirstBB->pred_size() == 1) {
-        BinaryBasicBlock *PredBB = *FirstBB->pred_begin();
-        if (PredBB->succ_size() == 1)
-          constantAndCopyPropagate(*PredBB, BlocksToDuplicate);
-      }
+
+    if (BlocksToDuplicate.size() == 0)
+      continue;
+    PossibleDuplications++;
+    PossibleDuplicationsDynamicCount += BB->getExecutionCount();
+    std::vector<BinaryBasicBlock *> DuplicatedBlocks =
+        tailDuplicate(*BB, BlocksToDuplicate);
+    if (!opts::TailDuplicationConstCopyPropagation)
+      continue;
+
+    constantAndCopyPropagate(*BB, DuplicatedBlocks);
+    BinaryBasicBlock *FirstBB = BlocksToDuplicate[0];
+    if (FirstBB->pred_size() == 1) {
+      BinaryBasicBlock *PredBB = *FirstBB->pred_begin();
+      if (PredBB->succ_size() == 1)
+        constantAndCopyPropagate(*PredBB, BlocksToDuplicate);
     }
   }
 }
