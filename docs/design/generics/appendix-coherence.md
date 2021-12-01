@@ -72,7 +72,7 @@ this:
     package SongHashArtistAndTitle;
     import SongLib;
     impl SongLib.Song as Hashable {
-      method (me: Self) Hash() -> UInt64 { ... }
+      fn Hash[me: Self]() -> u64 { ... }
     }
     ```
 
@@ -87,7 +87,7 @@ this:
 
     fn IsInHashSet(
         s: SongLib.Song,
-        h: Containers.HashSet(SongLib.Song)*) -> Bool {
+        h: Containers.HashSet(SongLib.Song)*) -> bool {
       return h->Contains(s);
     }
     ```
@@ -99,7 +99,7 @@ this:
     package SongHashAppleMusicURL;
     import SongLib;
     impl SongLib.Song as Hashable {
-      method (me: Self) Hash() -> UInt64 { ... }
+      fn Hash[me: Self]() -> u64 { ... }
     }
     ```
 

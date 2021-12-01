@@ -439,7 +439,7 @@ will necessarily be less incremental.
 ### Coherence
 
 We want the generics system to have the
-[_coherence_ property](terminology#coherence), so that the implementation of an
+[_coherence_ property](terminology.md#coherence), so that the implementation of an
 interface for a type is well defined. Since a generic function only depends on
 interface implementations, they will always behave consistently on a given type,
 independent of context. For more on this, see
@@ -458,7 +458,7 @@ It also has a number of benefits for users:
     Carbon template on that type.
 
 The main downside of coherence is that there are some capabilities we would like
-for interfaces which are in tension with having an orphan rule limiting where
+for interfaces that are in tension with having an orphan rule limiting where
 implementations may be defined. For example, we would like to address
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions#another-clojure-solution-using-protocols).
 We can get some of the way there by allowing the implementation of an interface
