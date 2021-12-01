@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Filing a report](#filing-a-report)
     -   [What happens after contacting the conduct team?](#what-happens-after-contacting-the-conduct-team)
     -   [Appealing](#appealing)
+    -   [Special cases](#special-cases)
 -   [Enforcement action guidelines](#enforcement-action-guidelines)
 -   [Acknowledgements](#acknowledgements)
 
@@ -136,11 +137,9 @@ If you believe someone is violating the code of conduct, you can always report
 it to the conduct team by emailing all members of the conduct team. **All
 reports will be kept confidential.**
 
-If your report concerns a member of the conduct team, you can make a report
-directly to any individual member of the conduct team. They will follow the
-usual enforcement process with the other members of the conduct team, but will
-exclude the member(s) that the report concerns from any discussion or decision
-making.
+Please send reports concerning a member of the conduct team directly to other
+members of the conduct team. This allows discussion of the complaint to more
+easily exclude the concerned member as a [special case](#special-cases).
 
 If you believe anyone is in **physical danger**, please notify appropriate law
 enforcement first. If you are unsure what law enforcement agency is appropriate,
@@ -223,11 +222,6 @@ appealed. To appeal a decision of the conduct team, contact the
 [Carbon leads](docs/project/evolution.md#carbon-leads-1) with your appeal and
 they will review the case.
 
-As with [#reporting-conduct](reporting conduct), if you are appealing a decision
-that concerns a member of the leads, you may appeal directly to any individual
-member of the leads. They will follow the usual process, but will exclude the
-lead(s) concerned from any discussion or decision making.
-
 In general, it is **not** appropriate to appeal a particular decision in public
 areas of GitHub or Discord. Doing so would involve disclosure of information
 which should remain confidential. Disclosing this kind of information publicly
@@ -236,6 +230,14 @@ Code of Conduct. This is not meant to limit discussion of the Code of Conduct,
 the conduct team itself, or the appropriateness of responses in general, but
 **please** refrain from mentioning specific facts about cases without the
 explicit permission of all parties involved.
+
+### Special cases
+
+If a complaint is raised against a member of the conduct team or Carbon leads,
+they will be excluded from conduct discussion and decisions, including appeals.
+They will only be included as needed for an involved party, such as to get their
+perspective or to notify them of decisions. Such complaints may lead to a
+member's responsibilities being revoked.
 
 ## Enforcement action guidelines
 
