@@ -4,10 +4,11 @@
 
 #include "toolchain/lexer/tokenized_buffer.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <iterator>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Sequence.h"

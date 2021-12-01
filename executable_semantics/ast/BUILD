@@ -10,17 +10,61 @@ cc_library(
     deps = [
         ":declaration",
         ":library_name",
+        ":static_scope",
     ],
 )
 
 cc_library(
-    name = "class_definition",
-    hdrs = ["class_definition.h"],
+    name = "ast_node",
+    srcs = ["ast_node.cpp"],
+    hdrs = [
+        "ast_node.h",
+        "ast_rtti.h",
+    ],
     deps = [
-        ":member",
         ":source_location",
-        "//common:ostream",
+    ],
+)
+
+genrule(
+    name = "ast_rtti",
+    srcs = ["ast_rtti.txt"],
+    outs = ["ast_rtti.h"],
+    cmd = "./$(location //executable_semantics:gen_rtti)" +
+          " $(location ast_rtti.txt) > \"$@\"",
+    tools = ["//executable_semantics:gen_rtti"],
+)
+
+cc_library(
+    name = "ast_test_matchers",
+    testonly = 1,
+    srcs = [
+        "ast_test_matchers_internal.cpp",
+        "ast_test_matchers_internal.h",
+    ],
+    hdrs = ["ast_test_matchers.h"],
+    deps = [
+        ":ast",
+        ":ast_node",
+        ":declaration",
+        ":expression",
+        ":statement",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "ast_test_matchers_test",
+    srcs = ["ast_test_matchers_test.cpp"],
+    deps = [
+        ":ast_test_matchers",
+        ":declaration",
+        ":expression",
+        ":pattern",
+        ":statement",
+        "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -31,11 +75,12 @@ cc_library(
         "declaration.h",
     ],
     deps = [
-        ":class_definition",
+        ":ast_node",
         ":member",
         ":pattern",
         ":source_location",
         ":statement",
+        ":static_scope",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -47,6 +92,7 @@ cc_library(
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
     deps = [
+        ":ast_node",
         ":paren_contents",
         "//common:indirect_value",
         "//common:ostream",
@@ -62,8 +108,7 @@ cc_test(
     deps = [
         ":expression",
         ":paren_contents",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -97,8 +142,10 @@ cc_library(
     srcs = ["pattern.cpp"],
     hdrs = ["pattern.h"],
     deps = [
+        ":ast_node",
         ":expression",
         ":source_location",
+        ":static_scope",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -112,16 +159,30 @@ cc_test(
     deps = [
         ":paren_contents",
         ":pattern",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "static_scope",
+    srcs = ["static_scope.cpp"],
+    hdrs = ["static_scope.h"],
+    deps = [
+        ":ast_node",
+        ":source_location",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
     ],
 )
 
 cc_library(
     name = "source_location",
     hdrs = ["source_location.h"],
-    deps = ["//common:ostream"],
+    deps = [
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+    ],
 )
 
 cc_library(
@@ -129,6 +190,7 @@ cc_library(
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
     deps = [
+        ":ast_node",
         ":expression",
         ":pattern",
         ":source_location",

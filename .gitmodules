@@ -5,6 +5,7 @@
 [submodule "third_party/llvm-project"]
 	path = third_party/llvm-project
 	url = https://github.com/llvm/llvm-project.git
+	branch = main
 [submodule "third_party/examples/brotli/original"]
 	path = third_party/examples/brotli/original
 	url = https://github.com/google/brotli

@@ -4,10 +4,12 @@
 
 #include "toolchain/parser/parse_tree.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <forward_list>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"

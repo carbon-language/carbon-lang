@@ -8,6 +8,7 @@
 #include <set>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
@@ -16,12 +17,15 @@
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
-
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
       : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
+
+  void TypeCheck(AST& ast);
+
+ private:
+  using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
 
   struct TypeCheckContext {
     explicit TypeCheckContext(Nonnull<Arena*> arena)
@@ -33,95 +37,67 @@ class TypeChecker {
     Env values;
   };
 
-  void TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
-                 const Env& values);
-
-  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
-
- private:
-  // Context about the return type, which may be updated during type checking.
-  class ReturnTypeContext {
-   public:
-    // If orig_return_type is auto, deduced_return_type_ will be nullopt;
-    // otherwise, it's orig_return_type. is_auto_ is set accordingly.
-    ReturnTypeContext(Nonnull<const Value*> orig_return_type, bool is_omitted);
-
-    auto is_auto() const -> bool { return is_auto_; }
-
-    auto deduced_return_type() const -> std::optional<Nonnull<const Value*>> {
-      return deduced_return_type_;
-    }
-    void set_deduced_return_type(Nonnull<const Value*> type) {
-      deduced_return_type_ = type;
-    }
-
-    auto is_omitted() const -> bool { return is_omitted_; }
-
-   private:
-    // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.
-    const bool is_auto_;
-
-    // The actual return type. May be nullopt for an `auto` return type that has
-    // yet to be determined.
-    std::optional<Nonnull<const Value*>> deduced_return_type_;
-
-    // Indicates the return type was omitted and is implicitly the empty tuple,
-    // as in `fn Foo() {}`.
-    const bool is_omitted_;
-  };
-
   struct TCResult {
     explicit TCResult(TypeEnv types) : types(types) {}
 
     TypeEnv types;
   };
 
-  // TypeCheckExp performs semantic analysis on an expression.  It returns a new
-  // version of the expression, its type, and an updated environment which are
-  // bundled into a TCResult object.  The purpose of the updated environment is
-  // to bring pattern variables into scope, for example, in a match case.  The
-  // new version of the expression may include more information, for example,
-  // the type arguments deduced for the type parameters of a generic.
+  static void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out);
+
+  // Perform type argument deduction, matching the parameter type `param`
+  // against the argument type `arg`. Whenever there is an VariableType
+  // in the parameter type, it is deduced to be the corresponding type
+  // inside the argument type.
+  // The `deduced` parameter is an accumulator, that is, it holds the
+  // results so-far.
+  static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
+                                Nonnull<const Value*> param,
+                                Nonnull<const Value*> arg) -> TypeEnv;
+
+  // Traverses the AST rooted at `e`, populating the static_type() of all nodes
+  // and ensuring they follow Carbon's typing rules.
   //
-  // e is the expression to be analyzed.
-  // types maps variable names to the type of their run-time value.
-  // values maps variable names to their compile-time values. It is not
+  // `types` maps variable names to the type of their run-time value.
+  // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
   auto TypeCheckExp(Nonnull<Expression*> e, TypeEnv types, Env values)
       -> TCResult;
 
-  // Equivalent to TypeCheckExp, but operates on Patterns instead of
-  // Expressions. `expected` is the type that this pattern is expected to have,
-  // if the surrounding context gives us that information. Otherwise, it is
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
+  //
+  // `expected` is the type that this pattern is expected to have, if the
+  // surrounding context gives us that information. Otherwise, it is
   // nullopt.
   auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
                         std::optional<Nonnull<const Value*>> expected)
       -> TCResult;
 
-  // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
-  // version of the statement and a new type environment.
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
+  void TypeCheckDeclaration(Nonnull<Declaration*> d, const TypeEnv& types,
+                            const Env& values);
+
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
-  // The ret_type parameter is used for analyzing return statements.  It is the
-  // declared return type of the enclosing function definition.  If the return
-  // type is "auto", then the return type is inferred from the first return
-  // statement.
-  auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values,
-                     Nonnull<ReturnTypeContext*> return_type_context)
+  // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
+  // where `f` is nearest enclosing FunctionDeclaration of `s`.
+  auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values)
       -> TCResult;
 
-  auto TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types, Env values)
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`,
+  // and may not traverse f->body() if `check_body` is false.
+  auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                    TypeEnv types, Env values, bool check_body)
       -> TCResult;
 
   auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
-                     Nonnull<Statement*> body, TypeEnv types, Env values,
-                     Nonnull<ReturnTypeContext*> return_type_context)
+                     Nonnull<Statement*> body, TypeEnv types, Env values)
       -> Match::Clause;
 
-  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDeclaration* fun_def)
-      -> Nonnull<const Value*>;
-  auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
-      -> Nonnull<const Value*>;
+  auto TypeOfClassDecl(const ClassDeclaration& class_decl, TypeEnv /*types*/,
+                       Env ct_top) -> Nonnull<const Value*>;
 
+  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
