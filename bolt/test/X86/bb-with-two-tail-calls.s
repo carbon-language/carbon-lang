@@ -9,21 +9,26 @@
 # RUN: llvm-strip --strip-unneeded %t.o
 # RUN: %clang %cflags %t.o -o %t.exe -Wl,-q -nostdlib
 # RUN: llvm-bolt %t.exe -o %t.out -data %t.fdata -lite=0 -dyno-stats \
-# RUN:    -print-sctc 2>&1 | FileCheck %s
+# RUN:    -print-sctc -print-only=_start 2>&1 | FileCheck %s
 # CHECK-NOT: Assertion `BranchInfo.size() == 2 && "could only be called for blocks with 2 successors"' failed.
 # Two tail calls in the same basic block after SCTC:
-# CHECK:         {{.*}}:   jae     {{.*}} # TAILCALL  # CTCTakenCount: {{.*}}
+# CHECK:         {{.*}}:   ja      {{.*}} # TAILCALL  # CTCTakenCount: {{.*}}
 # CHECK-NEXT:    {{.*}}:   jmp     {{.*}} # TAILCALL
 
   .globl _start
 _start:
-    ja a
-b:  jb c
-# FDATA: 1 _start #b# 1 _start #c# 2 4
-    jmp e
-a:  nop
-c:  jmp e
+    je x
+a:  ja b
+    jmp c
+x:  ret
+# FDATA: 1 _start #a# 1 _start #b# 2 4
+b:  jmp e
+c:  jmp f
 
   .globl e
 e:
+    nop
+
+  .globl f
+f:
     nop

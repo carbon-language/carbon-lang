@@ -89,6 +89,24 @@ public:
   }
 };
 
+/// The pass normalizes CFG by performing the following transformations:
+///   * removes empty basic blocks
+///   * merges duplicate edges and updates jump instructions
+class NormalizeCFG : public BinaryFunctionPass {
+  std::atomic<uint64_t> NumBlocksRemoved{0};
+  std::atomic<uint64_t> NumDuplicateEdgesMerged{0};
+
+  void runOnFunction(BinaryFunction &BF);
+
+public:
+  NormalizeCFG(const cl::opt<bool> &PrintPass)
+      : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override { return "normalize CFG"; }
+
+  void runOnFunctions(BinaryContext &) override;
+};
+
 /// Detect and eliminate unreachable basic blocks. We could have those
 /// filled with nops and they are used for alignment.
 class EliminateUnreachableBlocks : public BinaryFunctionPass {

@@ -272,6 +272,90 @@ bool BinaryFunctionPass::shouldPrint(const BinaryFunction &BF) const {
   return BF.isSimple() && !BF.isIgnored();
 }
 
+void NormalizeCFG::runOnFunction(BinaryFunction &BF) {
+  uint64_t NumRemoved = 0;
+  uint64_t NumDuplicateEdges = 0;
+  uint64_t NeedsFixBranches = 0;
+  for (BinaryBasicBlock &BB : BF) {
+    if (!BB.empty())
+      continue;
+
+    if (BB.isEntryPoint() || BB.isLandingPad())
+      continue;
+
+    // Handle a dangling empty block.
+    if (BB.succ_size() == 0) {
+      // If an empty dangling basic block has a predecessor, it could be a
+      // result of codegen for __builtin_unreachable. In such case, do not
+      // remove the block.
+      if (BB.pred_size() == 0) {
+        BB.markValid(false);
+        ++NumRemoved;
+      }
+      continue;
+    }
+
+    // The block should have just one successor.
+    BinaryBasicBlock *Successor = BB.getSuccessor();
+    assert(Successor && "invalid CFG encountered");
+
+    // Redirect all predecessors to the successor block.
+    while (!BB.pred_empty()) {
+      BinaryBasicBlock *Predecessor = *BB.pred_begin();
+      if (Predecessor->hasJumpTable())
+        break;
+
+      if (Predecessor == Successor)
+        break;
+
+      BinaryBasicBlock::BinaryBranchInfo &BI = Predecessor->getBranchInfo(BB);
+      Predecessor->replaceSuccessor(&BB, Successor, BI.Count,
+                                    BI.MispredictedCount);
+      // We need to fix branches even if we failed to replace all successors
+      // and remove the block.
+      NeedsFixBranches = true;
+    }
+
+    if (BB.pred_empty()) {
+      BB.removeAllSuccessors();
+      BB.markValid(false);
+      ++NumRemoved;
+    }
+  }
+
+  if (NumRemoved)
+    BF.eraseInvalidBBs();
+
+  // Check for duplicate successors. Do it after the empty block elimination as
+  // we can get more duplicate successors.
+  for (BinaryBasicBlock &BB : BF)
+    if (!BB.hasJumpTable() && BB.succ_size() == 2 &&
+        BB.getConditionalSuccessor(false) == BB.getConditionalSuccessor(true))
+      ++NumDuplicateEdges;
+
+  // fixBranches() will get rid of duplicate edges and update jump instructions.
+  if (NumDuplicateEdges || NeedsFixBranches)
+    BF.fixBranches();
+
+  NumDuplicateEdgesMerged += NumDuplicateEdges;
+  NumBlocksRemoved += NumRemoved;
+}
+
+void NormalizeCFG::runOnFunctions(BinaryContext &BC) {
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_BB_LINEAR,
+      [&](BinaryFunction &BF) { runOnFunction(BF); },
+      [&](const BinaryFunction &BF) { return !shouldOptimize(BF); },
+      "NormalizeCFG");
+  if (NumBlocksRemoved)
+    outs() << "BOLT-INFO: removed " << NumBlocksRemoved << " empty block"
+           << (NumBlocksRemoved == 1 ? "" : "s") << '\n';
+  if (NumDuplicateEdgesMerged)
+    outs() << "BOLT-INFO: merged " << NumDuplicateEdgesMerged
+           << " duplicate CFG edge" << (NumDuplicateEdgesMerged == 1 ? "" : "s")
+           << '\n';
+}
+
 void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
   if (Function.layout_size() > 0) {
     unsigned Count;
