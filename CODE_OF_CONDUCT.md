@@ -137,10 +137,9 @@ If you believe someone is violating the code of conduct, you can always report
 it to the conduct team by emailing all members of the conduct team. **All
 reports will be kept confidential.**
 
-Reports concerning members of the conduct team are encouraged to be sent
-directly to other members of the conduct team. This allows discussion of the
-complaint to be more easily exclude the concerned member as a
-[special case](#special-cases).
+Please send reports concerning a member of the conduct team directly to other
+members of the conduct team. This allows discussion of the complaint to be more
+easily exclude the concerned member as a [special case](#special-cases).
 
 If you believe anyone is in **physical danger**, please notify appropriate law
 enforcement first. If you are unsure what law enforcement agency is appropriate,
