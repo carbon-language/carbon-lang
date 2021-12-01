@@ -36,7 +36,7 @@ class AllocationId {
   // details of Heap.
   friend class Heap;
 
-  AllocationId(size_t index) : index_(index) {}
+  explicit AllocationId(size_t index) : index_(index) {}
 
   size_t index_;
 };

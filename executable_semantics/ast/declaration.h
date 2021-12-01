@@ -107,7 +107,7 @@ struct GenericBinding : public virtual AstNode, public NamedEntity {
 class ReturnTerm {
  public:
   ReturnTerm(const ReturnTerm&) = default;
-  ReturnTerm& operator=(const ReturnTerm&) = default;
+  auto operator=(const ReturnTerm&) -> ReturnTerm& = default;
 
   // Represents an omitted return term at `source_loc`.
   static auto Omitted(SourceLocation source_loc) -> ReturnTerm {

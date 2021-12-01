@@ -117,7 +117,7 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -495,7 +495,7 @@ class ContinuationValue : public Value {
     ~StackFragment();
 
     StackFragment(StackFragment&&) = delete;
-    StackFragment& operator=(StackFragment&&) = delete;
+    auto operator=(StackFragment&&) -> StackFragment& = delete;
 
     // Store the given partial todo stack in *this, which must currently be
     // empty. The stack is represented with the top of the stack at the

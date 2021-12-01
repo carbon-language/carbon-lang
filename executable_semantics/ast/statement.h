@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_STATEMENT_H_
 #define EXECUTABLE_SEMANTICS_AST_STATEMENT_H_
 
+#include <utility>
 #include <vector>
 
 #include "common/ostream.h"
@@ -45,7 +46,8 @@ class Statement : public virtual AstNode {
 class Block : public Statement {
  public:
   Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
-      : AstNode(AstNodeKind::Block, source_loc), statements_(statements) {}
+      : AstNode(AstNodeKind::Block, source_loc),
+        statements_(std::move(statements)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBlock(node->kind());
