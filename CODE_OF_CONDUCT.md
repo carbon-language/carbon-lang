@@ -234,7 +234,7 @@ explicit permission of all parties involved.
 ### Special cases
 
 If a complaint is raised against a member of the conduct team or Carbon leads,
-they will be excluded from conduct discussion or decisions, including appeals.
+they will be excluded from conduct discussion and decisions, including appeals.
 They will only be included as needed for an involved party, such as to get their
 perspective or to notify them of decisions. Such complaints may lead to a
 member's responsibilities being revoked.
