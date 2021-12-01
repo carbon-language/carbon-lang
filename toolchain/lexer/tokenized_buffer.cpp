@@ -863,6 +863,11 @@ auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   return Token(static_cast<int>(token_infos.size()) - 1);
 }
 
+auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
+    -> void {
+  output << token.index;
+}
+
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     const char* loc) -> Diagnostic::Location {
   assert(llvm::is_sorted(std::array{buffer_->source->Text().begin(), loc,

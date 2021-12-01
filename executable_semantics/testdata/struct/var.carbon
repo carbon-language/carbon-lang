@@ -11,7 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   var p: {.x: i32, .y: i32} = {.x = 1, .y = 2};
   return p.y - p.x - 1;
 }

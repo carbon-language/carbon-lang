@@ -4,9 +4,10 @@
 
 #include "toolchain/parser/parse_node_kind.h"
 
+#include <gtest/gtest.h>
+
 #include <cstring>
 
-#include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {

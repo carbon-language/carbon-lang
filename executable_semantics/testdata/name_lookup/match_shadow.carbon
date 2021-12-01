@@ -11,9 +11,13 @@
 
 package ExecutableSemanticsTest api;
 
-fn main() -> i32 {
-  var x: auto = 0;
-  var y: auto = 1;
-  (x, y) = (5, -5);
-  return x + y;
+var x: i32 = 0;
+
+fn Main() -> i32 {
+  match (0) {
+    case x: i32 => {
+      var x: i32 = 0;
+    }
+  }
+  return 0;
 }

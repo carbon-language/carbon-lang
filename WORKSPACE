@@ -90,6 +90,45 @@ load(
 configure_clang_toolchain(name = "bazel_cc_toolchain")
 
 ###############################################################################
+# Abseil libraries
+###############################################################################
+
+abseil_version = "4a995b1eaa4a602f0d3a9ff8eac89d4649cd2fe8"
+
+http_archive(
+    name = "com_google_absl",
+    sha256 = "f5021900ff9a6b8f39406d15f460714660ab6b3e727754663d786d75ecad5ee0",
+    strip_prefix = "abseil-cpp-%s" % abseil_version,
+    urls = ["https://github.com/abseil/abseil-cpp/archive/%s.zip" % abseil_version],
+)
+
+###############################################################################
+# GoogleTest libraries
+###############################################################################
+
+googletest_version = "075810f7a20405ea09a93f68847d6e963212fa62"
+
+http_archive(
+    name = "com_google_googletest",
+    sha256 = "19949c33e795197dbb8610672c18bff447dc31faef3257665d69d1bf0884d67b",
+    strip_prefix = "googletest-%s" % googletest_version,
+    urls = ["https://github.com/google/googletest/archive/%s.zip" % googletest_version],
+)
+
+###############################################################################
+# Google Benchmark libraries
+###############################################################################
+
+benchmark_version = "0baacde3618ca617da95375e0af13ce1baadea47"
+
+http_archive(
+    name = "com_github_google_benchmark",
+    sha256 = "62e2f2e6d8a744d67e4bbc212fcfd06647080de4253c97ad5c6749e09faf2cb0",
+    strip_prefix = "benchmark-%s" % benchmark_version,
+    urls = ["https://github.com/google/benchmark/archive/%s.zip" % benchmark_version],
+)
+
+###############################################################################
 # LLVM libraries
 ###############################################################################
 
