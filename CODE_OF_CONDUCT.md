@@ -138,7 +138,7 @@ it to the conduct team by emailing all members of the conduct team. **All
 reports will be kept confidential.**
 
 Please send reports concerning a member of the conduct team directly to other
-members of the conduct team. This allows discussion of the complaint to be more
+members of the conduct team. This allows discussion of the complaint to more
 easily exclude the concerned member as a [special case](#special-cases).
 
 If you believe anyone is in **physical danger**, please notify appropriate law
