@@ -60,10 +60,6 @@ auto main(int argc, char* argv[]) -> int {
   using llvm::cl::desc;
   using llvm::cl::opt;
   opt<bool> trace_option("trace", desc("Enable tracing"));
-  opt<bool> trace_bison_option(
-      "trace_bison", llvm::cl::init(true),
-      desc("Controls whether bison tracing is enabled when --trace is passed. "
-           "Defaults to true."));
   opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
                                    llvm::cl::Required);
 
@@ -71,8 +67,7 @@ auto main(int argc, char* argv[]) -> int {
 
   Carbon::Arena arena;
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::Parse(&arena, input_file_name, trace_option,
-                    trace_option && trace_bison_option);
+      Carbon::Parse(&arena, input_file_name, trace_option);
 
   if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.

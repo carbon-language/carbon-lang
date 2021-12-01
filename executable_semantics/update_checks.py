@@ -20,6 +20,9 @@ _TESTDATA = "executable_semantics/testdata"
 # A prefix followed by a command to run for autoupdating checked output.
 _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 
+# Indicates no autoupdate is requested.
+_NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
+
 
 def _get_tests() -> Set[str]:
     """Get the list of tests from the filesystem."""
@@ -50,12 +53,26 @@ def _update_check_once(test: str) -> bool:
     ]
     num_orig_check_lines = len(orig_lines) - len(lines_without_check)
     autoupdate_index = None
+    noautoupdate_index = None
     for line_index, line in enumerate(lines_without_check):
         if line.startswith(_AUTOUPDATE_MARKER):
             autoupdate_index = line_index
             autoupdate_cmd = line[len(_AUTOUPDATE_MARKER) :]
+        if line.startswith(_NOAUTOUPDATE_MARKER):
+            noautoupdate_index = line_index
     if autoupdate_index is None:
-        raise ValueError("No autoupdate marker in %s" % test)
+        if noautoupdate_index is None:
+            raise ValueError(
+                "%s must have either '%s' or '%s'"
+                % (test, _AUTOUPDATE_MARKER, _NOAUTOUPDATE_MARKER)
+            )
+        else:
+            return False
+    elif noautoupdate_index is not None:
+        raise ValueError(
+            "%s has both '%s' and '%s', must have only one"
+            % (test, _AUTOUPDATE_MARKER, _NOAUTOUPDATE_MARKER)
+        )
 
     # Add executable_semantics to the PATH.
     env = os.environ.copy()
