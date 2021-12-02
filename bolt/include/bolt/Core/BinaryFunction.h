@@ -1087,11 +1087,6 @@ public:
     Index = Idx;
   }
 
-  /// Get the original address for the given basic block within this function.
-  uint64_t getBasicBlockOriginalAddress(const BinaryBasicBlock *BB) const {
-    return Address + BB->getOffset();
-  }
-
   /// Return offset of the function body in the binary file.
   uint64_t getFileOffset() const { return FileOffset; }
 
