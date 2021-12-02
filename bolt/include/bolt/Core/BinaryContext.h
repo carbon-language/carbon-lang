@@ -195,6 +195,9 @@ class BinaryContext {
   /// with size won't overflow
   uint32_t DuplicatedJumpTables{0x10000000};
 
+  /// Function fragments to skip.
+  std::vector<BinaryFunction *> FragmentsToSkip;
+
   /// The runtime library.
   std::unique_ptr<RuntimeLibrary> RtLibrary;
 
@@ -864,12 +867,18 @@ public:
 
   /// @}
 
-  /// Register \p TargetFunction as fragment of \p Function.
-  void registerFragment(BinaryFunction &TargetFunction,
+  /// Register \p TargetFunction as a fragment of \p Function if checks pass:
+  /// - if \p TargetFunction name matches \p Function name with a suffix:
+  ///   fragment_name == parent_name.cold(.\d+)?
+  /// True if the Function is registered, false if the check failed.
+  bool registerFragment(BinaryFunction &TargetFunction,
                         BinaryFunction &Function) const;
 
   /// Resolve inter-procedural dependencies from \p Function.
   void processInterproceduralReferences(BinaryFunction &Function);
+
+  /// Skip functions with all parent and child fragments transitively.
+  void skipMarkedFragments();
 
   /// Perform any necessary post processing on the symbol table after
   /// function disassembly is complete.  This processing fixes top

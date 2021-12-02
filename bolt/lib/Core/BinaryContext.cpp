@@ -29,8 +29,10 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Regex.h"
+#include <algorithm>
 #include <functional>
 #include <iterator>
+#include <unordered_set>
 
 using namespace llvm;
 
@@ -483,6 +485,18 @@ BinaryContext::analyzeMemoryAt(uint64_t Address, BinaryFunction &BF) {
   return MemoryContentsType::UNKNOWN;
 }
 
+/// Check if <fragment restored name> == <parent restored name>.cold(.\d+)?
+bool isPotentialFragmentByName(BinaryFunction &Fragment,
+                               BinaryFunction &Parent) {
+  for (StringRef Name : Parent.getNames()) {
+    std::string NamePrefix = Regex::escape(NameResolver::restore(Name));
+    std::string NameRegex = Twine(NamePrefix, "\\.cold(\\.[0-9]+)?").str();
+    if (Fragment.hasRestoredNameRegex(NameRegex))
+      return true;
+  }
+  return false;
+}
+
 bool BinaryContext::analyzeJumpTable(const uint64_t Address,
                                      const JumpTable::JumpTableType Type,
                                      BinaryFunction &BF,
@@ -500,19 +514,6 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       Offsets->emplace_back(Offset);
   };
 
-  auto isFragment = [](BinaryFunction &Fragment,
-                       BinaryFunction &Parent) -> bool {
-    // Check if <fragment restored name> == <parent restored name>.cold(.\d+)?
-    for (StringRef BFName : Parent.getNames()) {
-      std::string BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
-      std::string BFNameRegex =
-          Twine(BFNamePrefix, "\\.cold(\\.[0-9]+)?").str();
-      if (Fragment.hasRestoredNameRegex(BFNameRegex))
-        return true;
-    }
-    return false;
-  };
-
   auto doesBelongToFunction = [&](const uint64_t Addr,
                                   BinaryFunction *TargetBF) -> bool {
     if (BF.containsAddress(Addr))
@@ -522,25 +523,12 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       return false;
     // Case 1: check if BF is a fragment and TargetBF is its parent.
     if (BF.isFragment()) {
-      // BF is a fragment, but parent function is not registered.
-      // This means there's no direct jump between parent and fragment.
-      // Set parent link here in jump table analysis, based on function name
-      // matching heuristic.
-      if (!BF.getParentFragment() && isFragment(BF, *TargetBF))
-        registerFragment(BF, *TargetBF);
-      return BF.getParentFragment() == TargetBF;
+      // Parent function may or may not be already registered.
+      // Set parent link based on function name matching heuristic.
+      return registerFragment(BF, *TargetBF);
     }
     // Case 2: check if TargetBF is a fragment and BF is its parent.
-    if (TargetBF->isFragment()) {
-      // TargetBF is a fragment, but parent function is not registered.
-      // This means there's no direct jump between parent and fragment.
-      // Set parent link here in jump table analysis, based on function name
-      // matching heuristic.
-      if (!TargetBF->getParentFragment() && isFragment(*TargetBF, BF))
-        registerFragment(*TargetBF, BF);
-      return TargetBF->getParentFragment() == &BF;
-    }
-    return false;
+    return TargetBF->isFragment() && registerFragment(*TargetBF, BF);
   };
 
   ErrorOr<BinarySection &> Section = getSectionForAddress(Address);
@@ -608,10 +596,10 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
                    << TargetBF->getPrintName() << '\n';
             if (TargetBF->isFragment())
               dbgs() << "  ! is a fragment\n";
-            BinaryFunction *TargetParent = TargetBF->getParentFragment();
-            dbgs() << "  ! its parent is "
-                   << (TargetParent ? TargetParent->getPrintName() : "(none)")
-                   << '\n';
+            for (BinaryFunction *TargetParent : TargetBF->ParentFragments)
+              dbgs() << "  ! its parent is "
+                     << (TargetParent ? TargetParent->getPrintName() : "(none)")
+                     << '\n';
           }
         }
         if (Value == BF.getAddress())
@@ -638,7 +626,8 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       BF.setHasSplitJumpTable(true);
       // Add invalid offset for proper identification of jump table size.
       addOffset(INVALID_OFFSET);
-      LLVM_DEBUG(dbgs() << "OK: address in split fragment\n");
+      LLVM_DEBUG(dbgs() << "OK: address in split fragment "
+                        << TargetBF->getPrintName() << '\n');
     }
   }
 
@@ -649,7 +638,6 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
 }
 
 void BinaryContext::populateJumpTables() {
-  std::vector<BinaryFunction *> FuncsToSkip;
   LLVM_DEBUG(dbgs() << "DataPCRelocations: " << DataPCRelocations.size()
                     << '\n');
   for (auto JTI = JumpTables.begin(), JTE = JumpTables.end(); JTI != JTE;
@@ -699,7 +687,7 @@ void BinaryContext::populateJumpTables() {
 
     // Mark to skip the function and all its fragments.
     if (BF.hasSplitJumpTable())
-      FuncsToSkip.push_back(&BF);
+      FragmentsToSkip.push_back(&BF);
   }
 
   if (opts::StrictMode && DataPCRelocations.size()) {
@@ -712,16 +700,36 @@ void BinaryContext::populateJumpTables() {
     assert(0 && "unclaimed PC-relative relocations left in data\n");
   }
   clearList(DataPCRelocations);
+}
+
+void BinaryContext::skipMarkedFragments() {
+  // Unique functions in the vector.
+  std::unordered_set<BinaryFunction *> UniqueFunctions(FragmentsToSkip.begin(),
+                                                       FragmentsToSkip.end());
+  // Copy the functions back to FragmentsToSkip.
+  FragmentsToSkip.assign(UniqueFunctions.begin(), UniqueFunctions.end());
+  auto addToWorklist = [&](BinaryFunction *Function) -> void {
+    if (UniqueFunctions.count(Function))
+      return;
+    FragmentsToSkip.push_back(Function);
+    UniqueFunctions.insert(Function);
+  };
   // Functions containing split jump tables need to be skipped with all
-  // fragments.
-  for (BinaryFunction *BF : FuncsToSkip) {
-    BinaryFunction *ParentBF =
-        const_cast<BinaryFunction *>(BF->getTopmostFragment());
-    LLVM_DEBUG(dbgs() << "Skipping " << ParentBF->getPrintName()
-                      << " family\n");
-    ParentBF->setIgnored();
-    ParentBF->ignoreFragments();
+  // fragments (transitively).
+  for (size_t I = 0; I != FragmentsToSkip.size(); I++) {
+    BinaryFunction *BF = FragmentsToSkip[I];
+    assert(UniqueFunctions.count(BF) &&
+           "internal error in traversing function fragments");
+    if (opts::Verbosity >= 1)
+      errs() << "BOLT-WARNING: Ignoring " << BF->getPrintName() << '\n';
+    BF->setIgnored();
+    std::for_each(BF->Fragments.begin(), BF->Fragments.end(), addToWorklist);
+    std::for_each(BF->ParentFragments.begin(), BF->ParentFragments.end(),
+                  addToWorklist);
   }
+  errs() << "BOLT-WARNING: Ignored " << FragmentsToSkip.size() << " functions "
+         << "due to cold fragments.\n";
+  FragmentsToSkip.clear();
 }
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
@@ -1093,16 +1101,14 @@ void BinaryContext::generateSymbolHashes() {
   }
 }
 
-void BinaryContext::registerFragment(BinaryFunction &TargetFunction,
+bool BinaryContext::registerFragment(BinaryFunction &TargetFunction,
                                      BinaryFunction &Function) const {
-  // Only a parent function (or a sibling) can reach its fragment.
-  assert(!Function.IsFragment &&
-         "only one cold fragment is supported at this time");
-  if (BinaryFunction *TargetParent = TargetFunction.getParentFragment()) {
-    assert(TargetParent == &Function && "mismatching parent function");
-    return;
-  }
-  TargetFunction.setParentFragment(Function);
+  if (!isPotentialFragmentByName(TargetFunction, Function))
+    return false;
+  assert(TargetFunction.isFragment() && "TargetFunction must be a fragment");
+  if (TargetFunction.isParentFragment(&Function))
+    return true;
+  TargetFunction.addParentFragment(Function);
   Function.addFragment(TargetFunction);
   if (!HasRelocations) {
     TargetFunction.setSimple(false);
@@ -1112,6 +1118,7 @@ void BinaryContext::registerFragment(BinaryFunction &TargetFunction,
     outs() << "BOLT-INFO: marking " << TargetFunction
            << " as a fragment of " << Function << '\n';
   }
+  return true;
 }
 
 void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
@@ -1125,8 +1132,13 @@ void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
       continue;
 
     if (TargetFunction) {
-      if (TargetFunction->IsFragment)
-        registerFragment(*TargetFunction, Function);
+      if (TargetFunction->IsFragment &&
+          !registerFragment(*TargetFunction, Function)) {
+        errs() << "BOLT-WARNING: interprocedural reference between unrelated "
+                  "fragments: "
+               << Function.getPrintName() << " and "
+               << TargetFunction->getPrintName() << '\n';
+      }
       if (uint64_t Offset = Address - TargetFunction->getAddress())
         TargetFunction->addEntryPointAtOffset(Offset);
 

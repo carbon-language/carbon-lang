@@ -354,7 +354,7 @@ private:
   std::string ColdCodeSectionName;
 
   /// Parent function fragment for split function fragments.
-  BinaryFunction *ParentFragment{nullptr};
+  SmallPtrSet<BinaryFunction *, 1> ParentFragments;
 
   /// Indicate if the function body was folded into another function.
   /// Used by ICF optimization.
@@ -633,15 +633,15 @@ private:
 
   /// If the function represents a secondary split function fragment, set its
   /// parent fragment to \p BF.
-  void setParentFragment(BinaryFunction &BF) {
+  void addParentFragment(BinaryFunction &BF) {
+    assert(this != &BF);
     assert(IsFragment && "function must be a fragment to have a parent");
-    assert((!ParentFragment || ParentFragment == &BF) &&
-           "cannot have more than one parent function");
-    ParentFragment = &BF;
+    ParentFragments.insert(&BF);
   }
 
   /// Register a child fragment for the main fragment of a split function.
   void addFragment(BinaryFunction &BF) {
+    assert(this != &BF);
     Fragments.insert(&BF);
   }
 
@@ -2000,20 +2000,9 @@ public:
     return IsFragment;
   }
 
-  /// Return parent function fragment if this function is a secondary (child)
-  /// fragment of another function.
-  BinaryFunction *getParentFragment() const {
-    return ParentFragment;
-  }
-
-  /// If the function is a nested child fragment of another function, return its
-  /// topmost parent fragment.
-  const BinaryFunction *getTopmostFragment() const {
-    const BinaryFunction *BF = this;
-    while (BF->getParentFragment())
-      BF = BF->getParentFragment();
-
-    return BF;
+  /// Returns if the given function is a parent fragment of this function.
+  bool isParentFragment(BinaryFunction *Parent) const {
+    return ParentFragments.count(Parent);
   }
 
   /// Set the profile data for the number of times the function was called.
@@ -2558,12 +2547,6 @@ public:
   FragmentInfo &cold() { return ColdFragment; }
 
   const FragmentInfo &cold() const { return ColdFragment; }
-
-  /// Mark child fragments as ignored.
-  void ignoreFragments() {
-    for (BinaryFunction *Fragment : Fragments)
-      Fragment->setIgnored();
-  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,

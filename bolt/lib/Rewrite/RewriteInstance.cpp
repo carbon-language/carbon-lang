@@ -2789,6 +2789,7 @@ void RewriteInstance::disassembleFunctions() {
   }
 
   BC->populateJumpTables();
+  BC->skipMarkedFragments();
 
   for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;

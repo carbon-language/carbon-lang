@@ -442,7 +442,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (isFolded()) {
     OS << "\n  FoldedInto  : " << *getFoldedIntoFunction();
   }
-  if (ParentFragment) {
+  for (BinaryFunction *ParentFragment : ParentFragments) {
     OS << "\n  Parent      : " << *ParentFragment;
   }
   if (!Fragments.empty()) {
