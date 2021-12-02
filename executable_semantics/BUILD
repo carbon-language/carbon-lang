@@ -12,9 +12,6 @@ package(default_visibility = [
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    # TODO: Make this a separate source file that's embedded in the interpreter
-    # at build time. See https://github.com/bazelbuild/rules_cc/issues/41 for a
-    # possible mechanism.
     data = ["data/prelude.carbon"],
     deps = [
         "//executable_semantics/common:arena",
