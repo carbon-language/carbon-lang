@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
@@ -36,10 +34,9 @@ cc_library(
     hdrs = ["matcher_test_base.h"],
     deps = [
         ":matcher",
+        "@com_google_googletest//:gtest",
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
     ],
 )
 
@@ -58,8 +55,8 @@ cc_test(
     deps = [
         ":fn_inserter",
         ":matcher_test_base",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -76,8 +73,8 @@ cc_test(
     deps = [
         ":for_range",
         ":matcher_test_base",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -94,7 +91,7 @@ cc_test(
     deps = [
         ":matcher_test_base",
         ":var_decl",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:gtest_main",
     ],
 )

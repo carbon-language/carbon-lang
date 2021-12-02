@@ -12,9 +12,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Notes](#notes)
--   [Alternatives](#alternatives)
     -   [Global variables](#global-variables)
--   [Relevant proposals](#relevant-proposals)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -46,8 +46,6 @@ While there can be global constants, there are no global variables.
 
 > TODO: Constant syntax is an ongoing discussion.
 
-## Alternatives
-
 ### Global variables
 
 We are exploring several different ideas for how to design less bug-prone
@@ -56,10 +54,17 @@ variables. We may be unable to fully address them, at least for migrated code,
 and be forced to add some limited form of global variables back. We may also
 discover that their convenience outweighs any improvements afforded.
 
-## Relevant proposals
+## Alternatives considered
 
-Most discussion of design choices and alternatives may be found in relevant
-proposals.
+-   [No `var` introducer keyword](/proposals/p0339.md#no-var-introducer-keyword)
+-   [Name of the `var` statement introducer](/proposals/p0339.md#name-of-the-var-statement-introducer)
+-   [Colon between type and identifier](/proposals/p0339.md#colon-between-type-and-identifier)
+-   [Type elision](/proposals/p0339.md#type-elision)
+-   [Type ordering](/proposals/p0618.md#type-ordering)
 
--   [`var` statement](/proposals/p0339.md)
--   [`var` ordering](/proposals/p0618.md)
+## References
+
+-   Proposal
+    [#339: `var` statement](https://github.com/carbon-language/carbon-lang/pull/339)
+-   Proposal
+    [#618: `var` ordering](https://github.com/carbon-language/carbon-lang/pull/618)

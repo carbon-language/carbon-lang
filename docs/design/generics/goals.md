@@ -1,4 +1,4 @@
-# Carbon: Generics goals
+# Generics: Goals
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Template use cases that are out of scope](#template-use-cases-that-are-out-of-scope)
     -   [Generics will be checked when defined](#generics-will-be-checked-when-defined)
     -   [Specialization strategy](#specialization-strategy)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -378,7 +379,7 @@ There are a few obstacles to supporting dynamic dispatch efficiently, which may
 limit the extent it is used automatically by implementations. For example, the
 following features would benefit substantially from guaranteed monomorphization:
 
--   Field packing in struct layout. For example, packing a `Bool` into the lower
+-   Field packing in class layout. For example, packing a `Bool` into the lower
     bits of a pointer, or packing bit-fields with generic widths.
 -   Allocating local variables in stack storage. Without monomorphization, we
     would need to perform dynamic memory allocation -- whether on the stack or
@@ -439,10 +440,10 @@ will necessarily be less incremental.
 ### Coherence
 
 We want the generics system to have the
-[_coherence_ property](terminology.md#coherence), so that the implementation of an
-interface for a type is well defined. Since a generic function only depends on
-interface implementations, they will always behave consistently on a given type,
-independent of context. For more on this, see
+[_coherence_ property](terminology.md#coherence), so that the implementation of
+an interface for a type is well defined. Since a generic function only depends
+on interface implementations, they will always behave consistently on a given
+type, independent of context. For more on this, see
 [this description of what coherence is and why Rust enforces it](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence).
 
 Coherence greatly simplifies the language design, since it reduces the need for
@@ -530,7 +531,8 @@ are complicated and
 
 ### Interfaces are nominal
 
-Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
+Interfaces can either be [structural](terminology.md#structural-interfaces), as
+in Go, or [nominal](terminology.md#nominal-interfaces), as in Rust and Swift.
 Structural interfaces match any type that has the required methods, whereas
 nominal interfaces only match if there is an explicit declaration stating that
 the interface is implemented for that specific type. Carbon will support nominal
@@ -666,3 +668,7 @@ cases.
 Lastly, runtime specialization is out of scope as an implementation strategy.
 That is, some language runtimes JIT a specialization when it is first needed,
 but it is not a goal for Carbon to support such an implementation strategy.
+
+## References
+
+-   [#24: Generics goals](https://github.com/carbon-language/carbon-lang/pull/24)

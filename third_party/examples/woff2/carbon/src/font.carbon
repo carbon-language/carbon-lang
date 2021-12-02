@@ -10,8 +10,8 @@
 #ifndef WOFF2_FONT_H_
 #define WOFF2_FONT_H_
 
-#include <cstddef>
 #include <cinttypes>
+#include <cstddef>
 #include <map>
 #include <vector>
 

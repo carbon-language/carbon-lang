@@ -14,16 +14,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Integer literals](#integer-literals)
     -   [Real number literals](#real-number-literals)
-        -   [Ties](#ties)
     -   [Digit separators](#digit-separators)
--   [Alternatives](#alternatives)
-    -   [Integer bases](#integer-bases)
-        -   [Octal literals](#octal-literals)
-        -   [Decimal literals](#decimal-literals)
-        -   [Case sensitivity](#case-sensitivity)
-    -   [Real number syntax](#real-number-syntax)
-    -   [Digit separator syntax](#digit-separator-syntax)
-    -   [Digit separator positioning](#digit-separator-positioning)
+-   [Divergence from other languages](#divergence-from-other-languages)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -92,7 +86,7 @@ example, `3e10` is not a valid literal.
 
 When a real number literal is interpreted as a value of a real number type, its
 value is the representable real number closest to the value of the literal. In
-the case of a [tie](#ties), the conversion to the real number type is invalid.
+the case of a tie, the nearest value whose mantissa is even is selected.
 
 The decimal real number syntax allows for any decimal fraction to be expressed
 -- that is, any number of the form _a_ x 10<sup>-_b_</sup>, where _a_ is an
@@ -104,29 +98,6 @@ intended real number representation may be more convenient than producing a
 decimal equivalent that is known to convert to the intended value. Hexadecimal
 real number literals are provided in order to permit values of binary floating
 or fixed point real number types to be expressed directly.
-
-#### Ties
-
-As described above, a real number literal that lies exactly between two
-representable values for its target type is invalid. Such ties are extremely
-unlikely to occur by accident: for example, when interpreting a literal as
-`Float64`, `1.` would need to be followed by exactly 53 decimal digits (followed
-by zero or more `0`s) to land exactly half-way between two representable values,
-and the probability of `1.` followed by a random 53-digit sequence resulting in
-such a tie is one in 5<sup>53</sup>, or about
-0.000000000000000000000000000000000009%. For `Float32`, it's about
-0.000000000000001%, and even for a typical `Float16` implementation with 10
-fractional bits, it's around 0.00001%.
-
-Ties are much easier to express as hexadecimal floating-point literals: for
-example, `0x1.0000_0000_0000_08p+0` is exactly half way between `1.0` and the
-smallest `Float64` value greater than `1.0`, which is `0x1.0000_0000_0000_1p+0`.
-
-Whether written in decimal or hexadecimal, a tie provides very strong evidence
-that the developer intended to express a precise floating-point value, and
-provided one bit too much precision (or one bit too little, depending on whether
-they expected some rounding to occur), so rejecting the literal is preferred
-over making an arbitrary choice between the two possible values.
 
 ### Digit separators
 
@@ -144,340 +115,38 @@ respective condition:
 -   For binary literals, digit separators can appear between any two digits. For
     example, `0b1_000_101_11`.
 
-## Alternatives
-
-### Integer bases
-
-#### Octal literals
-
-No support is proposed for octal literals. In practice, their appearance in C
-and C++ code in a sample corpus consisted of (in decreasing order of commonality
-and excluding `0` literals):
-
--   file permissions,
--   cases where decimal was clearly intended (`CivilDay(2020, 04, 01)`), and
--   (in _distant_ third place) anything else.
-
-The number of intentional uses of octal literals, other than in file
-permissions, was negligible. We considered the following alternatives:
-
-**Alternative 1:** Follow C and C++, and use `0` as the base prefix for octal.
-
-Advantages:
-
--   More similar to C++ and other languages.
-
-Disadvantages:
-
--   Subtle and error-prone rule: for example, left-padding with zeroes for
-    alignment changes the meaning of literals.
-
-**Alternative 2:** Use `0o` as the base prefix for octal.
-
-Advantages:
-
--   Unlikely to be misinterpreted as decimal.
--   Follows several other languages (for example, Python).
-
-Disadvantages:
-
--   Additional language complexity.
-
-If we decide we want to introduce octal literals at a later date, use of
-alternative 2 is suggested.
-
-#### Decimal literals
-
-**We could permit leading `0`s in decimal integers (and in floating-point
-numbers).**
-
-Advantages:
-
--   We would allow leading `0`s to be used to align columns of numbers.
-
-Disadvantages:
-
--   The same literal could be valid but have a different value in C++ and
-    Carbon.
-
-**We could add an (optional) base specifier `0d` for decimal integers.**
-
-Advantages:
-
--   Uniform treatment of all bases. Left-padding with `0` could be achieved by
-    using `0d000123`.
-
-Disadvantages:
-
--   No evidence of need for this functionality.
-
-**We could permit an `e` in decimal literals to express large powers of 10.**
-
-Advantages:
-
--   Many uses of (eg) `1e6` in our sample C++ corpus intend to form an integer
-    literal instead of a floating-point literal.
-
-Disadvantages:
-
--   Would violate the expectations of many C++ programmers used to `e`
-    indicating a floating-point constant.
-
-#### Case sensitivity
-
-**We could make base specifiers case-insensitive.**
-
-Advantages:
-
--   More similar to C++.
-
-Disadvantages:
-
--   `0B1` is easily mistaken for `081`
--   `0B1` can be confused with `0xB1`
--   `0O17` is easily mistaken for `0017`
--   Allowing more than one way to write literals will lead to style divergence.
-
-**We could make the digit sequence in hexadecimal integers case-insensitive.**
-
-Advantages:
-
--   More similar to C++.
--   Some developers will be more comfortable writing hexadecimal digits in
-    lowercase. Some tools, such as `md5`, will print lowercase.
-
-Disadvantages:
-
--   Allowing more than one way to write literals will lead to style divergence.
--   Lowercase hexadecimal digits are less visually distinct from the `x` base
-    specifier (for example, the digit sequence is more visually distinct in
-    `0xAC` than in `0xac`).
-
-**We could require the digit sequence in hexadecimal integers to be written
-using lowercase letters `a`..`f`.**
-
-Advantages:
-
--   Some developers will be more comfortable writing hexadecimal digits in
-    lowercase. Some tools, such as `md5`, will print lowercase.
--   `B` and `D` are more likely to be confused with `8` and `0` than `b` and `d`
-    are.
-
-Disadvantages:
-
--   Some developers will be more comfortable writing hexadecimal digits in
-    uppercase. Some tools will print uppercase.
--   Lowercase hexadecimal digits are less visually distinct from the `x` base
-    specifier (for example, the digit sequence is more visually distinct in
-    `0xAC` than in `0xac`).
-
-### Real number syntax
-
-**We could allow real numbers with no digits on one side of the period (`3.` or
-`.5`).**
-
-Advantages:
-
--   More similar to C++.
--   Allows numbers to be expressed more tersely.
-
-Disadvantages:
-
--   Gives meaning to `tup.0` syntax that may be useful for indexing tuples.
--   Gives meaning to `0.ToString()` syntax that may be useful for performing
-    member access on literals.
--   May harm readability by making the difference between an integer literal and
-    a real number literal less significant.
--   Allowing more than one way to write literals will lead to style divergence.
-
-See also the section on
-[floating-point literals](https://google.github.io/styleguide/cppguide.html#Floating_Literals)
-in the Google style guide, which argues for the same rule.
-
-**We could allow a real number with no `e` or `p` to omit a period (`1e100`).**
-
-Advantages:
-
--   More similar to C++.
--   Allows numbers to be expressed more tersely.
-
-Disadvantages:
-
--   Assuming that such numbers are integers rather than real numbers is a common
-    error in C++.
-
-**We could allow the `e` or `p` to be written in uppercase.**
-
-Advantages:
-
--   More similar to C++.
--   Most calculators use `E`, to avoid confusion with the constant `e`.
-
-Disadvantages:
-
--   Allowing more than one way to write literals will lead to style divergence.
--   `E` may be confused with a hexadecimal digit.
-
-**We could require a `p` in a hexadecimal real number literal.**
-
-Advantages:
-
--   More similar to C++.
--   When explicitly writing a bit-pattern for a floating-point type, it's
-    reasonable to always include the exponent value.
-
-Disadvantages:
-
--   Less consistent.
--   Makes hexadecimal floating-point values even more expert-only.
-
-**We could arbitrarily pick one of the two values when a real number is exactly
-half-way between two representable values.**
-
-Advantages:
-
--   More similar to C++.
--   Would accept more cases, and it's likely that either of the two possible
-    values would be acceptable in practice.
-
-Disadvantages:
-
--   Would either need to specify which option is chosen or, following C++,
-    accept that programs using such literals have non-portable semantics.
--   Numbers specified to the exact level of precision required to form a tie are
-    a strong signal that the programmer intended to specify a particular value.
-
-### Digit separator syntax
-
-We considered the following characters as digit separators:
-
-**Status quo:** `_` as a digit separator.
-
-Advantages:
-
--   Follows convention of C#, Java, JavaScript, Python, D, Ruby, Rust, Swift,
-    ...
--   Culturally agnostic, because it doesn't match any common human writing
-    convention.
-
-Disadvantages:
-
--   Underscore is not used as a digit grouping separator in any common human
-    writing convention.
-
-**Alternative 1:** `'` as a digit separator.
-
-Advantages:
-
--   Follows C++ syntax.
--   Used in several (mostly European) writing conventions.
-
-Disadvantages:
-
--   `'` is also likely to be used to introduce character literals.
-
-**Alternative 2:** `,` as a digit separator.
-
-Advantages:
-
--   More similar to how numbers are written in English text and many other
-    cultures.
-
-Disadvantages:
-
--   Commas are expected to widely be used in Carbon programs for other purposes,
-    where there may be digits on both sides of the comma. For example, there
-    could be readability problems if `f(1, 234)` called `f` with two arguments
-    but `f(1,234)` called `f` with a single argument.
--   Comma is interpreted as a decimal point in the conventions of many cultures.
--   Unprecedented in common programming languages.
-
-**Alternative 3:** whitespace as a digit separator.
-
-Advantages:
-
--   Used and understood by many cultures.
--   Never interpreted as a decimal point instead of a grouping separator.
--   Also usable to the right of a decimal point.
-
-Disadvantages:
-
--   Omitted separators in lists of numbers may result in distinct numbers being
-    spliced together. For example, `f(1, 23, 4 567)` may be interpreted as three
-    separate numerical arguments instead of four arguments with a missing comma.
--   Unprecedented in other programming languages.
-
-**Alternative 4:** `.` as digit separator, `,` as decimal point.
-
-Advantages:
-
--   More familiar to cultures that write numbers this way.
-
-Disadvantages:
-
--   As with `,` as a digit separator, `,` as a decimal point is problematic.
--   This usage is unfamiliar and would be surprising to programmers; programmers
-    from cultures where `,` is the decimal point in regular writing are likely
-    already accustomed to using `.` as the decimal point in programming
-    environments, and the converse is not true.
-
-**Alternative 5:** No digit separator syntax.
-
-Advantages:
-
--   Simpler language rules.
--   More consistent source syntax, as there is no choice as to whether to use
-    digit separators or not.
-
-Disadvantages:
-
--   Harms the readability of long literals.
-
-### Digit separator positioning
-
-**Alternative 1:** allow any digit groupings (for example, `123_4567_89`).
-
-Advantages:
-
--   Simpler, more flexible rule, that may allow some groupings that are
-    conventional in a specific domain. For example, `var Date d = 01_12_1983;`,
-    or `var Int64 time_in_microseconds = 123456_000000;`.
--   Culturally agnostic. For example, the Indian convention for digit separators
-    would group the last three digits, and then every two digits before that
-    (1,23,45,678 could be written `1_23_45_678`).
-
-Disadvantages:
-
--   Less self-checking that numeric literals are interpreted the way that the
-    author intends.
-
-**Alternative 2:** as above, but additionally require binary digits to be
-grouped in 4s.
-
-Advantages:
-
--   More enforcement that digit grouping is conventional.
-
-Disadvantages:
-
--   No clear, established rule for how to group binary digits. In some cases, 8
-    digit groups may be more conventional.
--   When used to express literals involving bit-fields, arbitrary grouping may
-    be desirable. For example:
-
-    ```carbon
-    var Float32 flt_max =
-      BitCast(Float32, 0b0_11111110_11111111111111111111111);
-    ```
-
-**Alternative 3:** allow any regular grouping.
-
-Advantages:
-
--   Can be applied uniformly to all bases.
-
-Disadvantages:
-
--   Provides no assistance for decimal numbers with a single digit separator.
--   Does not allow binary literals to express an intent to initialize irregular
-    bit-fields.
+## Divergence from other languages
+
+The design provides a syntax that is deliberately close to that used both by C++
+and many other languages, so it should feel familiar to developers. However, it
+selects a reasonably minimal subset of the syntaxes. This minimal approach
+provides benefits directly in line with the goal that Carbon code should be
+[easy to read, understand, and write](../docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
+
+-   Reduces unnecessary choices for programmers.
+-   Simplifies the syntax rules of the language.
+-   Improves consistency of written Carbon code.
+
+That said, it still provides sufficient variations to address important use
+cases for the goal of not leaving room for a lower level language:
+
+-   Hexadecimal and binary integer literals.
+-   Scientific notation floating point literals.
+-   Hexadecimal (scientific) floating point literals.
+
+## Alternatives considered
+
+-   [Integer bases](/proposals/p0143.md#integer-bases)
+    -   [Octal literals](/proposals/p0143.md#octal-literals)
+    -   [Decimal literals](/proposals/p0143.md#decimal-literals)
+    -   [Case sensitivity](/proposals/p0143.md#case-sensitivity)
+-   [Real number syntax](/proposals/p0143.md#real-number-syntax)
+    -   [Disallow ties](/proposals/p0866.md)
+-   [Digit separator syntax](/proposals/p0143.md#digit-separator-syntax)
+
+## References
+
+-   Proposal
+    [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
+-   Proposal
+    [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)

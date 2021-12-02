@@ -74,6 +74,14 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
       "string literal.";
 };
 
+struct InvalidHorizontalWhitespaceInString
+    : SimpleDiagnostic<InvalidHorizontalWhitespaceInString> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Whitespace other than plain space must be expressed with an escape "
+      "sequence in a string literal.";
+};
+
 // Find and return the opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
 static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
@@ -317,7 +325,10 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
     // Process the contents of the line.
     while (true) {
-      auto end_of_regular_text = contents.find_first_of("\n\\");
+      auto end_of_regular_text = contents.find_if([](char c) {
+        return c == '\n' || c == '\\' ||
+               (IsHorizontalWhitespace(c) && c != ' ');
+      });
       result += contents.substr(0, end_of_regular_text);
       contents = contents.substr(end_of_regular_text);
 
@@ -335,6 +346,25 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         result += '\n';
         // Move onto to the next line.
         break;
+      }
+
+      if (IsHorizontalWhitespace(contents.front())) {
+        // Horizontal whitespace other than ` ` is valid only at the end of a
+        // line.
+        assert(contents.front() != ' ' &&
+               "should not have stopped at a plain space");
+        auto after_space = contents.find_if_not(IsHorizontalWhitespace);
+        if (after_space == llvm::StringRef::npos ||
+            contents[after_space] != '\n') {
+          // TODO: Include the source range of the whitespace up to
+          // `contents.begin() + after_space` in the diagnostic.
+          emitter.EmitError<InvalidHorizontalWhitespaceInString>(
+              contents.begin());
+          // Include the whitespace in the string contents for error recovery.
+          result += contents.substr(0, after_space);
+        }
+        contents = contents.substr(after_space);
+        continue;
       }
 
       if (!contents.consume_front(escape)) {

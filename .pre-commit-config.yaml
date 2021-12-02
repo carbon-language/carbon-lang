@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Update versions with:
-#   pre-commit autoupdate --freeze
+#   pre-commit autoupdate --freeze && pre-commit run -a
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
@@ -19,11 +19,7 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
-        exclude: |
-          (?x)^(
-              website/jekyll/site/_includes|
-              bazel-(clang-toolchain|execroot)
-          )$
+        exclude: ^bazel-(clang-toolchain|execroot)$
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
@@ -31,6 +27,11 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
         exclude: '^(.*/testdata/.*\.golden)$'
+  - repo: https://github.com/mattlqx/pre-commit-search-and-replace
+    rev: 417c99dafb534d7517d9abc17f0293de3c915a72 # frozen: v1.0.5
+    hooks:
+      - id: search-and-replace
+        files: '\.md$'
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
     hooks:
@@ -71,7 +72,6 @@ repos:
               .bazelversion|
               compile_flags.txt|
               third_party/examples/.*/compile_flags.carbon.txt|
-              website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|
               .*\.def|
               .*\.svg|
               .*/testdata/.*\.golden
@@ -83,35 +83,32 @@ repos:
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
-        exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
-      - id: proposal-list
-        name: Update list of proposals
-        description: Updates the list of proposals in proposals/README.md
-        entry: proposals/scripts/update_proposal_list.py
+      - id: executable-semantics-format-grammar
+        name: Format the executable_semantics grammar file
+        entry: executable_semantics/syntax/format_grammar.py
         language: python
-        files: ^proposals/(README|p.*)\.md$
+        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 93c10bf9ebccf8d7cc686b0b9579f2e5e41c5328 # frozen: 21.6b0
+    rev: 19f6aa8208154de4560ee1e4a3e638e120dcdba5 # frozen: 21.11b1
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: 07a539b8db43298f124ace23c90b4b871911b8c4
+    rev: fb5e481f35f5a9b32a06ccfc28b8d6dda4525f75
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
         types: [c++]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: bc48c541add1551be726f23c4294c773442341cb # frozen: v2.3.2
+    rev: f69d0a4007f48ad4f144089973c56f6ecf53a5b5 # frozen: v2.5.0
     hooks:
       - id: prettier
-        exclude: ^website/jekyll/theme/
   # Run linters last, as formatters and other checks may fix issues.
-  - repo: https://gitlab.com/PyCQA/flake8
-    rev: dcd740bc0ebaf2b3d43e59a0060d157c97de13f3 # frozen: 3.9.2
+  - repo: https://github.com/PyCQA/flake8
+    rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
       - id: flake8
 

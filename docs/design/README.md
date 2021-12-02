@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
 -   [Context and disclaimer](#context-and-disclaimer)
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
@@ -41,9 +42,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Pointers and references](#pointers-and-references)
         -   [Arrays and slices](#arrays-and-slices)
     -   [User-defined types](#user-defined-types)
-        -   [Structs](#structs)
+        -   [Classes](#classes)
+            -   [Assignment, copying](#assignment-copying)
+            -   [Member access](#member-access)
+            -   [Methods](#methods)
             -   [Allocation, construction, and destruction](#allocation-construction-and-destruction)
-            -   [Assignment, copying, and moving](#assignment-copying-and-moving)
+            -   [Moving](#moving)
             -   [Comparison](#comparison)
             -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
             -   [Inline type composition](#inline-type-composition)
@@ -67,6 +71,24 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
 
 <!-- tocstop -->
+
+## Overview
+
+This documentation describes the design of the Carbon language, and the
+rationale for that design. The goal is to provide sufficient coverage of the
+design to support the following audiences:
+
+-   People who wish to determine whether Carbon would be the right choice to use
+    for a project compared to other existing languages.
+-   People working on the evolution of the Carbon language who wish to
+    understanding the rationale and motivation for existing design decisions.
+-   People working on a specification or implementation of the Carbon language
+    who need a detailed understanding of the intended design.
+-   People writing Carbon code who wish to understand why the language rules are
+    the way they are.
+
+For Carbon developers, documentation that is more suitable for learning the
+language will be made available separately.
 
 ## Context and disclaimer
 
@@ -151,14 +173,14 @@ cleaned up during evolution.
 Name paths in Carbon always start with the package name. Additional namespaces
 may be specified as desired.
 
-For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
+For example, this code declares a class `Geometry.Shapes.Flat.Circle` in a
 library `Geometry/OneSide`:
 
 ```carbon
 package Geometry library("OneSide") namespace Shapes;
 
 namespace Flat;
-struct Flat.Circle { ... }
+class Flat.Circle { ... }
 ```
 
 This type can be used from another package:
@@ -468,7 +490,7 @@ fn Sum(a: Int, b: Int) -> Int {
 ## Types
 
 > References: [Primitive types](primitive_types.md), [tuples](tuples.md), and
-> [structs](structs.md)
+> [classes](classes.md)
 >
 > **TODO:** References need to be evolved.
 
@@ -576,19 +598,16 @@ fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
 
 ### User-defined types
 
-#### Structs
+#### Classes
 
-> References: [Structs](structs.md)
->
-> **TODO:** References need to be evolved.
+> References: [Classes](classes.md)
 
-`struct`s are a way for users to define their own data strutures or named
-product types.
+Classes are a way for users to define their own data strutures or record types.
 
 For example:
 
 ```carbon
-struct Widget {
+class Widget {
   var x: Int;
   var y: Int;
   var z: Int;
@@ -603,48 +622,81 @@ Breaking apart `Widget`:
 -   `Widget` has one `String` member: `payload`.
 -   Given an instance `dial`, a member can be referenced with `dial.paylod`.
 
-More advanced `struct`s may be created:
+##### Assignment, copying
+
+You may use a _structural data class literal_, also known as a _struct literal_,
+to assign or initialize a variable with a class type.
 
 ```carbon
-struct AdvancedWidget {
-  // Do a thing!
-  fn DoSomething(self: AdvancedWidget, x: Int, y: Int);
-
-  // A nested type.
-  struct Nestedtype {
-    // ...
-  }
-
-  private var x: Int;
-  private var y: Int;
-}
-
-fn Foo(thing: AdvancedWidget) {
-  thing.DoSomething(1, 2);
-}
+var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
+sprocket = {.x = 2, .y = 1, .z = 0, .payload = "Bounce"};
 ```
 
-Breaking apart `AdvancedWidget`:
+You may also copy one struct into another of the same type.
 
--   `AdvancedWidget` has a public object method `DoSomething`.
-    -   `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to
-        it, and there is no automatic scoping - `self` must be specified as the
-        first input. The `self` name is also a keyword that explains how to
-        invoke this method on an object.
-    -   `DoSomething` accepts `AdvancedWidget` _by value_, which is easily
-        expressed here along with other constraints on the object parameter.
--   `AdvancedWidget` has two private data members: `x` and `y`.
-    -   Private methods and data members are restricted to use by
-        `AdvancedWidget` only, providing a layer of easy validation of the most
-        basic interface constraints.
--   `Nestedtype` is a nested type, and can be accessed as
-    `AdvancedWidget.Nestedtype`.
+```carbon
+var thingy: Widget = sprocket;
+sprocket = thingy;
+```
+
+##### Member access
+
+The data members of a variable with a class type may be accessed using dot `.`
+notation:
+
+```carbon
+Assert(sprocket.x == thingy.x);
+```
+
+##### Methods
+
+Class type definitions can include methods:
+
+```carbon
+class Point {
+  fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
+    var dx: i32 = x2 - me.x;
+    var dy: i32 = y2 - me.y;
+    return Math.Sqrt(dx * dx - dy * dy);
+  }
+  fn Offset[addr me: Self*](dx: i32, dy: i32);
+
+  var x: i32;
+  var y: i32;
+}
+
+fn Point.Offset[addr me: Self*](dx: i32, dy: i32) {
+  me->x += dx;
+  me->y += dy;
+}
+
+var origin: Point = {.x = 0, .y = 0};
+Assert(Math.Abs(origin.Distance(3, 4) - 5.0) < 0.001);
+origin.Offset(3, 4);
+Assert(origin.Distance(3, 4) == 0.0);
+```
+
+This defines a `Point` class type with two integer data members `x` and `y` and
+two methods `Distance` and `Offset`:
+
+-   Methods are defined as functions with a `me` parameter inside square
+    brackets `[`...`]` before the regular explicit parameter list in parens
+    `(`...`)`.
+-   Methods are called using using the member syntax, `origin.Distance(`...`)`
+    and `origin.Offset(`...`)`.
+-   `Distance` computes and returns the distance to another point, without
+    modifying the `Point`. This is signified using `[me: Self]` in the method
+    declaration.
+-   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
+    using `[addr me: Self*]` in the method declaration.
+-   Methods may be declared lexically inline like `Distance`, or lexically out
+    of line like `Offset`.
 
 ##### Allocation, construction, and destruction
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
-##### Assignment, copying, and moving
+##### Moving
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
@@ -799,7 +851,7 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-struct Stack(T:$$ Type) {
+class Stack(T:$$ Type) {
   var storage: Array(T);
 
   fn Push(value: T);

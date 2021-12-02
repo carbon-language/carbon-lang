@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
@@ -15,6 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -195,6 +197,9 @@ class TokenizedBuffer {
       return *this;
     }
 
+    // Prints the raw token index.
+    auto Print(llvm::raw_ostream& output) const -> void;
+
    private:
     friend class TokenizedBuffer;
 
@@ -292,6 +297,10 @@ class TokenizedBuffer {
 
   // Returns the value of a `StringLiteral()` token.
   [[nodiscard]] auto GetStringLiteral(Token token) const -> llvm::StringRef;
+
+  // Returns the size specified in a `*TypeLiteral()` token.
+  [[nodiscard]] auto GetTypeLiteralSize(Token token) const
+      -> const llvm::APInt&;
 
   // Returns the closing token matched with the given opening token.
   //
@@ -453,7 +462,8 @@ class TokenizedBuffer {
 
   llvm::SmallVector<IdentifierInfo, 16> identifier_infos;
 
-  // Storage for integers that form part of the value of a numeric literal.
+  // Storage for integers that form part of the value of a numeric or type
+  // literal.
   llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
 
   llvm::SmallVector<std::string, 16> literal_string_storage;

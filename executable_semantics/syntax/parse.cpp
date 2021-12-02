@@ -4,46 +4,81 @@
 
 #include "executable_semantics/syntax/parse.h"
 
-#include <iostream>
-
+#include "common/check.h"
+#include "executable_semantics/common/error.h"
+#include "executable_semantics/syntax/lexer.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
-#include "executable_semantics/tracing_flag.h"
-
-extern FILE* yyin;
 
 namespace Carbon {
 
-// Returns an abstract representation of the program contained in the
-// well-formed input file, or if the file was malformed, a description of the
-// problem.
-auto parse(const std::string& input_file_name)
+auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
+               std::string_view input_file_name, bool trace)
     -> std::variant<AST, SyntaxErrorCode> {
-  yyin = fopen(input_file_name.c_str(), "r");
-  if (yyin == nullptr) {
-    std::cerr << "Error opening '" << input_file_name
-              << "': " << std::strerror(errno) << std::endl;
-    exit(1);
-  }
+  // Prepare other parser arguments.
+  std::optional<AST> ast = std::nullopt;
+  ParseAndLexContext context(arena->New<std::string>(input_file_name), trace);
 
-  std::optional<AST> parsed_input = std::nullopt;
-  ParseAndLexContext context(input_file_name);
-
-  auto parser = yy::parser(parsed_input, context);
-  if (tracing_output) {
+  // Do the parse.
+  auto parser = Parser(arena, scanner, context, &ast);
+  if (trace) {
     parser.set_debug_level(1);
   }
   auto syntax_error_code = parser();
+
+  // Return an error if appropriate.
   if (syntax_error_code != 0) {
     return syntax_error_code;
   }
 
-  if (parsed_input == std::nullopt) {
-    std::cerr << "Internal error: parser validated syntax yet didn't produce "
-                 "an AST.\n";
-    exit(1);
-  }
-  return *parsed_input;
+  // Return parse results.
+  CHECK(ast != std::nullopt)
+      << "parser validated syntax yet didn't produce an AST.";
+  return *ast;
 }
 
+auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
+    -> std::variant<AST, SyntaxErrorCode> {
+  FILE* input_file = fopen(std::string(input_file_name).c_str(), "r");
+  if (input_file == nullptr) {
+    FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
+                                  << "': " << std::strerror(errno);
+  }
+
+  // Prepare the lexer.
+  yyscan_t scanner;
+  yylex_init(&scanner);
+  auto buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
+  yy_switch_to_buffer(buffer, scanner);
+
+  std::variant<AST, SyntaxErrorCode> result =
+      ParseImpl(scanner, arena, input_file_name, trace);
+
+  // Clean up the lexer.
+  yy_delete_buffer(buffer, scanner);
+  yylex_destroy(scanner);
+  fclose(input_file);
+
+  return result;
+}
+
+auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
+                     std::string_view file_contents, bool trace)
+    -> std::variant<Carbon::AST, SyntaxErrorCode> {
+  // Prepare the lexer.
+  yyscan_t scanner;
+  yylex_init(&scanner);
+  auto buffer =
+      yy_scan_bytes(file_contents.data(), file_contents.size(), scanner);
+  yy_switch_to_buffer(buffer, scanner);
+
+  std::variant<AST, SyntaxErrorCode> result =
+      ParseImpl(scanner, arena, input_file_name, trace);
+
+  // Clean up the lexer.
+  yy_delete_buffer(buffer, scanner);
+  yylex_destroy(scanner);
+
+  return result;
+}
 }  // namespace Carbon

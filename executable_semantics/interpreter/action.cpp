@@ -2,96 +2,78 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <iostream>
+#include "executable_semantics/interpreter/action.h"
+
 #include <iterator>
 #include <map>
 #include <optional>
 #include <utility>
 #include <vector>
 
+#include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/interpreter/stack.h"
-#include "executable_semantics/interpreter/typecheck.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Casting.h"
 
 namespace Carbon {
 
-auto Action::MakeLValAction(const Expression* e) -> Action* {
-  auto* act = new Action();
-  act->value = LValAction({.exp = e});
-  return act;
+using llvm::cast;
+
+Scope::Scope(Scope&& other) noexcept
+    : values_(other.values_),
+      locals_(std::exchange(other.locals_, {})),
+      heap_(other.heap_) {}
+
+auto Scope::operator=(Scope&& rhs) noexcept -> Scope& {
+  values_ = rhs.values_;
+  locals_ = std::exchange(rhs.locals_, {});
+  heap_ = rhs.heap_;
+  return *this;
 }
 
-auto Action::MakeExpressionAction(const Expression* e) -> Action* {
-  auto* act = new Action();
-  act->value = ExpressionAction({.exp = e});
-  return act;
-}
-
-auto Action::MakeStatementAction(const Statement* s) -> Action* {
-  auto* act = new Action();
-  act->value = StatementAction({.stmt = s});
-  return act;
-}
-
-auto Action::MakeValAction(const Value* v) -> Action* {
-  auto* act = new Action();
-  act->value = ValAction({.val = v});
-  return act;
-}
-
-auto Action::GetLValAction() const -> const LValAction& {
-  return std::get<LValAction>(value);
-}
-
-auto Action::GetExpressionAction() const -> const ExpressionAction& {
-  return std::get<ExpressionAction>(value);
-}
-
-auto Action::GetStatementAction() const -> const StatementAction& {
-  return std::get<StatementAction>(value);
-}
-
-auto Action::GetValAction() const -> const ValAction& {
-  return std::get<ValAction>(value);
-}
-
-void Action::Print(std::ostream& out) {
-  switch (tag()) {
-    case ActionKind::LValAction:
-      PrintExp(GetLValAction().exp);
-      break;
-    case ActionKind::ExpressionAction:
-      PrintExp(GetExpressionAction().exp);
-      break;
-    case ActionKind::StatementAction:
-      PrintStatement(GetStatementAction().stmt, 1);
-      break;
-    case ActionKind::ValAction:
-      PrintValue(GetValAction().val, out);
-      break;
+Scope::~Scope() {
+  for (const auto& l : locals_) {
+    std::optional<AllocationId> a = values_.Get(l);
+    CHECK(a.has_value());
+    heap_->Deallocate(*a);
   }
-  out << "<" << pos << ">";
-  if (results.size() > 0) {
+}
+
+void Action::Print(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case Action::Kind::LValAction:
+      out << cast<LValAction>(*this).expression();
+      break;
+    case Action::Kind::ExpressionAction:
+      out << cast<ExpressionAction>(*this).expression();
+      break;
+    case Action::Kind::PatternAction:
+      out << cast<PatternAction>(*this).pattern();
+      break;
+    case Action::Kind::StatementAction:
+      cast<StatementAction>(*this).statement().PrintDepth(1, out);
+      break;
+    case Action::Kind::ScopeAction:
+      out << "ScopeAction";
+  }
+  out << "<" << pos_ << ">";
+  if (results_.size() > 0) {
     out << "(";
-    for (auto& result : results) {
-      if (result) {
-        PrintValue(result, out);
-      }
-      out << ",";
+    llvm::ListSeparator sep;
+    for (auto& result : results_) {
+      out << sep << *result;
     }
     out << ")";
   }
 }
 
-void Action::PrintList(Stack<Action*> ls, std::ostream& out) {
-  if (!ls.IsEmpty()) {
-    ls.Pop()->Print(out);
-    if (!ls.IsEmpty()) {
-      out << " :: ";
-      PrintList(ls, out);
-    }
+void Action::PrintList(const Stack<Nonnull<Action*>>& ls,
+                       llvm::raw_ostream& out) {
+  llvm::ListSeparator sep(" :: ");
+  for (const auto& action : ls) {
+    out << sep << *action;
   }
 }
 

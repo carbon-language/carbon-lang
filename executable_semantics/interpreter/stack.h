@@ -7,75 +7,34 @@
 
 #include <cstddef>
 #include <iterator>
+#include <vector>
 
 #include "common/check.h"
-#include "executable_semantics/interpreter/list_node.h"
 
 namespace Carbon {
 
-// A persistent stack data structure.
-//
-// - Note: this data structure leaks memory.
+// A stack data structure.
 template <class T>
 struct Stack {
-  // A forward iterator over elements of a `Stack`.
-  struct Iterator {
-    using value_type = T;
-    using difference_type = std::ptrdiff_t;
-    using pointer = const T*;
-    using reference = const T&;
-    using iterator_category = std::forward_iterator_tag;
-
-    Iterator(ListNode<T>* x) : p(x) {}
-    Iterator(const Iterator& mit) : p(mit.p) {}
-    Iterator& operator++() {
-      p = p->next;
-      return *this;
-    }
-    Iterator operator++(int) {
-      Iterator tmp(*this);
-      operator++();
-      return tmp;
-    }
-    bool operator==(const Iterator& rhs) const { return p == rhs.p; }
-    bool operator!=(const Iterator& rhs) const { return p != rhs.p; }
-    const T& operator*() { return p->curr; }
-    const T* operator->() { return &p->curr; }
-
-   private:
-    ListNode<T>* p;
-  };
-
-  // The position of the first/`Top()` element, or `end()` if
-  // `this->IsEmpty()`.
-  auto begin() const -> Iterator { return Iterator(head); }
-
-  // The position one past that of the last element.
-  auto end() const -> Iterator { return Iterator(nullptr); }
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  using const_iterator = typename std::vector<T>::const_reverse_iterator;
 
   // Creates an empty instance.
-  Stack() { head = nullptr; }
+  Stack() = default;
 
   // Creates an instance containing just `x`.
-  explicit Stack(T x) : Stack() { Push(x); }
+  explicit Stack(T x) : Stack() { Push(std::move(x)); }
 
   // Pushes `x` onto the top of the stack.
-  void Push(T x) { head = new ListNode<T>(x, head); }
-
-  // Returns a copy of `*this`, with `x` pushed onto the top.
-  auto Pushing(T x) const -> Stack {
-    auto r = *this;
-    r.Push(x);
-    return r;
-  }
+  void Push(T x) { elements_.push_back(std::move(x)); }
 
   // Removes and returns the top element of the stack.
   //
   // - Requires: !this->IsEmpty()
   auto Pop() -> T {
-    CHECK(!IsEmpty() && "Can't pop from empty stack.");
-    auto r = head->curr;
-    head = head->next;
+    CHECK(!IsEmpty()) << "Can't pop from empty stack.";
+    auto r = std::move(elements_.back());
+    elements_.pop_back();
     return r;
   }
 
@@ -83,54 +42,32 @@ struct Stack {
   //
   // - Requires: n >= 0 && n <= Count()
   void Pop(int n) {
-    CHECK(n >= 0 && "Negative pop count disallowed.");
-    while (n--) {
-      CHECK(head != nullptr && "Can only pop as many elements as stack has.");
-      head = head->next;
-    }
-  }
-
-  // Returns a copy of `*this`, sans the top element.
-  //
-  // - Requires: !this->IsEmpty()
-  auto Popped() const -> Stack {
-    auto r = *this;
-    r.Pop();
-    return r;
+    CHECK(n >= 0) << "Negative pop count disallowed.";
+    CHECK(static_cast<size_t>(n) <= elements_.size())
+        << "Can only pop as many elements as stack has.";
+    elements_.erase(elements_.end() - n, elements_.end());
   }
 
   // Returns the top element of the stack.
   //
   // - Requires: !this->IsEmpty()
-  auto Top() const -> T {
-    CHECK(!IsEmpty() && "Empty stack has no Top().");
-    return head->curr;
+  auto Top() const -> const T& {
+    CHECK(!IsEmpty()) << "Empty stack has no Top().";
+    return elements_.back();
   }
 
   // Returns `true` iff `Count() > 0`.
-  auto IsEmpty() const -> bool { return head == nullptr; }
-
-  // Returns `true` iff `Count() > n`.
-  //
-  // - Complexity: O(`n`)
-  auto CountExceeds(int n) const -> bool {
-    if (n < 0)
-      return true;
-
-    for (auto p = head; p != nullptr; p = p->next) {
-      if (n-- == 0)
-        return true;
-    }
-
-    return false;
-  }
+  auto IsEmpty() const -> bool { return elements_.empty(); }
 
   // Returns the number of elements in `*this`.
-  auto Count() const -> int { return std::distance(begin(), end()); }
+  auto Count() const -> int { return elements_.size(); }
+
+  // Iterates over the Stack from top to bottom.
+  auto begin() const -> const_iterator { return elements_.crbegin(); }
+  auto end() const -> const_iterator { return elements_.crend(); }
 
  private:
-  // A linked list of cells containing the elements of self.
-  ListNode<T>* head;
+  std::vector<T> elements_;
 };
 
 }  // namespace Carbon

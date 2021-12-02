@@ -11,7 +11,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Alternatives](#alternatives)
+-   [Keywords](#keywords)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -26,24 +28,59 @@ follow lexical conventions for identifiers based on
 the precise rules are decided; see the
 [Unicode source files](/proposals/p0142.md#characters-in-identifiers) proposal.
 
-## Alternatives
+## Keywords
 
-**We could restrict words to ASCII.**
+The following words are interpreted as keywords:
 
-Advantages:
+-   `abstract`
+-   `addr`
+-   `alias`
+-   `and`
+-   `api`
+-   `as`
+-   `auto`
+-   `base`
+-   `break`
+-   `case`
+-   `class`
+-   `constraint`
+-   `continue`
+-   `default`
+-   `else`
+-   `extends`
+-   `external`
+-   `fn`
+-   `for`
+-   `friend`
+-   `if`
+-   `impl`
+-   `import`
+-   `interface`
+-   `is`
+-   `let`
+-   `library`
+-   `match`
+-   `namespace`
+-   `not`
+-   `observe`
+-   `or`
+-   `override`
+-   `package`
+-   `partial`
+-   `private`
+-   `protected`
+-   `return`
+-   `returned`
+-   `var`
+-   `virtual`
+-   `where`
+-   `while`
 
--   Reduced implementation complexity.
--   Avoids all problems relating to normalization, homoglyphs, text
-    directionality, and so on.
--   We have no intention of using non-ASCII characters in the language syntax or
-    in any library name.
--   Provides assurance that all names in libraries can reliably be typed by all
-    developers -- we already require that keywords, and thus all ASCII letters,
-    can be typed.
+## Alternatives considered
 
-Disadvantages:
+-   [Character encoding: We could restrict words to ASCII.](/proposals/p0142.md#character-encoding-1)
 
--   An overarching goal of the Carbon project is to provide a language that is
-    inclusive and welcoming. A language that does not permit names in programs
-    to be expressed in the developer's native language will not meet that goal
-    for at least some of our developers.
+## References
+
+-   Proposal
+    [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)

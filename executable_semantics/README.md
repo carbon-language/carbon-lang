@@ -28,7 +28,12 @@ The parser is implemented using the flex and bison parser generator tools.
 -   [`syntax.ypp`](syntax/syntax.ypp) the grammar
 
 The parser translates program text into an abstract syntax tree (AST), defined
-in the [ast](ast/) subdirectory.
+in the [ast](ast/) subdirectory. The `UnimplementedExpression` node type can be
+used to define new expression syntaxes without defining their semantics, and the
+same techniques can be applied to other kinds of AST nodes as needed. See the
+handling of the `UNIMPL_EXAMPLE` token for an example of how this is done, and
+see [`unimplemented_example_test.cpp`](syntax/unimplemented_example_test.cpp)
+for an example of how to test it.
 
 The [type checker](interpreter/typecheck.h) defines what it means for an AST to
 be a valid program. The type checker prints an error and exits if the AST is
@@ -179,7 +184,7 @@ The first time increments `x` to `1` and the second time increments `x` to `2`,
 so the expected result of this program is `2`.
 
 ```carbon
-fn main() -> Int {
+fn Main() -> Int {
   var Int: x = 0;
   __continuation k {
     x = x + 1;
@@ -198,6 +203,9 @@ the continuation. After the first `__run`, the control state is just after the
 `__await`. After the second `__run`, the control state is at the end of the
 continuation.
 
+Continuation variables are currently copyable, but that operation is "shallow":
+the two values are aliases for the same underlying continuation object.
+
 The delimited continuation feature described here is based on the
 `shift`/`reset` style of delimited continuations created by Danvy and Filinsky
 (Abstracting control, ACM Conference on Lisp and Functional Programming, 1990).
@@ -210,4 +218,54 @@ equivalent to calling the continuation. The `__await` feature is equivalent to a
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
-golden output.
+expected output.
+
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
+boilerplate at the top:
+
+```carbon
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
+// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
+
+package ExecutableSemanticsTest api;
+```
+
+To explain this boilerplate:
+
+-   The standard copyright is expected.
+-   The `RUN` lines indicate two commands for `lit` to execute using the file:
+    one without `--trace` output, one with.
+    -   Output is piped to `FileCheck` for verification.
+    -   `-allow-unused-prefixes` controls that output of the command without
+        `--trace` should _precisely_ match `CHECK` lines, whereas the command
+        with `--trace` will be a superset.
+    -   `RUN:` will be followed by the `not` command when failure is expected.
+        In particular, `RUN: not executable_semantics ...`.
+    -   `%s` is a
+        [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
+        for the path to the given test file.
+-   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
+    inserted immediately below by the `./update_checks.py` script.
+-   The `CHECK` lines indicate expected output, verified by `FileCheck`.
+    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
+        braces indicate a contained regular expression.
+-   The `package` is required in all test files, per normal Carbon syntax rules.
+
+Useful commands are:
+
+-   `./update_checks.py` -- Updates expected output.
+-   `bazel test :executable_semantics_lit_test --test_output=errors` -- Runs
+    tests and prints any errors.
+-   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=--filter=basic_syntax/.*`
+    -- Only runs tests in the `basic_syntax` directory; `--filter` is a regular
+    expression.

@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "check",
+    srcs = ["check_internal.h"],
     hdrs = ["check.h"],
     deps = [
         "@llvm-project//llvm:Support",
@@ -17,8 +18,7 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -32,7 +32,33 @@ cc_test(
     srcs = ["indirect_value_test.cpp"],
     deps = [
         ":indirect_value",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "ostream",
+    hdrs = ["ostream.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "string_helpers",
+    srcs = ["string_helpers.cpp"],
+    hdrs = ["string_helpers.h"],
+    deps = [
+        ":check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "string_helpers_test",
+    srcs = ["string_helpers_test.cpp"],
+    deps = [
+        ":string_helpers",
+        "@com_google_googletest//:gtest_main",
     ],
 )

@@ -11,6 +11,7 @@
 
 #include <cinttypes>
 #include <vector>
+
 #include "./buffer.h"
 
 namespace woff2 {

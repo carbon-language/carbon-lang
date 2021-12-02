@@ -1,4 +1,0 @@
-8: type error in pattern variable
-expected: (x = Int, y = Int)
-actual: (y = Int, x = Int)
-EXIT CODE: 255

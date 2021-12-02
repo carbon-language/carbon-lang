@@ -1,4 +1,4 @@
-# Carbon: Generics - Terminology
+# Generics: Terminology
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -24,6 +24,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
     -   [Nominal interfaces](#nominal-interfaces)
+    -   [Named constraints](#named-constraints)
+-   [Associated entity](#associated-entity)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
@@ -40,9 +42,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Template specialization](#template-specialization)
     -   [Generic specialization](#generic-specialization)
 -   [Conditional conformance](#conditional-conformance)
--   [Interface type parameters versus associated types](#interface-type-parameters-versus-associated-types)
+-   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
 -   [Type-of-type](#type-of-type)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -52,7 +55,7 @@ Generally speaking, when we talk about either templates or a generics system, we
 are talking about generalizing some language construct by adding a parameter to
 it. Language constructs here primarily would include functions and types, but we
 may want to support parameterizing other language constructs like
-[interfaces](#interface-type-parameters-versus-associated-types).
+[interfaces](#interface-type-parameters-and-associated-types).
 
 This parameter broadens the scope of the language construct on an axis defined
 by that parameter, for example it could define a family of functions instead of
@@ -297,14 +300,40 @@ We use the "structural" versus "nominal" terminology as a generalization of the
 same terms being used in a
 [subtyping context](https://en.wikipedia.org/wiki/Subtyping#Subtyping_schemes).
 
+### Named constraints
+
+Named constraints are "structural" in the sense that they match a type based on
+meeting some criteria rather than an explicit statement in the type's
+definition. The criteria for a named constraint, however, are less focused on
+the type's API and instead might include a set of nominal interfaces that the
+type must implement.
+
+## Associated entity
+
+An _associated entity_ is a requirement in an interface that a type's
+implementation of the interface must satisfy by having a matching member. A
+requirement that the type define a value for a member constant is called an
+_associated constant_, and similarly an _associated function_ or _associated
+type_.
+
+Different types can satisfy an interface with different definitions for a given
+member. These definitions are _associated_ with what type is implementing the
+interface. An [impl](#impls-implementations-of-interfaces) defines what is
+associated with the type for that interface.
+
+Rust uses the term
+["associated item"](https://doc.rust-lang.org/reference/items/associated-items.html)
+instead of associated entity.
+
 ## Impls: Implementations of interfaces
 
 An _impl_ is an implementation of an interface for a specific type. It is the
 place where the function bodies are defined, values for associated types, etc.
-are given. A given generics programming model may support default impls, named
-impls, or both. Impls are mostly associated with nominal interfaces; structural
-interfaces define conformance implicitly instead of by requiring an impl to be
-defined.
+are given. Impls are needed for [nominal interfaces](#nominal-interfaces);
+[structural interfaces](#structural-interfaces) and
+[named constraints](#named-constraints) define conformance implicitly instead of
+by requiring an impl to be defined. In can still make sense to implement a named
+constraint as a way to implement all of the interfaces it requires.
 
 ## Compatible types
 
@@ -355,10 +384,15 @@ its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
 might use a cast to switch between [type adaptations](#adapting-a-type), or to
-be explicit where an implicit cast would otherwise occur. For now, we are saying
-"`x as y`" is the provisional syntax in Carbon for casting the value `x` to the
-type `y`. Note that outside of generics, the term "casting" includes any
+be explicit where an implicit conversion would otherwise occur. For now, we are
+saying "`x as y`" is the provisional syntax in Carbon for casting the value `x`
+to the type `y`. Note that outside of generics, the term "casting" includes any
 explicit type change, including those that change the data representation.
+
+In contexts where an expression of one type is provided and a different type is
+required, an [implicit conversion](../expressions/implicit_conversions.md) is
+performed if it is considered safe to do so. Such an implicit conversion, if
+permitted, always has the same meaning as an explicit cast.
 
 ## Coherence
 
@@ -536,18 +570,19 @@ that it always supports, but satisfies additional interfaces under some
 conditions on the type argument. For example: `Array(T)` might implement
 `Comparable` if `T` itself implements `Comparable`, using lexicographical order.
 
-## Interface type parameters versus associated types
+## Interface type parameters and associated types
 
-Let's say you have an interface defining a container. Different containers will
-contain different types of values, and the container API will have to refer to
-that "element type" when defining the signature of methods like "insert" or
-"find". If that element type is a parameter (input) to the interface type, we
-say it is a type parameter; if it is an output, we say it is an associated type.
+Imagine an interface defining a container. Different containers will contain
+different types of values, and the container API will have to refer to that
+"element type" when defining the signature of methods like "insert" or "find".
+If that element type is a parameter (input) to the interface type, we say it is
+an _interface type parameter_; if it is an output, we say it is an _associated
+type_. An associated type is a kind of [associated entity](#associated-entity).
 
-Type parameter example:
+Interface type parameter example:
 
 ```
-interface Stack(ElementType:! Type)
+interface StackTP(ElementType:! Type)
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
 }
@@ -556,8 +591,8 @@ interface Stack(ElementType:! Type)
 Associated type example:
 
 ```
-interface Stack {
-  let ElementType: Type;
+interface StackAT {
+  let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
 }
@@ -573,33 +608,80 @@ interface Iterator { ... }
 interface Container {
   // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
-  let IteratorType: Iterator;
+  let IteratorType:! Iterator;
   ...
   fn Insert[addr me: Self*](position: IteratorType, value: ElementType);
 }
-struct ListIterator(ElementType:! Type) {
+class ListIterator(ElementType:! Type) {
   ...
-  impl Iterator;
+  impl as Iterator;
 }
-struct List(ElementType:! Type) {
+class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
-  let IteratorType: Iterator = ListIterator(ElementType);
+  let IteratorType:! Iterator = ListIterator(ElementType);
   fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
     ...
   }
-  impl Container;
+  impl as Container;
 }
 ```
 
-Since type parameters are directly under the user's control, it is easier to
-express things like "this type parameter is the same for all these interfaces",
-and other type constraints.
+If you have an interface with type parameters, a type can have multiple impls
+for different combinations of type parameters. As a result, type parameters may
+not be deduced in a function call. However, if the interface parameters are
+specified, a type can only have a single implementation of the given interface.
+This unique implementation choice determines the values of associated types.
 
-If you have an interface with type parameters, there is a question of whether a
-type can have multiple impls for different combinations of type parameters, or
-if you can only have a single impl (in which case you can directly infer the
-type parameters given just a type implementing the interface). You can always
-infer associated types.
+For example, we might have an interface that says how to perform addition with
+another type:
+
+```
+interface Addable(T:! Type) {
+  let ResultType:! Type;
+  fn Add[me: Self](rhs: T) -> ResultType;
+}
+```
+
+An `i32` value might support addition with `i32`, `u16`, and `f64` values.
+
+```
+impl i32 as Addable(i32) {
+  let ResultType:! Type = i32;
+  // ...
+}
+impl i32 as Addable(u16) {
+  let ResultType:! Type = i32;
+  // ...
+}
+impl i32 as Addable(f64) {
+  let ResultType:! Type = f64;
+  // ...
+}
+```
+
+To write a generic function requiring a parameter to be `Addable`, there needs
+to be some way to determine the type to add to:
+
+```
+// ✅ This is allowed, since the value of `T` is determined by the
+// `y` parameter.
+fn DoAdd[T:! Type, U:! Addable(T)](x: U, y: T) -> U.ResultType {
+  return x.Add(y);
+}
+
+// ❌ This is forbidden, can't uniquely determine `T`.
+fn CompileError[T:! Type, U:! Addable(T)](x: U) -> T;
+```
+
+Once the interface parameter can be determined, that determines the values for
+associated types, such as `ResultType` in the example. As always, calls with
+types for which no implementation exists will be rejected at the call site:
+
+```
+// ❌ This is forbidden, no implementation of `Addable(Orange)`
+// for `Apple`.
+DoAdd(apple, orange);
+```
 
 ## Type constraints
 
@@ -617,12 +699,12 @@ express, for example:
     element type.
 -   An interface may define an associated type that needs to be constrained to
     implement some interfaces.
--   This type parameter must be [compatible](#compatible-types) with another
-    type. You might use this to define alternate implementations of a single
-    interfaces, such as sorting order, for a single type.
+-   This type must be [compatible](#compatible-types) with another type. You
+    might use this to define alternate implementations of a single interfaces,
+    such as sorting order, for a single type.
 
-Note that type constraints can be a restriction on one type parameter, or can
-define a relationship between multiple type parameters.
+Note that type constraints can be a restriction on one type parameter or
+associated type, or can define a relationship between multiple types.
 
 ## Type-of-type
 
@@ -634,3 +716,8 @@ available in the body of the function. Calling a function with a type `T` passed
 to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
 the facet type `T as I`. This has the API determined by `I`, with the
 implementation of that API coming from `T`.
+
+## References
+
+-   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)

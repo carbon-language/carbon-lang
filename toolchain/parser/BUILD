@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -20,9 +19,8 @@ cc_test(
     srcs = ["parse_node_kind_test.cpp"],
     deps = [
         ":parse_node_kind",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -52,8 +50,8 @@ cc_library(
         ":parse_node_kind",
         ":parse_tree",
         "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
     ],
 )
 
@@ -64,13 +62,13 @@ cc_test(
         ":parse_node_kind",
         ":parse_test_helpers",
         ":parse_tree",
+        "//common:ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -103,8 +101,6 @@ cc_test(
     deps = [
         ":precedence",
         "//toolchain/lexer:token_kind",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )

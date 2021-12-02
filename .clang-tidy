@@ -3,13 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ---
+# - modernize-use-nodiscard is disabled because it only fixes const methods,
+#   not non-const, which yields distracting results on accessors.
+# - performance-unnecessary-value-param is disabled because it duplicate
+#   modernize-pass-by-value.
 Checks:
-  -*, bugprone-*, -bugprone-narrowing-conversions, google-*,
-  -google-readability-todo, misc-definitions-in-headers, misc-misplaced-const,
-  misc-redundant-expression, misc-static-assert,
-  misc-unconventional-assign-operator, misc-uniqueptr-reset-release,
-  misc-unused-*, modernize-*, -modernize-avoid-c-arrays,
-  -modernize-use-default-member-init, -modernize-use-emplace, performance-*,
+  -*, bugprone-*, -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions, google-*, -google-readability-todo,
+  misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
+  misc-static-assert, misc-unconventional-assign-operator,
+  misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
+  -modernize-avoid-c-arrays, -modernize-return-braced-init-list,
+  -modernize-use-default-member-init, -modernize-use-emplace,
+  -modernize-use-nodiscard, performance-*, -performance-unnecessary-value-param,
   readability-braces-around-statements, readability-identifier-naming
 WarningsAsErrors: true
 CheckOptions:
@@ -18,7 +24,6 @@ CheckOptions:
       key: readability-identifier-naming.ConstexprVariableCase,
       value: CamelCase,
     }
-  - { key: readability-identifier-naming.FunctionCase, value: CamelCase }
   - { key: readability-identifier-naming.NamespaceCase, value: CamelCase }
   - { key: readability-identifier-naming.StructCase, value: CamelCase }
   - {
@@ -31,3 +36,7 @@ CheckOptions:
   - { key: readability-identifier-naming.VariableCase, value: lower_case }
   - { key: readability-identifier-naming.ParameterCase, value: lower_case }
   - { key: readability-identifier-naming.ClassMemberCase, value: lower_case }
+  - {
+      key: readability-identifier-naming.MethodIgnoredRegexp,
+      value: '^classof$',
+    }

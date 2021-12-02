@@ -5,173 +5,333 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 #define EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
 
-#include <list>
 #include <string>
+#include <utility>
+#include <vector>
 
-#include "executable_semantics/ast/function_definition.h"
+#include "common/ostream.h"
 #include "executable_semantics/ast/member.h"
-#include "executable_semantics/ast/struct_definition.h"
-#include "executable_semantics/interpreter/dictionary.h"
-
-namespace yy {
-class parser;
-}
+#include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/statement.h"
+#include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/common/nonnull.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-struct Value;
+class StaticScope;
 
-using Address = unsigned int;
-using TypeEnv = Dictionary<std::string, const Value*>;
-using Env = Dictionary<std::string, Address>;
+// Abstract base class of all AST nodes representing patterns.
+//
+// Declaration and its derived classes support LLVM-style RTTI, including
+// llvm::isa, llvm::cast, and llvm::dyn_cast. To support this, every
+// class derived from Declaration must provide a `classof` operation, and
+// every concrete derived class must have a corresponding enumerator
+// in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
+// details.
+class Declaration : public virtual AstNode, public NamedEntity {
+ public:
+  ~Declaration() override = 0;
 
-struct TypeCheckContext {
-  // Symbol table mapping names of runtime entities to their type.
-  TypeEnv types;
-  // Symbol table mapping names of compile time entities to their value.
-  Env values;
-};
+  Declaration(const Member&) = delete;
+  auto operator=(const Member&) -> Declaration& = delete;
 
-// An existential AST declaration satisfying the Declaration concept.
-class Declaration {
- public:  // ValueSemantic concept API.
-  Declaration(const Declaration& other) = default;
-  Declaration& operator=(const Declaration& other) = default;
+  void Print(llvm::raw_ostream& out) const override;
 
-  // Constructs an instance equivalent to `d`, where `Model` satisfies the
-  // Declaration concept.
-  template <class Model>
-  Declaration(Model d) : box(std::make_shared<Boxed<Model>>(d)) {}
-
- public:  // Declaration concept API, in addition to ValueSemantic.
-  void Print() const { box->Print(); }
-  auto Name() const -> std::string { return box->Name(); }
-
-  // Signals a type error if the declaration is not well typed,
-  // otherwise returns this declaration with annotated types.
-  //
-  // - Parameter env: types of run-time names.
-  // - Paraemter ct_env: values of compile-time names.
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
-    return box->TypeChecked(env, ct_env);
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDeclaration(node->kind());
   }
-  // Add an entry in the runtime global symbol table for this declaration.
-  void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
-  // Add an entry in the compile time global symbol tables for this declaration.
-  auto TopLevel(TypeCheckContext& e) const -> void { return box->TopLevel(e); }
 
- private:
-  // A base class that erases the type of a `Boxed<Content>`, where `Content`
-  // satisfies the Declaration concept.
-  struct Box {
-   protected:
-    Box() {}
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto kind() const -> DeclarationKind {
+    return static_cast<DeclarationKind>(root_kind());
+  }
 
-   public:
-    Box(const Box& other) = delete;
-    Box& operator=(const Box& other) = delete;
+  // The static type of the declared entity. Cannot be called before
+  // typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
 
-    virtual ~Box() {}
-    virtual auto Print() const -> void = 0;
-    virtual auto Name() const -> std::string = 0;
-    virtual auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration = 0;
-    virtual auto InitGlobals(Env& globals) const -> void = 0;
-    virtual auto TopLevel(TypeCheckContext&) const -> void = 0;
-  };
+  // Sets the static type of the declared entity. Can only be called once,
+  // during typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
 
-  // The derived class that holds an instance of `Content` satisfying the
-  // Declaration concept.
-  template <class Content>
-  struct Boxed final : Box {
-    const Content content;
-    explicit Boxed(Content content) : Box(), content(content) {}
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
 
-    auto Print() const -> void override { return content.Print(); }
-    auto Name() const -> std::string override { return content.Name(); }
-    auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration override {
-      return content.TypeChecked(env, ct_env);
-    }
-    auto InitGlobals(Env& globals) const -> void override {
-      content.InitGlobals(globals);
-    }
-    auto TopLevel(TypeCheckContext& e) const -> void override {
-      content.TopLevel(e);
-    }
-  };
-
-  // Constructs an instance in a "partially formed" state, which can only be
-  // assigned to or destroyed.
+ protected:
+  // Constructs a Declaration representing syntax at the given line number.
+  // `kind` must be the enumerator corresponding to the most-derived type being
+  // constructed.
   Declaration() = default;
 
-  // Give Bison access to the default constructor.
-  friend class yy::parser;
-
-  // Note: the pointee is const as long as we have no mutating methods. When
-  std::shared_ptr<const Box> box;
+ private:
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
-struct FunctionDeclaration {
-  FunctionDefinition definition;
-  explicit FunctionDeclaration(FunctionDefinition definition)
-      : definition(std::move(definition)) {}
+// TODO: expand the kinds of things that can be deduced parameters.
+//   For now, only generic parameters are supported.
+struct GenericBinding : public virtual AstNode, public NamedEntity {
+ public:
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : AstNode(AstNodeKind::GenericBinding, source_loc),
+        name_(std::move(name)),
+        type_(type) {}
 
-  auto Print() const -> void;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  auto InitGlobals(Env& globals) const -> void;
-  auto TopLevel(TypeCheckContext&) const -> void;
+  void Print(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromGenericBinding(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> type_;
 };
 
-struct StructDeclaration {
-  StructDefinition definition;
-  StructDeclaration(int line_num, std::string name, std::list<Member*>* members)
-      : definition{line_num, new std::string(name), members} {}
+// The syntactic representation of a function declaration's return type.
+// This syntax can take one of three forms:
+// - An _explicit_ term consists of `->` followed by a type expression.
+// - An _auto_ term consists of `-> auto`.
+// - An _omitted_ term consists of no tokens at all.
+// Each of these forms has a corresponding factory function.
+class ReturnTerm {
+ public:
+  ReturnTerm(const ReturnTerm&) = default;
+  auto operator=(const ReturnTerm&) -> ReturnTerm& = default;
 
-  void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
-  auto TopLevel(TypeCheckContext&) const -> void;
+  // Represents an omitted return term at `source_loc`.
+  static auto Omitted(SourceLocation source_loc) -> ReturnTerm {
+    return ReturnTerm(ReturnKind::Omitted, source_loc);
+  }
+
+  // Represents an auto return term at `source_loc`.
+  static auto Auto(SourceLocation source_loc) -> ReturnTerm {
+    return ReturnTerm(ReturnKind::Auto, source_loc);
+  }
+
+  // Represents an explicit return term with the given type expression.
+  static auto Explicit(Nonnull<Expression*> type_expression) -> ReturnTerm {
+    return ReturnTerm(type_expression);
+  }
+
+  // Returns true if this represents an omitted return term.
+  auto is_omitted() const -> bool { return kind_ == ReturnKind::Omitted; }
+
+  // Returns true if this represents an auto return term.
+  auto is_auto() const -> bool { return kind_ == ReturnKind::Auto; }
+
+  // If this represents an explicit return term, returns the type expression.
+  // Otherwise, returns nullopt.
+  auto type_expression() const -> std::optional<Nonnull<const Expression*>> {
+    return type_expression_;
+  }
+  auto type_expression() -> std::optional<Nonnull<Expression*>> {
+    return type_expression_;
+  }
+
+  // The static return type this term resolves to. Cannot be called before
+  // typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the value of static_type(). Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether static_type() has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+ private:
+  enum class ReturnKind { Omitted, Auto, Expression };
+
+  explicit ReturnTerm(ReturnKind kind, SourceLocation source_loc)
+      : kind_(kind), source_loc_(source_loc) {
+    CHECK(kind != ReturnKind::Expression);
+  }
+
+  explicit ReturnTerm(Nonnull<Expression*> type_expression)
+      : kind_(ReturnKind::Expression),
+        type_expression_(type_expression),
+        source_loc_(type_expression->source_loc()) {}
+
+  ReturnKind kind_;
+  std::optional<Nonnull<Expression*>> type_expression_;
+  std::optional<Nonnull<const Value*>> static_type_;
+
+  SourceLocation source_loc_;
 };
 
-struct ChoiceDeclaration {
-  int line_num;
-  std::string name;
-  std::list<std::pair<std::string, const Expression*>> alternatives;
+class FunctionDeclaration : public Declaration {
+ public:
+  FunctionDeclaration(SourceLocation source_loc, std::string name,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
+                      Nonnull<TuplePattern*> param_pattern,
+                      ReturnTerm return_term,
+                      std::optional<Nonnull<Block*>> body)
+      : AstNode(AstNodeKind::FunctionDeclaration, source_loc),
+        name_(std::move(name)),
+        deduced_parameters_(std::move(deduced_params)),
+        param_pattern_(param_pattern),
+        return_term_(return_term),
+        body_(body) {}
 
-  ChoiceDeclaration(
-      int line_num, std::string name,
-      std::list<std::pair<std::string, const Expression*>> alternatives)
-      : line_num(line_num), name(name), alternatives(std::move(alternatives)) {}
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFunctionDeclaration(node->kind());
+  }
 
-  void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
-  auto TopLevel(TypeCheckContext&) const -> void;
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
+
+  auto name() const -> const std::string& { return name_; }
+  auto deduced_parameters() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return deduced_parameters_;
+  }
+  auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
+    return deduced_parameters_;
+  }
+  auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
+  auto param_pattern() -> TuplePattern& { return *param_pattern_; }
+  auto return_term() const -> const ReturnTerm& { return return_term_; }
+  auto return_term() -> ReturnTerm& { return return_term_; }
+  auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
+  auto body() -> std::optional<Nonnull<Block*>> { return body_; }
+
+  // Only contains function parameters. Scoped variables are in the body.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
+
+ private:
+  std::string name_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
+  Nonnull<TuplePattern*> param_pattern_;
+  ReturnTerm return_term_;
+  std::optional<Nonnull<Block*>> body_;
+  StaticScope static_scope_;
+};
+
+class ClassDeclaration : public Declaration {
+ public:
+  ClassDeclaration(SourceLocation source_loc, std::string name,
+                   std::vector<Nonnull<Member*>> members)
+      : AstNode(AstNodeKind::ClassDeclaration, source_loc),
+        name_(std::move(name)),
+        members_(std::move(members)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromClassDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+
+  // Contains class members. Scoped variables are in the body.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
+
+ private:
+  std::string name_;
+  std::vector<Nonnull<Member*>> members_;
+  StaticScope static_scope_;
+};
+
+class AlternativeSignature : public virtual AstNode, public NamedEntity {
+ public:
+  AlternativeSignature(SourceLocation source_loc, std::string name,
+                       Nonnull<Expression*> signature)
+      : AstNode(AstNodeKind::AlternativeSignature, source_loc),
+        name_(std::move(name)),
+        signature_(signature) {}
+
+  void Print(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAlternativeSignature(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto signature() const -> const Expression& { return *signature_; }
+  auto signature() -> Expression& { return *signature_; }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> signature_;
+};
+
+class ChoiceDeclaration : public Declaration {
+ public:
+  ChoiceDeclaration(SourceLocation source_loc, std::string name,
+                    std::vector<Nonnull<AlternativeSignature*>> alternatives)
+      : AstNode(AstNodeKind::ChoiceDeclaration, source_loc),
+        name_(std::move(name)),
+        alternatives_(std::move(alternatives)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromChoiceDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto alternatives() const
+      -> llvm::ArrayRef<Nonnull<const AlternativeSignature*>> {
+    return alternatives_;
+  }
+  auto alternatives() -> llvm::ArrayRef<Nonnull<AlternativeSignature*>> {
+    return alternatives_;
+  }
+
+  // Contains the alternatives.
+  auto static_scope() const -> const StaticScope& { return static_scope_; }
+  auto static_scope() -> StaticScope& { return static_scope_; }
+
+ private:
+  std::string name_;
+  std::vector<Nonnull<AlternativeSignature*>> alternatives_;
+  StaticScope static_scope_;
 };
 
 // Global variable definition implements the Declaration concept.
-class VariableDeclaration {
+//
+// TODO: this should not inherit from NamedEntity, because names should
+//   always resolve to the underlying binding, not the VariableDeclaration.
+class VariableDeclaration : public Declaration {
  public:
-  VariableDeclaration(int source_location, std::string name,
-                      const Expression* type, const Expression* initializer)
-      : source_location(source_location),
-        name(name),
-        type(type),
-        initializer(initializer) {}
+  VariableDeclaration(SourceLocation source_loc,
+                      Nonnull<BindingPattern*> binding,
+                      Nonnull<Expression*> initializer)
+      : AstNode(AstNodeKind::VariableDeclaration, source_loc),
+        binding_(binding),
+        initializer_(initializer) {}
 
-  void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
-  auto TopLevel(TypeCheckContext&) const -> void;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromVariableDeclaration(node->kind());
+  }
+
+  auto binding() const -> const BindingPattern& { return *binding_; }
+  auto binding() -> BindingPattern& { return *binding_; }
+  auto initializer() const -> const Expression& { return *initializer_; }
+  auto initializer() -> Expression& { return *initializer_; }
 
  private:
-  int source_location;
-  std::string name;
-  const Expression* type;
-  const Expression* initializer;
+  // TODO: split this into a non-optional name and a type, initialized by
+  // a constructor that takes a BindingPattern and handles errors like a
+  // missing name.
+  Nonnull<BindingPattern*> binding_;
+  Nonnull<Expression*> initializer_;
 };
 
 }  // namespace Carbon

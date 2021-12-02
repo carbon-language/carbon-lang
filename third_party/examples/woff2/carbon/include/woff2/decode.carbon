@@ -9,9 +9,10 @@
 #ifndef WOFF2_WOFF2_DEC_H_
 #define WOFF2_WOFF2_DEC_H_
 
-#include <cstddef>
-#include <cinttypes>
 #include <woff2/output.h>
+
+#include <cinttypes>
+#include <cstddef>
 
 namespace woff2 {
 

@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Carbon leads](#carbon-leads)
     -   [When to write a proposal](#when-to-write-a-proposal)
     -   [Proposal PRs](#proposal-prs)
+        -   [What goes in the proposal document](#what-goes-in-the-proposal-document)
         -   [Open questions](#open-questions)
     -   [Review and RFC on proposal PRs](#review-and-rfc-on-proposal-prs)
     -   [Blocking issues](#blocking-issues)
@@ -36,11 +37,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Carbon's evolution process uses [proposals](#proposals) to evaluate and approve
-significant changes to the project or language. The goal is to ensure these
-kinds of changes can receive feedback from the entire community, and also to
-resolve questions and decide direction efficiently. We use proposals to create a
-clear log of rationale for why the project and language have evolved in
-particular directions.
+[significant changes](#when-to-write-a-proposal) to the project or language.
+This process is designed to:
+
+-   Ensure these kinds of changes can receive feedback from the entire
+    community.
+-   Resolve questions and decide direction efficiently.
+-   Create a clear log of rationale for why the project and language have
+    evolved in particular directions.
 
 When there are questions, concerns, or issues with a proposal that need to be
 resolved, Carbon uses its [governance](#governance-structure) system of
@@ -56,43 +60,47 @@ language are well explained, justified, and reviewed by the community.
 
 ### Life of a proposal
 
--   We author and review proposals when making
-    [substantive changes to Carbon](#when-to-write-a-proposal).
-
 -   Proposals consist of a PR (pull request) in GitHub that adds a document to
     the [`proposals/` directory](/proposals/) following
-    [the template](/proposals/template.md).
+    [the template](/proposals/scripts/template.md).
 
 -   Proposal PRs start out in draft mode. When proposal PRs are ready, click on
-    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
-    in GitHub.
+    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review),
+    and change the
+    [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
+    to "RFC". The project column should be available as a dropdown under
+    "Projects" on the PR.
 
     -   This will result in a Carbon lead being assigned to review the PR.
 
     -   This also signifies an RFC (request for comment) from the entire
         community.
 
--   Contributors should react with a _thumbs-up_ to the proposal PR if they are
-    generally interested and supportive of the high level direction based on
-    title and summary.
+-   Contributors are encouraged to react with a _thumbs-up_ to proposal PRs if
+    they are generally interested and supportive of the high level direction
+    based on title and summary. Similarly, other reactions are encouraged to
+    help surface contributor's sentiment.
 
 -   We use GitHub issues to discuss and track _blocking issues_ with proposals,
     such as open questions or alternative approaches that may need further
     consideration. These are assigned to carbon-leads to decide.
 
--   The lead assigned to review the PR should ensure that at least three
-    contributors (possibly including the lead) are generally supportive and
-    react with thumbs-up. If a proposal doesn't have these thumbs-up, the leads
-    together need to decide whether to move forward, and if so provide those
-    thumbs-up.
+-   A [Carbon lead](#carbon-leads-1) will be assigned to a proposal PR. They are
+    responsible for the basic review (or delegating that) as well as ultimately
+    approving the PR.
 
--   If the leads choose to defer or reject the proposal, the reviewing lead
-    should explain why and close the PR.
+-   The assigned lead should ensure that there is a reasonable degree of
+    consensus among the contributors outside of the identified blocking issues.
+    Contributors should have a reasonable chance to raise concerns, and where
+    needed they should become blocking issues. Community consensus isn't
+    intended to be perfect though, and is ultimately a judgement call by the
+    lead. When things are missed or mistakes are made here, we should just
+    revert or fix-forward as usual.
 
--   Once the thumbs-up are present and the assigned lead finishes code review,
-    the lead should [approve](/docs/project/code_review.md#approving-the-change)
-    the PR. Any outstanding high-level concerns should be handled with blocking
-    issues.
+-   Once a reasonable degree of community consensus is reached and the assigned
+    lead finishes code review, the lead should
+    [approve](/docs/project/code_review.md#approving-the-change) the PR. Any
+    outstanding high-level concerns should be handled with blocking issues.
 
 -   Optionally, the assigned lead can file a blocking issue for a one week final
     comment period when they approve. This is rarely needed, and only when it is
@@ -106,6 +114,9 @@ language are well explained, justified, and reviewed by the community.
 -   The proposal PR can be merged once the assigned lead approves, all blocking
     issues have been decided, and any related decisions are incorporated.
 
+-   If the leads choose to defer or reject the proposal, the reviewing lead
+    should explain why and close the PR.
+
 ### Proposal roles
 
 It is also useful to see what the process looks like for different roles within
@@ -118,7 +129,7 @@ For proposal authors, this should feel like a code review, with some broken out
 issues for longer discussion:
 
 -   Create a proposal document and draft PR following
-    [the template](/proposals/template.md).
+    [the template](/proposals/scripts/template.md).
 
     -   [new_proposal.py](/proposals/scripts/new_proposal.py) helps create
         templated PRs.
@@ -128,11 +139,19 @@ issues for longer discussion:
 
 -   When ready, click on
     ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
-    in GitHub.
+    in GitHub, and change the
+    [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
+    to "RFC". The project column should be available as a dropdown under
+    "Projects" on the PR.
 
     -   This will result in the PR being assigned to an individual for review.
 
     -   This will also send the proposal as a broad RFC to the community.
+
+    -   While setting the "RFC" project column will also add the "RFC" label,
+        the reverse is not true. Unfortunately, this is currently a limit of
+        GitHub automation. Similarly, Adding the "RFC" project column currently
+        does not set "Ready for review".
 
 -   Address comments where you can and they make sense.
 
@@ -200,8 +219,9 @@ Everyone actively contributing to the evolution of Carbon should try to
 regularly:
 
 -   Give a thumbs-up or other reaction on any interesting PRs out for RFC to
-    help surface general enthusiasm for the high level idea or direction. Don't
-    worry about "approving" or the details here.
+    help surface the community's sentiment around the high level idea or
+    direction. Don't worry about "approving" or the detailed text of the
+    proposal here.
 
 -   If interested and time permitting, dive into some RFCs and provide
     [community feedback](#community).
@@ -225,8 +245,15 @@ ensuring proposal PRs land:
     -   Escalate any blocking issues without a resolution that are slowing down
         the proposal to the other leads.
 
-    -   Evaluate whether an extended final comment period is important for the
-        community given the nature of the proposal.
+    -   Evaluate whether the community has had a reasonable chance to raise
+        concerns and there is sufficient consensus to move forward given the
+        decisions on the blocking issues. This doesn't need to be perfect
+        though. Here too, we prioritize progress over perfection. We can revert
+        or fix-forward mistakes whenever necessary, especially for low-risk
+        changes. In rare cases, an extended final comment period can be used
+        when warranted for a proposal.
+
+    -   Once ready, approve and help the author merge the proposal.
 
 ### When to write a proposal
 
@@ -254,8 +281,11 @@ a pull request instead go through the full evolution process.
 A proposal PR should use the `proposal` label, have a descriptive title, and
 easily understood initial summary comment. Authors and leads are encouraged to
 edit both as necessary to ensure they give the best high-level understanding of
-the proposal possible. The proposals should then use the
-[template file](/proposals/template.md) to describe itself fully.
+the proposal possible.
+
+A proposal PR will include a "P-numbered" _proposal document_,
+`proposals/pNNNN.md`, where `NNNN` is the pull request number. This file should
+be based on the [proposal template file](/proposals/scripts/template.md).
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
@@ -263,11 +293,38 @@ community's engagement in it. Beyond the above structure, try to use
 or [BLUF](<https://en.wikipedia.org/wiki/BLUF_(communication)>) writing style to
 help readers rapidly skim the material.
 
-Proposal PRs will often lead to related changes to the rest of the Carbon
-project. These changes may be added to the proposal PR itself, they may be done
-in other PRs that are referenced for context, or they may be stand-alone changes
-that are implemented through a series of future PRs to the rest of the project.
-All of these options are fine.
+#### What goes in the proposal document
+
+The purpose of the proposal document is to present the case for deciding to
+adopt the proposal. Any information that feeds into making that decision, and
+that should not be maintained as part of our living design documentation,
+belongs in the proposal document. This includes background material to introduce
+the problem, comparisons to any alternative designs that were considered and any
+other current proposals in the same area, records of informal polls taken to
+determine community preferences, and rationale for the decision based on the
+project's goals.
+
+The proposal PR can contain related changes to the Carbon project, such as
+updates to the design documentation. Those changes form part of the proposal,
+and need not be additionally described in the proposal document beyond a mention
+in the "Proposal" section that such changes exist. For example:
+
+```md
+## Proposal
+
+See the proposed changes to the design documents.
+```
+
+Readers of proposals are expected to consult the PR or the git commit that
+merged the PR in order to understand the proposed changes.
+
+The author of a proposal is not required to include changes to the design
+documentation as part of a proposal, and it may in some cases be preferable to
+decouple the proposal process from updating the design. When accepted, the
+proposal would then be implemented through a series of future PRs to the rest of
+the project, and the proposal document should describe what is being proposed in
+enough detail to validate that those future PRs properly implement the proposed
+direction.
 
 #### Open questions
 

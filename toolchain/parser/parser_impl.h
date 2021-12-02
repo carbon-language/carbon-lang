@@ -134,12 +134,24 @@ class ParseTree::Parser {
   auto ParseCloseParen(TokenizedBuffer::Token open_paren, ParseNodeKind kind)
       -> llvm::Optional<Node>;
 
+  // Parses a comma-separated list with the given delimiters.
+  template <typename ListElementParser, typename ListCompletionHandler>
+  auto ParseList(TokenKind open, TokenKind close,
+                 ListElementParser list_element_parser,
+                 ParseNodeKind comma_kind, ListCompletionHandler list_handler,
+                 bool allow_trailing_comma = false) -> llvm::Optional<Node>;
+
   // Parses a parenthesized, comma-separated list.
   template <typename ListElementParser, typename ListCompletionHandler>
   auto ParseParenList(ListElementParser list_element_parser,
                       ParseNodeKind comma_kind,
-                      ListCompletionHandler list_handler)
-      -> llvm::Optional<Node>;
+                      ListCompletionHandler list_handler,
+                      bool allow_trailing_comma = false)
+      -> llvm::Optional<Node> {
+    return ParseList(TokenKind::OpenParen(), TokenKind::CloseParen(),
+                     list_element_parser, comma_kind, list_handler,
+                     allow_trailing_comma);
+  }
 
   // Parses a single function parameter declaration.
   auto ParseFunctionParameter() -> llvm::Optional<Node>;
@@ -153,7 +165,7 @@ class ParseTree::Parser {
   //
   // These can form the definition for a function or be nested within a function
   // definition. These contain variable declarations and statements.
-  auto ParseCodeBlock() -> Node;
+  auto ParseCodeBlock() -> llvm::Optional<Node>;
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.
@@ -173,14 +185,17 @@ class ParseTree::Parser {
   // Parses a parenthesized expression.
   auto ParseParenExpression() -> llvm::Optional<Node>;
 
+  // Parses a braced expression.
+  auto ParseBraceExpression() -> llvm::Optional<Node>;
+
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
   auto ParsePrimaryExpression() -> llvm::Optional<Node>;
 
   // Parses a designator expression suffix starting with `.`.
-  auto ParseDesignatorExpression(SubtreeStart start, bool has_errors)
-      -> llvm::Optional<Node>;
+  auto ParseDesignatorExpression(SubtreeStart start, ParseNodeKind kind,
+                                 bool has_errors) -> llvm::Optional<Node>;
 
   // Parses a call expression suffix starting with `(`.
   auto ParseCallExpression(SubtreeStart start, bool has_errors)

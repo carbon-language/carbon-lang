@@ -26,6 +26,7 @@ typedef unsigned __int64 uint64_t;
 #define htons(x) _byteswap_ushort (x)
 #else
 #include <arpa/inet.h>
+
 #include <cstdint>
 #endif
 

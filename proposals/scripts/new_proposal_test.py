@@ -10,17 +10,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import os
 import unittest
-from unittest import mock
 
-from carbon.proposals.scripts import new_proposal
-
-
-class FakeExitError(Exception):
-    pass
-
-
-def _fake_exit(message):
-    raise FakeExitError(message)
+from proposals.scripts import new_proposal
 
 
 class TestNewProposal(unittest.TestCase):
@@ -47,7 +38,8 @@ class TestNewProposal(unittest.TestCase):
         parsed_args = new_proposal._parse_args(["foo"])
         content = new_proposal._fill_template(
             os.path.join(
-                new_proposal._get_proposals_dir(parsed_args), "template.md"
+                new_proposal._get_proposals_dir(parsed_args),
+                "scripts/template.md",
             ),
             "TITLE",
             123,
@@ -63,11 +55,7 @@ class TestNewProposal(unittest.TestCase):
         new_proposal._run(["true"])
 
     def test_run_failure(self):
-        with mock.patch(
-            "carbon.proposals.scripts.new_proposal._exit",
-            side_effect=_fake_exit,
-        ):
-            self.assertRaises(FakeExitError, new_proposal._run, ["false"])
+        self.assertRaises(SystemExit, new_proposal._run, ["false"])
 
 
 if __name__ == "__main__":

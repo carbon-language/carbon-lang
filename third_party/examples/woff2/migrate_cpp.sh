@@ -9,7 +9,7 @@
 # cd to the carbon-lang root.
 cd "$(dirname "$0")/../../.."
 
-EXAMPLE=third_party/examples/woff2
+EXAMPLE="${PWD}/third_party/examples/woff2"
 
 # Remove any previous conversion. Each time this is run, it should demonstrate
 # on a fresh copy of woff2.
@@ -26,17 +26,35 @@ cp "${EXAMPLE}/BUILD.original" \
   "${EXAMPLE}/carbon/BUILD"
 cp "${EXAMPLE}/WORKSPACE.original" \
   "${EXAMPLE}/carbon/WORKSPACE"
-cp "${EXAMPLE}/compile_flags.carbon.txt" \
-  "${EXAMPLE}/carbon/compile_flags.txt"
 
 # Kludge for adding LLVM include paths into the compile flags.
 # TODO: Find better solution.
+COMPILE_FLAGS=($(cat "${EXAMPLE}/compile_flags.carbon.txt" | sed 's/"/\\"/g'))
 for x in $(
     clang++ -Wp,-v -xc++ -stdlib=libc++ - -fsyntax-only < /dev/null 2>&1 |
     grep /llvm/); do
-  echo "-isystem" >> "${EXAMPLE}/carbon/compile_flags.txt"
-  echo "${x}" >> "${EXAMPLE}/carbon/compile_flags.txt"
+  COMPILE_FLAGS+=("-isystem")
+  COMPILE_FLAGS+=("${x}")
 done
+
+# Construct a compilation database for use by run-clang-tidy.py.
+COMPDB="${EXAMPLE}/carbon/compile_commands.json"
+echo "[" > "${COMPDB}"
+for f in $(find "${EXAMPLE}/carbon" -regex ".*\.\(cc\|h\)"); do
+  echo "{ \"file\": \"$(realpath --relative-to "${EXAMPLE}/carbon" ${f})\"," >> "${COMPDB}"
+  echo "  \"directory\": \"${EXAMPLE}/carbon\"," >> "${COMPDB}"
+  echo "  \"arguments\": [" >> "${COMPDB}"
+  echo "    \"clang++\"," >> "${COMPDB}"
+  for index in ${!COMPILE_FLAGS[@]}; do
+    echo "    \"${COMPILE_FLAGS[$index]}\"," >> "${COMPDB}"
+  done
+  echo "    \"${f}\"" >> "${COMPDB}"
+  echo "  ]" >> "${COMPDB}"
+  echo "}," >> "${COMPDB}"
+done
+# Remove the last comma, for JSON syntax correctness.
+sed -i '$ s/,$//' "${COMPDB}"
+echo "]" >> "${EXAMPLE}/carbon/compile_commands.json"
 
 # Run the migration tool.
 bazel build -c opt //migrate_cpp
@@ -48,4 +66,4 @@ pushd "${EXAMPLE}/carbon"
 popd
 
 # Don't save the compile flags.
-rm "${EXAMPLE}/carbon/compile_flags.txt"
+rm "${EXAMPLE}/carbon/compile_commands.json"

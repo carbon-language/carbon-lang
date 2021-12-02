@@ -4,10 +4,11 @@
 
 #include "toolchain/lexer/tokenized_buffer.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <iterator>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Sequence.h"
@@ -831,6 +832,113 @@ TEST_F(LexerTest, InvalidStringLiterals) {
     }
     EXPECT_TRUE(found_error) << "`" << test << "`";
   }
+}
+
+TEST_F(LexerTest, TypeLiterals) {
+  llvm::StringLiteral testcase = R"(
+    i0 i1 i20 i999999999999 i0x1
+    u0 u1 u64 u64b
+    f32 f80 f1 fi
+    s1
+  )";
+
+  auto buffer = Lex(testcase);
+  EXPECT_FALSE(buffer.HasErrors());
+  ASSERT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::Identifier(),
+                   .line = 2,
+                   .column = 5,
+                   .indent_column = 5,
+                   .text = {"i0"}},
+                  {.kind = TokenKind::IntegerTypeLiteral(),
+                   .line = 2,
+                   .column = 8,
+                   .indent_column = 5,
+                   .text = {"i1"}},
+                  {.kind = TokenKind::IntegerTypeLiteral(),
+                   .line = 2,
+                   .column = 11,
+                   .indent_column = 5,
+                   .text = {"i20"}},
+                  {.kind = TokenKind::IntegerTypeLiteral(),
+                   .line = 2,
+                   .column = 15,
+                   .indent_column = 5,
+                   .text = {"i999999999999"}},
+                  {.kind = TokenKind::Identifier(),
+                   .line = 2,
+                   .column = 29,
+                   .indent_column = 5,
+                   .text = {"i0x1"}},
+
+                  {.kind = TokenKind::Identifier(),
+                   .line = 3,
+                   .column = 5,
+                   .indent_column = 5,
+                   .text = {"u0"}},
+                  {.kind = TokenKind::UnsignedIntegerTypeLiteral(),
+                   .line = 3,
+                   .column = 8,
+                   .indent_column = 5,
+                   .text = {"u1"}},
+                  {.kind = TokenKind::UnsignedIntegerTypeLiteral(),
+                   .line = 3,
+                   .column = 11,
+                   .indent_column = 5,
+                   .text = {"u64"}},
+                  {.kind = TokenKind::Identifier(),
+                   .line = 3,
+                   .column = 15,
+                   .indent_column = 5,
+                   .text = {"u64b"}},
+
+                  {.kind = TokenKind::FloatingPointTypeLiteral(),
+                   .line = 4,
+                   .column = 5,
+                   .indent_column = 5,
+                   .text = {"f32"}},
+                  {.kind = TokenKind::FloatingPointTypeLiteral(),
+                   .line = 4,
+                   .column = 9,
+                   .indent_column = 5,
+                   .text = {"f80"}},
+                  {.kind = TokenKind::FloatingPointTypeLiteral(),
+                   .line = 4,
+                   .column = 13,
+                   .indent_column = 5,
+                   .text = {"f1"}},
+                  {.kind = TokenKind::Identifier(),
+                   .line = 4,
+                   .column = 16,
+                   .indent_column = 5,
+                   .text = {"fi"}},
+
+                  {.kind = TokenKind::Identifier(),
+                   .line = 5,
+                   .column = 5,
+                   .indent_column = 5,
+                   .text = {"s1"}},
+
+                  {.kind = TokenKind::EndOfFile(), .line = 6, .column = 3},
+              }));
+
+  auto token_i1 = buffer.Tokens().begin() + 1;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i1), 1);
+  auto token_i20 = buffer.Tokens().begin() + 2;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i20), 20);
+  auto token_i999999999999 = buffer.Tokens().begin() + 3;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i999999999999), 999999999999ull);
+  auto token_u1 = buffer.Tokens().begin() + 6;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u1), 1);
+  auto token_u64 = buffer.Tokens().begin() + 7;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u64), 64);
+  auto token_f32 = buffer.Tokens().begin() + 9;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f32), 32);
+  auto token_f80 = buffer.Tokens().begin() + 10;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f80), 80);
+  auto token_f1 = buffer.Tokens().begin() + 11;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
 }
 
 TEST_F(LexerTest, Diagnostics) {

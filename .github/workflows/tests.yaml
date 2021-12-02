@@ -51,7 +51,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           # Match the min version listed in docs/project/contribution_tools.md
-          python-version: '3.6'
+          python-version: '3.9'
 
       # On macOS we need Go and to use it to install Bazelisk.
       - uses: actions/setup-go@v2

@@ -10,20 +10,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Lexical elements](#lexical-elements)
 
 <!-- tocstop -->
-
-## TODO
-
-This is a skeletal design, added to support
-[the overview](/docs/design/README.md). It should not be treated as accepted by
-the core team; rather, it is a placeholder until we have more time to examine
-this detail. Please feel welcome to rewrite and update as appropriate.
-
-See [PR 17](https://github.com/carbon-language/carbon-lang/pull/17) for context
--- that proposal may replace this.
 
 ## Lexical elements
 
@@ -37,7 +26,7 @@ A _lexical element_ is one of the following:
 -   a [word](words.md)
 -   a literal:
     -   a [numeric literal](numeric_literals.md)
-    -   TODO: string literals
+    -   a [string literal](string_literals.md)
 -   TODO: operators, comments, ...
 
 The sequence of lexical elements is formed by repeatedly removing the longest

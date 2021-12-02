@@ -1,4 +1,0 @@
-7: type error in initializer of variable
-expected: Int
-actual: Bool
-EXIT CODE: 255

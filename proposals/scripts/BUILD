@@ -2,21 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
-
-py_library(
-    name = "proposals",
-    srcs = ["proposals.py"],
-    visibility = ["//website/jekyll:__pkg__"],
-)
-
-py_test(
-    name = "proposals_test",
-    srcs = ["proposals_test.py"],
-    data = ["//proposals:website_content"],
-    python_version = "PY3",
-    deps = [":proposals"],
-)
+load("@mypy_integration//:mypy.bzl", "mypy_test")
 
 py_binary(
     name = "new_proposal",
@@ -27,14 +13,13 @@ py_binary(
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
-    data = ["//proposals:website_content"],
+    data = ["template.md"],
     python_version = "PY3",
     deps = [":new_proposal"],
 )
 
-# This is a directly runnable script, but should not be run via bazel.
-py_library(
-    name = "update_proposal_list",
-    srcs = ["update_proposal_list.py"],
-    deps = [":proposals"],
+mypy_test(
+    name = "new_proposal_mypy_test",
+    include_imports = True,
+    deps = [":new_proposal"],
 )

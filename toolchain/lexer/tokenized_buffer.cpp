@@ -369,6 +369,48 @@ class TokenizedBuffer::Lexer {
     return token;
   }
 
+  // Given a word that has already been lexed, determine whether it is a type
+  // literal and if so form the corresponding token.
+  auto LexWordAsTypeLiteralToken(llvm::StringRef word, int column)
+      -> LexResult {
+    if (word.size() < 2) {
+      // Too short to form one of these tokens.
+      return LexResult::NoMatch();
+    }
+    if (!('1' <= word[1] && word[1] <= '9')) {
+      // Doesn't start with a valid initial digit.
+      return LexResult::NoMatch();
+    }
+
+    llvm::Optional<TokenKind> kind;
+    switch (word.front()) {
+      case 'i':
+        kind = TokenKind::IntegerTypeLiteral();
+        break;
+      case 'u':
+        kind = TokenKind::UnsignedIntegerTypeLiteral();
+        break;
+      case 'f':
+        kind = TokenKind::FloatingPointTypeLiteral();
+        break;
+      default:
+        return LexResult::NoMatch();
+    };
+
+    llvm::StringRef suffix = word.substr(1);
+    llvm::APInt suffix_value;
+    if (suffix.getAsInteger(10, suffix_value)) {
+      return LexResult::NoMatch();
+    }
+
+    auto token = buffer.AddToken(
+        {.kind = *kind, .token_line = current_line, .column = column});
+    buffer.GetTokenInfo(token).literal_index =
+        buffer.literal_int_storage.size();
+    buffer.literal_int_storage.push_back(std::move(suffix_value));
+    return token;
+  }
+
   // Closes all open groups that cannot remain open across the symbol `K`.
   // Users may pass `Error` to close all open groups.
   auto CloseInvalidOpenGroups(TokenKind kind) -> void {
@@ -430,6 +472,12 @@ class TokenizedBuffer::Lexer {
     int identifier_column = current_column;
     current_column += identifier_text.size();
     source_text = source_text.drop_front(identifier_text.size());
+
+    // Check if the text is a type literal, and if so form such a literal.
+    if (LexResult result =
+            LexWordAsTypeLiteralToken(identifier_text, identifier_column)) {
+      return result;
+    }
 
     // Check if the text matches a keyword token, and if so use that.
     TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
@@ -583,6 +631,16 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return relexed_token->Text();
   }
 
+  // Refer back to the source text to avoid needing to reconstruct the
+  // spelling from the size.
+  if (token_info.kind.IsSizedTypeLiteral()) {
+    auto& line_info = GetLineInfo(token_info.token_line);
+    int64_t token_start = line_info.start + token_info.column;
+    llvm::StringRef suffix =
+        source->Text().substr(token_start + 1).take_while(IsDecimalDigit);
+    return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
+  }
+
   if (token_info.kind == TokenKind::EndOfFile()) {
     return llvm::StringRef();
   }
@@ -628,6 +686,14 @@ auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
   assert(token_info.kind == TokenKind::StringLiteral() &&
          "The token must be a string literal!");
   return literal_string_storage[token_info.literal_index];
+}
+
+auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
+    -> const llvm::APInt& {
+  auto& token_info = GetTokenInfo(token);
+  assert(token_info.kind.IsSizedTypeLiteral() &&
+         "The token must be a sized type literal!");
+  return literal_int_storage[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
@@ -795,6 +861,11 @@ auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
 auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   token_infos.push_back(info);
   return Token(static_cast<int>(token_infos.size()) - 1);
+}
+
+auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
+    -> void {
+  output << token.index;
 }
 
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(

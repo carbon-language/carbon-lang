@@ -4,37 +4,88 @@
 
 #include "executable_semantics/ast/declaration.h"
 
-#include <iostream>
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Casting.h"
 
 namespace Carbon {
 
-void FunctionDeclaration::Print() const { PrintFunDef(definition); }
+using llvm::cast;
 
-void StructDeclaration::Print() const {
-  std::cout << "struct " << *definition.name << " {" << std::endl;
-  for (auto& member : *definition.members) {
-    PrintMember(member);
+Declaration::~Declaration() = default;
+
+void Declaration::Print(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case DeclarationKind::FunctionDeclaration:
+      cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
+      break;
+
+    case DeclarationKind::ClassDeclaration: {
+      const auto& class_decl = cast<ClassDeclaration>(*this);
+      out << "class " << class_decl.name() << " {\n";
+      for (Nonnull<Member*> m : class_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& choice = cast<ChoiceDeclaration>(*this);
+      out << "choice " << choice.name() << " {\n";
+      for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
+        out << *alt << ";\n";
+      }
+      out << "}\n";
+      break;
+    }
+
+    case DeclarationKind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(*this);
+      out << "var " << var.binding() << " = " << var.initializer() << "\n";
+      break;
+    }
   }
-  std::cout << "}" << std::endl;
 }
 
-void ChoiceDeclaration::Print() const {
-  std::cout << "choice " << name << " {" << std::endl;
-  for (const auto& [name, signature] : alternatives) {
-    std::cout << "alt " << name << " ";
-    PrintExp(signature);
-    std::cout << ";" << std::endl;
-  }
-  std::cout << "}" << std::endl;
+void GenericBinding::Print(llvm::raw_ostream& out) const {
+  out << name() << ":! " << type();
 }
 
-// Print a global variable declaration to standard out.
-void VariableDeclaration::Print() const {
-  std::cout << "var ";
-  PrintExp(type);
-  std::cout << " : " << name << " = ";
-  PrintExp(initializer);
-  std::cout << std::endl;
+void ReturnTerm::Print(llvm::raw_ostream& out) const {
+  switch (kind_) {
+    case ReturnKind::Omitted:
+      return;
+    case ReturnKind::Auto:
+      out << "-> auto";
+      return;
+    case ReturnKind::Expression:
+      out << "-> " << **type_expression_;
+      return;
+  }
+}
+
+void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
+  out << "fn " << name_ << " ";
+  if (!deduced_parameters_.empty()) {
+    out << "[";
+    llvm::ListSeparator sep;
+    for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
+      out << sep << *deduced;
+    }
+    out << "]";
+  }
+  out << *param_pattern_ << return_term_;
+  if (body_) {
+    out << " {\n";
+    (*body_)->PrintDepth(depth, out);
+    out << "\n}\n";
+  } else {
+    out << ";\n";
+  }
+}
+
+void AlternativeSignature::Print(llvm::raw_ostream& out) const {
+  out << "alt " << name() << " " << signature();
 }
 
 }  // namespace Carbon

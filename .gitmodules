@@ -2,13 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-[submodule "third_party/llvm-bazel"]
-	path = third_party/llvm-bazel
-	url = https://github.com/google/llvm-bazel.git
-	fetchRecurseSubmodules = false
 [submodule "third_party/llvm-project"]
 	path = third_party/llvm-project
 	url = https://github.com/llvm/llvm-project.git
+	branch = main
 [submodule "third_party/examples/brotli/original"]
 	path = third_party/examples/brotli/original
 	url = https://github.com/google/brotli

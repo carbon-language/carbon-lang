@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -20,9 +19,8 @@ cc_test(
     srcs = ["token_kind_test.cpp"],
     deps = [
         ":token_kind",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -59,11 +57,10 @@ cc_test(
     deps = [
         ":numeric_literal",
         ":test_helpers",
+        "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -96,11 +93,10 @@ cc_test(
     deps = [
         ":string_literal",
         ":test_helpers",
+        "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -125,6 +121,7 @@ cc_library(
         ":numeric_literal",
         ":string_literal",
         ":token_kind",
+        "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
@@ -137,8 +134,8 @@ cc_library(
     hdrs = ["tokenized_buffer_test_helpers.h"],
     deps = [
         ":tokenized_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
     ],
 )
 
@@ -151,10 +148,8 @@ cc_test(
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 

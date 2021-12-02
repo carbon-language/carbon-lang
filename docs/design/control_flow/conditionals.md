@@ -11,36 +11,74 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Relevant proposals](#relevant-proposals)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
 ## Overview
 
-`if` and `else` provide conditional execution of statements. For example:
+`if` and `else` provide conditional execution of statements. Syntax is:
+
+> `if (`_boolean expression_ `) {` _statements_ `}`
+>
+> [ `else if (` _boolean expression_ `) {` _statements_ `}` ] ...
+>
+> [ `else {` _statements_ `}` ]
+
+Only one group of statements will execute:
+
+-   When the first `if`'s boolean expression evaluates to true, its associated
+    statements will execute.
+-   When earlier boolean expressions evaluate to false and an `else if`'s
+    boolean expression evaluates to true, its associated statements will
+    execute.
+    -   `... else if ...` is equivalent to `... else { if ... }`, but without
+        visible nesting of braces.
+-   When all boolean expressions evaluate to false, the `else`'s associated
+    statements will execute.
+
+When a boolean expression evaluates to true, no later boolean expressions will
+evaluate.
+
+Note that `else if` may be repeated.
+
+For example:
 
 ```carbon
 if (fruit.IsYellow()) {
   Print("Banana!");
 } else if (fruit.IsOrange()) {
   Print("Orange!");
+} else if (fruit.IsGreen()) {
+  Print("Apple!");
 } else {
   Print("Vegetable!");
 }
+fruit.Eat();
 ```
 
 This code will:
 
--   Print `Banana!` if `fruit.IsYellow()` is `True`.
--   Print `Orange!` if `fruit.IsYellow()` is `False` and `fruit.IsOrange()` is
-    `True`.
--   Print `Vegetable!` if both of the above return `False`.
+-   Evaluate `fruit.IsYellow()`:
+    -   When `True`, print `Banana!` and resume execution at `fruit.Eat()`.
+    -   When `False`, evaluate `fruit.IsOrange()`:
+        -   When `True`, print `Orange!` and resume execution at `fruit.Eat()`.
+        -   When `False`, evaluate `fruit.IsGreen()`:
+            -   When `True`, print `Orange!` and resume execution at
+                `fruit.Eat()`.
+            -   When `False`, print `Vegetable!` and resume execution at
+                `fruit.Eat()`.
 
-> TODO: Flesh out text (currently just overview)
+## Alternatives considered
 
-## Relevant proposals
+-   [Optional braces](/proposals/p0623.md#optional-braces)
+-   [Optional parentheses](/proposals/p0623.md#optional-parentheses)
+-   [`elif`](/proposals/p0623.md#elif)
 
-Most discussion of design choices and alternatives may be found in relevant
-proposals.
+## References
 
--   [`if` and `else`](/proposals/p0285.md)
+-   Proposal
+    [#285: `if` and `else`](https://github.com/carbon-language/carbon-lang/pull/285)
+-   Proposal
+    [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)
