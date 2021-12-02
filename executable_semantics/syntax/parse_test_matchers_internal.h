@@ -13,12 +13,12 @@
 
 #include "executable_semantics/syntax/parse.h"
 
-namespace Carbon {
-namespace TestingInternal {
+namespace Carbon::TestingInternal {
 
 // Implementation of ParsedAs(). See there for detailed documentation.
 class ParsedAsMatcher {
  public:
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using is_gtest_matcher = void;
 
   explicit ParsedAsMatcher(::testing::Matcher<AST> ast_matcher)
@@ -53,7 +53,6 @@ class ParsedAsMatcher {
   ::testing::Matcher<AST> ast_matcher_;
 };
 
-}  // namespace TestingInternal
-}  // namespace Carbon
+}  // namespace Carbon::TestingInternal
 
 #endif  // EXECUTABLE_SEMANTICS_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_

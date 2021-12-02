@@ -19,8 +19,7 @@
 #include "executable_semantics/ast/statement.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon {
-namespace TestingInternal {
+namespace Carbon::TestingInternal {
 
 // Abstract GoogleMock matcher which matches AstNodes, and is agnostic to
 // whether they are passed by pointer or reference. Derived classes specify what
@@ -28,6 +27,7 @@ namespace TestingInternal {
 // MatchAndExplainImpl.
 class AstNodeMatcherBase {
  public:
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using is_gtest_matcher = void;
 
   virtual ~AstNodeMatcherBase();
@@ -202,6 +202,7 @@ class MatchesUnimplementedExpressionMatcher : public AstNodeMatcherBase {
 // Matches an `AST`.
 class ASTDeclarationsMatcher {
  public:
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using is_gtest_matcher = void;
 
   // Constructs a matcher which matches an `AST` whose `declarations` member
@@ -231,7 +232,6 @@ class ASTDeclarationsMatcher {
   ::testing::Matcher<std::vector<Nonnull<Declaration*>>> declarations_matcher_;
 };
 
-}  // namespace TestingInternal
-}  // namespace Carbon
+}  // namespace Carbon::TestingInternal
 
 #endif  // EXECUTABLE_SEMANTICS_AST_AST_TEST_MATCHERS_INTERNAL_H_

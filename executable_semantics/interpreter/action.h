@@ -209,7 +209,7 @@ class StatementAction : public Action {
 // with AST nodes.
 class ScopeAction : public Action {
  public:
-  ScopeAction(Scope scope) : Action(Kind::ScopeAction) {
+  explicit ScopeAction(Scope scope) : Action(Kind::ScopeAction) {
     StartScope(std::move(scope));
   }
 
