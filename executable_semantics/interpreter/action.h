@@ -132,8 +132,7 @@ class Action {
 };
 
 // An Action which implements evaluation of an Expression to produce an
-// lvalue. The result be expressed as a PointerValue which points to the
-// Expression's value.
+// LValue.
 class LValAction : public Action {
  public:
   explicit LValAction(Nonnull<const Expression*> expression)
@@ -210,7 +209,7 @@ class StatementAction : public Action {
 // with AST nodes.
 class ScopeAction : public Action {
  public:
-  ScopeAction(Scope scope) : Action(Kind::ScopeAction) {
+  explicit ScopeAction(Scope scope) : Action(Kind::ScopeAction) {
     StartScope(std::move(scope));
   }
 

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Update versions with:
-#   pre-commit autoupdate --freeze
+#   pre-commit autoupdate --freeze && pre-commit run -a
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
@@ -93,7 +93,7 @@ repos:
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 911470a610e47d9da5ea938b0887c3df62819b85 # frozen: 21.9b0
+    rev: 19f6aa8208154de4560ee1e4a3e638e120dcdba5 # frozen: 21.11b1
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
@@ -103,7 +103,7 @@ repos:
       - id: clang-format-whole-file
         types: [c++]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: 6e24ff01ab7d5e64045599b81c4cd34d6a6a7159 # frozen: v2.4.1
+    rev: f69d0a4007f48ad4f144089973c56f6ecf53a5b5 # frozen: v2.5.0
     hooks:
       - id: prettier
   # Run linters last, as formatters and other checks may fix issues.
