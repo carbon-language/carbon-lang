@@ -18,7 +18,7 @@ _TESTDATA = "executable_semantics/testdata"
 
 # TODO: Right now this is a static string used. In theory maybe we should use
 # the command; it's included for that flexibility.
-_AUTOUPDATE_MARKER = "// AUTOUPDATE: executable_semantics %s\n"
+_AUTOUPDATE_MARKER = "// AUTOUPDATE: %{executable_semantics} %s\n"
 
 
 def _get_tests():
