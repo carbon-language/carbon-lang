@@ -113,8 +113,7 @@ void PopulateNamesInStatement(Arena* arena,
 
 // Populates names for a member. See PopulateNamesInDeclaration for overall
 // flow.
-void PopulateNamesInMember(Arena* arena, const Member& member,
-                           StaticScope& static_scope) {
+void PopulateNamesInMember(const Member& member, StaticScope& static_scope) {
   switch (member.kind()) {
     case MemberKind::FieldMember: {
       const auto& field = cast<FieldMember>(member);
@@ -148,7 +147,7 @@ void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
       class_decl.static_scope().AddParent(&static_scope);
       static_scope.Add(class_decl.name(), &declaration);
       for (auto* member : class_decl.members()) {
-        PopulateNamesInMember(arena, *member, class_decl.static_scope());
+        PopulateNamesInMember(*member, class_decl.static_scope());
       }
       break;
     }

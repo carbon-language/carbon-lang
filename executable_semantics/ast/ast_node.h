@@ -81,7 +81,7 @@ namespace llvm {
 template <typename To>
 struct cast_convert_val<To, const Carbon::AstNode*, const Carbon::AstNode*> {
   using ResultType = typename cast_retty<To, const Carbon::AstNode*>::ret_type;
-  static ResultType doit(const Carbon::AstNode* node) {
+  static auto doit(const Carbon::AstNode* node) -> ResultType {
     return dynamic_cast<ResultType>(node);
   }
 };
@@ -89,7 +89,7 @@ struct cast_convert_val<To, const Carbon::AstNode*, const Carbon::AstNode*> {
 template <typename To>
 struct cast_convert_val<To, Carbon::AstNode*, Carbon::AstNode*> {
   using ResultType = typename cast_retty<To, Carbon::AstNode*>::ret_type;
-  static ResultType doit(Carbon::AstNode* node) {
+  static auto doit(Carbon::AstNode* node) -> ResultType {
     return dynamic_cast<ResultType>(node);
   }
 };
@@ -97,7 +97,7 @@ struct cast_convert_val<To, Carbon::AstNode*, Carbon::AstNode*> {
 template <typename To>
 struct cast_convert_val<To, const Carbon::AstNode, const Carbon::AstNode> {
   using ResultType = typename cast_retty<To, const Carbon::AstNode>::ret_type;
-  static ResultType doit(const Carbon::AstNode& node) {
+  static auto doit(const Carbon::AstNode& node) -> ResultType {
     return dynamic_cast<ResultType>(node);
   }
 };
@@ -105,7 +105,7 @@ struct cast_convert_val<To, const Carbon::AstNode, const Carbon::AstNode> {
 template <typename To>
 struct cast_convert_val<To, Carbon::AstNode, Carbon::AstNode> {
   using ResultType = typename cast_retty<To, Carbon::AstNode>::ret_type;
-  static ResultType doit(Carbon::AstNode& node) {
+  static auto doit(Carbon::AstNode& node) -> ResultType {
     return dynamic_cast<ResultType>(node);
   }
 };

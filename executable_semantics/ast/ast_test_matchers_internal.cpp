@@ -7,8 +7,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace Carbon {
-namespace TestingInternal {
+namespace Carbon::TestingInternal {
 
 AstNodeMatcherBase::~AstNodeMatcherBase() = default;
 
@@ -210,5 +209,4 @@ void MatchesUnimplementedExpressionMatcher::DescribeToImpl(std::ostream* out,
   children_matcher_.DescribeTo(out);
 }
 
-}  // namespace TestingInternal
-}  // namespace Carbon
+}  // namespace Carbon::TestingInternal

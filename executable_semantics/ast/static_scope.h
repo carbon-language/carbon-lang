@@ -18,7 +18,7 @@ namespace Carbon {
 
 class NamedEntity : public virtual AstNode {
  public:
-  virtual ~NamedEntity() = 0;
+  ~NamedEntity() override = 0;
 
   NamedEntity() = default;
 
