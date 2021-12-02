@@ -467,17 +467,17 @@ class ContinuationType : public Value {
 // A variable type.
 class VariableType : public Value {
  public:
-  explicit VariableType(std::string name)
-      : Value(Kind::VariableType), name_(std::move(name)) {}
+  explicit VariableType(Nonnull<const GenericBinding*> binding)
+      : Value(Kind::VariableType), binding_(binding) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::VariableType;
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto binding() const -> const GenericBinding& { return *binding_; }
 
  private:
-  std::string name_;
+  Nonnull<const GenericBinding*> binding_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
