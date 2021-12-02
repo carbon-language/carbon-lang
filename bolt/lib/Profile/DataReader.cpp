@@ -82,21 +82,6 @@ raw_ostream &operator<<(raw_ostream &OS, const Location &Loc) {
   return OS;
 }
 
-iterator_range<FuncBranchData::ContainerTy::const_iterator>
-FuncBranchData::getBranchRange(uint64_t From) const {
-  assert(std::is_sorted(Data.begin(), Data.end()));
-  struct Compare {
-    bool operator()(const BranchInfo &BI, const uint64_t Val) const {
-      return BI.From.Offset < Val;
-    }
-    bool operator()(const uint64_t Val, const BranchInfo &BI) const {
-      return Val < BI.From.Offset;
-    }
-  };
-  auto Range = std::equal_range(Data.begin(), Data.end(), From, Compare());
-  return iterator_range<ContainerTy::const_iterator>(Range.first, Range.second);
-}
-
 void FuncBranchData::appendFrom(const FuncBranchData &FBD, uint64_t Offset) {
   Data.insert(Data.end(), FBD.Data.begin(), FBD.Data.end());
   for (auto I = Data.begin(), E = Data.end(); I != E; ++I) {

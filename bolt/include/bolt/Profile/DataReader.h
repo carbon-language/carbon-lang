@@ -133,10 +133,6 @@ struct FuncBranchData {
   /// undefined.
   ErrorOr<const BranchInfo &> getDirectCallBranch(uint64_t From) const;
 
-  /// Find all the branches originating at From.
-  iterator_range<ContainerTy::const_iterator>
-  getBranchRange(uint64_t From) const;
-
   /// Append the branch data of another function located \p Offset bytes away
   /// from the entry of this function.
   void appendFrom(const FuncBranchData &FBD, uint64_t Offset);
