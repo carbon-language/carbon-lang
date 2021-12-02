@@ -19,9 +19,8 @@
 
 // Adds the Carbon prelude to `declarations`.
 static void AddPrelude(
-    Carbon::Nonnull<Carbon::Arena*> arena,
-    std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations,
-    std::string_view prelude_file_name) {
+    std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
+    std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> parse_result =
       Carbon::Parse(arena, prelude_file_name, false);
   if (std::holds_alternative<Carbon::SyntaxErrorCode>(parse_result)) {
@@ -66,7 +65,7 @@ auto main(int argc, char* argv[]) -> int {
   }
   auto& ast = std::get<Carbon::AST>(ast_or_error);
 
-  AddPrelude(&arena, &ast.declarations, prelude_file_name);
+  AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
   // Typecheck and run the parsed program.
   Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error),
