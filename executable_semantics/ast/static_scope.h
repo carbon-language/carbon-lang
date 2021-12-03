@@ -34,7 +34,7 @@ class NamedEntity : public virtual AstNode {
 class StaticScope {
  public:
   // Defines `name` to be `entity` in this scope, or reports a compilation error
-  // if `name` is already defined in this scope.
+  // if `name` is already defined to be a different entity in this scope.
   void Add(std::string name, Nonnull<const NamedEntity*> entity);
 
   // Make `parent` a parent of this scope.
