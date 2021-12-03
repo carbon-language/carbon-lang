@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [External impl](#external-impl)
     -   [Qualified member names](#qualified-member-names)
 -   [Generics](#generics)
+    -   [Return type](#return-type)
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
 -   [Type-of-types](#type-of-types)
@@ -38,6 +39,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
+    -   [Associated types outside a generic context](#associated-types-outside-a-generic-context)
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
@@ -70,6 +72,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Model](#model-2)
     -   [`TypeId`](#typeid)
+-   [Generic `let`](#generic-let)
 -   [Future work](#future-work)
     -   [Conditional conformance](#conditional-conformance)
     -   [Parameterized impls](#parameterized-impls)
@@ -491,6 +494,9 @@ present in the signature of the function to type check the body of
 `AddAndScaleGeneric`'s definition. In this case, we know that any value of type
 `T` implements the `Vector` interface and so has an `Add` and a `Scale` method.
 
+**References:** The `:!` syntax was accepted in
+[proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+
 Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
 in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
 to adding a `Vector` qualification to all unqualified member accesses of `T`:
@@ -535,17 +541,42 @@ fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
 }
 ```
 
+### Return type
+
 From the caller's perspective, the return type is the result of substituting the
 caller's values for the generic parameters into the return type expression. So
 `AddAndScaleGeneric` called with `Point` values returns a `Point` and called
-with `Point2` values returns a `Point2`. This is part of realizing
+with `Point2` values returns a `Point2`. In particular, looking up a member on
+the resulting value will look in `Point` or `Point2` rather than `Vector`.
+
+This is part of realizing
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
 In this example, `AddAndScaleGeneric` can be substituted for
 `AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
 types.
 
-**References:** The `:!` syntax was accepted in
-[proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+A generic caller of a generic function performs the same substitution process to
+determine the return type, but the result may be generic. In this example of
+calling a generic from another generic,
+
+```
+fn DoubleThreeTimes[U:! Vector](a: U) -> U {
+  return AddAndScaleGeneric(a, a, 2.0).Scale(2.0);
+}
+```
+
+the return type of `AddAndScaleGeneric` is found by substituting in the `U` from
+`DoubleThreeTimes` for the `T` from `AddAndScaleGeneric` in the return type
+expression of `AddAndScaleGeneric`. If `U` had a more specific type, the return
+value would have the additional capabilities of `U`.
+
+```
+class GeneralPoint(C:! Numeric) {
+  impl Vector { ... }
+}
+
+
+```
 
 ### Model
 
@@ -1850,7 +1881,9 @@ interface Container {
 class DynamicArray(T:! Type) {
   ...
   impl as Container {
-    class IteratorType { ... }
+    class IteratorType {
+      impl Iterator { ... }
+    }
     ...
   }
 }
@@ -1863,6 +1896,21 @@ For context, see
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
+
+### Associated types outside a generic context
+
+FIXME
+
+[Return type](#return-type)
+
+From the caller's perspective, the return type is the result of substituting the
+caller's values for the generic parameters into the return type expression. So
+`AddAndScaleGeneric` called with `Point` values returns a `Point` and called
+with `Point2` values returns a `Point2`. This is part of realizing
+[the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
+In this example, `AddAndScaleGeneric` can be substituted for
+`AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
+types.
 
 ### Model
 
@@ -3227,6 +3275,36 @@ value of type `T` in this case.
 **Open question:** Should `TypeId` be implemented externally for types to avoid
 name pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
+
+## Generic `let`
+
+FIXME
+
+```
+{
+  ...
+  let T:! C = U;
+  X;
+  Y;
+  Z;
+}
+```
+
+gets rewritten to:
+
+```
+{
+  ...
+  fn Closure(T:! C where .Self == U) {
+    X;
+    Y;
+    Z;
+  }
+  Closure(U);
+}
+```
+
+The `where .Self == U` modifier allows casts between `T` and `U`.
 
 ## Future work
 
