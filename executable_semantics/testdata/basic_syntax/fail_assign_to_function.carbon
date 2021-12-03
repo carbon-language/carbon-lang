@@ -2,18 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
+// RUN: executable_semantics %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
+// RUN: executable_semantics --trace %s 2>&1 | \
 // RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_separate_decl.carbon:15: Function declaration has deduced return type but no body
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
-// This declaration is not allowed.
-fn Add(x: i32, y: i32) -> auto;
+fn F() {}
+fn G() {}
 
 fn Main() -> i32 {
-  return Add(1, 2) - 3;
+  // TODO: this test should not pass. See comments on the handling of
+  // IdentifierExpression in type_checker.cpp.
+  F = G;
+  return 0;
 }

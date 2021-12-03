@@ -36,7 +36,7 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
-    PointerValue,
+    LValue,
     BoolValue,
     StructValue,
     NominalClassValue,
@@ -117,7 +117,7 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -132,17 +132,17 @@ class FunctionValue : public Value {
   Nonnull<const FunctionDeclaration*> declaration_;
 };
 
-// A pointer value.
-class PointerValue : public Value {
+// The value of a location in memory.
+class LValue : public Value {
  public:
-  explicit PointerValue(Address value)
-      : Value(Kind::PointerValue), value_(std::move(value)) {}
+  explicit LValue(Address value)
+      : Value(Kind::LValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::PointerValue;
+    return value->kind() == Kind::LValue;
   }
 
-  auto value() const -> const Address& { return value_; }
+  auto address() const -> const Address& { return value_; }
 
  private:
   Address value_;
@@ -335,11 +335,11 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<Nonnull<const GenericBinding*>> deduced,
+  FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
       : Value(Kind::FunctionType),
-        deduced_(std::move(deduced)),
+        deduced_(deduced),
         parameters_(parameters),
         return_type_(return_type) {}
 
@@ -485,21 +485,53 @@ class VariableType : public Value {
 // fragment, which is exposed by `Stack()`.
 class ContinuationValue : public Value {
  public:
-  explicit ContinuationValue(Nonnull<std::vector<Nonnull<Action*>>*> stack)
+  class StackFragment {
+   public:
+    // Constructs an empty StackFragment.
+    StackFragment() = default;
+
+    // Requires *this to be empty, because by the time we're tearing down the
+    // Arena, it's no longer safe to invoke ~Action.
+    ~StackFragment();
+
+    StackFragment(StackFragment&&) = delete;
+    auto operator=(StackFragment&&) -> StackFragment& = delete;
+
+    // Store the given partial todo stack in *this, which must currently be
+    // empty. The stack is represented with the top of the stack at the
+    // beginning of the vector, the reverse of the usual order.
+    void StoreReversed(std::vector<std::unique_ptr<Action>> reversed_todo);
+
+    // Restore the currently stored stack fragment to the top of `todo`,
+    // leaving *this empty.
+    void RestoreTo(Stack<std::unique_ptr<Action>>& todo);
+
+    // Destroy the currently stored stack fragment.
+    void Clear();
+
+    void Print(llvm::raw_ostream& out) const;
+    LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+   private:
+    // The todo stack of a suspended continuation, starting with the top
+    // Action.
+    std::vector<std::unique_ptr<Action>> reversed_todo_;
+  };
+
+  explicit ContinuationValue(Nonnull<StackFragment*> stack)
       : Value(Kind::ContinuationValue), stack_(stack) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
   }
 
-  // The todo stack of the suspended continuation, starting with the top
-  // Action (the reverse of the usual order). Note that this provides mutable
-  // access, even when *this is const, because of the reference-like semantics
-  // of ContinuationValue.
-  auto stack() const -> std::vector<Nonnull<Action*>>& { return *stack_; }
+  // The todo stack of the suspended continuation. Note that this provides
+  // mutable access, even when *this is const, because of the reference-like
+  // semantics of ContinuationValue.
+  auto stack() const -> StackFragment& { return *stack_; }
 
  private:
-  Nonnull<std::vector<Nonnull<Action*>>*> stack_;
+  Nonnull<StackFragment*> stack_;
 };
 
 // The String type.

@@ -20,6 +20,7 @@ cc_library(
         ":address",
         ":dictionary",
         ":field_path",
+        ":heap_allocation_interface",
         ":stack",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
@@ -27,6 +28,19 @@ cc_library(
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "action_stack",
+    srcs = ["action_stack.cpp"],
+    hdrs = ["action_stack.h"],
+    deps = [
+        ":action_and_value",
+        ":stack",
+        "//common:ostream",
+        "//executable_semantics/ast:statement",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -103,6 +117,7 @@ cc_library(
     ],
     deps = [
         ":action_and_value",
+        ":action_stack",
         ":address",
         ":heap",
         "//common:check",

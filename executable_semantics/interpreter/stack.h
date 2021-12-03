@@ -51,7 +51,7 @@ struct Stack {
   // Returns the top element of the stack.
   //
   // - Requires: !this->IsEmpty()
-  auto Top() const -> T {
+  auto Top() const -> const T& {
     CHECK(!IsEmpty()) << "Empty stack has no Top().";
     return elements_.back();
   }

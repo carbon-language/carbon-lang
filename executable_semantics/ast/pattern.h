@@ -10,6 +10,8 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/ast_rtti.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -27,27 +29,24 @@ class Value;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Pattern {
+class Pattern : public virtual AstNode {
  public:
-  enum class Kind {
-    AutoPattern,
-    BindingPattern,
-    TuplePattern,
-    AlternativePattern,
-    ExpressionPattern,
-  };
-
   Pattern(const Pattern&) = delete;
   auto operator=(const Pattern&) -> Pattern& = delete;
 
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  ~Pattern() override = 0;
+
+  void Print(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromPattern(node->kind());
+  }
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto kind() const -> Kind { return kind_; }
-
-  auto source_loc() const -> SourceLocation { return source_loc_; }
+  auto kind() const -> PatternKind {
+    return static_cast<PatternKind>(root_kind());
+  }
 
   // The static type of this pattern. Cannot be called before typechecking.
   auto static_type() const -> const Value& { return **static_type_; }
@@ -77,13 +76,9 @@ class Pattern {
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern(Kind kind, SourceLocation source_loc)
-      : kind_(kind), source_loc_(source_loc) {}
+  Pattern() = default;
 
  private:
-  const Kind kind_;
-  SourceLocation source_loc_;
-
   std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const Value*>> value_;
 };
@@ -92,33 +87,25 @@ class Pattern {
 class AutoPattern : public Pattern {
  public:
   explicit AutoPattern(SourceLocation source_loc)
-      : Pattern(Kind::AutoPattern, source_loc) {}
+      : AstNode(AstNodeKind::AutoPattern, source_loc) {}
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->kind() == Kind::AutoPattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAutoPattern(node->kind());
   }
 };
 
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
-class BindingPattern : public Pattern, public NamedEntityInterface {
+class BindingPattern : public Pattern, public NamedEntity {
  public:
   BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)
-      : Pattern(Kind::BindingPattern, source_loc),
+      : AstNode(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type) {}
 
-  auto named_entity_kind() const -> NamedEntityKind override {
-    return NamedEntityKind::BindingPattern;
-  }
-
-  auto source_loc() const -> SourceLocation override {
-    return Pattern::source_loc();
-  }
-
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->kind() == Kind::BindingPattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBindingPattern(node->kind());
   }
 
   // The name this pattern binds, if any.
@@ -137,10 +124,11 @@ class BindingPattern : public Pattern, public NamedEntityInterface {
 class TuplePattern : public Pattern {
  public:
   TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
-      : Pattern(Kind::TuplePattern, source_loc), fields_(std::move(fields)) {}
+      : AstNode(AstNodeKind::TuplePattern, source_loc),
+        fields_(std::move(fields)) {}
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->kind() == Kind::TuplePattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromTuplePattern(node->kind());
   }
 
   auto fields() const -> llvm::ArrayRef<Nonnull<const Pattern*>> {
@@ -182,7 +170,7 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> choice_type,
                      std::string alternative_name,
                      Nonnull<TuplePattern*> arguments)
-      : Pattern(Kind::AlternativePattern, source_loc),
+      : AstNode(AstNodeKind::AlternativePattern, source_loc),
         choice_type_(choice_type),
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
@@ -193,8 +181,8 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments);
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->kind() == Kind::AlternativePattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAlternativePattern(node->kind());
   }
 
   auto choice_type() const -> const Expression& { return *choice_type_; }
@@ -216,11 +204,11 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   explicit ExpressionPattern(Nonnull<Expression*> expression)
-      : Pattern(Kind::ExpressionPattern, expression->source_loc()),
+      : AstNode(AstNodeKind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->kind() == Kind::ExpressionPattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromExpressionPattern(node->kind());
   }
 
   auto expression() const -> const Expression& { return *expression_; }

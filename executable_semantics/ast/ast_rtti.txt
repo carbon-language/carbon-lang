@@ -1,0 +1,55 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+root class AstNode;
+interface class NamedEntity : AstNode;
+abstract class Pattern : AstNode;
+  class AutoPattern : Pattern;
+  class BindingPattern : Pattern, NamedEntity;
+  class TuplePattern : Pattern;
+  class AlternativePattern : Pattern;
+  class ExpressionPattern : Pattern;
+abstract class Declaration : AstNode, NamedEntity;
+  class FunctionDeclaration : Declaration;
+  class ClassDeclaration : Declaration;
+  class ChoiceDeclaration : Declaration;
+  class VariableDeclaration : Declaration;
+class GenericBinding : AstNode, NamedEntity;
+class AlternativeSignature : AstNode, NamedEntity;
+abstract class Statement : AstNode;
+  class ExpressionStatement : Statement;
+  class Assign : Statement;
+  class VariableDefinition : Statement;
+  class If : Statement;
+  class Return : Statement;
+  class Block : Statement;
+  class While : Statement;
+  class Break : Statement;
+  class Continue : Statement;
+  class Match : Statement;
+  class Continuation : Statement, NamedEntity;
+  class Run : Statement;
+  class Await : Statement;
+abstract class Expression : AstNode;
+  class BoolTypeLiteral : Expression;
+  class BoolLiteral : Expression;
+  class CallExpression : Expression;
+  class FunctionTypeLiteral : Expression;
+  class FieldAccessExpression : Expression;
+  class IndexExpression : Expression;
+  class IntTypeLiteral : Expression;
+  class ContinuationTypeLiteral : Expression;
+  class IntLiteral : Expression;
+  class PrimitiveOperatorExpression : Expression;
+  class StringLiteral : Expression;
+  class StringTypeLiteral : Expression;
+  class TupleLiteral : Expression;
+  class StructLiteral : Expression;
+  class StructTypeLiteral : Expression;
+  class TypeTypeLiteral : Expression;
+  class IdentifierExpression : Expression;
+  class IntrinsicExpression : Expression;
+  class UnimplementedExpression : Expression;
+abstract class Member : AstNode;
+  class FieldMember : Member, NamedEntity;
