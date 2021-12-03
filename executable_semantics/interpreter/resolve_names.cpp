@@ -18,14 +18,13 @@ using llvm::cast;
 
 namespace Carbon {
 
-namespace {
-
 // Adds the names exposed by the given AST node to enclosing_scope.
-void AddExposedNames(const Declaration& declaration,
-                     StaticScope& enclosing_scope);
-void AddExposedNames(const Member& member, StaticScope& enclosing_scope);
+static void AddExposedNames(const Declaration& declaration,
+                            StaticScope& enclosing_scope);
+static void AddExposedNames(const Member& member, StaticScope& enclosing_scope);
 
-void AddExposedNames(const Member& member, StaticScope& enclosing_scope) {
+static void AddExposedNames(const Member& member,
+                            StaticScope& enclosing_scope) {
   switch (member.kind()) {
     case MemberKind::FieldMember: {
       const auto& field = cast<FieldMember>(member);
@@ -37,8 +36,8 @@ void AddExposedNames(const Member& member, StaticScope& enclosing_scope) {
   }
 }
 
-void AddExposedNames(const Declaration& declaration,
-                     StaticScope& enclosing_scope) {
+static void AddExposedNames(const Declaration& declaration,
+                            StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
@@ -78,8 +77,9 @@ static void ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope);
 static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope);
 static void ResolveNames(Statement& statement, StaticScope& enclosing_scope);
-void ResolveNames(Member& member, StaticScope& enclosing_scope);
-void ResolveNames(Declaration& declaration, StaticScope& enclosing_scope);
+static void ResolveNames(Member& member, StaticScope& enclosing_scope);
+static void ResolveNames(Declaration& declaration,
+                         StaticScope& enclosing_scope);
 
 static void ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope) {
@@ -257,14 +257,15 @@ static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
   }
 }
 
-void ResolveNames(Member& member, StaticScope& enclosing_scope) {
+static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
   switch (member.kind()) {
     case MemberKind::FieldMember:
       ResolveNames(cast<FieldMember>(member).binding(), enclosing_scope);
   }
 }
 
-void ResolveNames(Declaration& declaration, StaticScope& enclosing_scope) {
+static void ResolveNames(Declaration& declaration,
+                         StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<FunctionDeclaration>(declaration);
@@ -320,8 +321,6 @@ void ResolveNames(Declaration& declaration, StaticScope& enclosing_scope) {
     }
   }
 }
-
-}  // namespace
 
 void ResolveNames(AST& ast) {
   StaticScope file_scope;
