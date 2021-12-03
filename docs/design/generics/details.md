@@ -34,8 +34,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Adapter compatibility](#adapter-compatibility)
     -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
+    -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
-    -   [Application: Defining an impl for use by other types](#application-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
@@ -1785,20 +1785,7 @@ var song: Song = ...;
 CompareLib.Sort((song,));
 ```
 
-### Adapter with stricter invariants
-
-**Future work:** Rust also uses the newtype idiom to create types with
-additional invariants or other information encoded in the type
-([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
-This is used to record in the type system that some data has passed validation
-checks, like `ValidDate` with the same data layout as `Date`. Or to record the
-units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. We should have some way of restricting the casts between a type
-and an adapter to address this use case.
-
-### Application: Defining an impl for use by other types
+### Use case: Defining an impl for use by other types
 
 Let's say we want to provide a possible implementation of an interface for use
 by types for which that implementation would be appropriate. We can do that by
@@ -1862,6 +1849,19 @@ class IntWrapper {
       as Comparable;
 }
 ```
+
+### Adapter with stricter invariants
+
+**Future work:** Rust also uses the newtype idiom to create types with
+additional invariants or other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`. We should have some way of restricting the casts between a type
+and an adapter to address this use case.
 
 ## Associated constants
 
