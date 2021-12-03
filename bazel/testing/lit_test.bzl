@@ -26,8 +26,6 @@ def lit_test(name, test_dir, data = None, **kwargs):
     data += [
         "@llvm-project//llvm:lit",
     ]
-    if not data:
-        data = []
     native.py_test(
         name = name,
         srcs = ["//bazel/testing:lit_test.py"],
