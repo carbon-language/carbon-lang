@@ -13,6 +13,7 @@ package(default_visibility = [
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
+    data = ["data/prelude.carbon"],
     deps = [
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
@@ -24,8 +25,12 @@ cc_binary(
 
 lit_test(
     name = "executable_semantics_lit_test",
+    data = [
+        ":executable_semantics",
+        "@llvm-project//llvm:FileCheck",
+        "@llvm-project//llvm:not",
+    ],
     test_dir = "testdata",
-    tools = [":executable_semantics"],
 )
 
 py_binary(
