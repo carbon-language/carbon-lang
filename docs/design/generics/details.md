@@ -546,14 +546,15 @@ fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
 From the caller's perspective, the return type is the result of substituting the
 caller's values for the generic parameters into the return type expression. So
 `AddAndScaleGeneric` called with `Point` values returns a `Point` and called
-with `Point2` values returns a `Point2`. In particular, looking up a member on
-the resulting value will look in `Point` or `Point2` rather than `Vector`.
+with `Point2` values returns a `Point2`. So looking up a member on the resulting
+value will look in `Point` or `Point2` rather than `Vector`.
 
 This is part of realizing
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
 In this example, `AddAndScaleGeneric` can be substituted for
 `AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
-types.
+types. This requires the return value to be converted to the type that the
+caller expects instead of the erased type used inside the generic function.
 
 A generic caller of a generic function performs the same substitution process to
 determine the return type, but the result may be generic. In this example of
@@ -567,16 +568,26 @@ fn DoubleThreeTimes[U:! Vector](a: U) -> U {
 
 the return type of `AddAndScaleGeneric` is found by substituting in the `U` from
 `DoubleThreeTimes` for the `T` from `AddAndScaleGeneric` in the return type
-expression of `AddAndScaleGeneric`. If `U` had a more specific type, the return
-value would have the additional capabilities of `U`.
+expression of `AddAndScaleGeneric`.
+
+If `U` had a more specific type, the return value would have the additional
+capabilities of `U`. For example, given a parameterized type `GeneralPoint`
+implementing `Vector`, and a function that takes a `GeneralPoint` and calls
+`AddAndScaleGeneric` with it:
 
 ```
 class GeneralPoint(C:! Numeric) {
   impl Vector { ... }
+  fn Get[me: Self](i: i32) -> C;
 }
 
-
+fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
+  return AddAndScaleGeneric(p, p, 2.0).Get(0);
+}
 ```
+
+the result of the call to `AddAndScaleGeneric` has type `GeneralPoint(C)` and so
+has a `Get` method.
 
 ### Model
 
@@ -1911,6 +1922,20 @@ with `Point2` values returns a `Point2`. This is part of realizing
 In this example, `AddAndScaleGeneric` can be substituted for
 `AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
 types.
+
+```
+interface Deref {
+  let Result:! Type;
+  fn DoDeref[me: Self]() -> Result;
+}
+
+class Ptr(Type: T) {
+  impl Deref {
+    let Result:! Type = T;
+    fn DoDeref[me: Self]() -> T { ... }
+  }
+}
+```
 
 ### Model
 
