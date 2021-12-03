@@ -25,7 +25,6 @@ cc_binary(
 lit_test(
     name = "executable_semantics_lit_test",
     data = [
-        "data/prelude.carbon",
         ":executable_semantics",
         "@llvm-project//llvm:FileCheck",
         "@llvm-project//llvm:not",
