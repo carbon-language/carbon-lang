@@ -39,7 +39,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated types](#associated-types)
-    -   [Associated types outside a generic context](#associated-types-outside-a-generic-context)
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
@@ -1844,7 +1843,7 @@ class DynamicArray(T:! Type) {
     }
     fn Pop[addr me: Self*]() -> ElementType {
       var pos: IteratorType = this->End();
-      Assert(pos != this->Begin());
+7      Assert(pos != this->Begin());
       --pos;
       returned var ret: ElementType = *pos;
       this->Remove(pos);
@@ -1873,12 +1872,27 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
   s->Push(top);
   return top;
 }
+```
 
+Inside the generic function `PeekAtTopOfStack`, the `ElementType` associated
+type member of `StackType` is erased. This means `StackType.ElementType` has the
+API dictated by the declaration of `ElementType` in the interface
+`StackAssociatedType`.
+
+Outside the generic, associated types have the concrete type values determined
+by impl lookup, rather than the erased version of that type used inside a
+generic.
+
+```
 var my_array: DynamicArray(i32) = (1, 2, 3);
 // PeekAtTopOfStack's `StackType` is set to `DynamicArray(i32)`
 // with `StackType.ElementType` set to `i32`.
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
+
+This is another part of achieving
+[the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions)
+discussed in the [return type section](#return-type).
 
 Associated types can also be implemented using a
 [member type](/docs/design/classes.md#member-type).
@@ -1907,35 +1921,6 @@ For context, see
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
-
-### Associated types outside a generic context
-
-FIXME
-
-[Return type](#return-type)
-
-From the caller's perspective, the return type is the result of substituting the
-caller's values for the generic parameters into the return type expression. So
-`AddAndScaleGeneric` called with `Point` values returns a `Point` and called
-with `Point2` values returns a `Point2`. This is part of realizing
-[the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
-In this example, `AddAndScaleGeneric` can be substituted for
-`AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
-types.
-
-```
-interface Deref {
-  let Result:! Type;
-  fn DoDeref[me: Self]() -> Result;
-}
-
-class Ptr(Type: T) {
-  impl Deref {
-    let Result:! Type = T;
-    fn DoDeref[me: Self]() -> T { ... }
-  }
-}
-```
 
 ### Model
 
