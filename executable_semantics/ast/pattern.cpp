@@ -17,12 +17,14 @@ namespace Carbon {
 
 using llvm::cast;
 
+Pattern::~Pattern() = default;
+
 void Pattern::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case Kind::AutoPattern:
+    case PatternKind::AutoPattern:
       out << "auto";
       break;
-    case Kind::BindingPattern: {
+    case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*this);
       if (binding.name().has_value()) {
         out << *binding.name();
@@ -32,7 +34,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << ": " << binding.type();
       break;
     }
-    case Kind::TuplePattern: {
+    case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*this);
       out << "(";
       llvm::ListSeparator sep;
@@ -42,13 +44,13 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
-    case Kind::AlternativePattern: {
+    case PatternKind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*this);
       out << alternative.choice_type() << "." << alternative.alternative_name()
           << alternative.arguments();
       break;
     }
-    case Kind::ExpressionPattern:
+    case PatternKind::ExpressionPattern:
       out << cast<ExpressionPattern>(*this).expression();
       break;
   }
@@ -77,7 +79,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // apply.
 static auto RequireFieldAccess(Nonnull<Expression*> alternative)
     -> FieldAccessExpression& {
-  if (alternative->kind() != Expression::Kind::FieldAccessExpression) {
+  if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
     FATAL_PROGRAM_ERROR(alternative->source_loc())
         << "Alternative pattern must have the form of a field access.";
   }
@@ -87,7 +89,7 @@ static auto RequireFieldAccess(Nonnull<Expression*> alternative)
 AlternativePattern::AlternativePattern(SourceLocation source_loc,
                                        Nonnull<Expression*> alternative,
                                        Nonnull<TuplePattern*> arguments)
-    : Pattern(Kind::AlternativePattern, source_loc),
+    : AstNode(AstNodeKind::AlternativePattern, source_loc),
       choice_type_(&RequireFieldAccess(alternative).aggregate()),
       alternative_name_(RequireFieldAccess(alternative).field()),
       arguments_(arguments) {}

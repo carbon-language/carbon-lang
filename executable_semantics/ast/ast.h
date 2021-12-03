@@ -26,6 +26,8 @@ struct AST {
   std::vector<Nonnull<Declaration*>> declarations;
   // Names declared at the top level of the file.
   StaticScope static_scope;
+  // Synthesized call to `Main`. Injected after parsing.
+  std::optional<Nonnull<CallExpression*>> main_call;
 };
 
 }  // namespace Carbon

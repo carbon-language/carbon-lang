@@ -45,6 +45,9 @@ build --force_pic
 # crashes. Optimized builds already avoid using debug information by default.
 build --strip=never
 
+# Enable Abseil for GoogleTest.
+build --define=absl=1
+
 # Configuration for enabling Address Sanitizer. Note that this is enabled by
 # default for fastbuild. The config is provided to enable ASan even in
 # optimized or other build configurations.

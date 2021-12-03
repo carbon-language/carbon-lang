@@ -16,6 +16,6 @@ class Foo {
   var x: i32;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return 0;
 }

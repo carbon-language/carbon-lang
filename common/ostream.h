@@ -51,7 +51,7 @@ operator<<(std::ostream& out, const T* /*obj*/) -> std::ostream&;
 // This is important to allow automatic printing of arguments of mocked APIs.
 template <typename T, typename std::enable_if<std::is_member_function_pointer<
                           decltype(&T::Print)>::value>::type* = nullptr>
-void PrintTo(const T* p, std::ostream* out) {
+void PrintTo(T* p, std::ostream* out) {
   *out << static_cast<const void*>(p);
 
   // Also print the object if non-null.

@@ -186,8 +186,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionValue:
       out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
-    case Value::Kind::PointerValue:
-      out << "ptr<" << cast<PointerValue>(*this).value() << ">";
+    case Value::Kind::LValue:
+      out << "ptr<" << cast<LValue>(*this).address() << ">";
       break;
     case Value::Kind::BoolType:
       out << "Bool";
@@ -213,11 +213,11 @@ void Value::Print(llvm::raw_ostream& out) const {
       if (fn_type.deduced().size() > 0) {
         out << "[";
         unsigned int i = 0;
-        for (const auto& deduced : fn_type.deduced()) {
+        for (Nonnull<const GenericBinding*> deduced : fn_type.deduced()) {
           if (i != 0) {
             out << ", ";
           }
-          out << deduced.name() << ":! " << deduced.type();
+          out << deduced->name() << ":! " << deduced->type();
           ++i;
         }
         out << "]";
@@ -244,13 +244,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << cast<VariableType>(*this).name();
       break;
     case Value::Kind::ContinuationValue: {
-      out << "{";
-      llvm::ListSeparator sep(" :: ");
-      for (Nonnull<const Action*> action :
-           cast<ContinuationValue>(*this).stack()) {
-        out << sep << *action;
-      }
-      out << "}";
+      out << cast<ContinuationValue>(*this).stack();
       break;
     }
     case Value::Kind::StringType:
@@ -262,6 +256,43 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "\"";
       break;
   }
+}
+
+ContinuationValue::StackFragment::~StackFragment() {
+  CHECK(reversed_todo_.empty())
+      << "All StackFragments must be empty before the Carbon program ends.";
+}
+
+void ContinuationValue::StackFragment::StoreReversed(
+    std::vector<std::unique_ptr<Action>> reversed_todo) {
+  CHECK(reversed_todo_.empty());
+  reversed_todo_ = std::move(reversed_todo);
+}
+
+void ContinuationValue::StackFragment::RestoreTo(
+    Stack<std::unique_ptr<Action>>& todo) {
+  while (!reversed_todo_.empty()) {
+    todo.Push(std::move(reversed_todo_.back()));
+    reversed_todo_.pop_back();
+  }
+}
+
+void ContinuationValue::StackFragment::Clear() {
+  // We destroy the underlying Actions explicitly to ensure they're
+  // destroyed in the correct order.
+  for (auto& action : reversed_todo_) {
+    action.reset();
+  }
+  reversed_todo_.clear();
+}
+
+void ContinuationValue::StackFragment::Print(llvm::raw_ostream& out) const {
+  out << "{";
+  llvm::ListSeparator sep(" :: ");
+  for (const std::unique_ptr<Action>& action : reversed_todo_) {
+    out << sep << *action;
+  }
+  out << "}";
 }
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
@@ -394,7 +425,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
       FATAL() << "ValueEqual does not support this kind of value: " << *v1;
