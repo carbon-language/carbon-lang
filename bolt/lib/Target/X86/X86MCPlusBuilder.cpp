@@ -646,10 +646,6 @@ public:
            Inst.getOpcode() == X86::LEAVE64;
   }
 
-  bool isEnter(const MCInst &Inst) const override {
-    return Inst.getOpcode() == X86::ENTER;
-  }
-
   bool isMoveMem2Reg(const MCInst &Inst) const override {
     switch (Inst.getOpcode()) {
     case X86::MOV16rm:

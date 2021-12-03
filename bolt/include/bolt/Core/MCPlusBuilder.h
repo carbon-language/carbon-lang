@@ -551,11 +551,6 @@ public:
     return false;
   }
 
-  virtual bool isEnter(const MCInst &Inst) const {
-    llvm_unreachable("not implemented");
-    return false;
-  }
-
   virtual bool isADRP(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
