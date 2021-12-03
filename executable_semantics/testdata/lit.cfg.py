@@ -12,23 +12,28 @@ import os
 config = config  # noqa: F821
 
 
-def add_file_substitution(substitution, relative_path):
-    """Adds a substitution for a data file path."""
-    config.substitutions.append(
-        (substitution, os.path.join(os.environ["TEST_SRCDIR"], relative_path))
-    )
+def fullpath(relative_path):
+    return os.path.join(os.environ["TEST_SRCDIR"], relative_path)
 
 
 config.name = "lit"
 config.suffixes = [".carbon"]
 config.test_format = lit.formats.ShTest()
 
-add_file_substitution(
-    "%{prelude}", "carbon/executable_semantics/data/prelude.carbon"
+config.substitutions.append(
+    ("%{prelude}", fullpath("carbon/executable_semantics/data/prelude.carbon"))
 )
-add_file_substitution(
-    "%{executable_semantics}",
-    "carbon/executable_semantics/executable_semantics",
+config.substitutions.append(
+    (
+        "%{executable_semantics}",
+        "%s --prelude=%s"
+        % (
+            fullpath("carbon/executable_semantics/executable_semantics"),
+            fullpath("carbon/executable_semantics/data/prelude.carbon"),
+        ),
+    )
 )
-add_file_substitution("%{not}", "llvm-project/llvm/not")
-add_file_substitution("%{FileCheck}", "llvm-project/llvm/FileCheck")
+config.substitutions.append(("%{not}", fullpath("llvm-project/llvm/not")))
+config.substitutions.append(
+    ("%{FileCheck}", fullpath("llvm-project/llvm/FileCheck"))
+)
