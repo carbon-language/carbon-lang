@@ -326,9 +326,25 @@ class Continuation : public Statement, public NamedEntity {
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
 
+  // The static type of the continuation. Cannot be called before typechecking.
+  //
+  // This will always be ContinuationType, but we must set it dynamically in
+  // the typechecker because this code can't depend on ContinuationType.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the continuation. Can only be called once,
+  // during typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  private:
   std::string continuation_variable_;
   Nonnull<Block*> body_;
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // A run statement.

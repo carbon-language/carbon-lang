@@ -94,7 +94,7 @@ class TypeChecker {
                      Nonnull<Statement*> body, TypeEnv types, Env values)
       -> Match::Clause;
 
-  auto TypeOfClassDecl(const ClassDeclaration& class_decl, TypeEnv /*types*/,
+  auto TypeOfClassDecl(ClassDeclaration& class_decl, TypeEnv /*types*/,
                        Env ct_top) -> Nonnull<const Value*>;
 
   auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;

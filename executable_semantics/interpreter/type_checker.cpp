@@ -25,45 +25,15 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Sets the static type of `expression`. Can be called multiple times on
+// Sets the static type of `*object`. Can be called multiple times on
 // the same node, so long as the types are the same on each call.
-static void SetStaticType(Nonnull<Expression*> expression,
-                          Nonnull<const Value*> type) {
-  if (expression->has_static_type()) {
-    CHECK(TypeEqual(&expression->static_type(), type));
+// T must have static_type, has_static_type, and set_static_type methods.
+template <typename T>
+static void SetStaticType(Nonnull<T*> object, Nonnull<const Value*> type) {
+  if (object->has_static_type()) {
+    CHECK(TypeEqual(&object->static_type(), type));
   } else {
-    expression->set_static_type(type);
-  }
-}
-
-// Sets the static type of `pattern`. Can be called multiple times on
-// the same node, so long as the types are the same on each call.
-static void SetStaticType(Nonnull<Pattern*> pattern,
-                          Nonnull<const Value*> type) {
-  if (pattern->has_static_type()) {
-    CHECK(TypeEqual(&pattern->static_type(), type));
-  } else {
-    pattern->set_static_type(type);
-  }
-}
-
-// Sets the static type of `definition`. Can be called multiple times on
-// the same node, so long as the types are the same on each call.
-static void SetStaticType(Nonnull<Declaration*> definition,
-                          Nonnull<const Value*> type) {
-  if (definition->has_static_type()) {
-    CHECK(TypeEqual(&definition->static_type(), type));
-  } else {
-    definition->set_static_type(type);
-  }
-}
-
-static void SetStaticType(Nonnull<ReturnTerm*> return_term,
-                          Nonnull<const Value*> type) {
-  if (return_term->has_static_type()) {
-    CHECK(TypeEqual(&return_term->static_type(), type));
-  } else {
-    return_term->set_static_type(type);
+    object->set_static_type(type);
   }
 }
 
@@ -959,7 +929,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types,
     case StatementKind::Continuation: {
       auto& cont = cast<Continuation>(*s);
       TypeCheckStmt(&cont.body(), types, values);
-      types.Set(cont.continuation_variable(), arena_->New<ContinuationType>());
+      SetStaticType(&cont, arena_->New<ContinuationType>());
+      types.Set(cont.continuation_variable(), &cont.static_type());
       return TCResult(types);
     }
     case StatementKind::Run: {
@@ -1058,7 +1029,8 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     TypeCheckExp(&deduced->type(), types, values);
     // auto t = interpreter_.InterpExp(values, deduced.type);
-    types.Set(deduced->name(), arena_->New<VariableType>(deduced->name()));
+    SetStaticType(deduced, arena_->New<VariableType>(deduced->name()));
+    types.Set(deduced->name(), &deduced->static_type());
     AllocationId a = interpreter_.AllocateValue(*types.Get(deduced->name()));
     values.Set(deduced->name(), a);
   }
@@ -1109,7 +1081,7 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   return TCResult(types);
 }
 
-auto TypeChecker::TypeOfClassDecl(const ClassDeclaration& class_decl,
+auto TypeChecker::TypeOfClassDecl(ClassDeclaration& class_decl,
                                   TypeEnv /*types*/, Env ct_top)
     -> Nonnull<const Value*> {
   std::vector<NamedValue> fields;
@@ -1133,8 +1105,10 @@ auto TypeChecker::TypeOfClassDecl(const ClassDeclaration& class_decl,
       }
     }
   }
-  return arena_->New<NominalClassType>(class_decl.name(), std::move(fields),
-                                       std::move(methods));
+  SetStaticType(&class_decl,
+                arena_->New<NominalClassType>(
+                    class_decl.name(), std::move(fields), std::move(methods)));
+  return &class_decl.static_type();
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
@@ -1219,7 +1193,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     }
 
     case DeclarationKind::ClassDeclaration: {
-      const auto& class_decl = cast<ClassDeclaration>(*d);
+      auto& class_decl = cast<ClassDeclaration>(*d);
       auto st = TypeOfClassDecl(class_decl, tops->types, tops->values);
       AllocationId a = interpreter_.AllocateValue(st);
       tops->values.Set(class_decl.name(), a);  // Is this obsolete?
@@ -1228,7 +1202,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
     }
 
     case DeclarationKind::ChoiceDeclaration: {
-      const auto& choice = cast<ChoiceDeclaration>(*d);
+      auto& choice = cast<ChoiceDeclaration>(*d);
       std::vector<NamedValue> alts;
       for (Nonnull<const AlternativeSignature*> alternative :
            choice.alternatives()) {
@@ -1237,6 +1211,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
         alts.push_back({.name = alternative->name(), .value = t});
       }
       auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
+      SetStaticType(&choice, ct);
       AllocationId a = interpreter_.AllocateValue(ct);
       tops->values.Set(choice.name(), a);  // Is this obsolete?
       tops->types.Set(choice.name(), ct);
@@ -1249,9 +1224,13 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
       // compile-time symbol table.
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
+      tops->types = TypeCheckPattern(&var.binding(), tops->types, tops->values,
+                                     std::nullopt)
+                        .types;
       Nonnull<const Value*> declared_type =
           interpreter_.InterpExp(tops->values, &type);
       tops->types.Set(*var.binding().name(), declared_type);
+      SetStaticType(&var, declared_type);
       break;
     }
   }
