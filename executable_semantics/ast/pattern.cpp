@@ -89,7 +89,7 @@ static auto RequireFieldAccess(Nonnull<Expression*> alternative)
 AlternativePattern::AlternativePattern(SourceLocation source_loc,
                                        Nonnull<Expression*> alternative,
                                        Nonnull<TuplePattern*> arguments)
-    : AstNode(AstNodeKind::AlternativePattern, source_loc),
+    : Pattern(AstNodeKind::AlternativePattern, source_loc),
       choice_type_(&RequireFieldAccess(alternative).aggregate()),
       alternative_name_(RequireFieldAccess(alternative).field()),
       arguments_(arguments) {}

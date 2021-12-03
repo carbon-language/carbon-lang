@@ -21,7 +21,7 @@ namespace Carbon {
 
 class FunctionDeclaration;
 
-class Statement : public virtual AstNode {
+class Statement : public AstNode {
  public:
   ~Statement() override = 0;
 
@@ -39,13 +39,14 @@ class Statement : public virtual AstNode {
   }
 
  protected:
-  Statement() = default;
+  Statement(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 };
 
 class Block : public Statement {
  public:
   Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
-      : AstNode(AstNodeKind::Block, source_loc),
+      : Statement(AstNodeKind::Block, source_loc),
         statements_(std::move(statements)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -67,7 +68,7 @@ class ExpressionStatement : public Statement {
  public:
   ExpressionStatement(SourceLocation source_loc,
                       Nonnull<Expression*> expression)
-      : AstNode(AstNodeKind::ExpressionStatement, source_loc),
+      : Statement(AstNodeKind::ExpressionStatement, source_loc),
         expression_(expression) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -85,7 +86,7 @@ class Assign : public Statement {
  public:
   Assign(SourceLocation source_loc, Nonnull<Expression*> lhs,
          Nonnull<Expression*> rhs)
-      : AstNode(AstNodeKind::Assign, source_loc), lhs_(lhs), rhs_(rhs) {}
+      : Statement(AstNodeKind::Assign, source_loc), lhs_(lhs), rhs_(rhs) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAssign(node->kind());
@@ -105,7 +106,7 @@ class VariableDefinition : public Statement {
  public:
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
                      Nonnull<Expression*> init)
-      : AstNode(AstNodeKind::VariableDefinition, source_loc),
+      : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init) {}
 
@@ -127,7 +128,7 @@ class If : public Statement {
  public:
   If(SourceLocation source_loc, Nonnull<Expression*> condition,
      Nonnull<Block*> then_block, std::optional<Nonnull<Block*>> else_block)
-      : AstNode(AstNodeKind::If, source_loc),
+      : Statement(AstNodeKind::If, source_loc),
         condition_(condition),
         then_block_(then_block),
         else_block_(else_block) {}
@@ -157,7 +158,7 @@ class Return : public Statement {
       : Return(source_loc, arena->New<TupleLiteral>(source_loc), true) {}
   Return(SourceLocation source_loc, Nonnull<Expression*> expression,
          bool is_omitted_expression)
-      : AstNode(AstNodeKind::Return, source_loc),
+      : Statement(AstNodeKind::Return, source_loc),
         expression_(expression),
         is_omitted_expression_(is_omitted_expression) {}
 
@@ -194,7 +195,7 @@ class While : public Statement {
  public:
   While(SourceLocation source_loc, Nonnull<Expression*> condition,
         Nonnull<Block*> body)
-      : AstNode(AstNodeKind::While, source_loc),
+      : Statement(AstNodeKind::While, source_loc),
         condition_(condition),
         body_(body) {}
 
@@ -215,7 +216,7 @@ class While : public Statement {
 class Break : public Statement {
  public:
   explicit Break(SourceLocation source_loc)
-      : AstNode(AstNodeKind::Break, source_loc) {}
+      : Statement(AstNodeKind::Break, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBreak(node->kind());
@@ -242,7 +243,7 @@ class Break : public Statement {
 class Continue : public Statement {
  public:
   explicit Continue(SourceLocation source_loc)
-      : AstNode(AstNodeKind::Continue, source_loc) {}
+      : Statement(AstNodeKind::Continue, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromContinue(node->kind());
@@ -285,7 +286,7 @@ class Match : public Statement {
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,
         std::vector<Clause> clauses)
-      : AstNode(AstNodeKind::Match, source_loc),
+      : Statement(AstNodeKind::Match, source_loc),
         expression_(expression),
         clauses_(std::move(clauses)) {}
 
@@ -308,11 +309,11 @@ class Match : public Statement {
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-class Continuation : public Statement, public NamedEntity {
+class Continuation : public Statement {
  public:
   Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Block*> body)
-      : AstNode(AstNodeKind::Continuation, source_loc),
+      : Statement(AstNodeKind::Continuation, source_loc),
         continuation_variable_(std::move(continuation_variable)),
         body_(body) {}
 
@@ -353,7 +354,7 @@ class Continuation : public Statement, public NamedEntity {
 class Run : public Statement {
  public:
   Run(SourceLocation source_loc, Nonnull<Expression*> argument)
-      : AstNode(AstNodeKind::Run, source_loc), argument_(argument) {}
+      : Statement(AstNodeKind::Run, source_loc), argument_(argument) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromRun(node->kind());
@@ -372,7 +373,7 @@ class Run : public Statement {
 class Await : public Statement {
  public:
   explicit Await(SourceLocation source_loc)
-      : AstNode(AstNodeKind::Await, source_loc) {}
+      : Statement(AstNodeKind::Await, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAwait(node->kind());

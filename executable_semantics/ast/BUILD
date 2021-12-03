@@ -93,6 +93,7 @@ cc_library(
     deps = [
         ":ast_node",
         ":paren_contents",
+        ":static_scope",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",

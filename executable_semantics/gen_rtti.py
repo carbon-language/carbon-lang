@@ -4,22 +4,27 @@
 
 Takes as input a file describing the class hierarchy which can consist of
 four different kinds of classes: a *root* class is the base of a class
-hierarchy, meaning that it doesn't inherit from any other class. *Abstract* and
-*interface* classes are non-root classes that cannot be instantiated, and
-*concrete* classes are classes that can be instantiated.
+hierarchy, meaning that it doesn't inherit from any other class. *Concrete*
+classes are classes that can be instantiated, and can't be inherited from.
+*Abstract* and *interface* classes inherit from other classes, but cannot be
+instantiated; the difference is that abstract classes can be inherited from,
+whereas interfaces can be implemented.
+FIXME: figure out how (and where) to explain interfaces.
 
 A non-root class C must inherit from exactly one parent, which can be a root or
-abstract class, and can also inherit from any number of interfaces, but each
-interface's parent must be an ancestor of C.
+abstract class. If C is not an interface itself, it can also implement any
+number of interfaces, but each interface's parent must be an ancestor of C.
 
 The input file consists of comment lines starting with `#`, whitespace lines,
 and one `;`-terminated line for each class. The core of a line is `class`
 followed by the class name. `class` can be prefixed with `root`, `abstract`,
 or `interface` to specify the corresponding kind of class; if there is no
 prefix, the class is concrete. If the class is not a root class, the name is
-followed by `:` and then a comma-separated list of the names of the classes
-it inherits from. The first entry in the list is the parent, and the others
-are interfaces. A class cannot inherit from classes defined later in the file.
+followed by `:` and then the name of the class it inherits from. This can
+optionally be followed by a comma, and then a comma-separated list of the
+interfaces it implements. A class cannot inherit from or implement classes
+defined later in the file.
+
 For example:
 
 root class R;
@@ -34,16 +39,21 @@ For each non-concrete class `Foo`, the generated header file will contain
 `enum class FooKind`, which has an enumerator for each concrete class derived
 from `Foo`, with a name that matches the concrete class name.
 
-For each non-root class `Foo` whose root class is `Root`, the generated header
-file will also contain a function `bool InheritsFromFoo(RootKind kind)`,
-which returns true if the value of `kind` corresponds to a class that is
-derived from `Foo`. This function can be used to implement `Foo::classof`.
+For each abstract or concrete class `Foo` whose root class is `Root`, the
+generated header file will also contain a function
+`bool InheritsFromFoo(RootKind kind)`, which returns true if the value of `kind`
+corresponds to a class that is derived from `Foo`. This function can be used to
+implement `Foo::classof`.
 
 All enumerators that represent the same concrete class will have the same
 numeric value, so you can use `static_cast` to convert between the enum types
 for different classes that have a common root, so long as the enumerator value
 is present in both types. As a result, `InheritsFromFoo` can be used to
 determine whether casting to `FooKind` is safe.
+
+For each interface `Foo`, the generated header file will also contain a
+variable template `ImplementsFoo<T>`, which is true if `T` implements `Foo`
+or inherits from a class that implements `Foo`, and false otherwise.
 """
 
 __copyright__ = """
@@ -69,7 +79,7 @@ class Class:
         starting with the root and ending with the current class's parent.
       interfaces: A list of Class objects representing the interfaces the class
         inherits from.
-      _children: A list of Class objects representing the classes that are
+      children: A list of Class objects representing the classes that are
         derived directly from this one.
 
     Attributes set by Finalize():
@@ -107,14 +117,13 @@ class Class:
         else:
             self.id = None
 
-        if self.kind != Class.Kind.CONCRETE:
-            self._children = []
+        self.children = []
 
         if parent:
-            parent._children.append(self)
+            parent.children.append(self)
 
         for interface in self.interfaces:
-            interface._children.append(self)
+            interface.children.append(self)
 
     def Parent(self):
         """Returns this Class's parent."""
@@ -177,7 +186,7 @@ class Class:
             self.id = len(self.Root().leaves)
             self._RegisterLeaf(self)
         elif self.kind in [Class.Kind.ROOT, Class.Kind.ABSTRACT]:
-            for child in self._children:
+            for child in self.children:
                 child.Finalize()
 
 
@@ -239,6 +248,10 @@ def main():
 
         interfaces = []
         if match_result.group("interfaces"):
+            if kind == Class.Kind.INTERFACE:
+                sys.exit(
+                    f"Interface cannot implement interfaces on line {line_num}"
+                )
             for unstripped_name in match_result.group("interfaces").split(","):
                 interface_name = unstripped_name.strip()
                 interface = classes[interface_name]
@@ -284,7 +297,8 @@ def main():
                 print(f"  {node.Root().leaves[id].name} = {id},")
             print("};\n")
 
-        if node.kind != Class.Kind.ROOT:
+        if node.kind in [Class.Kind.ABSTRACT, Class.Kind.CONCRETE]:
+            print(f"class {node.name};\n")
             print(
                 f"inline bool InheritsFrom{node.name}({node.Root().name}Kind"
                 + " kind) {"
@@ -305,24 +319,25 @@ def main():
                             + f"::{range_end}"
                         )
                     print("      ;")
-            elif node.kind == Class.Kind.INTERFACE:
-                print("  switch(kind) {")
-                is_empty = True
-                for id in sorted(node.leaf_ids):
-                    print(
-                        f"    case {node.Root().name}Kind::"
-                        + f"{node.Root().leaves[id].name}:"
-                    )
-                    is_empty = False
-                if not is_empty:
-                    print("      return true;")
-                print("    default:")
-                print("      return false;\n  }")
             elif node.kind == Class.Kind.CONCRETE:
                 print(
                     f"    return kind == {node.Root().name}Kind::{node.name};"
                 )
             print("}\n")
+
+    for node in classes.values():
+        if node.kind == Class.Kind.INTERFACE:
+            print("template <typename NodeType>")
+            print(f"constexpr bool Implements{node.name} = false;")
+
+            queue = node.children.copy()
+            while queue:
+                descendant = queue.pop(0)
+                queue.extend(descendant.children)
+                print(
+                    "template <> inline constexpr bool "
+                    + f"Implements{node.name}<{descendant.name}> = true;"
+                )
 
     print("}  // namespace Carbon\n")
     print(f"#endif  // {guard_macro}")

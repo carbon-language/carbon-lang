@@ -29,7 +29,7 @@ class Value;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Pattern : public virtual AstNode {
+class Pattern : public AstNode {
  public:
   Pattern(const Pattern&) = delete;
   auto operator=(const Pattern&) -> Pattern& = delete;
@@ -76,7 +76,8 @@ class Pattern : public virtual AstNode {
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern() = default;
+  Pattern(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -87,7 +88,7 @@ class Pattern : public virtual AstNode {
 class AutoPattern : public Pattern {
  public:
   explicit AutoPattern(SourceLocation source_loc)
-      : AstNode(AstNodeKind::AutoPattern, source_loc) {}
+      : Pattern(AstNodeKind::AutoPattern, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAutoPattern(node->kind());
@@ -96,11 +97,11 @@ class AutoPattern : public Pattern {
 
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
-class BindingPattern : public Pattern, public NamedEntity {
+class BindingPattern : public Pattern {
  public:
   BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)
-      : AstNode(AstNodeKind::BindingPattern, source_loc),
+      : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type) {}
 
@@ -124,7 +125,7 @@ class BindingPattern : public Pattern, public NamedEntity {
 class TuplePattern : public Pattern {
  public:
   TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
-      : AstNode(AstNodeKind::TuplePattern, source_loc),
+      : Pattern(AstNodeKind::TuplePattern, source_loc),
         fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -170,7 +171,7 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> choice_type,
                      std::string alternative_name,
                      Nonnull<TuplePattern*> arguments)
-      : AstNode(AstNodeKind::AlternativePattern, source_loc),
+      : Pattern(AstNodeKind::AlternativePattern, source_loc),
         choice_type_(choice_type),
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
@@ -204,7 +205,7 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   explicit ExpressionPattern(Nonnull<Expression*> expression)
-      : AstNode(AstNodeKind::ExpressionPattern, expression->source_loc()),
+      : Pattern(AstNodeKind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
 
   static auto classof(const AstNode* node) -> bool {
