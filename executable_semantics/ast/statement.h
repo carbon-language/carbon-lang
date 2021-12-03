@@ -20,7 +20,6 @@
 namespace Carbon {
 
 class FunctionDeclaration;
-class StaticScope;
 
 class Statement : public virtual AstNode {
  public:
@@ -60,12 +59,8 @@ class Block : public Statement {
     return statements_;
   }
 
-  auto static_scope() const -> const StaticScope& { return static_scope_; }
-  auto static_scope() -> StaticScope& { return static_scope_; }
-
  private:
   std::vector<Nonnull<Statement*>> statements_;
-  StaticScope static_scope_;
 };
 
 class ExpressionStatement : public Statement {
@@ -283,15 +278,9 @@ class Match : public Statement {
     auto statement() const -> const Statement& { return *statement_; }
     auto statement() -> Statement& { return *statement_; }
 
-    // Contains names for the pattern and statement. Note that when the
-    // statement is a block, it gains its own scope.
-    auto static_scope() const -> const StaticScope& { return static_scope_; }
-    auto static_scope() -> StaticScope& { return static_scope_; }
-
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
-    StaticScope static_scope_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,

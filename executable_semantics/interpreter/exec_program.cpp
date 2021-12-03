@@ -30,7 +30,7 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
       arena->New<TupleLiteral>(source_loc));
   // Although name resolution is currently done once, generic programming
   // (particularly templates) may require more passes.
-  ResolveNames(arena, ast);
+  ResolveNames(ast);
   ResolveControlFlow(ast);
   TypeChecker(arena, trace).TypeCheck(ast);
   if (trace) {
