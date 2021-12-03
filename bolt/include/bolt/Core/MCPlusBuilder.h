@@ -1442,12 +1442,6 @@ public:
     return false;
   }
 
-  virtual bool createIndirectCall(MCInst &Inst, const MCSymbol *TargetLocation,
-                                  MCContext *Ctx, bool IsTailCall) {
-    llvm_unreachable("not implemented");
-    return false;
-  }
-
   /// Creates a new tail call instruction in Inst and sets its operand to
   /// Target.
   ///

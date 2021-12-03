@@ -3279,21 +3279,6 @@ public:
     return true;
   }
 
-  bool createIndirectCall(MCInst &Inst, const MCSymbol *TargetLocation,
-                          MCContext *Ctx, bool IsTailCall) override {
-    Inst.setOpcode(IsTailCall ? X86::JMP32m : X86::CALL64m);
-    Inst.addOperand(MCOperand::createReg(X86::RIP));        // BaseReg
-    Inst.addOperand(MCOperand::createImm(1));               // ScaleAmt
-    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // IndexReg
-    Inst.addOperand(MCOperand::createExpr(                  // Displacement
-        MCSymbolRefExpr::create(TargetLocation, MCSymbolRefExpr::VK_None,
-                                *Ctx)));
-    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
-    if (IsTailCall)
-      setTailCall(Inst);
-    return true;
-  }
-
   bool createTailCall(MCInst &Inst, const MCSymbol *Target,
                       MCContext *Ctx) override {
     return createDirectCall(Inst, Target, Ctx, /*IsTailCall*/ true);
