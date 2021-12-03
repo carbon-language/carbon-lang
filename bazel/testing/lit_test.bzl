@@ -4,7 +4,7 @@
 
 """Rule for a lit test."""
 
-def lit_test(name, test_dir, tools = None, **kwargs):
+def lit_test(name, test_dir, data = None, **kwargs):
     """Runs `lit` on test_dir.
 
     `lit` reference:
@@ -17,22 +17,20 @@ def lit_test(name, test_dir, tools = None, **kwargs):
     Args:
       name: Name of the build rule.
       test_dir: The directory with the lit tests.
-      tools: An optional list of tools to provide to the tests. These will be
+      data: An optional list of tools to provide to the tests. These will be
         aliased for execution.
       **kwargs: Any additional parameters for the generated py_test.
     """
-    if not tools:
-        tools = []
-    tools += [
+    if not data:
+        data = []
+    data += [
         "@llvm-project//llvm:lit",
-        "@llvm-project//llvm:not",
-        "@llvm-project//llvm:FileCheck",
     ]
     native.py_test(
         name = name,
         srcs = ["//bazel/testing:lit_test.py"],
         main = "//bazel/testing:lit_test.py",
-        data = tools + native.glob([test_dir + "/**"]),
-        args = ["--tool=%s" % t for t in tools] + [test_dir, "--"],
+        data = data + native.glob([test_dir + "/**"]),
+        args = [test_dir, "--"],
         **kwargs
     )

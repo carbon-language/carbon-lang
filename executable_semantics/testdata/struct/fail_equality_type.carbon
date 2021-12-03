@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 2>&1 | FileCheck %s
-// AUTOUPDATE: executable_semantics %s
+// RUN: %{not} %{executable_semantics} %s 2>&1 2>&1 | FileCheck %s
+// AUTOUPDATE: %{executable_semantics} %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/struct/fail_equality_type.carbon:16: type error in ==
 // CHECK: expected: {.x: i32, .y: i32}
 // CHECK: actual: {.x: i32}
