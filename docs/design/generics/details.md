@@ -3288,10 +3288,12 @@ requests those capabilities?
 
 ## Generic `let`
 
-FIXME
+A `let` statement inside a function body may be used to get the change in type
+behavior of calling a generic function without having to introduce a function
+call.
 
 ```
-{
+fn F(...) {
   ...
   let T:! C = U;
   X;
@@ -3303,7 +3305,7 @@ FIXME
 gets rewritten to:
 
 ```
-{
+fn F(...) {
   ...
   fn Closure(T:! C where .Self == U) {
     X;
@@ -3314,7 +3316,13 @@ gets rewritten to:
 }
 ```
 
-The `where .Self == U` modifier allows casts between `T` and `U`.
+The `where .Self == U` modifier allows values to implicitly convert between type
+`T`, the erased type, and type `U`, the concrete type. Note that implicit
+conversion is
+[only performed across a single `where` equality](#manual-type-equality). This
+can be used to switch to the API of `C` when it is external, as an alternative
+to [using an adapter](#use-case-accessing-external-names), or to simplify
+inlining of a generic function while preserving semantics.
 
 ## Future work
 
