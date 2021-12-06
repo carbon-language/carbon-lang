@@ -58,9 +58,6 @@ struct ExpectedStructLiteralField
     : SimpleDiagnostic<ExpectedStructLiteralField> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
 
-  bool can_be_type;
-  bool can_be_value;
-
   auto Format() -> std::string {
     std::string result = "Expected ";
     if (can_be_type) {
@@ -75,6 +72,9 @@ struct ExpectedStructLiteralField
     result += ".";
     return result;
   }
+
+  bool can_be_type;
+  bool can_be_value;
 };
 
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
@@ -97,11 +97,11 @@ struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `(` after `{0}`.";
 
-  TokenKind introducer;
-
   auto Format() -> std::string {
     return llvm::formatv(Message, introducer.GetFixedSpelling()).str();
   }
+
+  TokenKind introducer;
 };
 
 struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
@@ -124,11 +124,11 @@ struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `;` after `{0}`.";
 
-  TokenKind preceding;
-
   auto Format() -> std::string {
     return llvm::formatv(Message, preceding.GetFixedSpelling()).str();
   }
+
+  TokenKind preceding;
 };
 
 struct ExpectedIdentifierAfterDot
@@ -143,11 +143,11 @@ struct UnexpectedTokenAfterListElement
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `,` or `{0}`.";
 
-  TokenKind close;
-
   auto Format() -> std::string {
     return llvm::formatv(Message, close.GetFixedSpelling()).str();
   }
+
+  TokenKind close;
 };
 
 struct BinaryOperatorRequiresWhitespace
@@ -156,20 +156,18 @@ struct BinaryOperatorRequiresWhitespace
   static constexpr const char* Message =
       "Whitespace missing {0} binary operator.";
 
+  auto Format() -> std::string {
+    const char* position = "around";
+    if (has_leading_space) {
+      position = "after";
+    } else if (has_trailing_space) {
+      position = "before";
+    }
+    return llvm::formatv(Message, position);
+  }
+
   bool has_leading_space;
   bool has_trailing_space;
-
-  auto Format() -> std::string {
-    const char* where = "around";
-    // clang-format off
-    if (has_leading_space) {
-      where = "after";
-    } else if (has_trailing_space) {
-      where = "before";
-    }
-    // clang-format on
-    return llvm::formatv(Message, where);
-  }
 };
 
 struct UnaryOperatorHasWhitespace
@@ -178,11 +176,11 @@ struct UnaryOperatorHasWhitespace
   static constexpr const char* Message =
       "Whitespace is not allowed {0} this unary operator.";
 
-  bool prefix;
-
   auto Format() -> std::string {
     return llvm::formatv(Message, prefix ? "after" : "before");
   }
+
+  bool prefix;
 };
 
 struct UnaryOperatorRequiresWhitespace
@@ -191,11 +189,11 @@ struct UnaryOperatorRequiresWhitespace
   static constexpr const char* Message =
       "Whitespace is required {0} this unary operator.";
 
-  bool prefix;
-
   auto Format() -> std::string {
     return llvm::formatv(Message, prefix ? "before" : "after");
   }
+
+  bool prefix;
 };
 
 struct OperatorRequiresParentheses
