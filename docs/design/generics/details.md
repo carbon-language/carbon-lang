@@ -511,11 +511,16 @@ implementing `Vector`. This type checking is equivalent to type checking the
 function with `T` set to an [archetype](terminology.md#archetype) of `Vector`.
 An archetype is a placeholder type considered to satisfy its constraint, which
 is `Vector` in this case, and no more. It acts as the most general type
-satisfying the interface. For name lookup purposes, an archetype is considered
-to have [implemented its constraint internally](terminology.md#internal-impl).
-The effect of this is that an archetype of `Vector` acts like a
-[supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T` implementing
-`Vector`.
+satisfying the interface. The effect of this is that an archetype of `Vector`
+acts like a [supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T`
+implementing `Vector`.
+
+For name lookup purposes, an archetype is considered to have
+[implemented its constraint internally](terminology.md#internal-impl). The only
+oddity is that the archetype may have different names for members than specific
+types `T`. This is already can be true of supertypes in C++, for example members
+in a derived class can hide members in the base class with the same name, though
+it is not that common for it to come up in practice.
 
 The behavior of calling `AddAndScaleGeneric` with a value of a specific type
 like `Point` is to set `T` to `Point` after all the names have been qualified.
