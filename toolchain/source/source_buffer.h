@@ -71,7 +71,7 @@ class SourceBuffer {
   [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
 
  private:
-  explicit SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
+  SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
       : filename_(fake_filename.str()),
         is_string_rep_(true),
         string_storage_(std::move(buffer_text)) {
