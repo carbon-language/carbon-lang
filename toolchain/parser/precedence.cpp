@@ -317,7 +317,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
     -> OperatorPriority {
   static constexpr OperatorPriorityTable Lookup;
-  return Lookup.table[left.level][right.level];
+  return Lookup.table[left.level_][right.level_];
 }
 
 }  // namespace Carbon

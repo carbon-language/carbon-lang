@@ -35,9 +35,8 @@ using ::testing::NotNull;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
-struct LexerTest : ::testing::Test {
-  llvm::SmallVector<SourceBuffer, 16> source_storage;
-
+class LexerTest : public ::testing::Test {
+ protected:
   auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
     source_storage.push_back(SourceBuffer::CreateFromText(text.str()));
     return source_storage.back();
@@ -48,6 +47,8 @@ struct LexerTest : ::testing::Test {
       -> TokenizedBuffer {
     return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
+
+  llvm::SmallVector<SourceBuffer, 16> source_storage;
 };
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {

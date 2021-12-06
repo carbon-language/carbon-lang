@@ -207,15 +207,15 @@ struct OperatorRequiresParentheses
 
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)
-    : tree(tree_arg),
-      tokens(tokens_arg),
-      emitter(emitter),
-      position(tokens.Tokens().begin()),
-      end(tokens.Tokens().end()) {
-  assert(std::find_if(position, end,
+    : tree_(tree_arg),
+      tokens_(tokens_arg),
+      emitter_(emitter),
+      position_(tokens_.Tokens().begin()),
+      end_(tokens_.Tokens().end()) {
+  assert(std::find_if(position_, end_,
                       [&](TokenizedBuffer::Token t) {
-                        return tokens.GetKind(t) == TokenKind::EndOfFile();
-                      }) != end &&
+                        return tokens_.GetKind(t) == TokenKind::EndOfFile();
+                      }) != end_ &&
          "No EndOfFileToken in token buffer.");
 }
 
@@ -226,18 +226,18 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   // We expect to have a 1:1 correspondence between tokens and tree nodes, so
   // reserve the space we expect to need here to avoid allocation and copying
   // overhead.
-  tree.node_impls.reserve(tokens.Size());
+  tree.node_impls_.reserve(tokens.Size());
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
     if (!parser.ParseDeclaration()) {
       // We don't have an enclosing parse tree node to mark as erroneous, so
       // just mark the tree as a whole.
-      tree.has_errors = true;
+      tree.has_errors_ = true;
     }
   }
 
-  parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position);
+  parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position_);
 
   assert(tree.Verify() && "Parse tree built but does not verify!");
   return tree;
@@ -246,9 +246,10 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
   assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
   assert(NextTokenIs(kind) && "The current token is the wrong kind!");
-  TokenizedBuffer::Token t = *position;
-  ++position;
-  assert(position != end && "Reached end of tokens without finding EOF token.");
+  TokenizedBuffer::Token t = *position_;
+  ++position_;
+  assert(position_ != end_ &&
+         "Reached end of tokens without finding EOF token.");
   return t;
 }
 
@@ -262,8 +263,8 @@ auto ParseTree::Parser::ConsumeIf(TokenKind kind)
 
 auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
                                     TokenizedBuffer::Token token) -> Node {
-  Node n(tree.node_impls.size());
-  tree.node_impls.push_back(NodeImpl(kind, token, /*subtree_size_arg=*/1));
+  Node n(tree_.node_impls_.size());
+  tree_.node_impls_.push_back(NodeImpl(kind, token, /*subtree_size_arg=*/1));
   return n;
 }
 
@@ -279,8 +280,8 @@ auto ParseTree::Parser::ConsumeAndAddLeafNodeIf(TokenKind t_kind,
 }
 
 auto ParseTree::Parser::MarkNodeError(Node n) -> void {
-  tree.node_impls[n.index].has_error = true;
-  tree.has_errors = true;
+  tree_.node_impls_[n.index_].has_error = true;
+  tree_.has_errors_ = true;
 }
 
 // A marker for the start of a node's subtree.
@@ -292,18 +293,18 @@ struct ParseTree::Parser::SubtreeStart {
 };
 
 auto ParseTree::Parser::GetSubtreeStartPosition() -> SubtreeStart {
-  return {static_cast<int>(tree.node_impls.size())};
+  return {static_cast<int>(tree_.node_impls_.size())};
 }
 
 auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
                                 SubtreeStart start, bool has_error) -> Node {
   // The size of the subtree is the change in size from when we started this
   // subtree to now, but including the node we're about to add.
-  int tree_stop_size = static_cast<int>(tree.node_impls.size()) + 1;
+  int tree_stop_size = static_cast<int>(tree_.node_impls_.size()) + 1;
   int subtree_size = tree_stop_size - start.tree_size;
 
-  Node n(tree.node_impls.size());
-  tree.node_impls.push_back(NodeImpl(n_kind, t, subtree_size));
+  Node n(tree_.node_impls_.size());
+  tree_.node_impls_.push_back(NodeImpl(n_kind, t, subtree_size));
   if (has_error) {
     MarkNodeError(n);
   }
@@ -312,30 +313,30 @@ auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
 }
 
 auto ParseTree::Parser::SkipMatchingGroup() -> bool {
-  TokenizedBuffer::Token t = *position;
-  TokenKind t_kind = tokens.GetKind(t);
+  TokenizedBuffer::Token t = *position_;
+  TokenKind t_kind = tokens_.GetKind(t);
   if (!t_kind.IsOpeningSymbol()) {
     return false;
   }
 
-  SkipTo(tokens.GetMatchedClosingToken(t));
+  SkipTo(tokens_.GetMatchedClosingToken(t));
   Consume(t_kind.GetClosingSymbol());
   return true;
 }
 
 auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
-  assert(t >= *position && "Tried to skip backwards.");
-  position = TokenizedBuffer::TokenIterator(t);
-  assert(position != end && "Skipped past EOF.");
+  assert(t >= *position_ && "Tried to skip backwards.");
+  position_ = TokenizedBuffer::TokenIterator(t);
+  assert(position_ != end_ && "Skipped past EOF.");
 }
 
 auto ParseTree::Parser::FindNextOf(
     std::initializer_list<TokenKind> desired_kinds)
     -> llvm::Optional<TokenizedBuffer::Token> {
-  auto new_position = position;
+  auto new_position = position_;
   while (true) {
     TokenizedBuffer::Token token = *new_position;
-    TokenKind kind = tokens.GetKind(token);
+    TokenKind kind = tokens_.GetKind(token);
     if (kind.IsOneOf(desired_kinds)) {
       return token;
     }
@@ -346,7 +347,7 @@ auto ParseTree::Parser::FindNextOf(
       return llvm::None;
     } else if (kind.IsOpeningSymbol()) {
       new_position =
-          TokenizedBuffer::TokenIterator(tokens.GetMatchedClosingToken(token));
+          TokenizedBuffer::TokenIterator(tokens_.GetMatchedClosingToken(token));
     } else {
       ++new_position;
     }
@@ -360,19 +361,19 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
     return llvm::None;
   }
 
-  TokenizedBuffer::Line root_line = tokens.GetLine(skip_root);
-  int root_line_indent = tokens.GetIndentColumnNumber(root_line);
+  TokenizedBuffer::Line root_line = tokens_.GetLine(skip_root);
+  int root_line_indent = tokens_.GetIndentColumnNumber(root_line);
 
   // We will keep scanning through tokens on the same line as the root or
   // lines with greater indentation than root's line.
   auto is_same_line_or_indent_greater_than_root =
       [&](TokenizedBuffer::Token t) {
-        TokenizedBuffer::Line l = tokens.GetLine(t);
+        TokenizedBuffer::Line l = tokens_.GetLine(t);
         if (l == root_line) {
           return true;
         }
 
-        return tokens.GetIndentColumnNumber(l) > root_line_indent;
+        return tokens_.GetIndentColumnNumber(l) > root_line_indent;
       };
 
   do {
@@ -388,7 +389,7 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
       return on_semi(*semi);
     }
 
-    // Skip over any matching group of tokens.
+    // Skip over any matching group of tokens_.
     if (SkipMatchingGroup()) {
       continue;
     }
@@ -396,7 +397,7 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
     // Otherwise just step forward one token.
     Consume(NextTokenKind());
   } while (!AtEndOfFile() &&
-           is_same_line_or_indent_greater_than_root(*position));
+           is_same_line_or_indent_greater_than_root(*position_));
 
   return llvm::None;
 }
@@ -409,8 +410,9 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
     return close_paren;
   }
 
-  emitter.EmitError<ExpectedCloseParen>(*position, {.open_paren = open_paren});
-  SkipTo(tokens.GetMatchedClosingToken(open_paren));
+  emitter_.EmitError<ExpectedCloseParen>(*position_,
+                                         {.open_paren = open_paren});
+  SkipTo(tokens_.GetMatchedClosingToken(open_paren));
   AddLeafNode(kind, Consume(TokenKind::CloseParen()));
   return llvm::None;
 }
@@ -441,8 +443,8 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
       if (!NextTokenIsOneOf({close, TokenKind::Comma()})) {
         if (!element_error) {
-          emitter.EmitError<UnexpectedTokenAfterListElement>(*position,
-                                                             {.close = close});
+          emitter_.EmitError<UnexpectedTokenAfterListElement>(*position_,
+                                                              {.close = close});
         }
         has_errors = true;
 
@@ -471,7 +473,7 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   if (NextTokenIs(TokenKind::Identifier()) &&
-      tokens.GetKind(*(position + 1)) == TokenKind::Colon()) {
+      tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
     // identifier `:` type
     auto start = GetSubtreeStartPosition();
     AddLeafNode(ParseNodeKind::DeclaredName(),
@@ -484,11 +486,11 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
 
   switch (kind) {
     case PatternKind::Parameter:
-      emitter.EmitError<ExpectedParameterName>(*position);
+      emitter_.EmitError<ExpectedParameterName>(*position_);
       break;
 
     case PatternKind::Variable:
-      emitter.EmitError<ExpectedVariableName>(*position);
+      emitter_.EmitError<ExpectedVariableName>(*position_);
       break;
   }
 
@@ -530,7 +532,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
     // Recover by parsing a single statement.
-    emitter.EmitError<ExpectedCodeBlock>(*position);
+    emitter_.EmitError<ExpectedCodeBlock>(*position_);
     return ParseStatement();
   }
   TokenizedBuffer::Token open_curly = *maybe_open_curly;
@@ -546,7 +548,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
       // to the actual close curly brace from here.
       // FIXME: It would be better to skip to the next semicolon, or the next
       // token at the start of a line with the same indent as this one.
-      SkipTo(tokens.GetMatchedClosingToken(open_curly));
+      SkipTo(tokens_.GetMatchedClosingToken(open_curly));
       has_errors = true;
       break;
     }
@@ -576,7 +578,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                         ParseNodeKind::DeclaredName());
   if (!name_n) {
-    emitter.EmitError<ExpectedFunctionName>(*position);
+    emitter_.EmitError<ExpectedFunctionName>(*position_);
     // FIXME: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
@@ -584,14 +586,14 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     return add_error_function_node();
   }
 
-  TokenizedBuffer::Token open_paren = *position;
-  if (tokens.GetKind(open_paren) != TokenKind::OpenParen()) {
-    emitter.EmitError<ExpectedFunctionParams>(open_paren);
+  TokenizedBuffer::Token open_paren = *position_;
+  if (tokens_.GetKind(open_paren) != TokenKind::OpenParen()) {
+    emitter_.EmitError<ExpectedFunctionParams>(open_paren);
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     return add_error_function_node();
   }
   TokenizedBuffer::Token close_paren =
-      tokens.GetMatchedClosingToken(open_paren);
+      tokens_.GetMatchedClosingToken(open_paren);
 
   if (!ParseFunctionSignature()) {
     // Don't try to parse more of the function declaration, but consume a
@@ -607,8 +609,8 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     }
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd())) {
-    emitter.EmitError<ExpectedFunctionBodyOrSemi>(*position);
-    if (tokens.GetLine(*position) == tokens.GetLine(close_paren)) {
+    emitter_.EmitError<ExpectedFunctionBodyOrSemi>(*position_);
+    if (tokens_.GetLine(*position_) == tokens_.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
       SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     }
@@ -643,7 +645,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   auto semi = ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd());
   if (!semi) {
-    emitter.EmitError<ExpectedSemiAfterExpression>(*position);
+    emitter_.EmitError<ExpectedSemiAfterExpression>(*position_);
     SkipPastLikelyEnd(var_token, [&](TokenizedBuffer::Token semi) {
       return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
     });
@@ -674,12 +676,12 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   }
 
   // We didn't recognize an introducer for a valid declaration.
-  emitter.EmitError<UnrecognizedDeclaration>(*position);
+  emitter_.EmitError<UnrecognizedDeclaration>(*position_);
 
   // Skip forward past any end of a declaration we simply didn't understand so
   // that we can find the start of the next declaration or the end of a scope.
   if (auto found_semi_n =
-          SkipPastLikelyEnd(*position, [&](TokenizedBuffer::Token semi) {
+          SkipPastLikelyEnd(*position_, [&](TokenizedBuffer::Token semi) {
             return AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi);
           })) {
     MarkNodeError(*found_semi_n);
@@ -733,8 +735,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         auto start_elem = GetSubtreeStartPosition();
 
         auto diagnose_invalid_syntax = [&] {
-          emitter.EmitError<ExpectedStructLiteralField>(
-              *position,
+          emitter_.EmitError<ExpectedStructLiteralField>(
+              *position_,
               {.can_be_type = kind != Value, .can_be_value = kind != Type});
           return llvm::None;
         };
@@ -749,7 +751,7 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
           auto recovery_pos = FindNextOf(
               {TokenKind::Equal(), TokenKind::Colon(), TokenKind::Comma()});
           if (!recovery_pos ||
-              tokens.GetKind(*recovery_pos) == TokenKind::Comma()) {
+              tokens_.GetKind(*recovery_pos) == TokenKind::Comma()) {
             return llvm::None;
           }
           SkipTo(*recovery_pos);
@@ -809,7 +811,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
       return ParseBraceExpression();
 
     default:
-      emitter.EmitError<ExpectedExpression>(*position);
+      emitter_.EmitError<ExpectedExpression>(*position_);
       return llvm::None;
   }
 
@@ -826,7 +828,7 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
   if (name) {
     AddLeafNode(ParseNodeKind::DesignatedName(), *name);
   } else {
-    emitter.EmitError<ExpectedIdentifierAfterDot>(*position);
+    emitter_.EmitError<ExpectedIdentifierAfterDot>(*position_);
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
     if (NextTokenKind().IsKeyword()) {
@@ -909,8 +911,8 @@ static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
 auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
   assert(!AtEndOfFile() && "Expected an operator token.");
 
-  bool leading_space = tokens.HasLeadingWhitespace(*position);
-  bool trailing_space = tokens.HasTrailingWhitespace(*position);
+  bool leading_space = tokens_.HasLeadingWhitespace(*position_);
+  bool trailing_space = tokens_.HasTrailingWhitespace(*position_);
 
   // If there's whitespace on both sides, it's an infix operator.
   if (leading_space && trailing_space) {
@@ -925,9 +927,9 @@ auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
   // Otherwise, for an infix operator, the preceding token must be any close
   // bracket, identifier, or literal and the next token must be an open paren,
   // identifier, or literal.
-  if (position == tokens.Tokens().begin() ||
-      !IsAssumedEndOfOperand(tokens.GetKind(*(position - 1))) ||
-      !IsAssumedStartOfOperand(tokens.GetKind(*(position + 1)))) {
+  if (position_ == tokens_.Tokens().begin() ||
+      !IsAssumedEndOfOperand(tokens_.GetKind(*(position_ - 1))) ||
+      !IsAssumedStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
     return false;
   }
 
@@ -940,10 +942,10 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   if (fixity == OperatorFixity::Infix) {
     // Infix operators must satisfy the infix operator rules.
     if (!is_valid_as_infix) {
-      emitter.EmitError<BinaryOperatorRequiresWhitespace>(
-          *position,
-          {.has_leading_space = tokens.HasLeadingWhitespace(*position),
-           .has_trailing_space = tokens.HasTrailingWhitespace(*position)});
+      emitter_.EmitError<BinaryOperatorRequiresWhitespace>(
+          *position_,
+          {.has_leading_space = tokens_.HasLeadingWhitespace(*position_),
+           .has_trailing_space = tokens_.HasTrailingWhitespace(*position_)});
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -951,15 +953,15 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // Whitespace is not permitted between a symbolic pre/postfix operator and
     // its operand.
     if (NextTokenKind().IsSymbol() &&
-        (prefix ? tokens.HasTrailingWhitespace(*position)
-                : tokens.HasLeadingWhitespace(*position))) {
-      emitter.EmitError<UnaryOperatorHasWhitespace>(*position,
-                                                    {.prefix = prefix});
+        (prefix ? tokens_.HasTrailingWhitespace(*position_)
+                : tokens_.HasLeadingWhitespace(*position_))) {
+      emitter_.EmitError<UnaryOperatorHasWhitespace>(*position_,
+                                                     {.prefix = prefix});
     }
     // Pre/postfix operators must not satisfy the infix operator rules.
     if (is_valid_as_infix) {
-      emitter.EmitError<UnaryOperatorRequiresWhitespace>(*position,
-                                                         {.prefix = prefix});
+      emitter_.EmitError<UnaryOperatorRequiresWhitespace>(*position_,
+                                                          {.prefix = prefix});
     }
   }
 }
@@ -972,7 +974,7 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
   // An operator that follows the infix operator rules is parsed as
   // infix, unless the next token means that it can't possibly be.
   if (IsLexicallyValidInfixOperator() &&
-      IsPossibleStartOfOperand(tokens.GetKind(*(position + 1)))) {
+      IsPossibleStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
     return true;
   }
 
@@ -980,8 +982,8 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
   // not valid at all. If the next token looks like the start of an operand,
   // then parse as infix, otherwise as postfix. Either way we'll produce a
   // diagnostic later on.
-  if (tokens.HasLeadingWhitespace(*position) &&
-      IsAssumedStartOfOperand(tokens.GetKind(*(position + 1)))) {
+  if (tokens_.HasLeadingWhitespace(*position_) &&
+      IsAssumedStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
     return true;
   }
 
@@ -1005,7 +1007,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
         OperatorPriority::RightFirst) {
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
-      emitter.EmitError<OperatorRequiresParentheses>(*position);
+      emitter_.EmitError<OperatorRequiresParentheses>(*position_);
     } else {
       // Check that this operator follows the proper whitespace rules.
       DiagnoseOperatorFixity(OperatorFixity::Prefix);
@@ -1038,7 +1040,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // Either the LHS operator and this operator are ambiguous, or the
       // LHS operaor is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
-      emitter.EmitError<OperatorRequiresParentheses>(*position);
+      emitter_.EmitError<OperatorRequiresParentheses>(*position_);
       lhs = llvm::None;
     } else {
       DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
@@ -1070,7 +1072,7 @@ auto ParseTree::Parser::ParseType() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
-  TokenizedBuffer::Token start_token = *position;
+  TokenizedBuffer::Token start_token = *position_;
   auto start = GetSubtreeStartPosition();
 
   bool has_errors = !ParseExpression();
@@ -1081,7 +1083,7 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   }
 
   if (!has_errors) {
-    emitter.EmitError<ExpectedSemiAfterExpression>(*position);
+    emitter_.EmitError<ExpectedSemiAfterExpression>(*position_);
   }
 
   if (auto recovery_node =
@@ -1102,8 +1104,8 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
   auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
   if (!open_paren) {
-    emitter.EmitError<ExpectedParenAfter>(*position,
-                                          {.introducer = introducer});
+    emitter_.EmitError<ExpectedParenAfter>(*position_,
+                                           {.introducer = introducer});
   }
 
   auto expr = ParseExpression();
@@ -1166,8 +1168,8 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   auto semi =
       ConsumeAndAddLeafNodeIf(TokenKind::Semi(), ParseNodeKind::StatementEnd());
   if (!semi) {
-    emitter.EmitError<ExpectedSemiAfter>(*position,
-                                         {.preceding = keyword_kind});
+    emitter_.EmitError<ExpectedSemiAfter>(*position_,
+                                          {.preceding = keyword_kind});
     // FIXME: Try to skip to a semicolon to recover.
   }
   return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);

@@ -53,10 +53,10 @@ class ParseTree {
       -> ParseTree;
 
   // Tests whether there are any errors in the parse tree.
-  [[nodiscard]] auto HasErrors() const -> bool { return has_errors; }
+  [[nodiscard]] auto HasErrors() const -> bool { return has_errors_; }
 
   // Returns the number of nodes in this parse tree.
-  [[nodiscard]] auto Size() const -> int { return node_impls.size(); }
+  [[nodiscard]] auto Size() const -> int { return node_impls_.size(); }
 
   // Returns an iterable range over the parse tree nodes in depth-first
   // postorder.
@@ -192,12 +192,12 @@ class ParseTree {
 
   // Wires up the reference to the tokenized buffer. The global `parse` routine
   // should be used to actually parse the tokens into a tree.
-  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens(&tokens_arg) {}
+  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {}
 
   // Depth-first postorder sequence of node implementation data.
-  llvm::SmallVector<NodeImpl, 0> node_impls;
+  llvm::SmallVector<NodeImpl, 0> node_impls_;
 
-  TokenizedBuffer* tokens;
+  TokenizedBuffer* tokens_;
 
   // Indicates if any errors were encountered while parsing.
   //
@@ -207,7 +207,7 @@ class ParseTree {
   // some errors were encountered somewhere. A key implication is that when this
   // is true we do *not* have the expected 1:1 mapping between tokens and parsed
   // nodes as some tokens may have been skipped.
-  bool has_errors = false;
+  bool has_errors_ = false;
 };
 
 // A lightweight handle representing a node in the tree.
@@ -227,29 +227,29 @@ class ParseTree::Node {
   Node() = default;
 
   friend auto operator==(Node lhs, Node rhs) -> bool {
-    return lhs.index == rhs.index;
+    return lhs.index_ == rhs.index_;
   }
   friend auto operator!=(Node lhs, Node rhs) -> bool {
-    return lhs.index != rhs.index;
+    return lhs.index_ != rhs.index_;
   }
   friend auto operator<(Node lhs, Node rhs) -> bool {
-    return lhs.index < rhs.index;
+    return lhs.index_ < rhs.index_;
   }
   friend auto operator<=(Node lhs, Node rhs) -> bool {
-    return lhs.index <= rhs.index;
+    return lhs.index_ <= rhs.index_;
   }
   friend auto operator>(Node lhs, Node rhs) -> bool {
-    return lhs.index > rhs.index;
+    return lhs.index_ > rhs.index_;
   }
   friend auto operator>=(Node lhs, Node rhs) -> bool {
-    return lhs.index >= rhs.index;
+    return lhs.index_ >= rhs.index_;
   }
 
   // Returns an opaque integer identifier of the node in the tree. Clients
   // should not expect any particular semantics from this value.
   //
   // FIXME: Maybe we can switch to stream operator overloads?
-  [[nodiscard]] auto GetIndex() const -> int { return index; }
+  [[nodiscard]] auto GetIndex() const -> int { return index_; }
 
   // Prints the node index.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -262,10 +262,10 @@ class ParseTree::Node {
 
   // Constructs a node with a specific index into the parse tree's postorder
   // sequence of node implementations.
-  explicit Node(int index_arg) : index(index_arg) {}
+  explicit Node(int index_arg) : index_(index_arg) {}
 
   // The index of this node's implementation in the postorder sequence.
-  int32_t index;
+  int32_t index_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
@@ -282,24 +282,24 @@ class ParseTree::PostorderIterator
   PostorderIterator() = default;
 
   auto operator==(const PostorderIterator& rhs) const -> bool {
-    return node == rhs.node;
+    return node_ == rhs.node_;
   }
   auto operator<(const PostorderIterator& rhs) const -> bool {
-    return node < rhs.node;
+    return node_ < rhs.node_;
   }
 
-  auto operator*() const -> Node { return node; }
+  auto operator*() const -> Node { return node_; }
 
   auto operator-(const PostorderIterator& rhs) const -> int {
-    return node.index - rhs.node.index;
+    return node_.index_ - rhs.node_.index_;
   }
 
   auto operator+=(int offset) -> PostorderIterator& {
-    node.index += offset;
+    node_.index_ += offset;
     return *this;
   }
   auto operator-=(int offset) -> PostorderIterator& {
-    node.index -= offset;
+    node_.index_ -= offset;
     return *this;
   }
 
@@ -309,9 +309,9 @@ class ParseTree::PostorderIterator
  private:
   friend class ParseTree;
 
-  explicit PostorderIterator(Node n) : node(n) {}
+  explicit PostorderIterator(Node n) : node_(n) {}
 
-  Node node;
+  Node node_;
 };
 
 // A forward iterator across the silbings at a particular level in the parse
@@ -332,19 +332,19 @@ class ParseTree::SiblingIterator
   SiblingIterator() = default;
 
   auto operator==(const SiblingIterator& rhs) const -> bool {
-    return node == rhs.node;
+    return node_ == rhs.node_;
   }
   auto operator<(const SiblingIterator& rhs) const -> bool {
     // Note that child iterators walk in reverse compared to the postorder
     // index.
-    return node > rhs.node;
+    return node_ > rhs.node_;
   }
 
-  auto operator*() const -> Node { return node; }
+  auto operator*() const -> Node { return node_; }
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
-    node.index -= std::abs(tree->node_impls[node.index].subtree_size);
+    node_.index_ -= std::abs(tree_->node_impls_[node_.index_].subtree_size);
     return *this;
   }
 
@@ -355,11 +355,11 @@ class ParseTree::SiblingIterator
   friend class ParseTree;
 
   explicit SiblingIterator(const ParseTree& tree_arg, Node n)
-      : tree(&tree_arg), node(n) {}
+      : tree_(&tree_arg), node_(n) {}
 
-  const ParseTree* tree;
+  const ParseTree* tree_;
 
-  Node node;
+  Node node_;
 };
 
 }  // namespace Carbon

@@ -37,7 +37,7 @@ auto GetSubcommand(llvm::StringRef name) -> Subcommand {
 
 auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   if (args.empty()) {
-    error_stream << "ERROR: No subcommand specified.\n";
+    error_stream_ << "ERROR: No subcommand specified.\n";
     return false;
   }
 
@@ -46,8 +46,8 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
       std::next(args.begin()), args.end());
   switch (GetSubcommand(subcommand_text)) {
     case Subcommand::Unknown:
-      error_stream << "ERROR: Unknown subcommand '" << subcommand_text
-                   << "'.\n";
+      error_stream_ << "ERROR: Unknown subcommand '" << subcommand_text
+                    << "'.\n";
       return false;
 
 #define CARBON_SUBCOMMAND(Name, ...) \
@@ -66,7 +66,7 @@ auto Driver::RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     return false;
   }
 
-  output_stream << "List of subcommands:\n\n";
+  output_stream_ << "List of subcommands:\n\n";
 
   constexpr llvm::StringLiteral SubcommandsAndHelp[][2] = {
 #define CARBON_SUBCOMMAND(Name, Spelling, HelpText) {Spelling, HelpText},
@@ -84,19 +84,19 @@ auto Driver::RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     // FIXME: We should wrap this to the number of columns left after the
     // subcommand on the terminal, and using a hanging indent.
     llvm::StringRef help_text = subcommand_and_help[1];
-    output_stream << "  "
-                  << llvm::left_justify(subcommand_text, max_subcommand_width)
-                  << " - " << help_text << "\n";
+    output_stream_ << "  "
+                   << llvm::left_justify(subcommand_text, max_subcommand_width)
+                   << " - " << help_text << "\n";
   }
 
-  output_stream << "\n";
+  output_stream_ << "\n";
   return true;
 }
 
 auto Driver::RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args)
     -> bool {
   if (args.empty()) {
-    error_stream << "ERROR: No input file specified.\n";
+    error_stream_ << "ERROR: No input file specified.\n";
     return false;
   }
 
@@ -109,24 +109,24 @@ auto Driver::RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args)
 
   auto source = SourceBuffer::CreateFromFile(input_file_name);
   if (!source) {
-    error_stream << "ERROR: Unable to open input source file: ";
+    error_stream_ << "ERROR: Unable to open input source file: ";
     llvm::handleAllErrors(source.takeError(),
                           [&](const llvm::ErrorInfoBase& ei) {
-                            ei.log(error_stream);
-                            error_stream << "\n";
+                            ei.log(error_stream_);
+                            error_stream_ << "\n";
                           });
     return false;
   }
   auto tokenized_source =
       TokenizedBuffer::Lex(*source, ConsoleDiagnosticConsumer());
-  tokenized_source.Print(output_stream);
+  tokenized_source.Print(output_stream_);
   return !tokenized_source.HasErrors();
 }
 
 auto Driver::RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args)
     -> bool {
   if (args.empty()) {
-    error_stream << "ERROR: No input file specified.\n";
+    error_stream_ << "ERROR: No input file specified.\n";
     return false;
   }
 
@@ -139,11 +139,11 @@ auto Driver::RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args)
 
   auto source = SourceBuffer::CreateFromFile(input_file_name);
   if (!source) {
-    error_stream << "ERROR: Unable to open input source file: ";
+    error_stream_ << "ERROR: Unable to open input source file: ";
     llvm::handleAllErrors(source.takeError(),
                           [&](const llvm::ErrorInfoBase& ei) {
-                            ei.log(error_stream);
-                            error_stream << "\n";
+                            ei.log(error_stream_);
+                            error_stream_ << "\n";
                           });
     return false;
   }
@@ -151,19 +151,19 @@ auto Driver::RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args)
       TokenizedBuffer::Lex(*source, ConsoleDiagnosticConsumer());
   auto parse_tree =
       ParseTree::Parse(tokenized_source, ConsoleDiagnosticConsumer());
-  parse_tree.Print(output_stream);
+  parse_tree.Print(output_stream_);
   return !tokenized_source.HasErrors() && !parse_tree.HasErrors();
 }
 
 auto Driver::ReportExtraArgs(llvm::StringRef subcommand_text,
                              llvm::ArrayRef<llvm::StringRef> args) -> void {
-  error_stream << "ERROR: Unexpected additional arguments to the '"
-               << subcommand_text << "' subcommand:";
+  error_stream_ << "ERROR: Unexpected additional arguments to the '"
+                << subcommand_text << "' subcommand:";
   for (auto arg : args) {
-    error_stream << " " << arg;
+    error_stream_ << " " << arg;
   }
 
-  error_stream << "\n";
+  error_stream_ << "\n";
 }
 
 }  // namespace Carbon
