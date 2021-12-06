@@ -71,6 +71,16 @@ class SourceBuffer {
   [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
 
  private:
+  explicit SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
+      : filename_(fake_filename.str()),
+        is_string_rep_(true),
+        string_storage_(std::move(buffer_text)) {
+    text_ = string_storage_;
+  }
+
+  explicit SourceBuffer(llvm::StringRef filename)
+      : filename_(filename.str()), text_(), is_string_rep_(false) {}
+
   std::string filename_;
 
   llvm::StringRef text_;
@@ -83,16 +93,6 @@ class SourceBuffer {
   union {
     std::string string_storage_;
   };
-
-  explicit SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
-      : filename_(fake_filename.str()),
-        is_string_rep_(true),
-        string_storage_(std::move(buffer_text)) {
-    text_ = string_storage_;
-  }
-
-  explicit SourceBuffer(llvm::StringRef filename)
-      : filename_(filename.str()), text_(), is_string_rep_(false) {}
 };
 
 }  // namespace Carbon
