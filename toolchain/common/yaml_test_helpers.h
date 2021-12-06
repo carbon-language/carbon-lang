@@ -57,9 +57,7 @@
 
 #include "common/ostream.h"
 
-namespace Carbon {
-namespace Testing {
-namespace Yaml {
+namespace Carbon::Testing::Yaml {
 
 struct EmptyComparable {
   friend auto operator==(EmptyComparable, EmptyComparable) -> bool {
@@ -144,8 +142,6 @@ MATCHER_P(Scalar, value,
   return false;
 }
 
-}  // namespace Yaml
-}  // namespace Testing
-}  // namespace Carbon
+}  // namespace Carbon::Testing::Yaml
 
 #endif  // TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
