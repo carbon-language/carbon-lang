@@ -29,13 +29,19 @@ This document explains the rationale for choosing to make
 The main thing to understand is that coherence is a desirable property, but to
 get that property we need an orphan rule, and that rule has a cost. It in
 particular limits how much control users of a type have over how that type
-implements interfaces. There are two main use cases to consider:
+implements interfaces. There are a few main problematic use cases to consider:
 
 -   Selecting between multiple implementations of an interface for a type. For
     example selecting the implementation of the `Comparable` interface for a
     `Song` type to support "by title", "by artist", and "by album" orderings.
 -   Implementing an interface for a type when there is no relationship between
     the libraries defining the interface and the type.
+-   When the implementation of an interface for a type uses an associated type
+    that can't be referenced from the file or files where the implementation is
+    allowed to be defined.
+
+These last two cases are highlighted as concerns in Rust in
+[Rust RFC #1856: orphan rules are stricter than we would like](https://github.com/rust-lang/rfcs/issues/1856).
 
 Since Carbon is bundling interface implementations into types, for the
 convenience and expressiveness that provides, we satisfy those use cases by
@@ -183,8 +189,10 @@ implementation of the `Hashable` interface for `Song` would be fixed for the
 `song_set` `HashSet` object based on which implementation was in scope in the
 body of the `SomethingWeirdHappens` function.
 
-This idea is discussed briefly in section 5.4 on separate compilation of
-[this proposal for implementing "Indiana" C++0x concepts proposal](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.86.9526&rep=rep1&type=pdf).
+This idea is discussed briefly in section 5.4 on separate compilation of WG21
+proposal n1848 for implementing "Indiana" C++0x concepts
+([1](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.86.9526&rep=rep1&type=pdf),
+and [2](https://wg21.link/n1848)).
 
 This has some downsides:
 
