@@ -507,7 +507,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
   auto params = ParseParenList(
       [&] { return ParseFunctionParameter(); },
       ParseNodeKind::ParameterListComma(),
-      [&](TokenizedBuffer::Token open_paren, bool is_single_item,
+      [&](TokenizedBuffer::Token open_paren, bool /*is_single_item*/,
           TokenizedBuffer::Token close_paren, bool has_errors) {
         AddLeafNode(ParseNodeKind::ParameterListEnd(), close_paren);
         return AddNode(ParseNodeKind::ParameterList(), open_paren, start,
@@ -778,7 +778,7 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
                        /*has_error=*/!designator || !type_or_value);
       },
       ParseNodeKind::StructComma(),
-      [&](TokenizedBuffer::Token open_brace, bool is_single_item,
+      [&](TokenizedBuffer::Token open_brace, bool /*is_single_item*/,
           TokenizedBuffer::Token close_brace, bool has_errors) {
         AddLeafNode(ParseNodeKind::StructEnd(), close_brace);
         return AddNode(kind == Type ? ParseNodeKind::StructTypeLiteral()
@@ -852,7 +852,7 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
   //                 ::= expression `,` expression-list
   return ParseParenList(
       [&] { return ParseExpression(); }, ParseNodeKind::CallExpressionComma(),
-      [&](TokenizedBuffer::Token open_paren, bool is_single_item,
+      [&](TokenizedBuffer::Token open_paren, bool /*is_single_item*/,
           TokenizedBuffer::Token close_paren, bool has_arg_errors) {
         AddLeafNode(ParseNodeKind::CallExpressionEnd(), close_paren);
         return AddNode(ParseNodeKind::CallExpression(), open_paren, start,
@@ -1131,10 +1131,11 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
   if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
                               ParseNodeKind::IfStatementElse())) {
     // 'else if' is permitted as a special case.
-    if (NextTokenIs(TokenKind::IfKeyword()))
+    if (NextTokenIs(TokenKind::IfKeyword())) {
       else_has_errors = !ParseIfStatement();
-    else
+    } else {
       else_has_errors = !ParseCodeBlock();
+    }
   }
   return AddNode(ParseNodeKind::IfStatement(), if_token, start,
                  /*has_error=*/!cond || !then_case || else_has_errors);

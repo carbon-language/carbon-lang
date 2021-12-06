@@ -99,6 +99,7 @@ struct OperatorPriorityTable {
     bool changed = false;
     do {
       changed = false;
+      // NOLINTNEXTLINE(modernize-loop-convert)
       for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
         for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
           if (table[a][b] == OperatorPriority::LeftFirst) {
