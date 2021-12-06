@@ -31,7 +31,6 @@ using ::Carbon::Testing::HasTokens;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
-using ::testing::NotNull;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 

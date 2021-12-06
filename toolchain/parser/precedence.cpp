@@ -99,13 +99,13 @@ struct OperatorPriorityTable {
     bool changed = false;
     do {
       changed = false;
-      for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
+      for (auto& a : table) {
         for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
-          if (table[a][b] == OperatorPriority::LeftFirst) {
+          if (a[b] == OperatorPriority::LeftFirst) {
             for (int8_t c = 0; c != NumPrecedenceLevels; ++c) {
               if (table[b][c] == OperatorPriority::LeftFirst &&
-                  table[a][c] != OperatorPriority::LeftFirst) {
-                table[a][c] = OperatorPriority::LeftFirst;
+                  a[c] != OperatorPriority::LeftFirst) {
+                a[c] = OperatorPriority::LeftFirst;
                 changed = true;
               }
             }
