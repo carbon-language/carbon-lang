@@ -456,11 +456,10 @@ type (`Point3` here). This (at least partially) addresses
 Carbon requires `impl`s defined in a different library to be `external` so that
 the API of `Point3` doesn't change based on what is imported. It would be
 particularly bad if two different libraries implemented interfaces with
-conflicting names that both affected the API of a single type.
-As a consequence of this restriction, you can
-find all the names of direct (unqualified) members of a type in the definition
-of that type. The only thing that may be in another library is an `impl` of an
-interface.
+conflicting names that both affected the API of a single type. As a consequence
+of this restriction, you can find all the names of direct (unqualified) members
+of a type in the definition of that type. The only thing that may be in another
+library is an `impl` of an interface.
 
 You might also use `external impl` to implement an interface for a type to avoid
 cluttering the API of that type, for example to avoid a name collision. A syntax
