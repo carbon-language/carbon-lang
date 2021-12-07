@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <unistd.h>
+
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -15,30 +17,15 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
 
-// The Carbon prelude.
-//
-// TODO: Make this a separate source file that's embedded in the interpreter
-// at build time. See https://github.com/bazelbuild/rules_cc/issues/41 for a
-// possible mechanism.
-static constexpr std::string_view Prelude = R"(
-package Carbon api;
-
-// Note that Print is experimental, and not part of an accepted proposal, but
-// is included here for printing state in tests.
-fn Print(format_str: String) {
-  __intrinsic_print(format_str);
-}
-)";
-
 // Adds the Carbon prelude to `declarations`.
 static void AddPrelude(
-    Carbon::Nonnull<Carbon::Arena*> arena,
+    std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
     std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> parse_result =
-      ParseFromString(arena, "<prelude>", Prelude, false);
+      Carbon::Parse(arena, prelude_file_name, false);
   if (std::holds_alternative<Carbon::SyntaxErrorCode>(parse_result)) {
     // Try again with tracing, to help diagnose the problem.
-    ParseFromString(arena, "<prelude>", Prelude, true);
+    Carbon::Parse(arena, prelude_file_name, true);
     FATAL() << "Failed to parse prelude.";
   }
   const auto& prelude = std::get<Carbon::AST>(parse_result);
@@ -62,6 +49,9 @@ auto main(int argc, char* argv[]) -> int {
   opt<bool> trace_option("trace", desc("Enable tracing"));
   opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
                                    llvm::cl::Required);
+  opt<std::string> prelude_file_name(
+      "prelude", desc("<prelude file>"),
+      llvm::cl::init("executable_semantics/data/prelude.carbon"));
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
@@ -75,7 +65,7 @@ auto main(int argc, char* argv[]) -> int {
   }
   auto& ast = std::get<Carbon::AST>(ast_or_error);
 
-  AddPrelude(&arena, &ast.declarations);
+  AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
   // Typecheck and run the parsed program.
   Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error),

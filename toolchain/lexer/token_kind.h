@@ -35,10 +35,10 @@ class TokenKind {
   TokenKind() = delete;
 
   friend auto operator==(TokenKind lhs, TokenKind rhs) -> bool {
-    return lhs.kind_value == rhs.kind_value;
+    return lhs.kind_value_ == rhs.kind_value_;
   }
   friend auto operator!=(TokenKind lhs, TokenKind rhs) -> bool {
-    return lhs.kind_value != rhs.kind_value;
+    return lhs.kind_value_ != rhs.kind_value_;
   }
 
   // Get a friendly name for the token for logging or debugging.
@@ -97,12 +97,12 @@ class TokenKind {
   // to enable usage in `switch` and `case`. The enum remains private and
   // nothing else should be using this.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator KindEnum() const { return kind_value; }
+  constexpr operator KindEnum() const { return kind_value_; }
 
  private:
-  constexpr explicit TokenKind(KindEnum kind_value) : kind_value(kind_value) {}
+  constexpr explicit TokenKind(KindEnum kind_value) : kind_value_(kind_value) {}
 
-  KindEnum kind_value;
+  KindEnum kind_value_;
 };
 
 }  // namespace Carbon

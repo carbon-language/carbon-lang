@@ -22,9 +22,6 @@ def _parse_args():
     arg_parser.add_argument(
         "lit_args", nargs="*", help="Arguments to pass through to lit."
     )
-    arg_parser.add_argument(
-        "--tool", action="append", help="A tool to add to the PATH."
-    )
     return arg_parser.parse_args()
 
 
@@ -56,29 +53,17 @@ def _normalize(relative_base, target):
 def main():
     parsed_args = _parse_args()
 
-    # A symlink directory is added to the PATH so that commands like `lit` and
-    # `not` can use the versions in the path.
-    symlink_dir = os.environ["TEST_TMPDIR"]
-
-    # Create symlinks to all the tools.
     bin_dir = os.getcwd()
-    relative_base = os.path.dirname(_normalize("", os.environ["TEST_TARGET"]))
-    for tool in parsed_args.tool:
-        tool_path = _normalize(relative_base, tool)
-        symlink_loc = os.path.join(symlink_dir, os.path.basename(tool_path))
-        symlinked_file = os.path.join(bin_dir, tool_path)
-        if not os.path.exists(symlinked_file):
-            raise ValueError("Missing file: %s" % symlinked_file)
-        os.symlink(symlinked_file, symlink_loc)
 
     # Figure out the actual path for the test_dir.
+    relative_base = os.path.dirname(_normalize("", os.environ["TEST_TARGET"]))
     test_dir = os.path.join(
         bin_dir, _normalize(relative_base, parsed_args.test_dir)
     )
 
     args = [
-        os.path.join(symlink_dir, "lit"),
-        "--path=%s" % symlink_dir,
+        os.path.join(os.environ["TEST_SRCDIR"], "llvm-project/llvm/lit"),
+        "--path=%s" % bin_dir,
         test_dir,
         "-sv",
     ]

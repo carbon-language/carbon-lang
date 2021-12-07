@@ -154,22 +154,22 @@ struct SimpleDiagnostic {
 class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
  public:
   explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
-      : next_consumer(&next_consumer) {}
+      : next_consumer_(&next_consumer) {}
 
   auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-    seen_error |= diagnostic.level == Diagnostic::Error;
-    next_consumer->HandleDiagnostic(diagnostic);
+    seen_error_ |= diagnostic.level == Diagnostic::Error;
+    next_consumer_->HandleDiagnostic(diagnostic);
   }
 
   // Returns whether we've seen an error since the last reset.
-  auto SeenError() const -> bool { return seen_error; }
+  auto SeenError() const -> bool { return seen_error_; }
 
   // Reset whether we've seen an error.
-  auto Reset() -> void { seen_error = false; }
+  auto Reset() -> void { seen_error_ = false; }
 
  private:
-  DiagnosticConsumer* next_consumer;
-  bool seen_error = false;
+  DiagnosticConsumer* next_consumer_;
+  bool seen_error_ = false;
 };
 
 }  // namespace Carbon
