@@ -54,7 +54,7 @@ class ExpectedNodesMatcher
  public:
   explicit ExpectedNodesMatcher(
       llvm::SmallVector<ExpectedNode, 0> expected_nodess)
-      : expected_nodes(std::move(expected_nodess)) {}
+      : expected_nodes_(std::move(expected_nodess)) {}
 
   auto MatchAndExplain(const ParseTree& tree,
                        ::testing::MatchResultListener* output_ptr) const
@@ -66,7 +66,7 @@ class ExpectedNodesMatcher
                          int postorder_index, const ExpectedNode& expected_node,
                          ::testing::MatchResultListener& output) const -> bool;
 
-  llvm::SmallVector<ExpectedNode, 0> expected_nodes;
+  llvm::SmallVector<ExpectedNode, 0> expected_nodes_;
 };
 
 // Implementation of the Google Mock interface for matching (and explaining any
@@ -81,7 +81,7 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   const auto nodes_end = rpo.end();
   auto nodes_it = nodes_begin;
   llvm::SmallVector<const ExpectedNode*, 16> expected_node_stack;
-  for (const ExpectedNode& en : expected_nodes) {
+  for (const ExpectedNode& en : expected_nodes_) {
     expected_node_stack.push_back(&en);
   }
   while (!expected_node_stack.empty()) {
@@ -169,7 +169,7 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
   // of the actual parse tree.
   llvm::SmallVector<std::pair<const ExpectedNode*, int>, 16>
       expected_node_stack;
-  for (const ExpectedNode& expected_node : llvm::reverse(expected_nodes)) {
+  for (const ExpectedNode& expected_node : llvm::reverse(expected_nodes_)) {
     expected_node_stack.push_back({&expected_node, 0});
   }
 
