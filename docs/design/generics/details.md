@@ -453,10 +453,11 @@ interface (`Vector` in this case) in addition to the library that defines the
 type (`Point3` here). This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-Carbon only allows external impls to be defined in a different library so that
+Carbon requires `impl`s defined in a different library to be `external` so that
 the API of `Point3` doesn't change based on what is imported. It would be
 particularly bad if two different libraries implemented interfaces with
-conflicting names both affected the API of a single type. The result is you can
+conflicting names that both affected the API of a single type.
+As a consequence of this restriction, you can
 find all the names of direct (unqualified) members of a type in the definition
 of that type. The only thing that may be in another library is an `impl` of an
 interface.
@@ -734,8 +735,8 @@ time, so the actual value of the `t` argument here can be used to generate the
 code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 [static-dispatch witness table](terminology.md#static-dispatch-witness-table).
 
-Note that this implementation strategy only works for impls the caller knows
-that the callee needs.
+Note that this implementation strategy only works for impls that the caller
+knows the callee needs.
 
 ## Interfaces recap
 
@@ -2119,7 +2120,7 @@ If instead you want a family of related interfaces, one per possible value of a
 type parameter, multiple of which could be implemented for a single type, you
 would use
 [parameterized interfaces](terminology.md#interface-type-parameters-versus-associated-types).
-To write a parameterized version the stack interface, instead of using
+To write a parameterized version of the stack interface, instead of using
 associated types, write a parameter list after the name of the interface instead
 of the associated type declaration:
 
