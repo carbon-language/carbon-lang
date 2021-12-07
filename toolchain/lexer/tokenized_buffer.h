@@ -50,30 +50,30 @@ class TokenizedBufferToken {
   TokenizedBufferToken() = default;
 
   friend auto operator==(Token lhs, Token rhs) -> bool {
-    return lhs.index == rhs.index;
+    return lhs.index_ == rhs.index_;
   }
   friend auto operator!=(Token lhs, Token rhs) -> bool {
-    return lhs.index != rhs.index;
+    return lhs.index_ != rhs.index_;
   }
   friend auto operator<(Token lhs, Token rhs) -> bool {
-    return lhs.index < rhs.index;
+    return lhs.index_ < rhs.index_;
   }
   friend auto operator<=(Token lhs, Token rhs) -> bool {
-    return lhs.index <= rhs.index;
+    return lhs.index_ <= rhs.index_;
   }
   friend auto operator>(Token lhs, Token rhs) -> bool {
-    return lhs.index > rhs.index;
+    return lhs.index_ > rhs.index_;
   }
   friend auto operator>=(Token lhs, Token rhs) -> bool {
-    return lhs.index >= rhs.index;
+    return lhs.index_ >= rhs.index_;
   }
 
  private:
   friend TokenizedBuffer;
 
-  explicit TokenizedBufferToken(int index) : index(index) {}
+  explicit TokenizedBufferToken(int index) : index_(index) {}
 
-  int32_t index;
+  int32_t index_;
 };
 
 }  // namespace Internal
@@ -107,30 +107,30 @@ class TokenizedBuffer {
     Line() = default;
 
     friend auto operator==(Line lhs, Line rhs) -> bool {
-      return lhs.index == rhs.index;
+      return lhs.index_ == rhs.index_;
     }
     friend auto operator!=(Line lhs, Line rhs) -> bool {
-      return lhs.index != rhs.index;
+      return lhs.index_ != rhs.index_;
     }
     friend auto operator<(Line lhs, Line rhs) -> bool {
-      return lhs.index < rhs.index;
+      return lhs.index_ < rhs.index_;
     }
     friend auto operator<=(Line lhs, Line rhs) -> bool {
-      return lhs.index <= rhs.index;
+      return lhs.index_ <= rhs.index_;
     }
     friend auto operator>(Line lhs, Line rhs) -> bool {
-      return lhs.index > rhs.index;
+      return lhs.index_ > rhs.index_;
     }
     friend auto operator>=(Line lhs, Line rhs) -> bool {
-      return lhs.index >= rhs.index;
+      return lhs.index_ >= rhs.index_;
     }
 
    private:
     friend class TokenizedBuffer;
 
-    explicit Line(int index) : index(index) {}
+    explicit Line(int index) : index_(index) {}
 
-    int32_t index;
+    int32_t index_;
   };
 
   // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
@@ -151,18 +151,18 @@ class TokenizedBuffer {
     // Most normal APIs are provided by the `TokenizedBuffer`, we just support
     // basic comparison operations.
     friend auto operator==(Identifier lhs, Identifier rhs) -> bool {
-      return lhs.index == rhs.index;
+      return lhs.index_ == rhs.index_;
     }
     friend auto operator!=(Identifier lhs, Identifier rhs) -> bool {
-      return lhs.index != rhs.index;
+      return lhs.index_ != rhs.index_;
     }
 
    private:
     friend class TokenizedBuffer;
 
-    explicit Identifier(int index) : index(index) {}
+    explicit Identifier(int index) : index_(index) {}
 
-    int32_t index;
+    int32_t index_;
   };
 
   // Random-access iterator over tokens within the buffer.
@@ -172,28 +172,28 @@ class TokenizedBuffer {
    public:
     TokenIterator() = default;
 
-    explicit TokenIterator(Token token) : token(token) {}
+    explicit TokenIterator(Token token) : token_(token) {}
 
     auto operator==(const TokenIterator& rhs) const -> bool {
-      return token == rhs.token;
+      return token_ == rhs.token_;
     }
     auto operator<(const TokenIterator& rhs) const -> bool {
-      return token < rhs.token;
+      return token_ < rhs.token_;
     }
 
-    auto operator*() const -> const Token& { return token; }
+    auto operator*() const -> const Token& { return token_; }
 
     using iterator_facade_base::operator-;
     auto operator-(const TokenIterator& rhs) const -> int {
-      return token.index - rhs.token.index;
+      return token_.index_ - rhs.token_.index_;
     }
 
     auto operator+=(int n) -> TokenIterator& {
-      token.index += n;
+      token_.index_ += n;
       return *this;
     }
     auto operator-=(int n) -> TokenIterator& {
-      token.index -= n;
+      token_.index_ -= n;
       return *this;
     }
 
@@ -203,7 +203,7 @@ class TokenizedBuffer {
    private:
     friend class TokenizedBuffer;
 
-    Token token;
+    Token token_;
   };
 
   // The value of a real literal.
@@ -214,31 +214,31 @@ class TokenizedBuffer {
   // The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
   // its tokens.
   class RealLiteralValue {
-    const TokenizedBuffer* buffer;
-    int32_t literal_index;
-    bool is_decimal;
-
    public:
     // The mantissa, represented as an unsigned integer.
     [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
-      return buffer->literal_int_storage[literal_index];
+      return buffer_->literal_int_storage_[literal_index_];
     }
     // The exponent, represented as a signed integer.
     [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
-      return buffer->literal_int_storage[literal_index + 1];
+      return buffer_->literal_int_storage_[literal_index_ + 1];
     }
     // If false, the value is mantissa * 2^exponent.
     // If true, the value is mantissa * 10^exponent.
-    [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal; }
+    [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
 
    private:
     friend class TokenizedBuffer;
 
     RealLiteralValue(const TokenizedBuffer* buffer, int32_t literal_index,
                      bool is_decimal)
-        : buffer(buffer),
-          literal_index(literal_index),
-          is_decimal(is_decimal) {}
+        : buffer_(buffer),
+          literal_index_(literal_index),
+          is_decimal_(is_decimal) {}
+
+    const TokenizedBuffer* buffer_;
+    int32_t literal_index_;
+    bool is_decimal_;
   };
 
   // A diagnostic location translator that maps token locations into source
@@ -264,14 +264,14 @@ class TokenizedBuffer {
       -> TokenizedBuffer;
 
   // Returns true if the buffer has errors that are detectable at lexing time.
-  [[nodiscard]] auto HasErrors() const -> bool { return has_errors; }
+  [[nodiscard]] auto HasErrors() const -> bool { return has_errors_; }
 
   [[nodiscard]] auto Tokens() const -> llvm::iterator_range<TokenIterator> {
     return llvm::make_range(TokenIterator(Token(0)),
-                            TokenIterator(Token(token_infos.size())));
+                            TokenIterator(Token(token_infos_.size())));
   }
 
-  [[nodiscard]] auto Size() const -> int { return token_infos.size(); }
+  [[nodiscard]] auto Size() const -> int { return token_infos_.size(); }
 
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
   [[nodiscard]] auto GetLine(Token token) const -> Line;
@@ -442,7 +442,7 @@ class TokenizedBuffer {
   // members. A working object of this type is built with the `lex` function
   // above so that its return can indicate if an error was encountered while
   // lexing.
-  explicit TokenizedBuffer(SourceBuffer& source) : source(&source) {}
+  explicit TokenizedBuffer(SourceBuffer& source) : source_(&source) {}
 
   auto GetLineInfo(Line line) -> LineInfo&;
   [[nodiscard]] auto GetLineInfo(Line line) const -> const LineInfo&;
@@ -454,23 +454,23 @@ class TokenizedBuffer {
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
 
-  SourceBuffer* source;
+  SourceBuffer* source_;
 
-  llvm::SmallVector<TokenInfo, 16> token_infos;
+  llvm::SmallVector<TokenInfo, 16> token_infos_;
 
-  llvm::SmallVector<LineInfo, 16> line_infos;
+  llvm::SmallVector<LineInfo, 16> line_infos_;
 
-  llvm::SmallVector<IdentifierInfo, 16> identifier_infos;
+  llvm::SmallVector<IdentifierInfo, 16> identifier_infos_;
 
   // Storage for integers that form part of the value of a numeric or type
   // literal.
-  llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
+  llvm::SmallVector<llvm::APInt, 16> literal_int_storage_;
 
-  llvm::SmallVector<std::string, 16> literal_string_storage;
+  llvm::SmallVector<std::string, 16> literal_string_storage_;
 
-  llvm::DenseMap<llvm::StringRef, Identifier> identifier_map;
+  llvm::DenseMap<llvm::StringRef, Identifier> identifier_map_;
 
-  bool has_errors = false;
+  bool has_errors_ = false;
 };
 
 // A diagnostic emitter that uses positions within a source buffer's text as
