@@ -389,8 +389,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
   llvm::StringRef indent =
-      multi_line ? CheckIndent(emitter, text, content) : llvm::StringRef();
-  return ExpandEscapeSequencesAndRemoveIndent(emitter, content, hash_level,
+      multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
+  return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
                                               indent);
 }
 

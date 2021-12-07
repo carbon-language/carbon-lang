@@ -32,11 +32,8 @@ using ::testing::Ne;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
-struct ParseTreeTest : ::testing::Test {
-  std::forward_list<SourceBuffer> source_storage;
-  std::forward_list<TokenizedBuffer> token_storage;
-  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
-
+class ParseTreeTest : public ::testing::Test {
+ protected:
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
     source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
     return source_storage.front();
@@ -47,6 +44,10 @@ struct ParseTreeTest : ::testing::Test {
         TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
+
+  std::forward_list<SourceBuffer> source_storage;
+  std::forward_list<TokenizedBuffer> token_storage;
+  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
 TEST_F(ParseTreeTest, Empty) {

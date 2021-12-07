@@ -25,8 +25,6 @@ struct FakeDiagnostic {
   // selection of the message.
   static constexpr llvm::StringLiteral Message = "{0}";
 
-  std::string message;
-
   auto Format() -> std::string {
     // Work around a bug in Clang's unused const variable warning by marking it
     // used here with a no-op.
@@ -34,6 +32,8 @@ struct FakeDiagnostic {
 
     return llvm::formatv(Message.data(), message).str();
   }
+
+  std::string message;
 };
 
 struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
