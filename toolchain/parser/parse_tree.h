@@ -262,7 +262,7 @@ class ParseTree::Node {
 
   // Constructs a node with a specific index into the parse tree's postorder
   // sequence of node implementations.
-  explicit Node(int index_arg) : index_(index_arg) {}
+  explicit Node(int index) : index_(index) {}
 
   // The index of this node's implementation in the postorder sequence.
   int32_t index_;
