@@ -207,6 +207,10 @@ This has some downsides:
     the witness table representing the implementation with the object, since it
     varies instead of being known statically.
 -   It is slower to execute from dynamic dispatch and the inability to inline.
+-   In some cases it may not be feasible to use dynamic dispatch. For example,
+    if an interface method returns an associated type, we might not know the
+    calling convention of the function without knowing some details about the
+    type.
 
 As a result, this doesn't make sense as the default behavior for Carbon based on
 its [goals](/project/goals.md). That being said, this could be a feature added
