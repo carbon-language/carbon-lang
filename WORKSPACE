@@ -114,11 +114,13 @@ http_archive(
         # Silence clang-tidy modernize-use-trailing-return-type TEST_F issues.
         "sed -i.bak 's~" +
         "type& operator=(type const&) = delete~" +
-        "\\0 /* NOLINT(modernize-use-trailing-return-type) */~" +
+        "type\\& operator=(type const\\&) = delete " +
+        "/* NOLINT(modernize-use-trailing-return-type) */~" +
         "' googletest/include/gtest/internal/gtest-port.h",
         "sed -i.bak 's~" +
         "type& operator=(type&&) noexcept = delete~" +
-        "\\0 /* NOLINT(modernize-use-trailing-return-type) */~" +
+        "type\\& operator=(type\\&\\&) noexcept = delete " +
+        "/* NOLINT(modernize-use-trailing-return-type) */~" +
         "' googletest/include/gtest/internal/gtest-port.h",
     ],
     sha256 = "19949c33e795197dbb8610672c18bff447dc31faef3257665d69d1bf0884d67b",
