@@ -36,7 +36,7 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
-    PointerValue,
+    LValue,
     BoolValue,
     StructValue,
     NominalClassValue,
@@ -117,7 +117,7 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -132,17 +132,17 @@ class FunctionValue : public Value {
   Nonnull<const FunctionDeclaration*> declaration_;
 };
 
-// A pointer value.
-class PointerValue : public Value {
+// The value of a location in memory.
+class LValue : public Value {
  public:
-  explicit PointerValue(Address value)
-      : Value(Kind::PointerValue), value_(std::move(value)) {}
+  explicit LValue(Address value)
+      : Value(Kind::LValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::PointerValue;
+    return value->kind() == Kind::LValue;
   }
 
-  auto value() const -> const Address& { return value_; }
+  auto address() const -> const Address& { return value_; }
 
  private:
   Address value_;
@@ -335,11 +335,11 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(std::vector<Nonnull<const GenericBinding*>> deduced,
+  FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
       : Value(Kind::FunctionType),
-        deduced_(std::move(deduced)),
+        deduced_(deduced),
         parameters_(parameters),
         return_type_(return_type) {}
 
@@ -495,7 +495,7 @@ class ContinuationValue : public Value {
     ~StackFragment();
 
     StackFragment(StackFragment&&) = delete;
-    StackFragment& operator=(StackFragment&&) = delete;
+    auto operator=(StackFragment&&) -> StackFragment& = delete;
 
     // Store the given partial todo stack in *this, which must currently be
     // empty. The stack is represented with the top of the stack at the

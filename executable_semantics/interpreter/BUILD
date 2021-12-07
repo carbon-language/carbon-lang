@@ -33,6 +33,19 @@ cc_library(
 )
 
 cc_library(
+    name = "action_stack",
+    srcs = ["action_stack.cpp"],
+    hdrs = ["action_stack.h"],
+    deps = [
+        ":action_and_value",
+        ":stack",
+        "//common:ostream",
+        "//executable_semantics/ast:statement",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "address",
     hdrs = ["address.h"],
     deps = [
@@ -104,6 +117,7 @@ cc_library(
     ],
     deps = [
         ":action_and_value",
+        ":action_stack",
         ":address",
         ":heap",
         "//common:check",
@@ -135,6 +149,12 @@ cc_library(
     deps = [
         "//common:check",
         "//executable_semantics/ast",
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:member",
+        "//executable_semantics/ast:pattern",
+        "//executable_semantics/ast:statement",
+        "//executable_semantics/ast:static_scope",
         "@llvm-project//llvm:Support",
     ],
 )

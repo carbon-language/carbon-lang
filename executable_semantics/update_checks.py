@@ -12,21 +12,24 @@ from concurrent import futures
 import os
 import subprocess
 import sys
+from typing import Set
 
-_BINDIR = "./bazel-bin/executable_semantics"
+_BIN = "./bazel-bin/executable_semantics/executable_semantics"
 _TESTDATA = "executable_semantics/testdata"
 
-# TODO: Right now this is a static string used. In theory maybe we should use
-# the command; it's included for that flexibility.
-_AUTOUPDATE_MARKER = "// AUTOUPDATE: executable_semantics %s\n"
+# A prefix followed by a command to run for autoupdating checked output.
+_AUTOUPDATE_MARKER = "// AUTOUPDATE: "
+
+# Indicates no autoupdate is requested.
+_NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 
-def _get_tests():
+def _get_tests() -> Set[str]:
     """Get the list of tests from the filesystem."""
     tests = set()
     for root, _, files in os.walk(_TESTDATA):
         for f in files:
-            if f == "lit.cfg":
+            if f == "lit.cfg.py":
                 # Ignore the lit config.
                 continue
             if os.path.splitext(f)[1] == ".carbon":
@@ -36,16 +39,49 @@ def _get_tests():
     return tests
 
 
-def _update_check(test):
-    """Updates the CHECK: lines for `test` by running executable_semantics."""
+def _update_check_once(test: str) -> bool:
+    """Updates the CHECK: lines for `test` by running executable_semantics.
+
+    Returns True if the number of lines changes.
+    """
     with open(test) as f:
         orig_lines = f.readlines()
-    if _AUTOUPDATE_MARKER not in orig_lines:
-        raise ValueError("No autoupdate marker in %s" % test)
-    # Run executable_semantics to general output.
+
+    # Remove old OUT.
+    lines_without_check = [
+        x for x in orig_lines if not x.startswith("// CHECK")
+    ]
+    num_orig_check_lines = len(orig_lines) - len(lines_without_check)
+    autoupdate_index = None
+    noautoupdate_index = None
+    for line_index, line in enumerate(lines_without_check):
+        if line.startswith(_AUTOUPDATE_MARKER):
+            autoupdate_index = line_index
+            autoupdate_cmd = line[len(_AUTOUPDATE_MARKER) :]
+        if line.startswith(_NOAUTOUPDATE_MARKER):
+            noautoupdate_index = line_index
+    if autoupdate_index is None:
+        if noautoupdate_index is None:
+            raise ValueError(
+                "%s must have either '%s' or '%s'"
+                % (test, _AUTOUPDATE_MARKER, _NOAUTOUPDATE_MARKER)
+            )
+        else:
+            return False
+    elif noautoupdate_index is not None:
+        raise ValueError(
+            "%s has both '%s' and '%s', must have only one"
+            % (test, _AUTOUPDATE_MARKER, _NOAUTOUPDATE_MARKER)
+        )
+
+    # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
+    autoupdate_cmd = autoupdate_cmd.replace("%{executable_semantics}", _BIN)
+
+    # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
     p = subprocess.run(
-        ["%s/executable_semantics" % _BINDIR, test],
+        autoupdate_cmd % test,
+        shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -56,22 +92,34 @@ def _update_check(test):
     # TODO: Maybe revisit and see if lit can be convinced to give a
     # root-relative path.
     out = out.replace(test, "{{.*}}/%s" % test)
+    out_lines = out.splitlines()
 
-    # Remove old OUT.
-    lines_without_check = [
-        x for x in orig_lines if not x.startswith("// CHECK:")
-    ]
-    autoupdate_index = lines_without_check.index(_AUTOUPDATE_MARKER)
-    assert autoupdate_index >= 0
+    # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
         f.writelines(lines_without_check[: autoupdate_index + 1])
-        f.writelines(["// CHECK: %s\n" % x for x in out.splitlines()])
+        for line in out_lines:
+            line = line.rstrip()
+            if line:
+                f.write("// CHECK: %s\n" % line)
+            else:
+                f.write("// CHECK-EMPTY:\n")
         f.writelines(lines_without_check[autoupdate_index + 1 :])
 
+    # Compares the number of CHECK: lines originally with the number added.
+    return num_orig_check_lines != len(out_lines)
+
+
+def _update_check(test: str) -> None:
+    """Wraps CHECK: updates for test files."""
+    if _update_check_once(test):
+        # If the number of output lines changes, run again because output can be
+        # line-specific. However, output should stabilize quickly.
+        if _update_check_once(test):
+            raise ValueError("The output of %s kept changing" % test)
     print(".", end="", flush=True)
 
 
-def _update_checks():
+def _update_checks() -> None:
     """Runs bazel to update CHECK: lines in lit tests."""
     # TODO: It may be helpful if a list of tests can be passed in args; would
     # want to use argparse for this.
@@ -85,14 +133,12 @@ def _update_checks():
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
         list(exec.map(_update_check, tests))
-        # Run again, because the previous run may have changed line numbers.
-        list(exec.map(_update_check, tests))
     # Each update call indicates progress with a dot without a newline, so put a
     # newline to wrap.
     print("\nUpdated lit tests.")
 
 
-def main():
+def main() -> None:
     # Go to the repository root so that paths will match bazel's view.
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
 

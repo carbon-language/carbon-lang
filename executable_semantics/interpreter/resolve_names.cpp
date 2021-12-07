@@ -4,195 +4,334 @@
 
 #include "executable_semantics/interpreter/resolve_names.h"
 
+#include <set>
+
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/member.h"
+#include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/statement.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
 
 namespace Carbon {
 
-namespace {
+// Adds the names exposed by the given AST node to enclosing_scope.
+static void AddExposedNames(const Declaration& declaration,
+                            StaticScope& enclosing_scope);
+static void AddExposedNames(const Member& member, StaticScope& enclosing_scope);
 
-// Populates names for a pattern. See PopulateNamesInDeclaration for overall
-// flow.
-void PopulateNamesInPattern(const Pattern& pattern, StaticScope& static_scope) {
-  switch (pattern.kind()) {
-    case Pattern::Kind::AlternativePattern: {
-      const auto& alt = cast<AlternativePattern>(pattern);
-      PopulateNamesInPattern(alt.arguments(), static_scope);
-      break;
-    }
-    case Pattern::Kind::BindingPattern: {
-      const auto& binding = cast<BindingPattern>(pattern);
-      if (binding.name().has_value()) {
-        static_scope.Add(*binding.name(), &binding);
-      }
-      break;
-    }
-    case Pattern::Kind::TuplePattern: {
-      const auto& tuple = cast<TuplePattern>(pattern);
-      for (auto* field : tuple.fields()) {
-        PopulateNamesInPattern(*field, static_scope);
-      }
-      break;
-    }
-    case Pattern::Kind::AutoPattern:
-    case Pattern::Kind::ExpressionPattern:
-      // These don't add names.
-      break;
-  }
-}
-
-// Populates names for a statement. See PopulateNamesInDeclaration for overall
-// flow.
-void PopulateNamesInStatement(Arena* arena,
-                              std::optional<Nonnull<Statement*>> opt_statement,
-                              StaticScope& static_scope) {
-  if (!opt_statement.has_value()) {
-    return;
-  }
-  Statement& statement = **opt_statement;
-  switch (statement.kind()) {
-    case Statement::Kind::Block: {
-      // Defines a new scope for names.
-      auto& block = cast<Block>(statement);
-      for (const auto& statement : block.statements()) {
-        PopulateNamesInStatement(arena, statement, block.static_scope());
-      }
-      break;
-    }
-    case Statement::Kind::Continuation: {
-      // Defines a new name and contains a block.
-      auto& cont = cast<Continuation>(statement);
-      static_scope.Add(cont.continuation_variable(), &cont);
-      PopulateNamesInStatement(arena, &cont.body(), static_scope);
-      break;
-    }
-    case Statement::Kind::VariableDefinition: {
-      // Defines a new name.
-      const auto& var = cast<VariableDefinition>(statement);
-      PopulateNamesInPattern(var.pattern(), static_scope);
-      break;
-    }
-    case Statement::Kind::If: {
-      // Contains blocks.
-      auto& if_stmt = cast<If>(statement);
-      PopulateNamesInStatement(arena, &if_stmt.then_block(), static_scope);
-      PopulateNamesInStatement(arena, if_stmt.else_block(), static_scope);
-      break;
-    }
-    case Statement::Kind::While: {
-      // Contains a block.
-      auto& while_stmt = cast<While>(statement);
-      PopulateNamesInStatement(arena, &while_stmt.body(), static_scope);
-      break;
-    }
-    case Statement::Kind::Match: {
-      // Contains blocks.
-      auto& match = cast<Match>(statement);
-      for (auto& clause : match.clauses()) {
-        PopulateNamesInPattern(clause.pattern(), clause.static_scope());
-        PopulateNamesInStatement(arena, &clause.statement(),
-                                 clause.static_scope());
-      }
-      break;
-    }
-    case Statement::Kind::Assign:
-    case Statement::Kind::Await:
-    case Statement::Kind::Break:
-    case Statement::Kind::Continue:
-    case Statement::Kind::ExpressionStatement:
-    case Statement::Kind::Return:
-    case Statement::Kind::Run:
-      // Neither contains names nor a scope.
-      break;
-  }
-}
-
-// Populates names for a member. See PopulateNamesInDeclaration for overall
-// flow.
-void PopulateNamesInMember(Arena* arena, const Member& member,
-                           StaticScope& static_scope) {
+static void AddExposedNames(const Member& member,
+                            StaticScope& enclosing_scope) {
   switch (member.kind()) {
-    case Member::Kind::FieldMember: {
+    case MemberKind::FieldMember: {
       const auto& field = cast<FieldMember>(member);
       if (field.binding().name().has_value()) {
-        static_scope.Add(*field.binding().name(), &member);
+        enclosing_scope.Add(*field.binding().name(), &field.binding());
       }
       break;
     }
   }
 }
 
-// Populates declared names at scoped boundaries, such as file-level or
-// function bodies. This doesn't currently recurse into expressions, but
-// likely will in the future in order to resolve names in lambdas.
-void PopulateNamesInDeclaration(Arena* arena, Declaration& declaration,
-                                StaticScope& static_scope) {
+static void AddExposedNames(const Declaration& declaration,
+                            StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
-    case Declaration::Kind::FunctionDeclaration: {
+    case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
-      static_scope.Add(func.name(), &declaration);
-      for (Nonnull<const GenericBinding*> param : func.deduced_parameters()) {
-        func.static_scope().Add(param->name(), param);
-      }
-      PopulateNamesInPattern(func.param_pattern(), func.static_scope());
-      PopulateNamesInStatement(arena, func.body(), static_scope);
+      enclosing_scope.Add(func.name(), &func);
       break;
     }
-    case Declaration::Kind::ClassDeclaration: {
+    case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      static_scope.Add(class_decl.name(), &declaration);
-      for (auto* member : class_decl.members()) {
-        PopulateNamesInMember(arena, *member, class_decl.static_scope());
-      }
+      enclosing_scope.Add(class_decl.name(), &class_decl);
       break;
     }
-    case Declaration::Kind::ChoiceDeclaration: {
+    case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
-      static_scope.Add(choice.name(), &declaration);
-      for (Nonnull<const ChoiceDeclaration::Alternative*> alt :
-           choice.alternatives()) {
-        choice.static_scope().Add(alt->name(), alt);
-      }
-      // Populate name into declared_names.
-      // Init the choice's declared_names, and populate it with the
-      // alternatives.
+      enclosing_scope.Add(choice.name(), &choice);
       break;
     }
-    case Declaration::Kind::VariableDeclaration:
+    case DeclarationKind::VariableDeclaration:
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name().has_value()) {
-        static_scope.Add(*(var.binding().name()), &var.binding());
+        enclosing_scope.Add(*(var.binding().name()), &var.binding());
       }
       return;
   }
 }
 
-// TODO: ResolveNames for Expression, Member, Pattern, and Statement will be
-// needed for recursion.
+// Traverses the sub-AST rooted at the given node, resolving all names within
+// it using enclosing_scope, and updating enclosing_scope to add names to
+// it as they become available. In scopes where names are only visible below
+// their point of declaration (such as block scopes in C++), this is implemented
+// as a single pass, recursively calling ResolveNames on the elements of the
+// scope in order. In scopes where names are also visible above their point of
+// declaration (such as class scopes in C++), this requires two passes: first
+// calling AddExposedNames on each element of the scope to populate a
+// StaticScope, and then calling ResolveNames on each element, passing it the
+// already-populated StaticScope.
+static void ResolveNames(Expression& expression,
+                         const StaticScope& enclosing_scope);
+static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope);
+static void ResolveNames(Statement& statement, StaticScope& enclosing_scope);
+static void ResolveNames(Member& member, StaticScope& enclosing_scope);
+static void ResolveNames(Declaration& declaration,
+                         StaticScope& enclosing_scope);
 
-// Recurses through a declaration to find and resolve IdentifierExpressions
-// using declared_names.
-void ResolveNamesInDeclaration(Declaration& declaration,
-                               const StaticScope& static_scope) {
-  switch (declaration.kind()) {
-    case Declaration::Kind::FunctionDeclaration:
-    case Declaration::Kind::ClassDeclaration:
-    case Declaration::Kind::ChoiceDeclaration:
-    case Declaration::Kind::VariableDeclaration:
+static void ResolveNames(Expression& expression,
+                         const StaticScope& enclosing_scope) {
+  switch (expression.kind()) {
+    case ExpressionKind::CallExpression: {
+      auto& call = cast<CallExpression>(expression);
+      ResolveNames(call.function(), enclosing_scope);
+      ResolveNames(call.argument(), enclosing_scope);
+      break;
+    }
+    case ExpressionKind::FunctionTypeLiteral: {
+      auto& fun_type = cast<FunctionTypeLiteral>(expression);
+      ResolveNames(fun_type.parameter(), enclosing_scope);
+      ResolveNames(fun_type.return_type(), enclosing_scope);
+      break;
+    }
+    case ExpressionKind::FieldAccessExpression:
+      ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
+                   enclosing_scope);
+      break;
+    case ExpressionKind::IndexExpression: {
+      auto& index = cast<IndexExpression>(expression);
+      ResolveNames(index.aggregate(), enclosing_scope);
+      ResolveNames(index.offset(), enclosing_scope);
+      break;
+    }
+    case ExpressionKind::PrimitiveOperatorExpression:
+      for (Nonnull<Expression*> operand :
+           cast<PrimitiveOperatorExpression>(expression).arguments()) {
+        ResolveNames(*operand, enclosing_scope);
+      }
+      break;
+    case ExpressionKind::TupleLiteral:
+      for (Nonnull<Expression*> field :
+           cast<TupleLiteral>(expression).fields()) {
+        ResolveNames(*field, enclosing_scope);
+      }
+      break;
+    case ExpressionKind::StructLiteral:
+      for (FieldInitializer& init : cast<StructLiteral>(expression).fields()) {
+        ResolveNames(init.expression(), enclosing_scope);
+      }
+      break;
+    case ExpressionKind::StructTypeLiteral:
+      for (FieldInitializer& init :
+           cast<StructTypeLiteral>(expression).fields()) {
+        ResolveNames(init.expression(), enclosing_scope);
+      }
+      break;
+    case ExpressionKind::IdentifierExpression: {
+      auto& identifier = cast<IdentifierExpression>(expression);
+      identifier.set_named_entity(
+          enclosing_scope.Resolve(identifier.name(), identifier.source_loc()));
+      break;
+    }
+    case ExpressionKind::IntrinsicExpression:
+      ResolveNames(cast<IntrinsicExpression>(expression).args(),
+                   enclosing_scope);
+      break;
+    case ExpressionKind::BoolTypeLiteral:
+    case ExpressionKind::BoolLiteral:
+    case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::ContinuationTypeLiteral:
+    case ExpressionKind::IntLiteral:
+    case ExpressionKind::StringLiteral:
+    case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::TypeTypeLiteral:
+      break;
+    case ExpressionKind::UnimplementedExpression:
+      FATAL() << "Unimplemented";
+  }
+}
+
+static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
+  switch (pattern.kind()) {
+    case PatternKind::BindingPattern: {
+      auto& binding = cast<BindingPattern>(pattern);
+      ResolveNames(binding.type(), enclosing_scope);
+      if (binding.name().has_value()) {
+        enclosing_scope.Add(*binding.name(), &binding);
+      }
+      break;
+    }
+    case PatternKind::TuplePattern:
+      for (Nonnull<Pattern*> field : cast<TuplePattern>(pattern).fields()) {
+        ResolveNames(*field, enclosing_scope);
+      }
+      break;
+    case PatternKind::AlternativePattern: {
+      auto& alternative = cast<AlternativePattern>(pattern);
+      ResolveNames(alternative.choice_type(), enclosing_scope);
+      ResolveNames(alternative.arguments(), enclosing_scope);
+      break;
+    }
+    case PatternKind::ExpressionPattern:
+      ResolveNames(cast<ExpressionPattern>(pattern).expression(),
+                   enclosing_scope);
+      break;
+    case PatternKind::AutoPattern:
       break;
   }
 }
 
-}  // namespace
+static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
+  switch (statement.kind()) {
+    case StatementKind::ExpressionStatement:
+      ResolveNames(cast<ExpressionStatement>(statement).expression(),
+                   enclosing_scope);
+      break;
+    case StatementKind::Assign: {
+      auto& assign = cast<Assign>(statement);
+      ResolveNames(assign.lhs(), enclosing_scope);
+      ResolveNames(assign.rhs(), enclosing_scope);
+      break;
+    }
+    case StatementKind::VariableDefinition: {
+      auto& def = cast<VariableDefinition>(statement);
+      ResolveNames(def.init(), enclosing_scope);
+      ResolveNames(def.pattern(), enclosing_scope);
+      break;
+    }
+    case StatementKind::If: {
+      auto& if_stmt = cast<If>(statement);
+      ResolveNames(if_stmt.condition(), enclosing_scope);
+      ResolveNames(if_stmt.then_block(), enclosing_scope);
+      if (if_stmt.else_block().has_value()) {
+        ResolveNames(**if_stmt.else_block(), enclosing_scope);
+      }
+      break;
+    }
+    case StatementKind::Return:
+      ResolveNames(cast<Return>(statement).expression(), enclosing_scope);
+      break;
+    case StatementKind::Block: {
+      auto& block = cast<Block>(statement);
+      StaticScope block_scope;
+      block_scope.AddParent(&enclosing_scope);
+      for (Nonnull<Statement*> sub_statement : block.statements()) {
+        ResolveNames(*sub_statement, block_scope);
+      }
+      break;
+    }
+    case StatementKind::While: {
+      auto& while_stmt = cast<While>(statement);
+      ResolveNames(while_stmt.condition(), enclosing_scope);
+      ResolveNames(while_stmt.body(), enclosing_scope);
+      break;
+    }
+    case StatementKind::Match: {
+      auto& match = cast<Match>(statement);
+      ResolveNames(match.expression(), enclosing_scope);
+      for (Match::Clause& clause : match.clauses()) {
+        StaticScope clause_scope;
+        clause_scope.AddParent(&enclosing_scope);
+        ResolveNames(clause.pattern(), clause_scope);
+        ResolveNames(clause.statement(), clause_scope);
+      }
+      break;
+    }
+    case StatementKind::Continuation: {
+      auto& continuation = cast<Continuation>(statement);
+      enclosing_scope.Add(continuation.continuation_variable(), &continuation);
+      StaticScope continuation_scope;
+      continuation_scope.AddParent(&enclosing_scope);
+      ResolveNames(cast<Continuation>(statement).body(), continuation_scope);
+      break;
+    }
+    case StatementKind::Run:
+      ResolveNames(cast<Run>(statement).argument(), enclosing_scope);
+      break;
+    case StatementKind::Await:
+    case StatementKind::Break:
+    case StatementKind::Continue:
+      break;
+  }
+}
 
-void ResolveNames(Arena* arena, AST& ast) {
+static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
+  switch (member.kind()) {
+    case MemberKind::FieldMember:
+      ResolveNames(cast<FieldMember>(member).binding(), enclosing_scope);
+  }
+}
+
+static void ResolveNames(Declaration& declaration,
+                         StaticScope& enclosing_scope) {
+  switch (declaration.kind()) {
+    case DeclarationKind::FunctionDeclaration: {
+      auto& function = cast<FunctionDeclaration>(declaration);
+      StaticScope function_scope;
+      function_scope.AddParent(&enclosing_scope);
+      for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
+        function_scope.Add(binding->name(), binding);
+        ResolveNames(binding->type(), function_scope);
+      }
+      ResolveNames(function.param_pattern(), function_scope);
+      if (function.return_term().type_expression().has_value()) {
+        ResolveNames(**function.return_term().type_expression(),
+                     function_scope);
+      }
+      if (function.body().has_value()) {
+        ResolveNames(**function.body(), function_scope);
+      }
+      break;
+    }
+    case DeclarationKind::ClassDeclaration: {
+      auto& class_decl = cast<ClassDeclaration>(declaration);
+      StaticScope class_scope;
+      class_scope.AddParent(&enclosing_scope);
+      for (Nonnull<Member*> member : class_decl.members()) {
+        AddExposedNames(*member, class_scope);
+      }
+      for (Nonnull<Member*> member : class_decl.members()) {
+        ResolveNames(*member, class_scope);
+      }
+      break;
+    }
+    case DeclarationKind::ChoiceDeclaration: {
+      auto& choice = cast<ChoiceDeclaration>(declaration);
+      // Alternative names are never used unqualified, so we don't need to
+      // add the alternatives to a scope, or introduce a new scope; we only
+      // need to check for duplicates.
+      std::set<std::string_view> alternative_names;
+      for (Nonnull<AlternativeSignature*> alternative : choice.alternatives()) {
+        ResolveNames(alternative->signature(), enclosing_scope);
+        if (!alternative_names.insert(alternative->name()).second) {
+          FATAL_COMPILATION_ERROR(alternative->source_loc())
+              << "Duplicate name `" << alternative->name()
+              << "` in choice type";
+        }
+      }
+      break;
+    }
+    case DeclarationKind::VariableDeclaration: {
+      auto& var = cast<VariableDeclaration>(declaration);
+      ResolveNames(var.binding(), enclosing_scope);
+      ResolveNames(var.initializer(), enclosing_scope);
+      break;
+    }
+  }
+}
+
+void ResolveNames(AST& ast) {
+  StaticScope file_scope;
   for (auto declaration : ast.declarations) {
-    PopulateNamesInDeclaration(arena, *declaration, ast.static_scope);
+    AddExposedNames(*declaration, file_scope);
   }
   for (auto declaration : ast.declarations) {
-    ResolveNamesInDeclaration(*declaration, ast.static_scope);
+    ResolveNames(*declaration, file_scope);
+  }
+  if (ast.main_call.has_value()) {
+    ResolveNames(**ast.main_call, file_scope);
   }
 }
 

@@ -28,9 +28,7 @@ using Carbon::Testing::MatchParseTreeNodes;
 using namespace Carbon::Testing::NodeMatchers;
 using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::HasSubstr;
 using ::testing::Ne;
-using ::testing::NotNull;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
@@ -1071,7 +1069,7 @@ TEST_F(ParseTreeTest, StructErrors) {
        DiagnosticMessage("Expected `,` or `}`.")},
   };
 
-  for (Testcase testcase : testcases) {
+  for (const Testcase& testcase : testcases) {
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
     EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));

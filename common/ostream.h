@@ -14,16 +14,18 @@ namespace Carbon {
 
 // Support raw_ostream << for types which implement:
 //   void Print(llvm::raw_ostream& out) const;
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
+template <typename T,
+          typename = std::enable_if_t<
+              std::is_member_function_pointer_v<decltype(&T::Print)>>>
 auto operator<<(llvm::raw_ostream& out, const T& obj) -> llvm::raw_ostream& {
   obj.Print(out);
   return out;
 }
 
 // Prevents raw_ostream << for pointers to printable types.
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
+template <typename T,
+          typename = std::enable_if_t<
+              std::is_member_function_pointer_v<decltype(&T::Print)>>>
 __attribute__((unavailable(
     "Received a pointer to a printable type, are you missing a `*`? "
     "To print as a pointer, cast to void*."))) auto
@@ -31,8 +33,9 @@ operator<<(llvm::raw_ostream& out, const T* /*obj*/) -> llvm::raw_ostream&;
 
 // Support std::ostream << for types which implement:
 //   void Print(llvm::raw_ostream& out) const;
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
+template <typename T,
+          typename = std::enable_if_t<
+              std::is_member_function_pointer_v<decltype(&T::Print)>>>
 auto operator<<(std::ostream& out, const T& obj) -> std::ostream& {
   llvm::raw_os_ostream raw_os(out);
   obj.Print(raw_os);
@@ -40,8 +43,9 @@ auto operator<<(std::ostream& out, const T& obj) -> std::ostream& {
 }
 
 // Prevents std::ostream << for pointers to printable types.
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
+template <typename T,
+          typename = std::enable_if_t<
+              std::is_member_function_pointer_v<decltype(&T::Print)>>>
 __attribute__((unavailable(
     "Received a pointer to a printable type, are you missing a `*`? "
     "To print as a pointer, cast to void*."))) auto
@@ -49,9 +53,10 @@ operator<<(std::ostream& out, const T* /*obj*/) -> std::ostream&;
 
 // Allow GoogleTest and GoogleMock to print even pointers by dereferencing them.
 // This is important to allow automatic printing of arguments of mocked APIs.
-template <typename T, typename std::enable_if<std::is_member_function_pointer<
-                          decltype(&T::Print)>::value>::type* = nullptr>
-void PrintTo(const T* p, std::ostream* out) {
+template <typename T,
+          typename = std::enable_if_t<
+              std::is_member_function_pointer_v<decltype(&T::Print)>>>
+void PrintTo(T* p, std::ostream* out) {
   *out << static_cast<const void*>(p);
 
   // Also print the object if non-null.
