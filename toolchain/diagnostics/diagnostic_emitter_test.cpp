@@ -18,8 +18,6 @@ using Testing::DiagnosticAt;
 using Testing::DiagnosticLevel;
 using Testing::DiagnosticMessage;
 using Testing::DiagnosticShortName;
-using ::testing::ElementsAre;
-using ::testing::Eq;
 
 struct FakeDiagnostic {
   static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";

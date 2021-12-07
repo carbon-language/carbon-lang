@@ -11,10 +11,11 @@ namespace Carbon {
 NamedEntity::~NamedEntity() = default;
 
 void StaticScope::Add(std::string name, Nonnull<const NamedEntity*> entity) {
-  if (!declared_names_.insert({name, entity}).second) {
+  auto [it, success] = declared_names_.insert({name, entity});
+  if (!success && it->second != entity) {
     FATAL_COMPILATION_ERROR(entity->source_loc())
         << "Duplicate name `" << name << "` also found at "
-        << declared_names_[name]->source_loc();
+        << it->second->source_loc();
   }
 }
 
@@ -24,8 +25,7 @@ auto StaticScope::Resolve(const std::string& name,
   std::optional<Nonnull<const NamedEntity*>> result =
       TryResolve(name, source_loc);
   if (!result.has_value()) {
-    FATAL_COMPILATION_ERROR(source_loc)
-        << "'" << name << "' is not declared in this scope";
+    FATAL_COMPILATION_ERROR(source_loc) << "could not resolve '" << name << "'";
   }
   return *result;
 }

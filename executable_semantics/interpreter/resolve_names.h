@@ -11,7 +11,7 @@
 namespace Carbon {
 
 // Resolves names (IdentifierExpressions) in the AST.
-void ResolveNames(Nonnull<Arena*>, AST& ast);
+void ResolveNames(AST& ast);
 
 }  // namespace Carbon
 
