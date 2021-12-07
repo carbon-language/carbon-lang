@@ -111,7 +111,7 @@ googletest_version = "075810f7a20405ea09a93f68847d6e963212fa62"
 http_archive(
     name = "com_google_googletest",
     patch_cmds = [
-        # Silence clang-tidy modernize-use-trailing-return-type issues.
+        # Silence clang-tidy modernize-use-trailing-return-type TEST_F issues.
         "sed -i 's/" +
         "type& operator=(type const&) = delete/" +
         "auto operator=(type const\\&) -> type\\& = delete/" +
