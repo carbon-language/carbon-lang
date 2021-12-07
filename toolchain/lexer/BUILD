@@ -11,7 +11,10 @@ cc_library(
     srcs = ["token_kind.cpp"],
     hdrs = ["token_kind.h"],
     textual_hdrs = ["token_registry.def"],
-    deps = ["@llvm-project//llvm:Support"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_test(
@@ -35,6 +38,7 @@ cc_library(
     testonly = 1,
     hdrs = ["test_helpers.h"],
     deps = [
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -46,6 +50,7 @@ cc_library(
     hdrs = ["numeric_literal.h"],
     deps = [
         ":character_set",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -82,6 +87,7 @@ cc_library(
     hdrs = ["string_literal.h"],
     deps = [
         ":character_set",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -121,6 +127,7 @@ cc_library(
         ":numeric_literal",
         ":string_literal",
         ":token_kind",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
@@ -159,6 +166,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/tokenized_buffer/*"]),
     deps = [
         ":tokenized_buffer",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",

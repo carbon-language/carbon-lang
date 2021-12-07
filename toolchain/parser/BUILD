@@ -35,6 +35,7 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":precedence",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
@@ -78,6 +79,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":parse_tree",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lexer:tokenized_buffer",
