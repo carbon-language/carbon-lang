@@ -110,6 +110,17 @@ googletest_version = "075810f7a20405ea09a93f68847d6e963212fa62"
 
 http_archive(
     name = "com_google_googletest",
+    patch_cmds = [
+        # Silence clang-tidy modernize-use-trailing-return-type issues.
+        "sed -i 's/" +
+        "type& operator=(type const&) = delete/" +
+        "auto operator=(type const\\&) -> type\\& = delete/" +
+        "' googletest/include/gtest/internal/gtest-port.h",
+        "sed -i 's/" +
+        "type& operator=(type&&) noexcept = delete/" +
+        "auto operator=(type\\&\\&) noexcept -> type\\& = delete/" +
+        "' googletest/include/gtest/internal/gtest-port.h",
+    ],
     sha256 = "19949c33e795197dbb8610672c18bff447dc31faef3257665d69d1bf0884d67b",
     strip_prefix = "googletest-%s" % googletest_version,
     urls = ["https://github.com/google/googletest/archive/%s.zip" % googletest_version],
