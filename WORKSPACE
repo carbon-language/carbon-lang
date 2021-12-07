@@ -112,11 +112,11 @@ http_archive(
     name = "com_google_googletest",
     patch_cmds = [
         # Silence clang-tidy modernize-use-trailing-return-type TEST_F issues.
-        "sed -i 's/" +
+        "sed -i.bak 's/" +
         "type& operator=(type const&) = delete/" +
         "auto operator=(type const\\&) -> type\\& = delete/" +
         "' googletest/include/gtest/internal/gtest-port.h",
-        "sed -i 's/" +
+        "sed -i.bak 's/" +
         "type& operator=(type&&) noexcept = delete/" +
         "auto operator=(type\\&\\&) noexcept -> type\\& = delete/" +
         "' googletest/include/gtest/internal/gtest-port.h",
