@@ -782,13 +782,22 @@ static inline void emitDwarfLineTable(
 }
 
 void DwarfLineTable::emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
-                            Optional<MCDwarfLineStr> &LineStr) const {
+                            Optional<MCDwarfLineStr> &LineStr,
+                            BinaryContext &BC) const {
   if (!RawData.empty()) {
     assert(MCLineSections.getMCLineEntries().empty() &&
            InputSequences.empty() &&
            "cannot combine raw data with new line entries");
     MCOS->emitLabel(getLabel());
     MCOS->emitBytes(RawData);
+
+    // Emit fake relocation for RuntimeDyld to always allocate the section.
+    //
+    // FIXME: remove this once RuntimeDyld stops skipping allocatable sections
+    //        without relocations.
+    MCOS->emitRelocDirective(
+        *MCConstantExpr::create(0, *BC.Ctx), "BFD_RELOC_NONE",
+        MCSymbolRefExpr::create(getLabel(), *BC.Ctx), SMLoc(), *BC.STI);
 
     return;
   }
@@ -830,7 +839,7 @@ void DwarfLineTable::emit(BinaryContext &BC, MCStreamer &Streamer) {
 
   // Handle the rest of the Compile Units.
   for (auto &CUIDTablePair : LineTables) {
-    CUIDTablePair.second.emitCU(&Streamer, Params, LineStr);
+    CUIDTablePair.second.emitCU(&Streamer, Params, LineStr, BC);
   }
 }
 

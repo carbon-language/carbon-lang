@@ -600,7 +600,7 @@ public:
 
   /// Emit the Dwarf file and the line tables for a given CU.
   void emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
-              Optional<MCDwarfLineStr> &LineStr) const;
+              Optional<MCDwarfLineStr> &LineStr, BinaryContext &BC) const;
 
   Expected<unsigned> tryGetFile(StringRef &Directory, StringRef &FileName,
                                 Optional<MD5::MD5Result> Checksum,
