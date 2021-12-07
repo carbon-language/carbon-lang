@@ -3802,7 +3802,7 @@ Since at most one library can define impls with a given type structure, all
 impls with a given type structure must be in the same library. Furthermore by
 the [impl declaration access rules](#access), they will be defined in the API
 file for the library if they could match any query from outside the library. If
-there are more than one impls with that type structure, they must be written
+there is more than one impl with that type structure, they must be written
 together in a prioritization block. Once a type structure is selected for a
 query, the first impl in the prioritization block that matches is selected.
 
@@ -3838,7 +3838,7 @@ considered to have the intersection impl with type structure
 considered the rules mentioned explicitly, then `impl (A, ?, C, ?) as I` from
 library C is the most specific. The advantage of the implicit intersection rule
 is that if library B is changed to add an impl with type structure
-`impl (A, B, ?, D) as I` impl, it won't shift which library is serving that
+`impl (A, B, ?, D) as I`, it won't shift which library is serving that
 query.
 
 #### Acyclic rule
@@ -3946,7 +3946,7 @@ doesn't increase when recursing?
 #### Comparison to Rust
 
 Rust has been designing a specialization feature, but it has not been completed.
-Luckily, Rust team membersy have done a lot of blogging during their design
+Luckily, Rust team members have done a lot of blogging during their design
 process, so Carbon can benefit from the work they have done. However, getting
 specialization to work for Rust is complicated by the need to maintain
 compatibility with existing Rust code. This motivates a number of Rust rules
