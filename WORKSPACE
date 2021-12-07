@@ -106,7 +106,7 @@ http_archive(
 # GoogleTest libraries
 ###############################################################################
 
-# Version as of 2021-12-07. Fixes a clang-tidy issue.
+# Version as of 2021-12-07. Not a major release, but gets a clang-tidy fix.
 googletest_version = "4c5650f68866e3c2e60361d5c4c95c6f335fb64b"
 
 http_archive(
