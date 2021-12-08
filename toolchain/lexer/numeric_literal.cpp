@@ -46,7 +46,7 @@ struct IrregularDigitSeparators {
       "syntax-irregular-digit-separators";
 
   auto Format() -> std::string {
-    CHECK((radix == 10 || radix == 16)) << "unexpected radix";
+    CHECK((radix == 10 || radix == 16)) << "unexpected radix: " << radix;
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
