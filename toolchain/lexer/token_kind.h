@@ -64,12 +64,12 @@ class TokenKind {
   // The token kind must be an opening symbol.
   [[nodiscard]] auto GetClosingSymbol() const -> TokenKind;
 
-  // Test whether this kind of token is an closing symbol for a group.
+  // Test whether this kind of token is a closing symbol for a group.
   [[nodiscard]] auto IsClosingSymbol() const -> bool;
 
   // Returns the associated opening symbol for a closing symbol.
   //
-  // The token kind must be an closing symbol.
+  // The token kind must be a closing symbol.
   [[nodiscard]] auto GetOpeningSymbol() const -> TokenKind;
 
   // Test whether this kind of token is a keyword.

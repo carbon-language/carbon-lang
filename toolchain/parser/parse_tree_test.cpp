@@ -1159,5 +1159,21 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
                              {"text", ""}}}));
 }
 
+TEST_F(ParseTreeTest, ParenMatchRegression) {
+  // A regression test that the search for the closing `)` doesn't end early on
+  // the closing `}` when it skips over the nested scope.
+  TokenizedBuffer tokens = GetTokenizedBuffer("var = (foo {})");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+  EXPECT_THAT(
+      tree, MatchParseTreeNodes(
+                {MatchVariableDeclaration(
+                     HasError, MatchVariableInitializer(
+                                   "=", MatchParenExpression(
+                                            HasError, MatchNameReference("foo"),
+                                            MatchParenExpressionEnd()))),
+                 MatchFileEnd()}));
+}
+
 }  // namespace
 }  // namespace Carbon
