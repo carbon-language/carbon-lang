@@ -710,9 +710,10 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
   // to back. Replace with new attributes and patch the DIE.
   if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) &&
       AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc)) {
-    convertToRanges(*DIE.getDwarfUnit(), AbbreviationDecl, AbbrevWriter,
-                    RangesBase);
-    convertToRanges(DIE, DebugRangesOffset, DebugInfoPatcher, RangesBase);
+    convertToRangesPatchAbbrev(*DIE.getDwarfUnit(), AbbreviationDecl,
+                               AbbrevWriter, RangesBase);
+    convertToRangesPatchDebugInfo(DIE, DebugRangesOffset, DebugInfoPatcher,
+                                  RangesBase);
   } else {
     if (opts::Verbosity >= 1)
       errs() << "BOLT-ERROR: cannot update ranges for DIE at offset 0x"
@@ -1332,7 +1333,7 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
   else
     RangesSectionOffset = RangesSectionWriter->addRanges(Ranges);
 
-  convertToRanges(DIE, RangesSectionOffset, DebugInfoPatcher);
+  convertToRangesPatchDebugInfo(DIE, RangesSectionOffset, DebugInfoPatcher);
 }
 
 void DWARFRewriter::convertPending(const DWARFUnit &Unit,
@@ -1342,7 +1343,7 @@ void DWARFRewriter::convertPending(const DWARFUnit &Unit,
   if (ConvertedRangesAbbrevs.count(Abbrev))
     return;
 
-  convertToRanges(Unit, Abbrev, AbbrevWriter);
+  convertToRangesPatchAbbrev(Unit, Abbrev, AbbrevWriter);
 
   auto I = PendingRanges.find(Abbrev);
   if (I != PendingRanges.end()) {
@@ -1485,33 +1486,23 @@ void DWARFRewriter::patchLowHigh(DWARFDie DIE, DebugAddressRange Range,
                                    HighPCVal->Size);
 }
 
-void DWARFRewriter::convertToRanges(const DWARFUnit &Unit,
-                                    const DWARFAbbreviationDeclaration *Abbrev,
-                                    DebugAbbrevWriter &AbbrevWriter,
-                                    Optional<uint64_t> RangesBase) {
+void DWARFRewriter::convertToRangesPatchAbbrev(
+    const DWARFUnit &Unit, const DWARFAbbreviationDeclaration *Abbrev,
+    DebugAbbrevWriter &AbbrevWriter, Optional<uint64_t> RangesBase) {
   auto getAttributeForm = [&Abbrev](const dwarf::Attribute Attr) {
     Optional<uint32_t> Index = Abbrev->findAttributeIndex(Attr);
     assert(Index && "attribute not found");
     return Abbrev->getFormByIndex(*Index);
   };
-  dwarf::Form HighPCForm = getAttributeForm(dwarf::DW_AT_high_pc);
   dwarf::Form LowPCForm = getAttributeForm(dwarf::DW_AT_low_pc);
 
   // DW_FORM_GNU_addr_index is already variable encoding so nothing to do
-  // there. If HighForm is 8 bytes need to change low_pc to be variable
-  // encoding to consume extra bytes from high_pc, since DW_FORM_sec_offset is
-  // 4 bytes for DWARF32.
-  // FIXME: update comments
+  // there.
   if (RangesBase) {
     assert(LowPCForm != dwarf::DW_FORM_GNU_addr_index);
     AbbrevWriter.addAttributePatch(Unit, Abbrev, dwarf::DW_AT_low_pc,
                                    dwarf::DW_AT_GNU_ranges_base,
-                                   dwarf::DW_FORM_indirect);
-  } else if (LowPCForm != dwarf::DW_FORM_GNU_addr_index &&
-             isHighPcFormEightBytes(HighPCForm)) {
-    AbbrevWriter.addAttributePatch(Unit, Abbrev, dwarf::DW_AT_low_pc,
-                                   dwarf::DW_AT_low_pc,
-                                   dwarf::DW_FORM_indirect);
+                                   dwarf::DW_FORM_sec_offset);
   }
 
   AbbrevWriter.addAttributePatch(Unit, Abbrev, dwarf::DW_AT_high_pc,
@@ -1519,53 +1510,30 @@ void DWARFRewriter::convertToRanges(const DWARFUnit &Unit,
                                  dwarf::DW_FORM_sec_offset);
 }
 
-void DWARFRewriter::convertToRanges(DWARFDie DIE, uint64_t RangesSectionOffset,
-                                    SimpleBinaryPatcher &DebugInfoPatcher,
-                                    Optional<uint64_t> RangesBase) {
+void DWARFRewriter::convertToRangesPatchDebugInfo(
+    DWARFDie DIE, uint64_t RangesSectionOffset,
+    SimpleBinaryPatcher &DebugInfoPatcher, Optional<uint64_t> RangesBase) {
   Optional<AttrInfo> LowPCVal = None;
   Optional<AttrInfo> HighPCVal = None;
   getRangeAttrData(DIE, LowPCVal, HighPCVal);
   uint64_t LowPCOffset = LowPCVal->Offset;
   uint64_t HighPCOffset = HighPCVal->Offset;
 
-  // Size to fill with the first field (DW_AT_low_pc or DW_AT_GNU_ranges_base).
-  unsigned NumBytesToFill = 0;
-  assert(DIE.getDwarfUnit()->getAddressByteSize() == 8);
-  if (isHighPcFormEightBytes(HighPCVal->V.getForm())) {
-    NumBytesToFill = 12;
-  } else if (HighPCVal->V.getForm() == dwarf::DW_FORM_data4) {
-    NumBytesToFill = 8;
-  } else {
-    llvm_unreachable("unexpected DW_AT_high_pc form");
-  }
-
   std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
   uint32_t BaseOffset = 0;
   if (LowPCVal->V.getForm() == dwarf::DW_FORM_GNU_addr_index) {
     // Use ULEB128 for the value.
     DebugInfoPatcher.addUDataPatch(LowPCOffset, 0,
-                                   std::abs(int(HighPCOffset - LowPCOffset)) +
-                                       NumBytesToFill - 8);
+                                   std::abs(int(HighPCOffset - LowPCOffset)));
     // Ranges are relative to DW_AT_GNU_ranges_base.
     BaseOffset = DebugInfoPatcher.getRangeBase();
   } else {
-    if (RangesBase) {
-      assert(NumBytesToFill == LowPCVal->Size &&
-             "Bytes to fill not equal to LocPCVal Size");
-      DebugInfoPatcher.addUDataPatch(LowPCOffset, dwarf::DW_FORM_udata, 1);
-      DebugInfoPatcher.addUDataPatch(LowPCOffset + 1, *RangesBase,
-                                     LowPCVal->Size - 1);
-    } else if (NumBytesToFill == 12) {
-      // Creatively encoding dwarf::DW_FORM_addr in to 4 bytes.
-      // Write an indirect 0 value for DW_AT_low_pc so that we can fill
-      // 12 bytes of space.
-      DebugInfoPatcher.addUDataPatch(LowPCOffset, dwarf::DW_FORM_addr, 4);
-      DebugInfoPatcher.addLE64Patch(LowPCOffset + 4, 0);
-    } else {
-      // NumBytesToFill == 8
+    // If case DW_AT_low_pc was converted into DW_AT_GNU_ranges_base
+    if (RangesBase)
+      DebugInfoPatcher.addLE32Patch(LowPCOffset, *RangesBase, 8);
+    else
       DebugInfoPatcher.addLE64Patch(LowPCOffset, 0);
-    }
   }
-  DebugInfoPatcher.addLE32Patch(HighPCOffset + NumBytesToFill - 8,
-                                RangesSectionOffset - BaseOffset);
+  DebugInfoPatcher.addLE32Patch(HighPCOffset, RangesSectionOffset - BaseOffset,
+                                HighPCVal->Size);
 }

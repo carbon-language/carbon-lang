@@ -139,17 +139,17 @@ class DWARFRewriter {
 
   /// Convert \p Abbrev from using a simple DW_AT_(low|high)_pc range to
   /// DW_AT_ranges with optional \p RangesBase.
-  void convertToRanges(const DWARFUnit &Unit,
-                       const DWARFAbbreviationDeclaration *Abbrev,
-                       DebugAbbrevWriter &AbbrevWriter,
-                       Optional<uint64_t> RangesBase = None);
+  void convertToRangesPatchAbbrev(const DWARFUnit &Unit,
+                                  const DWARFAbbreviationDeclaration *Abbrev,
+                                  DebugAbbrevWriter &AbbrevWriter,
+                                  Optional<uint64_t> RangesBase = None);
 
   /// Update \p DIE that was using DW_AT_(low|high)_pc with DW_AT_ranges offset.
   /// Updates to the DIE should be synced with abbreviation updates using the
   /// function above.
-  void convertToRanges(DWARFDie DIE, uint64_t RangesSectionOffset,
-                       SimpleBinaryPatcher &DebugInfoPatcher,
-                       Optional<uint64_t> RangesBase = None);
+  void convertToRangesPatchDebugInfo(DWARFDie DIE, uint64_t RangesSectionOffset,
+                                     SimpleBinaryPatcher &DebugInfoPatcher,
+                                     Optional<uint64_t> RangesBase = None);
 
   /// Same as above, but takes a vector of \p Ranges as a parameter.
   void convertToRanges(DWARFDie DIE, const DebugAddressRangesVector &Ranges,
