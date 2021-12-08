@@ -3868,27 +3868,74 @@ external impl [U:! Type, T:! ComparableWith(U)]
 This is a cycle where which types implement `ComparableWith` determines which
 types implement the same interface.
 
-**Example:** Cycles can create contradictions in the type system. Consider these
-two blanket `impl` declarations:
+**Example:** Cycles can create situations where there are multiple ways of
+selecting impls that are inconsistent with each other. Consider an interface
+with two blanket `impl` declarations:
 
 ```
-impl [T:! Type, U:! ImplicitAs(T)] T as CommonTypeWith(U) { ... }
-impl [T:! Type, U:! ImplicitAs(T) & CommonTypeWith(T)]
-    T as CommonTypeWith(U) { ... }
+class Y {}
+class N {}
+interface True {}
+impl Y as True {}
+interface Z(T:! Type) { let Cond:! Type; }
+match_first {
+  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U) {
+    let Cond:! Type = N;
+  }
+  impl [T:! Type, U:! Type] T as Z(U) {
+    let Cond:! Type = Y;
+  }
+}
 ```
 
-If `U is ImplicitAs(T)`, then it will choose the second impl if
-`U is CommonTypeWith(T)`. If both `T is ImplicitAs(U)` and `U is ImplicitAs(T)`,
-then which of the two impls will be used?
+What is `i8.(Z(i16).Cond)`? It depends on which of the two blanket impls are
+selected.
 
--   `U is ImplicitAs(T)` gives a definition of `T as CommonTypeWith(U)` using
-    the first impl as long as not `U is CommonTypeWith(T)`.
--   `T is ImplicitAs(U)` gives a definition of `U as CommonTypeWith(T)` using
-    the first impl as long as not `T is CommonTypeWith(U)`.
+-   An implementation of `Z(i16)` for `i8` could come from the first blanket
+    impl with `T == i8` and `U == i16` if `i16 is Z(i8)` and
+    `i16.(Z(i8).Cond) == Y`. This condition is satisfied if `i16` implements
+    `Z(i8)` using the second blanket impl. In this case,
+    `i8.(Z(i16).Cond) == N`.
+-   Equally well `Z(i8)` could be implemented for `i16` using the first blanket
+    impl and `Z(i16)` for `i8` using the second. In this case,
+    `i8.(Z(i16).Cond) == Y`.
 
-The compiler won't know which blanket impl to select unless it can determine
-whether a type implements an interface, but the answer to that question can be
-affected by which blanket impl we select.
+There is no reason to to prefer one of these outcomes over the other.
+
+**Example:** Further, cycles can create contradictions in the type system:
+
+```
+class A {}
+class B {}
+class C {}
+interface D(T:! Type) { let Cond:! Type; }
+match_first {
+  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U) {
+    let Cond:! Type = C;
+  }
+  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U) {
+    let Cond:! Type = B;
+  }
+  impl [T:! Type, U:! Type] T as D(U) {
+    let Cond:! Type = A;
+  }
+}
+```
+
+What is `i8.(D(i16).Cond)`? The answer is determined by which blanket impl is
+selected to implement `D(i16)` for `i8`:
+
+-   If the third blanket impl is selected, then `i8.(D(i16).Cond) == A`. This
+    implies that `i16.(D(i8).Cond) == B` using the second blanket impl. If that
+    is true, though, then our first impl choice was incorrect, since the first
+    blanket impl applies and is higher priority. So `i8.(D(i16).Cond) == C`. But
+    that means that `i16 as D(i8)` can't use the second blanket impl.
+-   For the second blanket impl to be selected, so `i8.(D(i16).Cond) == B`,
+    `i16.(D(i8).Cond)` would have to be `A`. This happens when `i16` implements
+    `D(i8)` using the third blanket impl. However, `i8.(D(i16).Cond) == B` means
+    that there is a higher priority implementation of `D(i8).Cond` for `i16`.
+
+In either case, we arrive at a contradiction.
 
 The workaround for this problem is to either split an interface in the cycle in
 two, with a blanket implementation of one from the other, or move some of the
