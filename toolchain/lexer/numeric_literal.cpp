@@ -382,7 +382,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   }
 
   CHECK((radix == 10 || radix == 16))
-      << "unexpected radix for digit separator checks";
+      << "unexpected radix " << radix << " for digit separator checks";
 
   auto diagnose_irregular_digit_separators = [&]() {
     emitter_.EmitError<IrregularDigitSeparators>(text.begin(),
