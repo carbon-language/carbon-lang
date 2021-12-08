@@ -597,7 +597,7 @@ considered the most specific:
 -   Given two type structures, find the first difference when read from
     left-to-right. The one with a `?` is less specific, the one with a concrete
     type name in that position is more specific.
--   If there are more than one `impl` declarations with the most specific type
+-   If there is more than one `impl` declaration with the most specific type
     structure, pick the one listed first in the priority ordering.
 
 To ensure [coherence](goals.md#coherence), an `impl` may only be declared in a
