@@ -3838,8 +3838,7 @@ considered to have the intersection impl with type structure
 considered the rules mentioned explicitly, then `impl (A, ?, C, ?) as I` from
 library C is the most specific. The advantage of the implicit intersection rule
 is that if library B is changed to add an impl with type structure
-`impl (A, B, ?, D) as I`, it won't shift which library is serving that
-query.
+`impl (A, B, ?, D) as I`, it won't shift which library is serving that query.
 
 #### Acyclic rule
 
