@@ -314,7 +314,7 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 auto LexedNumericLiteral::Parser::CheckDigitSequence(
     llvm::StringRef text, int radix, bool allow_digit_separators)
     -> CheckDigitSequenceResult {
-  CHECK((radix == 2 || radix == 10 || radix == 16)) << "unknown radix";
+  CHECK((radix == 2 || radix == 10 || radix == 16)) << "unknown radix: " << radix;
 
   std::bitset<256> valid_digits;
   if (radix == 2) {
