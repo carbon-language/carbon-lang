@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 
+#include "common/check.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -210,11 +211,11 @@ ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
       emitter_(emitter),
       position_(tokens_.Tokens().begin()),
       end_(tokens_.Tokens().end()) {
-  assert(std::find_if(position_, end_,
-                      [&](TokenizedBuffer::Token t) {
-                        return tokens_.GetKind(t) == TokenKind::EndOfFile();
-                      }) != end_ &&
-         "No EndOfFileToken in token buffer.");
+  CHECK(std::find_if(position_, end_,
+                     [&](TokenizedBuffer::Token t) {
+                       return tokens_.GetKind(t) == TokenKind::EndOfFile();
+                     }) != end_)
+      << "No EndOfFileToken in token buffer.";
 }
 
 auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
@@ -237,17 +238,17 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position_);
 
-  assert(tree.Verify() && "Parse tree built but does not verify!");
+  CHECK(tree.Verify()) << "Parse tree built but does not verify!";
   return tree;
 }
 
 auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
-  assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
-  assert(NextTokenIs(kind) && "The current token is the wrong kind!");
+  CHECK(kind != TokenKind::EndOfFile()) << "Cannot consume the EOF token!";
+  CHECK(NextTokenIs(kind)) << "The current token is the wrong kind!";
   TokenizedBuffer::Token t = *position_;
   ++position_;
-  assert(position_ != end_ &&
-         "Reached end of tokens without finding EOF token.");
+  CHECK(position_ != end_)
+      << "Reached end of tokens without finding EOF token.";
   return t;
 }
 
@@ -323,9 +324,9 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
 }
 
 auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
-  assert(t >= *position_ && "Tried to skip backwards.");
+  CHECK(t >= *position_) << "Tried to skip backwards.";
   position_ = TokenizedBuffer::TokenIterator(t);
-  assert(position_ != end_ && "Skipped past EOF.");
+  CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
 auto ParseTree::Parser::FindNextOf(
@@ -448,7 +449,7 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
         auto end_of_element = FindNextOf({TokenKind::Comma(), close});
         // The lexer guarantees that parentheses are balanced.
-        assert(end_of_element && "missing matching `)` for `(`");
+        CHECK(end_of_element) << "missing matching `)` for `(`";
         SkipTo(*end_of_element);
       }
 
@@ -907,7 +908,7 @@ static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
 }
 
 auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
-  assert(!AtEndOfFile() && "Expected an operator token.");
+  CHECK(!AtEndOfFile()) << "Expected an operator token.";
 
   bool leading_space = tokens_.HasLeadingWhitespace(*position_);
   bool trailing_space = tokens_.HasTrailingWhitespace(*position_);

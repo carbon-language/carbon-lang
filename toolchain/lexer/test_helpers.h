@@ -8,6 +8,7 @@
 #include <array>
 #include <string>
 
+#include "common/check.h"
 #include "gmock/gmock.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -26,8 +27,8 @@ class SingleTokenDiagnosticTranslator
       : token_(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
-    assert(llvm::is_sorted(std::array{token_.begin(), pos, token_.end()}) &&
-           "invalid diagnostic location");
+    CHECK(llvm::is_sorted(std::array{token_.begin(), pos, token_.end()}))
+        << "invalid diagnostic location";
     llvm::StringRef prefix = token_.take_front(pos - token_.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');
     if (before_last_newline.size() == prefix.size()) {

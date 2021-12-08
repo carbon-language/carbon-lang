@@ -10,6 +10,7 @@
 #include <iterator>
 #include <string>
 
+#include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -214,7 +215,7 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    assert(source_text.empty() && "Cannot reach here w/o finishing the text!");
+    CHECK(source_text.empty()) << "Cannot reach here w/o finishing the text!";
     // Update the line length as this is also the end of a line.
     current_line_info->length = current_column;
     return false;
@@ -428,7 +429,7 @@ class TokenizedBuffer::Lexer {
       open_groups.pop_back();
       token_emitter.EmitError<MismatchedClosing>(opening_token);
 
-      assert(!buffer.Tokens().empty() && "Must have a prior opening token!");
+      CHECK(!buffer.Tokens().empty()) << "Must have a prior opening token!";
       Token prev_token = buffer.Tokens().end()[-1];
 
       // TODO: do a smarter backwards scan for where to put the closing
@@ -468,7 +469,7 @@ class TokenizedBuffer::Lexer {
     // Take the valid characters off the front of the source buffer.
     llvm::StringRef identifier_text =
         source_text.take_while([](char c) { return IsAlnum(c) || c == '_'; });
-    assert(!identifier_text.empty() && "Must have at least one character!");
+    CHECK(!identifier_text.empty()) << "Must have at least one character!";
     int identifier_column = current_column;
     current_column += identifier_text.size();
     source_text = source_text.drop_front(identifier_text.size());
@@ -563,7 +564,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     if (!result) {
       result = lexer.LexError(source_text);
     }
-    assert(result && "No token was lexed.");
+    CHECK(result) << "No token was lexed.";
   }
 
   // The end-of-file token is always considered to be whitespace.
@@ -616,7 +617,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     int64_t token_start = line_info.start + token_info.column;
     llvm::Optional<LexedNumericLiteral> relexed_token =
         LexedNumericLiteral::Lex(source_->Text().substr(token_start));
-    assert(relexed_token && "Could not reform numeric literal token.");
+    CHECK(relexed_token) << "Could not reform numeric literal token.";
     return relexed_token->Text();
   }
 
@@ -627,7 +628,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     int64_t token_start = line_info.start + token_info.column;
     llvm::Optional<LexedStringLiteral> relexed_token =
         LexedStringLiteral::Lex(source_->Text().substr(token_start));
-    assert(relexed_token && "Could not reform string literal token.");
+    CHECK(relexed_token) << "Could not reform string literal token.";
     return relexed_token->Text();
   }
 
@@ -645,30 +646,30 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return llvm::StringRef();
   }
 
-  assert(token_info.kind == TokenKind::Identifier() &&
-         "Only identifiers have stored text!");
+  CHECK(token_info.kind == TokenKind::Identifier())
+      << "Only identifiers have stored text!";
   return GetIdentifierText(token_info.id);
 }
 
 auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
   auto& token_info = GetTokenInfo(token);
-  assert(token_info.kind == TokenKind::Identifier() &&
-         "The token must be an identifier!");
+  CHECK(token_info.kind == TokenKind::Identifier())
+      << "The token must be an identifier!";
   return token_info.id;
 }
 
 auto TokenizedBuffer::GetIntegerLiteral(Token token) const
     -> const llvm::APInt& {
   auto& token_info = GetTokenInfo(token);
-  assert(token_info.kind == TokenKind::IntegerLiteral() &&
-         "The token must be an integer literal!");
+  CHECK(token_info.kind == TokenKind::IntegerLiteral())
+      << "The token must be an integer literal!";
   return literal_int_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   auto& token_info = GetTokenInfo(token);
-  assert(token_info.kind == TokenKind::RealLiteral() &&
-         "The token must be a real literal!");
+  CHECK(token_info.kind == TokenKind::RealLiteral())
+      << "The token must be a real literal!";
 
   // Note that every real literal is at least three characters long, so we can
   // safely look at the second character to determine whether we have a decimal
@@ -683,32 +684,32 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
 
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
   auto& token_info = GetTokenInfo(token);
-  assert(token_info.kind == TokenKind::StringLiteral() &&
-         "The token must be a string literal!");
+  CHECK(token_info.kind == TokenKind::StringLiteral())
+      << "The token must be a string literal!";
   return literal_string_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
     -> const llvm::APInt& {
   auto& token_info = GetTokenInfo(token);
-  assert(token_info.kind.IsSizedTypeLiteral() &&
-         "The token must be a sized type literal!");
+  CHECK(token_info.kind.IsSizedTypeLiteral())
+      << "The token must be a sized type literal!";
   return literal_int_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
     -> Token {
   auto& opening_token_info = GetTokenInfo(opening_token);
-  assert(opening_token_info.kind.IsOpeningSymbol() &&
-         "The token must be an opening group symbol!");
+  CHECK(opening_token_info.kind.IsOpeningSymbol())
+      << "The token must be an opening group symbol!";
   return opening_token_info.closing_token;
 }
 
 auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
     -> Token {
   auto& closing_token_info = GetTokenInfo(closing_token);
-  assert(closing_token_info.kind.IsClosingSymbol() &&
-         "The token must be an closing group symbol!");
+  CHECK(closing_token_info.kind.IsClosingSymbol())
+      << "The token must be an closing group symbol!";
   return closing_token_info.opening_token;
 }
 
@@ -752,7 +753,7 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 //
 // This routine requires its argument to be *non-negative*.
 static auto ComputeDecimalPrintedWidth(int number) -> int {
-  assert(number >= 0 && "Negative numbers are not supported.");
+  CHECK(number >= 0) << "Negative numbers are not supported.";
   if (number == 0) {
     return 1;
   }
@@ -886,8 +887,8 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   bool incomplete_line_info = line_it == buffer_->line_infos_.end();
 
   // Step back one line to find the line containing the given position.
-  assert(line_it != buffer_->line_infos_.begin() &&
-         "location precedes the start of the first line");
+  CHECK(line_it != buffer_->line_infos_.begin())
+      << "location precedes the start of the first line";
   --line_it;
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
