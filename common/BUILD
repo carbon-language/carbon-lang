@@ -37,9 +37,15 @@ cc_test(
 )
 
 cc_library(
+    name = "metaprogramming",
+    hdrs = ["metaprogramming.h"],
+)
+
+cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
+        ":metaprogramming",
         "@llvm-project//llvm:Support",
     ],
 )
