@@ -373,7 +373,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
   CHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
-      << "given wrong number of digit separators";
+      << "given wrong number of digit separators: " << num_digit_separators;
 
   if (radix == 2) {
     // There are no restrictions on digit separator placement for binary
