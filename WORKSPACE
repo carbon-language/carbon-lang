@@ -106,11 +106,12 @@ http_archive(
 # GoogleTest libraries
 ###############################################################################
 
-googletest_version = "075810f7a20405ea09a93f68847d6e963212fa62"
+# Version as of 2021-12-07. Not a major release, but gets a clang-tidy fix.
+googletest_version = "4c5650f68866e3c2e60361d5c4c95c6f335fb64b"
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "19949c33e795197dbb8610672c18bff447dc31faef3257665d69d1bf0884d67b",
+    sha256 = "238ee428a2cde2f07c6925e9e2d237dc5aad52532c6ba584cb260d46d7b78455",
     strip_prefix = "googletest-%s" % googletest_version,
     urls = ["https://github.com/google/googletest/archive/%s.zip" % googletest_version],
 )
