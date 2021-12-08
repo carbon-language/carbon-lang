@@ -3560,13 +3560,52 @@ class Pair(T:! Type, U:! Type) { ... }
 external impl [T:! Type] Pair(T, T) as Foo(T) { ... }
 ```
 
-You may also define the `impl` inline:
+You may also define the `impl` inline, in which case it can be internal:
 
 ```
 class Pair(T:! Type, U:! Type) {
   impl Pair(T, T) as Foo(T) { ... }
 }
 ```
+
+**Clarification:** Method lookup will look at all internal implementations,
+whether or not the conditions on those implementations hold for the `Self` type.
+If the conditions don't hold, then the call will be rejected because `Self` has
+the wrong type, just like any other argument/parameter type mismatch. This means
+types may not implement two different interfaces internally if they share a
+member name, even if their conditions are mutually exclusive:
+
+```
+class X(T:! Type) {
+  impl X(i32) as Foo {
+    fn F[me: Self]();
+  }
+  impl X(i64) as Bar {
+    // ❌ Illegal: name conflict between `Foo.F` and `Bar.F`
+    fn F[me: Self](n: i64);
+  }
+}
+```
+
+However, the same interface may be implemented multiple times as long as there
+is no overlap in the conditions:
+
+```
+class X(T:! Type) {
+  impl X(i32) as Foo {
+    fn F[me: Self]();
+  }
+  impl X(i64) as Foo {
+    // ✅ Allowed: `X(T).F` consistently means `X(T).(Foo.F)`
+    fn F[me: Self]();
+  }
+}
+```
+
+This allows a type to express that it implements an interface for a list of
+types, possibly with different implementations.
+
+In general, `X(T).F` can only mean one thing, regardless of `T`.
 
 **Concern:** The conditional conformance feature makes the question "is this
 interface implemented for this type" undecidable in general.
