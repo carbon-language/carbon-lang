@@ -678,6 +678,10 @@ void DWARFRewriter::updateLineTableOffsets(const MCAsmLayout &Layout) {
     return *Offset;
   };
 
+  const uint64_t Reloc32Type = BC.isAArch64()
+                                   ? static_cast<uint64_t>(ELF::R_AARCH64_ABS32)
+                                   : static_cast<uint64_t>(ELF::R_X86_64_32);
+
   for (const std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units()) {
     const unsigned CUID = CU->getOffset();
     MCSymbol *Label = BC.getDwarfLineTable(CUID).getLabel();
@@ -693,7 +697,7 @@ void DWARFRewriter::updateLineTableOffsets(const MCAsmLayout &Layout) {
     const uint64_t LineTableOffset = Layout.getSymbolOffset(*Label);
     DebugLineOffsetMap[GetStatementListValue(CU.get())] = LineTableOffset;
     assert(DbgInfoSection && ".debug_info section must exist");
-    DbgInfoSection->addRelocation(AttributeOffset, nullptr, ELF::R_X86_64_32,
+    DbgInfoSection->addRelocation(AttributeOffset, nullptr, Reloc32Type,
                                   LineTableOffset, 0, /*Pending=*/true);
   }
 
@@ -707,7 +711,7 @@ void DWARFRewriter::updateLineTableOffsets(const MCAsmLayout &Layout) {
     auto Iter = DebugLineOffsetMap.find(GetStatementListValue(Unit));
     assert(Iter != DebugLineOffsetMap.end() &&
            "Type Unit Updated Line Number Entry does not exist.");
-    TypeInfoSection->addRelocation(AttributeOffset, nullptr, ELF::R_X86_64_32,
+    TypeInfoSection->addRelocation(AttributeOffset, nullptr, Reloc32Type,
                                    Iter->second, 0, /*Pending=*/true);
   }
 

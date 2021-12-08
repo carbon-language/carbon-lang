@@ -141,34 +141,14 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
     uint64_t Value = Reloc.Addend;
     if (Reloc.Symbol)
       Value += Resolver(Reloc.Symbol);
-    switch (Reloc.Type) {
-    default:
-      LLVM_DEBUG(dbgs() << Reloc.Type << '\n';);
-      llvm_unreachable("unhandled relocation type");
-    case ELF::R_X86_64_64:
-    case ELF::R_X86_64_32: {
-      OS.pwrite(reinterpret_cast<const char *>(&Value),
-                Relocation::getSizeForType(Reloc.Type),
-                SectionFileOffset + Reloc.Offset);
-      break;
-    }
-    case ELF::R_X86_64_PC32: {
-      Value -= SectionAddress + Reloc.Offset;
-      OS.pwrite(reinterpret_cast<const char *>(&Value),
-                Relocation::getSizeForType(Reloc.Type),
-                SectionFileOffset + Reloc.Offset);
-      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
-                        << Twine::utohexstr(Value) << " of size "
-                        << Relocation::getSizeForType(Reloc.Type)
-                        << " at offset 0x" << Twine::utohexstr(Reloc.Offset)
-                        << " address 0x"
-                        << Twine::utohexstr(SectionAddress + Reloc.Offset)
-                        << " Offset 0x"
-                        << Twine::utohexstr(SectionFileOffset + Reloc.Offset)
-                        << '\n';);
-      break;
-    }
-    }
+
+    Value = Relocation::adjustValue(Reloc.Type, Value,
+                                    SectionAddress + Reloc.Offset);
+
+    OS.pwrite(reinterpret_cast<const char *>(&Value),
+              Relocation::getSizeForType(Reloc.Type),
+              SectionFileOffset + Reloc.Offset);
+
     LLVM_DEBUG(
         dbgs() << "BOLT-DEBUG: writing value 0x" << Twine::utohexstr(Value)
                << " of size " << Relocation::getSizeForType(Reloc.Type)
