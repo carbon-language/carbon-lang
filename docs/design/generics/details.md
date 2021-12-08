@@ -3819,18 +3819,22 @@ match_first {
 ```
 
 **Open question:** How do we pick between two different prioritization blocks
-when they contain a mixture of type structures? There are two options:
+when they contain a mixture of type structures? There are three options:
 
 -   Prioritization blocks implicitly define all non-empty intersections of
     contained impls, which are then selected by their type structure.
 -   The compiler first picks the impl with the type pattern most favored for the
     query, and then picks the definition of the highest priority matching impl
     in the same prioritization block block.
+-   All the impls in a prioritization block are required to have the same type
+    structure, at a cost in expressivity.
 
-To see the difference, consider two libraries with type structures as follows:
+To see the difference between the first two options, consider two libraries with
+type structures as follows:
 
--   Library B has `impl (A, ?, ?, D) as I` and `impl (?, B, ?, D) as I`
--   Library C has `impl (A, ?, C, ?) as I`
+-   Library B has `impl (A, ?, ?, D) as I` and `impl (?, B, ?, D) as I` in the
+    same prioritization block.
+-   Library C has `impl (A, ?, C, ?) as I`.
 
 For the query `(A, B, C, D) as I`, using the intersection rule, library B is
 considered to have the intersection impl with type structure
