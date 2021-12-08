@@ -6,6 +6,7 @@
 
 #include <bitset>
 
+#include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
@@ -45,7 +46,7 @@ struct IrregularDigitSeparators {
       "syntax-irregular-digit-separators";
 
   auto Format() -> std::string {
-    assert((radix == 10 || radix == 16) && "unexpected radix");
+    CHECK((radix == 10 || radix == 16)) << "unexpected radix: " << radix;
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
@@ -127,7 +128,7 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
         IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
-      assert(!seen_plus_minus && "should only consume one + or -");
+      CHECK(!seen_plus_minus) << "should only consume one + or -";
       seen_plus_minus = true;
       continue;
     }
@@ -313,7 +314,8 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 auto LexedNumericLiteral::Parser::CheckDigitSequence(
     llvm::StringRef text, int radix, bool allow_digit_separators)
     -> CheckDigitSequenceResult {
-  assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
+  CHECK((radix == 2 || radix == 10 || radix == 16))
+      << "unknown radix: " << radix;
 
   std::bitset<256> valid_digits;
   if (radix == 2) {
@@ -371,8 +373,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 // correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
-  assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
-         "given wrong number of digit separators");
+  CHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
+      << "given wrong number of digit separators: " << num_digit_separators;
 
   if (radix == 2) {
     // There are no restrictions on digit separator placement for binary
@@ -380,8 +382,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     return;
   }
 
-  assert((radix == 10 || radix == 16) &&
-         "unexpected radix for digit separator checks");
+  CHECK((radix == 10 || radix == 16))
+      << "unexpected radix " << radix << " for digit separator checks";
 
   auto diagnose_irregular_digit_separators = [&]() {
     emitter_.EmitError<IrregularDigitSeparators>(text.begin(),
