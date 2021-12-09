@@ -29,10 +29,11 @@ class NamedEntityView {
  public:
   template <typename NodeType,
             typename = std::enable_if_t<ImplementsNamedEntity<NodeType>>>
+  // NOLINTNEXTLINE(google-explicit-constructor)
   NamedEntityView(Nonnull<const NodeType*> node)
-      : base_(node),
-        static_type_([node]() -> const Value& { return node->static_type(); }) {
-  }
+      : base_(node), static_type_([](const AstNode& node) -> const Value& {
+          return llvm::cast<NodeType>(node).static_type();
+        }) {}
 
   NamedEntityView(const NamedEntityView&) = default;
   NamedEntityView(NamedEntityView&&) = default;
@@ -47,7 +48,7 @@ class NamedEntityView {
   }
 
   // Returns node->static_type()
-  auto static_type() const -> const Value& { return static_type_(); }
+  auto static_type() const -> const Value& { return static_type_(*base_); }
 
   friend auto operator==(const NamedEntityView& lhs,
                          const NamedEntityView& rhs) {
@@ -61,7 +62,7 @@ class NamedEntityView {
 
  private:
   Nonnull<const AstNode*> base_;
-  std::function<const Value&()> static_type_;
+  std::function<const Value&(const AstNode&)> static_type_;
 };
 
 // Maps the names visible in a given scope to the entities they name.
