@@ -113,9 +113,6 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 }
 
 TEST_F(StringLiteralTest, StringLiteralContents) {
-  // We use ""s strings to handle embedded nul characters below.
-  using std::operator""s;
-
   std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
       // Empty strings.
       {R"("")", ""},
