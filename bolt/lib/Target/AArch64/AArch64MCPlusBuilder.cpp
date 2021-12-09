@@ -816,7 +816,7 @@ public:
     return true;
   }
 
-  void createLongTailCall(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  void createLongTailCall(InstructionListType &Seq, const MCSymbol *Target,
                           MCContext *Ctx) override {
     createShortJmp(Seq, Target, Ctx, /*IsTailCall*/ true);
   }
@@ -911,7 +911,7 @@ public:
     return true;
   }
 
-  void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  void createLongJmp(InstructionListType &Seq, const MCSymbol *Target,
                      MCContext *Ctx, bool IsTailCall) override {
     // ip0 (r16) is reserved to the linker (refer to 5.3.1.1 of "Procedure Call
     //   Standard for the ARM 64-bit Architecture (AArch64)".
@@ -968,7 +968,7 @@ public:
     Seq.emplace_back(Inst);
   }
 
-  void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  void createShortJmp(InstructionListType &Seq, const MCSymbol *Target,
                       MCContext *Ctx, bool IsTailCall) override {
     // ip0 (r16) is reserved to the linker (refer to 5.3.1.1 of "Procedure Call
     //   Standard for the ARM 64-bit Architecture (AArch64)".
@@ -977,7 +977,7 @@ public:
     //  add ip0, ip0, imm
     //  br ip0
     MCPhysReg Reg = AArch64::X16;
-    std::vector<MCInst> Insts = materializeAddress(Target, Ctx, Reg);
+    InstructionListType Insts = materializeAddress(Target, Ctx, Reg);
     Insts.emplace_back();
     MCInst &Inst = Insts.back();
     Inst.clear();
@@ -1097,11 +1097,11 @@ public:
     return true;
   }
 
-  std::vector<MCInst> materializeAddress(const MCSymbol *Target, MCContext *Ctx,
+  InstructionListType materializeAddress(const MCSymbol *Target, MCContext *Ctx,
                                          MCPhysReg RegName,
                                          int64_t Addend = 0) const override {
     // Get page-aligned address and add page offset
-    std::vector<MCInst> Insts(2);
+    InstructionListType Insts(2);
     Insts[0].setOpcode(AArch64::ADRP);
     Insts[0].clear();
     Insts[0].addOperand(MCOperand::createReg(RegName));

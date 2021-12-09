@@ -2874,8 +2874,8 @@ public:
     return true;
   }
 
-  std::vector<MCInst> createInlineMemcpy(bool ReturnEnd) const override {
-    std::vector<MCInst> Code;
+  InstructionListType createInlineMemcpy(bool ReturnEnd) const override {
+    InstructionListType Code;
     if (ReturnEnd) {
       Code.emplace_back(MCInstBuilder(X86::LEA64r)
                             .addReg(X86::RAX)
@@ -2897,8 +2897,8 @@ public:
     return Code;
   }
 
-  std::vector<MCInst> createOneByteMemcpy() const override {
-    std::vector<MCInst> Code;
+  InstructionListType createOneByteMemcpy() const override {
+    InstructionListType Code;
     Code.emplace_back(MCInstBuilder(X86::MOV8rm)
                           .addReg(X86::CL)
                           .addReg(X86::RSI)
@@ -2919,10 +2919,10 @@ public:
     return Code;
   }
 
-  std::vector<MCInst>
-  createCmpJE(MCPhysReg RegNo, int64_t Imm, const MCSymbol *Target,
-              MCContext *Ctx) const override {
-    std::vector<MCInst> Code;
+  InstructionListType createCmpJE(MCPhysReg RegNo, int64_t Imm,
+                                  const MCSymbol *Target,
+                                  MCContext *Ctx) const override {
+    InstructionListType Code;
     Code.emplace_back(MCInstBuilder(X86::CMP64ri8)
                           .addReg(RegNo)
                           .addImm(Imm));
@@ -3280,7 +3280,7 @@ public:
     return createDirectCall(Inst, Target, Ctx, /*IsTailCall*/ true);
   }
 
-  void createLongTailCall(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  void createLongTailCall(InstructionListType &Seq, const MCSymbol *Target,
                           MCContext *Ctx) override {
     Seq.clear();
     Seq.emplace_back();
@@ -3394,7 +3394,7 @@ public:
     return true;
   }
 
-  void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  void createShortJmp(InstructionListType &Seq, const MCSymbol *Target,
                       MCContext *Ctx, bool IsTailCall) override {
     Seq.clear();
     MCInst Inst;
@@ -3541,7 +3541,7 @@ public:
     Inst.clear();
   }
 
-  void createInstrIncMemory(std::vector<MCInst> &Instrs, const MCSymbol *Target,
+  void createInstrIncMemory(InstructionListType &Instrs, const MCSymbol *Target,
                             MCContext *Ctx, bool IsLeaf) const override {
     unsigned int I = 0;
 
@@ -3596,10 +3596,11 @@ public:
     Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
   }
 
-  std::vector<MCInst>
-  createInstrumentedIndirectCall(const MCInst &CallInst, bool TailCall,
-                                 MCSymbol *HandlerFuncAddr, int CallSiteID,
-                                 MCContext *Ctx) override {
+  InstructionListType createInstrumentedIndirectCall(const MCInst &CallInst,
+                                                     bool TailCall,
+                                                     MCSymbol *HandlerFuncAddr,
+                                                     int CallSiteID,
+                                                     MCContext *Ctx) override {
     // Check if the target address expression used in the original indirect call
     // uses the stack pointer, which we are going to clobber.
     static BitVector SPAliases(getAliases(X86::RSP));
@@ -3614,7 +3615,7 @@ public:
       }
     }
 
-    std::vector<MCInst> Insts;
+    InstructionListType Insts;
     MCPhysReg TempReg = getIntArgRegister(0);
     // Code sequence used to enter indirect call instrumentation helper:
     //   push %rdi
@@ -3658,7 +3659,7 @@ public:
     return Insts;
   }
 
-  std::vector<MCInst> createInstrumentedIndCallHandlerExitBB() const override {
+  InstructionListType createInstrumentedIndCallHandlerExitBB() const override {
     const MCPhysReg TempReg = getIntArgRegister(0);
     // We just need to undo the sequence created for every ind call in
     // instrumentIndirectTarget(), which can be accomplished minimally with:
@@ -3667,7 +3668,7 @@ public:
     //   add $16, %rsp
     //   xchg (%rsp), %rdi
     //   jmp *-8(%rsp)
-    std::vector<MCInst> Insts(5);
+    InstructionListType Insts(5);
     createPopFlags(Insts[0], 8);
     createPopRegister(Insts[1], TempReg, 8);
     createStackPointerDecrement(Insts[2], 16, /*NoFlagsClobber=*/false);
@@ -3676,7 +3677,7 @@ public:
     return Insts;
   }
 
-  std::vector<MCInst>
+  InstructionListType
   createInstrumentedIndTailCallHandlerExitBB() const override {
     const MCPhysReg TempReg = getIntArgRegister(0);
     // Same thing as above, but for tail calls
@@ -3684,7 +3685,7 @@ public:
     //   add $16, %rsp
     //   pop %rdi
     //   jmp *-16(%rsp)
-    std::vector<MCInst> Insts(4);
+    InstructionListType Insts(4);
     createPopFlags(Insts[0], 8);
     createStackPointerDecrement(Insts[1], 16, /*NoFlagsClobber=*/false);
     createPopRegister(Insts[2], TempReg, 8);
@@ -3692,7 +3693,7 @@ public:
     return Insts;
   }
 
-  std::vector<MCInst>
+  InstructionListType
   createInstrumentedIndCallHandlerEntryBB(const MCSymbol *InstrTrampoline,
                                           const MCSymbol *IndCallHandler,
                                           MCContext *Ctx) override {
@@ -3705,12 +3706,12 @@ public:
     //   je     IndCallHandler
     //   callq  *%rdi
     //   jmpq   IndCallHandler
-    std::vector<MCInst> Insts;
+    InstructionListType Insts;
     Insts.emplace_back();
     createPushFlags(Insts.back(), 8);
     Insts.emplace_back();
     createMove(Insts.back(), InstrTrampoline, TempReg, Ctx);
-    std::vector<MCInst> cmpJmp = createCmpJE(TempReg, 0, IndCallHandler, Ctx);
+    InstructionListType cmpJmp = createCmpJE(TempReg, 0, IndCallHandler, Ctx);
     Insts.insert(Insts.end(), cmpJmp.begin(), cmpJmp.end());
     Insts.emplace_back();
     Insts.back().setOpcode(X86::CALL64r);
@@ -3720,48 +3721,48 @@ public:
     return Insts;
   }
 
-  std::vector<MCInst> createNumCountersGetter(MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(2);
+  InstructionListType createNumCountersGetter(MCContext *Ctx) const override {
+    InstructionListType Insts(2);
     MCSymbol *NumLocs = Ctx->getOrCreateSymbol("__bolt_num_counters");
     createMove(Insts[0], NumLocs, X86::EAX, Ctx);
     createReturn(Insts[1]);
     return Insts;
   }
 
-  std::vector<MCInst>
+  InstructionListType
   createInstrLocationsGetter(MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(2);
+    InstructionListType Insts(2);
     MCSymbol *Locs = Ctx->getOrCreateSymbol("__bolt_instr_locations");
     createLea(Insts[0], Locs, X86::EAX, Ctx);
     createReturn(Insts[1]);
     return Insts;
   }
 
-  std::vector<MCInst> createInstrTablesGetter(MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(2);
+  InstructionListType createInstrTablesGetter(MCContext *Ctx) const override {
+    InstructionListType Insts(2);
     MCSymbol *Locs = Ctx->getOrCreateSymbol("__bolt_instr_tables");
     createLea(Insts[0], Locs, X86::EAX, Ctx);
     createReturn(Insts[1]);
     return Insts;
   }
 
-  std::vector<MCInst> createInstrNumFuncsGetter(MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(2);
+  InstructionListType createInstrNumFuncsGetter(MCContext *Ctx) const override {
+    InstructionListType Insts(2);
     MCSymbol *NumFuncs = Ctx->getOrCreateSymbol("__bolt_instr_num_funcs");
     createMove(Insts[0], NumFuncs, X86::EAX, Ctx);
     createReturn(Insts[1]);
     return Insts;
   }
 
-  std::vector<MCInst> createSymbolTrampoline(const MCSymbol *TgtSym,
+  InstructionListType createSymbolTrampoline(const MCSymbol *TgtSym,
                                              MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(1);
+    InstructionListType Insts(1);
     createUncondBranch(Insts[0], TgtSym, Ctx);
     return Insts;
   }
 
-  std::vector<MCInst> createDummyReturnFunction(MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(1);
+  InstructionListType createDummyReturnFunction(MCContext *Ctx) const override {
+    InstructionListType Insts(1);
     createReturn(Insts[0]);
     return Insts;
   }
@@ -3779,11 +3780,11 @@ public:
     BlocksVectorTy Results;
 
     // Label for the current code block.
-    MCSymbol* NextTarget = nullptr;
+    MCSymbol *NextTarget = nullptr;
 
     // The join block which contains all the instructions following CallInst.
     // MergeBlock remains null if CallInst is a tail call.
-    MCSymbol* MergeBlock = nullptr;
+    MCSymbol *MergeBlock = nullptr;
 
     unsigned FuncAddrReg = X86::R10;
 
@@ -3810,7 +3811,7 @@ public:
         return Results;
     }
 
-    const auto jumpToMergeBlock = [&](std::vector<MCInst> &NewCall) {
+    const auto jumpToMergeBlock = [&](InstructionListType &NewCall) {
       assert(MergeBlock);
       NewCall.push_back(CallInst);
       MCInst &Merge = NewCall.back();
@@ -3819,8 +3820,8 @@ public:
     };
 
     for (unsigned int i = 0; i < Targets.size(); ++i) {
-      Results.emplace_back(NextTarget, std::vector<MCInst>());
-      std::vector<MCInst>* NewCall = &Results.back().second;
+      Results.emplace_back(NextTarget, InstructionListType());
+      InstructionListType *NewCall = &Results.back().second;
 
       if (MinimizeCodeSize && !LoadElim) {
         // Load the call target into FuncAddrReg.
@@ -3942,7 +3943,7 @@ public:
 
         // Call specific target directly.
         Results.emplace_back(Ctx->createNamedTempSymbol(),
-                             std::vector<MCInst>());
+                             InstructionListType());
         NewCall = &Results.back().second;
         NewCall->push_back(CallInst);
         MCInst &CallOrJmp = NewCall->back();
@@ -3999,8 +4000,8 @@ public:
     }
 
     // Cold call block.
-    Results.emplace_back(NextTarget, std::vector<MCInst>());
-    std::vector<MCInst> &NewCall = Results.back().second;
+    Results.emplace_back(NextTarget, InstructionListType());
+    InstructionListType &NewCall = Results.back().second;
     for (const MCInst *Inst : MethodFetchInsns) {
       if (Inst != &CallInst)
         NewCall.push_back(*Inst);
@@ -4012,7 +4013,7 @@ public:
       jumpToMergeBlock(NewCall);
 
       // Record merge block
-      Results.emplace_back(MergeBlock, std::vector<MCInst>());
+      Results.emplace_back(MergeBlock, InstructionListType());
     }
 
     return Results;
@@ -4032,11 +4033,11 @@ public:
     BlocksVectorTy Results;
 
     // Label for the current code block.
-    MCSymbol* NextTarget = nullptr;
+    MCSymbol *NextTarget = nullptr;
 
     for (unsigned int i = 0; i < Targets.size(); ++i) {
-      Results.emplace_back(NextTarget, std::vector<MCInst>());
-      std::vector<MCInst>* CurBB = &Results.back().second;
+      Results.emplace_back(NextTarget, InstructionListType());
+      InstructionListType *CurBB = &Results.back().second;
 
       // Compare current index to a specific index.
       CurBB->emplace_back(MCInst());
@@ -4069,8 +4070,8 @@ public:
     }
 
     // Cold call block.
-    Results.emplace_back(NextTarget, std::vector<MCInst>());
-    std::vector<MCInst> &CurBB = Results.back().second;
+    Results.emplace_back(NextTarget, InstructionListType());
+    InstructionListType &CurBB = Results.back().second;
     for (const MCInst *Inst : TargetFetchInsns) {
       if (Inst != &IJmpInst)
         CurBB.push_back(*Inst);

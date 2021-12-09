@@ -253,30 +253,30 @@ public:
         Itr.reset(Other.Itr->Copy());
       return *this;
     }
-    InstructionIterator() { }
+    InstructionIterator() {}
     InstructionIterator(const InstructionIterator &Other)
-      : Itr(Other.Itr->Copy()) { }
+        : Itr(Other.Itr->Copy()) {}
     InstructionIterator(InstructionIterator &&Other)
-      : Itr(std::move(Other.Itr)) { }
+        : Itr(std::move(Other.Itr)) {}
     explicit InstructionIterator(std::unique_ptr<Impl> Itr)
-      : Itr(std::move(Itr)) { }
+        : Itr(std::move(Itr)) {}
 
-    InstructionIterator(std::vector<MCInst>::iterator Itr)
-      : Itr(new SeqImpl<std::vector<MCInst>::iterator>(Itr)) { }
+    InstructionIterator(InstructionListType::iterator Itr)
+        : Itr(new SeqImpl<InstructionListType::iterator>(Itr)) {}
 
     template <typename T>
-    InstructionIterator(T *Itr)
-      : Itr(new SeqImpl<T *>(Itr)) { }
+    InstructionIterator(T *Itr) : Itr(new SeqImpl<T *>(Itr)) {}
 
     InstructionIterator(ArrayRef<MCInst>::iterator Itr)
-      : Itr(new SeqImpl<ArrayRef<MCInst>::iterator>(Itr)) { }
+        : Itr(new SeqImpl<ArrayRef<MCInst>::iterator>(Itr)) {}
 
     InstructionIterator(MutableArrayRef<MCInst>::iterator Itr)
-      : Itr(new SeqImpl<MutableArrayRef<MCInst>::iterator>(Itr)) { }
+        : Itr(new SeqImpl<MutableArrayRef<MCInst>::iterator>(Itr)) {}
 
     // TODO: it would be nice to templatize this on the key type.
     InstructionIterator(std::map<uint32_t, MCInst>::iterator Itr)
-      : Itr(new MapImpl<std::map<uint32_t, MCInst>::iterator>(Itr)) { }
+        : Itr(new MapImpl<std::map<uint32_t, MCInst>::iterator>(Itr)) {}
+
   private:
     std::unique_ptr<Impl> Itr;
   };
@@ -429,7 +429,7 @@ public:
   }
 
   /// Create increment contents of target by 1 for Instrumentation
-  virtual void createInstrIncMemory(std::vector<MCInst> &Instrs,
+  virtual void createInstrIncMemory(InstructionListType &Instrs,
                                     const MCSymbol *Target, MCContext *Ctx,
                                     bool IsLeaf) const {
     llvm_unreachable("not implemented");
@@ -1357,12 +1357,12 @@ public:
     return false;
   }
 
-  virtual void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  virtual void createLongJmp(InstructionListType &Seq, const MCSymbol *Target,
                              MCContext *Ctx, bool IsTailCall = false) {
     llvm_unreachable("not implemented");
   }
 
-  virtual void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+  virtual void createShortJmp(InstructionListType &Seq, const MCSymbol *Target,
                               MCContext *Ctx, bool IsTailCall = false) {
     llvm_unreachable("not implemented");
   }
@@ -1409,7 +1409,7 @@ public:
   }
 
   /// Store \p Target absolute adddress to \p RegName
-  virtual std::vector<MCInst> materializeAddress(const MCSymbol *Target,
+  virtual InstructionListType materializeAddress(const MCSymbol *Target,
                                                  MCContext *Ctx,
                                                  MCPhysReg RegName,
                                                  int64_t Addend = 0) const {
@@ -1447,7 +1447,7 @@ public:
     return false;
   }
 
-  virtual void createLongTailCall(std::vector<MCInst> &Seq,
+  virtual void createLongTailCall(InstructionListType &Seq,
                                   const MCSymbol *Target, MCContext *Ctx) {
     llvm_unreachable("not implemented");
   }
@@ -1535,23 +1535,23 @@ public:
   }
 
   /// Create an inline version of memcpy(dest, src, 1).
-  virtual std::vector<MCInst> createOneByteMemcpy() const {
+  virtual InstructionListType createOneByteMemcpy() const {
     llvm_unreachable("not implemented");
     return {};
   }
 
   /// Create a sequence of instructions to compare contents of a register
   /// \p RegNo to immediate \Imm and jump to \p Target if they are equal.
-  virtual std::vector<MCInst>
-  createCmpJE(MCPhysReg RegNo, int64_t Imm, const MCSymbol *Target,
-              MCContext *Ctx) const {
+  virtual InstructionListType createCmpJE(MCPhysReg RegNo, int64_t Imm,
+                                          const MCSymbol *Target,
+                                          MCContext *Ctx) const {
     llvm_unreachable("not implemented");
     return {};
   }
 
   /// Creates inline memcpy instruction. If \p ReturnEnd is true, then return
   /// (dest + n) instead of dest.
-  virtual std::vector<MCInst> createInlineMemcpy(bool ReturnEnd) const {
+  virtual InstructionListType createInlineMemcpy(bool ReturnEnd) const {
     llvm_unreachable("not implemented");
     return {};
   }
@@ -1816,62 +1816,62 @@ public:
   /// Remove meta-data, but don't destroy it.
   void stripAnnotations(MCInst &Inst, bool KeepTC = false);
 
-  virtual std::vector<MCInst>
+  virtual InstructionListType
   createInstrumentedIndirectCall(const MCInst &CallInst, bool TailCall,
                                  MCSymbol *HandlerFuncAddr, int CallSiteID,
                                  MCContext *Ctx) {
     llvm_unreachable("not implemented");
-    return std::vector<MCInst>();
+    return InstructionListType();
   }
 
-  virtual std::vector<MCInst> createInstrumentedIndCallHandlerExitBB() const {
+  virtual InstructionListType createInstrumentedIndCallHandlerExitBB() const {
     llvm_unreachable("not implemented");
-    return std::vector<MCInst>();
+    return InstructionListType();
   }
 
-  virtual std::vector<MCInst>
+  virtual InstructionListType
   createInstrumentedIndTailCallHandlerExitBB() const {
     llvm_unreachable("not implemented");
-    return std::vector<MCInst>();
+    return InstructionListType();
   }
 
-  virtual std::vector<MCInst>
+  virtual InstructionListType
   createInstrumentedIndCallHandlerEntryBB(const MCSymbol *InstrTrampoline,
                                           const MCSymbol *IndCallHandler,
                                           MCContext *Ctx) {
     llvm_unreachable("not implemented");
-    return std::vector<MCInst>();
+    return InstructionListType();
   }
 
-  virtual std::vector<MCInst> createNumCountersGetter(MCContext *Ctx) const {
+  virtual InstructionListType createNumCountersGetter(MCContext *Ctx) const {
     llvm_unreachable("not implemented");
     return {};
   }
 
-  virtual std::vector<MCInst> createInstrLocationsGetter(MCContext *Ctx) const {
+  virtual InstructionListType createInstrLocationsGetter(MCContext *Ctx) const {
     llvm_unreachable("not implemented");
     return {};
   }
 
-  virtual std::vector<MCInst> createInstrTablesGetter(MCContext *Ctx) const {
+  virtual InstructionListType createInstrTablesGetter(MCContext *Ctx) const {
     llvm_unreachable("not implemented");
     return {};
   }
 
-  virtual std::vector<MCInst> createInstrNumFuncsGetter(MCContext *Ctx) const {
+  virtual InstructionListType createInstrNumFuncsGetter(MCContext *Ctx) const {
     llvm_unreachable("not implemented");
     return {};
   }
 
-  virtual std::vector<MCInst> createSymbolTrampoline(const MCSymbol *TgtSym,
+  virtual InstructionListType createSymbolTrampoline(const MCSymbol *TgtSym,
                                                      MCContext *Ctx) const {
     llvm_unreachable("not implemented");
-    return std::vector<MCInst>();
+    return InstructionListType();
   }
 
-  virtual std::vector<MCInst> createDummyReturnFunction(MCContext *Ctx) const {
+  virtual InstructionListType createDummyReturnFunction(MCContext *Ctx) const {
     llvm_unreachable("not implemented");
-    return std::vector<MCInst>();
+    return InstructionListType();
   }
 
   /// This method takes an indirect call instruction and splits it up into an
@@ -1892,7 +1892,8 @@ public:
   /// empty vector of instructions.  The label is meant to indicate the basic
   /// block where all previous snippets are joined, i.e. the instructions that
   /// would immediate follow the original call.
-  using BlocksVectorTy = std::vector<std::pair<MCSymbol*, std::vector<MCInst>>>;
+  using BlocksVectorTy =
+      std::vector<std::pair<MCSymbol *, InstructionListType>>;
   struct MultiBlocksCode {
     BlocksVectorTy Blocks;
     std::vector<MCSymbol*> Successors;

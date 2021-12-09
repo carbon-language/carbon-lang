@@ -120,7 +120,7 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
     BB1.addInstruction(Lfence);
   }
 
-  std::vector<MCInst> Seq;
+  InstructionListType Seq;
   MIB.createShortJmp(Seq, BB1.getLabel(), &Ctx);
   BB1.addInstructions(Seq.begin(), Seq.end());
 
@@ -227,10 +227,10 @@ BinaryFunction *RetpolineInsertion::getOrCreateRetpoline(
 }
 
 void createBranchReplacement(BinaryContext &BC,
-                                const IndirectBranchInfo &BrInfo,
-                                bool R11Available,
-                                std::vector<MCInst> &Replacement,
-                                const MCSymbol *RetpolineSymbol) {
+                             const IndirectBranchInfo &BrInfo,
+                             bool R11Available,
+                             InstructionListType &Replacement,
+                             const MCSymbol *RetpolineSymbol) {
   auto &MIB = *BC.MIB;
   // Load the branch address in r11 if available
   if (BrInfo.isMem() && R11Available) {
@@ -293,7 +293,7 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
         IndirectBranchInfo BrInfo(Inst, MIB);
         bool R11Available = false;
         BinaryFunction *TargetRetpoline;
-        std::vector<MCInst> Replacement;
+        InstructionListType Replacement;
 
         // Determine if r11 is available before this instruction
         if (BrInfo.isMem()) {

@@ -51,7 +51,7 @@ void ADRRelaxationPass::runOnFunction(BinaryFunction &BF) {
       MCPhysReg Reg;
       BC.MIB->getADRReg(Inst, Reg);
       int64_t Addend = BC.MIB->getTargetAddend(Inst);
-      std::vector<MCInst> Addr =
+      InstructionListType Addr =
           BC.MIB->materializeAddress(Symbol, BC.Ctx.get(), Reg, Addend);
       It = BB->replaceInstruction(It, Addr);
     }

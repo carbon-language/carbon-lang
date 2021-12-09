@@ -39,7 +39,7 @@ constexpr unsigned ColdFragAlign = 16;
 
 void relaxStubToShortJmp(BinaryBasicBlock &StubBB, const MCSymbol *Tgt) {
   const BinaryContext &BC = StubBB.getFunction()->getBinaryContext();
-  std::vector<MCInst> Seq;
+  InstructionListType Seq;
   BC.MIB->createShortJmp(Seq, Tgt, BC.Ctx.get());
   StubBB.clear();
   StubBB.addInstructions(Seq.begin(), Seq.end());
@@ -47,7 +47,7 @@ void relaxStubToShortJmp(BinaryBasicBlock &StubBB, const MCSymbol *Tgt) {
 
 void relaxStubToLongJmp(BinaryBasicBlock &StubBB, const MCSymbol *Tgt) {
   const BinaryContext &BC = StubBB.getFunction()->getBinaryContext();
-  std::vector<MCInst> Seq;
+  InstructionListType Seq;
   BC.MIB->createLongJmp(Seq, Tgt, BC.Ctx.get());
   StubBB.clear();
   StubBB.addInstructions(Seq.begin(), Seq.end());

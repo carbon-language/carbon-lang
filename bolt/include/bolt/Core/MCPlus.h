@@ -15,9 +15,13 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Casting.h"
+#include <vector>
 
 namespace llvm {
 namespace bolt {
+
+// NOTE: using SmallVector for instruction list results in a memory regression.
+using InstructionListType = std::vector<MCInst>;
 
 namespace MCPlus {
 

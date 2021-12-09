@@ -792,7 +792,7 @@ IndirectCallPromotion::rewriteCall(
 
   // Remember any pseudo instructions following a tail call.  These
   // must be preserved and moved to the original block.
-  std::vector<MCInst> TailInsts;
+  InstructionListType TailInsts;
   const MCInst *TailInst = &CallInst;
   if (IsTailCallOrJT) {
     while (TailInst + 1 < &(*IndCallBlock.end()) &&
@@ -801,7 +801,7 @@ IndirectCallPromotion::rewriteCall(
     }
   }
 
-  std::vector<MCInst> MovedInst = IndCallBlock.splitInstructions(&CallInst);
+  InstructionListType MovedInst = IndCallBlock.splitInstructions(&CallInst);
   // Link new BBs to the original input offset of the BB where the indirect
   // call site is, so we can map samples recorded in new BBs back to the
   // original BB seen in the input binary (if using BAT)
@@ -821,7 +821,7 @@ IndirectCallPromotion::rewriteCall(
 
   for (auto Itr = ICPcode.begin() + 1; Itr != ICPcode.end(); ++Itr) {
     MCSymbol *&Sym = Itr->first;
-    std::vector<MCInst> &Insts = Itr->second;
+    InstructionListType &Insts = Itr->second;
     assert(Sym);
     std::unique_ptr<BinaryBasicBlock> TBB =
         Function.createBasicBlock(OrigOffset, Sym);
@@ -860,8 +860,8 @@ IndirectCallPromotion::fixCFG(BinaryBasicBlock &IndCallBlock,
   }
   if (TotalIndirectBranches == 0)
     TotalIndirectBranches = 1;
-  std::vector<BinaryBranchInfo> BBI;
-  std::vector<BinaryBranchInfo> ScaledBBI;
+  BinaryBasicBlock::BranchInfoType BBI;
+  BinaryBasicBlock::BranchInfoType ScaledBBI;
   for (const Callsite &Target : Targets) {
     const size_t NumEntries =
         std::max(static_cast<std::size_t>(1UL), Target.JTIndices.size());
@@ -1421,7 +1421,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
           dbgs() << "BOLT-INFO: ICP indirect call code:\n";
           for (const auto &entry : ICPcode) {
             const MCSymbol *const &Sym = entry.first;
-            const std::vector<MCInst> &Insts = entry.second;
+            const InstructionListType &Insts = entry.second;
             if (Sym) dbgs() << Sym->getName() << ":\n";
             Offset = BC.printInstructions(dbgs(),
                                           Insts.begin(),

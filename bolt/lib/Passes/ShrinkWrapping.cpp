@@ -1583,13 +1583,13 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
         auto InsertionIter = InstIter;
         ++InsertionIter;
         InAffectedZone = CurZone;
-        if (InAffectedZone) {
-          InstIter = --insertCFIsForPushOrPop(*BB, InsertionIter, CSR, true, 0,
-                                              SPValPop);
-        } else {
-          InstIter = --insertCFIsForPushOrPop(*BB, InsertionIter, CSR, false, 0,
-                                              SPValPush);
-        }
+        if (InAffectedZone)
+          InstIter = insertCFIsForPushOrPop(*BB, InsertionIter, CSR, true, 0,
+                                            SPValPop);
+        else
+          InstIter = insertCFIsForPushOrPop(*BB, InsertionIter, CSR, false, 0,
+                                            SPValPush);
+        --InstIter;
       }
     }
     // Are we at the first basic block or hot-cold split point?
@@ -1744,10 +1744,11 @@ BBIterTy ShrinkWrapping::insertCFIsForPushOrPop(BinaryBasicBlock &BB,
       updateCFIInstOffset(*Pos++, NewOffset);
     }
     if (HasDeletedOffsetCFIs[Reg]) {
-      Pos = ++BF.addCFIInstruction(
+      Pos = BF.addCFIInstruction(
           &BB, Pos,
           MCCFIInstruction::createOffset(
               nullptr, BC.MRI->getDwarfRegNum(Reg, false), NewOffset));
+      ++Pos;
     }
   } else {
     for (uint32_t Idx : DeletedPopCFIs[Reg]) {
@@ -1755,10 +1756,11 @@ BBIterTy ShrinkWrapping::insertCFIsForPushOrPop(BinaryBasicBlock &BB,
       updateCFIInstOffset(*Pos++, NewOffset);
     }
     if (HasDeletedOffsetCFIs[Reg]) {
-      Pos = ++BF.addCFIInstruction(
+      Pos = BF.addCFIInstruction(
           &BB, Pos,
           MCCFIInstruction::createSameValue(
               nullptr, BC.MRI->getDwarfRegNum(Reg, false)));
+      ++Pos;
     }
   }
   return Pos;
@@ -1803,7 +1805,9 @@ BBIterTy ShrinkWrapping::processInsertion(BBIterTy InsertionPoint,
       dbgs() << "the following inst: ";
       NewInst.dump();
     });
-    return ++CurBB->insertInstruction(InsertionPoint, std::move(NewInst));
+    BBIterTy Iter =
+        CurBB->insertInstruction(InsertionPoint, std::move(NewInst));
+    return ++Iter;
   }
   CurBB->addInstruction(std::move(NewInst));
   LLVM_DEBUG(dbgs() << "Adding to BB!\n");

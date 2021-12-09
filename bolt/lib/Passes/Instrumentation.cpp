@@ -170,13 +170,13 @@ void Instrumentation::createLeafNodeDescription(FunctionDescription &FuncDesc,
   FuncDesc.LeafNodes.emplace_back(IN);
 }
 
-std::vector<MCInst>
+InstructionListType
 Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   auto L = BC.scopeLock();
   MCSymbol *Label;
   Label = BC.Ctx->createNamedTempSymbol("InstrEntry");
   Summary->Counters.emplace_back(Label);
-  std::vector<MCInst> CounterInstrs;
+  InstructionListType CounterInstrs;
   BC.MIB->createInstrIncMemory(CounterInstrs, Label, &*BC.Ctx, IsLeaf);
   return CounterInstrs;
 }
@@ -184,17 +184,15 @@ Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
 namespace {
 
 // Helper instruction sequence insertion function
-BinaryBasicBlock::iterator
-insertInstructions(std::vector<MCInst>& Instrs,
-                   BinaryBasicBlock &BB,
-                   BinaryBasicBlock::iterator Iter) {
+BinaryBasicBlock::iterator insertInstructions(InstructionListType &Instrs,
+                                              BinaryBasicBlock &BB,
+                                              BinaryBasicBlock::iterator Iter) {
   for (MCInst &NewInst : Instrs) {
     Iter = BB.insertInstruction(Iter, NewInst);
     ++Iter;
   }
   return Iter;
 }
-
 }
 
 void Instrumentation::instrumentLeafNode(BinaryBasicBlock &BB,
@@ -203,7 +201,7 @@ void Instrumentation::instrumentLeafNode(BinaryBasicBlock &BB,
                                          FunctionDescription &FuncDesc,
                                          uint32_t Node) {
   createLeafNodeDescription(FuncDesc, Node);
-  std::vector<MCInst> CounterInstrs = createInstrumentationSnippet(
+  InstructionListType CounterInstrs = createInstrumentationSnippet(
       BB.getFunction()->getBinaryContext(), IsLeaf);
   insertInstructions(CounterInstrs, BB, Iter);
 }
@@ -218,7 +216,7 @@ void Instrumentation::instrumentIndirectTarget(BinaryBasicBlock &BB,
 
   BinaryContext &BC = FromFunction.getBinaryContext();
   bool IsTailCall = BC.MIB->isTailCall(*Iter);
-  std::vector<MCInst> CounterInstrs = BC.MIB->createInstrumentedIndirectCall(
+  InstructionListType CounterInstrs = BC.MIB->createInstrumentedIndirectCall(
       *Iter, IsTailCall,
       IsTailCall ? IndTailCallHandlerExitBBFunction->getSymbol()
                  : IndCallHandlerExitBBFunction->getSymbol(),
@@ -249,8 +247,8 @@ bool Instrumentation::instrumentOneTarget(
       return false;
   }
 
-  std::vector<MCInst> CounterInstrs =
-    createInstrumentationSnippet(FromFunction.getBinaryContext(), IsLeaf);
+  InstructionListType CounterInstrs =
+      createInstrumentationSnippet(FromFunction.getBinaryContext(), IsLeaf);
 
   BinaryContext &BC = FromFunction.getBinaryContext();
   const MCInst &Inst = *Iter;
@@ -596,7 +594,7 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
 
 void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
   auto createSimpleFunction =
-      [&](StringRef Title, std::vector<MCInst> Instrs) -> BinaryFunction * {
+      [&](StringRef Title, InstructionListType Instrs) -> BinaryFunction * {
     BinaryFunction *Func = BC.createInjectedBinaryFunction(std::string(Title));
 
     std::vector<std::unique_ptr<BinaryBasicBlock>> BBs;

@@ -186,12 +186,11 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     // Create a handler entry if necessary.
     MCSymbol *LPSymbol = nullptr;
     if (LandingPad) {
-      if (Instructions.find(LandingPad) == Instructions.end()) {
-        if (opts::Verbosity >= 1) {
+      if (!getInstructionAtOffset(LandingPad)) {
+        if (opts::Verbosity >= 1)
           errs() << "BOLT-WARNING: landing pad " << Twine::utohexstr(LandingPad)
-                 << " not pointing to an instruction in function "
-                 << *this << " - ignoring.\n";
-        }
+                 << " not pointing to an instruction in function " << *this
+                 << " - ignoring.\n";
       } else {
         auto Label = Labels.find(LandingPad);
         if (Label != Labels.end()) {

@@ -99,7 +99,7 @@ bool ValidateInternalCalls::fixCFGForPIC(BinaryFunction &Function) const {
         continue;
 
       BC.MIB->addAnnotation(Inst, getProcessedICTag(), 0U);
-      std::vector<MCInst> MovedInsts = BB.splitInstructions(&Inst);
+      InstructionListType MovedInsts = BB.splitInstructions(&Inst);
       if (!MovedInsts.empty()) {
         // Split this block at the call instruction. Create an unreachable
         // block.

@@ -62,7 +62,7 @@ private:
   void createLeafNodeDescription(FunctionDescription &FuncDesc, uint32_t Node);
 
   /// Create the sequence of instructions to increment a counter
-  std::vector<MCInst> createInstrumentationSnippet(BinaryContext &BC,
+  InstructionListType createInstrumentationSnippet(BinaryContext &BC,
                                                    bool IsLeaf);
 
   // Critical edges worklist
@@ -73,7 +73,7 @@ private:
   // instrumentOneTarget() populates this, instrumentFunction() consumes.
   using SplitWorklistTy =
       std::vector<std::pair<BinaryBasicBlock *, BinaryBasicBlock *>>;
-  using SplitInstrsTy = std::vector<std::vector<MCInst>>;
+  using SplitInstrsTy = std::vector<InstructionListType>;
 
   /// Instrument the branch or call in \p Iter. \p TargetBB should be non-null
   /// if this is a local branch and null if it is a call. Return true if the

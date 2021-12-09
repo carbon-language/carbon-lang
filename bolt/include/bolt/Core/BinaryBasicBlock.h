@@ -6,11 +6,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Sequence of MC(Plus) instructions. Call/invoke does not terminate the block.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef BOLT_CORE_BINARY_BASIC_BLOCK_H
 #define BOLT_CORE_BINARY_BASIC_BLOCK_H
 
+#include "bolt/Core/MCPlus.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInst.h"
@@ -27,8 +30,6 @@ namespace bolt {
 
 class BinaryFunction;
 
-/// The intention is to keep the structure similar to MachineBasicBlock as
-/// we might switch to it at some point.
 class BinaryBasicBlock {
 public:
 
@@ -56,18 +57,27 @@ public:
   static constexpr uint32_t INVALID_OFFSET =
                                           std::numeric_limits<uint32_t>::max();
 
+  using BranchInfoType = SmallVector<BinaryBranchInfo, 0>;
+
 private:
   /// Vector of all instructions in the block.
-  std::vector<MCInst> Instructions;
+  InstructionListType Instructions;
 
   /// CFG information.
-  std::vector<BinaryBasicBlock *> Predecessors;
-  std::vector<BinaryBasicBlock *> Successors;
-  std::vector<BinaryBasicBlock *> Throwers;
-  std::vector<BinaryBasicBlock *> LandingPads;
+  using EdgeListType = SmallVector<BinaryBasicBlock *, 0>;
+  EdgeListType Predecessors;
+  EdgeListType Successors;
 
   /// Each successor has a corresponding BranchInfo entry in the list.
-  std::vector<BinaryBranchInfo> BranchInfo;
+  BranchInfoType BranchInfo;
+
+  using ExceptionListType = SmallVector<BinaryBasicBlock *, 0>;
+
+  /// List of blocks that this landing pad is handling.
+  ExceptionListType Throwers;
+
+  /// List of blocks that can catch exceptions thrown by code in this block.
+  ExceptionListType LandingPads;
 
   /// Function that owns this basic block.
   BinaryFunction *Function;
@@ -134,7 +144,9 @@ private:
 private:
   BinaryBasicBlock() = delete;
   BinaryBasicBlock(const BinaryBasicBlock &) = delete;
-  BinaryBasicBlock& operator=(const BinaryBasicBlock &) = delete;
+  BinaryBasicBlock(const BinaryBasicBlock &&) = delete;
+  BinaryBasicBlock &operator=(const BinaryBasicBlock &) = delete;
+  BinaryBasicBlock &operator=(const BinaryBasicBlock &&) = delete;
 
   explicit BinaryBasicBlock(
       BinaryFunction *Function,
@@ -162,9 +174,9 @@ public:
       std::numeric_limits<uint64_t>::max();
 
   // Instructions iterators.
-  using iterator       = std::vector<MCInst>::iterator;
-  using const_iterator = std::vector<MCInst>::const_iterator;
-  using reverse_iterator       = std::reverse_iterator<iterator>;
+  using iterator = InstructionListType::iterator;
+  using const_iterator = InstructionListType::const_iterator;
+  using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   bool         empty()            const { assert(hasInstructions());
@@ -198,14 +210,14 @@ public:
                                           return Instructions.rend();   }
 
   // CFG iterators.
-  using pred_iterator        = std::vector<BinaryBasicBlock *>::iterator;
-  using const_pred_iterator  = std::vector<BinaryBasicBlock *>::const_iterator;
-  using succ_iterator        = std::vector<BinaryBasicBlock *>::iterator;
-  using const_succ_iterator  = std::vector<BinaryBasicBlock *>::const_iterator;
-  using throw_iterator       = decltype(Throwers)::iterator;
+  using pred_iterator = EdgeListType::iterator;
+  using const_pred_iterator = EdgeListType::const_iterator;
+  using succ_iterator = EdgeListType::iterator;
+  using const_succ_iterator = EdgeListType::const_iterator;
+  using throw_iterator = decltype(Throwers)::iterator;
   using const_throw_iterator = decltype(Throwers)::const_iterator;
-  using lp_iterator          = decltype(LandingPads)::iterator;
-  using const_lp_iterator    = decltype(LandingPads)::const_iterator;
+  using lp_iterator = decltype(LandingPads)::iterator;
+  using const_lp_iterator = decltype(LandingPads)::const_iterator;
 
   using pred_reverse_iterator = std::reverse_iterator<pred_iterator>;
   using const_pred_reverse_iterator =
@@ -309,9 +321,8 @@ public:
   }
 
   // BranchInfo iterators.
-  using branch_info_iterator = std::vector<BinaryBranchInfo>::iterator;
-  using const_branch_info_iterator =
-                       std::vector<BinaryBranchInfo>::const_iterator;
+  using branch_info_iterator = BranchInfoType::iterator;
+  using const_branch_info_iterator = BranchInfoType::const_iterator;
   using branch_info_reverse_iterator =
                        std::reverse_iterator<branch_info_iterator>;
   using const_branch_info_reverse_iterator =
@@ -351,12 +362,10 @@ public:
   }
 
   /// Get instruction at given index.
-  MCInst &getInstructionAtIndex(unsigned Index) {
-    return Instructions.at(Index);
-  }
+  MCInst &getInstructionAtIndex(unsigned Index) { return Instructions[Index]; }
 
   const MCInst &getInstructionAtIndex(unsigned Index) const {
-    return Instructions.at(Index);
+    return Instructions[Index];
   }
 
   /// Return symbol marking the start of this basic block.
@@ -503,7 +512,7 @@ public:
   template <typename Itr>
   Itr insertPseudoInstr(Itr Pos, MCInst &Instr) {
     ++NumPseudos;
-    return Instructions.emplace(Pos, Instr);
+    return Instructions.insert(Pos, Instr);
   }
 
   /// Return the number of pseudo instructions in the basic block.
@@ -774,7 +783,7 @@ public:
   }
 
   iterator replaceInstruction(iterator II,
-                              const std::vector<MCInst> &Replacement) {
+                              const InstructionListType &Replacement) {
     return replaceInstruction(II, Replacement.begin(), Replacement.end());
   }
 
@@ -787,7 +796,7 @@ public:
 
   iterator insertInstruction(iterator At, MCInst &NewInst) {
     adjustNumPseudos(NewInst, 1);
-    return Instructions.emplace(At, NewInst);
+    return Instructions.insert(At, NewInst);
   }
 
   /// Helper to retrieve any terminators in \p BB before \p Pos. This is used
@@ -802,8 +811,8 @@ public:
 
   /// Split apart the instructions in this basic block starting at Inst.
   /// The instructions following Inst are removed and returned in a vector.
-  std::vector<MCInst> splitInstructions(const MCInst *Inst) {
-    std::vector<MCInst> SplitInst;
+  InstructionListType splitInstructions(const MCInst *Inst) {
+    InstructionListType SplitInst;
 
     assert(!Instructions.empty());
     while(&Instructions.back() != Inst) {

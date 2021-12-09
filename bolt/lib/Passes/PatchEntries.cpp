@@ -57,7 +57,7 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
   // Calculate the size of the patch.
   static size_t PatchSize = 0;
   if (!PatchSize) {
-    std::vector<MCInst> Seq;
+    InstructionListType Seq;
     BC.MIB->createLongTailCall(Seq, BC.Ctx->createTempSymbol(), BC.Ctx.get());
     PatchSize = BC.computeCodeSize(Seq.begin(), Seq.end());
   }
@@ -124,7 +124,7 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
       PatchFunction->setFileOffset(Patch.FileOffset);
       PatchFunction->setOriginSection(Patch.Section);
 
-      std::vector<MCInst> Seq;
+      InstructionListType Seq;
       BC.MIB->createLongTailCall(Seq, Patch.Symbol, BC.Ctx.get());
       PatchFunction->addBasicBlock(0)->addInstructions(Seq);
 

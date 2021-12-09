@@ -1697,7 +1697,7 @@ void InlineMemcpy::runOnFunctions(BinaryContext &BC) {
         const bool IsMemcpy8 = (CalleeSymbol->getName() == "_memcpy8");
         const bool IsTailCall = BC.MIB->isTailCall(Inst);
 
-        const std::vector<MCInst> NewCode =
+        const InstructionListType NewCode =
             BC.MIB->createInlineMemcpy(IsMemcpy8);
         II = BB.replaceInstruction(II, NewCode);
         std::advance(II, NewCode.size() - 1);
@@ -1816,7 +1816,7 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
 
         BinaryBasicBlock *MemcpyBB =
             Function.addBasicBlock(CurBB->getInputOffset());
-        std::vector<MCInst> CmpJCC =
+        InstructionListType CmpJCC =
             BC.MIB->createCmpJE(BC.MIB->getIntArgRegister(2), 1,
                                 OneByteMemcpyBB->getLabel(), BC.Ctx.get());
         CurBB->addInstructions(CmpJCC);
@@ -1832,7 +1832,7 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
         if (CurBB->getKnownExecutionCount() > 0)
           MemcpyBB->setExecutionCount(1);
 
-        std::vector<MCInst> OneByteMemcpy = BC.MIB->createOneByteMemcpy();
+        InstructionListType OneByteMemcpy = BC.MIB->createOneByteMemcpy();
         OneByteMemcpyBB->addInstructions(OneByteMemcpy);
 
         ++NumSpecialized;
