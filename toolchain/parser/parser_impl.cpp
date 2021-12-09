@@ -347,6 +347,8 @@ auto ParseTree::Parser::FindNextOf(
     } else if (kind.IsOpeningSymbol()) {
       new_position =
           TokenizedBuffer::TokenIterator(tokens_.GetMatchedClosingToken(token));
+      // Advance past the closing token.
+      ++new_position;
     } else {
       ++new_position;
     }
