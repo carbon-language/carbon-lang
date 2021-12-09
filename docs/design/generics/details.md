@@ -79,7 +79,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Blanket impls](#blanket-impls)
         -   [Difference between blanket impls and named constraints](#difference-between-blanket-impls-and-named-constraints)
     -   [Wildcard impls](#wildcard-impls)
-        -   [Automatic implicit conversion](#automatic-implicit-conversion)
     -   [Combinations](#combinations)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
@@ -3698,37 +3697,8 @@ extern impl [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
 extern impl BigInt as AddTo(T:! ImplicitAs(i32)) { ... }
 ```
 
-Wildcard impls generally must be [external](#external-impl), to avoid having the
+Wildcard impls must always be [external](#external-impl), to avoid having the
 names in the interface defined for the type multiple times.
-
-#### Automatic implicit conversion
-
-In this case:
-
-```
-class BigInt {
-  impl [T:! ImplicitAs(i32)] as AddTo(T) {
-    let AddResult:! auto = Self;
-    fn Add[me: Self](x: i32) -> Self { ... }
-  }
-}
-```
-
-Carbon will automatically provide the wrapper with the signature for `Add` that
-the `AddTo(T)` interface expects, converting from `T` to `i32`. Note that this
-is only allowed because `T` is known to be implicitly convertible to `i32`, in
-this case since it has a constraint that it implements `ImplicitAs(i32)`.
-
-Note that the one case where a wildcard impl need not be external is when its
-definition does not depend on the wildcard parameter, as in the above example.
-
-In general, Carbon allows an interface to be satisfied by a function as long as
-it can implicitly convert from the parameter types the interface expects to the
-parameters provided by the implementing function, and can implicitly convert
-from the return type of the implementing function to the return type expected by
-the interface. So an interface requiring a method returning values of type `T`
-could be implemented by a method returning `i32` as long as `T` had a
-`where i32 is ImplicitAs(T)` constraint.
 
 ### Combinations
 
@@ -3763,7 +3733,7 @@ implementation is chosen, for some definition of specific.
 
 #### Type structure of an impl declaration
 
-Given an impl declaration, find the type structure by deleting implicit
+Given an impl declaration, find the type structure by deleting deduced
 parameters and replacing type parameters by a `?`. The type structure of this
 declaration:
 
