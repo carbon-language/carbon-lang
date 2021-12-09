@@ -2,18 +2,34 @@
 
 """Generates C++ header to support LLVM-style RTTI for a class hierarchy.
 
-Takes as input a file describing the class hierarchy which can consist of
-four different kinds of classes: a *root* class is the base of a class
-hierarchy, meaning that it doesn't inherit from any other class. *Concrete*
-classes are classes that can be instantiated, and can't be inherited from.
-*Abstract* and *interface* classes inherit from other classes, but cannot be
-instantiated; the difference is that abstract classes can be inherited from,
-whereas interfaces can be implemented.
-FIXME: figure out how (and where) to explain interfaces.
+A C++ class hierarchy supported by this script consists of *abstract* classes,
+which can be inherited from but can't be instantiated, and *concrete* classes,
+which can be instantiated but can't be inherited from. Classes can inherit from
+at most one other class in the hierarchy; a class that doesn't inherit from
+any other class is called a *root* class, and it cannot be concrete.
 
-A non-root class C must inherit from exactly one parent, which can be a root or
-abstract class. If C is not an interface itself, it can also implement any
-number of interfaces, but each interface's parent must be an ancestor of C.
+This script also supports *interface view* classes, which do not participate
+in inheritance but are closely tied to a class hierarchy.
+An interface view can be thought of as a non-owning pointer to an instance of
+a class in the hierarchy that implements some interface. The interface is
+defined by duck-typing rather than by inheritance, so interfaces are used
+to model APIs that "cut across" the primary inheritance hierarchy. The
+interface itself is not actually a C++ type, but this script treats it as a
+class for most purposes. In particular, interfaces notionally participate
+in inheritance. A non-interface class cannot inherit from an interface, but
+it can *implement* an interface, and the associated interface view can only
+point to objects that implement the interface. An interface view class
+should be named by appending `View` to the name of the interface.
+
+This script's input file declares every class and interface in the hierarchy,
+and specifies the inheritance and interface-implementation relationships among
+them. A class C can inherit from at most one parent, and may implement any
+number of interfaces, subject to the following restrictions:
+- If C does not have a parent, it must be declared as a root.
+- If C is not an interface, its parent must not be an interface.
+- If C is a root or an interface, it cannot implement any interfaces.
+- For each interface I that C implements, the nearest non-interface ancestor
+  of I must be an ancestor of C.
 
 The input file consists of comment lines starting with `#`, whitespace lines,
 and one `;`-terminated line for each class. The core of a line is `class`
@@ -39,8 +55,8 @@ For each non-concrete class `Foo`, the generated header file will contain
 `enum class FooKind`, which has an enumerator for each concrete class derived
 from `Foo`, with a name that matches the concrete class name.
 
-For each abstract or concrete class `Foo` whose root class is `Root`, the
-generated header file will also contain a function
+For each non-root abstract or concrete class `Foo` whose root class is `Root`,
+the generated header file will also contain a function
 `bool InheritsFromFoo(RootKind kind)`, which returns true if the value of `kind`
 corresponds to a class that is derived from `Foo`. This function can be used to
 implement `Foo::classof`.
@@ -78,7 +94,7 @@ class Class:
       ancestors: A list of Class objects representing the class's ancestors,
         starting with the root and ending with the current class's parent.
       interfaces: A list of Class objects representing the interfaces the class
-        inherits from.
+        implements.
       children: A list of Class objects representing the classes that are
         derived directly from this one.
 
@@ -128,6 +144,12 @@ class Class:
     def Parent(self):
         """Returns this Class's parent."""
         return self.ancestors[-1]
+
+    def NearestNonInterfaceAncestor(self):
+        """Returns this Class's nearest non-interface ancestor."""
+        for ancestor in reversed(self.ancestors):
+            if ancestor.kind != Class.Kind.INTERFACE:
+                return ancestor
 
     def Root(self):
         """Returns the root Class of this hierarchy."""
@@ -264,6 +286,14 @@ def main():
                         f"'{interface_name}' used as interface on"
                         + f" line {line_num}"
                     )
+                interface_ancestor = interface.NearestNonInterfaceAncestor()
+                if interface_ancestor not in parent.ancestors + [parent]:
+                    sys.exit(
+                        f"Class that implements {interface_name} must"
+                        + f" inherit from {interface_ancestor.name}"
+                        + f" on line {line_num}"
+                    )
+
                 interfaces.append(interface)
 
         classes[match_result.group("name")] = Class(
