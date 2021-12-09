@@ -4,6 +4,7 @@
 
 #include "toolchain/lexer/string_literal.h"
 
+#include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -232,7 +233,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> void {
-  assert(!content.empty() && "should have escaped closing delimiter");
+  CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
@@ -351,8 +352,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        assert(contents.front() != ' ' &&
-               "should not have stopped at a plain space");
+        CHECK(contents.front() != ' ')
+            << "should not have stopped at a plain space";
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
@@ -389,8 +390,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
   llvm::StringRef indent =
-      multi_line ? CheckIndent(emitter, text, content) : llvm::StringRef();
-  return ExpandEscapeSequencesAndRemoveIndent(emitter, content, hash_level,
+      multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
+  return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
                                               indent);
 }
 

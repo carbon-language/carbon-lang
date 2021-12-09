@@ -10,7 +10,6 @@ cc_library(
     deps = [
         ":declaration",
         ":library_name",
-        ":static_scope",
     ],
 )
 

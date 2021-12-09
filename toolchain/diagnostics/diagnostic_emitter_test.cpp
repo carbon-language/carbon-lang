@@ -18,16 +18,12 @@ using Testing::DiagnosticAt;
 using Testing::DiagnosticLevel;
 using Testing::DiagnosticMessage;
 using Testing::DiagnosticShortName;
-using ::testing::ElementsAre;
-using ::testing::Eq;
 
 struct FakeDiagnostic {
   static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
   // TODO: consider ways to put the Message into `format` to allow dynamic
   // selection of the message.
   static constexpr llvm::StringLiteral Message = "{0}";
-
-  std::string message;
 
   auto Format() -> std::string {
     // Work around a bug in Clang's unused const variable warning by marking it
@@ -36,6 +32,8 @@ struct FakeDiagnostic {
 
     return llvm::formatv(Message.data(), message).str();
   }
+
+  std::string message;
 };
 
 struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {

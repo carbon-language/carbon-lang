@@ -21,8 +21,6 @@
 
 namespace Carbon {
 
-class StaticScope;
-
 // Abstract base class of all AST nodes representing patterns.
 //
 // Declaration and its derived classes support LLVM-style RTTI, including
@@ -31,7 +29,7 @@ class StaticScope;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration : public virtual AstNode, public NamedEntity {
+class Declaration : public virtual AstNode {
  public:
   ~Declaration() override = 0;
 
@@ -93,9 +91,22 @@ struct GenericBinding : public virtual AstNode, public NamedEntity {
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
 
+  // The static type of the binding. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the binding. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  private:
   std::string name_;
   Nonnull<Expression*> type_;
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // The syntactic representation of a function declaration's return type.
@@ -177,7 +188,7 @@ class ReturnTerm {
   SourceLocation source_loc_;
 };
 
-class FunctionDeclaration : public Declaration {
+class FunctionDeclaration : public Declaration, public NamedEntity {
  public:
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
@@ -212,20 +223,15 @@ class FunctionDeclaration : public Declaration {
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
-  // Only contains function parameters. Scoped variables are in the body.
-  auto static_scope() const -> const StaticScope& { return static_scope_; }
-  auto static_scope() -> StaticScope& { return static_scope_; }
-
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
-  StaticScope static_scope_;
 };
 
-class ClassDeclaration : public Declaration {
+class ClassDeclaration : public Declaration, public NamedEntity {
  public:
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
@@ -240,17 +246,12 @@ class ClassDeclaration : public Declaration {
   auto name() const -> const std::string& { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
 
-  // Contains class members. Scoped variables are in the body.
-  auto static_scope() const -> const StaticScope& { return static_scope_; }
-  auto static_scope() -> StaticScope& { return static_scope_; }
-
  private:
   std::string name_;
   std::vector<Nonnull<Member*>> members_;
-  StaticScope static_scope_;
 };
 
-class AlternativeSignature : public virtual AstNode, public NamedEntity {
+class AlternativeSignature : public virtual AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
                        Nonnull<Expression*> signature)
@@ -273,7 +274,7 @@ class AlternativeSignature : public virtual AstNode, public NamedEntity {
   Nonnull<Expression*> signature_;
 };
 
-class ChoiceDeclaration : public Declaration {
+class ChoiceDeclaration : public Declaration, public NamedEntity {
  public:
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
@@ -294,20 +295,12 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
-  // Contains the alternatives.
-  auto static_scope() const -> const StaticScope& { return static_scope_; }
-  auto static_scope() -> StaticScope& { return static_scope_; }
-
  private:
   std::string name_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
-  StaticScope static_scope_;
 };
 
 // Global variable definition implements the Declaration concept.
-//
-// TODO: this should not inherit from NamedEntity, because names should
-//   always resolve to the underlying binding, not the VariableDeclaration.
 class VariableDeclaration : public Declaration {
  public:
   VariableDeclaration(SourceLocation source_loc,

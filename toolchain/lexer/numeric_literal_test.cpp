@@ -24,10 +24,9 @@ using ::testing::Matcher;
 using ::testing::Property;
 using ::testing::Truly;
 
-struct NumericLiteralTest : ::testing::Test {
+class NumericLiteralTest : public ::testing::Test {
+ protected:
   NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
-
-  ErrorTrackingDiagnosticConsumer error_tracker;
 
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
@@ -41,6 +40,8 @@ struct NumericLiteralTest : ::testing::Test {
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return Lex(text).ComputeValue(emitter);
   }
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
 };
 
 // TODO: Use gmock's VariantWith once it exists.

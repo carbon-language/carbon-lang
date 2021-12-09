@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -54,7 +55,7 @@ class ExpectedNodesMatcher
  public:
   explicit ExpectedNodesMatcher(
       llvm::SmallVector<ExpectedNode, 0> expected_nodess)
-      : expected_nodes(std::move(expected_nodess)) {}
+      : expected_nodes_(std::move(expected_nodess)) {}
 
   auto MatchAndExplain(const ParseTree& tree,
                        ::testing::MatchResultListener* output_ptr) const
@@ -66,7 +67,7 @@ class ExpectedNodesMatcher
                          int postorder_index, const ExpectedNode& expected_node,
                          ::testing::MatchResultListener& output) const -> bool;
 
-  llvm::SmallVector<ExpectedNode, 0> expected_nodes;
+  llvm::SmallVector<ExpectedNode, 0> expected_nodes_;
 };
 
 // Implementation of the Google Mock interface for matching (and explaining any
@@ -81,7 +82,7 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   const auto nodes_end = rpo.end();
   auto nodes_it = nodes_begin;
   llvm::SmallVector<const ExpectedNode*, 16> expected_node_stack;
-  for (const ExpectedNode& en : expected_nodes) {
+  for (const ExpectedNode& en : expected_nodes_) {
     expected_node_stack.push_back(&en);
   }
   while (!expected_node_stack.empty()) {
@@ -100,9 +101,9 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
     }
 
     if (expected_node.skip_subtree) {
-      assert(expected_node.children.empty() &&
-             "Must not skip an expected subtree while specifying expected "
-             "children!");
+      CHECK(expected_node.children.empty())
+          << "Must not skip an expected subtree while specifying expected "
+             "children!";
       nodes_it = llvm::reverse(tree.Postorder(n)).end();
       continue;
     }
@@ -137,9 +138,9 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   // subtrees. Instead, we need to check that we successfully processed all of
   // the actual tree and consumed all of the expected tree.
   if (nodes_it != nodes_end) {
-    assert(expected_node_stack.empty() &&
-           "If we have unmatched nodes in the input tree, should only finish "
-           "having fully processed expected tree.");
+    CHECK(expected_node_stack.empty())
+        << "If we have unmatched nodes in the input tree, should only finish "
+           "having fully processed expected tree.";
     output << "\nFinished processing expected nodes and there are still "
            << (nodes_end - nodes_it) << " unexpected nodes.";
     matches = false;
@@ -169,7 +170,7 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
   // of the actual parse tree.
   llvm::SmallVector<std::pair<const ExpectedNode*, int>, 16>
       expected_node_stack;
-  for (const ExpectedNode& expected_node : llvm::reverse(expected_nodes)) {
+  for (const ExpectedNode& expected_node : llvm::reverse(expected_nodes_)) {
     expected_node_stack.push_back({&expected_node, 0});
   }
 
@@ -192,8 +193,8 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
     }
 
     if (!expected_node.children.empty()) {
-      assert(!expected_node.skip_subtree &&
-             "Must not have children and skip a subtree!");
+      CHECK(!expected_node.skip_subtree)
+          << "Must not have children and skip a subtree!";
       output << ", children: [\n";
       for (const ExpectedNode& child_expected_node :
            llvm::reverse(expected_node.children)) {
@@ -208,8 +209,8 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
     // we pop up.
     output << "}";
     if (!expected_node_stack.empty()) {
-      assert(depth >= expected_node_stack.back().second &&
-             "Cannot have an increase in depth on a leaf node!");
+      CHECK(depth >= expected_node_stack.back().second)
+          << "Cannot have an increase in depth on a leaf node!";
       // The distance we need to pop is the difference in depth.
       int pop_depth = depth - expected_node_stack.back().second;
       for (int pop_count = 0; pop_count < pop_depth; ++pop_count) {

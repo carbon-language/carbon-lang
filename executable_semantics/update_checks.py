@@ -14,7 +14,7 @@ import subprocess
 import sys
 from typing import Set
 
-_BINDIR = "./bazel-bin/executable_semantics"
+_BIN = "./bazel-bin/executable_semantics/executable_semantics"
 _TESTDATA = "executable_semantics/testdata"
 
 # A prefix followed by a command to run for autoupdating checked output.
@@ -29,7 +29,7 @@ def _get_tests() -> Set[str]:
     tests = set()
     for root, _, files in os.walk(_TESTDATA):
         for f in files:
-            if f == "lit.cfg":
+            if f == "lit.cfg.py":
                 # Ignore the lit config.
                 continue
             if os.path.splitext(f)[1] == ".carbon":
@@ -74,9 +74,8 @@ def _update_check_once(test: str) -> bool:
             % (test, _AUTOUPDATE_MARKER, _NOAUTOUPDATE_MARKER)
         )
 
-    # Add executable_semantics to the PATH.
-    env = os.environ.copy()
-    env["PATH"] = "%s:%s" % (os.path.abspath(_BINDIR), env["PATH"])
+    # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
+    autoupdate_cmd = autoupdate_cmd.replace("%{executable_semantics}", _BIN)
 
     # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
@@ -85,7 +84,6 @@ def _update_check_once(test: str) -> bool:
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        env=env,
     )
     out = p.stdout.decode("utf-8")
 

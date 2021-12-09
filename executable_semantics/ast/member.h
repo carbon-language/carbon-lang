@@ -23,7 +23,7 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Member : public virtual AstNode, public NamedEntity {
+class Member : public virtual AstNode {
  public:
   ~Member() override = 0;
 

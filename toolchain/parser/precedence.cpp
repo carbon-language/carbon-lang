@@ -99,6 +99,7 @@ struct OperatorPriorityTable {
     bool changed = false;
     do {
       changed = false;
+      // NOLINTNEXTLINE(modernize-loop-convert)
       for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
         for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
           if (table[a][b] == OperatorPriority::LeftFirst) {
@@ -317,7 +318,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
     -> OperatorPriority {
   static constexpr OperatorPriorityTable Lookup;
-  return Lookup.table[left.level][right.level];
+  return Lookup.table[left.level_][right.level_];
 }
 
 }  // namespace Carbon

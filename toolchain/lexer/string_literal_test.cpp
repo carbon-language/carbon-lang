@@ -14,10 +14,9 @@
 namespace Carbon {
 namespace {
 
-struct StringLiteralTest : ::testing::Test {
+class StringLiteralTest : public ::testing::Test {
+ protected:
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
-
-  ErrorTrackingDiagnosticConsumer error_tracker;
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
@@ -32,6 +31,8 @@ struct StringLiteralTest : ::testing::Test {
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return token.ComputeValue(emitter);
   }
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
 };
 
 TEST_F(StringLiteralTest, StringLiteralBounds) {

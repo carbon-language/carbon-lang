@@ -28,17 +28,12 @@ using Carbon::Testing::MatchParseTreeNodes;
 using namespace Carbon::Testing::NodeMatchers;
 using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::HasSubstr;
 using ::testing::Ne;
-using ::testing::NotNull;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
-struct ParseTreeTest : ::testing::Test {
-  std::forward_list<SourceBuffer> source_storage;
-  std::forward_list<TokenizedBuffer> token_storage;
-  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
-
+class ParseTreeTest : public ::testing::Test {
+ protected:
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
     source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
     return source_storage.front();
@@ -49,6 +44,10 @@ struct ParseTreeTest : ::testing::Test {
         TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
+
+  std::forward_list<SourceBuffer> source_storage;
+  std::forward_list<TokenizedBuffer> token_storage;
+  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
 TEST_F(ParseTreeTest, Empty) {
@@ -1071,7 +1070,7 @@ TEST_F(ParseTreeTest, StructErrors) {
        DiagnosticMessage("Expected `,` or `}`.")},
   };
 
-  for (Testcase testcase : testcases) {
+  for (const Testcase& testcase : testcases) {
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
     EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
@@ -1158,6 +1157,22 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
           Yaml::MappingValue{{"node_index", "5"},  //
                              {"kind", "FileEnd"},
                              {"text", ""}}}));
+}
+
+TEST_F(ParseTreeTest, ParenMatchRegression) {
+  // A regression test that the search for the closing `)` doesn't end early on
+  // the closing `}` when it skips over the nested scope.
+  TokenizedBuffer tokens = GetTokenizedBuffer("var = (foo {})");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+  EXPECT_THAT(
+      tree, MatchParseTreeNodes(
+                {MatchVariableDeclaration(
+                     HasError, MatchVariableInitializer(
+                                   "=", MatchParenExpression(
+                                            HasError, MatchNameReference("foo"),
+                                            MatchParenExpressionEnd()))),
+                 MatchFileEnd()}));
 }
 
 }  // namespace

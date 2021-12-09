@@ -20,7 +20,6 @@
 namespace Carbon {
 
 class FunctionDeclaration;
-class StaticScope;
 
 class Statement : public virtual AstNode {
  public:
@@ -60,12 +59,8 @@ class Block : public Statement {
     return statements_;
   }
 
-  auto static_scope() const -> const StaticScope& { return static_scope_; }
-  auto static_scope() -> StaticScope& { return static_scope_; }
-
  private:
   std::vector<Nonnull<Statement*>> statements_;
-  StaticScope static_scope_;
 };
 
 class ExpressionStatement : public Statement {
@@ -283,15 +278,9 @@ class Match : public Statement {
     auto statement() const -> const Statement& { return *statement_; }
     auto statement() -> Statement& { return *statement_; }
 
-    // Contains names for the pattern and statement. Note that when the
-    // statement is a block, it gains its own scope.
-    auto static_scope() const -> const StaticScope& { return static_scope_; }
-    auto static_scope() -> StaticScope& { return static_scope_; }
-
    private:
     Nonnull<Pattern*> pattern_;
     Nonnull<Statement*> statement_;
-    StaticScope static_scope_;
   };
 
   Match(SourceLocation source_loc, Nonnull<Expression*> expression,
@@ -337,9 +326,25 @@ class Continuation : public Statement, public NamedEntity {
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
 
+  // The static type of the continuation. Cannot be called before typechecking.
+  //
+  // This will always be ContinuationType, but we must set it dynamically in
+  // the typechecker because this code can't depend on ContinuationType.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the continuation. Can only be called once,
+  // during typechecking.
+  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+
+  // Returns whether the static type has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
+
  private:
   std::string continuation_variable_;
   Nonnull<Block*> body_;
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // A run statement.

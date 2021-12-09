@@ -81,8 +81,9 @@ Summary of how Carbon generics work:
 -   A function with a generic type parameter can have the same function body as
     an unparameterized one. Functions can freely mix generic, template, and
     regular parameters.
--   Interfaces can require other interfaces be implemented, or
-    [extend](terminology.md#extending-an-interface) them.
+-   Interfaces can require other interfaces be implemented.
+-   Interfaces can [extend](terminology.md#extending-an-interface) required
+    interfaces.
 -   The `&` operation on type-of-types allows you conveniently combine
     interfaces. It gives you all the names that don't conflict.
 -   You may also declare a new type-of-type directly using
@@ -99,7 +100,7 @@ instead of making near-duplicates for very similar situations, much like C++
 templates. For example, instead of having one function per type-you-can-sort:
 
 ```
-fn SortInt32Vector(a: Vector(Int32)*) { ... }
+fn SortInt32Vector(a: Vector(i32)*) { ... }
 fn SortStringVector(a: Vector(String)*) { ... }
 ...
 ```
@@ -111,9 +112,10 @@ elements:
 fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `!` to indicate that the parameter named `T` is generic.
+The syntax above adds a `!` to indicate that the parameter named `T` is generic
+and the caller will have to provide a value known at compile time.
 
-Given an `Int32` vector `iv`, `SortVector(Int32, &iv)` is equivalent to
+Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
 `SortVector(String, &sv)` is equivalent to `SortStringVector(&sv)`. Thus, we can
 sort any vector containing comparable elements using this single `SortVector`
@@ -155,7 +157,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](that: Self) -> Bool;
+  fn Less[me: Self](rhs: Self) -> Bool;
 }
 ```
 
@@ -169,8 +171,7 @@ do some checking given a function definition, but more checking of the
 definition is required after seeing the call sites once all the
 [instantiations](terminology.md#instantiation) are known.
 
-Note: The doc on [Generics terminology](terminology.md) goes into more detail
-about the
+Note: [Generics terminology](terminology.md) goes into more detail about the
 [differences between generics and templates](terminology.md#generic-versus-template-parameters).
 
 ### Implementing interfaces
@@ -209,19 +210,23 @@ class Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](that: Self) -> Bool { ... }
+  fn Less[me: Self](rhs: Self) -> Bool { ... }
 }
 ```
 
-Implementations may be defined within the class definition itself or externally.
-External implementations may be defined in the library defining the interface.
+Implementations may be defined within the class definition itself or
+out-of-line. Implementations may optionally be start with the `external` keyword
+to say the members of the interface are not unqualified members of the class.
+Out-of-line implementations must be external. External implementations may be
+defined in the library defining either the class or the interface.
 
 #### Qualified and unqualified access
 
-The methods of an interface implemented within the class definition may be
-called with the unqualified syntax. All methods of implemented interfaces may be
-called with the qualified syntax, whether they are defined internally or
-externally.
+The methods of an interface implemented internally within the class definition
+may be called with the ordinary unqualified member syntax. Methods of all
+implemented interfaces may be called with the
+[qualified member syntax](terminology.md#qualified-and-unqualified-member-names),
+whether they are defined internally or externally.
 
 ```
 var song: Song;
@@ -243,7 +248,7 @@ specific type value assigned to `T` is not known when type checking the
 `SortVector` function. Instead it is the constraints on `T` that let the
 compiler know what operations may be performed on values of type `T`. Those
 constraints are represented by the type of `T`, a
-[**_type-of-type_**](terminology.md#type-constraints).
+[**_type-of-type_**](terminology.md#type-of-type).
 
 In general, a type-of-type describes the capabilities of a type, while a type
 defines specific implementations of those capabilities.
@@ -282,7 +287,7 @@ SortVectorDeduced(&anIntVector);
 SortVectorDeduced(&aStringVector);
 ```
 
-and the compiler deduces that the `T` argument should be set to `Int32` or
+and the compiler deduces that the `T` argument should be set to `i32` or
 `String` from the type of the argument.
 
 Deduced arguments are always determined from the call and its explicit
@@ -329,7 +334,7 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](that: Self) -> Bool;
+  fn IsEqual[me: Self](rhs: Self) -> Bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
@@ -340,33 +345,33 @@ interface Iterable {
 ```
 
 The `extends` keyword is used to [extend](terminology.md#extending-an-interface)
-another interface. If interface `Child` extends interface `Parent`, `Parent`'s
-interface is both required and all its methods are included in `Child`'s
+another interface. If interface `Derived` extends interface `Base`, `Base`'s
+interface is both required and all its methods are included in `Derived`'s
 interface.
 
 ```
 // `Hashable` extends `Equatable`.
 interface Hashable {
   extends Equatable;
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
   impl as Equatable;
   alias IsEqual = Equatable.IsEqual;
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
 }
 ```
 
-A type may implement the parent interface implicitly by implementing all the
-methods in the child implementation.
+A type may implement the base interface implicitly by implementing all the
+methods in the implementation of the derived interface.
 
 ```
 class Key {
   // ...
   impl as Hashable {
-    fn IsEqual[me: Key](that: Key) -> Bool { ... }
-    fn Hash[me: Key]() -> UInt64 { ... }
+    fn IsEqual[me: Key](rhs: Key) -> Bool { ... }
+    fn Hash[me: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -382,17 +387,17 @@ It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  fn GetCenter[me: Self]() -> (Int, Int);
+  fn GetCenter[me: Self]() -> (i32, i32);
   // Draw the object to the screen
   fn Draw[me: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr me: Self*](player: Int);
+  fn SetWinner[addr me: Self*](player: i32);
   // Indicate the game was a draw
   fn Draw[addr me: Self*]();
 }
 
-fn F[T:! Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
+fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
   game_state->SetWinner(1);
   return game_state->Center();
 }
@@ -473,10 +478,10 @@ At that point, two erasures occur:
 
 ### Adapting types
 
-Carbon has a mechanism called "adapting types" to create new types that are
-compatible with existing types but with different interface implementations.
-This could be used to add or replace implementations, or define implementations
-for reuse.
+Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type))
+to create new types that are [compatible](terminology.md#compatible-types) with
+existing types but with different interface implementations. This could be used
+to add or replace implementations, or define implementations for reuse.
 
 In this example, we have multiple ways of sorting a collection of `Song` values.
 

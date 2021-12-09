@@ -8,6 +8,7 @@
 #include <array>
 #include <string>
 
+#include "common/check.h"
 #include "gmock/gmock.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -23,18 +24,18 @@ class SingleTokenDiagnosticTranslator
   // Form a translator for a given token. The string provided here must refer
   // to the same character array that we are going to lex.
   explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
-      : token(token) {}
+      : token_(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
-    assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) &&
-           "invalid diagnostic location");
-    llvm::StringRef prefix = token.take_front(pos - token.begin());
+    CHECK(llvm::is_sorted(std::array{token_.begin(), pos, token_.end()}))
+        << "invalid diagnostic location";
+    llvm::StringRef prefix = token_.take_front(pos - token_.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');
     if (before_last_newline.size() == prefix.size()) {
       // On first line.
       return {.file_name = SynthesizeFilename(),
               .line_number = 1,
-              .column_number = static_cast<int32_t>(pos - token.begin() + 1)};
+              .column_number = static_cast<int32_t>(pos - token_.begin() + 1)};
     } else {
       // On second or subsequent lines. Note that the line number here is 2
       // more than the number of newlines because `rsplit` removed one newline
@@ -48,10 +49,10 @@ class SingleTokenDiagnosticTranslator
 
  private:
   [[nodiscard]] auto SynthesizeFilename() const -> std::string {
-    return llvm::formatv("`{0}`", token);
+    return llvm::formatv("`{0}`", token_);
   }
 
-  llvm::StringRef token;
+  llvm::StringRef token_;
 };
 
 }  // namespace Carbon::Testing
