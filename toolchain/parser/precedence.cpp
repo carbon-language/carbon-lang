@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include "common/check.h"
+
 namespace Carbon {
 
 namespace {
@@ -121,7 +123,7 @@ struct OperatorPriorityTable {
       for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
         if (table[a][b] == OperatorPriority::LeftFirst) {
           if (table[b][a] == OperatorPriority::LeftFirst) {
-            throw "inconsistent lookup table entries";
+            FATAL() << "inconsistent lookup table entries";
           }
           table[b][a] = OperatorPriority::RightFirst;
         }
@@ -166,13 +168,13 @@ struct OperatorPriorityTable {
       if (level != Highest) {
         if (table[Highest][level] != OperatorPriority::LeftFirst ||
             table[level][Highest] != OperatorPriority::RightFirst) {
-          throw "Highest is not highest priority";
+          FATAL() << "Highest is not highest priority";
         }
       }
       if (level != Lowest) {
         if (table[Lowest][level] != OperatorPriority::RightFirst ||
             table[level][Lowest] != OperatorPriority::LeftFirst) {
-          throw "Lowest is not lowest priority";
+          FATAL() << "Lowest is not lowest priority";
         }
       }
     }
