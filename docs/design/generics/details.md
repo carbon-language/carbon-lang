@@ -74,10 +74,23 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
--   [Future work](#future-work)
+-   [Parameterized impls](#parameterized-impls)
+    -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
-    -   [Parameterized impls](#parameterized-impls)
-        -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
+        -   [Conditional methods](#conditional-methods)
+    -   [Blanket impls](#blanket-impls)
+        -   [Difference between blanket impls and named constraints](#difference-between-blanket-impls-and-named-constraints)
+    -   [Wildcard impls](#wildcard-impls)
+    -   [Combinations](#combinations)
+    -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
+        -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
+        -   [Orphan rule](#orphan-rule)
+        -   [Overlap rule](#overlap-rule)
+        -   [Prioritization rule](#prioritization-rule)
+        -   [Acyclic rule](#acyclic-rule)
+        -   [Termination rule](#termination-rule)
+        -   [Comparison to Rust](#comparison-to-rust)
+-   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
         -   [Runtime type fields](#runtime-type-fields)
@@ -2341,16 +2354,16 @@ but play no role in selecting the `impl`.
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
-defined in some library that must be imported in any code that looks up whether
-that interface is implemented for that type. This requires that `impl` is
-defined in the same library that defines the interface or one of the names
-needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
-`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
-this `impl` to import the _definitions_ of all of those names. Seeing a forward
-declaration of these names is insufficient, since you can presumably see forward
-declarations without seeing an `impl` with the definition. This accomplishes a
-few goals:
+`A(B(C(D), E))`. To satisfy the [orphan rule for coherence](#orphan-rule), that
+`impl` must be defined in some library that must be imported in any code that
+looks up whether that interface is implemented for that type. This requires that
+`impl` is defined in the same library that defines the interface or one of the
+names needed by the type. That is, the `impl` must be defined with one of `I`,
+`T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking
+up this `impl` to import the _definitions_ of all of those names. Seeing a
+forward declaration of these names is insufficient, since you can presumably see
+forward declarations without seeing an `impl` with the definition. This
+accomplishes a few goals:
 
 -   The compiler can check that there is only one definition of any `impl` that
     is actually used, avoiding
@@ -2365,8 +2378,8 @@ few goals:
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 Note that [the rules for specialization](#lookup-resolution-and-specialization)
-do allow there to be more than one `impl` to be defined for a type, as long as
-one can unambiguously be picked as most specific.
+do allow there to be more than one `impl` to be defined for a type, by
+unambiguously picking one as most specific.
 
 **References:** Implementation coherence is
 [defined in terminology](terminology.md#coherence), and is
@@ -3503,25 +3516,649 @@ value of type `T` in this case.
 pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
 
-## Future work
+## Parameterized impls
+
+There are cases where an impl definition should apply to more than a single type
+and interface combination. The solution is to parameterize the impl definition,
+so it applies to a family of types, interfaces, or both. This includes:
+
+-   Declare an impl for a parameterized type, which may be external or declared
+    out-of-line.
+-   "Conditional conformance" where a parameterized type implements some
+    interface if the parameter to the type satisfies some criteria, like
+    implementing the same interface.
+-   "Blanket" impls where an interface is implemented for all types that
+    implement another interface, or some other criteria beyond being a specific
+    type.
+-   "Wildcard" impls where a family of interfaces are implemented for single
+    type.
+
+### Impl for a parameterized type
+
+Interfaces may be implemented for a parameterized type. This can be done
+lexically in the class' scope:
+
+```
+class Vector(T:! Type) {
+  impl as Iterable {
+    let ElementType:! Type = T;
+    ...
+  }
+}
+```
+
+This is equivalent to naming the type between `impl` and `as`:
+
+```
+class Vector(T:! Type) {
+  impl Vector(T) as Iterable {
+    let ElementType:! Type = T;
+    ...
+  }
+}
+```
+
+An impl may be declared [external](#external-impl) by adding an `external`
+keyword before `impl`. External impls may also be declared out-of-line:
+
+```
+external impl [T:! Type] Vector(T) as Iterable {
+  let ElementType:! Type = T;
+  ...
+}
+// This syntax is also allowed:
+external impl Vector(T:! Type) as Iterable {
+  let ElementType:! Type = T;
+  ...
+}
+```
+
+The parameter for the type can be used as an argument to the interface being
+implemented:
+
+```
+class HashMap(Key:! Hashable, Value:! Type) {
+  impl as Has(Key) { ... }
+  impl as Contains(HashSet(Key)) { ... }
+}
+```
+
+or externally out-of-line:
+
+```
+class HashMap(Key:! Hashable, Value:! Type) { ... }
+external impl [Key:! Hashable, Value:! Type]
+    HashMap(Key, Value) as Has(Key) { ... }
+external impl [Key:! Hashable, Value:! Type]
+    HashMap(Key, Value) as Contains(HashSet(Key)) { ... }
+
+// This syntax is also allowed:
+external impl HashMap(Key:! Hashable, Value:! Type)
+    as Has(Key) { ... }
+external impl HashMap(Key:! Hashable, Value:! Type)
+    as Contains(HashSet(Key)) { ... }
+```
 
 ### Conditional conformance
 
-[The problem](terminology.md#conditional-conformance) we are trying to solve
-here is expressing that we have an `impl` of some interface for some type, but
-only if some additional type restrictions are met.
+[Conditional conformance](terminology.md#conditional-conformance) is expressing
+that we have an `impl` of some interface for some type, but only if some
+additional type restrictions are met. Examples where this would be useful
+include being able to say that a container type, like `Vector`, implements some
+interface when its element type satisfies the same interface:
 
-### Parameterized impls
+-   A container is printable if its elements are.
+-   A container could be compared to another container with the same element
+    type using a
+    [lexicographic comparison](https://en.wikipedia.org/wiki/Lexicographic_order)
+    if the element type is comparable.
+-   A container is copyable if its elements are.
 
-Also known as "blanket `impl`s", these are when you have an `impl` definition
-that is parameterized so it applies to more than a single type and interface
-combination.
+To do this with an [`external impl`](#external-impl), specify a more-specific
+`Self` type to the left of the `as` in the declaration:
 
-#### Lookup resolution and specialization
+```
+interface Printable {
+  fn Print[me: Self]();
+}
+class Vector(T:! Type) { ... }
+
+// By saying "T:! Printable" instead of "T:! Type" here,
+// we constrain T to be Printable for this impl.
+external impl [T:! Printable] Vector(T) as Printable {
+  fn Print[me: Self]() {
+    for (let a: T in me) {
+      // Can call `Print` on `a` since the constraint
+      // on `T` ensures it implements `Printable`.
+      a.Print();
+    }
+  }
+}
+// This syntax is also allowed:
+external impl Vector(T:! Printable) as Printable { ... }
+```
+
+To define these `impl`s inline in a `class` definition, include a more-specific
+type between the `impl` and `as` keywords.
+
+```
+class Array(T:! Type, template N:! Int) {
+  // These are both allowed:
+  impl [P:! Printable] Array(P, N) as Printable { ... }
+  impl Array(P:! Printable, N) as Printable { ... }
+}
+```
+
+It is legal to add the keyword `external` before the `impl` keyword to switch to
+an external impl defined lexically within the class scope. Inside the scope,
+both `P` and `T` refer to the same type, but `P` has the type-of-type of
+`Printable` and so has a `Print` member. The relationship between `T` and `P` is
+as if there was a `where P == T` clause.
+
+**TODO:** Need to resolve whether the `T` name can be reused, or if we require
+that you need to use new names, like `P`, when creating new type variables.
+
+**Example:** Consider a type with two parameters, like `Pair(T, U)`. In this
+example, the interface `Foo(T)` is only implemented when the two types are
+equal.
+
+```
+interface Foo(T:! Type) { ... }
+class Pair(T:! Type, U:! Type) { ... }
+external impl [T:! Type] Pair(T, T) as Foo(T) { ... }
+```
+
+You may also define the `impl` inline, in which case it can be internal:
+
+```
+class Pair(T:! Type, U:! Type) {
+  impl Pair(T, T) as Foo(T) { ... }
+}
+```
+
+**Clarification:** Method lookup will look at all internal implementations,
+whether or not the conditions on those implementations hold for the `Self` type.
+If the conditions don't hold, then the call will be rejected because `Self` has
+the wrong type, just like any other argument/parameter type mismatch. This means
+types may not implement two different interfaces internally if they share a
+member name, even if their conditions are mutually exclusive:
+
+```
+class X(T:! Type) {
+  impl X(i32) as Foo {
+    fn F[me: Self]();
+  }
+  impl X(i64) as Bar {
+    // ❌ Illegal: name conflict between `Foo.F` and `Bar.F`
+    fn F[me: Self](n: i64);
+  }
+}
+```
+
+However, the same interface may be implemented multiple times as long as there
+is no overlap in the conditions:
+
+```
+class X(T:! Type) {
+  impl X(i32) as Foo {
+    fn F[me: Self]();
+  }
+  impl X(i64) as Foo {
+    // ✅ Allowed: `X(T).F` consistently means `X(T).(Foo.F)`
+    fn F[me: Self]();
+  }
+}
+```
+
+This allows a type to express that it implements an interface for a list of
+types, possibly with different implementations.
+
+In general, `X(T).F` can only mean one thing, regardless of `T`.
+
+**Concern:** The conditional conformance feature makes the question "is this
+interface implemented for this type" undecidable in general.
+[This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
+The acyclic restriction may eliminate this issue, otherwise we will likely need
+some heuristic like a limit on how many steps of recursion are allowed.
+
+**Comparison with other languages:**
+[Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
+but bans cases where there could be ambiguity from overlap.
+[Rust also supports conditional conformance](https://doc.rust-lang.org/rust-by-example/generics/where.html).
+
+#### Conditional methods
+
+A method could be defined conditionally for a type by using a more specific type
+in place of `Self` in the method declaration. For example, this is how to define
+a vector type that only has a `Sort` method if its elements implement the
+`Comparable` interface:
+
+```
+class Vector(T:! Type) {
+  // `Vector(T)` has a `Sort()` method if `T` is `Comparable`.
+  fn Sort[C:! Comparable, addr me: Vector(C)*]();
+}
+```
+
+**Comparison with other languages:** In
+[Rust](https://doc.rust-lang.org/book/ch10-02-traits.html#using-trait-bounds-to-conditionally-implement-methods)
+this feature is part of conditional conformance. Swift supports conditional
+methods using
+[conditional extensions](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553)
+or
+[contextual where clauses](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID628).
+
+### Blanket impls
+
+A _blanket impl_ is an `impl` that could apply to more than one type, so the
+`impl` will use a type variable for the `Self` type. Here are some examples
+where blanket impls arise:
+
+-   Any type implementing `Ordered` should get an implementation of
+    `PartiallyOrdered`.
+
+    ```
+    external impl [T:! Ordered] T as PartiallyOrdered { ... }
+    ```
+
+-   `T` implements `CommonType(T)` for all `T`
+
+    ```
+    external impl [T:! Type] T as CommonType(T) {
+      let Result:! auto = T;
+    }
+    ```
+
+    This means that every type is the common type with itself.
+
+Blanket impls must always be [external](#external-impl) and defined lexically
+out-of-line.
+
+#### Difference between blanket impls and named constraints
+
+A blanket interface can be used to say "any type implementing `interface I` also
+implements `interface B`." Compare this with defining a `constraint C` that
+requires `I`. In that case, `C` will also be implemented any time `I` is. There
+are differences though:
+
+-   There can be other implementations of `interface B` without a corresponding
+    implementation of `I`, unless `B` has a requirement on `I`. However, the
+    types implementing `C` will be the same as the types implementing `I`.
+-   More specialized implementations of `B` can override the blanket
+    implementation.
+
+### Wildcard impls
+
+A _wildcard impl_ is an impl that defines a family of interfaces for a single
+`Self` type. For example, the `BigInt` type might implement `AddTo(T)` for all
+`T` that implement `ImplicitAs(i32)`. The implementation would first convert `T`
+to `i32` and then add the `i32` to the `BigInt` value.
+
+```
+class BigInt {
+  extern impl [T:! ImplicitAs(i32)] as AddTo(T) { ... }
+  // Or:
+  extern impl as AddTo(T:! ImplicitAs(i32)) { ... }
+}
+// Or out-of-line:
+extern impl [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
+// Or:
+extern impl BigInt as AddTo(T:! ImplicitAs(i32)) { ... }
+```
+
+Wildcard impls must always be [external](#external-impl), to avoid having the
+names in the interface defined for the type multiple times.
+
+### Combinations
+
+The different kinds of parameters to impls may be combined. For example, if `T`
+implements `As(U)`, then this implements `As(Optional(U))` for `Optional(T)`:
+
+```
+external impl [U:! Type, T:! As(U)]
+  Optional(T) as As(Optional(U)) { ... }
+```
+
+This has a wildcard parameter `U`, and a condition on parameter `T`.
+
+### Lookup resolution and specialization
+
+As much as possible, we want rules for where an impl is allowed to be defined
+and for selecting which impl to use that achieve these three goals:
+
+-   Implementations have coherence, as
+    [defined in terminology](terminology.md#coherence). This is
+    [a goal for Carbon](goals.md#coherence). More detail can be found in
+    [this appendix with the rationale and alternatives considered](appendix-coherence.md).
+-   Libraries will work together as long as they pass their separate checks.
+-   A generic function can assume that some impl will be successfully selected
+    if it can see an impl that applies, even though another more specific impl
+    may be selected.
 
 For this to work, we need a rule that picks a single `impl` in the case where
 there are multiple `impl` definitions that match a particular type and interface
-combination.
+combination. This is called _specialization_ when the rule is that most specific
+implementation is chosen, for some definition of specific.
+
+#### Type structure of an impl declaration
+
+Given an impl declaration, find the type structure by deleting deduced
+parameters and replacing type parameters by a `?`. The type structure of this
+declaration:
+
+```
+impl [T:! ..., U:! ...] Foo(T, i32) as Bar(String, U) { ... }
+```
+
+is:
+
+```
+impl Foo(?, i32) as Bar(String, ?)
+```
+
+To get a uniform representation across different `impl` definitions, before type
+parameters are replaced the declarations are normalized as follows:
+
+-   For impls declared lexically inline in a class definition, the type is added
+    between the `impl` and `as` keywords if the type is left out.
+-   Pointer types `T*` are replaced with `Ptr(T)`.
+-   The `external` keyword is removed, if present.
+
+The type structure will always contain a single interface name, which is the
+name of the interface being implemented, and some number of type names. Type
+names can be in the `Self` type to the left of the `as` keyword, or as
+parameters to other types or the interface. These names must always be defined
+either in the current library or be publicly defined in some library this
+library depends on.
+
+#### Orphan rule
+
+To achieve coherence, we need to ensure that any given impl can only be defined
+in a library that must be imported for it to apply. Specifically, given a
+specific type and specific interface, impls that can match can only be in
+libraries that must have been imported to name that type or interface. This is
+achieved with the _orphan rule_.
+
+**Orphan rule:** Some name from the type structure of an `impl` declaration must
+be defined in the same library as the `impl`, that is some name must be _local_.
+
+Only the implementing interface and types (self type and type parameters) in the
+type structure are relevant here; an interface mentioned in a constraint is not
+sufficient since it
+[need not be imported](/proposals/p0920.md#orphan-rule-could-consider-interface-requirements-in-blanket-impls).
+
+Since Carbon in addition requires there be no cyclic library dependencies, we
+conclude that there is at most one library that can define impls with a
+particular type structure.
+
+#### Overlap rule
+
+Given a specific concrete type, say `Foo(bool, i32)`, and an interface, say
+`Bar(String, f32)`, the overlap rule picks, among all the matching impls, which
+type structure is considered "most specific" to use as the implementation of
+that type for that interface.
+
+Given two different type structures of impls matching a query, for example:
+
+```
+impl Foo(?, i32) as Bar(String, ?)
+impl Foo(?, ?) as Bar(String, f32)
+```
+
+We pick the type structure with a non-`?` at the first difference as most
+specific. Here we see a difference between `Foo(?, i32)` and `Foo(?, ?)`, so we
+select the one with `Foo(?, i32)`, ignoring the fact that it has another `?`
+later in its type structure
+
+This rule corresponds to a depth-first traversal of the type tree to identify
+the first difference, and then picking the most specific choice at that
+difference.
+
+#### Prioritization rule
+
+Since at most one library can define impls with a given type structure, all
+impls with a given type structure must be in the same library. Furthermore by
+the [impl declaration access rules](#access), they will be defined in the API
+file for the library if they could match any query from outside the library. If
+there is more than one impl with that type structure, they must be written
+together in a prioritization block. Once a type structure is selected for a
+query, the first impl in the prioritization block that matches is selected.
+
+**Open question:** How are prioritization blocks written? A block starts with a
+keyword like `match_first` or `impl_priority` and then a sequence of impl
+declarations inside matching curly braces `{` ... `}`.
+
+```
+match_first {
+  // If T is Foo prioritized ahead of T is Bar
+  impl [T:! Foo] T as Bar { ... }
+  impl [T:! Baz] T as Bar { ... }
+}
+```
+
+**Open question:** How do we pick between two different prioritization blocks
+when they contain a mixture of type structures? There are three options:
+
+-   Prioritization blocks implicitly define all non-empty intersections of
+    contained impls, which are then selected by their type structure.
+-   The compiler first picks the impl with the type pattern most favored for the
+    query, and then picks the definition of the highest priority matching impl
+    in the same prioritization block block.
+-   All the impls in a prioritization block are required to have the same type
+    structure, at a cost in expressivity.
+
+To see the difference between the first two options, consider two libraries with
+type structures as follows:
+
+-   Library B has `impl (A, ?, ?, D) as I` and `impl (?, B, ?, D) as I` in the
+    same prioritization block.
+-   Library C has `impl (A, ?, C, ?) as I`.
+
+For the query `(A, B, C, D) as I`, using the intersection rule, library B is
+considered to have the intersection impl with type structure
+`impl (A, B, ?, D) as I` which is the most specific. If we instead just
+considered the rules mentioned explicitly, then `impl (A, ?, C, ?) as I` from
+library C is the most specific. The advantage of the implicit intersection rule
+is that if library B is changed to add an impl with type structure
+`impl (A, B, ?, D) as I`, it won't shift which library is serving that query.
+
+#### Acyclic rule
+
+A cycle is when a query, such as "does type `T` implement interface `I`?",
+considers an impl that might match, and whether that impl matches is ultimately
+dependent on whether that query is true. These are cycles in the graph of (type,
+interface) pairs where there is an edge from pair A to pair B if whether type A
+implements interface A determines whether type B implements interface B.
+
+The test for whether something forms a cycle needs to be precise enough, and not
+erase too much information when considering this graph, that these impls are not
+considered to form cycles with themselves:
+
+```
+impl [T:! Printable] Optional(T) as Printable;
+impl [T:! Type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
+```
+
+**Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
+`ComparableWith(T)`.
+
+```
+external impl [U:! Type, T:! ComparableWith(U)]
+    U as ComparableWith(T);
+```
+
+This is a cycle where which types implement `ComparableWith` determines which
+types implement the same interface.
+
+**Example:** Cycles can create situations where there are multiple ways of
+selecting impls that are inconsistent with each other. Consider an interface
+with two blanket `impl` declarations:
+
+```
+class Y {}
+class N {}
+interface True {}
+impl Y as True {}
+interface Z(T:! Type) { let Cond:! Type; }
+match_first {
+  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U) {
+    let Cond:! Type = N;
+  }
+  impl [T:! Type, U:! Type] T as Z(U) {
+    let Cond:! Type = Y;
+  }
+}
+```
+
+What is `i8.(Z(i16).Cond)`? It depends on which of the two blanket impls are
+selected.
+
+-   An implementation of `Z(i16)` for `i8` could come from the first blanket
+    impl with `T == i8` and `U == i16` if `i16 is Z(i8)` and
+    `i16.(Z(i8).Cond) == Y`. This condition is satisfied if `i16` implements
+    `Z(i8)` using the second blanket impl. In this case,
+    `i8.(Z(i16).Cond) == N`.
+-   Equally well `Z(i8)` could be implemented for `i16` using the first blanket
+    impl and `Z(i16)` for `i8` using the second. In this case,
+    `i8.(Z(i16).Cond) == Y`.
+
+There is no reason to to prefer one of these outcomes over the other.
+
+**Example:** Further, cycles can create contradictions in the type system:
+
+```
+class A {}
+class B {}
+class C {}
+interface D(T:! Type) { let Cond:! Type; }
+match_first {
+  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U) {
+    let Cond:! Type = C;
+  }
+  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U) {
+    let Cond:! Type = B;
+  }
+  impl [T:! Type, U:! Type] T as D(U) {
+    let Cond:! Type = A;
+  }
+}
+```
+
+What is `i8.(D(i16).Cond)`? The answer is determined by which blanket impl is
+selected to implement `D(i16)` for `i8`:
+
+-   If the third blanket impl is selected, then `i8.(D(i16).Cond) == A`. This
+    implies that `i16.(D(i8).Cond) == B` using the second blanket impl. If that
+    is true, though, then our first impl choice was incorrect, since the first
+    blanket impl applies and is higher priority. So `i8.(D(i16).Cond) == C`. But
+    that means that `i16 as D(i8)` can't use the second blanket impl.
+-   For the second blanket impl to be selected, so `i8.(D(i16).Cond) == B`,
+    `i16.(D(i8).Cond)` would have to be `A`. This happens when `i16` implements
+    `D(i8)` using the third blanket impl. However, `i8.(D(i16).Cond) == B` means
+    that there is a higher priority implementation of `D(i8).Cond` for `i16`.
+
+In either case, we arrive at a contradiction.
+
+The workaround for this problem is to either split an interface in the cycle in
+two, with a blanket implementation of one from the other, or move some of the
+criteria into a [named constraint](#named-constraints).
+
+**Concern:** Cycles could be spread out across libraries with no dependencies
+between them. This means there can be problems created by a library that are
+only detected by its users.
+
+**Open question:** Should Carbon reject cycles in the absence of a query? The
+two options here are:
+
+-   Combining impls gives you an immediate error if there exists queries using
+    those impls that have cycles.
+-   Only when a query reveals a cyclic dependency is an error reported.
+
+**Open question:** In the second case, should we ignore cycles if they don't
+affect the result of the query? For example, the cycle might be among
+implementations that are lower priority.
+
+#### Termination rule
+
+It is possible to define a set of impls where there isn't a cycle, but the graph
+is infinite. Without some rule to prevent exhaustive exploration of the graph,
+determining whether a type implements an interface could run forever.
+
+**Example:** It could be that `A` implements `B`, so `A is B` if
+`Optional(A) is B`, if `Optional(Optional(A)) is B`, and so on. This could be
+the result of a single impl:
+
+```
+impl [A:! Type where Optional(.Self) is B] A as B { ... }
+```
+
+This problem can also result from a chain of impls, as in `A is B` if `A* is C`,
+if `Optional(A) is B`, and so on.
+
+Rust solves this problem by imposing a recursion limit, much like C++ compilers
+use to terminate template recursion. This goes against
+[Carbon's goal of predictability in generics](goals.md#predictability), but at
+this time there are no known alternatives. Unfortunately, the approach Carbon
+uses to avoid undecidability for type equality,
+[providing an explicit proof in the source](#manual-type-equality), can't be
+used here. The code triggering the query asking whether some type implements an
+interface will typically be generic code with know specific knowledge about the
+types involved, and won't be in a position to provide a manual proof that the
+implementation should exist.
+
+**Open question:** Is there some restriction on `impl` declarations that would
+allow our desired use cases, but allow the compiler to detect non-terminating
+cases? Perhaps there is some sort of complexity measure Carbon can require
+doesn't increase when recursing?
+
+#### Comparison to Rust
+
+Rust has been designing a specialization feature, but it has not been completed.
+Luckily, Rust team members have done a lot of blogging during their design
+process, so Carbon can benefit from the work they have done. However, getting
+specialization to work for Rust is complicated by the need to maintain
+compatibility with existing Rust code. This motivates a number of Rust rules
+where Carbon can be simpler. As a result there are both similarites and
+differences between the Carbon and Rust plans:
+
+-   A Rust impl defaults to not being able to be specialized, with a `default`
+    keyword used to opt-in to allowing specialization, reflecting the existing
+    code base developed without specialization. Carbon impls may always be
+    specialized.
+-   Since Rust impls are not specializable by default, generic functions can
+    assume that if a matching blanket impl is found, the associated types from
+    that impl will be used. In Carbon, if a generic function requires an
+    associated type to have a particular value, the function needs to state that
+    using an explicit constraint.
+-   Carbon will not have the "fundamental" attribute used by Rust on types or
+    traits, as described in
+    [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html).
+-   Carbon will not use "covering" rules, as described in
+    [Rust RFC 2451: "Re-Rebalancing Coherence"](https://rust-lang.github.io/rfcs/2451-re-rebalancing-coherence.html)
+    and
+    [Little Orphan Impls: The covered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-covered-rule).
+-   Like Rust, Carbon does use ordering, favoring the `Self` type and then the
+    parameters to the interface in left-to-right order, see
+    [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html)
+    and
+    [Little Orphan Impls: The ordered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-ordered-rule),
+    but the specifics are different.
+-   Carbon is not planning to support any inheritance of implementation between
+    impls. This is more important to Rust since Rust does not support class
+    inheritance for implementation reuse. Rust has considered multiple
+    approaches here, see
+    [Aaron Turon: "Specialize to Reuse"](http://aturon.github.io/tech/2015/09/18/reuse/)
+    and
+    [Supporting blanket impls in specialization](http://smallcultfollowing.com/babysteps/blog/2016/10/24/supporting-blanket-impls-in-specialization/).
+-   [Supporting blanket impls in specialization](http://smallcultfollowing.com/babysteps/blog/2016/10/24/supporting-blanket-impls-in-specialization/)
+    proposes a specialization rule for Rust that considers type structure before
+    other constraints, as in Carbon, though the details differ.
+-   Rust has more orphan restrictions to avoid there being cases where it is
+    ambiguous which impl should be selected. Carbon instead has picked a total
+    ordering on type structures, picking one as higher priority even without one
+    being more specific in the sense of only applying to a subset of types.
+
+## Future work
 
 ### Dynamic types
 
@@ -3649,3 +4286,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 -   [#931: Generic impls access (details 4)](https://github.com/carbon-language/carbon-lang/pull/931)
+-   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
