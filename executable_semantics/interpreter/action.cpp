@@ -21,24 +21,75 @@ namespace Carbon {
 
 using llvm::cast;
 
-Scope::Scope(Scope&& other) noexcept
-    : values_(other.values_),
-      locals_(std::exchange(other.locals_, {})),
+DynamicScope::DynamicScope(DynamicScope&& other) noexcept
+    : locals_(std::move(other.locals_)),
+      allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_) {}
 
-auto Scope::operator=(Scope&& rhs) noexcept -> Scope& {
-  values_ = rhs.values_;
-  locals_ = std::exchange(rhs.locals_, {});
+auto DynamicScope::operator=(DynamicScope&& rhs) noexcept -> DynamicScope& {
+  locals_ = std::move(rhs.locals_);
+  allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
   return *this;
 }
 
-Scope::~Scope() {
-  for (const auto& l : locals_) {
-    std::optional<AllocationId> a = values_.Get(l);
-    CHECK(a.has_value());
-    heap_->Deallocate(*a);
+DynamicScope::~DynamicScope() {
+  for (AllocationId allocation : allocations_) {
+    heap_->Deallocate(allocation);
   }
+}
+
+void DynamicScope::Print(llvm::raw_ostream& out) const {
+  out << "{";
+  llvm::ListSeparator sep;
+  for (const auto& [named_entity, value] : locals_) {
+    out << sep << named_entity.name() << ": " << *value;
+  }
+  out << "}";
+}
+
+void DynamicScope::Initialize(NamedEntityView named_entity,
+                              Nonnull<const Value*> value) {
+  CHECK(!named_entity.constant_value().has_value());
+  CHECK(value->kind() != Value::Kind::LValue);
+  allocations_.push_back(heap_->AllocateValue(value));
+  auto [it, success] = locals_.insert(
+      {named_entity, heap_->arena().New<LValue>(Address(allocations_.back()))});
+  CHECK(success) << "Duplicate definition of " << named_entity.name();
+}
+
+void DynamicScope::Merge(DynamicScope other) {
+  locals_.merge(std::move(other.locals_));
+  CHECK(other.locals_.size() == 0)
+      << "Duplicate definition of " << other.locals_.size()
+      << " names, including " << other.locals_.begin()->first.name();
+  allocations_.insert(allocations_.end(), other.allocations_.begin(),
+                      other.allocations_.end());
+  other.allocations_.clear();
+  CHECK(heap_ == other.heap_);
+}
+
+auto DynamicScope::Get(NamedEntityView named_entity) const
+    -> std::optional<Nonnull<const LValue*>> {
+  auto it = locals_.find(named_entity);
+  if (it != locals_.end()) {
+    return it->second;
+  } else {
+    return std::nullopt;
+  }
+}
+
+auto DynamicScope::Capture(
+    const std::vector<Nonnull<const DynamicScope*>>& scopes) -> DynamicScope {
+  DynamicScope result(scopes.front()->heap_);
+  for (Nonnull<const DynamicScope*> scope : scopes) {
+    for (const auto& entry : scope->locals_) {
+      // Intentionally disregards duplicates later in the vector.
+      result.locals_.insert(entry);
+    }
+    CHECK(scope->heap_ == result.heap_);
+  }
+  return result;
 }
 
 void Action::Print(llvm::raw_ostream& out) const {

@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_ACTION_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_ACTION_H_
 
+#include <map>
 #include <vector>
 
 #include "common/ostream.h"
@@ -19,42 +20,47 @@
 
 namespace Carbon {
 
-using Env = Dictionary<std::string, AllocationId>;
-
-// A Scope represents the name lookup environment associated with an Action,
-// including any variables that are local to that action. Local variables
-// will be deallocated from the Carbon Heap when the Scope is destroyed.
-class Scope {
+// A DynamicScope manages and provides access to the storage for names that are
+// not compile-time constants.
+class DynamicScope {
  public:
-  // Constructs a Scope whose name environment is `values`, containing the local
-  // variables in `locals`. The elements of `locals` must also be keys in
-  // `values`, and their values must be allocated in `heap`.
-  Scope(Env values, std::vector<std::string> locals,
-        Nonnull<HeapAllocationInterface*> heap)
-      : values_(values), locals_(std::move(locals)), heap_(heap) {}
+  // Constructs a DynamicScope that allocates storage in `heap`.
+  explicit DynamicScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
 
-  // Equivalent to `Scope(values, {}, heap)`.
-  Scope(Env values, Nonnull<HeapAllocationInterface*> heap)
-      : Scope(values, std::vector<std::string>(), heap) {}
+  // Moving a DynamicScope transfers ownership of its allocations.
+  DynamicScope(DynamicScope&&) noexcept;
+  auto operator=(DynamicScope&&) noexcept -> DynamicScope&;
 
-  // Moving a Scope transfers ownership of its local variables.
-  Scope(Scope&&) noexcept;
-  auto operator=(Scope&&) noexcept -> Scope&;
+  // Deallocates any allocations in this scope from `heap`
+  ~DynamicScope();
 
-  ~Scope();
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Binds `name` to the value of `allocation` in `heap`, and takes
-  // ownership of it.
-  void AddLocal(const std::string& name, AllocationId allocation) {
-    values_.Set(name, allocation);
-    locals_.push_back(name);
-  }
+  // Allocates storage for named_entity in `heap`, and initializes it with
+  // `value`.
+  void Initialize(NamedEntityView named_entity, Nonnull<const Value*> value);
 
-  auto values() const -> Env { return values_; }
+  // Transfers the names and allocations from `other` into *this. The two
+  // scopes must not define the same name, and must be backed by the same Heap.
+  void Merge(DynamicScope other);
+
+  // Returns the local storage for named_entity, if it has storage local to
+  // this scope.
+  auto Get(NamedEntityView named_entity) const
+      -> std::optional<Nonnull<const LValue*>>;
+
+  // Returns a DynamicScope whose Get() operation for a given name returns the
+  // storage owned by the first entry in `scopes` that defines that name. This
+  // behavior is closely analogous to a `[&]` capture in C++, hence the name.
+  // `scopes` must contain at least one entry, and all entries must be backed
+  // by the same Heap.
+  static auto Capture(const std::vector<Nonnull<const DynamicScope*>>& scopes)
+      -> DynamicScope;
 
  private:
-  Env values_;
-  std::vector<std::string> locals_;
+  std::map<NamedEntityView, Nonnull<const LValue*>> locals_;
+  std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };
 
@@ -84,13 +90,13 @@ class Action {
   // Values that are local to this scope will be deallocated when this
   // Action is completed or unwound. Can only be called once on a given
   // Action.
-  void StartScope(Scope scope) {
+  void StartScope(DynamicScope scope) {
     CHECK(!scope_.has_value());
     scope_ = std::move(scope);
   }
 
   // Returns the scope associated with this Action, if any.
-  auto scope() -> std::optional<Scope>& { return scope_; }
+  auto scope() -> std::optional<DynamicScope>& { return scope_; }
 
   static void PrintList(const Stack<Nonnull<Action*>>& ls,
                         llvm::raw_ostream& out);
@@ -127,7 +133,7 @@ class Action {
  private:
   int pos_ = 0;
   std::vector<Nonnull<const Value*>> results_;
-  std::optional<Scope> scope_;
+  std::optional<DynamicScope> scope_;
 
   const Kind kind_;
 };
@@ -228,7 +234,7 @@ class DeclarationAction : public Action {
 // with AST nodes.
 class ScopeAction : public Action {
  public:
-  explicit ScopeAction(Scope scope) : Action(Kind::ScopeAction) {
+  explicit ScopeAction(DynamicScope scope) : Action(Kind::ScopeAction) {
     StartScope(std::move(scope));
   }
 
