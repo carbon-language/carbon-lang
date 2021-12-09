@@ -92,6 +92,7 @@ cc_library(
     srcs = ["precedence.cpp"],
     hdrs = ["precedence.h"],
     deps = [
+        "//common:check",
         "//toolchain/lexer:token_kind",
         "@llvm-project//llvm:Support",
     ],
