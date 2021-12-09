@@ -24,7 +24,7 @@ cc_test(
 
 cc_library(
     name = "indirect_value",
-    srcs = ["indirect_value.h"],
+    hdrs = ["indirect_value.h"],
 )
 
 cc_test(
