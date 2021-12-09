@@ -135,8 +135,10 @@ public:
     uint64_t Action;
   };
 
+  using CallSitesType = SmallVector<CallSite, 0>;
+
   using IslandProxiesType =
-    std::map<BinaryFunction *, std::map<const MCSymbol *, MCSymbol *>>;
+      std::map<BinaryFunction *, std::map<const MCSymbol *, MCSymbol *>>;
 
   struct IslandInfo {
     /// Temporary holder of offsets that are data markers (used in AArch)
@@ -155,12 +157,12 @@ public:
     /// after disassembling
     std::map<uint64_t, MCSymbol *> Offsets;
     SmallPtrSet<MCSymbol *, 4> Symbols;
-    std::map<const MCSymbol *, BinaryFunction *> ProxySymbols;
-    std::map<const MCSymbol *, MCSymbol *> ColdSymbols;
+    DenseMap<const MCSymbol *, BinaryFunction *> ProxySymbols;
+    DenseMap<const MCSymbol *, MCSymbol *> ColdSymbols;
     /// Keeps track of other functions we depend on because there is a reference
     /// to the constant islands in them.
     IslandProxiesType Proxies, ColdProxies;
-    std::set<BinaryFunction *> Dependency; // The other way around
+    SmallPtrSet<BinaryFunction *, 1> Dependency; // The other way around
 
     mutable MCSymbol *FunctionConstantIslandLabel{nullptr};
     mutable MCSymbol *FunctionColdConstantIslandLabel{nullptr};
@@ -175,12 +177,19 @@ public:
   static const char TimerGroupName[];
   static const char TimerGroupDesc[];
 
-  using BasicBlockOrderType = std::vector<BinaryBasicBlock *>;
+  using BasicBlockOrderType = SmallVector<BinaryBasicBlock *, 0>;
 
   /// Mark injected functions
   bool IsInjected = false;
 
-  using LSDATypeTableTy = std::vector<uint64_t>;
+  using LSDATypeTableTy = SmallVector<uint64_t, 0>;
+
+  /// List of DWARF CFI instructions. Original CFI from the binary must be
+  /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
+  /// if needed (to fix state after reordering BBs).
+  using CFIInstrMapType = SmallVector<MCCFIInstruction, 0>;
+  using cfi_iterator = CFIInstrMapType::iterator;
+  using const_cfi_iterator = CFIInstrMapType::const_iterator;
 
 private:
   /// Current state of the function.
@@ -195,7 +204,7 @@ private:
 
   /// The list of names this function is known under. Used for fuzzy-matching
   /// the function to its name in a profile, command line, etc.
-  std::vector<std::string> Aliases;
+  SmallVector<std::string, 0> Aliases;
 
   /// Containing section in the input file.
   BinarySection *OriginSection = nullptr;
@@ -251,7 +260,7 @@ private:
   /// Each additional function entry point has a corresponding entry in the map.
   /// The key is a local symbol corresponding to a basic block and the value
   /// is a global symbol corresponding to an external entry point.
-  std::unordered_map<const MCSymbol *, MCSymbol *> SecondaryEntryPoints;
+  DenseMap<const MCSymbol *, MCSymbol *> SecondaryEntryPoints;
 
   /// False if the function is too complex to reconstruct its control
   /// flow graph.
@@ -352,7 +361,7 @@ private:
   BinaryFunction *FoldedIntoFunction{nullptr};
 
   /// All fragments for a parent function.
-  std::unordered_set<BinaryFunction *> Fragments;
+  SmallPtrSet<BinaryFunction *, 1> Fragments;
 
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
@@ -441,9 +450,9 @@ private:
   int64_t OutputColdDataOffset{0};
 
   /// Map labels to corresponding basic blocks.
-  std::unordered_map<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
+  DenseMap<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
 
-  using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
+  using BranchListType = SmallVector<std::pair<uint32_t, uint32_t>, 0>;
   BranchListType TakenBranches;       /// All local taken branches.
   BranchListType IgnoredBranches;     /// Branches ignored by CFG purposes.
 
@@ -458,13 +467,6 @@ private:
   /// Map offset in the function to MCInst.
   using InstrMapType = std::map<uint32_t, MCInst>;
   InstrMapType Instructions;
-
-  /// List of DWARF CFI instructions. Original CFI from the binary must be
-  /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
-  /// if needed (to fix state after reordering BBs).
-  using CFIInstrMapType = std::vector<MCCFIInstruction>;
-  using cfi_iterator       = CFIInstrMapType::iterator;
-  using const_cfi_iterator = CFIInstrMapType::const_iterator;
 
   /// We don't decode Call Frame Info encoded in DWARF program state
   /// machine. Instead we define a "CFI State" - a frame information that
@@ -495,8 +497,8 @@ private:
   DenseMap<int32_t , SmallVector<int32_t, 4>> FrameRestoreEquivalents;
 
   // For tracking exception handling ranges.
-  std::vector<CallSite> CallSites;
-  std::vector<CallSite> ColdCallSites;
+  CallSitesType CallSites;
+  CallSitesType ColdCallSites;
 
   /// Binary blobs representing action, type, and type index tables for this
   /// function' LSDA (exception handling).
@@ -531,7 +533,7 @@ private:
   std::map<uint64_t, JumpTable *> JumpTables;
 
   /// All jump table sites in the function before CFG is built.
-  std::vector<std::pair<uint64_t, uint64_t>> JTSites;
+  SmallVector<std::pair<uint64_t, uint64_t>, 0> JTSites;
 
   /// List of relocations in this function.
   std::map<uint64_t, Relocation> Relocations;
@@ -542,7 +544,7 @@ private:
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
-  using BasicBlockListType = std::vector<BinaryBasicBlock *>;
+  using BasicBlockListType = SmallVector<BinaryBasicBlock *, 0>;
   BasicBlockListType BasicBlocks;
   BasicBlockListType DeletedBasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
@@ -560,7 +562,7 @@ private:
       return A.first < B.first;
     }
   };
-  std::vector<BasicBlockOffset> BasicBlockOffsets;
+  SmallVector<BasicBlockOffset, 0> BasicBlockOffsets;
 
   MCSymbol *ColdSymbol{nullptr};
 
@@ -853,9 +855,7 @@ public:
   void recomputeLandingPads();
 
   /// Return current basic block layout.
-  const BasicBlockOrderType &getLayout() const {
-    return BasicBlocksLayout;
-  }
+  const BasicBlockOrderType &getLayout() const { return BasicBlocksLayout; }
 
   /// Return a list of basic blocks sorted using DFS and update layout indices
   /// using the same order. Does not modify the current layout.
@@ -1544,21 +1544,15 @@ public:
     return PersonalityEncoding;
   }
 
-  const std::vector<CallSite> &getCallSites() const {
-    return CallSites;
-  }
+  const CallSitesType &getCallSites() const { return CallSites; }
 
-  const std::vector<CallSite> &getColdCallSites() const {
-    return ColdCallSites;
-  }
+  const CallSitesType &getColdCallSites() const { return ColdCallSites; }
 
   const ArrayRef<uint8_t> getLSDAActionTable() const {
     return LSDAActionTable;
   }
 
-  const LSDATypeTableTy &getLSDATypeTable() const {
-    return LSDATypeTable;
-  }
+  const LSDATypeTableTy &getLSDATypeTable() const { return LSDATypeTable; }
 
   const LSDATypeTableTy &getLSDATypeAddressTable() const {
     return LSDATypeAddressTable;
@@ -1622,7 +1616,7 @@ public:
       BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
     }
 
-    LabelToBB.emplace(Label, BB.get());
+    LabelToBB[Label] = BB.get();
 
     return BB;
   }

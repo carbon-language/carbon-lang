@@ -459,8 +459,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (isMultiEntry()) {
     OS << "\n  Secondary Entry Points : ";
     const char *Sep = "";
-    for (const std::pair<const MCSymbol *const, MCSymbol *> &KV :
-         SecondaryEntryPoints) {
+    for (const auto &KV : SecondaryEntryPoints) {
       OS << Sep << KV.second->getName();
       Sep = ", ";
     }
@@ -2459,8 +2458,8 @@ struct CFISnapshot {
   DenseMap<int32_t, int32_t> RegRule;
 
   /// References to CIE, FDE and expanded instructions after a restore state
-  const std::vector<MCCFIInstruction> &CIE;
-  const std::vector<MCCFIInstruction> &FDE;
+  const BinaryFunction::CFIInstrMapType &CIE;
+  const BinaryFunction::CFIInstrMapType &FDE;
   const DenseMap<int32_t, SmallVector<int32_t, 4>> &FrameRestoreEquivalents;
 
   /// Current FDE CFI number representing the state where the snapshot is at
@@ -2549,8 +2548,8 @@ public:
   /// Interpret all CIE and FDE instructions up until CFI State number and
   /// populate this snapshot
   CFISnapshot(
-      const std::vector<MCCFIInstruction> &CIE,
-      const std::vector<MCCFIInstruction> &FDE,
+      const BinaryFunction::CFIInstrMapType &CIE,
+      const BinaryFunction::CFIInstrMapType &FDE,
       const DenseMap<int32_t, SmallVector<int32_t, 4>> &FrameRestoreEquivalents,
       int32_t State)
       : CIE(CIE), FDE(FDE), FrameRestoreEquivalents(FrameRestoreEquivalents) {
@@ -2566,7 +2565,6 @@ public:
 
     advanceTo(State);
   }
-
 };
 
 /// A CFI snapshot with the capability of checking if incremental additions to
@@ -2581,8 +2579,8 @@ struct CFISnapshotDiff : public CFISnapshot {
   CFISnapshotDiff(const CFISnapshot &S) : CFISnapshot(S) {}
 
   CFISnapshotDiff(
-      const std::vector<MCCFIInstruction> &CIE,
-      const std::vector<MCCFIInstruction> &FDE,
+      const BinaryFunction::CFIInstrMapType &CIE,
+      const BinaryFunction::CFIInstrMapType &FDE,
       const DenseMap<int32_t, SmallVector<int32_t, 4>> &FrameRestoreEquivalents,
       int32_t State)
       : CFISnapshot(CIE, FDE, FrameRestoreEquivalents, State) {}
@@ -3645,8 +3643,7 @@ size_t BinaryFunction::computeHash(bool UseDFS,
 
   assert(hasCFG() && "function is expected to have CFG");
 
-  const std::vector<BinaryBasicBlock *> &Order =
-      UseDFS ? dfs() : BasicBlocksLayout;
+  const BasicBlockOrderType &Order = UseDFS ? dfs() : BasicBlocksLayout;
 
   // The hash is computed by creating a string of all instruction opcodes and
   // possibly their operands and then hashing that string with std::hash.

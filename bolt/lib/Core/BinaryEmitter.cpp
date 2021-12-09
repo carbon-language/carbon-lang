@@ -875,7 +875,7 @@ void BinaryEmitter::emitCFIInstruction(const MCCFIInstruction &Inst) const {
 
 // The code is based on EHStreamer::emitExceptionTable().
 void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
-  const std::vector<BinaryFunction::CallSite> *Sites =
+  const BinaryFunction::CallSitesType *Sites =
       EmitColdPart ? &BF.getColdCallSites() : &BF.getCallSites();
   if (Sites->empty()) {
     return;

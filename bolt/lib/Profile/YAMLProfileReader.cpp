@@ -105,7 +105,7 @@ bool YAMLProfileReader::parseFunctionProfile(
     ProfileMatched = false;
   }
 
-  std::vector<BinaryBasicBlock *> DFSOrder = BF.dfs();
+  BinaryFunction::BasicBlockOrderType DFSOrder = BF.dfs();
 
   for (const yaml::bolt::BinaryBasicBlockProfile &YamlBB : YamlBF.Blocks) {
     if (YamlBB.Index >= DFSOrder.size()) {

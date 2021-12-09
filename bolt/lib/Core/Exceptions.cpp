@@ -358,7 +358,7 @@ void BinaryFunction::updateEHRanges() {
   bool SeenCold = false;
 
   // Sites to update - either regular or cold.
-  std::vector<CallSite> *Sites = &CallSites;
+  CallSitesType *Sites = &CallSites;
 
   for (BinaryBasicBlock *&BB : BasicBlocksLayout) {
 

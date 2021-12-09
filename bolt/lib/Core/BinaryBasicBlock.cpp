@@ -196,7 +196,7 @@ int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
       getFunction()->getState() >= BinaryFunction::State::CFG &&
       "can only calculate CFI state when function is in or past the CFG state");
 
-  const std::vector<MCCFIInstruction> &FDEProgram =
+  const BinaryFunction::CFIInstrMapType &FDEProgram =
       getFunction()->getFDEProgram();
 
   // Find the last CFI preceding Instr in this basic block.

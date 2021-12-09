@@ -133,7 +133,7 @@ void SplitFunctions::splitFunction(BinaryFunction &BF) {
   if (AllCold)
     return;
 
-  std::vector<BinaryBasicBlock *> PreSplitLayout = BF.getLayout();
+  BinaryFunction::BasicBlockOrderType PreSplitLayout = BF.getLayout();
 
   BinaryContext &BC = BF.getBinaryContext();
   size_t OriginalHotSize;

@@ -506,7 +506,7 @@ public:
   }
 
   /// Run the algorithm and return an ordering of basic block
-  void run(std::vector<BinaryBasicBlock *> &Order) {
+  void run(BinaryFunction::BasicBlockOrderType &Order) {
     // Pass 1: Merge blocks with their fallthrough successors
     mergeFallthroughs();
 
@@ -889,7 +889,7 @@ private:
   }
 
   /// Concatenate all chains into a final order
-  void concatChains(std::vector<BinaryBasicBlock *> &Order) {
+  void concatChains(BinaryFunction::BasicBlockOrderType &Order) {
     // Collect chains
     std::vector<Chain *> SortedChains;
     for (Chain &Chain : AllChains) {

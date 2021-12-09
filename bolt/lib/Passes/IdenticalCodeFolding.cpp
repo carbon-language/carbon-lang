@@ -167,9 +167,9 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
     return false;
 
   // Process both functions in either DFS or existing order.
-  const std::vector<BinaryBasicBlock *> &OrderA =
+  const BinaryFunction::BasicBlockOrderType &OrderA =
       opts::UseDFS ? A.dfs() : A.getLayout();
-  const std::vector<BinaryBasicBlock *> &OrderB =
+  const BinaryFunction::BasicBlockOrderType &OrderB =
       opts::UseDFS ? B.dfs() : B.getLayout();
 
   const BinaryContext &BC = A.getBinaryContext();
