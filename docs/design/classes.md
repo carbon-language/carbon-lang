@@ -522,12 +522,10 @@ _Structural data classes_, or _struct types_, are convenient for defining
 -   as an initializer for other `class` variables or values
 -   as a type parameter to a container
 
-Note that struct types are examples of _data class types_ and are still classes,
-but we expect later to support more ways to define data class types. Also note
-that there is no `struct` keyword, "struct" is just convenient shorthand
-terminology for a structural data class.
-
-[Nominal data classes](#nominal-data-classes) are also supported by Carbon.
+Note that struct types are examples of _data class types_ and are still classes.
+The ["nominal data classes" section](#nominal-data-classes) describes another
+way to define a data class type. Also note that there is no `struct` keyword,
+"struct" is just convenient shorthand terminology for a structural data class.
 
 ### Literals
 
