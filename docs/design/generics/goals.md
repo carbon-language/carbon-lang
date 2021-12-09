@@ -448,12 +448,11 @@ match, without any type erasure or additional named members.
 
 ### Coherence
 
-We want the generics system to have the _coherence_ property. This means that
-there is a single answer to the question "what is the implementation of this
-interface for this type, if any?" independent of context, such as the libraries
-imported into a given file. Since a generic function only depends on interface
-implementations, they will always behave consistently on a given type,
-independent of context. For more on this, see
+We want the generics system to have the
+[_coherence_ property](terminology.md#coherence), so that the implementation of
+an interface for a type is well defined. Since a generic function only depends
+on interface implementations, they will always behave consistently on a given
+type, independent of context. For more on this, see
 [this description of what coherence is and why Rust enforces it](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence).
 
 Coherence greatly simplifies the language design, since it reduces the need for
@@ -469,8 +468,8 @@ It also has a number of benefits for users:
     Carbon template on that type.
 
 The main downside of coherence is that there are some capabilities we would like
-for interfaces which are in tension with the coherence property. For example, we
-would like to address
+for interfaces that are in tension with having an orphan rule limiting where
+implementations may be defined. For example, we would like to address
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions#another-clojure-solution-using-protocols).
 We can get some of the way there by allowing the implementation of an interface
 for a type to be defined with either the interface or the type. But some use
@@ -496,8 +495,8 @@ approaches that could work:
     interface implementations. This is the approach used by Rust
     ([1](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types),
     [2](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial)).
--   Carbon could support
-    [scoped conformances](https://forums.swift.org/t/scoped-conformances/37159).
+
+Alternatives to coherence are discussed in [an appendix](appendix-coherence.md).
 
 ### No novel name lookup
 
