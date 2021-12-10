@@ -541,7 +541,7 @@ This produces a struct value with two fields:
 -   The first field is named "`key`" and has the value `"the"`. The type of the
     field is set to the type of the value, and so is `String`.
 -   The second field is named "`value`" and has the value `27`. The type of the
-    field is set to the type of the value, and so is `Int`.
+    field is set to the type of the value, and so is `i32`.
 
 Note: A comma `,` may optionally be included after the last field:
 
@@ -564,7 +564,7 @@ The type of `kvpair` in the last example would be represented by this
 expression:
 
 ```
-{.key: String, .value: Int}
+{.key: String, .value: i32}
 ```
 
 This syntax is intended to parallel the literal syntax, and so uses commas (`,`)
@@ -579,7 +579,7 @@ Note: Like with struct literal expressions, a comma `,` may optionally be
 included after the last field:
 
 ```
-{.key: String, .value: Int,}
+{.key: String, .value: i32,}
 ```
 
 Also note that `{}` represents both the empty struct literal and its type.
@@ -591,10 +591,14 @@ type to a struct value on the right hand side, the order of the fields does not
 have to match, just the names.
 
 ```
-var different_order: {.x: Int, .y: Int} = {.y = 2, .x = 3};
+var different_order: {.x: i32, .y: i32} = {.y = 2, .x = 3};
 Assert(different_order.x == 3);
 Assert(different_order.y == 2);
 ```
+
+Initialization and assignment occur field-by-field. The order of fields is
+determined from the target on the left side of the `=`. This rule matches what
+we expect for classes with encapsulation more generally.
 
 **Open question:** What operations and in what order happen for assignment and
 initialization?
@@ -607,10 +611,6 @@ initialization?
     approach supports types that can't be moved or copied, such as mutex.
 -   Perhaps some operations are _not_ ordered with respect to each other?
 
-When initializing or assigning, the order of fields is determined from the
-target on the left side of the `=`. This rule matches what we expect for classes
-with encapsulation more generally.
-
 ### Operations performed field-wise
 
 Generally speaking, the operations that are available on a data class value,
@@ -618,37 +618,56 @@ such as a value with a struct type, are dependent on those operations being
 available for all the types of the fields.
 
 For example, two values of the same data class type may be compared for equality
-if equality is supported for every member of the type:
+or inequality if equality is supported for every member of the type:
 
 ```
 var p: auto = {.x = 2, .y = 3};
 Assert(p == {.x = 2, .y = 3});
 Assert(p != {.x = 2, .y = 4});
-```
-
-Similarly, a data class has an unformed state if all its members do. Treatment
-of unformed state follows
-[#257](https://github.com/carbon-language/carbon-lang/pull/257).
-
-`==` and `!=` are defined on a data class type if all its field types support
-it:
-
-```
 Assert({.x = 2, .y = 4} != {.x = 5, .y = 3});
 ```
 
-**Open question:** Which other comparisons are supported is the subject of
-[question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
+Equality and inequality comparisons are also allowed between different data
+class types when:
 
-```
-// Illegal
-Assert({.x = 2, .y = 3} != {.y = 4, .x = 5});
-```
+-   At least one is a struct type.
+-   They have the same set of field names, though the order may be different.
+-   Equality comparison is defined between the pairs of member types with the
+    same field names.
+
+For example, since
+[comparison between `i32` and `u32` is defined](/proposals/p0702.md#built-in-comparisons-and-implicit-conversions),
+equality comparison between values of types `{.x: i32, .y: i32}` and
+`{.y: u32, .x: u32}` is as well.
+
+Ordering comparisons, such as `<` and `<=`, use the order of the fields to do a
+[lexicographical comparison](https://en.wikipedia.org/wiki/Lexicographic_order).
+The argument types must have a matching order of the field names. Otherwise, the
+restrictions on ordering comparisons between different data class types are
+analogous to equality comparisons:
+
+-   At least one is a struct type.
+-   Ordering comparison is defined between the pairs of member types with the
+    same field names.
+
+Implicit conversion from a struct type to a data class type is allowed when the
+set of field names is the same and implicit conversion is defined between the
+pairs of member types with the same field names. So calling a function
+effectively performs an assignment from each of the caller's arguments to the
+function's parameters, and will be valid when those assignments are all valid.
+
+A data class has an unformed state if all its members do. Treatment of unformed
+state follows proposal
+[#257](https://github.com/carbon-language/carbon-lang/pull/257).
 
 Destruction is performed field-wise in reverse order.
 
 Extending user-defined operations on the fields to an operation on an entire
 data class is [future work](#interfaces-implemented-for-data-classes).
+
+**References:** Assignment, comparison, and implicit conversion for argument
+passing was decided in
+[question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
 
 ## Nominal class types
 
@@ -1545,7 +1564,7 @@ declaration with all of the optional parameters in an option struct:
 
 ```
 fn SortIntVector(
-    v: Vector(Int)*,
+    v: Vector(i32)*,
     options: {.stable: Bool = false,
               .descending: Bool = false} = {}) {
   // Code using `options.stable` and `options.descending`.
@@ -1570,7 +1589,7 @@ We might instead support destructuring struct patterns with defaults:
 
 ```
 fn SortIntVector(
-    v: Vector(Int)*,
+    v: Vector(i32)*,
     {stable: Bool = false, descending: Bool = false}) {
   // Code using `stable` and `descending`.
 }
@@ -1585,16 +1604,16 @@ and allows some other use cases such as destructuring return values.
 We might support destructuring directly:
 
 ```
-var {key: String, value: Int} = ReturnKeyValue();
+var {key: String, value: i32} = ReturnKeyValue();
 ```
 
 or by way of a mechanism that converts a struct into a tuple:
 
 ```
-var (key: String, value: Int) =
+var (key: String, value: i32) =
     ReturnKeyValue().extract(.key, .value);
 // or maybe:
-var (key: String, value: Int) =
+var (key: String, value: i32) =
     ReturnKeyValue()[(.key, .value)];
 ```
 
@@ -1875,7 +1894,7 @@ interface ConstructWidgetFrom {
   fn Construct(Self) -> Widget;
 }
 
-external impl {.kind: WidgetKind, .size: Int}
+external impl {.kind: WidgetKind, .size: i32}
     as ConstructWidgetFrom { ... }
 ```
 
@@ -1891,8 +1910,8 @@ feature should also implement the interfaces for any tuples whose fields satisfy
 the criteria.
 
 It is an open question how define implementations for binary operators. For
-example, if `Int` is comparable to `Float32`, then `{.x = 3, .y = 2.72}` should
-be comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
+example, if `i32` is comparable to `f64`, then `{.x = 3, .y = 2.72}` should be
+comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
