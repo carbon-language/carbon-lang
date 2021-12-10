@@ -80,6 +80,21 @@ struct WrongRealLiteralExponent {
 
   char expected;
 };
+
+struct TooManyDigits {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
+
+  auto Format() -> std::string {
+    return llvm::formatv(
+               "Found a sequence of {0} digits, which is greater than the "
+               "limit of {1}.",
+               count, limit)
+        .str();
+  }
+
+  size_t count;
+  size_t limit;
+};
 }  // namespace
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
@@ -364,6 +379,19 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
   // Check that digit separators occur in exactly the expected positions.
   if (num_digit_separators) {
     CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
+  }
+
+  // llvm::getAsInteger is used for parsing, but it's quadratic and visibly slow
+  // on large integer values. This limit exists to avoid hitting those limits.
+  // Per https://github.com/carbon-language/carbon-lang/issues/980, it may be
+  // feasible to optimize integer parsing in order to 2^128 would be 60 decimal
+  // digits or 128 binary. In either case, this limit is far above the threshold
+  // for normal integers.
+  constexpr size_t DigitLimit = 1000;
+  if (text.size() > DigitLimit) {
+    emitter_.EmitError<TooManyDigits>(
+        text.begin(), {.count = text.size(), .limit = DigitLimit});
+    return {.ok = false};
   }
 
   return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
