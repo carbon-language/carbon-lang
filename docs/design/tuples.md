@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [TODO](#todo)
 -   [Overview](#overview)
     -   [Indices as compile-time constants](#indices-as-compile-time-constants)
+    -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Open questions](#open-questions)
     -   [Slicing ranges](#slicing-ranges)
     -   [Single-value tuples](#single-value-tuples)
@@ -34,24 +35,24 @@ The primary composite type involves simple aggregation of other types as a tuple
 (called a "product type" in formal type theory):
 
 ```
-fn DoubleBoth(Int x, Int y) -> (Int, Int) {
+fn DoubleBoth(x: i32, y: i32) -> (i32, i32) {
   return (2 * x, 2 * y);
 }
 ```
 
 This function returns a tuple of two integers represented by the type
-`(Int, Int)`. The expression to return it uses a special tuple syntax to build a
+`(i32, i32)`. The expression to return it uses a special tuple syntax to build a
 tuple within an expression: `(<expression>, <expression>)`. This is actually the
 same syntax in both cases. The return type is a tuple expression, and the first
-and second elements are expressions referring to the `Int` type. The only
+and second elements are expressions referring to the `i32` type. The only
 difference is the type of these expressions. Both are tuples, but one is a tuple
 of types.
 
 Element access uses subscript syntax:
 
 ```
-fn Bar(Int x, Int y) -> Int {
-  var (Int, Int) t = (x, y);
+fn Bar(x: i32, y: i32) -> i32 {
+  var t: (i32, i32) = (x, y);
   return t[0] + t[1];
 }
 ```
@@ -59,9 +60,9 @@ fn Bar(Int x, Int y) -> Int {
 Tuples also support multiple indices and slicing to restructure tuple elements:
 
 ```
-fn Baz(Int x, Int y, Int z) -> (Int, Int) {
-  var (Int, Int, Int) t1 = (x, y, z);
-  var (Int, Int, Int) t2 = t1[(2, 1, 0)];
+fn Baz(x: i32, y: i32, z: i32) -> (i32, i32) {
+  var t1: (i32, i32, i32) = (x, y, z);
+  var t2: (i32, i32, i32) = t1[(2, 1, 0)];
   return t2[0 .. 2];
 }
 ```
@@ -75,6 +76,27 @@ In the example `t1[(2, 1, 0)]`, we will likely want to restrict these indices to
 compile-time constants. Without that, run-time indexing would need to suddenly
 switch to a variant-style return type to handle heterogeneous tuples. This would
 both be surprising and complex for little or no value.
+
+### Operations performed field-wise
+
+Like some other aggregate data types like
+[struct types](classes.md#struct-types), there are some operations are defined
+for tuples field-wise:
+
+-   initialization
+-   assignment
+-   equality and inequality comparison
+-   ordered comparison
+-   implicit conversion for argument passing
+-   destruction
+
+For binary operations, the two tuples must have the same number of components
+and the operation must be defined for the corresponding component types of the
+two tuples.
+
+**References:** The rules for assignment, comparison, and implicit conversion
+for argument passing were decided in
+[question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
 
 ## Open questions
 
@@ -120,5 +142,5 @@ C++ variadics.
 
 ### Type vs tuple of types
 
-Is `(Int, Int)` a type, a tuple of types, or is there even a difference between
+Is `(i32, i32)` a type, a tuple of types, or is there even a difference between
 the two? Is different syntax needed for these cases?

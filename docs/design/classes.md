@@ -665,8 +665,8 @@ Destruction is performed field-wise in reverse order.
 Extending user-defined operations on the fields to an operation on an entire
 data class is [future work](#interfaces-implemented-for-data-classes).
 
-**References:** Assignment, comparison, and implicit conversion for argument
-passing was decided in
+**References:** The rules for assignment, comparison, and implicit conversion
+for argument passing were decided in
 [question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
 
 ## Nominal class types
