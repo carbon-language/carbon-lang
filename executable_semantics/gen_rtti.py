@@ -2,6 +2,8 @@
 
 """Generates C++ header to support LLVM-style RTTI for a class hierarchy.
 
+# Background
+
 A C++ class hierarchy supported by this script consists of *abstract* classes,
 which can be inherited from but can't be instantiated, and *concrete* classes,
 which can be instantiated but can't be inherited from. Classes can inherit from
@@ -9,17 +11,20 @@ at most one other class in the hierarchy; a class that doesn't inherit from
 any other class is called a *root* class, and it cannot be concrete.
 
 This script also supports *interface view* classes, which do not participate
-in inheritance but are closely tied to a class hierarchy.
-An interface view can be thought of as a non-owning pointer to an instance of
-a class in the hierarchy that implements some interface. The interface is
-defined by duck-typing rather than by inheritance, so interfaces are used
-to model APIs that "cut across" the primary inheritance hierarchy. The
-interface itself is not actually a C++ type, but this script treats it as a
+in inheritance but are closely tied to a class hierarchy. An interface view
+can be thought of as a non-owning pointer to an instance of a class in the
+hierarchy that implements some interface. An interface is defined by
+duck-typing rather than by inheritance, so interfaces are used to model APIs
+that "cut across" the primary inheritance hierarchy.
+
+An interface is not actually a C++ type, but this script treats it as a
 class for most purposes. In particular, interfaces notionally participate
 in inheritance. A non-interface class cannot inherit from an interface, but
 it can *implement* an interface, and the associated interface view can only
 point to objects that implement the interface. An interface view class
 should be named by appending `View` to the name of the interface.
+
+# Input format
 
 This script's input file declares every class and interface in the hierarchy,
 and specifies the inheritance and interface-implementation relationships among
@@ -50,6 +55,8 @@ abstract class B : R, I;
 class C : A;
 class D : B;
 class E : A, I;
+
+# Output
 
 For each non-concrete class `Foo`, the generated header file will contain
 `enum class FooKind`, which has an enumerator for each concrete class derived

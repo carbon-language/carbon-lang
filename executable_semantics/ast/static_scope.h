@@ -31,8 +31,11 @@ class NamedEntityView {
             typename = std::enable_if_t<ImplementsNamedEntity<NodeType>>>
   // NOLINTNEXTLINE(google-explicit-constructor)
   NamedEntityView(Nonnull<const NodeType*> node)
-      : base_(node), static_type_([](const AstNode& node) -> const Value& {
-          return llvm::cast<NodeType>(node).static_type();
+      // Type-erase NodeType, retaining a pointer to the base class AstNode
+      // and using std::function to encapsulate the ability to call
+      // the derived class's static_type.
+      : base_(node), static_type_([](const AstNode& base) -> const Value& {
+          return llvm::cast<NodeType>(base).static_type();
         }) {}
 
   NamedEntityView(const NamedEntityView&) = default;
