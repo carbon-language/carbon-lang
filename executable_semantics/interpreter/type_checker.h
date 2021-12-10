@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
 
+#include <map>
 #include <set>
 
 #include "common/ostream.h"
@@ -51,9 +52,10 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  static auto ArgumentDeduction(SourceLocation source_loc, TypeEnv deduced,
-                                Nonnull<const Value*> param,
-                                Nonnull<const Value*> arg) -> TypeEnv;
+  static void ArgumentDeduction(
+      SourceLocation source_loc,
+      std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& deduced,
+      Nonnull<const Value*> param, Nonnull<const Value*> arg);
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -110,8 +112,9 @@ class TypeChecker {
   void ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value);
 
-  auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
-      -> Nonnull<const Value*>;
+  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
+                                 Nonnull<const Value*>>& dict,
+                  Nonnull<const Value*> type) -> Nonnull<const Value*>;
 
   Nonnull<Arena*> arena_;
   Interpreter interpreter_;

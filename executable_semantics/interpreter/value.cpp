@@ -241,7 +241,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).name();
+      out << cast<VariableType>(*this).binding().name();
       break;
     case Value::Kind::ContinuationValue: {
       out << cast<ContinuationValue>(*this).stack();
@@ -348,7 +348,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::StringType:
       return true;
     case Value::Kind::VariableType:
-      return cast<VariableType>(*t1).name() == cast<VariableType>(*t2).name();
+      return &cast<VariableType>(*t1).binding() ==
+             &cast<VariableType>(*t2).binding();
     default:
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
