@@ -89,7 +89,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
         -   [Termination rule](#termination-rule)
-        -   [Comparison to Rust](#comparison-to-rust)
+    -   [`final` impls](#final-impls)
+        -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
+    -   [Comparison to Rust](#comparison-to-rust)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -3750,8 +3752,8 @@ or
 
 ### Blanket impls
 
-A _blanket impl_ is an `impl` that could apply to more than one type, so the
-`impl` will use a type variable for the `Self` type. Here are some examples
+A _blanket impl_ is an `impl` that could apply to more than one root type, so
+the `impl` will use a type variable for the `Self` type. Here are some examples
 where blanket impls arise:
 
 -   Any type implementing `Ordered` should get an implementation of
@@ -4111,7 +4113,127 @@ allow our desired use cases, but allow the compiler to detect non-terminating
 cases? Perhaps there is some sort of complexity measure Carbon can require
 doesn't increase when recursing?
 
-#### Comparison to Rust
+### `final` impls
+
+There are cases where knowing that a parameterized impl won't be specialized is
+particularly valuable. This could let the compiler know the return type of a
+generic function call, such as using an operator:
+
+```
+// Interface defining the behavior of the prefix-* operator
+interface Deref {
+  let Result:! Type;
+  fn DoDeref[me: Self]() -> Result;
+}
+
+// Types implementing `Deref`
+class Ptr(T:! Type) {
+  ...
+  external impl as Deref {
+    let Result:! Type = T;
+    fn DoDeref[me: Self]() -> Result { ... }
+  }
+}
+class Optional(T:! Type) {
+  ...
+  external impl as Deref {
+    let Result:! Type = T;
+    fn DoDeref[me: Self]() -> Result { ... }
+  }
+}
+
+fn F[T:! Type](x: T) {
+  // uses Ptr(T) and Optional(T) in implementation
+}
+```
+
+The concern is the possibility of specializing `Optional(T) as Deref` or
+`Ptr(T) as Deref` for a more specific `T` means that the compiler can't assume
+anything about the return type of `Deref.DoDeref` calls. This means `F` would in
+practice have to add a constraint, which is both verbose and exposes what should
+be implementation details:
+
+```
+fn F[T:! Type where Optional(T).(Deref.Result) == .Self
+                and Ptr(T).(Deref.Result) == .Self](x: T) {
+  // uses Ptr(T) and Optional(T) in implementation
+}
+```
+
+To mark an impl as not able to be specialized, prefix it with the keyword
+`final`:
+
+```
+class Ptr(T:! Type) {
+  ...
+  // Note: added `final`
+  final external impl as Deref {
+    let Result:! Type = T;
+    fn DoDeref[me: Self]() -> Result { ... }
+  }
+}
+class Optional(T:! Type) {
+  ...
+  // Note: added `final`
+  final external impl as Deref {
+    let Result:! Type = T;
+    fn DoDeref[me: Self]() -> Result { ... }
+  }
+}
+
+// ❌ Illegal: external impl Ptr(i32) as Deref { ... }
+// ❌ Illegal: external impl Optional(i32) as Deref { ... }
+```
+
+This prevents any higher-priority impl that overlaps a final impl from being
+defined. Further, if the Carbon compiler sees a matching final impl, it can
+assume it won't be specialized so it can use the assignments of the associated
+types in that impl definition.
+
+```
+fn F[T:! Type](x: T) {
+  var p: Ptr(T) = ...;
+  // *p has type `T`
+  var o: Optional(T) = ...;
+  // *o has type `T`
+}
+```
+
+#### Libraries that can contain `final` impls
+
+To prevent the possibility of two unrelated libraries defining conflicting
+impls, Carbon restricts which libraries may declare an impl as `final` to only:
+
+-   the library declaring the impl's interface and
+-   the library declaring the root of the `Self` type.
+
+This means:
+
+-   A blanket impl with type structure `impl ? as MyInterface(...)` may only be
+    defined in the same library as `MyInterface`.
+-   An impl with type structure `impl MyType(...) as MyInterface(...)` may be
+    defined in the library with `MyType` or `MyInterface`.
+
+These restrictions ensure that the Carbon compiler can locally check that no
+higher-priority impl is defined superseding a `final` impl.
+
+-   An impl with type structure `impl MyType(...) as MyInterface(...)` defined
+    in the library with `MyType` must import the library defining `MyInterface`,
+    and so will be able to see any final blanket impls.
+-   A blanket impl with type structure
+    `impl ? as MyInterface(...ParameterType(...)...)` may be defined in the
+    library with `ParameterType`, but that library must import the library
+    defining `MyInterface`, and so will be able to see any `final` blanket impls
+    that might overlap. A final impl with type structure
+    `impl MyType(...) as MyInterface(...)` would be given priority over any
+    overlapping blanket impl defined in the `ParameterType` library.
+-   An impl with type structure
+    `impl MyType(...ParameterType(...)...) as MyInterface(...)` may be defined
+    in the library with `ParameterType`, but that library must import the
+    libraries defining `MyType` and `MyInterface`, and so will be able to see
+    any `final` impls that might overlap.
+
+### Comparison to Rust
 
 Rust has been designing a specialization feature, but it has not been completed.
 Luckily, Rust team members have done a lot of blogging during their design
@@ -4123,13 +4245,13 @@ differences between the Carbon and Rust plans:
 
 -   A Rust impl defaults to not being able to be specialized, with a `default`
     keyword used to opt-in to allowing specialization, reflecting the existing
-    code base developed without specialization. Carbon impls may always be
-    specialized.
+    code base developed without specialization. Carbon impls default to allowing
+    specialization, with restrictions on which may be declared `final`.
 -   Since Rust impls are not specializable by default, generic functions can
     assume that if a matching blanket impl is found, the associated types from
     that impl will be used. In Carbon, if a generic function requires an
-    associated type to have a particular value, the function needs to state that
-    using an explicit constraint.
+    associated type to have a particular value, the function commonly will need
+    to state that using an explicit constraint.
 -   Carbon will not have the "fundamental" attribute used by Rust on types or
     traits, as described in
     [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html).
