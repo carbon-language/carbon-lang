@@ -96,8 +96,13 @@ class TypeChecker {
                      Nonnull<Statement*> body, TypeEnv types, Env values)
       -> Match::Clause;
 
-  auto TypeOfClassDecl(ClassDeclaration& class_decl, TypeEnv /*types*/,
-                       Env ct_top) -> Nonnull<const Value*>;
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
+  auto TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                                 TypeEnv types, Env ct_top) -> TCResult;
+
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
+  auto TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                  TypeEnv types, Env ct_top) -> TCResult;
 
   auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
   void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
