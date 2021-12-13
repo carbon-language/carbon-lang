@@ -681,3 +681,4 @@ but it is not a goal for Carbon to support such an implementation strategy.
 ## References
 
 -   [#24: Generics goals](https://github.com/carbon-language/carbon-lang/pull/24)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)

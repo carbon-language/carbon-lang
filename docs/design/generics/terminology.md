@@ -754,3 +754,4 @@ available in the body of the function.
 
 -   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
