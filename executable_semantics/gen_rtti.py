@@ -10,65 +10,36 @@ which can be instantiated but can't be inherited from. Classes can inherit from
 at most one other class in the hierarchy; a class that doesn't inherit from
 any other class is called a *root* class, and it cannot be concrete.
 
-This script also supports *interface view* classes, which do not participate
-in inheritance but are closely tied to a class hierarchy. An interface view
-can be thought of as a non-owning pointer to an instance of a class in the
-hierarchy that implements some interface. An interface is defined by
-duck-typing rather than by inheritance, so interfaces are used to model APIs
-that "cut across" the primary inheritance hierarchy.
-
-An interface is not actually a C++ type, but this script treats it as a
-class for most purposes. In particular, interfaces notionally participate
-in inheritance. A non-interface class cannot inherit from an interface, but
-it can *implement* an interface, and the associated interface view can only
-point to objects that implement the interface. A class that implements an
-interface `Foo` must have a public member type `ImplementsCarbonFoo`. An
-interface view class should be named by appending `View` to the name of the
-interface.
-
 # Input format
 
-This script's input file declares every class and interface in the hierarchy,
-and specifies the inheritance and interface-implementation relationships among
-them. A class C can inherit from at most one parent, and may implement any
-number of interfaces, subject to the following restrictions:
-- If C does not have a parent, it must be declared as a root.
-- If C is not an interface, its parent must not be an interface.
-- If C is a root or an interface, it cannot implement any interfaces.
-- For each interface I that C implements, the nearest non-interface ancestor
-  of I must be an ancestor of C.
-
-The input file consists of comment lines starting with `#`, whitespace lines,
-and one `;`-terminated line for each class. The core of a line is `class`
-followed by the class name. `class` can be prefixed with `root`, `abstract`,
-or `interface` to specify the corresponding kind of class; if there is no
-prefix, the class is concrete. If the class is not a root class, the name is
-followed by `:` and then the name of the class it inherits from. This can
-optionally be followed by a comma, and then a comma-separated list of the
-interfaces it implements. A class cannot inherit from or implement classes
-defined later in the file.
+This script's input file declares every class in the hierarchy, and specifies
+the parent of each non-root class. The input file consists of comment lines
+starting with `#`, whitespace lines, and one `;`-terminated line for each class.
+The core of a line is `class` followed by the class name. `class` can be
+prefixed with `root` or `abstract` to specify the corresponding kind of class;
+if there is no prefix, the class is concrete. If the class is not a root class,
+the name is followed by `:` and then the name of the class it inherits from. A
+class cannot inherit from a class defined later in the file.
 
 For example:
 
 root class R;
 abstract class A : R;
-interface class I : R;
-abstract class B : R, I;
+abstract class B : R;
 class C : A;
 class D : B;
-class E : A, I;
+class E : A;
 
 # Output
 
-For each non-concrete class `Foo`, the generated header file will contain
+For each abstract class `Foo`, the generated header file will contain
 `enum class FooKind`, which has an enumerator for each concrete class derived
 from `Foo`, with a name that matches the concrete class name.
 
-For each non-root abstract or concrete class `Foo` whose root class is `Root`,
-the generated header file will also contain a function
-`bool InheritsFromFoo(RootKind kind)`, which returns true if the value of `kind`
-corresponds to a class that is derived from `Foo`. This function can be used to
-implement `Foo::classof`.
+For each non-root class `Foo` whose root class is `Root`, the generated header
+file will also contain a function `bool InheritsFromFoo(RootKind kind)`, which
+returns true if the value of `kind` corresponds to a class that is derived from
+`Foo`. This function can be used to implement `Foo::classof`.
 
 All enumerators that represent the same concrete class will have the same
 numeric value, so you can use `static_cast` to convert between the enum types
@@ -95,11 +66,9 @@ class Class:
 
     Attributes set at construction:
       name: The class name.
-      kind: The class kind (root, abstract, interface, or concrete)
+      kind: The class kind (root, abstract, or concrete)
       ancestors: A list of Class objects representing the class's ancestors,
         starting with the root and ending with the current class's parent.
-      interfaces: A list of Class objects representing the interfaces the class
-        implements.
       _children: A list of Class objects representing the classes that are
         derived directly from this one.
 
@@ -109,18 +78,15 @@ class Class:
       id_range (ROOT and ABSTRACT only): A pair such that a Class
         object `c` represents a concrete class derived from `self` if and only
         if c.id >= self.id_range[0] and c.id < self.id_range[1].
-      leaf_ids (INTERFACE only): A set containing the IDs of all concrete
-        classes derived from this interface.
       leaves (ROOT only): A list of all concrete classes derived from this one,
         indexed by their IDs.
     """
 
-    Kind = enum.Enum("Kind", "ROOT ABSTRACT INTERFACE CONCRETE")
+    Kind = enum.Enum("Kind", "ROOT ABSTRACT CONCRETE")
 
-    def __init__(self, name, kind, parent, interfaces):
+    def __init__(self, name, kind, parent):
         self.name = name
         self.kind = kind
-        self.interfaces = interfaces
 
         assert (parent is None) == (kind == Class.Kind.ROOT)
         if parent is None:
@@ -133,8 +99,6 @@ class Class:
             self.id_range = None
         elif self.kind == Class.Kind.ABSTRACT:
             self.id_range = None
-        elif self.kind == Class.Kind.INTERFACE:
-            self.leaf_ids = set()
         else:
             self.id = None
 
@@ -144,18 +108,9 @@ class Class:
         if parent:
             parent._children.append(self)
 
-        for interface in self.interfaces:
-            interface._children.append(self)
-
     def Parent(self):
         """Returns this Class's parent."""
         return self.ancestors[-1]
-
-    def NearestNonInterfaceAncestor(self):
-        """Returns this Class's nearest non-interface ancestor."""
-        for ancestor in reversed(self.ancestors):
-            if ancestor.kind != Class.Kind.INTERFACE:
-                return ancestor
 
     def Root(self):
         """Returns the root Class of this hierarchy."""
@@ -167,9 +122,9 @@ class Class:
     def _RegisterLeaf(self, leaf):
         """Records that `leaf` is derived from self.
 
-        Also recursively updates the parent and interfaces of self. leaf.id must
-        already be populated, and leaves must be registered in order of ID. This
-        operation is idempotent."""
+        Also recursively updates the parent of self. leaf.id must already be
+        populated, and leaves must be registered in order of ID. This operation
+        is idempotent."""
         already_visited = False
         if self.kind == Class.Kind.ROOT:
             if leaf.id == len(self.leaves):
@@ -192,17 +147,9 @@ class Class:
                 assert self.id_range[1] == leaf.id + 1
                 already_visited = True
 
-        elif self.kind == Class.Kind.INTERFACE:
-            if leaf.id in self.leaf_ids:
-                already_visited = True
-            else:
-                self.leaf_ids.add(leaf.id)
-
         if not already_visited:
             if self.kind != Class.Kind.ROOT:
                 self.Parent()._RegisterLeaf(leaf)
-            for interface in self.interfaces:
-                interface._RegisterLeaf(leaf)
 
     def Finalize(self):
         """Populates additional attributes for `self` and derived Classes.
@@ -213,7 +160,7 @@ class Class:
         if self.kind == Class.Kind.CONCRETE:
             self.id = len(self.Root().leaves)
             self._RegisterLeaf(self)
-        elif self.kind in [Class.Kind.ROOT, Class.Kind.ABSTRACT]:
+        else:
             for child in self._children:
                 child.Finalize()
 
@@ -222,7 +169,6 @@ _LINE_PATTERN = r"""(?P<prefix> \w*) \s*
                  class \s+
                  (?P<name> \w+)
                  (?: \s*:\s* (?P<parent> \w+)
-                   (?: , (?P<interfaces> .*) )?
                  )?
                  ;$"""
 
@@ -247,8 +193,6 @@ def main():
             kind = Class.Kind.ROOT
         elif prefix == "abstract":
             kind = Class.Kind.ABSTRACT
-        elif prefix == "interface":
-            kind = Class.Kind.INTERFACE
         else:
             sys.exit(f"Unrecognized class prefix '{prefix}' on line {line_num}")
 
@@ -262,48 +206,14 @@ def main():
                 sys.exit(f"Unknown class '{parent_name}' on line {line_num}")
             if parent.kind == Class.Kind.CONCRETE:
                 sys.exit(f"{parent.name} cannot be a parent on line {line_num}")
-            elif parent.kind == Class.Kind.INTERFACE:
-                if kind != Class.Kind.INTERFACE:
-                    sys.exit(
-                        "Interface cannot be parent of non-interface on"
-                        + f" line {line_num}"
-                    )
         else:
             if kind != Class.Kind.ROOT:
                 sys.exit(
                     f"Non-root class must have a parent on line {line_num}"
                 )
 
-        interfaces = []
-        if match_result.group("interfaces"):
-            if kind == Class.Kind.INTERFACE:
-                sys.exit(
-                    f"Interface cannot implement interfaces on line {line_num}"
-                )
-            for unstripped_name in match_result.group("interfaces").split(","):
-                interface_name = unstripped_name.strip()
-                interface = classes[interface_name]
-                if not interface:
-                    sys.exit(
-                        f"Unknown class '{interface_name}' on line {line_num}"
-                    )
-                if interface.kind != Class.Kind.INTERFACE:
-                    sys.exit(
-                        f"'{interface_name}' used as interface on"
-                        + f" line {line_num}"
-                    )
-                interface_ancestor = interface.NearestNonInterfaceAncestor()
-                if interface_ancestor not in parent.ancestors + [parent]:
-                    sys.exit(
-                        f"Class that implements {interface_name} must"
-                        + f" inherit from {interface_ancestor.name}"
-                        + f" on line {line_num}"
-                    )
-
-                interfaces.append(interface)
-
         classes[match_result.group("name")] = Class(
-            match_result.group("name"), kind, parent, interfaces
+            match_result.group("name"), kind, parent
         )
 
     for node in classes.values():
@@ -324,10 +234,7 @@ def main():
 
     for node in classes.values():
         if node.kind != Class.Kind.CONCRETE:
-            if node.kind == Class.Kind.INTERFACE:
-                ids = sorted(node.leaf_ids)
-            else:
-                ids = range(node.id_range[0], node.id_range[1])
+            ids = range(node.id_range[0], node.id_range[1])
             print(f"enum class {node.name}Kind {{")
             for id in ids:
                 print(f"  {node.Root().leaves[id].name} = {id},")

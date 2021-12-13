@@ -539,7 +539,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
     }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
-      if (ident.named_entity().kind() == NamedEntityKind::FunctionDeclaration) {
+      if (ident.named_entity().base().kind() ==
+          AstNodeKind::FunctionDeclaration) {
         const auto& function =
             cast<FunctionDeclaration>(ident.named_entity().base());
         if (!function.has_static_type()) {

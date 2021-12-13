@@ -56,10 +56,6 @@ class NamedEntityView {
   // Returns `node` as an instance of the base class AstNode.
   auto base() const -> const AstNode& { return *base_; }
 
-  auto kind() const -> NamedEntityKind {
-    return static_cast<NamedEntityKind>(base_->kind());
-  }
-
   // Returns node->static_type()
   auto static_type() const -> const Value& { return static_type_(*base_); }
 
