@@ -19,12 +19,22 @@ namespace Carbon {
 
 class Value;
 
-// Non-owning type-erased wrapper around a const NodeType* `node`, where
-// NodeType models the NamedEntity interface. This means that:
+// True if NodeType::ImplementsCarbonNamedEntity is valid and names a type,
+// indicating that NodeType implements the NamedEntity interface. This imposes
+// the following requirements on NodeType, where `node` is a const instance of
+// NodeType:
 //
-// - node->static_type() is well-formed and has type const Value&.
-// - ImplementsNamedEntity<NodeType> is true. In other words,
-//   NodeType must directly or indirectly implement NamedEntity in ast_rtti.txt.
+// - NodeType is derived from AstNode.
+// - node.static_type() is well-formed and has type const Value&.
+template <typename T, typename = void>
+static constexpr bool ImplementsNamedEntity = false;
+
+template <typename T>
+static constexpr bool
+    ImplementsNamedEntity<T, typename T::ImplementsCarbonNamedEntity> = true;
+
+// Non-owning type-erased wrapper around a const NodeType* `node`, where
+// NodeType implements the NamedEntity interface.
 class NamedEntityView {
  public:
   template <typename NodeType,

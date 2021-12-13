@@ -21,8 +21,10 @@ An interface is not actually a C++ type, but this script treats it as a
 class for most purposes. In particular, interfaces notionally participate
 in inheritance. A non-interface class cannot inherit from an interface, but
 it can *implement* an interface, and the associated interface view can only
-point to objects that implement the interface. An interface view class
-should be named by appending `View` to the name of the interface.
+point to objects that implement the interface. A class that implements an
+interface `Foo` must have a public member type `ImplementsCarbonFoo`. An
+interface view class should be named by appending `View` to the name of the
+interface.
 
 # Input format
 
@@ -73,10 +75,6 @@ numeric value, so you can use `static_cast` to convert between the enum types
 for different classes that have a common root, so long as the enumerator value
 is present in both types. As a result, `InheritsFromFoo` can be used to
 determine whether casting to `FooKind` is safe.
-
-For each interface `Foo`, the generated header file will also contain a
-variable template `ImplementsFoo<T>`, which is true if `T` implements `Foo`
-or inherits from a class that implements `Foo`, and false otherwise.
 """
 
 __copyright__ = """
@@ -102,7 +100,7 @@ class Class:
         starting with the root and ending with the current class's parent.
       interfaces: A list of Class objects representing the interfaces the class
         implements.
-      children: A list of Class objects representing the classes that are
+      _children: A list of Class objects representing the classes that are
         derived directly from this one.
 
     Attributes set by Finalize():
@@ -140,13 +138,14 @@ class Class:
         else:
             self.id = None
 
-        self.children = []
+        if self.kind != Class.Kind.CONCRETE:
+            self._children = []
 
         if parent:
-            parent.children.append(self)
+            parent._children.append(self)
 
         for interface in self.interfaces:
-            interface.children.append(self)
+            interface._children.append(self)
 
     def Parent(self):
         """Returns this Class's parent."""
@@ -215,7 +214,7 @@ class Class:
             self.id = len(self.Root().leaves)
             self._RegisterLeaf(self)
         elif self.kind in [Class.Kind.ROOT, Class.Kind.ABSTRACT]:
-            for child in self.children:
+            for child in self._children:
                 child.Finalize()
 
 
@@ -335,7 +334,6 @@ def main():
             print("};\n")
 
         if node.kind in [Class.Kind.ABSTRACT, Class.Kind.CONCRETE]:
-            print(f"class {node.name};\n")
             print(
                 f"inline bool InheritsFrom{node.name}({node.Root().name}Kind"
                 + " kind) {"
@@ -361,20 +359,6 @@ def main():
                     f"    return kind == {node.Root().name}Kind::{node.name};"
                 )
             print("}\n")
-
-    for node in classes.values():
-        if node.kind == Class.Kind.INTERFACE:
-            print("template <typename NodeType>")
-            print(f"constexpr bool Implements{node.name} = false;")
-
-            queue = node.children.copy()
-            while queue:
-                descendant = queue.pop(0)
-                queue.extend(descendant.children)
-                print(
-                    "template <> inline constexpr bool "
-                    + f"Implements{node.name}<{descendant.name}> = true;"
-                )
 
     print("}  // namespace Carbon\n")
     print(f"#endif  // {guard_macro}")

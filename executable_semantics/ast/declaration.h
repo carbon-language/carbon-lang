@@ -82,6 +82,8 @@ class GenericBinding : public AstNode {
         name_(std::move(name)),
         type_(type) {}
 
+  using ImplementsCarbonNamedEntity = void;
+
   void Print(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
@@ -207,6 +209,8 @@ class FunctionDeclaration : public Declaration {
     return InheritsFromFunctionDeclaration(node->kind());
   }
 
+  using ImplementsCarbonNamedEntity = void;
+
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
@@ -243,6 +247,8 @@ class ClassDeclaration : public Declaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromClassDeclaration(node->kind());
   }
+
+  using ImplementsCarbonNamedEntity = void;
 
   auto name() const -> const std::string& { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
@@ -286,6 +292,8 @@ class ChoiceDeclaration : public Declaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromChoiceDeclaration(node->kind());
   }
+
+  using ImplementsCarbonNamedEntity = void;
 
   auto name() const -> const std::string& { return name_; }
   auto alternatives() const

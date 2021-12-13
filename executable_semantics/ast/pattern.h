@@ -109,6 +109,8 @@ class BindingPattern : public Pattern {
     return InheritsFromBindingPattern(node->kind());
   }
 
+  using ImplementsCarbonNamedEntity = void;
+
   // The name this pattern binds, if any.
   auto name() const -> const std::optional<std::string>& { return name_; }
 

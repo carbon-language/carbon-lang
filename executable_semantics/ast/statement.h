@@ -321,6 +321,8 @@ class Continuation : public Statement {
     return InheritsFromContinuation(node->kind());
   }
 
+  using ImplementsCarbonNamedEntity = void;
+
   auto continuation_variable() const -> const std::string& {
     return continuation_variable_;
   }
