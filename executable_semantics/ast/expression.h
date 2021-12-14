@@ -14,6 +14,7 @@
 #include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -21,9 +22,8 @@
 namespace Carbon {
 
 class Value;
-class NamedEntity;
 
-class Expression : public virtual AstNode {
+class Expression : public AstNode {
  public:
   // The value category of a Carbon expression indicates whether it evaluates
   // to a variable or a value. A variable can be mutated, and can have its
@@ -76,7 +76,8 @@ class Expression : public virtual AstNode {
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Expression() = default;
+  Expression(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -121,7 +122,7 @@ auto ToString(Operator op) -> std::string_view;
 class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)
-      : AstNode(AstNodeKind::IdentifierExpression, source_loc),
+      : Expression(AstNodeKind::IdentifierExpression, source_loc),
         name_(std::move(name)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -130,15 +131,15 @@ class IdentifierExpression : public Expression {
 
   auto name() const -> const std::string& { return name_; }
 
-  // Returns the NamedEntity this identifier refers to. Cannot be called before
-  // name resolution.
-  auto named_entity() const -> const NamedEntity& { return **named_entity_; }
+  // Returns the NamedEntityView this identifier refers to. Cannot be called
+  // before name resolution.
+  auto named_entity() const -> const NamedEntityView& { return *named_entity_; }
 
   // Sets the value returned by named_entity. Can be called only once,
   // during name resolution.
-  void set_named_entity(Nonnull<const NamedEntity*> named_entity) {
+  void set_named_entity(NamedEntityView named_entity) {
     CHECK(!named_entity_.has_value());
-    named_entity_ = named_entity;
+    named_entity_ = std::move(named_entity);
   }
 
   // Returns true if set_named_entity has been called. Should be used only
@@ -148,7 +149,7 @@ class IdentifierExpression : public Expression {
 
  private:
   std::string name_;
-  std::optional<Nonnull<const NamedEntity*>> named_entity_;
+  std::optional<NamedEntityView> named_entity_;
 };
 
 class FieldAccessExpression : public Expression {
@@ -156,7 +157,7 @@ class FieldAccessExpression : public Expression {
   explicit FieldAccessExpression(SourceLocation source_loc,
                                  Nonnull<Expression*> aggregate,
                                  std::string field)
-      : AstNode(AstNodeKind::FieldAccessExpression, source_loc),
+      : Expression(AstNodeKind::FieldAccessExpression, source_loc),
         aggregate_(aggregate),
         field_(std::move(field)) {}
 
@@ -178,7 +179,7 @@ class IndexExpression : public Expression {
   explicit IndexExpression(SourceLocation source_loc,
                            Nonnull<Expression*> aggregate,
                            Nonnull<Expression*> offset)
-      : AstNode(AstNodeKind::IndexExpression, source_loc),
+      : Expression(AstNodeKind::IndexExpression, source_loc),
         aggregate_(aggregate),
         offset_(offset) {}
 
@@ -199,7 +200,7 @@ class IndexExpression : public Expression {
 class IntLiteral : public Expression {
  public:
   explicit IntLiteral(SourceLocation source_loc, int value)
-      : AstNode(AstNodeKind::IntLiteral, source_loc), value_(value) {}
+      : Expression(AstNodeKind::IntLiteral, source_loc), value_(value) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntLiteral(node->kind());
@@ -214,7 +215,7 @@ class IntLiteral : public Expression {
 class BoolLiteral : public Expression {
  public:
   explicit BoolLiteral(SourceLocation source_loc, bool value)
-      : AstNode(AstNodeKind::BoolLiteral, source_loc), value_(value) {}
+      : Expression(AstNodeKind::BoolLiteral, source_loc), value_(value) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBoolLiteral(node->kind());
@@ -229,7 +230,7 @@ class BoolLiteral : public Expression {
 class StringLiteral : public Expression {
  public:
   explicit StringLiteral(SourceLocation source_loc, std::string value)
-      : AstNode(AstNodeKind::StringLiteral, source_loc),
+      : Expression(AstNodeKind::StringLiteral, source_loc),
         value_(std::move(value)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -245,7 +246,7 @@ class StringLiteral : public Expression {
 class StringTypeLiteral : public Expression {
  public:
   explicit StringTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::StringTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::StringTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStringTypeLiteral(node->kind());
@@ -259,7 +260,7 @@ class TupleLiteral : public Expression {
 
   explicit TupleLiteral(SourceLocation source_loc,
                         std::vector<Nonnull<Expression*>> fields)
-      : AstNode(AstNodeKind::TupleLiteral, source_loc),
+      : Expression(AstNodeKind::TupleLiteral, source_loc),
         fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -285,7 +286,8 @@ class StructLiteral : public Expression {
  public:
   explicit StructLiteral(SourceLocation loc,
                          std::vector<FieldInitializer> fields)
-      : AstNode(AstNodeKind::StructLiteral, loc), fields_(std::move(fields)) {
+      : Expression(AstNodeKind::StructLiteral, loc),
+        fields_(std::move(fields)) {
     CHECK(!fields_.empty())
         << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
   }
@@ -311,7 +313,7 @@ class StructTypeLiteral : public Expression {
 
   explicit StructTypeLiteral(SourceLocation loc,
                              std::vector<FieldInitializer> fields)
-      : AstNode(AstNodeKind::StructTypeLiteral, loc),
+      : Expression(AstNodeKind::StructTypeLiteral, loc),
         fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -330,7 +332,7 @@ class PrimitiveOperatorExpression : public Expression {
   explicit PrimitiveOperatorExpression(
       SourceLocation source_loc, Operator op,
       std::vector<Nonnull<Expression*>> arguments)
-      : AstNode(AstNodeKind::PrimitiveOperatorExpression, source_loc),
+      : Expression(AstNodeKind::PrimitiveOperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}
 
@@ -356,7 +358,7 @@ class CallExpression : public Expression {
   explicit CallExpression(SourceLocation source_loc,
                           Nonnull<Expression*> function,
                           Nonnull<Expression*> argument)
-      : AstNode(AstNodeKind::CallExpression, source_loc),
+      : Expression(AstNodeKind::CallExpression, source_loc),
         function_(function),
         argument_(argument) {}
 
@@ -379,7 +381,7 @@ class FunctionTypeLiteral : public Expression {
   explicit FunctionTypeLiteral(SourceLocation source_loc,
                                Nonnull<Expression*> parameter,
                                Nonnull<Expression*> return_type)
-      : AstNode(AstNodeKind::FunctionTypeLiteral, source_loc),
+      : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
         return_type_(return_type) {}
 
@@ -400,7 +402,7 @@ class FunctionTypeLiteral : public Expression {
 class BoolTypeLiteral : public Expression {
  public:
   explicit BoolTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::BoolTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::BoolTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBoolTypeLiteral(node->kind());
@@ -410,7 +412,7 @@ class BoolTypeLiteral : public Expression {
 class IntTypeLiteral : public Expression {
  public:
   explicit IntTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::IntTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::IntTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntTypeLiteral(node->kind());
@@ -420,7 +422,7 @@ class IntTypeLiteral : public Expression {
 class ContinuationTypeLiteral : public Expression {
  public:
   explicit ContinuationTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromContinuationTypeLiteral(node->kind());
@@ -430,7 +432,7 @@ class ContinuationTypeLiteral : public Expression {
 class TypeTypeLiteral : public Expression {
  public:
   explicit TypeTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::TypeTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::TypeTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTypeTypeLiteral(node->kind());
@@ -446,7 +448,7 @@ class IntrinsicExpression : public Expression {
   explicit IntrinsicExpression(std::string_view intrinsic_name,
                                Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
-      : AstNode(AstNodeKind::IntrinsicExpression, source_loc),
+      : Expression(AstNodeKind::IntrinsicExpression, source_loc),
         intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
         args_(args) {}
 
@@ -480,7 +482,7 @@ class UnimplementedExpression : public Expression {
   template <typename... Children>
   UnimplementedExpression(SourceLocation source_loc, std::string label,
                           Children... children)
-      : AstNode(AstNodeKind::UnimplementedExpression, source_loc),
+      : Expression(AstNodeKind::UnimplementedExpression, source_loc),
         label_(std::move(label)) {
     AddChildren(children...);
   }

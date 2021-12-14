@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
 #define EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -16,16 +17,61 @@
 
 namespace Carbon {
 
-class NamedEntity : public virtual AstNode {
+class Value;
+
+// True if NodeType::ImplementsCarbonNamedEntity is valid and names a type,
+// indicating that NodeType implements the NamedEntity interface. This imposes
+// the following requirements on NodeType, where `node` is a const instance of
+// NodeType:
+//
+// - NodeType is derived from AstNode.
+// - node.static_type() is well-formed and has type const Value&.
+template <typename T, typename = void>
+static constexpr bool ImplementsNamedEntity = false;
+
+template <typename T>
+static constexpr bool
+    ImplementsNamedEntity<T, typename T::ImplementsCarbonNamedEntity> = true;
+
+// Non-owning type-erased wrapper around a const NodeType* `node`, where
+// NodeType implements the NamedEntity interface.
+class NamedEntityView {
  public:
-  ~NamedEntity() override = 0;
+  template <typename NodeType,
+            typename = std::enable_if_t<ImplementsNamedEntity<NodeType>>>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  NamedEntityView(Nonnull<const NodeType*> node)
+      // Type-erase NodeType, retaining a pointer to the base class AstNode
+      // and using std::function to encapsulate the ability to call
+      // the derived class's static_type.
+      : base_(node), static_type_([](const AstNode& base) -> const Value& {
+          return llvm::cast<NodeType>(base).static_type();
+        }) {}
 
-  NamedEntity() = default;
+  NamedEntityView(const NamedEntityView&) = default;
+  NamedEntityView(NamedEntityView&&) = default;
+  auto operator=(const NamedEntityView&) -> NamedEntityView& = default;
+  auto operator=(NamedEntityView&&) -> NamedEntityView& = default;
 
-  // TODO: This is unused, but is intended for casts after lookup.
-  auto kind() const -> NamedEntityKind {
-    return static_cast<NamedEntityKind>(root_kind());
+  // Returns `node` as an instance of the base class AstNode.
+  auto base() const -> const AstNode& { return *base_; }
+
+  // Returns node->static_type()
+  auto static_type() const -> const Value& { return static_type_(*base_); }
+
+  friend auto operator==(const NamedEntityView& lhs,
+                         const NamedEntityView& rhs) {
+    return lhs.base_ == rhs.base_;
   }
+
+  friend auto operator!=(const NamedEntityView& lhs,
+                         const NamedEntityView& rhs) {
+    return lhs.base_ != rhs.base_;
+  }
+
+ private:
+  Nonnull<const AstNode*> base_;
+  std::function<const Value&(const AstNode&)> static_type_;
 };
 
 // Maps the names visible in a given scope to the entities they name.
@@ -35,7 +81,7 @@ class StaticScope {
  public:
   // Defines `name` to be `entity` in this scope, or reports a compilation error
   // if `name` is already defined to be a different entity in this scope.
-  void Add(std::string name, Nonnull<const NamedEntity*> entity);
+  void Add(std::string name, NamedEntityView entity);
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -47,17 +93,17 @@ class StaticScope {
   // scope, or reports a compilation error at `source_loc` there isn't exactly
   // one such definition.
   auto Resolve(const std::string& name, SourceLocation source_loc) const
-      -> Nonnull<const NamedEntity*>;
+      -> NamedEntityView;
 
  private:
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
   // if no definition can be found. Still raises a compilation error if more
   // than one definition is found.
   auto TryResolve(const std::string& name, SourceLocation source_loc) const
-      -> std::optional<Nonnull<const NamedEntity*>>;
+      -> std::optional<NamedEntityView>;
 
   // Maps locally declared names to their entities.
-  std::unordered_map<std::string, Nonnull<const NamedEntity*>> declared_names_;
+  std::unordered_map<std::string, NamedEntityView> declared_names_;
 
   // A list of scopes used for name lookup within this scope.
   std::vector<Nonnull<StaticScope*>> parent_scopes_;
