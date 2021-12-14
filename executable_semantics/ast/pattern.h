@@ -118,6 +118,8 @@ class BindingPattern : public Pattern {
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
  private:
   std::optional<std::string> name_;
   Nonnull<Pattern*> type_;

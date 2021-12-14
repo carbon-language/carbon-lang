@@ -13,6 +13,7 @@
 
 #include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
@@ -20,12 +21,16 @@ namespace Carbon {
 class Value;
 
 // True if NodeType::ImplementsCarbonNamedEntity is valid and names a type,
-// indicating that NodeType implements the NamedEntity interface. This imposes
-// the following requirements on NodeType, where `node` is a const instance of
-// NodeType:
-//
-// - NodeType is derived from AstNode.
-// - node.static_type() is well-formed and has type const Value&.
+// indicating that NodeType implements the NamedEntity interface, which means
+// it must define the following methods, with contracts as documented.
+#if 0
+  // Returns the static type of an IdentifierExpression that names *this.
+  auto static_type() const -> const Value&;
+
+  // Returns the value category of an IdentifierExpression that names *this.
+  auto value_category() const -> ValueCategory;
+#endif
+// NodeType must be derived from AstNode.
 template <typename T, typename = void>
 static constexpr bool ImplementsNamedEntity = false;
 
@@ -43,9 +48,13 @@ class NamedEntityView {
   NamedEntityView(Nonnull<const NodeType*> node)
       // Type-erase NodeType, retaining a pointer to the base class AstNode
       // and using std::function to encapsulate the ability to call
-      // the derived class's static_type.
-      : base_(node), static_type_([](const AstNode& base) -> const Value& {
+      // the derived class's methods.
+      : base_(node),
+        static_type_([](const AstNode& base) -> const Value& {
           return llvm::cast<NodeType>(base).static_type();
+        }),
+        value_category_([](const AstNode& base) -> ValueCategory {
+          return llvm::cast<NodeType>(base).value_category();
         }) {}
 
   NamedEntityView(const NamedEntityView&) = default;
@@ -58,6 +67,11 @@ class NamedEntityView {
 
   // Returns node->static_type()
   auto static_type() const -> const Value& { return static_type_(*base_); }
+
+  // Returns node->value_category()
+  auto value_category() const -> ValueCategory {
+    return value_category_(*base_);
+  }
 
   friend auto operator==(const NamedEntityView& lhs,
                          const NamedEntityView& rhs) {
@@ -72,6 +86,7 @@ class NamedEntityView {
  private:
   Nonnull<const AstNode*> base_;
   std::function<const Value&(const AstNode&)> static_type_;
+  std::function<ValueCategory(const AstNode&)> value_category_;
 };
 
 // Maps the names visible in a given scope to the entities they name.

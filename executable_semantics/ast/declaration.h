@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -105,6 +106,8 @@ class GenericBinding : public AstNode {
   // during typechecking: before typechecking it's guaranteed to be false,
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
@@ -228,6 +231,8 @@ class FunctionDeclaration : public Declaration {
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
@@ -252,6 +257,8 @@ class ClassDeclaration : public Declaration {
 
   auto name() const -> const std::string& { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
@@ -303,6 +310,8 @@ class ChoiceDeclaration : public Declaration {
   auto alternatives() -> llvm::ArrayRef<Nonnull<AlternativeSignature*>> {
     return alternatives_;
   }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
