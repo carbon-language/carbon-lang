@@ -102,6 +102,8 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       return true;
     case Value::Kind::AutoType:
       // `auto` isn't a concrete type, it's a pattern that matches types.
@@ -310,6 +312,8 @@ void TypeChecker::ArgumentDeduction(
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       ExpectType(source_loc, "argument deduction", param, arg);
       return;
     // The rest of these cases should never happen.
@@ -374,6 +378,8 @@ auto TypeChecker::Substitute(
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::IntValue:
@@ -512,8 +518,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e, TypeEnv types,
               << "class " << t_class.name() << " does not have a field named "
               << access.field();
         }
-        case Value::Kind::ChoiceType: {
-          const auto& choice = cast<ChoiceType>(aggregate_type);
+        case Value::Kind::TypeOfChoiceType: {
+          const ChoiceType& choice =
+              cast<TypeOfChoiceType>(aggregate_type).choice_type();
           std::optional<Nonnull<const Value*>> parameter_types =
               choice.FindAlternative(access.field());
           if (!parameter_types.has_value()) {
@@ -803,27 +810,30 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
-      Nonnull<const Value*> choice_type =
-          interpreter_.InterpExp(values, &alternative.choice_type());
-      if (choice_type->kind() != Value::Kind::ChoiceType) {
+      TypeCheckExp(&alternative.choice_type(), types, values);
+      if (alternative.choice_type().static_type().kind() !=
+          Value::Kind::TypeOfChoiceType) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "alternative pattern does not name a choice type.";
       }
       if (expected) {
         ExpectExactType(alternative.source_loc(), "alternative pattern",
-                        *expected, choice_type);
+                        *expected, &alternative.choice_type().static_type());
       }
+      const ChoiceType& choice_type =
+          cast<TypeOfChoiceType>(alternative.choice_type().static_type())
+              .choice_type();
       std::optional<Nonnull<const Value*>> parameter_types =
-          cast<ChoiceType>(*choice_type)
+          cast<ChoiceType>(choice_type)
               .FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         FATAL_COMPILATION_ERROR(alternative.source_loc())
             << "'" << alternative.alternative_name()
-            << "' is not an alternative of " << *choice_type;
+            << "' is not an alternative of " << choice_type;
       }
       TCResult arg_results = TypeCheckPattern(&alternative.arguments(), types,
                                               values, *parameter_types);
-      SetStaticType(&alternative, choice_type);
+      SetStaticType(&alternative, &choice_type);
       SetValue(&alternative, interpreter_.InterpPattern(values, &alternative));
       return TCResult(arg_results.types);
     }
@@ -1080,34 +1090,45 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   return TCResult(types);
 }
 
-auto TypeChecker::TypeOfClassDecl(ClassDeclaration& class_decl,
-                                  TypeEnv /*types*/, Env ct_top)
-    -> Nonnull<const Value*> {
+auto TypeChecker::TypeCheckClassDeclaration(
+    Nonnull<ClassDeclaration*> class_decl, TypeEnv types, Env ct_top)
+    -> TCResult {
   std::vector<NamedValue> fields;
   std::vector<NamedValue> methods;
-  for (Nonnull<const Member*> m : class_decl.members()) {
+  for (Nonnull<Member*> m : class_decl->members()) {
     switch (m->kind()) {
       case MemberKind::FieldMember: {
-        const BindingPattern& binding = cast<FieldMember>(*m).binding();
+        BindingPattern& binding = cast<FieldMember>(*m).binding();
         if (!binding.name().has_value()) {
           FATAL_COMPILATION_ERROR(binding.source_loc())
               << "Struct members must have names";
         }
-        const auto* binding_type = dyn_cast<ExpressionPattern>(&binding.type());
-        if (binding_type == nullptr) {
-          FATAL_COMPILATION_ERROR(binding.source_loc())
-              << "Struct members must have explicit types";
-        }
-        auto type = interpreter_.InterpExp(ct_top, &binding_type->expression());
-        fields.push_back({.name = *binding.name(), .value = type});
+        types = TypeCheckPattern(&binding, types, ct_top, std::nullopt).types;
+        fields.push_back(
+            {.name = *binding.name(), .value = &binding.static_type()});
         break;
       }
     }
   }
-  SetStaticType(&class_decl,
-                arena_->New<NominalClassType>(
-                    class_decl.name(), std::move(fields), std::move(methods)));
-  return &class_decl.static_type();
+  SetStaticType(
+      class_decl,
+      arena_->New<TypeOfClassType>(arena_->New<NominalClassType>(
+          class_decl->name(), std::move(fields), std::move(methods))));
+  return TCResult(types);
+}
+
+auto TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                             TypeEnv types, Env ct_top)
+    -> TCResult {
+  std::vector<NamedValue> alternatives;
+  for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
+    types = TypeCheckExp(&alternative->signature(), types, ct_top).types;
+    auto signature = interpreter_.InterpExp(ct_top, &alternative->signature());
+    alternatives.push_back({.name = alternative->name(), .value = signature});
+  }
+  auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
+  SetStaticType(choice, arena_->New<TypeOfChoiceType>(ct));
+  return TCResult(types);
 }
 
 static auto GetName(const Declaration& d) -> const std::string& {
@@ -1150,13 +1171,11 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                                    values, /*check_body=*/true);
       return;
     case DeclarationKind::ClassDeclaration:
-      // TODO
+      TypeCheckClassDeclaration(&cast<ClassDeclaration>(*d), types, values);
       return;
-
     case DeclarationKind::ChoiceDeclaration:
-      // TODO
+      TypeCheckChoiceDeclaration(&cast<ChoiceDeclaration>(*d), types, values);
       return;
-
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
       // Signals a type error if the initializing expression does not have
@@ -1193,27 +1212,23 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops) {
 
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
-      auto st = TypeOfClassDecl(class_decl, tops->types, tops->values);
-      AllocationId a = interpreter_.AllocateValue(st);
+      TypeCheckClassDeclaration(&class_decl, tops->types, tops->values);
+      const auto& type = cast<TypeOfClassType>(class_decl.static_type());
+      const NominalClassType& value = type.class_type();
+      AllocationId a = interpreter_.AllocateValue(&value);
       tops->values.Set(class_decl.name(), a);  // Is this obsolete?
-      tops->types.Set(class_decl.name(), st);
+      tops->types.Set(class_decl.name(), &type);
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(*d);
-      std::vector<NamedValue> alts;
-      for (Nonnull<const AlternativeSignature*> alternative :
-           choice.alternatives()) {
-        auto t =
-            interpreter_.InterpExp(tops->values, &alternative->signature());
-        alts.push_back({.name = alternative->name(), .value = t});
-      }
-      auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
-      SetStaticType(&choice, ct);
-      AllocationId a = interpreter_.AllocateValue(ct);
+      TypeCheckChoiceDeclaration(&choice, tops->types, tops->values);
+      const auto& type = cast<TypeOfChoiceType>(choice.static_type());
+      const ChoiceType& value = type.choice_type();
+      AllocationId a = interpreter_.AllocateValue(&value);
       tops->values.Set(choice.name(), a);  // Is this obsolete?
-      tops->types.Set(choice.name(), ct);
+      tops->types.Set(choice.name(), &type);
       break;
     }
 
