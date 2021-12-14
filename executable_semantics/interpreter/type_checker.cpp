@@ -1087,7 +1087,7 @@ void TypeChecker::TypeCheck(AST& ast) {
   for (Nonnull<Declaration*> declaration : ast.declarations) {
     TopLevel(declaration, &values);
   }
-  for (const auto decl : ast.declarations) {
+  for (Nonnull<Declaration*> decl : ast.declarations) {
     TypeCheckDeclaration(decl, values);
   }
   TypeCheckExp(*ast.main_call, values);
