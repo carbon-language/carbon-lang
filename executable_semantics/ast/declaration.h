@@ -76,13 +76,13 @@ class Declaration : public AstNode {
 //   For now, only generic parameters are supported.
 class GenericBinding : public AstNode {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   GenericBinding(SourceLocation source_loc, std::string name,
                  Nonnull<Expression*> type)
       : AstNode(AstNodeKind::GenericBinding, source_loc),
         name_(std::move(name)),
         type_(type) {}
-
-  using ImplementsCarbonNamedEntity = void;
 
   void Print(llvm::raw_ostream& out) const override;
 
@@ -193,6 +193,8 @@ class ReturnTerm {
 
 class FunctionDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       Nonnull<TuplePattern*> param_pattern,
@@ -208,8 +210,6 @@ class FunctionDeclaration : public Declaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
-
-  using ImplementsCarbonNamedEntity = void;
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
@@ -238,6 +238,8 @@ class FunctionDeclaration : public Declaration {
 
 class ClassDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
@@ -247,8 +249,6 @@ class ClassDeclaration : public Declaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromClassDeclaration(node->kind());
   }
-
-  using ImplementsCarbonNamedEntity = void;
 
   auto name() const -> const std::string& { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
@@ -283,6 +283,8 @@ class AlternativeSignature : public AstNode {
 
 class ChoiceDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
       : Declaration(AstNodeKind::ChoiceDeclaration, source_loc),
@@ -292,8 +294,6 @@ class ChoiceDeclaration : public Declaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromChoiceDeclaration(node->kind());
   }
-
-  using ImplementsCarbonNamedEntity = void;
 
   auto name() const -> const std::string& { return name_; }
   auto alternatives() const

@@ -311,6 +311,8 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   Continuation(SourceLocation source_loc, std::string continuation_variable,
                Nonnull<Block*> body)
       : Statement(AstNodeKind::Continuation, source_loc),
@@ -320,8 +322,6 @@ class Continuation : public Statement {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromContinuation(node->kind());
   }
-
-  using ImplementsCarbonNamedEntity = void;
 
   auto continuation_variable() const -> const std::string& {
     return continuation_variable_;

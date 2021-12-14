@@ -99,6 +99,8 @@ class AutoPattern : public Pattern {
 // a name to it.
 class BindingPattern : public Pattern {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
                  Nonnull<Pattern*> type)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
@@ -108,8 +110,6 @@ class BindingPattern : public Pattern {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
   }
-
-  using ImplementsCarbonNamedEntity = void;
 
   // The name this pattern binds, if any.
   auto name() const -> const std::optional<std::string>& { return name_; }
