@@ -13,7 +13,7 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
@@ -61,4 +61,4 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   return 0;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

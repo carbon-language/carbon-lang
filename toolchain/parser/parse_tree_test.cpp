@@ -19,18 +19,13 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using Carbon::Testing::DiagnosticMessage;
-using Carbon::Testing::ExpectedNode;
-using Carbon::Testing::MatchParseTreeNodes;
-using namespace Carbon::Testing::NodeMatchers;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::Ne;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
@@ -1176,4 +1171,4 @@ TEST_F(ParseTreeTest, ParenMatchRegression) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

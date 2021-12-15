@@ -21,18 +21,13 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lexer/tokenized_buffer_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using ::Carbon::Testing::DiagnosticAt;
-using ::Carbon::Testing::DiagnosticMessage;
-using ::Carbon::Testing::ExpectedToken;
-using ::Carbon::Testing::HasTokens;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
 class LexerTest : public ::testing::Test {
  protected:
@@ -1103,4 +1098,4 @@ TEST_F(LexerTest, PrintingAsYaml) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

@@ -9,7 +9,7 @@
 
 #include "toolchain/lexer/token_kind.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::Eq;
@@ -154,4 +154,4 @@ TEST(PrecedenceTest, IncomparableOperators) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

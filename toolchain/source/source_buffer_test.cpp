@@ -11,7 +11,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 TEST(SourceBufferTest, StringRep) {
@@ -59,4 +59,4 @@ TEST(SourceBufferTest, FileRep) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
