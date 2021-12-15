@@ -9,6 +9,8 @@
 
 namespace Carbon {
 
+// Guards against the stack limit being exceeded by recursive calls. Call sites
+// should error before the limit is hit by checking `is_at_limit`.
 class StackGuard {
  public:
   // This is meant to approximate stack limits, but we may need to find a better
@@ -18,6 +20,7 @@ class StackGuard {
   // Returns a root-level stack guard.
   static auto Root() -> StackGuard { return StackGuard(); }
 
+  // Increment the depth on copy, and check to ensure the limit isn't exceeded.
   StackGuard(const StackGuard& parent) : depth_(parent.depth_ + 1) {
     CHECK(depth_ <= Limit) << "Exceeded recursion limit (" << Limit << ")";
   }
@@ -27,6 +30,7 @@ class StackGuard {
  private:
   StackGuard() = default;
 
+  // The current stack depth.
   int depth_ = 0;
 };
 
