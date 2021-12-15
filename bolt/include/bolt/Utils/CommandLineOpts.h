@@ -71,12 +71,12 @@ extern llvm::cl::opt<unsigned> Verbosity;
 /// Return true if we should process all functions in the binary.
 bool processAllFunctions();
 
-}
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
 extern const char *BoltRevision;
 }
-}
+} // namespace llvm
 
 #endif

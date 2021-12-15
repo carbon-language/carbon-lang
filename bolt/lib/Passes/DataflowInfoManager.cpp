@@ -22,9 +22,7 @@ ReachingDefOrUse</*Def=*/true> &DataflowInfoManager::getReachingDefs() {
   return *RD;
 }
 
-void DataflowInfoManager::invalidateReachingDefs() {
-  RD.reset(nullptr);
-}
+void DataflowInfoManager::invalidateReachingDefs() { RD.reset(nullptr); }
 
 ReachingDefOrUse</*Def=*/false> &DataflowInfoManager::getReachingUses() {
   if (RU)
@@ -35,9 +33,7 @@ ReachingDefOrUse</*Def=*/false> &DataflowInfoManager::getReachingUses() {
   return *RU;
 }
 
-void DataflowInfoManager::invalidateReachingUses() {
-  RU.reset(nullptr);
-}
+void DataflowInfoManager::invalidateReachingUses() { RU.reset(nullptr); }
 
 LivenessAnalysis &DataflowInfoManager::getLivenessAnalysis() {
   if (LA)
@@ -48,9 +44,7 @@ LivenessAnalysis &DataflowInfoManager::getLivenessAnalysis() {
   return *LA;
 }
 
-void DataflowInfoManager::invalidateLivenessAnalysis() {
-  LA.reset(nullptr);
-}
+void DataflowInfoManager::invalidateLivenessAnalysis() { LA.reset(nullptr); }
 
 StackReachingUses &DataflowInfoManager::getStackReachingUses() {
   if (SRU)
@@ -61,9 +55,7 @@ StackReachingUses &DataflowInfoManager::getStackReachingUses() {
   return *SRU;
 }
 
-void DataflowInfoManager::invalidateStackReachingUses() {
-  SRU.reset(nullptr);
-}
+void DataflowInfoManager::invalidateStackReachingUses() { SRU.reset(nullptr); }
 
 DominatorAnalysis<false> &DataflowInfoManager::getDominatorAnalysis() {
   if (DA)
@@ -73,9 +65,7 @@ DominatorAnalysis<false> &DataflowInfoManager::getDominatorAnalysis() {
   return *DA;
 }
 
-void DataflowInfoManager::invalidateDominatorAnalysis() {
-  DA.reset(nullptr);
-}
+void DataflowInfoManager::invalidateDominatorAnalysis() { DA.reset(nullptr); }
 
 DominatorAnalysis<true> &DataflowInfoManager::getPostDominatorAnalysis() {
   if (PDA)
@@ -110,9 +100,7 @@ ReachingInsns<false> &DataflowInfoManager::getReachingInsns() {
   return *RI;
 }
 
-void DataflowInfoManager::invalidateReachingInsns() {
-  RI.reset(nullptr);
-}
+void DataflowInfoManager::invalidateReachingInsns() { RI.reset(nullptr); }
 
 ReachingInsns<true> &DataflowInfoManager::getReachingInsnsBackwards() {
   if (RIB)
@@ -151,9 +139,7 @@ DataflowInfoManager::getInsnToBBMap() {
   return *InsnToBB;
 }
 
-void DataflowInfoManager::invalidateInsnToBBMap() {
-  InsnToBB.reset(nullptr);
-}
+void DataflowInfoManager::invalidateInsnToBBMap() { InsnToBB.reset(nullptr); }
 
 void DataflowInfoManager::invalidateAll() {
   invalidateReachingDefs();

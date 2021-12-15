@@ -75,13 +75,9 @@ protected:
 
 public:
   BinaryData(BinaryData &&) = default;
-  BinaryData(MCSymbol &Symbol,
-             uint64_t Address,
-             uint64_t Size,
-             uint16_t Alignment,
-             BinarySection &Section,
-             unsigned Flags = 0);
-  virtual ~BinaryData() { }
+  BinaryData(MCSymbol &Symbol, uint64_t Address, uint64_t Size,
+             uint16_t Alignment, BinarySection &Section, unsigned Flags = 0);
+  virtual ~BinaryData() {}
 
   virtual bool isJumpTable() const { return false; }
   virtual bool isObject() const { return !isJumpTable(); }
@@ -94,9 +90,7 @@ public:
 
   // BinaryData that is considered atomic and potentially moveable.  All
   // MemInfo data and relocations should be wrt. to atomic data.
-  bool isAtomic() const {
-    return isTopLevelJumpTable() || !Parent;
-  }
+  bool isAtomic() const { return isTopLevelJumpTable() || !Parent; }
 
   iterator_range<std::vector<MCSymbol *>::const_iterator> symbols() const {
     return make_range(Symbols.begin(), Symbols.end());
@@ -147,9 +141,7 @@ public:
     return containsAddress(Address) && Address + Size <= getEndAddress();
   }
 
-  const BinaryData *getParent() const {
-    return Parent;
-  }
+  const BinaryData *getParent() const { return Parent; }
 
   const BinaryData *getRootData() const {
     const BinaryData *BD = this;
@@ -202,8 +194,7 @@ struct AddressAccess {
   uint64_t Offset;          /// Offset within the object or absolute address
   uint64_t Count;           /// Number of accesses
   bool operator==(const AddressAccess &Other) const {
-    return MemoryObject == Other.MemoryObject &&
-           Offset == Other.Offset &&
+    return MemoryObject == Other.MemoryObject && Offset == Other.Offset &&
            Count == Other.Count;
   }
 };

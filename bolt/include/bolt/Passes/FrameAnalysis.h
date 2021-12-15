@@ -73,8 +73,7 @@ struct ArgAccesses {
       : AssumeEverything(AssumeEverything) {}
 };
 
-raw_ostream &operator<<(raw_ostream &OS,
-                        const FrameIndexEntry &FIE);
+raw_ostream &operator<<(raw_ostream &OS, const FrameIndexEntry &FIE);
 
 /// This pass attaches stack access information to instructions. If a load/store
 /// instruction accesses a stack position, it will identify the CFA offset and
@@ -175,8 +174,7 @@ class FrameAnalysis {
   std::vector<MCPlusBuilder::AllocatorIdTy> SPTAllocatorsId;
 
 public:
-  explicit FrameAnalysis(BinaryContext &BC,
-                         BinaryFunctionCallGraph &CG);
+  explicit FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG);
 
   /// Return true if we could fully analyze \p Func
   bool hasFrameInfo(const BinaryFunction &Func) const {
@@ -198,9 +196,7 @@ public:
   /// Remove all MCAnnotations attached by this pass
   void cleanAnnotations();
 
-  ~FrameAnalysis() {
-    cleanAnnotations();
-  }
+  ~FrameAnalysis() { cleanAnnotations(); }
 
   /// Print to standard output statistics about the analysis performed by this
   /// pass
@@ -230,6 +226,5 @@ public:
 
 } // namespace bolt
 } // namespace llvm
-
 
 #endif

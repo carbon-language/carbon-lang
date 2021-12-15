@@ -24,7 +24,7 @@ namespace opts {
 extern cl::opt<unsigned> ThreadCount;
 extern cl::opt<bool> NoThreads;
 extern cl::opt<unsigned> TaskCount;
-}
+} // namespace opts
 
 namespace llvm {
 class ThreadPool;

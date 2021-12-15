@@ -260,8 +260,7 @@ void FrameAnalysis::addArgInStackAccessFor(MCInst &Inst,
 }
 
 void FrameAnalysis::addFIEFor(MCInst &Inst, const FrameIndexEntry &FIE) {
-  BC.MIB->addAnnotation(Inst, "FrameAccessEntry",
-                        (unsigned)FIEVector.size());
+  BC.MIB->addAnnotation(Inst, "FrameAccessEntry", (unsigned)FIEVector.size());
   FIEVector.emplace_back(FIE);
 }
 
@@ -295,9 +294,8 @@ FrameAnalysis::getFIEFor(const MCInst &Inst) const {
 void FrameAnalysis::traverseCG(BinaryFunctionCallGraph &CG) {
   CallGraphWalker CGWalker(CG);
 
-  CGWalker.registerVisitor([&](BinaryFunction *Func) -> bool {
-    return computeArgsAccessed(*Func);
-  });
+  CGWalker.registerVisitor(
+      [&](BinaryFunction *Func) -> bool { return computeArgsAccessed(*Func); });
 
   CGWalker.walk();
 

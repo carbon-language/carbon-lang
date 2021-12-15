@@ -117,7 +117,7 @@ bool MCPlusBuilder::equals(const MCExpr &A, const MCExpr &B,
 
 bool MCPlusBuilder::equals(const MCTargetExpr &A, const MCTargetExpr &B,
                            CompFuncTy Comp) const {
-    llvm_unreachable("target-specific expressions are unsupported");
+  llvm_unreachable("target-specific expressions are unsupported");
 }
 
 void MCPlusBuilder::setTailCall(MCInst &Inst) {
@@ -214,8 +214,7 @@ MCPlusBuilder::getConditionalTailCall(const MCInst &Inst) const {
   return static_cast<uint64_t>(*Value);
 }
 
-bool
-MCPlusBuilder::setConditionalTailCall(MCInst &Inst, uint64_t Dest) {
+bool MCPlusBuilder::setConditionalTailCall(MCInst &Inst, uint64_t Dest) {
   if (!isConditionalBranch(Inst))
     return false;
 
@@ -265,8 +264,8 @@ void MCPlusBuilder::stripAnnotations(MCInst &Inst, bool KeepTC) {
     setTailCall(Inst);
 }
 
-void
-MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
+void MCPlusBuilder::printAnnotations(const MCInst &Inst,
+                                     raw_ostream &OS) const {
   const MCInst *AnnotationInst = getAnnotationInst(Inst);
   if (!AnnotationInst)
     return;
@@ -275,11 +274,9 @@ MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
     const int64_t Imm = AnnotationInst->getOperand(I).getImm();
     const unsigned Index = extractAnnotationIndex(Imm);
     const int64_t Value = extractAnnotationValue(Imm);
-    const auto *Annotation =
-            reinterpret_cast<const MCAnnotation *>(Value);
+    const auto *Annotation = reinterpret_cast<const MCAnnotation *>(Value);
     if (Index >= MCAnnotation::kGeneric) {
-      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric]
-         << ": ";
+      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric] << ": ";
       Annotation->print(OS);
     }
   }
@@ -309,8 +306,7 @@ void MCPlusBuilder::getClobberedRegs(const MCInst &Inst,
   }
 }
 
-void MCPlusBuilder::getTouchedRegs(const MCInst &Inst,
-                                   BitVector &Regs) const {
+void MCPlusBuilder::getTouchedRegs(const MCInst &Inst, BitVector &Regs) const {
   if (isPrefix(Inst) || isCFI(Inst))
     return;
 
@@ -332,8 +328,7 @@ void MCPlusBuilder::getTouchedRegs(const MCInst &Inst,
   }
 }
 
-void MCPlusBuilder::getWrittenRegs(const MCInst &Inst,
-                                   BitVector &Regs) const {
+void MCPlusBuilder::getWrittenRegs(const MCInst &Inst, BitVector &Regs) const {
   if (isPrefix(Inst) || isCFI(Inst))
     return;
 
@@ -423,9 +418,8 @@ bool MCPlusBuilder::hasUseOfPhysReg(const MCInst &MI, unsigned Reg) const {
   return false;
 }
 
-const BitVector &
-MCPlusBuilder::getAliases(MCPhysReg Reg,
-                          bool OnlySmaller) const {
+const BitVector &MCPlusBuilder::getAliases(MCPhysReg Reg,
+                                           bool OnlySmaller) const {
   // AliasMap caches a mapping of registers to the set of registers that
   // alias (are sub or superregs of itself, including itself).
   static std::vector<BitVector> AliasMap;
@@ -490,8 +484,7 @@ MCPlusBuilder::getAliases(MCPhysReg Reg,
   return AliasMap[SuperReg[Reg]];
 }
 
-uint8_t
-MCPlusBuilder::getRegSize(MCPhysReg Reg) const {
+uint8_t MCPlusBuilder::getRegSize(MCPhysReg Reg) const {
   // SizeMap caches a mapping of registers to their sizes
   static std::vector<uint8_t> SizeMap;
 

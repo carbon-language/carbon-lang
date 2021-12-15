@@ -38,9 +38,7 @@ public:
         SPT(SPT) {}
   virtual ~StackAllocationAnalysis() {}
 
-  void run() {
-    InstrsDataflowAnalysis<StackAllocationAnalysis, false>::run();
-  }
+  void run() { InstrsDataflowAnalysis<StackAllocationAnalysis, false>::run(); }
 
 protected:
   void preflight();

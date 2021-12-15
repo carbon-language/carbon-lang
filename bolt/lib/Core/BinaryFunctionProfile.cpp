@@ -199,8 +199,8 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
 
     // Update basic block count.
     if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE) {
-      BBMerge->setExecutionCount(
-          BBMerge->getKnownExecutionCount() + BB->getExecutionCount());
+      BBMerge->setExecutionCount(BBMerge->getKnownExecutionCount() +
+                                 BB->getExecutionCount());
     }
 
     // Update edge count for successors of this basic block.
@@ -280,8 +280,8 @@ void BinaryFunction::inferFallThroughCounts() {
     uint64_t CTCTakenCount = 0;
     const MCInst *CTCInstr = BB->getLastNonPseudoInstr();
     if (CTCInstr && BC.MIB->getConditionalTailCall(*CTCInstr)) {
-      CTCTakenCount =
-        BC.MIB->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
+      CTCTakenCount = BC.MIB->getAnnotationWithDefault<uint64_t>(
+          *CTCInstr, "CTCTakenCount");
     }
 
     // Calculate frequency of throws from this node according to LBR data
@@ -294,7 +294,7 @@ void BinaryFunction::inferFallThroughCounts() {
     }
 
     const uint64_t TotalReportedJumps =
-      ReportedBranches + CTCTakenCount + ReportedThrows;
+        ReportedBranches + CTCTakenCount + ReportedThrows;
 
     // Infer the frequency of the fall-through edge, representing not taking the
     // branch.
@@ -303,21 +303,18 @@ void BinaryFunction::inferFallThroughCounts() {
       Inferred = BBExecCount - TotalReportedJumps;
 
     LLVM_DEBUG(
-      if (BBExecCount < TotalReportedJumps)
-        dbgs()
+        if (BBExecCount < TotalReportedJumps) dbgs()
             << "Fall-through inference is slightly inconsistent. "
                "exec frequency is less than the outgoing edges frequency ("
             << BBExecCount << " < " << ReportedBranches
             << ") for  BB at offset 0x"
-            << Twine::utohexstr(getAddress() + BB->getOffset()) << '\n';
-    );
+            << Twine::utohexstr(getAddress() + BB->getOffset()) << '\n';);
 
     if (BB->succ_size() <= 2) {
       // Skip if the last instruction is an unconditional jump.
       const MCInst *LastInstr = BB->getLastNonPseudoInstr();
-      if (LastInstr &&
-          (BC.MIB->isUnconditionalBranch(*LastInstr) ||
-           BC.MIB->isIndirectBranch(*LastInstr)))
+      if (LastInstr && (BC.MIB->isUnconditionalBranch(*LastInstr) ||
+                        BC.MIB->isIndirectBranch(*LastInstr)))
         continue;
       // If there is an FT it will be the last successor.
       auto &SuccBI = *BB->branch_info_rbegin();

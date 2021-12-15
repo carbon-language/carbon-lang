@@ -48,11 +48,7 @@ namespace bolt {
 using InputOffsetToAddressMapTy = std::unordered_multimap<uint64_t, uint64_t>;
 
 /// Types of macro-fusion alignment corrections.
-enum MacroFusionType {
-  MFT_NONE,
-  MFT_HOT,
-  MFT_ALL
-};
+enum MacroFusionType { MFT_NONE, MFT_HOT, MFT_ALL };
 
 enum IndirectCallPromotionType : char {
   ICP_NONE,        /// Don't perform ICP.
@@ -68,13 +64,12 @@ struct IndirectCallProfile {
   uint64_t Count;
   uint64_t Mispreds;
 
-  IndirectCallProfile(MCSymbol *Symbol, uint64_t Count,
-                      uint64_t Mispreds, uint32_t Offset = 0)
-    : Symbol(Symbol), Offset(Offset), Count(Count), Mispreds(Mispreds) {}
+  IndirectCallProfile(MCSymbol *Symbol, uint64_t Count, uint64_t Mispreds,
+                      uint32_t Offset = 0)
+      : Symbol(Symbol), Offset(Offset), Count(Count), Mispreds(Mispreds) {}
 
   bool operator==(const IndirectCallProfile &Other) const {
-    return Symbol == Other.Symbol &&
-           Offset == Other.Offset;
+    return Symbol == Other.Symbol && Offset == Other.Offset;
   }
 };
 
@@ -111,20 +106,20 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 class BinaryFunction {
 public:
   enum class State : char {
-    Empty = 0,        /// Function body is empty.
-    Disassembled,     /// Function have been disassembled.
-    CFG,              /// Control flow graph has been built.
-    CFG_Finalized,    /// CFG is finalized. No optimizations allowed.
-    EmittedCFG,       /// Instructions have been emitted to output.
-    Emitted,          /// Same as above plus CFG is destroyed.
+    Empty = 0,     /// Function body is empty.
+    Disassembled,  /// Function have been disassembled.
+    CFG,           /// Control flow graph has been built.
+    CFG_Finalized, /// CFG is finalized. No optimizations allowed.
+    EmittedCFG,    /// Instructions have been emitted to output.
+    Emitted,       /// Same as above plus CFG is destroyed.
   };
 
   /// Types of profile the function can use. Could be a combination.
   enum {
-    PF_NONE = 0,         /// No profile.
-    PF_LBR = 1,          /// Profile is based on last branch records.
-    PF_SAMPLE = 2,       /// Non-LBR sample-based profile.
-    PF_MEMEVENT = 4,     /// Profile has mem events.
+    PF_NONE = 0,     /// No profile.
+    PF_LBR = 1,      /// Profile is based on last branch records.
+    PF_SAMPLE = 2,   /// Non-LBR sample-based profile.
+    PF_MEMEVENT = 4, /// Profile has mem events.
   };
 
   /// Struct for tracking exception handling ranges.
@@ -169,7 +164,7 @@ public:
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =
-    BinaryBasicBlock::COUNT_NO_PROFILE;
+      BinaryBasicBlock::COUNT_NO_PROFILE;
 
   /// We have to use at least 2-byte alignment for functions because of C++ ABI.
   static constexpr unsigned MinAlign = 2;
@@ -412,8 +407,8 @@ private:
   BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
 
   const BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset) const {
-    return const_cast<BinaryFunction *>(this)
-      ->getBasicBlockContainingOffset(Offset);
+    return const_cast<BinaryFunction *>(this)->getBasicBlockContainingOffset(
+        Offset);
   }
 
   /// Return basic block that started at offset \p Offset.
@@ -423,7 +418,7 @@ private:
   }
 
   /// Release memory taken by the list.
-  template<typename T> BinaryFunction &clearList(T& List) {
+  template <typename T> BinaryFunction &clearList(T &List) {
     T TempList;
     TempList.swap(List);
     return *this;
@@ -453,8 +448,8 @@ private:
   DenseMap<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
 
   using BranchListType = SmallVector<std::pair<uint32_t, uint32_t>, 0>;
-  BranchListType TakenBranches;       /// All local taken branches.
-  BranchListType IgnoredBranches;     /// Branches ignored by CFG purposes.
+  BranchListType TakenBranches;   /// All local taken branches.
+  BranchListType IgnoredBranches; /// Branches ignored by CFG purposes.
 
   /// Map offset in the function to a label.
   /// Labels are used for building CFG for simple functions. For non-simple
@@ -494,7 +489,7 @@ private:
   /// A map of restore state CFI instructions to their equivalent CFI
   /// instructions that produce the same state, in order to eliminate
   /// remember-restore CFI instructions when rewriting CFI.
-  DenseMap<int32_t , SmallVector<int32_t, 4>> FrameRestoreEquivalents;
+  DenseMap<int32_t, SmallVector<int32_t, 4>> FrameRestoreEquivalents;
 
   // For tracking exception handling ranges.
   CallSitesType CallSites;
@@ -573,7 +568,7 @@ private:
   mutable MCSymbol *FunctionColdEndLabel{nullptr};
 
   /// Unique number associated with the function.
-  uint64_t  FunctionNumber;
+  uint64_t FunctionNumber;
 
   /// Count the number of functions created.
   static uint64_t Count;
@@ -654,8 +649,7 @@ private:
 
   /// Analyze and process indirect branch \p Instruction before it is
   /// added to Instructions list.
-  IndirectBranchType processIndirectBranch(MCInst &Instruction,
-                                           unsigned Size,
+  IndirectBranchType processIndirectBranch(MCInst &Instruction, unsigned Size,
                                            uint64_t Offset,
                                            uint64_t &TargetAddress);
 
@@ -802,15 +796,13 @@ public:
   }
 
   inline iterator_range<reverse_order_iterator> rlayout() {
-    return
-      iterator_range<reverse_order_iterator>(BasicBlocksLayout.rbegin(),
-                                             BasicBlocksLayout.rend());
+    return iterator_range<reverse_order_iterator>(BasicBlocksLayout.rbegin(),
+                                                  BasicBlocksLayout.rend());
   }
 
   inline iterator_range<const_reverse_order_iterator> rlayout() const {
-    return
-      iterator_range<const_reverse_order_iterator>(BasicBlocksLayout.rbegin(),
-                                                   BasicBlocksLayout.rend());
+    return iterator_range<const_reverse_order_iterator>(
+        BasicBlocksLayout.rbegin(), BasicBlocksLayout.rend());
   }
 
   cfi_iterator        cie_begin()       { return CIEFrameInstructions.begin(); }
@@ -870,13 +862,9 @@ public:
   void calculateMacroOpFusionStats();
 
   /// Returns if loop detection has been run for this function.
-  bool hasLoopInfo() const {
-    return BLI != nullptr;
-  }
+  bool hasLoopInfo() const { return BLI != nullptr; }
 
-  const BinaryLoopInfo &getLoopInfo() {
-    return *BLI.get();
-  }
+  const BinaryLoopInfo &getLoopInfo() { return *BLI.get(); }
 
   bool isLoopFree() {
     if (!hasLoopInfo()) {
@@ -892,7 +880,7 @@ public:
   void viewGraph() const;
 
   /// Dump CFG in graphviz format
-  void dumpGraph(raw_ostream& OS) const;
+  void dumpGraph(raw_ostream &OS) const;
 
   /// Dump CFG in graphviz format to file.
   void dumpGraphToFile(std::string Filename) const;
@@ -903,14 +891,10 @@ public:
   void dumpGraphForPass(std::string Annotation = "") const;
 
   /// Return BinaryContext for the function.
-  const BinaryContext &getBinaryContext() const {
-    return BC;
-  }
+  const BinaryContext &getBinaryContext() const { return BC; }
 
   /// Return BinaryContext for the function.
-  BinaryContext &getBinaryContext() {
-    return BC;
-  }
+  BinaryContext &getBinaryContext() { return BC; }
 
   /// Attempt to validate CFG invariants.
   bool validateCFG() const;
@@ -929,8 +913,8 @@ public:
   /// nullptr the last basic block is given.
   const BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB,
                                              bool IgnoreSplits = true) const {
-    return
-      const_cast<BinaryFunction *>(this)->getBasicBlockAfter(BB, IgnoreSplits);
+    return const_cast<BinaryFunction *>(this)->getBasicBlockAfter(BB,
+                                                                  IgnoreSplits);
   }
 
   BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB,
@@ -938,8 +922,8 @@ public:
     for (auto I = layout_begin(), E = layout_end(); I != E; ++I) {
       auto Next = std::next(I);
       if (*I == BB && Next != E) {
-        return (IgnoreSplits || (*I)->isCold() == (*Next)->isCold())
-          ? *Next : nullptr;
+        return (IgnoreSplits || (*I)->isCold() == (*Next)->isCold()) ? *Next
+                                                                     : nullptr;
       }
     }
     return nullptr;
@@ -953,7 +937,7 @@ public:
     const Optional<MCPlus::MCLandingPad> LP = BC.MIB->getEHInfo(InvokeInst);
     if (LP && LP->first) {
       BinaryBasicBlock *LBB = BB.getLandingPad(LP->first);
-      assert (LBB && "Landing pad should be defined");
+      assert(LBB && "Landing pad should be defined");
       return LBB;
     }
     return nullptr;
@@ -981,8 +965,8 @@ public:
   }
 
   const JumpTable *getJumpTableContainingAddress(uint64_t Address) const {
-    return const_cast<BinaryFunction *>(this)->
-      getJumpTableContainingAddress(Address);
+    return const_cast<BinaryFunction *>(this)->getJumpTableContainingAddress(
+        Address);
   }
 
   /// Return the name of the function if the function has just one name.
@@ -999,8 +983,8 @@ public:
   std::string getPrintName() const {
     const size_t NumNames = Symbols.size() + Aliases.size();
     return NumNames == 1
-        ? getOneName().str()
-        : (getOneName().str() + "(*" + std::to_string(NumNames) + ")");
+               ? getOneName().str()
+               : (getOneName().str() + "(*" + std::to_string(NumNames) + ")");
   }
 
   /// The function may have many names. For that reason, we avoid having
@@ -1008,9 +992,7 @@ public:
   /// interface, such as forEachName(), hasName(), hasNameRegex(), etc.
   /// In some cases though, we need just a name uniquely identifying
   /// the function, and that's what this method is for.
-  StringRef getOneName() const {
-    return Symbols[0]->getName();
-  }
+  StringRef getOneName() const { return Symbols[0]->getName(); }
 
   /// Return the name of the function as getPrintName(), but also trying
   /// to demangle it.
@@ -1035,9 +1017,8 @@ public:
   /// Check if (possibly one out of many) function name matches the given
   /// string. Use this member function instead of direct name comparison.
   bool hasName(const std::string &FunctionName) const {
-    auto Res = forEachName([&](StringRef Name) {
-      return Name == FunctionName;
-    });
+    auto Res =
+        forEachName([&](StringRef Name) { return Name == FunctionName; });
     return Res.hasValue();
   }
 
@@ -1051,9 +1032,9 @@ public:
   /// Return a vector of all possible names for the function.
   const std::vector<StringRef> getNames() const {
     std::vector<StringRef> AllNames;
-    forEachName([&AllNames] (StringRef Name) {
-        AllNames.push_back(Name);
-        return false;
+    forEachName([&AllNames](StringRef Name) {
+      AllNames.push_back(Name);
+      return false;
     });
 
     return AllNames;
@@ -1061,65 +1042,44 @@ public:
 
   /// Return a state the function is in (see BinaryFunction::State definition
   /// for description).
-  State getState() const {
-    return CurrentState;
-  }
+  State getState() const { return CurrentState; }
 
   /// Return true if function has a control flow graph available.
   bool hasCFG() const {
-    return getState() == State::CFG ||
-           getState() == State::CFG_Finalized ||
+    return getState() == State::CFG || getState() == State::CFG_Finalized ||
            getState() == State::EmittedCFG;
   }
 
   /// Return true if the function state implies that it includes instructions.
   bool hasInstructions() const {
-    return getState() == State::Disassembled ||
-           hasCFG();
+    return getState() == State::Disassembled || hasCFG();
   }
 
   bool isEmitted() const {
-    return getState() == State::EmittedCFG ||
-           getState() == State::Emitted;
+    return getState() == State::EmittedCFG || getState() == State::Emitted;
   }
 
   /// Return the section in the input binary this function originated from or
   /// nullptr if the function did not originate from the file.
-  BinarySection *getOriginSection() const {
-    return OriginSection;
-  }
+  BinarySection *getOriginSection() const { return OriginSection; }
 
-  void setOriginSection(BinarySection *Section) {
-    OriginSection = Section;
-  }
+  void setOriginSection(BinarySection *Section) { OriginSection = Section; }
 
   /// Return true if the function did not originate from the primary input file.
-  bool isInjected() const {
-    return IsInjected;
-  }
+  bool isInjected() const { return IsInjected; }
 
   /// Return original address of the function (or offset from base for PIC).
-  uint64_t getAddress() const {
-    return Address;
-  }
+  uint64_t getAddress() const { return Address; }
 
-  uint64_t getOutputAddress() const {
-    return OutputAddress;
-  }
+  uint64_t getOutputAddress() const { return OutputAddress; }
 
-  uint64_t getOutputSize() const {
-    return OutputSize;
-  }
+  uint64_t getOutputSize() const { return OutputSize; }
 
   /// Does this function have a valid streaming order index?
-  bool hasValidIndex() const {
-    return Index != -1U;
-  }
+  bool hasValidIndex() const { return Index != -1U; }
 
   /// Get the streaming order index for this function.
-  uint32_t getIndex() const {
-    return Index;
-  }
+  uint32_t getIndex() const { return Index; }
 
   /// Set the streaming order index for this function.
   void setIndex(uint32_t Idx) {
@@ -1133,19 +1093,13 @@ public:
   }
 
   /// Return offset of the function body in the binary file.
-  uint64_t getFileOffset() const {
-    return FileOffset;
-  }
+  uint64_t getFileOffset() const { return FileOffset; }
 
   /// Return (original) byte size of the function.
-  uint64_t getSize() const {
-    return Size;
-  }
+  uint64_t getSize() const { return Size; }
 
   /// Return the maximum size the body of the function could have.
-  uint64_t getMaxSize() const {
-    return MaxSize;
-  }
+  uint64_t getMaxSize() const { return MaxSize; }
 
   /// Return the number of emitted instructions for this function.
   uint32_t getNumNonPseudos() const {
@@ -1158,15 +1112,11 @@ public:
 
   /// Return MC symbol associated with the function.
   /// All references to the function should use this symbol.
-  MCSymbol *getSymbol() {
-    return Symbols[0];
-  }
+  MCSymbol *getSymbol() { return Symbols[0]; }
 
   /// Return MC symbol associated with the function (const version).
   /// All references to the function should use this symbol.
-  const MCSymbol *getSymbol() const {
-    return Symbols[0];
-  }
+  const MCSymbol *getSymbol() const { return Symbols[0]; }
 
   /// Return a list of symbols associated with the main entry of the function.
   SymbolListTy &getSymbols() { return Symbols; }
@@ -1197,7 +1147,6 @@ public:
     return getSecondaryEntryPointSymbol(BB);
   }
 
-
   /// Return MC symbol corresponding to an enumerated entry for multiple-entry
   /// functions.
   MCSymbol *getSymbolForEntryID(uint64_t EntryNum);
@@ -1205,7 +1154,7 @@ public:
     return const_cast<BinaryFunction *>(this)->getSymbolForEntryID(EntryNum);
   }
 
-  using EntryPointCallbackTy = function_ref<bool(uint64_t, const MCSymbol*)>;
+  using EntryPointCallbackTy = function_ref<bool(uint64_t, const MCSymbol *)>;
 
   /// Invoke \p Callback function for every entry point in the function starting
   /// with the main entry and using entries in the ascending address order.
@@ -1270,15 +1219,11 @@ public:
   }
 
   /// Return true if this is a function representing a PLT entry.
-  bool isPLTFunction() const {
-    return PLTSymbol != nullptr;
-  }
+  bool isPLTFunction() const { return PLTSymbol != nullptr; }
 
   /// Return PLT function reference symbol for PLT functions and nullptr for
   /// non-PLT functions.
-  const MCSymbol *getPLTSymbol() const {
-    return PLTSymbol;
-  }
+  const MCSymbol *getPLTSymbol() const { return PLTSymbol; }
 
   /// Set function PLT reference symbol for PLT functions.
   void setPLTSymbol(const MCSymbol *Symbol) {
@@ -1392,9 +1337,7 @@ public:
   }
 
   /// Return internal section name for this function.
-  StringRef getCodeSectionName() const {
-    return StringRef(CodeSectionName);
-  }
+  StringRef getCodeSectionName() const { return StringRef(CodeSectionName); }
 
   /// Assign a code section name to the function.
   void setCodeSectionName(StringRef Name) {
@@ -1422,98 +1365,65 @@ public:
   }
 
   /// Return true iif the function will halt execution on entry.
-  bool trapsOnEntry() const {
-    return TrapsOnEntry;
-  }
+  bool trapsOnEntry() const { return TrapsOnEntry; }
 
   /// Make the function always trap on entry. Other than the trap instruction,
   /// the function body will be empty.
   void setTrapOnEntry();
 
   /// Return true if the function could be correctly processed.
-  bool isSimple() const {
-    return IsSimple;
-  }
+  bool isSimple() const { return IsSimple; }
 
   /// Return true if the function should be ignored for optimization purposes.
-  bool isIgnored() const {
-    return IsIgnored;
-  }
+  bool isIgnored() const { return IsIgnored; }
 
   /// Return true if the function should not be disassembled, emitted, or
   /// otherwise processed.
-  bool isPseudo() const {
-    return IsPseudo;
-  }
+  bool isPseudo() const { return IsPseudo; }
 
   /// Return true if the function contains a jump table with entries pointing
   /// to split fragments.
-  bool hasSplitJumpTable() const {
-    return HasSplitJumpTable;
-  }
+  bool hasSplitJumpTable() const { return HasSplitJumpTable; }
 
   /// Return true if all CFG edges have local successors.
-  bool hasCanonicalCFG() const {
-    return HasCanonicalCFG;
-  }
+  bool hasCanonicalCFG() const { return HasCanonicalCFG; }
 
   /// Return true if the original function code has all necessary relocations
   /// to track addresses of functions emitted to new locations.
-  bool hasExternalRefRelocations() const {
-    return HasExternalRefRelocations;
-  }
+  bool hasExternalRefRelocations() const { return HasExternalRefRelocations; }
 
   /// Return true if the function has instruction(s) with unknown control flow.
-  bool hasUnknownControlFlow() const {
-    return HasUnknownControlFlow;
-  }
+  bool hasUnknownControlFlow() const { return HasUnknownControlFlow; }
 
   /// Return true if the function body is non-contiguous.
   bool isSplit() const {
-    return isSimple() &&
-           layout_size() &&
+    return isSimple() && layout_size() &&
            layout_front()->isCold() != layout_back()->isCold();
   }
 
   /// Return true if the function has exception handling tables.
-  bool hasEHRanges() const {
-    return HasEHRanges;
-  }
+  bool hasEHRanges() const { return HasEHRanges; }
 
   /// Return true if the function uses DW_CFA_GNU_args_size CFIs.
-  bool usesGnuArgsSize() const {
-    return UsesGnuArgsSize;
-  }
+  bool usesGnuArgsSize() const { return UsesGnuArgsSize; }
 
   /// Return true if the function has more than one entry point.
-  bool isMultiEntry() const {
-    return !SecondaryEntryPoints.empty();
-  }
+  bool isMultiEntry() const { return !SecondaryEntryPoints.empty(); }
 
   /// Return true if the function might have a profile available externally,
   /// but not yet populated into the function.
-  bool hasProfileAvailable() const {
-    return HasProfileAvailable;
-  }
+  bool hasProfileAvailable() const { return HasProfileAvailable; }
 
-  bool hasMemoryProfile() const {
-    return HasMemoryProfile;
-  }
+  bool hasMemoryProfile() const { return HasMemoryProfile; }
 
   /// Return true if the body of the function was merged into another function.
-  bool isFolded() const {
-    return FoldedIntoFunction != nullptr;
-  }
+  bool isFolded() const { return FoldedIntoFunction != nullptr; }
 
   /// If this function was folded, return the function it was folded into.
-  BinaryFunction *getFoldedIntoFunction() const {
-    return FoldedIntoFunction;
-  }
+  BinaryFunction *getFoldedIntoFunction() const { return FoldedIntoFunction; }
 
   /// Return true if the function uses jump tables.
-  bool hasJumpTables() const {
-    return !JumpTables.empty();
-  }
+  bool hasJumpTables() const { return !JumpTables.empty(); }
 
   /// Return true if the function has SDT marker
   bool hasSDTMarker() const { return HasSDTMarker; }
@@ -1522,9 +1432,7 @@ public:
   bool hasPseudoProbe() const { return HasPseudoProbe; }
 
   /// Return true if the original entry point was patched.
-  bool isPatched() const {
-    return IsPatched;
-  }
+  bool isPatched() const { return IsPatched; }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
     const uint64_t Address = BC.MIB->getJumpTable(Inst);
@@ -1536,21 +1444,15 @@ public:
     return getJumpTableContainingAddress(Address);
   }
 
-  const MCSymbol *getPersonalityFunction() const {
-    return PersonalityFunction;
-  }
+  const MCSymbol *getPersonalityFunction() const { return PersonalityFunction; }
 
-  uint8_t getPersonalityEncoding() const {
-    return PersonalityEncoding;
-  }
+  uint8_t getPersonalityEncoding() const { return PersonalityEncoding; }
 
   const CallSitesType &getCallSites() const { return CallSites; }
 
   const CallSitesType &getColdCallSites() const { return ColdCallSites; }
 
-  const ArrayRef<uint8_t> getLSDAActionTable() const {
-    return LSDAActionTable;
-  }
+  const ArrayRef<uint8_t> getLSDAActionTable() const { return LSDAActionTable; }
 
   const LSDATypeTableTy &getLSDATypeTable() const { return LSDATypeTable; }
 
@@ -1562,9 +1464,7 @@ public:
     return LSDATypeIndexTable;
   }
 
-  const LabelsMapType &getLabels() const {
-    return Labels;
-  }
+  const LabelsMapType &getLabels() const { return Labels; }
 
   IslandInfo &getIslandInfo() {
     assert(Islands && "function expected to have constant islands");
@@ -1582,9 +1482,7 @@ public:
   }
 
   /// Return unique number associated with the function.
-  uint64_t getFunctionNumber() const {
-    return FunctionNumber;
-  }
+  uint64_t getFunctionNumber() const { return FunctionNumber; }
 
   /// Return true if the given address \p PC is inside the function body.
   bool containsAddress(uint64_t PC, bool UseMaxSize = false) const {
@@ -1600,8 +1498,7 @@ public:
   /// The new block is not inserted into the CFG.  The client must
   /// use insertBasicBlocks to add any new blocks to the CFG.
   std::unique_ptr<BinaryBasicBlock>
-  createBasicBlock(uint64_t Offset,
-                   MCSymbol *Label = nullptr,
+  createBasicBlock(uint64_t Offset, MCSymbol *Label = nullptr,
                    bool DeriveAlignment = false) {
     assert(BC.Ctx && "cannot be called with empty context");
     if (!Label) {
@@ -1609,7 +1506,7 @@ public:
       Label = BC.Ctx->createNamedTempSymbol("BB");
     }
     auto BB = std::unique_ptr<BinaryBasicBlock>(
-      new BinaryBasicBlock(this, Label, Offset));
+        new BinaryBasicBlock(this, Label, Offset));
 
     if (DeriveAlignment) {
       uint64_t DerivedAlignment = Offset & (1 + ~Offset);
@@ -1651,8 +1548,7 @@ public:
     }
 
     assert(CurrentState == State::CFG ||
-           (std::is_sorted(BasicBlockOffsets.begin(),
-                           BasicBlockOffsets.end(),
+           (std::is_sorted(BasicBlockOffsets.begin(), BasicBlockOffsets.end(),
                            CompareBasicBlockOffsets()) &&
             std::is_sorted(begin(), end())));
 
@@ -1684,24 +1580,22 @@ public:
   /// BB offsets and BB indices. The new BBs are inserted after Start.
   /// This operation could affect fallthrough branches for Start.
   ///
-  void insertBasicBlocks(
-    BinaryBasicBlock *Start,
-    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
-    const bool UpdateLayout = true,
-    const bool UpdateCFIState = true,
-    const bool RecomputeLandingPads = true);
+  void
+  insertBasicBlocks(BinaryBasicBlock *Start,
+                    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
+                    const bool UpdateLayout = true,
+                    const bool UpdateCFIState = true,
+                    const bool RecomputeLandingPads = true);
 
   iterator insertBasicBlocks(
-    iterator StartBB,
-    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
-    const bool UpdateLayout = true,
-    const bool UpdateCFIState = true,
-    const bool RecomputeLandingPads = true);
+      iterator StartBB, std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
+      const bool UpdateLayout = true, const bool UpdateCFIState = true,
+      const bool RecomputeLandingPads = true);
 
   /// Update the basic block layout for this function.  The BBs from
   /// [Start->Index, Start->Index + NumNewBlocks) are inserted into the
   /// layout after the BB indicated by Start.
-  void updateLayout(BinaryBasicBlock* Start, const unsigned NumNewBlocks);
+  void updateLayout(BinaryBasicBlock *Start, const unsigned NumNewBlocks);
 
   /// Make sure basic blocks' indices match the current layout.
   void updateLayoutIndices() const {
@@ -1732,8 +1626,7 @@ public:
   /// Change \p OrigDest to \p NewDest in the jump table used at the end of
   /// \p BB. Returns false if \p OrigDest couldn't be find as a valid target
   /// and no replacement took place.
-  bool replaceJumpTableEntryIn(BinaryBasicBlock *BB,
-                               BinaryBasicBlock *OldDest,
+  bool replaceJumpTableEntryIn(BinaryBasicBlock *BB, BinaryBasicBlock *OldDest,
                                BinaryBasicBlock *NewDest);
 
   /// Split the CFG edge <From, To> by inserting an intermediate basic block.
@@ -1778,14 +1671,11 @@ public:
 
   /// Return true if function has a profile, even if the profile does not
   /// match CFG 100%.
-  bool hasProfile() const {
-    return ExecutionCount != COUNT_NO_PROFILE;
-  }
+  bool hasProfile() const { return ExecutionCount != COUNT_NO_PROFILE; }
 
   /// Return true if function profile is present and accurate.
   bool hasValidProfile() const {
-    return ExecutionCount != COUNT_NO_PROFILE &&
-           ProfileMatchRatio == 1.0f;
+    return ExecutionCount != COUNT_NO_PROFILE && ProfileMatchRatio == 1.0f;
   }
 
   /// Mark this function as having a valid profile.
@@ -1797,9 +1687,7 @@ public:
   }
 
   /// Return flags describing a profile for this function.
-  uint16_t getProfileFlags() const {
-    return ProfileFlags;
-  }
+  uint16_t getProfileFlags() const { return ProfileFlags; }
 
   void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
     assert(!Instructions.empty());
@@ -1904,9 +1792,7 @@ public:
     return *this;
   }
 
-  void setPseudo(bool Pseudo) {
-    IsPseudo = Pseudo;
-  }
+  void setPseudo(bool Pseudo) { IsPseudo = Pseudo; }
 
   BinaryFunction &setUsesGnuArgsSize(bool Uses = true) {
     UsesGnuArgsSize = Uses;
@@ -1921,21 +1807,13 @@ public:
   /// Mark function that should not be emitted.
   void setIgnored();
 
-  void setIsPatched(bool V) {
-    IsPatched = V;
-  }
+  void setIsPatched(bool V) { IsPatched = V; }
 
-  void setHasSplitJumpTable(bool V) {
-    HasSplitJumpTable = V;
-  }
+  void setHasSplitJumpTable(bool V) { HasSplitJumpTable = V; }
 
-  void setHasCanonicalCFG(bool V) {
-    HasCanonicalCFG = V;
-  }
+  void setHasCanonicalCFG(bool V) { HasCanonicalCFG = V; }
 
-  void setFolded(BinaryFunction *BF) {
-    FoldedIntoFunction = BF;
-  }
+  void setFolded(BinaryFunction *BF) { FoldedIntoFunction = BF; }
 
   BinaryFunction &setPersonalityFunction(uint64_t Addr) {
     assert(!PersonalityFunction && "can't set personality function twice");
@@ -1953,27 +1831,21 @@ public:
     return *this;
   }
 
-  uint16_t getAlignment() const {
-    return Alignment;
-  }
+  uint16_t getAlignment() const { return Alignment; }
 
   BinaryFunction &setMaxAlignmentBytes(uint16_t MaxAlignBytes) {
     MaxAlignmentBytes = MaxAlignBytes;
     return *this;
   }
 
-  uint16_t getMaxAlignmentBytes() const {
-    return MaxAlignmentBytes;
-  }
+  uint16_t getMaxAlignmentBytes() const { return MaxAlignmentBytes; }
 
   BinaryFunction &setMaxColdAlignmentBytes(uint16_t MaxAlignBytes) {
     MaxColdAlignmentBytes = MaxAlignBytes;
     return *this;
   }
 
-  uint16_t getMaxColdAlignmentBytes() const {
-    return MaxColdAlignmentBytes;
-  }
+  uint16_t getMaxColdAlignmentBytes() const { return MaxColdAlignmentBytes; }
 
   BinaryFunction &setImageAddress(uint64_t Address) {
     ImageAddress = Address;
@@ -1981,9 +1853,7 @@ public:
   }
 
   /// Return the address of this function' image in memory.
-  uint64_t getImageAddress() const {
-    return ImageAddress;
-  }
+  uint64_t getImageAddress() const { return ImageAddress; }
 
   BinaryFunction &setImageSize(uint64_t Size) {
     ImageSize = Size;
@@ -1991,14 +1861,10 @@ public:
   }
 
   /// Return the size of this function' image in memory.
-  uint64_t getImageSize() const {
-    return ImageSize;
-  }
+  uint64_t getImageSize() const { return ImageSize; }
 
   /// Return true if the function is a secondary fragment of another function.
-  bool isFragment() const {
-    return IsFragment;
-  }
+  bool isFragment() const { return IsFragment; }
 
   /// Returns if the given function is a parent fragment of this function.
   bool isParentFragment(BinaryFunction *Parent) const {
@@ -2034,9 +1900,7 @@ public:
   /// the function was executed.
   ///
   /// Return COUNT_NO_PROFILE if there's no profile info.
-  uint64_t getExecutionCount() const {
-    return ExecutionCount;
-  }
+  uint64_t getExecutionCount() const { return ExecutionCount; }
 
   /// Return the raw profile information about the number of branch
   /// executions corresponding to this function.
@@ -2049,9 +1913,7 @@ public:
   }
 
   /// Return original LSDA address for the function or NULL.
-  uint64_t getLSDAAddress() const {
-    return LSDAAddress;
-  }
+  uint64_t getLSDAAddress() const { return LSDAAddress; }
 
   /// Return symbol pointing to function's LSDA.
   MCSymbol *getLSDASymbol() {
@@ -2060,9 +1922,8 @@ public:
     if (CallSites.empty())
       return nullptr;
 
-    LSDASymbol =
-      BC.Ctx->getOrCreateSymbol(Twine("GCC_except_table") +
-                                Twine::utohexstr(getFunctionNumber()));
+    LSDASymbol = BC.Ctx->getOrCreateSymbol(
+        Twine("GCC_except_table") + Twine::utohexstr(getFunctionNumber()));
 
     return LSDASymbol;
   }
@@ -2074,9 +1935,8 @@ public:
     if (ColdCallSites.empty())
       return nullptr;
 
-    ColdLSDASymbol =
-      BC.Ctx->getOrCreateSymbol(Twine("GCC_cold_except_table") +
-                                Twine::utohexstr(getFunctionNumber()));
+    ColdLSDASymbol = BC.Ctx->getOrCreateSymbol(
+        Twine("GCC_cold_except_table") + Twine::utohexstr(getFunctionNumber()));
 
     return ColdLSDASymbol;
   }
@@ -2086,21 +1946,15 @@ public:
   bool isDataMarker(const SymbolRef &Symbol, uint64_t SymbolSize) const;
   bool isCodeMarker(const SymbolRef &Symbol, uint64_t SymbolSize) const;
 
-  void setOutputDataAddress(uint64_t Address) {
-    OutputDataOffset = Address;
-  }
+  void setOutputDataAddress(uint64_t Address) { OutputDataOffset = Address; }
 
-  uint64_t getOutputDataAddress() const {
-    return OutputDataOffset;
-  }
+  uint64_t getOutputDataAddress() const { return OutputDataOffset; }
 
   void setOutputColdDataAddress(uint64_t Address) {
     OutputColdDataOffset = Address;
   }
 
-  uint64_t getOutputColdDataAddress() const {
-    return OutputColdDataOffset;
-  }
+  uint64_t getOutputColdDataAddress() const { return OutputColdDataOffset; }
 
   /// If \p Address represents an access to a constant island managed by this
   /// function, return a symbol so code can safely refer to it. Otherwise,
@@ -2135,17 +1989,16 @@ public:
   /// island symbols of this function. We create a proxy for it, so we emit
   /// separate symbols when emitting our constant island on behalf of this other
   /// function.
-  MCSymbol *
-  getOrCreateProxyIslandAccess(uint64_t Address, BinaryFunction &Referrer) {
+  MCSymbol *getOrCreateProxyIslandAccess(uint64_t Address,
+                                         BinaryFunction &Referrer) {
     MCSymbol *Symbol = getOrCreateIslandAccess(Address);
     if (!Symbol)
       return nullptr;
 
     MCSymbol *Proxy;
     if (!Islands->Proxies[&Referrer].count(Symbol)) {
-      Proxy =
-          BC.Ctx->getOrCreateSymbol(Symbol->getName() +
-                                    ".proxy.for." + Referrer.getPrintName());
+      Proxy = BC.Ctx->getOrCreateSymbol(Symbol->getName() + ".proxy.for." +
+                                        Referrer.getPrintName());
       Islands->Proxies[&Referrer][Symbol] = Proxy;
       Islands->Proxies[&Referrer][Proxy] = Symbol;
     }
@@ -2224,9 +2077,7 @@ public:
     return Size;
   }
 
-  bool hasIslandsInfo() const {
-    return !!Islands;
-  }
+  bool hasIslandsInfo() const { return !!Islands; }
 
   bool hasConstantIsland() const {
     return Islands && !Islands->DataOffsets.empty();
@@ -2301,9 +2152,7 @@ public:
   bool postProcessIndirectBranches(MCPlusBuilder::AllocatorIdTy AllocId);
 
   /// Return all call site profile info for this function.
-  IndirectCallSiteProfile &getAllCallSites() {
-    return AllCallSites;
-  }
+  IndirectCallSiteProfile &getAllCallSites() { return AllCallSites; }
 
   const IndirectCallSiteProfile &getAllCallSites() const {
     return AllCallSites;
@@ -2343,9 +2192,7 @@ public:
   /// Get the number of instructions within this function.
   uint64_t getInstructionCount() const;
 
-  const CFIInstrMapType &getFDEProgram() const {
-    return FrameInstructions;
-  }
+  const CFIInstrMapType &getFDEProgram() const { return FrameInstructions; }
 
   void moveRememberRestorePair(BinaryBasicBlock *BB);
 
@@ -2387,9 +2234,7 @@ public:
   void fixBranches();
 
   /// Mark function as finalized. No further optimizations are permitted.
-  void setFinalized() {
-    CurrentState = State::CFG_Finalized;
-  }
+  void setFinalized() { CurrentState = State::CFG_Finalized; }
 
   void setEmitted(bool KeepCFG = false) {
     CurrentState = State::EmittedCFG;
@@ -2416,12 +2261,10 @@ public:
   void mergeProfileDataInto(BinaryFunction &BF) const;
 
   /// Returns the last computed hash value of the function.
-  size_t getHash() const {
-    return Hash;
-  }
+  size_t getHash() const { return Hash; }
 
   using OperandHashFuncTy =
-    function_ref<typename std::string(const MCOperand&)>;
+      function_ref<typename std::string(const MCOperand &)>;
 
   /// Compute the hash value of the function based on its contents.
   ///
@@ -2431,18 +2274,16 @@ public:
   /// By default, instruction operands are ignored while calculating the hash.
   /// The caller can change this via passing \p OperandHashFunc function.
   /// The return result of this function will be mixed with internal hash.
-  size_t computeHash(bool UseDFS = false,
-                     OperandHashFuncTy OperandHashFunc =
-                       [](const MCOperand&) { return std::string(); }) const;
+  size_t computeHash(
+      bool UseDFS = false,
+      OperandHashFuncTy OperandHashFunc = [](const MCOperand &) {
+        return std::string();
+      }) const;
 
-  void setDWARFUnit(DWARFUnit *Unit) {
-    DwarfUnit = Unit;
-  }
+  void setDWARFUnit(DWARFUnit *Unit) { DwarfUnit = Unit; }
 
   /// Return DWARF compile unit for this function.
-  DWARFUnit *getDWARFUnit() const {
-    return DwarfUnit;
-  }
+  DWARFUnit *getDWARFUnit() const { return DwarfUnit; }
 
   /// Return line info table for this function.
   const DWARFDebugLine::LineTable *getDWARFLineTable() const {
@@ -2514,8 +2355,8 @@ public:
 
   /// Similar to translateInputToOutputRanges() but operates on location lists
   /// and moves associated data to output location lists.
-  DebugLocationsVector translateInputToOutputLocationList(
-      const DebugLocationsVector &InputLL) const;
+  DebugLocationsVector
+  translateInputToOutputLocationList(const DebugLocationsVector &InputLL) const;
 
   /// Return true if the function is an AArch64 linker inserted veneer
   bool isAArch64Veneer() const;
@@ -2529,6 +2370,7 @@ public:
     uint64_t ImageAddress{0};
     uint64_t ImageSize{0};
     uint64_t FileOffset{0};
+
   public:
     uint64_t getAddress() const { return Address; }
     uint64_t getImageAddress() const { return ImageAddress; }
@@ -2555,26 +2397,12 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   return OS;
 }
 
-inline raw_ostream &operator<<(raw_ostream &OS,
-                               const BinaryFunction::State State) {
-  switch (State) {
-  case BinaryFunction::State::Empty:        OS << "empty";  break;
-  case BinaryFunction::State::Disassembled: OS << "disassembled";  break;
-  case BinaryFunction::State::CFG:          OS << "CFG constructed";  break;
-  case BinaryFunction::State::CFG_Finalized:OS << "CFG finalized";  break;
-  case BinaryFunction::State::EmittedCFG:   OS << "emitted with CFG";  break;
-  case BinaryFunction::State::Emitted:      OS << "emitted";  break;
-  }
-
-  return OS;
-}
-
 } // namespace bolt
 
-
 // GraphTraits specializations for function basic block graphs (CFGs)
-template <> struct GraphTraits<bolt::BinaryFunction *> :
-  public GraphTraits<bolt::BinaryBasicBlock *> {
+template <>
+struct GraphTraits<bolt::BinaryFunction *>
+    : public GraphTraits<bolt::BinaryBasicBlock *> {
   static NodeRef getEntryNode(bolt::BinaryFunction *F) {
     return *F->layout_begin();
   }
@@ -2589,13 +2417,12 @@ template <> struct GraphTraits<bolt::BinaryFunction *> :
     llvm_unreachable("Not implemented");
     return nodes_iterator(F->end());
   }
-  static size_t size(bolt::BinaryFunction *F) {
-    return F->size();
-  }
+  static size_t size(bolt::BinaryFunction *F) { return F->size(); }
 };
 
-template <> struct GraphTraits<const bolt::BinaryFunction *> :
-  public GraphTraits<const bolt::BinaryBasicBlock *> {
+template <>
+struct GraphTraits<const bolt::BinaryFunction *>
+    : public GraphTraits<const bolt::BinaryBasicBlock *> {
   static NodeRef getEntryNode(const bolt::BinaryFunction *F) {
     return *F->layout_begin();
   }
@@ -2610,20 +2437,20 @@ template <> struct GraphTraits<const bolt::BinaryFunction *> :
     llvm_unreachable("Not implemented");
     return nodes_iterator(F->end());
   }
-  static size_t size(const bolt::BinaryFunction *F) {
-    return F->size();
-  }
+  static size_t size(const bolt::BinaryFunction *F) { return F->size(); }
 };
 
-template <> struct GraphTraits<Inverse<bolt::BinaryFunction *>> :
-  public GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
+template <>
+struct GraphTraits<Inverse<bolt::BinaryFunction *>>
+    : public GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
   static NodeRef getEntryNode(Inverse<bolt::BinaryFunction *> G) {
     return *G.Graph->layout_begin();
   }
 };
 
-template <> struct GraphTraits<Inverse<const bolt::BinaryFunction *>> :
-  public GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
+template <>
+struct GraphTraits<Inverse<const bolt::BinaryFunction *>>
+    : public GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
   static NodeRef getEntryNode(Inverse<const bolt::BinaryFunction *> G) {
     return *G.Graph->layout_begin();
   }

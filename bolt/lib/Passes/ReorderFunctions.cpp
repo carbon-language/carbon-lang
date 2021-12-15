@@ -119,7 +119,7 @@ using Node = CallGraph::Node;
 
 void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                                std::map<uint64_t, BinaryFunction> &BFs) {
-  std::vector<uint64_t> FuncAddr(Cg.numNodes());  // Just for computing stats
+  std::vector<uint64_t> FuncAddr(Cg.numNodes()); // Just for computing stats
   uint64_t TotalSize = 0;
   uint32_t Index = 0;
 
@@ -163,9 +163,9 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
   }
   for (Cluster &Cluster : Clusters) {
     if (PrintDetailed) {
-      outs() <<
-        format("BOLT-INFO: -------- density = %.3lf (%u / %u) --------\n",
-               Cluster.density(), Cluster.samples(), Cluster.size());
+      outs() << format(
+          "BOLT-INFO: -------- density = %.3lf (%u / %u) --------\n",
+          Cluster.density(), Cluster.samples(), Cluster.size());
     }
 
     for (NodeId FuncId : Cluster.targets()) {
@@ -173,8 +173,8 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
         Hotfuncs++;
 
         if (PrintDetailed) {
-          outs() << "BOLT-INFO: hot func " << *Cg.nodeIdToFunc(FuncId)
-                 << " (" << Cg.size(FuncId) << ")\n";
+          outs() << "BOLT-INFO: hot func " << *Cg.nodeIdToFunc(FuncId) << " ("
+                 << Cg.size(FuncId) << ")\n";
         }
 
         uint64_t Dist = 0;
@@ -184,7 +184,7 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
             continue;
           const Arc &Arc = *Cg.findArc(FuncId, Dst);
           const auto D = std::abs(FuncAddr[Arc.dst()] -
-                                      (FuncAddr[FuncId] + Arc.avgCallOffset()));
+                                  (FuncAddr[FuncId] + Arc.avgCallOffset()));
           const double W = Arc.weight();
           if (D < 64 && PrintDetailed && opts::Verbosity > 2) {
             outs() << "BOLT-INFO: short (" << D << "B) call:\n"
@@ -215,15 +215,13 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
 
         if (PrintDetailed) {
           outs() << format("BOLT-INFO: start = %6u : avgCallDist = %lu : ",
-                           TotalSize,
-                           Calls ? Dist / Calls : 0)
+                           TotalSize, Calls ? Dist / Calls : 0)
                  << Cg.nodeIdToFunc(FuncId)->getPrintName() << '\n';
           const uint64_t NewPage = TotalSize / HugePageSize;
           if (NewPage != CurPage) {
             CurPage = NewPage;
-            outs() <<
-              format("BOLT-INFO: ============== page %u ==============\n",
-                     CurPage);
+            outs() << format(
+                "BOLT-INFO: ============== page %u ==============\n", CurPage);
           }
         }
       }
@@ -235,8 +233,8 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                    Hotfuncs, Clusters.size())
          << format("BOLT-INFO:  Final average call distance = %.1lf "
                    "(%.0lf / %.0lf)\n",
-                   TotalCalls ? TotalDistance / TotalCalls : 0,
-                   TotalDistance, TotalCalls)
+                   TotalCalls ? TotalDistance / TotalCalls : 0, TotalDistance,
+                   TotalCalls)
          << format("BOLT-INFO:  Total Calls = %.0lf\n", TotalCalls);
   if (TotalCalls) {
     outs() << format("BOLT-INFO:  Total Calls within 64B = %.0lf (%.2lf%%)\n",
@@ -291,7 +289,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
 
   std::vector<Cluster> Clusters;
 
-  switch(opts::ReorderFunctions) {
+  switch (opts::ReorderFunctions) {
   case RT_NONE:
     break;
   case RT_EXEC_COUNT:
@@ -395,9 +393,8 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
 
   std::unique_ptr<std::ofstream> FuncsFile;
   if (!opts::GenerateFunctionOrderFile.empty()) {
-    FuncsFile =
-      std::make_unique<std::ofstream>(opts::GenerateFunctionOrderFile,
-                                       std::ios::out);
+    FuncsFile = std::make_unique<std::ofstream>(opts::GenerateFunctionOrderFile,
+                                                std::ios::out);
     if (!FuncsFile) {
       errs() << "BOLT-ERROR: ordered functions file "
              << opts::GenerateFunctionOrderFile << " cannot be opened\n";
@@ -408,20 +405,17 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
   std::unique_ptr<std::ofstream> LinkSectionsFile;
   if (!opts::LinkSectionsFile.empty()) {
     LinkSectionsFile =
-      std::make_unique<std::ofstream>(opts::LinkSectionsFile,
-                                       std::ios::out);
+        std::make_unique<std::ofstream>(opts::LinkSectionsFile, std::ios::out);
     if (!LinkSectionsFile) {
-      errs() << "BOLT-ERROR: link sections file "
-             << opts::LinkSectionsFile << " cannot be opened\n";
+      errs() << "BOLT-ERROR: link sections file " << opts::LinkSectionsFile
+             << " cannot be opened\n";
       exit(1);
     }
   }
 
   if (FuncsFile || LinkSectionsFile) {
     std::vector<BinaryFunction *> SortedFunctions(BFs.size());
-    std::transform(BFs.begin(),
-                   BFs.end(),
-                   SortedFunctions.begin(),
+    std::transform(BFs.begin(), BFs.end(), SortedFunctions.begin(),
                    [](std::pair<const uint64_t, BinaryFunction> &BFI) {
                      return &BFI.second;
                    });

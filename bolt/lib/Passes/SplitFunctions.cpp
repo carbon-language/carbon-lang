@@ -194,9 +194,9 @@ void SplitFunctions::splitFunction(BinaryFunction &BF) {
     // Even if they were natural to cluster formation and were seen in-between
     // hot basic blocks.
     std::stable_sort(BF.layout_begin(), BF.layout_end(),
-        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
-          return A->canOutline() < B->canOutline();
-        });
+                     [&](BinaryBasicBlock *A, BinaryBasicBlock *B) {
+                       return A->canOutline() < B->canOutline();
+                     });
   } else if (BF.hasEHRanges() && !opts::SplitEH) {
     // Typically functions with exception handling have landing pads at the end.
     // We cannot move beginning of landing pads, but we can move 0-count blocks
@@ -206,14 +206,13 @@ void SplitFunctions::splitFunction(BinaryFunction &BF) {
       ++FirstLP;
 
     std::stable_sort(FirstLP, BF.layout_end(),
-        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
-          return A->canOutline() < B->canOutline();
-        });
+                     [&](BinaryBasicBlock *A, BinaryBasicBlock *B) {
+                       return A->canOutline() < B->canOutline();
+                     });
   }
 
   // Separate hot from cold starting from the bottom.
-  for (auto I = BF.layout_rbegin(), E = BF.layout_rend();
-       I != E; ++I) {
+  for (auto I = BF.layout_rbegin(), E = BF.layout_rend(); I != E; ++I) {
     BinaryBasicBlock *BB = *I;
     if (!BB->canOutline())
       break;

@@ -40,9 +40,8 @@ class ProfileReaderBase;
 /// events.
 class RewriteInstance {
 public:
-  RewriteInstance(llvm::object::ELFObjectFileBase *File,
-                  const int Argc, const char *const *Argv,
-                  StringRef ToolPath);
+  RewriteInstance(llvm::object::ELFObjectFileBase *File, const int Argc,
+                  const char *const *Argv, StringRef ToolPath);
   ~RewriteInstance();
 
   /// Assign profile from \p Filename to this instance.
@@ -56,14 +55,10 @@ public:
   void compare(RewriteInstance &RI2);
 
   /// Return binary context.
-  const BinaryContext &getBinaryContext() const {
-    return *BC;
-  }
+  const BinaryContext &getBinaryContext() const { return *BC; }
 
   /// Return total score of all functions for this instance.
-  uint64_t getTotalScore() const {
-    return BC->TotalScore;
-  }
+  uint64_t getTotalScore() const { return BC->TotalScore; }
 
   /// Return the name of the input file.
   StringRef getInputFilename() const {
@@ -278,7 +273,7 @@ private:
   ELF_FUNCTION(finalizeSectionStringTable);
 
   /// Return a name of the input file section in the output file.
-  template<typename ELFObjType, typename ELFShdrTy>
+  template <typename ELFObjType, typename ELFShdrTy>
   std::string getOutputSectionName(const ELFObjType &Obj,
                                    const ELFShdrTy &Section);
 
@@ -351,9 +346,9 @@ private:
 public:
   /// Standard ELF sections we overwrite.
   static constexpr const char *SectionsToOverwrite[] = {
-    ".shstrtab",
-    ".symtab",
-    ".strtab",
+      ".shstrtab",
+      ".symtab",
+      ".strtab",
   };
 
   /// Debug section to we overwrite while updating the debug info.

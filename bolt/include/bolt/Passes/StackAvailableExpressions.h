@@ -33,9 +33,7 @@ public:
                             BinaryFunction &BF);
   virtual ~StackAvailableExpressions() {}
 
-  void run() {
-    InstrsDataflowAnalysis<StackAvailableExpressions>::run();
-  }
+  void run() { InstrsDataflowAnalysis<StackAvailableExpressions>::run(); }
 
 protected:
   const RegAnalysis &RA;

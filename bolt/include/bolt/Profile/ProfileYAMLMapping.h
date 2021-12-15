@@ -32,14 +32,11 @@ struct CallSiteInfo {
   uint64_t Mispreds{0};
 
   bool operator==(const CallSiteInfo &Other) const {
-    return Offset == Other.Offset &&
-           DestId == Other.DestId &&
+    return Offset == Other.Offset && DestId == Other.DestId &&
            EntryDiscriminator == Other.EntryDiscriminator;
   }
 
-  bool operator!=(const CallSiteInfo &Other) const {
-    return !(*this == Other);
-  }
+  bool operator!=(const CallSiteInfo &Other) const { return !(*this == Other); }
 
   bool operator<(const CallSiteInfo &Other) const {
     if (Offset < Other.Offset)
@@ -166,14 +163,13 @@ template <> struct MappingTraits<bolt::BinaryFunctionProfile> {
     YamlIO.mapRequired("exec", BFP.ExecCount);
     YamlIO.mapRequired("nblocks", BFP.NumBasicBlocks);
     YamlIO.mapOptional("blocks", BFP.Blocks,
-                        std::vector<bolt::BinaryBasicBlockProfile>());
+                       std::vector<bolt::BinaryBasicBlockProfile>());
   }
 };
 
 LLVM_YAML_STRONG_TYPEDEF(uint16_t, PROFILE_PF)
 
-template <>
-struct ScalarBitSetTraits<PROFILE_PF> {
+template <> struct ScalarBitSetTraits<PROFILE_PF> {
   static void bitset(IO &io, PROFILE_PF &value) {
     io.bitSetCase(value, "lbr", BinaryFunction::PF_LBR);
     io.bitSetCase(value, "sample", BinaryFunction::PF_SAMPLE);
@@ -184,12 +180,12 @@ struct ScalarBitSetTraits<PROFILE_PF> {
 namespace bolt {
 struct BinaryProfileHeader {
   uint32_t Version{1};
-  std::string FileName;       // Name of the profiled binary.
-  std::string Id;             // BuildID.
+  std::string FileName; // Name of the profiled binary.
+  std::string Id;       // BuildID.
   PROFILE_PF Flags{BinaryFunction::PF_NONE};
-                              // Type of the profile.
-  std::string Origin;         // How the profile was obtained.
-  std::string EventNames;     // Events used for sample profile.
+  // Type of the profile.
+  std::string Origin;     // How the profile was obtained.
+  std::string EventNames; // Events used for sample profile.
 };
 } // end namespace bolt
 
@@ -217,7 +213,7 @@ struct BinaryProfile {
   BinaryProfileHeader Header;
   std::vector<BinaryFunctionProfile> Functions;
 };
-}
+} // namespace bolt
 
 template <> struct MappingTraits<bolt::BinaryProfile> {
   static void mapping(IO &YamlIO, bolt::BinaryProfile &BP) {
@@ -228,6 +224,5 @@ template <> struct MappingTraits<bolt::BinaryProfile> {
 
 } // end namespace yaml
 } // end namespace llvm
-
 
 #endif

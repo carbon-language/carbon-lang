@@ -15,7 +15,6 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Support/Path.h"
 
-#undef DEBUG_TYPE
 #define DEBUG_TYPE "bolt-rtlib"
 
 using namespace llvm;
@@ -31,8 +30,7 @@ std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
   if (!llvm::sys::fs::exists(LibPath)) {
     // In some cases we install bolt binary into one level deeper in bin/,
     // we need to go back one more level to find lib directory.
-    LibPath =
-        llvm::sys::path::parent_path(llvm::sys::path::parent_path(Dir));
+    LibPath = llvm::sys::path::parent_path(llvm::sys::path::parent_path(Dir));
     llvm::sys::path::append(LibPath, "lib");
   }
   llvm::sys::path::append(LibPath, LibFileName);
@@ -63,8 +61,8 @@ void RuntimeLibrary::loadLibrary(StringRef LibPath, RuntimeDyld &RTDyld) {
   } else if (Magic == file_magic::elf_relocatable ||
              Magic == file_magic::elf_shared_object) {
     std::unique_ptr<object::ObjectFile> Obj = cantFail(
-      object::ObjectFile::createObjectFile(B.get()->getMemBufferRef()),
-      "error creating in-memory object");
+        object::ObjectFile::createObjectFile(B.get()->getMemBufferRef()),
+        "error creating in-memory object");
     RTDyld.loadObject(*Obj);
   } else {
     errs() << "BOLT-ERROR: unrecognized library format: " << LibPath << "\n";

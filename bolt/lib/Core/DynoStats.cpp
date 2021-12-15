@@ -53,27 +53,22 @@ constexpr const char *DynoStats::Desc[];
 
 bool DynoStats::operator<(const DynoStats &Other) const {
   return std::lexicographical_compare(
-    &Stats[FIRST_DYNO_STAT], &Stats[LAST_DYNO_STAT],
-    &Other.Stats[FIRST_DYNO_STAT], &Other.Stats[LAST_DYNO_STAT]
-  );
+      &Stats[FIRST_DYNO_STAT], &Stats[LAST_DYNO_STAT],
+      &Other.Stats[FIRST_DYNO_STAT], &Other.Stats[LAST_DYNO_STAT]);
 }
 
 bool DynoStats::operator==(const DynoStats &Other) const {
-  return std::equal(
-    &Stats[FIRST_DYNO_STAT], &Stats[LAST_DYNO_STAT],
-    &Other.Stats[FIRST_DYNO_STAT]
-  );
+  return std::equal(&Stats[FIRST_DYNO_STAT], &Stats[LAST_DYNO_STAT],
+                    &Other.Stats[FIRST_DYNO_STAT]);
 }
 
 bool DynoStats::lessThan(const DynoStats &Other,
                          ArrayRef<Category> Keys) const {
   return std::lexicographical_compare(
-    Keys.begin(), Keys.end(),
-    Keys.begin(), Keys.end(),
-    [this,&Other](const Category A, const Category) {
-      return Stats[A] < Other.Stats[A];
-    }
-  );
+      Keys.begin(), Keys.end(), Keys.begin(), Keys.end(),
+      [this, &Other](const Category A, const Category) {
+        return Stats[A] < Other.Stats[A];
+      });
 }
 
 void DynoStats::print(raw_ostream &OS, const DynoStats *Other,
@@ -83,10 +78,9 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other,
     OS << format("%'20lld : ", Stat * opts::DynoStatsScale) << Name;
     if (Other) {
       if (Stat != OtherStat) {
-       OtherStat = std::max(OtherStat, uint64_t(1)); // to prevent divide by 0
-       OS << format(" (%+.1f%%)",
-                    ( (float) Stat - (float) OtherStat ) * 100.0 /
-                      (float) (OtherStat) );
+        OtherStat = std::max(OtherStat, uint64_t(1)); // to prevent divide by 0
+        OS << format(" (%+.1f%%)", ((float)Stat - (float)OtherStat) * 100.0 /
+                                       (float)(OtherStat));
       } else {
         OS << " (=)";
       }
@@ -95,8 +89,7 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other,
   };
 
   for (auto Stat = DynoStats::FIRST_DYNO_STAT + 1;
-       Stat < DynoStats::LAST_DYNO_STAT;
-       ++Stat) {
+       Stat < DynoStats::LAST_DYNO_STAT; ++Stat) {
 
     if (!PrintAArch64Stats && Stat == DynoStats::VENEER_CALLS_AARCH64)
       continue;
@@ -118,8 +111,7 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other,
     // count.
     for (auto Stat = SortedHistogram.rbegin(); Stat != SortedHistogram.rend();
          ++Stat) {
-      OS << format("%20s,%'18lld",
-                   Printer->getOpcodeName(Stat->second).data(),
+      OS << format("%20s,%'18lld", Printer->getOpcodeName(Stat->second).data(),
                    Stat->first * opts::DynoStatsScale);
 
       MaxOpcodeHistogramTy MaxMultiMap =
@@ -136,8 +128,7 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other,
 
 void DynoStats::operator+=(const DynoStats &Other) {
   for (auto Stat = DynoStats::FIRST_DYNO_STAT + 1;
-       Stat < DynoStats::LAST_DYNO_STAT;
-       ++Stat) {
+       Stat < DynoStats::LAST_DYNO_STAT; ++Stat) {
     Stats[Stat] += Other[Stat];
   }
   for (const OpcodeStatTy &Stat : Other.OpcodeHistogram) {
@@ -183,15 +174,15 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
     // frequencies. This may deviate from the sum of outgoing branches of the
     // basic block especially since the block may contain a function that
     // does not return or a function that throws an exception.
-    const uint64_t BBExecutionCount =  BB->getKnownExecutionCount();
+    const uint64_t BBExecutionCount = BB->getKnownExecutionCount();
 
     // Ignore empty blocks and blocks that were not executed.
     if (BB->getNumNonPseudos() == 0 || BBExecutionCount == 0)
       continue;
 
     // Count AArch64 linker-inserted veneers
-    if(BF.isAArch64Veneer())
-        Stats[DynoStats::VENEER_CALLS_AARCH64] += BF.getKnownExecutionCount();
+    if (BF.isAArch64Veneer())
+      Stats[DynoStats::VENEER_CALLS_AARCH64] += BF.getKnownExecutionCount();
 
     // Count various instruction types by iterating through all instructions.
     // When -print-dyno-opcode-stats is on, count per each opcode and record
@@ -205,7 +196,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
           MMap.emplace(BBExecutionCount,
                        std::make_pair(BF.getOneName(), BB->getOffset()));
           Stats.OpcodeHistogram.emplace(Opcode,
-              std::make_pair(BBExecutionCount, MMap));
+                                        std::make_pair(BBExecutionCount, MMap));
         } else {
           I->second.first += BBExecutionCount;
           bool Insert = true;
@@ -236,7 +227,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
       uint64_t CallFreq = BBExecutionCount;
       if (BC.MIB->getConditionalTailCall(Instr)) {
         CallFreq =
-          BC.MIB->getAnnotationWithDefault<uint64_t>(Instr, "CTCTakenCount");
+            BC.MIB->getAnnotationWithDefault<uint64_t>(Instr, "CTCTakenCount");
       }
       Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
       if (BC.MIB->isIndirectCall(Instr)) {

@@ -129,17 +129,14 @@ uint64_t FuncBranchData::getNumExecutedBranches() const {
   return ExecutedBranches;
 }
 
-void SampleInfo::mergeWith(const SampleInfo &SI) {
-  Hits += SI.Hits;
-}
+void SampleInfo::mergeWith(const SampleInfo &SI) { Hits += SI.Hits; }
 
 void SampleInfo::print(raw_ostream &OS) const {
   OS << Loc.IsSymbol << " " << Loc.Name << " " << Twine::utohexstr(Loc.Offset)
      << " " << Hits << "\n";
 }
 
-uint64_t
-FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
+uint64_t FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
   assert(std::is_sorted(Data.begin(), Data.end()));
   struct Compare {
     bool operator()(const SampleInfo &SI, const uint64_t Val) const {
@@ -217,17 +214,15 @@ void BranchInfo::mergeWith(const BranchInfo &BI) {
 
 void BranchInfo::print(raw_ostream &OS) const {
   OS << From.IsSymbol << " " << From.Name << " "
-     << Twine::utohexstr(From.Offset) << " "
-     << To.IsSymbol << " " << To.Name << " "
-     << Twine::utohexstr(To.Offset) << " "
-     << Mispreds << " " << Branches << '\n';
+     << Twine::utohexstr(From.Offset) << " " << To.IsSymbol << " " << To.Name
+     << " " << Twine::utohexstr(To.Offset) << " " << Mispreds << " " << Branches
+     << '\n';
 }
 
 ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
                                                       uint64_t To) const {
   for (const BranchInfo &I : Data) {
-    if (I.From.Offset == From && I.To.Offset == To &&
-        I.From.Name == I.To.Name)
+    if (I.From.Offset == From && I.To.Offset == To && I.From.Name == I.To.Name)
       return I;
   }
   return make_error_code(llvm::errc::invalid_argument);
@@ -255,10 +250,9 @@ FuncBranchData::getDirectCallBranch(uint64_t From) const {
 
 void MemInfo::print(raw_ostream &OS) const {
   OS << (Offset.IsSymbol + 3) << " " << Offset.Name << " "
-     << Twine::utohexstr(Offset.Offset) << " "
-     << (Addr.IsSymbol + 3) << " " << Addr.Name << " "
-     << Twine::utohexstr(Addr.Offset) << " "
-     << Count << "\n";
+     << Twine::utohexstr(Offset.Offset) << " " << (Addr.IsSymbol + 3) << " "
+     << Addr.Name << " " << Twine::utohexstr(Addr.Offset) << " " << Count
+     << "\n";
 }
 
 void MemInfo::prettyPrint(raw_ostream &OS) const {
@@ -326,14 +320,14 @@ Error DataReader::readProfilePreCFG(BinaryContext &BC) {
       }
 
       auto &MemAccessProfile =
-        BC.MIB->getOrCreateAnnotationAs<MemoryAccessProfile>(
-            II->second, "MemoryAccessProfile");
+          BC.MIB->getOrCreateAnnotationAs<MemoryAccessProfile>(
+              II->second, "MemoryAccessProfile");
       BinaryData *BD = nullptr;
       if (MI.Addr.IsSymbol) {
         BD = BC.getBinaryDataByName(MI.Addr.Name);
       }
-      MemAccessProfile.AddressAccessInfo.
-        push_back({BD, MI.Addr.Offset, MI.Count});
+      MemAccessProfile.AddressAccessInfo.push_back(
+          {BD, MI.Addr.Offset, MI.Count});
       auto NextII = std::next(II);
       if (NextII == Function.Instructions.end()) {
         MemAccessProfile.NextInstrOffset = Function.getSize();
@@ -426,8 +420,8 @@ void DataReader::readProfile(BinaryFunction &BF) {
       continue;
     }
 
-    if (!recordBranch(BF, BI.From.Offset, BI.To.Offset,
-                      BI.Branches, BI.Mispreds)) {
+    if (!recordBranch(BF, BI.From.Offset, BI.To.Offset, BI.Branches,
+                      BI.Mispreds)) {
       LLVM_DEBUG(dbgs() << "bad branch : " << BI.From.Offset << " -> "
                         << BI.To.Offset << '\n');
       ++MismatchedBranches;
@@ -569,10 +563,8 @@ float DataReader::evaluateProfileData(BinaryFunction &BF,
       // If it's a prefix - skip it.
       if (Instr && BC.MIB->isPrefix(*Instr))
         Instr = BF.getInstructionAtOffset(BI.From.Offset + 1);
-      if (Instr &&
-          (BC.MIB->isCall(*Instr) ||
-           BC.MIB->isBranch(*Instr) ||
-           BC.MIB->isReturn(*Instr))) {
+      if (Instr && (BC.MIB->isCall(*Instr) || BC.MIB->isBranch(*Instr) ||
+                    BC.MIB->isReturn(*Instr))) {
         IsValid = true;
       }
     }
@@ -680,8 +672,8 @@ void DataReader::convertBranchData(BinaryFunction &BF) const {
     auto setOrUpdateAnnotation = [&](StringRef Name, uint64_t Count) {
       if (opts::Verbosity >= 1 && BC.MIB->hasAnnotation(*Instr, Name)) {
         errs() << "BOLT-WARNING: duplicate " << Name << " info for offset 0x"
-               << Twine::utohexstr(BI.From.Offset)
-               << " in function " << BF << '\n';
+               << Twine::utohexstr(BI.From.Offset) << " in function " << BF
+               << '\n';
       }
       auto &Value = BC.MIB->getOrCreateAnnotationAs<uint64_t>(*Instr, Name);
       Value += Count;
@@ -689,8 +681,8 @@ void DataReader::convertBranchData(BinaryFunction &BF) const {
 
     if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
       IndirectCallSiteProfile &CSP =
-        BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
-            *Instr, "CallProfile");
+          BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
+              *Instr, "CallProfile");
       MCSymbol *CalleeSymbol = nullptr;
       if (BI.To.IsSymbol) {
         if (BinaryData *BD = BC.getBinaryDataByName(BI.To.Name)) {
@@ -707,8 +699,7 @@ void DataReader::convertBranchData(BinaryFunction &BF) const {
   }
 }
 
-bool DataReader::recordBranch(BinaryFunction &BF,
-                              uint64_t From, uint64_t To,
+bool DataReader::recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
                               uint64_t Count, uint64_t Mispreds) const {
   BinaryContext &BC = BF.getBinaryContext();
 
@@ -736,8 +727,8 @@ bool DataReader::recordBranch(BinaryFunction &BF,
 
   // Very rarely we will see ignored branches. Do a linear check.
   for (std::pair<uint32_t, uint32_t> &Branch : BF.IgnoredBranches) {
-    if (Branch == std::make_pair(static_cast<uint32_t>(From),
-                                 static_cast<uint32_t>(To)))
+    if (Branch ==
+        std::make_pair(static_cast<uint32_t>(From), static_cast<uint32_t>(To)))
       return true;
   }
 
@@ -806,8 +797,8 @@ bool DataReader::recordBranch(BinaryFunction &BF,
     }
     // For data collected in a bolted binary, we may have created two output BBs
     // that map to one original block. Branches between these two blocks will
-    // appear here as one BB jumping to itself, even though it has no loop edges.
-    // Ignore these.
+    // appear here as one BB jumping to itself, even though it has no loop
+    // edges. Ignore these.
     if (collectedInBoltedBinary() && FromBB == ToBB)
       return true;
 
@@ -889,8 +880,7 @@ ErrorOr<StringRef> DataReader::parseString(char EndChar, bool EndNl) {
 
   // If EndNl was set and nl was found instead of EndChar, do not consume the
   // new line.
-  bool EndNlInsteadOfEndChar =
-    ParsingBuf[StringEnd] == '\n' && EndChar != '\n';
+  bool EndNlInsteadOfEndChar = ParsingBuf[StringEnd] == '\n' && EndChar != '\n';
   unsigned End = EndNlInsteadOfEndChar ? StringEnd : StringEnd + 1;
 
   ParsingBuf = ParsingBuf.drop_front(End);
@@ -931,29 +921,28 @@ ErrorOr<uint64_t> DataReader::parseHexField(char EndChar, bool EndNl) {
   return Num;
 }
 
-ErrorOr<Location> DataReader::parseLocation(char EndChar,
-                                            bool EndNl,
+ErrorOr<Location> DataReader::parseLocation(char EndChar, bool EndNl,
                                             bool ExpectMemLoc) {
   // Read whether the location of the branch should be DSO or a symbol
   // 0 means it is a DSO. 1 means it is a global symbol. 2 means it is a local
   // symbol.
   // The symbol flag is also used to tag memory load events by adding 3 to the
   // base values, i.e. 3 not a symbol, 4 global symbol and 5 local symbol.
-  if (!ExpectMemLoc &&
-      ParsingBuf[0] != '0' && ParsingBuf[0] != '1' && ParsingBuf[0] != '2') {
+  if (!ExpectMemLoc && ParsingBuf[0] != '0' && ParsingBuf[0] != '1' &&
+      ParsingBuf[0] != '2') {
     reportError("expected 0, 1 or 2");
     return make_error_code(llvm::errc::io_error);
   }
 
-  if (ExpectMemLoc &&
-      ParsingBuf[0] != '3' && ParsingBuf[0] != '4' && ParsingBuf[0] != '5') {
+  if (ExpectMemLoc && ParsingBuf[0] != '3' && ParsingBuf[0] != '4' &&
+      ParsingBuf[0] != '5') {
     reportError("expected 3, 4 or 5");
     return make_error_code(llvm::errc::io_error);
   }
 
   bool IsSymbol =
-    (!ExpectMemLoc && (ParsingBuf[0] == '1' || ParsingBuf[0] == '2')) ||
-    (ExpectMemLoc && (ParsingBuf[0] == '4' || ParsingBuf[0] == '5'));
+      (!ExpectMemLoc && (ParsingBuf[0] == '1' || ParsingBuf[0] == '2')) ||
+      (ExpectMemLoc && (ParsingBuf[0] == '4' || ParsingBuf[0] == '5'));
   ParsingBuf = ParsingBuf.drop_front(1);
   Col += 1;
 
@@ -1091,7 +1080,6 @@ ErrorOr<bool> DataReader::maybeParseBATFlag() {
   }
   return true;
 }
-
 
 bool DataReader::hasBranchData() {
   if (ParsingBuf.size() == 0)
@@ -1325,11 +1313,11 @@ fetchMapEntry(MapTy &Map, const std::vector<StringRef> &FuncNames) {
 }
 
 template <typename MapTy>
-std::vector<decltype(MapTy::MapEntryTy::second) *>
-fetchMapEntriesRegex(
-  MapTy &Map,
-  const StringMap<std::vector<decltype(MapTy::MapEntryTy::second) *>> &LTOCommonNameMap,
-  const std::vector<StringRef> &FuncNames) {
+std::vector<decltype(MapTy::MapEntryTy::second) *> fetchMapEntriesRegex(
+    MapTy &Map,
+    const StringMap<std::vector<decltype(MapTy::MapEntryTy::second) *>>
+        &LTOCommonNameMap,
+    const std::vector<StringRef> &FuncNames) {
   std::vector<decltype(MapTy::MapEntryTy::second) *> AllData;
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
@@ -1399,8 +1387,7 @@ DataReader::getFuncSampleData(const std::vector<StringRef> &FuncNames) {
   return fetchMapEntry<NamesToSamplesMapTy>(NamesToSamples, FuncNames);
 }
 
-std::vector<FuncBranchData *>
-DataReader::getBranchDataForNamesRegex(
+std::vector<FuncBranchData *> DataReader::getBranchDataForNamesRegex(
     const std::vector<StringRef> &FuncNames) {
   return fetchMapEntriesRegex(NamesToBranches, LTOCommonNameMap, FuncNames);
 }
@@ -1440,8 +1427,7 @@ void DataReader::dump() const {
   for (const StringMapEntry<FuncSampleData> &Func : NamesToSamples) {
     Diag << Func.getKey() << " samples:\n";
     for (const SampleInfo &SI : Func.getValue().Data) {
-      Diag << SI.Loc.Name << " " << SI.Loc.Offset << " "
-           << SI.Hits << "\n";
+      Diag << SI.Loc.Name << " " << SI.Loc.Offset << " " << SI.Hits << "\n";
     }
   }
 

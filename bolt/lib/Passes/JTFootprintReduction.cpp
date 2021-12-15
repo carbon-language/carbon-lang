@@ -26,13 +26,11 @@ extern cl::opt<unsigned> Verbosity;
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 
-static cl::opt<bool>
-JTFootprintOnlyPIC("jt-footprint-optimize-for-icache",
-  cl::desc("with jt-footprint-reduction, only process PIC jumptables and turn"
-           " off other transformations that increase code size"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+static cl::opt<bool> JTFootprintOnlyPIC(
+    "jt-footprint-optimize-for-icache",
+    cl::desc("with jt-footprint-reduction, only process PIC jumptables and turn"
+             " off other transformations that increase code size"),
+    cl::init(false), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 } // namespace opts
 
@@ -128,9 +126,8 @@ void JTFootprintReduction::checkOpportunities(BinaryFunction &Function,
 }
 
 bool JTFootprintReduction::tryOptimizeNonPIC(
-    BinaryContext &BC, BinaryBasicBlock &BB,
-    BinaryBasicBlock::iterator Inst, uint64_t JTAddr,
-    JumpTable *JumpTable, DataflowInfoManager &Info) {
+    BinaryContext &BC, BinaryBasicBlock &BB, BinaryBasicBlock::iterator Inst,
+    uint64_t JTAddr, JumpTable *JumpTable, DataflowInfoManager &Info) {
   if (opts::JTFootprintOnlyPIC)
     return false;
 
@@ -169,10 +166,11 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   return true;
 }
 
-bool JTFootprintReduction::tryOptimizePIC(
-    BinaryContext &BC, BinaryBasicBlock &BB,
-    BinaryBasicBlock::iterator Inst, uint64_t JTAddr,
-    JumpTable *JumpTable, DataflowInfoManager &Info) {
+bool JTFootprintReduction::tryOptimizePIC(BinaryContext &BC,
+                                          BinaryBasicBlock &BB,
+                                          BinaryBasicBlock::iterator Inst,
+                                          uint64_t JTAddr, JumpTable *JumpTable,
+                                          DataflowInfoManager &Info) {
   MCPhysReg BaseReg;
   uint64_t Scale;
   MCPhysReg Index;
@@ -184,9 +182,9 @@ bool JTFootprintReduction::tryOptimizePIC(
           BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg), BC.MIB->matchImm(Scale),
                             BC.MIB->matchReg(Index),
                             BC.MIB->matchAnyOperand())));
-  if (!PICIndJmpMatcher->match(*BC.MRI, *BC.MIB,
-                              MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
-                               -1)) {
+  if (!PICIndJmpMatcher->match(
+          *BC.MRI, *BC.MIB, MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
+          -1)) {
     return false;
   }
 
@@ -228,8 +226,8 @@ void JTFootprintReduction::optimizeFunction(BinaryFunction &Function,
     if (BlacklistedJTs.count(JumpTable))
       continue;
 
-    if (tryOptimizeNonPIC(BC, BB, IndJmp, JTAddr, JumpTable, Info)
-        || tryOptimizePIC(BC, BB, IndJmp, JTAddr, JumpTable, Info)) {
+    if (tryOptimizeNonPIC(BC, BB, IndJmp, JTAddr, JumpTable, Info) ||
+        tryOptimizePIC(BC, BB, IndJmp, JTAddr, JumpTable, Info)) {
       Modified.insert(&Function);
       continue;
     }
@@ -241,7 +239,7 @@ void JTFootprintReduction::optimizeFunction(BinaryFunction &Function,
     return;
 
   for (BinaryBasicBlock &BB : Function) {
-    for (auto I = BB.begin(); I != BB.end(); ) {
+    for (auto I = BB.begin(); I != BB.end();) {
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         I = BB.eraseInstruction(I);
       else
@@ -293,8 +291,7 @@ void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
          << " JTs discarded due to unsupported jump pattern.\n";
   outs() << "\t   " << NumJTsNoReg
          << " JTs discarded due to register unavailability.\n";
-  outs() << "\t   " << BytesSaved
-         << " bytes saved.\n";
+  outs() << "\t   " << BytesSaved << " bytes saved.\n";
 }
 
 } // namespace bolt

@@ -28,8 +28,7 @@ class YAMLProfileWriter {
 
 public:
   explicit YAMLProfileWriter(const std::string &Filename)
-    : Filename(Filename) {
-  }
+      : Filename(Filename) {}
 
   /// Save execution profile for that instance.
   std::error_code writeProfile(const RewriteInstance &RI);

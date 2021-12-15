@@ -20,7 +20,6 @@ namespace bolt {
 
 class Inliner : public BinaryFunctionPass {
 private:
-
   enum InliningType : char {
     INL_NONE = 0, /// Cannot inline
     INL_TAILCALL, /// Can inline at tail call site
@@ -32,9 +31,7 @@ private:
     uint64_t SizeAfterInlining{0};
     uint64_t SizeAfterTailCallInlining{0};
 
-    InliningInfo(InliningType Type = INL_NONE)
-      : Type(Type)
-    {}
+    InliningInfo(InliningType Type = INL_NONE) : Type(Type) {}
   };
 
   std::unordered_map<const BinaryFunction *, InliningInfo> InliningCandidates;
@@ -74,8 +71,7 @@ private:
   /// Return the location (basic block and instruction iterator) where the code
   /// of the caller function continues after the inlined code.
   std::pair<BinaryBasicBlock *, BinaryBasicBlock::iterator>
-  inlineCall(BinaryBasicBlock &CallerBB,
-             BinaryBasicBlock::iterator CallInst,
+  inlineCall(BinaryBasicBlock &CallerBB, BinaryBasicBlock::iterator CallInst,
              const BinaryFunction &Callee);
 
   /// Check if the inliner can handle inlining of \p BF.
@@ -83,11 +79,9 @@ private:
 
 public:
   explicit Inliner(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "inlining";
-  }
+  const char *getName() const override { return "inlining"; }
 
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;

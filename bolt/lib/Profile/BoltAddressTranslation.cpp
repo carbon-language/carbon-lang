@@ -17,7 +17,7 @@
 namespace llvm {
 namespace bolt {
 
-const char* BoltAddressTranslation::SECTION_NAME = ".note.bolt_bat";
+const char *BoltAddressTranslation::SECTION_NAME = ".note.bolt_bat";
 
 void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
                                                const BinaryBasicBlock &BB,
@@ -218,8 +218,9 @@ uint64_t BoltAddressTranslation::translate(const BinaryFunction &Func,
 }
 
 Optional<BoltAddressTranslation::FallthroughListTy>
-BoltAddressTranslation::getFallthroughsInTrace(
-    const BinaryFunction &Func, uint64_t From, uint64_t To) const {
+BoltAddressTranslation::getFallthroughsInTrace(const BinaryFunction &Func,
+                                               uint64_t From,
+                                               uint64_t To) const {
   SmallVector<std::pair<uint64_t, uint64_t>, 16> Res;
 
   // Filter out trivial case
@@ -253,7 +254,7 @@ BoltAddressTranslation::getFallthroughsInTrace(
   if (FromIter->first >= ToIter->first)
     return Res;
 
-  for (auto Iter = FromIter; Iter != ToIter; ) {
+  for (auto Iter = FromIter; Iter != ToIter;) {
     const uint32_t Src = Iter->first;
     if (Iter->second & BRANCHENTRY) {
       ++Iter;
@@ -291,5 +292,5 @@ bool BoltAddressTranslation::enabledFor(
   }
   return false;
 }
-}
-}
+} // namespace bolt
+} // namespace llvm

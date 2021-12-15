@@ -21,15 +21,11 @@ namespace bolt {
 class YAMLProfileReader : public ProfileReaderBase {
 public:
   explicit YAMLProfileReader(StringRef Filename)
-    : ProfileReaderBase(Filename) {}
+      : ProfileReaderBase(Filename) {}
 
-  StringRef getReaderName() const override {
-    return "YAML profile reader";
-  }
+  StringRef getReaderName() const override { return "YAML profile reader"; }
 
-  bool isTrustedSource() const override {
-    return false;
-  }
+  bool isTrustedSource() const override { return false; }
 
   Error readProfilePreCFG(BinaryContext &BC) override {
     return Error::success();
@@ -67,7 +63,7 @@ private:
 
   /// Map a common LTO prefix to a set of binary functions.
   StringMap<std::unordered_set<const BinaryFunction *>>
-                                                      LTOCommonNameFunctionMap;
+      LTOCommonNameFunctionMap;
 
   /// Strict matching of a name in a profile to its contents.
   StringMap<yaml::bolt::BinaryFunctionProfile *> ProfileNameToProfile;
@@ -96,7 +92,7 @@ private:
   bool usesEvent(StringRef Name) const;
 };
 
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

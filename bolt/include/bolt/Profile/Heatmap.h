@@ -37,11 +37,10 @@ class Heatmap {
   std::map<uint64_t, uint64_t> Map;
 
 public:
-  explicit Heatmap(uint64_t BucketSize = 4096,
-                   uint64_t MinAddress = 0,
+  explicit Heatmap(uint64_t BucketSize = 4096, uint64_t MinAddress = 0,
                    uint64_t MaxAddress = std::numeric_limits<uint64_t>::max())
-    : BucketSize(BucketSize), MinAddress(MinAddress), MaxAddress(MaxAddress)
-  {};
+      : BucketSize(BucketSize), MinAddress(MinAddress),
+        MaxAddress(MaxAddress){};
 
   inline bool ignoreAddress(uint64_t Address) const {
     return (Address > MaxAddress) || (Address < MinAddress);
@@ -58,9 +57,7 @@ public:
                             uint64_t Count);
 
   /// Return the number of ranges that failed to register.
-  uint64_t getNumInvalidRanges() const {
-    return NumSkippedRanges;
-  }
+  uint64_t getNumInvalidRanges() const { return NumSkippedRanges; }
 
   void print(StringRef FileName) const;
 
@@ -70,9 +67,7 @@ public:
 
   void printCDF(raw_ostream &OS) const;
 
-  size_t size() const {
-    return Map.size();
-  }
+  size_t size() const { return Map.size(); }
 };
 
 } // namespace bolt

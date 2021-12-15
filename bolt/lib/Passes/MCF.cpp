@@ -93,17 +93,19 @@ void updateEdgeWeight(EdgeWeightMap &EdgeWeights, const BinaryBasicBlock *A,
                       const BinaryBasicBlock *B, double Weight);
 
 template <>
-void updateEdgeWeight<BinaryBasicBlock *>(
-    EdgeWeightMap &EdgeWeights, const BinaryBasicBlock *A,
-    const BinaryBasicBlock *B, double Weight) {
+void updateEdgeWeight<BinaryBasicBlock *>(EdgeWeightMap &EdgeWeights,
+                                          const BinaryBasicBlock *A,
+                                          const BinaryBasicBlock *B,
+                                          double Weight) {
   EdgeWeights[std::make_pair(A, B)] = Weight;
   return;
 }
 
 template <>
-void updateEdgeWeight<Inverse<BinaryBasicBlock *>>(
-    EdgeWeightMap &EdgeWeights, const BinaryBasicBlock *A,
-    const BinaryBasicBlock *B, double Weight) {
+void updateEdgeWeight<Inverse<BinaryBasicBlock *>>(EdgeWeightMap &EdgeWeights,
+                                                   const BinaryBasicBlock *A,
+                                                   const BinaryBasicBlock *B,
+                                                   double Weight) {
   EdgeWeights[std::make_pair(B, A)] = Weight;
   return;
 }
@@ -111,14 +113,15 @@ void updateEdgeWeight<Inverse<BinaryBasicBlock *>>(
 template <class NodeT>
 void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
   typedef GraphTraits<NodeT> GraphT;
-  typedef GraphTraits<Inverse<NodeT> > InvTraits;
+  typedef GraphTraits<Inverse<NodeT>> InvTraits;
 
   double TotalChildrenCount = 0.0;
   SmallVector<double, 4> ChildrenExecCount;
   // First pass computes total children execution count that directly
   // contribute to this BB.
   for (typename GraphT::ChildIteratorType CI = GraphT::child_begin(BB),
-         E = GraphT::child_end(BB); CI != E; ++CI) {
+                                          E = GraphT::child_end(BB);
+       CI != E; ++CI) {
     typename GraphT::NodeRef Child = *CI;
     double ChildExecCount = Child->getExecutionCount();
     // Is self-reference?
@@ -152,7 +155,8 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
   // Second pass fixes the weight of a possible self-reference edge
   uint32_t ChildIndex = 0;
   for (typename GraphT::ChildIteratorType CI = GraphT::child_begin(BB),
-         E = GraphT::child_end(BB); CI != E; ++CI) {
+                                          E = GraphT::child_end(BB);
+       CI != E; ++CI) {
     typename GraphT::NodeRef Child = *CI;
     if (Child != BB) {
       ++ChildIndex;
@@ -168,7 +172,8 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
   // Third pass finally assigns weights to edges
   ChildIndex = 0;
   for (typename GraphT::ChildIteratorType CI = GraphT::child_begin(BB),
-         E = GraphT::child_end(BB); CI != E; ++CI) {
+                                          E = GraphT::child_end(BB);
+       CI != E; ++CI) {
     typename GraphT::NodeRef Child = *CI;
     double Weight = 1 / (GraphT::child_end(BB) - GraphT::child_begin(BB));
     if (TotalChildrenCount != 0.0)
@@ -178,7 +183,7 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
   }
 }
 
-template<class NodeT>
+template <class NodeT>
 void computeEdgeWeights(BinaryFunction &BF, EdgeWeightMap &EdgeWeights) {
   for (BinaryBasicBlock &BB : BF) {
     computeEdgeWeights<NodeT>(&BB, EdgeWeights);
@@ -333,8 +338,10 @@ void guessEdgeByIterativeApproach(BinaryFunction &BF) {
   do {
     Changed = false;
     for (BinaryBasicBlock &BB : BF) {
-      if (guessPredEdgeCounts(&BB, KnownArcs)) Changed = true;
-      if (guessSuccEdgeCounts(&BB, KnownArcs)) Changed = true;
+      if (guessPredEdgeCounts(&BB, KnownArcs))
+        Changed = true;
+      if (guessSuccEdgeCounts(&BB, KnownArcs))
+        Changed = true;
     }
   } while (Changed);
 
@@ -345,7 +352,7 @@ void guessEdgeByIterativeApproach(BinaryFunction &BF) {
         continue;
       BinaryBasicBlock::BinaryBranchInfo &BI = Pred->getBranchInfo(BB);
       BI.Count =
-        std::min(Pred->getExecutionCount(), BB.getExecutionCount()) / 2;
+          std::min(Pred->getExecutionCount(), BB.getExecutionCount()) / 2;
       KnownArcs.insert(std::make_pair(Pred, &BB));
     }
     auto BI = BB.branch_info_begin();
@@ -364,9 +371,9 @@ void guessEdgeByIterativeApproach(BinaryFunction &BF) {
 
 /// Associate each basic block with the BinaryLoop object corresponding to the
 /// innermost loop containing this block.
-DenseMap<const BinaryBasicBlock *, const BinaryLoop*>
+DenseMap<const BinaryBasicBlock *, const BinaryLoop *>
 createLoopNestLevelMap(BinaryFunction &BF) {
-  DenseMap<const BinaryBasicBlock *, const BinaryLoop*> LoopNestLevel;
+  DenseMap<const BinaryBasicBlock *, const BinaryLoop *> LoopNestLevel;
   const BinaryLoopInfo &BLI = BF.getLoopInfo();
 
   for (BinaryBasicBlock &BB : BF) {
@@ -417,7 +424,7 @@ void equalizeBBCounts(BinaryFunction &BF) {
         return;
       if (LoopNestLevel[&BB] != LoopNestLevel[DomBB])
         return;
-      if (BBsToEC[DomBB] == -1  && BBsToEC[&BB] == -1) {
+      if (BBsToEC[DomBB] == -1 && BBsToEC[&BB] == -1) {
         BBsToEC[DomBB] = Classes.size();
         BBsToEC[&BB] = Classes.size();
         Classes.emplace_back();
@@ -483,5 +490,5 @@ void solveMCF(BinaryFunction &BF, MCFCostFunction CostFunction) {
   llvm_unreachable("not implemented");
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

@@ -25,8 +25,8 @@ namespace llvm {
 namespace bolt {
 
 namespace {
-void
-convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
+void convert(const BinaryFunction &BF,
+             yaml::bolt::BinaryFunctionProfile &YamlBF) {
   const BinaryContext &BC = BF.getBinaryContext();
 
   const uint16_t LBRProfile = BF.getProfileFlags() & BinaryFunction::PF_LBR;
@@ -62,9 +62,8 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
       CSI.Offset = Offset.get() - BB->getInputOffset();
 
       if (BC.MIB->isIndirectCall(Instr) || BC.MIB->isIndirectBranch(Instr)) {
-        auto ICSP =
-          BC.MIB->tryGetAnnotationAs<IndirectCallSiteProfile>(Instr,
-                                                              "CallProfile");
+        auto ICSP = BC.MIB->tryGetAnnotationAs<IndirectCallSiteProfile>(
+            Instr, "CallProfile");
         if (!ICSP)
           continue;
         for (const IndirectCallProfile &CSP : ICSP.get()) {
@@ -86,17 +85,17 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
         const BinaryFunction *const Callee =
             BC.getFunctionForSymbol(CalleeSymbol, &EntryID);
         if (Callee) {
-          CSI.DestId = Callee->getFunctionNumber();;
+          CSI.DestId = Callee->getFunctionNumber();
           CSI.EntryDiscriminator = EntryID;
         }
 
         if (BC.MIB->getConditionalTailCall(Instr)) {
           auto CTCCount =
-            BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenCount");
+              BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenCount");
           if (CTCCount) {
             CSI.Count = *CTCCount;
             auto CTCMispreds =
-              BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "CTCMispredCount");
+                BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "CTCMispredCount");
             if (CTCMispreds)
               CSI.Mispreds = *CTCMispreds;
           }
@@ -115,8 +114,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 
     // Skip printing if there's no profile data for non-entry basic block.
     // Include landing pads with non-zero execution count.
-    if (YamlBB.CallSites.empty() &&
-        !BB->isEntryPoint() &&
+    if (YamlBB.CallSites.empty() && !BB->isEntryPoint() &&
         !(BB->isLandingPad() && BB->getKnownExecutionCount() != 0)) {
       uint64_t SuccessorExecCount = 0;
       for (const BinaryBasicBlock::BinaryBranchInfo &BranchInfo :
@@ -144,8 +142,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 }
 } // end anonymous namespace
 
-std::error_code
-YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
+std::error_code YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
   const BinaryContext &BC = RI.getBinaryContext();
   const auto &Functions = BC.getBinaryFunctions();
 

@@ -58,8 +58,8 @@ public:
   std::vector<int64_t> OffsetsByReg;
   BitVector HasRestores;
   std::vector<uint64_t> SavingCost;
-  std::vector<const FrameIndexEntry*> SaveFIEByReg;
-  std::vector<const FrameIndexEntry*> LoadFIEByReg;
+  std::vector<const FrameIndexEntry *> SaveFIEByReg;
+  std::vector<const FrameIndexEntry *> LoadFIEByReg;
 
   CalleeSavedAnalysis(const FrameAnalysis &FA, BinaryFunction &BF,
                       DataflowInfoManager &Info,
@@ -106,14 +106,9 @@ public:
 
   /// Returns the identifying string used to annotate instructions with metadata
   /// for this analysis. These are deleted in the destructor.
-  static StringRef getSaveTagName() {
-    return StringRef("CSA-SavedReg");
-  }
+  static StringRef getSaveTagName() { return StringRef("CSA-SavedReg"); }
 
-  static StringRef getRestoreTagName() {
-    return StringRef("CSA-RestoredReg");
-  }
-
+  static StringRef getRestoreTagName() { return StringRef("CSA-RestoredReg"); }
 };
 
 /// Identifies in a given binary function all stack regions being used and allow
@@ -165,8 +160,8 @@ public:
     WorklistItem(ActionType Action, int OffsetUpdate)
         : Action(Action), OffsetUpdate(OffsetUpdate) {}
   };
-private:
 
+private:
   /// Mark the stack region identified by \p Offset and \p Size to be a
   /// no-touch zone, whose accesses cannot be relocated to another region.
   void blacklistRegion(int64_t Offset, int64_t Size);
@@ -216,7 +211,7 @@ private:
     if (OffsetCFIRegTagIndex)
       return *OffsetCFIRegTagIndex;
     OffsetCFIRegTagIndex =
-      BC.MIB->getOrCreateAnnotationIndex(getOffsetCFIRegTagName());
+        BC.MIB->getOrCreateAnnotationIndex(getOffsetCFIRegTagName());
     return *OffsetCFIRegTagIndex;
   }
 
@@ -240,8 +235,7 @@ public:
   /// Retrieves the value of the callee-saved register that is restored by this
   /// instruction or 0 if this is not a CSR restore instruction.
   uint16_t getOffsetCFIReg(const MCInst &Inst) {
-    auto Val =
-        BC.MIB->tryGetAnnotationAs<uint16_t>(Inst, getOffsetCFIRegTag());
+    auto Val = BC.MIB->tryGetAnnotationAs<uint16_t>(Inst, getOffsetCFIRegTag());
     if (Val)
       return *Val;
     return 0;
@@ -279,18 +273,13 @@ public:
   /// accesses.
   void initialize();
 
-  static StringRef getTodoTagName() {
-    return StringRef("SLM-TodoTag");
-  }
+  static StringRef getTodoTagName() { return StringRef("SLM-TodoTag"); }
 
-  static StringRef getSlotTagName() {
-    return StringRef("SLM-SlotTag");
-  }
+  static StringRef getSlotTagName() { return StringRef("SLM-SlotTag"); }
 
   static StringRef getOffsetCFIRegTagName() {
     return StringRef("SLM-OffsetCFIReg");
   }
-
 };
 
 /// Implements a pass to optimize callee-saved register spills. These spills
@@ -350,12 +339,10 @@ public:
 
   /// Insertion todo items scheduled to happen at the end of BBs. Since we
   /// can't annotate BBs we maintain this bookkeeping here.
-  DenseMap<BinaryBasicBlock*, std::vector<WorklistItem>> Todo;
+  DenseMap<BinaryBasicBlock *, std::vector<WorklistItem>> Todo;
 
   /// Annotation name used to tag instructions with removal or insertion actions
-  static StringRef getAnnotationName() {
-    return StringRef("ShrinkWrap-Todo");
-  }
+  static StringRef getAnnotationName() { return StringRef("ShrinkWrap-Todo"); }
 
   unsigned getAnnotationIndex() {
     if (AnnotationIndex)
@@ -386,8 +373,7 @@ private:
                            uint64_t &TotalEstimatedWin);
 
   /// Populate the Todo map with worklistitems to change the function
-  template <typename ...T>
-  void scheduleChange(ProgramPoint PP, T&& ...Item) {
+  template <typename... T> void scheduleChange(ProgramPoint PP, T &&...Item) {
     if (PP.isInst()) {
       auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
           *PP.getInst(), getAnnotationIndex(), AllocatorId);

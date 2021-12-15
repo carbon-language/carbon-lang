@@ -35,8 +35,7 @@ void Heatmap::registerAddressRange(uint64_t StartAddress, uint64_t EndAddress,
     return;
   }
 
-  if (StartAddress > EndAddress ||
-      EndAddress - StartAddress > 64 * 1024) {
+  if (StartAddress > EndAddress || EndAddress - StartAddress > 64 * 1024) {
     LLVM_DEBUG(dbgs() << "invalid range : 0x" << Twine::utohexstr(StartAddress)
                       << " -> 0x" << Twine::utohexstr(EndAddress) << '\n');
     ++NumSkippedRanges;
@@ -135,21 +134,15 @@ void Heatmap::print(raw_ostream &OS) const {
   };
 
   static raw_ostream::Colors Colors[] = {
-    raw_ostream::WHITE,
-    raw_ostream::WHITE,
-    raw_ostream::CYAN,
-    raw_ostream::GREEN,
-    raw_ostream::YELLOW,
-    raw_ostream::RED
-  };
+      raw_ostream::WHITE, raw_ostream::WHITE,  raw_ostream::CYAN,
+      raw_ostream::GREEN, raw_ostream::YELLOW, raw_ostream::RED};
   constexpr size_t NumRanges = sizeof(Colors) / sizeof(Colors[0]);
 
   uint64_t Range[NumRanges];
   for (uint64_t I = 0; I < NumRanges; ++I)
-    Range[I] = std::max(I + 1,
-                        (uint64_t) std::pow((double) MaxValue,
-                                            (double) (I + 1) / NumRanges));
-  Range[NumRanges - 1] = std::max((uint64_t) NumRanges, MaxValue);
+    Range[I] = std::max(I + 1, (uint64_t)std::pow((double)MaxValue,
+                                                  (double)(I + 1) / NumRanges));
+  Range[NumRanges - 1] = std::max((uint64_t)NumRanges, MaxValue);
 
   // Print scaled value
   auto printValue = [&](uint64_t Value, bool ResetColor = false) {

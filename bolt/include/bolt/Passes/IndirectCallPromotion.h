@@ -104,12 +104,10 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   struct Location {
     MCSymbol *Sym{nullptr};
     uint64_t Addr{0};
-    bool isValid() const {
-      return Sym || (!Sym && Addr != 0);
-    }
-    Location() { }
-    explicit Location(MCSymbol *Sym) : Sym(Sym) { }
-    explicit Location(uint64_t Addr) : Addr(Addr) { }
+    bool isValid() const { return Sym || (!Sym && Addr != 0); }
+    Location() {}
+    explicit Location(MCSymbol *Sym) : Sym(Sym) {}
+    explicit Location(uint64_t Addr) : Addr(Addr) {}
   };
 
   struct Callsite {
@@ -119,15 +117,12 @@ class IndirectCallPromotion : public BinaryFunctionPass {
     uint64_t Branches{0};
     // Indices in the jmp table (jt only)
     std::vector<uint64_t> JTIndices;
-    bool isValid() const {
-      return From.isValid() && To.isValid();
-    }
+    bool isValid() const { return From.isValid() && To.isValid(); }
     Callsite(BinaryFunction &BF, const IndirectCallProfile &ICP);
-    Callsite(const Location &From, const Location &To,
-             uint64_t Mispreds, uint64_t Branches,
-             uint64_t JTIndex)
-    : From(From), To(To), Mispreds(Mispreds), Branches(Branches),
-      JTIndices(1, JTIndex) { }
+    Callsite(const Location &From, const Location &To, uint64_t Mispreds,
+             uint64_t Branches, uint64_t JTIndex)
+        : From(From), To(To), Mispreds(Mispreds), Branches(Branches),
+          JTIndices(1, JTIndex) {}
   };
 
   std::unordered_set<const BinaryFunction *> Modified;
@@ -216,11 +211,9 @@ class IndirectCallPromotion : public BinaryFunctionPass {
 
 public:
   explicit IndirectCallPromotion(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "indirect-call-promotion";
-  }
+  const char *getName() const override { return "indirect-call-promotion"; }
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }

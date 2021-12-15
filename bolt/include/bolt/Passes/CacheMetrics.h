@@ -30,9 +30,7 @@ void printAll(const std::vector<BinaryFunction *> &BinaryFunctions);
 /// - SrcSize is the size of the source block;
 /// - DstAddr is the address of the destination block;
 /// - Count is the number of jumps between the pair of blocks.
-double extTSPScore(uint64_t SrcAddr,
-                   uint64_t SrcSize,
-                   uint64_t DstAddr,
+double extTSPScore(uint64_t SrcAddr, uint64_t SrcSize, uint64_t DstAddr,
                    uint64_t Count);
 
 } // namespace CacheMetrics

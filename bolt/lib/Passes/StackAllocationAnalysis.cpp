@@ -24,9 +24,10 @@ void StackAllocationAnalysis::preflight() {
   for (BinaryBasicBlock &BB : this->Func) {
     for (MCInst &Inst : BB) {
       MCPhysReg From, To;
-      if (!BC.MIB->isPush(Inst) && (!BC.MIB->isRegToRegMove(Inst, From, To) ||
-                                    To != BC.MIB->getStackPointer() ||
-                                    From != BC.MIB->getFramePointer()) &&
+      if (!BC.MIB->isPush(Inst) &&
+          (!BC.MIB->isRegToRegMove(Inst, From, To) ||
+           To != BC.MIB->getStackPointer() ||
+           From != BC.MIB->getFramePointer()) &&
           !BC.MII->get(Inst.getOpcode())
                .hasDefOfPhysReg(Inst, BC.MIB->getStackPointer(), *BC.MRI))
         continue;

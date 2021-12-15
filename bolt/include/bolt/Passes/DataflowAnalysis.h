@@ -101,20 +101,18 @@ void doForAllSuccs(const BinaryBasicBlock &BB,
                    std::function<void(ProgramPoint)> Task);
 
 /// Default printer for State data.
-template <typename StateTy>
-class StatePrinter {
+template <typename StateTy> class StatePrinter {
 public:
-  void print(raw_ostream &OS, const StateTy &State) const {
-    OS << State;
-  }
-  explicit StatePrinter(const BinaryContext &) { }
+  void print(raw_ostream &OS, const StateTy &State) const { OS << State; }
+  explicit StatePrinter(const BinaryContext &) {}
 };
 
 /// Printer for State data that is a BitVector of registers.
 class RegStatePrinter {
 public:
   void print(raw_ostream &OS, const BitVector &State) const;
-  explicit RegStatePrinter(const BinaryContext &BC) : BC(BC) { }
+  explicit RegStatePrinter(const BinaryContext &BC) : BC(BC) {}
+
 private:
   const BinaryContext &BC;
 };
@@ -146,18 +144,14 @@ private:
 ///     Confluence operator = union  (if a reg is alive in any succ, it is alive
 ///     in the current block).
 ///
-template <typename Derived,
-          typename StateTy,
-          bool Backward = false,
+template <typename Derived, typename StateTy, bool Backward = false,
           typename StatePrinterTy = StatePrinter<StateTy>>
 class DataflowAnalysis {
   /// CRTP convenience methods
-  Derived &derived() {
-    return *static_cast<Derived*>(this);
-  }
+  Derived &derived() { return *static_cast<Derived *>(this); }
 
   const Derived &const_derived() const {
-    return *static_cast<const Derived*>(this);
+    return *static_cast<const Derived *>(this);
   }
 
   mutable Optional<unsigned> AnnotationIndex;
@@ -180,9 +174,7 @@ protected:
   DenseMap<const MCInst *, ProgramPoint> PrevPoint;
 
   /// Perform any bookkeeping before dataflow starts
-  void preflight() {
-    llvm_unreachable("Unimplemented method");
-  }
+  void preflight() { llvm_unreachable("Unimplemented method"); }
 
   /// Sets initial state for each BB
   StateTy getStartingStateAtBB(const BinaryBasicBlock &BB) {
@@ -210,7 +202,7 @@ protected:
   /// instruction considering in sets for the first instructions of its
   /// landing pads.
   void doConfluenceWithLP(StateTy &StateOut, const StateTy &StateIn,
-                                  const MCInst &Invoke) {
+                          const MCInst &Invoke) {
     return derived().doConfluence(StateOut, StateIn);
   }
 
@@ -231,7 +223,7 @@ protected:
     if (AnnotationIndex)
       return *AnnotationIndex;
     AnnotationIndex =
-      BC.MIB->getOrCreateAnnotationIndex(const_derived().getAnnotationName());
+        BC.MIB->getOrCreateAnnotationIndex(const_derived().getAnnotationName());
     return *AnnotationIndex;
   }
 
@@ -253,9 +245,7 @@ protected:
 
 public:
   /// Return the allocator id
-  unsigned getAllocatorId() {
-    return AllocatorId;
-  }
+  unsigned getAllocatorId() { return AllocatorId; }
 
   /// If the direction of the dataflow is forward, operates on the last
   /// instruction of all predecessors when performing an iteration of the
@@ -274,9 +264,7 @@ public:
                    MCPlusBuilder::AllocatorIdTy AllocatorId = 0)
       : BC(BF.getBinaryContext()), Func(BF), AllocatorId(AllocatorId) {}
 
-  virtual ~DataflowAnalysis() {
-    cleanAnnotations();
-  }
+  virtual ~DataflowAnalysis() { cleanAnnotations(); }
 
   /// Track the state at basic block start (end) if direction of the dataflow
   /// is forward (backward).
@@ -400,7 +388,7 @@ public:
       else
         LAST = &*BB->begin();
 
-      auto doNext = [&] (MCInst &Inst, const BinaryBasicBlock &BB) {
+      auto doNext = [&](MCInst &Inst, const BinaryBasicBlock &BB) {
         StateTy CurState = derived().computeNext(Inst, *PrevState);
 
         if (Backward && BC.MIB->isInvoke(Inst)) {
@@ -488,27 +476,22 @@ public:
       : BV(BV), Expressions(Exprs) {
     Idx = BV->find_first();
   }
-  ExprIterator(const BitVector *BV, const std::vector<MCInst *> &Exprs,
-               int Idx)
+  ExprIterator(const BitVector *BV, const std::vector<MCInst *> &Exprs, int Idx)
       : BV(BV), Expressions(Exprs), Idx(Idx) {}
 
-  int getBitVectorIndex() const {
-    return Idx;
-  }
+  int getBitVectorIndex() const { return Idx; }
 };
 
 /// Specialization of DataflowAnalysis whose state specifically stores
 /// a set of instructions.
-template <typename Derived,
-          bool Backward = false,
+template <typename Derived, bool Backward = false,
           typename StatePrinterTy = StatePrinter<BitVector>>
 class InstrsDataflowAnalysis
     : public DataflowAnalysis<Derived, BitVector, Backward, StatePrinterTy> {
 public:
   /// These iterator functions offer access to the set of pointers to
   /// instructions in a given program point
-  template <typename T>
-  ExprIterator expr_begin(const T &Point) const {
+  template <typename T> ExprIterator expr_begin(const T &Point) const {
     if (auto State = this->getStateAt(Point))
       return ExprIterator(&*State, Expressions);
     return expr_end();
@@ -534,13 +517,13 @@ public:
   /// Return whether \p Expr is in the state set at \p Point
   bool count(ProgramPoint Point, const MCInst &Expr) const {
     auto IdxIter = ExprToIdx.find(&Expr);
-    assert (IdxIter != ExprToIdx.end() && "Invalid Expr");
+    assert(IdxIter != ExprToIdx.end() && "Invalid Expr");
     return (*this->getStateAt(Point))[IdxIter->second];
   }
 
   bool count(const MCInst &Point, const MCInst &Expr) const {
     auto IdxIter = ExprToIdx.find(&Expr);
-    assert (IdxIter != ExprToIdx.end() && "Invalid Expr");
+    assert(IdxIter != ExprToIdx.end() && "Invalid Expr");
     return (*this->getStateAt(Point))[IdxIter->second];
   }
 
@@ -561,16 +544,16 @@ public:
 
 /// DenseMapInfo allows us to use the DenseMap LLVM data structure to store
 /// ProgramPoints.
-template<> struct DenseMapInfo<bolt::ProgramPoint> {
+template <> struct DenseMapInfo<bolt::ProgramPoint> {
   static inline bolt::ProgramPoint getEmptyKey() {
     uintptr_t Val = static_cast<uintptr_t>(-1);
-    Val <<= PointerLikeTypeTraits<MCInst*>::NumLowBitsAvailable;
-    return bolt::ProgramPoint(reinterpret_cast<MCInst*>(Val));
+    Val <<= PointerLikeTypeTraits<MCInst *>::NumLowBitsAvailable;
+    return bolt::ProgramPoint(reinterpret_cast<MCInst *>(Val));
   }
   static inline bolt::ProgramPoint getTombstoneKey() {
     uintptr_t Val = static_cast<uintptr_t>(-2);
-    Val <<= PointerLikeTypeTraits<MCInst*>::NumLowBitsAvailable;
-    return bolt::ProgramPoint(reinterpret_cast<MCInst*>(Val));
+    Val <<= PointerLikeTypeTraits<MCInst *>::NumLowBitsAvailable;
+    return bolt::ProgramPoint(reinterpret_cast<MCInst *>(Val));
   }
   static unsigned getHashValue(const bolt::ProgramPoint &PP) {
     return (unsigned((uintptr_t)PP.Data.BB) >> 4) ^

@@ -130,8 +130,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   if (opts::PrintExceptions) {
     outs() << "[LSDA at 0x" << Twine::utohexstr(getLSDAAddress())
            << " for function " << *this << "]:\n";
-    outs() << "LPStart Encoding = 0x"
-           << Twine::utohexstr(LPStartEncoding) << '\n';
+    outs() << "LPStart Encoding = 0x" << Twine::utohexstr(LPStartEncoding)
+           << '\n';
     outs() << "LPStart = 0x" << Twine::utohexstr(LPStart) << '\n';
     outs() << "TType Encoding = 0x" << Twine::utohexstr(TTypeEncoding) << '\n';
     outs() << "TType End = " << TTypeEnd << '\n';
@@ -168,8 +168,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   while (CallSitePtr < CallSiteTableEnd) {
     uint64_t Start = *Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
                                              CallSitePtr + LSDASectionAddress);
-    uint64_t Length = *Data.getEncodedPointer(
-        &CallSitePtr, CallSiteEncoding, CallSitePtr + LSDASectionAddress);
+    uint64_t Length = *Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
+                                              CallSitePtr + LSDASectionAddress);
     uint64_t LandingPad = *Data.getEncodedPointer(
         &CallSitePtr, CallSiteEncoding, CallSitePtr + LSDASectionAddress);
     uint64_t ActionEntry = Data.getULEB128(&CallSitePtr);
@@ -262,8 +262,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
             outs() << "cleanup";
         } else if (ActionType > 0) {
           // It's an index into a type table.
-          MaxTypeIndex = std::max(MaxTypeIndex,
-                                  static_cast<unsigned>(ActionType));
+          MaxTypeIndex =
+              std::max(MaxTypeIndex, static_cast<unsigned>(ActionType));
           if (opts::PrintExceptions) {
             outs() << "catch type ";
             printType(ActionType, outs());
@@ -285,9 +285,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
               TSep = ", ";
             }
           }
-          MaxTypeIndexTableOffset =
-              std::max(MaxTypeIndexTableOffset,
-                       TypeIndexTablePtr - TypeIndexTableStart);
+          MaxTypeIndexTableOffset = std::max(
+              MaxTypeIndexTableOffset, TypeIndexTablePtr - TypeIndexTableStart);
         }
 
         Sep = "; ";
@@ -394,9 +393,7 @@ void BinaryFunction::updateEHRanges() {
         std::tie(LP, Action) = *EHInfo;
 
       // No action if the exception handler has not changed.
-      if (Throws &&
-          StartRange &&
-          PreviousEH.LP == LP &&
+      if (Throws && StartRange && PreviousEH.LP == LP &&
           PreviousEH.Action == Action)
         continue;
 
@@ -432,8 +429,8 @@ void BinaryFunction::updateEHRanges() {
 
       // Close the previous range.
       if (EndRange) {
-        Sites->emplace_back(CallSite{StartRange, EndRange,
-                                     PreviousEH.LP, PreviousEH.Action});
+        Sites->emplace_back(
+            CallSite{StartRange, EndRange, PreviousEH.LP, PreviousEH.Action});
       }
 
       if (Throws) {
@@ -452,8 +449,8 @@ void BinaryFunction::updateEHRanges() {
     assert((!isSplit() || Sites == &ColdCallSites) && "sites mismatch");
     const MCSymbol *EndRange =
         IsStartInCold ? getFunctionColdEndLabel() : getFunctionEndLabel();
-    Sites->emplace_back(CallSite{StartRange, EndRange,
-                                 PreviousEH.LP, PreviousEH.Action});
+    Sites->emplace_back(
+        CallSite{StartRange, EndRange, PreviousEH.LP, PreviousEH.Action});
   }
 }
 
@@ -476,9 +473,8 @@ CFIReaderWriter::CFIReaderWriter(const DWARFDebugFrame &EHFrame) {
         } else if (opts::Verbosity > 0) {
           errs() << "BOLT-WARNING: different FDEs for function at 0x"
                  << Twine::utohexstr(FDEI->first)
-                 << " detected; sizes: "
-                 << FDEI->second->getAddressRange() << " and "
-                 << CurFDE->getAddressRange() << '\n';
+                 << " detected; sizes: " << FDEI->second->getAddressRange()
+                 << " and " << CurFDE->getAddressRange() << '\n';
         }
       }
     } else {
@@ -508,145 +504,142 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         *CurFDE.getLinkedCIE()->getPersonalityEncoding());
   }
 
-  auto decodeFrameInstruction =
-      [&Function, &Offset, Address, CodeAlignment, DataAlignment](
-          const CFIProgram::Instruction &Instr) {
-        uint8_t Opcode = Instr.Opcode;
-        if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
-          Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
-        switch (Instr.Opcode) {
-        case DW_CFA_nop:
-          break;
-        case DW_CFA_advance_loc4:
-        case DW_CFA_advance_loc2:
-        case DW_CFA_advance_loc1:
-        case DW_CFA_advance_loc:
-          // Advance our current address
-          Offset += CodeAlignment * int64_t(Instr.Ops[0]);
-          break;
-        case DW_CFA_offset_extended_sf:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createOffset(
-                          nullptr, Instr.Ops[0],
-                          DataAlignment * int64_t(Instr.Ops[1])));
-          break;
-        case DW_CFA_offset_extended:
-        case DW_CFA_offset:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createOffset(
-                          nullptr, Instr.Ops[0], DataAlignment * Instr.Ops[1]));
-          break;
-        case DW_CFA_restore_extended:
-        case DW_CFA_restore:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
-          break;
-        case DW_CFA_set_loc:
-          assert(Instr.Ops[0] >= Address && "set_loc out of function bounds");
-          assert(Instr.Ops[0] <= Address + Function.getSize() &&
-                 "set_loc out of function bounds");
-          Offset = Instr.Ops[0] - Address;
-          break;
+  auto decodeFrameInstruction = [&Function, &Offset, Address, CodeAlignment,
+                                 DataAlignment](
+                                    const CFIProgram::Instruction &Instr) {
+    uint8_t Opcode = Instr.Opcode;
+    if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
+      Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
+    switch (Instr.Opcode) {
+    case DW_CFA_nop:
+      break;
+    case DW_CFA_advance_loc4:
+    case DW_CFA_advance_loc2:
+    case DW_CFA_advance_loc1:
+    case DW_CFA_advance_loc:
+      // Advance our current address
+      Offset += CodeAlignment * int64_t(Instr.Ops[0]);
+      break;
+    case DW_CFA_offset_extended_sf:
+      Function.addCFIInstruction(
+          Offset,
+          MCCFIInstruction::createOffset(
+              nullptr, Instr.Ops[0], DataAlignment * int64_t(Instr.Ops[1])));
+      break;
+    case DW_CFA_offset_extended:
+    case DW_CFA_offset:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createOffset(nullptr, Instr.Ops[0],
+                                                 DataAlignment * Instr.Ops[1]));
+      break;
+    case DW_CFA_restore_extended:
+    case DW_CFA_restore:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_set_loc:
+      assert(Instr.Ops[0] >= Address && "set_loc out of function bounds");
+      assert(Instr.Ops[0] <= Address + Function.getSize() &&
+             "set_loc out of function bounds");
+      Offset = Instr.Ops[0] - Address;
+      break;
 
-        case DW_CFA_undefined:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
-          break;
-        case DW_CFA_same_value:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
-          break;
-        case DW_CFA_register:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createRegister(nullptr, Instr.Ops[0],
-                                                       Instr.Ops[1]));
-          break;
-        case DW_CFA_remember_state:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createRememberState(nullptr));
-          break;
-        case DW_CFA_restore_state:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createRestoreState(nullptr));
-          break;
-        case DW_CFA_def_cfa:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::cfiDefCfa(nullptr, Instr.Ops[0],
-                                                  Instr.Ops[1]));
-          break;
-        case DW_CFA_def_cfa_sf:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::cfiDefCfa(
-                          nullptr, Instr.Ops[0],
-                          DataAlignment * int64_t(Instr.Ops[1])));
-          break;
-        case DW_CFA_def_cfa_register:
-          Function.addCFIInstruction(
-              Offset,
-              MCCFIInstruction::createDefCfaRegister(nullptr, Instr.Ops[0]));
-          break;
-        case DW_CFA_def_cfa_offset:
-          Function.addCFIInstruction(
-              Offset,
-              MCCFIInstruction::cfiDefCfaOffset(nullptr, Instr.Ops[0]));
-          break;
-        case DW_CFA_def_cfa_offset_sf:
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::cfiDefCfaOffset(
-                          nullptr, DataAlignment * int64_t(Instr.Ops[0])));
-          break;
-        case DW_CFA_GNU_args_size:
-          Function.addCFIInstruction(
-              Offset,
-              MCCFIInstruction::createGnuArgsSize(nullptr, Instr.Ops[0]));
-          Function.setUsesGnuArgsSize();
-          break;
-        case DW_CFA_val_offset_sf:
-        case DW_CFA_val_offset:
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: DWARF val_offset() unimplemented\n";
-          }
-          return false;
-        case DW_CFA_def_cfa_expression:
-        case DW_CFA_val_expression:
-        case DW_CFA_expression: {
-          StringRef ExprBytes = Instr.Expression->getData();
-          std::string Str;
-          raw_string_ostream OS(Str);
-          // Manually encode this instruction using CFI escape
-          OS << Opcode;
-          if (Opcode != DW_CFA_def_cfa_expression) {
-            encodeULEB128(Instr.Ops[0], OS);
-          }
-          encodeULEB128(ExprBytes.size(), OS);
-          OS << ExprBytes;
-          Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createEscape(nullptr, OS.str()));
-          break;
-        }
-        case DW_CFA_MIPS_advance_loc8:
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
-          }
-          return false;
-        case DW_CFA_GNU_window_save:
-        case DW_CFA_lo_user:
-        case DW_CFA_hi_user:
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user "
-                      "unimplemented\n";
-          }
-          return false;
-        default:
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: Unrecognized CFI instruction: "
-                   << Instr.Opcode << '\n';
-          }
-          return false;
-        }
+    case DW_CFA_undefined:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_same_value:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_register:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createRegister(nullptr, Instr.Ops[0],
+                                                   Instr.Ops[1]));
+      break;
+    case DW_CFA_remember_state:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createRememberState(nullptr));
+      break;
+    case DW_CFA_restore_state:
+      Function.addCFIInstruction(Offset,
+                                 MCCFIInstruction::createRestoreState(nullptr));
+      break;
+    case DW_CFA_def_cfa:
+      Function.addCFIInstruction(
+          Offset,
+          MCCFIInstruction::cfiDefCfa(nullptr, Instr.Ops[0], Instr.Ops[1]));
+      break;
+    case DW_CFA_def_cfa_sf:
+      Function.addCFIInstruction(
+          Offset,
+          MCCFIInstruction::cfiDefCfa(nullptr, Instr.Ops[0],
+                                      DataAlignment * int64_t(Instr.Ops[1])));
+      break;
+    case DW_CFA_def_cfa_register:
+      Function.addCFIInstruction(Offset, MCCFIInstruction::createDefCfaRegister(
+                                             nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_def_cfa_offset:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::cfiDefCfaOffset(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_def_cfa_offset_sf:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::cfiDefCfaOffset(
+                      nullptr, DataAlignment * int64_t(Instr.Ops[0])));
+      break;
+    case DW_CFA_GNU_args_size:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createGnuArgsSize(nullptr, Instr.Ops[0]));
+      Function.setUsesGnuArgsSize();
+      break;
+    case DW_CFA_val_offset_sf:
+    case DW_CFA_val_offset:
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: DWARF val_offset() unimplemented\n";
+      }
+      return false;
+    case DW_CFA_def_cfa_expression:
+    case DW_CFA_val_expression:
+    case DW_CFA_expression: {
+      StringRef ExprBytes = Instr.Expression->getData();
+      std::string Str;
+      raw_string_ostream OS(Str);
+      // Manually encode this instruction using CFI escape
+      OS << Opcode;
+      if (Opcode != DW_CFA_def_cfa_expression) {
+        encodeULEB128(Instr.Ops[0], OS);
+      }
+      encodeULEB128(ExprBytes.size(), OS);
+      OS << ExprBytes;
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createEscape(nullptr, OS.str()));
+      break;
+    }
+    case DW_CFA_MIPS_advance_loc8:
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
+      }
+      return false;
+    case DW_CFA_GNU_window_save:
+    case DW_CFA_lo_user:
+    case DW_CFA_hi_user:
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: DW_CFA_GNU_* and DW_CFA_*_user "
+                  "unimplemented\n";
+      }
+      return false;
+    default:
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: Unrecognized CFI instruction: " << Instr.Opcode
+               << '\n';
+      }
+      return false;
+    }
 
-        return true;
-      };
+    return true;
+  };
 
   for (const CFIProgram::Instruction &Instr : CurFDE.getLinkedCIE()->cfis()) {
     if (!decodeFrameInstruction(Instr))
@@ -662,8 +655,7 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
 }
 
 std::vector<char> CFIReaderWriter::generateEHFrameHeader(
-    const DWARFDebugFrame &OldEHFrame,
-    const DWARFDebugFrame &NewEHFrame,
+    const DWARFDebugFrame &OldEHFrame, const DWARFDebugFrame &NewEHFrame,
     uint64_t EHFrameHeaderAddress,
     std::vector<uint64_t> &FailedAddresses) const {
   // Common PC -> FDE map to be written into .eh_frame_hdr.
@@ -740,7 +732,7 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
 
   // Address of eh_frame. Use the new one.
   support::ulittle32_t::ref(EHFrameHeader.data() + 4) =
-    NewEHFrame.getEHFrameAddress() - (EHFrameHeaderAddress + 4);
+      NewEHFrame.getEHFrameAddress() - (EHFrameHeaderAddress + 4);
 
   // Number of entries in the table (FDE count).
   support::ulittle32_t::ref(EHFrameHeader.data() + 8) = PCToFDE.size();
@@ -828,7 +820,7 @@ Error EHFrameParser::parseCIE(uint64_t StartOffset) {
 }
 
 Error EHFrameParser::parseFDE(uint64_t CIEPointer,
-                               uint64_t StartStructureOffset) {
+                              uint64_t StartStructureOffset) {
   Optional<uint64_t> LSDAAddress;
   CIEInfo *Cie = CIEs[StartStructureOffset - CIEPointer];
 
@@ -895,7 +887,7 @@ Error EHFrameParser::parse() {
 }
 
 Error EHFrameParser::parse(DWARFDataExtractor Data, uint64_t EHFrameAddress,
-                            PatcherCallbackTy PatcherCallback) {
+                           PatcherCallbackTy PatcherCallback) {
   EHFrameParser Parser(Data, EHFrameAddress, PatcherCallback);
   return Parser.parse();
 }

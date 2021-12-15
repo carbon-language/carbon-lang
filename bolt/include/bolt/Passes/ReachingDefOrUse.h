@@ -59,9 +59,7 @@ public:
     return (*this->getStateAt(B))[this->ExprToIdx[&A]];
   }
 
-  void run() {
-    InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>::run();
-  }
+  void run() { InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>::run(); }
 
 protected:
   /// Reference to the result of reg analysis
@@ -132,8 +130,7 @@ protected:
       if (TrackingReg == None) {
         // Track all instructions
         Next.set(this->ExprToIdx[&Point]);
-      }
-      else {
+      } else {
         // Track only instructions relevant to TrackingReg
         BitVector Regs = BitVector(this->BC.MRI->getNumRegs(), false);
         if (Def)
@@ -157,6 +154,5 @@ protected:
 
 } // end namespace bolt
 } // end namespace llvm
-
 
 #endif

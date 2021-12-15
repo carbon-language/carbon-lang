@@ -62,8 +62,7 @@ public:
   ProfileReaderBase &operator=(ProfileReaderBase &&) = delete;
 
   /// Construct a reader for a given file.
-  explicit ProfileReaderBase(StringRef Filename)
-    : Filename(Filename) {}
+  explicit ProfileReaderBase(StringRef Filename) : Filename(Filename) {}
 
   virtual ~ProfileReaderBase() = default;
 
@@ -96,14 +95,10 @@ public:
 
   /// Return true if the profile contains an entry for a local object
   /// that has an associated file name.
-  virtual bool hasLocalsWithFileName() const {
-    return true;
-  }
+  virtual bool hasLocalsWithFileName() const { return true; }
 
   /// Return all event names used to collect this profile.
-  virtual StringSet<> getEventNames() const {
-    return StringSet<>();
-  }
+  virtual StringSet<> getEventNames() const { return StringSet<>(); }
 
   /// Return true if the source of the profile should be trusted. E.g., even
   /// good source of profile data may contain discrepancies. Nevertheless, the
@@ -111,7 +106,7 @@ public:
   virtual bool isTrustedSource() const = 0;
 };
 
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

@@ -359,7 +359,7 @@ bool RegReAssign::conservativePassOverFunction(BinaryFunction &Function) {
 }
 
 void RegReAssign::setupAggressivePass(BinaryContext &BC,
-                                     std::map<uint64_t, BinaryFunction> &BFs) {
+                                      std::map<uint64_t, BinaryFunction> &BFs) {
   setupConservativePass(BC, BFs);
   CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC)));
   RA.reset(new RegAnalysis(BC, &BFs, &*CG));
@@ -446,5 +446,5 @@ void RegReAssign::runOnFunctions(BinaryContext &BC) {
   outs() << "\t   " << DynBytesSaved << " dynamic bytes saved.\n";
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

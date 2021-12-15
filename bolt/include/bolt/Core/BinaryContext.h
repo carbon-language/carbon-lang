@@ -84,22 +84,22 @@ inline raw_ostream &operator<<(raw_ostream &OS, const SegmentInfo &SegInfo) {
 }
 
 enum class MemoryContentsType : char {
-  UNKNOWN = 0,              /// Unknown contents.
-  POSSIBLE_JUMP_TABLE,      /// Possibly a non-PIC jump table.
-  POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a PIC jump table.
+  UNKNOWN = 0,             /// Unknown contents.
+  POSSIBLE_JUMP_TABLE,     /// Possibly a non-PIC jump table.
+  POSSIBLE_PIC_JUMP_TABLE, /// Possibly a PIC jump table.
 };
 
 /// Helper function to truncate a \p Value to given size in \p Bytes.
 inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
-  return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
+  return Value & ((uint64_t)(int64_t)-1 >> (64 - Bytes * 8));
 }
 
 /// Filter iterator.
 template <typename ItrType,
-          typename PredType = std::function<bool (const ItrType &)>>
+          typename PredType = std::function<bool(const ItrType &)>>
 class FilterIterator
-  : public std::iterator<std::bidirectional_iterator_tag,
-                         typename std::iterator_traits<ItrType>::value_type> {
+    : public std::iterator<std::bidirectional_iterator_tag,
+                           typename std::iterator_traits<ItrType>::value_type> {
   using Iterator = FilterIterator;
   using T = typename std::iterator_traits<ItrType>::reference;
   using PointerT = typename std::iterator_traits<ItrType>::pointer;
@@ -119,21 +119,18 @@ class FilterIterator
     while (Itr != End && !Pred(Itr))
       ++Itr;
   }
+
 public:
   Iterator &operator++() { next(); return *this; }
   Iterator &operator--() { prev(); return *this; }
   Iterator operator++(int) { auto Tmp(Itr); next(); return Tmp; }
   Iterator operator--(int) { auto Tmp(Itr); prev(); return Tmp; }
-  bool operator==(const Iterator& Other) const {
-    return Itr == Other.Itr;
-  }
-  bool operator!=(const Iterator& Other) const {
-    return !operator==(Other);
-  }
+  bool operator==(const Iterator &Other) const { return Itr == Other.Itr; }
+  bool operator!=(const Iterator &Other) const { return !operator==(Other); }
   T operator*() { return *Itr; }
   PointerT operator->() { return &operator*(); }
   FilterIterator(PredType Pred, ItrType Itr, ItrType End)
-    : Pred(Pred), Itr(Itr), End(End) {
+      : Pred(Pred), Itr(Itr), End(End) {
     nextMatching();
   }
 };
@@ -273,7 +270,7 @@ public:
   BinaryDataMapType BinaryDataMap;
 
   using FilteredBinaryDataConstIterator =
-    FilterIterator<binary_data_const_iterator>;
+      FilterIterator<binary_data_const_iterator>;
   using FilteredBinaryDataIterator = FilterIterator<binary_data_iterator>;
 
   /// Memory manager for sections and segments. Used to communicate with ORC
@@ -292,12 +289,8 @@ public:
   }
   void setFileBuildID(StringRef ID) { FileBuildID = std::string(ID); }
 
-  bool hasSymbolsWithFileName() const {
-    return HasSymbolsWithFileName;
-  }
-  void setHasSymbolsWithFileName(bool Value) {
-    HasSymbolsWithFileName = true;
-  }
+  bool hasSymbolsWithFileName() const { return HasSymbolsWithFileName; }
+  void setHasSymbolsWithFileName(bool Value) { HasSymbolsWithFileName = true; }
 
   /// Return true if relocations against symbol with a given name
   /// must be created.
@@ -306,9 +299,7 @@ public:
   uint64_t getNumUnusedProfiledObjects() const {
     return NumUnusedProfiledObjects;
   }
-  void setNumUnusedProfiledObjects(uint64_t N) {
-    NumUnusedProfiledObjects = N;
-  }
+  void setNumUnusedProfiledObjects(uint64_t N) { NumUnusedProfiledObjects = N; }
 
   RuntimeLibrary *getRuntimeLibrary() { return RtLibrary.get(); }
   void setRuntimeLibrary(std::unique_ptr<RuntimeLibrary> Lib) {
@@ -341,8 +332,8 @@ public:
   BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address);
 
   const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const {
-    return const_cast<BinaryContext *>(this)->
-        getBinaryFunctionAtAddress(Address);
+    return const_cast<BinaryContext *>(this)->getBinaryFunctionAtAddress(
+        Address);
   }
 
   /// Return size of an entry for the given jump table \p Type.
@@ -365,7 +356,8 @@ public:
 
   unsigned getDWARFEncodingSize(unsigned Encoding) {
     switch (Encoding & 0x0f) {
-    default: llvm_unreachable("unknown encoding");
+    default:
+      llvm_unreachable("unknown encoding");
     case dwarf::DW_EH_PE_absptr:
     case dwarf::DW_EH_PE_signed:
       return AsmInfo->getCodePointerSize();
@@ -385,8 +377,7 @@ public:
   ///
   /// As we fold identical functions, multiple symbols can point
   /// to the same BinaryFunction.
-  std::unordered_map<const MCSymbol *,
-                     BinaryFunction *> SymbolToFunctionMap;
+  std::unordered_map<const MCSymbol *, BinaryFunction *> SymbolToFunctionMap;
 
   /// A mutex that is used to control parallel accesses to SymbolToFunctionMap
   mutable std::shared_timed_mutex SymbolToFunctionMapMutex;
@@ -426,10 +417,8 @@ public:
 
   /// Construct BinaryFunction object and add it to internal maps.
   BinaryFunction *createBinaryFunction(const std::string &Name,
-                                       BinarySection &Section,
-                                       uint64_t Address,
-                                       uint64_t Size,
-                                       uint64_t SymbolSize = 0,
+                                       BinarySection &Section, uint64_t Address,
+                                       uint64_t Size, uint64_t SymbolSize = 0,
                                        uint16_t Alignment = 0);
 
   /// Return all functions for this rewrite instance.
@@ -474,8 +463,7 @@ public:
   /// Optionally, populate \p Offsets with jump table entries. The entries
   /// could be partially populated if the jump table detection fails.
   bool analyzeJumpTable(const uint64_t Address,
-                        const JumpTable::JumpTableType Type,
-                        BinaryFunction &BF,
+                        const JumpTable::JumpTableType Type, BinaryFunction &BF,
                         const uint64_t NextJTAddress = 0,
                         JumpTable::OffsetsType *Offsets = nullptr);
 
@@ -635,10 +623,8 @@ public:
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
-                std::unique_ptr<Triple> TheTriple,
-                const Target *TheTarget,
-                std::string TripleName,
-                std::unique_ptr<MCCodeEmitter> MCE,
+                std::unique_ptr<Triple> TheTriple, const Target *TheTarget,
+                std::string TripleName, std::unique_ptr<MCCodeEmitter> MCE,
                 std::unique_ptr<MCObjectFileInfo> MOFI,
                 std::unique_ptr<const MCAsmInfo> AsmInfo,
                 std::unique_ptr<const MCInstrInfo> MII,
@@ -653,13 +639,9 @@ public:
 
   std::unique_ptr<MCObjectWriter> createObjectWriter(raw_pwrite_stream &OS);
 
-  bool isELF() const {
-    return TheTriple->isOSBinFormatELF();
-  }
+  bool isELF() const { return TheTriple->isOSBinFormatELF(); }
 
-  bool isMachO() const {
-    return TheTriple->isOSBinFormatMachO();
-  }
+  bool isMachO() const { return TheTriple->isOSBinFormatMachO(); }
 
   bool isAArch64() const {
     return TheTriple->getArch() == llvm::Triple::aarch64;
@@ -688,10 +670,9 @@ public:
       --Begin;
     }
     auto End = BinaryDataMap.upper_bound(Section.getEndAddress());
-    auto pred =
-      [&Section](const binary_data_const_iterator &Itr) -> bool {
-        return Itr->second->getSection() == Section;
-      };
+    auto pred = [&Section](const binary_data_const_iterator &Itr) -> bool {
+      return Itr->second->getSection() == Section;
+    };
     return make_range(FilteredBinaryDataConstIterator(pred, Begin, End),
                       FilteredBinaryDataConstIterator(pred, End, End));
   }
@@ -726,9 +707,8 @@ public:
   /// Process \p Address reference from code in function \BF.
   /// \p IsPCRel indicates if the reference is PC-relative.
   /// Return <Symbol, Addend> pair corresponding to the \p Address.
-  std::pair<const MCSymbol *, uint64_t> handleAddressRef(uint64_t Address,
-                                                         BinaryFunction &BF,
-                                                         bool IsPCRel);
+  std::pair<const MCSymbol *, uint64_t>
+  handleAddressRef(uint64_t Address, BinaryFunction &BF, bool IsPCRel);
 
   /// Analyze memory contents at the given \p Address and return the type of
   /// memory contents (such as a possible jump table).
@@ -747,10 +727,8 @@ public:
   /// If no symbol exists, create one with unique name using \p Prefix.
   /// If there are multiple symbols registered at the \p Address, then
   /// return the first one.
-  MCSymbol *getOrCreateGlobalSymbol(uint64_t Address,
-                                    Twine Prefix,
-                                    uint64_t Size = 0,
-                                    uint16_t Alignment = 0,
+  MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix,
+                                    uint64_t Size = 0, uint16_t Alignment = 0,
                                     unsigned Flags = 0);
 
   /// Create a global symbol without registering an address.
@@ -759,10 +737,8 @@ public:
   /// Register a symbol with \p Name at a given \p Address using \p Size,
   /// \p Alignment, and \p Flags. See llvm::SymbolRef::Flags for the definition
   /// of \p Flags.
-  MCSymbol *registerNameAtAddress(StringRef Name,
-                                  uint64_t Address,
-                                  uint64_t Size,
-                                  uint16_t Alignment,
+  MCSymbol *registerNameAtAddress(StringRef Name, uint64_t Address,
+                                  uint64_t Size, uint16_t Alignment,
                                   unsigned Flags = 0);
 
   /// Return BinaryData registered at a given \p Address or nullptr if no
@@ -780,14 +756,13 @@ public:
   /// Look up the symbol entry that contains the given \p Address (based on
   /// the start address and size for each symbol).  Returns a pointer to
   /// the BinaryData for that symbol.  If no data is found, nullptr is returned.
-  const BinaryData *
-  getBinaryDataContainingAddress(uint64_t Address) const {
+  const BinaryData *getBinaryDataContainingAddress(uint64_t Address) const {
     return getBinaryDataContainingAddressImpl(Address);
   }
 
   BinaryData *getBinaryDataContainingAddress(uint64_t Address) {
-    return
-      const_cast<BinaryData *>(getBinaryDataContainingAddressImpl(Address));
+    return const_cast<BinaryData *>(
+        getBinaryDataContainingAddressImpl(Address));
   }
 
   /// Return BinaryData for the given \p Name or nullptr if no
@@ -805,8 +780,7 @@ public:
   /// Return true if \p SymbolName was generated internally and was not present
   /// in the input binary.
   bool isInternalSymbolName(const StringRef Name) {
-    return Name.startswith("SYMBOLat") ||
-           Name.startswith("DATAat") ||
+    return Name.startswith("SYMBOLat") || Name.startswith("DATAat") ||
            Name.startswith("HOLEat");
   }
 
@@ -818,9 +792,7 @@ public:
     return Ctx->getOrCreateSymbol("__hot_end");
   }
 
-  MCSection *getTextSection() const {
-    return MOFI->getTextSection();
-  }
+  MCSection *getTextSection() const { return MOFI->getTextSection(); }
 
   /// Return code section with a given name.
   MCSection *getCodeSection(StringRef SectionName) const {
@@ -841,21 +813,13 @@ public:
   /// \name Pre-assigned Section Names
   /// @{
 
-  const char *getMainCodeSectionName() const {
-    return ".text";
-  }
+  const char *getMainCodeSectionName() const { return ".text"; }
 
-  const char *getColdCodeSectionName() const {
-    return ".text.cold";
-  }
+  const char *getColdCodeSectionName() const { return ".text.cold"; }
 
-  const char *getHotTextMoverSectionName() const {
-    return ".text.mover";
-  }
+  const char *getHotTextMoverSectionName() const { return ".text.mover"; }
 
-  const char *getInjectedCodeSectionName() const {
-    return ".text.injected";
-  }
+  const char *getInjectedCodeSectionName() const { return ".text.injected"; }
 
   const char *getInjectedColdCodeSectionName() const {
     return ".text.injected.cold";
@@ -892,7 +856,7 @@ public:
   bool setBinaryDataSize(uint64_t Address, uint64_t Size);
 
   /// Print the global symbol table.
-  void printGlobalSymbols(raw_ostream& OS) const;
+  void printGlobalSymbols(raw_ostream &OS) const;
 
   /// Register information about the given \p Section so we can look up
   /// sections by address.
@@ -905,8 +869,7 @@ public:
   /// Register or update the information for the section with the given
   /// /p Name.  If the section already exists, the information in the
   /// section will be updated with the new data.
-  BinarySection &registerOrUpdateSection(StringRef Name,
-                                         unsigned ELFType,
+  BinarySection &registerOrUpdateSection(StringRef Name, unsigned ELFType,
                                          unsigned ELFFlags,
                                          uint8_t *Data = nullptr,
                                          uint64_t Size = 0,
@@ -916,15 +879,13 @@ public:
   /// with the given /p Name.  If the section already exists, the
   /// information in the section will be updated with the new data.
   BinarySection &
-  registerOrUpdateNoteSection(StringRef Name,
-                              uint8_t *Data = nullptr,
-                              uint64_t Size = 0,
-                              unsigned Alignment = 1,
+  registerOrUpdateNoteSection(StringRef Name, uint8_t *Data = nullptr,
+                              uint64_t Size = 0, unsigned Alignment = 1,
                               bool IsReadOnly = true,
                               unsigned ELFType = ELF::SHT_PROGBITS) {
     return registerOrUpdateSection(Name, ELFType,
-                                   BinarySection::getFlags(IsReadOnly),
-                                   Data, Size, Alignment);
+                                   BinarySection::getFlags(IsReadOnly), Data,
+                                   Size, Alignment);
   }
 
   /// Remove the given /p Section from the set of all sections.  Return
@@ -933,15 +894,10 @@ public:
 
   /// Iterate over all registered sections.
   iterator_range<FilteredSectionIterator> sections() {
-    auto notNull = [](const SectionIterator &Itr) {
-      return (bool)*Itr;
-    };
-    return make_range(FilteredSectionIterator(notNull,
-                                              Sections.begin(),
-                                              Sections.end()),
-                      FilteredSectionIterator(notNull,
-                                              Sections.end(),
-                                              Sections.end()));
+    auto notNull = [](const SectionIterator &Itr) { return (bool)*Itr; };
+    return make_range(
+        FilteredSectionIterator(notNull, Sections.begin(), Sections.end()),
+        FilteredSectionIterator(notNull, Sections.end(), Sections.end()));
   }
 
   /// Iterate over all registered sections.
@@ -954,12 +910,10 @@ public:
     auto isAllocatable = [](const SectionIterator &Itr) {
       return *Itr && Itr->isAllocatable();
     };
-    return make_range(FilteredSectionIterator(isAllocatable,
-                                              Sections.begin(),
-                                              Sections.end()),
-                      FilteredSectionIterator(isAllocatable,
-                                              Sections.end(),
-                                              Sections.end()));
+    return make_range(
+        FilteredSectionIterator(isAllocatable, Sections.begin(),
+                                Sections.end()),
+        FilteredSectionIterator(isAllocatable, Sections.end(), Sections.end()));
   }
 
   /// Iterate over all registered code sections.
@@ -967,12 +921,9 @@ public:
     auto isText = [](const SectionIterator &Itr) {
       return *Itr && Itr->isAllocatable() && Itr->isText();
     };
-    return make_range(FilteredSectionIterator(isText,
-                                              Sections.begin(),
-                                              Sections.end()),
-                      FilteredSectionIterator(isText,
-                                              Sections.end(),
-                                              Sections.end()));
+    return make_range(
+        FilteredSectionIterator(isText, Sections.begin(), Sections.end()),
+        FilteredSectionIterator(isText, Sections.end(), Sections.end()));
   }
 
   /// Iterate over all registered allocatable sections.
@@ -985,12 +936,9 @@ public:
     auto notAllocated = [](const SectionIterator &Itr) {
       return *Itr && !Itr->isAllocatable();
     };
-    return make_range(FilteredSectionIterator(notAllocated,
-                                              Sections.begin(),
-                                              Sections.end()),
-                      FilteredSectionIterator(notAllocated,
-                                              Sections.end(),
-                                              Sections.end()));
+    return make_range(
+        FilteredSectionIterator(notAllocated, Sections.begin(), Sections.end()),
+        FilteredSectionIterator(notAllocated, Sections.end(), Sections.end()));
   }
 
   /// Iterate over all registered non-allocatable sections.
@@ -1004,10 +952,8 @@ public:
       return *Itr && Itr->isAllocatable() && Itr->isRela();
     };
     return make_range(FilteredSectionIterator(isAllocatableRela,
-                                              Sections.begin(),
-                                              Sections.end()),
-                      FilteredSectionIterator(isAllocatableRela,
-                                              Sections.end(),
+                                              Sections.begin(), Sections.end()),
+                      FilteredSectionIterator(isAllocatableRela, Sections.end(),
                                               Sections.end()));
   }
 
@@ -1020,7 +966,7 @@ public:
   ErrorOr<StringRef> getSectionNameForAddress(uint64_t Address) const;
 
   /// Print all sections.
-  void printSections(raw_ostream& OS) const;
+  void printSections(raw_ostream &OS) const;
 
   /// Return largest section containing the given \p Address.  These
   /// functions only work for allocatable sections, i.e. ones with non-zero
@@ -1106,10 +1052,11 @@ public:
   BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol,
                                        uint64_t *EntryDesc = nullptr);
 
-  const BinaryFunction *getFunctionForSymbol(
-      const MCSymbol *Symbol, uint64_t *EntryDesc = nullptr) const {
-    return const_cast<BinaryContext *>(this)->
-        getFunctionForSymbol(Symbol, EntryDesc);
+  const BinaryFunction *
+  getFunctionForSymbol(const MCSymbol *Symbol,
+                       uint64_t *EntryDesc = nullptr) const {
+    return const_cast<BinaryContext *>(this)->getFunctionForSymbol(Symbol,
+                                                                   EntryDesc);
   }
 
   /// Associate the symbol \p Sym with the function \p BF for lookups with
@@ -1123,8 +1070,7 @@ public:
 
   /// Add a filename entry from SrcCUID to DestCUID.
   unsigned addDebugFilenameToUnit(const uint32_t DestCUID,
-                                  const uint32_t SrcCUID,
-                                  unsigned FileIndex);
+                                  const uint32_t SrcCUID, unsigned FileIndex);
 
   /// Return functions in output layout order
   std::vector<BinaryFunction *> getSortedFunctions();
@@ -1136,8 +1082,8 @@ public:
   ///
   /// Return the pair where the first size is for the main part, and the second
   /// size is for the cold one.
-  std::pair<size_t, size_t>
-  calculateEmittedSize(BinaryFunction &BF, bool FixBranches = true);
+  std::pair<size_t, size_t> calculateEmittedSize(BinaryFunction &BF,
+                                                 bool FixBranches = true);
 
   /// Calculate the size of the instruction \p Inst optionally using a
   /// user-supplied emitter for lock-free multi-thread work. MCCodeEmitter is
@@ -1202,27 +1148,22 @@ public:
   /// info.
   /// If printMCInst is true, the instruction is also printed in the
   /// architecture independent format.
-  void printInstruction(raw_ostream &OS,
-                        const MCInst &Instruction,
+  void printInstruction(raw_ostream &OS, const MCInst &Instruction,
                         uint64_t Offset = 0,
                         const BinaryFunction *Function = nullptr,
-                        bool PrintMCInst = false,
-                        bool PrintMemData = false,
+                        bool PrintMCInst = false, bool PrintMemData = false,
                         bool PrintRelocations = false) const;
 
   /// Print a range of instructions.
   template <typename Itr>
-  uint64_t printInstructions(raw_ostream &OS,
-                             Itr Begin,
-                             Itr End,
-                             uint64_t Offset = 0,
-                             const BinaryFunction *Function = nullptr,
-                             bool PrintMCInst = false,
-                             bool PrintMemData = false,
-                             bool PrintRelocations = false) const {
+  uint64_t
+  printInstructions(raw_ostream &OS, Itr Begin, Itr End, uint64_t Offset = 0,
+                    const BinaryFunction *Function = nullptr,
+                    bool PrintMCInst = false, bool PrintMemData = false,
+                    bool PrintRelocations = false) const {
     while (Begin != End) {
-      printInstruction(OS, *Begin, Offset, Function, PrintMCInst,
-                       PrintMemData, PrintRelocations);
+      printInstruction(OS, *Begin, Offset, Function, PrintMCInst, PrintMemData,
+                       PrintRelocations);
       Offset += computeCodeSize(Begin, Begin + 1);
       ++Begin;
     }
@@ -1274,10 +1215,8 @@ public:
   }
 };
 
-template <typename T,
-          typename = std::enable_if_t<sizeof(T) == 1> >
-inline raw_ostream &operator<<(raw_ostream &OS,
-                               const ArrayRef<T> &ByteArray) {
+template <typename T, typename = std::enable_if_t<sizeof(T) == 1>>
+inline raw_ostream &operator<<(raw_ostream &OS, const ArrayRef<T> &ByteArray) {
   const char *Sep = "";
   for (const auto Byte : ByteArray) {
     OS << Sep << format("%.2x", Byte);

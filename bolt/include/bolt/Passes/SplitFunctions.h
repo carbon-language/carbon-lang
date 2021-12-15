@@ -23,10 +23,10 @@ class SplitFunctions : public BinaryFunctionPass {
 public:
   /// Settings for splitting function bodies into hot/cold partitions.
   enum SplittingType : char {
-    ST_NONE = 0,      /// Do not split functions.
-    ST_LARGE,         /// In non-relocation mode, only split functions that
-                      /// are too large to fit into the original space.
-    ST_ALL,           /// Split all functions.
+    ST_NONE = 0, /// Do not split functions.
+    ST_LARGE,    /// In non-relocation mode, only split functions that
+                 /// are too large to fit into the original space.
+    ST_ALL,      /// Split all functions.
   };
 
 private:
@@ -38,13 +38,11 @@ private:
 
 public:
   explicit SplitFunctions(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
   bool shouldOptimize(const BinaryFunction &BF) const override;
 
-  const char *getName() const override {
-    return "split-functions";
-  }
+  const char *getName() const override { return "split-functions"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 };

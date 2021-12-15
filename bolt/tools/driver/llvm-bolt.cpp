@@ -26,7 +26,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
@@ -126,7 +125,7 @@ void heatmapMode(int argc, char **argv) {
   std::unique_ptr<char *[]> FakeArgv;
   if (argc == 1 || strcmp(argv[1], "heatmap")) {
     ++argc;
-    FakeArgv.reset(new char *[argc+1]);
+    FakeArgv.reset(new char *[argc + 1]);
     FakeArgv[0] = argv[0];
     FakeArgv[1] = const_cast<char *>("heatmap");
     for (int I = 2; I < argc; ++I)
@@ -205,7 +204,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   std::string ToolPath = GetExecutablePath(argv[0]);
 
@@ -236,7 +235,6 @@ int main(int argc, char **argv) {
   else
     boltMode(argc, argv);
 
-
   if (!sys::fs::exists(opts::InputFilename))
     report_error(opts::InputFilename, errc::no_such_file_or_directory);
 
@@ -253,8 +251,10 @@ int main(int argc, char **argv) {
       if (!opts::PerfData.empty()) {
         if (!opts::AggregateOnly) {
           errs() << ToolName
-            << ": WARNING: reading perf data directly is unsupported, please use "
-            "-aggregate-only or perf2bolt.\n!!! Proceed on your own risk. !!!\n";
+                 << ": WARNING: reading perf data directly is unsupported, "
+                    "please use "
+                    "-aggregate-only or perf2bolt.\n!!! Proceed on your own "
+                    "risk. !!!\n";
         }
         if (Error E = RI.setProfile(opts::PerfData))
           report_error(opts::PerfData, std::move(E));

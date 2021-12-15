@@ -22,7 +22,6 @@
 #include <cstdint>
 #include <limits>
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt-debug-info"
 
 namespace opts {
@@ -41,10 +40,9 @@ namespace {
 // the form (begin address, range size), otherwise (begin address, end address).
 // Terminates the list by writing a pair of two zeroes.
 // Returns the number of written bytes.
-uint64_t writeAddressRanges(
-    raw_svector_ostream &Stream,
-    const DebugAddressRangesVector &AddressRanges,
-    const bool WriteRelativeRanges = false) {
+uint64_t writeAddressRanges(raw_svector_ostream &Stream,
+                            const DebugAddressRangesVector &AddressRanges,
+                            const bool WriteRelativeRanges = false) {
   for (const DebugAddressRange &Range : AddressRanges) {
     support::endian::write(Stream, Range.LowPC, support::little);
     support::endian::write(
@@ -125,7 +123,7 @@ void DebugARangesSectionWriter::writeARangesSection(
     // + 2*sizeof(uint64_t) bytes for each of the ranges, plus an extra
     // pair of uint64_t's for the terminating, zero-length range.
     // Does not include size field itself.
-    uint32_t Size = 8 + 4 + 2*sizeof(uint64_t) * (AddressRanges.size() + 1);
+    uint32_t Size = 8 + 4 + 2 * sizeof(uint64_t) * (AddressRanges.size() + 1);
 
     // Header field #1: set size.
     support::endian::write(RangesStream, Size, support::little);
@@ -367,7 +365,8 @@ void SimpleBinaryPatcher::addLEPatch(uint32_t Offset, uint64_t NewValue,
   Patches.emplace_back(Offset, LE64);
 }
 
-void SimpleBinaryPatcher::addUDataPatch(uint32_t Offset, uint64_t Value, uint64_t Size) {
+void SimpleBinaryPatcher::addUDataPatch(uint32_t Offset, uint64_t Value,
+                                        uint64_t Size) {
   std::string Buff;
   raw_string_ostream OS(Buff);
   encodeULEB128(Value, OS, Size);
@@ -389,7 +388,7 @@ void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents,
     uint32_t Offset = Patch.first - DWPOffset;
     const std::string &ByteSequence = Patch.second;
     assert(Offset + ByteSequence.size() <= BinaryContents.size() &&
-        "Applied patch runs over binary size.");
+           "Applied patch runs over binary size.");
     for (uint64_t I = 0, Size = ByteSequence.size(); I < Size; ++I) {
       BinaryContents[Offset + I] = ByteSequence[I];
     }

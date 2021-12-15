@@ -38,19 +38,16 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
     return DataCopy;
   }
 
-  if (!IsCode &&
-      (SectionName == ".strtab" ||
-       SectionName == ".symtab" ||
-       SectionName == "" ||
-       SectionName.startswith(".rela."))) {
+  if (!IsCode && (SectionName == ".strtab" || SectionName == ".symtab" ||
+                  SectionName == "" || SectionName.startswith(".rela."))) {
     return SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
                                                      SectionName, IsReadOnly);
   }
 
   uint8_t *Ret;
   if (IsCode) {
-    Ret = SectionMemoryManager::allocateCodeSection(Size, Alignment,
-                                                    SectionID, SectionName);
+    Ret = SectionMemoryManager::allocateCodeSection(Size, Alignment, SectionID,
+                                                    SectionName);
   } else {
     Ret = SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
                                                     SectionName, IsReadOnly);
@@ -93,8 +90,8 @@ bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
   return SectionMemoryManager::finalizeMemory(ErrMsg);
 }
 
-ExecutableFileMemoryManager::~ExecutableFileMemoryManager() { }
+ExecutableFileMemoryManager::~ExecutableFileMemoryManager() {}
 
-}
+} // namespace bolt
 
-}
+} // namespace llvm

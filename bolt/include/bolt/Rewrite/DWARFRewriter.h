@@ -121,25 +121,21 @@ class DWARFRewriter {
     DWARFUnit *Unit;
     DWARFDebugInfoEntry DIE;
 
-    DWARFDieWrapper(DWARFUnit *Unit, DWARFDebugInfoEntry DIE) :
-      Unit(Unit),
-      DIE(DIE) {}
+    DWARFDieWrapper(DWARFUnit *Unit, DWARFDebugInfoEntry DIE)
+        : Unit(Unit), DIE(DIE) {}
 
-    DWARFDieWrapper(DWARFDie &Die) :
-      Unit(Die.getDwarfUnit()),
-      DIE(*Die.getDebugInfoEntry()) {}
+    DWARFDieWrapper(DWARFDie &Die)
+        : Unit(Die.getDwarfUnit()), DIE(*Die.getDebugInfoEntry()) {}
 
-    operator DWARFDie() {
-      return DWARFDie(Unit, &DIE);
-    }
+    operator DWARFDie() { return DWARFDie(Unit, &DIE); }
   };
 
   /// DIEs with abbrevs that were not converted to DW_AT_ranges.
   /// We only update those when all DIEs have been processed to guarantee that
   /// the abbrev (which is shared) is intact.
   using PendingRangesType = std::unordered_map<
-    const DWARFAbbreviationDeclaration *,
-    std::vector<std::pair<DWARFDieWrapper, DebugAddressRange>>>;
+      const DWARFAbbreviationDeclaration *,
+      std::vector<std::pair<DWARFDieWrapper, DebugAddressRange>>>;
 
   PendingRangesType PendingRanges;
 

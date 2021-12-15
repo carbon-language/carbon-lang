@@ -39,16 +39,16 @@ class BinaryData;
 class BinarySection {
   friend class BinaryContext;
 
-  BinaryContext &BC;          // Owning BinaryContext
-  std::string Name;           // Section name
-  const SectionRef Section;   // SectionRef (may be null)
-  StringRef Contents;         // Input section contents
-  const uint64_t Address;     // Address of section in input binary (may be 0)
-  const uint64_t Size;        // Input section size
-  uint64_t InputFileOffset{0};// Offset in the input binary
-  unsigned Alignment;         // alignment in bytes (must be > 0)
-  unsigned ELFType;           // ELF section type
-  unsigned ELFFlags;          // ELF section flags
+  BinaryContext &BC;           // Owning BinaryContext
+  std::string Name;            // Section name
+  const SectionRef Section;    // SectionRef (may be null)
+  StringRef Contents;          // Input section contents
+  const uint64_t Address;      // Address of section in input binary (may be 0)
+  const uint64_t Size;         // Input section size
+  uint64_t InputFileOffset{0}; // Offset in the input binary
+  unsigned Alignment;          // alignment in bytes (must be > 0)
+  unsigned ELFType;            // ELF section type
+  unsigned ELFFlags;           // ELF section flags
 
   // Relocations associated with this section. Relocation offsets are
   // wrt. to the original section address and size.
@@ -67,7 +67,7 @@ class BinarySection {
     SmallString<8> Bytes;
 
     BinaryPatch(uint64_t Offset, const SmallVectorImpl<char> &Bytes)
-      : Offset(Offset), Bytes(Bytes.begin(), Bytes.end()) {}
+        : Offset(Offset), Bytes(Bytes.begin(), Bytes.end()) {}
   };
   std::vector<BinaryPatch> Patches;
   /// Patcher used to apply simple changes to sections of the input binary.
@@ -122,49 +122,34 @@ class BinarySection {
   RelocationSetType reorderRelocations(bool Inplace) const;
 
   /// Set output info for this section.
-  void update(uint8_t *NewData,
-              uint64_t NewSize,
-              unsigned NewAlignment,
-              unsigned NewELFType,
-              unsigned NewELFFlags) {
+  void update(uint8_t *NewData, uint64_t NewSize, unsigned NewAlignment,
+              unsigned NewELFType, unsigned NewELFFlags) {
     assert(NewAlignment > 0 && "section alignment must be > 0");
     Alignment = NewAlignment;
     ELFType = NewELFType;
     ELFFlags = NewELFFlags;
     OutputSize = NewSize;
-    OutputContents = StringRef(reinterpret_cast<const char*>(NewData),
+    OutputContents = StringRef(reinterpret_cast<const char *>(NewData),
                                NewData ? NewSize : 0);
     IsFinalized = true;
   }
+
 public:
   /// Copy a section.
-  explicit BinarySection(BinaryContext &BC,
-                         StringRef Name,
+  explicit BinarySection(BinaryContext &BC, StringRef Name,
                          const BinarySection &Section)
-    : BC(BC),
-      Name(Name),
-      Section(Section.getSectionRef()),
-      Contents(Section.getContents()),
-      Address(Section.getAddress()),
-      Size(Section.getSize()),
-      Alignment(Section.getAlignment()),
-      ELFType(Section.getELFType()),
-      ELFFlags(Section.getELFFlags()),
-      Relocations(Section.Relocations),
-      PendingRelocations(Section.PendingRelocations),
-      OutputName(Name) {
-  }
+      : BC(BC), Name(Name), Section(Section.getSectionRef()),
+        Contents(Section.getContents()), Address(Section.getAddress()),
+        Size(Section.getSize()), Alignment(Section.getAlignment()),
+        ELFType(Section.getELFType()), ELFFlags(Section.getELFFlags()),
+        Relocations(Section.Relocations),
+        PendingRelocations(Section.PendingRelocations), OutputName(Name) {}
 
-  BinarySection(BinaryContext &BC,
-                SectionRef Section)
-    : BC(BC),
-      Name(getName(Section)),
-      Section(Section),
-      Contents(getContents(Section)),
-      Address(Section.getAddress()),
-      Size(Section.getSize()),
-      Alignment(Section.getAlignment()),
-      OutputName(Name) {
+  BinarySection(BinaryContext &BC, SectionRef Section)
+      : BC(BC), Name(getName(Section)), Section(Section),
+        Contents(getContents(Section)), Address(Section.getAddress()),
+        Size(Section.getSize()), Alignment(Section.getAlignment()),
+        OutputName(Name) {
     if (isELF()) {
       ELFType = ELFSectionRef(Section).getType();
       ELFFlags = ELFSectionRef(Section).getFlags();
@@ -178,33 +163,20 @@ public:
   }
 
   // TODO: pass Data as StringRef/ArrayRef? use StringRef::copy method.
-  BinarySection(BinaryContext &BC,
-                StringRef Name,
-                uint8_t *Data,
-                uint64_t Size,
-                unsigned Alignment,
-                unsigned ELFType,
-                unsigned ELFFlags)
-    : BC(BC),
-      Name(Name),
-      Contents(reinterpret_cast<const char*>(Data), Data ? Size : 0),
-      Address(0),
-      Size(Size),
-      Alignment(Alignment),
-      ELFType(ELFType),
-      ELFFlags(ELFFlags),
-      IsFinalized(true),
-      OutputName(Name),
-      OutputSize(Size),
-      OutputContents(Contents) {
+  BinarySection(BinaryContext &BC, StringRef Name, uint8_t *Data, uint64_t Size,
+                unsigned Alignment, unsigned ELFType, unsigned ELFFlags)
+      : BC(BC), Name(Name),
+        Contents(reinterpret_cast<const char *>(Data), Data ? Size : 0),
+        Address(0), Size(Size), Alignment(Alignment), ELFType(ELFType),
+        ELFFlags(ELFFlags), IsFinalized(true), OutputName(Name),
+        OutputSize(Size), OutputContents(Contents) {
     assert(Alignment > 0 && "section alignment must be > 0");
   }
 
   ~BinarySection();
 
   /// Helper function to generate the proper ELF flags from section properties.
-  static unsigned getFlags(bool IsReadOnly = true,
-                           bool IsText = false,
+  static unsigned getFlags(bool IsReadOnly = true, bool IsText = false,
                            bool IsAllocatable = false) {
     unsigned Flags = 0;
     if (IsAllocatable)
@@ -216,17 +188,12 @@ public:
     return Flags;
   }
 
-  operator bool() const {
-    return ELFType != ELF::SHT_NULL;
-  }
+  operator bool() const { return ELFType != ELF::SHT_NULL; }
 
   bool operator==(const BinarySection &Other) const {
-    return (Name == Other.Name &&
-            Address == Other.Address &&
-            Size == Other.Size &&
-            getData() == Other.getData() &&
-            Alignment == Other.Alignment &&
-            ELFType == Other.ELFType &&
+    return (Name == Other.Name && Address == Other.Address &&
+            Size == Other.Size && getData() == Other.getData() &&
+            Alignment == Other.Alignment && ELFType == Other.ELFType &&
             ELFFlags == Other.ELFFlags);
   }
 
@@ -239,8 +206,7 @@ public:
     return (getAddress() < Other.getAddress() ||
             (getAddress() == Other.getAddress() &&
              (getSize() < Other.getSize() ||
-              (getSize() == Other.getSize() &&
-               getName() < Other.getName()))));
+              (getSize() == Other.getSize() && getName() < Other.getName()))));
   }
 
   ///
@@ -270,17 +236,12 @@ public:
     return (ELFType == ELF::SHT_NOBITS &&
             (ELFFlags & (ELF::SHF_ALLOC | ELF::SHF_WRITE)));
   }
-  bool isTLS() const {
-    return (ELFFlags & ELF::SHF_TLS);
-  }
-  bool isTBSS() const {
-    return isBSS() && isTLS();
-  }
+  bool isTLS() const { return (ELFFlags & ELF::SHF_TLS); }
+  bool isTBSS() const { return isBSS() && isTLS(); }
   bool isVirtual() const { return ELFType == ELF::SHT_NOBITS; }
   bool isRela() const { return ELFType == ELF::SHT_RELA; }
   bool isReadOnly() const {
-    return ((ELFFlags & ELF::SHF_ALLOC) &&
-            !(ELFFlags & ELF::SHF_WRITE) &&
+    return ((ELFFlags & ELF::SHF_ALLOC) && !(ELFFlags & ELF::SHF_WRITE) &&
             ELFType == ELF::SHT_PROGBITS);
   }
   bool isAllocatable() const {
@@ -297,7 +258,8 @@ public:
   unsigned getELFFlags() const { return ELFFlags; }
 
   uint8_t *getData() {
-    return reinterpret_cast<uint8_t *>(const_cast<char *>(getContents().data()));
+    return reinterpret_cast<uint8_t *>(
+        const_cast<char *>(getContents().data()));
   }
   const uint8_t *getData() const {
     return reinterpret_cast<const uint8_t *>(getContents().data());
@@ -331,14 +293,10 @@ public:
   }
 
   /// Does this section have any non-pending relocations?
-  bool hasRelocations() const {
-    return !Relocations.empty();
-  }
+  bool hasRelocations() const { return !Relocations.empty(); }
 
   /// Does this section have any pending relocations?
-  bool hasPendingRelocations() const {
-    return !PendingRelocations.empty();
-  }
+  bool hasPendingRelocations() const { return !PendingRelocations.empty(); }
 
   /// Remove non-pending relocation with the given /p Offset.
   bool removeRelocationAt(uint64_t Offset) {
@@ -353,11 +311,8 @@ public:
   void clearRelocations();
 
   /// Add a new relocation at the given /p Offset.
-  void addRelocation(uint64_t Offset,
-                     MCSymbol *Symbol,
-                     uint64_t Type,
-                     uint64_t Addend,
-                     uint64_t Value = 0,
+  void addRelocation(uint64_t Offset, MCSymbol *Symbol, uint64_t Type,
+                     uint64_t Addend, uint64_t Value = 0,
                      bool Pending = false) {
     assert(Offset < getSize() && "offset not within section bounds");
     if (!Pending) {
@@ -369,11 +324,8 @@ public:
   }
 
   /// Add a dynamic relocation at the given /p Offset.
-  void addDynamicRelocation(uint64_t Offset,
-                            MCSymbol *Symbol,
-                            uint64_t Type,
-                            uint64_t Addend,
-                            uint64_t Value = 0) {
+  void addDynamicRelocation(uint64_t Offset, MCSymbol *Symbol, uint64_t Type,
+                            uint64_t Addend, uint64_t Value = 0) {
     assert(Offset < getSize() && "offset not within section bounds");
     DynamicRelocations.emplace(Relocation{Offset, Symbol, Type, Addend, Value});
   }
@@ -423,7 +375,8 @@ public:
   StringRef getOutputName() const { return OutputName; }
   uint64_t getOutputSize() const { return OutputSize; }
   uint8_t *getOutputData() {
-    return reinterpret_cast<uint8_t *>(const_cast<char *>(getOutputContents().data()));
+    return reinterpret_cast<uint8_t *>(
+        const_cast<char *>(getOutputContents().data()));
   }
   const uint8_t *getOutputData() const {
     return reinterpret_cast<const uint8_t *>(getOutputContents().data());
@@ -438,33 +391,19 @@ public:
     assert(hasValidSectionID() && "trying to use uninitialized section id");
     return SectionID;
   }
-  bool hasValidSectionID() const {
-    return SectionID != -1u;
-  }
-  uint32_t getIndex() const {
-    return Index;
-  }
+  bool hasValidSectionID() const { return SectionID != -1u; }
+  uint32_t getIndex() const { return Index; }
 
   // mutation
-  void setOutputAddress(uint64_t Address) {
-    OutputAddress = Address;
-  }
-  void setOutputFileOffset(uint64_t Offset) {
-    OutputFileOffset = Offset;
-  }
+  void setOutputAddress(uint64_t Address) { OutputAddress = Address; }
+  void setOutputFileOffset(uint64_t Offset) { OutputFileOffset = Offset; }
   void setSectionID(unsigned ID) {
     assert(!hasValidSectionID() && "trying to set section id twice");
     SectionID = ID;
   }
-  void setIndex(uint32_t I) {
-    Index = I;
-  }
-  void setOutputName(StringRef Name) {
-    OutputName = std::string(Name);
-  }
-  void setAnonymous(bool Flag) {
-    IsAnonymous = Flag;
-  }
+  void setIndex(uint32_t I) { Index = I; }
+  void setOutputName(StringRef Name) { OutputName = std::string(Name); }
+  void setAnonymous(bool Flag) { IsAnonymous = Flag; }
 
   /// Emit the section as data, possibly with relocations. Use name \p NewName
   //  for the section during emission if non-empty.
@@ -491,10 +430,7 @@ public:
                                    uint32_t Type);
 
   /// Code for ELF notes written by producer 'BOLT'
-  enum {
-    NT_BOLT_BAT = 1,
-    NT_BOLT_INSTRUMENTATION_TABLES = 2
-  };
+  enum { NT_BOLT_BAT = 1, NT_BOLT_INSTRUMENTATION_TABLES = 2 };
 };
 
 inline uint8_t *copyByteArray(const uint8_t *Data, uint64_t Size) {
@@ -504,12 +440,12 @@ inline uint8_t *copyByteArray(const uint8_t *Data, uint64_t Size) {
 }
 
 inline uint8_t *copyByteArray(StringRef Buffer) {
-  return copyByteArray(reinterpret_cast<const uint8_t*>(Buffer.data()),
+  return copyByteArray(reinterpret_cast<const uint8_t *>(Buffer.data()),
                        Buffer.size());
 }
 
 inline uint8_t *copyByteArray(ArrayRef<char> Buffer) {
-  return copyByteArray(reinterpret_cast<const uint8_t*>(Buffer.data()),
+  return copyByteArray(reinterpret_cast<const uint8_t *>(Buffer.data()),
                        Buffer.size());
 }
 

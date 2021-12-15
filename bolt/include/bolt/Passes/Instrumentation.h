@@ -86,8 +86,8 @@ private:
                            BinaryBasicBlock &FromBB, uint32_t From,
                            BinaryFunction &ToFunc, BinaryBasicBlock *TargetBB,
                            uint32_t ToOffset, bool IsLeaf, bool IsInvoke,
-                           FunctionDescription *FuncDesc,
-                           uint32_t FromNodeID, uint32_t ToNodeID = 0);
+                           FunctionDescription *FuncDesc, uint32_t FromNodeID,
+                           uint32_t ToNodeID = 0);
 
   void instrumentLeafNode(BinaryBasicBlock &BB, BinaryBasicBlock::iterator Iter,
                           bool IsLeaf, FunctionDescription &FuncDesc,
@@ -123,7 +123,7 @@ private:
   BinaryFunction *IndCallHandlerExitBBFunction;
   BinaryFunction *IndTailCallHandlerExitBBFunction;
 };
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

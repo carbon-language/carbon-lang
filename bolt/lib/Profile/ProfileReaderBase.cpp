@@ -19,5 +19,5 @@ bool ProfileReaderBase::mayHaveProfileData(const BinaryFunction &BF) {
   return true;
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

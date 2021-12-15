@@ -49,20 +49,15 @@ class BoltAddressTranslation;
 /// specified by the user.
 class DataAggregator : public DataReader {
 public:
-  explicit DataAggregator(StringRef Filename)
-      : DataReader(Filename) {
+  explicit DataAggregator(StringRef Filename) : DataReader(Filename) {
     start();
   }
 
   ~DataAggregator();
 
-  StringRef getReaderName() const override {
-    return "perf data aggregator";
-  }
+  StringRef getReaderName() const override { return "perf data aggregator"; }
 
-  bool isTrustedSource() const override {
-    return true;
-  }
+  bool isTrustedSource() const override { return true; }
 
   Error preprocessProfile(BinaryContext &BC) override;
 
@@ -110,8 +105,7 @@ private:
   struct Trace {
     uint64_t From;
     uint64_t To;
-    Trace(uint64_t From, uint64_t To)
-      : From(From), To(To) {}
+    Trace(uint64_t From, uint64_t To) : From(From), To(To) {}
     bool operator==(const Trace &Other) const {
       return From == Other.From && To == Other.To;
     }
@@ -141,7 +135,7 @@ private:
   std::unordered_map<uint64_t, uint64_t> BasicSamples;
   std::vector<PerfMemSample> MemSamples;
 
-  template<typename T> void clear(T& Container) {
+  template <typename T> void clear(T &Container) {
     T TempContainer;
     TempContainer.swap(Container);
   }
@@ -204,9 +198,8 @@ private:
   /// execution order.
   ///
   /// Return true if the trace is valid, false otherwise.
-  bool recordTrace(BinaryFunction &BF,
-      const LBREntry &First,
-      const LBREntry &Second,
+  bool recordTrace(
+      BinaryFunction &BF, const LBREntry &First, const LBREntry &Second,
       uint64_t Count = 1,
       SmallVector<std::pair<uint64_t, uint64_t>, 16> *Branches = nullptr) const;
 
@@ -481,7 +474,7 @@ private:
   void dump(const PerfBranchSample &Sample) const;
   void dump(const PerfMemSample &Sample) const;
 };
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

@@ -18,20 +18,16 @@
 namespace opts {
 extern llvm::cl::opt<bool> AssumeABI;
 extern llvm::cl::opt<bool> TimeOpts;
-}
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
 
-class LivenessAnalysis
-  : public DataflowAnalysis<LivenessAnalysis, BitVector, true, RegStatePrinter> {
-  using Parent = DataflowAnalysis<LivenessAnalysis,
-                                  BitVector,
-                                  true,
-                                  RegStatePrinter>;
-  friend class DataflowAnalysis<LivenessAnalysis,
-                                BitVector,
-                                true,
+class LivenessAnalysis : public DataflowAnalysis<LivenessAnalysis, BitVector,
+                                                 true, RegStatePrinter> {
+  using Parent =
+      DataflowAnalysis<LivenessAnalysis, BitVector, true, RegStatePrinter>;
+  friend class DataflowAnalysis<LivenessAnalysis, BitVector, true,
                                 RegStatePrinter>;
 
 public:
@@ -48,9 +44,7 @@ public:
     return BV.any();
   }
 
-  void run() {
-    Parent::run();
-  }
+  void run() { Parent::run(); }
 
   // Return a usable general-purpose reg after point P. Return 0 if no reg is
   // available.
@@ -136,7 +130,7 @@ protected:
 
       BitVector Used = BitVector(NumRegs, false);
       if (IsCall) {
-        RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/true);
+        RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/ true);
         if (RA.isConservative(Used)) {
           Used = BC.MIB->getRegsUsedAsParams();
           BC.MIB->getDefaultLiveOut(Used);
@@ -149,9 +143,8 @@ protected:
         Used |= BC.MIB->getAliases(Point.getOperand(I).getReg(),
                                    /*OnlySmaller=*/false);
       }
-      for (auto
-             I = InstInfo.getImplicitUses(),
-             E = InstInfo.getImplicitUses() + InstInfo.getNumImplicitUses();
+      for (auto I = InstInfo.getImplicitUses(),
+                E = InstInfo.getImplicitUses() + InstInfo.getNumImplicitUses();
            I != E; ++I) {
         Used |= BC.MIB->getAliases(*I, false);
       }
@@ -166,9 +159,7 @@ protected:
     return Next;
   }
 
-  StringRef getAnnotationName() const {
-    return StringRef("LivenessAnalysis");
-  }
+  StringRef getAnnotationName() const { return StringRef("LivenessAnalysis"); }
 };
 
 } // end namespace bolt

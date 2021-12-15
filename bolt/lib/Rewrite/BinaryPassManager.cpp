@@ -324,8 +324,7 @@ namespace bolt {
 
 using namespace opts;
 
-const char BinaryFunctionPassManager::TimerGroupName[] =
-    "passman";
+const char BinaryFunctionPassManager::TimerGroupName[] = "passman";
 const char BinaryFunctionPassManager::TimerGroupDesc[] =
     "Binary Function Pass Manager";
 
@@ -348,23 +347,16 @@ void BinaryFunctionPassManager::runPasses() {
     NamedRegionTimer T(Pass->getName(), Pass->getName(), TimerGroupName,
                        TimerGroupDesc, TimeOpts);
 
-    callWithDynoStats(
-      [this,&Pass] {
-        Pass->runOnFunctions(BC);
-      },
-      BFs,
-      Pass->getName(),
-      opts::DynoStatsAll
-    );
+    callWithDynoStats([this, &Pass] { Pass->runOnFunctions(BC); }, BFs,
+                      Pass->getName(), opts::DynoStatsAll);
 
     if (opts::VerifyCFG &&
         !std::accumulate(
-           BFs.begin(), BFs.end(),
-           true,
-           [](const bool Valid,
-              const std::pair<const uint64_t, BinaryFunction> &It) {
-             return Valid && It.second.validateCFG();
-           })) {
+            BFs.begin(), BFs.end(), true,
+            [](const bool Valid,
+               const std::pair<const uint64_t, BinaryFunction> &It) {
+              return Valid && It.second.validateCFG();
+            })) {
       errs() << "BOLT-ERROR: Invalid CFG detected after pass "
              << Pass->getName() << "\n";
       exit(1);
@@ -442,8 +434,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
       opts::JTFootprintReductionFlag);
 
   Manager.registerPass(
-    std::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
-    opts::SimplifyRODataLoads);
+      std::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
+      opts::SimplifyRODataLoads);
 
   Manager.registerPass(std::make_unique<RegReAssign>(PrintRegReAssign),
                        opts::RegReAssign);
@@ -460,9 +452,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
 
   Manager.registerPass(std::make_unique<ReorderBasicBlocks>(PrintReordered));
 
-  Manager.registerPass(
-    std::make_unique<EliminateUnreachableBlocks>(PrintUCE),
-    opts::EliminateUnreachable);
+  Manager.registerPass(std::make_unique<EliminateUnreachableBlocks>(PrintUCE),
+                       opts::EliminateUnreachable);
 
   Manager.registerPass(std::make_unique<SplitFunctions>(PrintSplit));
 
@@ -480,13 +471,13 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   // size of a function to determine the order.  It should definitely
   // also happen after any changes to the call graph are made, e.g. inlining.
   Manager.registerPass(
-    std::make_unique<ReorderFunctions>(PrintReorderedFunctions));
+      std::make_unique<ReorderFunctions>(PrintReorderedFunctions));
 
   // Print final dyno stats right while CFG and instruction analysis are intact.
   Manager.registerPass(
-    std::make_unique<DynoStatsPrintPass>(
-      InitialDynoStats, "after all optimizations before SCTC and FOP"),
-    opts::PrintDynoStats | opts::DynoStatsAll);
+      std::make_unique<DynoStatsPrintPass>(
+          InitialDynoStats, "after all optimizations before SCTC and FOP"),
+      opts::PrintDynoStats | opts::DynoStatsAll);
 
   // Add the StokeInfo pass, which extract functions for stoke optimization and
   // get the liveness information for them
@@ -547,7 +538,7 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   // function reordering. It's unsafe to use any CFG or instruction analysis
   // after this point.
   Manager.registerPass(
-    std::make_unique<InstructionLowering>(PrintAfterLowering));
+      std::make_unique<InstructionLowering>(PrintAfterLowering));
 
   // In non-relocation mode, mark functions that do not fit into their original
   // space as non-simple if we have to (e.g. for correct debug info update).

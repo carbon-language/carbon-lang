@@ -88,12 +88,8 @@ public:
 
 private:
   /// Constructor should only be called by a BinaryContext.
-  JumpTable(MCSymbol &Symbol,
-            uint64_t Address,
-            size_t EntrySize,
-            JumpTableType Type,
-            LabelMapType &&Labels,
-            BinaryFunction &BF,
+  JumpTable(MCSymbol &Symbol, uint64_t Address, size_t EntrySize,
+            JumpTableType Type, LabelMapType &&Labels, BinaryFunction &BF,
             BinarySection &Section);
 
 public:

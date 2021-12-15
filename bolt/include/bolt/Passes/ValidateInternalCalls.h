@@ -51,11 +51,9 @@ namespace bolt {
 class ValidateInternalCalls : public BinaryFunctionPass {
 public:
   explicit ValidateInternalCalls(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) {}
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "validate-internal-calls";
-  }
+  const char *getName() const override { return "validate-internal-calls"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 
@@ -83,9 +81,7 @@ private:
 
   /// The annotation tag we use to keep track of internal calls we already
   /// processed.
-  StringRef getProcessedICTag() const {
-    return "ProcessedInternalCall";
-  }
+  StringRef getProcessedICTag() const { return "ProcessedInternalCall"; }
 
   void clearAnnotations(BinaryFunction &Function) const {
     const BinaryContext &BC = Function.getBinaryContext();
@@ -97,7 +93,7 @@ private:
   }
 };
 
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

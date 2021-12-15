@@ -31,12 +31,9 @@ class PatchEntries : public BinaryFunctionPass {
   };
 
 public:
-  explicit PatchEntries() : BinaryFunctionPass(false) {
-  }
+  explicit PatchEntries() : BinaryFunctionPass(false) {}
 
-  const char *getName() const override {
-    return "patch-entries";
-  }
+  const char *getName() const override { return "patch-entries"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 

@@ -28,7 +28,6 @@
 #include <set>
 #include <vector>
 
-#undef DEBUG_TYPE
 #define DEBUG_TYPE "hfsort"
 
 using namespace llvm;

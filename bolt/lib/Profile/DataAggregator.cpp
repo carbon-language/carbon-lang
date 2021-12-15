@@ -107,7 +107,7 @@ WriteAutoFDOData("autofdo",
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
 
-}
+} // namespace opts
 
 namespace {
 
@@ -118,15 +118,13 @@ const char TimerGroupDesc[] = "Aggregator";
 
 constexpr uint64_t DataAggregator::KernelBaseAddr;
 
-DataAggregator::~DataAggregator() {
-  deleteTempFiles();
-}
+DataAggregator::~DataAggregator() { deleteTempFiles(); }
 
 namespace {
 void deleteTempFile(const std::string &FileName) {
   if (std::error_code Errc = sys::fs::remove(FileName.c_str())) {
-    errs() << "PERF2BOLT: failed to delete temporary file "
-           << FileName << " with error " << Errc.message() << "\n";
+    errs() << "PERF2BOLT: failed to delete temporary file " << FileName
+           << " with error " << Errc.message() << "\n";
   }
 }
 }
@@ -149,8 +147,7 @@ void DataAggregator::findPerfExecutable() {
 }
 
 void DataAggregator::start() {
-  outs() << "PERF2BOLT: Starting data aggregation job for " << Filename
-         << "\n";
+  outs() << "PERF2BOLT: Starting data aggregation job for " << Filename << "\n";
 
   // Don't launch perf for pre-aggregated files
   if (opts::ReadPreAggregated)
@@ -229,17 +226,16 @@ void DataAggregator::launchPerfProcess(StringRef Name, PerfProcessInfo &PPI,
 
   if (std::error_code Errc =
           sys::fs::createTemporaryFile("perf.script", "out", PPI.StdoutPath)) {
-    errs() << "PERF2BOLT: failed to create temporary file "
-           << PPI.StdoutPath << " with error " << Errc.message()
-           << "\n";
+    errs() << "PERF2BOLT: failed to create temporary file " << PPI.StdoutPath
+           << " with error " << Errc.message() << "\n";
     exit(1);
   }
   TempFiles.push_back(PPI.StdoutPath.data());
 
   if (std::error_code Errc =
           sys::fs::createTemporaryFile("perf.script", "err", PPI.StderrPath)) {
-    errs() << "PERF2BOLT: failed to create temporary file "
-           << PPI.StderrPath << " with error " << Errc.message() << "\n";
+    errs() << "PERF2BOLT: failed to create temporary file " << PPI.StderrPath
+           << " with error " << Errc.message() << "\n";
     exit(1);
   }
   TempFiles.push_back(PPI.StderrPath.data());
@@ -277,7 +273,7 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
 
   if (BuildIDProcessInfo.PI.ReturnCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(BuildIDProcessInfo.StderrPath.data());
+        MemoryBuffer::getFileOrSTDIN(BuildIDProcessInfo.StderrPath.data());
     StringRef ErrBuf = (*MB)->getBuffer();
 
     errs() << "PERF-ERROR: return code " << BuildIDProcessInfo.PI.ReturnCode
@@ -287,7 +283,7 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
   }
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-    MemoryBuffer::getFileOrSTDIN(BuildIDProcessInfo.StdoutPath.data());
+      MemoryBuffer::getFileOrSTDIN(BuildIDProcessInfo.StdoutPath.data());
   if (std::error_code EC = MB.getError()) {
     errs() << "Cannot open " << BuildIDProcessInfo.StdoutPath.data() << ": "
            << EC.message() << "\n";
@@ -368,8 +364,8 @@ void DataAggregator::parsePreAggregated() {
 
 std::error_code DataAggregator::writeAutoFDOData(StringRef OutputFilename) {
   outs() << "PERF2BOLT: writing data for autofdo tools...\n";
-  NamedRegionTimer T("writeAutoFDO", "Processing branch events",
-                     TimerGroupName, TimerGroupDesc, opts::TimeAggregator);
+  NamedRegionTimer T("writeAutoFDO", "Processing branch events", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
 
   std::error_code EC;
   raw_fd_ostream OutFile(OutputFilename, EC, sys::fs::OpenFlags::OF_None);
@@ -446,8 +442,8 @@ void DataAggregator::filterBinaryMMapInfo() {
       if (errs().has_colors())
         errs().changeColor(raw_ostream::RED);
       errs() << "PERF2BOLT-ERROR: could not find a profile matching PID \""
-             << opts::FilterPID << "\"" << " for binary \""
-             << BC->getFilename() <<"\".";
+             << opts::FilterPID << "\""
+             << " for binary \"" << BC->getFilename() << "\".";
       assert(!BinaryMMapInfo.empty() && "No memory map for matching binary");
       errs() << " Profile for the following process is available:\n";
       for (std::pair<const uint64_t, MMapInfo> &MMI : BinaryMMapInfo) {
@@ -492,7 +488,7 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
 
     if (PI.ReturnCode != 0) {
       ErrorOr<std::unique_ptr<MemoryBuffer>> ErrorMB =
-        MemoryBuffer::getFileOrSTDIN(Process.StderrPath.data());
+          MemoryBuffer::getFileOrSTDIN(Process.StderrPath.data());
       StringRef ErrBuf = (*ErrorMB)->getBuffer();
 
       errs() << "PERF-ERROR: return code " << PI.ReturnCode << "\n";
@@ -502,7 +498,7 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
     }
 
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(Process.StdoutPath.data());
+        MemoryBuffer::getFileOrSTDIN(Process.StdoutPath.data());
     if (std::error_code EC = MB.getError()) {
       errs() << "Cannot open " << Process.StdoutPath.data() << ": "
              << EC.message() << "\n";
@@ -573,7 +569,7 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
   sys::ProcessInfo PI = sys::Wait(MemEventsPPI.PI, 0, true, &Error);
   if (PI.ReturnCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(MemEventsPPI.StderrPath.data());
+        MemoryBuffer::getFileOrSTDIN(MemEventsPPI.StderrPath.data());
     StringRef ErrBuf = (*MB)->getBuffer();
 
     deleteTempFiles();
@@ -589,7 +585,7 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
   }
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-    MemoryBuffer::getFileOrSTDIN(MemEventsPPI.StdoutPath.data());
+      MemoryBuffer::getFileOrSTDIN(MemEventsPPI.StdoutPath.data());
   if (std::error_code EC = MB.getError()) {
     errs() << "Cannot open " << MemEventsPPI.StdoutPath.data() << ": "
            << EC.message() << "\n";
@@ -602,8 +598,8 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
   Col = 0;
   Line = 1;
   if (const std::error_code EC = parseMemEvents()) {
-    errs() << "PERF2BOLT: failed to parse memory events: "
-           << EC.message() << '\n';
+    errs() << "PERF2BOLT: failed to parse memory events: " << EC.message()
+           << '\n';
   }
 
   deleteTempFiles();
@@ -701,9 +697,9 @@ bool DataAggregator::doSample(BinaryFunction &Func, uint64_t Address,
   if (I == NamesToSamples.end()) {
     bool Success;
     StringRef LocName = getLocationName(Func, Count);
-    std::tie(I, Success) = NamesToSamples.insert(std::make_pair(
-        Func.getOneName(),
-        FuncSampleData(LocName, FuncSampleData::ContainerTy())));
+    std::tie(I, Success) = NamesToSamples.insert(
+        std::make_pair(Func.getOneName(),
+                       FuncSampleData(LocName, FuncSampleData::ContainerTy())));
   }
 
   Address -= Func.getAddress();
@@ -922,7 +918,7 @@ bool DataAggregator::recordTrace(
       return false;
     }
 
-   // Record fall-through jumps
+    // Record fall-through jumps
     BinaryBasicBlock::BinaryBranchInfo &BI = BB->getBranchInfo(*NextBB);
     BI.Count += Count;
 
@@ -980,8 +976,8 @@ bool DataAggregator::recordEntry(BinaryFunction &BF, uint64_t To, bool Mispred,
   return true;
 }
 
-bool DataAggregator::recordExit(BinaryFunction &BF, uint64_t From,
-                                bool Mispred, uint64_t Count) const {
+bool DataAggregator::recordExit(BinaryFunction &BF, uint64_t From, bool Mispred,
+                                uint64_t Count) const {
   if (!BF.isSimple() || From > BF.getSize())
     return false;
 
@@ -1025,7 +1021,7 @@ ErrorOr<LBREntry> DataAggregator::parseLBREntry() {
   }
   Res.Mispred = MispredStr[0] == 'M';
 
-  static bool MispredWarning = true;;
+  static bool MispredWarning = true;
   if (MispredStr[0] == '-' && MispredWarning) {
     errs() << "PERF2BOLT-WARNING: misprediction bit is missing in profile\n";
     MispredWarning = false;
@@ -1067,7 +1063,8 @@ void DataAggregator::consumeRestOfLine() {
 ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
   PerfBranchSample Res;
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<int64_t> PIDRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = PIDRes.getError())
@@ -1078,7 +1075,8 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
     return make_error_code(errc::no_such_process);
   }
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<uint64_t> PCRes = parseHexField(FieldSeparator, true);
   if (std::error_code EC = PCRes.getError())
@@ -1106,7 +1104,8 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
 }
 
 ErrorOr<DataAggregator::PerfBasicSample> DataAggregator::parseBasicSample() {
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<int64_t> PIDRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = PIDRes.getError())
@@ -1118,13 +1117,15 @@ ErrorOr<DataAggregator::PerfBasicSample> DataAggregator::parseBasicSample() {
     return PerfBasicSample{StringRef(), 0};
   }
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<StringRef> Event = parseString(FieldSeparator);
   if (std::error_code EC = Event.getError())
     return EC;
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<uint64_t> AddrRes = parseHexField(FieldSeparator, true);
   if (std::error_code EC = AddrRes.getError()) {
@@ -1144,9 +1145,10 @@ ErrorOr<DataAggregator::PerfBasicSample> DataAggregator::parseBasicSample() {
 }
 
 ErrorOr<DataAggregator::PerfMemSample> DataAggregator::parseMemSample() {
-  PerfMemSample Res{0,0};
+  PerfMemSample Res{0, 0};
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<int64_t> PIDRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = PIDRes.getError())
@@ -1158,7 +1160,8 @@ ErrorOr<DataAggregator::PerfMemSample> DataAggregator::parseMemSample() {
     return Res;
   }
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<StringRef> Event = parseString(FieldSeparator);
   if (std::error_code EC = Event.getError())
@@ -1168,14 +1171,16 @@ ErrorOr<DataAggregator::PerfMemSample> DataAggregator::parseMemSample() {
     return Res;
   }
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<uint64_t> AddrRes = parseHexField(FieldSeparator);
   if (std::error_code EC = AddrRes.getError()) {
     return EC;
   }
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<uint64_t> PCRes = parseHexField(FieldSeparator, true);
   if (std::error_code EC = PCRes.getError()) {
@@ -1221,7 +1226,8 @@ ErrorOr<Location> DataAggregator::parseLocationOrOffset() {
 
 ErrorOr<DataAggregator::AggregatedLBREntry>
 DataAggregator::parseAggregatedLBREntry() {
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<StringRef> TypeOrErr = parseString(FieldSeparator);
   if (std::error_code EC = TypeOrErr.getError())
@@ -1238,17 +1244,20 @@ DataAggregator::parseAggregatedLBREntry() {
     return make_error_code(llvm::errc::io_error);
   }
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
   ErrorOr<Location> From = parseLocationOrOffset();
   if (std::error_code EC = From.getError())
     return EC;
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
   ErrorOr<Location> To = parseLocationOrOffset();
   if (std::error_code EC = To.getError())
     return EC;
 
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
   ErrorOr<int64_t> Frequency =
       parseNumberField(FieldSeparator, Type != AggregatedLBREntry::BRANCH);
   if (std::error_code EC = Frequency.getError())
@@ -1256,7 +1265,8 @@ DataAggregator::parseAggregatedLBREntry() {
 
   uint64_t Mispreds = 0;
   if (Type == AggregatedLBREntry::BRANCH) {
-    while (checkAndConsumeFS()) {}
+    while (checkAndConsumeFS()) {
+    }
     ErrorOr<int64_t> MispredsOrErr = parseNumberField(FieldSeparator, true);
     if (std::error_code EC = MispredsOrErr.getError())
       return EC;
@@ -1501,8 +1511,8 @@ std::error_code DataAggregator::parseBranchEvents() {
     OS << ")";
   };
 
-  outs() << "PERF2BOLT: read " << NumSamples << " samples and "
-         << NumEntries << " LBR entries\n";
+  outs() << "PERF2BOLT: read " << NumSamples << " samples and " << NumEntries
+         << " LBR entries\n";
   if (NumTotalSamples) {
     if (NumSamples && NumSamplesNoLBR == NumSamples) {
       // Note: we don't know if perf2bolt is being used to parse memory samples
@@ -1611,8 +1621,8 @@ std::error_code DataAggregator::parseBasicEvents() {
 
 void DataAggregator::processBasicEvents() {
   outs() << "PERF2BOLT: processing basic events (without LBR)...\n";
-  NamedRegionTimer T("processBasic", "Processing basic events",
-                     TimerGroupName, TimerGroupDesc, opts::TimeAggregator);
+  NamedRegionTimer T("processBasic", "Processing basic events", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
   uint64_t OutOfRangeSamples = 0;
   uint64_t NumSamples = 0;
   for (auto &Sample : BasicSamples) {
@@ -1845,9 +1855,9 @@ Optional<uint64_t> parsePerfTime(const StringRef TimeStr) {
 }
 }
 
-Optional<DataAggregator::ForkInfo>
-DataAggregator::parseForkEvent() {
-  while (checkAndConsumeFS()) {}
+Optional<DataAggregator::ForkInfo> DataAggregator::parseForkEvent() {
+  while (checkAndConsumeFS()) {
+  }
 
   size_t LineEnd = ParsingBuf.find_first_of("\n");
   if (LineEnd == StringRef::npos) {
@@ -1896,7 +1906,8 @@ DataAggregator::parseForkEvent() {
 
 ErrorOr<std::pair<StringRef, DataAggregator::MMapInfo>>
 DataAggregator::parseMMapEvent() {
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   MMapInfo ParsedInfo;
 
@@ -2077,8 +2088,7 @@ std::error_code DataAggregator::parseTaskEvents() {
     if (Optional<int32_t> CommInfo = parseCommExecEvent()) {
       // Remove forked child that ran execve
       auto MMapInfoIter = BinaryMMapInfo.find(*CommInfo);
-      if (MMapInfoIter != BinaryMMapInfo.end() &&
-          MMapInfoIter->second.Forked) {
+      if (MMapInfoIter != BinaryMMapInfo.end() && MMapInfoIter->second.Forked) {
         BinaryMMapInfo.erase(MMapInfoIter);
       }
       consumeRestOfLine();
@@ -2114,8 +2124,8 @@ std::error_code DataAggregator::parseTaskEvents() {
   LLVM_DEBUG({
     for (std::pair<const uint64_t, MMapInfo> &MMI : BinaryMMapInfo) {
       outs() << "  " << MMI.second.PID << (MMI.second.Forked ? " (forked)" : "")
-             << ": (0x" << Twine::utohexstr(MMI.second.BaseAddress)
-             << ": 0x" << Twine::utohexstr(MMI.second.Size) << ")\n";
+             << ": (0x" << Twine::utohexstr(MMI.second.BaseAddress) << ": 0x"
+             << Twine::utohexstr(MMI.second.Size) << ")\n";
     }
   });
 
@@ -2124,7 +2134,8 @@ std::error_code DataAggregator::parseTaskEvents() {
 
 Optional<std::pair<StringRef, StringRef>>
 DataAggregator::parseNameBuildIDPair() {
-  while (checkAndConsumeFS()) {}
+  while (checkAndConsumeFS()) {
+  }
 
   ErrorOr<StringRef> BuildIDStr = parseString(FieldSeparator, true);
   if (std::error_code EC = BuildIDStr.getError())
@@ -2160,7 +2171,7 @@ DataAggregator::writeAggregatedFile(StringRef OutputFilename) const {
 
   bool WriteMemLocs = false;
 
-  auto writeLocation = [&OutFile,&WriteMemLocs](const Location &Loc) {
+  auto writeLocation = [&OutFile, &WriteMemLocs](const Location &Loc) {
     if (WriteMemLocs)
       OutFile << (Loc.IsSymbol ? "4 " : "3 ");
     else
@@ -2219,15 +2230,13 @@ DataAggregator::writeAggregatedFile(StringRef OutputFilename) const {
     }
   }
 
-  outs() << "PERF2BOLT: wrote " << BranchValues << " objects and "
-         << MemValues << " memory objects to " << OutputFilename << "\n";
+  outs() << "PERF2BOLT: wrote " << BranchValues << " objects and " << MemValues
+         << " memory objects to " << OutputFilename << "\n";
 
   return std::error_code();
 }
 
-void DataAggregator::dump() const {
-  DataReader::dump();
-}
+void DataAggregator::dump() const { DataReader::dump(); }
 
 void DataAggregator::dump(const LBREntry &LBR) const {
   Diag << "From: " << Twine::utohexstr(LBR.From)

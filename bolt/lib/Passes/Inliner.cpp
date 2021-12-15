@@ -117,9 +117,7 @@ NoInline("no-inline",
 /// this function should reflect the change.
 bool inliningEnabled() {
   return !NoInline &&
-    (InlineAll ||
-     InlineSmallFunctions ||
-     !ForceInlineFunctions.empty());
+         (InlineAll || InlineSmallFunctions || !ForceInlineFunctions.empty());
 }
 
 bool mustConsider(const llvm::bolt::BinaryFunction &Function) {
@@ -237,8 +235,7 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
     // For a regular call the last return instruction could be removed
     // (or converted to a branch).
     const MCInst *LastInst = BF.back().getLastNonPseudoInstr();
-    if (LastInst &&
-        BC.MIB->isReturn(*LastInst) &&
+    if (LastInst && BC.MIB->isReturn(*LastInst) &&
         !BC.MIB->isTailCall(*LastInst)) {
       const uint64_t RetInstSize = BC.computeInstructionSize(*LastInst);
       assert(Size >= RetInstSize);
@@ -249,8 +246,7 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
   return Info;
 }
 
-void
-Inliner::findInliningCandidates(BinaryContext &BC) {
+void Inliner::findInliningCandidates(BinaryContext &BC) {
   for (const auto &BFI : BC.getBinaryFunctions()) {
     const BinaryFunction &Function = BFI.second;
     const InliningInfo InlInfo = getInliningInfo(Function);
@@ -307,7 +303,7 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
   double ProfileRatio = 0;
   if (uint64_t CalleeExecCount = Callee.getKnownExecutionCount()) {
     ProfileRatio =
-      (double) FirstInlinedBB->getKnownExecutionCount() / CalleeExecCount;
+        (double)FirstInlinedBB->getKnownExecutionCount() / CalleeExecCount;
   }
 
   // Save execution count of the first block as we don't want it to change
@@ -357,8 +353,8 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
       }
 
       if (CSIsTailCall || (!MIB.isCall(Inst) && !MIB.isReturn(Inst))) {
-        InsertII = std::next(InlinedBB->insertInstruction(InsertII,
-                                                          std::move(Inst)));
+        InsertII =
+            std::next(InlinedBB->insertInstruction(InsertII, std::move(Inst)));
         continue;
       }
 
@@ -377,30 +373,22 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
           MIB.addGnuArgsSize(Inst, CSGNUArgsSize);
       }
 
-      InsertII = std::next(InlinedBB->insertInstruction(InsertII,
-                                                        std::move(Inst)));
+      InsertII =
+          std::next(InlinedBB->insertInstruction(InsertII, std::move(Inst)));
     }
 
     // Add CFG edges to the basic blocks of the inlined instance.
     std::vector<BinaryBasicBlock *> Successors(BB.succ_size());
-    std::transform(
-        BB.succ_begin(),
-        BB.succ_end(),
-        Successors.begin(),
-        [&InlinedBBMap](const BinaryBasicBlock *BB) {
-          return InlinedBBMap.at(BB);
-        });
+    std::transform(BB.succ_begin(), BB.succ_end(), Successors.begin(),
+                   [&InlinedBBMap](const BinaryBasicBlock *BB) {
+                     return InlinedBBMap.at(BB);
+                   });
 
     if (CallerFunction.hasValidProfile() && Callee.hasValidProfile()) {
-      InlinedBB->addSuccessors(
-          Successors.begin(),
-          Successors.end(),
-          BB.branch_info_begin(),
-          BB.branch_info_end());
+      InlinedBB->addSuccessors(Successors.begin(), Successors.end(),
+                               BB.branch_info_begin(), BB.branch_info_end());
     } else {
-      InlinedBB->addSuccessors(
-          Successors.begin(),
-          Successors.end());
+      InlinedBB->addSuccessors(Successors.begin(), Successors.end());
     }
 
     if (!CSIsTailCall && BB.succ_size() == 0 && NextBB) {
@@ -413,8 +401,8 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
       if (opts::AdjustProfile) {
         InlinedBB->adjustExecutionCount(ProfileRatio);
       } else {
-        InlinedBB->setExecutionCount(
-            InlinedBB->getKnownExecutionCount() * ProfileRatio);
+        InlinedBB->setExecutionCount(InlinedBB->getKnownExecutionCount() *
+                                     ProfileRatio);
       }
     }
   }
@@ -438,13 +426,14 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
   std::vector<BinaryBasicBlock *> Blocks(Function.layout().begin(),
                                          Function.layout().end());
   std::sort(Blocks.begin(), Blocks.end(),
-      [](const BinaryBasicBlock *BB1, const BinaryBasicBlock *BB2) {
-        return BB1->getKnownExecutionCount() > BB2->getKnownExecutionCount();
-      });
+            [](const BinaryBasicBlock *BB1, const BinaryBasicBlock *BB2) {
+              return BB1->getKnownExecutionCount() >
+                     BB2->getKnownExecutionCount();
+            });
 
   bool DidInlining = false;
   for (BinaryBasicBlock *BB : Blocks) {
-    for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
+    for (auto InstIt = BB->begin(); InstIt != BB->end();) {
       MCInst &Inst = *InstIt;
       if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
           !Inst.getOperand(0).isExpr()) {
@@ -484,11 +473,11 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
 
       int64_t SizeAfterInlining;
       if (IsTailCall) {
-        SizeAfterInlining = IInfo->second.SizeAfterTailCallInlining -
-                            getSizeOfTailCallInst(BC);
+        SizeAfterInlining =
+            IInfo->second.SizeAfterTailCallInlining - getSizeOfTailCallInst(BC);
       } else {
-        SizeAfterInlining = IInfo->second.SizeAfterInlining -
-                            getSizeOfCallInst(BC);
+        SizeAfterInlining =
+            IInfo->second.SizeAfterInlining - getSizeOfCallInst(BC);
       }
 
       if (!opts::InlineAll && !opts::mustConsider(*TargetFunction)) {
@@ -567,9 +556,10 @@ void Inliner::runOnFunctions(BinaryContext &BC) {
       ConsideredFunctions.push_back(&Function);
     }
     std::sort(ConsideredFunctions.begin(), ConsideredFunctions.end(),
-        [](const BinaryFunction *A, const BinaryFunction *B) {
-        return B->getKnownExecutionCount() < A->getKnownExecutionCount();
-    });
+              [](const BinaryFunction *A, const BinaryFunction *B) {
+                return B->getKnownExecutionCount() <
+                       A->getKnownExecutionCount();
+              });
     for (BinaryFunction *Function : ConsideredFunctions) {
       if (opts::InlineLimit && NumInlinedCallSites >= opts::InlineLimit)
         break;

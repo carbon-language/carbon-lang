@@ -14,7 +14,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
@@ -25,7 +24,7 @@ using JumpTable = bolt::JumpTable;
 namespace opts {
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<unsigned> Verbosity;
-}
+} // namespace opts
 
 bolt::JumpTable::JumpTable(MCSymbol &Symbol, uint64_t Address, size_t EntrySize,
                            JumpTableType Type, LabelMapType &&Labels,
@@ -114,12 +113,12 @@ void bolt::JumpTable::print(raw_ostream &OS) const {
     if (Offset && LI != Labels.end()) {
       OS << "Jump Table " << LI->second->getName() << " at 0x"
          << Twine::utohexstr(getAddress() + Offset)
-        << " (possibly part of larger jump table):\n";
+         << " (possibly part of larger jump table):\n";
     }
     OS << format("  0x%04" PRIx64 " : ", Offset) << Entry->getName();
     if (!Counts.empty()) {
-      OS << " : " << Counts[Offset / EntrySize].Mispreds
-         << "/" << Counts[Offset / EntrySize].Count;
+      OS << " : " << Counts[Offset / EntrySize].Mispreds << "/"
+         << Counts[Offset / EntrySize].Count;
     }
     OS << '\n';
     Offset += EntrySize;

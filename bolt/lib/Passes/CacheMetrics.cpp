@@ -30,15 +30,15 @@ extern cl::opt<unsigned> BackwardDistance;
 extern cl::opt<unsigned> ITLBPageSize;
 extern cl::opt<unsigned> ITLBEntries;
 
-}
+} // namespace opts
 
 namespace {
 
 /// Initialize and return a position map for binary basic blocks
 void extractBasicBlockInfo(
-  const std::vector<BinaryFunction *> &BinaryFunctions,
-  std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
+    const std::vector<BinaryFunction *> &BinaryFunctions,
+    std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
+    std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   for (BinaryFunction *BF : BinaryFunctions) {
     const BinaryContext &BC = BF->getBinaryContext();
@@ -58,10 +58,10 @@ void extractBasicBlockInfo(
 
 /// Calculate TSP metric, which quantifies the number of fallthrough jumps in
 /// the ordering of basic blocks
-double calcTSPScore(
-  const std::vector<BinaryFunction *> &BinaryFunctions,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
+double
+calcTSPScore(const std::vector<BinaryFunction *> &BinaryFunctions,
+             const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
+             const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   double Score = 0;
   for (BinaryFunction *BF : BinaryFunctions) {
@@ -83,9 +83,9 @@ double calcTSPScore(
 /// Calculate Ext-TSP metric, which quantifies the expected number of i-cache
 /// misses for a given ordering of basic blocks
 double calcExtTSPScore(
-  const std::vector<BinaryFunction *> &BinaryFunctions,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
+    const std::vector<BinaryFunction *> &BinaryFunctions,
+    const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
+    const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   double Score = 0.0;
   for (BinaryFunction *BF : BinaryFunctions) {
@@ -95,10 +95,8 @@ double calcExtTSPScore(
       auto BI = SrcBB->branch_info_begin();
       for (BinaryBasicBlock *DstBB : SrcBB->successors()) {
         if (DstBB != SrcBB) {
-          Score += CacheMetrics::extTSPScore(BBAddr.at(SrcBB),
-                                             BBSize.at(SrcBB),
-                                             BBAddr.at(DstBB),
-                                             BI->Count);
+          Score += CacheMetrics::extTSPScore(BBAddr.at(SrcBB), BBSize.at(SrcBB),
+                                             BBAddr.at(DstBB), BI->Count);
         }
         ++BI;
       }
@@ -124,7 +122,7 @@ extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
           continue;
 
         // Call info
-        const MCSymbol* DstSym = BC.MIB->getTargetSymbol(Inst);
+        const MCSymbol *DstSym = BC.MIB->getTargetSymbol(Inst);
         uint64_t Count = BB->getKnownExecutionCount();
         // Ignore calls w/o information
         if (DstSym == nullptr || Count == 0)
@@ -132,8 +130,7 @@ extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
 
         const BinaryFunction *DstFunction = BC.getFunctionForSymbol(DstSym);
         // Ignore recursive calls
-        if (DstFunction == nullptr ||
-            DstFunction->layout_empty() ||
+        if (DstFunction == nullptr || DstFunction->layout_empty() ||
             DstFunction == SrcFunction)
           continue;
 
@@ -150,17 +147,17 @@ extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
 /// functions calls into two categories:
 /// - 'short' ones that have a caller-callee distance less than a page;
 /// - 'long' ones where the distance exceeds a page.
-/// The short calls are likely to result in a i-TLB cache hit. For the long ones,
-/// the hit/miss result depends on the 'hotness' of the page (i.e., how often
-/// the page is accessed). Assuming that functions are sent to the i-TLB cache
-/// in a random order, the probability that a page is present in the cache is
-/// proportional to the number of samples corresponding to the functions on the
-/// page. The following procedure detects short and long calls, and estimates
-/// the expected number of cache misses for the long ones.
+/// The short calls are likely to result in a i-TLB cache hit. For the long
+/// ones, the hit/miss result depends on the 'hotness' of the page (i.e., how
+/// often the page is accessed). Assuming that functions are sent to the i-TLB
+/// cache in a random order, the probability that a page is present in the cache
+/// is proportional to the number of samples corresponding to the functions on
+/// the page. The following procedure detects short and long calls, and
+/// estimates the expected number of cache misses for the long ones.
 double expectedCacheHitRatio(
-  const std::vector<BinaryFunction *> &BinaryFunctions,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
+    const std::vector<BinaryFunction *> &BinaryFunctions,
+    const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
+    const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   const double PageSize = opts::ITLBPageSize;
   const uint64_t CacheEntries = opts::ITLBEntries;
@@ -218,12 +215,10 @@ double expectedCacheHitRatio(
   return 100.0 * (1.0 - Misses / TotalSamples);
 }
 
-} // end namespace anonymous
+} // namespace
 
-double CacheMetrics::extTSPScore(uint64_t SrcAddr,
-                                 uint64_t SrcSize,
-                                 uint64_t DstAddr,
-                                 uint64_t Count) {
+double CacheMetrics::extTSPScore(uint64_t SrcAddr, uint64_t SrcSize,
+                                 uint64_t DstAddr, uint64_t Count) {
   assert(Count != BinaryBasicBlock::COUNT_NO_PROFILE);
 
   // Fallthrough
@@ -283,22 +278,23 @@ void CacheMetrics::printAll(const std::vector<BinaryFunction *> &BFs) {
   }
 
   outs() << format("  There are %zu functions;", NumFunctions)
-         << format(" %zu (%.2lf%%) are in the hot section,",
-                   NumHotFunctions, 100.0 * NumHotFunctions / NumFunctions)
-         << format(" %zu (%.2lf%%) have profile\n",
-                   NumProfiledFunctions, 100.0 * NumProfiledFunctions / NumFunctions);
+         << format(" %zu (%.2lf%%) are in the hot section,", NumHotFunctions,
+                   100.0 * NumHotFunctions / NumFunctions)
+         << format(" %zu (%.2lf%%) have profile\n", NumProfiledFunctions,
+                   100.0 * NumProfiledFunctions / NumFunctions);
   outs() << format("  There are %zu basic blocks;", NumBlocks)
-         << format(" %zu (%.2lf%%) are in the hot section\n",
-                  NumHotBlocks, 100.0 * NumHotBlocks / NumBlocks);
+         << format(" %zu (%.2lf%%) are in the hot section\n", NumHotBlocks,
+                   100.0 * NumHotBlocks / NumBlocks);
 
   assert(TotalCodeMinAddr <= TotalCodeMaxAddr && "incorrect output addresses");
   size_t HotCodeSize = HotCodeMaxAddr - HotCodeMinAddr;
   size_t TotalCodeSize = TotalCodeMaxAddr - TotalCodeMinAddr;
 
   size_t HugePage2MB = 2 << 20;
-  outs() << format("  Hot code takes %.2lf%% of binary (%zu bytes out of %zu, %.2lf huge pages)\n",
-                   100.0 * HotCodeSize / TotalCodeSize, HotCodeSize, TotalCodeSize,
-                   double(HotCodeSize) / HugePage2MB);
+  outs() << format("  Hot code takes %.2lf%% of binary (%zu bytes out of %zu, "
+                   "%.2lf huge pages)\n",
+                   100.0 * HotCodeSize / TotalCodeSize, HotCodeSize,
+                   TotalCodeSize, double(HotCodeSize) / HugePage2MB);
 
   // Stats related to expected cache performance
   std::unordered_map<BinaryBasicBlock *, uint64_t> BBAddr;

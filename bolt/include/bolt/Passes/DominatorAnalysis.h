@@ -88,7 +88,7 @@ public:
     while (BB->size() == 0) {
       if (BB->succ_size() == 0)
         return false;
-      assert (BB->succ_size() == 1);
+      assert(BB->succ_size() == 1);
       BB = *BB->succ_begin();
     }
     const MCInst &InstA = *BB->begin();

@@ -97,9 +97,9 @@ public:
   /// taken in the path started at FirstLBR.To and ending at SecondLBR.From.
   /// Return NoneType if trace is invalid or the list of fall-throughs
   /// otherwise.
-  Optional<FallthroughListTy>
-  getFallthroughsInTrace(const BinaryFunction &Func, uint64_t From,
-                         uint64_t To) const;
+  Optional<FallthroughListTy> getFallthroughsInTrace(const BinaryFunction &Func,
+                                                     uint64_t From,
+                                                     uint64_t To) const;
 
   /// If available, fetch the address of the hot part linked to the cold part
   /// at \p Address. Return 0 otherwise.
@@ -128,8 +128,8 @@ private:
   /// translation map entry
   const static uint32_t BRANCHENTRY = 0x80000000;
 };
-}
+} // namespace bolt
 
-}
+} // namespace llvm
 
 #endif

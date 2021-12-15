@@ -54,9 +54,7 @@ struct StokeFuncInfo {
   bool HasRipAddr;
   bool Omitted;
 
-  StokeFuncInfo() {
-    reset();
-  }
+  StokeFuncInfo() { reset(); }
 
   void reset() {
     FuncName = "";
@@ -64,40 +62,30 @@ struct StokeFuncInfo {
     NumLoops = MaxLoopDepth = 0;
     HotSize = TotalSize = 0;
     Score = 0;
-    IsLoopFree
-      = HasCall
-      = HeapOut
-      = StackOut
-      = HasRipAddr
-      = Omitted
-      = false;
+    IsLoopFree = HasCall = HeapOut = StackOut = HasRipAddr = Omitted = false;
     DefIn.clear();
     LiveOut.clear();
   }
 
   void printCsvHeader(std::ofstream &Outfile) {
     if (Outfile.is_open()) {
-      Outfile
-        << "FuncName,Offset,Size,NumInstrs,NumBlocks,"
-        << "IsLoopFree,NumLoops,MaxLoopDepth,"
-        << "HotSize,TotalSize,"
-        << "Score,"
-        << "HasCall,"
-        << "DefIn,LiveOut,HeapOut,StackOut,"
-        << "HasRipAddr,"
-        << "Omitted\n";
+      Outfile << "FuncName,Offset,Size,NumInstrs,NumBlocks,"
+              << "IsLoopFree,NumLoops,MaxLoopDepth,"
+              << "HotSize,TotalSize,"
+              << "Score,"
+              << "HasCall,"
+              << "DefIn,LiveOut,HeapOut,StackOut,"
+              << "HasRipAddr,"
+              << "Omitted\n";
     }
   }
 
   void printData(std::ofstream &Outfile) {
     if (Outfile.is_open()) {
-      Outfile
-        << FuncName << ","
-        << Offset << "," << Size << "," << NumInstrs << "," << NumBlocks << ","
-        << IsLoopFree << "," << NumLoops << "," << MaxLoopDepth << ","
-        << HotSize << "," << TotalSize << ","
-        << Score << ","
-        << HasCall << ",\"{ ";
+      Outfile << FuncName << "," << Offset << "," << Size << "," << NumInstrs
+              << "," << NumBlocks << "," << IsLoopFree << "," << NumLoops << ","
+              << MaxLoopDepth << "," << HotSize << "," << TotalSize << ","
+              << Score << "," << HasCall << ",\"{ ";
       for (std::string S : DefIn) {
         Outfile << "%" << S << " ";
       }
@@ -105,9 +93,8 @@ struct StokeFuncInfo {
       for (std::string S : LiveOut) {
         Outfile << "%" << S << " ";
       }
-      Outfile << "}\"," << HeapOut << "," << StackOut << ","
-        << HasRipAddr << ","
-        << Omitted << "\n";
+      Outfile << "}\"," << HeapOut << "," << StackOut << "," << HasRipAddr
+              << "," << Omitted << "\n";
     }
   }
 };
@@ -126,9 +113,7 @@ private:
 public:
   StokeInfo(const cl::opt<bool> &PrintPass) : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "stoke-get-stat";
-  }
+  const char *getName() const override { return "stoke-get-stat"; }
 
   void checkInstr(const BinaryFunction &BF, StokeFuncInfo &FuncInfo);
 
@@ -141,6 +126,5 @@ public:
 
 } // namespace bolt
 } // namespace llvm
-
 
 #endif

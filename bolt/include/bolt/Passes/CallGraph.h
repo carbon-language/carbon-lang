@@ -32,8 +32,7 @@ public:
   using NodeId = size_t;
   static constexpr NodeId InvalidId = -1;
 
-  template <typename T>
-  class iterator_range {
+  template <typename T> class iterator_range {
     T Begin;
     T End;
 
@@ -41,8 +40,7 @@ public:
     template <typename Container>
     iterator_range(Container &&c) : Begin(c.begin()), End(c.end()) {}
     iterator_range(T Begin, T End)
-      : Begin(std::move(Begin)),
-        End(std::move(End)) {}
+        : Begin(std::move(Begin)), End(std::move(End)) {}
 
     T begin() const { return Begin; }
     T end() const { return End; }
@@ -54,12 +52,8 @@ public:
       int64_t operator()(const Arc &Arc) const;
     };
 
-    Arc(NodeId S, NodeId D, double W = 0)
-      : Src(S)
-      , Dst(D)
-      , Weight(W)
-    {}
-    Arc(const Arc&) = delete;
+    Arc(NodeId S, NodeId D, double W = 0) : Src(S), Dst(D), Weight(W) {}
+    Arc(const Arc &) = delete;
 
     friend bool operator==(const Arc &Lhs, const Arc &Rhs) {
       return Lhs.Src == Rhs.Src && Lhs.Dst == Rhs.Dst;
@@ -87,35 +81,27 @@ public:
   class Node {
   public:
     explicit Node(uint32_t Size, uint64_t Samples = 0)
-      : Size(Size), Samples(Samples)
-    {}
+        : Size(Size), Samples(Samples) {}
 
     uint32_t size() const { return Size; }
     uint64_t samples() const { return Samples; }
 
-    const std::vector<NodeId> &successors() const {
-      return Succs;
-    }
-    const std::vector<NodeId> &predecessors() const {
-      return Preds;
-    }
+    const std::vector<NodeId> &successors() const { return Succs; }
+    const std::vector<NodeId> &predecessors() const { return Preds; }
 
   private:
     friend class CallGraph;
     uint32_t Size;
     uint64_t Samples;
 
-    // preds and succs contain no duplicate elements and self arcs are not allowed
+    // preds and succs contain no duplicate elements and self arcs are not
+    // allowed
     std::vector<NodeId> Preds;
     std::vector<NodeId> Succs;
   };
 
-  size_t numNodes() const {
-    return Nodes.size();
-  }
-  size_t numArcs() const {
-    return Arcs.size();
-  }
+  size_t numNodes() const { return Nodes.size(); }
+  size_t numArcs() const { return Arcs.size(); }
   const Node &getNode(const NodeId Id) const {
     assert(Id < Nodes.size());
     return Nodes[Id];
@@ -149,11 +135,12 @@ public:
     return iterator_range<ArcConstIterator>(Arcs.begin(), Arcs.end());
   }
   iterator_range<std::vector<Node>::const_iterator> nodes() const {
-    return iterator_range<std::vector<Node>::const_iterator>(Nodes.begin(), Nodes.end());
+    return iterator_range<std::vector<Node>::const_iterator>(Nodes.begin(),
+                                                             Nodes.end());
   }
 
   double density() const {
-    return double(Arcs.size()) / (Nodes.size()*Nodes.size());
+    return double(Arcs.size()) / (Nodes.size() * Nodes.size());
   }
 
   // Initialize NormalizedWeight field for every arc
@@ -162,8 +149,7 @@ public:
   // samples for every node
   void adjustArcWeights();
 
-  template <typename L>
-  void printDot(char* fileName, L getLabel) const;
+  template <typename L> void printDot(char *fileName, L getLabel) const;
 
 private:
   void setSamples(const NodeId Id, uint64_t Samples) {
@@ -175,35 +161,28 @@ private:
   ArcsType Arcs;
 };
 
-template<class L>
-void CallGraph::printDot(char* FileName, L GetLabel) const {
-  FILE* File = fopen(FileName, "wt");
-  if (!File) return;
+template <class L> void CallGraph::printDot(char *FileName, L GetLabel) const {
+  FILE *File = fopen(FileName, "wt");
+  if (!File)
+    return;
 
   fprintf(File, "digraph g {\n");
   for (NodeId F = 0; F < Nodes.size(); F++) {
-    if (Nodes[F].samples() == 0) continue;
-    fprintf(
-            File,
-            "f%lu [label=\"%s\\nsamples=%u\\nsize=%u\"];\n",
-            F,
-            GetLabel(F),
-            Nodes[F].samples(),
-            Nodes[F].size());
+    if (Nodes[F].samples() == 0)
+      continue;
+    fprintf(File, "f%lu [label=\"%s\\nsamples=%u\\nsize=%u\"];\n", F,
+            GetLabel(F), Nodes[F].samples(), Nodes[F].size());
   }
   for (NodeId F = 0; F < Nodes.size(); F++) {
-    if (Nodes[F].samples() == 0) continue;
+    if (Nodes[F].samples() == 0)
+      continue;
     for (NodeId Dst : Nodes[F].successors()) {
       ArcConstIterator Arc = findArc(F, Dst);
       fprintf(
-              File,
-              "f%lu -> f%u [label=\"normWgt=%.3lf,weight=%.0lf,callOffset=%.1lf\"];"
-              "\n",
-              F,
-              Dst,
-              Arc->normalizedWeight(),
-              Arc->weight(),
-              Arc->avgCallOffset());
+          File,
+          "f%lu -> f%u [label=\"normWgt=%.3lf,weight=%.0lf,callOffset=%.1lf\"];"
+          "\n",
+          F, Dst, Arc->normalizedWeight(), Arc->weight(), Arc->avgCallOffset());
     }
   }
   fprintf(File, "}\n");

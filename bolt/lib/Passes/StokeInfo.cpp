@@ -13,7 +13,6 @@
 #include "bolt/Passes/DataflowInfoManager.h"
 #include "llvm/Support/CommandLine.h"
 
-#undef DEBUG_TYPE
 #define DEBUG_TYPE "stoke"
 
 using namespace llvm;
@@ -32,9 +31,8 @@ StokeOutputDataFilename("stoke-out",
 namespace llvm {
 namespace bolt {
 
-
 void getRegNameFromBitVec(const BinaryContext &BC, const BitVector &RegV,
-    std::set<std::string> *NameVec = nullptr) {
+                          std::set<std::string> *NameVec = nullptr) {
   int RegIdx = RegV.find_first();
   while (RegIdx != -1) {
     LLVM_DEBUG(dbgs() << BC.MRI->getName(RegIdx) << " ");

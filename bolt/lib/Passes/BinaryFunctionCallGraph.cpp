@@ -20,7 +20,7 @@
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;
 extern llvm::cl::opt<unsigned> Verbosity;
-}
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -76,14 +76,11 @@ std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
   return TopologicalOrder;
 }
 
-BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
-                                       CgFilterFunction Filter,
-                                       bool CgFromPerfData,
-                                       bool IncludeColdCalls,
-                                       bool UseFunctionHotSize,
-                                       bool UseSplitHotSize,
-                                       bool UseEdgeCounts,
-                                       bool IgnoreRecursiveCalls) {
+BinaryFunctionCallGraph
+buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
+               bool IncludeColdCalls, bool UseFunctionHotSize,
+               bool UseSplitHotSize, bool UseEdgeCounts,
+               bool IgnoreRecursiveCalls) {
   NamedRegionTimer T1("buildcg", "Callgraph construction", "CG breakdown",
                       "CG breakdown", opts::TimeOpts);
   BinaryFunctionCallGraph Cg;
@@ -93,8 +90,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   // Compute function size
   auto functionSize = [&](const BinaryFunction *Function) {
     return UseFunctionHotSize && Function->isSplit()
-      ? Function->estimateHotSize(UseSplitHotSize)
-      : Function->estimateSize();
+               ? Function->estimateHotSize(UseSplitHotSize)
+               : Function->estimateSize();
   };
 
   // Add call graph nodes.
@@ -156,11 +153,10 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (!IsValidCount)
           ++NoProfileCallsites;
         Cg.incArcWeight(SrcId, DstId, AdjCount, Offset);
-        LLVM_DEBUG(
-          if (opts::Verbosity > 1) {
-            dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function
-                   << " -> " << *DstFunc << " @ " << Offset << "\n";
-          });
+        LLVM_DEBUG(if (opts::Verbosity > 1) {
+          dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function << " -> "
+                 << *DstFunc << " @ " << Offset << "\n";
+        });
         return true;
       }
 
@@ -180,8 +176,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
 
       // If this is an indirect call use perf data directly.
       if (!DstSym && BC.MIB->hasAnnotation(Inst, "CallProfile")) {
-        const auto &ICSP =
-          BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
+        const auto &ICSP = BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(
+            Inst, "CallProfile");
         for (const IndirectCallProfile &CSI : ICSP) {
           if (CSI.Symbol)
             Counts.emplace_back(CSI.Symbol, CSI.Count);
@@ -281,5 +277,5 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   return Cg;
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

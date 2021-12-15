@@ -47,28 +47,24 @@ class JTFootprintReduction : public BinaryFunctionPass {
   /// instructions that depend on the availability of an extra register.
   /// This saves dcache/dTLB at the expense of icache.
   bool tryOptimizeNonPIC(BinaryContext &BC, BinaryBasicBlock &BB,
-                         BinaryBasicBlock::iterator Inst,
-                         uint64_t JTAddr, JumpTable *JumpTable,
-                         DataflowInfoManager &Info);
+                         BinaryBasicBlock::iterator Inst, uint64_t JTAddr,
+                         JumpTable *JumpTable, DataflowInfoManager &Info);
 
   /// The PIC jump table optimization consists of "de-pic-ifying" it, since the
   /// PIC jump sequence is larger than its non-PIC counterpart, saving icache.
   bool tryOptimizePIC(BinaryContext &BC, BinaryBasicBlock &BB,
-                      BinaryBasicBlock::iterator Inst,
-                      uint64_t JTAddr, JumpTable *JumpTable,
-                      DataflowInfoManager &Info);
+                      BinaryBasicBlock::iterator Inst, uint64_t JTAddr,
+                      JumpTable *JumpTable, DataflowInfoManager &Info);
 
   /// Run a pass for \p Function
   void optimizeFunction(BinaryFunction &Function, DataflowInfoManager &Info);
 
 public:
   explicit JTFootprintReduction(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
   /// BinaryPass interface functions
-  const char *getName() const override {
-    return "jt-footprint-reduction";
-  }
+  const char *getName() const override { return "jt-footprint-reduction"; }
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }

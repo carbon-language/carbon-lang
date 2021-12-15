@@ -14,7 +14,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
@@ -23,15 +22,11 @@ using namespace bolt;
 namespace opts {
 extern cl::opt<bool> PrintRelocations;
 extern cl::opt<bool> HotData;
-}
+} // namespace opts
 
-bool BinarySection::isELF() const {
-  return BC.isELF();
-}
+bool BinarySection::isELF() const { return BC.isELF(); }
 
-bool BinarySection::isMachO() const {
-  return BC.isMachO();
-}
+bool BinarySection::isMachO() const { return BC.isMachO(); }
 
 uint64_t
 BinarySection::hash(const BinaryData &BD,
@@ -48,23 +43,21 @@ BinarySection::hash(const BinaryData &BD,
   auto End = Relocations.upper_bound(Relocation{EndOffset, 0, 0, 0, 0});
   const StringRef Contents = getContents();
 
-  hash_code Hash = hash_combine(hash_value(BD.getSize()),
-                                hash_value(BD.getSectionName()));
+  hash_code Hash =
+      hash_combine(hash_value(BD.getSize()), hash_value(BD.getSectionName()));
 
   while (Begin != End) {
     const Relocation &Rel = *Begin++;
     Hash = hash_combine(
-      Hash,
-      hash_value(Contents.substr(Offset, Begin->Offset - Offset)));
+        Hash, hash_value(Contents.substr(Offset, Begin->Offset - Offset)));
     if (BinaryData *RelBD = BC.getBinaryDataByName(Rel.Symbol->getName())) {
       Hash = hash_combine(Hash, hash(*RelBD, Cache));
     }
     Offset = Rel.Offset + Rel.getSize();
   }
 
-  Hash = hash_combine(
-    Hash,
-    hash_value(Contents.substr(Offset, EndOffset - Offset)));
+  Hash = hash_combine(Hash,
+                      hash_value(Contents.substr(Offset, EndOffset - Offset)));
 
   Cache[&BD] = Hash;
 
@@ -97,9 +90,8 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
       if (BC.UndefinedSymbols.count(Relocation.Symbol))
         continue;
       if (SectionOffset < Relocation.Offset) {
-        Streamer.emitBytes(
-            SectionContents.substr(SectionOffset,
-                                   Relocation.Offset - SectionOffset));
+        Streamer.emitBytes(SectionContents.substr(
+            SectionOffset, Relocation.Offset - SectionOffset));
         SectionOffset = Relocation.Offset;
       }
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
@@ -132,8 +124,8 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
   // this means using their input file offsets, since the output file offset
   // could change (e.g. for new instance of .text). For non-allocatable
   // sections, the output offset should always be a valid one.
-  const uint64_t SectionFileOffset = isAllocatable() ? getInputFileOffset()
-                                                     : getOutputFileOffset();
+  const uint64_t SectionFileOffset =
+      isAllocatable() ? getInputFileOffset() : getOutputFileOffset();
   LLVM_DEBUG(
       dbgs() << "BOLT-DEBUG: flushing pending relocations for section "
              << getName() << '\n'
@@ -141,30 +133,28 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
              << "  offset: 0x" << Twine::utohexstr(SectionFileOffset) << '\n');
 
   for (BinaryPatch &Patch : Patches) {
-    OS.pwrite(Patch.Bytes.data(),
-              Patch.Bytes.size(),
+    OS.pwrite(Patch.Bytes.data(), Patch.Bytes.size(),
               SectionFileOffset + Patch.Offset);
   }
-
 
   for (Relocation &Reloc : PendingRelocations) {
     uint64_t Value = Reloc.Addend;
     if (Reloc.Symbol)
       Value += Resolver(Reloc.Symbol);
-    switch(Reloc.Type) {
+    switch (Reloc.Type) {
     default:
       LLVM_DEBUG(dbgs() << Reloc.Type << '\n';);
       llvm_unreachable("unhandled relocation type");
     case ELF::R_X86_64_64:
     case ELF::R_X86_64_32: {
-      OS.pwrite(reinterpret_cast<const char*>(&Value),
+      OS.pwrite(reinterpret_cast<const char *>(&Value),
                 Relocation::getSizeForType(Reloc.Type),
                 SectionFileOffset + Reloc.Offset);
       break;
     }
     case ELF::R_X86_64_PC32: {
       Value -= SectionAddress + Reloc.Offset;
-      OS.pwrite(reinterpret_cast<const char*>(&Value),
+      OS.pwrite(reinterpret_cast<const char *>(&Value),
                 Relocation::getSizeForType(Reloc.Type),
                 SectionFileOffset + Reloc.Offset);
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
@@ -205,18 +195,13 @@ BinarySection::~BinarySection() {
   }
 }
 
-void BinarySection::clearRelocations() {
-  clearList(Relocations);
-}
+void BinarySection::clearRelocations() { clearList(Relocations); }
 
 void BinarySection::print(raw_ostream &OS) const {
   OS << getName() << ", "
-     << "0x" << Twine::utohexstr(getAddress()) << ", "
-     << getSize()
-     << " (0x" << Twine::utohexstr(getOutputAddress()) << ", "
-     << getOutputSize() << ")"
-     << ", data = " << getData()
-     << ", output data = " << getOutputData();
+     << "0x" << Twine::utohexstr(getAddress()) << ", " << getSize() << " (0x"
+     << Twine::utohexstr(getOutputAddress()) << ", " << getOutputSize() << ")"
+     << ", data = " << getData() << ", output data = " << getOutputData();
 
   if (isAllocatable())
     OS << " (allocatable)";

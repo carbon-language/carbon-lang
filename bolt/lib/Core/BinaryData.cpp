@@ -16,7 +16,6 @@
 using namespace llvm;
 using namespace bolt;
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 namespace opts {
@@ -31,14 +30,10 @@ PrintSymbolAliases("print-aliases",
   cl::cat(BoltCategory));
 }
 
-bool BinaryData::isAbsolute() const {
-  return Flags & SymbolRef::SF_Absolute;
-}
+bool BinaryData::isAbsolute() const { return Flags & SymbolRef::SF_Absolute; }
 
 bool BinaryData::isMoveable() const {
-  return (!isAbsolute() &&
-          (IsMoveable &&
-           (!Parent || isTopLevelJumpTable())));
+  return (!isAbsolute() && (IsMoveable && (!Parent || isTopLevelJumpTable())));
 }
 
 void BinaryData::merge(const BinaryData *Other) {
@@ -78,9 +73,7 @@ bool BinaryData::nameStartsWith(StringRef Prefix) const {
   return false;
 }
 
-StringRef BinaryData::getSectionName() const {
-  return getSection().getName();
-}
+StringRef BinaryData::getSectionName() const { return getSection().getName(); }
 
 StringRef BinaryData::getOutputSectionName() const {
   return getOutputSection().getName();
@@ -105,9 +98,7 @@ bool BinaryData::isMoved() const {
   return (getOffset() != OutputOffset || OutputSection != Section);
 }
 
-void BinaryData::print(raw_ostream &OS) const {
-  printBrief(OS);
-}
+void BinaryData::print(raw_ostream &OS) const { printBrief(OS); }
 
 void BinaryData::printBrief(raw_ostream &OS) const {
   OS << "(";
@@ -133,27 +124,17 @@ void BinaryData::printBrief(raw_ostream &OS) const {
     OS << ")";
   }
 
-  OS << ", 0x" << Twine::utohexstr(getAddress())
-     << ":0x" << Twine::utohexstr(getEndAddress())
-     << "/" << getSize() << "/" << getAlignment()
-     << "/0x" << Twine::utohexstr(Flags);
+  OS << ", 0x" << Twine::utohexstr(getAddress()) << ":0x"
+     << Twine::utohexstr(getEndAddress()) << "/" << getSize() << "/"
+     << getAlignment() << "/0x" << Twine::utohexstr(Flags);
 
   OS << ")";
 }
 
-BinaryData::BinaryData(MCSymbol &Symbol,
-                       uint64_t Address,
-                       uint64_t Size,
-                       uint16_t Alignment,
-                       BinarySection &Section,
+BinaryData::BinaryData(MCSymbol &Symbol, uint64_t Address, uint64_t Size,
+                       uint16_t Alignment, BinarySection &Section,
                        unsigned Flags)
-: Section(&Section),
-  Address(Address),
-  Size(Size),
-  Alignment(Alignment),
-  Flags(Flags),
-  OutputSection(&Section),
-  OutputOffset(getOffset())
-{
+    : Section(&Section), Address(Address), Size(Size), Alignment(Alignment),
+      Flags(Flags), OutputSection(&Section), OutputOffset(getOffset()) {
   Symbols.push_back(&Symbol);
 }

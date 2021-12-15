@@ -29,7 +29,7 @@ static cl::opt<unsigned> ShrinkWrappingThreshold(
              " evaluating whether a block is cold enough to be profitable to"
              " move eligible spills there"),
     cl::init(30), cl::ZeroOrMore, cl::cat(BoltOptCategory));
-}
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -261,15 +261,15 @@ void StackLayoutModifier::checkFramePointerInitialization(MCInst &Point) {
 void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
   StackPointerTracking &SPT = Info.getStackPointerTracking();
   if (!BC.MII->get(Point.getOpcode())
-      .hasDefOfPhysReg(Point, BC.MIB->getStackPointer(), *BC.MRI))
+           .hasDefOfPhysReg(Point, BC.MIB->getStackPointer(), *BC.MRI))
     return;
   // Check if the definition of SP comes from FP -- in this case, this
   // value may need to be updated depending on our stack layout changes
   const MCInstrDesc &InstInfo = BC.MII->get(Point.getOpcode());
   unsigned NumDefs = InstInfo.getNumDefs();
   bool UsesFP = false;
-  for (unsigned I = NumDefs, E = MCPlus::getNumPrimeOperands(Point);
-       I < E; ++I) {
+  for (unsigned I = NumDefs, E = MCPlus::getNumPrimeOperands(Point); I < E;
+       ++I) {
     MCOperand &Operand = Point.getOperand(I);
     if (!Operand.isReg())
       continue;
@@ -509,7 +509,7 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
           continue;
         // SP update based on frame pointer
         scheduleChange(
-          Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, RegionSz));
+            Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, RegionSz));
         continue;
       }
 
@@ -520,7 +520,6 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
       if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst)) {
         continue;
       }
-
 
       if (FIE->StackPtrReg == BC.MIB->getStackPointer() && Slot < RegionAddr)
         continue;
@@ -609,7 +608,7 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
         if (Slot >= RegionAddr)
           continue;
         scheduleChange(
-          Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, -RegionSz));
+            Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, -RegionSz));
         continue;
       }
 
@@ -728,8 +727,7 @@ void ShrinkWrapping::classifyCSRUses() {
   UsesByReg = std::vector<BitVector>(BC.MRI->getNumRegs(),
                                      BitVector(DA.NumInstrs, false));
 
-  const BitVector &FPAliases =
-      BC.MIB->getAliases(BC.MIB->getFramePointer());
+  const BitVector &FPAliases = BC.MIB->getAliases(BC.MIB->getFramePointer());
   for (BinaryBasicBlock &BB : BF) {
     for (MCInst &Inst : BB) {
       if (BC.MIB->isCFI(Inst))
@@ -1083,8 +1081,9 @@ bool ShrinkWrapping::validatePushPopsMode(unsigned CSR, MCInst *BestPosSave,
                                           int64_t SaveOffset) {
   if (FA.requiresAlignment(BF)) {
     LLVM_DEBUG({
-      dbgs() << "Reg " << CSR << " is not using push/pops due to function "
-                                 "alignment requirements.\n";
+      dbgs() << "Reg " << CSR
+             << " is not using push/pops due to function "
+                "alignment requirements.\n";
     });
     return false;
   }
@@ -1105,12 +1104,12 @@ bool ShrinkWrapping::validatePushPopsMode(unsigned CSR, MCInst *BestPosSave,
   StackPointerTracking &SPT = Info.getStackPointerTracking();
   // Abort if we are inserting a push into an entry BB (offset -8) and this
   // func sets up a frame pointer.
-  if (!SLM.canInsertRegion(BestPosSave) ||
-      SaveOffset == SPT.SUPERPOSITION || SaveOffset == SPT.EMPTY ||
-      (SaveOffset == -8 && SPT.HasFramePointer)) {
+  if (!SLM.canInsertRegion(BestPosSave) || SaveOffset == SPT.SUPERPOSITION ||
+      SaveOffset == SPT.EMPTY || (SaveOffset == -8 && SPT.HasFramePointer)) {
     LLVM_DEBUG({
-      dbgs() << "Reg " << CSR << " cannot insert region or we are "
-                                 "trying to insert a push into entry bb.\n";
+      dbgs() << "Reg " << CSR
+             << " cannot insert region or we are "
+                "trying to insert a push into entry bb.\n";
     });
     return false;
   }
@@ -1242,8 +1241,9 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
     BestPosSave->dump();
   });
 
-  scheduleChange(BestPosSave, UsePushPops ? WorklistItem::InsertPushOrPop
-                                          : WorklistItem::InsertLoadOrStore,
+  scheduleChange(BestPosSave,
+                 UsePushPops ? WorklistItem::InsertPushOrPop
+                             : WorklistItem::InsertLoadOrStore,
                  *FIESave, CSR);
 
   for (ProgramPoint &PP : RestorePoints) {
@@ -1268,8 +1268,8 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
         PrecededByPrefix = BC.MIB->isPrefix(*Iter);
       }
     }
-    if (PP.isInst() && (doesInstUsesCSR(*PP.getInst(), CSR) ||
-                        PrecededByPrefix)) {
+    if (PP.isInst() &&
+        (doesInstUsesCSR(*PP.getInst(), CSR) || PrecededByPrefix)) {
       assert(!InsnToBB[PP.getInst()]->hasTerminatorAfter(PP.getInst()) &&
              "cannot move to end of bb");
       scheduleChange(InsnToBB[PP.getInst()],
@@ -1278,8 +1278,9 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
                      *FIELoad, CSR);
       continue;
     }
-    scheduleChange(PP, UsePushPops ? WorklistItem::InsertPushOrPop
-                                   : WorklistItem::InsertLoadOrStore,
+    scheduleChange(PP,
+                   UsePushPops ? WorklistItem::InsertPushOrPop
+                               : WorklistItem::InsertLoadOrStore,
                    *FIELoad, CSR);
   }
 }
@@ -1391,8 +1392,7 @@ void ShrinkWrapping::moveSaveRestores() {
 namespace {
 /// Helper function to identify whether two basic blocks created by splitting
 /// a critical edge have the same contents.
-bool isIdenticalSplitEdgeBB(const BinaryContext &BC,
-                            const BinaryBasicBlock &A,
+bool isIdenticalSplitEdgeBB(const BinaryContext &BC, const BinaryBasicBlock &A,
                             const BinaryBasicBlock &B) {
   if (A.succ_size() != B.succ_size())
     return false;
@@ -1411,15 +1411,16 @@ bool isIdenticalSplitEdgeBB(const BinaryContext &BC,
   while (I != E && OtherI != OtherE) {
     if (I->getOpcode() != OtherI->getOpcode())
       return false;
-    if (!BC.MIB->equals(*I, *OtherI,
-          [](const MCSymbol *A, const MCSymbol *B) { return true; }))
+    if (!BC.MIB->equals(*I, *OtherI, [](const MCSymbol *A, const MCSymbol *B) {
+          return true;
+        }))
       return false;
     ++I;
     ++OtherI;
   }
   return true;
 }
-}
+} // namespace
 
 bool ShrinkWrapping::foldIdenticalSplitEdges() {
   bool Changed = false;
@@ -1431,8 +1432,7 @@ bool ShrinkWrapping::foldIdenticalSplitEdges() {
       BinaryBasicBlock &RBB = *RIter;
       if (&RBB == &BB)
         break;
-      if (!RBB.getName().startswith(".LSplitEdge") ||
-          !RBB.isValid() ||
+      if (!RBB.getName().startswith(".LSplitEdge") || !RBB.isValid() ||
           !isIdenticalSplitEdgeBB(BC, *Iter, RBB))
         continue;
       assert(RBB.pred_size() == 1 && "Invalid split edge BB");
@@ -1551,8 +1551,8 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
       bool IsStoreFromReg = false;
       uint8_t Size = 0;
       if (!BC.MIB->isStackAccess(*InstIter, IsLoad, IsStore, IsStoreFromReg,
-                                 Reg, SrcImm, StackPtrReg, StackOffset,
-                                 Size, IsSimple, IsIndexed))
+                                 Reg, SrcImm, StackPtrReg, StackOffset, Size,
+                                 IsSimple, IsIndexed))
         continue;
       if (Reg != CSR || !IsStore || !IsSimple)
         continue;
@@ -1660,7 +1660,7 @@ void ShrinkWrapping::rebuildCFIForSP() {
   }
 
   for (BinaryBasicBlock &BB : BF) {
-    for (auto I = BB.begin(); I != BB.end(); ) {
+    for (auto I = BB.begin(); I != BB.end();) {
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         I = BB.eraseInstruction(I);
       else
@@ -1849,18 +1849,21 @@ BBIterTy ShrinkWrapping::processInsertionsList(
   }
 
   // Reorder POPs to obey the correct dominance relation between them
-  std::stable_sort(TodoList.begin(), TodoList.end(), [&](const WorklistItem &A,
-                                                         const WorklistItem
-                                                             &B) {
-    if ((A.Action != WorklistItem::InsertPushOrPop || !A.FIEToInsert.IsLoad) &&
-        (B.Action != WorklistItem::InsertPushOrPop || !B.FIEToInsert.IsLoad))
-      return false;
-    if ((A.Action != WorklistItem::InsertPushOrPop || !A.FIEToInsert.IsLoad))
-      return true;
-    if ((B.Action != WorklistItem::InsertPushOrPop || !B.FIEToInsert.IsLoad))
-      return false;
-    return DomOrder[B.AffectedReg] < DomOrder[A.AffectedReg];
-  });
+  std::stable_sort(TodoList.begin(), TodoList.end(),
+                   [&](const WorklistItem &A, const WorklistItem &B) {
+                     if ((A.Action != WorklistItem::InsertPushOrPop ||
+                          !A.FIEToInsert.IsLoad) &&
+                         (B.Action != WorklistItem::InsertPushOrPop ||
+                          !B.FIEToInsert.IsLoad))
+                       return false;
+                     if ((A.Action != WorklistItem::InsertPushOrPop ||
+                          !A.FIEToInsert.IsLoad))
+                       return true;
+                     if ((B.Action != WorklistItem::InsertPushOrPop ||
+                          !B.FIEToInsert.IsLoad))
+                       return false;
+                     return DomOrder[B.AffectedReg] < DomOrder[A.AffectedReg];
+                   });
 
   // Process insertions
   for (WorklistItem &Item : TodoList) {

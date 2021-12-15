@@ -14,7 +14,7 @@
 #ifndef BOLT_RUNTIMELIBS_RUNTIME_LIBRARY_H
 #define BOLT_RUNTIMELIBS_RUNTIME_LIBRARY_H
 
-#include <llvm/ADT/StringRef.h>
+#include "llvm/ADT/StringRef.h"
 #include <functional>
 #include <vector>
 

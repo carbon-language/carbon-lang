@@ -24,6 +24,7 @@ class ReorderFunctions : public BinaryFunctionPass {
 
   void reorder(std::vector<Cluster> &&Clusters,
                std::map<uint64_t, BinaryFunction> &BFs);
+
 public:
   enum ReorderType : char {
     RT_NONE = 0,
@@ -36,11 +37,9 @@ public:
   };
 
   explicit ReorderFunctions(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "reorder-functions";
-  }
+  const char *getName() const override { return "reorder-functions"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 

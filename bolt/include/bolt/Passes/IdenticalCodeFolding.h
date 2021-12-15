@@ -31,13 +31,12 @@ protected:
       return false;
     return BinaryFunctionPass::shouldOptimize(BF);
   }
+
 public:
   explicit IdenticalCodeFolding(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "identical-code-folding";
-  }
+  const char *getName() const override { return "identical-code-folding"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 

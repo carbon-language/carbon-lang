@@ -85,9 +85,8 @@ void mergeProfileHeaders(BinaryProfileHeader &MergedHeader,
   }
   if (!MergedHeader.FileName.empty() &&
       MergedHeader.FileName != Header.FileName) {
-    errs() << "WARNING: merging profile from a binary for "
-           << Header.FileName << " into a profile for binary "
-           << MergedHeader.FileName << '\n';
+    errs() << "WARNING: merging profile from a binary for " << Header.FileName
+           << " into a profile for binary " << MergedHeader.FileName << '\n';
   }
   if (MergedHeader.Id.empty()) {
     MergedHeader.Id = Header.Id;
@@ -286,7 +285,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::HideUnrelatedOptions(opts::MergeFdataCategory);
 
@@ -349,19 +348,14 @@ int main(int argc, char **argv) {
     BinaryProfile MergedProfile;
     MergedProfile.Header = MergedHeader;
     MergedProfile.Functions.resize(MergedBFs.size());
-    std::transform(MergedBFs.begin(),
-                   MergedBFs.end(),
-                   MergedProfile.Functions.begin(),
-                   [] (StringMapEntry<BinaryFunctionProfile> &V) {
-                     return V.second;
-                   });
+    std::transform(
+        MergedBFs.begin(), MergedBFs.end(), MergedProfile.Functions.begin(),
+        [](StringMapEntry<BinaryFunctionProfile> &V) { return V.second; });
 
     // For consistency, sort functions by their IDs.
     std::sort(MergedProfile.Functions.begin(), MergedProfile.Functions.end(),
-              [] (const BinaryFunctionProfile &A,
-                  const BinaryFunctionProfile &B) {
-                return A.Id < B.Id;
-              });
+              [](const BinaryFunctionProfile &A,
+                 const BinaryFunctionProfile &B) { return A.Id < B.Id; });
 
     YamlOut << MergedProfile;
   }
@@ -372,39 +366,33 @@ int main(int argc, char **argv) {
   if (opts::PrintFunctionList != opts::ST_NONE) {
     // List of function names with execution count.
     std::vector<std::pair<uint64_t, StringRef>> FunctionList(MergedBFs.size());
-    using CountFuncType =
-      std::function<std::pair<uint64_t, StringRef>(
-          const StringMapEntry<BinaryFunctionProfile> &)>;
+    using CountFuncType = std::function<std::pair<uint64_t, StringRef>(
+        const StringMapEntry<BinaryFunctionProfile> &)>;
     CountFuncType ExecCountFunc =
         [](const StringMapEntry<BinaryFunctionProfile> &V) {
-      return std::make_pair(V.second.ExecCount,
-                            StringRef(V.second.Name));
-    };
+          return std::make_pair(V.second.ExecCount, StringRef(V.second.Name));
+        };
     CountFuncType BranchCountFunc =
         [](const StringMapEntry<BinaryFunctionProfile> &V) {
-      // Return total branch count.
-      uint64_t BranchCount = 0;
-      for (const BinaryBasicBlockProfile &BI : V.second.Blocks) {
-        for (const SuccessorInfo &SI : BI.Successors) {
-          BranchCount += SI.Count;
-        }
-      }
-      return std::make_pair(BranchCount,
-                            StringRef(V.second.Name));
-    };
+          // Return total branch count.
+          uint64_t BranchCount = 0;
+          for (const BinaryBasicBlockProfile &BI : V.second.Blocks) {
+            for (const SuccessorInfo &SI : BI.Successors) {
+              BranchCount += SI.Count;
+            }
+          }
+          return std::make_pair(BranchCount, StringRef(V.second.Name));
+        };
 
     CountFuncType CountFunc = (opts::PrintFunctionList == opts::ST_EXEC_COUNT)
-       ? ExecCountFunc
-       : BranchCountFunc;
-    std::transform(MergedBFs.begin(),
-                   MergedBFs.end(),
-                   FunctionList.begin(),
+                                  ? ExecCountFunc
+                                  : BranchCountFunc;
+    std::transform(MergedBFs.begin(), MergedBFs.end(), FunctionList.begin(),
                    CountFunc);
     std::stable_sort(FunctionList.rbegin(), FunctionList.rend());
     errs() << "Functions sorted by "
-           << (opts::PrintFunctionList == opts::ST_EXEC_COUNT
-                ? "execution"
-                : "total branch")
+           << (opts::PrintFunctionList == opts::ST_EXEC_COUNT ? "execution"
+                                                              : "total branch")
            << " count:\n";
     for (std::pair<uint64_t, StringRef> &FI : FunctionList) {
       errs() << FI.second << " : " << FI.first << '\n';

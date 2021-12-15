@@ -24,12 +24,9 @@ class BinaryContext;
 /// Class responsible for allocating and managing code and data sections.
 class ExecutableFileMemoryManager : public SectionMemoryManager {
 private:
-  uint8_t *allocateSection(intptr_t Size,
-                           unsigned Alignment,
-                           unsigned SectionID,
-                           StringRef SectionName,
-                           bool IsCode,
-                           bool IsReadOnly);
+  uint8_t *allocateSection(intptr_t Size, unsigned Alignment,
+                           unsigned SectionID, StringRef SectionName,
+                           bool IsCode, bool IsReadOnly);
   BinaryContext &BC;
   bool AllowStubs;
 

@@ -95,9 +95,7 @@ class Edge;
 
 // Calculate Ext-TSP value, which quantifies the expected number of i-cache
 // misses for a given ordering of basic blocks
-double extTSPScore(uint64_t SrcAddr,
-                   uint64_t SrcSize,
-                   uint64_t DstAddr,
+double extTSPScore(uint64_t SrcAddr, uint64_t SrcSize, uint64_t DstAddr,
                    uint64_t Count) {
   assert(Count != BinaryBasicBlock::COUNT_NO_PROFILE);
 
@@ -139,24 +137,16 @@ class MergeGainTy {
 public:
   explicit MergeGainTy() {}
   explicit MergeGainTy(double Score, size_t MergeOffset, MergeTypeTy MergeType)
-    : Score(Score),
-      MergeOffset(MergeOffset),
-      MergeType(MergeType) {}
+      : Score(Score), MergeOffset(MergeOffset), MergeType(MergeType) {}
 
-  double score() const {
-    return Score;
-  }
+  double score() const { return Score; }
 
-  size_t mergeOffset() const {
-    return MergeOffset;
-  }
+  size_t mergeOffset() const { return MergeOffset; }
 
-  MergeTypeTy mergeType() const {
-    return MergeType;
-  }
+  MergeTypeTy mergeType() const { return MergeType; }
 
   // returns 'true' iff Other is preferred over this
-  bool operator < (const MergeGainTy& Other) const {
+  bool operator<(const MergeGainTy &Other) const {
     return (Other.Score > EPS && Other.Score > Score + EPS);
   }
 
@@ -170,10 +160,10 @@ private:
 // The class wraps several mutable fields utilized in the ExtTSP algorithm
 class Block {
 public:
-  Block(const Block&) = delete;
-  Block(Block&&) = default;
-  Block& operator=(const Block&) = delete;
-  Block& operator=(Block&&) = default;
+  Block(const Block &) = delete;
+  Block(Block &&) = default;
+  Block &operator=(const Block &) = delete;
+  Block &operator=(Block &&) = default;
 
   // Corresponding basic block
   BinaryBasicBlock *BB{nullptr};
@@ -204,10 +194,8 @@ public:
 
 public:
   explicit Block(BinaryBasicBlock *BB_, uint64_t Size_)
-    : BB(BB_),
-      Size(Size_),
-      ExecutionCount(BB_->getKnownExecutionCount()),
-      Index(BB->getLayoutIndex()) {}
+      : BB(BB_), Size(Size_), ExecutionCount(BB_->getKnownExecutionCount()),
+        Index(BB->getLayoutIndex()) {}
 
   bool adjacent(const Block *Other) const {
     return hasOutJump(Other) || hasInJump(Other);
@@ -233,54 +221,33 @@ public:
 // A chain (ordered sequence) of CFG nodes (basic blocks)
 class Chain {
 public:
-  Chain(const Chain&) = delete;
-  Chain(Chain&&) = default;
-  Chain& operator=(const Chain&) = delete;
-  Chain& operator=(Chain&&) = default;
+  Chain(const Chain &) = delete;
+  Chain(Chain &&) = default;
+  Chain &operator=(const Chain &) = delete;
+  Chain &operator=(Chain &&) = default;
 
   explicit Chain(size_t Id, Block *Block)
-    : Id(Id),
-      IsEntry(Block->Index == 0),
-      ExecutionCount(Block->ExecutionCount),
-      Size(Block->Size),
-      Score(0),
-      Blocks(1, Block) {}
+      : Id(Id), IsEntry(Block->Index == 0),
+        ExecutionCount(Block->ExecutionCount), Size(Block->Size), Score(0),
+        Blocks(1, Block) {}
 
-  size_t id() const {
-    return Id;
-  }
+  size_t id() const { return Id; }
 
-  uint64_t size() const {
-    return Size;
-  }
+  uint64_t size() const { return Size; }
 
-  double density() const {
-    return static_cast<double>(ExecutionCount) / Size;
-  }
+  double density() const { return static_cast<double>(ExecutionCount) / Size; }
 
-  uint64_t executionCount() const {
-    return ExecutionCount;
-  }
+  uint64_t executionCount() const { return ExecutionCount; }
 
-  bool isEntryPoint() const {
-    return IsEntry;
-  }
+  bool isEntryPoint() const { return IsEntry; }
 
-  double score() const {
-    return Score;
-  }
+  double score() const { return Score; }
 
-  void setScore(double NewScore) {
-    Score = NewScore;
-  }
+  void setScore(double NewScore) { Score = NewScore; }
 
-  const std::vector<Block *> &blocks() const {
-    return Blocks;
-  }
+  const std::vector<Block *> &blocks() const { return Blocks; }
 
-  const std::vector<std::pair<Chain *, Edge *>> &edges() const {
-    return Edges;
-  }
+  const std::vector<std::pair<Chain *, Edge *>> &edges() const { return Edges; }
 
   Edge *getEdge(Chain *Other) const {
     for (std::pair<Chain *, Edge *> It : Edges) {
@@ -340,19 +307,16 @@ private:
 // there is always at most one edge between a pair of chains
 class Edge {
 public:
-  Edge(const Edge&) = delete;
-  Edge(Edge&&) = default;
-  Edge& operator=(const Edge&) = delete;
-  Edge& operator=(Edge&&) = default;
+  Edge(const Edge &) = delete;
+  Edge(Edge &&) = default;
+  Edge &operator=(const Edge &) = delete;
+  Edge &operator=(Edge &&) = default;
 
   explicit Edge(Block *SrcBlock, Block *DstBlock, uint64_t EC)
-    : SrcChain(SrcBlock->CurChain),
-      DstChain(DstBlock->CurChain),
-      Jumps(1, std::make_pair(std::make_pair(SrcBlock, DstBlock), EC)) {}
+      : SrcChain(SrcBlock->CurChain), DstChain(DstBlock->CurChain),
+        Jumps(1, std::make_pair(std::make_pair(SrcBlock, DstBlock), EC)) {}
 
-  const JumpList &jumps() const {
-    return Jumps;
-  }
+  const JumpList &jumps() const { return Jumps; }
 
   void changeEndpoint(Chain *From, Chain *To) {
     if (From == SrcChain)
@@ -439,21 +403,13 @@ void Chain::mergeEdges(Chain *Other) {
 // instantiation of the vectors.
 class MergedChain {
 public:
-  MergedChain(BlockIter Begin1,
-              BlockIter End1,
-              BlockIter Begin2 = BlockIter(),
-              BlockIter End2 = BlockIter(),
-              BlockIter Begin3 = BlockIter(),
+  MergedChain(BlockIter Begin1, BlockIter End1, BlockIter Begin2 = BlockIter(),
+              BlockIter End2 = BlockIter(), BlockIter Begin3 = BlockIter(),
               BlockIter End3 = BlockIter())
-  : Begin1(Begin1),
-    End1(End1),
-    Begin2(Begin2),
-    End2(End2),
-    Begin3(Begin3),
-    End3(End3) {}
+      : Begin1(Begin1), End1(End1), Begin2(Begin2), End2(End2), Begin3(Begin3),
+        End3(End3) {}
 
-  template<typename F>
-  void forEach(const F &Func) const {
+  template <typename F> void forEach(const F &Func) const {
     for (auto It = Begin1; It != End1; It++)
       Func(*It);
     for (auto It = Begin2; It != End2; It++)
@@ -464,8 +420,7 @@ public:
 
   std::vector<Block *> getBlocks() const {
     std::vector<Block *> Result;
-    Result.reserve(std::distance(Begin1, End1) +
-                   std::distance(Begin2, End2) +
+    Result.reserve(std::distance(Begin1, End1) + std::distance(Begin2, End2) +
                    std::distance(Begin3, End3));
     Result.insert(Result.end(), Begin1, End1);
     Result.insert(Result.end(), Begin2, End2);
@@ -473,9 +428,7 @@ public:
     return Result;
   }
 
-  const Block *getFirstBlock() const {
-    return *Begin1;
-  }
+  const Block *getFirstBlock() const { return *Begin1; }
 
 private:
   BlockIter Begin1;
@@ -487,8 +440,8 @@ private:
 };
 
 /// Deterministically compare pairs of chains
-bool compareChainPairs(const Chain *A1, const Chain *B1,
-                       const Chain *A2, const Chain *B2) {
+bool compareChainPairs(const Chain *A1, const Chain *B1, const Chain *A2,
+                       const Chain *B2) {
   const uint64_t Samples1 = A1->executionCount() + B1->executionCount();
   const uint64_t Samples2 = A2->executionCount() + B2->executionCount();
   if (Samples1 != Samples2)
@@ -501,9 +454,7 @@ bool compareChainPairs(const Chain *A1, const Chain *B1,
 }
 class ExtTSP {
 public:
-  ExtTSP(const BinaryFunction &BF) : BF(BF) {
-    initialize();
-  }
+  ExtTSP(const BinaryFunction &BF) : BF(BF) { initialize(); }
 
   /// Run the algorithm and return an ordering of basic block
   void run(BinaryFunction::BasicBlockOrderType &Order) {
@@ -624,8 +575,7 @@ private:
         class Block *const SuccBlock = Edge.first;
         // Successor cannot be the first BB, which is pinned
         if (Block.OutWeight == Edge.second &&
-            SuccBlock->InWeight == Edge.second &&
-            SuccBlock->Index != 0) {
+            SuccBlock->InWeight == Edge.second && SuccBlock->Index != 0) {
           Block.FallthroughSucc = SuccBlock;
           SuccBlock->FallthroughPred = &Block;
           break;
@@ -688,9 +638,7 @@ private:
 
           if (BestGain < CurGain ||
               (std::abs(CurGain.score() - BestGain.score()) < EPS &&
-               compareChainPairs(ChainPred,
-                                 ChainSucc,
-                                 BestChainPred,
+               compareChainPairs(ChainPred, ChainSucc, BestChainPred,
                                  BestChainSucc))) {
             BestGain = CurGain;
             BestChainPred = ChainPred;
@@ -704,9 +652,7 @@ private:
         break;
 
       // Merge the best pair of chains
-      mergeChains(BestChainPred,
-                  BestChainSucc,
-                  BestGain.mergeOffset(),
+      mergeChains(BestChainPred, BestChainSucc, BestGain.mergeOffset(),
                   BestGain.mergeType());
     }
   }
@@ -747,10 +693,8 @@ private:
     for (const std::pair<std::pair<Block *, Block *>, uint64_t> &Jump : Jumps) {
       const Block *SrcBlock = Jump.first.first;
       const Block *DstBlock = Jump.first.second;
-      Score += extTSPScore(SrcBlock->EstimatedAddr,
-                           SrcBlock->Size,
-                           DstBlock->EstimatedAddr,
-                           Jump.second);
+      Score += extTSPScore(SrcBlock->EstimatedAddr, SrcBlock->Size,
+                           DstBlock->EstimatedAddr, Jump.second);
     }
     return Score;
   }
@@ -775,8 +719,8 @@ private:
 
     MergeGainTy Gain = MergeGainTy();
     // Try to concatenate two chains w/o splitting
-    Gain = computeMergeGain(
-        Gain, ChainPred, ChainSucc, Jumps, 0, MergeTypeTy::X_Y);
+    Gain = computeMergeGain(Gain, ChainPred, ChainSucc, Jumps, 0,
+                            MergeTypeTy::X_Y);
 
     // Try to break ChainPred in various ways and concatenate with ChainSucc
     if (ChainPred->blocks().size() <= opts::ChainSplitThreshold) {
@@ -790,12 +734,12 @@ private:
           continue;
         }
 
-        Gain = computeMergeGain(
-            Gain, ChainPred, ChainSucc, Jumps, Offset, MergeTypeTy::X1_Y_X2);
-        Gain = computeMergeGain(
-            Gain, ChainPred, ChainSucc, Jumps, Offset, MergeTypeTy::Y_X2_X1);
-        Gain = computeMergeGain(
-            Gain, ChainPred, ChainSucc, Jumps, Offset, MergeTypeTy::X2_X1_Y);
+        Gain = computeMergeGain(Gain, ChainPred, ChainSucc, Jumps, Offset,
+                                MergeTypeTy::X1_Y_X2);
+        Gain = computeMergeGain(Gain, ChainPred, ChainSucc, Jumps, Offset,
+                                MergeTypeTy::Y_X2_X1);
+        Gain = computeMergeGain(Gain, ChainPred, ChainSucc, Jumps, Offset,
+                                MergeTypeTy::X2_X1_Y);
       }
     }
 
@@ -805,10 +749,8 @@ private:
 
   /// Merge two chains and update the best Gain
   MergeGainTy computeMergeGain(const MergeGainTy &CurGain,
-                               const Chain *ChainPred,
-                               const Chain *ChainSucc,
-                               const JumpList &Jumps,
-                               size_t MergeOffset,
+                               const Chain *ChainPred, const Chain *ChainSucc,
+                               const JumpList &Jumps, size_t MergeOffset,
                                MergeTypeTy MergeType) const {
     MergedChain MergedBlocks = mergeBlocks(
         ChainPred->blocks(), ChainSucc->blocks(), MergeOffset, MergeType);
@@ -830,8 +772,7 @@ private:
   /// Otherwise, the first chain is cut into two sub-chains at the offset,
   /// and merged using all possible ways of concatenating three chains.
   MergedChain mergeBlocks(const std::vector<Block *> &X,
-                          const std::vector<Block *> &Y,
-                          size_t MergeOffset,
+                          const std::vector<Block *> &Y, size_t MergeOffset,
                           MergeTypeTy MergeType) const {
     // Split the first chain, X, into X1 and X2
     BlockIter BeginX1 = X.begin();
@@ -842,15 +783,15 @@ private:
     BlockIter EndY = Y.end();
 
     // Construct a new chain from the three existing ones
-    switch(MergeType) {
-      case MergeTypeTy::X_Y:
-        return MergedChain(BeginX1, EndX2, BeginY, EndY);
-      case MergeTypeTy::X1_Y_X2:
-        return MergedChain(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
-      case MergeTypeTy::Y_X2_X1:
-        return MergedChain(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
-      case MergeTypeTy::X2_X1_Y:
-        return MergedChain(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
+    switch (MergeType) {
+    case MergeTypeTy::X_Y:
+      return MergedChain(BeginX1, EndX2, BeginY, EndY);
+    case MergeTypeTy::X1_Y_X2:
+      return MergedChain(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
+    case MergeTypeTy::Y_X2_X1:
+      return MergedChain(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
+    case MergeTypeTy::X2_X1_Y:
+      return MergedChain(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
     }
 
     llvm_unreachable("unexpected merge type");
@@ -858,9 +799,7 @@ private:
 
   /// Merge chain From into chain Into, update the list of active chains,
   /// adjacency information, and the corresponding cached values
-  void mergeChains(Chain *Into,
-                   Chain *From,
-                   size_t MergeOffset,
+  void mergeChains(Chain *Into, Chain *From, size_t MergeOffset,
                    MergeTypeTy MergeType) {
     assert(Into != From && "a chain cannot be merged with itself");
 
@@ -946,8 +885,8 @@ private:
   std::vector<Edge> AllEdges;
 };
 
-void ExtTSPReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+void ExtTSPReorderAlgorithm::reorderBasicBlocks(const BinaryFunction &BF,
+                                                BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
 

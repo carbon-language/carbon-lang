@@ -181,8 +181,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
 
   if (BC.isMachO()) {
     MCSection *TablesSection = BC.Ctx->getMachOSection(
-                                 "__BOLT", "__tables", MachO::S_REGULAR,
-                                 SectionKind::getData());
+        "__BOLT", "__tables", MachO::S_REGULAR, SectionKind::getData());
     TablesSection->setAlignment(llvm::Align(BC.RegularPageSize));
     Streamer.SwitchSection(TablesSection);
     emitString("__bolt_instr_tables", buildTables(BC));

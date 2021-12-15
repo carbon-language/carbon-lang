@@ -18,14 +18,11 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace llvm {
 
 class raw_ostream;
 
-
 namespace bolt {
-
 
 /// Objects of this class implement various basic block clustering algorithms.
 /// Basic block clusters are chains of basic blocks that should be laid out
@@ -71,32 +68,33 @@ protected:
     uint64_t Count;
 
     EdgeTy(const BinaryBasicBlock *Src, const BinaryBasicBlock *Dst,
-           uint64_t Count) :
-      Src(Src), Dst(Dst), Count(Count) {}
+           uint64_t Count)
+        : Src(Src), Dst(Dst), Count(Count) {}
 
     void print(raw_ostream &OS) const;
   };
 
   struct EdgeHash {
-   size_t operator() (const EdgeTy &E) const;
+    size_t operator()(const EdgeTy &E) const;
   };
 
   struct EdgeEqual {
-    bool operator() (const EdgeTy &A, const EdgeTy &B) const;
+    bool operator()(const EdgeTy &A, const EdgeTy &B) const;
   };
 
   // Virtual methods that allow custom specialization of the heuristic used by
   // the algorithm to select edges.
-  virtual void initQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) = 0;
-  virtual void adjustQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) = 0;
-  virtual bool areClustersCompatible(
-      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const = 0;
+  virtual void initQueue(std::vector<EdgeTy> &Queue,
+                         const BinaryFunction &BF) = 0;
+  virtual void adjustQueue(std::vector<EdgeTy> &Queue,
+                           const BinaryFunction &BF) = 0;
+  virtual bool areClustersCompatible(const ClusterTy &Front,
+                                     const ClusterTy &Back,
+                                     const EdgeTy &E) const = 0;
 
   // Map from basic block to owning cluster index.
-  using BBToClusterMapTy = std::unordered_map<const BinaryBasicBlock *,
-                                              unsigned>;
+  using BBToClusterMapTy =
+      std::unordered_map<const BinaryBasicBlock *, unsigned>;
   BBToClusterMapTy BBToClusterMap;
 
 public:
@@ -105,20 +103,16 @@ public:
   void reset() override;
 };
 
-
 /// This clustering algorithm is based on a greedy heuristic suggested by
 /// Pettis and Hansen (PLDI '90).
 class PHGreedyClusterAlgorithm : public GreedyClusterAlgorithm {
 protected:
-  void initQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF)  override;
-  void adjustQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) override;
-  bool areClustersCompatible(
-      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const
-  override;
+  void initQueue(std::vector<EdgeTy> &Queue, const BinaryFunction &BF) override;
+  void adjustQueue(std::vector<EdgeTy> &Queue,
+                   const BinaryFunction &BF) override;
+  bool areClustersCompatible(const ClusterTy &Front, const ClusterTy &Back,
+                             const EdgeTy &E) const override;
 };
-
 
 /// This clustering algorithm is based on a greedy heuristic that is a
 /// modification of the heuristic suggested by Pettis (PLDI '90). It is
@@ -140,18 +134,15 @@ private:
   int64_t calculateWeight(const EdgeTy &E, const BinaryFunction &BF) const;
 
 protected:
-  void initQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF)  override;
-  void adjustQueue(
-      std::vector<EdgeTy> &Queue, const BinaryFunction &BF) override;
-  bool areClustersCompatible(
-      const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const
-  override;
+  void initQueue(std::vector<EdgeTy> &Queue, const BinaryFunction &BF) override;
+  void adjustQueue(std::vector<EdgeTy> &Queue,
+                   const BinaryFunction &BF) override;
+  bool areClustersCompatible(const ClusterTy &Front, const ClusterTy &Back,
+                             const EdgeTy &E) const override;
 
 public:
   void reset() override;
 };
-
 
 /// Objects of this class implement various basic block reordering alogrithms.
 /// Most of these algorithms depend on a clustering alogrithm.
@@ -168,24 +159,23 @@ protected:
   std::unique_ptr<ClusterAlgorithm> CAlgo;
 
 public:
-  ReorderAlgorithm() { }
-  explicit ReorderAlgorithm(std::unique_ptr<ClusterAlgorithm> CAlgo) :
-    CAlgo(std::move(CAlgo)) { }
+  ReorderAlgorithm() {}
+  explicit ReorderAlgorithm(std::unique_ptr<ClusterAlgorithm> CAlgo)
+      : CAlgo(std::move(CAlgo)) {}
 
   using BasicBlockOrder = BinaryFunction::BasicBlockOrderType;
 
   /// Reorder the basic blocks of the given function and store the new order in
   /// the new Clusters vector.
-  virtual void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const = 0;
+  virtual void reorderBasicBlocks(const BinaryFunction &BF,
+                                  BasicBlockOrder &Order) const = 0;
 
   void setClusterAlgorithm(ClusterAlgorithm *CAlgo) {
     this->CAlgo.reset(CAlgo);
   }
 
-  virtual ~ReorderAlgorithm() { }
+  virtual ~ReorderAlgorithm() {}
 };
-
 
 /// Dynamic programming implementation for the TSP, applied to BB layout. Find
 /// the optimal way to maximize weight during a path traversing all BBs. In
@@ -195,22 +185,20 @@ public:
 /// only be used for small functions.
 class TSPReorderAlgorithm : public ReorderAlgorithm {
 public:
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
-
 
 /// Simple algorithm that groups basic blocks into clusters and then
 /// lays them out cluster after cluster.
 class OptimizeReorderAlgorithm : public ReorderAlgorithm {
 public:
-  explicit OptimizeReorderAlgorithm(std::unique_ptr<ClusterAlgorithm> CAlgo) :
-    ReorderAlgorithm(std::move(CAlgo)) { }
+  explicit OptimizeReorderAlgorithm(std::unique_ptr<ClusterAlgorithm> CAlgo)
+      : ReorderAlgorithm(std::move(CAlgo)) {}
 
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
-
 
 /// This reorder algorithm tries to ensure that all inter-cluster edges are
 /// predicted as not-taken, by enforcing a topological order to make
@@ -218,13 +206,12 @@ public:
 class OptimizeBranchReorderAlgorithm : public ReorderAlgorithm {
 public:
   explicit OptimizeBranchReorderAlgorithm(
-      std::unique_ptr<ClusterAlgorithm> CAlgo) :
-    ReorderAlgorithm(std::move(CAlgo)) { }
+      std::unique_ptr<ClusterAlgorithm> CAlgo)
+      : ReorderAlgorithm(std::move(CAlgo)) {}
 
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
-
 
 /// This reorder tries to separate hot from cold blocks to maximize the
 /// probability that unfrequently executed code doesn't pollute the cache, by
@@ -232,36 +219,36 @@ public:
 class OptimizeCacheReorderAlgorithm : public ReorderAlgorithm {
 public:
   explicit OptimizeCacheReorderAlgorithm(
-      std::unique_ptr<ClusterAlgorithm> CAlgo) :
-    ReorderAlgorithm(std::move(CAlgo)) { }
+      std::unique_ptr<ClusterAlgorithm> CAlgo)
+      : ReorderAlgorithm(std::move(CAlgo)) {}
 
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
 
 /// A new reordering algorithm for basic blocks, ext-tsp
 class ExtTSPReorderAlgorithm : public ReorderAlgorithm {
 public:
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
 
 /// Toy example that simply reverses the original basic block order.
 class ReverseReorderAlgorithm : public ReorderAlgorithm {
 public:
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
 
 /// Create clusters as usual and place them in random order.
 class RandomClusterReorderAlgorithm : public ReorderAlgorithm {
 public:
   explicit RandomClusterReorderAlgorithm(
-      std::unique_ptr<ClusterAlgorithm> CAlgo) :
-    ReorderAlgorithm(std::move(CAlgo)) { }
+      std::unique_ptr<ClusterAlgorithm> CAlgo)
+      : ReorderAlgorithm(std::move(CAlgo)) {}
 
-  void reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+  void reorderBasicBlocks(const BinaryFunction &BF,
+                          BasicBlockOrder &Order) const override;
 };
 
 } // namespace bolt

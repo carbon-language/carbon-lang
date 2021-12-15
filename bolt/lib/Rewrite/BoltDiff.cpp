@@ -186,23 +186,25 @@ class RewriteInstanceDiff {
   double getNormalizedScore(const BinaryFunction &Function,
                             const RewriteInstance &Ctx) {
     if (!opts::NormalizeByBin1)
-      return static_cast<double>(Function.getFunctionScore()) / Ctx.getTotalScore();
-    return static_cast<double>(Function.getFunctionScore()) / RI1.getTotalScore();
+      return static_cast<double>(Function.getFunctionScore()) /
+             Ctx.getTotalScore();
+    return static_cast<double>(Function.getFunctionScore()) /
+           RI1.getTotalScore();
   }
 
   double getNormalizedScore(const BinaryBasicBlock &BB,
                             const RewriteInstance &Ctx) {
     if (!opts::NormalizeByBin1)
-      return static_cast<double>(BB.getKnownExecutionCount()) / Ctx.getTotalScore();
-    return static_cast<double>(BB.getKnownExecutionCount()) / RI1.getTotalScore();
+      return static_cast<double>(BB.getKnownExecutionCount()) /
+             Ctx.getTotalScore();
+    return static_cast<double>(BB.getKnownExecutionCount()) /
+           RI1.getTotalScore();
   }
 
   double getNormalizedScore(BinaryBasicBlock::branch_info_iterator BIIter,
                             const RewriteInstance &Ctx) {
     double Score =
-              BIIter->Count == BinaryBasicBlock::COUNT_NO_PROFILE
-                  ? 0
-                  : BIIter->Count;
+        BIIter->Count == BinaryBasicBlock::COUNT_NO_PROFILE ? 0 : BIIter->Count;
     if (!opts::NormalizeByBin1)
       return Score / Ctx.getTotalScore();
     return Score / RI1.getTotalScore();
@@ -277,7 +279,7 @@ class RewriteInstanceDiff {
       }
       if (Match || !Function2.hasCFG())
         continue;
-      auto Iter = HashLookup.find(Function2.computeHash(/*UseDFS*/true));
+      auto Iter = HashLookup.find(Function2.computeHash(/*UseDFS*/ true));
       if (Iter != HashLookup.end()) {
         FuncMap.insert(std::make_pair<>(&Function2, Iter->second));
         Bin1MappedFuncs.insert(Iter->second);
@@ -340,8 +342,7 @@ class RewriteInstanceDiff {
       return false;
 
     while (Iter1 != BB1.end()) {
-      if (Iter2 == BB2.end() ||
-          Iter1->getOpcode() != Iter2->getOpcode())
+      if (Iter2 == BB2.end() || Iter1->getOpcode() != Iter2->getOpcode())
         return false;
 
       ++Iter1;
@@ -464,9 +465,8 @@ class RewriteInstanceDiff {
   void reportHottestEdgeDiffs() {
     unsigned Printed = 0;
     setTitleColor();
-    outs()
-        << "\nTop " << opts::DisplayCount
-        << " largest differences in edge hotness bin 2 -> bin 1:\n";
+    outs() << "\nTop " << opts::DisplayCount
+           << " largest differences in edge hotness bin 2 -> bin 1:\n";
     outs() << "=========================================================\n";
     setRegularColor();
     outs() << " * Functions with different contents do not appear here\n";
@@ -494,7 +494,7 @@ class RewriteInstanceDiff {
       if (Printed++ == opts::DisplayCount)
         break;
     }
- }
+  }
 
   /// For LTO functions sharing the same prefix (for example, func1.lto_priv.1
   /// and func1.lto_priv.2 share the func1.lto_priv prefix), compute aggregated
@@ -527,7 +527,7 @@ class RewriteInstanceDiff {
         UnmappedScore += Score;
     }
     int64_t Unmapped =
-      RI2.BC->getBinaryFunctions().size() - Bin2MappedFuncs.size();
+        RI2.BC->getBinaryFunctions().size() - Bin2MappedFuncs.size();
     outs() << "BOLT-DIFF: " << Unmapped
            << " functions in Binary2 have no correspondence to any other "
               "function in Binary1.\n";
@@ -572,7 +572,7 @@ class RewriteInstanceDiff {
           &MapEntry = I->second;
       if (opts::IgnoreUnchanged &&
           MapEntry.second->computeHash(/*UseDFS=*/true) ==
-          MapEntry.first->computeHash(/*UseDFS=*/true))
+              MapEntry.first->computeHash(/*UseDFS=*/true))
         continue;
       const std::pair<double, double> &Scores = ScoreMap[MapEntry.first];
       outs() << "Function " << MapEntry.first->getDemangledName();
@@ -691,8 +691,9 @@ void RewriteInstance::compare(RewriteInstance &RI2) {
   outs() << "Trace for binary 2 has " << RI2.getTotalScore()
          << " instructions executed.\n";
   if (opts::NormalizeByBin1) {
-    double Diff2to1 = static_cast<double>(RI2.getTotalScore() - this->getTotalScore()) /
-                       this->getTotalScore();
+    double Diff2to1 =
+        static_cast<double>(RI2.getTotalScore() - this->getTotalScore()) /
+        this->getTotalScore();
     outs() << "Binary2 change in score with respect to Binary1: ";
     printColoredPercentage(Diff2to1 * 100.0);
     outs() << "\n";

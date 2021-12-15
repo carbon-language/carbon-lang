@@ -31,12 +31,12 @@ class BinaryFunctionPass {
 protected:
   bool PrintPass;
 
-  explicit BinaryFunctionPass(const bool PrintPass)
-    : PrintPass(PrintPass) { }
+  explicit BinaryFunctionPass(const bool PrintPass) : PrintPass(PrintPass) {}
 
   /// Control whether a specific function should be skipped during
   /// optimization.
   virtual bool shouldOptimize(const BinaryFunction &BF) const;
+
 public:
   virtual ~BinaryFunctionPass() = default;
 
@@ -62,24 +62,19 @@ protected:
 
 public:
   DynoStatsPrintPass(const DynoStats &PrevDynoStats, const char *Title)
-    : BinaryFunctionPass(false)
-    , PrevDynoStats(PrevDynoStats)
-    , Title(Title) {
-  }
+      : BinaryFunctionPass(false), PrevDynoStats(PrevDynoStats), Title(Title) {}
 
   const char *getName() const override {
     return "print dyno-stats after optimizations";
   }
 
-  bool shouldPrint(const BinaryFunction &BF) const override {
-    return false;
-  }
+  bool shouldPrint(const BinaryFunction &BF) const override { return false; }
 
   void runOnFunctions(BinaryContext &BC) override {
     const DynoStats NewDynoStats = getDynoStats(BC.getBinaryFunctions());
     const bool Changed = (NewDynoStats != PrevDynoStats);
-    outs() << "BOLT-INFO: program-wide dynostats "
-           << Title << (Changed ? "" : " (no change)") << ":\n\n"
+    outs() << "BOLT-INFO: program-wide dynostats " << Title
+           << (Changed ? "" : " (no change)") << ":\n\n"
            << PrevDynoStats;
     if (Changed) {
       outs() << '\n';
@@ -114,18 +109,17 @@ class EliminateUnreachableBlocks : public BinaryFunctionPass {
   std::unordered_set<const BinaryFunction *> Modified;
   std::atomic<unsigned> DeletedBlocks{0};
   std::atomic<uint64_t> DeletedBytes{0};
-  void runOnFunction(BinaryFunction& Function);
- public:
-  EliminateUnreachableBlocks(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+  void runOnFunction(BinaryFunction &Function);
 
-  const char *getName() const override {
-    return "eliminate-unreachable";
-  }
+public:
+  EliminateUnreachableBlocks(const cl::opt<bool> &PrintPass)
+      : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override { return "eliminate-unreachable"; }
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
-  void runOnFunctions(BinaryContext&) override;
+  void runOnFunctions(BinaryContext &) override;
 };
 
 // Reorder the basic blocks for each function based on hotness.
@@ -156,44 +150,38 @@ public:
   };
 
 private:
-  void modifyFunctionLayout(BinaryFunction &Function,
-                            LayoutType Type,
+  void modifyFunctionLayout(BinaryFunction &Function, LayoutType Type,
                             bool MinBranchClusters) const;
+
 public:
   explicit ReorderBasicBlocks(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
   bool shouldOptimize(const BinaryFunction &BF) const override;
 
-  const char *getName() const override {
-    return "reorder-blocks";
-  }
+  const char *getName() const override { return "reorder-blocks"; }
   bool shouldPrint(const BinaryFunction &BF) const override;
   void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Sync local branches with CFG.
 class FixupBranches : public BinaryFunctionPass {
- public:
+public:
   explicit FixupBranches(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "fix-branches";
-  }
+  const char *getName() const override { return "fix-branches"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Fix the CFI state and exception handling information after all other
 /// passes have completed.
 class FinalizeFunctions : public BinaryFunctionPass {
- public:
+public:
   explicit FinalizeFunctions(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "finalize-functions";
-  }
+  const char *getName() const override { return "finalize-functions"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
@@ -202,11 +190,9 @@ class FinalizeFunctions : public BinaryFunctionPass {
 class CheckLargeFunctions : public BinaryFunctionPass {
 public:
   explicit CheckLargeFunctions(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "check-large-functions";
-  }
+  const char *getName() const override { return "check-large-functions"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 
@@ -215,13 +201,11 @@ public:
 
 /// Convert and remove all BOLT-related annotations before LLVM code emission.
 class LowerAnnotations : public BinaryFunctionPass {
- public:
+public:
   explicit LowerAnnotations(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "lower-annotations";
-  }
+  const char *getName() const override { return "lower-annotations"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
@@ -279,15 +263,14 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
   std::set<const BinaryBasicBlock *> BeenOptimized;
 
   bool shouldRewriteBranch(const BinaryBasicBlock *PredBB,
-                           const MCInst &CondBranch,
-                           const BinaryBasicBlock *BB,
+                           const MCInst &CondBranch, const BinaryBasicBlock *BB,
                            const bool DirectionFlag);
 
   uint64_t fixTailCalls(BinaryFunction &BF);
 
 public:
   explicit SimplifyConditionalTailCalls(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
   const char *getName() const override {
     return "simplify-conditional-tail-calls";
@@ -321,11 +304,9 @@ class Peepholes : public BinaryFunctionPass {
 
 public:
   explicit Peepholes(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "peepholes";
-  }
+  const char *getName() const override { return "peepholes"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
@@ -351,11 +332,9 @@ class SimplifyRODataLoads : public BinaryFunctionPass {
 
 public:
   explicit SimplifyRODataLoads(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "simplify-read-only-loads";
-  }
+  const char *getName() const override { return "simplify-read-only-loads"; }
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
@@ -364,14 +343,10 @@ public:
 
 /// Assign output sections to all functions.
 class AssignSections : public BinaryFunctionPass {
- public:
-  explicit AssignSections()
-    : BinaryFunctionPass(false) {
-  }
+public:
+  explicit AssignSections() : BinaryFunctionPass(false) {}
 
-  const char *getName() const override {
-    return "assign-sections";
-  }
+  const char *getName() const override { return "assign-sections"; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
@@ -381,32 +356,24 @@ class AssignSections : public BinaryFunctionPass {
 /// for blocks of interest (excluding prologues, epilogues, and BB frequency
 /// lower than 100).
 class PrintProfileStats : public BinaryFunctionPass {
- public:
+public:
   explicit PrintProfileStats(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "profile-stats";
-  }
-  bool shouldPrint(const BinaryFunction &) const override {
-    return false;
-  }
+  const char *getName() const override { return "profile-stats"; }
+  bool shouldPrint(const BinaryFunction &) const override { return false; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Prints a list of the top 100 functions sorted by a set of
 /// dyno stats categories.
 class PrintProgramStats : public BinaryFunctionPass {
- public:
+public:
   explicit PrintProgramStats(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "print-stats";
-  }
-  bool shouldPrint(const BinaryFunction &) const override {
-    return false;
-  }
+  const char *getName() const override { return "print-stats"; }
+  bool shouldPrint(const BinaryFunction &) const override { return false; }
   void runOnFunctions(BinaryContext &BC) override;
 };
 
@@ -415,11 +382,9 @@ class PrintProgramStats : public BinaryFunctionPass {
 class InstructionLowering : public BinaryFunctionPass {
 public:
   explicit InstructionLowering(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) {}
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "inst-lowering";
-  }
+  const char *getName() const override { return "inst-lowering"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 };
@@ -428,11 +393,9 @@ public:
 class StripRepRet : public BinaryFunctionPass {
 public:
   explicit StripRepRet(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) {}
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "strip-rep-ret";
-  }
+  const char *getName() const override { return "strip-rep-ret"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 };
@@ -441,11 +404,9 @@ public:
 class InlineMemcpy : public BinaryFunctionPass {
 public:
   explicit InlineMemcpy(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) {}
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "inline-memcpy";
-  }
+  const char *getName() const override { return "inline-memcpy"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 };
@@ -462,13 +423,11 @@ private:
 public:
   explicit SpecializeMemcpy1(const cl::opt<bool> &PrintPass,
                              cl::list<std::string> &Spec)
-    : BinaryFunctionPass(PrintPass), Spec(Spec) {}
+      : BinaryFunctionPass(PrintPass), Spec(Spec) {}
 
   bool shouldOptimize(const BinaryFunction &BF) const override;
 
-  const char *getName() const override {
-    return "specialize-memcpy";
-  }
+  const char *getName() const override { return "specialize-memcpy"; }
 
   void runOnFunctions(BinaryContext &BC) override;
 };

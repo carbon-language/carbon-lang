@@ -48,9 +48,7 @@ public:
   bool isStoreUsed(const FrameIndexEntry &StoreFIE, ExprIterator Candidates,
                    bool IncludeLocalAccesses = true) const;
 
-  void run() {
-    InstrsDataflowAnalysis<StackReachingUses, true>::run();
-  }
+  void run() { InstrsDataflowAnalysis<StackReachingUses, true>::run(); }
 
 protected:
   // Reference to the result of stack frame analysis

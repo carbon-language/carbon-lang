@@ -31,7 +31,7 @@ class CallGraphWalker {
   std::deque<BinaryFunction *> TopologicalCGOrder;
 
   /// Stores all visitor functions to call when traversing the call graph
-  typedef std::function<bool(BinaryFunction*)> CallbackTy;
+  typedef std::function<bool(BinaryFunction *)> CallbackTy;
   std::vector<CallbackTy> Visitors;
 
   /// Do the bottom-up traversal
@@ -46,15 +46,13 @@ public:
   /// whatever information it is keeping track of has changed. Function must
   /// converge with time, ie, it must eventually return false, otherwise the
   /// call graph walk will never finish.
-  void registerVisitor(CallbackTy Callback) {
-    Visitors.emplace_back(Callback);
-  }
+  void registerVisitor(CallbackTy Callback) { Visitors.emplace_back(Callback); }
 
   /// Build the call graph, establish a traversal order and traverse it.
   void walk();
 };
 
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

@@ -203,7 +203,7 @@ BitVector RegAnalysis::getFunctionUsedRegsList(const BinaryFunction *Func) {
 
   for (const BinaryBasicBlock &BB : *Func) {
     for (const MCInst &Inst : BB) {
-      getInstUsedRegsList(Inst, UsedRegs, /*GetClobbers*/false);
+      getInstUsedRegsList(Inst, UsedRegs, /*GetClobbers*/ false);
       if (UsedRegs.all())
         return UsedRegs;
     }
@@ -239,5 +239,5 @@ void RegAnalysis::printStats() {
                    (100.0 * CountFunctionsAllClobber / CountDenominator));
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

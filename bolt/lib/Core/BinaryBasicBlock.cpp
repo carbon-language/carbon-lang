@@ -15,7 +15,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Errc.h"
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 namespace llvm {
@@ -27,9 +26,7 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Index < RHS.Index;
 }
 
-bool BinaryBasicBlock::hasCFG() const {
-  return getParent()->hasCFG();
-}
+bool BinaryBasicBlock::hasCFG() const { return getParent()->hasCFG(); }
 
 bool BinaryBasicBlock::isEntryPoint() const {
   return getParent()->isEntryPoint(*this);
@@ -62,8 +59,8 @@ BinaryBasicBlock::iterator BinaryBasicBlock::getFirstNonPseudo() {
 
 BinaryBasicBlock::reverse_iterator BinaryBasicBlock::getLastNonPseudo() {
   const BinaryContext &BC = Function->getBinaryContext();
-  for (auto RII = Instructions.rbegin(), E = Instructions.rend();
-       RII != E; ++RII) {
+  for (auto RII = Instructions.rbegin(), E = Instructions.rend(); RII != E;
+       ++RII) {
     if (!BC.MIB->isPseudo(*RII))
       return RII;
   }
@@ -89,12 +86,11 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
       auto Itr = UniqueSyms.find(Succ->getLabel());
       if (Itr != UniqueSyms.end()) {
         UniqueSyms.erase(Itr);
-      } else  {
+      } else {
         // Work on the assumption that jump table blocks don't
         // have a conditional successor.
         Valid = false;
-        errs() << "BOLT-WARNING: Jump table successor "
-               << Succ->getName()
+        errs() << "BOLT-WARNING: Jump table successor " << Succ->getName()
                << " not contained in the jump table.\n";
       }
     }
@@ -126,18 +122,18 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
         Valid = !CondBranch && !UncondBranch;
         break;
       case 1: {
-        const bool HasCondBlock = CondBranch &&
-          Function->getBasicBlockForLabel(BC.MIB->getTargetSymbol(*CondBranch));
+        const bool HasCondBlock =
+            CondBranch && Function->getBasicBlockForLabel(
+                              BC.MIB->getTargetSymbol(*CondBranch));
         Valid = !CondBranch || !HasCondBlock;
         break;
       }
       case 2:
-        Valid =
-          (CondBranch &&
-           (TBB == getConditionalSuccessor(true)->getLabel() &&
-            ((!UncondBranch && !FBB) ||
-             (UncondBranch &&
-              FBB == getConditionalSuccessor(false)->getLabel()))));
+        Valid = (CondBranch &&
+                 (TBB == getConditionalSuccessor(true)->getLabel() &&
+                  ((!UncondBranch && !FBB) ||
+                   (UncondBranch &&
+                    FBB == getConditionalSuccessor(false)->getLabel()))));
         break;
       }
     }
@@ -167,9 +163,8 @@ BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
   return nullptr;
 }
 
-BinaryBasicBlock *
-BinaryBasicBlock::getSuccessor(const MCSymbol *Label,
-                               BinaryBranchInfo &BI) const {
+BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label,
+                                                 BinaryBranchInfo &BI) const {
   auto BIIter = branch_info_begin();
   for (BinaryBasicBlock *BB : successors()) {
     if (BB->getLabel() == Label) {
@@ -202,8 +197,8 @@ int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
   // Find the last CFI preceding Instr in this basic block.
   const MCInst *LastCFI = nullptr;
   bool InstrSeen = (Instr == nullptr);
-  for (auto RII = Instructions.rbegin(), E = Instructions.rend();
-       RII != E; ++RII) {
+  for (auto RII = Instructions.rbegin(), E = Instructions.rend(); RII != E;
+       ++RII) {
     if (!InstrSeen) {
       InstrSeen = (&*RII == Instr);
       continue;
@@ -253,8 +248,8 @@ int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
     assert(Depth == 0 && "unbalanced RememberState/RestoreState stack");
 
     // Skip any GNU_args_size.
-    while (State >= 0 &&
-           FDEProgram[State].getOperation() == MCCFIInstruction::OpGnuArgsSize){
+    while (State >= 0 && FDEProgram[State].getOperation() ==
+                             MCCFIInstruction::OpGnuArgsSize) {
       --State;
     }
   }
@@ -263,8 +258,7 @@ int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
   return State + 1;
 }
 
-void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ,
-                                    uint64_t Count,
+void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ, uint64_t Count,
                                     uint64_t MispredictedCount) {
   Successors.push_back(Succ);
   BranchInfo.push_back({Count, MispredictedCount});
@@ -323,7 +317,7 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred,
                                          bool Multiple) {
   // Note: the predecessor could be listed multiple times.
   bool Erased = false;
-  for (auto PredI = Predecessors.begin(); PredI != Predecessors.end(); ) {
+  for (auto PredI = Predecessors.begin(); PredI != Predecessors.end();) {
     if (*PredI == Pred) {
       Erased = true;
       PredI = Predecessors.erase(PredI);
@@ -374,17 +368,12 @@ void BinaryBasicBlock::adjustExecutionCount(double Ratio) {
   }
 }
 
-bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
-                                     const MCSymbol *&FBB,
+bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB, const MCSymbol *&FBB,
                                      MCInst *&CondBranch,
                                      MCInst *&UncondBranch) {
   auto &MIB = Function->getBinaryContext().MIB;
-  return MIB->analyzeBranch(Instructions.begin(),
-                            Instructions.end(),
-                            TBB,
-                            FBB,
-                            CondBranch,
-                            UncondBranch);
+  return MIB->analyzeBranch(Instructions.begin(), Instructions.end(), TBB, FBB,
+                            CondBranch, UncondBranch);
 }
 
 bool BinaryBasicBlock::isMacroOpFusionPair(const_iterator I) const {
@@ -503,9 +492,8 @@ uint32_t BinaryBasicBlock::getNumPseudos() const {
   }
   if (N != NumPseudos) {
     errs() << "BOLT-ERROR: instructions for basic block " << getName()
-           << " in function " << *Function << ": calculated pseudos "
-           << N << ", set pseudos " << NumPseudos << ", size " << size()
-           << '\n';
+           << " in function " << *Function << ": calculated pseudos " << N
+           << ", set pseudos " << NumPseudos << ", size " << size() << '\n';
     llvm_unreachable("pseudos mismatch");
   }
 #endif
@@ -529,7 +517,8 @@ BinaryBasicBlock::getBranchStats(const BinaryBasicBlock *Succ) const {
       assert(Itr != Successors.end());
       const BinaryBranchInfo &BI = BranchInfo[Itr - Successors.begin()];
       if (BI.Count && BI.Count != COUNT_NO_PROFILE) {
-        if (TotalMispreds == 0) TotalMispreds = 1;
+        if (TotalMispreds == 0)
+          TotalMispreds = 1;
         return std::make_pair(double(BI.Count) / TotalCount,
                               double(BI.MispredictedCount) / TotalMispreds);
       }
@@ -540,7 +529,8 @@ BinaryBasicBlock::getBranchStats(const BinaryBasicBlock *Succ) const {
 
 void BinaryBasicBlock::dump() const {
   BinaryContext &BC = Function->getBinaryContext();
-  if (Label) outs() << Label->getName() << ":\n";
+  if (Label)
+    outs() << Label->getName() << ":\n";
   BC.printInstructions(outs(), Instructions.begin(), Instructions.end(),
                        getOffset());
   outs() << "preds:";

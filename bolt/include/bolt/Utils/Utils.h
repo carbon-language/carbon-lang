@@ -22,7 +22,7 @@ class MCCFIInstruction;
 namespace bolt {
 
 /// Free memory allocated for \p List.
-template<typename T> void clearList(T& List) {
+template <typename T> void clearList(T &List) {
   T TempList;
   TempList.swap(List);
 }

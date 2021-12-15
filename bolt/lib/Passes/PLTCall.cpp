@@ -69,8 +69,7 @@ void PLTCall::runOnFunctions(BinaryContext &BC) {
         const BinaryFunction *CalleeBF = BC.getFunctionForSymbol(CallSymbol);
         if (!CalleeBF || !CalleeBF->isPLTFunction())
           continue;
-        BC.MIB->convertCallToIndirectCall(Instr,
-                                          CalleeBF->getPLTSymbol(),
+        BC.MIB->convertCallToIndirectCall(Instr, CalleeBF->getPLTSymbol(),
                                           BC.Ctx.get());
         BC.MIB->addAnnotation(Instr, "PLTCall", true);
         ++NumCallsOptimized;
@@ -84,7 +83,6 @@ void PLTCall::runOnFunctions(BinaryContext &BC) {
            << " PLT calls in the binary were optimized.\n";
   }
 }
-
 
 } // namespace bolt
 } // namespace llvm

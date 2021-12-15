@@ -56,15 +56,13 @@ RandomSeed("bolt-seed",
 
 namespace {
 
-template <class T>
-inline void hashCombine(size_t &Seed, const T &Val) {
+template <class T> inline void hashCombine(size_t &Seed, const T &Val) {
   std::hash<T> Hasher;
   Seed ^= Hasher(Val) + 0x9e3779b9 + (Seed << 6) + (Seed >> 2);
 }
 
-template <typename A, typename B>
-struct HashPair {
-  size_t operator()(const std::pair<A,B>& Val) const {
+template <typename A, typename B> struct HashPair {
+  size_t operator()(const std::pair<A, B> &Val) const {
     std::hash<A> Hasher;
     size_t Seed = Hasher(Val.first);
     hashCombine(Seed, Val.second);
@@ -72,7 +70,7 @@ struct HashPair {
   }
 };
 
-}
+} // namespace
 
 void ClusterAlgorithm::computeClusterAverageFrequency(const BinaryContext &BC) {
   // Create a separate MCCodeEmitter to allow lock-free execution
@@ -127,8 +125,8 @@ size_t GreedyClusterAlgorithm::EdgeHash::operator()(const EdgeTy &E) const {
   return Hasher(std::make_pair(E.Src, E.Dst));
 }
 
-bool GreedyClusterAlgorithm::EdgeEqual::operator()(
-    const EdgeTy &A, const EdgeTy &B) const {
+bool GreedyClusterAlgorithm::EdgeEqual::operator()(const EdgeTy &A,
+                                                   const EdgeTy &B) const {
   return A.Src == B.Src && A.Dst == B.Dst;
 }
 
@@ -237,18 +235,18 @@ void GreedyClusterAlgorithm::reset() {
   BBToClusterMap.clear();
 }
 
-void PHGreedyClusterAlgorithm::initQueue(
-    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+void PHGreedyClusterAlgorithm::initQueue(std::vector<EdgeTy> &Queue,
+                                         const BinaryFunction &BF) {
   // Define a comparison function to establish SWO between edges.
-  auto Comp = [&BF] (const EdgeTy &A, const EdgeTy &B) {
+  auto Comp = [&BF](const EdgeTy &A, const EdgeTy &B) {
     // With equal weights, prioritize branches with lower index
     // source/destination. This helps to keep original block order for blocks
     // when optimal order cannot be deducted from a profile.
     if (A.Count == B.Count) {
       const signed SrcOrder = BF.getOriginalLayoutRelativeOrder(A.Src, B.Src);
       return (SrcOrder != 0)
-        ? SrcOrder > 0
-        : BF.getOriginalLayoutRelativeOrder(A.Dst, B.Dst) > 0;
+                 ? SrcOrder > 0
+                 : BF.getOriginalLayoutRelativeOrder(A.Dst, B.Dst) > 0;
     }
     return A.Count < B.Count;
   };
@@ -257,14 +255,15 @@ void PHGreedyClusterAlgorithm::initQueue(
   std::sort(Queue.begin(), Queue.end(), Comp);
 }
 
-void PHGreedyClusterAlgorithm::adjustQueue(
-    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+void PHGreedyClusterAlgorithm::adjustQueue(std::vector<EdgeTy> &Queue,
+                                           const BinaryFunction &BF) {
   // Nothing to do.
   return;
 }
 
-bool PHGreedyClusterAlgorithm::areClustersCompatible(
-    const ClusterTy &Front, const ClusterTy &Back, const EdgeTy &E) const {
+bool PHGreedyClusterAlgorithm::areClustersCompatible(const ClusterTy &Front,
+                                                     const ClusterTy &Back,
+                                                     const EdgeTy &E) const {
   return Front.back() == E.Src && Back.front() == E.Dst;
 }
 
@@ -314,8 +313,8 @@ int64_t MinBranchGreedyClusterAlgorithm::calculateWeight(
   return W;
 }
 
-void MinBranchGreedyClusterAlgorithm::initQueue(
-    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+void MinBranchGreedyClusterAlgorithm::initQueue(std::vector<EdgeTy> &Queue,
+                                                const BinaryFunction &BF) {
   // Initialize edge weights.
   for (const EdgeTy &E : Queue)
     Weight.emplace(std::make_pair(E, calculateWeight(E, BF)));
@@ -324,18 +323,18 @@ void MinBranchGreedyClusterAlgorithm::initQueue(
   adjustQueue(Queue, BF);
 }
 
-void MinBranchGreedyClusterAlgorithm::adjustQueue(
-    std::vector<EdgeTy> &Queue, const BinaryFunction &BF) {
+void MinBranchGreedyClusterAlgorithm::adjustQueue(std::vector<EdgeTy> &Queue,
+                                                  const BinaryFunction &BF) {
   // Define a comparison function to establish SWO between edges.
-  auto Comp = [&] (const EdgeTy &A, const EdgeTy &B) {
+  auto Comp = [&](const EdgeTy &A, const EdgeTy &B) {
     // With equal weights, prioritize branches with lower index
     // source/destination. This helps to keep original block order for blocks
     // when optimal order cannot be deduced from a profile.
     if (Weight[A] == Weight[B]) {
       const signed SrcOrder = BF.getOriginalLayoutRelativeOrder(A.Src, B.Src);
       return (SrcOrder != 0)
-        ? SrcOrder > 0
-        : BF.getOriginalLayoutRelativeOrder(A.Dst, B.Dst) > 0;
+                 ? SrcOrder > 0
+                 : BF.getOriginalLayoutRelativeOrder(A.Dst, B.Dst) > 0;
     }
     return Weight[A] < Weight[B];
   };
@@ -407,8 +406,8 @@ void MinBranchGreedyClusterAlgorithm::reset() {
   Weight.clear();
 }
 
-void TSPReorderAlgorithm::reorderBasicBlocks(
-    const BinaryFunction &BF, BasicBlockOrder &Order) const {
+void TSPReorderAlgorithm::reorderBasicBlocks(const BinaryFunction &BF,
+                                             BasicBlockOrder &Order) const {
   std::vector<std::vector<uint64_t>> Weight;
   std::vector<BinaryBasicBlock *> IndexToBB;
 
@@ -523,7 +522,7 @@ void OptimizeReorderAlgorithm::reorderBasicBlocks(
 
   // Arrange basic blocks according to clusters.
   for (ClusterAlgorithm::ClusterTy &Cluster : CAlgo->Clusters)
-    Order.insert(Order.end(),  Cluster.begin(), Cluster.end());
+    Order.insert(Order.end(), Cluster.begin(), Cluster.end());
 }
 
 void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
@@ -532,7 +531,7 @@ void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
     return;
 
   // Cluster basic blocks.
-  CAlgo->clusterBasicBlocks(BF, /* ComputeEdges = */true);
+  CAlgo->clusterBasicBlocks(BF, /* ComputeEdges = */ true);
   std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;
   std::vector<std::unordered_map<uint32_t, uint64_t>> &ClusterEdges =
       CAlgo->ClusterEdges;
@@ -567,7 +566,8 @@ void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
         return ClusterEdges[I][A] > ClusterEdges[I][B];
       };
       std::priority_queue<uint32_t, std::vector<uint32_t>,
-                          decltype(ClusterComp)> SuccQueue(ClusterComp);
+                          decltype(ClusterComp)>
+          SuccQueue(ClusterComp);
       for (std::pair<const uint32_t, uint64_t> &Target : ClusterEdges[I]) {
         if (Target.second > 0 && !(Status[Target.first] & STACKED) &&
             !Clusters[Target.first].empty()) {
@@ -626,12 +626,12 @@ void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
   // Arrange basic blocks according to cluster order.
   for (uint32_t ClusterIndex : ClusterOrder) {
     ClusterAlgorithm::ClusterTy &Cluster = Clusters[ClusterIndex];
-    Order.insert(Order.end(),  Cluster.begin(), Cluster.end());
+    Order.insert(Order.end(), Cluster.begin(), Cluster.end());
   }
 }
 
 void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+    const BinaryFunction &BF, BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
 
@@ -657,11 +657,9 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
     if (!Clusters[I].empty())
       ClusterOrder.push_back(I);
   // Don't reorder the first cluster, which contains the function entry point
-  std::stable_sort(std::next(ClusterOrder.begin()),
-                   ClusterOrder.end(),
-                   [&AvgFreq](uint32_t A, uint32_t B) {
-                     return AvgFreq[A] > AvgFreq[B];
-                   });
+  std::stable_sort(
+      std::next(ClusterOrder.begin()), ClusterOrder.end(),
+      [&AvgFreq](uint32_t A, uint32_t B) { return AvgFreq[A] > AvgFreq[B]; });
 
   if (opts::PrintClusters) {
     errs() << "New cluster order: ";
@@ -676,7 +674,7 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
   // Arrange basic blocks according to cluster order.
   for (uint32_t ClusterIndex : ClusterOrder) {
     ClusterAlgorithm::ClusterTy &Cluster = Clusters[ClusterIndex];
-    Order.insert(Order.end(),  Cluster.begin(), Cluster.end());
+    Order.insert(Order.end(), Cluster.begin(), Cluster.end());
     // Force zero execution count on clusters that do not meet the cut off
     // specified by --cold-threshold.
     if (AvgFreq[ClusterIndex] < static_cast<double>(ColdThreshold)) {
@@ -687,8 +685,8 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
   }
 }
 
-void ReverseReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+void ReverseReorderAlgorithm::reorderBasicBlocks(const BinaryFunction &BF,
+                                                 BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
 
@@ -699,7 +697,7 @@ void ReverseReorderAlgorithm::reorderBasicBlocks(
 }
 
 void RandomClusterReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+    const BinaryFunction &BF, BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
 
@@ -734,6 +732,6 @@ void RandomClusterReorderAlgorithm::reorderBasicBlocks(
   // Arrange basic blocks according to cluster order.
   for (uint32_t ClusterIndex : ClusterOrder) {
     ClusterAlgorithm::ClusterTy &Cluster = Clusters[ClusterIndex];
-    Order.insert(Order.end(),  Cluster.begin(), Cluster.end());
+    Order.insert(Order.end(), Cluster.begin(), Cluster.end());
   }
 }

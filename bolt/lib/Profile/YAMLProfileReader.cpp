@@ -80,8 +80,7 @@ bool YAMLProfileReader::hasLocalsWithFileName() const {
 }
 
 bool YAMLProfileReader::parseFunctionProfile(
-    BinaryFunction &BF,
-    const yaml::bolt::BinaryFunctionProfile &YamlBF) {
+    BinaryFunction &BF, const yaml::bolt::BinaryFunctionProfile &YamlBF) {
   BinaryContext &BC = BF.getBinaryContext();
 
   bool ProfileMatched = true;
@@ -148,8 +147,8 @@ bool YAMLProfileReader::parseFunctionProfile(
       if (IsFunction) {
         CalleeSymbol = Callee->getSymbolForEntryID(YamlCSI.EntryDiscriminator);
       }
-      BF.getAllCallSites().emplace_back(
-          CalleeSymbol, YamlCSI.Count, YamlCSI.Mispreds, YamlCSI.Offset);
+      BF.getAllCallSites().emplace_back(CalleeSymbol, YamlCSI.Count,
+                                        YamlCSI.Mispreds, YamlCSI.Offset);
 
       if (YamlCSI.Offset >= BB.getOriginalSize()) {
         if (opts::Verbosity >= 2)

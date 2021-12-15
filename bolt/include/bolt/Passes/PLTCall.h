@@ -18,23 +18,20 @@ namespace bolt {
 
 class PLTCall : public BinaryFunctionPass {
 public:
-
   /// PLT optimization type
   enum OptType : char {
-    OT_NONE = 0,   /// Do not optimize
-    OT_HOT  = 1,   /// Optimize hot PLT calls
-    OT_ALL  = 2    /// Optimize all PLT calls
+    OT_NONE = 0, /// Do not optimize
+    OT_HOT = 1,  /// Optimize hot PLT calls
+    OT_ALL = 2   /// Optimize all PLT calls
   };
 
   explicit PLTCall(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
+      : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "PLT call optimization";
-  }
+  const char *getName() const override { return "PLT call optimization"; }
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF);
- }
+  }
   void runOnFunctions(BinaryContext &BC) override;
 };
 

@@ -80,7 +80,7 @@ struct DebugLineTableRowRef {
 
   bool operator==(const DebugLineTableRowRef &Rhs) const {
     return DwCompileUnitIndex == Rhs.DwCompileUnitIndex &&
-      RowIndex == Rhs.RowIndex;
+           RowIndex == Rhs.RowIndex;
   }
 
   bool operator!=(const DebugLineTableRowRef &Rhs) const {
@@ -158,9 +158,7 @@ public:
   void writeARangesSection(raw_svector_ostream &RangesStream) const;
 
   /// Resets the writer to a clear state.
-  void reset() {
-    CUAddressRanges.clear();
-  }
+  void reset() { CUAddressRanges.clear(); }
 
   /// Map DWARFCompileUnit index to ranges.
   using CUAddressRangesType = std::map<uint64_t, DebugAddressRangesVector>;

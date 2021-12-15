@@ -82,7 +82,6 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
 
 } // anonymous namespace
 
-#undef DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,

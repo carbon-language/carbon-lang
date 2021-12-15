@@ -56,17 +56,12 @@ public:
   bool frozen() const { return Frozen; }
   void freeze() { Frozen = true; }
   void merge(const Cluster &Other, const double Aw = 0);
-  void merge(const Cluster &Other, const std::vector<CallGraph::NodeId>& Targets_);
+  void merge(const Cluster &Other,
+             const std::vector<CallGraph::NodeId> &Targets_);
   void clear();
-  size_t numTargets() const {
-    return Targets.size();
-  }
-  const std::vector<CallGraph::NodeId> &targets() const {
-    return Targets;
-  }
-  CallGraph::NodeId target(size_t N) const {
-    return Targets[N];
-  }
+  size_t numTargets() const { return Targets.size(); }
+  const std::vector<CallGraph::NodeId> &targets() const { return Targets; }
+  CallGraph::NodeId target(size_t N) const { return Targets[N]; }
   void reverseTargets();
   bool hasId() const { return Id != -1u; }
   void setId(uint32_t NewId) {
@@ -77,6 +72,7 @@ public:
     assert(hasId());
     return Id;
   }
+
 private:
   uint32_t Id{-1u};
   std::vector<CallGraph::NodeId> Targets;

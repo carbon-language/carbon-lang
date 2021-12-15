@@ -38,8 +38,8 @@ struct LBREntry {
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const LBREntry &LBR) {
-  OS << "0x" << Twine::utohexstr(LBR.From)
-     << " -> 0x" << Twine::utohexstr(LBR.To);
+  OS << "0x" << Twine::utohexstr(LBR.From) << " -> 0x"
+     << Twine::utohexstr(LBR.To);
   return OS;
 }
 
@@ -55,8 +55,7 @@ struct Location {
       : IsSymbol(IsSymbol), Name(Name), Offset(Offset) {}
 
   bool operator==(const Location &RHS) const {
-    return IsSymbol == RHS.IsSymbol &&
-           Name == RHS.Name &&
+    return IsSymbol == RHS.IsSymbol && Name == RHS.Name &&
            (Name == "[heap]" || Offset == RHS.Offset);
   }
 
@@ -86,8 +85,7 @@ struct BranchInfo {
         Branches(Branches) {}
 
   bool operator==(const BranchInfo &RHS) const {
-    return From == RHS.From &&
-           To == RHS.To;
+    return From == RHS.From && To == RHS.To;
   }
 
   bool operator<(const BranchInfo &RHS) const {
@@ -122,10 +120,10 @@ struct FuncBranchData {
   FuncBranchData() {}
 
   FuncBranchData(StringRef Name, ContainerTy Data)
-    : Name(Name), Data(std::move(Data)) {}
+      : Name(Name), Data(std::move(Data)) {}
 
   FuncBranchData(StringRef Name, ContainerTy Data, ContainerTy EntryData)
-    : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
+      : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
 
   ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
 
@@ -136,8 +134,8 @@ struct FuncBranchData {
   ErrorOr<const BranchInfo &> getDirectCallBranch(uint64_t From) const;
 
   /// Find all the branches originating at From.
-  iterator_range<ContainerTy::const_iterator> getBranchRange(
-    uint64_t From) const;
+  iterator_range<ContainerTy::const_iterator>
+  getBranchRange(uint64_t From) const;
 
   /// Append the branch data of another function located \p Offset bytes away
   /// from the entry of this function.
@@ -182,15 +180,13 @@ struct MemInfo {
     return false;
   }
 
-  void mergeWith(const MemInfo &MI) {
-    Count += MI.Count;
-  }
+  void mergeWith(const MemInfo &MI) { Count += MI.Count; }
 
   void print(raw_ostream &OS) const;
   void prettyPrint(raw_ostream &OS) const;
 
   MemInfo(const Location &Offset, const Location &Addr, uint64_t Count = 0)
-    : Offset(Offset), Addr(Addr), Count(Count) {}
+      : Offset(Offset), Addr(Addr), Count(Count) {}
 
   friend raw_ostream &operator<<(raw_ostream &OS, const MemInfo &MI) {
     MI.prettyPrint(OS);
@@ -219,7 +215,7 @@ struct FuncMemData {
   FuncMemData() {}
 
   FuncMemData(StringRef Name, ContainerTy Data)
-    : Name(Name), Data(std::move(Data)) {}
+      : Name(Name), Data(std::move(Data)) {}
 };
 
 /// Similar to BranchInfo, but instead of recording from-to address (an edge),
@@ -229,12 +225,9 @@ struct SampleInfo {
   Location Loc;
   int64_t Hits;
 
-  SampleInfo(Location Loc, int64_t Hits)
-      : Loc(std::move(Loc)), Hits(Hits) {}
+  SampleInfo(Location Loc, int64_t Hits) : Loc(std::move(Loc)), Hits(Hits) {}
 
-  bool operator==(const SampleInfo &RHS) const {
-    return Loc == RHS.Loc;
-  }
+  bool operator==(const SampleInfo &RHS) const { return Loc == RHS.Loc; }
 
   bool operator<(const SampleInfo &RHS) const {
     if (Loc < RHS.Loc)
@@ -273,16 +266,11 @@ struct FuncSampleData {
 class DataReader : public ProfileReaderBase {
 public:
   explicit DataReader(StringRef Filename)
-      : ProfileReaderBase(Filename),
-        Diag(errs()) {}
+      : ProfileReaderBase(Filename), Diag(errs()) {}
 
-  StringRef getReaderName() const override {
-    return "branch profile reader";
-  }
+  StringRef getReaderName() const override { return "branch profile reader"; }
 
-  bool isTrustedSource() const override {
-    return false;
-  }
+  bool isTrustedSource() const override { return false; }
 
   virtual Error preprocessProfile(BinaryContext &BC) override;
 
@@ -295,9 +283,7 @@ public:
   virtual bool mayHaveProfileData(const BinaryFunction &BF) override;
 
   /// Return all event names used to collect this profile
-  virtual StringSet<> getEventNames() const override {
-    return EventNames;
-  }
+  virtual StringSet<> getEventNames() const override { return EventNames; }
 
 protected:
   /// Read profile information available for the function.
@@ -337,9 +323,8 @@ protected:
   /// \p Count could be 0 if verification of the branch is required.
   ///
   /// Return true if the branch is valid, false otherwise.
-  bool recordBranch(BinaryFunction &BF,
-                    uint64_t From, uint64_t To, uint64_t Count = 1,
-                    uint64_t Mispreds = 0) const;
+  bool recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
+                    uint64_t Count = 1, uint64_t Mispreds = 0) const;
 
   /// Parses the input bolt data file into internal data structures. We expect
   /// the file format to follow the syntax below.
@@ -403,8 +388,7 @@ protected:
   /// Return mem data matching one of the names in \p FuncNames.
   FuncMemData *getMemDataForNames(const std::vector<StringRef> &FuncNames);
 
-  FuncSampleData *
-  getFuncSampleData(const std::vector<StringRef> &FuncNames);
+  FuncSampleData *getFuncSampleData(const std::vector<StringRef> &FuncNames);
 
   /// Return a vector of all FuncBranchData matching the list of names.
   /// Internally use fuzzy matching to match special names like LTO-generated
@@ -450,9 +434,9 @@ protected:
   using NamesToSamplesMapTy = StringMap<FuncSampleData>;
   using NamesToMemEventsMapTy = StringMap<FuncMemData>;
   using FuncsToBranchesMapTy =
-    std::unordered_map<const BinaryFunction *, FuncBranchData *>;
+      std::unordered_map<const BinaryFunction *, FuncBranchData *>;
   using FuncsToMemDataMapTy =
-    std::unordered_map<const BinaryFunction *, FuncMemData *>;
+      std::unordered_map<const BinaryFunction *, FuncMemData *>;
 
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;
@@ -485,14 +469,14 @@ protected:
   bool expectAndConsumeFS();
   void consumeAllRemainingFS();
   bool checkAndConsumeNewLine();
-  ErrorOr<StringRef> parseString(char EndChar, bool EndNl=false);
-  ErrorOr<int64_t> parseNumberField(char EndChar, bool EndNl=false);
-  ErrorOr<uint64_t> parseHexField(char EndChar, bool EndNl=false);
+  ErrorOr<StringRef> parseString(char EndChar, bool EndNl = false);
+  ErrorOr<int64_t> parseNumberField(char EndChar, bool EndNl = false);
+  ErrorOr<uint64_t> parseHexField(char EndChar, bool EndNl = false);
   ErrorOr<Location> parseLocation(char EndChar, bool EndNl, bool ExpectMemLoc);
-  ErrorOr<Location> parseLocation(char EndChar, bool EndNl=false) {
+  ErrorOr<Location> parseLocation(char EndChar, bool EndNl = false) {
     return parseLocation(EndChar, EndNl, false);
   }
-  ErrorOr<Location> parseMemLocation(char EndChar, bool EndNl=false) {
+  ErrorOr<Location> parseMemLocation(char EndChar, bool EndNl = false) {
     return parseLocation(EndChar, EndNl, true);
   }
   ErrorOr<BranchInfo> parseBranchInfo();
@@ -524,28 +508,28 @@ protected:
   StringMap<std::vector<FuncMemData *>> LTOCommonNameMemMap;
 };
 
-}
+} // namespace bolt
 
 /// DenseMapInfo allows us to use the DenseMap LLVM data structure to store
 /// Locations
-template<> struct DenseMapInfo<bolt::Location> {
+template <> struct DenseMapInfo<bolt::Location> {
   static inline bolt::Location getEmptyKey() {
     return bolt::Location(true, StringRef(), static_cast<uint64_t>(-1LL));
   }
   static inline bolt::Location getTombstoneKey() {
-    return bolt::Location(true, StringRef(), static_cast<uint64_t>(-2LL));;
+    return bolt::Location(true, StringRef(), static_cast<uint64_t>(-2LL));
+    ;
   }
   static unsigned getHashValue(const bolt::Location &L) {
     return (unsigned(DenseMapInfo<StringRef>::getHashValue(L.Name)) >> 4) ^
            (unsigned(L.Offset));
   }
-  static bool isEqual(const bolt::Location &LHS,
-                      const bolt::Location &RHS) {
+  static bool isEqual(const bolt::Location &LHS, const bolt::Location &RHS) {
     return LHS.IsSymbol == RHS.IsSymbol && LHS.Name == RHS.Name &&
            LHS.Offset == RHS.Offset;
   }
 };
 
-}
+} // namespace llvm
 
 #endif

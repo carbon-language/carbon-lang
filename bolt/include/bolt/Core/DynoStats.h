@@ -58,9 +58,8 @@ public:
   enum Category : uint8_t { DYNO_STATS };
 #undef D
 
-
 private:
-  uint64_t Stats[LAST_DYNO_STAT+1];
+  uint64_t Stats[LAST_DYNO_STAT + 1];
   bool PrintAArch64Stats;
 
 #define D(name, desc, ...) desc,
@@ -75,8 +74,7 @@ public:
   }
 
   uint64_t &operator[](size_t I) {
-    assert(I > FIRST_DYNO_STAT && I < LAST_DYNO_STAT &&
-           "index out of bounds");
+    assert(I > FIRST_DYNO_STAT && I < LAST_DYNO_STAT && "index out of bounds");
     return Stats[I];
   }
 
@@ -114,9 +112,7 @@ public:
   bool operator!=(const DynoStats &Other) const { return !operator==(Other); }
   bool lessThan(const DynoStats &Other, ArrayRef<Category> Keys) const;
 
-  static const char* Description(const Category C) {
-    return Desc[C];
-  }
+  static const char *Description(const Category C) { return Desc[C]; }
 
   /// Maps instruction opcodes to:
   /// 1. Accumulated executed instruction counts.
@@ -161,11 +157,8 @@ inline DynoStats getDynoStats(const FuncsType &Funcs) {
 
 /// Call a function with optional before and after dynostats printing.
 template <typename FnType, typename FuncsType>
-inline void
-callWithDynoStats(FnType &&Func,
-                  const FuncsType &Funcs,
-                  StringRef Phase,
-                  const bool Flag) {
+inline void callWithDynoStats(FnType &&Func, const FuncsType &Funcs,
+                              StringRef Phase, const bool Flag) {
   bool IsAArch64 = Funcs.begin()->second.getBinaryContext().isAArch64();
   DynoStats DynoStatsBefore(IsAArch64);
   if (Flag) {
@@ -177,8 +170,8 @@ callWithDynoStats(FnType &&Func,
   if (Flag) {
     const DynoStats DynoStatsAfter = getDynoStats(Funcs);
     const bool Changed = (DynoStatsAfter != DynoStatsBefore);
-    outs() << "BOLT-INFO: program-wide dynostats after running "
-           << Phase << (Changed ? "" : " (no change)") << ":\n\n"
+    outs() << "BOLT-INFO: program-wide dynostats after running " << Phase
+           << (Changed ? "" : " (no change)") << ":\n\n"
            << DynoStatsBefore << '\n';
     if (Changed) {
       DynoStatsAfter.print(outs(), &DynoStatsBefore);

@@ -37,9 +37,7 @@ cl::opt<std::string> InstrumentationBinpath(
 cl::opt<bool> InstrumentationFileAppendPID(
     "instrumentation-file-append-pid",
     cl::desc("append PID to saved profile file name (default: false)"),
-    cl::init(false),
-    cl::Optional,
-    cl::cat(BoltInstrCategory));
+    cl::init(false), cl::Optional, cl::cat(BoltInstrCategory));
 
 cl::opt<bool> ConservativeInstrumentation(
     "conservative-instrumentation",
@@ -79,7 +77,7 @@ cl::opt<bool> InstrumentCalls("instrument-calls",
                                        "control flow activity (default: true)"),
                               cl::init(true), cl::Optional,
                               cl::cat(BoltInstrCategory));
-}
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -136,12 +134,12 @@ void Instrumentation::createIndCallTargetDescription(
   Summary->IndCallTargetDescriptions.emplace_back(ICD);
 }
 
-bool Instrumentation::createEdgeDescription(
-    FunctionDescription &FuncDesc,
-    const BinaryFunction &FromFunction, uint32_t From,
-    uint32_t FromNodeID,
-    const BinaryFunction &ToFunction, uint32_t To,
-    uint32_t ToNodeID, bool Instrumented) {
+bool Instrumentation::createEdgeDescription(FunctionDescription &FuncDesc,
+                                            const BinaryFunction &FromFunction,
+                                            uint32_t From, uint32_t FromNodeID,
+                                            const BinaryFunction &ToFunction,
+                                            uint32_t To, uint32_t ToNodeID,
+                                            bool Instrumented) {
   EdgeDescription ED;
   auto Result = FuncDesc.EdgesSet.insert(std::make_pair(FromNodeID, ToNodeID));
   // Avoid creating duplicated edge descriptions. This happens in CFGs where a
@@ -193,7 +191,7 @@ BinaryBasicBlock::iterator insertInstructions(InstructionListType &Instrs,
   }
   return Iter;
 }
-}
+} // namespace
 
 void Instrumentation::instrumentLeafNode(BinaryBasicBlock &BB,
                                          BinaryBasicBlock::iterator Iter,
@@ -519,10 +517,9 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
   BC.registerOrUpdateSection(".bolt.instr.counters", ELF::SHT_PROGBITS, Flags,
                              nullptr, 0, 1);
 
-  BC.registerOrUpdateNoteSection(".bolt.instr.tables", nullptr,
-                                  0,
-                                  /*Alignment=*/1,
-                                  /*IsReadOnly=*/true, ELF::SHT_NOTE);
+  BC.registerOrUpdateNoteSection(".bolt.instr.tables", nullptr, 0,
+                                 /*Alignment=*/1,
+                                 /*IsReadOnly=*/true, ELF::SHT_NOTE);
 
   Summary->IndCallCounterFuncPtr =
       BC.Ctx->getOrCreateSymbol("__bolt_ind_call_counter_func_pointer");
@@ -580,8 +577,9 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
       MCSymbol *Target = BC.registerNameAtAddress(
           "__bolt_instr_fini", FiniSection->getAddress(), 0, 0);
       auto IsLEA = [&BC](const MCInst &Inst) { return BC.MIB->isLEA64r(Inst); };
-      const auto LEA = std::find_if(std::next(std::find_if(
-          BB.rbegin(), BB.rend(), IsLEA)), BB.rend(), IsLEA);
+      const auto LEA =
+          std::find_if(std::next(std::find_if(BB.rbegin(), BB.rend(), IsLEA)),
+                       BB.rend(), IsLEA);
       LEA->getOperand(4).setExpr(
           MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *BC.Ctx));
     } else {
@@ -708,5 +706,5 @@ void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
   assert(RtLibrary && "instrumentation runtime library object must be set");
   RtLibrary->setSummary(std::move(Summary));
 }
-}
-}
+} // namespace bolt
+} // namespace llvm

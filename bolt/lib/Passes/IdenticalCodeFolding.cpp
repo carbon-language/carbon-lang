@@ -47,8 +47,7 @@ using JumpTable = bolt::JumpTable;
 
 /// Compare two jump tables in 2 functions. The function relies on consistent
 /// ordering of basic blocks in both binary functions (e.g. DFS).
-bool equalJumpTables(const JumpTable &JumpTableA,
-                     const JumpTable &JumpTableB,
+bool equalJumpTables(const JumpTable &JumpTableA, const JumpTable &JumpTableB,
                      const BinaryFunction &FunctionA,
                      const BinaryFunction &FunctionB) {
   if (JumpTableA.EntrySize != JumpTableB.EntrySize)
@@ -143,7 +142,6 @@ bool isInstrEquivalentWith(const MCInst &InstA, const BinaryBasicBlock &BBA,
   return BC.MIB->equals(InstA, InstB, Comp);
 }
 
-
 /// Returns true if this function has identical code and CFG with
 /// the given function \p BF.
 ///
@@ -199,8 +197,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
     auto OtherI = OtherBB->begin(), OtherE = OtherBB->end();
     while (I != E && OtherI != OtherE) {
       // Compare symbols.
-      auto AreSymbolsIdentical = [&] (const MCSymbol *SymbolA,
-                                      const MCSymbol *SymbolB) {
+      auto AreSymbolsIdentical = [&](const MCSymbol *SymbolA,
+                                     const MCSymbol *SymbolB) {
         if (SymbolA == SymbolB)
           return true;
 
@@ -269,12 +267,13 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
         return equalJumpTables(*JumpTableA, *JumpTableB, A, B);
       };
 
-      if(!isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB,
-                                AreSymbolsIdentical)) {
+      if (!isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB,
+                                 AreSymbolsIdentical)) {
         return false;
       }
 
-      ++I; ++OtherI;
+      ++I;
+      ++OtherI;
     }
 
     // One of the identical blocks may have a trailing unconditional jump that
@@ -301,9 +300,7 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
 // This hash table is used to identify identical functions. It maps
 // a function to a bucket of functions identical to it.
 struct KeyHash {
-  size_t operator()(const BinaryFunction *F) const {
-    return F->getHash();
-  }
+  size_t operator()(const BinaryFunction *F) const { return F->getHash(); }
 };
 
 /// Identify two congruent functions. Two functions are considered congruent,
@@ -429,10 +426,9 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
 
       // Pre-compute hash before pushing into hashtable.
       // Hash instruction operands to minimize hash collisions.
-      BF.computeHash(opts::UseDFS,
-                     [&BC] (const MCOperand &Op) {
-                       return hashInstOperand(BC, Op);
-                     });
+      BF.computeHash(opts::UseDFS, [&BC](const MCOperand &Op) {
+        return hashInstOperand(BC, Op);
+      });
     };
 
     ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
@@ -578,12 +574,12 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
   });
 
   if (NumFunctionsFolded) {
-    outs() << "BOLT-INFO: ICF folded " << NumFunctionsFolded
-           << " out of " << OriginalFunctionCount << " functions in "
-           << Iteration << " passes. "
-           << NumJTFunctionsFolded << " functions had jump tables.\n"
+    outs() << "BOLT-INFO: ICF folded " << NumFunctionsFolded << " out of "
+           << OriginalFunctionCount << " functions in " << Iteration
+           << " passes. " << NumJTFunctionsFolded
+           << " functions had jump tables.\n"
            << "BOLT-INFO: Removing all identical functions will save "
-           << format("%.2lf", (double) BytesSavedEstimate / 1024)
+           << format("%.2lf", (double)BytesSavedEstimate / 1024)
            << " KB of code space. Folded functions were called "
            << CallsSavedEstimate << " times based on profile.\n";
   }

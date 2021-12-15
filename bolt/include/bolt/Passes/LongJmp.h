@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef BOLT_PASSES_LONGJMP_H
 #define BOLT_PASSES_LONGJMP_H
 
@@ -77,8 +78,8 @@ class LongJmpPass : public BinaryFunctionPass {
                            uint64_t DotAddress);
   uint64_t
   tentativeLayoutRelocColdPart(const BinaryContext &BC,
-                              std::vector<BinaryFunction *> &SortedFunctions,
-                              uint64_t DotAddress);
+                               std::vector<BinaryFunction *> &SortedFunctions,
+                               uint64_t DotAddress);
   void tentativeBBLayout(const BinaryFunction &Func);
 
   /// Update stubs addresses with their exact address after a round of stub
@@ -151,7 +152,7 @@ public:
 
   void runOnFunctions(BinaryContext &BC) override;
 };
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

@@ -66,7 +66,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
   const auto ExprEnd = SAE.expr_end();
   MCPlusBuilder *MIB = BF.getBinaryContext().MIB.get();
   for (BinaryBasicBlock &BB : BF) {
-    LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
+    LLVM_DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (MCInst &Inst : BB) {
       LLVM_DEBUG({
@@ -168,7 +168,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
   std::vector<std::pair<BinaryBasicBlock *, MCInst *>> ToErase;
   bool Changed = false;
   for (BinaryBasicBlock &BB : BF) {
-    LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
+    LLVM_DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       MCInst &Inst = *I;
@@ -206,7 +206,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
       LLVM_DEBUG(Inst.dump());
       LLVM_DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
       LLVM_DEBUG(dbgs() << "FIE offset = " << FIEX->StackOffset
-                   << " size = " << (int)FIEX->Size << "\n");
+                        << " size = " << (int)FIEX->Size << "\n");
       // Delete it!
       ToErase.emplace_back(&BB, &Inst);
       Prev = &Inst;
@@ -242,8 +242,8 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
   }
 
   {
-    NamedRegionTimer T1("reganalysis", "reg analysis", "FOP",
-                        "FOP breakdown", opts::TimeOpts);
+    NamedRegionTimer T1("reganalysis", "reg analysis", "FOP", "FOP breakdown",
+                        opts::TimeOpts);
     RA = std::make_unique<RegAnalysis>(BC, &BC.getBinaryFunctions(), CG.get());
   }
 
@@ -278,7 +278,6 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     // Don't even start shrink wrapping if no profiling info is available
     if (I.second.getKnownExecutionCount() == 0)
       continue;
-
   }
 
   {

@@ -51,7 +51,7 @@ private:
   std::vector<BinaryFunction *> Funcs;
 };
 
-using CgFilterFunction = std::function<bool (const BinaryFunction &BF)>;
+using CgFilterFunction = std::function<bool(const BinaryFunction &BF)>;
 inline bool NoFilter(const BinaryFunction &) { return false; }
 
 /// Builds a call graph from the map of BinaryFunctions provided in BC.
@@ -64,16 +64,13 @@ inline bool NoFilter(const BinaryFunction &) { return false; }
 /// filling in the Size attribute of new Nodes.
 /// UseEdgeCounts is used to control if the Weight attribute on Arcs is computed
 /// using the number of calls.
-BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
-                                       CgFilterFunction Filter = NoFilter,
-                                       bool CgFromPerfData = false,
-                                       bool IncludeColdCalls = true,
-                                       bool UseFunctionHotSize = false,
-                                       bool UseSplitHotSize = false,
-                                       bool UseEdgeCounts = false,
-                                       bool IgnoreRecursiveCalls = false);
+BinaryFunctionCallGraph
+buildCallGraph(BinaryContext &BC, CgFilterFunction Filter = NoFilter,
+               bool CgFromPerfData = false, bool IncludeColdCalls = true,
+               bool UseFunctionHotSize = false, bool UseSplitHotSize = false,
+               bool UseEdgeCounts = false, bool IgnoreRecursiveCalls = false);
 
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 #endif

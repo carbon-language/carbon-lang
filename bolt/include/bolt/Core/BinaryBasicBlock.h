@@ -32,7 +32,6 @@ class BinaryFunction;
 
 class BinaryBasicBlock {
 public:
-
   /// Profile execution information for a given edge in CFG.
   ///
   /// If MispredictedCount equals COUNT_INFERRED, then we have a profile
@@ -55,7 +54,7 @@ public:
   };
 
   static constexpr uint32_t INVALID_OFFSET =
-                                          std::numeric_limits<uint32_t>::max();
+      std::numeric_limits<uint32_t>::max();
 
   using BranchInfoType = SmallVector<BinaryBranchInfo, 0>;
 
@@ -148,11 +147,9 @@ private:
   BinaryBasicBlock &operator=(const BinaryBasicBlock &) = delete;
   BinaryBasicBlock &operator=(const BinaryBasicBlock &&) = delete;
 
-  explicit BinaryBasicBlock(
-      BinaryFunction *Function,
-      MCSymbol *Label,
-      uint32_t Offset = INVALID_OFFSET)
-    : Function(Function), Label(Label) {
+  explicit BinaryBasicBlock(BinaryFunction *Function, MCSymbol *Label,
+                            uint32_t Offset = INVALID_OFFSET)
+      : Function(Function), Label(Label) {
     assert(Function && "Function must be non-null");
     InputRange.first = Offset;
   }
@@ -163,9 +160,7 @@ private:
                         const BinaryBasicBlock &RHS);
 
   /// Assign new label to the basic block.
-  void setLabel(MCSymbol *Symbol) {
-    Label = Symbol;
-  }
+  void setLabel(MCSymbol *Symbol) { Label = Symbol; }
 
 public:
   static constexpr uint64_t COUNT_INFERRED =
@@ -324,12 +319,12 @@ public:
   using branch_info_iterator = BranchInfoType::iterator;
   using const_branch_info_iterator = BranchInfoType::const_iterator;
   using branch_info_reverse_iterator =
-                       std::reverse_iterator<branch_info_iterator>;
+      std::reverse_iterator<branch_info_iterator>;
   using const_branch_info_reverse_iterator =
-                       std::reverse_iterator<const_branch_info_iterator>;
+      std::reverse_iterator<const_branch_info_iterator>;
 
   branch_info_iterator branch_info_begin() { return BranchInfo.begin(); }
-  branch_info_iterator branch_info_end()   { return BranchInfo.end(); }
+  branch_info_iterator branch_info_end() { return BranchInfo.end(); }
   const_branch_info_iterator branch_info_begin() const {
     return BranchInfo.begin();
   }
@@ -339,9 +334,7 @@ public:
   branch_info_reverse_iterator branch_info_rbegin() {
     return BranchInfo.rbegin();
   }
-  branch_info_reverse_iterator branch_info_rend() {
-    return BranchInfo.rend();
-  }
+  branch_info_reverse_iterator branch_info_rend() { return BranchInfo.rend(); }
   const_branch_info_reverse_iterator branch_info_rbegin() const {
     return BranchInfo.rbegin();
   }
@@ -349,16 +342,16 @@ public:
     return BranchInfo.rend();
   }
 
-  size_t branch_info_size()  const { return BranchInfo.size(); }
+  size_t branch_info_size() const { return BranchInfo.size(); }
   bool branch_info_empty() const { return BranchInfo.empty(); }
 
   inline iterator_range<branch_info_iterator> branch_info() {
-    return iterator_range<branch_info_iterator>(
-        BranchInfo.begin(), BranchInfo.end());
+    return iterator_range<branch_info_iterator>(BranchInfo.begin(),
+                                                BranchInfo.end());
   }
   inline iterator_range<const_branch_info_iterator> branch_info() const {
-    return iterator_range<const_branch_info_iterator>(
-        BranchInfo.begin(), BranchInfo.end());
+    return iterator_range<const_branch_info_iterator>(BranchInfo.begin(),
+                                                      BranchInfo.end());
   }
 
   /// Get instruction at given index.
@@ -369,14 +362,10 @@ public:
   }
 
   /// Return symbol marking the start of this basic block.
-  MCSymbol *getLabel() {
-    return Label;
-  }
+  MCSymbol *getLabel() { return Label; }
 
   /// Return symbol marking the start of this basic block (const version).
-  const MCSymbol *getLabel() const {
-    return Label;
-  }
+  const MCSymbol *getLabel() const { return Label; }
 
   /// Get successor with given \p Label if \p Label != nullptr.
   /// Returns nullptr if no such successor is found.
@@ -399,13 +388,13 @@ public:
   }
 
   const BinaryBasicBlock *getConditionalSuccessor(bool Condition) const {
-    return
-      const_cast<BinaryBasicBlock *>(this)->getConditionalSuccessor(Condition);
+    return const_cast<BinaryBasicBlock *>(this)->getConditionalSuccessor(
+        Condition);
   }
 
   /// Find the fallthrough successor for a block, or nullptr if there is
   /// none.
-  BinaryBasicBlock* getFallthrough() {
+  BinaryBasicBlock *getFallthrough() {
     if (succ_size() == 2)
       return getConditionalSuccessor(false);
     else
@@ -438,8 +427,7 @@ public:
   BinaryBranchInfo &getBranchInfo(const MCSymbol *Label);
 
   /// Set branch information for the outgoing edge to block \p Succ.
-  void setSuccessorBranchInfo(const BinaryBasicBlock &Succ,
-                              uint64_t Count,
+  void setSuccessorBranchInfo(const BinaryBasicBlock &Succ, uint64_t Count,
                               uint64_t MispredictedCount) {
     BinaryBranchInfo &BI = getBranchInfo(Succ);
     BI.Count = Count;
@@ -473,9 +461,7 @@ public:
   BinaryBasicBlock *getLandingPad(const MCSymbol *Label) const;
 
   /// Return local name for the block.
-  StringRef getName() const {
-    return Label->getName();
-  }
+  StringRef getName() const { return Label->getName(); }
 
   /// Add instruction at the end of this basic block.
   /// Returns iterator pointing to the inserted instruction.
@@ -494,23 +480,20 @@ public:
   }
 
   /// Add a range of instructions to the end of this basic block.
-  template <typename Itr>
-  void addInstructions(Itr Begin, Itr End) {
+  template <typename Itr> void addInstructions(Itr Begin, Itr End) {
     while (Begin != End) {
       addInstruction(*Begin++);
     }
   }
 
   /// Add a range of instructions to the end of this basic block.
-  template <typename RangeTy>
-  void addInstructions(RangeTy R) {
+  template <typename RangeTy> void addInstructions(RangeTy R) {
     for (auto &I : R)
       addInstruction(I);
   }
 
   /// Add instruction before Pos in this basic block.
-  template <typename Itr>
-  Itr insertPseudoInstr(Itr Pos, MCInst &Instr) {
+  template <typename Itr> Itr insertPseudoInstr(Itr Pos, MCInst &Instr) {
     ++NumPseudos;
     return Instructions.insert(Pos, Instr);
   }
@@ -519,9 +502,7 @@ public:
   uint32_t getNumPseudos() const;
 
   /// Return the number of emitted instructions for this basic block.
-  uint32_t getNumNonPseudos() const {
-    return size() - getNumPseudos();
-  }
+  uint32_t getNumNonPseudos() const { return size() - getNumPseudos(); }
 
   /// Return iterator to the first non-pseudo instruction or end()
   /// if no such instruction was found.
@@ -573,35 +554,24 @@ public:
   /// Calculate and return CFI state after execution of this basic block.
   /// The state depends on CFI state at entry and CFI instructions inside the
   /// basic block.
-  int32_t getCFIStateAtExit() const {
-    return getCFIStateAtInstr(nullptr);
-  }
+  int32_t getCFIStateAtExit() const { return getCFIStateAtInstr(nullptr); }
 
   /// Set minimum alignment for the basic block.
-  void setAlignment(uint32_t Align) {
-    Alignment = Align;
-  }
+  void setAlignment(uint32_t Align) { Alignment = Align; }
 
   /// Return required alignment for the block.
-  uint32_t getAlignment() const {
-    return Alignment;
-  }
+  uint32_t getAlignment() const { return Alignment; }
 
   /// Set the maximum number of bytes to use for the block alignment.
-  void setAlignmentMaxBytes(uint32_t Value) {
-    AlignmentMaxBytes = Value;
-  }
+  void setAlignmentMaxBytes(uint32_t Value) { AlignmentMaxBytes = Value; }
 
   /// Return the maximum number of bytes to use for the block alignment.
-  uint32_t getAlignmentMaxBytes() const {
-    return AlignmentMaxBytes;
-  }
+  uint32_t getAlignmentMaxBytes() const { return AlignmentMaxBytes; }
 
   /// Adds block to successor list, and also updates predecessor list for
   /// successor block.
   /// Set branch info for this path.
-  void addSuccessor(BinaryBasicBlock *Succ,
-                    uint64_t Count = 0,
+  void addSuccessor(BinaryBasicBlock *Succ, uint64_t Count = 0,
                     uint64_t MispredictedCount = 0);
 
   void addSuccessor(BinaryBasicBlock *Succ, const BinaryBranchInfo &BI) {
@@ -609,8 +579,7 @@ public:
   }
 
   /// Add a range of successors.
-  template <typename Itr>
-  void addSuccessors(Itr Begin, Itr End) {
+  template <typename Itr> void addSuccessors(Itr Begin, Itr End) {
     while (Begin != End) {
       addSuccessor(*Begin++);
     }
@@ -627,19 +596,15 @@ public:
 
   /// Replace Succ with NewSucc.  This routine is helpful for preserving
   /// the order of conditional successors when editing the CFG.
-  void replaceSuccessor(BinaryBasicBlock *Succ,
-                        BinaryBasicBlock *NewSucc,
-                        uint64_t Count = 0,
-                        uint64_t MispredictedCount = 0);
+  void replaceSuccessor(BinaryBasicBlock *Succ, BinaryBasicBlock *NewSucc,
+                        uint64_t Count = 0, uint64_t MispredictedCount = 0);
 
   /// Move all of this block's successors to a new block, and set the
   /// execution count of this new block with our execution count. This is
   /// useful when splitting a block in two.
   void moveAllSuccessorsTo(BinaryBasicBlock *New) {
-    New->addSuccessors(successors().begin(),
-                       successors().end(),
-                       branch_info_begin(),
-                       branch_info_end());
+    New->addSuccessors(successors().begin(), successors().end(),
+                       branch_info_begin(), branch_info_end());
     removeAllSuccessors();
 
     // Update the execution count on the new block.
@@ -672,17 +637,13 @@ public:
   }
 
   /// Test if this BB has a valid execution count.
-  bool hasProfile() const {
-    return ExecutionCount != COUNT_NO_PROFILE;
-  }
+  bool hasProfile() const { return ExecutionCount != COUNT_NO_PROFILE; }
 
   /// Return the information about the number of times this basic block was
   /// executed.
   ///
   /// Return COUNT_NO_PROFILE if there's no profile info.
-  uint64_t getExecutionCount() const {
-    return ExecutionCount;
-  }
+  uint64_t getExecutionCount() const { return ExecutionCount; }
 
   /// Return the execution count for blocks with known profile.
   /// Return 0 if the block has no profile.
@@ -691,9 +652,7 @@ public:
   }
 
   /// Set the execution count for this block.
-  void setExecutionCount(uint64_t Count) {
-    ExecutionCount = Count;
-  }
+  void setExecutionCount(uint64_t Count) { ExecutionCount = Count; }
 
   /// Apply a given \p Ratio to the profile information of this basic block.
   void adjustExecutionCount(double Ratio);
@@ -702,33 +661,21 @@ public:
   /// (either primary or secondary).
   bool isEntryPoint() const;
 
-  bool isValid() const {
-    return IsValid;
-  }
+  bool isValid() const { return IsValid; }
 
-  void markValid(const bool Valid) {
-    IsValid = Valid;
-  }
+  void markValid(const bool Valid) { IsValid = Valid; }
 
-  bool isCold() const {
-    return IsCold;
-  }
+  bool isCold() const { return IsCold; }
 
-  void setIsCold(const bool Flag) {
-    IsCold = Flag;
-  }
+  void setIsCold(const bool Flag) { IsCold = Flag; }
 
   /// Return true if the block can be outlined. At the moment we disallow
   /// outlining of blocks that can potentially throw exceptions or are
   /// the beginning of a landing pad. The entry basic block also can
   /// never be outlined.
-  bool canOutline() const {
-    return CanOutline;
-  }
+  bool canOutline() const { return CanOutline; }
 
-  void setCanOutline(const bool Flag) {
-    CanOutline = Flag;
-  }
+  void setCanOutline(const bool Flag) { CanOutline = Flag; }
 
   /// Erase pseudo instruction at a given iterator.
   /// Return iterator following the removed instruction.
@@ -815,7 +762,7 @@ public:
     InstructionListType SplitInst;
 
     assert(!Instructions.empty());
-    while(&Instructions.back() != Inst) {
+    while (&Instructions.back() != Inst) {
       SplitInst.push_back(Instructions.back());
       Instructions.pop_back();
     }
@@ -867,9 +814,10 @@ public:
 
   /// Return offset translation table for the basic block.
   OffsetTranslationTableTy &getOffsetTranslationTable() {
-    return OffsetTranslationTable ?
-      *OffsetTranslationTable :
-      *(OffsetTranslationTable = std::make_unique<OffsetTranslationTableTy>());
+    return OffsetTranslationTable
+               ? *OffsetTranslationTable
+               : *(OffsetTranslationTable =
+                       std::make_unique<OffsetTranslationTableTy>());
   }
 
   /// Return offset translation table for the basic block.
@@ -882,16 +830,12 @@ public:
     return OutputAddressRange.second - OutputAddressRange.first;
   }
 
-  BinaryFunction *getFunction() const {
-    return Function;
-  }
+  BinaryFunction *getFunction() const { return Function; }
 
   /// Analyze and interpret the terminators of this basic block. TBB must be
   /// initialized with the original fall-through for this BB.
-  bool analyzeBranch(const MCSymbol *&TBB,
-                     const MCSymbol *&FBB,
-                     MCInst *&CondBranch,
-                     MCInst *&UncondBranch);
+  bool analyzeBranch(const MCSymbol *&TBB, const MCSymbol *&FBB,
+                     MCInst *&CondBranch, MCInst *&UncondBranch);
 
   /// Return true if iterator \p I is pointing to the first instruction in
   /// a pair that could be macro-fused.
@@ -917,15 +861,11 @@ public:
   bool validateSuccessorInvariants();
 
   /// Return offset of the basic block from the function start on input.
-  uint32_t getInputOffset() const {
-    return InputRange.first;
-  }
+  uint32_t getInputOffset() const { return InputRange.first; }
 
   /// Return offset from the function start to location immediately past
   /// the end of the basic block.
-  uint32_t getEndOffset() const {
-    return InputRange.second;
-  }
+  uint32_t getEndOffset() const { return InputRange.second; }
 
   /// Return size of the basic block on input.
   uint32_t getOriginalSize() const {
@@ -947,14 +887,10 @@ public:
   }
 
   /// Set layout index. To be used by BinaryFunction.
-  void setLayoutIndex(unsigned Index) const {
-    LayoutIndex = Index;
-  }
+  void setLayoutIndex(unsigned Index) const { LayoutIndex = Index; }
 
   /// Needed by graph traits.
-  BinaryFunction *getParent() const {
-    return getFunction();
-  }
+  BinaryFunction *getParent() const { return getFunction(); }
 
   /// Return true if the containing function is in CFG state.
   bool hasCFG() const;
@@ -963,9 +899,7 @@ public:
   bool hasInstructions() const;
 
   /// Return offset of the basic block from the function start.
-  uint32_t getOffset() const {
-    return InputRange.first;
-  }
+  uint32_t getOffset() const { return InputRange.first; }
 
   /// Get the index of this basic block.
   unsigned getIndex() const {
@@ -978,8 +912,7 @@ public:
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
-  template <typename Itr>
-  void adjustNumPseudos(Itr Begin, Itr End, int Sign) {
+  template <typename Itr> void adjustNumPseudos(Itr Begin, Itr End, int Sign) {
     while (Begin != End) {
       adjustNumPseudos(*Begin++, Sign);
     }
@@ -993,19 +926,15 @@ private:
   /// If \p Multiple is set to true, it will remove all predecessors that
   /// are equal to \p Pred. Otherwise, the first instance of \p Pred found
   /// will be removed. This only matters in awkward, redundant CFGs.
-  void removePredecessor(BinaryBasicBlock *Pred, bool Multiple=true);
+  void removePredecessor(BinaryBasicBlock *Pred, bool Multiple = true);
 
   /// Set end offset of this basic block.
-  void setEndOffset(uint32_t Offset) {
-    InputRange.second = Offset;
-  }
+  void setEndOffset(uint32_t Offset) { InputRange.second = Offset; }
 
   /// Set the index of this basic block.
-  void setIndex(unsigned I) {
-    Index = I;
-  }
+  void setIndex(unsigned I) { Index = I; }
 
-  template<typename T> void clearList(T& List) {
+  template <typename T> void clearList(T &List) {
     T TempList;
     TempList.swap(List);
   }
@@ -1031,7 +960,6 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
 } // namespace bolt
 
-
 // GraphTraits specializations for basic block graphs (CFGs)
 template <> struct GraphTraits<bolt::BinaryBasicBlock *> {
   using NodeRef = bolt::BinaryBasicBlock *;
@@ -1041,24 +969,18 @@ template <> struct GraphTraits<bolt::BinaryBasicBlock *> {
   static inline ChildIteratorType child_begin(NodeRef N) {
     return N->succ_begin();
   }
-  static inline ChildIteratorType child_end(NodeRef N) {
-    return N->succ_end();
-  }
+  static inline ChildIteratorType child_end(NodeRef N) { return N->succ_end(); }
 };
 
 template <> struct GraphTraits<const bolt::BinaryBasicBlock *> {
   using NodeRef = const bolt::BinaryBasicBlock *;
   using ChildIteratorType = bolt::BinaryBasicBlock::const_succ_iterator;
 
-  static NodeRef getEntryNode(const bolt::BinaryBasicBlock *BB) {
-    return BB;
-  }
+  static NodeRef getEntryNode(const bolt::BinaryBasicBlock *BB) { return BB; }
   static inline ChildIteratorType child_begin(NodeRef N) {
     return N->succ_begin();
   }
-  static inline ChildIteratorType child_end(NodeRef N) {
-    return N->succ_end();
-  }
+  static inline ChildIteratorType child_end(NodeRef N) { return N->succ_end(); }
 };
 
 template <> struct GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
@@ -1070,9 +992,7 @@ template <> struct GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
   static inline ChildIteratorType child_begin(NodeRef N) {
     return N->pred_begin();
   }
-  static inline ChildIteratorType child_end(NodeRef N) {
-    return N->pred_end();
-  }
+  static inline ChildIteratorType child_end(NodeRef N) { return N->pred_end(); }
 };
 
 template <> struct GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
@@ -1084,9 +1004,7 @@ template <> struct GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
   static inline ChildIteratorType child_begin(NodeRef N) {
     return N->pred_begin();
   }
-  static inline ChildIteratorType child_end(NodeRef N) {
-    return N->pred_end();
-  }
+  static inline ChildIteratorType child_end(NodeRef N) { return N->pred_end(); }
 };
 
 } // namespace llvm

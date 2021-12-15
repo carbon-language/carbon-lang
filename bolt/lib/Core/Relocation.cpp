@@ -176,9 +176,7 @@ bool skipRelocationProcessAArch64(uint64_t Type, uint64_t Contents) {
     return false;
   };
 
-  auto IsNop = [](uint64_t Contents) -> bool {
-    return Contents == 0xd503201f;
-  };
+  auto IsNop = [](uint64_t Contents) -> bool { return Contents == 0xd503201f; };
 
   // The linker might eliminate the instruction and replace it with NOP, ignore
   if (IsNop(Contents))
@@ -550,25 +548,23 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
     if (Symbol) {
       Value = MCSymbolRefExpr::create(Symbol, Ctx);
       if (Addend) {
-        Value = MCBinaryExpr::createAdd(Value,
-                                        MCConstantExpr::create(Addend, Ctx),
-                                        Ctx);
+        Value = MCBinaryExpr::createAdd(
+            Value, MCConstantExpr::create(Addend, Ctx), Ctx);
       }
     } else {
       Value = MCConstantExpr::create(Addend, Ctx);
     }
-    Value = MCBinaryExpr::createSub(Value,
-                                    MCSymbolRefExpr::create(TempLabel, Ctx),
-                                    Ctx);
+    Value = MCBinaryExpr::createSub(
+        Value, MCSymbolRefExpr::create(TempLabel, Ctx), Ctx);
     Streamer->emitValue(Value, Size);
 
     return Size;
   }
 
   if (Symbol && Addend) {
-    auto Value = MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, Ctx),
-                                         MCConstantExpr::create(Addend, Ctx),
-                                         Ctx);
+    auto Value =
+        MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, Ctx),
+                                MCConstantExpr::create(Addend, Ctx), Ctx);
     Streamer->emitValue(Value, Size);
   } else if (Symbol) {
     Streamer->emitSymbolValue(Symbol, Size);

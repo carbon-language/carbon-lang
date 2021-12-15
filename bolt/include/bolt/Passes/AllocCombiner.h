@@ -29,9 +29,7 @@ public:
   explicit AllocCombinerPass(const cl::opt<bool> &PrintPass)
       : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "alloc-combiner";
-  }
+  const char *getName() const override { return "alloc-combiner"; }
 
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && FuncsChanged.count(&BF) > 0;
@@ -43,6 +41,5 @@ public:
 
 } // namespace bolt
 } // namespace llvm
-
 
 #endif

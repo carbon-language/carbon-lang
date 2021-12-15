@@ -68,8 +68,10 @@ public:
   virtual void print(raw_ostream &OS) const = 0;
   virtual bool equals(const MCAnnotation &) const = 0;
   virtual ~MCAnnotation() {}
+
 protected:
   MCAnnotation() {}
+
 private:
   // noncopyable
   MCAnnotation(const MCAnnotation &Other) = delete;
@@ -82,19 +84,15 @@ private:
 /// only be freed if the annotation is removed with the
 /// MCPlusBuilder::removeAnnotation method.  This is because all
 /// annotations are arena allocated.
-template <typename ValueType>
-class MCSimpleAnnotation : public MCAnnotation {
+template <typename ValueType> class MCSimpleAnnotation : public MCAnnotation {
 public:
   ValueType &getValue() { return Value; }
   bool equals(const MCAnnotation &Other) const override {
     return Value == static_cast<const MCSimpleAnnotation &>(Other).Value;
   }
-  explicit MCSimpleAnnotation(const ValueType &Val)
-    : Value(Val) {}
+  explicit MCSimpleAnnotation(const ValueType &Val) : Value(Val) {}
 
-  void print(raw_ostream &OS) const override {
-    OS << Value;
-  }
+  void print(raw_ostream &OS) const override { OS << Value; }
 
 private:
   ValueType Value;
@@ -104,8 +102,8 @@ private:
 /// annotations.
 inline unsigned getNumPrimeOperands(const MCInst &Inst) {
   if (Inst.getNumOperands() > 0 && std::prev(Inst.end())->isInst()) {
-    assert(std::prev(Inst.end())->
-             getInst()->getOpcode() == TargetOpcode::ANNOTATION_LABEL);
+    assert(std::prev(Inst.end())->getInst()->getOpcode() ==
+           TargetOpcode::ANNOTATION_LABEL);
     return Inst.getNumOperands() - 1;
   }
   return Inst.getNumOperands();

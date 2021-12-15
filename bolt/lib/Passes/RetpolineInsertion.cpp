@@ -297,8 +297,8 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
 
         // Determine if r11 is available before this instruction
         if (BrInfo.isMem()) {
-          if(MIB.hasAnnotation(Inst, "PLTCall"))
-            R11Available= true;
+          if (MIB.hasAnnotation(Inst, "PLTCall"))
+            R11Available = true;
           else if (opts::R11Availability == AvailabilityOptions::ALWAYS)
             R11Available = true;
           else if (opts::R11Availability == AvailabilityOptions::ABI)
@@ -320,7 +320,7 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
         TargetRetpoline = getOrCreateRetpoline(BC, BrInfo, R11Available);
 
         createBranchReplacement(BC, BrInfo, R11Available, Replacement,
-                                   TargetRetpoline->getSymbol());
+                                TargetRetpoline->getSymbol());
 
         It = BB.replaceInstruction(It, Replacement.begin(), Replacement.end());
         RetpolinedBranches++;
@@ -329,8 +329,8 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
   }
   outs() << "BOLT-INFO: The number of created retpoline functions is : "
          << CreatedRetpolines.size()
-         << "\nBOLT-INFO: The number of retpolined branches is : " << RetpolinedBranches
-         << "\n";
+         << "\nBOLT-INFO: The number of retpolined branches is : "
+         << RetpolinedBranches << "\n";
 }
 
 } // namespace bolt

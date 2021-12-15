@@ -25,11 +25,11 @@ namespace bolt {
 class BinaryBasicBlock;
 
 using BinaryDomTreeNode = DomTreeNodeBase<BinaryBasicBlock>;
-using BinaryDominatorTree =  DomTreeBase<BinaryBasicBlock>;
+using BinaryDominatorTree = DomTreeBase<BinaryBasicBlock>;
 
 class BinaryLoop : public LoopBase<BinaryBasicBlock, BinaryLoop> {
 public:
-  BinaryLoop() : LoopBase<BinaryBasicBlock, BinaryLoop>() { }
+  BinaryLoop() : LoopBase<BinaryBasicBlock, BinaryLoop>() {}
 
   // The total count of all the back edges of this loop.
   uint64_t TotalBackEdgeCount{0};
@@ -44,13 +44,13 @@ public:
 
 protected:
   friend class LoopInfoBase<BinaryBasicBlock, BinaryLoop>;
-  explicit BinaryLoop(BinaryBasicBlock *BB) :
-    LoopBase<BinaryBasicBlock, BinaryLoop>(BB) { }
+  explicit BinaryLoop(BinaryBasicBlock *BB)
+      : LoopBase<BinaryBasicBlock, BinaryLoop>(BB) {}
 };
 
 class BinaryLoopInfo : public LoopInfoBase<BinaryBasicBlock, BinaryLoop> {
 public:
-  BinaryLoopInfo() { }
+  BinaryLoopInfo() {}
 
   unsigned OuterLoops{0};
   unsigned TotalLoops{0};
@@ -65,16 +65,19 @@ public:
 namespace llvm {
 
 // BinaryDominatorTree GraphTraits specializations.
-template <> struct GraphTraits<bolt::BinaryDomTreeNode *>
-  : public DomTreeGraphTraitsBase<bolt::BinaryDomTreeNode,
-                                  bolt::BinaryDomTreeNode::iterator> {};
+template <>
+struct GraphTraits<bolt::BinaryDomTreeNode *>
+    : public DomTreeGraphTraitsBase<bolt::BinaryDomTreeNode,
+                                    bolt::BinaryDomTreeNode::iterator> {};
 
-template <> struct GraphTraits<const bolt::BinaryDomTreeNode *>
-  : public DomTreeGraphTraitsBase<const bolt::BinaryDomTreeNode,
-                                  bolt::BinaryDomTreeNode::const_iterator> {};
+template <>
+struct GraphTraits<const bolt::BinaryDomTreeNode *>
+    : public DomTreeGraphTraitsBase<const bolt::BinaryDomTreeNode,
+                                    bolt::BinaryDomTreeNode::const_iterator> {};
 
-template <> struct GraphTraits<bolt::BinaryDominatorTree *>
-  : public GraphTraits<bolt::BinaryDomTreeNode *> {
+template <>
+struct GraphTraits<bolt::BinaryDominatorTree *>
+    : public GraphTraits<bolt::BinaryDomTreeNode *> {
   static NodeRef getEntryNode(bolt::BinaryDominatorTree *DT) {
     return DT->getRootNode();
   }
@@ -88,6 +91,6 @@ template <> struct GraphTraits<bolt::BinaryDominatorTree *>
   }
 };
 
-} // namescpae llvm
+} // namespace llvm
 
 #endif

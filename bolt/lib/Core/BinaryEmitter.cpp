@@ -20,7 +20,6 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/SMLoc.h"
 
-#undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
@@ -97,7 +96,7 @@ size_t padFunction(const BinaryFunction &Function) {
       if (N == std::string::npos)
         continue;
       std::string Name = Spec.substr(0, N);
-      size_t Padding = std::stoull(Spec.substr(N+1));
+      size_t Padding = std::stoull(Spec.substr(N + 1));
       FunctionPadding[Name] = Padding;
     }
   }
@@ -128,8 +127,7 @@ private:
 
 public:
   BinaryEmitter(MCStreamer &Streamer, BinaryContext &BC)
-    : Streamer(Streamer),
-      BC(BC) {}
+      : Streamer(Streamer), BC(BC) {}
 
   /// Emit all code and data.
   void emitAll(StringRef OrgSecPrefix);
@@ -293,9 +291,8 @@ bool BinaryEmitter::emitFunction(BinaryFunction &Function, bool EmitColdPart) {
 
   if (BC.HasRelocations) {
     Streamer.emitCodeAlignment(BinaryFunction::MinAlign, &*BC.STI);
-    uint16_t MaxAlignBytes = EmitColdPart
-      ? Function.getMaxColdAlignmentBytes()
-      : Function.getMaxAlignmentBytes();
+    uint16_t MaxAlignBytes = EmitColdPart ? Function.getMaxColdAlignmentBytes()
+                                          : Function.getMaxAlignmentBytes();
     if (MaxAlignBytes > 0)
       Streamer.emitCodeAlignment(Function.getAlignment(), &*BC.STI,
                                  MaxAlignBytes);
@@ -411,8 +408,8 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
     if (EmitColdPart != BB->isCold())
       continue;
 
-    if ((opts::AlignBlocks || opts::PreserveBlocksAlignment)
-        && BB->getAlignment() > 1) {
+    if ((opts::AlignBlocks || opts::PreserveBlocksAlignment) &&
+        BB->getAlignment() > 1) {
       Streamer.emitCodeAlignment(BB->getAlignment(), &*BC.STI,
                                  BB->getAlignmentMaxBytes());
     }
@@ -425,9 +422,8 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
 
     // Check if special alignment for macro-fusion is needed.
     bool MayNeedMacroFusionAlignment =
-      (opts::AlignMacroOpFusion == MFT_ALL) ||
-      (opts::AlignMacroOpFusion == MFT_HOT &&
-       BB->getKnownExecutionCount());
+        (opts::AlignMacroOpFusion == MFT_ALL) ||
+        (opts::AlignMacroOpFusion == MFT_HOT && BB->getKnownExecutionCount());
     BinaryBasicBlock::const_iterator MacroFusionPair;
     if (MayNeedMacroFusionAlignment) {
       MacroFusionPair = BB->getMacroOpFusionPair();
@@ -460,7 +456,8 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
       // Handle macro-fusion alignment. If we emitted a prefix as
       // the last instruction, we should've already emitted the associated
       // alignment hint, so don't emit it twice.
-      if (MayNeedMacroFusionAlignment && !LastIsPrefix && I == MacroFusionPair){
+      if (MayNeedMacroFusionAlignment && !LastIsPrefix &&
+          I == MacroFusionPair) {
         // This assumes the second instruction in the macro-op pair will get
         // assigned to its own MCRelaxableFragment. Since all JCC instructions
         // are relaxable, we should be safe.
@@ -515,10 +512,8 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
   StringRef SectionContents = BF.getOriginSection()->getContents();
 
   // Raw contents of the function.
-  StringRef FunctionContents =
-      SectionContents.substr(
-          BF.getAddress() - BF.getOriginSection()->getAddress(),
-          BF.getMaxSize());
+  StringRef FunctionContents = SectionContents.substr(
+      BF.getAddress() - BF.getOriginSection()->getAddress(), BF.getMaxSize());
 
   if (opts::Verbosity && !OnBehalfOf)
     outs() << "BOLT-INFO: emitting constant island for function " << BF << "\n";
@@ -526,8 +521,7 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
   // We split the island into smaller blocks and output labels between them.
   auto IS = Islands.Offsets.begin();
   for (auto DataIter = Islands.DataOffsets.begin();
-       DataIter != Islands.DataOffsets.end();
-       ++DataIter) {
+       DataIter != Islands.DataOffsets.end(); ++DataIter) {
     uint64_t FunctionOffset = *DataIter;
     uint64_t EndOffset = 0ULL;
 
@@ -546,7 +540,7 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
     }
 
     if (FunctionOffset == EndOffset)
-      continue;    // Size is zero, nothing to emit
+      continue; // Size is zero, nothing to emit
 
     auto emitCI = [&](uint64_t &FunctionOffset, uint64_t EndOffset) {
       if (FunctionOffset >= EndOffset)
@@ -583,7 +577,7 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
     // Emit labels, relocs and data
     while (IS != Islands.Offsets.end() && IS->first < EndOffset) {
       auto NextLabelOffset =
-        IS == Islands.Offsets.end() ? EndOffset : IS->first;
+          IS == Islands.Offsets.end() ? EndOffset : IS->first;
       auto NextStop = std::min(NextLabelOffset, EndOffset);
       assert(NextStop <= EndOffset && "internal overflow error");
       emitCI(FunctionOffset, NextStop);
@@ -665,8 +659,8 @@ SMLoc BinaryEmitter::emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc,
     CurrentLineTable = BC.DwCtx->getLineTableForUnit(
         BC.DwCtx->getCompileUnitForOffset(CurrentUnitIndex));
     // Add filename from the inlined function to the current CU.
-    CurrentFilenum =
-      BC.addDebugFilenameToUnit(FunctionUnitIndex, CurrentUnitIndex,
+    CurrentFilenum = BC.addDebugFilenameToUnit(
+        FunctionUnitIndex, CurrentUnitIndex,
         CurrentLineTable->Rows[RowReference.RowIndex - 1].File);
   }
 
@@ -684,13 +678,8 @@ SMLoc BinaryEmitter::emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc,
   if (FirstInstr)
     Flags |= DWARF2_FLAG_IS_STMT;
 
-  BC.Ctx->setCurrentDwarfLoc(
-    CurrentFilenum,
-    CurrentRow.Line,
-    CurrentRow.Column,
-    Flags,
-    CurrentRow.Isa,
-    CurrentRow.Discriminator);
+  BC.Ctx->setCurrentDwarfLoc(CurrentFilenum, CurrentRow.Line, CurrentRow.Column,
+                             Flags, CurrentRow.Isa, CurrentRow.Discriminator);
   const MCDwarfLoc &DwarfLoc = BC.Ctx->getCurrentDwarfLoc();
   BC.Ctx->clearDwarfLocSeen();
 
@@ -909,8 +898,8 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
   Streamer.emitLabel(LSDASymbol);
 
   // Corresponding FDE start.
-  const MCSymbol *StartSymbol = EmitColdPart ? BF.getColdSymbol()
-                                             : BF.getSymbol();
+  const MCSymbol *StartSymbol =
+      EmitColdPart ? BF.getColdSymbol() : BF.getSymbol();
 
   // Emit the LSDA header.
 
@@ -953,7 +942,7 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
     };
   }
 
-  Streamer.emitIntValue(TTypeEncoding, 1);        // TType format
+  Streamer.emitIntValue(TTypeEncoding, 1); // TType format
 
   // See the comment in EHStreamer::emitExceptionTable() on to use
   // uleb128 encoding (which can use variable number of bytes to encode the same
@@ -961,17 +950,16 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
   // iteratively fixing sizes of the tables.
   unsigned CallSiteTableLengthSize = getULEB128Size(CallSiteTableLength);
   unsigned TTypeBaseOffset =
-    sizeof(int8_t) +                            // Call site format
-    CallSiteTableLengthSize +                   // Call site table length size
-    CallSiteTableLength +                       // Call site table length
-    BF.getLSDAActionTable().size() +            // Actions table size
-    BF.getLSDATypeTable().size() * TTypeEncodingSize; // Types table size
+      sizeof(int8_t) +                 // Call site format
+      CallSiteTableLengthSize +        // Call site table length size
+      CallSiteTableLength +            // Call site table length
+      BF.getLSDAActionTable().size() + // Actions table size
+      BF.getLSDATypeTable().size() * TTypeEncodingSize; // Types table size
   unsigned TTypeBaseOffsetSize = getULEB128Size(TTypeBaseOffset);
-  unsigned TotalSize =
-    sizeof(int8_t) +                            // LPStart format
-    sizeof(int8_t) +                            // TType format
-    TTypeBaseOffsetSize +                       // TType base offset size
-    TTypeBaseOffset;                            // TType base offset
+  unsigned TotalSize = sizeof(int8_t) +      // LPStart format
+                       sizeof(int8_t) +      // TType format
+                       TTypeBaseOffsetSize + // TType base offset size
+                       TTypeBaseOffset;      // TType base offset
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   // Account for any extra padding that will be added to the call site table
@@ -1029,7 +1017,7 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
     case dwarf::DW_EH_PE_pcrel: {
       if (TypeAddress) {
         const MCSymbol *TypeSymbol =
-          BC.getOrCreateGlobalSymbol(TypeAddress, "TI", 0, TTypeAlignment);
+            BC.getOrCreateGlobalSymbol(TypeAddress, "TI", 0, TTypeAlignment);
         MCSymbol *DotSymbol = BC.Ctx->createNamedTempSymbol();
         Streamer.emitLabel(DotSymbol);
         const MCBinaryExpr *SubDotExpr = MCBinaryExpr::createSub(
@@ -1144,8 +1132,8 @@ void BinaryEmitter::emitDataSections(StringRef OrgSecPrefix) {
 
     StringRef SectionName = Section.getName();
     std::string EmitName = Section.isReordered()
-      ? std::string(Section.getOutputName())
-      : OrgSecPrefix.str() + std::string(SectionName);
+                               ? std::string(Section.getOutputName())
+                               : OrgSecPrefix.str() + std::string(SectionName);
     Section.emitAsData(Streamer, EmitName);
     Section.clearRelocations();
   }
@@ -1161,8 +1149,8 @@ void emitBinaryContext(MCStreamer &Streamer, BinaryContext &BC,
 
 void emitFunctionBody(MCStreamer &Streamer, BinaryFunction &BF,
                       bool EmitColdPart, bool EmitCodeOnly) {
-  BinaryEmitter(Streamer, BF.getBinaryContext()).
-    emitFunctionBody(BF, EmitColdPart, EmitCodeOnly);
+  BinaryEmitter(Streamer, BF.getBinaryContext())
+      .emitFunctionBody(BF, EmitColdPart, EmitCodeOnly);
 }
 
 } // namespace bolt

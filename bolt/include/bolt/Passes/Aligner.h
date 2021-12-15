@@ -31,9 +31,7 @@ private:
 public:
   explicit AlignerPass() : BinaryFunctionPass(false) {}
 
-  const char *getName() const override {
-    return "aligner";
-  }
+  const char *getName() const override { return "aligner"; }
 
   /// Pass entry point
   void runOnFunctions(BinaryContext &BC) override;
@@ -41,6 +39,5 @@ public:
 
 } // namespace bolt
 } // namespace llvm
-
 
 #endif

@@ -202,9 +202,7 @@ public:
                        MCPlusBuilder::AllocatorIdTy AllocatorId = 0);
   virtual ~StackPointerTracking() {}
 
-  void run() {
-    StackPointerTrackingBase<StackPointerTracking>::run();
-  }
+  void run() { StackPointerTrackingBase<StackPointerTracking>::run(); }
 };
 
 } // end namespace bolt
@@ -213,6 +211,5 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
                               const std::pair<int, int> &Val);
 
 } // end namespace llvm
-
 
 #endif

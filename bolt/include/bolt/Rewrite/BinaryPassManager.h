@@ -25,20 +25,18 @@ class BinaryContext;
 class BinaryFunctionPassManager {
 private:
   BinaryContext &BC;
-  std::vector<std::pair<const bool,
-                        std::unique_ptr<BinaryFunctionPass>>> Passes;
+  std::vector<std::pair<const bool, std::unique_ptr<BinaryFunctionPass>>>
+      Passes;
 
- public:
+public:
   static const char TimerGroupName[];
   static const char TimerGroupDesc[];
 
-  BinaryFunctionPassManager(BinaryContext &BC)
-    : BC(BC) {}
+  BinaryFunctionPassManager(BinaryContext &BC) : BC(BC) {}
 
   /// Adds a pass to this manager based on the value of its corresponding
   /// command-line option.
-  void registerPass(std::unique_ptr<BinaryFunctionPass> Pass,
-                    const bool Run) {
+  void registerPass(std::unique_ptr<BinaryFunctionPass> Pass, const bool Run) {
     Passes.emplace_back(Run, std::move(Pass));
   }
 

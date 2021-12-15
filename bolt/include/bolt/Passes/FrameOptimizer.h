@@ -90,13 +90,11 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   /// Perform a dataflow analysis in \p BF to reveal unnecessary reloads from
   /// the frame. Use the analysis to convert memory loads to register moves or
   /// immediate loads. Delete redundant register moves.
-  void removeUnnecessaryLoads(const RegAnalysis &RA,
-                              const FrameAnalysis &FA,
+  void removeUnnecessaryLoads(const RegAnalysis &RA, const FrameAnalysis &FA,
                               BinaryFunction &BF);
 
   /// Use information from stack frame usage to delete unused stores.
-  void removeUnusedStores(const FrameAnalysis &FA,
-                          BinaryFunction &BF);
+  void removeUnusedStores(const FrameAnalysis &FA, BinaryFunction &BF);
 
   /// Perform shrinkwrapping step
   void performShrinkWrapping(const RegAnalysis &RA, const FrameAnalysis &FA,
@@ -106,9 +104,7 @@ public:
   explicit FrameOptimizerPass(const cl::opt<bool> &PrintPass)
       : BinaryFunctionPass(PrintPass) {}
 
-  const char *getName() const override {
-    return "frame-optimizer";
-  }
+  const char *getName() const override { return "frame-optimizer"; }
 
   /// Pass entry point
   void runOnFunctions(BinaryContext &BC) override;
@@ -121,6 +117,5 @@ public:
 } // namespace bolt
 
 } // namespace llvm
-
 
 #endif

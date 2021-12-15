@@ -32,7 +32,6 @@ BinaryBasicBlock *getInternalCallTarget(BinaryFunction &Function,
   return Function.getBasicBlockForLabel(BC.MIB->getTargetSymbol(Inst));
 }
 
-
 // A special StackPointerTracking that considers internal calls
 class StackPointerTrackingForInternalCalls
     : public StackPointerTrackingBase<StackPointerTrackingForInternalCalls> {
@@ -134,7 +133,7 @@ bool ValidateInternalCalls::fixCFGForIC(BinaryFunction &Function) const {
 
   bool Updated = false;
 
-  auto processReturns = [&] (BinaryBasicBlock &BB, MCInst &Return) {
+  auto processReturns = [&](BinaryBasicBlock &BB, MCInst &Return) {
     // Check all reaching internal calls
     for (auto I = RI.expr_begin(Return), E = RI.expr_end(); I != E; ++I) {
       MCInst &ReachingInst = **I;
@@ -181,7 +180,8 @@ bool ValidateInternalCalls::fixCFGForIC(BinaryFunction &Function) const {
   return Updated;
 }
 
-bool ValidateInternalCalls::hasTailCallsInRange(BinaryFunction &Function) const {
+bool ValidateInternalCalls::hasTailCallsInRange(
+    BinaryFunction &Function) const {
   const BinaryContext &BC = Function.getBinaryContext();
   for (BinaryBasicBlock &BB : Function) {
     for (MCInst &Inst : BB) {
@@ -193,9 +193,11 @@ bool ValidateInternalCalls::hasTailCallsInRange(BinaryFunction &Function) const 
 }
 
 bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
-  while (fixCFGForPIC(Function)) {}
+  while (fixCFGForPIC(Function)) {
+  }
   clearAnnotations(Function);
-  while (fixCFGForIC(Function)) {}
+  while (fixCFGForIC(Function)) {
+  }
 
   BinaryContext &BC = Function.getBinaryContext();
   RegAnalysis RA = RegAnalysis(BC, nullptr, nullptr);
@@ -338,5 +340,5 @@ void ValidateInternalCalls::runOnFunctions(BinaryContext &BC) {
   }
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

@@ -61,5 +61,5 @@ void CallGraphWalker::walk() {
   traverseCG();
 }
 
-}
-}
+} // namespace bolt
+} // namespace llvm

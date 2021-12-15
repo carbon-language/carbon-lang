@@ -44,17 +44,15 @@ public:
   ///
   /// \p EHFrameHeaderAddress specifies location of .eh_frame_hdr,
   /// and is required for relative addressing used in the section.
-  std::vector<char> generateEHFrameHeader(
-      const DWARFDebugFrame &OldEHFrame,
-      const DWARFDebugFrame &NewEHFrame,
-      uint64_t EHFrameHeaderAddress,
-      std::vector<uint64_t> &FailedAddresses) const;
+  std::vector<char>
+  generateEHFrameHeader(const DWARFDebugFrame &OldEHFrame,
+                        const DWARFDebugFrame &NewEHFrame,
+                        uint64_t EHFrameHeaderAddress,
+                        std::vector<uint64_t> &FailedAddresses) const;
 
   using FDEsMap = std::map<uint64_t, const dwarf::FDE *>;
 
-  const FDEsMap &getFDEs() const {
-    return FDEs;
-  }
+  const FDEsMap &getFDEs() const { return FDEs; }
 
 private:
   FDEsMap FDEs;

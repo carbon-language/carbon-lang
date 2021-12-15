@@ -60,7 +60,8 @@ class MachORewriteInstance {
   void runOptimizationPasses();
   void emitAndLink();
 
-  void writeInstrumentationSection(StringRef SectionName, raw_pwrite_stream &OS);
+  void writeInstrumentationSection(StringRef SectionName,
+                                   raw_pwrite_stream &OS);
   void rewriteFile();
 
 public:
