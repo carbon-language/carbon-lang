@@ -26,15 +26,17 @@ struct StackLimitExceeded {
   }
 };
 
+// Manages the parser's stack depth, particularly decrementing on destruction.
 class ParseTree::Parser::ScopedStackStep {
  public:
   explicit ScopedStackStep(ParseTree::Parser* parser) : parser_(parser) {
-    ++(parser_->stack_depth_);
+    ++parser_->stack_depth_;
   }
-  ~ScopedStackStep() { --(parser_->stack_depth_); }
+  ~ScopedStackStep() { --parser_->stack_depth_; }
 
   auto VerifyUnderLimit() -> bool {
     if (parser_->stack_depth_ >= StackDepthLimit) {
+      parser_->emitter_.EmitError<StackLimitExceeded>(*parser_->position_);
       return false;
     }
     return true;
@@ -46,11 +48,10 @@ class ParseTree::Parser::ScopedStackStep {
 
 // Encapsulates checking the stack and erroring if needed. This should be called
 // at the start of every function that accepts a StackGuard.
-#define RETURN_IF_STACK_LIMITED(error_return_expr)      \
-  ScopedStackStep scoped_stack_step(this);              \
-  if (stack_depth_ >= StackDepthLimit) {                \
-    emitter_.EmitError<StackLimitExceeded>(*position_); \
-    return (error_return_expr);                         \
+#define RETURN_IF_STACK_LIMITED(error_return_expr) \
+  ScopedStackStep scoped_stack_step(this);         \
+  if (!scoped_stack_step.VerifyUnderLimit()) {     \
+    return (error_return_expr);                    \
   }
 
 struct UnexpectedTokenInCodeBlock
