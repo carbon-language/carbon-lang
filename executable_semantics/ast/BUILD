@@ -80,6 +80,7 @@ cc_library(
         ":source_location",
         ":statement",
         ":static_scope",
+        ":value_category",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -93,6 +94,8 @@ cc_library(
     deps = [
         ":ast_node",
         ":paren_contents",
+        ":static_scope",
+        ":value_category",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",
@@ -145,6 +148,7 @@ cc_library(
         ":expression",
         ":source_location",
         ":static_scope",
+        ":value_category",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -170,6 +174,7 @@ cc_library(
     deps = [
         ":ast_node",
         ":source_location",
+        ":value_category",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
     ],
@@ -193,9 +198,15 @@ cc_library(
         ":expression",
         ":pattern",
         ":source_location",
+        ":value_category",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "value_category",
+    hdrs = ["value_category.h"],
 )

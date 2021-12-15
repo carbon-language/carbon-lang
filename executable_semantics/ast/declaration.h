@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -29,7 +30,7 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Declaration : public virtual AstNode {
+class Declaration : public AstNode {
  public:
   ~Declaration() override = 0;
 
@@ -65,7 +66,8 @@ class Declaration : public virtual AstNode {
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration() = default;
+  Declaration(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -73,8 +75,10 @@ class Declaration : public virtual AstNode {
 
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
-struct GenericBinding : public virtual AstNode, public NamedEntity {
+class GenericBinding : public AstNode {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   GenericBinding(SourceLocation source_loc, std::string name,
                  Nonnull<Expression*> type)
       : AstNode(AstNodeKind::GenericBinding, source_loc),
@@ -102,6 +106,8 @@ struct GenericBinding : public virtual AstNode, public NamedEntity {
   // during typechecking: before typechecking it's guaranteed to be false,
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
@@ -188,14 +194,16 @@ class ReturnTerm {
   SourceLocation source_loc_;
 };
 
-class FunctionDeclaration : public Declaration, public NamedEntity {
+class FunctionDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
-      : AstNode(AstNodeKind::FunctionDeclaration, source_loc),
+      : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         param_pattern_(param_pattern),
@@ -223,6 +231,8 @@ class FunctionDeclaration : public Declaration, public NamedEntity {
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
@@ -231,11 +241,13 @@ class FunctionDeclaration : public Declaration, public NamedEntity {
   std::optional<Nonnull<Block*>> body_;
 };
 
-class ClassDeclaration : public Declaration, public NamedEntity {
+class ClassDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Member*>> members)
-      : AstNode(AstNodeKind::ClassDeclaration, source_loc),
+      : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
         members_(std::move(members)) {}
 
@@ -246,12 +258,14 @@ class ClassDeclaration : public Declaration, public NamedEntity {
   auto name() const -> const std::string& { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
 
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
  private:
   std::string name_;
   std::vector<Nonnull<Member*>> members_;
 };
 
-class AlternativeSignature : public virtual AstNode {
+class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
                        Nonnull<Expression*> signature)
@@ -274,11 +288,13 @@ class AlternativeSignature : public virtual AstNode {
   Nonnull<Expression*> signature_;
 };
 
-class ChoiceDeclaration : public Declaration, public NamedEntity {
+class ChoiceDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
-      : AstNode(AstNodeKind::ChoiceDeclaration, source_loc),
+      : Declaration(AstNodeKind::ChoiceDeclaration, source_loc),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
 
@@ -295,6 +311,8 @@ class ChoiceDeclaration : public Declaration, public NamedEntity {
     return alternatives_;
   }
 
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
  private:
   std::string name_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
@@ -306,7 +324,7 @@ class VariableDeclaration : public Declaration {
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
                       Nonnull<Expression*> initializer)
-      : AstNode(AstNodeKind::VariableDeclaration, source_loc),
+      : Declaration(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
         initializer_(initializer) {}
 

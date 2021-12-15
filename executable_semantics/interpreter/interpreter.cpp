@@ -392,6 +392,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
       // have Value::dynamic_type.
       return value;
