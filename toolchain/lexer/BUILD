@@ -40,6 +40,7 @@ cc_library(
     deps = [
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
