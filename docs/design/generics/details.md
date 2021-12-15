@@ -4194,6 +4194,7 @@ interface Add(Right:! Type = Self) {
 }
 
 impl String as Add() {
+  // Right == Result == Self == String
   fn DoAdd[me: Self](right: Self) -> Self;
 }
 ```
