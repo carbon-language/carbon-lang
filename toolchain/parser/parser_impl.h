@@ -24,10 +24,8 @@ class ParseTree::Parser {
       -> ParseTree;
 
  private:
-  struct SubtreeStart;
-
   class ScopedStackStep;
-  friend class ScopedStackStep;
+  struct SubtreeStart;
 
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                   TokenDiagnosticEmitter& emitter);
