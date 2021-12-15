@@ -1404,15 +1404,17 @@ public:
       return true;
     }
     if (int Sz = getPopSize(Inst)) {
-      assert(Inst.getOperand(0).isReg() &&
-             "Expected register operand for push");
       IsLoad = true;
       IsStore = false;
-      Reg = Inst.getOperand(0).getReg();
+      if (Inst.getNumOperands() == 0 || !Inst.getOperand(0).isReg()) {
+        IsSimple = false;
+      } else {
+        Reg = Inst.getOperand(0).getReg();
+        IsSimple = true;
+      }
       StackPtrReg = X86::RSP;
       StackOffset = 0;
       Size = Sz;
-      IsSimple = true;
       return true;
     }
 
