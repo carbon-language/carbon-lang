@@ -11,6 +11,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Names](#names)
+    -   [Unqualified names](#unqualified-names)
+    -   [Qualified names and member access](#qualified-names-and-member-access)
 -   [Conversions and casts](#conversions-and-casts)
 
 <!-- tocstop -->
@@ -28,6 +31,60 @@ fn Foo(a: i32*) -> i32 {
 
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
+
+## Names
+
+### Unqualified names
+
+An _unqualified name_ is a [word](../lexical_conventions/words.md) that is not a
+keyword and is not preceded by a period (`.`).
+
+**TODO:** Name lookup rules for unqualified names.
+
+### Qualified names and member access
+
+A _qualified name_ is a word that is prefixed by a period. Qualified names
+appear as designators and in [member access](member_access.md) expressions of
+the form
+
+> _expression_ `.` _word_
+
+or
+
+> _expression_ `.` `(` _member-access-expression_ `)`
+
+Qualified names refer to members of the entity named by the expression preceding
+the period. For example:
+
+```
+package Foo api;
+namespace N;
+fn N.F() {}
+
+fn G() {
+  // `Foo.N` names namespace `N` in package `Foo`.
+  // `(Foo.N).F` names function `F` in namespace `N`.
+  Foo.N.F();
+}
+
+fn H(a: {.n: i32}) -> i32 {
+  // `a.n` is resolved to the member `{.n: i32}.n`,
+  // and names the corresponding subobject of `a`.
+  return a.n;
+}
+```
+
+Member access expressions associate left-to-right. If the member name is more
+complex than a single _word_, parentheses are required:
+
+```
+interface I { fn F[me: Self](); }
+class X {}
+impl X as I { fn F[me: Self]() {} }
+
+// x.I.F() would mean (x.I).F().
+fn Q(x: X) { x.(I.F)(); }
+```
 
 ## Conversions and casts
 
