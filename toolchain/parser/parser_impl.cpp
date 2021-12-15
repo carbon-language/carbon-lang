@@ -17,7 +17,8 @@
 
 namespace Carbon {
 
-// Encapsulates checking the stack and erroring if needed.
+// Encapsulates checking the stack and erroring if needed. This should be called
+// at the start of every function that accepts a StackGuard.
 #define RETURN_IF_STACK_LIMITED(error_return_expr)   \
   if (stack_guard.is_at_limit()) {                   \
     emitter_.EmitError<StackGuardLimit>(*position_); \
