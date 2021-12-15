@@ -227,7 +227,7 @@ have two methods:
 interface Vector {
   // Here `Self` means "the type implementing this interface".
   fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: Double) -> Self;
+  fn Scale[me: Self](v: f64) -> Self;
 }
 ```
 
@@ -259,14 +259,14 @@ Impls may be defined inline inside the type definition:
 
 ```
 class Point {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
   impl as Vector {
     // In this scope, "Self" is an alias for "Point".
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
-    fn Scale[me: Self](v: Double) -> Self {
+    fn Scale[me: Self](v: f64) -> Self {
       return {.x = a.x * v, .y = a.y * v};
     }
   }
@@ -355,11 +355,11 @@ To implement more than one interface when defining a type, simply include an
 
 ```
 class Point {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
   impl as Vector {
     fn Add[me: Self](b: Self) -> Self { ... }
-    fn Scale[me: Self](v: Double) -> Self { ... }
+    fn Scale[me: Self](v: f64) -> Self { ... }
   }
   impl as Drawable {
     fn Draw[me: Self]() { ... }
@@ -416,15 +416,15 @@ construct. An external impl does not add the interface's methods to the type.
 
 ```
 class Point2 {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
 
   external impl as Vector {
     // In this scope, `Self` is an alias for `Point2`.
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
-    fn Scale[me: Self](v: Double) -> Self {
+    fn Scale[me: Self](v: f64) -> Self {
       return {.x = a.x * v, .y = a.y * v};
     }
   }
@@ -440,8 +440,8 @@ existing type before `as`, which is otherwise optional:
 
 ```
 class Point3 {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
 }
 
 external impl Point3 as Vector {
@@ -449,7 +449,7 @@ external impl Point3 as Vector {
   fn Add[me: Self](b: Self) -> Self {
     return {.x = a.x + b.x, .y = a.y + b.y};
   }
-  fn Scale[me: Self](v: Double) -> Self {
+  fn Scale[me: Self](v: f64) -> Self {
     return {.x = a.x * v, .y = a.y * v};
   }
 }
@@ -484,14 +484,14 @@ scope.
 
 ```
 class Point4a {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
   fn Add[me: Self](b: Self) -> Self {
     return {.x = a.x + b.x, .y = a.y + b.y};
   }
   external impl as Vector {
     alias Add = Point4a.Add;  // Syntax TBD
-    fn Scale[me: Self](v: Double) -> Self {
+    fn Scale[me: Self](v: f64) -> Self {
       return {.x = a.x * v, .y = a.y * v};
     }
   }
@@ -500,13 +500,13 @@ class Point4a {
 // OR:
 
 class Point4b {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
   external impl as Vector {
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
-    fn Scale[me: Self](v: Double) -> Self {
+    fn Scale[me: Self](v: f64) -> Self {
       return {.x = a.x * v, .y = a.y * v};
     }
   }
@@ -516,8 +516,8 @@ class Point4b {
 // OR:
 
 class Point4c {
-  var x: Double;
-  var y: Double;
+  var x: f64;
+  var y: f64;
   fn Add[me: Self](b: Self) -> Self {
     return {.x = a.x + b.x, .y = a.y + b.y};
   }
@@ -525,7 +525,7 @@ class Point4c {
 
 external impl Point4c as Vector {
   alias Add = Point4c.Add;  // Syntax TBD
-  fn Scale[me: Self](v: Double) -> Self {
+  fn Scale[me: Self](v: f64) -> Self {
     return {.x = a.x * v, .y = a.y * v};
   }
 }
@@ -630,7 +630,7 @@ Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
 
 ```
-fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
+fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: f64) -> T {
   return a.Add(b).Scale(s);
 }
 var v: Point = AddAndScaleGeneric(a, w, 2.5);
@@ -654,7 +654,7 @@ acts like we called this non-generic function, found by setting `T` to
 
 ```
 fn AddAndScaleForPointAsVector(
-      a: Point as Vector, b: Point as Vector, s: Double)
+      a: Point as Vector, b: Point as Vector, s: f64)
       -> Point as Vector {
   return a.Add(b).Scale(s);
 }
@@ -667,7 +667,7 @@ Since `Point` implements `Vector` inline, `Point` also has definitions for `Add`
 and `Scale`:
 
 ```
-fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
+fn AddAndScaleForPoint(a: Point, b: Point, s: f64) -> Point {
   return a.Add(b).Scale(s);
 }
 
@@ -679,11 +679,11 @@ However, for another type implementing `Vector` but externally, such as
 situation is different:
 
 ```
-fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
+fn AddAndScaleForPoint2(a: Point2, b: Point2, s: f64) -> Point2 {
   // ❌ ERROR: `Point2` doesn't have `Add` or `Scale` methods.
   return a.Add(b).Scale(s);
 }
-fn AddAndScaleForPoint3(a: Point3, b: Point3, s: Double) -> Point3 {
+fn AddAndScaleForPoint3(a: Point3, b: Point3, s: f64) -> Point3 {
   // ❌ ERROR: `Point3` doesn't have `Add` or `Scale` methods.
   return a.Add(b).Scale(s);
 }
@@ -728,7 +728,7 @@ class Vector {
   // so `Add` is a function that takes two `Self` parameters
   // and returns a value of type `Self`.
   var Add: fnty(a: Self, b: Self) -> Self;
-  var Scale: fnty(a: Self, v: Double) -> Self;
+  var Scale: fnty(a: Self, v: f64) -> Self;
 }
 ```
 
@@ -743,7 +743,7 @@ var VectorForPoint: Vector  = {
     .Add = lambda(a: Point, b: Point) -> Point {
       return {.x = a.x + b.x, .y = a.y + b.y};
     },
-    .Scale = lambda(a: Point, v: Double) -> Point {
+    .Scale = lambda(a: Point, v: f64) -> Point {
       return {.x = a.x * v, .y = a.y * v};
     },
 };
@@ -755,7 +755,7 @@ witness table an explicit argument to the function:
 
 ```
 fn AddAndScaleGeneric
-    (t:! Vector, a: t.Self, b: t.Self, s: Double) -> t.Self {
+    (t:! Vector, a: t.Self, b: t.Self, s: f64) -> t.Self {
   return t.Scale(t.Add(a, b), s);
 }
 // Point implements Vector.
