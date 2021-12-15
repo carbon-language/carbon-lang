@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -18,6 +19,7 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
+#include "toolchain/parser/stack_guard.h"
 
 namespace Carbon {
 namespace {
@@ -1173,6 +1175,21 @@ TEST_F(ParseTreeTest, ParenMatchRegression) {
                                             HasError, MatchNameReference("foo"),
                                             MatchParenExpressionEnd()))),
                  MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, RecursionLimit) {
+  std::string code = "fn Foo() { return ";
+  code.append(10000, '(');
+  code.append(10000, ')');
+  code += "; }";
+  TokenizedBuffer tokens = GetTokenizedBuffer(code);
+  ASSERT_FALSE(tokens.HasErrors());
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(DiagnosticMessage(llvm::formatv(
+                  "Exceeded recursion limit ({0})", StackGuard::Limit))));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
 }
 
 }  // namespace

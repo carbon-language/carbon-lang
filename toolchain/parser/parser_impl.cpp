@@ -17,6 +17,13 @@
 
 namespace Carbon {
 
+// Encapsulates checking the stack and erroring if needed.
+#define RETURN_IF_STACK_LIMITED(error_return_expr)   \
+  if (stack_guard.is_at_limit()) {                   \
+    emitter_.EmitError<StackGuardLimit>(*position_); \
+    return (error_return_expr);                      \
+  }
+
 struct UnexpectedTokenInCodeBlock
     : SimpleDiagnostic<UnexpectedTokenInCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
@@ -204,6 +211,14 @@ struct OperatorRequiresParentheses
       "Parentheses are required to disambiguate operator precedence.";
 };
 
+struct StackGuardLimit {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+
+  auto Format() -> std::string {
+    return llvm::formatv("Exceeded recursion limit ({0})", StackGuard::Limit);
+  }
+};
+
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)
     : tree_(tree_arg),
@@ -229,7 +244,7 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
-    if (!parser.ParseDeclaration()) {
+    if (!parser.ParseDeclaration(StackGuard::Root())) {
       // We don't have an enclosing parse tree node to mark as erroneous, so
       // just mark the tree as a whole.
       tree.has_errors_ = true;
@@ -472,7 +487,9 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
   return list_handler(open_paren, is_single_item, Consume(close), has_errors);
 }
 
-auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParsePattern(StackGuard stack_guard, PatternKind kind)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   if (NextTokenIs(TokenKind::Identifier()) &&
       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
     // identifier `:` type
@@ -480,7 +497,7 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
     AddLeafNode(ParseNodeKind::DeclaredName(),
                 Consume(TokenKind::Identifier()));
     auto colon = Consume(TokenKind::Colon());
-    auto type = ParseType();
+    auto type = ParseType(stack_guard);
     return AddNode(ParseNodeKind::PatternBinding(), colon, start,
                    /*has_error=*/!type);
   }
@@ -498,15 +515,18 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   return llvm::None;
 }
 
-auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
-  return ParsePattern(PatternKind::Parameter);
+auto ParseTree::Parser::ParseFunctionParameter(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
+  return ParsePattern(stack_guard, PatternKind::Parameter);
 }
 
-auto ParseTree::Parser::ParseFunctionSignature() -> bool {
+auto ParseTree::Parser::ParseFunctionSignature(StackGuard stack_guard) -> bool {
+  RETURN_IF_STACK_LIMITED(false);
   auto start = GetSubtreeStartPosition();
 
   auto params = ParseParenList(
-      [&] { return ParseFunctionParameter(); },
+      [&] { return ParseFunctionParameter(stack_guard); },
       ParseNodeKind::ParameterListComma(),
       [&](TokenizedBuffer::Token open_paren, bool /*is_single_item*/,
           TokenizedBuffer::Token close_paren, bool has_errors) {
@@ -517,7 +537,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
 
   auto start_return_type = GetSubtreeStartPosition();
   if (auto arrow = ConsumeIf(TokenKind::MinusGreater())) {
-    auto return_type = ParseType();
+    auto return_type = ParseType(stack_guard);
     AddNode(ParseNodeKind::ReturnType(), *arrow, start_return_type,
             /*has_error=*/!return_type);
     if (!return_type) {
@@ -528,13 +548,15 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
   return params.hasValue();
 }
 
-auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseCodeBlock(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
     // Recover by parsing a single statement.
     emitter_.EmitError<ExpectedCodeBlock>(*position_);
-    return ParseStatement();
+    return ParseStatement(stack_guard);
   }
   TokenizedBuffer::Token open_curly = *maybe_open_curly;
 
@@ -544,7 +566,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
 
   // Loop over all the different possibly nested elements in the code block.
   while (!NextTokenIs(TokenKind::CloseCurlyBrace())) {
-    if (!ParseStatement()) {
+    if (!ParseStatement(stack_guard)) {
       // We detected and diagnosed an error of some kind. We can trivially skip
       // to the actual close curly brace from here.
       // FIXME: It would be better to skip to the next semicolon, or the next
@@ -563,7 +585,8 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
   return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
 }
 
-auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
+auto ParseTree::Parser::ParseFunctionDeclaration(StackGuard stack_guard)
+    -> Node {
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::FnKeyword());
   auto start = GetSubtreeStartPosition();
 
@@ -571,6 +594,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                    start, /*has_error=*/true);
   };
+  RETURN_IF_STACK_LIMITED(add_error_function_node());
 
   auto handle_semi_in_error_recovery = [&](TokenizedBuffer::Token semi) {
     return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
@@ -596,7 +620,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token close_paren =
       tokens_.GetMatchedClosingToken(open_paren);
 
-  if (!ParseFunctionSignature()) {
+  if (!ParseFunctionSignature(stack_guard)) {
     // Don't try to parse more of the function declaration, but consume a
     // declaration ending semicolon if found (without going to a new line).
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
@@ -605,7 +629,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
   // See if we should parse a definition which is represented as a code block.
   if (NextTokenIs(TokenKind::OpenCurlyBrace())) {
-    if (!ParseCodeBlock()) {
+    if (!ParseCodeBlock(stack_guard)) {
       return add_error_function_node();
     }
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
@@ -623,12 +647,17 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
                  start);
 }
 
-auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
+auto ParseTree::Parser::ParseVariableDeclaration(StackGuard stack_guard)
+    -> Node {
   // `var` pattern [= expression] `;`
   TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
   auto start = GetSubtreeStartPosition();
 
-  auto pattern = ParsePattern(PatternKind::Variable);
+  RETURN_IF_STACK_LIMITED(AddNode(ParseNodeKind::VariableDeclaration(),
+                                  var_token, start,
+                                  /*has_error=*/true));
+
+  auto pattern = ParsePattern(stack_guard, PatternKind::Variable);
   if (!pattern) {
     if (auto after_pattern =
             FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
@@ -638,7 +667,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
 
   auto start_init = GetSubtreeStartPosition();
   if (auto equal_token = ConsumeIf(TokenKind::Equal())) {
-    auto init = ParseExpression();
+    auto init = ParseExpression(stack_guard);
     AddNode(ParseNodeKind::VariableInitializer(), *equal_token, start_init,
             /*has_error=*/!init);
   }
@@ -661,12 +690,14 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
                      Consume(TokenKind::Semi()));
 }
 
-auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseDeclaration(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
     case TokenKind::FnKeyword():
-      return ParseFunctionDeclaration();
+      return ParseFunctionDeclaration(stack_guard);
     case TokenKind::VarKeyword():
-      return ParseVariableDeclaration();
+      return ParseVariableDeclaration(stack_guard);
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
     case TokenKind::EndOfFile():
@@ -693,7 +724,9 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   return llvm::None;
 }
 
-auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseParenExpression(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // parenthesized-expression ::= `(` expression `)`
   // tuple-literal ::= `(` `)`
   //               ::= `(` expression `,` [expression-list [`,`]] `)`
@@ -702,7 +735,8 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
   // whether it's a tuple or a parenthesized expression afterwards.
   auto start = GetSubtreeStartPosition();
   return ParseParenList(
-      [&] { return ParseExpression(); }, ParseNodeKind::TupleLiteralComma(),
+      [&] { return ParseExpression(stack_guard); },
+      ParseNodeKind::TupleLiteralComma(),
       [&](TokenizedBuffer::Token open_paren, bool is_single_item,
           TokenizedBuffer::Token close_paren, bool has_arg_errors) {
         AddLeafNode(is_single_item ? ParseNodeKind::ParenExpressionEnd()
@@ -715,7 +749,9 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
       /*allow_trailing_comma=*/true);
 }
 
-auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseBraceExpression(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // braced-expression ::= `{` [field-value-list] `}`
   //                   ::= `{` field-type-list `}`
   // field-value-list ::= field-value [`,`]
@@ -772,7 +808,7 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         // one has a `:` separator and the other has an `=` separator.
         auto equal_or_colon_token =
             Consume(kind == Type ? TokenKind::Colon() : TokenKind::Equal());
-        auto type_or_value = ParseExpression();
+        auto type_or_value = ParseExpression(stack_guard);
         return AddNode(kind == Type ? ParseNodeKind::StructFieldType()
                                     : ParseNodeKind::StructFieldValue(),
                        equal_or_colon_token, start_elem,
@@ -789,7 +825,9 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
       /*allow_trailing_comma=*/true);
 }
 
-auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParsePrimaryExpression(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   llvm::Optional<ParseNodeKind> kind;
   switch (NextTokenKind()) {
     case TokenKind::Identifier():
@@ -806,10 +844,10 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
       break;
 
     case TokenKind::OpenParen():
-      return ParseParenExpression();
+      return ParseParenExpression(stack_guard);
 
     case TokenKind::OpenCurlyBrace():
-      return ParseBraceExpression();
+      return ParseBraceExpression(stack_guard);
 
     default:
       emitter_.EmitError<ExpectedExpression>(*position_);
@@ -845,14 +883,17 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
   return name ? result : llvm::Optional<Node>();
 }
 
-auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
+auto ParseTree::Parser::ParseCallExpression(StackGuard stack_guard,
+                                            SubtreeStart start, bool has_errors)
     -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // `(` expression-list[opt] `)`
   //
   // expression-list ::= expression
   //                 ::= expression `,` expression-list
   return ParseParenList(
-      [&] { return ParseExpression(); }, ParseNodeKind::CallExpressionComma(),
+      [&] { return ParseExpression(stack_guard); },
+      ParseNodeKind::CallExpressionComma(),
       [&](TokenizedBuffer::Token open_paren, bool /*is_single_item*/,
           TokenizedBuffer::Token close_paren, bool has_arg_errors) {
         AddLeafNode(ParseNodeKind::CallExpressionEnd(), close_paren);
@@ -861,9 +902,11 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
       });
 }
 
-auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParsePostfixExpression(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
-  llvm::Optional<Node> expression = ParsePrimaryExpression();
+  llvm::Optional<Node> expression = ParsePrimaryExpression(stack_guard);
 
   while (true) {
     switch (NextTokenKind()) {
@@ -873,7 +916,7 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
         break;
 
       case TokenKind::OpenParen():
-        expression = ParseCallExpression(start, !expression);
+        expression = ParseCallExpression(stack_guard, start, !expression);
         break;
 
       default: {
@@ -992,7 +1035,9 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
 }
 
 auto ParseTree::Parser::ParseOperatorExpression(
-    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
+    StackGuard stack_guard, PrecedenceGroup ambient_precedence)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
 
   llvm::Optional<Node> lhs;
@@ -1001,7 +1046,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
   // Check for a prefix operator.
   if (auto operator_precedence = PrecedenceGroup::ForLeading(NextTokenKind());
       !operator_precedence) {
-    lhs = ParsePostfixExpression();
+    lhs = ParsePostfixExpression(stack_guard);
   } else {
     if (PrecedenceGroup::GetPriority(ambient_precedence,
                                      *operator_precedence) !=
@@ -1015,7 +1060,8 @@ auto ParseTree::Parser::ParseOperatorExpression(
     }
 
     auto operator_token = Consume(NextTokenKind());
-    bool has_errors = !ParseOperatorExpression(*operator_precedence);
+    bool has_errors =
+        !ParseOperatorExpression(stack_guard, *operator_precedence);
     lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
                   has_errors);
     lhs_precedence = *operator_precedence;
@@ -1051,7 +1097,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
     auto operator_token = Consume(NextTokenKind());
 
     if (is_binary) {
-      auto rhs = ParseOperatorExpression(operator_precedence);
+      auto rhs = ParseOperatorExpression(stack_guard, operator_precedence);
       lhs = AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
                     /*has_error=*/!lhs || !rhs);
     } else {
@@ -1064,19 +1110,26 @@ auto ParseTree::Parser::ParseOperatorExpression(
   return lhs;
 }
 
-auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
-  return ParseOperatorExpression(PrecedenceGroup::ForTopLevelExpression());
+auto ParseTree::Parser::ParseExpression(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
+  return ParseOperatorExpression(stack_guard,
+                                 PrecedenceGroup::ForTopLevelExpression());
 }
 
-auto ParseTree::Parser::ParseType() -> llvm::Optional<Node> {
-  return ParseOperatorExpression(PrecedenceGroup::ForType());
+auto ParseTree::Parser::ParseType(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
+  return ParseOperatorExpression(stack_guard, PrecedenceGroup::ForType());
 }
 
-auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseExpressionStatement(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   TokenizedBuffer::Token start_token = *position_;
   auto start = GetSubtreeStartPosition();
 
-  bool has_errors = !ParseExpression();
+  bool has_errors = !ParseExpression(stack_guard);
 
   if (auto semi = ConsumeIf(TokenKind::Semi())) {
     return AddNode(ParseNodeKind::ExpressionStatement(), *semi, start,
@@ -1099,8 +1152,10 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   return llvm::None;
 }
 
-auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
+auto ParseTree::Parser::ParseParenCondition(StackGuard stack_guard,
+                                            TokenKind introducer)
     -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // `(` expression `)`
   auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
@@ -1109,7 +1164,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
                                            {.introducer = introducer});
   }
 
-  auto expr = ParseExpression();
+  auto expr = ParseExpression(stack_guard);
 
   if (!open_paren) {
     // Don't expect a matching closing paren if there wasn't an opening paren.
@@ -1123,37 +1178,42 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
                  /*has_error=*/!expr || !close_paren);
 }
 
-auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseIfStatement(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   auto if_token = Consume(TokenKind::IfKeyword());
-  auto cond = ParseParenCondition(TokenKind::IfKeyword());
-  auto then_case = ParseCodeBlock();
+  auto cond = ParseParenCondition(stack_guard, TokenKind::IfKeyword());
+  auto then_case = ParseCodeBlock(stack_guard);
   bool else_has_errors = false;
   if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
                               ParseNodeKind::IfStatementElse())) {
     // 'else if' is permitted as a special case.
     if (NextTokenIs(TokenKind::IfKeyword())) {
-      else_has_errors = !ParseIfStatement();
+      else_has_errors = !ParseIfStatement(stack_guard);
     } else {
-      else_has_errors = !ParseCodeBlock();
+      else_has_errors = !ParseCodeBlock(stack_guard);
     }
   }
   return AddNode(ParseNodeKind::IfStatement(), if_token, start,
                  /*has_error=*/!cond || !then_case || else_has_errors);
 }
 
-auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseWhileStatement(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
   auto while_token = Consume(TokenKind::WhileKeyword());
-  auto cond = ParseParenCondition(TokenKind::WhileKeyword());
-  auto body = ParseCodeBlock();
+  auto cond = ParseParenCondition(stack_guard, TokenKind::WhileKeyword());
+  auto body = ParseCodeBlock(stack_guard);
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
                  /*has_error=*/!cond || !body);
 }
 
-auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
+auto ParseTree::Parser::ParseKeywordStatement(StackGuard stack_guard,
+                                              ParseNodeKind kind,
                                               KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto keyword_kind = NextTokenKind();
   assert(keyword_kind.IsKeyword());
 
@@ -1164,7 +1224,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   if ((argument == KeywordStatementArgument::Optional &&
        NextTokenKind() != TokenKind::Semi()) ||
       argument == KeywordStatementArgument::Mandatory) {
-    arg_error = !ParseExpression();
+    arg_error = !ParseExpression(stack_guard);
   }
 
   auto semi =
@@ -1177,33 +1237,37 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);
 }
 
-auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseStatement(StackGuard stack_guard)
+    -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
     case TokenKind::VarKeyword():
-      return ParseVariableDeclaration();
+      return ParseVariableDeclaration(stack_guard);
 
     case TokenKind::IfKeyword():
-      return ParseIfStatement();
+      return ParseIfStatement(stack_guard);
 
     case TokenKind::WhileKeyword():
-      return ParseWhileStatement();
+      return ParseWhileStatement(stack_guard);
 
     case TokenKind::ContinueKeyword():
-      return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),
+      return ParseKeywordStatement(stack_guard,
+                                   ParseNodeKind::ContinueStatement(),
                                    KeywordStatementArgument::None);
 
     case TokenKind::BreakKeyword():
-      return ParseKeywordStatement(ParseNodeKind::BreakStatement(),
+      return ParseKeywordStatement(stack_guard, ParseNodeKind::BreakStatement(),
                                    KeywordStatementArgument::None);
 
     case TokenKind::ReturnKeyword():
-      return ParseKeywordStatement(ParseNodeKind::ReturnStatement(),
+      return ParseKeywordStatement(stack_guard,
+                                   ParseNodeKind::ReturnStatement(),
                                    KeywordStatementArgument::Optional);
 
     default:
       // A statement with no introducer token can only be an expression
       // statement.
-      return ParseExpressionStatement();
+      return ParseExpressionStatement(stack_guard);
   }
 }
 
