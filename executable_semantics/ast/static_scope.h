@@ -31,6 +31,9 @@ class Value;
   auto value_category() const -> ValueCategory;
 #endif
 // NodeType must be derived from AstNode.
+//
+// TODO: consider turning the above documentation into real code, as sketched
+// at https://godbolt.org/z/186oEozhc
 template <typename T, typename = void>
 static constexpr bool ImplementsNamedEntity = false;
 
