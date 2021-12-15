@@ -15,7 +15,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::_;
@@ -338,4 +338,4 @@ TEST_F(NumericLiteralTest, TooManyDigits) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
