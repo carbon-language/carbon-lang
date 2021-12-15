@@ -12,7 +12,6 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/parser/precedence.h"
-#include "toolchain/parser/stack_guard.h"
 
 namespace Carbon {
 
@@ -26,6 +25,9 @@ class ParseTree::Parser {
 
  private:
   struct SubtreeStart;
+
+  class ScopedStackStep;
+  friend class ScopedStackStep;
 
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                   TokenDiagnosticEmitter& emitter);
@@ -155,25 +157,25 @@ class ParseTree::Parser {
   }
 
   // Parses a single function parameter declaration.
-  auto ParseFunctionParameter(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseFunctionParameter() -> llvm::Optional<Node>;
 
   // Parses the signature of the function, consisting of a parameter list and an
   // optional return type. Returns the root node of the signature which must be
   // based on the open parenthesis of the parameter list.
-  auto ParseFunctionSignature(StackGuard stack_guard) -> bool;
+  auto ParseFunctionSignature() -> bool;
 
   // Parses a block of code: `{ ... }`.
   //
   // These can form the definition for a function or be nested within a function
   // definition. These contain variable declarations and statements.
-  auto ParseCodeBlock(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseCodeBlock() -> llvm::Optional<Node>;
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.
-  auto ParseFunctionDeclaration(StackGuard stack_guard) -> Node;
+  auto ParseFunctionDeclaration() -> Node;
 
   // Parses a variable declaration with an optional initializer.
-  auto ParseVariableDeclaration(StackGuard stack_guard) -> Node;
+  auto ParseVariableDeclaration() -> Node;
 
   // Parses and returns an empty declaration node from a single semicolon token.
   auto ParseEmptyDeclaration() -> Node;
@@ -181,26 +183,26 @@ class ParseTree::Parser {
   // Tries to parse a declaration. If a declaration, even an empty one after
   // skipping errors, can be parsed, it is returned. There may be parse errors
   // even when a node is returned.
-  auto ParseDeclaration(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseDeclaration() -> llvm::Optional<Node>;
 
   // Parses a parenthesized expression.
-  auto ParseParenExpression(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseParenExpression() -> llvm::Optional<Node>;
 
   // Parses a braced expression.
-  auto ParseBraceExpression(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseBraceExpression() -> llvm::Optional<Node>;
 
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
-  auto ParsePrimaryExpression(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParsePrimaryExpression() -> llvm::Optional<Node>;
 
   // Parses a designator expression suffix starting with `.`.
   auto ParseDesignatorExpression(SubtreeStart start, ParseNodeKind kind,
                                  bool has_errors) -> llvm::Optional<Node>;
 
   // Parses a call expression suffix starting with `(`.
-  auto ParseCallExpression(StackGuard stack_guard, SubtreeStart start,
-                           bool has_errors) -> llvm::Optional<Node>;
+  auto ParseCallExpression(SubtreeStart start, bool has_errors)
+      -> llvm::Optional<Node>;
 
   // Parses a postfix expression, which is a primary expression followed by
   // zero or more of the following:
@@ -208,7 +210,7 @@ class ParseTree::Parser {
   // -   function applications
   // -   array indexes (TODO)
   // -   designators
-  auto ParsePostfixExpression(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParsePostfixExpression() -> llvm::Optional<Node>;
 
   enum class OperatorFixity { Prefix, Infix, Postfix };
 
@@ -226,28 +228,26 @@ class ParseTree::Parser {
 
   // Parses an expression involving operators, in a context with the given
   // precedence.
-  auto ParseOperatorExpression(StackGuard stack_guard,
-                               PrecedenceGroup precedence)
+  auto ParseOperatorExpression(PrecedenceGroup precedence)
       -> llvm::Optional<Node>;
 
   // Parses an expression.
-  auto ParseExpression(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseExpression() -> llvm::Optional<Node>;
 
   // Parses a type expression.
-  auto ParseType(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseType() -> llvm::Optional<Node>;
 
   // Parses an expression statement: an expression followed by a semicolon.
-  auto ParseExpressionStatement(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseExpressionStatement() -> llvm::Optional<Node>;
 
   // Parses the parenthesized condition in an if-statement.
-  auto ParseParenCondition(StackGuard stack_guard, TokenKind introducer)
-      -> llvm::Optional<Node>;
+  auto ParseParenCondition(TokenKind introducer) -> llvm::Optional<Node>;
 
   // Parses an if-statement.
-  auto ParseIfStatement(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseIfStatement() -> llvm::Optional<Node>;
 
   // Parses a while-statement.
-  auto ParseWhileStatement(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseWhileStatement() -> llvm::Optional<Node>;
 
   enum class KeywordStatementArgument {
     None,
@@ -256,12 +256,12 @@ class ParseTree::Parser {
   };
 
   // Parses a statement of the form `keyword;` such as `break;` or `continue;`.
-  auto ParseKeywordStatement(StackGuard stack_guard, ParseNodeKind kind,
+  auto ParseKeywordStatement(ParseNodeKind kind,
                              KeywordStatementArgument argument)
       -> llvm::Optional<Node>;
 
   // Parses a statement.
-  auto ParseStatement(StackGuard stack_guard) -> llvm::Optional<Node>;
+  auto ParseStatement() -> llvm::Optional<Node>;
 
   enum class PatternKind {
     Parameter,
@@ -269,8 +269,7 @@ class ParseTree::Parser {
   };
 
   // Parses a pattern.
-  auto ParsePattern(StackGuard stack_guard, PatternKind kind)
-      -> llvm::Optional<Node>;
+  auto ParsePattern(PatternKind kind) -> llvm::Optional<Node>;
 
   ParseTree& tree_;
   TokenizedBuffer& tokens_;
@@ -281,6 +280,10 @@ class ParseTree::Parser {
   // The end position of the token buffer. There will always be an `EndOfFile`
   // token between `position` (inclusive) and `end` (exclusive).
   TokenizedBuffer::TokenIterator end_;
+
+  // Managed through RETURN_IF_STACK_LIMITED, which should be invoked by all
+  // functions.
+  int stack_depth_ = 0;
 };
 
 }  // namespace Carbon

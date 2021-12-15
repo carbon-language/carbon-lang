@@ -19,7 +19,6 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
-#include "toolchain/parser/stack_guard.h"
 
 namespace Carbon {
 namespace {
@@ -28,6 +27,7 @@ using Carbon::Testing::DiagnosticMessage;
 using Carbon::Testing::ExpectedNode;
 using Carbon::Testing::MatchParseTreeNodes;
 using namespace Carbon::Testing::NodeMatchers;
+using ::testing::AtLeast;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::Ne;
@@ -1185,9 +1185,14 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   TokenizedBuffer tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.HasErrors());
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(DiagnosticMessage(llvm::formatv(
-                  "Exceeded recursion limit ({0})", StackGuard::Limit))));
+  // Recursion might be exceeded multiple times due to quirks in parse tree
+  // handling; we only need to be sure it's hit at least once for test
+  // correctness.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(llvm::formatv(
+          "Exceeded recursion limit ({0})", ParseTree::StackDepthLimit))))
+      .Times(AtLeast(1));
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
 }

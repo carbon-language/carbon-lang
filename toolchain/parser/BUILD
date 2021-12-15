@@ -35,7 +35,6 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":precedence",
-        ":stack_guard",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
@@ -105,21 +104,6 @@ cc_test(
     deps = [
         ":precedence",
         "//toolchain/lexer:token_kind",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "stack_guard",
-    hdrs = ["stack_guard.h"],
-    deps = ["//common:check"],
-)
-
-cc_test(
-    name = "stack_guard_test",
-    srcs = ["stack_guard_test.cpp"],
-    deps = [
-        ":stack_guard",
         "@com_google_googletest//:gtest_main",
     ],
 )
