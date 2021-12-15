@@ -13,7 +13,7 @@
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** type checking **********
 // CHECK: checking pattern (format_str: String)
-// CHECK: types: Print: fn (String) -> ()
+// CHECK: values: Print: fun<Print>
 // CHECK: ********** type checking complete **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** starting execution **********
