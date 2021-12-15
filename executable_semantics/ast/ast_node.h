@@ -35,8 +35,6 @@ namespace Carbon {
 // The definitions of `InheritsFromFoo` and `FooKind` are generated from
 // ast_rtti.txt, and are implicitly provided by this header.
 //
-// When inheriting from this class, the inheritance must me marked `virtual`.
-//
 // TODO: To support generic traversal, add children() method, and ensure that
 //   all AstNodes are reachable from a root AstNode.
 class AstNode {
@@ -74,41 +72,5 @@ class AstNode {
 };
 
 }  // namespace Carbon
-
-// Ensure that LLVM casts from AstNode use dynamic_cast, because static_cast
-// doesn't work with a virtual base class.
-namespace llvm {
-template <typename To>
-struct cast_convert_val<To, const Carbon::AstNode*, const Carbon::AstNode*> {
-  using ResultType = typename cast_retty<To, const Carbon::AstNode*>::ret_type;
-  static auto doit(const Carbon::AstNode* node) -> ResultType {
-    return dynamic_cast<ResultType>(node);
-  }
-};
-
-template <typename To>
-struct cast_convert_val<To, Carbon::AstNode*, Carbon::AstNode*> {
-  using ResultType = typename cast_retty<To, Carbon::AstNode*>::ret_type;
-  static auto doit(Carbon::AstNode* node) -> ResultType {
-    return dynamic_cast<ResultType>(node);
-  }
-};
-
-template <typename To>
-struct cast_convert_val<To, const Carbon::AstNode, const Carbon::AstNode> {
-  using ResultType = typename cast_retty<To, const Carbon::AstNode>::ret_type;
-  static auto doit(const Carbon::AstNode& node) -> ResultType {
-    return dynamic_cast<ResultType>(node);
-  }
-};
-
-template <typename To>
-struct cast_convert_val<To, Carbon::AstNode, Carbon::AstNode> {
-  using ResultType = typename cast_retty<To, Carbon::AstNode>::ret_type;
-  static auto doit(Carbon::AstNode& node) -> ResultType {
-    return dynamic_cast<ResultType>(node);
-  }
-};
-}  // namespace llvm
 
 #endif  // EXECUTABLE_SEMANTICS_AST_AST_NODE_H_

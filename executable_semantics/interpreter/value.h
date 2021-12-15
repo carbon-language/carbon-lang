@@ -58,6 +58,8 @@ class Value {
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
+    TypeOfClassType,
+    TypeOfChoiceType,
   };
 
   Value(const Value&) = delete;
@@ -467,17 +469,17 @@ class ContinuationType : public Value {
 // A variable type.
 class VariableType : public Value {
  public:
-  explicit VariableType(std::string name)
-      : Value(Kind::VariableType), name_(std::move(name)) {}
+  explicit VariableType(Nonnull<const GenericBinding*> binding)
+      : Value(Kind::VariableType), binding_(binding) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::VariableType;
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto binding() const -> const GenericBinding& { return *binding_; }
 
  private:
-  std::string name_;
+  Nonnull<const GenericBinding*> binding_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -558,6 +560,44 @@ class StringValue : public Value {
 
  private:
   std::string value_;
+};
+
+// The type of an expression whose value is a class type. Currently there is no
+// way to explicitly name such a type in Carbon code, but we are tentatively
+// using `typeof(ClassName)` as the debug-printing format, in anticipation of
+// something like that becoming valid Carbon syntax.
+class TypeOfClassType : public Value {
+ public:
+  explicit TypeOfClassType(Nonnull<const NominalClassType*> class_type)
+      : Value(Kind::TypeOfClassType), class_type_(class_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfClassType;
+  }
+
+  auto class_type() const -> const NominalClassType& { return *class_type_; }
+
+ private:
+  Nonnull<const NominalClassType*> class_type_;
+};
+
+// The type of an expression whose value is a choice type. Currently there is no
+// way to explicitly name such a type in Carbon code, but we are tentatively
+// using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
+// something like that becoming valid Carbon syntax.
+class TypeOfChoiceType : public Value {
+ public:
+  explicit TypeOfChoiceType(Nonnull<const ChoiceType*> choice_type)
+      : Value(Kind::TypeOfChoiceType), choice_type_(choice_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfChoiceType;
+  }
+
+  auto choice_type() const -> const ChoiceType& { return *choice_type_; }
+
+ private:
+  Nonnull<const ChoiceType*> choice_type_;
 };
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;

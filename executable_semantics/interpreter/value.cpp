@@ -241,7 +241,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).name();
+      out << cast<VariableType>(*this).binding().name();
       break;
     case Value::Kind::ContinuationValue: {
       out << cast<ContinuationValue>(*this).stack();
@@ -254,6 +254,14 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "\"";
       out.write_escaped(cast<StringValue>(*this).value());
       out << "\"";
+      break;
+    case Value::Kind::TypeOfClassType:
+      out << "typeof(" << cast<TypeOfClassType>(*this).class_type().name()
+          << ")";
+      break;
+    case Value::Kind::TypeOfChoiceType:
+      out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
+          << ")";
       break;
   }
 }
@@ -348,7 +356,14 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::StringType:
       return true;
     case Value::Kind::VariableType:
-      return cast<VariableType>(*t1).name() == cast<VariableType>(*t2).name();
+      return &cast<VariableType>(*t1).binding() ==
+             &cast<VariableType>(*t2).binding();
+    case Value::Kind::TypeOfClassType:
+      return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
+                       &cast<TypeOfClassType>(*t2).class_type());
+    case Value::Kind::TypeOfChoiceType:
+      return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
+                       &cast<TypeOfChoiceType>(*t2).choice_type());
     default:
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
@@ -419,6 +434,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
