@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -25,16 +26,6 @@ class Value;
 
 class Expression : public AstNode {
  public:
-  // The value category of a Carbon expression indicates whether it evaluates
-  // to a variable or a value. A variable can be mutated, and can have its
-  // address taken, whereas a value cannot.
-  enum class ValueCategory {
-    // A variable. This roughly corresponds to a C/C++ lvalue.
-    Var,
-    // A value. This roughly corresponds to a C/C++ rvalue.
-    Let,
-  };
-
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
