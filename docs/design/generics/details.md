@@ -2425,7 +2425,7 @@ fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
 Similarly in an interface definition:
 
 ```
-interface {
+interface Has2DPoint {
   let PointT:! NSpacePoint where .N = 2;
 }
 ```
