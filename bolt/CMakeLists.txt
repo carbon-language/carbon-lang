@@ -43,7 +43,7 @@ else()
     install(CODE "execute_process\(COMMAND \${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX} -P ${CMAKE_CURRENT_BINARY_DIR}/bolt_rt-bins/cmake_install.cmake \)"
       COMPONENT bolt)
     add_llvm_install_targets(install-bolt_rt
-      DEPENDS bolt_rt
+      DEPENDS bolt_rt bolt
       COMPONENT bolt)
   endif()
 
