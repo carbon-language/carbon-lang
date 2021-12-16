@@ -172,7 +172,7 @@ compile. The interface bound has other benefits:
 The last piece of the puzzle is calling the function. For a value of type `Song`
 to be printed using the `PrintToStdout` function, `Song` needs to implement the
 `ConvertibleToString` interface. Interface implementations will usually be
-defined either with the type or with the interface. In may also be defined
+defined either with the type or with the interface. They may also be defined
 somewhere else as long as Carbon can be guaranteed to see the definition when
 needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
@@ -1603,9 +1603,9 @@ adapter SongHashedByTitle for Song {
 
 `Song` and `PlayableSong` have the same implementation of `Hashable` in addition
 to using the same data representation. This means that it is safe to convert
-between `HashMap(Song, i32)` and `HashMap(PlayableSong, i32)`, though Carbon
-requires an explicit cast, since the implementation of all the methods will use
-the same implementation of the `Hashable` interface.
+between `HashMap(Song, i32)` and `HashMap(PlayableSong, i32)`, because the
+implementation of all the methods will use the same implementation of the
+`Hashable` interface. Carbon permits this conversion with an explicit cast.
 
 On the other hand, `SongHashedByTitle` has a different implementation of
 `Hashable` than `Song`. So even though `Song` and `SongHashedByTitle` are
