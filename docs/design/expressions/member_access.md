@@ -200,6 +200,11 @@ fn UseBC(b: B, c: C) {
 
 A member `M` is accessed within a value `V` as follows:
 
+-   If `M` is a member of interface `I`, then the member of the corresponding
+    `impl T as I` is looked up and used in the place of `M`, where `T` is `V` if
+    `V` can be evaluated and evaluates to a type, and `T` is the type of `V`
+    otherwise.
+
 -   If the member is an instance member -- a field or a method -- and was either
     named indirectly or was named directly within the type or type-of-type of
     the value, the result is:
@@ -245,6 +250,23 @@ fn H(a: A) {
   // Error: value of `:!` binding is not constant because it
   // refers to local variable `a`.
   let U:! Type = a.B;
+}
+
+interface I {
+  fn J[me: Self]();
+}
+impl A as I {
+  fn J[me: Self]() {}
+}
+fn K(a: A) {
+  // OK: `I.J` is the interface member.
+  // `A.(I.J)` is the corresponding member of the `impl`.
+  // `a.(A.(I.J))` is a bound member function naming that member.
+  a.(A.(I.J))();
+
+  // Same as above, `a.(I.J)` is interpreted as `a.(A.(I.J))()`
+  // because `a` does not evaluate to a type.
+  a.(I.J)();
 }
 ```
 
