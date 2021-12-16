@@ -11,7 +11,7 @@
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
@@ -62,4 +62,4 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   return 0;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

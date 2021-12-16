@@ -33,6 +33,7 @@ cc_library(
 
 cc_test(
     name = "diagnostic_emitter_test",
+    size = "small",
     srcs = ["diagnostic_emitter_test.cpp"],
     deps = [
         ":diagnostic_emitter",
