@@ -4181,7 +4181,7 @@ the default, or provide a definition to override the default.
 Interface defaults are helpful for [evolution](#evolution), as well as reducing
 boilerplate. Defaults address the gap between the minimum necessary for a type
 to provide the desired functionality of an interface and the breadth of API that
-user's desire. As an example, in Rust the
+developers desire. As an example, in Rust the
 [iterator trait](https://doc.rust-lang.org/std/iter/trait.Iterator.html) only
 has one required method but dozens of "provided methods" with defaults.
 
