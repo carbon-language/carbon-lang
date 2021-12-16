@@ -1663,7 +1663,7 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
-Unlike the similar `class B extends A` notation, `adaptor B extends A` is
+Unlike the similar `class B extends A` notation, `adapter B extends A` is
 permitted even if `A` is a final class. Also, there is no implicit conversion
 from `B` to `A`, matching `adapter`...`for` but unlike class extension.
 
@@ -1853,7 +1853,7 @@ methods in the interface.
 
 ```
 adapter DrawInWindow for Window {
-  extends DrawingContext = Window;
+  impl DrawingContext = Window;
 }
 fn Render(w: Window) {
   let d: DrawInWindow = w as DrawInWindow;
