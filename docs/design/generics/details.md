@@ -91,6 +91,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Termination rule](#termination-rule)
         -   [Comparison to Rust](#comparison-to-rust)
 -   [Interface defaults](#interface-defaults)
+    -   [`final` members](#final-members)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -4248,8 +4249,43 @@ external impl [T:! TotalOrder] T as PartialOrder {
 **Comparison with other languages:** Rust supports specifying defaults for
 [methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
 [interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
+and
 [associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
-and has found them valuable.
+Rust has found them valuable.
+
+### `final` members
+
+As an alternative to providing a definition of an interface member as a default,
+members marked with the `final` keyword will not allow that definition to be
+overridden in impls.
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  final fn TotalGreater[me: Self](right: Self) -> Bool {
+    return right.TotalLess(me);
+  }
+}
+
+class String {
+  impl as TotalOrder {
+    fn TotalLess[me: Self](right: Self) -> Bool { ... }
+    // ❌ Illegal: May not provide definition of final
+    //             method `TotalGreater`.
+    fn TotalGreater[me: Self](right: Self) -> Bool { ... }
+  }
+}
+
+interface Add(T:! Type = Self) {
+  // `AddWith` *always* equals `T`
+  final let AddWith:! Type = T;
+  // Has a *default* of `Self`
+  let Result:! Type = Self;
+  fn DoAdd[me: Self](right: AddWith) -> Result;
+}
+```
+
+Note that this applies to associated entities, not interface parameters.
 
 ## Future work
 
