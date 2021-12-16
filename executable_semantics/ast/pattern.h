@@ -101,7 +101,7 @@ class BindingPattern : public Pattern {
  public:
   using ImplementsCarbonNamedEntity = void;
 
-  BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
+  BindingPattern(SourceLocation source_loc, std::string name,
                  Nonnull<Pattern*> type)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
@@ -111,8 +111,10 @@ class BindingPattern : public Pattern {
     return InheritsFromBindingPattern(node->kind());
   }
 
-  // The name this pattern binds, if any.
-  auto name() const -> const std::optional<std::string>& { return name_; }
+  // The name this pattern binds, if any. A value of "_" indicates that this
+  // BindingPattern does not bind a name, which in turn means it should not be
+  // used as a NamedEntity.
+  auto name() const -> const std::string& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.
   auto type() const -> const Pattern& { return *type_; }
@@ -121,7 +123,7 @@ class BindingPattern : public Pattern {
   auto value_category() const -> ValueCategory { return ValueCategory::Var; }
 
  private:
-  std::optional<std::string> name_;
+  std::string name_;
   Nonnull<Pattern*> type_;
 };
 
