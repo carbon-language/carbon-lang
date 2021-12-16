@@ -4405,4 +4405,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 -   [#931: Generic impls access (details 4)](https://github.com/carbon-language/carbon-lang/pull/931)
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
--   [#990: Generics details 8: interface defaults](https://github.com/carbon-language/carbon-lang/pull/990)
+-   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
