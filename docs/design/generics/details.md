@@ -596,9 +596,11 @@ implementing `Vector`.
 For name lookup purposes, an archetype is considered to have
 [implemented its constraint internally](terminology.md#internal-impl). The only
 oddity is that the archetype may have different names for members than specific
-types `T`. This is already can be true of supertypes in C++, for example members
-in a derived class can hide members in the base class with the same name, though
-it is not that common for it to come up in practice.
+types `T` that implement interfaces from the constraint
+[externally](terminology.md#external-impl). This difference in names can also
+occur for supertypes in C++, for example members in a derived class can hide
+members in the base class with the same name, though it is not that common for
+it to come up in practice.
 
 The behavior of calling `AddAndScaleGeneric` with a value of a specific type
 like `Point` is to set `T` to `Point` after all the names have been qualified.
@@ -650,7 +652,8 @@ fn DoubleThreeTimes[U:! Vector](a: U) -> U {
 
 the return type of `AddAndScaleGeneric` is found by substituting in the `U` from
 `DoubleThreeTimes` for the `T` from `AddAndScaleGeneric` in the return type
-expression of `AddAndScaleGeneric`.
+expression of `AddAndScaleGeneric`. `U` is an archetype of `Vector`, and so
+implements `Vector` internally and therefore has a `Scale` method.
 
 If `U` had a more specific type, the return value would have the additional
 capabilities of `U`. For example, given a parameterized type `GeneralPoint`
@@ -659,17 +662,34 @@ implementing `Vector`, and a function that takes a `GeneralPoint` and calls
 
 ```
 class GeneralPoint(C:! Numeric) {
-  impl Vector { ... }
+  external impl as Vector { ... }
   fn Get[me: Self](i: i32) -> C;
 }
 
 fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
-  return AddAndScaleGeneric(p, p, 2.0).Get(0);
+  // `AddAndScaleGeneric` returns `T` and in these calls `T` is
+  // deduced to be `GeneralPoint(C)`.
+
+  // ❌ Illegal: AddAndScaleGeneric(p, p, 2.0).Scale(2.0);
+  //    `GeneralPoint(C)` implements `Vector` externally, and so
+  //    does not have a `Scale` method.
+
+  // ✅ Allowed: `GeneralPoint(C)` has a `Get` method
+  AddAndScaleGeneric(p, p, 2.0).Get(0);
+
+  // ✅ Allowed: `GeneralPoint(C)` implements `Vector`
+  //    externally, and so has a `Vector.Scale` method.
+  //    `Vector.Scale` returns `Self` which is `GeneralPoint(C)`
+  //    again, and so has a `Get` method.
+  return AddAndScaleGeneric(p, p, 2.0).(Vector.Scale)(2.0).Get(0);
 }
 ```
 
-the result of the call to `AddAndScaleGeneric` has type `GeneralPoint(C)` and so
-has a `Get` method.
+The result of the call to `AddAndScaleGeneric` from `CallWithGeneralPoint` has
+type `GeneralPoint(C)` and so has a `Get` method and a `Vector.Scale` method.
+But, in contrast to how `DoubleThreeTimes` works, since `Vector` is implemented
+externally the return value in this case does not directly have a `Scale`
+method.
 
 ### Implementation model
 
