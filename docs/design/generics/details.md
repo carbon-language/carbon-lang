@@ -1550,7 +1550,7 @@ type may be accessed either by a cast:
 adapter SongByTitle for Song {
   impl as Comparable {
     fn Less[me: Self](rhs: Self) -> bool {
-      return (this as Song).Title() < (rhs as Song).Title();
+      return (me as Song).Title() < (rhs as Song).Title();
     }
   }
 }
