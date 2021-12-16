@@ -4207,7 +4207,7 @@ is, so `Add()` is equivalent to the constraint:
 ```
 // Equivalent to Add()
 constraint AddDefault {
-  extends Add(Self) where .Result == Self;
+  extends Add(Self);
 }
 ```
 
@@ -4245,6 +4245,9 @@ external impl [T:! TotalOrder] T as PartialOrder {
   }
 }
 ```
+
+Note that by the [orphan rule](#orphan-rule), this blanket impl must be defined
+in the same library as `PartialOrder`.
 
 **Comparison with other languages:** Rust supports specifying defaults for
 [methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
