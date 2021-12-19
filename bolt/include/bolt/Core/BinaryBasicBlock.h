@@ -691,6 +691,11 @@ public:
     return Instructions.erase(II);
   }
 
+  /// Erase non-pseudo instruction at a given \p Index
+  void eraseInstructionAtIndex(unsigned Index) {
+    eraseInstruction(Instructions.begin() + Index);
+  }
+
   /// Erase instructions in the specified range.
   template <typename ItrType>
   void eraseInstructions(ItrType Begin, ItrType End) {

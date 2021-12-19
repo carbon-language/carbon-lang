@@ -281,16 +281,24 @@ public:
   void runOnFunctions(BinaryContext &BC) override;
 };
 
+/// Convert instructions to the form with the minimum operand width.
+class ShortenInstructions : public BinaryFunctionPass {
+  uint64_t shortenInstructions(BinaryFunction &Function);
+
+public:
+  explicit ShortenInstructions(const cl::opt<bool> &PrintPass)
+      : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override { return "shorten-instructions"; }
+
+  void runOnFunctions(BinaryContext &BC) override;
+};
+
 /// Perform simple peephole optimizations.
 class Peepholes : public BinaryFunctionPass {
-  uint64_t NumShortened{0};
   uint64_t NumDoubleJumps{0};
   uint64_t TailCallTraps{0};
   uint64_t NumUselessCondBranches{0};
-
-  /// Attempt to use the minimum operand width for arithmetic, branch and
-  /// move instructions.
-  uint64_t shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
 
   /// Add trap instructions immediately after indirect tail calls to prevent
   /// the processor from decoding instructions immediate following the
@@ -429,6 +437,20 @@ public:
 
   const char *getName() const override { return "specialize-memcpy"; }
 
+  void runOnFunctions(BinaryContext &BC) override;
+};
+
+/// Pass to remove nops in code
+class RemoveNops : public BinaryFunctionPass {
+  void runOnFunction(BinaryFunction &Function);
+
+public:
+  explicit RemoveNops(const cl::opt<bool> &PrintPass)
+      : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override { return "remove-nops"; }
+
+  /// Pass entry point
   void runOnFunctions(BinaryContext &BC) override;
 };
 

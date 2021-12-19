@@ -732,7 +732,22 @@ bool DataReader::recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
       return true;
   }
 
-  if (To != ToBB->getOffset()) {
+  bool OffsetMatches = !!(To == ToBB->getOffset());
+  if (!OffsetMatches) {
+    // Skip the nops to support old .fdata
+    uint64_t Offset = ToBB->getOffset();
+    for (MCInst &Instr : *ToBB) {
+      if (!BC.MIB->isNoop(Instr))
+        break;
+
+      Offset += BC.MIB->getAnnotationWithDefault<uint32_t>(Instr, "Size");
+    }
+
+    if (To == Offset)
+      OffsetMatches = true;
+  }
+
+  if (!OffsetMatches) {
     // "To" could be referring to nop instructions in between 2 basic blocks.
     // While building the CFG we make sure these nops are attributed to the
     // previous basic block, thus we check if the destination belongs to the

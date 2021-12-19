@@ -1401,6 +1401,8 @@ public:
            layout_front()->isCold() != layout_back()->isCold();
   }
 
+  bool shouldPreserveNops() const { return PreserveNops; }
+
   /// Return true if the function has exception handling tables.
   bool hasEHRanges() const { return HasEHRanges; }
 

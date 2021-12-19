@@ -408,6 +408,10 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
 
   Manager.registerPass(std::make_unique<ValidateInternalCalls>(NeverPrint));
 
+  Manager.registerPass(std::make_unique<ShortenInstructions>(NeverPrint));
+
+  Manager.registerPass(std::make_unique<RemoveNops>(NeverPrint));
+
   Manager.registerPass(std::make_unique<NormalizeCFG>(PrintNormalized));
 
   Manager.registerPass(std::make_unique<StripRepRet>(NeverPrint),
