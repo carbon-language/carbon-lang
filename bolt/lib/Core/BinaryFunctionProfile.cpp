@@ -100,6 +100,28 @@ void BinaryFunction::postProcessProfile() {
     }
   }
 
+  // Fix for old profiles.
+  for (BinaryBasicBlock *BB : BasicBlocks) {
+    if (BB->size() != 1 || BB->succ_size() != 1)
+      continue;
+
+    if (BB->getKnownExecutionCount() == 0)
+      continue;
+
+    MCInst *Instr = BB->getFirstNonPseudoInstr();
+    assert(Instr && "expected non-pseudo instr");
+    if (!BC.MIB->hasAnnotation(*Instr, "NOP"))
+      continue;
+
+    BinaryBasicBlock *FTSuccessor = BB->getSuccessor();
+    BinaryBasicBlock::BinaryBranchInfo &BI = BB->getBranchInfo(*FTSuccessor);
+    if (!BI.Count) {
+      BI.Count = BB->getKnownExecutionCount();
+      FTSuccessor->setExecutionCount(FTSuccessor->getKnownExecutionCount() +
+                                     BI.Count);
+    }
+  }
+
   if (opts::FixBlockCounts) {
     for (BinaryBasicBlock *BB : BasicBlocks) {
       // Make sure that execution count of a block is at least the branch count

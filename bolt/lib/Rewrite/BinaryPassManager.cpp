@@ -147,7 +147,7 @@ PrintICP("print-icp",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintNormalized("print-normalized",
   cl::desc("print functions after CFG is normalized"),
   cl::ZeroOrMore,

@@ -43,6 +43,7 @@ extern cl::opt<bool> NeverPrint;
 extern cl::opt<std::string> OutputFilename;
 extern cl::opt<bool> PrintAfterBranchFixup;
 extern cl::opt<bool> PrintFinalized;
+extern cl::opt<bool> PrintNormalized;
 extern cl::opt<bool> PrintReordered;
 extern cl::opt<bool> PrintSections;
 extern cl::opt<bool> PrintDisasm;
@@ -352,6 +353,13 @@ void MachORewriteInstance::runOptimizationPasses() {
     Manager.registerPass(std::make_unique<PatchEntries>());
     Manager.registerPass(std::make_unique<Instrumentation>(opts::NeverPrint));
   }
+
+  Manager.registerPass(std::make_unique<ShortenInstructions>(opts::NeverPrint));
+
+  Manager.registerPass(std::make_unique<RemoveNops>(opts::NeverPrint));
+
+  Manager.registerPass(std::make_unique<NormalizeCFG>(opts::PrintNormalized));
+
   Manager.registerPass(
       std::make_unique<ReorderBasicBlocks>(opts::PrintReordered));
   Manager.registerPass(

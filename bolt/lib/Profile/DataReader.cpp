@@ -720,10 +720,9 @@ bool DataReader::recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
     return true;
   }
 
-  if (FromBB->succ_size() == 0) {
-    // Return from a tail call.
+  // Return from a tail call.
+  if (FromBB->succ_size() == 0)
     return true;
-  }
 
   // Very rarely we will see ignored branches. Do a linear check.
   for (std::pair<uint32_t, uint32_t> &Branch : BF.IgnoredBranches) {
@@ -817,10 +816,21 @@ bool DataReader::recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
     if (collectedInBoltedBinary() && FromBB == ToBB)
       return true;
 
-    LLVM_DEBUG(dbgs() << "invalid branch in " << BF << '\n'
-                      << Twine::utohexstr(From) << " -> "
-                      << Twine::utohexstr(To) << '\n');
-    return false;
+    BinaryBasicBlock *FTSuccessor = FromBB->getConditionalSuccessor(false);
+    if (FTSuccessor && FTSuccessor->succ_size() == 1 &&
+        FTSuccessor->getSuccessor(ToBB->getLabel())) {
+      BinaryBasicBlock::BinaryBranchInfo &FTBI =
+          FTSuccessor->getBranchInfo(*ToBB);
+      FTBI.Count += Count;
+      if (Count)
+        FTBI.MispredictedCount += Mispreds;
+      ToBB = FTSuccessor;
+    } else {
+      LLVM_DEBUG(dbgs() << "invalid branch in " << BF << '\n'
+                        << Twine::utohexstr(From) << " -> "
+                        << Twine::utohexstr(To) << '\n');
+      return false;
+    }
   }
 
   BinaryBasicBlock::BinaryBranchInfo &BI = FromBB->getBranchInfo(*ToBB);

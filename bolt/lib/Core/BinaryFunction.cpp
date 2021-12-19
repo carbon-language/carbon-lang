@@ -1980,6 +1980,7 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
   BinaryBasicBlock *InsertBB = nullptr;
   BinaryBasicBlock *PrevBB = nullptr;
   bool IsLastInstrNop = false;
+  // Offset of the last non-nop instruction.
   uint64_t LastInstrOffset = 0;
 
   auto addCFIPlaceholders = [this](uint64_t CFIOffset,
@@ -1992,13 +1993,22 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
   };
 
   // For profiling purposes we need to save the offset of the last instruction
-  // in the basic block. But in certain cases we don't if the instruction was
-  // the last one, and we have to go back and update its offset.
+  // in the basic block.
+  // NOTE: nops always have an Offset annotation. Annotate the last non-nop as
+  //       older profiles ignored nops.
   auto updateOffset = [&](uint64_t Offset) {
     assert(PrevBB && PrevBB != InsertBB && "invalid previous block");
-    MCInst *PrevInstr = PrevBB->getLastNonPseudoInstr();
-    if (PrevInstr && !MIB->hasAnnotation(*PrevInstr, "Offset"))
-      MIB->addAnnotation(*PrevInstr, "Offset", static_cast<uint32_t>(Offset),
+    MCInst *LastNonNop = nullptr;
+    for (BinaryBasicBlock::reverse_iterator RII = PrevBB->getLastNonPseudo(),
+                                            E = PrevBB->rend();
+         RII != E; ++RII) {
+      if (!BC.MIB->isPseudo(*RII) && !BC.MIB->isNoop(*RII)) {
+        LastNonNop = &*RII;
+        break;
+      }
+    }
+    if (LastNonNop && !MIB->hasAnnotation(*LastNonNop, "Offset"))
+      MIB->addAnnotation(*LastNonNop, "Offset", static_cast<uint32_t>(Offset),
                          AllocatorId);
   };
 
@@ -2009,7 +2019,7 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     auto LI = Labels.find(Offset);
     if (LI != Labels.end()) {
       // Always create new BB at branch destination.
-      PrevBB = InsertBB;
+      PrevBB = InsertBB ? InsertBB : PrevBB;
       InsertBB = addBasicBlock(LI->first, LI->second,
                                opts::PreserveBlocksAlignment && IsLastInstrNop);
       if (PrevBB)
@@ -2020,14 +2030,16 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     bool IsSDTMarker =
         MIB->isNoop(Instr) && BC.SDTMarkers.count(InstrInputAddr);
     bool IsLKMarker = BC.LKMarkers.count(InstrInputAddr);
-    if (IsSDTMarker || IsLKMarker) {
-      HasSDTMarker = true;
-      LLVM_DEBUG(dbgs() << "SDTMarker or LKMarker detected in the input at : "
-                        << utohexstr(InstrInputAddr) << "\n");
-      if (!MIB->hasAnnotation(Instr, "Offset")) {
+    // Mark all nops with Offset for profile tracking purposes.
+    if (MIB->isNoop(Instr) || IsLKMarker) {
+      if (!MIB->hasAnnotation(Instr, "Offset"))
         MIB->addAnnotation(Instr, "Offset", static_cast<uint32_t>(Offset),
                            AllocatorId);
-      }
+      if (IsSDTMarker || IsLKMarker)
+        HasSDTMarker = true;
+      else
+        // Annotate ordinary nops, so we can safely delete them if required.
+        MIB->addAnnotation(Instr, "NOP", static_cast<uint32_t>(1), AllocatorId);
     }
 
     if (!InsertBB) {
@@ -2060,7 +2072,8 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
 
     const bool IsBlockEnd = MIB->isTerminator(Instr);
     IsLastInstrNop = MIB->isNoop(Instr);
-    LastInstrOffset = Offset;
+    if (!IsLastInstrNop)
+      LastInstrOffset = Offset;
     InsertBB->addInstruction(std::move(Instr));
 
     // Add associated CFI instrs. We always add the CFI instruction that is
@@ -4359,6 +4372,13 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
       if (Offset == BC.MIB->getAnnotationWithDefault<uint32_t>(Inst, "Offset",
                                                                InvalidOffset))
         return &Inst;
+    }
+
+    if (MCInst *LastInstr = BB->getLastNonPseudoInstr()) {
+      const uint32_t Size =
+          BC.MIB->getAnnotationWithDefault<uint32_t>(*LastInstr, "Size");
+      if (BB->getEndOffset() - Offset == Size)
+        return LastInstr;
     }
 
     return nullptr;

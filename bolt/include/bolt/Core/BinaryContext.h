@@ -1091,6 +1091,9 @@ public:
   uint64_t
   computeInstructionSize(const MCInst &Inst,
                          const MCCodeEmitter *Emitter = nullptr) const {
+    if (auto Size = MIB->getAnnotationWithDefault<uint32_t>(Inst, "Size"))
+      return Size;
+
     if (!Emitter)
       Emitter = this->MCE.get();
     SmallString<256> Code;

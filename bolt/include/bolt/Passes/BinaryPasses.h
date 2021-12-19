@@ -105,7 +105,6 @@ public:
 /// Detect and eliminate unreachable basic blocks. We could have those
 /// filled with nops and they are used for alignment.
 class EliminateUnreachableBlocks : public BinaryFunctionPass {
-  std::shared_timed_mutex ModifiedMtx;
   std::unordered_set<const BinaryFunction *> Modified;
   std::atomic<unsigned> DeletedBlocks{0};
   std::atomic<uint64_t> DeletedBytes{0};
