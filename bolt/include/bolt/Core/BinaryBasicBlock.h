@@ -483,9 +483,8 @@ public:
 
   /// Add a range of instructions to the end of this basic block.
   template <typename Itr> void addInstructions(Itr Begin, Itr End) {
-    while (Begin != End) {
+    while (Begin != End)
       addInstruction(*Begin++);
-    }
   }
 
   /// Add a range of instructions to the end of this basic block.
@@ -582,18 +581,16 @@ public:
 
   /// Add a range of successors.
   template <typename Itr> void addSuccessors(Itr Begin, Itr End) {
-    while (Begin != End) {
+    while (Begin != End)
       addSuccessor(*Begin++);
-    }
   }
 
   /// Add a range of successors with branch info.
   template <typename Itr, typename BrItr>
   void addSuccessors(Itr Begin, Itr End, BrItr BrBegin, BrItr BrEnd) {
     assert(std::distance(Begin, End) == std::distance(BrBegin, BrEnd));
-    while (Begin != End) {
+    while (Begin != End)
       addSuccessor(*Begin++, *BrBegin++);
-    }
   }
 
   /// Replace Succ with NewSucc.  This routine is helpful for preserving
@@ -701,9 +698,8 @@ public:
   /// Erase instructions in the specified range.
   template <typename ItrType>
   void eraseInstructions(ItrType Begin, ItrType End) {
-    while (End > Begin) {
+    while (End > Begin)
       eraseInstruction(findInstruction(*--End));
-    }
   }
 
   /// Erase all instructions.
@@ -855,9 +851,8 @@ public:
 
   /// Printer required for printing dominator trees.
   void printAsOperand(raw_ostream &OS, bool PrintType = true) {
-    if (PrintType) {
+    if (PrintType)
       OS << "basic block ";
-    }
     OS << getName();
   }
 
@@ -920,9 +915,8 @@ private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
   template <typename Itr> void adjustNumPseudos(Itr Begin, Itr End, int Sign) {
-    while (Begin != End) {
+    while (Begin != End)
       adjustNumPseudos(*Begin++, Sign);
-    }
   }
 
   /// Adds predecessor to the BB. Most likely you don't need to call this.

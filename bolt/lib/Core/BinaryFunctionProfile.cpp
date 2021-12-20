@@ -81,9 +81,8 @@ void BinaryFunction::postProcessProfile() {
 
   // If we have at least some branch data for the function indicate that it
   // was executed.
-  if (opts::FixFuncCounts && ExecutionCount == 0) {
+  if (opts::FixFuncCounts && ExecutionCount == 0)
     ExecutionCount = 1;
-  }
 
   // Compute preliminary execution count for each basic block.
   for (BinaryBasicBlock *BB : BasicBlocks) {
@@ -146,9 +145,8 @@ void BinaryFunction::postProcessProfile() {
           continue;
 
         auto CountAnnt = BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "Count");
-        if (CountAnnt) {
+        if (CountAnnt)
           BB->setExecutionCount(std::max(BB->getExecutionCount(), *CountAnnt));
-        }
       }
     }
   }
@@ -208,9 +206,8 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
     return;
 
   // Update function execution count.
-  if (getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE) {
+  if (getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE)
     BF.setExecutionCount(BF.getKnownExecutionCount() + getExecutionCount());
-  }
 
   // Since we are merging a valid profile, the new profile should be valid too.
   // It has either already been valid, or it has been cleaned up.
@@ -296,10 +293,9 @@ void BinaryFunction::inferFallThroughCounts() {
     // Calculate frequency of outgoing branches from this node according to
     // LBR data.
     uint64_t ReportedBranches = 0;
-    for (const BinaryBasicBlock::BinaryBranchInfo &SuccBI : BB->branch_info()) {
+    for (const BinaryBasicBlock::BinaryBranchInfo &SuccBI : BB->branch_info())
       if (SuccBI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         ReportedBranches += SuccBI.Count;
-    }
 
     // Get taken count of conditional tail call if the block ends with one.
     uint64_t CTCTakenCount = 0;
@@ -314,9 +310,8 @@ void BinaryFunction::inferFallThroughCounts() {
     // for a landing pad to be associated with more than one basic blocks,
     // we may overestimate the frequency of throws for such blocks.
     uint64_t ReportedThrows = 0;
-    for (const BinaryBasicBlock *LP : BB->landing_pads()) {
+    for (const BinaryBasicBlock *LP : BB->landing_pads())
       ReportedThrows += LP->getExecutionCount();
-    }
 
     const uint64_t TotalReportedJumps =
         ReportedBranches + CTCTakenCount + ReportedThrows;

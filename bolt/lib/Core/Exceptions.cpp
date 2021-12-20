@@ -229,9 +229,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         const uint64_t TTEntryAddress = TTEntry + LSDASectionAddress;
         uint64_t TypeAddress =
             *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
-        if ((TTypeEncoding & DW_EH_PE_pcrel) && TypeAddress == TTEntryAddress) {
+        if ((TTypeEncoding & DW_EH_PE_pcrel) && TypeAddress == TTEntryAddress)
           TypeAddress = 0;
-        }
         if (TypeAddress == 0) {
           OS << "<all>";
           return;
@@ -241,11 +240,10 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           assert(PointerOrErr && "failed to decode indirect address");
           TypeAddress = *PointerOrErr;
         }
-        if (BinaryData *TypeSymBD = BC.getBinaryDataAtAddress(TypeAddress)) {
+        if (BinaryData *TypeSymBD = BC.getBinaryDataAtAddress(TypeAddress))
           OS << TypeSymBD->getName();
-        } else {
+        else
           OS << "0x" << Twine::utohexstr(TypeAddress);
-        }
       };
       if (opts::PrintExceptions)
         outs() << "    actions: ";
@@ -610,9 +608,8 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
       raw_string_ostream OS(Str);
       // Manually encode this instruction using CFI escape
       OS << Opcode;
-      if (Opcode != DW_CFA_def_cfa_expression) {
+      if (Opcode != DW_CFA_def_cfa_expression)
         encodeULEB128(Instr.Ops[0], OS);
-      }
       encodeULEB128(ExprBytes.size(), OS);
       OS << ExprBytes;
       Function.addCFIInstruction(
@@ -620,9 +617,8 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
       break;
     }
     case DW_CFA_MIPS_advance_loc8:
-      if (opts::Verbosity >= 1) {
+      if (opts::Verbosity >= 1)
         errs() << "BOLT-WARNING: DW_CFA_MIPS_advance_loc unimplemented\n";
-      }
       return false;
     case DW_CFA_GNU_window_save:
     case DW_CFA_lo_user:
@@ -643,15 +639,13 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
     return true;
   };
 
-  for (const CFIProgram::Instruction &Instr : CurFDE.getLinkedCIE()->cfis()) {
+  for (const CFIProgram::Instruction &Instr : CurFDE.getLinkedCIE()->cfis())
     if (!decodeFrameInstruction(Instr))
       return false;
-  }
 
-  for (const CFIProgram::Instruction &Instr : CurFDE.cfis()) {
+  for (const CFIProgram::Instruction &Instr : CurFDE.cfis())
     if (!decodeFrameInstruction(Instr))
       return false;
-  }
 
   return true;
 }
@@ -771,11 +765,10 @@ Error EHFrameParser::parseCIE(uint64_t StartOffset) {
   // Skip data alignment
   Data.getSLEB128(&Offset);
   // Skip return address register
-  if (Version == 1) {
+  if (Version == 1)
     Offset += 1;
-  } else {
+  else
     Data.getULEB128(&Offset);
-  }
 
   uint32_t FDEPointerEncoding = DW_EH_PE_absptr;
   uint32_t LSDAPointerEncoding = DW_EH_PE_omit;

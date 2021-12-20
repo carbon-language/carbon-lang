@@ -101,15 +101,12 @@ BinaryContext::BinaryContext(std::unique_ptr<MCContext> Ctx,
 }
 
 BinaryContext::~BinaryContext() {
-  for (BinarySection *Section : Sections) {
+  for (BinarySection *Section : Sections)
     delete Section;
-  }
-  for (BinaryFunction *InjectedFunction : InjectedBinaryFunctions) {
+  for (BinaryFunction *InjectedFunction : InjectedBinaryFunctions)
     delete InjectedFunction;
-  }
-  for (std::pair<const uint64_t, JumpTable *> JTI : JumpTables) {
+  for (std::pair<const uint64_t, JumpTable *> JTI : JumpTables)
     delete JTI.second;
-  }
   clearBinaryData();
 }
 
@@ -362,9 +359,8 @@ iterator_range<BinaryContext::binary_data_iterator>
 BinaryContext::getSubBinaryData(BinaryData *BD) {
   auto Start = std::next(BinaryDataMap.find(BD->getAddress()));
   auto End = Start;
-  while (End != BinaryDataMap.end() && BD->isAncestorOf(End->second)) {
+  while (End != BinaryDataMap.end() && BD->isAncestorOf(End->second))
     ++End;
-  }
   return make_range(Start, End);
 }
 
@@ -426,9 +422,8 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
     }
   }
 
-  if (BinaryData *BD = getBinaryDataContainingAddress(Address)) {
+  if (BinaryData *BD = getBinaryDataContainingAddress(Address))
     return std::make_pair(BD->getSymbol(), Address - BD->getAddress());
-  }
 
   // TODO: use DWARF info to get size/alignment here?
   MCSymbol *TargetSymbol = getOrCreateGlobalSymbol(Address, "DATAat");
@@ -533,9 +528,8 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
            "data object cannot cross a section boundary");
     UpperBound = JumpTableBD->getEndAddress();
   }
-  if (NextJTAddress) {
+  if (NextJTAddress)
     UpperBound = std::min(NextJTAddress, UpperBound);
-  }
 
   LLVM_DEBUG(dbgs() << "BOLT-DEBUG: analyzeJumpTable in " << BF.getPrintName()
                     << '\n');
@@ -640,9 +634,8 @@ void BinaryContext::populateJumpTables() {
 
     uint64_t NextJTAddress = 0;
     auto NextJTI = std::next(JTI);
-    if (NextJTI != JTE) {
+    if (NextJTI != JTE)
       NextJTAddress = NextJTI->second->getAddress();
-    }
 
     const bool Success = analyzeJumpTable(JT->getAddress(), JT->Type, BF,
                                           NextJTAddress, &JT->OffsetEntries);
@@ -830,9 +823,8 @@ std::string BinaryContext::generateJumpTableName(const BinaryFunction &BF,
   if (const JumpTable *JT = BF.getJumpTableContainingAddress(Address)) {
     Offset = Address - JT->getAddress();
     auto Itr = JT->Labels.find(Offset);
-    if (Itr != JT->Labels.end()) {
+    if (Itr != JT->Labels.end())
       return std::string(Itr->second->getName());
-    }
     Id = JumpTableIds.at(JT->getAddress());
   } else {
     Id = JumpTableIds[Address] = BF.JumpTables.size();
@@ -979,9 +971,8 @@ BinaryContext::getBinaryDataContainingAddressImpl(uint64_t Address) const {
   auto End = BinaryDataMap.end();
   if ((NI != End && Address == NI->first) ||
       ((NI != BinaryDataMap.begin()) && (NI-- != BinaryDataMap.begin()))) {
-    if (NI->second->containsAddress(Address)) {
+    if (NI->second->containsAddress(Address))
       return NI->second;
-    }
 
     // If this is a sub-symbol, see if a parent data contains the address.
     const BinaryData *BD = NI->second->getParent();
@@ -1268,9 +1259,8 @@ void BinaryContext::fixBinaryDataHoles() {
       ++Itr;
     }
 
-    if (EndAddress < Section.getEndAddress()) {
+    if (EndAddress < Section.getEndAddress())
       Holes.emplace_back(EndAddress, Section.getEndAddress() - EndAddress);
-    }
 
     // If there is already a symbol at the start of the hole, grow that symbol
     // to cover the rest.  Otherwise, create a new symbol to cover the hole.
@@ -1701,9 +1691,8 @@ ErrorOr<BinarySection &> BinaryContext::getSectionForAddress(uint64_t Address) {
 
 ErrorOr<StringRef>
 BinaryContext::getSectionNameForAddress(uint64_t Address) const {
-  if (ErrorOr<const BinarySection &> Section = getSectionForAddress(Address)) {
+  if (ErrorOr<const BinarySection &> Section = getSectionForAddress(Address))
     return Section->getName();
-  }
   return std::make_error_code(std::errc::bad_address);
 }
 
@@ -1789,9 +1778,8 @@ bool BinaryContext::deregisterSection(BinarySection &Section) {
 }
 
 void BinaryContext::printSections(raw_ostream &OS) const {
-  for (BinarySection *const &Section : Sections) {
+  for (BinarySection *const &Section : Sections)
     OS << "BOLT-INFO: " << *Section << "\n";
-  }
 }
 
 BinarySection &BinaryContext::absoluteSection() {
@@ -2077,9 +2065,8 @@ BinaryFunction *BinaryContext::getBinaryFunctionAtAddress(uint64_t Address) {
   // function was folded, this will get us the original folded function if it
   // wasn't removed from the list, e.g. in non-relocation mode.
   auto BFI = BinaryFunctions.find(Address);
-  if (BFI != BinaryFunctions.end()) {
+  if (BFI != BinaryFunctions.end())
     return &BFI->second;
-  }
 
   // We might have folded the function matching the object at the given
   // address. In such case, we look for a function matching the symbol

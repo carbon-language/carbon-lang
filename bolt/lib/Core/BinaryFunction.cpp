@@ -301,9 +301,8 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
 void BinaryFunction::markUnreachableBlocks() {
   std::stack<BinaryBasicBlock *> Stack;
 
-  for (BinaryBasicBlock *BB : layout()) {
+  for (BinaryBasicBlock *BB : layout())
     BB->markValid(false);
-  }
 
   // Add all entries and landing pads as roots.
   for (BinaryBasicBlock *BB : BasicBlocks) {
@@ -544,9 +543,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       else
         OS << "<unknown>\n";
     }
-    if (BB->getCFIState() >= 0) {
+    if (BB->getCFIState() >= 0)
       OS << "  CFI State : " << BB->getCFIState() << '\n';
-    }
     if (opts::EnableBAT) {
       OS << "  Input offset: " << Twine::utohexstr(BB->getInputOffset())
          << "\n";
@@ -642,9 +640,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   }
 
   // Print all jump tables.
-  for (const std::pair<const uint64_t, JumpTable *> &JTI : JumpTables) {
+  for (const std::pair<const uint64_t, JumpTable *> &JTI : JumpTables)
     JTI.second->print(OS);
-  }
 
   OS << "DWARF CFI Instructions:\n";
   if (OffsetToCFI.size()) {
@@ -970,9 +967,8 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
 
   // For AArch64, check if this address is part of a constant island.
   if (BC.isAArch64()) {
-    if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address)) {
+    if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address))
       return IslandSym;
-    }
   }
 
   MCSymbol *Label = BC.Ctx->createNamedTempSymbol();
@@ -986,9 +982,8 @@ ErrorOr<ArrayRef<uint8_t>> BinaryFunction::getData() const {
   assert(Section.containsRange(getAddress(), getMaxSize()) &&
          "wrong section for function");
 
-  if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
+  if (!Section.isText() || Section.isVirtual() || !Section.getSize())
     return std::make_error_code(std::errc::bad_address);
-  }
 
   StringRef SectionContents = Section.getContents();
 
@@ -1009,9 +1004,8 @@ size_t BinaryFunction::getSizeOfDataInCodeAt(uint64_t Offset) const {
     return 0;
 
   auto Iter = Islands->CodeOffsets.upper_bound(Offset);
-  if (Iter != Islands->CodeOffsets.end()) {
+  if (Iter != Islands->CodeOffsets.end())
     return *Iter - Offset;
-  }
   return getSize() - Offset;
 }
 
@@ -1023,11 +1017,9 @@ bool BinaryFunction::isZeroPaddingAt(uint64_t Offset) const {
     if (Iter != Islands->DataOffsets.end())
       EndOfCode = *Iter;
   }
-  for (uint64_t I = Offset; I < EndOfCode; ++I) {
-    if (FunctionData[I] != 0) {
+  for (uint64_t I = Offset; I < EndOfCode; ++I)
+    if (FunctionData[I] != 0)
       return false;
-    }
-  }
 
   return true;
 }
@@ -1388,9 +1380,8 @@ bool BinaryFunction::disassemble() {
         BC.MIB->replaceBranchTarget(Instruction, TargetSymbol, &*Ctx);
 
         // Mark CTC.
-        if (IsCondBranch && IsCall) {
+        if (IsCondBranch && IsCall)
           MIB->setConditionalTailCall(Instruction, TargetAddress);
-        }
       } else {
         // Could not evaluate branch. Should be an indirect call or an
         // indirect branch. Bail out on the latter case.
@@ -1403,8 +1394,9 @@ bool BinaryFunction::disassemble() {
         if (BC.isAArch64())
           handleAArch64IndirectCall(Instruction, Offset);
       }
-    } else if (MIB->hasPCRelOperand(Instruction) && !UsedReloc)
+    } else if (MIB->hasPCRelOperand(Instruction) && !UsedReloc) {
       handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size);
+    }
 
 add_instruction:
     if (getDWARFLineTable()) {
@@ -1413,9 +1405,8 @@ add_instruction:
     }
 
     // Record offset of the instruction for profile matching.
-    if (BC.keepOffsetForInstruction(Instruction)) {
+    if (BC.keepOffsetForInstruction(Instruction))
       MIB->addAnnotation(Instruction, "Offset", static_cast<uint32_t>(Offset));
-    }
 
     if (BC.MIB->isNoop(Instruction)) {
       // NOTE: disassembly loses the correct size information for noops.
@@ -1620,33 +1611,27 @@ bool BinaryFunction::scanExternalRefs() {
   }
 
   // Add relocations unless disassembly failed for this function.
-  if (!DisassemblyFailed) {
-    for (Relocation &Rel : FunctionRelocations) {
+  if (!DisassemblyFailed)
+    for (Relocation &Rel : FunctionRelocations)
       getOriginSection()->addPendingRelocation(Rel);
-    }
-  }
 
   // Inform BinaryContext that this function symbols will not be defined and
   // relocations should not be created against them.
   if (BC.HasRelocations) {
-    for (std::pair<const uint32_t, MCSymbol *> &LI : Labels) {
+    for (std::pair<const uint32_t, MCSymbol *> &LI : Labels)
       BC.UndefinedSymbols.insert(LI.second);
-    }
-    if (FunctionEndLabel) {
+    if (FunctionEndLabel)
       BC.UndefinedSymbols.insert(FunctionEndLabel);
-    }
   }
 
   clearList(Relocations);
   clearList(ExternallyReferencedOffsets);
 
-  if (Success && BC.HasRelocations) {
+  if (Success && BC.HasRelocations)
     HasExternalRefRelocations = true;
-  }
 
-  if (opts::Verbosity >= 1 && !Success) {
+  if (opts::Verbosity >= 1 && !Success)
     outs() << "BOLT-INFO: failed to scan refs for  " << *this << '\n';
-  }
 
   return Success;
 }
@@ -1671,22 +1656,19 @@ void BinaryFunction::postProcessEntryPoints() {
     // If we are at Offset 0 and there is no instruction associated with it,
     // this means this is an empty function. Just ignore. If we find an
     // instruction at this offset, this entry point is valid.
-    if (!Offset || getInstructionAtOffset(Offset)) {
+    if (!Offset || getInstructionAtOffset(Offset))
       continue;
-    }
 
     // On AArch64 there are legitimate reasons to have references past the
     // end of the function, e.g. jump tables.
-    if (BC.isAArch64() && Offset == getSize()) {
+    if (BC.isAArch64() && Offset == getSize())
       continue;
-    }
 
     errs() << "BOLT-WARNING: reference in the middle of instruction "
               "detected in function "
            << *this << " at offset 0x" << Twine::utohexstr(Offset) << '\n';
-    if (BC.HasRelocations) {
+    if (BC.HasRelocations)
       setIgnored();
-    }
     setSimple(false);
     return;
   }
@@ -1780,10 +1762,9 @@ bool BinaryFunction::postProcessIndirectBranches(
   auto addUnknownControlFlow = [&](BinaryBasicBlock &BB) {
     HasUnknownControlFlow = true;
     BB.removeAllSuccessors();
-    for (uint64_t PossibleDestination : ExternallyReferencedOffsets) {
+    for (uint64_t PossibleDestination : ExternallyReferencedOffsets)
       if (BinaryBasicBlock *SuccBB = getBasicBlockAtOffset(PossibleDestination))
         BB.addSuccessor(SuccBB);
-    }
   };
 
   uint64_t NumIndirectJumps = 0;
@@ -1898,9 +1879,8 @@ bool BinaryFunction::postProcessIndirectBranches(
     std::set<const MCSymbol *> JTLabels;
     LastIndirectJumpBB->removeAllSuccessors();
     const JumpTable *JT = getJumpTableContainingAddress(LastJT);
-    for (const MCSymbol *Label : JT->Entries) {
+    for (const MCSymbol *Label : JT->Entries)
       JTLabels.emplace(Label);
-    }
     for (const MCSymbol *Label : JTLabels) {
       BinaryBasicBlock *BB = getBasicBlockForLabel(Label);
       // Ignore __builtin_unreachable()
@@ -2131,9 +2111,9 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
   PrevBB = nullptr;
   bool IsPrevFT = false; // Is previous block a fall-through.
   for (BinaryBasicBlock *BB : BasicBlocks) {
-    if (IsPrevFT) {
+    if (IsPrevFT)
       PrevBB->addSuccessor(BB);
-    }
+
     if (BB->empty()) {
       IsPrevFT = true;
       PrevBB = BB;
@@ -2233,10 +2213,11 @@ void BinaryFunction::postProcessCFG() {
   // Remove "Offset" annotations, unless we need an address-translation table
   // later. This has no cost, since annotations are allocated by a bumpptr
   // allocator and won't be released anyway until late in the pipeline.
-  if (!requiresAddressTranslation() && !opts::Instrument)
+  if (!requiresAddressTranslation() && !opts::Instrument) {
     for (BinaryBasicBlock *BB : layout())
       for (MCInst &Inst : *BB)
         BC.MIB->removeAnnotation(Inst, "Offset");
+  }
 
   assert((!isSimple() || validateCFG()) &&
          "invalid CFG detected after post-processing");
@@ -2518,9 +2499,8 @@ public:
       auto Iter = FrameRestoreEquivalents.find(I);
       if (Iter == FrameRestoreEquivalents.end())
         continue;
-      for (int32_t RuleNumber : Iter->second) {
+      for (int32_t RuleNumber : Iter->second)
         update(FDE[RuleNumber], RuleNumber);
-      }
     }
 
     assert(((CFAReg != (uint32_t)UNKNOWN && CFAOffset != UNKNOWN) ||
@@ -2893,9 +2873,8 @@ bool BinaryFunction::requiresAddressTranslation() const {
 
 uint64_t BinaryFunction::getInstructionCount() const {
   uint64_t Count = 0;
-  for (BinaryBasicBlock *const &Block : BasicBlocksLayout) {
+  for (BinaryBasicBlock *const &Block : BasicBlocksLayout)
     Count += Block->getNumNonPseudos();
-  }
   return Count;
 }
 
@@ -2913,12 +2892,10 @@ void BinaryFunction::clearDisasmState() {
   clearList(InterproceduralReferences);
 
   if (BC.HasRelocations) {
-    for (std::pair<const uint32_t, MCSymbol *> &LI : Labels) {
+    for (std::pair<const uint32_t, MCSymbol *> &LI : Labels)
       BC.UndefinedSymbols.insert(LI.second);
-    }
-    if (FunctionEndLabel) {
+    if (FunctionEndLabel)
       BC.UndefinedSymbols.insert(FunctionEndLabel);
-    }
   }
 }
 
@@ -2932,11 +2909,9 @@ void BinaryFunction::setTrapOnEntry() {
   };
 
   addTrapAtOffset(0);
-  for (const std::pair<const uint32_t, MCSymbol *> &KV : getLabels()) {
-    if (getSecondaryEntryPointSymbol(KV.second)) {
+  for (const std::pair<const uint32_t, MCSymbol *> &KV : getLabels())
+    if (getSecondaryEntryPointSymbol(KV.second))
       addTrapAtOffset(KV.first);
-    }
-  }
 
   TrapsOnEntry = true;
 }
@@ -2958,14 +2933,12 @@ void BinaryFunction::setIgnored() {
   if (hasCFG()) {
     releaseCFG();
 
-    for (BinaryBasicBlock *BB : BasicBlocks) {
+    for (BinaryBasicBlock *BB : BasicBlocks)
       delete BB;
-    }
     clearList(BasicBlocks);
 
-    for (BinaryBasicBlock *BB : DeletedBasicBlocks) {
+    for (BinaryBasicBlock *BB : DeletedBasicBlocks)
       delete BB;
-    }
     clearList(DeletedBasicBlocks);
 
     clearList(BasicBlocksLayout);
@@ -3036,9 +3009,8 @@ namespace {
 std::string constructFilename(std::string Filename, std::string Annotation,
                               std::string Suffix) {
   std::replace(Filename.begin(), Filename.end(), '/', '-');
-  if (!Annotation.empty()) {
+  if (!Annotation.empty())
     Annotation.insert(0, "-");
-  }
   if (Filename.size() + Annotation.size() + Suffix.size() > MAX_PATH) {
     assert(Suffix.size() + Annotation.size() <= MAX_PATH);
     if (opts::Verbosity >= 1) {
@@ -3123,9 +3095,8 @@ void BinaryFunction::dumpGraph(raw_ostream &OS) const {
           Branch = "FT";
         }
       }
-      if (IsJumpTable) {
+      if (IsJumpTable)
         Branch = "JT";
-      }
       OS << format("\"%s\" -> \"%s\" [label=\"%s", BB->getName().data(),
                    Succ->getName().data(), Branch.c_str());
 
@@ -3157,9 +3128,8 @@ void BinaryFunction::viewGraph() const {
     return;
   }
   dumpGraphToFile(std::string(Filename));
-  if (DisplayGraph(Filename)) {
+  if (DisplayGraph(Filename))
     errs() << "BOLT-ERROR: Can't display " << Filename << " with graphviz.\n";
-  }
   if (std::error_code EC = sys::fs::remove(Filename)) {
     errs() << "BOLT-WARNING: " << EC.message() << ", failed to remove "
            << Filename << "\n";
@@ -3187,9 +3157,8 @@ void BinaryFunction::dumpGraphToFile(std::string Filename) const {
 
 bool BinaryFunction::validateCFG() const {
   bool Valid = true;
-  for (BinaryBasicBlock *BB : BasicBlocks) {
+  for (BinaryBasicBlock *BB : BasicBlocks)
     Valid &= BB->validateSuccessorInvariants();
-  }
 
   if (!Valid)
     return Valid;
@@ -3315,9 +3284,8 @@ void BinaryFunction::fixBranches() {
         auto L = BC.scopeLock();
         MIB->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
       }
-      if (TSuccessor == FSuccessor) {
+      if (TSuccessor == FSuccessor)
         BB->removeDuplicateConditionalSuccessor(CondBranch);
-      }
       if (!NextBB ||
           ((NextBB != TSuccessor || !IsSupported) && NextBB != FSuccessor)) {
         // If one of the branches is guaranteed to be "long" while the other
@@ -3634,9 +3602,8 @@ size_t BinaryFunction::computeHash(bool UseDFS,
         Opcode = Opcode >> 8;
       }
 
-      for (unsigned I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
+      for (unsigned I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I)
         HashString.append(OperandHashFunc(Inst.getOperand(I)));
-      }
     }
   }
 
@@ -3660,19 +3627,16 @@ void BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  if (RecomputeLandingPads) {
+  if (RecomputeLandingPads)
     recomputeLandingPads();
-  } else {
+  else
     updateBBIndices(0);
-  }
 
-  if (UpdateLayout) {
+  if (UpdateLayout)
     updateLayout(Start, NumNewBlocks);
-  }
 
-  if (UpdateCFIState) {
+  if (UpdateCFIState)
     updateCFIState(Start, NumNewBlocks);
-  }
 }
 
 BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
@@ -3693,36 +3657,31 @@ BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  if (RecomputeLandingPads) {
+  if (RecomputeLandingPads)
     recomputeLandingPads();
-  } else {
+  else
     updateBBIndices(0);
-  }
 
-  if (UpdateLayout) {
+  if (UpdateLayout)
     updateLayout(*std::prev(RetIter), NumNewBlocks);
-  }
 
-  if (UpdateCFIState) {
+  if (UpdateCFIState)
     updateCFIState(*std::prev(RetIter), NumNewBlocks);
-  }
 
   return RetIter;
 }
 
 void BinaryFunction::updateBBIndices(const unsigned StartIndex) {
-  for (unsigned I = StartIndex; I < BasicBlocks.size(); ++I) {
+  for (unsigned I = StartIndex; I < BasicBlocks.size(); ++I)
     BasicBlocks[I]->Index = I;
-  }
 }
 
 void BinaryFunction::updateCFIState(BinaryBasicBlock *Start,
                                     const unsigned NumNewBlocks) {
   const int32_t CFIState = Start->getCFIStateAtExit();
   const unsigned StartIndex = getIndex(Start) + 1;
-  for (unsigned I = 0; I < NumNewBlocks; ++I) {
+  for (unsigned I = 0; I < NumNewBlocks; ++I)
     BasicBlocks[StartIndex + I]->setCFIState(CFIState);
-  }
 }
 
 void BinaryFunction::updateLayout(BinaryBasicBlock *Start,
@@ -4039,12 +3998,10 @@ void BinaryFunction::adjustExecutionCount(uint64_t Count) {
 }
 
 BinaryFunction::~BinaryFunction() {
-  for (BinaryBasicBlock *BB : BasicBlocks) {
+  for (BinaryBasicBlock *BB : BasicBlocks)
     delete BB;
-  }
-  for (BinaryBasicBlock *BB : DeletedBasicBlocks) {
+  for (BinaryBasicBlock *BB : DeletedBasicBlocks)
     delete BB;
-  }
 }
 
 void BinaryFunction::calculateLoopInfo() {
@@ -4068,9 +4025,8 @@ void BinaryFunction::calculateLoopInfo() {
     BLI->MaximumDepth = std::max(L->getLoopDepth(), BLI->MaximumDepth);
 
     // Add nested loops in the stack.
-    for (BinaryLoop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
+    for (BinaryLoop::iterator I = L->begin(), E = L->end(); I != E; ++I)
       St.push(*I);
-    }
 
     // Skip if no valid profile is found.
     if (!hasValidProfile()) {
@@ -4194,9 +4150,8 @@ void BinaryFunction::updateOutputValues(const MCAsmLayout &Layout) {
 
     if (PrevBB) {
       uint64_t PrevBBEndAddress = BBAddress;
-      if (BB->isCold() != PrevBB->isCold()) {
+      if (BB->isCold() != PrevBB->isCold())
         PrevBBEndAddress = getOutputAddress() + getOutputSize();
-      }
       PrevBB->setOutputEndAddress(PrevBBEndAddress);
     }
     PrevBB = BB;
@@ -4252,9 +4207,8 @@ uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
   // Check if the address is associated with an instruction that is tracked
   // by address translation.
   auto KV = InputOffsetToAddressMap.find(Address - getAddress());
-  if (KV != InputOffsetToAddressMap.end()) {
+  if (KV != InputOffsetToAddressMap.end())
     return KV->second;
-  }
 
   // FIXME: #18950828 - we rely on relative offsets inside basic blocks to stay
   //        intact. Instead we can use pseudo instructions and/or annotations.
@@ -4393,14 +4347,12 @@ DebugLocationsVector BinaryFunction::translateInputToOutputLocationList(
     const DebugLocationsVector &InputLL) const {
   DebugLocationsVector OutputLL;
 
-  if (isFolded()) {
+  if (isFolded())
     return OutputLL;
-  }
 
   // If the function hasn't changed - there's nothing to update.
-  if (!isEmitted()) {
+  if (!isEmitted())
     return InputLL;
-  }
 
   uint64_t PrevEndAddress = 0;
   SmallVectorImpl<uint8_t> *PrevExpr = nullptr;
@@ -4480,22 +4432,19 @@ DebugLocationsVector BinaryFunction::translateInputToOutputLocationList(
 
 void BinaryFunction::printLoopInfo(raw_ostream &OS) const {
   OS << "Loop Info for Function \"" << *this << "\"";
-  if (hasValidProfile()) {
+  if (hasValidProfile())
     OS << " (count: " << getExecutionCount() << ")";
-  }
   OS << "\n";
 
   std::stack<BinaryLoop *> St;
-  for (auto I = BLI->begin(), E = BLI->end(); I != E; ++I) {
+  for (auto I = BLI->begin(), E = BLI->end(); I != E; ++I)
     St.push(*I);
-  }
   while (!St.empty()) {
     BinaryLoop *L = St.top();
     St.pop();
 
-    for (BinaryLoop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
+    for (BinaryLoop::iterator I = L->begin(), E = L->end(); I != E; ++I)
       St.push(*I);
-    }
 
     if (!hasValidProfile())
       continue;
@@ -4536,10 +4485,9 @@ bool BinaryFunction::isAArch64Veneer() const {
   if (BB.size() != 3)
     return false;
 
-  for (MCInst &Inst : BB) {
+  for (MCInst &Inst : BB)
     if (!BC.MIB->hasAnnotation(Inst, "AArch64Veneer"))
       return false;
-  }
 
   return true;
 }

@@ -281,13 +281,11 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
     MCInst *UncondBranch = nullptr;
-    if (!BB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch)) {
+    if (!BB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch))
       continue;
-    }
 
-    if (!CondBranch && !UncondBranch) {
+    if (!CondBranch && !UncondBranch)
       continue;
-    }
 
     // Simple unconditional branch.
     if (!CondBranch) {

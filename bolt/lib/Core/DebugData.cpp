@@ -192,8 +192,9 @@ void DebugAddrWriter::addIndexAddress(uint64_t Address, uint32_t Index,
     if (Entry->second > Index)
       Map.updateAddressToIndex(Address, Index);
     Map.updateIndexToAddrss(Address, Index);
-  } else
+  } else {
     Map.insert(Address, Index);
+  }
 }
 
 AddressSectionBuffer DebugAddrWriter::finalize() {

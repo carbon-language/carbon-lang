@@ -107,9 +107,8 @@ void bolt::JumpTable::print(raw_ostream &OS) const {
   OS << "Jump table " << getName() << " for function " << *Parent << " at 0x"
      << Twine::utohexstr(getAddress()) << " with a total count of " << Count
      << ":\n";
-  for (const uint64_t EntryOffset : OffsetEntries) {
+  for (const uint64_t EntryOffset : OffsetEntries)
     OS << "  0x" << Twine::utohexstr(EntryOffset) << '\n';
-  }
   for (const MCSymbol *Entry : Entries) {
     auto LI = Labels.find(Offset);
     if (Offset && LI != Labels.end()) {

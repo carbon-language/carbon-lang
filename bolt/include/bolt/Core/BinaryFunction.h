@@ -708,12 +708,10 @@ private:
   /// Release memory allocated for CFG and instructions.
   /// We still keep basic blocks for address translation/mapping purposes.
   void releaseCFG() {
-    for (BinaryBasicBlock *BB : BasicBlocks) {
+    for (BinaryBasicBlock *BB : BasicBlocks)
       BB->releaseCFG();
-    }
-    for (BinaryBasicBlock *BB : DeletedBasicBlocks) {
+    for (BinaryBasicBlock *BB : DeletedBasicBlocks)
       BB->releaseCFG();
-    }
 
     clearList(CallSites);
     clearList(ColdCallSites);
@@ -878,9 +876,8 @@ public:
   const BinaryLoopInfo &getLoopInfo() { return *BLI.get(); }
 
   bool isLoopFree() {
-    if (!hasLoopInfo()) {
+    if (!hasLoopInfo())
       calculateLoopInfo();
-    }
     return BLI->empty();
   }
 
@@ -1110,9 +1107,8 @@ public:
   /// Return the number of emitted instructions for this function.
   uint32_t getNumNonPseudos() const {
     uint32_t N = 0;
-    for (BinaryBasicBlock *const &BB : layout()) {
+    for (BinaryBasicBlock *const &BB : layout())
       N += BB->getNumNonPseudos();
-    }
     return N;
   }
 
@@ -1608,9 +1604,8 @@ public:
   /// Make sure basic blocks' indices match the current layout.
   void updateLayoutIndices() const {
     unsigned Index = 0;
-    for (BinaryBasicBlock *BB : layout()) {
+    for (BinaryBasicBlock *BB : layout())
       BB->setLayoutIndex(Index++);
-    }
   }
 
   /// Recompute the CFI state for NumNewBlocks following Start after inserting
@@ -2078,10 +2073,9 @@ public:
       Size += NextMarker - *DataIter;
     }
 
-    if (!OnBehalfOf) {
+    if (!OnBehalfOf)
       for (BinaryFunction *ExternalFunc : Islands->Dependency)
         Size += ExternalFunc->estimateConstantIslandSize(this);
-    }
     return Size;
   }
 
@@ -2311,17 +2305,13 @@ public:
   size_t estimateHotSize(const bool UseSplitSize = true) const {
     size_t Estimate = 0;
     if (UseSplitSize && isSplit()) {
-      for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
-        if (!BB->isCold()) {
+      for (const BinaryBasicBlock *BB : BasicBlocksLayout)
+        if (!BB->isCold())
           Estimate += BC.computeCodeSize(BB->begin(), BB->end());
-        }
-      }
     } else {
-      for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
-        if (BB->getKnownExecutionCount() != 0) {
+      for (const BinaryBasicBlock *BB : BasicBlocksLayout)
+        if (BB->getKnownExecutionCount() != 0)
           Estimate += BC.computeCodeSize(BB->begin(), BB->end());
-        }
-      }
     }
     return Estimate;
   }
@@ -2330,19 +2320,16 @@ public:
     if (!isSplit())
       return estimateSize();
     size_t Estimate = 0;
-    for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
-      if (BB->isCold()) {
+    for (const BinaryBasicBlock *BB : BasicBlocksLayout)
+      if (BB->isCold())
         Estimate += BC.computeCodeSize(BB->begin(), BB->end());
-      }
-    }
     return Estimate;
   }
 
   size_t estimateSize() const {
     size_t Estimate = 0;
-    for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
+    for (const BinaryBasicBlock *BB : BasicBlocksLayout)
       Estimate += BC.computeCodeSize(BB->begin(), BB->end());
-    }
     return Estimate;
   }
 
