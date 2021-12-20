@@ -182,48 +182,54 @@ cache misses.
 
 ## Bootstrapping Clang-7 with PGO and LTO
 
-Below we describe detailed steps to build Clang, and make it ready for BOLT optimizations. If you
-already have the build setup, you can skip this section, except for the last step that adds `-Wl,-q` linker flag to the final build.
+Below we describe detailed steps to build Clang, and make it ready for BOLT
+optimizations. If you already have the build setup, you can skip this section,
+except for the last step that adds `-Wl,-q` linker flag to the final build.
 
 ### Getting Clang-7 Sources
 
 Set `$TOPLEV` to the directory of your preference where you would like to do
-builds. E.g. `TOPLEV=~/clang-7/`. Follow with commands to clone the `release_70` branches
-of LLVM, Clang, lld linker, and the compiler runtime:
+builds. E.g. `TOPLEV=~/clang-7/`. Follow with commands to clone the `release_70`
+branch of LLVM monorepo:
 ```bash
+$ mkdir ${TOPLEV}
 $ cd ${TOPLEV}
-$ git clone -q --depth=1 --branch=release_70 https://git.llvm.org/git/llvm.git/ llvm
-$ cd llvm/tools
-$ git clone -q --depth=1 --branch=release_70 https://git.llvm.org/git/clang.git/
-$ cd ../projects
-$ git clone -q --depth=1 --branch=release_70 https://git.llvm.org/git/lld.git/
-$ git clone -q --depth=1 --branch=release_70 https://git.llvm.org/git/compiler-rt.git/
+$ git clone --branch=release/7.x https://github.com/llvm/llvm-project.git
 ```
 
 ### Building Stage 1 Compiler
 
 Stage 1 will be the first build we are going to do, and we will be using the
-default system compiler to build Clang. If your system lacks a compiler, use your distribution package manager to install one
-that supports C++11. In this example we are going to use GCC. In addition to the compiler,
-you will need the `cmake` and `ninja` packages.
+default system compiler to build Clang. If your system lacks a compiler, use
+your distribution package manager to install one that supports C++11. In this
+example we are going to use GCC. In addition to the compiler, you will need the
+`cmake` and `ninja` packages. Note that we disable the build of certain
+compiler-rt components that are known to cause build issues at release/7.x.
 ```bash
-$ mkdir ${TOPLEV}stage1
+$ mkdir ${TOPLEV}/stage1
 $ cd ${TOPLEV}/stage1
-$ cmake -G Ninja ${TOPLEV}/llvm -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_BUILD_TYPE=Release \
+$ cmake -G Ninja ${TOPLEV}/llvm-project/llvm -DLLVM_TARGETS_TO_BUILD=X86 \
+      -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_ASM_COMPILER=gcc \
+      -DLLVM_ENABLE_PROJECTS="clang;lld;compiler-rt" \
+      -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF \
+      -DCOMPILER_RT_BUILD_LIBFUZZER=OFF \
       -DCMAKE_INSTALL_PREFIX=${TOPLEV}/stage1/install
 $ ninja install
 ```
 
 ### Building Stage 2 Compiler With Instrumentation
 
-Using the freshly-baked stage 1 Clang compiler, we are going to build Clang with profile generation capabilities:
+Using the freshly-baked stage 1 Clang compiler, we are going to build Clang with
+profile generation capabilities:
 ```bash
 $ mkdir ${TOPLEV}/stage2-prof-gen
 $ cd ${TOPLEV}/stage2-prof-gen
 $ CPATH=${TOPLEV}/stage1/install/bin/
-$ cmake -G Ninja ${TOPLEV}/llvm -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_BUILD_TYPE=Release \
+$ cmake -G Ninja ${TOPLEV}/llvm-project/llvm -DLLVM_TARGETS_TO_BUILD=X86 \
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=$CPATH/clang -DCMAKE_CXX_COMPILER=$CPATH/clang++ \
+    -DLLVM_ENABLE_PROJECTS="clang;lld" \
     -DLLVM_USE_LINKER=lld -DLLVM_BUILD_INSTRUMENTED=ON \
     -DCMAKE_INSTALL_PREFIX=${TOPLEV}/stage2-prof-gen/install
 $ ninja install
@@ -231,18 +237,23 @@ $ ninja install
 
 ### Generating Profile for PGO
 
-While there are many ways to obtain the profile data, we are going to use the source code already at our
-disposal, i.e. we are going to collect the profile while building Clang itself:
+While there are many ways to obtain the profile data, we are going to use the
+source code already at our disposal, i.e. we are going to collect the profile
+while building Clang itself:
 ```bash
 $ mkdir ${TOPLEV}/stage3-train
 $ cd ${TOPLEV}/stage3-train
 $ CPATH=${TOPLEV}/stage2-prof-gen/install/bin
-$ cmake -G Ninja ${TOPLEV}/llvm -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_BUILD_TYPE=Release \
+$ cmake -G Ninja ${TOPLEV}/llvm-project/llvm -DLLVM_TARGETS_TO_BUILD=X86 \
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=$CPATH/clang -DCMAKE_CXX_COMPILER=$CPATH/clang++ \
+    -DLLVM_ENABLE_PROJECTS="clang" \
     -DLLVM_USE_LINKER=lld -DCMAKE_INSTALL_PREFIX=${TOPLEV}/stage3-train/install
 $ ninja clang
 ```
-Once the build is completed, the profile files will be saved under `${TOPLEV}/stage2-prof-gen/profiles`. We will merge them before they can be passed back into Clang:
+Once the build is completed, the profile files will be saved under
+`${TOPLEV}/stage2-prof-gen/profiles`. We will merge them before they can be
+passed back into Clang:
 ```bash
 $ cd ${TOPLEV}/stage2-prof-gen/profiles
 $ ${TOPLEV}/stage1/install/bin/llvm-profdata merge -output=clang.profdata *
@@ -250,17 +261,28 @@ $ ${TOPLEV}/stage1/install/bin/llvm-profdata merge -output=clang.profdata *
 
 ### Building Clang with PGO and LTO
 
-Now the profile can be used to guide optimizations to produce better code for our scenario, i.e. building Clang.
-We will also enable link-time optimizations to allow cross-module inlining and other optimizations. Finally, we are going to add one extra step that is useful for BOLT: a linker flag instructing it to preserve relocations in the output binary. Note that this flag does not affect the generated code or data used at runtime, it only writes metadata to the file on disk:
+Now the profile can be used to guide optimizations to produce better code for
+our scenario, i.e. building Clang. We will also enable link-time optimizations
+to allow cross-module inlining and other optimizations. Finally, we are going to
+add one extra step that is useful for BOLT: a linker flag instructing it to
+preserve relocations in the output binary. Note that this flag does not affect
+the generated code or data used at runtime, it only writes metadata to the file
+on disk:
 ```bash
 $ mkdir ${TOPLEV}/stage2-prof-use-lto
 $ cd ${TOPLEV}/stage2-prof-use-lto
 $ CPATH=${TOPLEV}/stage1/install/bin/
 $ export LDFLAGS="-Wl,-q"
-$ cmake -G Ninja ${TOPLEV}/llvm -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_BUILD_TYPE=Release \
+$ cmake -G Ninja ${TOPLEV}/llvm-project/llvm -DLLVM_TARGETS_TO_BUILD=X86 \
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=$CPATH/clang -DCMAKE_CXX_COMPILER=$CPATH/clang++ \
-    -DLLVM_ENABLE_LTO=Full -DLLVM_PROFDATA_FILE=${TOPLEV}/stage2-prof-gen/profiles/clang.profdata \
-    -DLLVM_USE_LINKER=lld -DCMAKE_INSTALL_PREFIX=${TOPLEV}/stage2-prof-use-lto/install
+    -DLLVM_ENABLE_PROJECTS="clang;lld" \
+    -DLLVM_ENABLE_LTO=Full \
+    -DLLVM_PROFDATA_FILE=${TOPLEV}/stage2-prof-gen/profiles/clang.profdata \
+    -DLLVM_USE_LINKER=lld \
+    -DCMAKE_INSTALL_PREFIX=${TOPLEV}/stage2-prof-use-lto/install
 $ ninja install
 ```
-Now we have a Clang compiler that can build itself much faster. As we will see, it builds other applications faster as well, and, with BOLT, the compile time can be improved even further.
+Now we have a Clang compiler that can build itself much faster. As we will see,
+it builds other applications faster as well, and, with BOLT, the compile time
+can be improved even further.
