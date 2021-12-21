@@ -419,9 +419,8 @@ the "main type". The methods of a mixin may also use data, methods, and
 interface implementations provided by the main type. Mixins are designed around
 implementation reuse rather than subtyping, and so don't need to use a vtable.
 
-A mixin might be an implementation detail of a [data class](#data-classes),
-or [encapsulated type](#encapsulated-types). A
-mixin might partially implement an
+A mixin might be an implementation detail of a [data class](#data-classes), or
+[encapsulated type](#encapsulated-types). A mixin might partially implement an
 [interface as base class](#interface-as-base-class).
 
 **Examples:**
