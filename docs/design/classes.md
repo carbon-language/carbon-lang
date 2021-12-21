@@ -420,7 +420,7 @@ interface implementations provided by the main type. Mixins are designed around
 implementation reuse rather than subtyping, and so don't need to use a vtable.
 
 A mixin might be an implementation detail of a [data class](#data-classes),
-object type, or [derived type of a polymorphic type](#polymorphic-types). A
+or [encapsulated type](#encapsulated-types). A
 mixin might partially implement an
 [interface as base class](#interface-as-base-class).
 
