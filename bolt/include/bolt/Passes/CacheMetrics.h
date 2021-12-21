@@ -1,4 +1,4 @@
-//===- CacheMetrics.h - Interface for instruction cache evaluation       --===//
+//===- bolt/Passes/CacheMetrics.h - Instruction cache metrics ---*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Functions to show metrics of cache lines
+// Functions to show metrics of cache lines.
 //
 //===----------------------------------------------------------------------===//
 

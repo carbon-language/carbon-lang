@@ -1,10 +1,8 @@
-//===--- HFSortPlus.cpp - Order functions by hotness ----------------------===//
+//===- bolt/Passes/HFSortPlus.cpp - Order functions by hotness ------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
 //
 //===----------------------------------------------------------------------===//
 //
@@ -21,6 +19,8 @@
 // proportional to the number of samples corresponding to the functions on the
 // page. The following algorithm detects short and long calls, and optimizes
 // the expected number of cache misses for the long ones.
+//
+//===----------------------------------------------------------------------===//
 
 #include "bolt/Passes/HFSort.h"
 #include "llvm/Support/CommandLine.h"

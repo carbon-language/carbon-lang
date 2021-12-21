@@ -1,4 +1,4 @@
-//===--------- Passes/TailDuplication.cpp -------------------------------===//
+//===- bolt/Passes/TailDuplication.cpp ------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,10 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This file implements the TailDuplication class.
+//
 //===----------------------------------------------------------------------===//
 
 #include "bolt/Passes/TailDuplication.h"
-
 #include <numeric>
 
 #define DEBUG_TYPE "taildup"

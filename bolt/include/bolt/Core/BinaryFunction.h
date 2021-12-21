@@ -1,4 +1,4 @@
-//===--- BinaryFunction.h - Interface for machine-level function ----------===//
+//===- bolt/Core/BinaryFunction.h - Low-level function ----------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,8 +6,19 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Interface to function in binary (machine) form. This is assembly-level
-// code representation with the control flow.
+// This file contains the declaration of the BinaryFunction class. It represents
+// a function at the lowest IR level. Typically, a BinaryFunction represents a
+// function object in a compiled and linked binary file. However, a
+// BinaryFunction can also be constructed manually, e.g. for injecting into a
+// binary file.
+//
+// A BinaryFunction could be in one of the several states described in
+// BinaryFunction::State. While in the disassembled state, it will contain a
+// list of instructions with their offsets. In the CFG state, it will contain a
+// list of BinaryBasicBlocks that form a control-flow graph. This state is best
+// suited for binary analysis and optimizations. However, sometimes it's
+// impossible to build the precise CFG due to the ambiguity of indirect
+// branches.
 //
 //===----------------------------------------------------------------------===//
 

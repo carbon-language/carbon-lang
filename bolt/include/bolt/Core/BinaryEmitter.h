@@ -1,10 +1,13 @@
-//===--- BinaryEmitter.h - collection of functions to emit code and data --===//
+//===- bolt/Core/BinaryEmitter.h - Emit code and data -----------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains declarations of functions for emitting code and data into
+// a binary file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +23,7 @@ namespace bolt {
 class BinaryContext;
 class BinaryFunction;
 
-/// Emit all code and data in the BinaryContext \p BC.
+/// Emit all code and data from the BinaryContext \p BC into the \p Streamer.
 ///
 /// \p OrgSecPrefix is used to modify name of emitted original sections
 /// contained in \p BC. This is done to distinguish them from sections emitted

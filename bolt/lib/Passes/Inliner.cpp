@@ -1,10 +1,12 @@
-//===--- Passes/Inliner.cpp - Inlining infra for BOLT ---------------------===//
+//===- bolt/Passes/Inliner.cpp - Inlining pass for low-level binary IR ----===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file implements the Inliner class used for inlining binary functions.
 //
 // The current inliner has a limited callee support
 // (see Inliner::getInliningInfo() for the most up-to-date details):

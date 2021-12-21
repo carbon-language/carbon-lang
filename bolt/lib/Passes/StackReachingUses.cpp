@@ -1,4 +1,4 @@
-//===--- Passes/StackReachingUses.cpp -------------------------------------===//
+//===- bolt/Passes/StackReachingUses.cpp ----------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This file implements the StackReachingUses class.
+//
 //===----------------------------------------------------------------------===//
+
 #include "bolt/Passes/StackReachingUses.h"
 #include "bolt/Passes/FrameAnalysis.h"
 

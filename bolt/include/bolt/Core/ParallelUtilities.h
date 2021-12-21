@@ -1,15 +1,16 @@
-//===-- ParallelUtilities.h - -----------------------------------*- C++ -*-===//
+//===- bolt/Core/ParallelUtilities.h - Parallel utilities -------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-// This class creates an interface that can be used to run parallel tasks that
-// operate on functions. Several scheduling criteria are supported using
-// SchedulingPolicy, and are defined by how the runtime cost should be
-// estimated.
-// If the NoThreads flags is passed, work will execute sequentially.
+//
+// This file contains functions for assisting parallel processing of binary
+// functions. Several scheduling criteria are supported using SchedulingPolicy,
+// and are defined by how the runtime cost should be estimated. If the NoThreads
+// flags is passed, all jobs will execute sequentially.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef BOLT_CORE_PARALLEL_UTILITIES_H
@@ -49,7 +50,7 @@ enum SchedulingPolicy {
   SP_BB_QUADRATIC,   /// cost is estimated by the square of the BB count
 };
 
-/// Return the managed threadpool and initialize it if not intiliazed
+/// Return the managed thread pool and initialize it if not initiliazed.
 ThreadPool &getThreadPool();
 
 /// Perform the work on each BinaryFunction except those that are accepted

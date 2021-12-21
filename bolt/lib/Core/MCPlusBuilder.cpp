@@ -1,4 +1,4 @@
-//===- MCPlusBuilder.cpp - main interface for MCPlus-level instructions ---===//
+//===- bolt/Core/MCPlusBuilder.cpp - Interface for MCPlus -----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Create/analyze/modify instructions at MC+ level.
+// This file implements the MCPlusBuilder class.
 //
 //===----------------------------------------------------------------------===//
 

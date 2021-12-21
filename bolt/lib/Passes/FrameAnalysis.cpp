@@ -1,4 +1,4 @@
-//===--- Passes/FrameAnalysis.cpp -----------------------------------------===//
+//===- bolt/Passes/FrameAnalysis.cpp --------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This file implements the FrameAnalysis class.
+//
 //===----------------------------------------------------------------------===//
+
 #include "bolt/Passes/FrameAnalysis.h"
 #include "bolt/Core/ParallelUtilities.h"
 #include "bolt/Passes/CallGraphWalker.h"

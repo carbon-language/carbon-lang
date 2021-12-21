@@ -1,10 +1,13 @@
-//===--- BinaryEmitter.cpp - collection of functions to emit code and data ===//
+//===- bolt/Core/BinaryEmitter.cpp - Emit code and data -------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file implements the collection of functions and classes used for
+// emission of code and data into object/binary file.
 //
 //===----------------------------------------------------------------------===//
 

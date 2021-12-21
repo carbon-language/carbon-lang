@@ -1,10 +1,11 @@
-//===--- ExtTSPReorderAlgorithm.cpp - Order basic blocks ---------------===//
+//===- bolt/Passes/ExtTSPReorderAlgorithm.cpp - Order basic blocks --------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
 // ExtTSP - layout of basic blocks with i-cache optimization.
 //
 // The algorithm is a greedy heuristic that works with chains (ordered lists)
@@ -28,7 +29,9 @@
 //   * A. Newell and S. Pupyrev, Improved Basic Block Reordering,
 //     IEEE Transactions on Computers, 2020
 //     https://arxiv.org/abs/1809.04676
+//
 //===----------------------------------------------------------------------===//
+
 #include "bolt/Core/BinaryBasicBlock.h"
 #include "bolt/Core/BinaryFunction.h"
 #include "bolt/Passes/ReorderAlgorithm.h"
@@ -36,6 +39,7 @@
 
 using namespace llvm;
 using namespace bolt;
+
 namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;

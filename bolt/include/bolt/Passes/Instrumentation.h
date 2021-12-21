@@ -1,4 +1,4 @@
-//===--- Passes/Instrumentation.h -----------------------------------------===//
+//===- bolt/Passes/Instrumentation.h ----------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -13,6 +13,7 @@
 // runtime/instr.cpp
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef BOLT_PASSES_INSTRUMENTATION_H
 #define BOLT_PASSES_INSTRUMENTATION_H
 

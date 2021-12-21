@@ -1,4 +1,4 @@
-//===------ CacheMetrics.cpp - Calculate metrics for instruction cache ----===//
+//===- bolt/Passes/CacheMetrics.cpp - Metrics for instruction cache -------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Functions to show metrics of cache lines
+// This file implements the CacheMetrics class and functions for showing metrics
+// of cache lines.
 //
 //===----------------------------------------------------------------------===//
 

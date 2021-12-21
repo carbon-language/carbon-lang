@@ -1,4 +1,4 @@
-//===-- DebugData.h - Representation and writing of debugging information. -==//
+//===- bolt/Core/DebugData.h - Debugging information handling ---*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Classes that represent and serialize DWARF-related entities.
+// This file contains declaration of classes that represent and serialize
+// DWARF-related entities.
 //
 //===----------------------------------------------------------------------===//
 

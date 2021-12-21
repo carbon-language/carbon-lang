@@ -1,4 +1,4 @@
-//===-- X86MCPlusBuilder.cpp ------------------------------------------===//
+//===- bolt/Target/X86/X86MCPlusBuilder.cpp -------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file provides X86-specific MC+ builder.
+// This file provides X86-specific MCPlus builder.
 //
 //===----------------------------------------------------------------------===//
 

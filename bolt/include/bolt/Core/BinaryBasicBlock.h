@@ -1,4 +1,4 @@
-//===--- BinaryBasicBlock.h - Interface for assembly-level basic block ----===//
+//===- bolt/Core/BinaryBasicBlock.h - Low-level basic block -----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Sequence of MC(Plus) instructions. Call/invoke does not terminate the block.
+// Sequence of MC/MCPlus instructions. Call/invoke does not terminate the block.
+// CFI instructions are part of the instruction list with the initial CFI state
+// defined at the beginning of the block.
 //
 //===----------------------------------------------------------------------===//
 

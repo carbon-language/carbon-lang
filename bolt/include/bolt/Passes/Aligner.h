@@ -1,10 +1,14 @@
-//===--------- Passes/Aligner.h -------------------------------------------===//
+//===- bolt/Passes/Aligner.h - Pass for optimal code alignment --*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the declaration of the Aligner class, which provides
+// alignment for code, e.g. basic block and functions, with the goal to achieve
+// the optimal performance.
 //
 //===----------------------------------------------------------------------===//
 

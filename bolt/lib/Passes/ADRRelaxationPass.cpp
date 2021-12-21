@@ -1,4 +1,4 @@
-//===--- ADRRelaxationPass.cpp --------------------------------------------===//
+//===- bolt/Passes/ADRRelaxationPass.cpp ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,6 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file implements the ADRRelaxationPass class.
 //
 //===----------------------------------------------------------------------===//
 

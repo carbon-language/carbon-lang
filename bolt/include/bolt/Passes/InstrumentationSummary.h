@@ -1,13 +1,15 @@
-//===--- InstrumentationSummary.h -------------------------------------===//
+//===- bolt/Passes/InstrumentationSummary.h ---------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
 // InstrumentationSummary holds all the data generated during
 // the Instrumentation pass, which will be needed latter for runtime library
 // binary emit and linking.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef BOLT_PASSES_INSTRUMENTATION_SUMMARY_H

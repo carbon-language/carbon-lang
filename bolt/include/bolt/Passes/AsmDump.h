@@ -1,4 +1,4 @@
-//===--- AsmDump.h - Dumping of a BinaryFunction into assembly ----------===//
+//===- bolt/Passes/AsmDump.h - Dump BinaryFunction as assembly --*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.

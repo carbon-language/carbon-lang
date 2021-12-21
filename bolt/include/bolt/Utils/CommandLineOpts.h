@@ -1,4 +1,4 @@
-//===--- CommandLineOpts.h - BOLT CLI options -----------------------------===//
+//===- bolt/Utils/CommandLineOpts.h - BOLT CLI options ----------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -9,6 +9,7 @@
 // BOLT CLI options
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef BOLT_UTILS_COMMAND_LINE_OPTS_H
 #define BOLT_UTILS_COMMAND_LINE_OPTS_H
 

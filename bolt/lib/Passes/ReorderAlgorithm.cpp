@@ -1,4 +1,4 @@
-//===--- Passes/ReorderAlgorithm.cpp - Basic block reorderng algorithms ---===//
+//===- bolt/Passes/ReorderAlgorithm.cpp - Basic block reordering ----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Implements different basic block reordering algorithms.
+// This file implements classes used by several basic block reordering
+// algorithms.
 //
 //===----------------------------------------------------------------------===//
 

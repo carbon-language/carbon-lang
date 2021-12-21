@@ -1,4 +1,4 @@
-//===--- BinaryContext.h  - Interface for machine-level context -----------===//
+//===- bolt/Core/BinaryContext.h - Low-level context ------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Context for processing binary executables in files and/or memory.
+// Context for processing binary executable/library files.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===--- Passes/PatchEntries.cpp - pass for patching function entries -----===//
+//===- bolt/Passes/PatchEntries.cpp - Pass for patching function entries --===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Pass for patching original function entry points.
+// This file implements the PatchEntries class that is used for patching
+// the original function entry points.
 //
 //===----------------------------------------------------------------------===//
 

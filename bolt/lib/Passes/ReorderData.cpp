@@ -1,10 +1,12 @@
-//===--- ReorderSection.cpp - Profile based reordering of section data =======//
+//===- bolt/Passes/ReorderSection.cpp - Reordering of section data --------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file implements ReorderData class.
 //
 //===----------------------------------------------------------------------===//
 

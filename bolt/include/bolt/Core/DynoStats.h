@@ -1,10 +1,13 @@
-//===--- DynoStats.h ------------------------------------------------------===//
+//===- bolt/Core/DynoStats.h - Dynamic execution stats ----------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// Keep track of statistics about the trace of execution captured in BOLT
+// profile.
 //
 //===----------------------------------------------------------------------===//
 

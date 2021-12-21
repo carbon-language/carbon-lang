@@ -1,4 +1,4 @@
-// Passes/ReorderAlgorithm.h - Interface for basic block reorderng algorithms //
+//===- bolt/Passes/ReorderAlgorithm.h - Basic block reorderng ---*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.

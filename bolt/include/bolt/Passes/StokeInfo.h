@@ -1,10 +1,11 @@
-//===--- Passes/StokeInfo.h -------------------------------------------===//
+//===- bolt/Passes/StokeInfo.h ----------------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
 //  Pass to get information for functions for the Stoke Optimization
 //  To use the Stoke optimization technique to optimize the HHVM.
 //  This Pass solves the two major problems to use the Stoke program without
@@ -20,6 +21,7 @@
 //  .csv file. Next, we use python scripts to process the file, filter
 //  out functions for optimization and automatically generate configure files.
 //  Finally, these configure files are feed to the Stoke to do the job.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef BOLT_PASSES_STOKEINFO_H

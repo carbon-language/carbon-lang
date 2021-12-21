@@ -1,10 +1,13 @@
-//===--- MCPlus.h - helpers for MCPlus-level instructions -----------------===//
+//===- bolt/Core/MCPlus.h - Helpers for MCPlus instructions -----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains declarations for helper functions for adding annotations
+// to MCInst objects.
 //
 //===----------------------------------------------------------------------===//
 

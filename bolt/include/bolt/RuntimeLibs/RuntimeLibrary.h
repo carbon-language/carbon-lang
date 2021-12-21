@@ -1,4 +1,4 @@
-//===------------- RuntimeLibrary.h - The Runtime Library -----------------===//
+//===- bolt/RuntimeLibs/RuntimeLibrary.h - Runtime Library ------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,8 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Provides all the necessary utilities to link runtime libraries during
-// binary rewriting, such as the instrumentation runtime library.
+// This file contains the declaration of the RuntimeLibrary class, which
+// provides all the necessary utilities to link runtime libraries during binary
+// rewriting, such as the instrumentation runtime library.
 //
 //===----------------------------------------------------------------------===//
 

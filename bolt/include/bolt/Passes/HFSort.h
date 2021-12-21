@@ -1,4 +1,4 @@
-//===--- HFSort.h - Cluster functions by hotness --------------------------===//
+//===- bolt/Passes/HFSort.h - Cluster functions by hotness ------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -15,7 +15,6 @@
 // 3. pettisAndHansen
 // 4. randomClusters
 //
-// See original code in hphp/utils/hfsort.[h,cpp]
 //===----------------------------------------------------------------------===//
 
 #ifndef BOLT_PASSES_HFSORT_H

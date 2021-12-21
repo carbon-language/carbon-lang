@@ -1,4 +1,4 @@
-//===--------- Passes/TailDuplication.h ---------------------------------===//
+//===- bolt/Passes/TailDuplication.h ----------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,13 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//===----------------------------------------------------------------------===//
-
-#ifndef BOLT_PASSES_TAILDUPLICATION_H
-#define BOLT_PASSES_TAILDUPLICATION_H
-
-#include "bolt/Passes/BinaryPasses.h"
-
 // This pass founds cases when BBs have layout:
 // #BB0:
 // <body>
@@ -39,6 +32,13 @@
 // that if there is too much code duplication, we may end up evicting hot cache
 // lines and causing the opposite effect, hurting i-cache performance This needs
 // to be well balanced to achieve the optimal effect
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef BOLT_PASSES_TAILDUPLICATION_H
+#define BOLT_PASSES_TAILDUPLICATION_H
+
+#include "bolt/Passes/BinaryPasses.h"
 
 namespace llvm {
 namespace bolt {

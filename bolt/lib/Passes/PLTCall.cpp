@@ -1,4 +1,4 @@
-//===--- Passes/PLTCall.h - PLT call optimization -------------------------===//
+//===- bolt/Passes/PLTCall.h - PLT call optimization ----------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Replace calls to PLT entries with indirect calls against GOT.
+// This file implements the PLTCall class, which replaces calls to PLT entries
+// with indirect calls against GOT.
 //
 //===----------------------------------------------------------------------===//
 

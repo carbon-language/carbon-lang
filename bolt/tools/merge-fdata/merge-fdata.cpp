@@ -1,4 +1,4 @@
-//===-- merge-fdata.cpp - Tool for merging profile in fdata format --------===//
+//===- bolt/tools/merge-fdata/merge-fdata.cpp -----------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// merge-fdata 1.fdata 2.fdata 3.fdata > merged.fdata
+// Tool for merging profile in fdata format:
+//
+//   $ merge-fdata 1.fdata 2.fdata 3.fdata > merged.fdata
 //
 //===----------------------------------------------------------------------===//
 

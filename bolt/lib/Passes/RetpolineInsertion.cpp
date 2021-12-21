@@ -1,4 +1,4 @@
-//===--- Passes/RetpolineInsertion.cpp-------------------------------------===//
+//===- bolt/Passes/RetpolineInsertion.cpp ---------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This class implements a pass that replaces indirect branches (calls and
-// jumps) with calls to retpolines to protect against branch target injection
-// attacks.
+// This file implements RetpolineInsertion class, which replaces indirect
+// branches (calls and jumps) with calls to retpolines to protect against branch
+// target injection attacks.
 // A unique retpoline is created for each register holding the address of the
 // callee, if the callee address is in memory %r11 is used if available to
 // hold the address of the callee before calling the retpoline, otherwise an
@@ -18,7 +18,9 @@
 // option, by default %r11 is assumed not available.
 // Adding lfence instruction to the body of the speculate code is enabled by
 // default and can be controlled by the user using retpoline-lfence option.
+//
 //===----------------------------------------------------------------------===//
+
 #include "bolt/Passes/RetpolineInsertion.h"
 #include "llvm/Support/raw_ostream.h"
 

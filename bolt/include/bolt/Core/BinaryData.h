@@ -1,10 +1,14 @@
-//===--- BinaryData.h  - Representation of section data objects -----------===//
+//===- bolt/Core/BinaryData.h - Objects in a binary file --------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the declaration of the BinaryData class, which represents
+// an allocatable entity in a binary file, such as a data object, a jump table,
+// or a function.
 //
 //===----------------------------------------------------------------------===//
 
