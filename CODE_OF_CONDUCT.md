@@ -196,7 +196,7 @@ decision as to how to respond. Responses may include:
 
 -   Nothing, if no violation occurred or it has already been appropriately
     resolved.
--   One or more [enforcement actions](#enforcement-actions).
+-   One or more [enforcement actions](#enforcement-action-guidelines).
 -   Involvement of relevant law enforcement if appropriate.
 
 If the situation is not resolved within one week, we’ll respond to the original
