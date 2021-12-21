@@ -256,6 +256,7 @@ class TokenizedBuffer {
 
    private:
     TokenizedBuffer* buffer_;
+    // Passed to SourceBufferLocationTranslator.
     int* last_line_lexed_to_column_;
   };
 
@@ -380,6 +381,8 @@ class TokenizedBuffer {
 
    private:
     TokenizedBuffer* buffer_;
+    // The last lexed column, for determining whether the last line should be
+    // checked for unlexed newlines. May be null after lexing is complete.
     int* last_line_lexed_to_column_;
   };
 
