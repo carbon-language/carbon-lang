@@ -26,11 +26,11 @@ int main() {
 // REQUIRES: system-linux
 // RUN: %clang %cflags -no-pie %s -o %t.exe -Wl,-q \
 // RUN:   -Wl,--unresolved-symbols=ignore-all \
-// RUN:   -fuse-ld=ld.lld \
+// RUN:   -fuse-ld=lld \
 // RUN:   -nostdlib
 // RUN: llvm-bolt %t.exe -o %t.bolt
 // RUN: %clang %cflags -fPIC -pie %s -o %t_pie.exe -Wl,-q \
 // RUN:   -Wl,--unresolved-symbols=ignore-all \
-// RUN:   -target aarch64-linux -fuse-ld=ld.lld \
+// RUN:   -target aarch64-linux -fuse-ld=lld \
 // RUN:   -nostdlib
 // RUN: llvm-bolt %t_pie.exe -o %t.bolt

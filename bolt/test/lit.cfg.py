@@ -66,7 +66,6 @@ tool_dirs = [config.llvm_tools_dir,
 
 tools = [
     ToolSubst('llc', unresolved='fatal'),
-    ToolSubst('lld', unresolved='fatal'),
     ToolSubst('llvm-dwarfdump', unresolved='fatal'),
     ToolSubst('llvm-bolt', unresolved='fatal'),
     ToolSubst('llvm-boltdiff', unresolved='fatal'),
