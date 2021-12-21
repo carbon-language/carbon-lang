@@ -5,11 +5,12 @@
 #ifndef TOOLCHAIN_LEXER_TEST_HELPERS_H_
 #define TOOLCHAIN_LEXER_TEST_HELPERS_H_
 
+#include <gmock/gmock.h>
+
 #include <array>
 #include <string>
 
 #include "common/check.h"
-#include "gmock/gmock.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"

@@ -12,7 +12,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/driver/driver.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 static auto Read(const unsigned char*& data, size_t& size, int& output)
     -> bool {
@@ -79,4 +79,4 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   }
   return 0;
 }
-}  // namespace Carbon
+}  // namespace Carbon::Testing

@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -343,6 +344,8 @@ class Continuation : public Statement {
   // during typechecking: before typechecking it's guaranteed to be false,
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
 
  private:
   std::string continuation_variable_;
