@@ -99,15 +99,15 @@ cc_library(
 
 cc_binary(
     name = "string_literal_bm",
+    testonly = 1,
     srcs = ["string_literal_bm.cpp"],
     deps = [
-        "@com_github_google_benchmark//:benchmark_main",
         ":string_literal",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_github_google_benchmark//:benchmark_main",
         "@llvm-project//llvm:Support",
     ],
-    testonly = 1,
 )
 
 cc_test(
