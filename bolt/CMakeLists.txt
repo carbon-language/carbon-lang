@@ -78,3 +78,9 @@ add_subdirectory(tools)
 if (BOLT_INCLUDE_TESTS)
   add_subdirectory(test)
 endif()
+
+option(BOLT_INCLUDE_DOCS "Generate build targets for the BOLT docs."
+       ${LLVM_INCLUDE_DOCS})
+if (BOLT_INCLUDE_DOCS)
+  add_subdirectory(docs)
+endif()
