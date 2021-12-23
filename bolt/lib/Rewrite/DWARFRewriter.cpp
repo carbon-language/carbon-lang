@@ -1435,20 +1435,26 @@ void getRangeAttrData(DWARFDie DIE, Optional<AttrInfo> &LowPCVal,
   HighPCVal = findAttributeInfo(DIE, dwarf::DW_AT_high_pc);
   uint64_t LowPCOffset = LowPCVal->Offset;
   uint64_t HighPCOffset = HighPCVal->Offset;
-  DWARFFormValue LowPCFormValue = LowPCVal->V;
-  DWARFFormValue HighPCFormValue = HighPCVal->V;
+  dwarf::Form LowPCForm = LowPCVal->V.getForm();
+  dwarf::Form HighPCForm = HighPCVal->V.getForm();
 
-  if ((LowPCFormValue.getForm() != dwarf::DW_FORM_addr &&
-       LowPCFormValue.getForm() != dwarf::DW_FORM_GNU_addr_index) ||
-      (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
-       HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
-       HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
-    errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
+  if (LowPCForm != dwarf::DW_FORM_addr &&
+      LowPCForm != dwarf::DW_FORM_GNU_addr_index) {
+    errs() << "BOLT-WARNING: unexpected low_pc form value. Cannot update DIE "
+           << "at offset 0x" << Twine::utohexstr(DIE.getOffset()) << "\n";
+    return;
+  }
+  if (HighPCForm != dwarf::DW_FORM_addr && HighPCForm != dwarf::DW_FORM_data8 &&
+      HighPCForm != dwarf::DW_FORM_data4 &&
+      HighPCForm != dwarf::DW_FORM_data2 &&
+      HighPCForm != dwarf::DW_FORM_data1 &&
+      HighPCForm != dwarf::DW_FORM_udata) {
+    errs() << "BOLT-WARNING: unexpected high_pc form value. Cannot update DIE "
            << "at offset 0x" << Twine::utohexstr(DIE.getOffset()) << "\n";
     return;
   }
   if ((LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) &&
-      LowPCFormValue.getForm() != dwarf::DW_FORM_GNU_addr_index) {
+      LowPCForm != dwarf::DW_FORM_GNU_addr_index) {
     errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
            << "Cannot update DIE at offset 0x"
            << Twine::utohexstr(DIE.getOffset()) << '\n';
