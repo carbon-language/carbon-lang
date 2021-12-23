@@ -51,5 +51,12 @@ they are less [context sensitive](low_context_sensitivity.md). Generics are
 overloading can resolve names differently depending on what is imported. Closed
 overloading in Carbon also simplifies what gets exported to C++ from Carbon.
 
+Interfaces provide an way to group functions together, and express the
+constraint that all of the functions in the group are implemented. Consider a
+random-access iterator, which has a number of methods. If a C++ template
+function only accesses some of those methods which happens to match the subset
+defined for a type, the code will work temporariliy but fail later when the code
+is changed to use a different subset.
+
 All this helps achieve the Carbon Goal of
 [code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
