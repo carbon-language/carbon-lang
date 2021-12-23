@@ -1,5 +1,8 @@
 # Check that BOLT generates .debug_aranges section for an input
 # where it was removed when .gdb_index was generated.
+
+REQUIRES: system-linux
+
 RUN: %clang %S/Inputs/icf_baz.c %S/Inputs/icf_main.c -Wl,--icf=all,--gdb-index \
 RUN:   -g -o %t.exe -fuse-ld=lld
 RUN: llvm-bolt %t.exe -o %t -update-debug-sections -keep-aranges

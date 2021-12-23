@@ -45,7 +45,7 @@ std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
 
 void RuntimeLibrary::loadLibrary(StringRef LibPath, RuntimeDyld &RTDyld) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MaybeBuf =
-      MemoryBuffer::getFile(LibPath, -1, false);
+      MemoryBuffer::getFile(LibPath, false, false);
   check_error(MaybeBuf.getError(), LibPath);
   std::unique_ptr<MemoryBuffer> B = std::move(MaybeBuf.get());
   file_magic Magic = identify_magic(B->getBuffer());

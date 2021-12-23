@@ -16,6 +16,7 @@
 #define BOLT_PASSES_INSTRUMENTATION_SUMMARY_H
 
 #include "llvm/ADT/DenseSet.h"
+#include <string>
 #include <vector>
 
 namespace llvm {

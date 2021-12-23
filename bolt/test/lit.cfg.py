@@ -61,6 +61,8 @@ llvm_config.use_lld()
 config.substitutions.append(('%cflags', '-no-pie'))
 config.substitutions.append(('%cxxflags', '-no-pie'))
 
+link_fdata_cmd = os.path.join(config.test_source_root, 'link_fdata.py')
+
 tool_dirs = [config.llvm_tools_dir,
              config.test_source_root]
 
@@ -77,7 +79,7 @@ tools = [
     ToolSubst('llvm-objcopy', unresolved='fatal'),
     ToolSubst('llvm-strip', unresolved='fatal'),
     ToolSubst('llvm-readelf', unresolved='fatal'),
-    ToolSubst('link_fdata', command=FindTool('link_fdata.py'), unresolved='fatal'),
+    ToolSubst('link_fdata', command=link_fdata_cmd, unresolved='fatal'),
     ToolSubst('merge-fdata', unresolved='fatal'),
 ]
 llvm_config.add_tool_substitutions(tools, tool_dirs)

@@ -42,5 +42,7 @@ install(PROGRAMS
   COMPONENT bolt
   )
 add_llvm_install_targets(install-bolt DEPENDS bolt COMPONENT bolt)
+set_target_properties(bolt PROPERTIES FOLDER "BOLT")
+set_target_properties(install-bolt PROPERTIES FOLDER "BOLT")
 
 include_directories( ${BOLT_SOURCE_DIR}/lib )

@@ -14,28 +14,30 @@ set(BOLT_TEST_PARAMS
   )
 
 list(APPEND BOLT_TEST_DEPS
+  clang
+  count
+  FileCheck
   llc
+  lld
   llvm-config
-  FileCheck count not
   llvm-bolt
   llvm-boltdiff
-  perf2bolt
-  merge-fdata
+  llvm-dwarfdump
+  llvm-mc
   llvm-nm
   llvm-objdump
   llvm-readelf
   llvm-readobj
-  yaml2obj
   llvm-strip
-  llvm-dwarfdump
-  llvm-mc
   llvm-objcopy
-  clang
-  lld
+  merge-fdata
+  not
+  perf2bolt
+  yaml2obj
   )
 
 add_custom_target(bolt-test-depends DEPENDS ${BOLT_TEST_DEPS})
-set_target_properties(bolt-test-depends PROPERTIES FOLDER "BOLT tests")
+set_target_properties(bolt-test-depends PROPERTIES FOLDER "BOLT")
 
 add_lit_testsuite(check-bolt "Running the BOLT regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -43,7 +45,7 @@ add_lit_testsuite(check-bolt "Running the BOLT regression tests"
   DEPENDS ${BOLT_TEST_DEPS}
   ARGS ${BOLT_TEST_EXTRA_ARGS}
   )
-set_target_properties(check-bolt PROPERTIES FOLDER "BOLT tests")
+set_target_properties(check-bolt PROPERTIES FOLDER "BOLT")
 
 add_lit_testsuites(BOLT ${CMAKE_CURRENT_SOURCE_DIR}
   PARAMS ${BOLT_TEST_PARAMS}
