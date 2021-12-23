@@ -58,5 +58,14 @@ function only accesses some of those methods which happens to match the subset
 defined for a type, the code will work temporariliy but fail later when the code
 is changed to use a different subset.
 
-All this helps achieve the Carbon Goal of
+Another approach to operator overloading is to use methods with a specific name.
+In C++ these start with the
+[`operator` keyword](https://en.cppreference.com/w/cpp/language/operators).
+[Python uses method with names starting and ending with double underscores](https://docs.python.org/3/reference/datamodel.html#special-method-names).
+Interfaces are more flexible about where implementations may be defined. For
+example, with special method names, `+` on a `Vector(T)` class could only be
+defined as part of the `Vector(T)` definition. With interfaces, additionally `+`
+for `Vector(MyType)` could be implemented with `MyType`.
+
+This helps achieve the Carbon Goal of
 [code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
