@@ -546,14 +546,12 @@ class RewriteInstanceDiff {
       const BinaryFunction *const &Func2 = MapEntry.first;
       double Score1 = getNormalizedScore(*Func1, RI1);
       auto Iter1 = LTOMap1.find(Func1);
-      if (Iter1 != LTOMap1.end()) {
+      if (Iter1 != LTOMap1.end())
         Score1 = LTOAggregatedScore1[Iter1->second];
-      }
       double Score2 = getNormalizedScore(*Func2, RI2);
       auto Iter2 = LTOMap2.find(Func2);
-      if (Iter2 != LTOMap2.end()) {
+      if (Iter2 != LTOMap2.end())
         Score2 = LTOAggregatedScore2[Iter2->second];
-      }
       if (Score1 == 0.0 || Score2 == 0.0)
         continue;
       LargestDiffs.insert(
@@ -616,10 +614,9 @@ class RewriteInstanceDiff {
       const std::pair<const double, const BinaryFunction *> &MapEntry = *I;
       outs() << "Function " << MapEntry.second->getDemangledName() << "\n";
       auto Iter = ScoreMap.find(MapEntry.second);
-      if (Iter != ScoreMap.end()) {
+      if (Iter != ScoreMap.end())
         outs() << "\tScore bin1 = "
                << format("%.2f", Iter->second.first * 100.0) << "%\n";
-      }
       outs() << "\tScore bin2 = " << format("%.2f", MapEntry.first * 100.0)
              << "%\n";
       if (Printed++ == opts::DisplayCount)

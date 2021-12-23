@@ -478,10 +478,10 @@ private:
       PLTSI = AArch64_PLTSections;
       break;
     }
-    for (; PLTSI && PLTSI->Name; ++PLTSI) {
+    for (; PLTSI && PLTSI->Name; ++PLTSI)
       if (SectionName == PLTSI->Name)
         return PLTSI;
-    }
+
     return nullptr;
   }
 

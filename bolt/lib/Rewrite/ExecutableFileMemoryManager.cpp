@@ -37,19 +37,17 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   }
 
   if (!IsCode && (SectionName == ".strtab" || SectionName == ".symtab" ||
-                  SectionName == "" || SectionName.startswith(".rela."))) {
+                  SectionName == "" || SectionName.startswith(".rela.")))
     return SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
                                                      SectionName, IsReadOnly);
-  }
 
   uint8_t *Ret;
-  if (IsCode) {
+  if (IsCode)
     Ret = SectionMemoryManager::allocateCodeSection(Size, Alignment, SectionID,
                                                     SectionName);
-  } else {
+  else
     Ret = SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
                                                     SectionName, IsReadOnly);
-  }
 
   SmallVector<char, 256> Buf;
   if (ObjectsLoaded > 0) {

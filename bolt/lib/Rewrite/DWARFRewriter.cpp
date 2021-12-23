@@ -146,9 +146,8 @@ getDWOName(llvm::DWARFUnit &CU,
          "DW_AT_dwo_name/DW_AT_GNU_dwo_name does not exists.");
   if (NameToIndexMap && !opts::DwarfOutputPath.empty()) {
     auto Iter = NameToIndexMap->find(DWOName);
-    if (Iter == NameToIndexMap->end()) {
+    if (Iter == NameToIndexMap->end())
       Iter = NameToIndexMap->insert({DWOName, 0}).first;
-    }
     DWOName.append(std::to_string(Iter->second));
     ++Iter->second;
   }
@@ -187,9 +186,9 @@ void DWARFRewriter::updateDebugInfo() {
 
   LocListWritersByCU.reserve(NumCUs);
 
-  for (size_t CUIndex = 0; CUIndex < NumCUs; ++CUIndex) {
+  for (size_t CUIndex = 0; CUIndex < NumCUs; ++CUIndex)
     LocListWritersByCU[CUIndex] = std::make_unique<DebugLocWriter>(&BC);
-  }
+
   // Unordered maps to handle name collision if output DWO directory is
   // specified.
   std::unordered_map<std::string, uint32_t> NameToIndexMap;
@@ -252,9 +251,8 @@ void DWARFRewriter::updateDebugInfo() {
   };
 
   if (opts::NoThreads || opts::DeterministicDebugInfo) {
-    for (std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units()) {
+    for (std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units())
       processUnitDIE(0, CU.get());
-    }
   } else {
     // Update unit debug info in parallel
     ThreadPool &ThreadPool = ParallelUtilities::getThreadPool();
@@ -263,7 +261,6 @@ void DWARFRewriter::updateDebugInfo() {
       ThreadPool.async(processUnitDIE, CUIndex, CU.get());
       CUIndex++;
     }
-
     ThreadPool.wait();
   }
 
@@ -566,10 +563,9 @@ void DWARFRewriter::updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
     }
   }
 
-  if (DIEOffset > NextCUOffset) {
+  if (DIEOffset > NextCUOffset)
     errs() << "BOLT-WARNING: corrupt DWARF detected at 0x"
            << Twine::utohexstr(Unit.getOffset()) << '\n';
-  }
 }
 
 void DWARFRewriter::updateDWARFObjectAddressRanges(
@@ -585,11 +581,10 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
   const DWARFAbbreviationDeclaration *AbbreviationDecl =
       DIE.getAbbreviationDeclarationPtr();
   if (!AbbreviationDecl) {
-    if (opts::Verbosity >= 1) {
+    if (opts::Verbosity >= 1)
       errs() << "BOLT-WARNING: object's DIE doesn't have an abbreviation: "
              << "skipping update. DIE at offset 0x"
              << Twine::utohexstr(DIE.getOffset()) << '\n';
-    }
     return;
   }
 
@@ -646,10 +641,9 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
                     RangesBase);
     convertToRanges(DIE, DebugRangesOffset, DebugInfoPatcher, RangesBase);
   } else {
-    if (opts::Verbosity >= 1) {
+    if (opts::Verbosity >= 1)
       errs() << "BOLT-ERROR: cannot update ranges for DIE at offset 0x"
              << Twine::utohexstr(DIE.getOffset()) << '\n';
-    }
   }
 }
 
@@ -1033,9 +1027,9 @@ void DWARFRewriter::writeDWP(
 
       StringRef OutData = *TOutData;
       StringRef Name = getSectionName(Section);
-      if (Name.equals("debug_str.dwo"))
+      if (Name.equals("debug_str.dwo")) {
         CurStrSection = OutData;
-      else {
+      } else {
         // Since handleDebugDataPatching returned true, we already know this is
         // a known section.
         auto SectionIter = KnownSections.find(Name);
@@ -1247,11 +1241,10 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
                                     const DebugAddressRangesVector &Ranges,
                                     SimpleBinaryPatcher &DebugInfoPatcher) {
   uint64_t RangesSectionOffset;
-  if (Ranges.empty()) {
+  if (Ranges.empty())
     RangesSectionOffset = RangesSectionWriter->getEmptyRangesOffset();
-  } else {
+  else
     RangesSectionOffset = RangesSectionWriter->addRanges(Ranges);
-  }
 
   convertToRanges(DIE, RangesSectionOffset, DebugInfoPatcher);
 }
@@ -1267,9 +1260,8 @@ void DWARFRewriter::convertPending(const DWARFUnit &Unit,
 
   auto I = PendingRanges.find(Abbrev);
   if (I != PendingRanges.end()) {
-    for (std::pair<DWARFDieWrapper, DebugAddressRange> &Pair : I->second) {
+    for (std::pair<DWARFDieWrapper, DebugAddressRange> &Pair : I->second)
       convertToRanges(Pair.first, {Pair.second}, DebugInfoPatcher);
-    }
     PendingRanges.erase(I);
   }
 
@@ -1342,11 +1334,9 @@ DWARFRewriter::makeFinalLocListsSection(SimpleBinaryPatcher &DebugInfoPatcher) {
 void DWARFRewriter::flushPendingRanges(SimpleBinaryPatcher &DebugInfoPatcher) {
   for (std::pair<const DWARFAbbreviationDeclaration *const,
                  std::vector<std::pair<DWARFDieWrapper, DebugAddressRange>>>
-           &I : PendingRanges) {
-    for (std::pair<DWARFDieWrapper, DebugAddressRange> &RangePair : I.second) {
+           &I : PendingRanges)
+    for (std::pair<DWARFDieWrapper, DebugAddressRange> &RangePair : I.second)
       patchLowHigh(RangePair.first, RangePair.second, DebugInfoPatcher);
-    }
-  }
   clearList(PendingRanges);
 }
 
@@ -1402,11 +1392,10 @@ void DWARFRewriter::patchLowHigh(DWARFDie DIE, DebugAddressRange Range,
     TempDebugPatcher->addLE64Patch(LowPCOffset, Range.LowPC);
   }
 
-  if (isHighPcFormEightBytes(HighPCFormValue.getForm())) {
+  if (isHighPcFormEightBytes(HighPCFormValue.getForm()))
     TempDebugPatcher->addLE64Patch(HighPCOffset, Range.HighPC - Range.LowPC);
-  } else {
+  else
     TempDebugPatcher->addLE32Patch(HighPCOffset, Range.HighPC - Range.LowPC);
-  }
 }
 
 void DWARFRewriter::convertToRanges(const DWARFUnit &Unit,
