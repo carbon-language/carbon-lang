@@ -1,12 +1,12 @@
 #!/bin/bash
-#===--------------- llvm/tools/llvm-bolt/utils/bughunter.sh ---------------===//
+##===- bolt/utils/bughunter.sh - Help locate BOLT bugs -------*- Script -*-===##
 #
-#                     The LLVM Compiler Infrastructure
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# details.
 #
-# This file is distributed under the University of Illinois Open Source
-# License. See LICENSE.TXT for details.
-#
-#===-----------------------------------------------------------------------===//
+##===----------------------------------------------------------------------===##
 #
 # This script attempts to narrow down llvm-bolt bug to a single function in the
 # input binary.
@@ -55,6 +55,8 @@
 #
 #   VERBOSE           - if non-empty, set the script to echo mode.
 #
+##===----------------------------------------------------------------------===##
+
 BOLT=${BOLT:=llvm-bolt}
 
 ulimit -c 0
