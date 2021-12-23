@@ -83,7 +83,8 @@ struct InvalidHorizontalWhitespaceInString
       "sequence in a string literal.";
 };
 
-/*
+// Find and return the opening characters of a multi-line string literal,
+// after any '#'s, including the file type indicator and following newline.
 static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
     -> llvm::StringRef {
   llvm::StringRef remaining = source_text;
@@ -101,57 +102,28 @@ static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
 
   return source_text.take_front(remaining.begin() - source_text.begin());
 }
-*/
-
-// Returns the end of the prefix for a multi-line string literal, including the
-// file type indicator and following newline. If it's not multi-line, returns
-// nullptr.
-static auto GetMultiLineStringLiteralPrefixEnd(const char* start,
-                                               const char* source_text_end)
-    -> const char* {
-  constexpr char Quotes[] = R"(""")";
-  if (source_text_end - start < static_cast<int>(strlen(Quotes)) ||
-      memcmp(start, Quotes, strlen(Quotes) * sizeof(char)) != 0) {
-    return nullptr;
-  }
-  for (const char* cursor = start + strlen(Quotes); cursor < source_text_end;
-       ++cursor) {
-    switch (*cursor) {
-      case '#':
-      case '"':
-        return nullptr;
-      case '\n':
-        return cursor + 1;
-    }
-  }
-  return nullptr;
-}
 
 // If source_text begins with a string literal token, extract and return
 // information on that token.
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
-  const char* text_begin = source_text.begin();
-  const char* source_text_end = source_text.end();
+  const char* begin = source_text.begin();
 
-  size_t hash_level = source_text.find_first_not_of('#');
-  if (hash_level == llvm::StringRef::npos) {
-    return llvm::None;
+  int hash_level = 0;
+  while (source_text.consume_front("#")) {
+    ++hash_level;
   }
-  const char* content_begin = text_begin + hash_level;
 
   llvm::SmallString<16> terminator("\"");
   llvm::SmallString<16> escape("\\");
 
-  const char* multi_line_prefix_end =
-      GetMultiLineStringLiteralPrefixEnd(content_begin, source_text_end);
-  bool multi_line = multi_line_prefix_end != nullptr;
+  llvm::StringRef multi_line_prefix =
+      TakeMultiLineStringLiteralPrefix(source_text);
+  bool multi_line = !multi_line_prefix.empty();
   if (multi_line) {
-    content_begin = multi_line_prefix_end;
+    source_text = source_text.drop_front(multi_line_prefix.size());
     terminator = R"(""")";
-  } else if (content_begin < source_text_end && *content_begin == '"') {
-    ++content_begin;
-  } else {
+  } else if (!source_text.consume_front("\"")) {
     return llvm::None;
   }
 
@@ -160,14 +132,16 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
-  for (const char* cursor = content_begin; cursor != source_text_end;
-       ++cursor) {
+  const char* cursor = source_text.begin();
+  const char* source_text_end = source_text.end();
+  while (cursor != source_text_end) {
     switch (*cursor) {
       case '\\':
         // This relies on multi-character escape sequences not containing an
         // embedded and unescaped terminator or newline.
-        if (hash_level == 0 || llvm::StringRef(cursor, source_text_end - cursor)
-                                   .startswith(escape)) {
+        if (escape.size() == 1 ||
+            llvm::StringRef(cursor, source_text_end - cursor)
+                .startswith(escape)) {
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
@@ -183,206 +157,22 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
         }
         break;
       case '\"': {
-        if (llvm::StringRef(cursor, source_text_end - cursor)
+        if (terminator.size() == 1 ||
+            llvm::StringRef(cursor, source_text_end - cursor)
                 .startswith(terminator)) {
-          llvm::StringRef text(text_begin,
-                               cursor - text_begin + terminator.size());
-          llvm::StringRef content(content_begin, cursor - content_begin);
+          llvm::StringRef text(begin, cursor - begin + terminator.size());
+          llvm::StringRef content(source_text.begin(),
+                                  cursor - source_text.begin());
           return LexedStringLiteral(text, content, hash_level, multi_line);
         }
         break;
       }
     }
+    ++cursor;
   }
   // Let LexError figure out how to recover from an unterminated string
   // literal.
   return llvm::None;
-
-  /*
-  fastbuild
-  BM_ValidString_Simple                  305411 ns       305385 ns         2266
-  BM_ValidString_Multiline               307486 ns       307446 ns         2282
-  BM_ValidString_Raw                     306693 ns       306667 ns         2293
-  BM_IncompleteWithEscapes_Simple        275252 ns       275225 ns         2503
-  BM_IncompleteWithEscapes_Multiline     263120 ns       263085 ns         2608
-  BM_IncompleteWithEscapes_Raw           693668 ns       693588 ns          997
-  opt
-  BM_ValidString_Simple                   69245 ns        69238 ns        10060
-  BM_ValidString_Multiline                67667 ns        67661 ns        10185
-  BM_ValidString_Raw                      67697 ns        67691 ns        10244
-  BM_IncompleteWithEscapes_Simple         68324 ns        68315 ns        10399
-  BM_IncompleteWithEscapes_Multiline      50578 ns        50574 ns        13943
-  BM_IncompleteWithEscapes_Raw           134478 ns       134462 ns         5288
-  */
-  /*
-    const char* begin = source_text.begin();
-
-    int hash_level = 0;
-    while (source_text.consume_front("#")) {
-      ++hash_level;
-    }
-
-    llvm::SmallString<16> terminator("\"");
-    llvm::SmallString<16> escape("\\");
-
-    llvm::StringRef multi_line_prefix =
-        TakeMultiLineStringLiteralPrefix(source_text);
-    bool multi_line = !multi_line_prefix.empty();
-    if (multi_line) {
-      source_text = source_text.drop_front(multi_line_prefix.size());
-      terminator = R"(""")";
-    } else if (!source_text.consume_front("\"")) {
-      return llvm::None;
-    }
-
-    // The terminator and escape sequence marker require a number of '#'s
-    // matching the leading sequence of '#'s.
-    const int terminator_size = terminator.size() + hash_level;
-    terminator.resize(terminator_size, '#');
-    const int escape_size = escape.size() + hash_level;
-    escape.resize(escape_size, '#');
-
-    const char* cursor = source_text.begin();
-    const char* source_text_end = source_text.end();
-    while (cursor != source_text_end) {
-      switch (*cursor) {
-        case '\\':
-          // This relies on multi-character escape sequences not containing an
-          // embedded and unescaped terminator or newline.
-          if (escape_size == 1 ||
-              llvm::StringRef(cursor, source_text_end - cursor)
-                  .startswith(escape)) {
-            cursor += escape_size;
-            // If there's either not a character following the escape, or it's a
-            // single-line string and the escaped character is a newline, we
-            // should stop here.
-            if (cursor == source_text_end || (!multi_line && *cursor == '\n')) {
-              return llvm::None;
-            }
-          }
-          break;
-        case '\n':
-          if (!multi_line) {
-            return llvm::None;
-          }
-          break;
-        case '\"': {
-          if (llvm::StringRef(cursor, source_text_end - cursor)
-                  .startswith(terminator)) {
-            return LexedStringLiteral(
-                llvm::StringRef(begin, cursor - begin + terminator_size),
-                llvm::StringRef(source_text.begin(),
-                                cursor - source_text.begin()),
-                hash_level, multi_line);
-          }
-          break;
-        }
-      }
-      ++cursor;
-    }
-    return llvm::None;
-  */
-
-  /*
-BM_ValidString_Simple                  545808 ns       545716 ns         1288
-BM_ValidString_Multiline               544358 ns       544288 ns         1294
-BM_ValidString_Raw                     560736 ns       560682 ns         1278
-BM_IncompleteWithEscapes_Simple       2410269 ns      2409978 ns          290
-BM_IncompleteWithEscapes_Multiline    2288780 ns      2288446 ns          306
-BM_IncompleteWithEscapes_Raw          2530670 ns      2530243 ns          288
-opt
-BM_ValidString_Simple                  102361 ns       102350 ns         6788
-BM_ValidString_Multiline               103207 ns       103198 ns         6878
-BM_ValidString_Raw                     102159 ns       102139 ns         6746
-BM_IncompleteWithEscapes_Simple        270925 ns       270880 ns         2535
-BM_IncompleteWithEscapes_Multiline     269758 ns       269723 ns         2603
-BM_IncompleteWithEscapes_Raw           242358 ns       242332 ns         2865
-  */
-  /*
-    int introducer_size = source_text.begin() - begin;
-    llvm::StringRef look_for = "\\\n\"";
-    size_t cursor = 0;
-    const size_t source_text_size = source_text.size();
-    for (;;) {
-      cursor = source_text.find_first_of(look_for, cursor);
-      if (cursor == llvm::StringRef::npos) {
-        return llvm::None;
-      }
-      switch (source_text[cursor]) {
-        case '\\':
-          if (escape_size == 1 || source_text.substr(cursor).startswith(escape))
-    { cursor += escape_size; if (!multi_line && source_text_size > cursor &&
-                source_text[cursor] == '\n') {
-              return llvm::None;
-            }
-          }
-          break;
-        case '\n':
-          if (!multi_line) {
-            return llvm::None;
-          }
-          break;
-        case '\"': {
-          if (source_text.substr(cursor).startswith(terminator)) {
-            return LexedStringLiteral(
-                llvm::StringRef(begin,
-                                introducer_size + cursor + terminator_size),
-                source_text.substr(0, cursor), hash_level, multi_line);
-          }
-          break;
-        }
-        default:
-          FATAL() << "find_first_of must correspond to an above character";
-      }
-      ++cursor;
-    }
-  */
-
-  /*
-fastbuild
-BM_ValidString_Simple                 6687822 ns      6687109 ns          105
-BM_ValidString_Multiline              4734796 ns      4734125 ns          149
-BM_ValidString_Raw                    6650717 ns      6649633 ns          104
-BM_IncompleteWithEscapes_Simple       5274067 ns      5273569 ns          132
-BM_IncompleteWithEscapes_Multiline    3831291 ns      3830516 ns          183
-BM_IncompleteWithEscapes_Raw          4227835 ns      4227115 ns          166
-opt
-BM_ValidString_Simple                  642729 ns       642643 ns         1067
-BM_ValidString_Multiline               703019 ns       702949 ns          990
-BM_ValidString_Raw                     801925 ns       801792 ns          874
-BM_IncompleteWithEscapes_Simple        500082 ns       499979 ns         1368
-BM_IncompleteWithEscapes_Multiline     563000 ns       562947 ns         1247
-BM_IncompleteWithEscapes_Raw           486858 ns       486816 ns         1451
-  */
-  /*
-    const char* content_begin = source_text.begin();
-    const char* content_end = content_begin;
-    while (!source_text.consume_front(terminator)) {
-      // Let LexError figure out how to recover from an unterminated string
-      // literal.
-      if (source_text.empty()) {
-        return llvm::None;
-      }
-
-      // Consume an escape sequence marker if present.
-      (void)source_text.consume_front(escape);
-
-      // Then consume one more character, either of the content or of an
-      // escape sequence. This can be a newline in a multi-line string literal.
-      // This relies on multi-character escape sequences not containing an
-      // embedded and unescaped terminator or newline.
-      if (!multi_line && source_text.startswith("\n")) {
-        return llvm::None;
-      }
-      source_text = source_text.substr(1);
-      content_end = source_text.begin();
-    }
-
-    return LexedStringLiteral(
-        llvm::StringRef(begin, source_text.begin() - begin),
-        llvm::StringRef(content_begin, content_end - content_begin), hash_level,
-        multi_line);
-        */
 }
 
 // Given a string that contains at least one newline, find the indent (the
