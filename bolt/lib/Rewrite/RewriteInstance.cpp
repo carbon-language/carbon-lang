@@ -4808,7 +4808,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       ShouldPatch = false;
       break;
     case ELF::DT_INIT:
-    case ELF::DT_FINI:
+    case ELF::DT_FINI: {
       if (BC->HasRelocations) {
         if (uint64_t NewAddress = getNewFunctionAddress(Dyn.getPtr())) {
           LLVM_DEBUG(dbgs() << "BOLT-DEBUG: patching dynamic entry of type "
@@ -4816,22 +4816,20 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
           NewDE.d_un.d_ptr = NewAddress;
         }
       }
-      if (Dyn.getTag() == ELF::DT_FINI) {
-        if (RuntimeLibrary *RtLibrary = BC->getRuntimeLibrary()) {
-          if (uint64_t Addr = RtLibrary->getRuntimeFiniAddress())
-            NewDE.d_un.d_ptr = Addr;
-        }
+      RuntimeLibrary *RtLibrary = BC->getRuntimeLibrary();
+      if (RtLibrary && Dyn.getTag() == ELF::DT_FINI) {
+        if (uint64_t Addr = RtLibrary->getRuntimeFiniAddress())
+          NewDE.d_un.d_ptr = Addr;
       }
-      if (Dyn.getTag() == ELF::DT_INIT && !BC->HasInterpHeader) {
-        if (auto *RtLibrary = BC->getRuntimeLibrary()) {
-          if (auto Addr = RtLibrary->getRuntimeStartAddress()) {
-            LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Set DT_INIT to 0x"
-                              << Twine::utohexstr(Addr) << '\n');
-            NewDE.d_un.d_ptr = Addr;
-          }
+      if (RtLibrary && Dyn.getTag() == ELF::DT_INIT && !BC->HasInterpHeader) {
+        if (auto Addr = RtLibrary->getRuntimeStartAddress()) {
+          LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Set DT_INIT to 0x"
+                            << Twine::utohexstr(Addr) << '\n');
+          NewDE.d_un.d_ptr = Addr;
         }
       }
       break;
+    }
     case ELF::DT_FLAGS:
       if (BC->RequiresZNow) {
         NewDE.d_un.d_val |= ELF::DF_BIND_NOW;
