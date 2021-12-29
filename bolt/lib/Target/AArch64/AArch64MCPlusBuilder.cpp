@@ -218,10 +218,10 @@ public:
 
     // Look for literal addressing mode (see C1-143 ARM DDI 0487B.a)
     const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
-    for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
+    for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I)
       if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL)
         return true;
-    }
+
     return false;
   }
 
@@ -298,9 +298,8 @@ public:
     } else {
       const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
       for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
-        if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL) {
+        if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL)
           break;
-        }
         ++OI;
       }
       assert(OI != Inst.end() && "Literal operand not found");
@@ -505,9 +504,9 @@ public:
 
     // Match the indirect branch pattern for aarch64
     SmallVector<MCInst *, 4> &UsesRoot = UDChain[&Inst];
-    if (UsesRoot.size() == 0 || UsesRoot[0] == nullptr) {
+    if (UsesRoot.size() == 0 || UsesRoot[0] == nullptr)
       return false;
-    }
+
     const MCInst *DefAdd = UsesRoot[0];
 
     // Now we match an ADD
@@ -548,18 +547,17 @@ public:
     unsigned ShiftVal = AArch64_AM::getArithShiftValue(OperandExtension);
     AArch64_AM::ShiftExtendType ExtendType =
         AArch64_AM::getArithExtendType(OperandExtension);
-    if (ShiftVal != 2) {
+    if (ShiftVal != 2)
       llvm_unreachable("Failed to match indirect branch! (fragment 2)");
-    }
-    if (ExtendType == AArch64_AM::SXTB) {
+
+    if (ExtendType == AArch64_AM::SXTB)
       ScaleValue = 1LL;
-    } else if (ExtendType == AArch64_AM::SXTH) {
+    else if (ExtendType == AArch64_AM::SXTH)
       ScaleValue = 2LL;
-    } else if (ExtendType == AArch64_AM::SXTW) {
+    else if (ExtendType == AArch64_AM::SXTW)
       ScaleValue = 4LL;
-    } else {
+    else
       llvm_unreachable("Failed to match indirect branch! (fragment 3)");
-    }
 
     // Match an ADR to load base address to be used when addressing JT targets
     SmallVector<MCInst *, 4> &UsesAdd = UDChain[DefAdd];
@@ -671,9 +669,9 @@ public:
 
     // Process the last instruction, which is not currently added into the
     // instruction stream
-    if (CurInstr) {
+    if (CurInstr)
       addInstrOperands(*CurInstr);
-    }
+
     return Uses;
   }
 
@@ -708,9 +706,8 @@ public:
         computeLocalUDChain(&Instruction, Begin, End);
     MCInst *PCRelBase;
     if (!analyzeIndirectBranchFragment(Instruction, UDChain, DispExpr,
-                                       DispValue, ScaleValue, PCRelBase)) {
+                                       DispValue, ScaleValue, PCRelBase))
       return IndirectBranchType::UNKNOWN;
-    }
 
     MemLocInstrOut = MemLocInstr;
     DispValueOut = DispValue;
@@ -873,9 +870,8 @@ public:
       }
 
       // Handle conditional branches and ignore indirect branches
-      if (isIndirectBranch(*I)) {
+      if (isIndirectBranch(*I))
         return false;
-      }
 
       if (CondBranch == nullptr) {
         const MCSymbol *TargetBB = getTargetSymbol(*I);

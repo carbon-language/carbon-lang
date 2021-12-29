@@ -943,10 +943,9 @@ public:
   }
 
   bool hasPCRelOperand(const MCInst &Inst) const override {
-    for (const MCOperand &Operand : Inst) {
+    for (const MCOperand &Operand : Inst)
       if (Operand.isReg() && Operand.getReg() == X86::RIP)
         return true;
-    }
     return false;
   }
 
@@ -1004,14 +1003,14 @@ public:
 
     // Check instructions against table 3-1 in Intel's Optimization Guide.
     unsigned FirstInstGroup = 0;
-    if (isTEST(FirstInst.getOpcode()) || isAND(FirstInst.getOpcode())) {
+    if (isTEST(FirstInst.getOpcode()) || isAND(FirstInst.getOpcode()))
       FirstInstGroup = 1;
-    } else if (isCMP(FirstInst.getOpcode()) || isADD(FirstInst.getOpcode()) ||
-               ::isSUB(FirstInst.getOpcode())) {
+    else if (isCMP(FirstInst.getOpcode()) || isADD(FirstInst.getOpcode()) ||
+             ::isSUB(FirstInst.getOpcode()))
       FirstInstGroup = 2;
-    } else if (isINC(FirstInst.getOpcode()) || isDEC(FirstInst.getOpcode())) {
+    else if (isINC(FirstInst.getOpcode()) || isDEC(FirstInst.getOpcode()))
       FirstInstGroup = 3;
-    }
+
     if (FirstInstGroup == 0)
       return false;
 
@@ -1075,15 +1074,13 @@ public:
     if (Disp.isImm()) {
       assert(DispImm && "DispImm needs to be set");
       *DispImm = Disp.getImm();
-      if (DispExpr) {
+      if (DispExpr)
         *DispExpr = nullptr;
-      }
     } else {
       assert(DispExpr && "DispExpr needs to be set");
       *DispExpr = Disp.getExpr();
-      if (DispImm) {
+      if (DispImm)
         *DispImm = 0;
-      }
     }
     *SegmentRegNum = Segment.getReg();
     return true;
@@ -1100,16 +1097,15 @@ public:
     unsigned      SegRegNum;
     const MCExpr *DispExpr = nullptr;
     if (!evaluateX86MemoryOperand(Inst, &BaseRegNum, &ScaleValue, &IndexRegNum,
-                                  &DispValue, &SegRegNum, &DispExpr)) {
+                                  &DispValue, &SegRegNum, &DispExpr))
       return false;
-    }
 
     // Make sure it's a well-formed addressing we can statically evaluate.
     if ((BaseRegNum != X86::RIP && BaseRegNum != X86::NoRegister) ||
         IndexRegNum != X86::NoRegister || SegRegNum != X86::NoRegister ||
-        DispExpr) {
+        DispExpr)
       return false;
-    }
+
     Target = DispValue;
     if (BaseRegNum == X86::RIP) {
       assert(Size != 0 && "instruction size required in order to statically "
@@ -1394,13 +1390,13 @@ public:
       StackOffset = -Sz;
       Size = Sz;
       IsSimple = true;
-      if (Inst.getOperand(0).isImm()) {
+      if (Inst.getOperand(0).isImm())
         SrcImm = Inst.getOperand(0).getImm();
-      } else if (Inst.getOperand(0).isReg()) {
+      else if (Inst.getOperand(0).isReg())
         Reg = Inst.getOperand(0).getReg();
-      } else {
+      else
         IsSimple = false;
-      }
+
       return true;
     }
     if (int Sz = getPopSize(Inst)) {
@@ -1481,9 +1477,8 @@ public:
     }
 
     // Make sure it's a stack access
-    if (BaseRegNum != X86::RBP && BaseRegNum != X86::RSP) {
+    if (BaseRegNum != X86::RBP && BaseRegNum != X86::RSP)
       return false;
-    }
 
     IsLoad = I.IsLoad;
     IsStore = I.IsStore;
@@ -1623,9 +1618,8 @@ public:
     const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
     for (int I = 0, E = MCII.getNumDefs(); I != E; ++I) {
       const MCOperand &Operand = Inst.getOperand(I);
-      if (Operand.isReg() && Operand.getReg() == X86::RSP) {
+      if (Operand.isReg() && Operand.getReg() == X86::RSP)
         return true;
-      }
     }
     return false;
   }
@@ -1651,42 +1645,38 @@ public:
       if (!Inst.getOperand(2).isImm())
         return false;
       if (ErrorOr<int64_t> InputVal =
-              getOperandVal(Inst.getOperand(1).getReg())) {
+              getOperandVal(Inst.getOperand(1).getReg()))
         Output = *InputVal & Inst.getOperand(2).getImm();
-      } else {
+      else
         return false;
-      }
       break;
     case X86::SUB64ri32:
     case X86::SUB64ri8:
       if (!Inst.getOperand(2).isImm())
         return false;
       if (ErrorOr<int64_t> InputVal =
-              getOperandVal(Inst.getOperand(1).getReg())) {
+              getOperandVal(Inst.getOperand(1).getReg()))
         Output = *InputVal - Inst.getOperand(2).getImm();
-      } else {
+      else
         return false;
-      }
       break;
     case X86::ADD64ri32:
     case X86::ADD64ri8:
       if (!Inst.getOperand(2).isImm())
         return false;
       if (ErrorOr<int64_t> InputVal =
-              getOperandVal(Inst.getOperand(1).getReg())) {
+              getOperandVal(Inst.getOperand(1).getReg()))
         Output = *InputVal + Inst.getOperand(2).getImm();
-      } else {
+      else
         return false;
-      }
       break;
     case X86::ADD64i32:
       if (!Inst.getOperand(0).isImm())
         return false;
-      if (ErrorOr<int64_t> InputVal = getOperandVal(X86::RAX)) {
+      if (ErrorOr<int64_t> InputVal = getOperandVal(X86::RAX))
         Output = *InputVal + Inst.getOperand(0).getImm();
-      } else {
+      else
         return false;
-      }
       break;
 
     case X86::LEA64r: {
@@ -1698,20 +1688,17 @@ public:
       const MCExpr *DispExpr = nullptr;
       if (!evaluateX86MemoryOperand(Inst, &BaseRegNum, &ScaleValue,
                                     &IndexRegNum, &DispValue, &SegRegNum,
-                                    &DispExpr)) {
+                                    &DispExpr))
         return false;
-      }
 
       if (BaseRegNum == X86::NoRegister || IndexRegNum != X86::NoRegister ||
-          SegRegNum != X86::NoRegister || DispExpr) {
+          SegRegNum != X86::NoRegister || DispExpr)
         return false;
-      }
 
-      if (ErrorOr<int64_t> InputVal = getOperandVal(BaseRegNum)) {
+      if (ErrorOr<int64_t> InputVal = getOperandVal(BaseRegNum))
         Output = *InputVal + DispValue;
-      } else {
+      else
         return false;
-      }
 
       break;
     }
@@ -1801,16 +1788,13 @@ public:
   bool addToImm(MCInst &Inst, int64_t &Amt, MCContext *Ctx) const override {
     unsigned ImmOpNo = -1U;
     int MemOpNo = getMemoryOperandNo(Inst);
-    if (MemOpNo != -1) {
+    if (MemOpNo != -1)
       ImmOpNo = MemOpNo + X86::AddrDisp;
-    } else {
+    else
       for (unsigned Index = 0;
-           Index < MCPlus::getNumPrimeOperands(Inst); ++Index) {
-        if (Inst.getOperand(Index).isImm()) {
+           Index < MCPlus::getNumPrimeOperands(Inst); ++Index)
+        if (Inst.getOperand(Index).isImm())
           ImmOpNo = Index;
-        }
-      }
-    }
     if (ImmOpNo == -1U)
       return false;
 
@@ -1992,9 +1976,9 @@ public:
     if (NewOpcode == X86::TEST8ri ||
         NewOpcode == X86::TEST16ri ||
         NewOpcode == X86::TEST32ri ||
-        NewOpcode == X86::TEST64ri32) {
+        NewOpcode == X86::TEST64ri32)
       TargetOpNum = getMemoryOperandNo(Inst) + X86::AddrNumOperands;
-    }
+
     MCOperand TargetOp = Inst.getOperand(TargetOpNum);
     Inst.clear();
     Inst.setOpcode(NewOpcode);
@@ -2207,9 +2191,8 @@ public:
       MCOperand &IndexOp =
           Inst.getOperand(static_cast<unsigned>(MemOpNo) + X86::AddrIndexReg);
       if (IndexOp.getReg() == X86::EIZ ||
-          IndexOp.getReg() == X86::RIZ) {
+          IndexOp.getReg() == X86::RIZ)
         IndexOp = MCOperand::createReg(X86::NoRegister);
-      }
     }
 
     if (isBranch(Inst)) {
@@ -2218,9 +2201,8 @@ public:
       if (Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).isImm()) {
         const int64_t Imm =
             Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
-        if (int64_t(Imm) == int64_t(int32_t(Imm))) {
+        if (int64_t(Imm) == int64_t(int32_t(Imm)))
           NewOpcode = X86::MOV64ri32;
-        }
       }
     } else {
       // If it's arithmetic instruction check if signed operand fits in 1 byte.
@@ -2229,9 +2211,8 @@ public:
           Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).isImm()) {
         int64_t Imm =
             Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
-        if (int64_t(Imm) == int64_t(int8_t(Imm))) {
+        if (int64_t(Imm) == int64_t(int8_t(Imm)))
           NewOpcode = ShortOpcode;
-        }
       }
     }
 
@@ -2385,7 +2366,8 @@ public:
           !InstrDesc.hasDefOfPhysReg(Instr, R2, *RegInfo)) {
         // Ignore instructions that don't affect R1, R2 registers.
         continue;
-      } else if (!MovInstr) {
+      }
+      if (!MovInstr) {
         // Expect to see MOV instruction.
         if (!isMOVSX64rm32(Instr)) {
           LLVM_DEBUG(dbgs() << "MOV instruction expected.\n");
@@ -2526,15 +2508,15 @@ public:
         if (isMoveMem2Reg(PrevInstr)) {
           MemLocInstr = &PrevInstr;
           break;
-        } else if (isADD64rr(PrevInstr)) {
+        }
+        if (isADD64rr(PrevInstr)) {
           unsigned R2 = PrevInstr.getOperand(2).getReg();
           if (R1 == R2)
             return IndirectBranchType::UNKNOWN;
           std::tie(Type, MemLocInstr) = analyzePICJumpTable(PrevII, IE, R1, R2);
           break;
-        } else {
-          return IndirectBranchType::UNKNOWN;
         }
+        return IndirectBranchType::UNKNOWN;
       }
       if (!MemLocInstr) {
         // No definition seen for the register in this function so far. Could be
@@ -2653,11 +2635,11 @@ public:
         }
       }
       return false;
-    } else if (CallInst.getOperand(0).isReg()) {
-      MethodRegNum = CallInst.getOperand(0).getReg();
-    } else {
-      return false;
     }
+    if (CallInst.getOperand(0).isReg())
+      MethodRegNum = CallInst.getOperand(0).getReg();
+    else
+      return false;
 
     if (MethodRegNum == X86::RIP || MethodRegNum == X86::RBP) {
       VtableRegNum = X86::NoRegister;
@@ -2878,7 +2860,7 @@ public:
 
   InstructionListType createInlineMemcpy(bool ReturnEnd) const override {
     InstructionListType Code;
-    if (ReturnEnd) {
+    if (ReturnEnd)
       Code.emplace_back(MCInstBuilder(X86::LEA64r)
                             .addReg(X86::RAX)
                             .addReg(X86::RDI)
@@ -2886,11 +2868,11 @@ public:
                             .addReg(X86::RDX)
                             .addImm(0)
                             .addReg(X86::NoRegister));
-    } else {
+    else
       Code.emplace_back(MCInstBuilder(X86::MOV64rr)
                             .addReg(X86::RAX)
                             .addReg(X86::RDI));
-    }
+
     Code.emplace_back(MCInstBuilder(X86::MOV32rr)
                           .addReg(X86::ECX)
                           .addReg(X86::EDX));
@@ -3167,11 +3149,10 @@ public:
 
     unsigned NumFound = 0;
     for (unsigned Index = InstDesc.getNumDefs() + (I.HasLHS ? 1 : 0),
-                  E = InstDesc.getNumOperands(); Index != E; ++Index) {
+                  E = InstDesc.getNumOperands(); Index != E; ++Index)
       if (Inst.getOperand(Index).isReg() &&
           Inst.getOperand(Index).getReg() == Register)
         NumFound++;
-    }
 
     if (NumFound != 1)
       return false;
@@ -3655,9 +3636,9 @@ public:
     // Carry over metadata
     for (int I = MCPlus::getNumPrimeOperands(CallInst),
              E = CallInst.getNumOperands();
-         I != E; ++I) {
+         I != E; ++I)
       Insts.back().addOperand(CallInst.getOperand(I));
-    }
+
     return Insts;
   }
 
@@ -3800,9 +3781,8 @@ public:
 
       for (unsigned int I = 0; I < MCPlus::getNumPrimeOperands(CallInst); ++I) {
         const MCOperand &Op = CallInst.getOperand(I);
-        if (Op.isReg()) {
+        if (Op.isReg())
           UsedRegs.insert(Op.getReg());
-        }
       }
 
       if (UsedRegs.count(X86::R10) == 0)
@@ -3842,9 +3822,9 @@ public:
         } else {
           const uint64_t Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
-          if (int64_t(Addr) != int64_t(int32_t(Addr))) {
+          if (int64_t(Addr) != int64_t(int32_t(Addr)))
             return BlocksVectorTy();
-          }
+
           Target.addOperand(MCOperand::createImm(Addr));
         }
 
@@ -3852,40 +3832,37 @@ public:
         NewCall->push_back(CallInst);
         MCInst &Compare = NewCall->back();
         Compare.clear();
-        if (isBranchOnReg(CallInst)) {
+        if (isBranchOnReg(CallInst))
           Compare.setOpcode(X86::CMP64rr);
-        } else if (CallInst.getOpcode() == X86::CALL64pcrel32) {
+        else if (CallInst.getOpcode() == X86::CALL64pcrel32)
           Compare.setOpcode(X86::CMP64ri32);
-        } else {
+        else
           Compare.setOpcode(X86::CMP64rm);
-        }
+
         Compare.addOperand(MCOperand::createReg(FuncAddrReg));
 
         // TODO: Would be preferable to only load this value once.
         for (unsigned i = 0;
              i < Info->get(CallInst.getOpcode()).getNumOperands();
-             ++i) {
+             ++i)
           if (!CallInst.getOperand(i).isInst())
             Compare.addOperand(CallInst.getOperand(i));
-        }
       } else {
         // Compare current call target to a specific address.
         NewCall->push_back(CallInst);
         MCInst &Compare = NewCall->back();
         Compare.clear();
-        if (isBranchOnReg(CallInst)) {
+        if (isBranchOnReg(CallInst))
           Compare.setOpcode(X86::CMP64ri32);
-        } else {
+        else
           Compare.setOpcode(X86::CMP64mi32);
-        }
 
         // Original call address.
         for (unsigned i = 0;
              i < Info->get(CallInst.getOpcode()).getNumOperands();
-             ++i) {
+             ++i)
           if (!CallInst.getOperand(i).isInst())
             Compare.addOperand(CallInst.getOperand(i));
-        }
 
         // Target address.
         if (Targets[i].first || LoadElim) {
@@ -3895,19 +3872,18 @@ public:
 
           const MCExpr *Expr = MCSymbolRefExpr::create(Sym, *Ctx);
 
-          if (Addend) {
+          if (Addend)
             Expr = MCBinaryExpr::createAdd(Expr,
                                            MCConstantExpr::create(Addend, *Ctx),
                                            *Ctx);
-          }
 
           Compare.addOperand(MCOperand::createExpr(Expr));
         } else {
           const uint64_t Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
-          if (int64_t(Addr) != int64_t(int32_t(Addr))) {
+          if (int64_t(Addr) != int64_t(int32_t(Addr)))
             return BlocksVectorTy();
-          }
+
           Compare.addOperand(MCOperand::createImm(Addr));
         }
       }
@@ -3923,14 +3899,14 @@ public:
         // Jump to next compare if target addresses don't match.
         Je.clear();
         Je.setOpcode(X86::JCC_1);
-        if (Targets[i].first) {
+        if (Targets[i].first)
           Je.addOperand(MCOperand::createExpr(
             MCSymbolRefExpr::create(Targets[i].first,
                                     MCSymbolRefExpr::VK_None,
                                     *Ctx)));
-        } else {
+        else
           Je.addOperand(MCOperand::createImm(Targets[i].second));
-        }
+
         Je.addOperand(MCOperand::createImm(X86::COND_E));
         assert(!isInvoke(CallInst));
       } else {
@@ -3958,12 +3934,11 @@ public:
         } else {
           CallOrJmp.setOpcode(IsTailCall ? X86::JMP_4 : X86::CALL64pcrel32);
 
-          if (Targets[i].first) {
+          if (Targets[i].first)
             CallOrJmp.addOperand(MCOperand::createExpr(MCSymbolRefExpr::create(
                 Targets[i].first, MCSymbolRefExpr::VK_None, *Ctx)));
-          } else {
+          else
             CallOrJmp.addOperand(MCOperand::createImm(Targets[i].second));
-          }
         }
         if (IsTailCall)
           setTailCall(CallOrJmp);
@@ -4004,10 +3979,9 @@ public:
     // Cold call block.
     Results.emplace_back(NextTarget, InstructionListType());
     InstructionListType &NewCall = Results.back().second;
-    for (const MCInst *Inst : MethodFetchInsns) {
+    for (const MCInst *Inst : MethodFetchInsns)
       if (Inst != &CallInst)
         NewCall.push_back(*Inst);
-    }
     NewCall.push_back(CallInst);
 
     // Jump to merge block from cold call block
@@ -4050,9 +4024,9 @@ public:
 
       const uint64_t CaseIdx = Targets[i].second;
       // Immediate address is out of sign extended 32 bit range.
-      if (int64_t(CaseIdx) != int64_t(int32_t(CaseIdx))) {
+      if (int64_t(CaseIdx) != int64_t(int32_t(CaseIdx)))
         return BlocksVectorTy();
-      }
+
       CompareInst.addOperand(MCOperand::createImm(CaseIdx));
       shortenInstruction(CompareInst);
 
@@ -4074,10 +4048,10 @@ public:
     // Cold call block.
     Results.emplace_back(NextTarget, InstructionListType());
     InstructionListType &CurBB = Results.back().second;
-    for (const MCInst *Inst : TargetFetchInsns) {
+    for (const MCInst *Inst : TargetFetchInsns)
       if (Inst != &IJmpInst)
         CurBB.push_back(*Inst);
-    }
+
     CurBB.push_back(IJmpInst);
 
     return Results;
