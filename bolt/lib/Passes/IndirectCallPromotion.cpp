@@ -459,8 +459,8 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(BinaryBasicBlock &BB,
         for (std::pair<MCSymbol *const, std::pair<uint64_t, uint64_t>> &HT :
              HotTargetMap)
           dbgs() << "BOLT-INFO: " << HT.first->getName()
-                 << " = (count=" << HT.first << ", index=" << HT.second
-                 << ")\n";
+                 << " = (count=" << HT.second.first
+                 << ", index=" << HT.second.second << ")\n";
       });
       return JumpTableInfoType();
     }
