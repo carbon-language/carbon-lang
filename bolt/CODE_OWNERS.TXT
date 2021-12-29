@@ -16,3 +16,7 @@ D: All parts not covered by someone else
 N: Alexander Yermolovich
 E: ayermolo@fb.com
 D: DWARF support
+
+N: Vladislav Khmelevsky
+E: och95@yandex.ru
+D: AArch64 backend
