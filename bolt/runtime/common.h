@@ -203,9 +203,9 @@ char *intToStr(char *OutBuf, uint64_t Num, uint32_t Base) {
     *OutBuf++ = '0';
     return OutBuf;
   }
-  while (Ptr != Buf) {
+  while (Ptr != Buf)
     *OutBuf++ = *--Ptr;
-  }
+
   return OutBuf;
 }
 
@@ -272,9 +272,8 @@ unsigned long hexToLong(const char *Str, char Terminator = '\0') {
       Res += *Str++ - 'a' + 10;
     else if ('A' <= *Str && *Str <= 'F')
       Res += *Str++ - 'A' + 10;
-    else {
+    else
       return 0;
-    }
   }
   return Res;
 }

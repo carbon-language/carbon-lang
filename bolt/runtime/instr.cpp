@@ -828,14 +828,14 @@ Graph::Graph(BumpPtrAllocator &Alloc, const FunctionDescription &D,
       MaxNodes = D.Edges[I].ToNode;
   }
 
-  for (int I = 0; I < D.NumLeafNodes; ++I) {
+  for (int I = 0; I < D.NumLeafNodes; ++I)
     if (static_cast<int32_t>(D.LeafNodes[I].Node) > MaxNodes)
       MaxNodes = D.LeafNodes[I].Node;
-  }
-  for (int I = 0; I < D.NumCalls; ++I) {
+
+  for (int I = 0; I < D.NumCalls; ++I)
     if (static_cast<int32_t>(D.Calls[I].FromNode) > MaxNodes)
       MaxNodes = D.Calls[I].FromNode;
-  }
+
   // No nodes? Nothing to do
   if (MaxNodes < 0) {
     DEBUG(report("No nodes!\n"));
@@ -1039,10 +1039,9 @@ struct NodeToCallsMap {
   }
 
   ~NodeToCallsMap() {
-    for (int I = NumNodes - 1; I >= 0; --I) {
+    for (int I = NumNodes - 1; I >= 0; --I)
       if (Entries[I].Calls)
         Alloc.deallocate(Entries[I].Calls);
-    }
     Alloc.deallocate(Entries);
   }
 };
@@ -1090,10 +1089,10 @@ void Graph::computeEdgeFrequencies(const uint64_t *Counters,
     });
   }
   // Add all root nodes to the stack
-  for (int I = 0; I < NumNodes; ++I) {
+  for (int I = 0; I < NumNodes; ++I)
     if (SpanningTreeNodes[I].NumInEdges == 0)
       Stack[StackTop++] = I;
-  }
+
   // Empty stack?
   if (StackTop == 0) {
     DEBUG(report("Empty stack!\n"));
@@ -1139,7 +1138,7 @@ void Graph::computeEdgeFrequencies(const uint64_t *Counters,
         const uint32_t Succ = SpanningTreeNodes[Cur].OutEdges[I].Node;
         Stack[StackTop++] = Succ;
         assert(StackTop <= NumNodes, "stack grew too large");
-     }
+      }
       continue;
     }
     Visited[Cur] = S_VISITED;
@@ -1177,9 +1176,8 @@ void Graph::computeEdgeFrequencies(const uint64_t *Counters,
     }
 
     // No parent? Reached a tree root, limit to call frequency updating.
-    if (SpanningTreeNodes[Cur].NumInEdges == 0) {
+    if (SpanningTreeNodes[Cur].NumInEdges == 0)
       continue;
-    }
 
     assert(SpanningTreeNodes[Cur].NumInEdges == 1, "must have 1 parent");
     const uint32_t Parent = SpanningTreeNodes[Cur].InEdges[0].Node;
@@ -1234,9 +1232,9 @@ const uint8_t *writeFunctionProfile(int FD, ProfileWriterContext &Ctx,
   // Skip funcs we know are cold
 #ifndef ENABLE_DEBUG
   uint64_t CountersFreq = 0;
-  for (int I = 0; I < F.NumLeafNodes; ++I) {
+  for (int I = 0; I < F.NumLeafNodes; ++I)
     CountersFreq += bolt_instr_locations[F.LeafNodes[I].Counter];
-  }
+
   if (CountersFreq == 0) {
     for (int I = 0; I < F.NumEdges; ++I) {
       const uint32_t C = F.Edges[I].Counter;
@@ -1442,9 +1440,8 @@ int openProfile() {
 extern "C" void __bolt_instr_clear_counters() {
   memSet(reinterpret_cast<char *>(__bolt_instr_locations), 0,
          __bolt_num_counters * 8);
-  for (int I = 0; I < __bolt_instr_num_ind_calls; ++I) {
+  for (int I = 0; I < __bolt_instr_num_ind_calls; ++I)
     GlobalIndCallCounters[I].resetCounters();
-  }
 }
 
 /// This is the entry point for profile writing.

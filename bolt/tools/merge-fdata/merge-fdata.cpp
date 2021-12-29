@@ -82,25 +82,24 @@ static void report_error(Twine Message, StringRef CustomError) {
 
 void mergeProfileHeaders(BinaryProfileHeader &MergedHeader,
                          const BinaryProfileHeader &Header) {
-  if (MergedHeader.FileName.empty()) {
+  if (MergedHeader.FileName.empty())
     MergedHeader.FileName = Header.FileName;
-  }
+
   if (!MergedHeader.FileName.empty() &&
-      MergedHeader.FileName != Header.FileName) {
+      MergedHeader.FileName != Header.FileName)
     errs() << "WARNING: merging profile from a binary for " << Header.FileName
            << " into a profile for binary " << MergedHeader.FileName << '\n';
-  }
-  if (MergedHeader.Id.empty()) {
+
+  if (MergedHeader.Id.empty())
     MergedHeader.Id = Header.Id;
-  }
-  if (!MergedHeader.Id.empty() && (MergedHeader.Id != Header.Id)) {
+
+  if (!MergedHeader.Id.empty() && (MergedHeader.Id != Header.Id))
     errs() << "WARNING: build-ids in merged profiles do not match\n";
-  }
 
   // Cannot merge samples profile with LBR profile.
-  if (!MergedHeader.Flags) {
+  if (!MergedHeader.Flags)
     MergedHeader.Flags = Header.Flags;
-  }
+
   constexpr auto Mask = llvm::bolt::BinaryFunction::PF_LBR |
                         llvm::bolt::BinaryFunction::PF_SAMPLE;
   if ((MergedHeader.Flags & Mask) != (Header.Flags & Mask)) {
@@ -110,16 +109,15 @@ void mergeProfileHeaders(BinaryProfileHeader &MergedHeader,
   MergedHeader.Flags = MergedHeader.Flags | Header.Flags;
 
   if (!Header.Origin.empty()) {
-    if (MergedHeader.Origin.empty()) {
+    if (MergedHeader.Origin.empty())
       MergedHeader.Origin = Header.Origin;
-    } else if (MergedHeader.Origin != Header.Origin) {
+    else if (MergedHeader.Origin != Header.Origin)
       MergedHeader.Origin += "; " + Header.Origin;
-    }
   }
 
-  if (MergedHeader.EventNames.empty()) {
+  if (MergedHeader.EventNames.empty())
     MergedHeader.EventNames = Header.EventNames;
-  }
+
   if (MergedHeader.EventNames != Header.EventNames) {
     errs() << "WARNING: merging profiles with different sampling events\n";
     MergedHeader.EventNames += "," + Header.EventNames;
@@ -163,9 +161,8 @@ void mergeBasicBlockProfile(BinaryBasicBlockProfile &MergedBB,
   }
 
   // Append the rest of call sites.
-  for (std::pair<const uint32_t, CallSiteInfo *> CSI : CSByOffset) {
+  for (std::pair<const uint32_t, CallSiteInfo *> CSI : CSByOffset)
     MergedBB.CallSites.emplace_back(std::move(*CSI.second));
-  }
 
   // Merge successor info.
   std::vector<SuccessorInfo *> SIByIndex(BF.NumBasicBlocks);
@@ -184,11 +181,9 @@ void mergeBasicBlockProfile(BinaryBasicBlockProfile &MergedBB,
 
     SIByIndex[MergedSI.Index] = nullptr;
   }
-  for (SuccessorInfo *SI : SIByIndex) {
-    if (SI) {
+  for (SuccessorInfo *SI : SIByIndex)
+    if (SI)
       MergedBB.Successors.emplace_back(std::move(*SI));
-    }
-  }
 }
 
 void mergeFunctionProfile(BinaryFunctionProfile &MergedBF,
@@ -224,11 +219,9 @@ void mergeFunctionProfile(BinaryFunctionProfile &MergedBF,
   }
 
   // Append blocks unique to BF (i.e. those that are not in MergedBF).
-  for (BinaryBasicBlockProfile *BB : BlockByIndex) {
-    if (BB) {
+  for (BinaryBasicBlockProfile *BB : BlockByIndex)
+    if (BB)
       MergedBF.Blocks.emplace_back(std::move(*BB));
-    }
-  }
 }
 
 bool isYAML(const StringRef Filename) {
@@ -258,20 +251,18 @@ void mergeLegacyProfiles(const cl::list<std::string> &Filenames) {
     StringRef Buf = MB.get()->getBuffer();
     // Check if the string "boltedcollection" is in the first line
     if (Buf.startswith("boltedcollection\n")) {
-      if (!First && !BoltedCollection) {
+      if (!First && !BoltedCollection)
         report_error(
             Filename,
             "cannot mix profile collected in BOLT and non-BOLT deployments");
-      }
       BoltedCollection = true;
       if (!First)
         Buf = Buf.drop_front(17);
     } else {
-      if (BoltedCollection) {
+      if (BoltedCollection)
         report_error(
             Filename,
             "cannot mix profile collected in BOLT and non-BOLT deployments");
-      }
     }
 
     outs() << Buf;
@@ -378,11 +369,9 @@ int main(int argc, char **argv) {
         [](const StringMapEntry<BinaryFunctionProfile> &V) {
           // Return total branch count.
           uint64_t BranchCount = 0;
-          for (const BinaryBasicBlockProfile &BI : V.second.Blocks) {
-            for (const SuccessorInfo &SI : BI.Successors) {
+          for (const BinaryBasicBlockProfile &BI : V.second.Blocks)
+            for (const SuccessorInfo &SI : BI.Successors)
               BranchCount += SI.Count;
-            }
-          }
           return std::make_pair(BranchCount, StringRef(V.second.Name));
         };
 
@@ -396,9 +385,8 @@ int main(int argc, char **argv) {
            << (opts::PrintFunctionList == opts::ST_EXEC_COUNT ? "execution"
                                                               : "total branch")
            << " count:\n";
-    for (std::pair<uint64_t, StringRef> &FI : FunctionList) {
+    for (std::pair<uint64_t, StringRef> &FI : FunctionList)
       errs() << FI.second << " : " << FI.first << '\n';
-    }
   }
 
   return 0;

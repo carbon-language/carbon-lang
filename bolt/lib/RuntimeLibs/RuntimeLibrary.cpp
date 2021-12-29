@@ -55,9 +55,8 @@ void RuntimeLibrary::loadLibrary(StringRef LibPath, RuntimeDyld &RTDyld) {
     object::Archive Archive(B.get()->getMemBufferRef(), Err);
     for (const object::Archive::Child &C : Archive.children(Err)) {
       std::unique_ptr<object::Binary> Bin = cantFail(C.getAsBinary());
-      if (object::ObjectFile *Obj = dyn_cast<object::ObjectFile>(&*Bin)) {
+      if (object::ObjectFile *Obj = dyn_cast<object::ObjectFile>(&*Bin))
         RTDyld.loadObject(*Obj);
-      }
     }
     check_error(std::move(Err), B->getBufferIdentifier());
   } else if (Magic == file_magic::elf_relocatable ||
