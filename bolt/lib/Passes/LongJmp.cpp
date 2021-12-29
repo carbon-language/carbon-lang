@@ -259,9 +259,8 @@ LongJmpPass::replaceTargetWithStub(BinaryBasicBlock &BB, MCInst &Inst,
 void LongJmpPass::updateStubGroups() {
   auto update = [&](StubGroupsTy &StubGroups) {
     for (auto &KeyVal : StubGroups) {
-      for (StubTy &Elem : KeyVal.second) {
+      for (StubTy &Elem : KeyVal.second)
         Elem.first = BBAddresses[Elem.second];
-      }
       std::sort(KeyVal.second.begin(), KeyVal.second.end(),
                 [&](const std::pair<uint64_t, BinaryBasicBlock *> &LHS,
                     const std::pair<uint64_t, BinaryBasicBlock *> &RHS) {
@@ -324,16 +323,14 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
   uint32_t CurrentIndex = 0;
   if (opts::HotFunctionsAtEnd) {
     for (BinaryFunction *BF : SortedFunctions) {
-      if (BF->hasValidIndex() && LastHotIndex == -1u) {
+      if (BF->hasValidIndex() && LastHotIndex == -1u)
         LastHotIndex = CurrentIndex;
-      }
       ++CurrentIndex;
     }
   } else {
     for (BinaryFunction *BF : SortedFunctions) {
-      if (!BF->hasValidIndex() && LastHotIndex == -1u) {
+      if (!BF->hasValidIndex() && LastHotIndex == -1u)
         LastHotIndex = CurrentIndex;
-      }
       ++CurrentIndex;
     }
   }
@@ -396,9 +393,8 @@ void LongJmpPass::tentativeLayout(
   if (opts::UseOldText && EstimatedTextSize <= BC.OldTextSectionSize) {
     DotAddress = BC.OldTextSectionAddress;
     uint64_t Pad = offsetToAlignment(DotAddress, llvm::Align(BC.PageAlign));
-    if (Pad + EstimatedTextSize <= BC.OldTextSectionSize) {
+    if (Pad + EstimatedTextSize <= BC.OldTextSectionSize)
       DotAddress += Pad;
-    }
   } else {
     DotAddress = alignTo(BC.LayoutStartAddress, BC.PageAlign);
   }
@@ -501,9 +497,8 @@ bool LongJmpPass::needsStub(const BinaryBasicBlock &BB, const MCInst &Inst,
   // Check for shared stubs from foreign functions
   if (!TgtBB) {
     auto SSIter = SharedStubs.find(TgtSym);
-    if (SSIter != SharedStubs.end()) {
+    if (SSIter != SharedStubs.end())
       TgtBB = SSIter->second;
-    }
   }
 
   int BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
@@ -527,9 +522,9 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
 
   BinaryBasicBlock *Frontier = getBBAtHotColdSplitPoint(Func);
   uint64_t FrontierAddress = Frontier ? BBAddresses[Frontier] : 0;
-  if (FrontierAddress) {
+  if (FrontierAddress)
     FrontierAddress += Frontier->getNumNonPseudos() * InsnSize;
-  }
+
   // Add necessary stubs for branch targets we know we can't fit in the
   // instruction
   for (BinaryBasicBlock &BB : Func) {

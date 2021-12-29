@@ -74,9 +74,8 @@ protected:
   BitVector computeNext(const MCInst &Point, const BitVector &Cur) {
     BitVector Next = Cur;
     // Gen
-    if (!this->BC.MIB->isCFI(Point)) {
+    if (!this->BC.MIB->isCFI(Point))
       Next.set(this->ExprToIdx[&Point]);
-    }
     return Next;
   }
 

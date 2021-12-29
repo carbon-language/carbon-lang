@@ -159,25 +159,22 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
   double TotalCalls64B = 0;
   double TotalCalls4KB = 0;
   double TotalCalls2MB = 0;
-  if (PrintDetailed) {
+  if (PrintDetailed)
     outs() << "BOLT-INFO: Function reordering page layout\n"
            << "BOLT-INFO: ============== page 0 ==============\n";
-  }
   for (Cluster &Cluster : Clusters) {
-    if (PrintDetailed) {
+    if (PrintDetailed)
       outs() << format(
           "BOLT-INFO: -------- density = %.3lf (%u / %u) --------\n",
           Cluster.density(), Cluster.samples(), Cluster.size());
-    }
 
     for (NodeId FuncId : Cluster.targets()) {
       if (Cg.samples(FuncId) > 0) {
         Hotfuncs++;
 
-        if (PrintDetailed) {
+        if (PrintDetailed)
           outs() << "BOLT-INFO: hot func " << *Cg.nodeIdToFunc(FuncId) << " ("
                  << Cg.size(FuncId) << ")\n";
-        }
 
         uint64_t Dist = 0;
         uint64_t Calls = 0;
@@ -188,19 +185,18 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
           const auto D = std::abs(FuncAddr[Arc.dst()] -
                                   (FuncAddr[FuncId] + Arc.avgCallOffset()));
           const double W = Arc.weight();
-          if (D < 64 && PrintDetailed && opts::Verbosity > 2) {
+          if (D < 64 && PrintDetailed && opts::Verbosity > 2)
             outs() << "BOLT-INFO: short (" << D << "B) call:\n"
                    << "BOLT-INFO:   Src: " << *Cg.nodeIdToFunc(FuncId) << "\n"
                    << "BOLT-INFO:   Dst: " << *Cg.nodeIdToFunc(Dst) << "\n"
                    << "BOLT-INFO:   Weight = " << W << "\n"
                    << "BOLT-INFO:   AvgOffset = " << Arc.avgCallOffset() << "\n";
-          }
           Calls += W;
           if (D < 64)        TotalCalls64B += W;
           if (D < 4096)      TotalCalls4KB += W;
           if (D < (2 << 20)) TotalCalls2MB += W;
           Dist += Arc.weight() * D;
-          if (PrintDetailed) {
+          if (PrintDetailed)
             outs() << format("BOLT-INFO: arc: %u [@%lu+%.1lf] -> %u [@%lu]: "
                              "weight = %.0lf, callDist = %f\n",
                              Arc.src(),
@@ -209,7 +205,6 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                              Arc.dst(),
                              FuncAddr[Arc.dst()],
                              Arc.weight(), D);
-          }
         }
         TotalCalls += Calls;
         TotalDistance += Dist;
@@ -238,14 +233,13 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                    TotalCalls ? TotalDistance / TotalCalls : 0, TotalDistance,
                    TotalCalls)
          << format("BOLT-INFO:  Total Calls = %.0lf\n", TotalCalls);
-  if (TotalCalls) {
+  if (TotalCalls)
     outs() << format("BOLT-INFO:  Total Calls within 64B = %.0lf (%.2lf%%)\n",
                      TotalCalls64B, 100 * TotalCalls64B / TotalCalls)
            << format("BOLT-INFO:  Total Calls within 4KB = %.0lf (%.2lf%%)\n",
                      TotalCalls4KB, 100 * TotalCalls4KB / TotalCalls)
            << format("BOLT-INFO:  Total Calls within 2MB = %.0lf (%.2lf%%)\n",
                      TotalCalls2MB, 100 * TotalCalls2MB / TotalCalls);
-  }
 }
 
 namespace {
@@ -259,9 +253,8 @@ std::vector<std::string> readFunctionOrderFile() {
     exit(1);
   }
   std::string FuncName;
-  while (std::getline(FuncsFile, FuncName)) {
+  while (std::getline(FuncsFile, FuncName))
     FunctionNames.push_back(FuncName);
-  }
   return FunctionNames;
 }
 
@@ -320,10 +313,9 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
                            (B->hasProfile() ||
                             (A->getExecutionCount() > B->getExecutionCount()));
                        });
-      for (BinaryFunction *BF : SortedFunctions) {
+      for (BinaryFunction *BF : SortedFunctions)
         if (BF->hasProfile())
           BF->setIndex(Index++);
-      }
     }
     break;
   case RT_HFSORT:
@@ -379,12 +371,11 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
                    << Function << ".\n";
             break;
           }
-          if (!BF->hasValidIndex()) {
+          if (!BF->hasValidIndex())
             BF->setIndex(Index++);
-          } else if (opts::Verbosity > 0) {
+          else if (opts::Verbosity > 0)
             errs() << "BOLT-WARNING: Duplicate reorder entry for " << Function
                    << ".\n";
-          }
         }
       }
     }
@@ -427,15 +418,13 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
       SortedFunctions.begin(),
       SortedFunctions.end(),
       [](const BinaryFunction *A, const BinaryFunction *B) {
-        if (A->hasValidIndex() && B->hasValidIndex()) {
+        if (A->hasValidIndex() && B->hasValidIndex())
           return A->getIndex() < B->getIndex();
-        } else if (A->hasValidIndex() && !B->hasValidIndex()) {
+        if (A->hasValidIndex() && !B->hasValidIndex())
           return true;
-        } else if (!A->hasValidIndex() && B->hasValidIndex()) {
+        if (!A->hasValidIndex() && B->hasValidIndex())
           return false;
-        } else {
-          return A->getAddress() < B->getAddress();
-        }
+        return A->getAddress() < B->getAddress();
       });
 
     for (const BinaryFunction *Func : SortedFunctions) {

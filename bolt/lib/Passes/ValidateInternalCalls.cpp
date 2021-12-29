@@ -185,12 +185,10 @@ bool ValidateInternalCalls::fixCFGForIC(BinaryFunction &Function) const {
 bool ValidateInternalCalls::hasTailCallsInRange(
     BinaryFunction &Function) const {
   const BinaryContext &BC = Function.getBinaryContext();
-  for (BinaryBasicBlock &BB : Function) {
-    for (MCInst &Inst : BB) {
+  for (BinaryBasicBlock &BB : Function)
+    for (MCInst &Inst : BB)
       if (BC.MIB->isTailCall(Inst))
         return true;
-    }
-  }
   return false;
 }
 
@@ -326,9 +324,8 @@ void ValidateInternalCalls::runOnFunctions(BinaryContext &BC) {
   std::set<BinaryFunction *> Invalid;
   for (BinaryFunction *Function : NeedsValidation) {
     LLVM_DEBUG(dbgs() << "Validating " << *Function << "\n");
-    if (!analyzeFunction(*Function)) {
+    if (!analyzeFunction(*Function))
       Invalid.insert(Function);
-    }
     clearAnnotations(*Function);
   }
 

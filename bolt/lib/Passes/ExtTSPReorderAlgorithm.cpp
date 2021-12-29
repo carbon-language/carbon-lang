@@ -254,10 +254,9 @@ public:
   const std::vector<std::pair<Chain *, Edge *>> &edges() const { return Edges; }
 
   Edge *getEdge(Chain *Other) const {
-    for (std::pair<Chain *, Edge *> It : Edges) {
+    for (std::pair<Chain *, Edge *> It : Edges)
       if (It.first == Other)
         return It.second;
-    }
     return nullptr;
   }
 
@@ -390,16 +389,14 @@ void Chain::mergeEdges(Chain *Other) {
     if (curEdge == nullptr) {
       DstEdge->changeEndpoint(Other, this);
       this->addEdge(TargetChain, DstEdge);
-      if (DstChain != this && DstChain != Other) {
+      if (DstChain != this && DstChain != Other)
         DstChain->addEdge(this, DstEdge);
-      }
     } else {
       curEdge->moveJumps(DstEdge);
     }
     // Cleanup leftover edge
-    if (DstChain != Other) {
+    if (DstChain != Other)
       DstChain->removeEdge(Other);
-    }
   }
 }
 
@@ -480,9 +477,8 @@ private:
   void initialize() {
     // Create a separate MCCodeEmitter to allow lock-free execution
     BinaryContext::IndependentCodeEmitter Emitter;
-    if (!opts::NoThreads) {
+    if (!opts::NoThreads)
       Emitter = BF.getBinaryContext().createIndependentMCCodeEmitter();
-    }
 
     // Initialize CFG nodes
     AllBlocks.reserve(BF.layout_size());
@@ -531,9 +527,8 @@ private:
     for (Block &Block : AllBlocks) {
       AllChains.emplace_back(Block.Index, &Block);
       Block.CurChain = &AllChains.back();
-      if (Block.ExecutionCount > 0) {
+      if (Block.ExecutionCount > 0)
         HotChains.push_back(&AllChains.back());
-      }
     }
 
     // Initialize edges
@@ -595,9 +590,9 @@ private:
         continue;
 
       class Block *SuccBlock = Block.FallthroughSucc;
-      while (SuccBlock != nullptr && SuccBlock != &Block) {
+      while (SuccBlock != nullptr && SuccBlock != &Block)
         SuccBlock = SuccBlock->FallthroughSucc;
-      }
+
       if (SuccBlock == nullptr)
         continue;
       // break the cycle
@@ -674,9 +669,8 @@ private:
         Chain *DstChain = AllBlocks[DstIndex].CurChain;
         if (SrcChain != DstChain && !DstChain->isEntryPoint() &&
             SrcChain->blocks().back()->Index == SrcIndex &&
-            DstChain->blocks().front()->Index == DstIndex) {
+            DstChain->blocks().front()->Index == DstIndex)
           mergeChains(SrcChain, DstChain, 0, MergeTypeTy::X_Y);
-        }
       }
     }
   }
@@ -710,9 +704,8 @@ private:
   /// result is a pair with the first element being the gain and the second
   /// element being the corresponding merging type.
   MergeGainTy mergeGain(Chain *ChainPred, Chain *ChainSucc, Edge *Edge) const {
-    if (Edge->hasCachedMergeGain(ChainPred, ChainSucc)) {
+    if (Edge->hasCachedMergeGain(ChainPred, ChainSucc))
       return Edge->getCachedMergeGain(ChainPred, ChainSucc);
-    }
 
     // Precompute jumps between ChainPred and ChainSucc
     JumpList Jumps = Edge->jumps();
@@ -826,20 +819,17 @@ private:
     HotChains.erase(Iter, HotChains.end());
 
     // Invalidate caches
-    for (std::pair<Chain *, Edge *> EdgeIter : Into->edges()) {
+    for (std::pair<Chain *, Edge *> EdgeIter : Into->edges())
       EdgeIter.second->invalidateCache();
-    }
   }
 
   /// Concatenate all chains into a final order
   void concatChains(BinaryFunction::BasicBlockOrderType &Order) {
     // Collect chains
     std::vector<Chain *> SortedChains;
-    for (Chain &Chain : AllChains) {
-      if (Chain.blocks().size() > 0) {
+    for (Chain &Chain : AllChains)
+      if (Chain.blocks().size() > 0)
         SortedChains.push_back(&Chain);
-      }
-    }
 
     // Sorting chains by density in decreasing order
     std::stable_sort(
@@ -865,11 +855,9 @@ private:
 
     // Collect the basic blocks in the order specified by their chains
     Order.reserve(BF.layout_size());
-    for (Chain *Chain : SortedChains) {
-      for (Block *Block : Chain->blocks()) {
+    for (Chain *Chain : SortedChains)
+      for (Block *Block : Chain->blocks())
         Order.push_back(Block->BB);
-      }
-    }
   }
 
 private:
@@ -896,9 +884,8 @@ void ExtTSPReorderAlgorithm::reorderBasicBlocks(const BinaryFunction &BF,
 
   // Do not change layout of functions w/o profile information
   if (!BF.hasValidProfile() || BF.layout_size() <= 2) {
-    for (BinaryBasicBlock *BB : BF.layout()) {
+    for (BinaryBasicBlock *BB : BF.layout())
       Order.push_back(BB);
-    }
     return;
   }
 

@@ -18,9 +18,7 @@ class VeneerElimination : public BinaryFunctionPass {
 public:
   /// BinaryPass public interface
   explicit VeneerElimination(const cl::opt<bool> &PrintPass)
-      : BinaryFunctionPass(PrintPass) {
-    ;
-  }
+      : BinaryFunctionPass(PrintPass) {}
 
   const char *getName() const override { return "veneer-elimination"; }
 

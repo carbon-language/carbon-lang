@@ -37,9 +37,8 @@ public:
 
   template <typename F> void forAllAdjacent(const Cluster *C, F Func) {
     for (int I = Bits[C->id()].find_first(); I != -1;
-         I = Bits[C->id()].find_next(I)) {
+         I = Bits[C->id()].find_next(I))
       Func(Clusters[I]);
-    }
   }
 
   /// Merge adjacency info from cluster B into cluster A.  Info for cluster B is
@@ -93,9 +92,8 @@ public:
 
   void invalidate(const Cluster *C) {
     Valid.reset(C->id() * Size, (C->id() + 1) * Size);
-    for (size_t Id = 0; Id < Size; Id++) {
+    for (size_t Id = 0; Id < Size; Id++)
       Valid.reset((Id * Size) + C->id());
-    }
   }
 
 private:

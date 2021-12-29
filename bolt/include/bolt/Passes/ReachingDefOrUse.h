@@ -42,11 +42,10 @@ public:
   bool isReachedBy(MCPhysReg Reg, ExprIterator Candidates) {
     for (auto I = Candidates; I != this->expr_end(); ++I) {
       BitVector BV = BitVector(this->BC.MRI->getNumRegs(), false);
-      if (Def) {
+      if (Def)
         RA.getInstClobberList(**I, BV);
-      } else {
+      else
         this->BC.MIB->getTouchedRegs(**I, BV);
-      }
       if (BV[Reg])
         return true;
     }

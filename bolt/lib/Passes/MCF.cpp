@@ -142,9 +142,8 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
            II != IE; ++II) {
         typename GraphT::NodeRef N = *II;
         Denominator += N->getExecutionCount();
-        if (N != BB) {
+        if (N != BB)
           continue;
-        }
         CritWeight = N->getExecutionCount();
       }
       if (Denominator)
@@ -187,9 +186,8 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
 
 template <class NodeT>
 void computeEdgeWeights(BinaryFunction &BF, EdgeWeightMap &EdgeWeights) {
-  for (BinaryBasicBlock &BB : BF) {
+  for (BinaryBasicBlock &BB : BF)
     computeEdgeWeights<NodeT>(&BB, EdgeWeights);
-  }
 }
 
 /// Make BB count match the sum of all incoming edges. If AllEdges is true,
@@ -197,25 +195,21 @@ void computeEdgeWeights(BinaryFunction &BF, EdgeWeightMap &EdgeWeights) {
 void recalculateBBCounts(BinaryFunction &BF, bool AllEdges) {
   for (BinaryBasicBlock &BB : BF) {
     uint64_t TotalPredsEWeight = 0;
-    for (BinaryBasicBlock *Pred : BB.predecessors()) {
+    for (BinaryBasicBlock *Pred : BB.predecessors())
       TotalPredsEWeight += Pred->getBranchInfo(BB).Count;
-    }
 
-    if (TotalPredsEWeight > BB.getExecutionCount()) {
+    if (TotalPredsEWeight > BB.getExecutionCount())
       BB.setExecutionCount(TotalPredsEWeight);
-    }
 
     if (!AllEdges)
       continue;
 
     uint64_t TotalSuccsEWeight = 0;
-    for (BinaryBasicBlock::BinaryBranchInfo &BI : BB.branch_info()) {
+    for (BinaryBasicBlock::BinaryBranchInfo &BI : BB.branch_info())
       TotalSuccsEWeight += BI.Count;
-    }
 
-    if (TotalSuccsEWeight > BB.getExecutionCount()) {
+    if (TotalSuccsEWeight > BB.getExecutionCount())
       BB.setExecutionCount(TotalSuccsEWeight);
-    }
   }
 }
 
@@ -378,9 +372,8 @@ createLoopNestLevelMap(BinaryFunction &BF) {
   DenseMap<const BinaryBasicBlock *, const BinaryLoop *> LoopNestLevel;
   const BinaryLoopInfo &BLI = BF.getLoopInfo();
 
-  for (BinaryBasicBlock &BB : BF) {
+  for (BinaryBasicBlock &BB : BF)
     LoopNestLevel[&BB] = BLI[&BB];
-  }
 
   return LoopNestLevel;
 }
@@ -408,9 +401,8 @@ void equalizeBBCounts(BinaryFunction &BF) {
   DenseMap<const BinaryBasicBlock *, const BinaryLoop *> LoopNestLevel =
       createLoopNestLevelMap(BF);
 
-  for (BinaryBasicBlock &BB : BF) {
+  for (BinaryBasicBlock &BB : BF)
     BBsToEC[&BB] = -1;
-  }
 
   for (BinaryBasicBlock &BB : BF) {
     auto I = BB.begin();
@@ -457,12 +449,10 @@ void equalizeBBCounts(BinaryFunction &BF) {
 
   for (std::vector<BinaryBasicBlock *> &Class : Classes) {
     uint64_t Max = 0ULL;
-    for (BinaryBasicBlock *BB : Class) {
+    for (BinaryBasicBlock *BB : Class)
       Max = std::max(Max, BB->getExecutionCount());
-    }
-    for (BinaryBasicBlock *BB : Class) {
+    for (BinaryBasicBlock *BB : Class)
       BB->setExecutionCount(Max);
-    }
   }
 }
 

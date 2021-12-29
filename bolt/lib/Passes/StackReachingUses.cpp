@@ -26,9 +26,8 @@ bool StackReachingUses::isLoadedInDifferentReg(const FrameIndexEntry &StoreFIE,
       assert(FIEY->IsLoad == 1);
       if (StoreFIE.StackOffset + StoreFIE.Size > FIEY->StackOffset &&
           StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size &&
-          StoreFIE.RegOrImm != FIEY->RegOrImm) {
+          StoreFIE.RegOrImm != FIEY->RegOrImm)
         return true;
-      }
     }
   }
   return false;
@@ -43,23 +42,20 @@ bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
       if (ErrorOr<const FrameIndexEntry &> FIEY = FA.getFIEFor(*ReachingInst)) {
         assert(FIEY->IsLoad == 1);
         if (StoreFIE.StackOffset + StoreFIE.Size > FIEY->StackOffset &&
-            StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size) {
+            StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size)
           return true;
-        }
       }
     }
     ErrorOr<const ArgAccesses &> Args = FA.getArgAccessesFor(*ReachingInst);
     if (!Args)
       continue;
-    if (Args->AssumeEverything) {
+    if (Args->AssumeEverything)
       return true;
-    }
-    for (ArgInStackAccess FIEY : Args->Set) {
+
+    for (ArgInStackAccess FIEY : Args->Set)
       if (StoreFIE.StackOffset + StoreFIE.Size > FIEY.StackOffset &&
-          StoreFIE.StackOffset < FIEY.StackOffset + FIEY.Size) {
+          StoreFIE.StackOffset < FIEY.StackOffset + FIEY.Size)
         return true;
-      }
-    }
   }
   return false;
 }

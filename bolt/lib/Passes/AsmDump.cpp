@@ -42,11 +42,11 @@ void dumpCFI(const BinaryFunction &BF, const MCInst &Instr, AsmPrinter &MAP) {
   // Skip unsupported CFI instructions.
   case MCCFIInstruction::OpRememberState:
   case MCCFIInstruction::OpRestoreState:
-    if (opts::Verbosity >= 2) {
+    if (opts::Verbosity >= 2)
       errs()
           << "BOLT-WARNING: AsmDump: skipping unsupported CFI instruction in "
           << BF << ".\n";
-    }
+
     return;
 
   default:

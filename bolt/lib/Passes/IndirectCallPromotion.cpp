@@ -261,12 +261,11 @@ IndirectCallPromotion::getCallTargets(BinaryBasicBlock &BB,
     while (++First != Last) {
       Callsite &A = *Result;
       const Callsite &B = *First;
-      if (A.To.Sym && B.To.Sym && A.To.Sym == B.To.Sym) {
+      if (A.To.Sym && B.To.Sym && A.To.Sym == B.To.Sym)
         A.JTIndices.insert(A.JTIndices.end(), B.JTIndices.begin(),
                            B.JTIndices.end());
-      } else {
+      else
         *(++Result) = *First;
-      }
     }
     ++Result;
 
@@ -279,9 +278,9 @@ IndirectCallPromotion::getCallTargets(BinaryBasicBlock &BB,
   } else {
     // Don't try to optimize PC relative indirect calls.
     if (Inst.getOperand(0).isReg() &&
-        Inst.getOperand(0).getReg() == BC.MRI->getProgramCounter()) {
+        Inst.getOperand(0).getReg() == BC.MRI->getProgramCounter())
       return Targets;
-    }
+
     auto ICSP = BC.MIB->tryGetAnnotationAs<IndirectCallSiteProfile>(
         Inst, "CallProfile");
     if (ICSP) {
@@ -374,9 +373,8 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(BinaryBasicBlock &BB,
            << (&CallInst - &BB.front()) << "\n"
            << "BOLT-INFO: ICP target fetch instructions:\n";
     BC.printInstruction(dbgs(), *MemLocInstr, 0, &Function);
-    if (MemLocInstr != &CallInst) {
+    if (MemLocInstr != &CallInst)
       BC.printInstruction(dbgs(), CallInst, 0, &Function);
-    }
   });
 
   DEBUG_VERBOSE(1, {
@@ -412,9 +410,8 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(BinaryBasicBlock &BB,
     ArrayStart = static_cast<uint64_t>(DispValue);
   }
 
-  if (BaseReg == BC.MRI->getProgramCounter()) {
+  if (BaseReg == BC.MRI->getProgramCounter())
     ArrayStart += Function.getAddress() + MemAccessProfile.NextInstrOffset;
-  }
 
   // This is a map of [symbol] -> [count, index] and is used to combine indices
   // into the jump table since there may be multiple addresses that all have the
@@ -460,11 +457,10 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(BinaryBasicBlock &BB,
         JT->print(dbgs());
         dbgs() << "HotTargetMap:\n";
         for (std::pair<MCSymbol *const, std::pair<uint64_t, uint64_t>> &HT :
-             HotTargetMap) {
+             HotTargetMap)
           dbgs() << "BOLT-INFO: " << HT.first->getName()
                  << " = (count=" << HT.first << ", index=" << HT.second
                  << ")\n";
-        }
       });
       return JumpTableInfoType();
     }
@@ -486,10 +482,9 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(BinaryBasicBlock &BB,
 
   LLVM_DEBUG({
     dbgs() << "BOLT-INFO: ICP jump table hot targets:\n";
-    for (const std::pair<uint64_t, uint64_t> &Target : HotTargets) {
+    for (const std::pair<uint64_t, uint64_t> &Target : HotTargets)
       dbgs() << "BOLT-INFO:  Idx = " << Target.second << ", "
              << "Count = " << Target.first << "\n";
-    }
   });
 
   BC.MIB->getOrCreateAnnotationAs<uint16_t>(CallInst, "JTIndexReg") = IndexReg;
@@ -525,13 +520,11 @@ IndirectCallPromotion::findCallTargetSymbols(std::vector<Callsite> &Targets,
                          "callsite");
       };
 
-      if (opts::Verbosity >= 1) {
-        for (size_t I = 0; I < HotTargets.size(); ++I) {
+      if (opts::Verbosity >= 1)
+        for (size_t I = 0; I < HotTargets.size(); ++I)
           outs() << "BOLT-INFO: HotTarget[" << I << "] = ("
                  << HotTargets[I].first << ", " << HotTargets[I].second
                  << ")\n";
-        }
-      }
 
       // Recompute hottest targets, now discriminating which index is hot
       // NOTE: This is a tradeoff. On one hand, we get index information. On the
@@ -649,12 +642,11 @@ IndirectCallPromotion::MethodInfoType IndirectCallPromotion::maybeGetVtableSyms(
     dbgs() << "BOLT-INFO: ICP found virtual method call in " << Function
            << " at @ " << (&Inst - &BB.front()) << "\n";
     dbgs() << "BOLT-INFO: ICP method fetch instructions:\n";
-    for (MCInst *Inst : MethodFetchInsns) {
+    for (MCInst *Inst : MethodFetchInsns)
       BC.printInstruction(dbgs(), *Inst, 0, &Function);
-    }
-    if (MethodFetchInsns.back() != &Inst) {
+
+    if (MethodFetchInsns.back() != &Inst)
       BC.printInstruction(dbgs(), Inst, 0, &Function);
-    }
   });
 
   // Try to get value profiling data for the method load instruction.
@@ -673,9 +665,8 @@ IndirectCallPromotion::MethodInfoType IndirectCallPromotion::maybeGetVtableSyms(
 
   for (const AddressAccess &AccessInfo : MemAccessProfile.AddressAccessInfo) {
     uint64_t Address = AccessInfo.Offset;
-    if (AccessInfo.MemoryObject) {
+    if (AccessInfo.MemoryObject)
       Address += AccessInfo.MemoryObject->getAddress();
-    }
 
     // Ignore bogus data.
     if (!Address)
@@ -723,9 +714,8 @@ IndirectCallPromotion::MethodInfoType IndirectCallPromotion::maybeGetVtableSyms(
     for (MCInst *CurInst = MethodFetchInsns.front(); CurInst < &Inst;
          ++CurInst) {
       const MCInstrDesc &InstrInfo = BC.MII->get(CurInst->getOpcode());
-      if (InstrInfo.hasDefOfPhysReg(*CurInst, VtableReg, *BC.MRI)) {
+      if (InstrInfo.hasDefOfPhysReg(*CurInst, VtableReg, *BC.MRI))
         return MethodInfoType();
-      }
     }
   }
 
@@ -752,12 +742,10 @@ IndirectCallPromotion::rewriteCall(
   // must be preserved and moved to the original block.
   InstructionListType TailInsts;
   const MCInst *TailInst = &CallInst;
-  if (IsTailCallOrJT) {
+  if (IsTailCallOrJT)
     while (TailInst + 1 < &(*IndCallBlock.end()) &&
-           MIB->isPseudo(*(TailInst + 1))) {
+           MIB->isPseudo(*(TailInst + 1)))
       TailInsts.push_back(*++TailInst);
-    }
-  }
 
   InstructionListType MovedInst = IndCallBlock.splitInstructions(&CallInst);
   // Link new BBs to the original input offset of the BB where the indirect
@@ -768,13 +756,12 @@ IndirectCallPromotion::rewriteCall(
   IndCallBlock.eraseInstructions(MethodFetchInsns.begin(),
                                  MethodFetchInsns.end());
   if (IndCallBlock.empty() ||
-      (!MethodFetchInsns.empty() && MethodFetchInsns.back() == &CallInst)) {
+      (!MethodFetchInsns.empty() && MethodFetchInsns.back() == &CallInst))
     IndCallBlock.addInstructions(ICPcode.front().second.begin(),
                                  ICPcode.front().second.end());
-  } else {
+  else
     IndCallBlock.replaceInstruction(std::prev(IndCallBlock.end()),
                                     ICPcode.front().second);
-  }
   IndCallBlock.addInstructions(TailInsts.begin(), TailInsts.end());
 
   for (auto Itr = ICPcode.begin() + 1; Itr != ICPcode.end(); ++Itr) {
@@ -783,19 +770,17 @@ IndirectCallPromotion::rewriteCall(
     assert(Sym);
     std::unique_ptr<BinaryBasicBlock> TBB =
         Function.createBasicBlock(OrigOffset, Sym);
-    for (MCInst &Inst : Insts) { // sanitize new instructions.
+    for (MCInst &Inst : Insts) // sanitize new instructions.
       if (MIB->isCall(Inst))
         MIB->removeAnnotation(Inst, "CallProfile");
-    }
     TBB->addInstructions(Insts.begin(), Insts.end());
     NewBBs.emplace_back(std::move(TBB));
   }
 
   // Move tail of instructions from after the original call to
   // the merge block.
-  if (!IsTailCallOrJT) {
+  if (!IsTailCallOrJT)
     NewBBs.back()->addInstructions(MovedInst.begin(), MovedInst.end());
-  }
 
   return NewBBs;
 }
@@ -813,9 +798,8 @@ IndirectCallPromotion::fixCFG(BinaryBasicBlock &IndCallBlock,
   // basic block containing the indirect call.
   uint64_t TotalCount = IndCallBlock.getKnownExecutionCount();
   uint64_t TotalIndirectBranches = 0;
-  for (const Callsite &Target : Targets) {
+  for (const Callsite &Target : Targets)
     TotalIndirectBranches += Target.Branches;
-  }
   if (TotalIndirectBranches == 0)
     TotalIndirectBranches = 1;
   BinaryBasicBlock::BranchInfoType BBI;
@@ -843,9 +827,8 @@ IndirectCallPromotion::fixCFG(BinaryBasicBlock &IndCallBlock,
     for (const Callsite &Target : Targets) {
       const size_t NumEntries =
           std::max(static_cast<std::size_t>(1UL), Target.JTIndices.size());
-      for (size_t I = 0; I < NumEntries; ++I) {
+      for (size_t I = 0; I < NumEntries; ++I)
         SymTargets.push_back(Target.To.Sym);
-      }
     }
     assert(SymTargets.size() > NewBBs.size() - 1 &&
            "There must be a target symbol associated with each new BB.");
@@ -902,9 +885,8 @@ IndirectCallPromotion::fixCFG(BinaryBasicBlock &IndCallBlock,
              TotalCount <= uint64_t(TotalIndirectBranches));
       uint64_t ExecCount = ScaledBBI[(I + 1) / 2].Count;
       if (I % 2 == 0) {
-        if (MergeBlock) {
+        if (MergeBlock)
           NewBBs[I]->addSuccessor(MergeBlock, ScaledBBI[(I + 1) / 2].Count);
-        }
       } else {
         assert(I + 2 < NewBBs.size());
         updateCurrentBranchInfo();
@@ -946,12 +928,11 @@ size_t IndirectCallPromotion::canPromoteCallsite(
   const bool IsJumpTable = BB.getFunction()->getJumpTable(Inst);
 
   auto computeStats = [&](size_t N) {
-    for (size_t I = 0; I < N; ++I) {
+    for (size_t I = 0; I < N; ++I)
       if (!IsJumpTable)
         TotalNumFrequentCalls += Targets[I].Branches;
       else
         TotalNumFrequentJmps += Targets[I].Branches;
-    }
   };
 
   // If we have no targets (or no calls), skip this callsite.
@@ -1067,10 +1048,9 @@ size_t IndirectCallPromotion::canPromoteCallsite(
 
   // Filter functions that can have ICP applied (for debugging)
   if (!opts::ICPFuncsList.empty()) {
-    for (std::string &Name : opts::ICPFuncsList) {
+    for (std::string &Name : opts::ICPFuncsList)
       if (BB.getFunction()->hasName(Name))
         return N;
-    }
     return 0;
   }
 
@@ -1141,9 +1121,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
   // total.
   SetVector<BinaryFunction *> Functions;
   if (opts::ICPTopCallsites == 0) {
-    for (auto &KV : BFs) {
+    for (auto &KV : BFs)
       Functions.insert(&KV.second);
-    }
   } else {
     using IndirectCallsite = std::tuple<uint64_t, MCInst *, BinaryFunction *>;
     std::vector<IndirectCallsite> IndirectCalls;
@@ -1174,9 +1153,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
               ((HasIndirectCallProfile && !IsJumpTable && OptimizeCalls) ||
                (IsJumpTable && OptimizeJumpTables))) {
             uint64_t NumCalls = 0;
-            for (const Callsite &BInfo : getCallTargets(BB, Inst)) {
+            for (const Callsite &BInfo : getCallTargets(BB, Inst))
               NumCalls += BInfo.Branches;
-            }
             IndirectCalls.push_back(
                 std::make_tuple(NumCalls, &Inst, &Function));
             TotalIndirectCalls += NumCalls;
@@ -1228,9 +1206,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
     std::vector<BinaryBasicBlock *> BBs;
     for (BinaryBasicBlock &BB : Function) {
       // Skip indirect calls in cold blocks.
-      if (!HasLayout || !Function.isSplit() || !BB.isCold()) {
+      if (!HasLayout || !Function.isSplit() || !BB.isCold())
         BBs.push_back(&BB);
-      }
     }
     if (BBs.empty())
       continue;
@@ -1248,9 +1225,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
             BC.MIB->hasAnnotation(Inst, "CallProfile");
         const bool IsJumpTable = Function.getJumpTable(Inst);
 
-        if (BC.MIB->isCall(Inst)) {
+        if (BC.MIB->isCall(Inst))
           TotalCalls += BB->getKnownExecutionCount();
-        }
 
         if (IsJumpTable && !OptimizeJumpTables)
           continue;
@@ -1274,9 +1250,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
 
         // Compute the total number of calls from this particular callsite.
         uint64_t NumCalls = 0;
-        for (const Callsite &BInfo : Targets) {
+        for (const Callsite &BInfo : Targets)
           NumCalls += BInfo.Branches;
-        }
         if (!IsJumpTable)
           FuncTotalIndirectCalls += NumCalls;
         else
@@ -1288,13 +1263,12 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
           ErrorOr<const BitVector &> State =
               Info.getLivenessAnalysis().getStateBefore(Inst);
           if (!State || (State && (*State)[BC.MIB->getFlagsReg()])) {
-            if (opts::Verbosity >= 1) {
+            if (opts::Verbosity >= 1)
               outs() << "BOLT-INFO: ICP failed in " << Function << " @ "
                      << InstIdx << " in " << BB->getName()
                      << ", calls = " << NumCalls
                      << (State ? ", cannot clobber flags reg.\n"
                                : ", no liveness data available.\n");
-            }
             continue;
           }
         }
@@ -1310,9 +1284,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
         if (!N && !IsJumpTable)
           continue;
 
-        if (opts::Verbosity >= 1) {
+        if (opts::Verbosity >= 1)
           printCallsiteInfo(*BB, Inst, Targets, N, NumCalls);
-        }
 
         // Find MCSymbols or absolute addresses for each call target.
         MCInst *TargetFetchInst = nullptr;
@@ -1330,13 +1303,12 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
         // TODO: can this ever happen?
         if (SymTargets.size() < N) {
           const size_t LastTarget = SymTargets.size();
-          if (opts::Verbosity >= 1) {
+          if (opts::Verbosity >= 1)
             outs() << "BOLT-INFO: ICP failed in " << Function << " @ "
                    << InstIdx << " in " << BB->getName()
                    << ", calls = " << NumCalls
                    << ", ICP failed to find target symbol for "
                    << Targets[LastTarget].To.Sym->getName() << "\n";
-          }
           continue;
         }
 
@@ -1364,12 +1336,11 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
                       opts::ICPOldCodeSequence, BC.Ctx.get());
 
         if (ICPcode.empty()) {
-          if (opts::Verbosity >= 1) {
+          if (opts::Verbosity >= 1)
             outs() << "BOLT-INFO: ICP failed in " << Function << " @ "
                    << InstIdx << " in " << BB->getName()
                    << ", calls = " << NumCalls
                    << ", unable to generate promoted call code.\n";
-          }
           continue;
         }
 
@@ -1398,15 +1369,13 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
         // Since the tail of the original block was split off and it may contain
         // additional indirect calls, we must add the merge block to the set of
         // blocks to process.
-        if (MergeBlock) {
+        if (MergeBlock)
           BBs.push_back(MergeBlock);
-        }
 
-        if (opts::Verbosity >= 1) {
+        if (opts::Verbosity >= 1)
           outs() << "BOLT-INFO: ICP succeeded in " << Function << " @ "
                  << InstIdx << " in " << BB->getName()
                  << " -> calls = " << NumCalls << "\n";
-        }
 
         if (IsJumpTable)
           ++TotalOptimizedJumpTableCallsites;

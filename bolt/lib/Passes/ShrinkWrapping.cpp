@@ -167,23 +167,19 @@ void CalleeSavedAnalysis::analyzeRestores() {
 
 std::vector<MCInst *> CalleeSavedAnalysis::getSavesByReg(uint16_t Reg) {
   std::vector<MCInst *> Results;
-  for (BinaryBasicBlock &BB : BF) {
-    for (MCInst &Inst : BB) {
+  for (BinaryBasicBlock &BB : BF)
+    for (MCInst &Inst : BB)
       if (getSavedReg(Inst) == Reg)
         Results.push_back(&Inst);
-    }
-  }
   return Results;
 }
 
 std::vector<MCInst *> CalleeSavedAnalysis::getRestoresByReg(uint16_t Reg) {
   std::vector<MCInst *> Results;
-  for (BinaryBasicBlock &BB : BF) {
-    for (MCInst &Inst : BB) {
+  for (BinaryBasicBlock &BB : BF)
+    for (MCInst &Inst : BB)
       if (getRestoredReg(Inst) == Reg)
         Results.push_back(&Inst);
-    }
-  }
   return Results;
 }
 
@@ -197,16 +193,14 @@ CalleeSavedAnalysis::~CalleeSavedAnalysis() {
 }
 
 void StackLayoutModifier::blacklistRegion(int64_t Offset, int64_t Size) {
-  if (BlacklistedRegions[Offset] < Size) {
+  if (BlacklistedRegions[Offset] < Size)
     BlacklistedRegions[Offset] = Size;
-  }
 }
 
 bool StackLayoutModifier::isRegionBlacklisted(int64_t Offset, int64_t Size) {
-  for (std::pair<const int64_t, int64_t> Elem : BlacklistedRegions) {
+  for (std::pair<const int64_t, int64_t> Elem : BlacklistedRegions)
     if (Offset + Size > Elem.first && Offset < Elem.first + Elem.second)
       return true;
-  }
   return false;
 }
 
@@ -519,9 +513,8 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
         BC.MIB->addAnnotation(Inst, "AccessesDeletedPos", 0U, AllocatorId);
         continue;
       }
-      if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst)) {
+      if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst))
         continue;
-      }
 
       if (FIE->StackPtrReg == BC.MIB->getStackPointer() && Slot < RegionAddr)
         continue;
@@ -666,9 +659,8 @@ void StackLayoutModifier::performChanges() {
         const MCCFIInstruction *CFI = BF.getCFIFor(Inst);
         const MCCFIInstruction::OpType Operation = CFI->getOperation();
         if (Operation == MCCFIInstruction::OpDefCfa ||
-            Operation == MCCFIInstruction::OpDefCfaOffset) {
+            Operation == MCCFIInstruction::OpDefCfaOffset)
           Adjustment = 0 - Adjustment;
-        }
         LLVM_DEBUG(dbgs() << "Changing CFI offset from " << CFI->getOffset()
                           << " to " << (CFI->getOffset() + Adjustment) << "\n");
         BF.mutateCFIOffsetFor(Inst, CFI->getOffset() + Adjustment);
@@ -747,9 +739,8 @@ void ShrinkWrapping::classifyCSRUses() {
         continue;
       BV = CSA.CalleeSaved;
       BV &= FPAliases;
-      for (int I = BV.find_first(); I > 0; I = BV.find_next(I)) {
+      for (int I = BV.find_first(); I > 0; I = BV.find_next(I))
         UsesByReg[I].set(DA.ExprToIdx[&Inst]);
-      }
     }
   }
 }
@@ -812,10 +803,9 @@ void ShrinkWrapping::computeSaveLocations() {
 
       BitVector BBDominatedUses = BitVector(DA.NumInstrs, false);
       for (int J = UsesByReg[I].find_first(); J > 0;
-           J = UsesByReg[I].find_next(J)) {
+           J = UsesByReg[I].find_next(J))
         if (DA.doesADominateB(*First, J))
           BBDominatedUses.set(J);
-      }
       LLVM_DEBUG(dbgs() << "\t\tBB " << BB.getName() << " dominates "
                         << BBDominatedUses.count() << " uses for reg " << I
                         << ". Total uses for reg is " << UsesByReg[I].count()
@@ -884,9 +874,8 @@ void ShrinkWrapping::computeDomOrder() {
               return A < B;
             });
 
-  for (MCPhysReg I = 0, E = BC.MRI->getNumRegs(); I != E; ++I) {
+  for (MCPhysReg I = 0, E = BC.MRI->getNumRegs(); I != E; ++I)
     DomOrder[Order[I]] = I;
-  }
 }
 
 bool ShrinkWrapping::isBestSavePosCold(unsigned CSR, MCInst *&BestPosSave,
@@ -995,20 +984,17 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
   LLVM_DEBUG({
     dbgs() << "Dumping dominance frontier for ";
     BC.printInstruction(dbgs(), *BestPosSave);
-    for (ProgramPoint &PP : Frontier) {
-      if (PP.isInst()) {
+    for (ProgramPoint &PP : Frontier)
+      if (PP.isInst())
         BC.printInstruction(dbgs(), *PP.getInst());
-      } else {
+      else
         dbgs() << PP.getBB()->getName() << "\n";
-      }
-    }
   });
   for (ProgramPoint &PP : Frontier) {
     bool HasCritEdges = false;
     if (PP.isInst() && BC.MIB->isTerminator(*PP.getInst()) &&
-        doesInstUsesCSR(*PP.getInst(), CSR)) {
+        doesInstUsesCSR(*PP.getInst(), CSR))
       CannotPlace = true;
-    }
     BinaryBasicBlock *FrontierBB = Info.getParentBB(PP);
     CritEdgesFrom.emplace_back(FrontierBB);
     CritEdgesTo.emplace_back(0);
@@ -1048,9 +1034,9 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     LLVM_DEBUG({
       dbgs() << "Now detected critical edges in the following frontier:\n";
       for (ProgramPoint &PP : Frontier) {
-        if (PP.isBB())
+        if (PP.isBB()) {
           dbgs() << "  BB: " << PP.getBB()->getName() << "\n";
-        else {
+        } else {
           dbgs() << "  Inst: ";
           PP.getInst()->dump();
         }
@@ -1254,9 +1240,8 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
       dbgs() << "Scheduling restore insertion at: ";
       if (PP.isInst())
         PP.getInst()->dump();
-      else {
+      else
         dbgs() << PP.getBB()->getName() << "\n";
-      }
     });
     MCInst *Term =
         FrontierBB->getTerminatorBefore(PP.isInst() ? PP.getInst() : nullptr);
@@ -1348,10 +1333,9 @@ void ShrinkWrapping::moveSaveRestores() {
       auto WRI = Todo.find(&BB);
       if (WRI != Todo.end()) {
         std::vector<WorklistItem> &TodoList = WRI->second;
-        for (WorklistItem &Item : TodoList) {
+        for (WorklistItem &Item : TodoList)
           if (Item.Action == WorklistItem::InsertPushOrPop)
             Item.Action = WorklistItem::InsertLoadOrStore;
-        }
       }
       for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
         MCInst &Inst = *I;
@@ -1384,9 +1368,8 @@ void ShrinkWrapping::moveSaveRestores() {
     MCInst *SavePos;
     size_t SaveSize;
     std::tie(RegNdx, SavePos, SaveSize) = I;
-    for (MCInst *Save : CSA.getSavesByReg(RegNdx)) {
+    for (MCInst *Save : CSA.getSavesByReg(RegNdx))
       SLM.collapseRegion(Save);
-    }
     SLM.insertRegion(SavePos, SaveSize);
   }
 }
@@ -1596,19 +1579,13 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
     }
     // Are we at the first basic block or hot-cold split point?
     if (!PrevBB || (BF.isSplit() && BB->isCold() != PrevBB->isCold())) {
-      if (InAffectedZoneAtBegin) {
+      if (InAffectedZoneAtBegin)
         insertCFIsForPushOrPop(*BB, BB->begin(), CSR, true, 0, SPValPush);
-      }
-    } else {
-      if (InAffectedZoneAtBegin != PrevAffectedZone) {
-        if (InAffectedZoneAtBegin) {
-          insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, true, 0,
-                                 SPValPush);
-        } else {
-          insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, false, 0,
-                                 SPValPop);
-        }
-      }
+    } else if (InAffectedZoneAtBegin != PrevAffectedZone) {
+      if (InAffectedZoneAtBegin)
+        insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, true, 0, SPValPush);
+      else
+        insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, false, 0, SPValPop);
     }
     PrevAffectedZone = InAffectedZoneAtEnd;
     PrevBB = BB;
@@ -1646,29 +1623,24 @@ void ShrinkWrapping::rebuildCFIForSP() {
         SPVal = CurVal;
       }
     }
-    if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold()) {
+    if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold())
       BF.addCFIInstruction(
           BB, BB->begin(),
           MCCFIInstruction::cfiDefCfaOffset(nullptr, -SPValAtBegin));
-    } else {
-      if (SPValAtBegin != PrevSPVal) {
-        BF.addCFIInstruction(
-            PrevBB, PrevBB->end(),
-            MCCFIInstruction::cfiDefCfaOffset(nullptr, -SPValAtBegin));
-      }
-    }
+    else if (SPValAtBegin != PrevSPVal)
+      BF.addCFIInstruction(
+          PrevBB, PrevBB->end(),
+          MCCFIInstruction::cfiDefCfaOffset(nullptr, -SPValAtBegin));
     PrevSPVal = SPValAtEnd;
     PrevBB = BB;
   }
 
-  for (BinaryBasicBlock &BB : BF) {
-    for (auto I = BB.begin(); I != BB.end();) {
+  for (BinaryBasicBlock &BB : BF)
+    for (auto I = BB.begin(); I != BB.end();)
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         I = BB.eraseInstruction(I);
       else
         ++I;
-    }
-  }
 }
 
 MCInst ShrinkWrapping::createStackAccess(int SPVal, int FPVal,
@@ -1876,13 +1848,11 @@ BBIterTy ShrinkWrapping::processInsertionsList(
     InsertionPoint =
         processInsertion(InsertionPoint, CurBB, Item, SPVal, FPVal);
     if (Item.Action == WorklistItem::InsertPushOrPop &&
-        Item.FIEToInsert.IsStore) {
+        Item.FIEToInsert.IsStore)
       SPVal -= Item.FIEToInsert.Size;
-    }
     if (Item.Action == WorklistItem::InsertPushOrPop &&
-        Item.FIEToInsert.IsLoad) {
+        Item.FIEToInsert.IsLoad)
       SPVal += Item.FIEToInsert.Size;
-    }
   }
   return InsertionPoint;
 }

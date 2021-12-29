@@ -261,9 +261,8 @@ IndirectBranchInfo::IndirectBranchInfo(MCInst &Inst, MCPlusBuilder &MIB) {
     if (!MIB.evaluateX86MemoryOperand(Inst, &Memory.BaseRegNum,
                                       &Memory.ScaleValue,
                                       &Memory.IndexRegNum, &Memory.DispValue,
-                                      &Memory.SegRegNum, &Memory.DispExpr)) {
+                                      &Memory.SegRegNum, &Memory.DispExpr))
       llvm_unreachable("not expected");
-    }
   } else if (MIB.isBranchOnReg(Inst)) {
     assert(MCPlus::getNumPrimeOperands(Inst) == 1 && "expect 1 operand");
     BranchReg = Inst.getOperand(0).getReg();
@@ -312,9 +311,8 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
         if (BrInfo.isMem() && !R11Available) {
           IndirectBranchInfo::MemOpInfo &MemRef = BrInfo.Memory;
           int Addend = (BrInfo.isJump() || BrInfo.isTailCall()) ? 8 : 16;
-          if (MemRef.BaseRegNum == MIB.getStackPointer()) {
+          if (MemRef.BaseRegNum == MIB.getStackPointer())
             MemRef.DispValue += Addend;
-          }
           if (MemRef.IndexRegNum == MIB.getStackPointer())
             MemRef.DispValue += Addend * MemRef.ScaleValue;
         }

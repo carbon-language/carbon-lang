@@ -46,9 +46,8 @@ bool isIndifferentToSP(const MCInst &Inst, const BinaryContext &BC) {
 
   for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
     const MCOperand &Operand = Inst.getOperand(I);
-    if (Operand.isReg() && Operand.getReg() == BC.MIB->getStackPointer()) {
+    if (Operand.isReg() && Operand.getReg() == BC.MIB->getStackPointer())
       return false;
-    }
   }
   return true;
 }

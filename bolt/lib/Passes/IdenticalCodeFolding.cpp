@@ -96,9 +96,8 @@ template <class Compare>
 bool isInstrEquivalentWith(const MCInst &InstA, const BinaryBasicBlock &BBA,
                            const MCInst &InstB, const BinaryBasicBlock &BBB,
                            Compare Comp) {
-  if (InstA.getOpcode() != InstB.getOpcode()) {
+  if (InstA.getOpcode() != InstB.getOpcode())
     return false;
-  }
 
   const BinaryContext &BC = BBA.getFunction()->getBinaryContext();
 
@@ -237,9 +236,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
         }
 
         // One of the symbols represents a function, the other one does not.
-        if (FunctionA != FunctionB) {
+        if (FunctionA != FunctionB)
           return false;
-        }
 
         // Check if symbols are jump tables.
         const BinaryData *SIA = BC.getBinaryDataByName(SymbolA->getName());
@@ -270,9 +268,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
       };
 
       if (!isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB,
-                                 AreSymbolsIdentical)) {
+                                 AreSymbolsIdentical))
         return false;
-      }
 
       ++I;
       ++OtherI;
@@ -282,9 +279,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
     // is ignored for CFG purposes.
     const MCInst *TrailingInstr =
         (I != E ? &(*I) : (OtherI != OtherE ? &(*OtherI) : 0));
-    if (TrailingInstr && !BC.MIB->isUnconditionalBranch(*TrailingInstr)) {
+    if (TrailingInstr && !BC.MIB->isUnconditionalBranch(*TrailingInstr))
       return false;
-    }
 
     ++BBI;
   }
@@ -292,9 +288,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
   // Compare exceptions action tables.
   if (A.getLSDAActionTable() != B.getLSDAActionTable() ||
       A.getLSDATypeTable() != B.getLSDATypeTable() ||
-      A.getLSDATypeIndexTable() != B.getLSDATypeIndexTable()) {
+      A.getLSDATypeIndexTable() != B.getLSDATypeIndexTable())
     return false;
-  }
 
   return true;
 }
@@ -338,9 +333,9 @@ typedef std::unordered_map<BinaryFunction *, std::vector<BinaryFunction *>,
 
 std::string hashInteger(uint64_t Value) {
   std::string HashString;
-  if (Value == 0) {
+  if (Value == 0)
     HashString.push_back(0);
-  }
+
   while (Value) {
     uint8_t LSB = Value & 0xff;
     HashString.push_back(LSB);
@@ -393,13 +388,12 @@ std::string hashExpr(BinaryContext &BC, const MCExpr &Expr) {
 }
 
 std::string hashInstOperand(BinaryContext &BC, const MCOperand &Operand) {
-  if (Operand.isImm()) {
+  if (Operand.isImm())
     return hashInteger(Operand.getImm());
-  } else if (Operand.isReg()) {
+  if (Operand.isReg())
     return hashInteger(Operand.getReg());
-  } else if (Operand.isExpr()) {
+  if (Operand.isExpr())
     return hashExpr(BC, *Operand.getExpr());
-  }
 
   return std::string();
 }
@@ -567,15 +561,14 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
              << " bytes) are congruent but not identical:\n";
       for (BinaryFunction *BF : Candidates) {
         dbgs() << "  " << *BF;
-        if (BF->getKnownExecutionCount()) {
+        if (BF->getKnownExecutionCount())
           dbgs() << " (executed " << BF->getKnownExecutionCount() << " times)";
-        }
         dbgs() << '\n';
       }
     }
   });
 
-  if (NumFunctionsFolded) {
+  if (NumFunctionsFolded)
     outs() << "BOLT-INFO: ICF folded " << NumFunctionsFolded << " out of "
            << OriginalFunctionCount << " functions in " << Iteration
            << " passes. " << NumJTFunctionsFolded
@@ -584,7 +577,6 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
            << format("%.2lf", (double)BytesSavedEstimate / 1024)
            << " KB of code space. Folded functions were called "
            << CallsSavedEstimate << " times based on profile.\n";
-  }
 }
 
 } // namespace bolt

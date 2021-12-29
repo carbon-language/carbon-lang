@@ -509,11 +509,9 @@ public:
         CSA(FA, BF, Info, AllocId) {}
 
   ~ShrinkWrapping() {
-    for (BinaryBasicBlock &BB : BF) {
-      for (MCInst &Inst : BB) {
+    for (BinaryBasicBlock &BB : BF)
+      for (MCInst &Inst : BB)
         BC.MIB->removeAnnotation(Inst, getAnnotationIndex());
-      }
-    }
   }
 
   bool perform();

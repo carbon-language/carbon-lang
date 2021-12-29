@@ -143,9 +143,8 @@ protected:
       }
       for (auto I = InstInfo.getImplicitUses(),
                 E = InstInfo.getImplicitUses() + InstInfo.getNumImplicitUses();
-           I != E; ++I) {
+           I != E; ++I)
         Used |= BC.MIB->getAliases(*I, false);
-      }
       if (IsCall &&
           (!BC.MIB->isTailCall(Point) || !BC.MIB->isConditionalBranch(Point))) {
         // Never gen FLAGS from a non-conditional call... this is overly

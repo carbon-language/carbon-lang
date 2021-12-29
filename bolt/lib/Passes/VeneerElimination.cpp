@@ -90,9 +90,8 @@ void VeneerElimination::runOnFunctions(BinaryContext &BC) {
 
         VeneerCallers++;
         if (!BC.MIB->replaceBranchTarget(
-                Instr, VeneerDestinations[TargetSymbol], BC.Ctx.get())) {
+                Instr, VeneerDestinations[TargetSymbol], BC.Ctx.get()))
           assert(false && "updating veneer call destination failed");
-        }
       }
     }
   }

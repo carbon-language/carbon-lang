@@ -374,11 +374,10 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction &Function) {
     DeletedBytes += Bytes;
     if (Count) {
       Modified.insert(&Function);
-      if (opts::Verbosity > 0) {
+      if (opts::Verbosity > 0)
         outs() << "BOLT-INFO: Removed " << Count
                << " dead basic block(s) accounting for " << Bytes
                << " bytes in function " << Function << '\n';
-      }
     }
   }
 }
@@ -386,9 +385,8 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction &Function) {
 void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction &Function = It.second;
-    if (shouldOptimize(Function)) {
+    if (shouldOptimize(Function))
       runOnFunction(Function);
-    }
   }
 
   outs() << "BOLT-INFO: UCE removed " << DeletedBlocks << " blocks and "
@@ -416,9 +414,8 @@ void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
 
   ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
     modifyFunctionLayout(BF, opts::ReorderBlocks, opts::MinBranchClusters);
-    if (BF.hasLayoutChanged()) {
+    if (BF.hasLayoutChanged())
       ++ModifiedFuncCount;
-    }
   };
 
   ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
@@ -439,10 +436,9 @@ void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
     // Copy all the values into vector in order to sort them
     std::map<uint64_t, BinaryFunction &> ScoreMap;
     auto &BFs = BC.getBinaryFunctions();
-    for (auto It = BFs.begin(); It != BFs.end(); ++It) {
+    for (auto It = BFs.begin(); It != BFs.end(); ++It)
       ScoreMap.insert(std::pair<uint64_t, BinaryFunction &>(
           It->second.getFunctionScore(), It->second));
-    }
 
     OS << "\nBOLT-INFO: Printing Function Statistics:\n\n";
     OS << "           There are " << BFs.size() << " functions in total. \n";
@@ -634,21 +630,17 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
       // Now record preserved annotations separately and then strip annotations.
       for (auto II = BB->begin(); II != BB->end(); ++II) {
         if (BF.requiresAddressTranslation() &&
-            BC.MIB->hasAnnotation(*II, "Offset")) {
+            BC.MIB->hasAnnotation(*II, "Offset"))
           PreservedOffsetAnnotations.emplace_back(
               &(*II), BC.MIB->getAnnotationAs<uint32_t>(*II, "Offset"));
-        }
         BC.MIB->stripAnnotations(*II);
       }
     }
   }
-  for (BinaryFunction *BF : BC.getInjectedBinaryFunctions()) {
-    for (BinaryBasicBlock &BB : *BF) {
-      for (MCInst &Instruction : BB) {
+  for (BinaryFunction *BF : BC.getInjectedBinaryFunctions())
+    for (BinaryBasicBlock &BB : *BF)
+      for (MCInst &Instruction : BB)
         BC.MIB->stripAnnotations(Instruction);
-      }
-    }
-  }
 
   // Release all memory taken by annotations
   BC.MIB->freeAnnotations();
@@ -762,12 +754,10 @@ uint64_t fixDoubleJumps(BinaryFunction &Function, bool MarkInvalid) {
 
       if (Pred->getSuccessor() == &BB ||
           (Pred->getConditionalSuccessor(true) == &BB && !IsTailCall) ||
-          Pred->getConditionalSuccessor(false) == &BB) {
-        if (checkAndPatch(Pred, Succ, SuccSym) && MarkInvalid) {
+          Pred->getConditionalSuccessor(false) == &BB)
+        if (checkAndPatch(Pred, Succ, SuccSym) && MarkInvalid)
           BB.markValid(BB.pred_size() != 0 || BB.isLandingPad() ||
                        BB.isEntryPoint());
-        }
-      }
     }
   }
 
@@ -920,11 +910,10 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryFunction &BF) {
       // if there are no other users.
       PredBB->removeSuccessor(BB);
       // Update BB execution count
-      if (CTCTakenFreq && CTCTakenFreq <= BB->getKnownExecutionCount()) {
+      if (CTCTakenFreq && CTCTakenFreq <= BB->getKnownExecutionCount())
         BB->setExecutionCount(BB->getExecutionCount() - CTCTakenFreq);
-      } else if (CTCTakenFreq > BB->getKnownExecutionCount()) {
+      else if (CTCTakenFreq > BB->getKnownExecutionCount())
         BB->setExecutionCount(0);
-      }
 
       ++NumLocalCTCs;
       LocalCTCTakenCount += CTCTakenFreq;
@@ -950,9 +939,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryFunction &BF) {
     // Find the next valid block.  Invalid blocks will be deleted
     // so they shouldn't be considered fallthrough targets.
     const BinaryBasicBlock *NextBlock = BF.getBasicBlockAfter(PredBB, false);
-    while (NextBlock && !isValid(NextBlock)) {
+    while (NextBlock && !isValid(NextBlock))
       NextBlock = BF.getBasicBlockAfter(NextBlock, false);
-    }
 
     // Get the unconditional successor to this block.
     const BinaryBasicBlock *PredSucc = PredBB->getSuccessor();
@@ -1216,9 +1204,8 @@ bool SimplifyRODataLoads::simplifyRODataLoads(BinaryFunction &BF) {
 void SimplifyRODataLoads::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction &Function = It.second;
-    if (shouldOptimize(Function) && simplifyRODataLoads(Function)) {
+    if (shouldOptimize(Function) && simplifyRODataLoads(Function))
       Modified.insert(&Function);
-    }
   }
 
   outs() << "BOLT-INFO: simplified " << NumLoadsSimplified << " out of "
@@ -1250,11 +1237,10 @@ void AssignSections::runOnFunctions(BinaryContext &BC) {
     }
 
     if (!UseColdSection || Function.hasValidIndex() ||
-        Function.hasValidProfile()) {
+        Function.hasValidProfile())
       Function.setCodeSectionName(BC.getMainCodeSectionName());
-    } else {
+    else
       Function.setCodeSectionName(BC.getColdCodeSectionName());
-    }
 
     if (Function.isSplit())
       Function.setColdCodeSectionName(BC.getColdCodeSectionName());
@@ -1373,18 +1359,17 @@ void PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     ++NumRegularFunctions;
 
     if (!Function.isSimple()) {
-      if (Function.hasProfile()) {
+      if (Function.hasProfile())
         ++NumNonSimpleProfiledFunctions;
-      }
       continue;
     }
 
     if (Function.hasUnknownControlFlow()) {
-      if (opts::PrintUnknownCFG) {
+      if (opts::PrintUnknownCFG)
         Function.dump();
-      } else if (opts::PrintUnknown) {
+      else if (opts::PrintUnknown)
         errs() << "function with unknown control flow: " << Function << '\n';
-      }
+
       ++NumUnknownControlFlowFunctions;
     }
 
@@ -1424,11 +1409,10 @@ void PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     const float PctStale =
         NumStaleProfileFunctions / (float)NumAllProfiledFunctions * 100.0f;
     auto printErrorOrWarning = [&]() {
-      if (PctStale > opts::StaleThreshold) {
+      if (PctStale > opts::StaleThreshold)
         errs() << "BOLT-ERROR: ";
-      } else {
+      else
         errs() << "BOLT-WARNING: ";
-      }
     };
     printErrorOrWarning();
     errs() << NumStaleProfileFunctions
@@ -1466,9 +1450,8 @@ void PrintProgramStats::runOnFunctions(BinaryContext &BC) {
       auto SFI = ProfiledFunctions.begin();
       auto SFIend = ProfiledFunctions.end();
       for (unsigned I = 0u; I < opts::TopCalledLimit && SFI != SFIend;
-           ++SFI, ++I) {
+           ++SFI, ++I)
         outs() << "  " << **SFI << " : " << (*SFI)->getExecutionCount() << '\n';
-      }
     }
   }
 
@@ -1616,30 +1599,25 @@ void PrintProgramStats::runOnFunctions(BinaryContext &BC) {
       for (unsigned I = 0;
            I < std::min(static_cast<size_t>(opts::ReportBadLayout),
                         SuboptimalFuncs.size());
-           ++I) {
+           ++I)
         SuboptimalFuncs[I]->print(outs());
-      }
     }
   }
 
   if (NumUnknownControlFlowFunctions) {
     outs() << "BOLT-INFO: " << NumUnknownControlFlowFunctions
            << " functions have instructions with unknown control flow";
-    if (!opts::PrintUnknown) {
+    if (!opts::PrintUnknown)
       outs() << ". Use -print-unknown to see the list.";
-    }
     outs() << '\n';
   }
 }
 
 void InstructionLowering::runOnFunctions(BinaryContext &BC) {
-  for (auto &BFI : BC.getBinaryFunctions()) {
-    for (BinaryBasicBlock &BB : BFI.second) {
-      for (MCInst &Instruction : BB) {
+  for (auto &BFI : BC.getBinaryFunctions())
+    for (BinaryBasicBlock &BB : BFI.second)
+      for (MCInst &Instruction : BB)
         BC.MIB->lowerTailCall(Instruction);
-      }
-    }
-  }
 }
 
 void StripRepRet::runOnFunctions(BinaryContext &BC) {
@@ -1657,12 +1635,11 @@ void StripRepRet::runOnFunctions(BinaryContext &BC) {
     }
   }
 
-  if (NumBytesSaved) {
+  if (NumBytesSaved)
     outs() << "BOLT-INFO: removed " << NumBytesSaved
            << " 'repz' prefixes"
               " with estimated execution count of "
            << NumPrefixesRemoved << " times.\n";
-  }
 }
 
 void InlineMemcpy::runOnFunctions(BinaryContext &BC) {

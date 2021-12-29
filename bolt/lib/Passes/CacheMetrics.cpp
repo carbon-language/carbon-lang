@@ -95,10 +95,9 @@ double calcExtTSPScore(
     for (BinaryBasicBlock *SrcBB : BF->layout()) {
       auto BI = SrcBB->branch_info_begin();
       for (BinaryBasicBlock *DstBB : SrcBB->successors()) {
-        if (DstBB != SrcBB) {
+        if (DstBB != SrcBB)
           Score += CacheMetrics::extTSPScore(BBAddr.at(SrcBB), BBSize.at(SrcBB),
                                              BBAddr.at(DstBB), BI->Count);
-        }
         ++BI;
       }
     }
@@ -169,9 +168,8 @@ double expectedCacheHitRatio(
   std::unordered_map<BinaryFunction *, double> FunctionSamples;
   for (BinaryFunction *BF : BinaryFunctions) {
     double Samples = 0;
-    for (std::pair<BinaryFunction *, uint64_t> Pair : Calls[BF]) {
+    for (std::pair<BinaryFunction *, uint64_t> Pair : Calls[BF])
       Samples += Pair.second;
-    }
     Samples = std::max(Samples, (double)BF->getKnownExecutionCount());
     FunctionSamples[BF] = Samples;
     TotalSamples += Samples;

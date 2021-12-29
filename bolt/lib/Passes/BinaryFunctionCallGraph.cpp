@@ -114,9 +114,8 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
       // samples.  Results from perfomance testing seem to favor the zero
       // count though, so I'm leaving it this way for now.
       return Cg.addNode(Function, Size, Function->getKnownExecutionCount());
-    } else {
-      return Id;
     }
+    return Id;
   };
 
   // Add call graph edges.
@@ -128,9 +127,8 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction *Function = &It.second;
 
-    if (Filter(*Function)) {
+    if (Filter(*Function))
       continue;
-    }
 
     const CallGraph::NodeId SrcId = lookupNode(Function);
     // Offset of the current basic block from the beginning of the function
@@ -146,9 +144,9 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
           if (IgnoreRecursiveCalls)
             return false;
         }
-        if (Filter(*DstFunc)) {
+        if (Filter(*DstFunc))
           return false;
-        }
+
         const CallGraph::NodeId DstId = lookupNode(DstFunc);
         const bool IsValidCount = Count != COUNT_NO_PROFILE;
         const uint64_t AdjCount = UseEdgeCounts && IsValidCount ? Count : 1;
@@ -180,10 +178,9 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
       if (!DstSym && BC.MIB->hasAnnotation(Inst, "CallProfile")) {
         const auto &ICSP = BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(
             Inst, "CallProfile");
-        for (const IndirectCallProfile &CSI : ICSP) {
+        for (const IndirectCallProfile &CSI : ICSP)
           if (CSI.Symbol)
             Counts.emplace_back(CSI.Symbol, CSI.Count);
-        }
       } else {
         const uint64_t Count = BB->getExecutionCount();
         Counts.emplace_back(DstSym, Count);
@@ -214,9 +211,8 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
         if (Offset > Size)
           Offset = Size;
 
-        if (!recordCall(CSI.Symbol, CSI.Count)) {
+        if (!recordCall(CSI.Symbol, CSI.Count))
           ++NotProcessed;
-        }
       }
     } else {
       for (BinaryBasicBlock *BB : Function->layout()) {
@@ -253,9 +249,8 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
             }
           }
           // Increase Offset if needed
-          if (BBIncludedInFunctionSize) {
+          if (BBIncludedInFunctionSize)
             Offset += BC.computeCodeSize(&Inst, &Inst + 1);
-          }
         }
       }
     }
@@ -266,7 +261,7 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
 #else
   bool PrintInfo = false;
 #endif
-  if (PrintInfo || opts::Verbosity > 0) {
+  if (PrintInfo || opts::Verbosity > 0)
     outs() << format("BOLT-INFO: buildCallGraph: %u nodes, %u callsites "
                      "(%u recursive), density = %.6lf, %u callsites not "
                      "processed, %u callsites with invalid profile, "
@@ -274,7 +269,6 @@ buildCallGraph(BinaryContext &BC, CgFilterFunction Filter, bool CgFromPerfData,
                      Cg.numNodes(), TotalCallsites, RecursiveCallsites,
                      Cg.density(), NotProcessed, NoProfileCallsites,
                      NumFallbacks);
-  }
 
   return Cg;
 }

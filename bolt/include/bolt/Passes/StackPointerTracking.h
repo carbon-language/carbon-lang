@@ -99,8 +99,7 @@ protected:
 
       if (MIB->isLeave(Point))
         return FPVal + 8;
-      else
-        return FPVal;
+      return FPVal;
     }
 
     if (this->BC.MII->get(Point.getOpcode())
@@ -157,11 +156,8 @@ protected:
         return SUPERPOSITION;
       }
 
-      if (!HasFramePointer) {
-        if (MIB->escapesVariable(Point, false)) {
-          HasFramePointer = true;
-        }
-      }
+      if (!HasFramePointer && MIB->escapesVariable(Point, false))
+        HasFramePointer = true;
       return static_cast<int>(Output);
     }
 

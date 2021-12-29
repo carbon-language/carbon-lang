@@ -143,9 +143,8 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
                           BC.MIB->matchAnyOperand(Offset));
   if (!IndJmpMatcher->match(*BC.MRI, *BC.MIB,
                             MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
-                            -1)) {
+                            -1))
     return false;
-  }
 
   assert(Scale == 8 && "Wrong scale");
 
@@ -186,9 +185,8 @@ bool JTFootprintReduction::tryOptimizePIC(BinaryContext &BC,
                             BC.MIB->matchAnyOperand())));
   if (!PICIndJmpMatcher->match(
           *BC.MRI, *BC.MIB, MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
-          -1)) {
+          -1))
     return false;
-  }
 
   assert(Scale == 4 && "Wrong scale");
 
@@ -240,14 +238,12 @@ void JTFootprintReduction::optimizeFunction(BinaryFunction &Function,
   if (!Modified.count(&Function))
     return;
 
-  for (BinaryBasicBlock &BB : Function) {
-    for (auto I = BB.begin(); I != BB.end();) {
+  for (BinaryBasicBlock &BB : Function)
+    for (auto I = BB.begin(); I != BB.end();)
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         I = BB.eraseInstruction(I);
       else
         ++I;
-    }
-  }
 }
 
 void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
@@ -281,10 +277,9 @@ void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
   }
 
   outs() << "BOLT-INFO: JT Footprint reduction stats (simple funcs only):\n";
-  if (OptimizedScore) {
+  if (OptimizedScore)
     outs() << format("\t   %.2lf%%", (OptimizedScore * 100.0 / TotalJTScore))
            << " of dynamic JT entries were reduced.\n";
-  }
   outs() << "\t   " << TotalJTs - TotalJTsDenied << " of " << TotalJTs
          << " jump tables affected.\n";
   outs() << "\t   " << IndJmps - IndJmpsDenied << " of " << IndJmps

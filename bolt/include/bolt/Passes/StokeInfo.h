@@ -70,7 +70,7 @@ struct StokeFuncInfo {
   }
 
   void printCsvHeader(std::ofstream &Outfile) {
-    if (Outfile.is_open()) {
+    if (Outfile.is_open())
       Outfile << "FuncName,Offset,Size,NumInstrs,NumBlocks,"
               << "IsLoopFree,NumLoops,MaxLoopDepth,"
               << "HotSize,TotalSize,"
@@ -79,7 +79,6 @@ struct StokeFuncInfo {
               << "DefIn,LiveOut,HeapOut,StackOut,"
               << "HasRipAddr,"
               << "Omitted\n";
-    }
   }
 
   void printData(std::ofstream &Outfile) {
@@ -88,13 +87,11 @@ struct StokeFuncInfo {
               << "," << NumBlocks << "," << IsLoopFree << "," << NumLoops << ","
               << MaxLoopDepth << "," << HotSize << "," << TotalSize << ","
               << Score << "," << HasCall << ",\"{ ";
-      for (std::string S : DefIn) {
+      for (std::string S : DefIn)
         Outfile << "%" << S << " ";
-      }
       Outfile << "}\",\"{ ";
-      for (std::string S : LiveOut) {
+      for (std::string S : LiveOut)
         Outfile << "%" << S << " ";
-      }
       Outfile << "}\"," << HeapOut << "," << StackOut << "," << HasRipAddr
               << "," << Omitted << "\n";
     }

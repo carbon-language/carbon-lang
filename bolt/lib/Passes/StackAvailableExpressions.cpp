@@ -67,13 +67,11 @@ namespace {
 
 bool isLoadRedundant(const FrameIndexEntry &LoadFIE,
                      const FrameIndexEntry &StoreFIE) {
-  if (LoadFIE.IsLoad == false || LoadFIE.IsSimple == false) {
+  if (LoadFIE.IsLoad == false || LoadFIE.IsSimple == false)
     return false;
-  }
   if (LoadFIE.StackOffset == StoreFIE.StackOffset &&
-      LoadFIE.Size == StoreFIE.Size) {
+      LoadFIE.Size == StoreFIE.Size)
     return true;
-  }
 
   return false;
 }
@@ -99,11 +97,11 @@ bool StackAvailableExpressions::doesXKillsY(const MCInst *X, const MCInst *Y) {
   // If Y is a store to stack, its clobber list is its source reg. This is
   // different than the rest because we want to check if the store source
   // reaches its corresponding load untouched.
-  if (FIEY && FIEY->IsStore == true && FIEY->IsStoreFromReg) {
+  if (FIEY && FIEY->IsStore == true && FIEY->IsStoreFromReg)
     YClobbers.set(FIEY->RegOrImm);
-  } else {
+  else
     RA.getInstClobberList(*Y, YClobbers);
-  }
+
   XClobbers &= YClobbers;
   return XClobbers.any();
 }

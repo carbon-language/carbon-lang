@@ -147,9 +147,8 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
 
   // The size and order of Clusters is fixed until we reshuffle it immediately
   // before returning.
-  for (Cluster &Cluster : Clusters) {
+  for (Cluster &Cluster : Clusters)
     FuncCluster[Cluster.targets().front()] = &Cluster;
-  }
 
   std::sort(SortedFuncs.begin(), SortedFuncs.end(),
             [&](const NodeId F1, const NodeId F2) {
@@ -192,9 +191,8 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
     // Skip if no predCluster (predecessor w/ no samples), or if same
     // as cluster, of it's frozen.
     if (PredCluster == nullptr || PredCluster == Cluster ||
-        PredCluster->frozen()) {
+        PredCluster->frozen())
       continue;
-    }
 
     // Skip if merged cluster would be bigger than the threshold.
     if (Cluster->size() + PredCluster->size() > MaxClusterSize)
@@ -216,9 +214,8 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
                        Cluster->toString().c_str(), Cg.samples(Fid));
     });
 
-    for (NodeId F : Cluster->targets()) {
+    for (NodeId F : Cluster->targets())
       FuncCluster[F] = PredCluster;
-    }
 
     PredCluster->merge(*Cluster);
     Cluster->clear();
@@ -230,9 +227,9 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
   std::unordered_set<Cluster *> Visited;
   for (const NodeId Func : SortedFuncs) {
     Cluster *Cluster = FuncCluster[Func];
-    if (!Cluster || Visited.count(Cluster) == 1 || Cluster->target(0) != Func) {
+    if (!Cluster || Visited.count(Cluster) == 1 || Cluster->target(0) != Func)
       continue;
-    }
+
     SortedClusters.emplace_back(std::move(*Cluster));
     Visited.insert(Cluster);
   }
@@ -262,9 +259,8 @@ std::vector<Cluster> randomClusters(const CallGraph &Cg) {
     size_t MaxIdx = Idx + 1;
 
     while (MaxIdx < Clusters.size() &&
-           Clusters[Idx].size() + Clusters[MaxIdx].size() <= MaxClusterSize) {
+           Clusters[Idx].size() + Clusters[MaxIdx].size() <= MaxClusterSize)
       ++MaxIdx;
-    }
 
     if (MaxIdx - Idx > 1) {
       size_t MergeIdx = (std::rand() % (MaxIdx - Idx - 1)) + Idx + 1;

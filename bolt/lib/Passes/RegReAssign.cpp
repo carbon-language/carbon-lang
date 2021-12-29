@@ -120,17 +120,16 @@ void RegReAssign::swap(BinaryFunction &Function, MCPhysReg A, MCPhysReg B) {
           CFIReg = *Reg;
         }
         const MCPhysReg Reg = *BC.MRI->getLLVMRegNum(CFIReg, /*isEH=*/false);
-        if (AliasA.test(Reg)) {
+        if (AliasA.test(Reg))
           Function.mutateCFIRegisterFor(
               Inst,
               BC.MRI->getDwarfRegNum(
                   BC.MIB->getAliasSized(B, BC.MIB->getRegSize(Reg)), false));
-        } else if (AliasB.test(Reg)) {
+        else if (AliasB.test(Reg))
           Function.mutateCFIRegisterFor(
               Inst,
               BC.MRI->getDwarfRegNum(
                   BC.MIB->getAliasSized(A, BC.MIB->getRegSize(Reg)), false));
-        }
         break;
       }
       default:
@@ -257,11 +256,11 @@ void RegReAssign::aggressivePassOverFunction(BinaryFunction &Function) {
   DataflowInfoManager Info(Function, RA.get(), nullptr);
   BitVector AliveAtStart = *Info.getLivenessAnalysis().getStateAt(
       ProgramPoint::getFirstPointAt(*Function.begin()));
-  for (BinaryBasicBlock &BB : Function) {
+  for (BinaryBasicBlock &BB : Function)
     if (BB.pred_size() == 0)
       AliveAtStart |= *Info.getLivenessAnalysis().getStateAt(
           ProgramPoint::getFirstPointAt(BB));
-  }
+
   // Mark frame pointer alive because of CFI
   AliveAtStart |= BC.MIB->getAliases(BC.MIB->getFramePointer(), false);
   // Never touch return registers
@@ -329,10 +328,9 @@ bool RegReAssign::conservativePassOverFunction(BinaryFunction &Function) {
   // regs except RBP)
   MCPhysReg Candidate = 0;
   for (int J = ExtendedCSR.find_first(); J != -1;
-       J = ExtendedCSR.find_next(J)) {
+       J = ExtendedCSR.find_next(J))
     if (RegScore[J] > RegScore[Candidate])
       Candidate = J;
-  }
 
   if (!Candidate || RegScore[Candidate] < 0)
     return false;
@@ -345,9 +343,8 @@ bool RegReAssign::conservativePassOverFunction(BinaryFunction &Function) {
     if (ScoreRBX <= 0)
       continue;
 
-    if (RegScore[Candidate] > (ScoreRBX + 10)) {
+    if (RegScore[Candidate] > (ScoreRBX + 10))
       RBX = I;
-    }
   }
 
   if (!RBX)
@@ -424,10 +421,9 @@ void RegReAssign::runOnFunctions(BinaryContext &BC) {
     if (!conservativePassOverFunction(Function) && opts::AggressiveReAssign) {
       aggressivePassOverFunction(Function);
       LLVM_DEBUG({
-        if (FuncsChanged.count(&Function)) {
+        if (FuncsChanged.count(&Function))
           dbgs() << "Aggressive pass successful on " << Function.getPrintName()
                  << "\n";
-        }
       });
     }
   }
@@ -436,12 +432,11 @@ void RegReAssign::runOnFunctions(BinaryContext &BC) {
     outs() << "BOLT-INFO: Reg Reassignment Pass: no changes were made.\n";
     return;
   }
-  if (opts::UpdateDebugSections) {
+  if (opts::UpdateDebugSections)
     outs() << "BOLT-WARNING: You used -reg-reassign and -update-debug-sections."
            << " Some registers were changed but associated AT_LOCATION for "
            << "impacted variables were NOT updated! This operation is "
            << "currently unsupported by BOLT.\n";
-  }
   outs() << "BOLT-INFO: Reg Reassignment Pass Stats:\n";
   outs() << "\t   " << FuncsChanged.size() << " functions affected.\n";
   outs() << "\t   " << StaticBytesSaved << " static bytes saved.\n";

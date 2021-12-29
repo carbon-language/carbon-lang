@@ -123,10 +123,9 @@ bool inliningEnabled() {
 }
 
 bool mustConsider(const llvm::bolt::BinaryFunction &Function) {
-  for (std::string &Name : opts::ForceInlineFunctions) {
+  for (std::string &Name : opts::ForceInlineFunctions)
     if (Function.hasName(Name))
       return true;
-  }
   return false;
 }
 
@@ -290,11 +289,10 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
   // for return instructions in the callee to redirect to.
   BinaryBasicBlock *NextBB = nullptr;
   if (Callee.size() > 1) {
-    if (std::next(CallInst) != FirstInlinedBB->end()) {
+    if (std::next(CallInst) != FirstInlinedBB->end())
       NextBB = FirstInlinedBB->splitAt(std::next(CallInst));
-    } else {
+    else
       NextBB = FirstInlinedBB->getSuccessor();
-    }
   }
   if (NextBB)
     FirstInlinedBB->removeSuccessor(NextBB);
@@ -303,10 +301,9 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
   auto InsertII = FirstInlinedBB->eraseInstruction(CallInst);
 
   double ProfileRatio = 0;
-  if (uint64_t CalleeExecCount = Callee.getKnownExecutionCount()) {
+  if (uint64_t CalleeExecCount = Callee.getKnownExecutionCount())
     ProfileRatio =
         (double)FirstInlinedBB->getKnownExecutionCount() / CalleeExecCount;
-  }
 
   // Save execution count of the first block as we don't want it to change
   // later due to profile adjustment rounding errors.
@@ -319,11 +316,10 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
     BinaryBasicBlock *InlinedBB = CallerFunction.addBasicBlock(0);
     InlinedBBMap[&*BBI] = InlinedBB;
     InlinedBB->setCFIState(FirstInlinedBB->getCFIState());
-    if (Callee.hasValidProfile()) {
+    if (Callee.hasValidProfile())
       InlinedBB->setExecutionCount(BBI->getKnownExecutionCount());
-    } else {
+    else
       InlinedBB->setExecutionCount(FirstInlinedBBCount);
-    }
   }
 
   // Copy over instructions and edges.
@@ -386,12 +382,11 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
                      return InlinedBBMap.at(BB);
                    });
 
-    if (CallerFunction.hasValidProfile() && Callee.hasValidProfile()) {
+    if (CallerFunction.hasValidProfile() && Callee.hasValidProfile())
       InlinedBB->addSuccessors(Successors.begin(), Successors.end(),
                                BB.branch_info_begin(), BB.branch_info_end());
-    } else {
+    else
       InlinedBB->addSuccessors(Successors.begin(), Successors.end());
-    }
 
     if (!CSIsTailCall && BB.succ_size() == 0 && NextBB) {
       // Either it's a return block or the last instruction never returns.
@@ -400,12 +395,11 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
 
     // Scale profiling info for blocks and edges after inlining.
     if (CallerFunction.hasValidProfile() && Callee.size() > 1) {
-      if (opts::AdjustProfile) {
+      if (opts::AdjustProfile)
         InlinedBB->adjustExecutionCount(ProfileRatio);
-      } else {
+      else
         InlinedBB->setExecutionCount(InlinedBB->getKnownExecutionCount() *
                                      ProfileRatio);
-      }
     }
   }
 
@@ -474,13 +468,12 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
       }
 
       int64_t SizeAfterInlining;
-      if (IsTailCall) {
+      if (IsTailCall)
         SizeAfterInlining =
             IInfo->second.SizeAfterTailCallInlining - getSizeOfTailCallInst(BC);
-      } else {
+      else
         SizeAfterInlining =
             IInfo->second.SizeAfterInlining - getSizeOfCallInst(BC);
-      }
 
       if (!opts::InlineAll && !opts::mustConsider(*TargetFunction)) {
         if (!opts::InlineSmallFunctions ||
@@ -505,9 +498,8 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
       NumInlinedDynamicCalls += BB->getExecutionCount();
 
       // Subtract basic block execution count from the callee execution count.
-      if (opts::AdjustProfile) {
+      if (opts::AdjustProfile)
         TargetFunction->adjustExecutionCount(BB->getKnownExecutionCount());
-      }
 
       // Check if the caller inlining status has to be adjusted.
       if (IInfo->second.Type == INL_TAILCALL) {
@@ -520,9 +512,8 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
         }
       }
 
-      if (NumInlinedCallSites == opts::InlineLimit) {
+      if (NumInlinedCallSites == opts::InlineLimit)
         return true;
-      }
     }
   }
 
@@ -577,12 +568,11 @@ void Inliner::runOnFunctions(BinaryContext &BC) {
     ++NumIters;
   } while (InlinedOnce && NumIters < opts::InlineMaxIters);
 
-  if (NumInlinedCallSites) {
+  if (NumInlinedCallSites)
     outs() << "BOLT-INFO: inlined " << NumInlinedDynamicCalls << " calls at "
            << NumInlinedCallSites << " call sites in " << NumIters
            << " iteration(s). Change in binary size: " << TotalInlinedBytes
            << " bytes.\n";
-  }
 }
 
 } // namespace bolt

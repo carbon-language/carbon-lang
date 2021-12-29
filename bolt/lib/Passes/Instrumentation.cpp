@@ -362,9 +362,8 @@ void Instrumentation::instrumentFunction(BinaryFunction &Function,
   for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
     for (auto I = BBI->begin(), E = BBI->end(); I != E; ++I) {
       if (BC.MIB->isCall(*I)) {
-        if (BC.MIB->isInvoke(*I)) {
+        if (BC.MIB->isInvoke(*I))
           InvokeBlocks.insert(&*BBI);
-        }
         IsLeafFunction = false;
       }
     }

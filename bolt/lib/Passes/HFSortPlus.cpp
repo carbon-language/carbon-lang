@@ -104,10 +104,9 @@ public:
   double density() const { return static_cast<double>(Samples) / Size; }
 
   Edge *getEdge(Chain *Other) const {
-    for (std::pair<Chain *, Edge *> It : Edges) {
+    for (std::pair<Chain *, Edge *> It : Edges)
       if (It.first == Other)
         return It.second;
-    }
     return nullptr;
   }
 
@@ -228,16 +227,14 @@ void Chain::mergeEdges(Chain *Other) {
     if (CurEdge == nullptr) {
       DstEdge->changeEndpoint(Other, this);
       this->addEdge(TargetChain, DstEdge);
-      if (DstChain != this && DstChain != Other) {
+      if (DstChain != this && DstChain != Other)
         DstChain->addEdge(this, DstEdge);
-      }
     } else {
       CurEdge->moveArcs(DstEdge);
     }
     // Cleanup leftover edge
-    if (DstChain != Other) {
+    if (DstChain != Other)
       DstChain->removeEdge(Other);
-    }
   }
 }
 
@@ -258,9 +255,8 @@ public:
 
     // Sorting chains by density in decreasing order
     auto DensityComparator = [](const Chain *L, const Chain *R) {
-      if (L->density() != R->density()) {
+      if (L->density() != R->density())
         return L->density() > R->density();
-      }
       // Making sure the comparison is deterministic
       return L->Id < R->Id;
     };
@@ -270,9 +266,8 @@ public:
     // didn't get merged (so their first func is its original func)
     std::vector<Cluster> Clusters;
     Clusters.reserve(HotChains.size());
-    for (Chain *Chain : HotChains) {
+    for (Chain *Chain : HotChains)
       Clusters.emplace_back(Cluster(Chain->Nodes, Cg));
-    }
     return Clusters;
   }
 
@@ -344,9 +339,8 @@ private:
   double missProbability(double ChainDensity) const {
     double PageSamples = ChainDensity * opts::ITLBDensity;
 
-    if (PageSamples >= TotalSamples) {
+    if (PageSamples >= TotalSamples)
       return 0;
-    }
 
     double P = PageSamples / TotalSamples;
     return pow(1.0 - P, double(opts::ITLBEntries));
@@ -357,9 +351,8 @@ private:
   double expectedCalls(uint64_t SrcAddr, uint64_t DstAddr,
                        double Weight) const {
     uint64_t Dist = SrcAddr >= DstAddr ? SrcAddr - DstAddr : DstAddr - SrcAddr;
-    if (Dist >= opts::ITLBPageSize) {
+    if (Dist >= opts::ITLBPageSize)
       return 0;
-    }
 
     double D = double(Dist) / double(opts::ITLBPageSize);
     // Increasing the importance of shorter calls
@@ -453,9 +446,8 @@ private:
 
         const Arc &Arc = *Cg.findArc(F, Succ);
         if (Arc.weight() == 0.0 ||
-            Arc.weight() / TotalSamples < opts::ArcThreshold) {
+            Arc.weight() / TotalSamples < opts::ArcThreshold)
           continue;
-        }
 
         const double CallsFromPred = OutWeight[F];
         const double CallsToSucc = InWeight[Succ];
@@ -470,9 +462,8 @@ private:
         const double ProbIn = CallsToSucc > 0 ? CallsPredSucc / CallsToSucc : 0;
         assert(0.0 <= ProbIn && ProbIn <= 1.0 && "incorrect in-probability");
 
-        if (std::min(ProbOut, ProbIn) >= opts::MergeProbability) {
+        if (std::min(ProbOut, ProbIn) >= opts::MergeProbability)
           ArcsToMerge.push_back(&Arc);
-        }
       }
     }
 
@@ -488,9 +479,8 @@ private:
       if (ChainPred == ChainSucc)
         continue;
       if (ChainPred->Nodes.back() == Arc->src() &&
-          ChainSucc->Nodes.front() == Arc->dst()) {
+          ChainSucc->Nodes.front() == Arc->dst())
         mergeChains(ChainPred, ChainSucc);
-      }
     }
   }
 
@@ -500,13 +490,13 @@ private:
   void runPassTwo() {
     // Creating a priority queue containing all edges ordered by the merge gain
     auto GainComparator = [](Edge *L, Edge *R) {
-      if (std::abs(L->gain() - R->gain()) > 1e-8) {
+      if (std::abs(L->gain() - R->gain()) > 1e-8)
         return L->gain() > R->gain();
-      }
+
       // Making sure the comparison is deterministic
-      if (L->predChain()->Id != R->predChain()->Id) {
+      if (L->predChain()->Id != R->predChain()->Id)
         return L->predChain()->Id < R->predChain()->Id;
-      }
+
       return L->succChain()->Id < R->succChain()->Id;
     };
     std::set<Edge *, decltype(GainComparator)> Queue(GainComparator);
@@ -527,9 +517,8 @@ private:
         auto ForwardGain = mergeGain(ChainPred, ChainSucc, ChainEdge);
         auto BackwardGain = mergeGain(ChainSucc, ChainPred, ChainEdge);
         ChainEdge->setMergeGain(ChainPred, ForwardGain, BackwardGain);
-        if (ChainEdge->gain() > 0.0) {
+        if (ChainEdge->gain() > 0.0)
           Queue.insert(ChainEdge);
-        }
       }
     }
 
@@ -545,12 +534,10 @@ private:
         continue;
 
       // Remove outdated edges
-      for (std::pair<Chain *, Edge *> EdgeIt : BestChainPred->Edges) {
+      for (std::pair<Chain *, Edge *> EdgeIt : BestChainPred->Edges)
         Queue.erase(EdgeIt.second);
-      }
-      for (std::pair<Chain *, Edge *> EdgeIt : BestChainSucc->Edges) {
+      for (std::pair<Chain *, Edge *> EdgeIt : BestChainSucc->Edges)
         Queue.erase(EdgeIt.second);
-      }
 
       // Merge the best pair of chains
       mergeChains(BestChainPred, BestChainSucc);
@@ -567,9 +554,8 @@ private:
         auto ForwardGain = mergeGain(BestChainPred, ChainSucc, ChainEdge);
         auto BackwardGain = mergeGain(ChainSucc, BestChainPred, ChainEdge);
         ChainEdge->setMergeGain(BestChainPred, ForwardGain, BackwardGain);
-        if (ChainEdge->gain() > 0.0) {
+        if (ChainEdge->gain() > 0.0)
           Queue.insert(ChainEdge);
-        }
       }
     }
   }

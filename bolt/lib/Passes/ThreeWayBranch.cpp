@@ -22,12 +22,10 @@ namespace bolt {
 bool ThreeWayBranch::shouldRunOnFunction(BinaryFunction &Function) {
   BinaryContext &BC = Function.getBinaryContext();
   BinaryFunction::BasicBlockOrderType BlockLayout = Function.getLayout();
-  for (BinaryBasicBlock *BB : BlockLayout) {
-    for (MCInst &Inst : *BB) {
+  for (BinaryBasicBlock *BB : BlockLayout)
+    for (MCInst &Inst : *BB)
       if (BC.MIB->isPacked(Inst))
         return false;
-    }
-  }
   return true;
 }
 
@@ -136,14 +134,13 @@ void ThreeWayBranch::runOnFunction(BinaryFunction &Function) {
     SecondBranch->setExecutionCount(NewSecondBranchCount);
 
     // Replace the branch condition to fallthrough for the most common block
-    if (SecondBranchBigger) {
+    if (SecondBranchBigger)
       BC.MIB->replaceBranchCondition(*FirstJump, Blocks[2].first->getLabel(),
                                      Ctx, Blocks[2].second);
-    } else {
+    else
       BC.MIB->replaceBranchCondition(
           *FirstJump, SecondBranch->getLabel(), Ctx,
           BC.MIB->getInvertedCondCode(Blocks[2].second));
-    }
 
     // Replace the branch condition to fallthrough for the second most common
     // block

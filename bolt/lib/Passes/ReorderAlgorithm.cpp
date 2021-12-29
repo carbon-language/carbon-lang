@@ -76,9 +76,8 @@ template <typename A, typename B> struct HashPair {
 void ClusterAlgorithm::computeClusterAverageFrequency(const BinaryContext &BC) {
   // Create a separate MCCodeEmitter to allow lock-free execution
   BinaryContext::IndependentCodeEmitter Emitter;
-  if (!opts::NoThreads) {
+  if (!opts::NoThreads)
     Emitter = BC.createIndependentMCCodeEmitter();
-  }
 
   AvgFreq.resize(Clusters.size(), 0.0);
   for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
@@ -434,9 +433,9 @@ void TSPReorderAlgorithm::reorderBasicBlocks(const BinaryFunction &BF,
 
   std::vector<std::vector<int64_t>> DP;
   DP.resize(1 << N);
-  for (std::vector<int64_t> &Elmt : DP) {
+  for (std::vector<int64_t> &Elmt : DP)
     Elmt.resize(N, -1);
-  }
+
   // Start with the entry basic block being allocated with cost zero
   DP[1][0] = 0;
   // Walk through TSP solutions using a bitmask to represent state (current set
@@ -504,10 +503,9 @@ void TSPReorderAlgorithm::reorderBasicBlocks(const BinaryFunction &BF,
 
   // Finalize layout with BBs that weren't assigned to the layout using the
   // input layout.
-  for (BinaryBasicBlock *BB : BF.layout()) {
+  for (BinaryBasicBlock *BB : BF.layout())
     if (Visited[BB->getLayoutIndex()] == false)
       Order.push_back(BB);
-  }
 }
 
 void OptimizeReorderAlgorithm::reorderBasicBlocks(
@@ -678,11 +676,9 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
     Order.insert(Order.end(), Cluster.begin(), Cluster.end());
     // Force zero execution count on clusters that do not meet the cut off
     // specified by --cold-threshold.
-    if (AvgFreq[ClusterIndex] < static_cast<double>(ColdThreshold)) {
-      for (BinaryBasicBlock *BBPtr : Cluster) {
+    if (AvgFreq[ClusterIndex] < static_cast<double>(ColdThreshold))
+      for (BinaryBasicBlock *BBPtr : Cluster)
         BBPtr->setExecutionCount(0);
-      }
-    }
   }
 }
 
