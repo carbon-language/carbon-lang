@@ -230,9 +230,8 @@ BoltAddressTranslation::getFallthroughsInTrace(const BinaryFunction &Func,
   To -= Func.getAddress();
 
   auto Iter = Maps.find(Func.getAddress());
-  if (Iter == Maps.end()) {
+  if (Iter == Maps.end())
     return NoneType();
-  }
 
   const MapTy &Map = Iter->second;
   auto FromIter = Map.upper_bound(From);
@@ -261,9 +260,8 @@ BoltAddressTranslation::getFallthroughsInTrace(const BinaryFunction &Func,
     }
 
     ++Iter;
-    while (Iter->second & BRANCHENTRY && Iter != ToIter) {
+    while (Iter->second & BRANCHENTRY && Iter != ToIter)
       ++Iter;
-    }
     if (Iter->second & BRANCHENTRY)
       break;
     Res.emplace_back(Src, Iter->first);

@@ -53,17 +53,14 @@ void YAMLProfileReader::buildNameMaps(
     if (Pos != StringRef::npos)
       Name = Name.substr(0, Pos);
     ProfileNameToProfile[Name] = &YamlBF;
-    if (const Optional<StringRef> CommonName = getLTOCommonName(Name)) {
+    if (const Optional<StringRef> CommonName = getLTOCommonName(Name))
       LTOCommonNameMap[*CommonName].push_back(&YamlBF);
-    }
   }
   for (auto &BFI : Functions) {
     const BinaryFunction &Function = BFI.second;
-    for (StringRef Name : Function.getNames()) {
-      if (const Optional<StringRef> CommonName = getLTOCommonName(Name)) {
+    for (StringRef Name : Function.getNames())
+      if (const Optional<StringRef> CommonName = getLTOCommonName(Name))
         LTOCommonNameFunctionMap[*CommonName].insert(&Function);
-      }
-    }
   }
 }
 
@@ -123,11 +120,11 @@ bool YAMLProfileReader::parseFunctionProfile(
         continue;
       }
       uint64_t NumSamples = YamlBB.EventCount * 1000;
-      if (NormalizeByInsnCount && BB.getNumNonPseudos()) {
+      if (NormalizeByInsnCount && BB.getNumNonPseudos())
         NumSamples /= BB.getNumNonPseudos();
-      } else if (NormalizeByCalls) {
+      else if (NormalizeByCalls)
         NumSamples /= BB.getNumCalls() + 1;
-      }
+
       BB.setExecutionCount(NumSamples);
       if (BB.isEntryPoint())
         FunctionExecutionCount += NumSamples;
@@ -142,9 +139,9 @@ bool YAMLProfileReader::parseFunctionProfile(
                                    : nullptr;
       bool IsFunction = Callee ? true : false;
       MCSymbol *CalleeSymbol = nullptr;
-      if (IsFunction) {
+      if (IsFunction)
         CalleeSymbol = Callee->getSymbolForEntryID(YamlCSI.EntryDiscriminator);
-      }
+
       BF.getAllCallSites().emplace_back(CalleeSymbol, YamlCSI.Count,
                                         YamlCSI.Mispreds, YamlCSI.Offset);
 
@@ -221,10 +218,9 @@ bool YAMLProfileReader::parseFunctionProfile(
   }
 
   // If basic block profile wasn't read it should be 0.
-  for (BinaryBasicBlock &BB : BF) {
+  for (BinaryBasicBlock &BB : BF)
     if (BB.getExecutionCount() == BinaryBasicBlock::COUNT_NO_PROFILE)
       BB.setExecutionCount(0);
-  }
 
   if (YamlBP.Header.Flags & BinaryFunction::PF_SAMPLE) {
     BF.setExecutionCount(FunctionExecutionCount);
@@ -236,11 +232,10 @@ bool YAMLProfileReader::parseFunctionProfile(
   if (ProfileMatched)
     BF.markProfiled(YamlBP.Header.Flags);
 
-  if (!ProfileMatched && opts::Verbosity >= 1) {
+  if (!ProfileMatched && opts::Verbosity >= 1)
     errs() << "BOLT-WARNING: " << MismatchedBlocks << " blocks, "
            << MismatchedCalls << " calls, and " << MismatchedEdges
            << " edges in profile did not match function " << BF << '\n';
-  }
 
   return ProfileMatched;
 }
@@ -263,16 +258,15 @@ Error YAMLProfileReader::preprocessProfile(BinaryContext &BC) {
   }
 
   // Sanity check.
-  if (YamlBP.Header.Version != 1) {
+  if (YamlBP.Header.Version != 1)
     return make_error<StringError>(
         Twine("cannot read profile : unsupported version"),
         inconvertibleErrorCode());
-  }
-  if (YamlBP.Header.EventNames.find(',') != StringRef::npos) {
+
+  if (YamlBP.Header.EventNames.find(',') != StringRef::npos)
     return make_error<StringError>(
         Twine("multiple events in profile are not supported"),
         inconvertibleErrorCode());
-  }
 
   // Match profile to function based on a function name.
   buildNameMaps(BC.getBinaryFunctions());
@@ -298,9 +292,8 @@ bool YAMLProfileReader::mayHaveProfileData(const BinaryFunction &BF) {
     if (ProfileNameToProfile.find(Name) != ProfileNameToProfile.end())
       return true;
     if (const Optional<StringRef> CommonName = getLTOCommonName(Name)) {
-      if (LTOCommonNameMap.find(*CommonName) != LTOCommonNameMap.end()) {
+      if (LTOCommonNameMap.find(*CommonName) != LTOCommonNameMap.end())
         return true;
-      }
     }
   }
 
@@ -336,9 +329,9 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
 
     for (StringRef FunctionName : Function.getNames()) {
       auto PI = ProfileNameToProfile.find(FunctionName);
-      if (PI == ProfileNameToProfile.end()) {
+      if (PI == ProfileNameToProfile.end())
         continue;
-      }
+
       yaml::bolt::BinaryFunctionProfile &YamlBF = *PI->getValue();
       if (profileMatches(YamlBF, Function))
         matchProfileToFunction(YamlBF, Function);
@@ -394,12 +387,10 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
     }
   }
 
-  for (yaml::bolt::BinaryFunctionProfile &YamlBF : YamlBP.Functions) {
-    if (!YamlBF.Used && opts::Verbosity >= 1) {
+  for (yaml::bolt::BinaryFunctionProfile &YamlBF : YamlBP.Functions)
+    if (!YamlBF.Used && opts::Verbosity >= 1)
       errs() << "BOLT-WARNING: profile ignored for function " << YamlBF.Name
              << '\n';
-    }
-  }
 
   // Set for parseFunctionProfile().
   NormalizeByInsnCount = usesEvent("cycles") || usesEvent("instructions");
@@ -412,11 +403,10 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
       ++NumUnused;
       continue;
     }
-    if (BinaryFunction *BF = YamlProfileToFunction[YamlBF.Id]) {
+    if (BinaryFunction *BF = YamlProfileToFunction[YamlBF.Id])
       parseFunctionProfile(*BF, YamlBF);
-    } else {
+    else
       ++NumUnused;
-    }
   }
 
   BC.setNumUnusedProfiledObjects(NumUnused);

@@ -41,9 +41,8 @@ void Heatmap::registerAddressRange(uint64_t StartAddress, uint64_t EndAddress,
   }
 
   for (uint64_t Bucket = StartAddress / BucketSize;
-       Bucket <= EndAddress / BucketSize; ++Bucket) {
+       Bucket <= EndAddress / BucketSize; ++Bucket)
     Map[Bucket] += Count;
-  }
 }
 
 void Heatmap::print(StringRef FileName) const {
@@ -72,9 +71,8 @@ void Heatmap::print(raw_ostream &OS) const {
 
   // Calculate the max value for scaling.
   uint64_t MaxValue = 0;
-  for (const std::pair<const uint64_t, uint64_t> &Entry : Map) {
+  for (const std::pair<const uint64_t, uint64_t> &Entry : Map)
     MaxValue = std::max<uint64_t>(MaxValue, Entry.second);
-  }
 
   // Print start of the line and fill it with an empty space right before
   // the Address.
@@ -89,9 +87,8 @@ void Heatmap::print(raw_ostream &OS) const {
 
     if (Empty)
       Address = LineAddress + BytesPerLine;
-    for (uint64_t Fill = LineAddress; Fill < Address; Fill += BucketSize) {
+    for (uint64_t Fill = LineAddress; Fill < Address; Fill += BucketSize)
       OS << FillChar;
-    }
   };
 
   // Finish line after \p Address was printed.
@@ -151,11 +148,11 @@ void Heatmap::print(raw_ostream &OS) const {
         break;
       }
     }
-    if (Value <= Range[0]) {
+    if (Value <= Range[0])
       OS << 'o';
-    } else {
+    else
       OS << 'O';
-    }
+
     if (ResetColor)
       changeColor(DefaultColor);
   };
@@ -200,11 +197,10 @@ void Heatmap::print(raw_ostream &OS) const {
     const std::pair<const uint64_t, uint64_t> &Entry = *MI;
     uint64_t Address = Entry.first * BucketSize;
 
-    if (PrevAddress) {
+    if (PrevAddress)
       fillRange(PrevAddress, Address);
-    } else {
+    else
       startLine(Address);
-    }
 
     printValue(Entry.second);
 

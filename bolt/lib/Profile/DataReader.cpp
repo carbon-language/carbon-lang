@@ -42,23 +42,21 @@ namespace bolt {
 
 Optional<StringRef> getLTOCommonName(const StringRef Name) {
   size_t LTOSuffixPos = Name.find(".lto_priv.");
-  if (LTOSuffixPos != StringRef::npos) {
+  if (LTOSuffixPos != StringRef::npos)
     return Name.substr(0, LTOSuffixPos + 10);
-  } else if ((LTOSuffixPos = Name.find(".constprop.")) != StringRef::npos) {
+  if ((LTOSuffixPos = Name.find(".constprop.")) != StringRef::npos)
     return Name.substr(0, LTOSuffixPos + 11);
-  } else {
-    return NoneType();
-  }
+  return NoneType();
 }
 
 namespace {
 
 /// Return true if the function name can change across compilations.
 bool hasVolatileName(const BinaryFunction &BF) {
-  for (const StringRef Name : BF.getNames()) {
+  for (const StringRef Name : BF.getNames())
     if (getLTOCommonName(Name))
       return true;
-  }
+
   return false;
 }
 
@@ -134,9 +132,8 @@ uint64_t FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
   uint64_t Result = 0;
   for (auto I = std::lower_bound(Data.begin(), Data.end(), Start, Compare()),
             E = std::lower_bound(Data.begin(), Data.end(), End, Compare());
-       I != E; ++I) {
+       I != E; ++I)
     Result += I->Hits;
-  }
   return Result;
 }
 
@@ -206,10 +203,10 @@ void BranchInfo::print(raw_ostream &OS) const {
 
 ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
                                                       uint64_t To) const {
-  for (const BranchInfo &I : Data) {
+  for (const BranchInfo &I : Data)
     if (I.From.Offset == From && I.To.Offset == To && I.From.Name == I.To.Name)
       return I;
-  }
+
   return make_error_code(llvm::errc::invalid_argument);
 }
 
@@ -226,10 +223,10 @@ FuncBranchData::getDirectCallBranch(uint64_t From) const {
     }
   };
   auto Range = std::equal_range(Data.begin(), Data.end(), From, Compare());
-  for (auto I = Range.first; I != Range.second; ++I) {
+  for (auto I = Range.first; I != Range.second; ++I)
     if (I->From.Name != I->To.Name)
       return *I;
-  }
+
   return make_error_code(llvm::errc::invalid_argument);
 }
 
@@ -255,18 +252,15 @@ void FuncMemData::update(const Location &Offset, const Location &Addr) {
 }
 
 Error DataReader::preprocessProfile(BinaryContext &BC) {
-  if (std::error_code EC = parseInput()) {
+  if (std::error_code EC = parseInput())
     return errorCodeToError(EC);
-  }
 
-  if (opts::DumpData) {
+  if (opts::DumpData)
     dump();
-  }
 
-  if (collectedInBoltedBinary()) {
+  if (collectedInBoltedBinary())
     outs() << "BOLT-INFO: profile collection done on a binary already "
               "processed by BOLT\n";
-  }
 
   for (auto &BFI : BC.getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
@@ -308,17 +302,15 @@ Error DataReader::readProfilePreCFG(BinaryContext &BC) {
           BC.MIB->getOrCreateAnnotationAs<MemoryAccessProfile>(
               II->second, "MemoryAccessProfile");
       BinaryData *BD = nullptr;
-      if (MI.Addr.IsSymbol) {
+      if (MI.Addr.IsSymbol)
         BD = BC.getBinaryDataByName(MI.Addr.Name);
-      }
       MemAccessProfile.AddressAccessInfo.push_back(
           {BD, MI.Addr.Offset, MI.Count});
       auto NextII = std::next(II);
-      if (NextII == Function.Instructions.end()) {
+      if (NextII == Function.Instructions.end())
         MemAccessProfile.NextInstrOffset = Function.getSize();
-      } else {
+      else
         MemAccessProfile.NextInstrOffset = II->first;
-      }
     }
     Function.HasMemoryProfile = true;
   }
@@ -350,13 +342,11 @@ std::error_code DataReader::parseInput() {
   }
   FileBuf = std::move(MB.get());
   ParsingBuf = FileBuf->getBuffer();
-  if (std::error_code EC = parse()) {
+  if (std::error_code EC = parse())
     return EC;
-  }
-  if (!ParsingBuf.empty()) {
+  if (!ParsingBuf.empty())
     Diag << "WARNING: invalid profile data detected at line " << Line
          << ". Possibly corrupted profile.\n";
-  }
 
   buildLTONameMaps();
 
@@ -401,9 +391,8 @@ void DataReader::readProfile(BinaryFunction &BF) {
 
   uint64_t MismatchedBranches = 0;
   for (const BranchInfo &BI : FBD->Data) {
-    if (BI.From.Name != BI.To.Name) {
+    if (BI.From.Name != BI.To.Name)
       continue;
-    }
 
     if (!recordBranch(BF, BI.From.Offset, BI.To.Offset, BI.Branches,
                       BI.Mispreds)) {
@@ -523,9 +512,8 @@ float DataReader::evaluateProfileData(BinaryFunction &BF,
   // Until we define a minimal profile, we consider an empty branch data to be
   // a valid profile. It could happen to a function without branches when we
   // still have an EntryData for the execution count.
-  if (BranchData.Data.empty()) {
+  if (BranchData.Data.empty())
     return 1.0f;
-  }
 
   uint64_t NumMatchedBranches = 0;
   for (const BranchInfo &BI : BranchData.Data) {
@@ -549,9 +537,8 @@ float DataReader::evaluateProfileData(BinaryFunction &BF,
       if (Instr && BC.MIB->isPrefix(*Instr))
         Instr = BF.getInstructionAtOffset(BI.From.Offset + 1);
       if (Instr && (BC.MIB->isCall(*Instr) || BC.MIB->isBranch(*Instr) ||
-                    BC.MIB->isReturn(*Instr))) {
+                    BC.MIB->isReturn(*Instr)))
         IsValid = true;
-      }
     }
 
     if (IsValid) {
@@ -567,12 +554,11 @@ float DataReader::evaluateProfileData(BinaryFunction &BF,
   }
 
   const float MatchRatio = (float)NumMatchedBranches / BranchData.Data.size();
-  if (opts::Verbosity >= 2 && NumMatchedBranches < BranchData.Data.size()) {
+  if (opts::Verbosity >= 2 && NumMatchedBranches < BranchData.Data.size())
     errs() << "BOLT-WARNING: profile branches match only "
            << format("%.1f%%", MatchRatio * 100.0f) << " ("
            << NumMatchedBranches << '/' << BranchData.Data.size()
            << ") for function " << BF << '\n';
-  }
 
   return MatchRatio;
 }
@@ -592,11 +578,11 @@ void DataReader::readSampleData(BinaryFunction &BF) {
   if (NagUser) {
     outs()
         << "BOLT-INFO: operating with basic samples profiling data (no LBR).\n";
-    if (NormalizeByInsnCount) {
+    if (NormalizeByInsnCount)
       outs() << "BOLT-INFO: normalizing samples by instruction count.\n";
-    } else if (NormalizeByCalls) {
+    else if (NormalizeByCalls)
       outs() << "BOLT-INFO: normalizing samples by branches.\n";
-    }
+
     NagUser = false;
   }
   uint64_t LastOffset = BF.getSize();
@@ -608,9 +594,9 @@ void DataReader::readSampleData(BinaryFunction &BF) {
     // later need to normalize numbers
     uint64_t NumSamples =
         SampleDataOrErr->getSamples(CurOffset, LastOffset) * 1000;
-    if (NormalizeByInsnCount && I->second->getNumNonPseudos())
+    if (NormalizeByInsnCount && I->second->getNumNonPseudos()) {
       NumSamples /= I->second->getNumNonPseudos();
-    else if (NormalizeByCalls) {
+    } else if (NormalizeByCalls) {
       uint32_t NumCalls = I->second->getNumCalls();
       NumSamples /= NumCalls + 1;
     }
@@ -655,11 +641,10 @@ void DataReader::convertBranchData(BinaryFunction &BF) const {
       continue;
 
     auto setOrUpdateAnnotation = [&](StringRef Name, uint64_t Count) {
-      if (opts::Verbosity >= 1 && BC.MIB->hasAnnotation(*Instr, Name)) {
+      if (opts::Verbosity >= 1 && BC.MIB->hasAnnotation(*Instr, Name))
         errs() << "BOLT-WARNING: duplicate " << Name << " info for offset 0x"
                << Twine::utohexstr(BI.From.Offset) << " in function " << BF
                << '\n';
-      }
       auto &Value = BC.MIB->getOrCreateAnnotationAs<uint64_t>(*Instr, Name);
       Value += Count;
     };
@@ -670,9 +655,8 @@ void DataReader::convertBranchData(BinaryFunction &BF) const {
               *Instr, "CallProfile");
       MCSymbol *CalleeSymbol = nullptr;
       if (BI.To.IsSymbol) {
-        if (BinaryData *BD = BC.getBinaryDataByName(BI.To.Name)) {
+        if (BinaryData *BD = BC.getBinaryDataByName(BI.To.Name))
           CalleeSymbol = BD->getSymbol();
-        }
       }
       CSP.emplace_back(CalleeSymbol, BI.Branches, BI.Mispreds);
     } else if (BC.MIB->getConditionalTailCall(*Instr)) {
@@ -701,20 +685,18 @@ bool DataReader::recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
   // BBs as a result of optimizations. In that case, a branch between these
   // two will be recorded as a branch from A going to A in the source address
   // space. Keep processing.
-  if (From == To) {
+  if (From == To)
     return true;
-  }
 
   // Return from a tail call.
   if (FromBB->succ_size() == 0)
     return true;
 
   // Very rarely we will see ignored branches. Do a linear check.
-  for (std::pair<uint32_t, uint32_t> &Branch : BF.IgnoredBranches) {
+  for (std::pair<uint32_t, uint32_t> &Branch : BF.IgnoredBranches)
     if (Branch ==
         std::make_pair(static_cast<uint32_t>(From), static_cast<uint32_t>(To)))
       return true;
-  }
 
   bool OffsetMatches = !!(To == ToBB->getOffset());
   if (!OffsetMatches) {
@@ -742,9 +724,8 @@ bool DataReader::recordBranch(BinaryFunction &BF, uint64_t From, uint64_t To,
           BC.MIB->getAnnotationWithDefault<uint32_t>(*LastInstr, "Offset");
 
       // With old .fdata we are getting FT branches for "jcc,jmp" sequences.
-      if (To == LastInstrOffset && BC.MIB->isUnconditionalBranch(*LastInstr)) {
+      if (To == LastInstrOffset && BC.MIB->isUnconditionalBranch(*LastInstr))
         return true;
-      }
 
       if (To <= LastInstrOffset) {
         LLVM_DEBUG(dbgs() << "branch recorded into the middle of the block"
@@ -1163,15 +1144,13 @@ std::error_code DataReader::parseInNoLBRMode() {
     I->getValue().Data.emplace_back(std::move(MI));
   }
 
-  for (StringMapEntry<FuncSampleData> &FuncSamples : NamesToSamples) {
+  for (StringMapEntry<FuncSampleData> &FuncSamples : NamesToSamples)
     std::stable_sort(FuncSamples.second.Data.begin(),
                      FuncSamples.second.Data.end());
-  }
 
-  for (StringMapEntry<FuncMemData> &MemEvents : NamesToMemEvents) {
+  for (StringMapEntry<FuncMemData> &MemEvents : NamesToMemEvents)
     std::stable_sort(MemEvents.second.Data.begin(),
                      MemEvents.second.Data.end());
-  }
 
   return std::error_code();
 }
@@ -1266,15 +1245,13 @@ std::error_code DataReader::parse() {
     I->getValue().Data.emplace_back(std::move(MI));
   }
 
-  for (StringMapEntry<FuncBranchData> &FuncBranches : NamesToBranches) {
+  for (StringMapEntry<FuncBranchData> &FuncBranches : NamesToBranches)
     std::stable_sort(FuncBranches.second.Data.begin(),
                      FuncBranches.second.Data.end());
-  }
 
-  for (StringMapEntry<FuncMemData> &MemEvents : NamesToMemEvents) {
+  for (StringMapEntry<FuncMemData> &MemEvents : NamesToMemEvents)
     std::stable_sort(MemEvents.second.Data.begin(),
                      MemEvents.second.Data.end());
-  }
 
   return std::error_code();
 }
@@ -1343,9 +1320,8 @@ std::vector<decltype(MapTy::MapEntryTy::second) *> fetchMapEntriesRegex(
       }
     } else {
       auto I = Map.find(Name);
-      if (I != Map.end()) {
+      if (I != Map.end())
         return {&I->getValue()};
-      }
     }
   }
   return AllData;
@@ -1419,15 +1395,13 @@ bool DataReader::hasLocalsWithFileName() const {
 void DataReader::dump() const {
   for (const StringMapEntry<FuncBranchData> &Func : NamesToBranches) {
     Diag << Func.getKey() << " branches:\n";
-    for (const BranchInfo &BI : Func.getValue().Data) {
+    for (const BranchInfo &BI : Func.getValue().Data)
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
            << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
-    }
     Diag << Func.getKey() << " entry points:\n";
-    for (const BranchInfo &BI : Func.getValue().EntryData) {
+    for (const BranchInfo &BI : Func.getValue().EntryData)
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
            << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
-    }
   }
 
   for (auto I = EventNames.begin(), E = EventNames.end(); I != E; ++I) {
@@ -1436,20 +1410,18 @@ void DataReader::dump() const {
   }
   for (const StringMapEntry<FuncSampleData> &Func : NamesToSamples) {
     Diag << Func.getKey() << " samples:\n";
-    for (const SampleInfo &SI : Func.getValue().Data) {
+    for (const SampleInfo &SI : Func.getValue().Data)
       Diag << SI.Loc.Name << " " << SI.Loc.Offset << " " << SI.Hits << "\n";
-    }
   }
 
   for (const StringMapEntry<FuncMemData> &Func : NamesToMemEvents) {
     Diag << "Memory events for " << Func.getValue().Name;
     Location LastOffset(0);
     for (const MemInfo &MI : Func.getValue().Data) {
-      if (MI.Offset == LastOffset) {
+      if (MI.Offset == LastOffset)
         Diag << ", " << MI.Addr << "/" << MI.Count;
-      } else {
+      else
         Diag << "\n" << MI.Offset << ": " << MI.Addr << "/" << MI.Count;
-      }
       LastOffset = MI.Offset;
     }
     Diag << "\n";

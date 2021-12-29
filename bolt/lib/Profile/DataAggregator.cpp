@@ -122,17 +122,15 @@ DataAggregator::~DataAggregator() { deleteTempFiles(); }
 
 namespace {
 void deleteTempFile(const std::string &FileName) {
-  if (std::error_code Errc = sys::fs::remove(FileName.c_str())) {
+  if (std::error_code Errc = sys::fs::remove(FileName.c_str()))
     errs() << "PERF2BOLT: failed to delete temporary file " << FileName
            << " with error " << Errc.message() << "\n";
-  }
 }
 }
 
 void DataAggregator::deleteTempFiles() {
-  for (std::string &FileName : TempFiles) {
+  for (std::string &FileName : TempFiles)
     deleteTempFile(FileName);
-  }
   TempFiles.clear();
 }
 
@@ -155,17 +153,16 @@ void DataAggregator::start() {
 
   findPerfExecutable();
 
-  if (opts::BasicAggregation) {
+  if (opts::BasicAggregation)
     launchPerfProcess("events without LBR",
                       MainEventsPPI,
                       "script -F pid,event,ip",
                       /*Wait = */false);
-  } else {
+  else
     launchPerfProcess("branch events",
                       MainEventsPPI,
                       "script -F pid,ip,brstack",
                       /*Wait = */false);
-  }
 
   // Note: we launch script for mem events regardless of the option, as the
   //       command fails fairly fast if mem events were not collected.
@@ -253,13 +250,12 @@ void DataAggregator::launchPerfProcess(StringRef Name, PerfProcessInfo &PPI,
            << "\n";
   });
 
-  if (Wait) {
+  if (Wait)
     PPI.PI.ReturnCode = sys::ExecuteAndWait(PerfPath.data(), Argv,
                                             /*envp*/ llvm::None, Redirects);
-  } else {
+  else
     PPI.PI = sys::ExecuteNoWait(PerfPath.data(), Argv, /*envp*/ llvm::None,
                                 Redirects);
-  }
 
   free(WritableArgsString);
 }
@@ -307,9 +303,8 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
               "is not the same recorded by perf when collecting profiling "
               "data, or there were no samples recorded for the binary. "
               "Use -ignore-build-id option to override.\n";
-    if (!opts::IgnoreBuildID) {
+    if (!opts::IgnoreBuildID)
       abort();
-    }
   } else if (*FileName != llvm::sys::path::filename(BC->getFilename())) {
     errs() << "PERF2BOLT-WARNING: build-id matched a different file name\n";
     BuildIDBinaryName = std::string(*FileName);
@@ -446,10 +441,10 @@ void DataAggregator::filterBinaryMMapInfo() {
              << " for binary \"" << BC->getFilename() << "\".";
       assert(!BinaryMMapInfo.empty() && "No memory map for matching binary");
       errs() << " Profile for the following process is available:\n";
-      for (std::pair<const uint64_t, MMapInfo> &MMI : BinaryMMapInfo) {
+      for (std::pair<const uint64_t, MMapInfo> &MMI : BinaryMMapInfo)
         outs() << "  " << MMI.second.PID
                << (MMI.second.Forked ? " (forked)\n" : "\n");
-      }
+
       if (errs().has_colors())
         errs().resetColor();
 
@@ -529,15 +524,13 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
     opts::IgnoreInterruptLBR = false;
   } else {
     prepareToParse("mmap events", MMapEventsPPI);
-    if (parseMMapEvents()) {
+    if (parseMMapEvents())
       errs() << "PERF2BOLT: failed to parse mmap events\n";
-    }
   }
 
   prepareToParse("task events", TaskEventsPPI);
-  if (parseTaskEvents()) {
+  if (parseTaskEvents())
     errs() << "PERF2BOLT: failed to parse task events\n";
-  }
 
   filterBinaryMMapInfo();
   prepareToParse("events", MainEventsPPI);
@@ -551,15 +544,14 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
   }
 
   if ((!opts::BasicAggregation && parseBranchEvents()) ||
-      (opts::BasicAggregation && parseBasicEvents())) {
+      (opts::BasicAggregation && parseBasicEvents()))
     errs() << "PERF2BOLT: failed to parse samples\n";
-  }
 
   // We can finish early if the goal is just to generate data for autofdo
   if (opts::WriteAutoFDOData) {
-    if (std::error_code EC = writeAutoFDOData(opts::OutputFilename)) {
+    if (std::error_code EC = writeAutoFDOData(opts::OutputFilename))
       errs() << "Error writing autofdo data to file: " << EC.message() << "\n";
-    }
+
     deleteTempFiles();
     exit(0);
   }
@@ -597,10 +589,9 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
   ParsingBuf = FileBuf->getBuffer();
   Col = 0;
   Line = 1;
-  if (const std::error_code EC = parseMemEvents()) {
+  if (const std::error_code EC = parseMemEvents())
     errs() << "PERF2BOLT: failed to parse memory events: " << EC.message()
            << '\n';
-  }
 
   deleteTempFiles();
 
@@ -616,9 +607,8 @@ Error DataAggregator::readProfile(BinaryContext &BC) {
   }
 
   if (opts::AggregateOnly) {
-    if (std::error_code EC = writeAggregatedFile(opts::OutputFilename)) {
+    if (std::error_code EC = writeAggregatedFile(opts::OutputFilename))
       report_error("cannot create output data file", EC);
-    }
   }
 
   return Error::success();
@@ -844,10 +834,9 @@ bool DataAggregator::doTrace(const LBREntry &First, const LBREntry &Second,
                     << FromFunc->getPrintName() << ":"
                     << Twine::utohexstr(First.To) << " to "
                     << Twine::utohexstr(Second.From) << ".\n");
-  for (const std::pair<uint64_t, uint64_t> &Pair : *FTs) {
+  for (const std::pair<uint64_t, uint64_t> &Pair : *FTs)
     doIntraBranch(*FromFunc, Pair.first + FromFunc->getAddress(),
                   Pair.second + FromFunc->getAddress(), Count, false);
-  }
 
   return true;
 }
@@ -885,12 +874,11 @@ bool DataAggregator::recordTrace(
     BinaryBasicBlock *PrevBB = BF.BasicBlocksLayout[FromBB->getIndex() - 1];
     if (PrevBB->getSuccessor(FromBB->getLabel())) {
       const MCInst *Instr = PrevBB->getLastNonPseudoInstr();
-      if (Instr && BC.MIB->isCall(*Instr)) {
+      if (Instr && BC.MIB->isCall(*Instr))
         FromBB = PrevBB;
-      } else {
+      else
         LLVM_DEBUG(dbgs() << "invalid incoming LBR (no call): " << FirstLBR
                           << '\n');
-      }
     } else {
       LLVM_DEBUG(dbgs() << "invalid incoming LBR: " << FirstLBR << '\n');
     }
@@ -899,9 +887,8 @@ bool DataAggregator::recordTrace(
   // Fill out information for fall-through edges. The From and To could be
   // within the same basic block, e.g. when two call instructions are in the
   // same block. In this case we skip the processing.
-  if (FromBB == ToBB) {
+  if (FromBB == ToBB)
     return true;
-  }
 
   // Process blocks in the original layout order.
   BinaryBasicBlock *BB = BF.BasicBlocksLayout[FromBB->getIndex()];
@@ -925,11 +912,11 @@ bool DataAggregator::recordTrace(
     if (Branches) {
       const MCInst *Instr = BB->getLastNonPseudoInstr();
       uint64_t Offset = 0;
-      if (Instr) {
+      if (Instr)
         Offset = BC.MIB->getAnnotationWithDefault<uint32_t>(*Instr, "Offset");
-      } else {
+      else
         Offset = BB->getOffset();
-      }
+
       Branches->emplace_back(Offset, NextBB->getOffset());
     }
 
@@ -1039,9 +1026,9 @@ ErrorOr<LBREntry> DataAggregator::parseLBREntry() {
 }
 
 bool DataAggregator::checkAndConsumeFS() {
-  if (ParsingBuf[0] != FieldSeparator) {
+  if (ParsingBuf[0] != FieldSeparator)
     return false;
-  }
+
   ParsingBuf = ParsingBuf.drop_front(1);
   Col += 1;
   return true;
@@ -1128,9 +1115,8 @@ ErrorOr<DataAggregator::PerfBasicSample> DataAggregator::parseBasicSample() {
   }
 
   ErrorOr<uint64_t> AddrRes = parseHexField(FieldSeparator, true);
-  if (std::error_code EC = AddrRes.getError()) {
+  if (std::error_code EC = AddrRes.getError())
     return EC;
-  }
 
   if (!checkAndConsumeNewLine()) {
     reportError("expected end of line");
@@ -1175,9 +1161,8 @@ ErrorOr<DataAggregator::PerfMemSample> DataAggregator::parseMemSample() {
   }
 
   ErrorOr<uint64_t> AddrRes = parseHexField(FieldSeparator);
-  if (std::error_code EC = AddrRes.getError()) {
+  if (std::error_code EC = AddrRes.getError())
     return EC;
-  }
 
   while (checkAndConsumeFS()) {
   }
@@ -1363,11 +1348,10 @@ std::error_code DataAggregator::printLBRHeatMap() {
   }
 
   HM.print(opts::HeatmapFile);
-  if (opts::HeatmapFile == "-") {
+  if (opts::HeatmapFile == "-")
     HM.printCDF(opts::HeatmapFile);
-  } else {
+  else
     HM.printCDF(opts::HeatmapFile + ".csv");
-  }
 
   return std::error_code();
 }
@@ -1432,11 +1416,10 @@ std::error_code DataAggregator::parseBranchEvents() {
             getBinaryFunctionContainingAddress(TraceFrom);
         if (TraceBF && TraceBF->containsAddress(TraceTo)) {
           FTInfo &Info = FallthroughLBRs[Trace(TraceFrom, TraceTo)];
-          if (TraceBF->containsAddress(LBR.From)) {
+          if (TraceBF->containsAddress(LBR.From))
             ++Info.InternCount;
-          } else {
+          else
             ++Info.ExternCount;
-          }
         } else {
           if (TraceBF && getBinaryFunctionContainingAddress(TraceTo)) {
             LLVM_DEBUG(dbgs()
@@ -1497,13 +1480,12 @@ std::error_code DataAggregator::parseBranchEvents() {
   auto printColored = [](raw_ostream &OS, float Percent, float T1, float T2) {
     OS << " (";
     if (OS.has_colors()) {
-      if (Percent > T2) {
+      if (Percent > T2)
         OS.changeColor(raw_ostream::RED);
-      } else if (Percent > T1) {
+      else if (Percent > T1)
         OS.changeColor(raw_ostream::YELLOW);
-      } else {
+      else
         OS.changeColor(raw_ostream::GREEN);
-      }
     }
     OS << format("%.1f%%", Percent);
     if (OS.has_colors())
@@ -1527,10 +1509,9 @@ std::error_code DataAggregator::parseBranchEvents() {
       outs() << "PERF2BOLT: " << IgnoredSamples << " samples";
       printColored(outs(), PercentIgnored, 20, 50);
       outs() << " were ignored\n";
-      if (PercentIgnored > 50.0f) {
+      if (PercentIgnored > 50.0f)
         errs() << "PERF2BOLT-WARNING: less than 50% of all recorded samples "
                   "were attributed to the input binary\n";
-      }
     }
   }
   outs() << "PERF2BOLT: traces mismatching disassembled function contents: "
@@ -1541,18 +1522,16 @@ std::error_code DataAggregator::parseBranchEvents() {
     printColored(outs(), Perc, 5, 10);
   }
   outs() << "\n";
-  if (Perc > 10.0f) {
+  if (Perc > 10.0f)
     outs() << "\n !! WARNING !! This high mismatch ratio indicates the input "
               "binary is probably not the same binary used during profiling "
               "collection. The generated data may be ineffective for improving "
               "performance.\n\n";
-  }
 
   outs() << "PERF2BOLT: out of range traces involving unknown regions: "
          << NumLongRangeTraces;
-  if (NumTraces > 0) {
+  if (NumTraces > 0)
     outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
-  }
   outs() << "\n";
 
   if (NumColdSamples > 0) {
@@ -1560,12 +1539,11 @@ std::error_code DataAggregator::parseBranchEvents() {
     outs() << "PERF2BOLT: " << NumColdSamples
            << format(" (%.1f%%)", ColdSamples)
            << " samples recorded in cold regions of split functions.\n";
-    if (ColdSamples > 5.0f) {
+    if (ColdSamples > 5.0f)
       outs()
           << "WARNING: The BOLT-processed binary where samples were collected "
              "likely used bad data or your service observed a large shift in "
              "profile. You may want to audit this.\n";
-    }
   }
 
   return std::error_code();
@@ -1581,9 +1559,8 @@ void DataAggregator::processBranchEvents() {
     const FTInfo &Info = AggrLBR.second;
     LBREntry First{Loc.From, Loc.From, false};
     LBREntry Second{Loc.To, Loc.To, false};
-    if (Info.InternCount) {
+    if (Info.InternCount)
       doTrace(First, Second, Info.InternCount);
-    }
     if (Info.ExternCount) {
       First.From = 0;
       doTrace(First, Second, Info.ExternCount);
@@ -1646,13 +1623,12 @@ void DataAggregator::processBasicEvents() {
     outs() << " (";
     Perc = OutOfRangeSamples * 100.0f / NumSamples;
     if (outs().has_colors()) {
-      if (Perc > 60.0f) {
+      if (Perc > 60.0f)
         outs().changeColor(raw_ostream::RED);
-      } else if (Perc > 40.0f) {
+      else if (Perc > 40.0f)
         outs().changeColor(raw_ostream::YELLOW);
-      } else {
+      else
         outs().changeColor(raw_ostream::GREEN);
-      }
     }
     outs() << format("%.1f%%", Perc);
     if (outs().has_colors())
@@ -1660,12 +1636,11 @@ void DataAggregator::processBasicEvents() {
     outs() << ")";
   }
   outs() << "\n";
-  if (Perc > 80.0f) {
+  if (Perc > 80.0f)
     outs() << "\n !! WARNING !! This high mismatch ratio indicates the input "
               "binary is probably not the same binary used during profiling "
               "collection. The generated data may be ineffective for improving "
               "performance.\n\n";
-  }
 }
 
 std::error_code DataAggregator::parseMemEvents() {
@@ -1784,13 +1759,12 @@ void DataAggregator::processPreAggregated() {
     outs() << " (";
     Perc = NumInvalidTraces * 100.0f / NumTraces;
     if (outs().has_colors()) {
-      if (Perc > 10.0f) {
+      if (Perc > 10.0f)
         outs().changeColor(raw_ostream::RED);
-      } else if (Perc > 5.0f) {
+      else if (Perc > 5.0f)
         outs().changeColor(raw_ostream::YELLOW);
-      } else {
+      else
         outs().changeColor(raw_ostream::GREEN);
-      }
     }
     outs() << format("%.1f%%", Perc);
     if (outs().has_colors())
@@ -1798,18 +1772,16 @@ void DataAggregator::processPreAggregated() {
     outs() << ")";
   }
   outs() << "\n";
-  if (Perc > 10.0f) {
+  if (Perc > 10.0f)
     outs() << "\n !! WARNING !! This high mismatch ratio indicates the input "
               "binary is probably not the same binary used during profiling "
               "collection. The generated data may be ineffective for improving "
               "performance.\n\n";
-  }
 
   outs() << "PERF2BOLT: Out of range traces involving unknown regions: "
          << NumLongRangeTraces;
-  if (NumTraces > 0) {
+  if (NumTraces > 0)
     outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
-  }
   outs() << "\n";
 }
 
@@ -1823,9 +1795,8 @@ Optional<int32_t> DataAggregator::parseCommExecEvent() {
   StringRef Line = ParsingBuf.substr(0, LineEnd);
 
   size_t Pos = Line.find("PERF_RECORD_COMM exec");
-  if (Pos == StringRef::npos) {
+  if (Pos == StringRef::npos)
     return NoneType();
-  }
   Line = Line.drop_front(Pos);
 
   // Line:
@@ -1848,9 +1819,8 @@ Optional<uint64_t> parsePerfTime(const StringRef TimeStr) {
   uint64_t SecTime;
   uint64_t USecTime;
   if (SecTimeStr.getAsInteger(10, SecTime) ||
-      USecTimeStr.getAsInteger(10, USecTime)) {
+      USecTimeStr.getAsInteger(10, USecTime))
     return NoneType();
-  }
   return SecTime * 1000000ULL + USecTime;
 }
 }
@@ -1930,9 +1900,8 @@ DataAggregator::parseMMapEvent() {
 
   const StringRef TimeStr =
       Line.substr(0, Pos).rsplit(':').first.rsplit(FieldSeparator).second;
-  if (Optional<uint64_t> TimeRes = parsePerfTime(TimeStr)) {
+  if (Optional<uint64_t> TimeRes = parsePerfTime(TimeStr))
     ParsedInfo.Time = *TimeRes;
-  }
 
   Line = Line.drop_front(Pos);
 
@@ -2012,12 +1981,11 @@ std::error_code DataAggregator::parseMMapEvents() {
 
   LLVM_DEBUG({
     dbgs() << "FileName -> mmap info:\n";
-    for (const std::pair<const StringRef, MMapInfo> &Pair : GlobalMMapInfo) {
+    for (const std::pair<const StringRef, MMapInfo> &Pair : GlobalMMapInfo)
       dbgs() << "  " << Pair.first << " : " << Pair.second.PID << " [0x"
              << Twine::utohexstr(Pair.second.BaseAddress) << ", "
              << Twine::utohexstr(Pair.second.Size) << " @ "
              << Twine::utohexstr(Pair.second.Offset) << "]\n";
-    }
   });
 
   StringRef NameToUse = llvm::sys::path::filename(BC->getFilename());
@@ -2063,9 +2031,8 @@ std::error_code DataAggregator::parseMMapEvents() {
     if (!GlobalMMapInfo.empty()) {
       errs() << " Profile for the following binary name(s) is available:\n";
       for (auto I = GlobalMMapInfo.begin(), IE = GlobalMMapInfo.end(); I != IE;
-           I = GlobalMMapInfo.upper_bound(I->first)) {
+           I = GlobalMMapInfo.upper_bound(I->first))
         errs() << "  " << I->first << '\n';
-      }
       errs() << "Please rename the input binary.\n";
     } else {
       errs() << " Failed to extract any binary name from a profile.\n";
@@ -2088,9 +2055,8 @@ std::error_code DataAggregator::parseTaskEvents() {
     if (Optional<int32_t> CommInfo = parseCommExecEvent()) {
       // Remove forked child that ran execve
       auto MMapInfoIter = BinaryMMapInfo.find(*CommInfo);
-      if (MMapInfoIter != BinaryMMapInfo.end() && MMapInfoIter->second.Forked) {
+      if (MMapInfoIter != BinaryMMapInfo.end() && MMapInfoIter->second.Forked)
         BinaryMMapInfo.erase(MMapInfoIter);
-      }
       consumeRestOfLine();
       continue;
     }
@@ -2122,11 +2088,10 @@ std::error_code DataAggregator::parseTaskEvents() {
          << BinaryMMapInfo.size() << " PID(s)\n";
 
   LLVM_DEBUG({
-    for (std::pair<const uint64_t, MMapInfo> &MMI : BinaryMMapInfo) {
+    for (std::pair<const uint64_t, MMapInfo> &MMI : BinaryMMapInfo)
       outs() << "  " << MMI.second.PID << (MMI.second.Forked ? " (forked)" : "")
              << ": (0x" << Twine::utohexstr(MMI.second.BaseAddress) << ": 0x"
              << Twine::utohexstr(MMI.second.Size) << ")\n";
-    }
   });
 
   return std::error_code();
@@ -2187,9 +2152,8 @@ DataAggregator::writeAggregatedFile(StringRef OutputFilename) const {
     OutFile << "boltedcollection\n";
   if (opts::BasicAggregation) {
     OutFile << "no_lbr";
-    for (const StringMapEntry<NoneType> &Entry : EventNames) {
+    for (const StringMapEntry<NoneType> &Entry : EventNames)
       OutFile << " " << Entry.getKey();
-    }
     OutFile << "\n";
 
     for (const StringMapEntry<FuncSampleData> &Func : NamesToSamples) {
@@ -2246,9 +2210,8 @@ void DataAggregator::dump(const LBREntry &LBR) const {
 
 void DataAggregator::dump(const PerfBranchSample &Sample) const {
   Diag << "Sample LBR entries: " << Sample.LBR.size() << "\n";
-  for (const LBREntry &LBR : Sample.LBR) {
+  for (const LBREntry &LBR : Sample.LBR)
     dump(LBR);
-  }
 }
 
 void DataAggregator::dump(const PerfMemSample &Sample) const {
