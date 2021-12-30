@@ -748,6 +748,8 @@ WARN_LOGFILE           =
 INPUT                  = @abs_top_srcdir@/../include/ \
                          @abs_top_srcdir@/../lib/ \
                          @abs_top_srcdir@/../runtime/ \
+                         @abs_top_srcdir@/../tools/ \
+                         @abs_top_srcdir@/../README.md \
                          @abs_top_srcdir@/doxygen-mainpage.dox
 
 # This tag can be used to specify the character encoding of the source files
