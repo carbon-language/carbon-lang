@@ -55,8 +55,7 @@ struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
       "Expected parameter declaration.";
 };
 
-struct ExpectedStructLiteralField
-    : SimpleDiagnostic<ExpectedStructLiteralField> {
+struct ExpectedStructLiteralField {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
 
   auto Format() -> std::string {
@@ -94,7 +93,7 @@ struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
   static constexpr llvm::StringLiteral Message = "Expected expression.";
 };
 
-struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
+struct ExpectedParenAfter {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `(` after `{0}`.";
 
@@ -121,7 +120,7 @@ struct ExpectedSemiAfterExpression
       "Expected `;` after expression.";
 };
 
-struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
+struct ExpectedSemiAfter {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `;` after `{0}`.";
 
@@ -139,8 +138,7 @@ struct ExpectedIdentifierAfterDot
       "Expected identifier after `.`.";
 };
 
-struct UnexpectedTokenAfterListElement
-    : SimpleDiagnostic<UnexpectedTokenAfterListElement> {
+struct UnexpectedTokenAfterListElement {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `,` or `{0}`.";
 
@@ -151,8 +149,7 @@ struct UnexpectedTokenAfterListElement
   TokenKind close;
 };
 
-struct BinaryOperatorRequiresWhitespace
-    : SimpleDiagnostic<BinaryOperatorRequiresWhitespace> {
+struct BinaryOperatorRequiresWhitespace {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace missing {0} binary operator.";
@@ -171,8 +168,7 @@ struct BinaryOperatorRequiresWhitespace
   bool has_trailing_space;
 };
 
-struct UnaryOperatorHasWhitespace
-    : SimpleDiagnostic<UnaryOperatorHasWhitespace> {
+struct UnaryOperatorHasWhitespace {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace is not allowed {0} this unary operator.";
@@ -184,8 +180,7 @@ struct UnaryOperatorHasWhitespace
   bool prefix;
 };
 
-struct UnaryOperatorRequiresWhitespace
-    : SimpleDiagnostic<UnaryOperatorRequiresWhitespace> {
+struct UnaryOperatorRequiresWhitespace {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace is required {0} this unary operator.";

@@ -146,7 +146,7 @@ inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
 // CRTP base class for diagnostics with no substitutions.
 template <typename Derived>
 struct SimpleDiagnostic {
-  static auto Format() -> std::string { return Derived::Message.str(); }
+  auto Format() -> std::string { return Derived::Message.str(); }
 };
 
 // Diagnostic consumer adaptor that tracks whether any errors have been
