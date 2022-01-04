@@ -16,6 +16,7 @@ cc_library(
 
 cc_test(
     name = "parse_node_kind_test",
+    size = "small",
     srcs = ["parse_node_kind_test.cpp"],
     deps = [
         ":parse_node_kind",
@@ -58,6 +59,7 @@ cc_library(
 
 cc_test(
     name = "parse_tree_test",
+    size = "small",
     srcs = ["parse_tree_test.cpp"],
     deps = [
         ":parse_node_kind",
@@ -75,6 +77,7 @@ cc_test(
 
 cc_fuzz_test(
     name = "parse_tree_fuzzer",
+    size = "small",
     srcs = ["parse_tree_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
@@ -100,6 +103,7 @@ cc_library(
 
 cc_test(
     name = "precedence_test",
+    size = "small",
     srcs = ["precedence_test.cpp"],
     deps = [
         ":precedence",

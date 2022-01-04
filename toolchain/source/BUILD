@@ -16,6 +16,7 @@ cc_library(
 
 cc_test(
     name = "source_buffer_test",
+    size = "small",
     srcs = ["source_buffer_test.cpp"],
     deps = [
         ":source_buffer",
