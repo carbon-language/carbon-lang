@@ -83,57 +83,60 @@ struct InvalidHorizontalWhitespaceInString
       "sequence in a string literal.";
 };
 
-// Find and return the opening characters of a multi-line string literal,
+// Return the number of opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
-static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  llvm::StringRef remaining = source_text;
-  if (!remaining.consume_front(R"(""")")) {
-    return llvm::StringRef();
+static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
+    -> int {
+  if (!source_text.startswith(R"(""")")) {
+    return 0;
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
-  remaining = remaining.drop_until(
-      [](char c) { return c == '"' || c == '#' || c == '\n'; });
-  if (!remaining.consume_front("\n")) {
-    return llvm::StringRef();
+  size_t prefix_end = source_text.find_first_of("#\n\"", 3);
+  if (prefix_end == llvm::StringRef::npos || prefix_end >= source_text.size() ||
+      source_text[prefix_end] != '\n') {
+    return 0;
   }
 
-  return source_text.take_front(remaining.begin() - source_text.begin());
+  // Include the newline on return.
+  return prefix_end + 1;
 }
 
-// If source_text begins with a string literal token, extract and return
-// information on that token.
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
-  const char* begin = source_text.begin();
+  size_t cursor = 0;
+  const size_t source_text_size = source_text.size();
 
-  int hash_level = 0;
-  while (source_text.consume_front("#")) {
-    ++hash_level;
+  // Determine the number of hashes prefixing.
+  while (cursor < source_text_size && source_text[cursor] == '#') {
+    ++cursor;
   }
+  const int hash_level = cursor;
 
   llvm::SmallString<16> terminator("\"");
   llvm::SmallString<16> escape("\\");
 
-  llvm::StringRef multi_line_prefix =
-      TakeMultiLineStringLiteralPrefix(source_text);
-  bool multi_line = !multi_line_prefix.empty();
+  const int multi_line_prefix_size =
+      GetMultiLineStringLiteralPrefixSize(source_text.substr(hash_level));
+  const bool multi_line = multi_line_prefix_size > 0;
   if (multi_line) {
-    source_text = source_text.drop_front(multi_line_prefix.size());
+    cursor += multi_line_prefix_size;
     terminator = R"(""")";
-  } else if (!source_text.consume_front("\"")) {
+  } else if (cursor < source_text_size && source_text[cursor] == '"') {
+    ++cursor;
+  } else {
     return llvm::None;
   }
+
+  const int prefix_len = cursor;
 
   // The terminator and escape sequence marker require a number of '#'s
   // matching the leading sequence of '#'s.
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
-  for (size_t cursor = 0, source_text_end = source_text.size();
-       cursor < source_text_end; ++cursor) {
+  for (; cursor < source_text_size; ++cursor) {
     // This switch and loop structure relies on multi-character terminators and
     // escape sequences starting with a predictable character and not containing
     // embedded and unescaped terminators or newlines.
@@ -145,7 +148,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
           // should stop here.
-          if (cursor == source_text_end ||
+          if (cursor >= source_text_size ||
               (!multi_line && source_text[cursor] == '\n')) {
             return llvm::None;
           }
@@ -159,9 +162,10 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
       case '\"': {
         if (terminator.size() == 1 ||
             source_text.substr(cursor).startswith(terminator)) {
-          llvm::StringRef text(begin, (source_text.begin() - begin) + cursor +
-                                          terminator.size());
-          llvm::StringRef content(source_text.begin(), cursor);
+          llvm::StringRef text =
+              source_text.substr(0, cursor + terminator.size());
+          llvm::StringRef content =
+              source_text.substr(prefix_len, cursor - prefix_len);
           return LexedStringLiteral(text, content, hash_level, multi_line);
         }
         break;
