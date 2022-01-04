@@ -132,22 +132,21 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
-  const char* cursor = source_text.begin();
-  const char* source_text_end = source_text.end();
-  while (cursor != source_text_end) {
+  for (size_t cursor = 0, source_text_end = source_text.size();
+       cursor < source_text_end; ++cursor) {
     // This switch and loop structure relies on multi-character terminators and
     // escape sequences starting with a predictable character and not containing
     // embedded and unescaped terminators or newlines.
-    switch (*cursor) {
+    switch (source_text[cursor]) {
       case '\\':
         if (escape.size() == 1 ||
-            llvm::StringRef(cursor, source_text_end - cursor)
-                .startswith(escape)) {
+            source_text.substr(cursor).startswith(escape)) {
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
           // should stop here.
-          if (cursor == source_text_end || (!multi_line && *cursor == '\n')) {
+          if (cursor == source_text_end ||
+              (!multi_line && source_text[cursor] == '\n')) {
             return llvm::None;
           }
         }
@@ -159,17 +158,15 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
         break;
       case '\"': {
         if (terminator.size() == 1 ||
-            llvm::StringRef(cursor, source_text_end - cursor)
-                .startswith(terminator)) {
-          llvm::StringRef text(begin, cursor - begin + terminator.size());
-          llvm::StringRef content(source_text.begin(),
-                                  cursor - source_text.begin());
+            source_text.substr(cursor).startswith(terminator)) {
+          llvm::StringRef text(begin, (source_text.begin() - begin) + cursor +
+                                          terminator.size());
+          llvm::StringRef content(source_text.begin(), cursor);
           return LexedStringLiteral(text, content, hash_level, multi_line);
         }
         break;
       }
     }
-    ++cursor;
   }
   // Let LexError figure out how to recover from an unterminated string
   // literal.
