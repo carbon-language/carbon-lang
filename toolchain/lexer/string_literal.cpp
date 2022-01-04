@@ -83,17 +83,20 @@ struct InvalidHorizontalWhitespaceInString
       "sequence in a string literal.";
 };
 
+static constexpr char MultiLineIndicator[] = R"(""")";
+
 // Return the number of opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
 static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
     -> int {
-  if (!source_text.startswith(R"(""")")) {
+  if (!source_text.startswith(MultiLineIndicator)) {
     return 0;
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
-  size_t prefix_end = source_text.find_first_of("#\n\"", 3);
+  size_t prefix_end =
+      source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
   if (prefix_end == llvm::StringRef::npos || prefix_end >= source_text.size() ||
       source_text[prefix_end] != '\n') {
     return 0;
@@ -122,7 +125,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   const bool multi_line = multi_line_prefix_size > 0;
   if (multi_line) {
     cursor += multi_line_prefix_size;
-    terminator = R"(""")";
+    terminator = MultiLineIndicator;
   } else if (cursor < source_text_size && source_text[cursor] == '"') {
     ++cursor;
   } else {
