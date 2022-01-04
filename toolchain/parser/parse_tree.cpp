@@ -22,8 +22,7 @@ namespace Carbon {
 
 auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
     -> ParseTree {
-  TokenizedBuffer::TokenLocationTranslator translator(
-      tokens, /*last_line_lexed_to_column=*/nullptr);
+  TokenizedBuffer::TokenLocationTranslator translator(tokens);
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
