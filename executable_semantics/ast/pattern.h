@@ -111,9 +111,9 @@ class BindingPattern : public Pattern {
     return InheritsFromBindingPattern(node->kind());
   }
 
-  // The name this pattern binds, if any. A value of "_" indicates that this
-  // BindingPattern does not bind a name, which in turn means it should not be
-  // used as a NamedEntity.
+  // The name this pattern binds, if any. If equal to AnonymousName, indicates
+  // that this BindingPattern does not bind a name, which in turn means it
+  // should not be used as a NamedEntity.
   auto name() const -> const std::string& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.
