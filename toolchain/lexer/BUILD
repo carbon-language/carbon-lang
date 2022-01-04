@@ -98,9 +98,9 @@ cc_library(
 )
 
 cc_binary(
-    name = "string_literal_bm",
+    name = "string_literal_benchmark",
     testonly = 1,
-    srcs = ["string_literal_bm.cpp"],
+    srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
         "//common:ostream",

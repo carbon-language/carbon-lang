@@ -135,10 +135,11 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   const char* cursor = source_text.begin();
   const char* source_text_end = source_text.end();
   while (cursor != source_text_end) {
+    // This switch and loop structure relies on multi-character terminators and
+    // escape sequences starting with a predictable character and not containing
+    // embedded and unescaped terminators or newlines.
     switch (*cursor) {
       case '\\':
-        // This relies on multi-character escape sequences not containing an
-        // embedded and unescaped terminator or newline.
         if (escape.size() == 1 ||
             llvm::StringRef(cursor, source_text_end - cursor)
                 .startswith(escape)) {
