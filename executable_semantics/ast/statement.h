@@ -314,19 +314,17 @@ class Continuation : public Statement {
  public:
   using ImplementsCarbonNamedEntity = void;
 
-  Continuation(SourceLocation source_loc, std::string continuation_variable,
+  Continuation(SourceLocation source_loc, std::string name,
                Nonnull<Block*> body)
       : Statement(AstNodeKind::Continuation, source_loc),
-        continuation_variable_(std::move(continuation_variable)),
+        name_(std::move(name)),
         body_(body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromContinuation(node->kind());
   }
 
-  auto continuation_variable() const -> const std::string& {
-    return continuation_variable_;
-  }
+  auto name() const -> const std::string& { return name_; }
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
 
@@ -348,7 +346,7 @@ class Continuation : public Statement {
   auto value_category() const -> ValueCategory { return ValueCategory::Var; }
 
  private:
-  std::string continuation_variable_;
+  std::string name_;
   Nonnull<Block*> body_;
   std::optional<Nonnull<const Value*>> static_type_;
 };

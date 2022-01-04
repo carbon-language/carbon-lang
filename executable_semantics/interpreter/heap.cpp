@@ -46,8 +46,8 @@ void Heap::Deallocate(AllocationId allocation) {
   if (alive_[allocation.index_]) {
     alive_[allocation.index_] = false;
   } else {
-    FATAL_RUNTIME_ERROR_NO_LINE() << "deallocating an already dead value: "
-                                  << *values_[allocation.index_];
+    FATAL() << "deallocating an already dead value: "
+            << *values_[allocation.index_];
   }
 }
 

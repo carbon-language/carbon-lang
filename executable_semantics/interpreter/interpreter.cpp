@@ -88,7 +88,7 @@ auto Interpreter::EvalPrim(Operator op,
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
     case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], source_loc));
+      return arena_->New<BoolValue>(ValueEqual(args[0], args[1]));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -125,7 +125,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
             const Expression& type_expression =
                 cast<ExpressionPattern>(binding.type()).expression();
             auto type = InterpExp(Env(arena_), &type_expression);
-            fields.push_back({.name = *binding.name(), .value = type});
+            fields.push_back({.name = binding.name(), .value = type});
             break;
           }
         }
@@ -158,7 +158,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       Nonnull<const Value*> v =
           Convert(InterpExp(*env, &var.initializer()), &var.static_type());
       AllocationId a = heap_.AllocateValue(v);
-      env->Set(*var.binding().name(), a);
+      env->Set(var.binding().name(), a);
       break;
     }
   }
@@ -189,9 +189,9 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       Env values(arena_);
-      if (placeholder.name().has_value()) {
+      if (placeholder.named_entity().has_value()) {
         AllocationId a = heap_.AllocateValue(v);
-        values.Set(*placeholder.name(), a);
+        values.Set(std::string(placeholder.named_entity()->name()), a);
       }
       return values;
     }
@@ -283,7 +283,7 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       // on the typechecker to ensure that `v` is a type.
       return Env(arena_);
     default:
-      if (ValueEqual(p, v, source_loc)) {
+      if (ValueEqual(p, v)) {
         return Env(arena_);
       } else {
         return std::nullopt;
@@ -680,11 +680,11 @@ void Interpreter::StepPattern() {
     }
     case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(pattern);
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<PatternAction>(&binding.type()));
+      if (binding.name() != AnonymousName) {
+        return todo_.FinishAction(
+            arena_->New<BindingPlaceholderValue>(&binding));
       } else {
-        return todo_.FinishAction(arena_->New<BindingPlaceholderValue>(
-            binding.name(), act.results()[0]));
+        return todo_.FinishAction(arena_->New<BindingPlaceholderValue>());
       }
     }
     case PatternKind::TuplePattern: {
@@ -926,9 +926,8 @@ void Interpreter::StepStmt() {
       AllocationId continuation_address =
           heap_.AllocateValue(arena_->New<ContinuationValue>(fragment));
       // Bind the continuation object to the continuation variable
-      todo_.CurrentScope().AddLocal(
-          cast<Continuation>(stmt).continuation_variable(),
-          continuation_address);
+      todo_.CurrentScope().AddLocal(cast<Continuation>(stmt).name(),
+                                    continuation_address);
       return todo_.FinishAction();
     }
     case StatementKind::Run: {
