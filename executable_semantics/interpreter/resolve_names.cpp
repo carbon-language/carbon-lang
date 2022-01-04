@@ -330,9 +330,7 @@ void ResolveNames(AST& ast) {
   for (auto declaration : ast.declarations) {
     ResolveNames(*declaration, file_scope);
   }
-  if (ast.main_call.has_value()) {
-    ResolveNames(**ast.main_call, file_scope);
-  }
+  ResolveNames(**ast.main_call, file_scope);
 }
 
 }  // namespace Carbon

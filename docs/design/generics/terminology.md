@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Qualified and unqualified member names](#qualified-and-unqualified-member-names)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
+-   [Coherence](#coherence)
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Facet type](#facet-type)
@@ -438,6 +439,26 @@ required, an [implicit conversion](../expressions/implicit_conversions.md) is
 performed if it is considered safe to do so. Such an implicit conversion, if
 permitted, always has the same meaning as an explicit cast.
 
+## Coherence
+
+A generics system has the _implementation coherence_ property, or simply
+_coherence_, if there is a single answer to the question "what is the
+implementation of this interface for this type, if any?" independent of context,
+such as the libraries imported into a given file.
+
+This is typically enforced by making sure the definition of the implementation
+must be imported if you import both the interface and the type. This may be done
+by requiring the implementation to be in the same library as the interface or
+type. This is called an _orphan rule_, meaning we don't allow an implementation
+that is not with either of its parents (parent type or parent interface).
+
+Note that in addition to an orphan rule that implementations are visible when
+queried, coherence also requires a rule for resolving what happens if there are
+multiple non-orphan implementations. In Rust, this is called the
+[overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check).
+This could be just producing an error in that situation, or picking one using
+some specialization rule.
+
 ## Adapting a type
 
 A type can be adapted by creating a new type that is
@@ -452,11 +473,12 @@ between those two types without any dynamic checks or danger of
 [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
 This is called "newtype" in Rust, and is used for capturing additional
-information in types to improve type safety of move some checking to compile
+information in types to improve type safety by moving some checking to compile
 time ([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
 [2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
 [3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html))
-and as a workaround for Rust's orphan rules for coherence.
+and as a workaround for
+[Rust's orphan rules for coherence](https://github.com/Ixrec/rust-orphan-rules#why-are-the-orphan-rules-controversial).
 
 ## Type erasure
 

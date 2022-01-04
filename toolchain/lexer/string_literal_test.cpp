@@ -11,7 +11,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 class StringLiteralTest : public ::testing::Test {
@@ -113,9 +113,6 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 }
 
 TEST_F(StringLiteralTest, StringLiteralContents) {
-  // We use ""s strings to handle embedded nul characters below.
-  using std::operator""s;
-
   std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
       // Empty strings.
       {R"("")", ""},
@@ -294,4 +291,4 @@ TEST_F(StringLiteralTest, TabInBlockString) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

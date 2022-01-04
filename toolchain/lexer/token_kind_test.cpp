@@ -11,7 +11,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::MatchesRegex;
@@ -91,4 +91,4 @@ TEST(TokenKindTest, SymbolsInDescendingLength) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

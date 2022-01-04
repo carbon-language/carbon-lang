@@ -8,22 +8,18 @@
 
 namespace Carbon {
 
-NamedEntity::~NamedEntity() = default;
-
-void StaticScope::Add(std::string name, Nonnull<const NamedEntity*> entity) {
+void StaticScope::Add(std::string name, NamedEntityView entity) {
   auto [it, success] = declared_names_.insert({name, entity});
   if (!success && it->second != entity) {
-    FATAL_COMPILATION_ERROR(entity->source_loc())
+    FATAL_COMPILATION_ERROR(entity.base().source_loc())
         << "Duplicate name `" << name << "` also found at "
-        << it->second->source_loc();
+        << it->second.base().source_loc();
   }
 }
 
 auto StaticScope::Resolve(const std::string& name,
-                          SourceLocation source_loc) const
-    -> Nonnull<const NamedEntity*> {
-  std::optional<Nonnull<const NamedEntity*>> result =
-      TryResolve(name, source_loc);
+                          SourceLocation source_loc) const -> NamedEntityView {
+  std::optional<NamedEntityView> result = TryResolve(name, source_loc);
   if (!result.has_value()) {
     FATAL_COMPILATION_ERROR(source_loc) << "could not resolve '" << name << "'";
   }
@@ -32,19 +28,20 @@ auto StaticScope::Resolve(const std::string& name,
 
 auto StaticScope::TryResolve(const std::string& name,
                              SourceLocation source_loc) const
-    -> std::optional<Nonnull<const NamedEntity*>> {
+    -> std::optional<NamedEntityView> {
   auto it = declared_names_.find(name);
   if (it != declared_names_.end()) {
     return it->second;
   }
-  std::optional<Nonnull<const NamedEntity*>> result;
+  std::optional<NamedEntityView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
     auto parent_result = parent->TryResolve(name, source_loc);
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
       FATAL_COMPILATION_ERROR(source_loc)
-          << "'" << name << "' is ambiguous between " << (*result)->source_loc()
-          << " and " << (*parent_result)->source_loc();
+          << "'" << name << "' is ambiguous between "
+          << result->base().source_loc() << " and "
+          << parent_result->base().source_loc();
     }
     result = parent_result;
   }

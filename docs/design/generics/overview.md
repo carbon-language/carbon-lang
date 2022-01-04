@@ -34,6 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
+    -   [Parameterized impls](#parameterized-impls)
 -   [Future work](#future-work)
 -   [References](#references)
 
@@ -589,12 +590,28 @@ Constraints limit the types that the generic function can operate on, but
 increase the knowledge that may be used in the body of the function to operate
 on values of those types.
 
+### Parameterized impls
+
+Implementations can be parameterized to apply to multiple types. Those
+parameters can have constraints to restrict when the implementation applies.
+When multiple implementations apply, there is a rule to pick which one is
+considered the most specific:
+
+-   All type parameters in each `impl` declaration are replaced with question
+    marks `?`. This is called the type structure of the `impl` declaration.
+-   Given two type structures, find the first difference when read from
+    left-to-right. The one with a `?` is less specific, the one with a concrete
+    type name in that position is more specific.
+-   If there is more than one `impl` declaration with the most specific type
+    structure, pick the one listed first in the priority ordering.
+
+To ensure [coherence](goals.md#coherence), an `impl` may only be declared in a
+library defining some name from its type structure. If a library defines
+multiple implementations with the same type structure, they must be listed in
+priority order in a prioritization block.
+
 ## Future work
 
--   Implementations can be parameterized to apply to multiple types. These
-    implementations would be restricted to various conditions are true for the
-    parameters. When there are two implementations that can apply, there is a
-    specialization rule that picks the more specific one.
 -   Support functions should have a way to accept types that types that vary at
     runtime.
 -   You should have the ability to mark entities as `upcoming` or `deprecated`
@@ -611,3 +628,4 @@ on values of those types.
 -   [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
+-   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)

@@ -105,7 +105,7 @@ void Interpreter::InitEnv(const Declaration& d, Env* env) {
       for (Nonnull<const GenericBinding*> deduced :
            func_def.deduced_parameters()) {
         AllocationId a =
-            heap_.AllocateValue(arena_->New<VariableType>(deduced->name()));
+            heap_.AllocateValue(arena_->New<VariableType>(deduced));
         new_env.Set(deduced->name(), a);
       }
       Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
@@ -392,6 +392,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
       // have Value::dynamic_type.
       return value;
