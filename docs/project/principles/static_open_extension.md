@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 In C++, a single function may be overloaded with definitions in multiple files.
 The [ADL](https://en.wikipedia.org/wiki/Argument-dependent_name_lookup) name
-lookup rule even allows an unqualfied call to resolve to functions defined in
+lookup rule even allows an unqualified call to resolve to functions defined in
 different namespaces. These rules are used to define extension points with
 static dispatch for operator overloading and functions like
 [`swap`](https://www.cplusplus.com/reference/algorithm/swap/).
@@ -55,7 +55,7 @@ Interfaces provide an way to group functions together, and express the
 constraint that all of the functions in the group are implemented. Consider a
 random-access iterator, which has a number of methods. If a C++ template
 function only accesses some of those methods which happens to match the subset
-defined for a type, the code will work temporariliy but fail later when the code
+defined for a type, the code will work temporarily but fail later when the code
 is changed to use a different subset.
 
 Another approach to operator overloading is to use methods with a specific name.
