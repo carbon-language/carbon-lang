@@ -94,7 +94,7 @@ class DiagnosticEmitter {
     // hardcoding an "error: " prefix.
     consumer_->HandleDiagnostic({.level = Diagnostic::Error,
                                  .location = translator_->GetLocation(location),
-                                 .short_name = DiagnosticT::ShortName,
+                                 .short_name = diag.ShortName,
                                  .message = diag.Format()});
   }
 
@@ -118,7 +118,7 @@ class DiagnosticEmitter {
       consumer_->HandleDiagnostic(
           {.level = Diagnostic::Warning,
            .location = translator_->GetLocation(location),
-           .short_name = DiagnosticT::ShortName,
+           .short_name = diag.ShortName,
            .message = diag.Format()});
     }
   }
@@ -147,6 +147,16 @@ inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
 template <typename Derived>
 struct SimpleDiagnostic {
   static auto Format() -> std::string { return Derived::Message.str(); }
+};
+
+// The proper use of this is:
+//   static constexpr SimpleDiagnostic MyDiagnostic = {
+//       .ShortName = "short-name", .Message = "message" };
+struct ProposedSimpleDiagnostic final {
+  auto Format() -> std::string { return Message.str(); }
+
+  llvm::StringLiteral ShortName;
+  llvm::StringLiteral Message;
 };
 
 // Diagnostic consumer adaptor that tracks whether any errors have been

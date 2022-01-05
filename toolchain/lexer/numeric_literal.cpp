@@ -9,15 +9,16 @@
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/character_set.h"
 
 namespace Carbon {
 
 namespace {
-struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Empty digit sequence in numeric literal.";
+
+static constexpr ProposedSimpleDiagnostic EmptyDigitSequence = {
+    .ShortName = "syntax-invalid-number",
+    .Message = "Empty digit sequence in numeric literal.",
 };
 
 struct InvalidDigit {
@@ -35,10 +36,9 @@ struct InvalidDigit {
   int radix;
 };
 
-struct InvalidDigitSeparator : SimpleDiagnostic<InvalidDigitSeparator> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Misplaced digit separator in numeric literal.";
+static constexpr ProposedSimpleDiagnostic InvalidDigitSeparator{
+    .ShortName = "syntax-invalid-number",
+    .Message = "Misplaced digit separator in numeric literal.",
 };
 
 struct IrregularDigitSeparators {
@@ -58,16 +58,14 @@ struct IrregularDigitSeparators {
   int radix;
 };
 
-struct UnknownBaseSpecifier : SimpleDiagnostic<UnknownBaseSpecifier> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Unknown base specifier in numeric literal.";
+static constexpr ProposedSimpleDiagnostic UnknownBaseSpecifier{
+    .ShortName = "syntax-invalid-number",
+    .Message = "Unknown base specifier in numeric literal.",
 };
 
-struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Binary real number literals are not supported.";
+static constexpr ProposedSimpleDiagnostic BinaryRealLiteral{
+    .ShortName = "syntax-invalid-number",
+    .Message = "Binary real number literals are not supported.",
 };
 
 struct WrongRealLiteralExponent {
@@ -360,7 +358,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
       // next to another digit separator, or at the end.
       if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
           i + 1 == n) {
-        emitter_.EmitError<InvalidDigitSeparator>(text.begin() + i);
+        emitter_.EmitError(text.begin() + i, InvalidDigitSeparator);
       }
       ++num_digit_separators;
       continue;
@@ -372,7 +370,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
   }
 
   if (num_digit_separators == static_cast<int>(text.size())) {
-    emitter_.EmitError<EmptyDigitSequence>(text.begin());
+    emitter_.EmitError(text.begin(), EmptyDigitSequence);
     return {.ok = false};
   }
 
@@ -444,7 +442,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix_ == 10 && int_part_.startswith("0") && int_part_ != "0") {
-    emitter_.EmitError<UnknownBaseSpecifier>(int_part_.begin());
+    emitter_.EmitError(int_part_.begin(), UnknownBaseSpecifier);
     return false;
   }
   return true;
@@ -465,8 +463,8 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
   }
 
   if (radix_ == 2) {
-    emitter_.EmitError<BinaryRealLiteral>(literal_.text_.begin() +
-                                          literal_.radix_point_);
+    emitter_.EmitError(literal_.text_.begin() + literal_.radix_point_,
+                       BinaryRealLiteral);
     // Carry on and parse the binary real literal anyway.
   }
 
