@@ -1855,7 +1855,7 @@ methods in the interface.
 
 ```
 adapter DrawInWindow for Window {
-  impl DrawingContext = Window;
+  impl as DrawingContext = Window;
 }
 fn Render(w: Window) {
   let d: DrawInWindow = w as DrawInWindow;
