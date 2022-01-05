@@ -1909,7 +1909,7 @@ way of iterating through the fields so it can perform operations fieldwise. This
 feature should also implement the interfaces for any tuples whose fields satisfy
 the criteria.
 
-It is an open question how define implementations for binary operators. For
+It is an open question how to define implementations for binary operators. For
 example, if `i32` is comparable to `f64`, then `{.x = 3, .y = 2.72}` should be
 comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
