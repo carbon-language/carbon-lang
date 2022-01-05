@@ -118,7 +118,7 @@ may mean packages _should_ be outdated, and not be upgraded.
 ### Linux only
 
 Linux-specific package managers are typically used for packages which work
-through [brew](#brew) on MacOS, but not on Linux.
+through [brew](#homebrew) on MacOS, but not on Linux.
 
 Installation instructions assume Debian- or Ubuntu-based Linux distributions
 with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
@@ -281,7 +281,7 @@ than a separate install. They are noted here mainly to help findability.
 the PR and proposal file for a new proposal. It's documented in
 [the proposal template](/proposals/scripts/template.md).
 
-**NOTE**: This requires installing [the gh CLI](#gh).
+**NOTE**: This requires installing [the gh CLI](#gh-cli).
 
 #### pr_comments.py
 
