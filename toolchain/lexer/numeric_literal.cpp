@@ -36,7 +36,7 @@ struct InvalidDigit {
   int radix;
 };
 
-static constexpr ProposedSimpleDiagnostic InvalidDigitSeparator{
+static constexpr ProposedSimpleDiagnostic InvalidDigitSeparator = {
     .ShortName = "syntax-invalid-number",
     .Message = "Misplaced digit separator in numeric literal.",
 };
@@ -58,12 +58,12 @@ struct IrregularDigitSeparators {
   int radix;
 };
 
-static constexpr ProposedSimpleDiagnostic UnknownBaseSpecifier{
+static constexpr ProposedSimpleDiagnostic UnknownBaseSpecifier = {
     .ShortName = "syntax-invalid-number",
     .Message = "Unknown base specifier in numeric literal.",
 };
 
-static constexpr ProposedSimpleDiagnostic BinaryRealLiteral{
+static constexpr ProposedSimpleDiagnostic BinaryRealLiteral = {
     .ShortName = "syntax-invalid-number",
     .Message = "Binary real number literals are not supported.",
 };
