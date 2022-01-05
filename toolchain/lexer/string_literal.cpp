@@ -97,8 +97,7 @@ static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
   // characters containing neither '#' nor '"' followed by a newline.
   size_t prefix_end =
       source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
-  if (prefix_end == llvm::StringRef::npos || prefix_end >= source_text.size() ||
-      source_text[prefix_end] != '\n') {
+  if (prefix_end == llvm::StringRef::npos || source_text[prefix_end] != '\n') {
     return 0;
   }
 
