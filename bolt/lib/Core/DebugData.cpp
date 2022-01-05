@@ -181,6 +181,7 @@ void DebugAddrWriter::AddressForDWOCU::dump() {
 }
 uint32_t DebugAddrWriter::getIndexFromAddress(uint64_t Address,
                                               uint64_t DWOId) {
+  std::lock_guard<std::mutex> Lock(WriterMutex);
   if (!AddressMaps.count(DWOId))
     AddressMaps[DWOId] = AddressForDWOCU();
 
@@ -199,6 +200,7 @@ uint32_t DebugAddrWriter::getIndexFromAddress(uint64_t Address,
 // update AddressToIndex and IndexToAddress
 void DebugAddrWriter::addIndexAddress(uint64_t Address, uint32_t Index,
                                       uint64_t DWOId) {
+  std::lock_guard<std::mutex> Lock(WriterMutex);
   AddressForDWOCU &Map = AddressMaps[DWOId];
   auto Entry = Map.find(Address);
   if (Entry != Map.end()) {
@@ -666,6 +668,7 @@ void DebugStrWriter::initialize() {
 }
 
 uint32_t DebugStrWriter::addString(StringRef Str) {
+  std::lock_guard<std::mutex> Lock(WriterMutex);
   if (StrBuffer->empty())
     initialize();
   auto Offset = StrBuffer->size();

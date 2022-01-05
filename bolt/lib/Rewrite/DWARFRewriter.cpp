@@ -223,6 +223,7 @@ void DWARFRewriter::updateDebugInfo() {
   // specified.
   std::unordered_map<std::string, uint32_t> NameToIndexMap;
   std::unordered_map<uint64_t, std::string> DWOIdToName;
+  std::mutex AccessMutex;
 
   auto updateDWONameCompDir = [&](DWARFUnit &Unit) -> void {
     const DWARFDie &DIE = Unit.getUnitDIE();
@@ -231,7 +232,13 @@ void DWARFRewriter::updateDebugInfo() {
     (void)AttrInfoVal;
     assert(AttrInfoVal && "Skeleton CU doesn't have dwo_name.");
 
-    std::string ObjectName = getDWOName(Unit, &NameToIndexMap, DWOIdToName);
+    std::string ObjectName = "";
+
+    {
+      std::lock_guard<std::mutex> Lock(AccessMutex);
+      ObjectName = getDWOName(Unit, &NameToIndexMap, DWOIdToName);
+    }
+
     uint32_t NewOffset = StrWriter->addString(ObjectName.c_str());
     DebugInfoPatcher->addLE32Patch(AttrInfoVal->Offset, NewOffset,
                                    AttrInfoVal->Size);
@@ -256,6 +263,7 @@ void DWARFRewriter::updateDebugInfo() {
     if (DWOId)
       SplitCU = BC.getDWOCU(*DWOId);
 
+    DebugLocWriter *DebugLocWriter = nullptr;
     // Skipping CUs that failed to load.
     if (SplitCU) {
       updateDWONameCompDir(*Unit);
@@ -264,8 +272,14 @@ void DWARFRewriter::updateDebugInfo() {
       // have same DWO ID.
       assert(LocListWritersByCU.count(*DWOId) == 0 &&
              "LocList writer for DWO unit already exists.");
-      LocListWritersByCU[*DWOId] =
-          std::make_unique<DebugLoclistWriter>(&BC, *DWOId);
+      {
+        std::lock_guard<std::mutex> Lock(AccessMutex);
+        DebugLocWriter =
+            LocListWritersByCU
+                .insert(
+                    {*DWOId, std::make_unique<DebugLoclistWriter>(&BC, *DWOId)})
+                .first->second.get();
+      }
       DebugInfoBinaryPatcher *DwoDebugInfoPatcher =
           llvm::cast<DebugInfoBinaryPatcher>(
               getBinaryDWODebugInfoPatcher(*DWOId));
@@ -278,16 +292,20 @@ void DWARFRewriter::updateDebugInfo() {
       DwoDebugInfoPatcher->addUnitBaseOffsetLabel((*SplitCU)->getOffset());
       DebugAbbrevWriter *DWOAbbrevWriter =
           createBinaryDWOAbbrevWriter((*SplitCU)->getContext(), *DWOId);
-      updateUnitDebugInfo(*DWOId, *(*SplitCU), *DwoDebugInfoPatcher,
-                          *DWOAbbrevWriter);
+      updateUnitDebugInfo(*(*SplitCU), *DwoDebugInfoPatcher, *DWOAbbrevWriter,
+                          *DebugLocWriter);
       DwoDebugInfoPatcher->clearDestinationLabels();
       if (!DwoDebugInfoPatcher->getWasRangBasedUsed())
         RangesBase = None;
     }
 
+    {
+      std::lock_guard<std::mutex> Lock(AccessMutex);
+      DebugLocWriter = LocListWritersByCU[CUIndex].get();
+    }
     DebugInfoPatcher->addUnitBaseOffsetLabel(Unit->getOffset());
-    updateUnitDebugInfo(CUIndex, *Unit, *DebugInfoPatcher, *AbbrevWriter,
-                        RangesBase);
+    updateUnitDebugInfo(*Unit, *DebugInfoPatcher, *AbbrevWriter,
+                        *DebugLocWriter, RangesBase);
   };
 
   if (opts::NoThreads || opts::DeterministicDebugInfo) {
@@ -318,12 +336,11 @@ void DWARFRewriter::updateDebugInfo() {
 }
 
 void DWARFRewriter::updateUnitDebugInfo(
-    uint64_t CUIndex, DWARFUnit &Unit, DebugInfoBinaryPatcher &DebugInfoPatcher,
-    DebugAbbrevWriter &AbbrevWriter, Optional<uint64_t> RangesBase) {
+    DWARFUnit &Unit, DebugInfoBinaryPatcher &DebugInfoPatcher,
+    DebugAbbrevWriter &AbbrevWriter, DebugLocWriter &DebugLocWriter,
+    Optional<uint64_t> RangesBase) {
   // Cache debug ranges so that the offset for identical ranges could be reused.
   std::map<DebugAddressRangesVector, uint64_t> CachedRanges;
-
-  auto &DebugLocWriter = *LocListWritersByCU[CUIndex].get();
 
   uint64_t DIEOffset = Unit.getOffset() + Unit.getHeaderSize();
   uint64_t NextCUOffset = Unit.getNextUnitOffset();

@@ -69,9 +69,10 @@ class DWARFRewriter {
   std::mutex LocListDebugInfoPatchesMutex;
 
   /// Update debug info for all DIEs in \p Unit.
-  void updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
+  void updateUnitDebugInfo(DWARFUnit &Unit,
                            DebugInfoBinaryPatcher &DebugInfoPatcher,
                            DebugAbbrevWriter &AbbrevWriter,
+                           DebugLocWriter &DebugLocWriter,
                            Optional<uint64_t> RangesBase = None);
 
   /// Patches the binary for an object's address ranges to be updated.
@@ -179,6 +180,7 @@ class DWARFRewriter {
   /// Helper function for creating and returning per-DWO patchers/writers.
   template <class T, class Patcher>
   Patcher *getBinaryDWOPatcherHelper(T &BinaryPatchers, uint64_t DwoId) {
+    std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
     auto Iter = BinaryPatchers.find(DwoId);
     if (Iter == BinaryPatchers.end()) {
       // Using make_pair instead of {} to work around bug in older version of
@@ -211,6 +213,7 @@ public:
   /// Creates abbrev writer for DWO unit with \p DWOId.
   DebugAbbrevWriter *createBinaryDWOAbbrevWriter(DWARFContext &Context,
                                                  uint64_t DWOId) {
+    std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
     auto &Entry = BinaryDWOAbbrevWriters[DWOId];
     Entry = std::make_unique<DebugAbbrevWriter>(Context, DWOId);
     return Entry.get();
