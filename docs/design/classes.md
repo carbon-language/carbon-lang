@@ -638,7 +638,11 @@ class types when:
 For example, since
 [comparison between `i32` and `u32` is defined](/proposals/p0702.md#built-in-comparisons-and-implicit-conversions),
 equality comparison between values of types `{.x: i32, .y: i32}` and
-`{.y: u32, .x: u32}` is as well.
+`{.y: u32, .x: u32}` is as well. Equality and inequality comparisons compare
+fields using the field order of the left-hand operand and stop once the outcome
+of the comparison is determined. However, the comparison order and
+short-circuiting are generally expected to affect only the performance
+characteristics of the comparison and not its meaning.
 
 Ordering comparisons, such as `<` and `<=`, use the order of the fields to do a
 [lexicographical comparison](https://en.wikipedia.org/wiki/Lexicographic_order).
