@@ -24,6 +24,7 @@ class ParseTree::Parser {
       -> ParseTree;
 
  private:
+  class ScopedStackStep;
   struct SubtreeStart;
 
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
@@ -277,6 +278,10 @@ class ParseTree::Parser {
   // The end position of the token buffer. There will always be an `EndOfFile`
   // token between `position` (inclusive) and `end` (exclusive).
   TokenizedBuffer::TokenIterator end_;
+
+  // Managed through RETURN_IF_STACK_LIMITED, which should be invoked by all
+  // functions.
+  int stack_depth_ = 0;
 };
 
 }  // namespace Carbon
