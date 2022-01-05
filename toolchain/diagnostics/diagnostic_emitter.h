@@ -149,9 +149,10 @@ struct SimpleDiagnostic {
   static auto Format() -> std::string { return Derived::Message.str(); }
 };
 
-// The proper use of this is:
+// Diagnostics that don't need message formatting can use this with:
 //   static constexpr SimpleDiagnostic MyDiagnostic = {
 //       .ShortName = "short-name", .Message = "message" };
+//   EmitError(location, MyDiagnostic);
 struct ProposedSimpleDiagnostic final {
   auto Format() -> std::string { return Message.str(); }
 
