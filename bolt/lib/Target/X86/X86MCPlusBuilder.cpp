@@ -252,42 +252,6 @@ bool isCMP(unsigned Opcode) {
   }
 }
 
-bool isDEC(unsigned Opcode) {
-  switch (Opcode) {
-  default:
-    return false;
-  case X86::DEC16m:
-  case X86::DEC16r:
-  case X86::DEC16r_alt:
-  case X86::DEC32m:
-  case X86::DEC32r:
-  case X86::DEC32r_alt:
-  case X86::DEC64r:
-  case X86::DEC64m:
-  case X86::DEC8m:
-  case X86::DEC8r:
-    return true;
-  }
-}
-
-bool isINC(unsigned Opcode) {
-  switch (Opcode) {
-  default:
-    return false;
-  case X86::INC16m:
-  case X86::INC16r:
-  case X86::INC16r_alt:
-  case X86::INC32m:
-  case X86::INC32r:
-  case X86::INC32r_alt:
-  case X86::INC64r:
-  case X86::INC64m:
-  case X86::INC8m:
-  case X86::INC8r:
-    return true;
-  }
-}
-
 bool isSUB(unsigned Opcode) {
   switch (Opcode) {
   default:
@@ -964,8 +928,6 @@ public:
   }
 
   bool isMacroOpFusionPair(ArrayRef<MCInst> Insts) const override {
-    // FIXME: the macro-op fusion is triggered under different conditions
-    //        on different cores. This implementation is for sandy-bridge+.
     const auto *I = Insts.begin();
     while (I != Insts.end() && isPrefix(*I))
       ++I;
@@ -982,65 +944,21 @@ public:
 
     if (!isConditionalBranch(SecondInst))
       return false;
-    // J?CXZ and LOOP cannot be fused
-    if (SecondInst.getOpcode() == X86::LOOP ||
-        SecondInst.getOpcode() == X86::LOOPE ||
-        SecondInst.getOpcode() == X86::LOOPNE ||
-        SecondInst.getOpcode() == X86::JECXZ ||
-        SecondInst.getOpcode() == X86::JRCXZ)
-      return false;
-
-    const MCInstrDesc &Desc = Info->get(FirstInst.getOpcode());
-    int MemOpNo = X86II::getMemoryOperandNo(Desc.TSFlags);
-    if (MemOpNo != -1) {
-      // Cannot fuse if first instruction operands are MEM-IMM.
-      if (X86II::hasImm(Desc.TSFlags))
-        return false;
-      // Cannot fuse if first instruction may store.
-      if (Desc.mayStore())
-        return false;
-    }
-
     // Cannot fuse if the first instruction uses RIP-relative memory.
-    // FIXME: verify that this is true.
     if (hasPCRelOperand(FirstInst))
       return false;
 
-    // Check instructions against table 3-1 in Intel's Optimization Guide.
-    unsigned FirstInstGroup = 0;
-    if (isTEST(FirstInst.getOpcode()) || isAND(FirstInst.getOpcode()))
-      FirstInstGroup = 1;
-    else if (isCMP(FirstInst.getOpcode()) || isADD(FirstInst.getOpcode()) ||
-             ::isSUB(FirstInst.getOpcode()))
-      FirstInstGroup = 2;
-    else if (isINC(FirstInst.getOpcode()) || isDEC(FirstInst.getOpcode()))
-      FirstInstGroup = 3;
-
-    if (FirstInstGroup == 0)
+    const X86::FirstMacroFusionInstKind CmpKind =
+        X86::classifyFirstOpcodeInMacroFusion(FirstInst.getOpcode());
+    if (CmpKind == X86::FirstMacroFusionInstKind::Invalid)
       return false;
 
-    const unsigned CondCode =
-        getCanonicalBranchCondCode(getCondCode(SecondInst));
-    switch (CondCode) {
-    default:
-      llvm_unreachable("unexpected conditional code");
+    X86::CondCode CC = static_cast<X86::CondCode>(getCondCode(SecondInst));
+    X86::SecondMacroFusionInstKind BranchKind =
+        X86::classifySecondCondCodeInMacroFusion(CC);
+    if (BranchKind == X86::SecondMacroFusionInstKind::Invalid)
       return false;
-    case X86::COND_E:
-    case X86::COND_L:
-    case X86::COND_G:
-      return true;
-    case X86::COND_O:
-    case X86::COND_P:
-    case X86::COND_S:
-      if (FirstInstGroup == 1)
-        return true;
-      return false;
-    case X86::COND_A:
-    case X86::COND_B:
-      if (FirstInstGroup != 3)
-        return true;
-      return false;
-    }
+    return X86::isMacroFused(CmpKind, BranchKind);
   }
 
   bool evaluateX86MemoryOperand(const MCInst &Inst,
