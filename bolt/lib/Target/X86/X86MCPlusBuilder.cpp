@@ -25,7 +25,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include <set>
 
-#define DEBUG_TYPE "bolt-x86"
+#define DEBUG_TYPE "mcplus"
 
 using namespace llvm;
 using namespace bolt;

@@ -21,7 +21,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
-#define DEBUG_TYPE "bolt-aarch64"
+#define DEBUG_TYPE "mcplus"
 
 using namespace llvm;
 using namespace bolt;
