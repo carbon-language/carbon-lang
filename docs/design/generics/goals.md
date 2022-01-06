@@ -134,7 +134,8 @@ templates, so it is written as if Carbon will have its own templating system. It
 is assumed to be similar to C++ templates with some specific changes:
 
 -   It may have some limitations to be more compatible with generics, much like
-    how we [restrict overloading](#generics-instead-of-open-overloading).
+    how we
+    [restrict overloading](#generics-instead-of-open-overloading-and-adl).
 -   We likely will have a different method of selecting between different
     template instantiations, since
     [SFINAE](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)

@@ -233,5 +233,5 @@ either:
 -   there are incompatible values with types that have the same name, or
 -   it is difficult to reason about the program's behavior because it behaves
     like
-    [dynamic implementation binding](#rejected-alternative-dynamic-implementation-binding)
+    [dynamic implementation binding](#rejected-variation-dynamic-implementation-binding)
     (though perhaps with a monomorphization cost instead of a runtime cost).

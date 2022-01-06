@@ -46,6 +46,11 @@ class ParseTree {
   class PostorderIterator;
   class SiblingIterator;
 
+  // The maximum stack depth allowed while recursing the parse tree.
+  // This is meant to approximate system stack limits, but we may need to find a
+  // better way to track what the system is enforcing.
+  static constexpr int StackDepthLimit = 200;
+
   // Parses the token buffer into a `ParseTree`.
   //
   // This is the factory function which is used to build parse trees.
