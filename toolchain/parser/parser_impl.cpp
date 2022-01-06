@@ -55,8 +55,7 @@ class ParseTree::Parser::ScopedStackStep {
     return (error_return_expr);                    \
   }
 
-struct UnexpectedTokenInCodeBlock
-    : DiagnosticBase<UnexpectedTokenInCodeBlock> {
+struct UnexpectedTokenInCodeBlock : DiagnosticBase<UnexpectedTokenInCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unexpected token in code block.";
