@@ -470,7 +470,7 @@ fn PrintIt[T:! Printable](p: T*) {
 At that point, two erasures occur:
 
 -   All of `CDCover`'s API _except_ `Printable` is erased during the cast from
-    `CDCover` to `Printable`, which is the [facet](terminology.md#facets) type
+    `CDCover` to `Printable`, which is the parameterized type
     `CDCover as Printable`.
 -   When you call `PrintIt`, the type connection to `CDCover` is lost. Outside
     of `PrintIt` you can cast a `CDCover as Printable` value back to `CDCover`.
