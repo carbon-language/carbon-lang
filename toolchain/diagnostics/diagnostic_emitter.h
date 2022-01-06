@@ -68,7 +68,7 @@ class DiagnosticLocationTranslator {
       -> Diagnostic::Location = 0;
 };
 
-// CRTP base class for diagnostics with no substitutions.
+// CRTP base class for diagnostics.
 template <typename Derived>
 struct DiagnosticBase {
   // Children with instance-specific formatting needs will provide a Format
