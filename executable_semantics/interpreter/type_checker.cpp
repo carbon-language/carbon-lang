@@ -1051,13 +1051,13 @@ void TypeChecker::TypeCheckClassDeclaration(
     switch (m->kind()) {
       case MemberKind::FieldMember: {
         BindingPattern& binding = cast<FieldMember>(*m).binding();
-        if (!binding.name().has_value()) {
+        if (binding.name() == AnonymousName) {
           FATAL_COMPILATION_ERROR(binding.source_loc())
               << "Struct members must have names";
         }
         TypeCheckPattern(&binding, ct_top, std::nullopt);
         fields.push_back(
-            {.name = *binding.name(), .value = &binding.static_type()});
+            {.name = binding.name(), .value = &binding.static_type()});
         break;
       }
     }

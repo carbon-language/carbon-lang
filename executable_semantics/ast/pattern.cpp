@@ -26,12 +26,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       break;
     case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*this);
-      if (binding.name().has_value()) {
-        out << *binding.name();
-      } else {
-        out << "_";
-      }
-      out << ": " << binding.type();
+      out << binding.name() << ": " << binding.type();
       break;
     }
     case PatternKind::TuplePattern: {

@@ -139,12 +139,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*this);
-      if (placeholder.name().has_value()) {
-        out << *placeholder.name();
+      out << "Placeholder<";
+      if (placeholder.named_entity().has_value()) {
+        out << (*placeholder.named_entity()).name();
       } else {
         out << "_";
       }
-      out << ": " << placeholder.type();
+      out << ">";
       break;
     }
     case Value::Kind::AlternativeValue: {
@@ -374,8 +375,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
 // Returns true if the two values are equal and returns false otherwise.
 //
 // This function implements the `==` operator of Carbon.
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
-                SourceLocation source_loc) -> bool {
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
   if (v1->kind() != v2->kind()) {
     return false;
   }
@@ -401,7 +401,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
         return false;
       }
       for (size_t i = 0; i < elements1.size(); ++i) {
-        if (!ValueEqual(elements1[i], elements2[i], source_loc)) {
+        if (!ValueEqual(elements1[i], elements2[i])) {
           return false;
         }
       }
@@ -414,7 +414,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       for (size_t i = 0; i < struct_v1.elements().size(); ++i) {
         CHECK(struct_v1.elements()[i].name == struct_v2.elements()[i].name);
         if (!ValueEqual(struct_v1.elements()[i].value,
-                        struct_v2.elements()[i].value, source_loc)) {
+                        struct_v2.elements()[i].value)) {
           return false;
         }
       }

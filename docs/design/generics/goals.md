@@ -27,6 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Predictability](#predictability)
     -   [Dispatch control](#dispatch-control)
     -   [Upgrade path from templates](#upgrade-path-from-templates)
+    -   [Path from regular functions](#path-from-regular-functions)
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
     -   [Learn from others](#learn-from-others)
@@ -134,7 +135,8 @@ templates, so it is written as if Carbon will have its own templating system. It
 is assumed to be similar to C++ templates with some specific changes:
 
 -   It may have some limitations to be more compatible with generics, much like
-    how we [restrict overloading](#generics-instead-of-open-overloading).
+    how we
+    [restrict overloading](#generics-instead-of-open-overloading-and-adl).
 -   We likely will have a different method of selecting between different
     template instantiations, since
     [SFINAE](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
@@ -437,6 +439,14 @@ Carbon. This gives us these sub-goals:
 If Carbon does not end up having direct support for templates, the transition
 will necessarily be less incremental.
 
+### Path from regular functions
+
+Replacing a regular, non-parameterized function with a generic function should
+not affect existing callers of the function. There may be some differences, such
+as when taking the address of the function, but ordinary calls should not see
+any difference. In particular, the return type of a generic function should
+match, without any type erasure or additional named members.
+
 ### Coherence
 
 We want the generics system to have the
@@ -672,3 +682,4 @@ but it is not a goal for Carbon to support such an implementation strategy.
 ## References
 
 -   [#24: Generics goals](https://github.com/carbon-language/carbon-lang/pull/24)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
