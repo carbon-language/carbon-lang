@@ -68,6 +68,14 @@ class DiagnosticLocationTranslator {
       -> Diagnostic::Location = 0;
 };
 
+// CRTP base class for diagnostics with no substitutions.
+template <typename Derived>
+struct DiagnosticBase {
+  // Children with instance-specific formatting needs will provide a Format
+  // method, overriding this behavior.
+  static auto Format() -> std::string { return Derived::Message.str(); }
+};
+
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
 //
@@ -88,7 +96,9 @@ class DiagnosticEmitter {
   ~DiagnosticEmitter() = default;
 
   // Emits an error unconditionally.
-  template <typename DiagnosticT>
+  template <typename DiagnosticT,
+            typename = std::enable_if_t<
+                std::is_base_of_v<DiagnosticBase<DiagnosticT>, DiagnosticT>>>
   auto EmitError(LocationT location, DiagnosticT diag) -> void {
     // TODO: Encode the diagnostic kind in the Diagnostic object rather than
     // hardcoding an "error: " prefix.
@@ -142,12 +152,6 @@ inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   static auto* consumer = new Consumer;
   return *consumer;
 }
-
-// CRTP base class for diagnostics with no substitutions.
-template <typename Derived>
-struct SimpleDiagnostic {
-  auto Format() -> std::string { return Derived::Message.str(); }
-};
 
 // Diagnostic consumer adaptor that tracks whether any errors have been
 // produced.
