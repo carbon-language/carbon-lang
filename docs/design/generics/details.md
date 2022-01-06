@@ -2432,11 +2432,10 @@ interface Has2DPoint {
 }
 ```
 
-To name such a constraint, you may use a `let template` or a `constraint`
-declaration:
+To name such a constraint, you may use a `let` or a `constraint` declaration:
 
 ```
-let template Point2DInterface:! auto = NSpacePoint where .N = 2;
+let Point2DInterface:! auto = NSpacePoint where .N = 2;
 constraint Point2DInterface {
   extends NSpacePoint where .N = 2;
 }
@@ -2476,11 +2475,11 @@ fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
 }
 ```
 
-To name these sorts of constraints, we could use `let template` declarations or
+To name these sorts of constraints, we could use `let` declarations or
 `constraint` definitions:
 
 ```
-let template IntStack:! auto = Stack where .ElementType = i32;
+let IntStack:! auto = Stack where .ElementType = i32;
 constraint IntStack {
   extends Stack where .ElementType = i32;
 }
@@ -2532,7 +2531,7 @@ interface HasEqualPair {
 This kind of constraint can be named:
 
 ```
-let template EqualPair:! auto =
+let EqualPair:! auto =
     PairInterface where .Left == .Right;
 constraint EqualPair {
   extends PairInterface where .Left == .Right;
@@ -2654,7 +2653,7 @@ We would like to be able to name this constraint, defining a
 `ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
 
 ```
-let template RandomAccessContainer:! auto =
+let RandomAccessContainer:! auto =
     ContainerInterface where .IteratorType is RandomAccessIterator;
 // or
 constraint RandomAccessContainer {
@@ -2751,11 +2750,11 @@ interface Container {
 These recursive constraints can be named:
 
 ```
-let template RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
+let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
 constraint RealAbs {
   extends HasAbs where .MagnitudeType == Self;
 }
-let template ContainerIsSlice:! auto =
+let ContainerIsSlice:! auto =
     Container where .SliceType == .Self;
 constraint ContainerIsSlice {
   extends Container where .SliceType == Self;
@@ -3347,7 +3346,7 @@ adapter ThenCompare(
   }
 }
 
-let template SongByArtistThenTitle: auto =
+let SongByArtistThenTitle: auto =
     ThenCompare(Song, (SongByArtist, SongByTitle));
 var s1: Song = ...;
 var s2: SongByArtistThenTitle =
