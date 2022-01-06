@@ -55,6 +55,9 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).statement().PrintDepth(1, out);
       break;
+    case Action::Kind::DeclarationAction:
+      cast<DeclarationAction>(*this).declaration().Print(out);
+      break;
     case Action::Kind::ScopeAction:
       out << "ScopeAction";
   }
