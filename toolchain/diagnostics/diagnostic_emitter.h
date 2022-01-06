@@ -68,11 +68,19 @@ class DiagnosticLocationTranslator {
       -> Diagnostic::Location = 0;
 };
 
-// CRTP base class for diagnostics.
+// CRTP base class for diagnostics. A simple child will look like:
+//
+// struct MyError : DiagnosticBase<MyError> {
+//   static constexpr llvm::StringLiteral ShortName = "short-name";
+//   static constexpr llvm::StringLiteral Message = "A message.";
+// };
+//
+// `DiagnosticEmitter` requires `ShortName` and `Format`; `Message` is used by
+// the default `Format` implementation. Complex children may provide an
+// alternate `Format` implementation, and doing so allows them to also omit
+// `Message`.
 template <typename Derived>
 struct DiagnosticBase {
-  // Children with instance-specific formatting needs will provide a Format
-  // method, overriding this behavior.
   static auto Format() -> std::string { return Derived::Message.str(); }
 };
 
