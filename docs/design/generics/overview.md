@@ -251,12 +251,17 @@ constraints are represented by the type of `T`, a
 [**_type-of-type_**](terminology.md#type-of-type).
 
 In general, a type-of-type describes the capabilities of a type, while a type
-defines specific implementations of those capabilities.
+defines specific implementations of those capabilities. An interface, like
+`Comparable`, may be used as a type-of-type. In that case, the constraint on the
+type is that it must implement the interface `Comparable`.
 
-An interface, like `Comparable`, may be used as a type-of-type. In that case,
-the constraint on the type is that it must implement the interface `Comparable`.
 A type-of-type also defines a set of names and a mapping to corresponding
-qualified names. You may combine interfaces into new type-of-types using
+qualified names. Those names are used for
+[unqualfied member lookup](terminology.md#qualified-and-unqualified-member-names)
+in scopes where the value of the type is not known, such as when the type is a
+generic parameter.
+
+You may combine interfaces into new type-of-types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
@@ -447,7 +452,10 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
 
 Inside a generic function, the API of a type argument is
 [erased](terminology.md#type-erasure) except for the names defined in the
-type-of-type.
+type-of-type. An equivalent model is to say an
+[archetype](terminology.md#archetype) is used for type checking and name lookup
+when the actual type is not known in that scope. The archetype has members
+dictated by the type-of-type.
 
 For example: If there were a class `CDCover` defined this way:
 
@@ -467,14 +475,10 @@ fn PrintIt[T:! Printable](p: T*) {
 }
 ```
 
-At that point, two erasures occur:
-
--   All of `CDCover`'s API _except_ `Printable` is erased during the cast from
-    `CDCover` to `Printable`, which is the [facet](terminology.md#facets) type
-    `CDCover as Printable`.
--   When you call `PrintIt`, the type connection to `CDCover` is lost. Outside
-    of `PrintIt` you can cast a `CDCover as Printable` value back to `CDCover`.
-    Inside of `PrintIt`, you can't cast `p` or `T` back to `CDCover`.
+Inside `PrintIt`, `T` is an archetype with the API of `Printable`. A call to
+`PrintIt` with a value of type `CDCover` erases everything except the members or
+`Printable`. This includes the type connection to `CDCover`, so it is illegal to
+cast from `T` to `CDCover`.
 
 ### Adapting types
 
@@ -629,3 +633,4 @@ priority order in a prioritization block.
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
