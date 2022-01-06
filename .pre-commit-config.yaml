@@ -78,10 +78,10 @@ repos:
           )$
       - id: check-google-doc-style
       - id: check-links
-        name: Validates links in non-proposal files
+        name: Check links in non-proposal files
         exclude: ^proposals/.*$
       - id: check-links
-        name: Validates links in proposal files
+        name: Check links in proposal files
         args: ['--anchors-only']
         files: ^proposals/.*$
       - id: markdown-toc
