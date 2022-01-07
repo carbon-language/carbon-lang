@@ -134,8 +134,7 @@ We suggest a specific workflow to address this:
     ```
 
     And create a pull request for it using the
-    [`gh`](/docs/project/contribution_tools.md#github_commandline_interface)
-    tool:
+    [`gh`](/docs/project/contribution_tools.md#gh-cli) tool:
 
     ```shell
     gh pr create
