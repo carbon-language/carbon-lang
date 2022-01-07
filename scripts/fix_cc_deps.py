@@ -23,6 +23,8 @@ from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
 
 
+# Maps external repository names to a method translating bazel labels to file
+# paths for that repository.
 EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x)
 }
@@ -66,7 +68,7 @@ def remap_file(label: str) -> str:
     repo, _, path = label.partition("//")
     if not repo:
         return path.replace(":", "/")
-    assert repo in EXTERNAL_REPOS, repo
+    assert (repo in EXTERNAL_REPOS), repo
     return EXTERNAL_REPOS[repo](path)
     exit(f"Don't know how to remap label '{label}'")
 
@@ -79,7 +81,7 @@ def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
     """
     results: Set[str] = set()
     for label in list_child:
-        assert label.tag in ("label", "output"), label.tag
+        assert (label.tag in ("label", "output")), label.tag
         value = label.attrib["value"]
         if is_file:
             value = remap_file(value)
@@ -112,7 +114,7 @@ def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
         exit(f"bazel query returned {p.returncode}")
     rules: Dict[str, Rule] = {}
     for rule_xml in ElementTree.fromstring(p.stdout):
-        assert rule_xml.tag == "rule", rule_xml.tag
+        assert (rule_xml.tag == "rule"), rule_xml.tag
         rule_name = rule_xml.attrib["name"]
         hdrs: Set[str] = set()
         srcs: Set[str] = set()
@@ -181,7 +183,6 @@ def get_missing_deps(
                     )
                 dep_choices = header_to_rule_map[header]
                 if not dep_choices.intersection(rule.deps):
-                    # Only add one dep from the choices, if there are multiple.
                     if len(dep_choices) > 1:
                         print(
                             f"Ambiguous dependency choice for #include "
