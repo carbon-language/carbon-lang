@@ -4,16 +4,18 @@
 
 #include "toolchain/lexer/numeric_literal.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <iterator>
 #include <memory>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::_;
@@ -22,10 +24,9 @@ using ::testing::Matcher;
 using ::testing::Property;
 using ::testing::Truly;
 
-struct NumericLiteralTest : ::testing::Test {
+class NumericLiteralTest : public ::testing::Test {
+ protected:
   NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
-
-  ErrorTrackingDiagnosticConsumer error_tracker;
 
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
@@ -39,6 +40,8 @@ struct NumericLiteralTest : ::testing::Test {
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return Lex(text).ComputeValue(emitter);
   }
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
 };
 
 // TODO: Use gmock's VariantWith once it exists.
@@ -328,5 +331,11 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
   }
 }
 
+TEST_F(NumericLiteralTest, TooManyDigits) {
+  std::string long_number(2000, '1');
+  EXPECT_THAT(Parse(long_number), HasUnrecoverableError());
+  EXPECT_TRUE(error_tracker.SeenError());
+}
+
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

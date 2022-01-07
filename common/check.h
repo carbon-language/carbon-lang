@@ -5,81 +5,9 @@
 #ifndef COMMON_CHECK_H_
 #define COMMON_CHECK_H_
 
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Signals.h"
-#include "llvm/Support/raw_ostream.h"
+#include "common/check_internal.h"
 
 namespace Carbon {
-namespace Internal {
-
-// Wraps a stream and exiting for fatal errors. Should only be used by the
-// macros below.
-class ExitingStream {
- public:
-  // A tag type that renders as ": " in an ExitingStream, but only if it is
-  // followed by additional output. Otherwise, it renders as "". Primarily used
-  // when building macros around these streams.
-  struct AddSeparator {};
-
-  // Internal type used in macros to dispatch to the `operator|` overload below.
-  struct Helper {};
-
-  [[noreturn]] ~ExitingStream() {
-    llvm_unreachable(
-        "Exiting streams should only be constructed with the below macros that "
-        "ensure the special operator| exits the program prior to their "
-        "destruction!");
-  }
-
-  // Indicates that the program is exiting due to a bug in the program, rather
-  // than, e.g., invalid input.
-  ExitingStream& TreatAsBug() {
-    treat_as_bug = true;
-    return *this;
-  }
-
-  // If the bool cast occurs, it's because the condition is false. This supports
-  // && short-circuiting the creation of ExitingStream.
-  explicit operator bool() const { return true; }
-
-  // Forward output to llvm::errs.
-  template <typename T>
-  ExitingStream& operator<<(const T& message) {
-    if (separator) {
-      llvm::errs() << ": ";
-      separator = false;
-    }
-    llvm::errs() << message;
-    return *this;
-  }
-
-  ExitingStream& operator<<(AddSeparator /*unused*/) {
-    separator = true;
-    return *this;
-  }
-
-  // Low-precedence binary operator overload used in macros below to flush the
-  // output and exit the program. We do this in a binary operator rather than
-  // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*unused*/, ExitingStream& rhs) {
-    // Finish with a newline.
-    llvm::errs() << "\n";
-    if (rhs.treat_as_bug) {
-      std::abort();
-    } else {
-      std::exit(-1);
-    }
-  }
-
- private:
-  // Whether a separator should be printed if << is used again.
-  bool separator = false;
-
-  // Whether the program is exiting due to a bug.
-  bool treat_as_bug = false;
-};
-
-}  // namespace Internal
 
 // Raw exiting stream. This should be used when building other forms of exiting
 // macros like those below. It evaluates to a temporary `ExitingStream` object

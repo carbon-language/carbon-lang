@@ -54,7 +54,7 @@ We work in a simple
 [trunk-based development](https://trunkbaseddevelopment.com/) model. This means
 all development activity takes place on a single common `trunk` branch in the
 repository (our default branch). We focus on
-[small, incremental changes](#small_incremental_changes) rather than feature
+[small, incremental changes](#small-incremental-changes) rather than feature
 branches or the "scaled" variations of this workflow.
 
 ### Green tests
@@ -134,8 +134,7 @@ We suggest a specific workflow to address this:
     ```
 
     And create a pull request for it using the
-    [`gh`](/docs/project/contribution_tools.md#github_commandline_interface)
-    tool:
+    [`gh`](/docs/project/contribution_tools.md#gh-cli) tool:
 
     ```shell
     gh pr create

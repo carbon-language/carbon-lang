@@ -68,6 +68,33 @@ class DiagnosticLocationTranslator {
       -> Diagnostic::Location = 0;
 };
 
+// CRTP base class for diagnostics. `DiagnosticEmitter` requires `ShortName` and
+// `Format`; `Message` is used by the default `Format` implementation. A simple
+// child will look like:
+//
+//   struct MySimpleError : DiagnosticBase<MyError> {
+//     static constexpr llvm::StringLiteral ShortName = "short-name";
+//     static constexpr llvm::StringLiteral Message = "A message.";
+//   };
+//
+//   emitter.EmitError<MySimpleError>(location);
+//
+// A complex child may provide an alternate `Format` implementation:
+//
+//   struct MyComplexError : DiagnosticBase<MyComplexError> {
+//     static constexpr llvm::StringLiteral ShortName = "short-name";
+//
+//     auto Format() -> std::string { return llvm::formatv("See {0}.", ref); }
+//
+//     std::string ref;
+//   };
+//
+//   emitter.EmitError<MyComplexError>(location, {.ref = "ref"; });
+template <typename Derived>
+struct DiagnosticBase {
+  static auto Format() -> std::string { return Derived::Message.str(); }
+};
+
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
 //
@@ -88,7 +115,9 @@ class DiagnosticEmitter {
   ~DiagnosticEmitter() = default;
 
   // Emits an error unconditionally.
-  template <typename DiagnosticT>
+  template <typename DiagnosticT,
+            typename = std::enable_if_t<
+                std::is_base_of_v<DiagnosticBase<DiagnosticT>, DiagnosticT>>>
   auto EmitError(LocationT location, DiagnosticT diag) -> void {
     // TODO: Encode the diagnostic kind in the Diagnostic object rather than
     // hardcoding an "error: " prefix.
@@ -143,33 +172,27 @@ inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   return *consumer;
 }
 
-// CRTP base class for diagnostics with no substitutions.
-template <typename Derived>
-struct SimpleDiagnostic {
-  static auto Format() -> std::string { return Derived::Message.str(); }
-};
-
 // Diagnostic consumer adaptor that tracks whether any errors have been
 // produced.
 class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
  public:
   explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
-      : next_consumer(&next_consumer) {}
+      : next_consumer_(&next_consumer) {}
 
   auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-    seen_error |= diagnostic.level == Diagnostic::Error;
-    next_consumer->HandleDiagnostic(diagnostic);
+    seen_error_ |= diagnostic.level == Diagnostic::Error;
+    next_consumer_->HandleDiagnostic(diagnostic);
   }
 
   // Returns whether we've seen an error since the last reset.
-  auto SeenError() const -> bool { return seen_error; }
+  auto SeenError() const -> bool { return seen_error_; }
 
   // Reset whether we've seen an error.
-  auto Reset() -> void { seen_error = false; }
+  auto Reset() -> void { seen_error_ = false; }
 
  private:
-  DiagnosticConsumer* next_consumer;
-  bool seen_error = false;
+  DiagnosticConsumer* next_consumer_;
+  bool seen_error_ = false;
 };
 
 }  // namespace Carbon

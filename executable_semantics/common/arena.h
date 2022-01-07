@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_COMMON_ARENA_H_
 
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 #include "executable_semantics/common/nonnull.h"
@@ -15,12 +16,14 @@ namespace Carbon {
 class Arena {
  public:
   // Allocates an object in the arena, returning a pointer to it.
-  template <typename T, typename... Args>
+  template <
+      typename T, typename... Args,
+      typename std::enable_if_t<std::is_constructible_v<T, Args...>>* = nullptr>
   auto New(Args&&... args) -> Nonnull<T*> {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
     Nonnull<T*> ptr = smart_ptr->Instance();
-    arena.push_back(std::move(smart_ptr));
+    arena_.push_back(std::move(smart_ptr));
     return ptr;
   }
 
@@ -38,16 +41,16 @@ class Arena {
    public:
     template <typename... Args>
     explicit ArenaEntryTyped(Args&&... args)
-        : instance(std::forward<Args>(args)...) {}
+        : instance_(std::forward<Args>(args)...) {}
 
-    auto Instance() -> Nonnull<T*> { return Nonnull<T*>(&instance); }
+    auto Instance() -> Nonnull<T*> { return Nonnull<T*>(&instance_); }
 
    private:
-    T instance;
+    T instance_;
   };
 
   // Manages allocations in an arena for destruction at shutdown.
-  std::vector<std::unique_ptr<ArenaEntry>> arena;
+  std::vector<std::unique_ptr<ArenaEntry>> arena_;
 };
 
 }  // namespace Carbon

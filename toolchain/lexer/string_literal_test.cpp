@@ -4,18 +4,19 @@
 
 #include "toolchain/lexer/string_literal.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-struct StringLiteralTest : ::testing::Test {
+class StringLiteralTest : public ::testing::Test {
+ protected:
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
-
-  ErrorTrackingDiagnosticConsumer error_tracker;
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
@@ -30,6 +31,8 @@ struct StringLiteralTest : ::testing::Test {
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return token.ComputeValue(emitter);
   }
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
 };
 
 TEST_F(StringLiteralTest, StringLiteralBounds) {
@@ -110,9 +113,6 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 }
 
 TEST_F(StringLiteralTest, StringLiteralContents) {
-  // We use ""s strings to handle embedded nul characters below.
-  using std::operator""s;
-
   std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
       // Empty strings.
       {R"("")", ""},
@@ -291,4 +291,4 @@ TEST_F(StringLiteralTest, TabInBlockString) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

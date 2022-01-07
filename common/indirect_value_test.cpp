@@ -4,9 +4,9 @@
 
 #include "common/indirect_value.h"
 
-#include <string>
+#include <gtest/gtest.h>
 
-#include "gtest/gtest.h"
+#include <string>
 
 namespace Carbon {
 namespace {
@@ -26,7 +26,7 @@ TEST(IndirectValueTest, MutableAccess) {
 }
 
 struct NonMovable {
-  NonMovable(int i) : i(i) {}
+  explicit NonMovable(int i) : i(i) {}
   NonMovable(NonMovable&&) = delete;
   auto operator=(NonMovable&&) -> NonMovable& = delete;
 
@@ -39,7 +39,7 @@ TEST(IndirectValueTest, Create) {
   EXPECT_EQ(v->i, 42);
 }
 
-const int& GetIntReference() {
+auto GetIntReference() -> const int& {
   static int i = 42;
   return i;
 }
@@ -54,15 +54,15 @@ TEST(IndirectValueTest, CreateWithDecay) {
 // member function (if any) caused it to reach its present value.
 struct TestValue {
   TestValue() : state("default constructed") {}
-  TestValue(const TestValue& rhs) : state("copy constructed") {}
-  TestValue(TestValue&& other) : state("move constructed") {
+  TestValue(const TestValue& /*rhs*/) : state("copy constructed") {}
+  TestValue(TestValue&& other) noexcept : state("move constructed") {
     other.state = "move constructed from";
   }
-  TestValue& operator=(const TestValue&) {
+  auto operator=(const TestValue&) noexcept -> TestValue& {
     state = "copy assigned";
     return *this;
   }
-  TestValue& operator=(TestValue&& other) {
+  auto operator=(TestValue&& other) noexcept -> TestValue& {
     state = "move assigned";
     other.state = "move assigned from";
     return *this;
@@ -101,6 +101,8 @@ TEST(IndirectValueTest, CopyAssign) {
 TEST(IndirectValueTest, MoveConstruct) {
   IndirectValue<TestValue> v1;
   auto v2 = std::move(v1);
+  // While not entirely safe, the `v1->state` access tests move behavior.
+  // NOLINTNEXTLINE(bugprone-use-after-move)
   EXPECT_EQ(v1->state, "move constructed from");
   EXPECT_EQ(v2->state, "move constructed");
 }
@@ -109,6 +111,8 @@ TEST(IndirectValueTest, MoveAssign) {
   IndirectValue<TestValue> v1;
   IndirectValue<TestValue> v2;
   v2 = std::move(v1);
+  // While not entirely safe, the `v1->state` access tests move behavior.
+  // NOLINTNEXTLINE(bugprone-use-after-move)
   EXPECT_EQ(v1->state, "move assigned from");
   EXPECT_EQ(v2->state, "move assigned");
 }

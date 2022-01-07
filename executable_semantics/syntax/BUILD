@@ -12,6 +12,27 @@ cc_library(
     deps = ["//common:check"],
 )
 
+cc_test(
+    name = "parse_test",
+    srcs = ["parse_test.cpp"],
+    deps = [
+        ":syntax",
+        "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "parse_test_matchers",
+    testonly = 1,
+    srcs = ["parse_test_matchers_internal.h"],
+    hdrs = ["parse_test_matchers.h"],
+    deps = [
+        ":syntax",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "syntax",
     srcs = [
@@ -43,7 +64,6 @@ cc_library(
         "//executable_semantics/ast:paren_contents",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
-        "//executable_semantics/common:tracing_flag",
     ],
 )
 
@@ -98,4 +118,15 @@ mypy_test(
     name = "format_grammar_mypy_test",
     include_imports = True,
     deps = [":format_grammar_lib"],
+)
+
+cc_test(
+    name = "unimplemented_example_test",
+    srcs = ["unimplemented_example_test.cpp"],
+    deps = [
+        ":parse_test_matchers",
+        ":syntax",
+        "//executable_semantics/ast:ast_test_matchers",
+        "@com_google_googletest//:gtest_main",
+    ],
 )

@@ -52,7 +52,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Important Carbon goals for code and name organization are:
 
--   [Language tools and ecosystem](#language-tools-and-ecosystem)
+-   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
 
     -   Tooling support is important for Carbon, including the possibility of a
         package manager.
@@ -295,8 +295,8 @@ This declaration is important for [implementation files](#libraries), which
 implicitly import the library's API, because it keeps the package name as an
 explicit entity in source files.
 
-Note that [imported name conflicts](#imported-name-conflicts) are handled
-differently.
+Note that [imported name conflicts](#package-and-library-name-conflicts) are
+handled differently.
 
 ### Libraries
 

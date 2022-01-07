@@ -4,29 +4,21 @@
 
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/mocks.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using Testing::DiagnosticAt;
-using Testing::DiagnosticLevel;
-using Testing::DiagnosticMessage;
-using Testing::DiagnosticShortName;
-using ::testing::ElementsAre;
-using ::testing::Eq;
-
-struct FakeDiagnostic {
+struct FakeDiagnostic : DiagnosticBase<FakeDiagnostic> {
   static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
   // TODO: consider ways to put the Message into `format` to allow dynamic
   // selection of the message.
   static constexpr llvm::StringLiteral Message = "{0}";
-
-  std::string message;
 
   auto Format() -> std::string {
     // Work around a bug in Clang's unused const variable warning by marking it
@@ -35,6 +27,8 @@ struct FakeDiagnostic {
 
     return llvm::formatv(Message.data(), message).str();
   }
+
+  std::string message;
 };
 
 struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
@@ -92,4 +86,4 @@ TEST(DiagTest, EmitWarnings) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

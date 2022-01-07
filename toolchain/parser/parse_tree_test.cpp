@@ -4,11 +4,14 @@
 
 #include "toolchain/parser/parse_tree.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <forward_list>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -17,26 +20,17 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using Carbon::Testing::DiagnosticMessage;
-using Carbon::Testing::ExpectedNode;
-using Carbon::Testing::MatchParseTreeNodes;
-using namespace Carbon::Testing::NodeMatchers;
+using ::testing::AtLeast;
 using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::HasSubstr;
 using ::testing::Ne;
-using ::testing::NotNull;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
-struct ParseTreeTest : ::testing::Test {
-  std::forward_list<SourceBuffer> source_storage;
-  std::forward_list<TokenizedBuffer> token_storage;
-  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
-
+class ParseTreeTest : public ::testing::Test {
+ protected:
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
     source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
     return source_storage.front();
@@ -47,6 +41,10 @@ struct ParseTreeTest : ::testing::Test {
         TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
+
+  std::forward_list<SourceBuffer> source_storage;
+  std::forward_list<TokenizedBuffer> token_storage;
+  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
 TEST_F(ParseTreeTest, Empty) {
@@ -1069,7 +1067,7 @@ TEST_F(ParseTreeTest, StructErrors) {
        DiagnosticMessage("Expected `,` or `}`.")},
   };
 
-  for (Testcase testcase : testcases) {
+  for (const Testcase& testcase : testcases) {
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
     EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
@@ -1158,5 +1156,41 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
                              {"text", ""}}}));
 }
 
+TEST_F(ParseTreeTest, ParenMatchRegression) {
+  // A regression test that the search for the closing `)` doesn't end early on
+  // the closing `}` when it skips over the nested scope.
+  TokenizedBuffer tokens = GetTokenizedBuffer("var = (foo {})");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+  EXPECT_THAT(
+      tree, MatchParseTreeNodes(
+                {MatchVariableDeclaration(
+                     HasError, MatchVariableInitializer(
+                                   "=", MatchParenExpression(
+                                            HasError, MatchNameReference("foo"),
+                                            MatchParenExpressionEnd()))),
+                 MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, RecursionLimit) {
+  std::string code = "fn Foo() { return ";
+  code.append(10000, '(');
+  code.append(10000, ')');
+  code += "; }";
+  TokenizedBuffer tokens = GetTokenizedBuffer(code);
+  ASSERT_FALSE(tokens.HasErrors());
+  Testing::MockDiagnosticConsumer consumer;
+  // Recursion might be exceeded multiple times due to quirks in parse tree
+  // handling; we only need to be sure it's hit at least once for test
+  // correctness.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(llvm::formatv(
+          "Exceeded recursion limit ({0})", ParseTree::StackDepthLimit))))
+      .Times(AtLeast(1));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+}
+
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

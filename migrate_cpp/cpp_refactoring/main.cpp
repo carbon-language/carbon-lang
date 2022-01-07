@@ -19,7 +19,7 @@ static void InitReplacements(RefactoringTool* tool) {
   for (const std::string& path : tool->getSourcePaths()) {
     llvm::ErrorOr<const clang::FileEntry*> file = files.getFile(path);
     if (file.getError()) {
-      llvm::report_fatal_error("Error accessing `" + path +
+      llvm::report_fatal_error(llvm::Twine("Error accessing `") + path +
                                "`: " + file.getError().message() + "\n");
     }
     repl.insert({files.getCanonicalName(*file).str(), {}});
