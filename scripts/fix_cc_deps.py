@@ -30,10 +30,15 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
 
 class Rule(NamedTuple):
     # For cc_* rules:
+    # The hdrs + textual_hdrs attributes, as relative paths to the file.
     hdrs: Set[str]
+    # The srcs attribute, as relative paths to the file.
     srcs: Set[str]
+    # The deps attribute, as full bazel labels.
     deps: Set[str]
+
     # For genrules:
+    # The outs attribute, as relative paths to the file.
     outs: Set[str]
 
 
@@ -67,6 +72,11 @@ def remap_file(label: str) -> str:
 
 
 def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
+    """Returns the contents of a bazel list.
+
+    The return will normally be the full label, unless `is_file` is set, in
+    which case the label will be translated to the underlying file.
+    """
     results: Set[str] = set()
     for label in list_child:
         assert label.tag in ("label", "output"), label.tag
@@ -78,6 +88,13 @@ def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
 
 
 def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
+    """Queries the specified targets, returning the found rules.
+
+    keep_going will be set to true for external repositories, where sometimes we
+    see query errors.
+
+    The return maps rule names to rule data.
+    """
     args = [
         "bazel",
         "query",
@@ -123,6 +140,10 @@ def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
 def map_headers(
     header_to_rule_map: Dict[str, Set[str]], rules: Dict[str, Rule]
 ) -> None:
+    """Accumulates headers provided by rules into the map.
+
+    The map maps header paths to rule names.
+    """
     for rule_name, rule in rules.items():
         for header in rule.hdrs:
             if header in header_to_rule_map:
@@ -135,8 +156,14 @@ def get_missing_deps(
     header_to_rule_map: Dict[str, Set[str]],
     generated_files: Set[str],
     rule: Rule,
-) -> Set[str]:
+) -> Tuple[Set[str], bool]:
+    """Returns missing dependencies for the rule.
+
+    On return, the set is dependency labels that should be added; the bool
+    indicates whether some where omitted due to ambiguity.
+    """
     missing_deps: Set[str] = set()
+    ambiguous = False
     rule_files = rule.hdrs.union(rule.srcs)
     for source_file in rule_files:
         if source_file in generated_files:
@@ -155,8 +182,15 @@ def get_missing_deps(
                 dep_choices = header_to_rule_map[header]
                 if not dep_choices.intersection(rule.deps):
                     # Only add one dep from the choices, if there are multiple.
-                    missing_deps.add(next(iter(dep_choices)))
-    return missing_deps
+                    if len(dep_choices) > 1:
+                        print(
+                            f"Ambiguous dependency choice for #include "
+                            f"'{header}' in '{source_file}': "
+                            f"{', '.join(dep_choices)}"
+                        )
+                        ambiguous = True
+                    missing_deps.add(dep_choices.pop())
+    return missing_deps, ambiguous
 
 
 def main() -> None:
@@ -182,19 +216,27 @@ def main() -> None:
 
     print("Parsing headers from source files...")
     all_missing_deps: List[Tuple[str, Set[str]]] = []
+    any_ambiguous = False
     for rule_name, rule in carbon_rules.items():
-        missing_deps = get_missing_deps(
+        missing_deps, ambiguous = get_missing_deps(
             header_to_rule_map, generated_files, rule
         )
         if missing_deps:
             all_missing_deps.append((rule_name, missing_deps))
+        if ambiguous:
+            any_ambiguous = True
+    if any_ambiguous:
+        exit("Stopping due to ambiguous dependency choices.")
 
+    print("Fixing dependencies...")
     SEPARATOR = "\n- "
     for rule_name, missing_deps in sorted(all_missing_deps):
         friendly_missing_deps = SEPARATOR.join(missing_deps)
         print(f"Adding deps to {rule_name}:{SEPARATOR}{friendly_missing_deps}")
         args = ["buildozer", f"add deps {' '.join(missing_deps)}", rule_name]
         subprocess.check_call(args)
+
+    print("Done!")
 
 
 if __name__ == "__main__":
