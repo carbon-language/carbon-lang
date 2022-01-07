@@ -83,4 +83,7 @@ In C++ these start with the
 Interfaces are more flexible about where implementations may be defined. For
 example, with special method names, `+` on a `Vector(T)` class could only be
 defined as part of the `Vector(T)` definition. With interfaces, additionally `+`
-for `Vector(MyType)` could be implemented with `MyType`.
+for `Vector(MyType)` could be implemented with `MyType`. C++ provides this
+flexibility by also permitting non-method operator overloads, but this brings
+with it the cost of selecting a best-matching operator from a potentially very
+large open overload set.
