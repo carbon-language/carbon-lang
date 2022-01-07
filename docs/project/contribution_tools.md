@@ -285,8 +285,8 @@ the PR and proposal file for a new proposal. It's documented in
 
 #### pr_comments.py
 
-[pr_comments.py](/github/pr_comments.py) is a helper for scanning comments in
-GitHub. It's particularly intended to help find threads which need to be
+[pr_comments.py](/github_tools/pr_comments.py) is a helper for scanning comments
+in GitHub. It's particularly intended to help find threads which need to be
 resolved.
 
 Options can be seen with `-h`. A couple key options to be aware of are:

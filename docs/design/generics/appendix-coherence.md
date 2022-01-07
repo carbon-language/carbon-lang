@@ -46,8 +46,8 @@ These last two cases are highlighted as concerns in Rust in
 Since Carbon is bundling interface implementations into types, for the
 convenience and expressiveness that provides, we satisfy those use cases by
 giving the user control over the type of a value. This means having facilities
-for defining new [compatible types](terminology#compatible-types) with different
-interface implementations, and casting between those types as needed.
+for defining new [compatible types](terminology.md#compatible-types) with
+different interface implementations, and casting between those types as needed.
 
 ## The "Hashtable Problem"
 
@@ -213,9 +213,9 @@ This has some downsides:
     type.
 
 As a result, this doesn't make sense as the default behavior for Carbon based on
-its [goals](/project/goals.md). That being said, this could be a feature added
-later as opt-in behavior to either allow users to reduce code size or support
-use cases that require dynamic dispatch.
+its [goals](/docs/project/goals.md). That being said, this could be a feature
+added later as opt-in behavior to either allow users to reduce code size or
+support use cases that require dynamic dispatch.
 
 ### Rejected variation: manual conflict resolution
 

@@ -281,10 +281,10 @@ types.
 
 ## Alternatives considered
 
--   [Provide lossy and non-semantics-preserving implicit conversions from C++](/docs/proposals/p0820.md#c-conversions)
--   [Provide no implicit conversions](/docs/proposals/p0820.md#no-conversions)
--   [Provide no extensibility](/docs/proposals/p0820.md#no-extensibility)
--   [Apply implicit conversions transitively](/docs/proposals/p0820.md#transitivity)
+-   [Provide lossy and non-semantics-preserving implicit conversions from C++](/proposals/p0820.md#c-conversions)
+-   [Provide no implicit conversions](/proposals/p0820.md#no-conversions)
+-   [Provide no extensibility](/proposals/p0820.md#no-extensibility)
+-   [Apply implicit conversions transitively](/proposals/p0820.md#transitivity)
 
 ## References
 

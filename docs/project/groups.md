@@ -23,7 +23,7 @@ We use a mix of:
 -   [GitHub organization](https://github.com/orgs/carbon-language/people)
     -   [GitHub team: Contributors with label access](https://github.com/orgs/carbon-language/teams/contributors-with-label-access):
         Mirrors the GitHub organization for write access.
-        [Manually updated](/github/update_label_access.py).
+        [Manually updated](/github_tools/update_label_access.py).
 -   [Discord access](https://discord.com/app)
 -   [Google group](https://groups.google.com/g/carbon-lang-contributors): Grants
     Google Drive access.
