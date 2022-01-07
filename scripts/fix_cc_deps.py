@@ -90,7 +90,7 @@ def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"
     )
     # 3 indicates incomplete results from --keep_going, which is fine here.
-    if p.returncode not in (0, 3):
+    if p.returncode not in {0, 3}:
         print(p.stderr)
         exit(f"bazel query returned {p.returncode}")
     rules: Dict[str, Rule] = {}
