@@ -22,12 +22,15 @@ cc_library(
         ":field_path",
         ":heap_allocation_interface",
         ":stack",
+        "//common:check",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:pattern",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
+        "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -70,7 +73,10 @@ cc_library(
         ":resolve_control_flow",
         ":resolve_names",
         ":type_checker",
+        "//common:check",
+        "//common:ostream",
         "//executable_semantics/ast",
+        "//executable_semantics/common:arena",
     ],
 )
 
@@ -93,6 +99,7 @@ cc_library(
         ":heap_allocation_interface",
         "//common:ostream",
         "//executable_semantics/ast:source_location",
+        "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
@@ -120,11 +127,14 @@ cc_library(
         ":action_stack",
         ":address",
         ":heap",
+        ":stack",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:pattern",
         "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -138,6 +148,8 @@ cc_library(
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/common:error",
+        "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -155,6 +167,7 @@ cc_library(
         "//executable_semantics/ast:pattern",
         "//executable_semantics/ast:statement",
         "//executable_semantics/ast:static_scope",
+        "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -170,6 +183,7 @@ cc_library(
     srcs = ["type_checker.cpp"],
     hdrs = ["type_checker.h"],
     deps = [
+        ":action_and_value",
         ":dictionary",
         ":interpreter",
         "//common:ostream",
@@ -178,6 +192,8 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
+        "//executable_semantics/common:error",
+        "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )

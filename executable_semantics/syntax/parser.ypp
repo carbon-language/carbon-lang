@@ -121,7 +121,7 @@
 %type <Nonnull<StructTypeLiteral*>> struct_type_literal
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<TupleLiteral*>> tuple
-%type <std::optional<std::string>> binding_lhs
+%type <std::string> binding_lhs
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <Nonnull<Member*>> member
 %type <std::vector<Nonnull<Member*>>> member_list
@@ -476,7 +476,7 @@ non_expression_pattern:
 ;
 binding_lhs:
   identifier { $$ = $1; }
-| UNDERSCORE { $$ = std::nullopt; }
+| UNDERSCORE { $$ = AnonymousName; }
 ;
 paren_pattern: paren_pattern_base
     { $$ = PatternFromParenContents(arena, context.source_loc(), $1); }
@@ -536,7 +536,7 @@ clause:
 | DEFAULT DOUBLE_ARROW statement
     {
       $$ = Match::Clause(arena->New<BindingPattern>(
-                             context.source_loc(), std::nullopt,
+                             context.source_loc(), std::string(AnonymousName),
                              arena->New<AutoPattern>(context.source_loc())),
                          $3);
     }

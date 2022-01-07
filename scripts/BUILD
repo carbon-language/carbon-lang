@@ -16,3 +16,16 @@ mypy_test(
     include_imports = True,
     deps = [":create_compdb"],
 )
+
+# Note that this Python script is intended to be run directly, and not through
+# Bazel. We have a rule for it so we can type check it.
+py_binary(
+    name = "fix_cc_deps",
+    srcs = ["fix_cc_deps.py"],
+)
+
+mypy_test(
+    name = "fix_cc_deps_mypy_test",
+    include_imports = True,
+    deps = [":fix_cc_deps"],
+)

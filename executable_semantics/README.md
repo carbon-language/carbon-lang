@@ -24,8 +24,8 @@ considered definitive.
 
 The parser is implemented using the flex and bison parser generator tools.
 
--   [`syntax.lpp`](syntax/syntax.lpp) the lexer specification
--   [`syntax.ypp`](syntax/syntax.ypp) the grammar
+-   [`lexer.lpp`](syntax/lexer.lpp) the lexer specification
+-   [`parser.ypp`](syntax/parser.ypp) the grammar
 
 The parser translates program text into an abstract syntax tree (AST), defined
 in the [ast](ast/) subdirectory. The `UnimplementedExpression` node type can be
@@ -35,8 +35,8 @@ handling of the `UNIMPL_EXAMPLE` token for an example of how this is done, and
 see [`unimplemented_example_test.cpp`](syntax/unimplemented_example_test.cpp)
 for an example of how to test it.
 
-The [type checker](interpreter/typecheck.h) defines what it means for an AST to
-be a valid program. The type checker prints an error and exits if the AST is
+The [type checker](interpreter/type_checker.h) defines what it means for an AST
+to be a valid program. The type checker prints an error and exits if the AST is
 invalid.
 
 The parser and type checker together specify the static (compile-time)

@@ -33,7 +33,7 @@ repos:
       - id: search-and-replace
         files: '\.md$'
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
+    rev: 26cc20f971cad7dee54e1fcccb960b4e19b2bdce # frozen: v1.2.1
     hooks:
       - id: check-copyright
         args:
@@ -77,6 +77,13 @@ repos:
               .*/testdata/.*\.golden
           )$
       - id: check-google-doc-style
+      - id: check-links
+        name: Check links in non-proposal files
+        exclude: ^proposals/.*$
+      - id: check-links
+        name: Check links in proposal files
+        args: ['--anchors-only']
+        files: ^proposals/.*$
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
     rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0

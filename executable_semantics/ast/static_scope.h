@@ -11,6 +11,7 @@
 #include <variant>
 #include <vector>
 
+#include "common/check.h"
 #include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/value_category.h"
@@ -20,16 +21,23 @@ namespace Carbon {
 
 class Value;
 
+// The placeholder name exposed by anonymous NamedEntities.
+static constexpr std::string_view AnonymousName = "_";
+
 // True if NodeType::ImplementsCarbonNamedEntity is valid and names a type,
 // indicating that NodeType implements the NamedEntity interface, which means
 // it must define the following methods, with contracts as documented.
-#if 0
+/*
   // Returns the static type of an IdentifierExpression that names *this.
   auto static_type() const -> const Value&;
 
   // Returns the value category of an IdentifierExpression that names *this.
   auto value_category() const -> ValueCategory;
-#endif
+
+  // Returns the name of an IdentifierExpression that names *this. If *this
+  // is anonymous, returns AnonymousName.
+  auto name() const -> std::string_view;
+*/
 // NodeType must be derived from AstNode.
 //
 // TODO: consider turning the above documentation into real code, as sketched
@@ -45,6 +53,7 @@ static constexpr bool
 // NodeType implements the NamedEntity interface.
 class NamedEntityView {
  public:
+  // REQUIRES: node->name() != AnonymousName
   template <typename NodeType,
             typename = std::enable_if_t<ImplementsNamedEntity<NodeType>>>
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -53,12 +62,18 @@ class NamedEntityView {
       // and using std::function to encapsulate the ability to call
       // the derived class's methods.
       : base_(node),
+        name_([](const AstNode& base) -> std::string_view {
+          return llvm::cast<NodeType>(base).name();
+        }),
         static_type_([](const AstNode& base) -> const Value& {
           return llvm::cast<NodeType>(base).static_type();
         }),
         value_category_([](const AstNode& base) -> ValueCategory {
           return llvm::cast<NodeType>(base).value_category();
-        }) {}
+        }) {
+    CHECK(node->name() != AnonymousName)
+        << "Entity with no name used as NamedEntity: " << *node;
+  }
 
   NamedEntityView(const NamedEntityView&) = default;
   NamedEntityView(NamedEntityView&&) = default;
@@ -68,6 +83,9 @@ class NamedEntityView {
   // Returns `node` as an instance of the base class AstNode.
   auto base() const -> const AstNode& { return *base_; }
 
+  // Returns node->name()
+  auto name() const -> std::string_view { return name_(*base_); }
+
   // Returns node->static_type()
   auto static_type() const -> const Value& { return static_type_(*base_); }
 
@@ -76,18 +94,24 @@ class NamedEntityView {
     return value_category_(*base_);
   }
 
-  friend auto operator==(const NamedEntityView& lhs,
-                         const NamedEntityView& rhs) {
+  friend auto operator==(const NamedEntityView& lhs, const NamedEntityView& rhs)
+      -> bool {
     return lhs.base_ == rhs.base_;
   }
 
-  friend auto operator!=(const NamedEntityView& lhs,
-                         const NamedEntityView& rhs) {
+  friend auto operator!=(const NamedEntityView& lhs, const NamedEntityView& rhs)
+      -> bool {
     return lhs.base_ != rhs.base_;
+  }
+
+  friend auto operator<(const NamedEntityView& lhs, const NamedEntityView& rhs)
+      -> bool {
+    return std::less<>()(lhs.base_, rhs.base_);
   }
 
  private:
   Nonnull<const AstNode*> base_;
+  std::function<std::string_view(const AstNode&)> name_;
   std::function<const Value&(const AstNode&)> static_type_;
   std::function<ValueCategory(const AstNode&)> value_category_;
 };

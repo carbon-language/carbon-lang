@@ -104,7 +104,7 @@ benefits, typically as a matter of convenience for either a common use-case or a
 particularly complex and important use-case. Some examples of why and where this
 occurs are:
 
--   For [performance](/docs/projects/goals.md#performance-critical-software), it
+-   For [performance](/docs/project/goals.md#performance-critical-software), it
     may at times be necessary to provide a specialized syntax that better
     supports optimization than a generic syntax.
 -   For

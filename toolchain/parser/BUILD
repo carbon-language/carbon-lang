@@ -37,6 +37,7 @@ cc_library(
         ":parse_node_kind",
         ":precedence",
         "//common:check",
+        "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
@@ -51,6 +52,7 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":parse_tree",
+        "//common:check",
         "//toolchain/lexer:tokenized_buffer",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",

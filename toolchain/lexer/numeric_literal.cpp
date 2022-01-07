@@ -14,13 +14,13 @@
 namespace Carbon {
 
 namespace {
-struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
+struct EmptyDigitSequence : DiagnosticBase<EmptyDigitSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Empty digit sequence in numeric literal.";
 };
 
-struct InvalidDigit {
+struct InvalidDigit : DiagnosticBase<InvalidDigit> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
@@ -35,13 +35,13 @@ struct InvalidDigit {
   int radix;
 };
 
-struct InvalidDigitSeparator : SimpleDiagnostic<InvalidDigitSeparator> {
+struct InvalidDigitSeparator : DiagnosticBase<InvalidDigitSeparator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Misplaced digit separator in numeric literal.";
 };
 
-struct IrregularDigitSeparators {
+struct IrregularDigitSeparators : DiagnosticBase<IrregularDigitSeparators> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-irregular-digit-separators";
 
@@ -58,19 +58,19 @@ struct IrregularDigitSeparators {
   int radix;
 };
 
-struct UnknownBaseSpecifier : SimpleDiagnostic<UnknownBaseSpecifier> {
+struct UnknownBaseSpecifier : DiagnosticBase<UnknownBaseSpecifier> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Unknown base specifier in numeric literal.";
 };
 
-struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
+struct BinaryRealLiteral : DiagnosticBase<BinaryRealLiteral> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Binary real number literals are not supported.";
 };
 
-struct WrongRealLiteralExponent {
+struct WrongRealLiteralExponent : DiagnosticBase<WrongRealLiteralExponent> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
@@ -81,7 +81,7 @@ struct WrongRealLiteralExponent {
   char expected;
 };
 
-struct TooManyDigits {
+struct TooManyDigits : DiagnosticBase<TooManyDigits> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
