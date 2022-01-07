@@ -27,7 +27,7 @@ static constexpr std::string_view AnonymousName = "_";
 // True if NodeType::ImplementsCarbonNamedEntity is valid and names a type,
 // indicating that NodeType implements the NamedEntity interface, which means
 // it must define the following methods, with contracts as documented.
-#if 0
+/*
   // Returns the static type of an IdentifierExpression that names *this.
   auto static_type() const -> const Value&;
 
@@ -37,7 +37,7 @@ static constexpr std::string_view AnonymousName = "_";
   // Returns the name of an IdentifierExpression that names *this. If *this
   // is anonymous, returns AnonymousName.
   auto name() const -> std::string_view;
-#endif
+*/
 // NodeType must be derived from AstNode.
 //
 // TODO: consider turning the above documentation into real code, as sketched

@@ -36,7 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Coherence](#coherence)
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
--   [Facet type](#facet-type)
+-   [Archetype](#archetype)
 -   [Extending an interface](#extending-an-interface)
 -   [Witness tables](#witness-tables)
     -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
@@ -498,26 +498,17 @@ The term "type erasure" can also refer to
 which includes erasing the identity of type parameters. This is not the meaning
 of "type erasure" used in Carbon.
 
-## Facet type
+## Archetype
 
-A facet type is a [compatible type](#compatible-types) of some original type
-written by the user, that has a specific API. This API might correspond to a
-specific [interface](#interface), or the API required by particular
-[type constraints](#type-constraints). In either case, the API can be specified
-using a [type-of-type](#type-of-type). Casting a type to a type-of-type results
-in a facet type, with data representation matching the original type and API
-matching the type-of-type.
+A placeholder type is used when type checking a function in place of a generic
+type parameter. This allows type checking when the specific type to be used is
+not known at type checking time. The type satisfies just its constraint and no
+more, so it acts as the most general type satisfying the interface. In this way
+the archetype is the supertype of all types satisfying the interface.
 
-Casting to a facet type is one way of modeling compile-time
-[type erasure](#type-erasure) when calling a generic function. It is also a way
-of accessing APIs for a type that would otherwise be hidden, possibly to avoid a
-name conflict or because the implementation of that API was external to the
-definition of the type.
-
-A facet type associated with a specific interface, corresponds to the
-[impl](#impls-implementations-of-interfaces) of that interface for the type.
-Using such a facet type removes ambiguity about where to find the declaration
-and definition of any accessed methods.
+In addition to satisfying all the requirements of its constraint, the archetype
+also has the member names of its constraint. Effectively it is considered to
+[implement the constraint internally](#internal-impl).
 
 ## Extending an interface
 
@@ -757,12 +748,10 @@ A type-of-type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
 as [type constraints](#type-constraints). For template parameters, that is all a
 type-of-type does. For generic parameters, it also determines the API that is
-available in the body of the function. Calling a function with a type `T` passed
-to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
-the facet type `T as I`. This has the API determined by `I`, with the
-implementation of that API coming from `T`.
+available in the body of the function.
 
 ## References
 
 -   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)

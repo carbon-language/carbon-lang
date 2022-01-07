@@ -13,15 +13,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Interfaces](#interfaces)
 -   [Implementing interfaces](#implementing-interfaces)
-    -   [Facet type](#facet-type)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
     -   [Qualified member names](#qualified-member-names)
     -   [Access](#access)
 -   [Generics](#generics)
+    -   [Return type](#return-type)
     -   [Implementation model](#implementation-model)
 -   [Interfaces recap](#interfaces-recap)
--   [Type-of-types and facet types](#type-of-types-and-facet-types)
+-   [Type-of-types](#type-of-types)
 -   [Named constraints](#named-constraints)
     -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
 -   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
@@ -30,13 +30,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`extends` and `impl` with named constraints](#extends-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
--   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Adapter compatibility](#adapter-compatibility)
     -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
+    -   [Use case: Accessing external names](#use-case-accessing-external-names)
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
@@ -70,10 +70,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Same implementation restriction](#same-implementation-restriction)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
-    -   [Type facet of another type](#type-facet-of-another-type)
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
+-   [Generic `let`](#generic-let)
 -   [Parameterized impls](#parameterized-impls)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
@@ -171,45 +171,23 @@ compile. The interface bound has other benefits:
 -   expresses that a type has certain semantics beyond what is captured in its
     member function names and signatures.
 
-The last piece of the puzzle is how the caller of the function can produce a
-value with the right type. Let's say the user has a value of type `Song`, and of
-course songs have all sorts of functionality. If we want a `Song` to be printed
-using the `PrintToStdout` function, it needs to implement the
-`ConvertibleToString` interface. Note that we _don't_ say that `Song` is of type
-`ConvertibleToString` but instead that it has a "facet type". This means there
-is another type, called `Song as ConvertibleToString`, with the following
-properties:
-
--   `Song as ConvertibleToString` has the same _data representation_ as `Song`.
--   `Song as ConvertibleToString` is an implementation of the interface
-    `ConvertibleToString`. The functions of `Song as ConvertibleToString` are
-    just implementations of the names and signatures defined in the
-    `ConvertibleToString` interface, like `ToString`, and not the functions
-    defined on `Song` values.
--   Carbon will implicitly convert values from type `Song` to type
-    `Song as ConvertibleToString` when calling a function that can only accept
-    types of type `ConvertibleToString`.
--   In the normal case where the implementation of `ConvertibleToString` for
-    `Song` is not defined as `external`, every member of
-    `Song as ConvertibleToString` is also a member of `Song`. This includes
-    members of `ConvertibleToString` that are not explicitly named in the `impl`
-    definition but have defaults.
--   You may access the `ToString` function for a `Song` value `w` by writing a
-    _qualified_ function call, like `w.(ConvertibleToString.ToString)()`. The
-    same effect may be achieved by casting, as in
-    `(w as (Song as ConvertibleToString)).ToString()`. This qualified syntax is
-    available whether or not the implementation is defined as `external`.
--   If other interfaces are implemented for `Song`, they are also implemented
-    for `Song as ConvertibleToString`. The only thing that changes when casting
-    a `Song` `w` to `Song as ConvertibleToString` are the names that are
-    accessible without using the qualification syntax. A
-    `Song as ConvertibleToString` value can likewise be cast to a `Song`; a
-    `Song` acts just like another facet type for these purposes.
-
-We define these facet types (alternatively, interface implementations) either
-with the type, with the interface, or somewhere else where Carbon can be
-guaranteed to see when needed. For more on this, see
+The last piece of the puzzle is calling the function. For a value of type `Song`
+to be printed using the `PrintToStdout` function, `Song` needs to implement the
+`ConvertibleToString` interface. Interface implementations will usually be
+defined either with the type or with the interface. They may also be defined
+somewhere else as long as Carbon can be guaranteed to see the definition when
+needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
+
+Unless the implementation of `ConvertibleToString` for `Song` is defined as
+`external`, every member of `ConvertibleToString` is also a member of `Song`.
+This includes members of `ConvertibleToString` that are not explicitly named in
+the `impl` definition but have defaults. Whether the implementation is defined
+as [internal](terminology.md#internal-impl) or
+[external](terminology.md#external-impl), you may access the `ToString` function
+for a `Song` value `s` by writing a
+[qualified](terminology.md#qualified-and-unqualified-member-names) function
+call, like `s.(ConvertibleToString.ToString)()`.
 
 If `Song` doesn't implement an interface or we would like to use a different
 implementation of that interface, we can define another type that also has the
@@ -240,11 +218,8 @@ Each declaration in the interface defines an
 has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-of-type, that is a type whose values are types. The
-values of an interface are specifically
-[facet types](terminology.md#facet-type), by which we mean types that are
-declared as specifically implementing **exactly** this interface, and which
-provide definitions for all the functions (and other members) declared in the
-interface.
+values of an interface are any types implementing the interface, and so provide
+definitions for all the functions (and other members) declared in the interface.
 
 ## Implementing interfaces
 
@@ -298,57 +273,6 @@ afterwards.
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
 particular, see
 [the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
-
-### Facet type
-
-The `impl` definition defines a [facet type](terminology.md#facet-type):
-`Point as Vector`. While the API of `Point` includes the two fields `x` and `y`
-along with the `Add` and `Scale` methods, the API of `Point as Vector` _only_
-has the `Add` and `Scale` methods of the `Vector` interface. The facet type
-`Point as Vector` is [compatible](terminology.md#compatible-types) with `Point`,
-meaning their data representations are the same, so we allow you to convert
-between the two freely:
-
-```
-var a: Point = {.x = 1.0, .y = 2.0};
-// `a` has `Add` and `Scale` methods:
-a.Add(a.Scale(2.0));
-
-// Cast from Point implicitly
-var b: Point as Vector = a;
-// `b` has `Add` and `Scale` methods:
-b.Add(b.Scale(2.0));
-
-// Will also implicitly convert when calling functions:
-fn F(c: Point as Vector, d: Point) {
-  d.Add(c.Scale(2.0));
-}
-F(a, b);
-
-// Explicit casts
-var z: Point as Vector = (a as (Point as Vector)).Scale(3.0);
-z.Add(b);
-var w: Point = z as Point;
-```
-
-These [conversions](terminology.md#subtyping-and-casting) change which names are
-exposed in the type's API, but as much as possible we don't want the meaning of
-any given name to change. Instead we want these casts to simply change the
-subset of names that are visible.
-
-**Note:** In general the above is written assuming that casts are written
-"`a as T`" where `a` is a value and `T` is the type to cast to. When we write
-`Point as Vector`, the value `Point` is a type, and `Vector` is a type of a
-type, or a "type-of-type".
-
-**Note:** A type may implement any number of different interfaces, but may
-provide at most one implementation of any single interface. This makes the act
-of selecting an implementation of an interface for a type unambiguous throughout
-the whole program, so for example `Point as Vector` is well defined.
-
-We don't expect users to ordinarily name facet types explicitly in source code.
-Instead, values are implicitly converted to a facet type as part of calling a
-generic function, as described in the [Generics](#generics) section.
 
 ### Implementing multiple interfaces
 
@@ -455,6 +379,10 @@ external impl Point3 as Vector {
     return {.x = a.x * v, .y = a.y * v};
   }
 }
+
+var a: Point3 = {.x = 1.0, .y = 2.0};
+// `a` does *not* have `Add` and `Scale` methods:
+// ❌ Error: a.Add(a.Scale(2.0));
 ```
 
 **References:** The external interface implementation syntax was decided in
@@ -639,80 +567,140 @@ var v: Point = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[generic parameter](terminology.md#generic-versus-template-parameters)_, that
-is it must be known to the caller but we will only use the information present
-in the signature of the function to typecheck the body of `AddAndScaleGeneric`'s
-definition. In this case, we know that any value of type `T` implements the
-`Vector` interface and so has an `Add` and a `Scale` method.
-
-When we call `AddAndScaleGeneric`, we need to determine the value of `T` to use
-when passed values with type `Point`. Since `T` has type `Vector`, the compiler
-simply sets `T` to `Point as Vector`. This
-[cast](terminology.md#subtyping-and-casting)
-[erases](terminology.md#type-erasure) all of the API of `Point` and substitutes
-the api of `Vector`, without changing anything about the data representation. It
-acts like we called this non-generic function, found by setting `T` to
-`Point as Vector`:
-
-```
-fn AddAndScaleForPointAsVector(
-      a: Point as Vector, b: Point as Vector, s: f64)
-      -> Point as Vector {
-  return a.Add(b).Scale(s);
-}
-// May still be called with Point arguments, due to implicit conversions.
-// Similarly the return value can be implicitly converted to a Point.
-var v2: Point = AddAndScaleForPointAsVector(a, w, 2.5);
-```
-
-Since `Point` implements `Vector` inline, `Point` also has definitions for `Add`
-and `Scale`:
-
-```
-fn AddAndScaleForPoint(a: Point, b: Point, s: f64) -> Point {
-  return a.Add(b).Scale(s);
-}
-
-AddAndScaleForPoint(a, w, 2.5);
-```
-
-However, for another type implementing `Vector` but externally, such as
-`Point2`, or out-of-line using an `external impl` statement like `Point3`, the
-situation is different:
-
-```
-fn AddAndScaleForPoint2(a: Point2, b: Point2, s: f64) -> Point2 {
-  // ❌ ERROR: `Point2` doesn't have `Add` or `Scale` methods.
-  return a.Add(b).Scale(s);
-}
-fn AddAndScaleForPoint3(a: Point3, b: Point3, s: f64) -> Point3 {
-  // ❌ ERROR: `Point3` doesn't have `Add` or `Scale` methods.
-  return a.Add(b).Scale(s);
-}
-```
-
-Even though `Point2` and `Point3` don't have `Add` and `Scale` methods, they
-still implement `Vector` and so can still call `AddAndScaleGeneric`:
-
-```
-var a2: Point2 = {.x = 1.0, .y = 2.0};
-var w2: Point2 = {.x = 3.0, .y = 4.0};
-var v3: Point2 = AddAndScaleGeneric(a, w, 2.5);
-```
+_[generic parameter](terminology.md#generic-versus-template-parameters)_. That
+means it must be known to the caller, but we will only use the information
+present in the signature of the function to type check the body of
+`AddAndScaleGeneric`'s definition. In this case, we know that any value of type
+`T` implements the `Vector` interface and so has an `Add` and a `Scale` method.
 
 **References:** The `:!` syntax was accepted in
 [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
 
+Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
+in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
+to adding a `Vector` qualification to all unqualified member accesses of `T`:
+
+```
+fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
+  return a.(Vector.Add)(b).(Vector.Scale)(s);
+}
+```
+
+With these qualifications, the function can be type-checked for any `T`
+implementing `Vector`. This type checking is equivalent to type checking the
+function with `T` set to an [archetype](terminology.md#archetype) of `Vector`.
+An archetype is a placeholder type considered to satisfy its constraint, which
+is `Vector` in this case, and no more. It acts as the most general type
+satisfying the interface. The effect of this is that an archetype of `Vector`
+acts like a [supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T`
+implementing `Vector`.
+
+For name lookup purposes, an archetype is considered to have
+[implemented its constraint internally](terminology.md#internal-impl). The only
+oddity is that the archetype may have different names for members than specific
+types `T` that implement interfaces from the constraint
+[externally](terminology.md#external-impl). This difference in names can also
+occur for supertypes in C++, for example members in a derived class can hide
+members in the base class with the same name, though it is not that common for
+it to come up in practice.
+
+The behavior of calling `AddAndScaleGeneric` with a value of a specific type
+like `Point` is to set `T` to `Point` after all the names have been qualified.
+
+```
+// AddAndScaleGeneric with T = Point
+fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
+  return a.(Vector.Add)(b).(Vector.Scale)(s);
+}
+```
+
+This qualification gives a consistent interpretation to the body of the function
+even when the type supplied by the caller
+[implements the interface externally](terminology.md#external-impl), as `Point2`
+does:
+
+```
+// AddAndScaleGeneric with T = Point2
+fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
+  // ✅ This works even though `a.Add(b).Scale(s)` wouldn't.
+  return a.(Vector.Add)(b).(Vector.Scale)(s);
+}
+```
+
+### Return type
+
+From the caller's perspective, the return type is the result of substituting the
+caller's values for the generic parameters into the return type expression. So
+`AddAndScaleGeneric` called with `Point` values returns a `Point` and called
+with `Point2` values returns a `Point2`. So looking up a member on the resulting
+value will look in `Point` or `Point2` rather than `Vector`.
+
+This is part of realizing
+[the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
+In this example, `AddAndScaleGeneric` can be substituted for
+`AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
+types. This requires the return value to be converted to the type that the
+caller expects instead of the erased type used inside the generic function.
+
+A generic caller of a generic function performs the same substitution process to
+determine the return type, but the result may be generic. In this example of
+calling a generic from another generic,
+
+```
+fn DoubleThreeTimes[U:! Vector](a: U) -> U {
+  return AddAndScaleGeneric(a, a, 2.0).Scale(2.0);
+}
+```
+
+the return type of `AddAndScaleGeneric` is found by substituting in the `U` from
+`DoubleThreeTimes` for the `T` from `AddAndScaleGeneric` in the return type
+expression of `AddAndScaleGeneric`. `U` is an archetype of `Vector`, and so
+implements `Vector` internally and therefore has a `Scale` method.
+
+If `U` had a more specific type, the return value would have the additional
+capabilities of `U`. For example, given a parameterized type `GeneralPoint`
+implementing `Vector`, and a function that takes a `GeneralPoint` and calls
+`AddAndScaleGeneric` with it:
+
+```
+class GeneralPoint(C:! Numeric) {
+  external impl as Vector { ... }
+  fn Get[me: Self](i: i32) -> C;
+}
+
+fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
+  // `AddAndScaleGeneric` returns `T` and in these calls `T` is
+  // deduced to be `GeneralPoint(C)`.
+
+  // ❌ Illegal: AddAndScaleGeneric(p, p, 2.0).Scale(2.0);
+  //    `GeneralPoint(C)` implements `Vector` externally, and so
+  //    does not have a `Scale` method.
+
+  // ✅ Allowed: `GeneralPoint(C)` has a `Get` method
+  AddAndScaleGeneric(p, p, 2.0).Get(0);
+
+  // ✅ Allowed: `GeneralPoint(C)` implements `Vector`
+  //    externally, and so has a `Vector.Scale` method.
+  //    `Vector.Scale` returns `Self` which is `GeneralPoint(C)`
+  //    again, and so has a `Get` method.
+  return AddAndScaleGeneric(p, p, 2.0).(Vector.Scale)(2.0).Get(0);
+}
+```
+
+The result of the call to `AddAndScaleGeneric` from `CallWithGeneralPoint` has
+type `GeneralPoint(C)` and so has a `Get` method and a `Vector.Scale` method.
+But, in contrast to how `DoubleThreeTimes` works, since `Vector` is implemented
+externally the return value in this case does not directly have a `Scale`
+method.
+
 ### Implementation model
 
-The underlying model here is interfaces are
-[type-of-types](terminology.md#type-of-type), in particular, the type of
-[facet types](terminology.md#facet-type):
+A possible model for generating code for a generic function is to use a
+[witness table](terminology.md#witness-tables) to represent how a type
+implements an interface:
 
--   [Interfaces](#interfaces) are types of
-    [witness tables](terminology.md#witness-tables)
--   Facet types (defined by [Impls](#implementing-interfaces)) are
-    [witness table](terminology.md#witness-tables) values
+-   [Interfaces](#interfaces) are types of witness tables.
+-   [Impls](#implementing-interfaces) are witness table values.
 -   The compiler rewrites functions with an implicit type argument
     (`fn Foo[InterfaceName:! T](...)`) to have an actual argument with type
     determined by the interface, and supplied at the callsite using a value
@@ -801,7 +789,7 @@ An interface's name may be used in a few different contexts:
 While interfaces are examples of type-of-types, type-of-types are a more general
 concept, for which interfaces are a building block.
 
-## Type-of-types and facet types
+## Type-of-types
 
 A [type-of-type](terminology.md#type-of-type) consists of a set of requirements
 and a set of names. Requirements are typically a set of interfaces that a type
@@ -813,11 +801,9 @@ An interface is one particularly simple example of a type-of-type. For example,
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types may be converted to a given type-of-type.
-The result of converting a type `T` to a type-of-type `I` (written `T as I`) is
-called a facet type, you might say a facet type `F` is the `I` facet of `T` if
-`F` is `T as I`. The API of `F` is determined by the set of names in the
-type-of-type.
+The requirements determine which types are values of a given type-of-type. The
+set of names in a type-of-type determines the API of a generic type value and
+define the result of qualified member name lookup.
 
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
@@ -886,9 +872,9 @@ members of those interfaces.
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
 associated type, and associated function requirements may only be declared
-inside a `template constraint`. Note that a generic constraint matches all
-facets of a type if it matches any, but a template constraint can depend on the
-specific names of members used in a particular facet.
+inside a `template constraint`. Note that a generic constraint ignores the
+unqualified member names defined for a type, but a template constraint can
+depend on them.
 
 There is an analogy between declarations used in a `constraint` and in an
 `interface` definition. If an `interface` `I` has (non-`alias`) declarations
@@ -943,15 +929,13 @@ design document, once it exists.
 
 ### Subtyping between type-of-types
 
-There is a subtyping relationship between type-of-types that allows you to call
-one generic function from another as long as you are calling a function with a
-subset of your requirements.
+There is a subtyping relationship between type-of-types that allows calls of one
+generic function from another as long as it has a subset of the requirements.
 
-Given a generic type `T` with type-of-type `I1`, it may be
-[implicitly converted](../expressions/implicit_conversions.md) to a type-of-type
-`I2`, resulting in `T as I2`, as long as the requirements of `I1` are a superset
-of the requirements of `I2`. Further, given a value `x` of type `T`, it can be
-implicitly converted to `T as I2`. For example:
+Given a generic type variable `T` with type-of-type `I1`, it satisfies a
+type-of-type `I2` as long as the requirements of `I1` are a superset of the
+requirements of `I2`. This means a value `x` of type `T` may be passed to
+functions requiring types to satisfy `I2`, as in this example:
 
 ```
 interface Printable { fn Print[me: Self](); }
@@ -974,8 +958,6 @@ fn PrintDrawPrint[T1:! PrintAndRender](x1: T1) {
   x1.(Renderable.Draw)();
   // Can call `PrintIt` since `T1` satisfies `JustPrint` since
   // it implements `Printable` (in addition to `Renderable`).
-  // This calls `PrintIt` with `T2 == T1 as JustPrint` and
-  // `x2 == x1 as T2`.
   PrintIt(x1);
 }
 ```
@@ -1139,9 +1121,8 @@ type. For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
 `Swappable`. This is already a capability for
-[type-of-types in general](#type-of-types-and-facet-types). For consistency we
-will use the same semantics and syntax as we do for
-[named constraints](#named-constraints):
+[type-of-types in general](#type-of-types). For consistency we will use the same
+semantics and syntax as we do for [named constraints](#named-constraints):
 
 ```
 interface Equatable { fn Equals[me: Self](rhs: Self) -> bool; }
@@ -1514,69 +1495,6 @@ This would be an example of the more general rule that an interface `A`
 requiring an implementation of interface `B` means `A` is more specific than
 `B`.
 
-## Type compatibility
-
-None of the conversions between facet types change the implementation of any
-interfaces for a type. So the result of a conversion does not depend on the
-sequence of conversions you perform, just the original type and the final
-type-of-type. That is, these types will all be equal:
-
--   `T as I`
--   `(T as A) as I`
--   `(((T as A) as B) as C) as I`
-
-Now consider a type with a generic type parameter, like a hash map type:
-
-```
-interface Hashable { ... }
-class HashMap(KeyT:! Hashable, ValueT:! Type) {
-  fn Find[me:Self](key: KeyT) -> Optional(ValueT);
-  // ...
-}
-```
-
-A user of this type will provide specific values for the key and value types:
-
-```
-var hm: HashMap(String, i32) = ...;
-var result: Optional(i32) = hm.Find("Needle");
-```
-
-Since the `Find` function is generic, it can only use the capabilities that
-`HashMap` requires of `KeyT` and `ValueT`. This implies that the
-_implementation_ of `HashMap(String, i32).Find` and
-`HashMap(String as Hashable, i32).Find` are the same. In fact, we could
-substitute any facet of `String`, and `Find` would still use
-`String as Hashable` in its implementation. So these types:
-
--   `HashMap(String, i32)`
--   `HashMap(String as Hashable, i32 as Type)`
--   `HashMap(String as Printable, i32)`
--   `HashMap((String as Printable & Hashable) as Hashable, i32)`
-
-are also facets of each other, and Carbon can freely allow casts and implicit
-conversions between them.
-
-This means we don't generally need to worry about getting the wrong facet type
-as the argument for a generic type. This means we don't get type mismatches when
-calling functions as in this example, where the type parameters have different
-constraints than the type requires:
-
-```
-fn PrintValue
-    [KeyT:! Printable & Hashable, ValueT:! Printable]
-    (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
-
-var m: HashMap(String, i32) = ...;
-PrintValue(m, "key");
-```
-
-However, those types are still different. A caller of `Find` observes that its
-signature reflects the actual type parameters passed to `HashMap`, not their
-projection onto the `Hashable` or `Type` facets. In particular, the return type
-of `hm.Find` is `Optional(i32)`, not `Optional(i32 as Type)`. (Incidentally,
-`Optional(i32)` and `Optional(i32 as Type)` are also facets of each other.)
-
 ## Adapting types
 
 Since interfaces may only be implemented for a type once, and we limit where
@@ -1606,8 +1524,8 @@ adapter FormattedSong for Song {
   impl as Printable { fn Print[me: Self]() { ... } }
 }
 adapter FormattedSongByTitle for Song {
-  impl as Printable = FormattedSong as Printable;
-  impl as Comparable = SongByTitle as Comparable;
+  impl as Printable = FormattedSong;
+  impl as Comparable = SongByTitle;
 }
 ```
 
@@ -1625,16 +1543,16 @@ This allows developers to provide implementations of new interfaces (as in
     and `FormattedSongByTitle` end up compatible with each other.
 -   Since adapted types are compatible with the original type, you may
     explicitly cast between them, but there is no implicit conversion between
-    these types (unlike between a type and one of its facet types / impls).
+    these types.
 
 Inside an adapter, the `Self` type matches the adapter. Members of the original
-type may be accessed like any other facet type; either by a cast:
+type may be accessed either by a cast:
 
 ```
 adapter SongByTitle for Song {
   impl as Comparable {
     fn Less[me: Self](rhs: Self) -> bool {
-      return (this as Song).Title() < (rhs as Song).Title();
+      return (me as Song).Title() < (rhs as Song).Title();
     }
   }
 }
@@ -1652,29 +1570,6 @@ adapter SongByTitle for Song {
 }
 ```
 
-**Open question:** As an alternative to:
-
-```
-impl as Printable = FormattedSong as Printable;
-```
-
-we could allow users to write:
-
-```
-impl as Printable = FormattedSong;
-```
-
-This would remove ceremony that the compiler doesn't need. The concern is
-whether it makes sense or is a category error. In this example, is
-`FormattedSong`, a type, a suitable value to provide when asking for a
-`Printable` implementation? An argument for this terser syntax is that the
-implicit conversion is legal in other contexts:
-
-```
-// ✅ Legal implicit conversion
-var v:! Printable = FormattedSong;
-```
-
 **Comparison with other languages:** This matches the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding coherence
 problems, see
@@ -1690,41 +1585,55 @@ compiler provides it as
 
 ### Adapter compatibility
 
-The framework from the [type compatibility section](#type-compatibility) allows
-us to evaluate when we can convert between two different arguments to a
-parameterized type. Consider three compatible types, all of which implement
-`Hashable`:
+Consider a type with a generic type parameter, like a hash map:
+
+```
+interface Hashable { ... }
+class HashMap(KeyT:! Hashable, ValueT:! Type) {
+  fn Find[me:Self](key: KeyT) -> Optional(ValueT);
+  // ...
+}
+```
+
+A user of this type will provide specific values for the key and value types:
 
 ```
 class Song {
   impl as Hashable { ... }
-  impl as Printable { ... }
+  // ...
+}
+
+var play_count: HashMap(Song, i32) = ...;
+var thriller_count: Optional(i32) =
+    play_count.Find(Song("Thriller"));
+```
+
+Since the `Find` function is generic, it can only use the capabilities that
+`HashMap` requires of `KeyT` and `ValueT`. This allows us to evaluate when we
+can convert between two different arguments to a parameterized type. Consider
+two adapters of `Song` that implement `Hashable`:
+
+```
+adapter PlayableSong for Song {
+  impl as Hashable = Song;
+  impl as Media { ... }
 }
 adapter SongHashedByTitle for Song {
   impl as Hashable { ... }
 }
-adapter PlayableSong for Song {
-  impl as Hashable = Song as Hashable;
-  impl as Media { ... }
-}
 ```
 
-Observe that `Song as Hashable` is different from
-`SongHashedByTitle as Hashable`, since they have different definitions of the
-`Hashable` interface even though they are compatible types. However
-`Song as Hashable` and `PlayableSong as Hashable` are almost the same. In
-addition to using the same data representation, they both implement one
-interface, `Hashable`, and use the same implementation for that interface. The
-one difference between them is that `Song as Hashable` may be implicitly
-converted to `Song`, which implements interface `Printable`, and
-`PlayableSong as Hashable` may be implicitly converted to `PlayableSong`, which
-implements interface `Media`. This means that it is safe to convert between
-`HashMap(Song, i32)` and `HashMap(PlayableSong, i32)` (though maybe only with an
-explicit cast), since the implementation of all the methods will use the same
-implementation of the `Hashable` interface. But
-`HashMap(SongHashedByTitle, i32)` is incompatible. This is a relief, because we
-know that in practice the invariants of a `HashMap` implementation rely on the
-hashing function staying the same.
+`Song` and `PlayableSong` have the same implementation of `Hashable` in addition
+to using the same data representation. This means that it is safe to convert
+between `HashMap(Song, i32)` and `HashMap(PlayableSong, i32)`, because the
+implementation of all the methods will use the same implementation of the
+`Hashable` interface. Carbon permits this conversion with an explicit cast.
+
+On the other hand, `SongHashedByTitle` has a different implementation of
+`Hashable` than `Song`. So even though `Song` and `SongHashedByTitle` are
+compatible types, `HashMap(Song, i32)` and `HashMap(SongHashedByTitle, i32)` are
+incompatible. This is important because we know that in practice the invariants
+of a `HashMap` implementation rely on the hashing function staying the same.
 
 ### Extending adapter
 
@@ -1756,7 +1665,7 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
-Unlike the similar `class B extends A` notation, `adaptor B extends A` is
+Unlike the similar `class B extends A` notation, `adapter B extends A` is
 permitted even if `A` is a final class. Also, there is no implicit conversion
 from `B` to `A`, matching `adapter`...`for` but unlike class extension.
 
@@ -1771,7 +1680,7 @@ adapter SongRenderToPrintDriver extends Song {
 
   // Avoid name conflict with new `Print` function by making
   // the implementation of the `Printable` interface external.
-  external impl as Printable = Song as Printable;
+  external impl as Printable = Song;
 
   // Make the `Print` function from `Printable` available
   // under the name `PrintToScreen`.
@@ -1880,8 +1789,7 @@ class IntWrapper {
     return left.x - right.x;
   }
   impl as Comparable =
-      ComparableFromDifferenceFn(IntWrapper, Difference)
-      as Comparable;
+      ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
 
@@ -1919,6 +1827,41 @@ fn Complex64.CloserToOrigin[me: Self](them: Self) -> bool {
   var me_mag: ByReal = me * me.Conj() as ByReal;
   var them_mag: ByReal = them * them.Conj() as ByReal;
   return me_mag.Less(them_mag);
+}
+```
+
+### Use case: Accessing external names
+
+Consider a case where a function will call several functions from an interface
+that is [implemented externally](terminology.md#external-impl) for a type.
+
+```
+interface DrawingContext {
+  fn SetPen[me: Self](...);
+  fn SetFill[me: Self](...);
+  fn DrawRectangle[me: Self](...);
+  fn DrawLine[me: Self](...);
+  ...
+}
+external impl Window as DrawingContext { ... }
+```
+
+An adapter can make that much more convenient by making a compatible type where
+the interface is [implemented internally](terminology.md#internal-impl). This
+avoids having to
+[qualify](terminology.md#qualified-and-unqualified-member-names) each call to
+methods in the interface.
+
+```
+adapter DrawInWindow for Window {
+  impl as DrawingContext = Window;
+}
+fn Render(w: Window) {
+  let d: DrawInWindow = w as DrawInWindow;
+  d.SetPen(...);
+  d.SetFill(...);
+  d.DrawRectangle(...);
+  ...
 }
 ```
 
@@ -2113,13 +2056,27 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
   s->Push(top);
   return top;
 }
+```
 
+Inside the generic function `PeekAtTopOfStack`, the `ElementType` associated
+type member of `StackType` is erased. This means `StackType.ElementType` has the
+API dictated by the declaration of `ElementType` in the interface
+`StackAssociatedType`.
+
+Outside the generic, associated types have the concrete type values determined
+by impl lookup, rather than the erased version of that type used inside a
+generic.
+
+```
 var my_array: DynamicArray(i32) = (1, 2, 3);
-// PeekAtTopOfStack's `StackType` is set to
-// `DynamicArray(i32) as StackAssociatedType`.
-// `StackType.ElementType` becomes `i32`.
+// PeekAtTopOfStack's `StackType` is set to `DynamicArray(i32)`
+// with `StackType.ElementType` set to `i32`.
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
+
+This is another part of achieving
+[the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions)
+discussed in the [return type section](#return-type).
 
 Associated types can also be implemented using a
 [member type](/docs/design/classes.md#member-type).
@@ -2133,7 +2090,9 @@ interface Container {
 class DynamicArray(T:! Type) {
   ...
   impl as Container {
-    class IteratorType { ... }
+    class IteratorType {
+      impl Iterator { ... }
+    }
     ...
   }
 }
@@ -2467,7 +2426,7 @@ fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
 Similarly in an interface definition:
 
 ```
-interface {
+interface Has2DPoint {
   let PointT:! NSpacePoint where .N = 2;
 }
 ```
@@ -2515,7 +2474,7 @@ fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
 }
 ```
 
-To name these sorts of constraints, we could use `let` statements or
+To name these sorts of constraints, we could use `let` declarations or
 `constraint` definitions:
 
 ```
@@ -2802,9 +2761,7 @@ constraint ContainerIsSlice {
 ```
 
 Note that using the `constraint` approach we can name these constraints using
-`Self` instead of `.Self`, since they are facets of the same type: `Self` is the
-facet corresponding to the containing interface and `.Self` is the facet
-corresponding to the interface being extended.
+`Self` instead of `.Self`, since they refer to the same type.
 
 #### Parameterized type implements interface
 
@@ -3388,19 +3345,14 @@ adapter ThenCompare(
   }
 }
 
-let SongByArtistThenTitle: auto = ThenCompare(Song, (SongByArtist, SongByTitle));
+let SongByArtistThenTitle: auto =
+    ThenCompare(Song, (SongByArtist, SongByTitle));
 var s1: Song = ...;
 var s2: SongByArtistThenTitle =
     Song(...) as SongByArtistThenTitle;
 assert((s1 as SongByArtistThenTitle).Compare(s2) ==
        CompareResult.Less);
 ```
-
-### Type facet of another type
-
-Similar to `CompatibleWith(T)`, `FacetOf(T)` introduces an equivalence
-relationship between types. `T1 is FacetOf(T2)` if both `T1` and `T2` are facets
-of the same type.
 
 ### Sized types and type-of-types
 
@@ -3517,6 +3469,44 @@ value of type `T` in this case.
 [implemented externally](terminology.md#external-impl) for types to avoid name
 pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
+
+## Generic `let`
+
+A `let` statement inside a function body may be used to get the change in type
+behavior of calling a generic function without having to introduce a function
+call.
+
+```
+fn F(...) {
+  ...
+  let T:! C = U;
+  X;
+  Y;
+  Z;
+}
+```
+
+gets rewritten to:
+
+```
+fn F(...) {
+  ...
+  fn Closure(T:! C where .Self == U) {
+    X;
+    Y;
+    Z;
+  }
+  Closure(U);
+}
+```
+
+The `where .Self == U` modifier allows values to implicitly convert between type
+`T`, the erased type, and type `U`, the concrete type. Note that implicit
+conversion is
+[only performed across a single `where` equality](#manual-type-equality). This
+can be used to switch to the API of `C` when it is external, as an alternative
+to [using an adapter](#use-case-accessing-external-names), or to simplify
+inlining of a generic function while preserving semantics.
 
 ## Parameterized impls
 
@@ -4409,4 +4399,5 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 -   [#931: Generic impls access (details 4)](https://github.com/carbon-language/carbon-lang/pull/931)
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
