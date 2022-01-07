@@ -14,7 +14,7 @@
 namespace Carbon::Testing {
 namespace {
 
-struct FakeDiagnostic {
+struct FakeDiagnostic : DiagnosticBase<FakeDiagnostic> {
   static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
   // TODO: consider ways to put the Message into `format` to allow dynamic
   // selection of the message.
