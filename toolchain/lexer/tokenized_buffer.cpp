@@ -898,8 +898,8 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   int column_number = offset - line_it->start;
 
   // We might still be lexing the last line. If so, check to see if there are
-  // any newline characters between the start of this line and the given
-  // location.
+  // any newline characters between the position we've finished lexing up to
+  // and the given location.
   if (incomplete_line_info && column_number > *last_line_lexed_to_column_) {
     column_number = *last_line_lexed_to_column_;
     for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
