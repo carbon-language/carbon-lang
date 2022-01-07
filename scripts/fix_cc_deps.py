@@ -132,7 +132,9 @@ def map_headers(
 
 
 def get_missing_deps(
-    header_to_rule_map: Dict[str, Set[str]], generated_files: Set[str], rule: Rule
+    header_to_rule_map: Dict[str, Set[str]],
+    generated_files: Set[str],
+    rule: Rule,
 ) -> Set[str]:
     missing_deps: Set[str] = set()
     rule_files = rule.hdrs.union(rule.srcs)
