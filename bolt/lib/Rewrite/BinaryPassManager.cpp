@@ -51,269 +51,201 @@ extern cl::opt<bolt::PLTCall::OptType> PLT;
 static cl::opt<bool>
 DynoStatsAll("dyno-stats-all",
   cl::desc("print dyno stats after each stage"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
 
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
   cl::desc("eliminate unreachable code"),
-  cl::init(true),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::init(true), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 cl::opt<bool>
 ICF("icf",
   cl::desc("fold functions with identical code"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 JTFootprintReductionFlag("jt-footprint-reduction",
   cl::desc("make jump tables size smaller at the cost of using more "
            "instructions at jump sites"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool> TailDuplicationFlag(
-    "tail-duplication",
-    cl::desc("duplicate unconditional branches that cross a cache line"),
-    cl::ZeroOrMore, cl::ReallyHidden, cl::cat(BoltOptCategory));
-
-static cl::opt<bool> ThreeWayBranchFlag("three-way-branch",
-                                        cl::desc("reorder three way branches"),
-                                        cl::ZeroOrMore, cl::ReallyHidden,
-                                        cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintJTFootprintReduction("print-after-jt-footprint-reduction",
-  cl::desc("print function after jt-footprint-reduction pass"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 cl::opt<bool>
 NeverPrint("never-print",
   cl::desc("never print"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::ReallyHidden,
-  cl::cat(BoltOptCategory));
+  cl::init(false), cl::ZeroOrMore, cl::ReallyHidden, cl::cat(BoltOptCategory));
 
 cl::opt<bool>
 PrintAfterBranchFixup("print-after-branch-fixup",
   cl::desc("print function after fixing local branches"),
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintAfterLowering("print-after-lowering",
   cl::desc("print function after instruction lowering"),
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintFOP("print-fop",
-  cl::desc("print functions after frame optimizer pass"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::Hidden, cl::cat(BoltOptCategory));
 
 cl::opt<bool>
 PrintFinalized("print-finalized",
   cl::desc("print function after CFG is finalized"),
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-PrintLongJmp("print-longjmp",
-  cl::desc("print functions after longjmp pass"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+PrintFOP("print-fop",
+  cl::desc("print functions after frame optimizer pass"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintICF("print-icf",
   cl::desc("print functions after ICF optimization"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintICP("print-icp",
   cl::desc("print functions after indirect call promotion"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-cl::opt<bool>
-PrintNormalized("print-normalized",
-  cl::desc("print functions after CFG is normalized"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
-static cl::opt<bool>
-PrintRegReAssign("print-regreassign",
-  cl::desc("print functions after regreassign pass"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintInline("print-inline",
   cl::desc("print functions after inlining optimization"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintJTFootprintReduction("print-after-jt-footprint-reduction",
+  cl::desc("print function after jt-footprint-reduction pass"),
+  cl::ZeroOrMore, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintLongJmp("print-longjmp",
+  cl::desc("print functions after longjmp pass"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+cl::opt<bool>
+PrintNormalized("print-normalized",
+  cl::desc("print functions after CFG is normalized"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
 
 static cl::opt<bool>
 PrintOptimizeBodyless("print-optimize-bodyless",
   cl::desc("print functions after bodyless optimization"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintPLT("print-plt",
-  cl::desc("print functions after PLT optimization"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintPeepholes("print-peepholes",
   cl::desc("print functions after peephole optimization"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-cl::opt<bool>
-PrintReordered("print-reordered",
-  cl::desc("print functions after layout optimization"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-PrintReorderedFunctions("print-reordered-functions",
-  cl::desc("print functions after clustering"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintSCTC("print-sctc",
-  cl::desc("print functions after conditional tail call simplification"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintSimplifyROLoads("print-simplify-rodata-loads",
-  cl::desc("print functions after simplification of RO data loads"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintSplit("print-split",
-  cl::desc("print functions after code splitting"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-PrintUCE("print-uce",
-  cl::desc("print functions after unreachable code elimination"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
+PrintPLT("print-plt",
+  cl::desc("print functions after PLT optimization"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintProfileStats("print-profile-stats",
   cl::desc("print profile quality/bias analysis"),
-  cl::ZeroOrMore,
-  cl::init(false),
-  cl::cat(BoltCategory));
+  cl::ZeroOrMore, cl::init(false), cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintRegReAssign("print-regreassign",
+  cl::desc("print functions after regreassign pass"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+cl::opt<bool>
+PrintReordered("print-reordered",
+  cl::desc("print functions after layout optimization"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintReorderedFunctions("print-reordered-functions",
+  cl::desc("print functions after clustering"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintRetpolineInsertion("print-retpoline-insertion",
+  cl::desc("print functions after retpoline insertion pass"),
+  cl::init(false), cl::ZeroOrMore, cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintSCTC("print-sctc",
+  cl::desc("print functions after conditional tail call simplification"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintSimplifyROLoads("print-simplify-rodata-loads",
+  cl::desc("print functions after simplification of RO data loads"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintSplit("print-split",
+  cl::desc("print functions after code splitting"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintStoke("print-stoke",
+  cl::desc("print functions after stoke analysis"),
+  cl::init(false), cl::ZeroOrMore, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintVeneerElimination("print-veneer-elimination",
+  cl::desc("print functions after veneer elimination pass"),
+  cl::init(false), cl::ZeroOrMore, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintUCE("print-uce",
+  cl::desc("print functions after unreachable code elimination"),
+  cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+RegReAssign("reg-reassign",
+  cl::desc("reassign registers so as to avoid using REX prefixes in hot code"),
+  cl::init(false), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
   cl::desc("simplify conditional tail calls by removing unnecessary jumps"),
-  cl::init(true),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::init(true), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 SimplifyRODataLoads("simplify-rodata-loads",
   cl::desc("simplify loads from read-only sections by replacing the memory "
            "operand with the constant found in the corresponding section"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-RegReAssign("reg-reassign",
-  cl::desc("reassign registers so as to avoid using REX prefixes in hot code"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-StringOps("inline-memcpy",
-  cl::desc("inline memcpy using 'rep movsb' instruction (X86-only)"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 static cl::list<std::string>
 SpecializeMemcpy1("memcpy1-spec",
   cl::desc("list of functions with call sites for which to specialize memcpy() "
            "for size 1"),
   cl::value_desc("func1,func2:cs1:cs2,func3:cs1,..."),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::ZeroOrMore, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+Stoke("stoke",
+  cl::desc("turn on the stoke analysis"),
+  cl::init(false), cl::ZeroOrMore, cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+StringOps("inline-memcpy",
+  cl::desc("inline memcpy using 'rep movsb' instruction (X86-only)"),
+  cl::init(false), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 StripRepRet("strip-rep-ret",
   cl::desc("strip 'repz' prefix from 'repz retq' sequence (on by default)"),
-  cl::init(true),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::init(true), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
-static llvm::cl::opt<bool>
+static cl::opt<bool>
 VerifyCFG("verify-cfg",
   cl::desc("verify the CFG after every pass"),
-  cl::init(false),
-  cl::Hidden,
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::init(false), cl::Hidden, cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
-static llvm::cl::opt<bool>
-Stoke("stoke",
-  cl::desc("turn on the stoke analysis"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+static cl::opt<bool>
+TailDuplicationFlag("tail-duplication",
+  cl::desc("duplicate unconditional branches that cross a cache line"),
+  cl::ZeroOrMore, cl::ReallyHidden, cl::cat(BoltOptCategory));
 
-static llvm::cl::opt<bool>
-PrintStoke("print-stoke",
-  cl::desc("print functions after stoke analysis"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static llvm::cl::opt<bool>
-  PrintVeneerElimination("print-veneer-elimination",
-    cl::desc("print functions after veneer elimination pass"),
-    cl::init(false),
-    cl::ZeroOrMore,
-    cl::cat(BoltOptCategory));
-
-static llvm::cl::opt<bool>
-  PrintRetpolineInsertion("print-retpoline-insertion",
-    cl::desc("print functions after retpoline insertion pass"),
-    cl::init(false),
-    cl::ZeroOrMore,
-    cl::cat(BoltCategory));
+static cl::opt<bool>
+ThreeWayBranchFlag("three-way-branch",
+  cl::desc("reorder three way branches"),
+  cl::ZeroOrMore, cl::ReallyHidden, cl::cat(BoltOptCategory));
 
 } // namespace opts
 
