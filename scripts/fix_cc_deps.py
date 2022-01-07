@@ -4,9 +4,8 @@
 
 Bazel has some support for detecting when an include refers to a missing
 dependency. However, the ideal state is that a given build target depends
-directly on all #include'd headers, and Bazel doesn't
-
-it's imperfect. There are advantages to having fully
+directly on all #include'd headers, and Bazel doesn't enforce that. This
+automates the addition for technical correctness.
 """
 
 __copyright__ = """
