@@ -10,6 +10,7 @@ cc_binary(
     deps = [
         ":fn_inserter",
         ":for_range",
+        ":matcher",
         ":var_decl",
         "@llvm-project//clang:tooling",
     ],
@@ -24,6 +25,8 @@ cc_library(
     ],
     deps = [
         "@llvm-project//clang:ast_matchers",
+        "@llvm-project//clang:basic",
+        "@llvm-project//clang:lex",
         "@llvm-project//clang:tooling_core",
     ],
 )
@@ -37,6 +40,7 @@ cc_library(
         "@com_google_googletest//:gtest",
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling",
+        "@llvm-project//clang:tooling_core",
     ],
 )
 
@@ -46,7 +50,10 @@ cc_library(
     name = "fn_inserter",
     srcs = ["fn_inserter.cpp"],
     hdrs = ["fn_inserter.h"],
-    deps = [":matcher"],
+    deps = [
+        ":matcher",
+        "@llvm-project//clang:ast_matchers",
+    ],
 )
 
 cc_test(
@@ -64,7 +71,10 @@ cc_library(
     name = "for_range",
     srcs = ["for_range.cpp"],
     hdrs = ["for_range.h"],
-    deps = [":matcher"],
+    deps = [
+        ":matcher",
+        "@llvm-project//clang:ast_matchers",
+    ],
 )
 
 cc_test(
@@ -82,7 +92,11 @@ cc_library(
     name = "var_decl",
     srcs = ["var_decl.cpp"],
     hdrs = ["var_decl.h"],
-    deps = [":matcher"],
+    deps = [
+        ":matcher",
+        "@llvm-project//clang:ast_matchers",
+        "@llvm-project//clang:type_nodes_gen",
+    ],
 )
 
 cc_test(
