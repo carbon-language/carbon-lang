@@ -990,11 +990,16 @@ public:
         SecondInst.getOpcode() == X86::JRCXZ)
       return false;
 
-    // Cannot fuse if first instruction operands are MEM-IMM.
     const MCInstrDesc &Desc = Info->get(FirstInst.getOpcode());
     int MemOpNo = X86II::getMemoryOperandNo(Desc.TSFlags);
-    if (MemOpNo != -1 && X86II::hasImm(Desc.TSFlags))
-      return false;
+    if (MemOpNo != -1) {
+      // Cannot fuse if first instruction operands are MEM-IMM.
+      if (X86II::hasImm(Desc.TSFlags))
+        return false;
+      // Cannot fuse if first instruction may store.
+      if (Desc.mayStore())
+        return false;
+    }
 
     // Cannot fuse if the first instruction uses RIP-relative memory.
     // FIXME: verify that this is true.
