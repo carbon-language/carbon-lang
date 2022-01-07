@@ -121,15 +121,18 @@ def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
 
 
 def map_headers(
-    header_to_rule_map: Dict[str, str], rules: Dict[str, Rule]
+    header_to_rule_map: Dict[str, Set[str]], rules: Dict[str, Rule]
 ) -> None:
     for rule_name, rule in rules.items():
         for header in rule.hdrs:
-            header_to_rule_map[header] = rule_name
+            if header in header_to_rule_map:
+                header_to_rule_map[header].add(rule_name)
+            else:
+                header_to_rule_map[header] = {rule_name}
 
 
 def get_missing_deps(
-    header_to_rule_map: Dict[str, str], generated_files: Set[str], rule: Rule
+    header_to_rule_map: Dict[str, Set[str]], generated_files: Set[str], rule: Rule
 ) -> Set[str]:
     missing_deps: Set[str] = set()
     rule_files = rule.hdrs.union(rule.srcs)
@@ -147,9 +150,10 @@ def get_missing_deps(
                         f"Missing rule for #include '{header}' in "
                         f"'{source_file}'"
                     )
-                dep = header_to_rule_map[header]
-                if dep not in rule.deps:
-                    missing_deps.add(dep)
+                dep_choices = header_to_rule_map[header]
+                if not dep_choices.intersection(rule.deps):
+                    # Only add one dep from the choices, if there are multiple.
+                    missing_deps.add(next(iter(dep_choices)))
     return missing_deps
 
 
@@ -165,7 +169,7 @@ def main() -> None:
     external_rules = get_rules(external_repo_query, True)
 
     print("Building header map...")
-    header_to_rule_map: Dict[str, str] = {}
+    header_to_rule_map: Dict[str, Set[str]] = {}
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
 
