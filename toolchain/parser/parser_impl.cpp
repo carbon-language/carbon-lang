@@ -17,10 +17,10 @@
 
 namespace Carbon {
 
-struct StackLimitExceeded {
+struct StackLimitExceeded : DiagnosticBase<StackLimitExceeded> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
 
-  auto Format() -> std::string {
+  static auto Format() -> std::string {
     return llvm::formatv("Exceeded recursion limit ({0})",
                          ParseTree::StackDepthLimit);
   }
@@ -55,46 +55,43 @@ class ParseTree::Parser::ScopedStackStep {
     return (error_return_expr);                    \
   }
 
-struct UnexpectedTokenInCodeBlock
-    : SimpleDiagnostic<UnexpectedTokenInCodeBlock> {
+struct UnexpectedTokenInCodeBlock : DiagnosticBase<UnexpectedTokenInCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unexpected token in code block.";
 };
 
-struct ExpectedFunctionName : SimpleDiagnostic<ExpectedFunctionName> {
+struct ExpectedFunctionName : DiagnosticBase<ExpectedFunctionName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected function name after `fn` keyword.";
 };
 
-struct ExpectedFunctionParams : SimpleDiagnostic<ExpectedFunctionParams> {
+struct ExpectedFunctionParams : DiagnosticBase<ExpectedFunctionParams> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected `(` after function name.";
 };
 
-struct ExpectedFunctionBodyOrSemi
-    : SimpleDiagnostic<ExpectedFunctionBodyOrSemi> {
+struct ExpectedFunctionBodyOrSemi : DiagnosticBase<ExpectedFunctionBodyOrSemi> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected function definition or `;` after function declaration.";
 };
 
-struct ExpectedVariableName : SimpleDiagnostic<ExpectedVariableName> {
+struct ExpectedVariableName : DiagnosticBase<ExpectedVariableName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected pattern in `var` declaration.";
 };
 
-struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
+struct ExpectedParameterName : DiagnosticBase<ExpectedParameterName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected parameter declaration.";
 };
 
-struct ExpectedStructLiteralField
-    : SimpleDiagnostic<ExpectedStructLiteralField> {
+struct ExpectedStructLiteralField : DiagnosticBase<ExpectedStructLiteralField> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
 
   auto Format() -> std::string {
@@ -116,23 +113,23 @@ struct ExpectedStructLiteralField
   bool can_be_value;
 };
 
-struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
+struct UnrecognizedDeclaration : DiagnosticBase<UnrecognizedDeclaration> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unrecognized declaration introducer.";
 };
 
-struct ExpectedCodeBlock : SimpleDiagnostic<ExpectedCodeBlock> {
+struct ExpectedCodeBlock : DiagnosticBase<ExpectedCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected braced code block.";
 };
 
-struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
+struct ExpectedExpression : DiagnosticBase<ExpectedExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected expression.";
 };
 
-struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
+struct ExpectedParenAfter : DiagnosticBase<ExpectedParenAfter> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `(` after `{0}`.";
 
@@ -143,7 +140,7 @@ struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
   TokenKind introducer;
 };
 
-struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
+struct ExpectedCloseParen : DiagnosticBase<ExpectedCloseParen> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unexpected tokens before `)`.";
@@ -153,13 +150,13 @@ struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
 };
 
 struct ExpectedSemiAfterExpression
-    : SimpleDiagnostic<ExpectedSemiAfterExpression> {
+    : DiagnosticBase<ExpectedSemiAfterExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected `;` after expression.";
 };
 
-struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
+struct ExpectedSemiAfter : DiagnosticBase<ExpectedSemiAfter> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `;` after `{0}`.";
 
@@ -170,15 +167,14 @@ struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
   TokenKind preceding;
 };
 
-struct ExpectedIdentifierAfterDot
-    : SimpleDiagnostic<ExpectedIdentifierAfterDot> {
+struct ExpectedIdentifierAfterDot : DiagnosticBase<ExpectedIdentifierAfterDot> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected identifier after `.`.";
 };
 
 struct UnexpectedTokenAfterListElement
-    : SimpleDiagnostic<UnexpectedTokenAfterListElement> {
+    : DiagnosticBase<UnexpectedTokenAfterListElement> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `,` or `{0}`.";
 
@@ -190,7 +186,7 @@ struct UnexpectedTokenAfterListElement
 };
 
 struct BinaryOperatorRequiresWhitespace
-    : SimpleDiagnostic<BinaryOperatorRequiresWhitespace> {
+    : DiagnosticBase<BinaryOperatorRequiresWhitespace> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace missing {0} binary operator.";
@@ -209,8 +205,7 @@ struct BinaryOperatorRequiresWhitespace
   bool has_trailing_space;
 };
 
-struct UnaryOperatorHasWhitespace
-    : SimpleDiagnostic<UnaryOperatorHasWhitespace> {
+struct UnaryOperatorHasWhitespace : DiagnosticBase<UnaryOperatorHasWhitespace> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace is not allowed {0} this unary operator.";
@@ -223,7 +218,7 @@ struct UnaryOperatorHasWhitespace
 };
 
 struct UnaryOperatorRequiresWhitespace
-    : SimpleDiagnostic<UnaryOperatorRequiresWhitespace> {
+    : DiagnosticBase<UnaryOperatorRequiresWhitespace> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace is required {0} this unary operator.";
@@ -236,7 +231,7 @@ struct UnaryOperatorRequiresWhitespace
 };
 
 struct OperatorRequiresParentheses
-    : SimpleDiagnostic<OperatorRequiresParentheses> {
+    : DiagnosticBase<OperatorRequiresParentheses> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Parentheses are required to disambiguate operator precedence.";

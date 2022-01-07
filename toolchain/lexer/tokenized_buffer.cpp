@@ -25,32 +25,32 @@
 
 namespace Carbon {
 
-struct TrailingComment : SimpleDiagnostic<TrailingComment> {
+struct TrailingComment : DiagnosticBase<TrailingComment> {
   static constexpr llvm::StringLiteral ShortName = "syntax-comments";
   static constexpr llvm::StringLiteral Message =
       "Trailing comments are not permitted.";
 };
 
 struct NoWhitespaceAfterCommentIntroducer
-    : SimpleDiagnostic<NoWhitespaceAfterCommentIntroducer> {
+    : DiagnosticBase<NoWhitespaceAfterCommentIntroducer> {
   static constexpr llvm::StringLiteral ShortName = "syntax-comments";
   static constexpr llvm::StringLiteral Message =
       "Whitespace is required after '//'.";
 };
 
-struct UnmatchedClosing : SimpleDiagnostic<UnmatchedClosing> {
+struct UnmatchedClosing : DiagnosticBase<UnmatchedClosing> {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol without a corresponding opening symbol.";
 };
 
-struct MismatchedClosing : SimpleDiagnostic<MismatchedClosing> {
+struct MismatchedClosing : DiagnosticBase<MismatchedClosing> {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol does not match most recent opening symbol.";
 };
 
-struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
+struct UnrecognizedCharacters : DiagnosticBase<UnrecognizedCharacters> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-unrecognized-characters";
   static constexpr llvm::StringLiteral Message =
