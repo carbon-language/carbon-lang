@@ -7,28 +7,40 @@ package(default_visibility = ["//executable_semantics:__pkg__"])
 # These currently have to be a single build rule because of a dependency cycle
 # in printing.
 cc_library(
-    name = "action_frame_and_value",
+    name = "action_and_value",
     srcs = [
         "action.cpp",
-        "frame.cpp",
         "value.cpp",
     ],
     hdrs = [
         "action.h",
-        "frame.h",
         "value.h",
     ],
     deps = [
         ":address",
         ":dictionary",
         ":field_path",
+        ":heap_allocation_interface",
         ":stack",
         "//common:ostream",
+        "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "action_stack",
+    srcs = ["action_stack.cpp"],
+    hdrs = ["action_stack.h"],
+    deps = [
+        ":action_and_value",
+        ":stack",
+        "//common:ostream",
+        "//executable_semantics/ast:statement",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -55,6 +67,8 @@ cc_library(
     hdrs = ["exec_program.h"],
     deps = [
         ":interpreter",
+        ":resolve_control_flow",
+        ":resolve_names",
         ":type_checker",
         "//executable_semantics/ast",
     ],
@@ -74,10 +88,22 @@ cc_library(
     srcs = ["heap.cpp"],
     hdrs = ["heap.h"],
     deps = [
-        ":action_frame_and_value",
+        ":action_and_value",
         ":address",
+        ":heap_allocation_interface",
         "//common:ostream",
+        "//executable_semantics/ast:source_location",
+        "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "heap_allocation_interface",
+    hdrs = ["heap_allocation_interface.h"],
+    deps = [
+        ":address",
+        "//executable_semantics/common:nonnull",
     ],
 )
 
@@ -90,16 +116,45 @@ cc_library(
         "interpreter.h",
     ],
     deps = [
-        ":action_frame_and_value",
+        ":action_and_value",
+        ":action_stack",
         ":address",
         ":heap",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:function_definition",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:tracing_flag",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "resolve_control_flow",
+    srcs = ["resolve_control_flow.cpp"],
+    hdrs = ["resolve_control_flow.h"],
+    deps = [
+        "//common:check",
+        "//executable_semantics/ast",
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:statement",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "resolve_names",
+    srcs = ["resolve_names.cpp"],
+    hdrs = ["resolve_names.h"],
+    deps = [
+        "//common:check",
+        "//executable_semantics/ast",
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:member",
+        "//executable_semantics/ast:pattern",
+        "//executable_semantics/ast:statement",
+        "//executable_semantics/ast:static_scope",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -118,11 +173,11 @@ cc_library(
         ":dictionary",
         ":interpreter",
         "//common:ostream",
+        "//executable_semantics/ast",
+        "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:tracing_flag",
         "@llvm-project//llvm:Support",
     ],
 )

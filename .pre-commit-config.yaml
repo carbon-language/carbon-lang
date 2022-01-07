@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Update versions with:
-#   pre-commit autoupdate --freeze
+#   pre-commit autoupdate --freeze && pre-commit run -a
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
@@ -33,7 +33,7 @@ repos:
       - id: search-and-replace
         files: '\.md$'
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
+    rev: 26cc20f971cad7dee54e1fcccb960b4e19b2bdce # frozen: v1.2.1
     hooks:
       - id: check-copyright
         args:
@@ -77,6 +77,13 @@ repos:
               .*/testdata/.*\.golden
           )$
       - id: check-google-doc-style
+      - id: check-links
+        name: Check links in non-proposal files
+        exclude: ^proposals/.*$
+      - id: check-links
+        name: Check links in proposal files
+        args: ['--anchors-only']
+        files: ^proposals/.*$
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
     rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
@@ -89,26 +96,26 @@ repos:
         name: Format the executable_semantics grammar file
         entry: executable_semantics/syntax/format_grammar.py
         language: python
-        files: ^executable_semantics/syntax/parser.ypp$
+        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 911470a610e47d9da5ea938b0887c3df62819b85 # frozen: 21.9b0
+    rev: 19f6aa8208154de4560ee1e4a3e638e120dcdba5 # frozen: 21.11b1
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: a0f1c385f6a50581983008c8737ca72473ecf3ad
+    rev: fb5e481f35f5a9b32a06ccfc28b8d6dda4525f75
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
         types: [c++]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: 6e24ff01ab7d5e64045599b81c4cd34d6a6a7159 # frozen: v2.4.1
+    rev: f69d0a4007f48ad4f144089973c56f6ecf53a5b5 # frozen: v2.5.0
     hooks:
       - id: prettier
   # Run linters last, as formatters and other checks may fix issues.
   - repo: https://github.com/PyCQA/flake8
-    rev: dcd740bc0ebaf2b3d43e59a0060d157c97de13f3 # frozen: 3.9.2
+    rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
       - id: flake8
 

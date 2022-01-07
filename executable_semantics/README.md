@@ -24,14 +24,19 @@ considered definitive.
 
 The parser is implemented using the flex and bison parser generator tools.
 
--   [`syntax.lpp`](syntax/syntax.lpp) the lexer specification
--   [`syntax.ypp`](syntax/syntax.ypp) the grammar
+-   [`lexer.lpp`](syntax/lexer.lpp) the lexer specification
+-   [`parser.ypp`](syntax/parser.ypp) the grammar
 
 The parser translates program text into an abstract syntax tree (AST), defined
-in the [ast](ast/) subdirectory.
+in the [ast](ast/) subdirectory. The `UnimplementedExpression` node type can be
+used to define new expression syntaxes without defining their semantics, and the
+same techniques can be applied to other kinds of AST nodes as needed. See the
+handling of the `UNIMPL_EXAMPLE` token for an example of how this is done, and
+see [`unimplemented_example_test.cpp`](syntax/unimplemented_example_test.cpp)
+for an example of how to test it.
 
-The [type checker](interpreter/typecheck.h) defines what it means for an AST to
-be a valid program. The type checker prints an error and exits if the AST is
+The [type checker](interpreter/type_checker.h) defines what it means for an AST
+to be a valid program. The type checker prints an error and exits if the AST is
 invalid.
 
 The parser and type checker together specify the static (compile-time)
@@ -179,7 +184,7 @@ The first time increments `x` to `1` and the second time increments `x` to `2`,
 so the expected result of this program is `2`.
 
 ```carbon
-fn main() -> Int {
+fn Main() -> Int {
   var Int: x = 0;
   __continuation k {
     x = x + 1;

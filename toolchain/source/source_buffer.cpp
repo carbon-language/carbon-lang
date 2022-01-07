@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <system_error>
 
+#include "common/check.h"
 #include "llvm/ADT/ScopeExit.h"
 
 namespace Carbon {
@@ -78,8 +79,8 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
   }
 
   buffer.text_ = llvm::StringRef(static_cast<const char*>(mapped_text), size);
-  assert(!buffer.text_.empty() &&
-         "Must not have an empty text when we have mapped data from a file!");
+  CHECK(!buffer.text_.empty())
+      << "Must not have an empty text when we have mapped data from a file!";
   return {std::move(buffer)};
 }
 
@@ -95,7 +96,7 @@ SourceBuffer::~SourceBuffer() {
         munmap(const_cast<void*>(static_cast<const void*>(text_.data())),
                text_.size());
     (void)result;
-    assert(result != -1 && "Unmapping text failed!");
+    CHECK(result != -1) << "Unmapping text failed!";
   }
 }
 

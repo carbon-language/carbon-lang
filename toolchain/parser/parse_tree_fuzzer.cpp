@@ -6,13 +6,14 @@
 #include <cstdint>
 #include <cstring>
 
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
@@ -55,9 +56,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // In the absence of parse errors, we should have exactly as many nodes as
   // tokens.
-  assert(tree.Size() == tokens.Size() && "Unexpected number of tree nodes!");
+  CHECK(tree.Size() == tokens.Size()) << "Unexpected number of tree nodes!";
 
   return 0;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

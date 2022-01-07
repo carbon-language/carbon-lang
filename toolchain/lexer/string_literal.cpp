@@ -4,6 +4,7 @@
 
 #include "toolchain/lexer/string_literal.h"
 
+#include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -16,27 +17,27 @@ namespace Carbon {
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 struct ContentBeforeStringTerminator
-    : SimpleDiagnostic<ContentBeforeStringTerminator> {
+    : DiagnosticBase<ContentBeforeStringTerminator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Only whitespace is permitted before the closing `\"\"\"` of a "
       "multi-line string.";
 };
 
-struct UnicodeEscapeTooLarge : SimpleDiagnostic<UnicodeEscapeTooLarge> {
+struct UnicodeEscapeTooLarge : DiagnosticBase<UnicodeEscapeTooLarge> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Code point specified by `\\u{...}` escape is greater than 0x10FFFF.";
 };
 
-struct UnicodeEscapeSurrogate : SimpleDiagnostic<UnicodeEscapeSurrogate> {
+struct UnicodeEscapeSurrogate : DiagnosticBase<UnicodeEscapeSurrogate> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Code point specified by `\\u{...}` escape is a surrogate character.";
 };
 
 struct UnicodeEscapeMissingBracedDigits
-    : SimpleDiagnostic<UnicodeEscapeMissingBracedDigits> {
+    : DiagnosticBase<UnicodeEscapeMissingBracedDigits> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Escape sequence `\\u` must be followed by a braced sequence of "
@@ -44,30 +45,30 @@ struct UnicodeEscapeMissingBracedDigits
 };
 
 struct HexadecimalEscapeMissingDigits
-    : SimpleDiagnostic<HexadecimalEscapeMissingDigits> {
+    : DiagnosticBase<HexadecimalEscapeMissingDigits> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Escape sequence `\\x` must be followed by two "
       "uppercase hexadecimal digits, for example `\\x0F`.";
 };
 
-struct DecimalEscapeSequence : SimpleDiagnostic<DecimalEscapeSequence> {
+struct DecimalEscapeSequence : DiagnosticBase<DecimalEscapeSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead of "
       "`\\0` if the next character is a digit.";
 };
 
-struct UnknownEscapeSequence {
+struct UnknownEscapeSequence : DiagnosticBase<UnknownEscapeSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
 
-  char first;
-
   auto Format() -> std::string { return llvm::formatv(Message, first).str(); }
+
+  char first;
 };
 
-struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
+struct MismatchedIndentInString : DiagnosticBase<MismatchedIndentInString> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Indentation does not match that of the closing \"\"\" in multi-line "
@@ -75,7 +76,7 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
 };
 
 struct InvalidHorizontalWhitespaceInString
-    : SimpleDiagnostic<InvalidHorizontalWhitespaceInString> {
+    : DiagnosticBase<InvalidHorizontalWhitespaceInString> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Whitespace other than plain space must be expressed with an escape "
@@ -232,7 +233,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> void {
-  assert(!content.empty() && "should have escaped closing delimiter");
+  CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
@@ -351,8 +352,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        assert(contents.front() != ' ' &&
-               "should not have stopped at a plain space");
+        CHECK(contents.front() != ' ')
+            << "should not have stopped at a plain space";
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
@@ -389,8 +390,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
   llvm::StringRef indent =
-      multi_line ? CheckIndent(emitter, text, content) : llvm::StringRef();
-  return ExpandEscapeSequencesAndRemoveIndent(emitter, content, hash_level,
+      multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
+  return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
                                               indent);
 }
 

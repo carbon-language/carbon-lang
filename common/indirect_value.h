@@ -45,43 +45,44 @@ class IndirectValue {
   // std::is_constructible give correct answers.
 
   // Initializes the underlying T object as if by `T()`.
-  IndirectValue() : value(std::make_unique<T>()) {}
+  IndirectValue() : value_(std::make_unique<T>()) {}
 
   // Initializes the underlying T object as if by `T(std::move(value))`.
-  IndirectValue(T value) : value(std::make_unique<T>(std::move(value))) {}
+  // NOLINTNEXTLINE(google-explicit-constructor): Implicit constructor.
+  IndirectValue(T value) : value_(std::make_unique<T>(std::move(value))) {}
 
   // TODO(geoffromer): consider defining implicit conversions from
   // U and IndirectValue<U>, when U is implicitly convertible to T.
 
   IndirectValue(const IndirectValue& other)
-      : value(std::make_unique<T>(*other)) {}
+      : value_(std::make_unique<T>(*other)) {}
 
-  IndirectValue(IndirectValue&& other)
-      : value(std::make_unique<T>(std::move(*other))) {}
+  IndirectValue(IndirectValue&& other) noexcept
+      : value_(std::make_unique<T>(std::move(*other))) {}
 
   auto operator=(const IndirectValue& other) -> IndirectValue& {
-    *value = *other.value;
+    *value_ = *other.value_;
     return *this;
   }
 
-  auto operator=(IndirectValue&& other) -> IndirectValue& {
-    *value = std::move(*other.value);
+  auto operator=(IndirectValue&& other) noexcept -> IndirectValue& {
+    *value_ = std::move(*other.value_);
     return *this;
   }
 
-  auto operator*() -> T& { return *value; }
-  auto operator*() const -> const T& { return *value; }
+  auto operator*() -> T& { return *value_; }
+  auto operator*() const -> const T& { return *value_; }
 
-  auto operator->() -> T* { return value.get(); }
-  auto operator->() const -> const T* { return value.get(); }
+  auto operator->() -> T* { return value_.get(); }
+  auto operator->() const -> const T* { return value_.get(); }
 
   // Returns the address of the stored value.
   //
   // TODO(geoffromer): Consider eliminating this method, which is not
   // present in comparable types like indirect_value<T> or optional<T>,
   // once our APIs are less pointer-centric.
-  auto GetPointer() -> T* { return value.get(); }
-  auto GetPointer() const -> const T* { return value.get(); }
+  auto GetPointer() -> T* { return value_.get(); }
+  auto GetPointer() const -> const T* { return value_.get(); }
 
  private:
   static_assert(std::is_object_v<T>, "T must be an object type");
@@ -91,9 +92,9 @@ class IndirectValue {
       -> IndirectValue<std::decay_t<decltype(callable())>>;
 
   template <typename... Args>
-  IndirectValue(std::unique_ptr<T> value) : value(std::move(value)) {}
+  explicit IndirectValue(std::unique_ptr<T> value) : value_(std::move(value)) {}
 
-  const std::unique_ptr<T> value;
+  const std::unique_ptr<T> value_;
 };
 
 template <typename Callable>

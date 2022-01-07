@@ -5,12 +5,13 @@
 #include <cstdint>
 #include <cstring>
 
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
@@ -50,15 +51,15 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   for (TokenizedBuffer::Token token : buffer.Tokens()) {
     int line_number = buffer.GetLineNumber(token);
     (void)line_number;
-    assert(line_number > 0 && "Invalid line number!");
-    assert(line_number < INT_MAX && "Invalid line number!");
+    CHECK(line_number > 0) << "Invalid line number!";
+    CHECK(line_number < INT_MAX) << "Invalid line number!";
     int column_number = buffer.GetColumnNumber(token);
     (void)column_number;
-    assert(column_number > 0 && "Invalid line number!");
-    assert(column_number < INT_MAX && "Invalid line number!");
+    CHECK(column_number > 0) << "Invalid line number!";
+    CHECK(column_number < INT_MAX) << "Invalid line number!";
   }
 
   return 0;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

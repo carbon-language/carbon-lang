@@ -45,10 +45,10 @@ class ParseNodeKind {
   ParseNodeKind() = delete;
 
   friend auto operator==(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
-    return lhs.kind == rhs.kind;
+    return lhs.kind_ == rhs.kind_;
   }
   friend auto operator!=(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
-    return lhs.kind != rhs.kind;
+    return lhs.kind_ != rhs.kind_;
   }
 
   // Gets a friendly name for the token for logging or debugging.
@@ -58,12 +58,12 @@ class ParseNodeKind {
   // to enable usage in `switch` and `case`. The enum remains private and
   // nothing else should be using this.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator KindEnum() const { return kind; }
+  constexpr operator KindEnum() const { return kind_; }
 
  private:
-  constexpr explicit ParseNodeKind(KindEnum k) : kind(k) {}
+  constexpr explicit ParseNodeKind(KindEnum k) : kind_(k) {}
 
-  KindEnum kind;
+  KindEnum kind_;
 };
 
 // We expect the parse node kind to fit compactly into 8 bits.

@@ -129,10 +129,25 @@ print("Found %d generated files..." % (len(generated_file_labels),))
 print("Building the generated files so that tools can find them...")
 subprocess.run([bazel, "build", "--keep_going"] + generated_file_labels)
 
+# Also build some specific targets that depend on external packages so those are
+# fetched and linked into the Bazel execution root. We try to use cheap files
+# where possible, but in some cases need to create a virtual include directory.
+subprocess.run(
+    [
+        bazel,
+        "build",
+        "--keep_going",
+        "@llvm-project//llvm:LICENSE.TXT",
+        "@com_google_absl//:LICENSE",
+        "@com_google_googletest//:LICENSE",
+        "@com_github_google_benchmark//:benchmark",
+    ]
+)
+
 
 # Manually translate the label to a user friendly path into the Bazel output
 # symlinks.
-def _label_to_path(s):
+def _label_to_path(s: str) -> Path:
     # Map external repositories to their part of the output tree.
     s = re.sub(r"^@([^/]+)//", r"bazel-bin/external/\1/", s)
     # Map this repository to the root of the output tree.

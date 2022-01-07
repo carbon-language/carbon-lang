@@ -5,11 +5,11 @@
 #ifndef TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
 #define TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
 
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
+
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
-namespace Testing {
+namespace Carbon::Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
@@ -35,7 +35,7 @@ MATCHER_P2(DiagnosticAt, line, column, "") {
   return true;
 }
 
-auto DiagnosticLevel(Diagnostic::Level level) -> auto {
+inline auto DiagnosticLevel(Diagnostic::Level level) -> auto {
   return testing::Field(&Diagnostic::level, level);
 }
 
@@ -51,7 +51,6 @@ auto DiagnosticShortName(Matcher&& inner_matcher) -> auto {
                         std::forward<Matcher&&>(inner_matcher));
 }
 
-}  // namespace Testing
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // TOOLCHAIN_DIAGNOSTICS_MOCKS_H_

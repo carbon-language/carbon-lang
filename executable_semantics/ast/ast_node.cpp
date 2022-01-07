@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "executable_semantics/common/tracing_flag.h"
+#include "executable_semantics/ast/ast_node.h"
 
 namespace Carbon {
 
-bool tracing_output = false;
+AstNode::~AstNode() = default;
 
 }  // namespace Carbon
