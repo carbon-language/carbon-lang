@@ -92,7 +92,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`final` impls](#final-impls)
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
     -   [Comparison to Rust](#comparison-to-rust)
--   [Interface defaults](#interface-defaults)
+-   [Interface members with definitions](#interface-members-with-definitions)
+    -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -4271,7 +4272,14 @@ differences between the Carbon and Rust plans:
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
 
-## Interface defaults
+## Interface members with definitions
+
+Interfaces may provide definitions for members, such as a function body for an
+associated function or method or a value for an associated constant. If these
+definitions may be overridden in implementations, they are called "defaults."
+Otherwise they are called "final members."
+
+### Interface defaults
 
 An interface may provide a default implementation of methods in terms of other
 methods in the interface.
@@ -4325,6 +4333,16 @@ constraint AddDefault {
 
 Note also that the parenthesis are required after `Add`, even when all
 parameters are left as their default values.
+
+More generally, default expressions may reference other associated types or
+`Self` as parameters to type constructors. For example:
+
+```
+interface Iterator {
+  let Element:! Type;
+  let Pointer:! Type = Element*;
+}
+```
 
 Carbon does **not** support providing a default implementation of a required
 interface.
