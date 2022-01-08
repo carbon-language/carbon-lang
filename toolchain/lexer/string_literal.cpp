@@ -157,9 +157,10 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
       case '\"': {
         if (source_text.consume_front(terminator)) {
           const char* content_end = source_text.begin();
-          auto text = llvm::StringRef(text_begin,
-                                      content_end - text_begin + terminator.size());
-          auto content = llvm::StringRef(content_begin, content_end - content_begin);
+          auto text = llvm::StringRef(
+              text_begin, content_end - text_begin + terminator.size());
+          auto content =
+              llvm::StringRef(content_begin, content_end - content_begin);
           return LexedStringLiteral(text, content, hash_level, multi_line);
         }
         break;
