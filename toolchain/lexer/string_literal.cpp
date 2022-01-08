@@ -95,7 +95,7 @@ static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
-  size_t prefix_end =
+  auto prefix_end =
       source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
   if (prefix_end == llvm::StringRef::npos || source_text[prefix_end] != '\n') {
     return 0;
@@ -107,8 +107,8 @@ static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
 
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
-  size_t cursor = 0;
-  const size_t source_text_size = source_text.size();
+  int64_t cursor = 0;
+  const int64_t source_text_size = source_text.size();
 
   // Determine the number of hashes prefixing.
   while (cursor < source_text_size && source_text[cursor] == '#') {
