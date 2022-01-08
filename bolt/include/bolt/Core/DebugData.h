@@ -498,6 +498,8 @@ public:
     Patch(uint32_t O, DebugPatchKind K) : Offset(O), Kind(K) {}
     DebugPatchKind getKind() const { return Kind; }
 
+    virtual ~Patch(){};
+
     static bool classof(const Patch *Writer) {
       return Writer->getKind() == DebugPatchKind::PatchBaseClass;
     }
