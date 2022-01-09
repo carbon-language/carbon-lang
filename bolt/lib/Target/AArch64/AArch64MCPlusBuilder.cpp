@@ -676,17 +676,10 @@ public:
   }
 
   IndirectBranchType analyzeIndirectBranch(
-     MCInst &Instruction,
-     InstructionIterator Begin,
-     InstructionIterator End,
-     const unsigned PtrSize,
-     MCInst *&MemLocInstrOut,
-     unsigned &BaseRegNumOut,
-     unsigned &IndexRegNumOut,
-     int64_t &DispValueOut,
-     const MCExpr *&DispExprOut,
-     MCInst *&PCRelBaseOut
-  ) const override {
+      MCInst &Instruction, InstructionIterator Begin, InstructionIterator End,
+      const unsigned PtrSize, MCInst *&MemLocInstrOut, unsigned &BaseRegNumOut,
+      unsigned &IndexRegNumOut, int64_t &DispValueOut,
+      const MCExpr *&DispExprOut, MCInst *&PCRelBaseOut) const override {
     MemLocInstrOut = nullptr;
     BaseRegNumOut = AArch64::NoRegister;
     IndexRegNumOut = AArch64::NoRegister;
@@ -699,7 +692,7 @@ public:
     MCInst *MemLocInstr = nullptr;
 
     // Analyze the memory location.
-    int64_t       ScaleValue, DispValue;
+    int64_t ScaleValue, DispValue;
     const MCExpr *DispExpr;
 
     DenseMap<const MCInst *, SmallVector<llvm::MCInst *, 4>> UDChain =
@@ -987,14 +980,11 @@ public:
 
     --I;
     Address -= 4;
-    if (I == Begin ||
-        I->getOpcode() != AArch64::ADDXri ||
-        MCPlus::getNumPrimeOperands(*I) < 3 ||
-        !I->getOperand(0).isReg() ||
+    if (I == Begin || I->getOpcode() != AArch64::ADDXri ||
+        MCPlus::getNumPrimeOperands(*I) < 3 || !I->getOperand(0).isReg() ||
         !I->getOperand(1).isReg() ||
         I->getOperand(0).getReg() != AArch64::X16 ||
-        I->getOperand(1).getReg() != AArch64::X16 ||
-        !I->getOperand(2).isImm())
+        I->getOperand(1).getReg() != AArch64::X16 || !I->getOperand(2).isImm())
       return false;
     TargetLowBits = &*I;
     uint64_t Addr = I->getOperand(2).getImm() & 0xFFF;
@@ -1002,10 +992,8 @@ public:
     --I;
     Address -= 4;
     if (I->getOpcode() != AArch64::ADRP ||
-        MCPlus::getNumPrimeOperands(*I) < 2 ||
-        !I->getOperand(0).isReg() ||
-        !I->getOperand(1).isImm() ||
-        I->getOperand(0).getReg() != AArch64::X16)
+        MCPlus::getNumPrimeOperands(*I) < 2 || !I->getOperand(0).isReg() ||
+        !I->getOperand(1).isImm() || I->getOperand(0).getReg() != AArch64::X16)
       return false;
     TargetHiBits = &*I;
     Addr |= (Address + ((int64_t)I->getOperand(1).getImm() << 12)) &
