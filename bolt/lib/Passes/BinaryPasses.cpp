@@ -746,7 +746,7 @@ uint64_t fixDoubleJumps(BinaryFunction &Function, bool MarkInvalid) {
     if (((!Succ || &BB == Succ) && !IsTailCall) || (IsTailCall && !SuccSym))
       continue;
 
-    std::vector<BinaryBasicBlock *> Preds{BB.pred_begin(), BB.pred_end()};
+    std::vector<BinaryBasicBlock *> Preds = {BB.pred_begin(), BB.pred_end()};
 
     for (BinaryBasicBlock *Pred : Preds) {
       if (Pred->isLandingPad())

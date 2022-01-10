@@ -87,10 +87,10 @@ private:
   MCSymbol *Label{nullptr};
 
   /// [Begin, End) address range for this block in the output binary.
-  std::pair<uint32_t, uint32_t> OutputAddressRange{0, 0};
+  std::pair<uint32_t, uint32_t> OutputAddressRange = {0, 0};
 
   /// Original offset range of the basic block in the function.
-  std::pair<uint32_t, uint32_t> InputRange{INVALID_OFFSET, INVALID_OFFSET};
+  std::pair<uint32_t, uint32_t> InputRange = {INVALID_OFFSET, INVALID_OFFSET};
 
   /// Map input offset (from function start) of an instruction to an output
   /// symbol. Enables writing BOLT address translation tables used for mapping
