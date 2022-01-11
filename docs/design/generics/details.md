@@ -1898,13 +1898,14 @@ interface NSpacePoint {
 }
 ```
 
-Implementations of `NSpacePoint` for different types might have different values
-for `N`:
+An implementation of an interface must specify values for all associated
+constants that [do not have default values](#interface-defaults) with a
+[`where` clause](#where-constraints). For example, implementations of
+`NSpacePoint` for different types might have different values for `N`:
 
 ```
 class Point2D {
-  impl as NSpacePoint {
-    let N:! i32 = 2;
+  impl as NSpacePoint where .N = 2 {
     fn Get[addr me: Self*](i: i32) -> f64 { ... }
     fn Set[addr me: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr me: Self*](value: Array(f64, 2)) { ... }
@@ -1912,8 +1913,7 @@ class Point2D {
 }
 
 class Point3D {
-  impl as NSpacePoint {
-    let N:! i32 = 3;
+  impl as NSpacePoint where .N = 3 {
     fn Get[addr me: Self*](i: i32) -> f64 { ... }
     fn Set[addr me: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr me: Self*](value: Array(f64, 3)) { ... }
@@ -1921,7 +1921,9 @@ class Point3D {
 }
 ```
 
-And these values may be accessed as members of the type:
+Multiple assignments to associated types may be joined using the `and` keyword.
+
+These values may be accessed as members of the type:
 
 ```
 Assert(Point2D.N == 2);
@@ -2019,9 +2021,8 @@ class DynamicArray(T:! Type) {
   fn Insert[addr me: Self*](pos: IteratorType, value: T);
   fn Remove[addr me: Self*](pos: IteratorType);
 
-  impl as StackAssociatedType {
-    // Set the associated type `ElementType` to `T`.
-    let ElementType:! Type = T;
+  // Set the associated type `ElementType` to `T`.
+  impl as StackAssociatedType where .ElementType = T {
     fn Push[addr me: Self*](value: ElementType) {
       me->Insert(me->End(), value);
     }
@@ -2440,6 +2441,10 @@ constraint Point2DInterface {
 }
 ```
 
+This syntax is also used to specify the values of
+[associated constants](#associated-constants) when implementing an interface for
+a type.
+
 **Concern:** Using `=` for this use case is not consistent with other `where`
 clauses that write a boolean expression that evaluates to `true` when the
 constraint is satisfied.
@@ -2483,6 +2488,9 @@ constraint IntStack {
   extends Stack where .ElementType = i32;
 }
 ```
+
+This syntax is also used to specify the values of
+[associated types](#associated-types) when implementing an interface for a type.
 
 ##### Equal generic types
 
@@ -3532,8 +3540,7 @@ lexically in the class' scope:
 
 ```
 class Vector(T:! Type) {
-  impl as Iterable {
-    let ElementType:! Type = T;
+  impl as Iterable where .ElementType = T {
     ...
   }
 }
@@ -3543,8 +3550,7 @@ This is equivalent to naming the type between `impl` and `as`:
 
 ```
 class Vector(T:! Type) {
-  impl Vector(T) as Iterable {
-    let ElementType:! Type = T;
+  impl Vector(T) as Iterable where .ElementType = T {
     ...
   }
 }
@@ -3554,13 +3560,13 @@ An impl may be declared [external](#external-impl) by adding an `external`
 keyword before `impl`. External impls may also be declared out-of-line:
 
 ```
-external impl [T:! Type] Vector(T) as Iterable {
-  let ElementType:! Type = T;
+external impl [T:! Type] Vector(T) as Iterable
+    where .ElementType = T {
   ...
 }
 // This syntax is also allowed:
-external impl Vector(T:! Type) as Iterable {
-  let ElementType:! Type = T;
+external impl Vector(T:! Type) as Iterable
+    where .ElementType = T {
   ...
 }
 ```
@@ -3756,9 +3762,8 @@ where blanket impls arise:
 -   `T` implements `CommonType(T)` for all `T`
 
     ```
-    external impl [T:! Type] T as CommonType(T) {
-      let Result:! auto = T;
-    }
+    external impl [T:! Type] T as CommonType(T)
+        where .Result = T { }
     ```
 
     This means that every type is the common type with itself.
@@ -3993,12 +3998,10 @@ interface True {}
 impl Y as True {}
 interface Z(T:! Type) { let Cond:! Type; }
 match_first {
-  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U) {
-    let Cond:! Type = N;
-  }
-  impl [T:! Type, U:! Type] T as Z(U) {
-    let Cond:! Type = Y;
-  }
+  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U)
+      where .Cond = N { }
+  impl [T:! Type, U:! Type] T as Z(U)
+      where .Cond = Y { }
 }
 ```
 
@@ -4024,15 +4027,12 @@ class B {}
 class C {}
 interface D(T:! Type) { let Cond:! Type; }
 match_first {
-  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U) {
-    let Cond:! Type = C;
-  }
-  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U) {
-    let Cond:! Type = B;
-  }
-  impl [T:! Type, U:! Type] T as D(U) {
-    let Cond:! Type = A;
-  }
+  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U)
+      where .Cond = C { }
+  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U)
+      where .Cond = B { }
+  impl [T:! Type, U:! Type] T as D(U)
+      where .Cond = A { }
 }
 ```
 
@@ -4119,15 +4119,13 @@ interface Deref {
 // Types implementing `Deref`
 class Ptr(T:! Type) {
   ...
-  external impl as Deref {
-    let Result:! Type = T;
+  external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
 class Optional(T:! Type) {
   ...
-  external impl as Deref {
-    let Result:! Type = T;
+  external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
@@ -4157,16 +4155,14 @@ To mark an impl as not able to be specialized, prefix it with the keyword
 class Ptr(T:! Type) {
   ...
   // Note: added `final`
-  final external impl as Deref {
-    let Result:! Type = T;
+  final external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
 class Optional(T:! Type) {
   ...
   // Note: added `final`
-  final external impl as Deref {
-    let Result:! Type = T;
+  final external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }

@@ -654,11 +654,11 @@ class ListIterator(ElementType:! Type) {
 }
 class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
-  let IteratorType:! Iterator = ListIterator(ElementType);
-  fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
-    ...
+  impl as Container where .IteratorType = ListIterator(ElementType) {
+    fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
+      ...
+    }
   }
-  impl as Container;
 }
 ```
 
@@ -681,18 +681,9 @@ interface Addable(T:! Type) {
 An `i32` value might support addition with `i32`, `u16`, and `f64` values.
 
 ```
-impl i32 as Addable(i32) {
-  let ResultType:! Type = i32;
-  // ...
-}
-impl i32 as Addable(u16) {
-  let ResultType:! Type = i32;
-  // ...
-}
-impl i32 as Addable(f64) {
-  let ResultType:! Type = f64;
-  // ...
-}
+impl i32 as Addable(i32) where .ResultType = i32 { ... }
+impl i32 as Addable(u16) where .ResultType = i32 { ... }
+impl i32 as Addable(f64) where .ResultType = f64 { ... }
 ```
 
 To write a generic function requiring a parameter to be `Addable`, there needs
