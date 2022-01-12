@@ -110,6 +110,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
     -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
+    -   [Separate declaration and definition of impl](#separate-declaration-and-definition-of-impl)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -4390,6 +4391,14 @@ between multiple generic integer parameters. For example, if `J < K` and
 secondary syntactic concern about how to write this kind of constraint on a
 parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 
+### Separate declaration and definition of impl
+
+There is a desire to support a short declaration that a type implements an
+interface without giving a full definition of that implementation for API files.
+Everything needed for type checking is provided in the interface definition,
+except for the assignments to associated constants and types, and so those must
+be included in the declaration as well.
+
 ## References
 
 -   [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
@@ -4399,3 +4408,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+-   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
