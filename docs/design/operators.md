@@ -14,7 +14,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## TODO
+## Overview
+
+Carbon operators are:
+
+| Category   | Operator | Function       |
+| ---------- | -------- | -------------- |
+| Arithmetic | \*       | Multiplication |
 
 This is a skeletal design, added to support [the overview](README.md). It should
 not be treated as accepted by the core team; rather, it is a placeholder until
