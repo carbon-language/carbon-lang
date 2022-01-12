@@ -26,8 +26,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Functions are the core building block for applications. Carbon's basic function
 syntax is:
 
-<!-- The \ is for https://github.com/prettier/prettier/issues/9099 -->
-
 -   _arg#_: _identifier_ `:` _expression_
 -   _return-clause_: _[_ `->` _< expression |_ `auto` _> ]_
 -   _signature_: `fn` _identifier_ `(` _[ arg1_ `,` _arg2_ `,` _... ]_ `)`
