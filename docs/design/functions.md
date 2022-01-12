@@ -27,10 +27,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Functions are the core building block for applications. Carbon's basic function
 syntax is:
 
--   _arg#_: _identifier_ `:` _expression_
+-   _parameter_: _identifier_ `:` _expression_
+-   _parameter-list_: _[ parameter_ `,` _parameter_ `,` _... ]_
 -   _return-clause_: _[_ `->` _< expression |_ `auto` _> ]_
--   _signature_: `fn` _identifier_ `(` _[ arg1_ `,` _arg2_ `,` _... ]_ `)`
-    _return-clause_
+-   _signature_: `fn` _identifier_ `(` _parameter-list_ `)` _return-clause_
 -   _function-definition_: _signature_ `{` _statements_ `}`
 -   _function-declaration_: _signature_ `;`
 -   _function-call_: _identifier_ `(` _[ expression_ `,` _expression_ `,` _...
