@@ -133,10 +133,13 @@ http_archive(
 # LLVM libraries
 ###############################################################################
 
-new_local_repository(
+llvm_version = "dbf0d8118ccbfd09def0974bf671c39e94d0be93"
+http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
-    path = "third_party/llvm-project",
+    sha256 = "16b368284aabf4bb94bbd761a009401811d99e3288fb346877072f32926f33db",
+    strip_prefix = "llvm-project-%s" % llvm_version,
+    urls = ["https://github.com/llvm/llvm-project/archive/%s.zip" % llvm_version],
 )
 
 load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
