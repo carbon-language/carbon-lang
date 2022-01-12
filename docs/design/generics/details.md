@@ -3860,6 +3860,8 @@ parameters are replaced the declarations are normalized as follows:
     between the `impl` and `as` keywords if the type is left out.
 -   Pointer types `T*` are replaced with `Ptr(T)`.
 -   The `external` keyword is removed, if present.
+-   Any `where` clauses that are setting associated constants or types are
+    removed.
 
 The type structure will always contain a single interface name, which is the
 name of the interface being implemented, and some number of type names. Type
