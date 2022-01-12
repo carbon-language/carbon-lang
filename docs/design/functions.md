@@ -145,6 +145,15 @@ Here, `Add(1, 2)` is a function call expression. `Add` refers to the function
 definition's identifier. The parenthesized arguments `(1, 2)` are passed to the
 `a` and `b` parameters of `Add`.
 
+## Advanced functions
+
+Other designs build upon basic function syntax to add advanced features:
+
+-   [Generic functions](generics/overview.md#generic-functions) adds support for
+    deduced parameters and generic type parameters.
+-   [Class member functions](classes.md#member-functions) adds support for
+    methods and class functions.
+
 ## Alternatives considered
 
 -   [Function keyword](/proposals/p0438.md#function-keyword)
