@@ -101,6 +101,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/iterator.h"
@@ -132,7 +133,6 @@ struct InformationCache;
 struct AAIsDead;
 struct AttributorCallGraph;
 
-class AAManager;
 class AAResults;
 class Function;
 
@@ -172,7 +172,8 @@ combineOptionalValuesInAAValueLatice(const Optional<Value *> &A,
                                      const Optional<Value *> &B, Type *Ty);
 
 /// Return the initial value of \p Obj with type \p Ty if that is a constant.
-Constant *getInitialValueForObj(Value &Obj, Type &Ty);
+Constant *getInitialValueForObj(Value &Obj, Type &Ty,
+                                const TargetLibraryInfo *TLI);
 
 /// Collect all potential underlying objects of \p Ptr at position \p CtxI in
 /// \p Objects. Assumed information is used and dependences onto \p QueryingAA
@@ -591,7 +592,7 @@ struct IRPosition {
 
     LLVMContext &Ctx = getAnchorValue().getContext();
     for (Attribute::AttrKind AK : AKs)
-      AttrList = AttrList.removeAttribute(Ctx, getAttrIdx(), AK);
+      AttrList = AttrList.removeAttributeAtIndex(Ctx, getAttrIdx(), AK);
 
     if (CB)
       CB->setAttributes(AttrList);
@@ -1622,10 +1623,17 @@ public:
   ///
   /// This method will evaluate \p Pred on all (transitive) uses of the
   /// associated value and return true if \p Pred holds every time.
+  /// If uses are skipped in favor of equivalent ones, e.g., if we look through
+  /// memory, the \p EquivalentUseCB will be used to give the caller an idea
+  /// what original used was replaced by a new one (or new ones). The visit is
+  /// cut short if \p EquivalentUseCB returns false and the function will return
+  /// false as well.
   bool checkForAllUses(function_ref<bool(const Use &, bool &)> Pred,
                        const AbstractAttribute &QueryingAA, const Value &V,
                        bool CheckBBLivenessOnly = false,
-                       DepClassTy LivenessDepClass = DepClassTy::OPTIONAL);
+                       DepClassTy LivenessDepClass = DepClassTy::OPTIONAL,
+                       function_ref<bool(const Use &OldU, const Use &NewU)>
+                           EquivalentUseCB = nullptr);
 
   /// Emit a remark generically.
   ///
@@ -2353,11 +2361,11 @@ private:
 };
 
 /// Simple wrapper for a single bit (boolean) state.
-struct BooleanState : public IntegerStateBase<bool, 1, 0> {
-  using super = IntegerStateBase<bool, 1, 0>;
+struct BooleanState : public IntegerStateBase<bool, true, false> {
+  using super = IntegerStateBase<bool, true, false>;
   using base_t = IntegerStateBase::base_t;
 
-  BooleanState() : super() {}
+  BooleanState() {}
   BooleanState(base_t Assumed) : super(Assumed) {}
 
   /// Set the assumed value to \p Value but never below the known one.
@@ -2511,6 +2519,139 @@ struct IntegerRangeState : public AbstractState {
     return *this;
   }
 };
+
+/// Simple state for a set.
+///
+/// This represents a state containing a set of values. The interface supports
+/// modelling sets that contain all possible elements. The state's internal
+/// value is modified using union or intersection operations.
+template <typename BaseTy> struct SetState : public AbstractState {
+  /// A wrapper around a set that has semantics for handling unions and
+  /// intersections with a "universal" set that contains all elements.
+  struct SetContents {
+    /// Creates a universal set with no concrete elements or an empty set.
+    SetContents(bool Universal) : Universal(Universal) {}
+
+    /// Creates a non-universal set with concrete values.
+    SetContents(const DenseSet<BaseTy> &Assumptions)
+        : Universal(false), Set(Assumptions) {}
+
+    SetContents(bool Universal, const DenseSet<BaseTy> &Assumptions)
+        : Universal(Universal), Set(Assumptions) {}
+
+    const DenseSet<BaseTy> &getSet() const { return Set; }
+
+    bool isUniversal() const { return Universal; }
+
+    bool empty() const { return Set.empty() && !Universal; }
+
+    /// Finds A := A ^ B where A or B could be the "Universal" set which
+    /// contains every possible attribute. Returns true if changes were made.
+    bool getIntersection(const SetContents &RHS) {
+      bool IsUniversal = Universal;
+      unsigned Size = Set.size();
+
+      // A := A ^ U = A
+      if (RHS.isUniversal())
+        return false;
+
+      // A := U ^ B = B
+      if (Universal)
+        Set = RHS.getSet();
+      else
+        set_intersect(Set, RHS.getSet());
+
+      Universal &= RHS.isUniversal();
+      return IsUniversal != Universal || Size != Set.size();
+    }
+
+    /// Finds A := A u B where A or B could be the "Universal" set which
+    /// contains every possible attribute. returns true if changes were made.
+    bool getUnion(const SetContents &RHS) {
+      bool IsUniversal = Universal;
+      unsigned Size = Set.size();
+
+      // A := A u U = U = U u B
+      if (!RHS.isUniversal() && !Universal)
+        set_union(Set, RHS.getSet());
+
+      Universal |= RHS.isUniversal();
+      return IsUniversal != Universal || Size != Set.size();
+    }
+
+  private:
+    /// Indicates if this set is "universal", containing every possible element.
+    bool Universal;
+
+    /// The set of currently active assumptions.
+    DenseSet<BaseTy> Set;
+  };
+
+  SetState() : Known(false), Assumed(true), IsAtFixedpoint(false) {}
+
+  /// Initializes the known state with an initial set and initializes the
+  /// assumed state as universal.
+  SetState(const DenseSet<BaseTy> &Known)
+      : Known(Known), Assumed(true), IsAtFixedpoint(false) {}
+
+  /// See AbstractState::isValidState()
+  bool isValidState() const override { return !Assumed.empty(); }
+
+  /// See AbstractState::isAtFixpoint()
+  bool isAtFixpoint() const override { return IsAtFixedpoint; }
+
+  /// See AbstractState::indicateOptimisticFixpoint(...)
+  ChangeStatus indicateOptimisticFixpoint() override {
+    IsAtFixedpoint = true;
+    Known = Assumed;
+    return ChangeStatus::UNCHANGED;
+  }
+
+  /// See AbstractState::indicatePessimisticFixpoint(...)
+  ChangeStatus indicatePessimisticFixpoint() override {
+    IsAtFixedpoint = true;
+    Assumed = Known;
+    return ChangeStatus::CHANGED;
+  }
+
+  /// Return the known state encoding.
+  const SetContents &getKnown() const { return Known; }
+
+  /// Return the assumed state encoding.
+  const SetContents &getAssumed() const { return Assumed; }
+
+  /// Returns if the set state contains the element.
+  bool setContains(const BaseTy &Elem) const {
+    return Assumed.getSet().contains(Elem) || Known.getSet().contains(Elem);
+  }
+
+  /// Performs the set intersection between this set and \p RHS. Returns true if
+  /// changes were made.
+  bool getIntersection(const SetContents &RHS) {
+    unsigned SizeBefore = Assumed.getSet().size();
+
+    // Get intersection and make sure that the known set is still a proper
+    // subset of the assumed set. A := K u (A ^ R).
+    Assumed.getIntersection(RHS);
+    Assumed.getUnion(Known);
+
+    return SizeBefore != Assumed.getSet().size();
+  }
+
+  /// Performs the set union between this set and \p RHS. Returns true if
+  /// changes were made.
+  bool getUnion(const SetContents &RHS) { return Assumed.getUnion(RHS); }
+
+private:
+  /// The set of values known for this state.
+  SetContents Known;
+
+  /// The set of assumed values for this state.
+  SetContents Assumed;
+
+  bool IsAtFixedpoint;
+};
+
 /// Helper struct necessary as the modular build fails if the virtual method
 /// IRAttribute::manifest is defined in the Attributor.cpp.
 struct IRAttributeManifest {
@@ -3413,7 +3554,7 @@ struct AADereferenceable
 };
 
 using AAAlignmentStateType =
-    IncIntegerState<uint32_t, Value::MaximumAlignment, 1>;
+    IncIntegerState<uint64_t, Value::MaximumAlignment, 1>;
 /// An abstract interface for all align attributes.
 struct AAAlign : public IRAttribute<
                      Attribute::Alignment,
@@ -3421,10 +3562,10 @@ struct AAAlign : public IRAttribute<
   AAAlign(const IRPosition &IRP, Attributor &A) : IRAttribute(IRP) {}
 
   /// Return assumed alignment.
-  unsigned getAssumedAlign() const { return getAssumed(); }
+  uint64_t getAssumedAlign() const { return getAssumed(); }
 
   /// Return known alignment.
-  unsigned getKnownAlign() const { return getKnown(); }
+  uint64_t getKnownAlign() const { return getKnown(); }
 
   /// See AbstractAttribute::getName()
   const std::string getName() const override { return "AAAlign"; }
@@ -3795,7 +3936,7 @@ struct AAMemoryLocation
   /// Return true if we assume that the associated functions has no observable
   /// accesses.
   bool isAssumedReadNone() const {
-    return isAssumed(NO_LOCATIONS) | isAssumedStackOnly();
+    return isAssumed(NO_LOCATIONS) || isAssumedStackOnly();
   }
 
   /// Return true if we know that the associated functions has at most
@@ -3939,19 +4080,19 @@ struct AAValueConstantRange
   static AAValueConstantRange &createForPosition(const IRPosition &IRP,
                                                  Attributor &A);
 
-  /// Return an assumed range for the assocaited value a program point \p CtxI.
+  /// Return an assumed range for the associated value a program point \p CtxI.
   /// If \p I is nullptr, simply return an assumed range.
   virtual ConstantRange
   getAssumedConstantRange(Attributor &A,
                           const Instruction *CtxI = nullptr) const = 0;
 
-  /// Return a known range for the assocaited value at a program point \p CtxI.
+  /// Return a known range for the associated value at a program point \p CtxI.
   /// If \p I is nullptr, simply return a known range.
   virtual ConstantRange
   getKnownConstantRange(Attributor &A,
                         const Instruction *CtxI = nullptr) const = 0;
 
-  /// Return an assumed constant for the assocaited value a program point \p
+  /// Return an assumed constant for the associated value a program point \p
   /// CtxI.
   Optional<ConstantInt *>
   getAssumedConstantInt(Attributor &A,
@@ -4454,6 +4595,9 @@ struct AAFunctionReachability
   /// If the function represented by this possition can reach \p Fn.
   virtual bool canReach(Attributor &A, Function *Fn) const = 0;
 
+  /// Can \p CB reach \p Fn
+  virtual bool canReach(Attributor &A, CallBase &CB, Function *Fn) const = 0;
+
   /// Create an abstract attribute view for the position \p IRP.
   static AAFunctionReachability &createForPosition(const IRPosition &IRP,
                                                    Attributor &A);
@@ -4598,6 +4742,40 @@ struct AAPointerInfo : public AbstractAttribute {
       StoreInst &SI, function_ref<bool(const Access &, bool)> CB) const = 0;
 
   /// This function should return true if the type of the \p AA is AAPointerInfo
+  static bool classof(const AbstractAttribute *AA) {
+    return (AA->getIdAddr() == &ID);
+  }
+
+  /// Unique ID (due to the unique address)
+  static const char ID;
+};
+
+/// An abstract attribute for getting assumption information.
+struct AAAssumptionInfo
+    : public StateWrapper<SetState<StringRef>, AbstractAttribute,
+                          DenseSet<StringRef>> {
+  using Base =
+      StateWrapper<SetState<StringRef>, AbstractAttribute, DenseSet<StringRef>>;
+
+  AAAssumptionInfo(const IRPosition &IRP, Attributor &A,
+                   const DenseSet<StringRef> &Known)
+      : Base(IRP, Known) {}
+
+  /// Returns true if the assumption set contains the assumption \p Assumption.
+  virtual bool hasAssumption(const StringRef Assumption) const = 0;
+
+  /// Create an abstract attribute view for the position \p IRP.
+  static AAAssumptionInfo &createForPosition(const IRPosition &IRP,
+                                             Attributor &A);
+
+  /// See AbstractAttribute::getName()
+  const std::string getName() const override { return "AAAssumptionInfo"; }
+
+  /// See AbstractAttribute::getIdAddr()
+  const char *getIdAddr() const override { return &ID; }
+
+  /// This function should return true if the type of the \p AA is
+  /// AAAssumptionInfo
   static bool classof(const AbstractAttribute *AA) {
     return (AA->getIdAddr() == &ID);
   }

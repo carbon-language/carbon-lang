@@ -18,13 +18,18 @@
 
 namespace Fortran::evaluate {
 
-// Constant expression predicate IsConstantExpr().
+// Constant expression predicates IsConstantExpr() & IsScopeInvariantExpr().
 // This code determines whether an expression is a "constant expression"
 // in the sense of section 10.1.12.  This is not the same thing as being
 // able to fold it (yet) into a known constant value; specifically,
 // the expression may reference derived type kind parameters whose values
 // are not yet known.
-class IsConstantExprHelper : public AllTraverse<IsConstantExprHelper, true> {
+//
+// The variant form (IsScopeInvariantExpr()) also accepts symbols that are
+// INTENT(IN) dummy arguments without the VALUE attribute.
+template <bool INVARIANT>
+class IsConstantExprHelper
+    : public AllTraverse<IsConstantExprHelper<INVARIANT>, true> {
 public:
   using Base = AllTraverse<IsConstantExprHelper, true>;
   IsConstantExprHelper() : Base{*this} {}
@@ -36,12 +41,15 @@ public:
   }
 
   bool operator()(const TypeParamInquiry &inq) const {
-    return semantics::IsKindTypeParameter(inq.parameter());
+    return INVARIANT || semantics::IsKindTypeParameter(inq.parameter());
   }
   bool operator()(const semantics::Symbol &symbol) const {
     const auto &ultimate{GetAssociationRoot(symbol)};
     return IsNamedConstant(ultimate) || IsImpliedDoIndex(ultimate) ||
-        IsInitialProcedureTarget(ultimate);
+        IsInitialProcedureTarget(ultimate) ||
+        ultimate.has<semantics::TypeParamDetails>() ||
+        (INVARIANT && IsIntentIn(symbol) &&
+            !symbol.attrs().test(semantics::Attr::VALUE));
   }
   bool operator()(const CoarrayRef &) const { return false; }
   bool operator()(const semantics::ParamValue &param) const {
@@ -72,7 +80,12 @@ public:
   }
 
   bool operator()(const Constant<SomeDerived> &) const { return true; }
-  bool operator()(const DescriptorInquiry &) const { return false; }
+  bool operator()(const DescriptorInquiry &x) const {
+    const Symbol &sym{x.base().GetLastSymbol()};
+    return INVARIANT && !IsAllocatable(sym) &&
+        (!IsDummy(sym) ||
+            (IsIntentIn(sym) && !sym.attrs().test(semantics::Attr::VALUE)));
+  }
 
 private:
   bool IsConstantStructureConstructorComponent(
@@ -80,7 +93,8 @@ private:
   bool IsConstantExprShape(const Shape &) const;
 };
 
-bool IsConstantExprHelper::IsConstantStructureConstructorComponent(
+template <bool INVARIANT>
+bool IsConstantExprHelper<INVARIANT>::IsConstantStructureConstructorComponent(
     const Symbol &component, const Expr<SomeType> &expr) const {
   if (IsAllocatable(component)) {
     return IsNullPointer(expr);
@@ -92,8 +106,10 @@ bool IsConstantExprHelper::IsConstantStructureConstructorComponent(
   }
 }
 
-bool IsConstantExprHelper::operator()(const ProcedureRef &call) const {
-  // LBOUND, UBOUND, and SIZE with DIM= arguments will have been reritten
+template <bool INVARIANT>
+bool IsConstantExprHelper<INVARIANT>::operator()(
+    const ProcedureRef &call) const {
+  // LBOUND, UBOUND, and SIZE with DIM= arguments will have been rewritten
   // into DescriptorInquiry operations.
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
     if (intrinsic->name == "kind" ||
@@ -122,7 +138,9 @@ bool IsConstantExprHelper::operator()(const ProcedureRef &call) const {
   return false;
 }
 
-bool IsConstantExprHelper::IsConstantExprShape(const Shape &shape) const {
+template <bool INVARIANT>
+bool IsConstantExprHelper<INVARIANT>::IsConstantExprShape(
+    const Shape &shape) const {
   for (const auto &extent : shape) {
     if (!(*this)(extent)) {
       return false;
@@ -132,12 +150,20 @@ bool IsConstantExprHelper::IsConstantExprShape(const Shape &shape) const {
 }
 
 template <typename A> bool IsConstantExpr(const A &x) {
-  return IsConstantExprHelper{}(x);
+  return IsConstantExprHelper<false>{}(x);
 }
 template bool IsConstantExpr(const Expr<SomeType> &);
 template bool IsConstantExpr(const Expr<SomeInteger> &);
 template bool IsConstantExpr(const Expr<SubscriptInteger> &);
 template bool IsConstantExpr(const StructureConstructor &);
+
+// IsScopeInvariantExpr()
+template <typename A> bool IsScopeInvariantExpr(const A &x) {
+  return IsConstantExprHelper<true>{}(x);
+}
+template bool IsScopeInvariantExpr(const Expr<SomeType> &);
+template bool IsScopeInvariantExpr(const Expr<SomeInteger> &);
+template bool IsScopeInvariantExpr(const Expr<SubscriptInteger> &);
 
 // IsActuallyConstant()
 struct IsActuallyConstantHelper {
@@ -460,9 +486,6 @@ public:
       : Base{*this}, scope_{s}, context_{context} {}
   using Base::operator();
 
-  Result operator()(const ProcedureDesignator &) const {
-    return "dummy procedure argument";
-  }
   Result operator()(const CoarrayRef &) const { return "coindexed reference"; }
 
   Result operator()(const semantics::Symbol &symbol) const {
@@ -541,6 +564,20 @@ public:
             "' not allowed for derived type components or type parameter"
             " values";
       }
+      if (auto procChars{
+              characteristics::Procedure::Characterize(x.proc(), context_)}) {
+        const auto iter{std::find_if(procChars->dummyArguments.begin(),
+            procChars->dummyArguments.end(),
+            [](const characteristics::DummyArgument &dummy) {
+              return std::holds_alternative<characteristics::DummyProcedure>(
+                  dummy.u);
+            })};
+        if (iter != procChars->dummyArguments.end()) {
+          return "reference to function '"s + ultimate.name().ToString() +
+              "' with dummy procedure argument '" + iter->name + '\'';
+        }
+      }
+      // References to internal functions are caught in expression semantics.
       // TODO: other checks for standard module procedures
     } else {
       const SpecificIntrinsic &intrin{DEREF(x.proc().GetSpecificIntrinsic())};
@@ -615,16 +652,19 @@ public:
 
   Result operator()(const semantics::Symbol &symbol) const {
     const auto &ultimate{symbol.GetUltimate()};
-    if (ultimate.attrs().test(semantics::Attr::CONTIGUOUS) ||
-        ultimate.Rank() == 0) {
+    if (ultimate.attrs().test(semantics::Attr::CONTIGUOUS)) {
       return true;
-    } else if (semantics::IsPointer(ultimate)) {
+    } else if (ultimate.Rank() == 0) {
+      // Extension: accept scalars as a degenerate case of
+      // simple contiguity to allow their use in contexts like
+      // data targets in pointer assignments with remapping.
+      return true;
+    } else if (semantics::IsPointer(ultimate) ||
+        semantics::IsAssumedShape(ultimate)) {
       return false;
     } else if (const auto *details{
                    ultimate.detailsIf<semantics::ObjectEntityDetails>()}) {
-      // N.B. ALLOCATABLEs are deferred shape, not assumed, and
-      // are obviously contiguous.
-      return !details->IsAssumedShape() && !details->IsAssumedRank();
+      return !details->IsAssumedRank();
     } else if (auto assoc{Base::operator()(ultimate)}) {
       return assoc;
     } else {
@@ -637,8 +677,15 @@ public:
     if (!(*this)(symbol).has_value()) {
       return false;
     } else if (auto rank{CheckSubscripts(x.subscript())}) {
-      // a(:)%b(1,1) is not contiguous; a(1)%b(:,:) is
-      return *rank > 0 || x.Rank() == 0;
+      if (x.Rank() == 0) {
+        return true;
+      } else if (*rank > 0) {
+        // a(1)%b(:,:) is contiguous if an only if a(1)%b is contiguous.
+        return (*this)(x.base());
+      } else {
+        // a(:)%b(1,1) is not contiguous.
+        return false;
+      }
     } else {
       return false;
     }

@@ -20,8 +20,8 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
@@ -196,7 +196,8 @@ public:
     llvm_unreachable("relaxInstruction() unimplemented");
   }
 
-  bool writeNopData(raw_ostream &OS, uint64_t Count) const override {
+  bool writeNopData(raw_ostream &OS, uint64_t Count,
+                    const MCSubtargetInfo *STI) const override {
     uint64_t NumNops = Count / 4;
     for (uint64_t i = 0; i != NumNops; ++i)
       support::endian::write<uint32_t>(OS, 0x60000000, Endian);

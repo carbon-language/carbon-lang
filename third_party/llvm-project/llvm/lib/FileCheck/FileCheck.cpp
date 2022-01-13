@@ -954,8 +954,8 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
 
   // Check to see if this is a fixed string, or if it has regex pieces.
   if (!MatchFullLinesHere &&
-      (PatternStr.size() < 2 || (PatternStr.find("{{") == StringRef::npos &&
-                                 PatternStr.find("[[") == StringRef::npos))) {
+      (PatternStr.size() < 2 ||
+       (!PatternStr.contains("{{") && !PatternStr.contains("[[")))) {
     FixedStr = PatternStr;
     return false;
   }
@@ -1034,7 +1034,8 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
       bool IsLegacyLineExpr = false;
       StringRef DefName;
       StringRef SubstStr;
-      std::string MatchRegexp;
+      StringRef MatchRegexp;
+      std::string WildcardRegexp;
       size_t SubstInsertIdx = RegExStr.size();
 
       // Parse string variable or legacy @LINE expression.
@@ -1078,7 +1079,7 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
             return true;
           }
           DefName = Name;
-          MatchRegexp = MatchStr.str();
+          MatchRegexp = MatchStr;
         } else {
           if (IsPseudo) {
             MatchStr = OrigMatchStr;
@@ -1117,7 +1118,8 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
           SubstStr = MatchStr;
         else {
           ExpressionFormat Format = ExpressionPointer->getFormat();
-          MatchRegexp = cantFail(Format.getWildcardRegex());
+          WildcardRegexp = cantFail(Format.getWildcardRegex());
+          MatchRegexp = WildcardRegexp;
         }
       }
 
@@ -2213,7 +2215,7 @@ static Error reportMatchResult(bool ExpectedMatch, const SourceMgr &SM,
 static unsigned CountNumNewlinesBetween(StringRef Range,
                                         const char *&FirstNewLine) {
   unsigned NumNewLines = 0;
-  while (1) {
+  while (true) {
     // Scan for newline.
     Range = Range.substr(Range.find_first_of("\n\r"));
     if (Range.empty())

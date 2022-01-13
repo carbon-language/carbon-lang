@@ -12,12 +12,19 @@ set (FILES
   SocketAddressTest.cpp
   SocketTest.cpp
   SocketTestUtilities.cpp
+  XMLTest.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux|Android")
   list(APPEND FILES
     linux/HostTest.cpp
     linux/SupportTest.cpp
+  )
+endif()
+
+if (LLDB_ENABLE_TERMIOS)
+  list(APPEND FILES
+    posix/TerminalTest.cpp
   )
 endif()
 

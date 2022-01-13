@@ -43,7 +43,7 @@ void BTFTypeBase::emitType(MCStreamer &OS) {
 
 BTFTypeDerived::BTFTypeDerived(const DIDerivedType *DTy, unsigned Tag,
                                bool NeedsFixup)
-    : DTy(DTy), NeedsFixup(NeedsFixup) {
+    : DTy(DTy), NeedsFixup(NeedsFixup), Name(DTy->getName()) {
   switch (Tag) {
   case dwarf::DW_TAG_pointer_type:
     Kind = BTF::BTF_KIND_PTR;
@@ -66,14 +66,23 @@ BTFTypeDerived::BTFTypeDerived(const DIDerivedType *DTy, unsigned Tag,
   BTFType.Info = Kind << 24;
 }
 
+/// Used by DW_TAG_pointer_type only.
+BTFTypeDerived::BTFTypeDerived(unsigned NextTypeId, unsigned Tag,
+                               StringRef Name)
+    : DTy(nullptr), NeedsFixup(false), Name(Name) {
+  Kind = BTF::BTF_KIND_PTR;
+  BTFType.Info = Kind << 24;
+  BTFType.Type = NextTypeId;
+}
+
 void BTFTypeDerived::completeType(BTFDebug &BDebug) {
   if (IsCompleted)
     return;
   IsCompleted = true;
 
-  BTFType.NameOff = BDebug.addString(DTy->getName());
+  BTFType.NameOff = BDebug.addString(Name);
 
-  if (NeedsFixup)
+  if (NeedsFixup || !DTy)
     return;
 
   // The base type for PTR/CONST/VOLATILE could be void.
@@ -386,6 +395,55 @@ void BTFTypeFloat::completeType(BTFDebug &BDebug) {
   BTFType.NameOff = BDebug.addString(Name);
 }
 
+BTFTypeDeclTag::BTFTypeDeclTag(uint32_t BaseTypeId, int ComponentIdx,
+                               StringRef Tag)
+    : Tag(Tag) {
+  Kind = BTF::BTF_KIND_DECL_TAG;
+  BTFType.Info = Kind << 24;
+  BTFType.Type = BaseTypeId;
+  Info = ComponentIdx;
+}
+
+void BTFTypeDeclTag::completeType(BTFDebug &BDebug) {
+  if (IsCompleted)
+    return;
+  IsCompleted = true;
+
+  BTFType.NameOff = BDebug.addString(Tag);
+}
+
+void BTFTypeDeclTag::emitType(MCStreamer &OS) {
+  BTFTypeBase::emitType(OS);
+  OS.emitInt32(Info);
+}
+
+BTFTypeTypeTag::BTFTypeTypeTag(uint32_t NextTypeId, StringRef Tag)
+    : DTy(nullptr), Tag(Tag) {
+  Kind = BTF::BTF_KIND_TYPE_TAG;
+  BTFType.Info = Kind << 24;
+  BTFType.Type = NextTypeId;
+}
+
+BTFTypeTypeTag::BTFTypeTypeTag(const DIDerivedType *DTy, StringRef Tag)
+    : DTy(DTy), Tag(Tag) {
+  Kind = BTF::BTF_KIND_TYPE_TAG;
+  BTFType.Info = Kind << 24;
+}
+
+void BTFTypeTypeTag::completeType(BTFDebug &BDebug) {
+  if (IsCompleted)
+    return;
+  IsCompleted = true;
+  BTFType.NameOff = BDebug.addString(Tag);
+  if (DTy) {
+    const DIType *ResolvedType = DTy->getBaseType();
+    if (!ResolvedType)
+      BTFType.Type = 0;
+    else
+      BTFType.Type = BDebug.getTypeId(ResolvedType);
+  }
+}
+
 uint32_t BTFStringTable::addString(StringRef S) {
   // Check whether the string already exists.
   for (auto &OffsetM : OffsetToIdMap) {
@@ -475,6 +533,25 @@ void BTFDebug::visitSubroutineType(
   }
 }
 
+void BTFDebug::processDeclAnnotations(DINodeArray Annotations,
+                                      uint32_t BaseTypeId,
+                                      int ComponentIdx) {
+  if (!Annotations)
+     return;
+
+  for (const Metadata *Annotation : Annotations->operands()) {
+    const MDNode *MD = cast<MDNode>(Annotation);
+    const MDString *Name = cast<MDString>(MD->getOperand(0));
+    if (!Name->getString().equals("btf_decl_tag"))
+      continue;
+
+    const MDString *Value = cast<MDString>(MD->getOperand(1));
+    auto TypeEntry = std::make_unique<BTFTypeDeclTag>(BaseTypeId, ComponentIdx,
+                                                      Value->getString());
+    addType(std::move(TypeEntry));
+  }
+}
+
 /// Handle structure/union types.
 void BTFDebug::visitStructType(const DICompositeType *CTy, bool IsStruct,
                                uint32_t &TypeId) {
@@ -498,9 +575,17 @@ void BTFDebug::visitStructType(const DICompositeType *CTy, bool IsStruct,
   StructTypes.push_back(TypeEntry.get());
   TypeId = addType(std::move(TypeEntry), CTy);
 
+  // Check struct/union annotations
+  processDeclAnnotations(CTy->getAnnotations(), TypeId, -1);
+
   // Visit all struct members.
-  for (const auto *Element : Elements)
-    visitTypeEntry(cast<DIDerivedType>(Element));
+  int FieldNo = 0;
+  for (const auto *Element : Elements) {
+    const auto Elem = cast<DIDerivedType>(Element);
+    visitTypeEntry(Elem);
+    processDeclAnnotations(Elem->getAnnotations(), TypeId, FieldNo);
+    FieldNo++;
+  }
 }
 
 void BTFDebug::visitArrayType(const DICompositeType *CTy, uint32_t &TypeId) {
@@ -609,11 +694,49 @@ void BTFDebug::visitDerivedType(const DIDerivedType *DTy, uint32_t &TypeId,
     }
   }
 
-  if (Tag == dwarf::DW_TAG_pointer_type || Tag == dwarf::DW_TAG_typedef ||
-      Tag == dwarf::DW_TAG_const_type || Tag == dwarf::DW_TAG_volatile_type ||
-      Tag == dwarf::DW_TAG_restrict_type) {
+  if (Tag == dwarf::DW_TAG_pointer_type) {
+    SmallVector<const MDString *, 4> MDStrs;
+    DINodeArray Annots = DTy->getAnnotations();
+    if (Annots) {
+      // For type with "int __tag1 __tag2 *p", the MDStrs will have
+      // content: [__tag1, __tag2].
+      for (const Metadata *Annotations : Annots->operands()) {
+        const MDNode *MD = cast<MDNode>(Annotations);
+        const MDString *Name = cast<MDString>(MD->getOperand(0));
+        if (!Name->getString().equals("btf_type_tag"))
+          continue;
+        MDStrs.push_back(cast<MDString>(MD->getOperand(1)));
+      }
+    }
+
+    if (MDStrs.size() > 0) {
+      // With MDStrs [__tag1, __tag2], the output type chain looks like
+      //   PTR -> __tag2 -> __tag1 -> BaseType
+      // In the below, we construct BTF types with the order of __tag1, __tag2
+      // and PTR.
+      auto TypeEntry =
+          std::make_unique<BTFTypeTypeTag>(DTy, MDStrs[0]->getString());
+      unsigned TmpTypeId = addType(std::move(TypeEntry));
+      for (unsigned I = 1; I < MDStrs.size(); I++) {
+        const MDString *Value = MDStrs[I];
+        TypeEntry =
+            std::make_unique<BTFTypeTypeTag>(TmpTypeId, Value->getString());
+        TmpTypeId = addType(std::move(TypeEntry));
+      }
+      auto TypeDEntry =
+          std::make_unique<BTFTypeDerived>(TmpTypeId, Tag, DTy->getName());
+      TypeId = addType(std::move(TypeDEntry), DTy);
+    } else {
+      auto TypeEntry = std::make_unique<BTFTypeDerived>(DTy, Tag, false);
+      TypeId = addType(std::move(TypeEntry), DTy);
+    }
+  } else if (Tag == dwarf::DW_TAG_typedef || Tag == dwarf::DW_TAG_const_type ||
+             Tag == dwarf::DW_TAG_volatile_type ||
+             Tag == dwarf::DW_TAG_restrict_type) {
     auto TypeEntry = std::make_unique<BTFTypeDerived>(DTy, Tag, false);
     TypeId = addType(std::move(TypeEntry), DTy);
+    if (Tag == dwarf::DW_TAG_typedef)
+      processDeclAnnotations(DTy->getAnnotations(), TypeId, -1);
   } else if (Tag != dwarf::DW_TAG_member) {
     return;
   }
@@ -783,7 +906,9 @@ void BTFDebug::emitBTFSection() {
     return;
 
   MCContext &Ctx = OS.getContext();
-  OS.SwitchSection(Ctx.getELFSection(".BTF", ELF::SHT_PROGBITS, 0));
+  MCSectionELF *Sec = Ctx.getELFSection(".BTF", ELF::SHT_PROGBITS, 0);
+  Sec->setAlignment(Align(4));
+  OS.SwitchSection(Sec);
 
   // Emit header.
   emitCommonHeader();
@@ -821,7 +946,9 @@ void BTFDebug::emitBTFExtSection() {
     return;
 
   MCContext &Ctx = OS.getContext();
-  OS.SwitchSection(Ctx.getELFSection(".BTF.ext", ELF::SHT_PROGBITS, 0));
+  MCSectionELF *Sec = Ctx.getELFSection(".BTF.ext", ELF::SHT_PROGBITS, 0);
+  Sec->setAlignment(Align(4));
+  OS.SwitchSection(Sec);
 
   // Emit header.
   emitCommonHeader();
@@ -963,6 +1090,17 @@ void BTFDebug::beginFunctionImpl(const MachineFunction *MF) {
   auto FuncTypeEntry =
       std::make_unique<BTFTypeFunc>(SP->getName(), ProtoTypeId, Scope);
   uint32_t FuncTypeId = addType(std::move(FuncTypeEntry));
+
+  // Process argument annotations.
+  for (const DINode *DN : SP->getRetainedNodes()) {
+    if (const auto *DV = dyn_cast<DILocalVariable>(DN)) {
+      uint32_t Arg = DV->getArg();
+      if (Arg)
+        processDeclAnnotations(DV->getAnnotations(), FuncTypeId, Arg - 1);
+    }
+  }
+
+  processDeclAnnotations(SP->getAnnotations(), FuncTypeId, -1);
 
   for (const auto &TypeEntry : TypeEntries)
     TypeEntry->completeType(*this);
@@ -1176,11 +1314,13 @@ void BTFDebug::processGlobals(bool ProcessingMapDef) {
       continue;
 
     uint32_t GVTypeId = 0;
+    DIGlobalVariable *DIGlobal = nullptr;
     for (auto *GVE : GVs) {
+      DIGlobal = GVE->getVariable();
       if (SecName.startswith(".maps"))
-        visitMapDefType(GVE->getVariable()->getType(), GVTypeId);
+        visitMapDefType(DIGlobal->getType(), GVTypeId);
       else
-        visitTypeEntry(GVE->getVariable()->getType(), GVTypeId, false, false);
+        visitTypeEntry(DIGlobal->getType(), GVTypeId, false, false);
       break;
     }
 
@@ -1211,6 +1351,8 @@ void BTFDebug::processGlobals(bool ProcessingMapDef) {
     auto VarEntry =
         std::make_unique<BTFKindVar>(Global.getName(), GVTypeId, GVarInfo);
     uint32_t VarId = addType(std::move(VarEntry));
+
+    processDeclAnnotations(DIGlobal->getAnnotations(), VarId, -1);
 
     // An empty SecName means an extern variable without section attribute.
     if (SecName.empty())
@@ -1306,6 +1448,9 @@ void BTFDebug::processFuncPrototypes(const Function *F) {
   auto FuncTypeEntry =
       std::make_unique<BTFTypeFunc>(SP->getName(), ProtoTypeId, Scope);
   uint32_t FuncId = addType(std::move(FuncTypeEntry));
+
+  processDeclAnnotations(SP->getAnnotations(), FuncId, -1);
+
   if (F->hasSection()) {
     StringRef SecName = F->getSection();
 

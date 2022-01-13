@@ -15,38 +15,14 @@ using llvm::Twine;
 using llvm::libc_benchmarks::BzeroConfiguration;
 using llvm::libc_benchmarks::ComparisonSetup;
 using llvm::libc_benchmarks::CopySetup;
-using llvm::libc_benchmarks::MemcmpConfiguration;
+using llvm::libc_benchmarks::MemcmpOrBcmpConfiguration;
 using llvm::libc_benchmarks::MemcpyConfiguration;
+using llvm::libc_benchmarks::MemmoveConfiguration;
 using llvm::libc_benchmarks::MemorySizeDistribution;
 using llvm::libc_benchmarks::MemsetConfiguration;
+using llvm::libc_benchmarks::MoveSetup;
 using llvm::libc_benchmarks::OffsetDistribution;
 using llvm::libc_benchmarks::SetSetup;
-
-namespace __llvm_libc {
-
-extern void *memcpy(void *__restrict, const void *__restrict, size_t);
-extern void *memset(void *, int, size_t);
-extern void bzero(void *, size_t);
-extern int memcmp(const void *, const void *, size_t);
-extern int bcmp(const void *, const void *, size_t);
-
-} // namespace __llvm_libc
-
-// List of implementations to test.
-static constexpr MemcpyConfiguration kMemcpyConfigurations[] = {
-    {__llvm_libc::memcpy, "__llvm_libc::memcpy"}};
-
-static constexpr MemcmpConfiguration kMemcmpConfigurations[] = {
-    {__llvm_libc::memcmp, "__llvm_libc::memcmp"}};
-
-static constexpr MemcmpConfiguration kBcmpConfigurations[] = {
-    {__llvm_libc::bcmp, "__llvm_libc::bcmp"}};
-
-static constexpr MemsetConfiguration kMemsetConfigurations[] = {
-    {__llvm_libc::memset, "__llvm_libc::memset"}};
-
-static constexpr BzeroConfiguration kBzeroConfigurations[] = {
-    {__llvm_libc::bzero, "__llvm_libc::bzero"}};
 
 // Alignment to use for when accessing the buffers.
 static constexpr Align kBenchmarkAlignment = Align::Constant<1>();
@@ -116,13 +92,26 @@ private:
         benchmark->Args({DistIndex, ConfIndex});                               \
   })
 
+extern llvm::ArrayRef<MemcpyConfiguration> getMemcpyConfigurations();
 BENCHMARK_MEMORY_FUNCTION(BM_Memcpy, CopySetup, MemcpyConfiguration,
-                          llvm::makeArrayRef(kMemcpyConfigurations));
-BENCHMARK_MEMORY_FUNCTION(BM_Memcmp, ComparisonSetup, MemcmpConfiguration,
-                          llvm::makeArrayRef(kMemcmpConfigurations));
-BENCHMARK_MEMORY_FUNCTION(BM_Bcmp, ComparisonSetup, MemcmpConfiguration,
-                          llvm::makeArrayRef(kBcmpConfigurations));
+                          getMemcpyConfigurations());
+
+extern llvm::ArrayRef<MemmoveConfiguration> getMemmoveConfigurations();
+BENCHMARK_MEMORY_FUNCTION(BM_Memmove, MoveSetup, MemmoveConfiguration,
+                          getMemmoveConfigurations());
+
+extern llvm::ArrayRef<MemcmpOrBcmpConfiguration> getMemcmpConfigurations();
+BENCHMARK_MEMORY_FUNCTION(BM_Memcmp, ComparisonSetup, MemcmpOrBcmpConfiguration,
+                          getMemcmpConfigurations());
+
+extern llvm::ArrayRef<MemcmpOrBcmpConfiguration> getBcmpConfigurations();
+BENCHMARK_MEMORY_FUNCTION(BM_Bcmp, ComparisonSetup, MemcmpOrBcmpConfiguration,
+                          getBcmpConfigurations());
+
+extern llvm::ArrayRef<MemsetConfiguration> getMemsetConfigurations();
 BENCHMARK_MEMORY_FUNCTION(BM_Memset, SetSetup, MemsetConfiguration,
-                          llvm::makeArrayRef(kMemsetConfigurations));
+                          getMemsetConfigurations());
+
+extern llvm::ArrayRef<BzeroConfiguration> getBzeroConfigurations();
 BENCHMARK_MEMORY_FUNCTION(BM_Bzero, SetSetup, BzeroConfiguration,
-                          llvm::makeArrayRef(kBzeroConfigurations));
+                          getBzeroConfigurations());

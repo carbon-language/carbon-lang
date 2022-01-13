@@ -47,8 +47,8 @@ func @test_gaussian_elimination_non_empty_set2() {
 
 // CHECK-LABEL: func @test_gaussian_elimination_empty_set3() {
 func @test_gaussian_elimination_empty_set3() {
-  %c7 = constant 7 : index
-  %c11 = constant 11 : index
+  %c7 = arith.constant 7 : index
+  %c11 = arith.constant 11 : index
   affine.for %arg0 = 1 to 10 {
     affine.for %arg1 = 1 to 100 {
       // CHECK-NOT: affine.if
@@ -68,8 +68,8 @@ func @test_gaussian_elimination_empty_set3() {
 
 // CHECK-LABEL: func @test_gaussian_elimination_non_empty_set4() {
 func @test_gaussian_elimination_non_empty_set4() {
-  %c7 = constant 7 : index
-  %c11 = constant 11 : index
+  %c7 = arith.constant 7 : index
+  %c11 = arith.constant 11 : index
   affine.for %arg0 = 1 to 10 {
     affine.for %arg1 = 1 to 100 {
       // CHECK: #[[$SET_7_11]](%arg0, %arg1)
@@ -90,8 +90,8 @@ func @test_gaussian_elimination_non_empty_set4() {
 
 // CHECK-LABEL: func @test_gaussian_elimination_empty_set5() {
 func @test_gaussian_elimination_empty_set5() {
-  %c7 = constant 7 : index
-  %c11 = constant 11 : index
+  %c7 = arith.constant 7 : index
+  %c11 = arith.constant 11 : index
   affine.for %arg0 = 1 to 10 {
     affine.for %arg1 = 1 to 100 {
       // CHECK-NOT: affine.if
@@ -260,12 +260,12 @@ func @simplify_set(%a : index, %b : index) {
 
 // CHECK-DAG: -> (s0 * 2 + 1)
 
-// Test "op local" simplification on affine.apply. DCE on addi will not happen.
+// Test "op local" simplification on affine.apply. DCE on arith.addi will not happen.
 func @affine.apply(%N : index) -> index {
   %v = affine.apply affine_map<(d0, d1) -> (d0 + d1 + 1)>(%N, %N)
-  %res = addi %v, %v : index
+  %res = arith.addi %v, %v : index
   // CHECK: affine.apply #map{{.*}}()[%arg0]
-  // CHECK-NEXT: addi
+  // CHECK-NEXT: arith.addi
   return %res: index
 }
 
@@ -287,7 +287,7 @@ func @simplify_zero_dim_map(%in : memref<f32>) -> f32 {
 // CHECK-LABEL: func @semiaffine_mod
 func @semiaffine_mod(%arg0: index, %arg1: index) -> index {
   %a = affine.apply affine_map<(d0)[s0] ->((-((d0 floordiv s0) * s0) + s0 * s0) mod s0)> (%arg0)[%arg1]
-  // CHECK:       %[[CST:.*]] = constant 0
+  // CHECK:       %[[CST:.*]] = arith.constant 0
   return %a : index
 }
 
@@ -299,7 +299,7 @@ func @semiaffine_floordiv(%arg0: index, %arg1: index) -> index {
   return %a : index
 }
 
-// Tests the simplification of a semi-affine expression with a ceildiv operation and a division of constant 0 by a symbol.
+// Tests the simplification of a semi-affine expression with a ceildiv operation and a division of arith.constant 0 by a symbol.
 // CHECK-LABEL: func @semiaffine_ceildiv
 func @semiaffine_ceildiv(%arg0: index, %arg1: index) -> index {
   %a = affine.apply affine_map<(d0)[s0] ->((-((d0 floordiv s0) * s0) + s0 * 42 + ((5-5) floordiv s0)) ceildiv  s0)> (%arg0)[%arg1]
@@ -311,7 +311,7 @@ func @semiaffine_ceildiv(%arg0: index, %arg1: index) -> index {
 // CHECK-LABEL: func @semiaffine_composite_floor
 func @semiaffine_composite_floor(%arg0: index, %arg1: index) -> index {
   %a = affine.apply affine_map<(d0)[s0] ->(((((s0 * 2) ceildiv 4) * 5) + s0 * 42) ceildiv s0)> (%arg0)[%arg1]
-  // CHECK:       %[[CST:.*]] = constant 47
+  // CHECK:       %[[CST:.*]] = arith.constant 47
   return %a : index
 }
 
@@ -319,7 +319,7 @@ func @semiaffine_composite_floor(%arg0: index, %arg1: index) -> index {
 // CHECK-LABEL: func @semiaffine_unsimplified_symbol
 func @semiaffine_unsimplified_symbol(%arg0: index, %arg1: index) -> index {
   %a = affine.apply affine_map<(d0)[s0] ->(s0 mod (2 * s0 - s0))> (%arg0)[%arg1]
-  // CHECK:       %[[CST:.*]] = constant 0
+  // CHECK:       %[[CST:.*]] = arith.constant 0
   return %a : index
 }
 
@@ -388,8 +388,8 @@ func @test_dimensional_if_elimination() {
 // Testing: affine.if gets removed.
 // CHECK-LABEL: func @test_num_results_if_elimination
 func @test_num_results_if_elimination() -> index {
-  // CHECK: %[[zero:.*]] = constant 0 : index
-  %zero = constant 0 : index
+  // CHECK: %[[zero:.*]] = arith.constant 0 : index
+  %zero = arith.constant 0 : index
   %0 = affine.if affine_set<() : ()> () -> index {
     affine.yield %zero : index
   } else {
@@ -407,19 +407,19 @@ func @test_num_results_if_elimination() -> index {
 // CHECK-LABEL: func @test_trivially_false_returning_two_results
 // CHECK-SAME: (%[[arg0:.*]]: index)
 func @test_trivially_false_returning_two_results(%arg0: index) -> (index, index) {
-  // CHECK: %[[c7:.*]] = constant 7 : index
-  // CHECK: %[[c13:.*]] = constant 13 : index
-  %c7 = constant 7 : index
-  %c13 = constant 13 : index
-  // CHECK: %[[c2:.*]] = constant 2 : index
-  // CHECK: %[[c3:.*]] = constant 3 : index
+  // CHECK: %[[c7:.*]] = arith.constant 7 : index
+  // CHECK: %[[c13:.*]] = arith.constant 13 : index
+  %c7 = arith.constant 7 : index
+  %c13 = arith.constant 13 : index
+  // CHECK: %[[c2:.*]] = arith.constant 2 : index
+  // CHECK: %[[c3:.*]] = arith.constant 3 : index
   %res:2 = affine.if affine_set<(d0, d1) : (5 >= 0, -2 >= 0)> (%c7, %c13) -> (index, index) {
-    %c0 = constant 0 : index
-    %c1 = constant 1 : index
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
     affine.yield %c0, %c1 : index, index
   } else {
-    %c2 = constant 2 : index
-    %c3 = constant 3 : index
+    %c2 = arith.constant 2 : index
+    %c3 = arith.constant 3 : index
     affine.yield %c7, %arg0 : index, index
   }
   // CHECK-NEXT: return %[[c7]], %[[arg0]] : index, index
@@ -429,28 +429,28 @@ func @test_trivially_false_returning_two_results(%arg0: index) -> (index, index)
 // Testing: affine.if gets removed. `Then` block get promoted.
 // CHECK-LABEL: func @test_trivially_true_returning_five_results
 func @test_trivially_true_returning_five_results() -> (index, index, index, index, index) {
-  // CHECK: %[[c12:.*]] = constant 12 : index
-  // CHECK: %[[c13:.*]] = constant 13 : index
-  %c12 = constant 12 : index
-  %c13 = constant 13 : index
-  // CHECK: %[[c0:.*]] = constant 0 : index
-  // CHECK: %[[c1:.*]] = constant 1 : index
-  // CHECK: %[[c2:.*]] = constant 2 : index
-  // CHECK: %[[c3:.*]] = constant 3 : index
-  // CHECK: %[[c4:.*]] = constant 4 : index
+  // CHECK: %[[c12:.*]] = arith.constant 12 : index
+  // CHECK: %[[c13:.*]] = arith.constant 13 : index
+  %c12 = arith.constant 12 : index
+  %c13 = arith.constant 13 : index
+  // CHECK: %[[c0:.*]] = arith.constant 0 : index
+  // CHECK: %[[c1:.*]] = arith.constant 1 : index
+  // CHECK: %[[c2:.*]] = arith.constant 2 : index
+  // CHECK: %[[c3:.*]] = arith.constant 3 : index
+  // CHECK: %[[c4:.*]] = arith.constant 4 : index
   %res:5 = affine.if affine_set<(d0, d1) : (1 >= 0, 3 >= 0)>(%c12, %c13) -> (index, index, index, index, index) {
-    %c0 = constant 0 : index
-    %c1 = constant 1 : index
-    %c2 = constant 2 : index
-    %c3 = constant 3 : index
-    %c4 = constant 4 : index
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    %c2 = arith.constant 2 : index
+    %c3 = arith.constant 3 : index
+    %c4 = arith.constant 4 : index
     affine.yield %c0, %c1, %c2, %c3, %c4 : index, index, index, index, index
   } else {
-    %c5 = constant 5 : index
-    %c6 = constant 6 : index
-    %c7 = constant 7 : index
-    %c8 = constant 8 : index
-    %c9 = constant 9 : index
+    %c5 = arith.constant 5 : index
+    %c6 = arith.constant 6 : index
+    %c7 = arith.constant 7 : index
+    %c8 = arith.constant 8 : index
+    %c9 = arith.constant 9 : index
     affine.yield %c5, %c6, %c7, %c8, %c9 : index, index, index, index, index
   }
   // CHECK-NEXT: return %[[c0]], %[[c1]], %[[c2]], %[[c3]], %[[c4]] : index, index, index, index, index
@@ -460,22 +460,90 @@ func @test_trivially_true_returning_five_results() -> (index, index, index, inde
 // Testing: affine.if doesn't get removed.
 // CHECK-LABEL: func @test_not_trivially_true_or_false_returning_three_results
 func @test_not_trivially_true_or_false_returning_three_results() -> (index, index, index) {
-  // CHECK: %[[c8:.*]] = constant 8 : index
-  // CHECK: %[[c13:.*]] = constant 13 : index
-  %c8 = constant 8 : index
-  %c13 = constant 13 : index
+  // CHECK: %[[c8:.*]] = arith.constant 8 : index
+  // CHECK: %[[c13:.*]] = arith.constant 13 : index
+  %c8 = arith.constant 8 : index
+  %c13 = arith.constant 13 : index
   // CHECK: affine.if
   %res:3 = affine.if affine_set<(d0, d1) : (d0 - 1 == 0)>(%c8, %c13) -> (index, index, index) {
-    %c0 = constant 0 : index
-    %c1 = constant 1 : index
-    %c2 = constant 2 : index
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    %c2 = arith.constant 2 : index
     affine.yield %c0, %c1, %c2 : index, index, index
   // CHECK: } else {
   } else {
-    %c3 = constant 3 : index
-    %c4 = constant 4 : index
-    %c5 = constant 5 : index
+    %c3 = arith.constant 3 : index
+    %c4 = arith.constant 4 : index
+    %c5 = arith.constant 5 : index
     affine.yield %c3, %c4, %c5 : index, index, index
   }
   return %res#0, %res#1, %res#2 : index, index, index
 }
+
+// -----
+
+// Test simplification of mod expressions.
+// CHECK-DAG:   #[[$MOD:.*]] = affine_map<()[s0, s1, s2, s3, s4] -> (s3 + s4 * s1 + (s0 - s1) mod s2)>
+// CHECK-DAG:   #[[$SIMPLIFIED_MOD_RHS:.*]] = affine_map<()[s0, s1, s2, s3] -> (s3 mod (s2 - s0 * s1))>
+// CHECK-DAG:   #[[$MODULO_AND_PRODUCT:.*]] = affine_map<()[s0, s1, s2, s3] -> (s0 * s1 + s3 - (-s0 + s3) mod s2)>
+// CHECK-LABEL: func @semiaffine_simplification_mod
+// CHECK-SAME:  (%[[ARG0:.*]]: index, %[[ARG1:.*]]: index, %[[ARG2:.*]]: index, %[[ARG3:.*]]: index, %[[ARG4:.*]]: index, %[[ARG5:.*]]: index)
+func @semiaffine_simplification_mod(%arg0: index, %arg1: index, %arg2: index, %arg3: index, %arg4: index, %arg5: index) -> (index, index, index) {
+  %a = affine.apply affine_map<(d0, d1)[s0, s1, s2, s3] -> ((-(d1 * s0 - (s0 - s1) mod s2) + s3) + (d0 * s1 + d1 * s0))>(%arg0, %arg1)[%arg2, %arg3, %arg4, %arg5]
+  %b = affine.apply affine_map<(d0)[s0, s1, s2, s3] -> (d0 mod (s0 - s1 * s2 + s3 - s0))>(%arg0)[%arg0, %arg1, %arg2, %arg3]
+  %c = affine.apply affine_map<(d0)[s0, s1, s2] -> (d0 + (d0 + s0) mod s2 + s0 * s1 - (d0 + s0) mod s2 - (d0 - s0) mod s2)>(%arg0)[%arg1, %arg2, %arg3]
+  return %a, %b, %c : index, index, index
+}
+// CHECK-NEXT: %[[RESULT0:.*]] = affine.apply #[[$MOD]]()[%[[ARG2]], %[[ARG3]], %[[ARG4]], %[[ARG5]], %[[ARG0]]]
+// CHECK-NEXT: %[[RESULT1:.*]] = affine.apply #[[$SIMPLIFIED_MOD_RHS]]()[%[[ARG1]], %[[ARG2]], %[[ARG3]], %[[ARG0]]]
+// CHECK-NEXT: %[[RESULT2:.*]] = affine.apply #[[$MODULO_AND_PRODUCT]]()[%[[ARG1]], %[[ARG2]], %[[ARG3]], %[[ARG0]]]
+// CHECK-NEXT: return %[[RESULT0]], %[[RESULT1]], %[[RESULT2]]
+
+// -----
+
+// Test simplification of floordiv and ceildiv expressions.
+// CHECK-DAG:   #[[$SIMPLIFIED_FLOORDIV_RHS:.*]] = affine_map<()[s0, s1, s2, s3] -> (s3 floordiv (s2 - s0 * s1))>
+// CHECK-DAG:   #[[$FLOORDIV:.*]] = affine_map<()[s0, s1, s2, s3] -> (s0 + s3 + (s0 - s1) floordiv s2)>
+// CHECK-DAG:   #[[$SIMPLIFIED_CEILDIV_RHS:.*]] = affine_map<()[s0, s1, s2, s3] -> (s3 ceildiv (s2 - s0 * s1))>
+// CHECK-LABEL: func @semiaffine_simplification_floordiv_and_ceildiv
+// CHECK-SAME:  (%[[ARG0:.*]]: index, %[[ARG1:.*]]: index, %[[ARG2:.*]]: index, %[[ARG3:.*]]: index, %[[ARG4:.*]]: index)
+func @semiaffine_simplification_floordiv_and_ceildiv(%arg0: index, %arg1: index, %arg2: index, %arg3: index, %arg4: index) -> (index, index, index) {
+  %a = affine.apply affine_map<(d0)[s0, s1, s2, s3] -> (d0 floordiv (s0 - s1 * s2 + s3 - s0))>(%arg0)[%arg0, %arg1, %arg2, %arg3]
+  %b = affine.apply affine_map<(d0)[s0, s1, s2, s3] -> ((-(d0 * s1 - (s0 - s1) floordiv s2) + s3) + (d0 * s1 + s0))>(%arg0)[%arg1, %arg2, %arg3, %arg4]
+  %c = affine.apply affine_map<(d0)[s0, s1, s2, s3] -> (d0 ceildiv (s0 - s1 * s2 + s3 - s0))>(%arg0)[%arg0, %arg1, %arg2, %arg3]
+  return %a, %b, %c : index, index, index
+}
+// CHECK-NEXT: %[[RESULT0:.*]] = affine.apply #[[$SIMPLIFIED_FLOORDIV_RHS]]()[%[[ARG1]], %[[ARG2]], %[[ARG3]], %[[ARG0]]]
+// CHECK-NEXT: %[[RESULT1:.*]] = affine.apply #[[$FLOORDIV]]()[%[[ARG1]], %[[ARG2]], %[[ARG3]], %[[ARG4]]]
+// CHECK-NEXT: %[[RESULT2:.*]] = affine.apply #[[$SIMPLIFIED_CEILDIV_RHS]]()[%[[ARG1]], %[[ARG2]], %[[ARG3]], %[[ARG0]]]
+// CHECK-NEXT: return %[[RESULT0]], %[[RESULT1]], %[[RESULT2]]
+
+// -----
+
+// Test simplification of product expressions.
+// CHECK-DAG:   #[[$PRODUCT:.*]] = affine_map<()[s0, s1, s2, s3, s4] -> (s3 + s4 + (s0 - s1) * s2)>
+// CHECK-DAG:   #[[$SUM_OF_PRODUCTS:.*]] = affine_map<()[s0, s1, s2, s3, s4] -> (s2 * s0 + s2 + s3 * s0 + s3 * s1 + s3 + s4 * s1 + s4)>
+// CHECK-LABEL: func @semiaffine_simplification_product
+// CHECK-SAME:  (%[[ARG0:.*]]: index, %[[ARG1:.*]]: index, %[[ARG2:.*]]: index, %[[ARG3:.*]]: index, %[[ARG4:.*]]: index, %[[ARG5:.*]]: index)
+func @semiaffine_simplification_product(%arg0: index, %arg1: index, %arg2: index, %arg3: index, %arg4: index, %arg5: index) -> (index, index) {
+  %a = affine.apply affine_map<(d0)[s0, s1, s2, s3] -> ((-(s0 - (s0 - s1) * s2) + s3) + (d0 + s0))>(%arg0)[%arg1, %arg2, %arg3, %arg4]
+  %b = affine.apply affine_map<(d0, d1, d2)[s0, s1] -> (d0 + d1 * s1 + d1 + d0 * s0 + d1 * s0 + d2 * s1 + d2)>(%arg0, %arg1, %arg2)[%arg3, %arg4]
+  return %a, %b : index, index
+}
+// CHECK-NEXT: %[[RESULT0:.*]] = affine.apply #[[$PRODUCT]]()[%[[ARG1]], %[[ARG2]], %[[ARG3]], %[[ARG4]], %[[ARG0]]]
+// CHECK-NEXT: %[[RESULT1:.*]] = affine.apply #[[$SUM_OF_PRODUCTS]]()[%[[ARG3]], %[[ARG4]], %[[ARG0]], %[[ARG1]], %[[ARG2]]]
+// CHECK-NEXT: return %[[RESULT0]], %[[RESULT1]]
+
+// -----
+
+// CHECK-DAG: #[[$SIMPLIFIED_MAP:.*]] = affine_map<()[s0, s1, s2, s3] -> ((-s0 + s2 + s3) mod (s0 + s1))>
+// CHECK-LABEL: func @semi_affine_simplification_euclidean_lemma
+// CHECK-SAME: (%[[ARG0:.*]]: index, %[[ARG1:.*]]: index, %[[ARG2:.*]]: index, %[[ARG3:.*]]: index, %[[ARG4:.*]]: index, %[[ARG5:.*]]: index)
+func @semi_affine_simplification_euclidean_lemma(%arg0: index, %arg1: index, %arg2: index, %arg3: index, %arg4: index, %arg5: index) -> (index, index) {
+  %a = affine.apply affine_map<(d0, d1)[s0, s1] -> ((d0 + d1) - ((d0 + d1) floordiv (s0 - s1)) * (s0 - s1) - (d0 + d1) mod (s0 - s1))>(%arg0, %arg1)[%arg2, %arg3]
+  %b = affine.apply affine_map<(d0, d1)[s0, s1] -> ((d0 + d1 - s0) - ((d0 + d1 - s0) floordiv (s0 + s1)) * (s0 + s1))>(%arg0, %arg1)[%arg2, %arg3]
+  return %a, %b : index, index
+}
+// CHECK-NEXT: %[[ZERO:.*]] = arith.constant 0 : index
+// CHECK-NEXT: %[[RESULT:.*]] = affine.apply #[[$SIMPLIFIED_MAP]]()[%[[ARG2]], %[[ARG3]], %[[ARG0]], %[[ARG1]]]
+// CHECK-NEXT: return %[[ZERO]], %[[RESULT]]

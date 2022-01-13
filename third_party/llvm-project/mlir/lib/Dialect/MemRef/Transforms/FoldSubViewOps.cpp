@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
@@ -49,18 +50,13 @@ resolveSourceIndices(Location loc, PatternRewriter &rewriter,
   SmallVector<Value> useIndices;
   // Check if this is rank-reducing case. Then for every unit-dim size add a
   // zero to the indices.
-  ArrayRef<int64_t> resultShape = subViewOp.getType().getShape();
   unsigned resultDim = 0;
-  for (auto size : llvm::enumerate(mixedSizes)) {
-    auto attr = size.value().dyn_cast<Attribute>();
-    // Check if this dimension has been dropped, i.e. the size is 1, but the
-    // associated dimension is not 1.
-    if (attr && attr.cast<IntegerAttr>().getInt() == 1 &&
-        (resultDim >= resultShape.size() || resultShape[resultDim] != 1))
-      useIndices.push_back(rewriter.create<ConstantIndexOp>(loc, 0));
-    else if (resultDim < resultShape.size()) {
+  llvm::SmallDenseSet<unsigned> unusedDims = subViewOp.getDroppedDims();
+  for (auto dim : llvm::seq<unsigned>(0, subViewOp.getSourceType().getRank())) {
+    if (unusedDims.count(dim))
+      useIndices.push_back(rewriter.create<arith::ConstantIndexOp>(loc, 0));
+    else
       useIndices.push_back(indices[resultDim++]);
-    }
   }
   if (useIndices.size() != mixedOffsets.size())
     return failure();
@@ -102,6 +98,25 @@ static Value getMemRefOperand(memref::StoreOp op) { return op.memref(); }
 
 static Value getMemRefOperand(vector::TransferWriteOp op) {
   return op.source();
+}
+
+/// Given the permutation map of the original
+/// `vector.transfer_read`/`vector.transfer_write` operations compute the
+/// permutation map to use after the subview is folded with it.
+static AffineMapAttr getPermutationMapAttr(MLIRContext *context,
+                                           memref::SubViewOp subViewOp,
+                                           AffineMap currPermutationMap) {
+  llvm::SmallDenseSet<unsigned> unusedDims = subViewOp.getDroppedDims();
+  SmallVector<AffineExpr> exprs;
+  int64_t sourceRank = subViewOp.getSourceType().getRank();
+  for (auto dim : llvm::seq<int64_t>(0, sourceRank)) {
+    if (unusedDims.count(dim))
+      continue;
+    exprs.push_back(getAffineDimExpr(dim, context));
+  }
+  auto resultDimToSourceDimMap = AffineMap::get(sourceRank, 0, exprs, context);
+  return AffineMapAttr::get(
+      currPermutationMap.compose(resultDimToSourceDimMap));
 }
 
 //===----------------------------------------------------------------------===//
@@ -149,11 +164,18 @@ void LoadOpOfSubViewFolder<memref::LoadOp>::replaceOp(
 
 template <>
 void LoadOpOfSubViewFolder<vector::TransferReadOp>::replaceOp(
-    vector::TransferReadOp loadOp, memref::SubViewOp subViewOp,
+    vector::TransferReadOp transferReadOp, memref::SubViewOp subViewOp,
     ArrayRef<Value> sourceIndices, PatternRewriter &rewriter) const {
+  // TODO: support 0-d corner case.
+  if (transferReadOp.getTransferRank() == 0)
+    return;
   rewriter.replaceOpWithNewOp<vector::TransferReadOp>(
-      loadOp, loadOp.getVectorType(), subViewOp.source(), sourceIndices,
-      loadOp.permutation_map(), loadOp.padding(), loadOp.in_boundsAttr());
+      transferReadOp, transferReadOp.getVectorType(), subViewOp.source(),
+      sourceIndices,
+      getPermutationMapAttr(rewriter.getContext(), subViewOp,
+                            transferReadOp.permutation_map()),
+      transferReadOp.padding(),
+      /*mask=*/Value(), transferReadOp.in_boundsAttr());
 }
 
 template <>
@@ -168,9 +190,14 @@ template <>
 void StoreOpOfSubViewFolder<vector::TransferWriteOp>::replaceOp(
     vector::TransferWriteOp transferWriteOp, memref::SubViewOp subViewOp,
     ArrayRef<Value> sourceIndices, PatternRewriter &rewriter) const {
+  // TODO: support 0-d corner case.
+  if (transferWriteOp.getTransferRank() == 0)
+    return;
   rewriter.replaceOpWithNewOp<vector::TransferWriteOp>(
       transferWriteOp, transferWriteOp.vector(), subViewOp.source(),
-      sourceIndices, transferWriteOp.permutation_map(),
+      sourceIndices,
+      getPermutationMapAttr(rewriter.getContext(), subViewOp,
+                            transferWriteOp.permutation_map()),
       transferWriteOp.in_boundsAttr());
 }
 } // namespace

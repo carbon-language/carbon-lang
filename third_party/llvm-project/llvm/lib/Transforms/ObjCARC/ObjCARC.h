@@ -105,8 +105,8 @@ CallInst *createCallInstWithColors(
 
 class BundledRetainClaimRVs {
 public:
-  BundledRetainClaimRVs(ARCRuntimeEntryPoints &P, bool ContractPass)
-      : EP(P), ContractPass(ContractPass) {}
+  BundledRetainClaimRVs(bool ContractPass, bool UseMarker)
+      : ContractPass(ContractPass), UseMarker(UseMarker) {}
   ~BundledRetainClaimRVs();
 
   /// Insert a retainRV/claimRV call to the normal destination blocks of invokes
@@ -155,8 +155,10 @@ private:
   /// A map of inserted retainRV/claimRV calls to annotated calls/invokes.
   DenseMap<CallInst *, CallBase *> RVCalls;
 
-  ARCRuntimeEntryPoints &EP;
   bool ContractPass;
+
+  /// Indicates whether the target uses a special inline-asm marker.
+  bool UseMarker;
 };
 
 } // end namespace objcarc

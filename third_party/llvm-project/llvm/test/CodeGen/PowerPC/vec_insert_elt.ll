@@ -199,20 +199,18 @@ entry:
 define <4 x float> @testFloat1(<4 x float> %a, float %b, i32 zeroext %idx1) {
 ; CHECK-LABEL: testFloat1:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    xscvdpspn vs0, f1
-; CHECK-NEXT:    extsw r4, r6
-; CHECK-NEXT:    slwi r4, r4, 2
-; CHECK-NEXT:    mffprwz r3, f0
-; CHECK-NEXT:    vinswrx v2, r4, r3
+; CHECK-NEXT:    xscvdpspn v3, f1
+; CHECK-NEXT:    extsw r3, r6
+; CHECK-NEXT:    slwi r3, r3, 2
+; CHECK-NEXT:    vinswvrx v2, r3, v3
 ; CHECK-NEXT:    blr
 ;
 ; CHECK-BE-LABEL: testFloat1:
 ; CHECK-BE:       # %bb.0: # %entry
-; CHECK-BE-NEXT:    xscvdpspn vs0, f1
-; CHECK-BE-NEXT:    extsw r4, r6
-; CHECK-BE-NEXT:    slwi r4, r4, 2
-; CHECK-BE-NEXT:    mffprwz r3, f0
-; CHECK-BE-NEXT:    vinswlx v2, r4, r3
+; CHECK-BE-NEXT:    xscvdpspn v3, f1
+; CHECK-BE-NEXT:    extsw r3, r6
+; CHECK-BE-NEXT:    slwi r3, r3, 2
+; CHECK-BE-NEXT:    vinswvlx v2, r3, v3
 ; CHECK-BE-NEXT:    blr
 ;
 ; CHECK-P9-LABEL: testFloat1:
@@ -671,15 +669,13 @@ entry:
 define <2 x double> @testDoubleImm4(<2 x double> %a, i32* %b) {
 ; CHECK-LABEL: testDoubleImm4:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    lis r3, 4
-; CHECK-NEXT:    lfdx f0, r5, r3
+; CHECK-NEXT:    plfd f0, 262144(r5), 0
 ; CHECK-NEXT:    xxmrghd v2, v2, vs0
 ; CHECK-NEXT:    blr
 ;
 ; CHECK-BE-LABEL: testDoubleImm4:
 ; CHECK-BE:       # %bb.0: # %entry
-; CHECK-BE-NEXT:    lis r3, 4
-; CHECK-BE-NEXT:    lfdx f0, r5, r3
+; CHECK-BE-NEXT:    plfd f0, 262144(r5), 0
 ; CHECK-BE-NEXT:    xxpermdi v2, vs0, v2, 1
 ; CHECK-BE-NEXT:    blr
 ;

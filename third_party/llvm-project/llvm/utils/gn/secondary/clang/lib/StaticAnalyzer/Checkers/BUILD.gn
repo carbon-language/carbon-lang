@@ -112,6 +112,7 @@ static_library("Checkers") {
     "StackAddrEscapeChecker.cpp",
     "StdLibraryFunctionsChecker.cpp",
     "StreamChecker.cpp",
+    "StringChecker.cpp",
     "Taint.cpp",
     "TaintTesterChecker.cpp",
     "TestAfterDivZeroChecker.cpp",
@@ -137,6 +138,7 @@ static_library("Checkers") {
     "WebKit/UncountedCallArgsChecker.cpp",
     "WebKit/UncountedLambdaCapturesChecker.cpp",
     "WebKit/UncountedLocalVarsChecker.cpp",
+    "cert/InvalidPtrChecker.cpp",
     "cert/PutenvWithAutoChecker.cpp",
   ]
 }

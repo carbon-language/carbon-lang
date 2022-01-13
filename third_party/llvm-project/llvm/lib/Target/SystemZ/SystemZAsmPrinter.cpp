@@ -24,7 +24,7 @@
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -549,15 +549,17 @@ void SystemZAsmPrinter::emitInstruction(const MachineInstr *MI) {
     Register SrcReg = MI->getOperand(4).getReg();
     int64_t SrcDisp = MI->getOperand(5).getImm();
 
+    SystemZTargetStreamer *TS = getTargetStreamer();
     MCSymbol *DotSym = nullptr;
     MCInst ET = MCInstBuilder(TargetInsOpc).addReg(DestReg)
       .addImm(DestDisp).addImm(1).addReg(SrcReg).addImm(SrcDisp);
-    MCInstSTIPair ET_STI(ET, &MF->getSubtarget());
-    EXRLT2SymMap::iterator I = EXRLTargets2Sym.find(ET_STI);
-    if (I != EXRLTargets2Sym.end())
+    SystemZTargetStreamer::MCInstSTIPair ET_STI(ET, &MF->getSubtarget());
+    SystemZTargetStreamer::EXRLT2SymMap::iterator I =
+        TS->EXRLTargets2Sym.find(ET_STI);
+    if (I != TS->EXRLTargets2Sym.end())
       DotSym = I->second;
     else
-      EXRLTargets2Sym[ET_STI] = DotSym = OutContext.createTempSymbol();
+      TS->EXRLTargets2Sym[ET_STI] = DotSym = OutContext.createTempSymbol();
     const MCSymbolRefExpr *Dot = MCSymbolRefExpr::create(DotSym, OutContext);
     EmitToStreamer(
         *OutStreamer,
@@ -722,19 +724,6 @@ void SystemZAsmPrinter::LowerPATCHPOINT(const MachineInstr &MI,
                             getSubtargetInfo());
 }
 
-void SystemZAsmPrinter::emitEXRLTargetInstructions() {
-  if (EXRLTargets2Sym.empty())
-    return;
-  // Switch to the .text section.
-  OutStreamer->SwitchSection(getObjFileLowering().getTextSection());
-  for (auto &I : EXRLTargets2Sym) {
-    OutStreamer->emitLabel(I.second);
-    const MCInstSTIPair &MCI_STI = I.first;
-    OutStreamer->emitInstruction(MCI_STI.first, *MCI_STI.second);
-  }
-  EXRLTargets2Sym.clear();
-}
-
 // Convert a SystemZ-specific constant pool modifier into the associated
 // MCSymbolRefExpr variant kind.
 static MCSymbolRefExpr::VariantKind
@@ -786,15 +775,59 @@ bool SystemZAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                               unsigned OpNo,
                                               const char *ExtraCode,
                                               raw_ostream &OS) {
-  SystemZInstPrinter::printAddress(MAI, MI->getOperand(OpNo).getReg(),
-                                   MI->getOperand(OpNo + 1).getImm(),
-                                   MI->getOperand(OpNo + 2).getReg(), OS);
+  SystemZInstPrinter::
+    printAddress(MAI, MI->getOperand(OpNo).getReg(),
+                 MCOperand::createImm(MI->getOperand(OpNo + 1).getImm()),
+                 MI->getOperand(OpNo + 2).getReg(), OS);
   return false;
 }
 
 void SystemZAsmPrinter::emitEndOfAsmFile(Module &M) {
-  emitEXRLTargetInstructions();
   emitStackMaps(SM);
+}
+
+void SystemZAsmPrinter::emitFunctionEntryLabel() {
+  const SystemZSubtarget &Subtarget =
+      static_cast<const SystemZSubtarget &>(MF->getSubtarget());
+
+  if (Subtarget.getTargetTriple().isOSzOS()) {
+    MCContext &OutContext = OutStreamer->getContext();
+    MCSymbol *EPMarkerSym = OutContext.createTempSymbol("CM_", true);
+
+    // EntryPoint Marker
+    const MachineFrameInfo &MFFrame = MF->getFrameInfo();
+    bool IsUsingAlloca = MFFrame.hasVarSizedObjects();
+
+    // Set Flags
+    uint8_t Flags = 0;
+    if (IsUsingAlloca)
+      Flags |= 0x04;
+
+    uint32_t DSASize = MFFrame.getStackSize();
+
+    // Combine into top 27 bits of DSASize and bottom 5 bits of Flags.
+    uint32_t DSAAndFlags = DSASize & 0xFFFFFFE0; // (x/32) << 5
+    DSAAndFlags |= Flags;
+
+    // Emit entry point marker section.
+    OutStreamer->AddComment("XPLINK Routine Layout Entry");
+    OutStreamer->emitLabel(EPMarkerSym);
+    OutStreamer->AddComment("Eyecatcher 0x00C300C500C500");
+    OutStreamer->emitIntValueInHex(0x00C300C500C500, 7); // Eyecatcher.
+    OutStreamer->AddComment("Mark Type C'1'");
+    OutStreamer->emitInt8(0xF1); // Mark Type.
+    if (OutStreamer->isVerboseAsm()) {
+      OutStreamer->AddComment("DSA Size 0x" + Twine::utohexstr(DSASize));
+      OutStreamer->AddComment("Entry Flags");
+      if (Flags & 0x04)
+        OutStreamer->AddComment("  Bit 2: 1 = Uses alloca");
+      else
+        OutStreamer->AddComment("  Bit 2: 0 = Does not use alloca");
+    }
+    OutStreamer->emitInt32(DSAAndFlags);
+  }
+
+  AsmPrinter::emitFunctionEntryLabel();
 }
 
 // Force static initialization.

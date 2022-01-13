@@ -20,7 +20,7 @@ struct CallOpSignatureConversion : public OpConversionPattern<CallOp> {
 
   /// Hook for derived classes to implement combined matching and rewriting.
   LogicalResult
-  matchAndRewrite(CallOp callOp, ArrayRef<Value> operands,
+  matchAndRewrite(CallOp callOp, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     // Convert the original function results.
     SmallVector<Type, 1> convertedResults;
@@ -30,12 +30,12 @@ struct CallOpSignatureConversion : public OpConversionPattern<CallOp> {
 
     // Substitute with the new result types from the corresponding FuncType
     // conversion.
-    rewriter.replaceOpWithNewOp<CallOp>(callOp, callOp.callee(),
-                                        convertedResults, operands);
+    rewriter.replaceOpWithNewOp<CallOp>(
+        callOp, callOp.getCallee(), convertedResults, adaptor.getOperands());
     return success();
   }
 };
-} // end anonymous namespace
+} // namespace
 
 void mlir::populateCallOpTypeConversionPattern(RewritePatternSet &patterns,
                                                TypeConverter &converter) {
@@ -85,7 +85,7 @@ public:
 private:
   function_ref<bool(BranchOpInterface, int)> shouldConvertBranchOperand;
 };
-} // end anonymous namespace
+} // namespace
 
 namespace {
 /// Only needed to support partial conversion of functions where this pattern
@@ -96,17 +96,16 @@ public:
   using OpConversionPattern<ReturnOp>::OpConversionPattern;
 
   LogicalResult
-  matchAndRewrite(ReturnOp op, ArrayRef<Value> operands,
+  matchAndRewrite(ReturnOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const final {
     // For a return, all operands go to the results of the parent, so
     // rewrite them all.
-    Operation *operation = op.getOperation();
-    rewriter.updateRootInPlace(
-        op, [operands, operation]() { operation->setOperands(operands); });
+    rewriter.updateRootInPlace(op,
+                               [&] { op->setOperands(adaptor.getOperands()); });
     return success();
   }
 };
-} // end anonymous namespace
+} // namespace
 
 void mlir::populateBranchOpInterfaceTypeConversionPattern(
     RewritePatternSet &patterns, TypeConverter &typeConverter,
@@ -147,10 +146,7 @@ bool mlir::isLegalForReturnOpTypeConversionPattern(Operation *op,
 
   // ReturnLike operations have to be legalized with their parent. For
   // return this is handled, for other ops they remain as is.
-  if (op->hasTrait<OpTrait::ReturnLike>())
-    return true;
-
-  return false;
+  return op->hasTrait<OpTrait::ReturnLike>();
 }
 
 bool mlir::isNotBranchOpInterfaceOrReturnLikeOp(Operation *op) {

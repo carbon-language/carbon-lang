@@ -159,15 +159,6 @@ class Configuration(object):
         self.lit_config.note("Running against the C++ Library at {}".format(self.cxx_runtime_root))
         self.lit_config.note("Linking against the ABI Library at {}".format(self.abi_library_root))
         self.lit_config.note("Running against the ABI Library at {}".format(self.abi_runtime_root))
-        sys.stderr.flush()  # Force flushing to avoid broken output on Windows
-
-    def get_test_format(self):
-        from libcxx.test.format import LibcxxTestFormat
-        return LibcxxTestFormat(
-            self.cxx,
-            self.use_clang_verify,
-            self.executor,
-            exec_env=self.exec_env)
 
     def configure_cxx(self):
         # Gather various compiler parameters.
@@ -467,6 +458,7 @@ class Configuration(object):
         sub.append(('%{flags}',         ' '.join(map(self.quote, flags))))
         sub.append(('%{compile_flags}', ' '.join(map(self.quote, compile_flags))))
         sub.append(('%{link_flags}',    ' '.join(map(self.quote, self.cxx.link_flags))))
+        sub.append(('%{install}',       self.quote(self.config.install_root)))
 
         codesign_ident = self.get_lit_conf('llvm_codesign_identity', '')
         env_vars = ' '.join('%s=%s' % (k, self.quote(v)) for (k, v) in self.exec_env.items())

@@ -20,27 +20,10 @@
 
 using namespace __tsan;
 
-void __tsan_init() {
-  cur_thread_init();
-  Initialize(cur_thread());
-}
+void __tsan_init() { Initialize(cur_thread_init()); }
 
 void __tsan_flush_memory() {
   FlushShadowMemory();
-}
-
-void __tsan_read16(void *addr) {
-  uptr pc = CALLERPC;
-  ThreadState *thr = cur_thread();
-  MemoryAccess(thr, pc, (uptr)addr, 8, kAccessRead);
-  MemoryAccess(thr, pc, (uptr)addr + 8, 8, kAccessRead);
-}
-
-void __tsan_write16(void *addr) {
-  uptr pc = CALLERPC;
-  ThreadState *thr = cur_thread();
-  MemoryAccess(thr, pc, (uptr)addr, 8, kAccessWrite);
-  MemoryAccess(thr, pc, (uptr)addr + 8, 8, kAccessWrite);
 }
 
 void __tsan_read16_pc(void *addr, void *pc) {

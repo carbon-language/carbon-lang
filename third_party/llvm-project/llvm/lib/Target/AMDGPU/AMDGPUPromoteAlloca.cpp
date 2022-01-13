@@ -21,6 +21,7 @@
 #include "llvm/IR/IntrinsicsR600.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
+#include "Utils/AMDGPUBaseInfo.h"
 
 #define DEBUG_TYPE "amdgpu-promote-alloca"
 
@@ -176,6 +177,10 @@ bool AMDGPUPromoteAllocaImpl::run(Function &F) {
   if (IsAMDGCN) {
     const GCNSubtarget &ST = TM.getSubtarget<GCNSubtarget>(F);
     MaxVGPRs = ST.getMaxNumVGPRs(ST.getWavesPerEU(F).first);
+    // A non-entry function has only 32 caller preserved registers.
+    // Do not promote alloca which will force spilling.
+    if (!AMDGPU::isEntryFunctionCC(F.getCallingConv()))
+      MaxVGPRs = std::min(MaxVGPRs, 32u);
   } else {
     MaxVGPRs = 128;
   }
@@ -258,8 +263,6 @@ AMDGPUPromoteAllocaImpl::getLocalSizeYZ(IRBuilder<> &Builder) {
   CallInst *DispatchPtr = Builder.CreateCall(DispatchPtrFn, {});
   DispatchPtr->addRetAttr(Attribute::NoAlias);
   DispatchPtr->addRetAttr(Attribute::NonNull);
-  DispatchPtr->addAttribute(AttributeList::ReturnIndex, Attribute::NoAlias);
-  DispatchPtr->addAttribute(AttributeList::ReturnIndex, Attribute::NonNull);
   F.removeFnAttr("amdgpu-no-dispatch-ptr");
 
   // Size of the dispatch packet struct.
@@ -271,7 +274,7 @@ AMDGPUPromoteAllocaImpl::getLocalSizeYZ(IRBuilder<> &Builder) {
 
   // We could do a single 64-bit load here, but it's likely that the basic
   // 32-bit and extract sequence is already present, and it is probably easier
-  // to CSE this. The loads should be mergable later anyway.
+  // to CSE this. The loads should be mergeable later anyway.
   Value *GEPXY = Builder.CreateConstInBoundsGEP1_64(I32Ty, CastDispatchPtr, 1);
   LoadInst *LoadXY = Builder.CreateAlignedLoad(I32Ty, GEPXY, Align(4));
 
@@ -936,7 +939,7 @@ bool AMDGPUPromoteAllocaImpl::handleAlloca(AllocaInst &I, bool SufficientLDS) {
       GlobalVariable::NotThreadLocal,
       AMDGPUAS::LOCAL_ADDRESS);
   GV->setUnnamedAddr(GlobalValue::UnnamedAddr::Global);
-  GV->setAlignment(MaybeAlign(I.getAlignment()));
+  GV->setAlignment(I.getAlign());
 
   Value *TCntY, *TCntZ;
 
@@ -1109,6 +1112,10 @@ bool promoteAllocasToVector(Function &F, TargetMachine &TM) {
   if (TM.getTargetTriple().getArch() == Triple::amdgcn) {
     const GCNSubtarget &ST = TM.getSubtarget<GCNSubtarget>(F);
     MaxVGPRs = ST.getMaxNumVGPRs(ST.getWavesPerEU(F).first);
+    // A non-entry function has only 32 caller preserved registers.
+    // Do not promote alloca which will force spilling.
+    if (!AMDGPU::isEntryFunctionCC(F.getCallingConv()))
+      MaxVGPRs = std::min(MaxVGPRs, 32u);
   } else {
     MaxVGPRs = 128;
   }

@@ -148,7 +148,7 @@ simplifyAMDGCNImageIntrinsic(const GCNSubtarget *ST,
   Function *I =
       Intrinsic::getDeclaration(II.getModule(), II.getIntrinsicID(), ArgTys);
 
-  SmallVector<Value *, 8> Args(II.arg_operands());
+  SmallVector<Value *, 8> Args(II.args());
 
   unsigned EndIndex =
       OnlyDerivatives ? ImageDimIntr->CoordStart : ImageDimIntr->VAddrEnd;
@@ -439,7 +439,7 @@ GCNTTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
     if (!CWidth || !COffset)
       break;
 
-    // The case of Width == 0 is handled above, which makes this tranformation
+    // The case of Width == 0 is handled above, which makes this transformation
     // safe.  If Width == 0, then the ashr and lshr instructions become poison
     // value since the shift amount would be equal to the bit size.
     assert(Width != 0);
@@ -890,6 +890,15 @@ GCNTTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
           II.getModule(), Intrinsic::fma, II.getType()));
       return &II;
     }
+    break;
+  }
+  case Intrinsic::amdgcn_is_shared:
+  case Intrinsic::amdgcn_is_private: {
+    if (isa<UndefValue>(II.getArgOperand(0)))
+      return IC.replaceInstUsesWith(II, UndefValue::get(II.getType()));
+
+    if (isa<ConstantPointerNull>(II.getArgOperand(0)))
+      return IC.replaceInstUsesWith(II, ConstantInt::getFalse(II.getType()));
     break;
   }
   default: {

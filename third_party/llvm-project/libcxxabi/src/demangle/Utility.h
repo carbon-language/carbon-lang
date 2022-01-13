@@ -24,7 +24,7 @@ DEMANGLE_NAMESPACE_BEGIN
 
 // Stream that AST nodes write their string representation into after the AST
 // has been parsed.
-class OutputStream {
+class OutputBuffer {
   char *Buffer = nullptr;
   size_t CurrentPosition = 0;
   size_t BufferCapacity = 0;
@@ -63,9 +63,9 @@ class OutputStream {
   }
 
 public:
-  OutputStream(char *StartBuf, size_t Size)
+  OutputBuffer(char *StartBuf, size_t Size)
       : Buffer(StartBuf), CurrentPosition(0), BufferCapacity(Size) {}
-  OutputStream() = default;
+  OutputBuffer() = default;
   void reset(char *Buffer_, size_t BufferCapacity_) {
     CurrentPosition = 0;
     Buffer = Buffer_;
@@ -77,7 +77,7 @@ public:
   unsigned CurrentPackIndex = std::numeric_limits<unsigned>::max();
   unsigned CurrentPackMax = std::numeric_limits<unsigned>::max();
 
-  OutputStream &operator+=(StringView R) {
+  OutputBuffer &operator+=(StringView R) {
     size_t Size = R.size();
     if (Size == 0)
       return *this;
@@ -87,17 +87,28 @@ public:
     return *this;
   }
 
-  OutputStream &operator+=(char C) {
+  OutputBuffer &operator+=(char C) {
     grow(1);
     Buffer[CurrentPosition++] = C;
     return *this;
   }
 
-  OutputStream &operator<<(StringView R) { return (*this += R); }
+  OutputBuffer &operator<<(StringView R) { return (*this += R); }
 
-  OutputStream &operator<<(char C) { return (*this += C); }
+  OutputBuffer prepend(StringView R) {
+    size_t Size = R.size();
 
-  OutputStream &operator<<(long long N) {
+    grow(Size);
+    std::memmove(Buffer + Size, Buffer, CurrentPosition);
+    std::memcpy(Buffer, R.begin(), Size);
+    CurrentPosition += Size;
+
+    return *this;
+  }
+
+  OutputBuffer &operator<<(char C) { return (*this += C); }
+
+  OutputBuffer &operator<<(long long N) {
     if (N < 0)
       writeUnsigned(static_cast<unsigned long long>(-N), true);
     else
@@ -105,25 +116,35 @@ public:
     return *this;
   }
 
-  OutputStream &operator<<(unsigned long long N) {
+  OutputBuffer &operator<<(unsigned long long N) {
     writeUnsigned(N, false);
     return *this;
   }
 
-  OutputStream &operator<<(long N) {
+  OutputBuffer &operator<<(long N) {
     return this->operator<<(static_cast<long long>(N));
   }
 
-  OutputStream &operator<<(unsigned long N) {
+  OutputBuffer &operator<<(unsigned long N) {
     return this->operator<<(static_cast<unsigned long long>(N));
   }
 
-  OutputStream &operator<<(int N) {
+  OutputBuffer &operator<<(int N) {
     return this->operator<<(static_cast<long long>(N));
   }
 
-  OutputStream &operator<<(unsigned int N) {
+  OutputBuffer &operator<<(unsigned int N) {
     return this->operator<<(static_cast<unsigned long long>(N));
+  }
+
+  void insert(size_t Pos, const char *S, size_t N) {
+    assert(Pos <= CurrentPosition);
+    if (N == 0)
+      return;
+    grow(N);
+    std::memmove(Buffer + Pos + N, Buffer + Pos, CurrentPosition - Pos);
+    std::memcpy(Buffer + Pos, S, N);
+    CurrentPosition += N;
   }
 
   size_t getCurrentPosition() const { return CurrentPosition; }
@@ -171,7 +192,7 @@ public:
   SwapAndRestore &operator=(const SwapAndRestore &) = delete;
 };
 
-inline bool initializeOutputStream(char *Buf, size_t *N, OutputStream &S,
+inline bool initializeOutputBuffer(char *Buf, size_t *N, OutputBuffer &OB,
                                    size_t InitSize) {
   size_t BufferSize;
   if (Buf == nullptr) {
@@ -182,7 +203,7 @@ inline bool initializeOutputStream(char *Buf, size_t *N, OutputStream &S,
   } else
     BufferSize = *N;
 
-  S.reset(Buf, BufferSize);
+  OB.reset(Buf, BufferSize);
   return true;
 }
 

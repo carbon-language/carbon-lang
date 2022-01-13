@@ -12,7 +12,6 @@
 
 #include "Lexer.h"
 #include "mlir/IR/Diagnostics.h"
-#include "mlir/IR/Identifier.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/MLIRContext.h"
 #include "llvm/ADT/StringExtras.h"
@@ -21,7 +20,6 @@
 using namespace mlir;
 
 using llvm::SMLoc;
-using llvm::SourceMgr;
 
 // Returns true if 'c' is an allowable punctuation character: [$._-]
 // Returns false otherwise.

@@ -220,9 +220,7 @@ class LowerMatrixIntrinsics {
     bool IsColumnMajor = true;
 
   public:
-    MatrixTy()
-        : Vectors(),
-          IsColumnMajor(MatrixLayout == MatrixLayoutTy::ColumnMajor) {}
+    MatrixTy() : IsColumnMajor(MatrixLayout == MatrixLayoutTy::ColumnMajor) {}
     MatrixTy(ArrayRef<Value *> Vectors)
         : Vectors(Vectors.begin(), Vectors.end()),
           IsColumnMajor(MatrixLayout == MatrixLayoutTy::ColumnMajor) {}
@@ -900,8 +898,7 @@ public:
     // UndefedInsts and then check that we in fact remove them.
     SmallSet<Instruction *, 16> UndefedInsts;
     for (auto *Inst : reverse(ToRemove)) {
-      for (auto I = Inst->use_begin(), E = Inst->use_end(); I != E;) {
-        Use &U = *I++;
+      for (Use &U : llvm::make_early_inc_range(Inst->uses())) {
         if (auto *Undefed = dyn_cast<Instruction>(U.getUser()))
           UndefedInsts.insert(Undefed);
         U.set(UndefValue::get(Inst->getType()));
@@ -1394,7 +1391,8 @@ public:
     // reloads necessary.
     unsigned Op0Regs = (R + VF - 1) / VF * M;
     unsigned Op1Regs = (M + VF - 1) / VF * C;
-    return Op0Regs + Op1Regs > TTI.getNumberOfRegisters(true);
+    return Op0Regs + Op1Regs >
+           TTI.getNumberOfRegisters(TTI.getRegisterClassForType(true));
   }
 
   MatrixTy getZeroMatrix(Type *EltType, unsigned R, unsigned C) {
@@ -1833,7 +1831,7 @@ public:
                    const DenseMap<Value *, SmallPtrSet<Value *, 2>> &Shared,
                    const SmallSetVector<Value *, 32> &ExprsInSubprogram,
                    Value *Leaf)
-        : Str(), Stream(Str), DL(DL), Inst2Matrix(Inst2Matrix), Shared(Shared),
+        : Stream(Str), DL(DL), Inst2Matrix(Inst2Matrix), Shared(Shared),
           ExprsInSubprogram(ExprsInSubprogram), Leaf(Leaf) {}
 
     void indent(unsigned N) {
@@ -1896,7 +1894,7 @@ public:
           write(Name);
           return;
         }
-        IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
+        auto *II = cast<IntrinsicInst>(CI);
         write(Intrinsic::getBaseName(II->getIntrinsicID())
                   .drop_front(StringRef("llvm.matrix.").size()));
         write(".");
@@ -2262,6 +2260,16 @@ PreservedAnalyses LowerMatrixIntrinsicsPass::run(Function &F,
     return PA;
   }
   return PreservedAnalyses::all();
+}
+
+void LowerMatrixIntrinsicsPass::printPipeline(
+    raw_ostream &OS, function_ref<StringRef(StringRef)> MapClassName2PassName) {
+  static_cast<PassInfoMixin<LowerMatrixIntrinsicsPass> *>(this)->printPipeline(
+      OS, MapClassName2PassName);
+  OS << "<";
+  if (Minimal)
+    OS << "minimal";
+  OS << ">";
 }
 
 namespace {

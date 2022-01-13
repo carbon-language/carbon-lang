@@ -46,12 +46,19 @@ typedef __UINTPTR_TYPE__ uintptr_t;
 typedef char char2 __attribute__((ext_vector_type(2)));
 typedef char char4 __attribute__((ext_vector_type(4)));
 typedef uchar uchar4 __attribute__((ext_vector_type(4)));
+typedef uchar uchar16 __attribute__((ext_vector_type(16)));
 typedef float float4 __attribute__((ext_vector_type(4)));
+typedef float float16 __attribute__((ext_vector_type(16)));
 typedef half half4 __attribute__((ext_vector_type(4)));
 typedef int int2 __attribute__((ext_vector_type(2)));
 typedef int int4 __attribute__((ext_vector_type(4)));
+typedef uint uint2 __attribute__((ext_vector_type(2)));
 typedef uint uint4 __attribute__((ext_vector_type(4)));
 typedef long long2 __attribute__((ext_vector_type(2)));
+typedef long long8 __attribute__((ext_vector_type(8)));
+typedef ulong ulong4 __attribute__((ext_vector_type(4)));
+typedef short short16 __attribute__((ext_vector_type(16)));
+typedef ushort ushort3 __attribute__((ext_vector_type(3)));
 
 typedef int clk_profiling_info;
 #define CLK_PROFILING_COMMAND_EXEC_TIME 0x1
@@ -121,6 +128,27 @@ void test_atomic_fetch(volatile __generic atomic_int *a_int,
   uip = atomic_fetch_or(a_uintptr, uip);
 }
 #endif
+
+#if !defined(NO_HEADER) && !defined(NO_FP64) && __OPENCL_C_VERSION__ >= 200
+// Check added atomic_fetch_ functions by cl_ext_float_atomics
+// extension can be called
+void test_atomic_fetch_with_address_space(volatile __generic atomic_float *a_float,
+                                          volatile __generic atomic_double *a_double,
+                                          volatile __local atomic_float *a_float_local,
+                                          volatile __local atomic_double *a_double_local,
+                                          volatile __global atomic_float *a_float_global,
+                                          volatile __global atomic_double *a_double_global) {
+  float f1, resf1;
+  double d1, resd1;
+  resf1 = atomic_fetch_min(a_float, f1);
+  resf1 = atomic_fetch_max_explicit(a_float_local, f1, memory_order_seq_cst);
+  resf1 = atomic_fetch_add_explicit(a_float_global, f1, memory_order_seq_cst, memory_scope_work_group);
+
+  resd1 = atomic_fetch_min(a_double, d1);
+  resd1 = atomic_fetch_max_explicit(a_double_local, d1, memory_order_seq_cst);
+  resd1 = atomic_fetch_add_explicit(a_double_global, d1, memory_order_seq_cst, memory_scope_work_group);
+}
+#endif // !defined(NO_HEADER) && __OPENCL_C_VERSION__ >= 200
 
 // Test old atomic overloaded with generic address space in C++ for OpenCL.
 #if __OPENCL_C_VERSION__ >= 200
@@ -263,18 +291,27 @@ kernel void basic_vector_data() {
   global void *global_p;
   private void *private_p;
   size_t s;
+  ulong4 ul4;
+  short16 s16;
+#if __OPENCL_C_VERSION__ >= CL_VERSION_2_0
+  ushort3 us3;
+  uchar16 uc16;
+#endif
+  long8 l8;
+  uint2 ui2;
+  float16 f16;
 
-  vload4(s, (const __constant ulong *) constant_p);
-  vload16(s, (const __constant short *) constant_p);
+  ul4 = vload4(s, (const __constant ulong *) constant_p);
+  s16 = vload16(s, (const __constant short *) constant_p);
 
 #if __OPENCL_C_VERSION__ >= CL_VERSION_2_0
-  vload3(s, (const __generic ushort *) generic_p);
-  vload16(s, (const __generic uchar *) generic_p);
+  us3 = vload3(s, (const __generic ushort *) generic_p);
+  uc16 = vload16(s, (const __generic uchar *) generic_p);
 #endif
 
-  vload8(s, (const __global long *) global_p);
-  vload2(s, (const __local uint *) local_p);
-  vload16(s, (const __private float *) private_p);
+  l8 = vload8(s, (const __global long *) global_p);
+  ui2 = vload2(s, (const __local uint *) local_p);
+  f16 = vload16(s, (const __private float *) private_p);
 }
 
 kernel void basic_work_item() {

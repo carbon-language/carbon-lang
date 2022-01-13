@@ -115,7 +115,7 @@ struct VFShape {
 
     return {EC, Parameters};
   }
-  /// Sanity check on the Parameters in the VFShape.
+  /// Validation check on the Parameters in the VFShape.
   bool hasValidParameterList() const;
 };
 
@@ -532,6 +532,12 @@ llvm::SmallVector<int, 16> createStrideMask(unsigned Start, unsigned Stride,
 ///   <0, 1, 2, 3, undef, undef, undef, undef>
 llvm::SmallVector<int, 16>
 createSequentialMask(unsigned Start, unsigned NumInts, unsigned NumUndefs);
+
+/// Given a shuffle mask for a binary shuffle, create the equivalent shuffle
+/// mask assuming both operands are identical. This assumes that the unary
+/// shuffle will use elements from operand 0 (operand 1 will be unused).
+llvm::SmallVector<int, 16> createUnaryMask(ArrayRef<int> Mask,
+                                           unsigned NumElts);
 
 /// Concatenate a list of vectors.
 ///

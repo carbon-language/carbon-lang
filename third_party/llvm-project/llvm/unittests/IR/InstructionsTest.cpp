@@ -6,10 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/ADT/CombinationGenerator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/VectorUtils.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -89,7 +91,7 @@ TEST_F(ModuleWithFunctionTest, CallInst) {
 
   // Make sure iteration over a call's arguments works as expected.
   unsigned Idx = 0;
-  for (Value *Arg : Call->arg_operands()) {
+  for (Value *Arg : Call->args()) {
     EXPECT_EQ(FArgTypes[Idx], Arg->getType());
     EXPECT_EQ(Call->getArgOperand(Idx)->getType(), Arg->getType());
     Idx++;
@@ -111,7 +113,7 @@ TEST_F(ModuleWithFunctionTest, InvokeInst) {
 
   // Make sure iteration over invoke's arguments works as expected.
   unsigned Idx = 0;
-  for (Value *Arg : Invoke->arg_operands()) {
+  for (Value *Arg : Invoke->args()) {
     EXPECT_EQ(FArgTypes[Idx], Arg->getType());
     EXPECT_EQ(Invoke->getArgOperand(Idx)->getType(), Arg->getType());
     Idx++;
@@ -612,7 +614,7 @@ TEST(InstructionsTest, CloneCall) {
 
   // Test cloning an attribute.
   {
-    AttrBuilder AB;
+    AttrBuilder AB(C);
     AB.addAttribute(Attribute::ReadOnly);
     Call->setAttributes(
         AttributeList::get(C, AttributeList::FunctionIndex, AB));
@@ -631,14 +633,14 @@ TEST(InstructionsTest, AlterCallBundles) {
   std::unique_ptr<CallInst> Call(
       CallInst::Create(FnTy, Callee, Args, OldBundle, "result"));
   Call->setTailCallKind(CallInst::TailCallKind::TCK_NoTail);
-  AttrBuilder AB;
+  AttrBuilder AB(C);
   AB.addAttribute(Attribute::Cold);
   Call->setAttributes(AttributeList::get(C, AttributeList::FunctionIndex, AB));
   Call->setDebugLoc(DebugLoc(MDNode::get(C, None)));
 
   OperandBundleDef NewBundle("after", ConstantInt::get(Int32Ty, 7));
   std::unique_ptr<CallInst> Clone(CallInst::Create(Call.get(), NewBundle));
-  EXPECT_EQ(Call->getNumArgOperands(), Clone->getNumArgOperands());
+  EXPECT_EQ(Call->arg_size(), Clone->arg_size());
   EXPECT_EQ(Call->getArgOperand(0), Clone->getArgOperand(0));
   EXPECT_EQ(Call->getCallingConv(), Clone->getCallingConv());
   EXPECT_EQ(Call->getTailCallKind(), Clone->getTailCallKind());
@@ -660,7 +662,7 @@ TEST(InstructionsTest, AlterInvokeBundles) {
   std::unique_ptr<InvokeInst> Invoke(
       InvokeInst::Create(FnTy, Callee, NormalDest.get(), UnwindDest.get(), Args,
                          OldBundle, "result"));
-  AttrBuilder AB;
+  AttrBuilder AB(C);
   AB.addAttribute(Attribute::Cold);
   Invoke->setAttributes(
       AttributeList::get(C, AttributeList::FunctionIndex, AB));
@@ -671,7 +673,7 @@ TEST(InstructionsTest, AlterInvokeBundles) {
       InvokeInst::Create(Invoke.get(), NewBundle));
   EXPECT_EQ(Invoke->getNormalDest(), Clone->getNormalDest());
   EXPECT_EQ(Invoke->getUnwindDest(), Clone->getUnwindDest());
-  EXPECT_EQ(Invoke->getNumArgOperands(), Clone->getNumArgOperands());
+  EXPECT_EQ(Invoke->arg_size(), Clone->arg_size());
   EXPECT_EQ(Invoke->getArgOperand(0), Clone->getArgOperand(0));
   EXPECT_EQ(Invoke->getCallingConv(), Clone->getCallingConv());
   EXPECT_TRUE(Clone->hasFnAttr(Attribute::AttrKind::Cold));
@@ -1113,6 +1115,103 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id15->isIdentityWithExtract());
   EXPECT_FALSE(Id15->isConcat());
   delete Id15;
+}
+
+TEST(InstructionsTest, ShuffleMaskIsReplicationMask) {
+  for (int ReplicationFactor : seq_inclusive(1, 8)) {
+    for (int VF : seq_inclusive(1, 8)) {
+      const auto ReplicatedMask = createReplicatedMask(ReplicationFactor, VF);
+      int GuessedReplicationFactor = -1, GuessedVF = -1;
+      EXPECT_TRUE(ShuffleVectorInst::isReplicationMask(
+          ReplicatedMask, GuessedReplicationFactor, GuessedVF));
+      EXPECT_EQ(GuessedReplicationFactor, ReplicationFactor);
+      EXPECT_EQ(GuessedVF, VF);
+
+      for (int OpVF : seq_inclusive(VF, 2 * VF + 1)) {
+        LLVMContext Ctx;
+        Type *OpVFTy = FixedVectorType::get(IntegerType::getInt1Ty(Ctx), OpVF);
+        Value *Op = ConstantVector::getNullValue(OpVFTy);
+        ShuffleVectorInst *SVI = new ShuffleVectorInst(Op, Op, ReplicatedMask);
+        EXPECT_EQ(SVI->isReplicationMask(GuessedReplicationFactor, GuessedVF),
+                  OpVF == VF);
+        delete SVI;
+      }
+    }
+  }
+}
+
+TEST(InstructionsTest, ShuffleMaskIsReplicationMask_undef) {
+  for (int ReplicationFactor : seq_inclusive(1, 4)) {
+    for (int VF : seq_inclusive(1, 4)) {
+      const auto ReplicatedMask = createReplicatedMask(ReplicationFactor, VF);
+      int GuessedReplicationFactor = -1, GuessedVF = -1;
+
+      // If we change some mask elements to undef, we should still match.
+
+      SmallVector<SmallVector<bool>> ElementChoices(ReplicatedMask.size(),
+                                                    {false, true});
+
+      CombinationGenerator<bool, decltype(ElementChoices)::value_type,
+                           /*variable_smallsize=*/4>
+          G(ElementChoices);
+
+      G.generate([&](ArrayRef<bool> UndefOverrides) -> bool {
+        SmallVector<int> AdjustedMask;
+        AdjustedMask.reserve(ReplicatedMask.size());
+        for (auto I : zip(ReplicatedMask, UndefOverrides))
+          AdjustedMask.emplace_back(std::get<1>(I) ? -1 : std::get<0>(I));
+        assert(AdjustedMask.size() == ReplicatedMask.size() &&
+               "Size misprediction");
+
+        EXPECT_TRUE(ShuffleVectorInst::isReplicationMask(
+            AdjustedMask, GuessedReplicationFactor, GuessedVF));
+        // Do not check GuessedReplicationFactor and GuessedVF,
+        // with enough undef's we may deduce a different tuple.
+
+        return /*Abort=*/false;
+      });
+    }
+  }
+}
+
+TEST(InstructionsTest, ShuffleMaskIsReplicationMask_Exhaustive_Correctness) {
+  for (int ShufMaskNumElts : seq_inclusive(1, 6)) {
+    SmallVector<int> PossibleShufMaskElts;
+    PossibleShufMaskElts.reserve(ShufMaskNumElts + 2);
+    for (int PossibleShufMaskElt : seq_inclusive(-1, ShufMaskNumElts))
+      PossibleShufMaskElts.emplace_back(PossibleShufMaskElt);
+    assert(PossibleShufMaskElts.size() == ShufMaskNumElts + 2U &&
+           "Size misprediction");
+
+    SmallVector<SmallVector<int>> ElementChoices(ShufMaskNumElts,
+                                                 PossibleShufMaskElts);
+
+    CombinationGenerator<int, decltype(ElementChoices)::value_type,
+                         /*variable_smallsize=*/4>
+        G(ElementChoices);
+
+    G.generate([&](ArrayRef<int> Mask) -> bool {
+      int GuessedReplicationFactor = -1, GuessedVF = -1;
+      bool Match = ShuffleVectorInst::isReplicationMask(
+          Mask, GuessedReplicationFactor, GuessedVF);
+      if (!Match)
+        return /*Abort=*/false;
+
+      const auto ActualMask =
+          createReplicatedMask(GuessedReplicationFactor, GuessedVF);
+      EXPECT_EQ(Mask.size(), ActualMask.size());
+      for (auto I : zip(Mask, ActualMask)) {
+        int Elt = std::get<0>(I);
+        int ActualElt = std::get<0>(I);
+
+        if (Elt != -1) {
+          EXPECT_EQ(Elt, ActualElt);
+        }
+      }
+
+      return /*Abort=*/false;
+    });
+  }
 }
 
 TEST(InstructionsTest, GetSplat) {

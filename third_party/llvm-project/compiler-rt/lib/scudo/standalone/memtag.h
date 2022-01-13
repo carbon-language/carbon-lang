@@ -23,7 +23,9 @@ namespace scudo {
 // We assume that Top-Byte Ignore is enabled if the architecture supports memory
 // tagging. Not all operating systems enable TBI, so we only claim architectural
 // support for memory tagging if the operating system enables TBI.
-#if SCUDO_LINUX && !defined(SCUDO_DISABLE_TBI)
+// HWASan uses the top byte for its own purpose and Scudo should not touch it.
+#if SCUDO_LINUX && !defined(SCUDO_DISABLE_TBI) &&                              \
+    !__has_feature(hwaddress_sanitizer)
 inline constexpr bool archSupportsMemoryTagging() { return true; }
 #else
 inline constexpr bool archSupportsMemoryTagging() { return false; }
@@ -91,9 +93,10 @@ inline bool systemDetectsMemoryTagFaultsTestOnly() {
 #ifndef PR_MTE_TCF_MASK
 #define PR_MTE_TCF_MASK (3UL << PR_MTE_TCF_SHIFT)
 #endif
-  return (static_cast<unsigned long>(
-              prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0)) &
-          PR_MTE_TCF_MASK) != PR_MTE_TCF_NONE;
+  int res = prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0);
+  if (res == -1)
+    return false;
+  return (static_cast<unsigned long>(res) & PR_MTE_TCF_MASK) != PR_MTE_TCF_NONE;
 }
 
 inline void enableSystemMemoryTaggingTestOnly() {

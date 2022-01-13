@@ -15,6 +15,7 @@
 #ifndef MLIR_ANALYSIS_AFFINE_ANALYSIS_H
 #define MLIR_ANALYSIS_AFFINE_ANALYSIS_H
 
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/Value.h"
 #include "llvm/ADT/Optional.h"
@@ -25,13 +26,14 @@ namespace mlir {
 class AffineApplyOp;
 class AffineForOp;
 class AffineValueMap;
+class FlatAffineRelation;
 class FlatAffineValueConstraints;
 class Operation;
 
 /// A description of a (parallelizable) reduction in an affine loop.
 struct LoopReduction {
   /// Reduction kind.
-  AtomicRMWKind kind;
+  arith::AtomicRMWKind kind;
 
   /// Position of the iteration argument that acts as accumulator.
   unsigned iterArgPosition;
@@ -39,6 +41,10 @@ struct LoopReduction {
   /// The value being reduced.
   Value value;
 };
+
+/// Populate `supportedReductions` with descriptors of the supported reductions.
+void getSupportedReductions(
+    AffineForOp forOp, SmallVectorImpl<LoopReduction> &supportedReductions);
 
 /// Returns true if `forOp' is a parallel loop. If `parallelReductions` is
 /// provided, populates it with descriptors of the parallelizable reductions and
@@ -85,6 +91,30 @@ struct MemRefAccess {
   // Returns true if this access is of a store op.
   bool isStore() const;
 
+  /// Creates an access relation for the access. An access relation maps
+  /// elements of an iteration domain to the element(s) of an array domain
+  /// accessed by that iteration of the associated statement through some array
+  /// reference. For example, given the MLIR code:
+  ///
+  /// affine.for %i0 = 0 to 10 {
+  ///   affine.for %i1 = 0 to 10 {
+  ///     %a = affine.load %arr[%i0 + %i1, %i0 + 2 * %i1] : memref<100x100xf32>
+  ///   }
+  /// }
+  ///
+  /// The access relation, assuming that the memory locations for %arr are
+  /// represented as %m0, %m1 would be:
+  ///
+  ///   (%i0, %i1) -> (%m0, %m1)
+  ///   %m0 = %i0 + %i1
+  ///   %m1 = %i0 + 2 * %i1
+  ///   0  <= %i0 < 10
+  ///   0  <= %i1 < 10
+  ///
+  /// Returns failure for yet unimplemented/unsupported cases (see docs of
+  /// mlir::getIndexSet and mlir::getRelationFromMap for these cases).
+  LogicalResult getAccessRelation(FlatAffineRelation &accessRel) const;
+
   /// Populates 'accessMap' with composition of AffineApplyOps reachable from
   /// 'indices'.
   void getAccessMap(AffineValueMap *accessMap) const;
@@ -107,7 +137,7 @@ struct MemRefAccess {
 // lb < ub. Note that ub/lb == None means unbounded.
 struct DependenceComponent {
   // The AffineForOp Operation associated with this dependence component.
-  Operation *op;
+  Operation *op = nullptr;
   // The lower bound of the dependence distance.
   Optional<int64_t> lb;
   // The upper bound of the dependence distance (inclusive).
@@ -153,6 +183,6 @@ void getDependenceComponents(
     AffineForOp forOp, unsigned maxLoopDepth,
     std::vector<SmallVector<DependenceComponent, 2>> *depCompsVec);
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_ANALYSIS_AFFINE_ANALYSIS_H

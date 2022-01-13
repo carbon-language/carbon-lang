@@ -20,11 +20,13 @@ add_llvm_unittest(CodeGenTests
   AsmPrinterDwarfTest.cpp
   DIEHashTest.cpp
   DIETest.cpp
+  InstrRefLDVTest.cpp
   LowLevelTypeTest.cpp
   LexicalScopesTest.cpp
   MachineInstrBundleIteratorTest.cpp
   MachineInstrTest.cpp
   MachineOperandTest.cpp
+  RegAllocScoreTest.cpp
   PassManagerTest.cpp
   ScalableVectorMVTsTest.cpp
   SelectionDAGAddressAnalysisTest.cpp

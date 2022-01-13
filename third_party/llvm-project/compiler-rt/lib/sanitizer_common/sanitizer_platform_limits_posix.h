@@ -57,12 +57,12 @@ extern unsigned struct_regmatch_sz;
 extern unsigned struct_fstab_sz;
 extern unsigned struct_statfs_sz;
 extern unsigned struct_sockaddr_sz;
-extern unsigned ucontext_t_sz;
-#endif // !SANITIZER_ANDROID
+unsigned ucontext_t_sz(void *uctx);
+#  endif  // !SANITIZER_ANDROID
 
-#if SANITIZER_LINUX
+#  if SANITIZER_LINUX
 
-#if defined(__x86_64__)
+#    if defined(__x86_64__)
 const unsigned struct_kernel_stat_sz = 144;
 const unsigned struct_kernel_stat64_sz = 0;
 #elif defined(__i386__)
@@ -713,6 +713,13 @@ struct __sanitizer_protoent {
   char *p_name;
   char **p_aliases;
   int p_proto;
+};
+
+struct __sanitizer_netent {
+  char *n_name;
+  char **n_aliases;
+  int n_addrtype;
+  u32 n_net;
 };
 
 struct __sanitizer_addrinfo {

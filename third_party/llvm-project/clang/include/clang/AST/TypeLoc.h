@@ -581,10 +581,9 @@ public:
 
   bool needsExtraLocalData() const {
     BuiltinType::Kind bk = getTypePtr()->getKind();
-    return (bk >= BuiltinType::UShort && bk <= BuiltinType::UInt128)
-      || (bk >= BuiltinType::Short && bk <= BuiltinType::Float128)
-      || bk == BuiltinType::UChar
-      || bk == BuiltinType::SChar;
+    return (bk >= BuiltinType::UShort && bk <= BuiltinType::UInt128) ||
+           (bk >= BuiltinType::Short && bk <= BuiltinType::Ibm128) ||
+           bk == BuiltinType::UChar || bk == BuiltinType::SChar;
   }
 
   unsigned getExtraLocalDataSize() const {
@@ -664,6 +663,16 @@ public:
       wbs.ModeAttr = false;
     }
   }
+};
+
+/// Wrapper for source info for types used via transparent aliases.
+class UsingTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                      UsingTypeLoc, UsingType> {
+public:
+  QualType getUnderlyingType() const {
+    return getTypePtr()->getUnderlyingType();
+  }
+  UsingShadowDecl *getFoundDecl() const { return getTypePtr()->getFoundDecl(); }
 };
 
 /// Wrapper for source info for typedefs.
@@ -1985,12 +1994,35 @@ public:
   void initializeLocal(ASTContext &Context, SourceLocation Loc);
 };
 
-// FIXME: location of the 'decltype' and parens.
-class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                         DecltypeTypeLoc,
-                                                         DecltypeType> {
+// decltype(expression) abc;
+// ~~~~~~~~                  DecltypeLoc
+//                    ~      RParenLoc
+// FIXME: add LParenLoc, it is tricky to support due to the limitation of
+// annotated-decltype token.
+struct DecltypeTypeLocInfo {
+  SourceLocation DecltypeLoc;
+  SourceLocation RParenLoc;
+};
+class DecltypeTypeLoc
+    : public ConcreteTypeLoc<UnqualTypeLoc, DecltypeTypeLoc, DecltypeType,
+                             DecltypeTypeLocInfo> {
 public:
   Expr *getUnderlyingExpr() const { return getTypePtr()->getUnderlyingExpr(); }
+
+  SourceLocation getDecltypeLoc() const { return getLocalData()->DecltypeLoc; }
+  void setDecltypeLoc(SourceLocation Loc) { getLocalData()->DecltypeLoc = Loc; }
+
+  SourceLocation getRParenLoc() const { return getLocalData()->RParenLoc; }
+  void setRParenLoc(SourceLocation Loc) { getLocalData()->RParenLoc = Loc; }
+
+  SourceRange getLocalSourceRange() const {
+    return SourceRange(getDecltypeLoc(), getRParenLoc());
+  }
+
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    setDecltypeLoc(Loc);
+    setRParenLoc(Loc);
+  }
 };
 
 struct UnaryTransformTypeLocInfo {
@@ -2562,12 +2594,12 @@ inline T TypeLoc::getAsAdjusted() const {
   }
   return Cur.getAs<T>();
 }
-class ExtIntTypeLoc final
-    : public InheritingConcreteTypeLoc<TypeSpecTypeLoc, ExtIntTypeLoc,
-                                        ExtIntType> {};
-class DependentExtIntTypeLoc final
-    : public InheritingConcreteTypeLoc<TypeSpecTypeLoc, DependentExtIntTypeLoc,
-                                        DependentExtIntType> {};
+class BitIntTypeLoc final
+    : public InheritingConcreteTypeLoc<TypeSpecTypeLoc, BitIntTypeLoc,
+                                       BitIntType> {};
+class DependentBitIntTypeLoc final
+    : public InheritingConcreteTypeLoc<TypeSpecTypeLoc, DependentBitIntTypeLoc,
+                                       DependentBitIntType> {};
 
 } // namespace clang
 

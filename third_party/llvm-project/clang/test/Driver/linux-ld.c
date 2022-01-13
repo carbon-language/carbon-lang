@@ -1,4 +1,4 @@
-// UNSUPPORTED: system-windows
+// UNSUPPORTED: system-windows, default-pie-on-linux
 // General tests that ld invocations on Linux targets sane. Note that we use
 // sysroot to make these tests independent of the host system.
 //
@@ -319,7 +319,13 @@
 // CHECK-LD-64-STATIC: "-L[[SYSROOT]]/lib"
 // CHECK-LD-64-STATIC: "-L[[SYSROOT]]/usr/lib"
 // CHECK-LD-64-STATIC: "--start-group" "-lgcc" "-lgcc_eh" "-lc" "--end-group"
-//
+
+// RUN: %clang -### %s --target=x86_64-unknown-linux -rtlib=platform --unwindlib=platform -shared -static \
+// RUN:   --gcc-toolchain= --sysroot=%S/Inputs/basic_linux_tree 2>&1 | FileCheck --check-prefix=CHECK-LD-SHARED-STATIC %s
+// CHECK-LD-SHARED-STATIC: "-shared" "-static"
+// CHECK-LD-SHARED-STATIC: "{{.*}}/usr/lib/gcc/x86_64-unknown-linux/10.2.0{{/|\\\\}}crtbeginS.o"
+// CHECK-LD-SHARED-STATIC: "{{.*}}/usr/lib/gcc/x86_64-unknown-linux/10.2.0{{/|\\\\}}crtendS.o"
+
 // Check that flags can be combined. The -static dominates.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=x86_64-unknown-linux -rtlib=platform --unwindlib=platform \
@@ -985,15 +991,6 @@
 
 // RUN: %clang %s -### -o %t.o 2>&1 \
 // RUN:     --target=armv7-linux-android21 \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NOEXECSTACK %s
-// CHECK-ANDROID-NOEXECSTACK: "{{.*}}ld{{(.exe)?}}"
-// CHECK-ANDROID-NOEXECSTACK: "-z" "noexecstack"
-// CHECK-ANDROID-NOEXECSTACK-NOT: "-z" "execstack"
-// CHECK-ANDROID-NOEXECSTACK-NOT: "-z,execstack"
-// CHECK-ANDROID-NOEXECSTACK-NOT: "-zexecstack"
-
-// RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     --target=armv7-linux-android21 \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-WARN-SHARED-TEXTREL %s
 // CHECK-ANDROID-WARN-SHARED-TEXTREL: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ANDROID-WARN-SHARED-TEXTREL: "--warn-shared-textrel"
@@ -1032,7 +1029,6 @@
 // CHECK-SPARCV9: "{{.*}}ld{{(.exe)?}}"
 // CHECK-SPARCV9: "-m" "elf64_sparc"
 // CHECK-SPARCV9: "-dynamic-linker" "{{(/usr/sparcv9-unknown-linux-gnu)?}}/lib{{(64)?}}/ld-linux.so.2"
-
 
 // Test linker invocation on Android.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -1449,6 +1445,22 @@
 // CHECK-DEBIAN-ML-MIPS64EL-N32: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips64el-linux-gnuabi64 -rtlib=platform -mabi=32 \
+// RUN:     --gcc-toolchain="" \
+// RUN:     --sysroot=%S/Inputs/debian_6_mips64_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-ML-MIPS64EL-O32 %s
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "{{.*}}/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/../../../../libo32{{/|\\\\}}crt1.o"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "{{.*}}/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/../../../../libo32{{/|\\\\}}crti.o"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "{{.*}}/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/32{{/|\\\\}}crtbegin.o"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "-L[[SYSROOT]]/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/32"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "-L[[SYSROOT]]/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/../../../../libo32"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "-L[[SYSROOT]]/libo32"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "-L[[SYSROOT]]/usr/libo32"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-ML-MIPS64EL-O32: "-L[[SYSROOT]]/usr/lib"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mips64-unknown-linux-gnu --rtlib=platform \
 // RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/debian_6_mips64_tree \
@@ -1706,6 +1718,9 @@
 // RUN:     --target=powerpc64-pc-linux-musl \
 // RUN:   | FileCheck --check-prefix=CHECK-MUSL-PPC64 %s
 // RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     --target=powerpcspe-pc-linux-musl \
+// RUN:   | FileCheck --check-prefix=CHECK-MUSL-PPCSPE %s
+// RUN: %clang %s -### -o %t.o 2>&1 \
 // RUN:     --target=thumb-pc-linux-musleabi \
 // RUN:   | FileCheck --check-prefix=CHECK-MUSL-ARM %s
 // RUN: %clang %s -### -o %t.o 2>&1 \
@@ -1755,6 +1770,7 @@
 // CHECK-MUSL-MIPS64EL:   "-dynamic-linker" "/lib/ld-musl-mips64el.so.1"
 // CHECK-MUSL-PPC:        "-dynamic-linker" "/lib/ld-musl-powerpc.so.1"
 // CHECK-MUSL-PPC64:      "-dynamic-linker" "/lib/ld-musl-powerpc64.so.1"
+// CHECK-MUSL-PPCSPE:     "-dynamic-linker" "/lib/ld-musl-powerpc-sf.so.1"
 // CHECK-MUSL-ARM:        "-dynamic-linker" "/lib/ld-musl-arm.so.1"
 // CHECK-MUSL-ARMHF:      "-dynamic-linker" "/lib/ld-musl-armhf.so.1"
 // CHECK-MUSL-ARMEB:      "-dynamic-linker" "/lib/ld-musl-armeb.so.1"

@@ -201,7 +201,7 @@ CodeGenFunction::GenerateVarArgsThunk(llvm::Function *Fn,
   Address ThisPtr(&*AI, CGM.getClassPointerAlignment(MD->getParent()));
   llvm::BasicBlock *EntryBB = &Fn->front();
   llvm::BasicBlock::iterator ThisStore =
-      std::find_if(EntryBB->begin(), EntryBB->end(), [&](llvm::Instruction &I) {
+      llvm::find_if(*EntryBB, [&](llvm::Instruction &I) {
         return isa<llvm::StoreInst>(I) &&
                I.getOperand(0) == ThisPtr.getPointer();
       });
@@ -1178,7 +1178,7 @@ bool CodeGenModule::HasLTOVisibilityPublicStd(const CXXRecordDecl *RD) {
     return false;
 
   const DeclContext *DC = RD;
-  while (1) {
+  while (true) {
     auto *D = cast<Decl>(DC);
     DC = DC->getParent();
     if (isa<TranslationUnitDecl>(DC->getRedeclContext())) {

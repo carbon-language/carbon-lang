@@ -64,9 +64,11 @@ public:
 class BTFTypeDerived : public BTFTypeBase {
   const DIDerivedType *DTy;
   bool NeedsFixup;
+  StringRef Name;
 
 public:
   BTFTypeDerived(const DIDerivedType *Ty, unsigned Tag, bool NeedsFixup);
+  BTFTypeDerived(unsigned NextTypeId, unsigned Tag, StringRef Name);
   void completeType(BTFDebug &BDebug) override;
   void emitType(MCStreamer &OS) override;
   void setPointeeType(uint32_t PointeeType);
@@ -204,6 +206,28 @@ public:
   void completeType(BTFDebug &BDebug) override;
 };
 
+/// Handle decl tags.
+class BTFTypeDeclTag : public BTFTypeBase {
+  uint32_t Info;
+  StringRef Tag;
+
+public:
+  BTFTypeDeclTag(uint32_t BaseTypeId, int ComponentId, StringRef Tag);
+  uint32_t getSize() override { return BTFTypeBase::getSize() + 4; }
+  void completeType(BTFDebug &BDebug) override;
+  void emitType(MCStreamer &OS) override;
+};
+
+class BTFTypeTypeTag : public BTFTypeBase {
+  const DIDerivedType *DTy;
+  StringRef Tag;
+
+public:
+  BTFTypeTypeTag(uint32_t NextTypeId, StringRef Tag);
+  BTFTypeTypeTag(const DIDerivedType *DTy, StringRef Tag);
+  void completeType(BTFDebug &BDebug) override;
+};
+
 /// String table.
 class BTFStringTable {
   /// String table size in bytes.
@@ -312,6 +336,10 @@ class BTFDebug : public DebugHandlerBase {
 
   /// Generate types for function prototypes.
   void processFuncPrototypes(const Function *);
+
+  /// Generate types for decl annotations.
+  void processDeclAnnotations(DINodeArray Annotations, uint32_t BaseTypeId,
+                              int ComponentId);
 
   /// Generate one field relocation record.
   void generatePatchImmReloc(const MCSymbol *ORSym, uint32_t RootId,

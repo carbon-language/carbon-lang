@@ -64,6 +64,8 @@ public:
          uint64_t Size, llvm::sys::fs::file_type Type,
          llvm::sys::fs::perms Perms);
 
+  /// Get a copy of a Status with a different size.
+  static Status copyWithNewSize(const Status &In, uint64_t NewSize);
   /// Get a copy of a Status with a different name.
   static Status copyWithNewName(const Status &In, const Twine &NewName);
   static Status copyWithNewName(const llvm::sys::fs::file_status &In,
@@ -121,6 +123,14 @@ public:
 
   /// Closes the file.
   virtual std::error_code close() = 0;
+
+  // Get the same file with a different path.
+  static ErrorOr<std::unique_ptr<File>>
+  getWithPath(ErrorOr<std::unique_ptr<File>> Result, const Twine &P);
+
+protected:
+  // Set the file's underlying path.
+  virtual void setPath(const Twine &Path) {}
 };
 
 /// A member of a directory, yielded by a directory_iterator.
@@ -596,6 +606,17 @@ class RedirectingFileSystemParser;
 /// contain multiple path components (e.g. /path/to/file). However, any
 /// directory in such a path that contains more than one child must be uniquely
 /// represented by a 'directory' entry.
+///
+/// When the 'use-external-name' field is set, calls to \a vfs::File::status()
+/// give the external (remapped) filesystem name instead of the name the file
+/// was accessed by. This is an intentional leak through the \a
+/// RedirectingFileSystem abstraction layer. It enables clients to discover
+/// (and use) the external file location when communicating with users or tools
+/// that don't use the same VFS overlay.
+///
+/// FIXME: 'use-external-name' causes behaviour that's inconsistent with how
+/// "real" filesystems behave. Maybe there should be a separate channel for
+/// this information.
 class RedirectingFileSystem : public vfs::FileSystem {
 public:
   enum EntryKind { EK_Directory, EK_DirectoryRemap, EK_File };
@@ -746,6 +767,12 @@ private:
   /// with the given error code on a path associated with the provided Entry.
   bool shouldFallBackToExternalFS(std::error_code EC, Entry *E = nullptr) const;
 
+  /// Get the File status, or error, from the underlying external file system.
+  /// This returns the status with the originally requested name, while looking
+  /// up the entry using the canonical path.
+  ErrorOr<Status> getExternalStatus(const Twine &CanonicalPath,
+                                    const Twine &OriginalPath) const;
+
   // In a RedirectingFileSystem, keys can be specified in Posix or Windows
   // style (or even a mixture of both), so this comparison helper allows
   // slashes (representing a root) to match backslashes (and vice versa).  Note
@@ -777,12 +804,7 @@ private:
   /// Whether to perform case-sensitive comparisons.
   ///
   /// Currently, case-insensitive matching only works correctly with ASCII.
-  bool CaseSensitive =
-#ifdef _WIN32
-      false;
-#else
-      true;
-#endif
+  bool CaseSensitive = is_style_posix(sys::path::Style::native);
 
   /// IsRelativeOverlay marks whether a ExternalContentsPrefixDir path must
   /// be prefixed in every 'external-contents' when reading from YAML files.
@@ -808,7 +830,8 @@ private:
                                        Entry *From) const;
 
   /// Get the status for a path with the provided \c LookupResult.
-  ErrorOr<Status> status(const Twine &Path, const LookupResult &Result);
+  ErrorOr<Status> status(const Twine &CanonicalPath, const Twine &OriginalPath,
+                         const LookupResult &Result);
 
 public:
   /// Looks up \p Path in \c Roots and returns a LookupResult giving the

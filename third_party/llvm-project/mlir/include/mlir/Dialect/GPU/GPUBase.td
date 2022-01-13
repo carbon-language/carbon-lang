@@ -51,6 +51,8 @@ def GPU_Dialect : Dialect {
     /// space.
     static unsigned getPrivateAddressSpace() { return 5; }
   }];
+
+  let dependentDialects = ["arith::ArithmeticDialect"];
 }
 
 def GPU_AsyncToken : DialectType<
@@ -111,20 +113,6 @@ def GPU_AsyncOpInterface : OpInterface<"AsyncOpInterface"> {
       }]
     >
   ];
-}
-
-// Cases of the String enum Attribute for SubgroupMmaOpLayout, representing
-// the layouts of the operands supported by the ops that use this attribute.
-def RowMajor: StrEnumAttrCase<"RowMajor", 0>;
-def ColMajor: StrEnumAttrCase<"ColMajor", 1>;
-
-// Specifies a String enum Attribute for Warp wide matrix operations,
-// representing the layout of respective operands. The layout later governs
-// the lowerings to appropriate intrinsics.
-def SubgroupMmaOpLayout: StrEnumAttr<"Layout", "Specifies whether op is row/col major",
-                           [RowMajor, ColMajor]> {
-  let stringToSymbolFnName = "LayoutStrToEnum";
-  let symbolToStringFnName = "EnumToLayoutStr";
 }
 
 #endif // GPU_BASE

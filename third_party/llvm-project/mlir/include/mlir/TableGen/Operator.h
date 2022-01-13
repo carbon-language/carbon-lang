@@ -32,7 +32,7 @@ namespace llvm {
 class DefInit;
 class Record;
 class StringInit;
-} // end namespace llvm
+} // namespace llvm
 
 namespace mlir {
 namespace tblgen {
@@ -64,6 +64,10 @@ public:
   // Returns the name of op's adaptor C++ class.
   std::string getAdaptorName() const;
 
+  // Check invariants (like no duplicated or conflicted names) and abort the
+  // process if any invariant is broken.
+  void assertInvariants() const;
+
   /// A class used to represent the decorators of an operator variable, i.e.
   /// argument or result.
   struct VariableDecorator {
@@ -80,8 +84,6 @@ public:
   struct VariableDecoratorIterator
       : public llvm::mapped_iterator<llvm::Init *const *,
                                      VariableDecorator (*)(llvm::Init *)> {
-    using reference = VariableDecorator;
-
     /// Initializes the iterator to the specified iterator.
     VariableDecoratorIterator(llvm::Init *const *it)
         : llvm::mapped_iterator<llvm::Init *const *,
@@ -136,6 +138,9 @@ public:
 
   // Op attribute accessors.
   NamedAttribute &getAttribute(int index) { return attributes[index]; }
+  const NamedAttribute &getAttribute(int index) const {
+    return attributes[index];
+  }
 
   // Op operand iterators.
   value_iterator operand_begin();
@@ -230,6 +235,9 @@ public:
   // Returns this op's extra class declaration code.
   StringRef getExtraClassDeclaration() const;
 
+  // Returns this op's extra class definition code.
+  StringRef getExtraClassDefinition() const;
+
   // Returns the Tablegen definition this operator was constructed from.
   // TODO: do not expose the TableGen record, this is a temporary solution to
   // OpEmitter requiring a Record because Operator does not provide enough
@@ -291,6 +299,17 @@ public:
 
   // Returns the builders of this operation.
   ArrayRef<Builder> getBuilders() const { return builders; }
+
+  // Returns the preferred getter name for the accessor.
+  std::string getGetterName(StringRef name) const {
+    return getGetterNames(name).front();
+  }
+
+  // Returns the getter names for the accessor.
+  SmallVector<std::string, 2> getGetterNames(StringRef name) const;
+
+  // Returns the setter names for the accessor.
+  SmallVector<std::string, 2> getSetterNames(StringRef name) const;
 
 private:
   // Populates the vectors containing operands, attributes, results and traits.
@@ -354,7 +373,7 @@ private:
   bool allResultsHaveKnownTypes;
 };
 
-} // end namespace tblgen
-} // end namespace mlir
+} // namespace tblgen
+} // namespace mlir
 
 #endif // MLIR_TABLEGEN_OPERATOR_H_

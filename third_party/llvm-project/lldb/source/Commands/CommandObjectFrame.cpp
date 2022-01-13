@@ -14,6 +14,7 @@
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionArgParser.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Interpreter/OptionGroupVariable.h"
@@ -104,7 +105,7 @@ public:
 
   CommandObjectFrameDiagnose(CommandInterpreter &interpreter)
       : CommandObjectParsed(interpreter, "frame diagnose",
-                            "Try to determine what path path the current stop "
+                            "Try to determine what path the current stop "
                             "location used to get to a register or address",
                             nullptr,
                             eCommandRequiresThread | eCommandTryTargetAPILock |
@@ -393,19 +394,7 @@ public:
             interpreter, "frame variable",
             "Show variables for the current stack frame. Defaults to all "
             "arguments and local variables in scope. Names of argument, "
-            "local, file static and file global variables can be specified. "
-            "Children of aggregate variables can be specified such as "
-            "'var->child.x'.  The -> and [] operators in 'frame variable' do "
-            "not invoke operator overloads if they exist, but directly access "
-            "the specified element.  If you want to trigger operator overloads "
-            "use the expression command to print the variable instead."
-            "\nIt is worth noting that except for overloaded "
-            "operators, when printing local variables 'expr local_var' and "
-            "'frame var local_var' produce the same "
-            "results.  However, 'frame variable' is more efficient, since it "
-            "uses debug information and memory reads directly, rather than "
-            "parsing and evaluating an expression, which may even involve "
-            "JITing and running code in the target program.",
+            "local, file static and file global variables can be specified.",
             nullptr,
             eCommandRequiresFrame | eCommandTryTargetAPILock |
                 eCommandProcessMustBeLaunched | eCommandProcessMustBePaused |
@@ -414,6 +403,18 @@ public:
         m_option_variable(
             true), // Include the frame specific options by passing "true"
         m_option_format(eFormatDefault), m_varobj_options() {
+    SetHelpLong(R"(
+Children of aggregate variables can be specified such as 'var->child.x'.  In
+'frame variable', the operators -> and [] do not invoke operator overloads if
+they exist, but directly access the specified element.  If you want to trigger
+operator overloads use the expression command to print the variable instead.
+
+It is worth noting that except for overloaded operators, when printing local
+variables 'expr local_var' and 'frame var local_var' produce the same results.
+However, 'frame variable' is more efficient, since it uses debug information and
+memory reads directly, rather than parsing and evaluating an expression, which
+may even involve JITing and running code in the target program.)");
+
     CommandArgumentEntry arg;
     CommandArgumentData var_name_arg;
 
@@ -707,11 +708,11 @@ protected:
 
     // Increment statistics.
     bool res = result.Succeeded();
-    Target &target = GetSelectedOrDummyTarget();
+    TargetStats &target_stats = GetSelectedOrDummyTarget().GetStatistics();
     if (res)
-      target.IncrementStats(StatisticKind::FrameVarSuccess);
+      target_stats.GetFrameVariableStats().NotifySuccess();
     else
-      target.IncrementStats(StatisticKind::FrameVarFailure);
+      target_stats.GetFrameVariableStats().NotifyFailure();
     return res;
   }
 
@@ -739,6 +740,17 @@ private:
       const int short_option = m_getopt_table[option_idx].val;
 
       switch (short_option) {
+      case 'f': {
+        bool value, success;
+        value = OptionArgParser::ToBoolean(option_arg, true, &success);
+        if (success) {
+          m_first_instruction_only = value;
+        } else {
+          error.SetErrorStringWithFormat(
+              "invalid boolean value '%s' passed for -f option",
+              option_arg.str().c_str());
+        }
+      } break;
       case 'l':
         m_class_name = std::string(option_arg);
         break;
@@ -763,6 +775,7 @@ private:
       m_symbols.clear();
       m_class_name = "";
       m_regex = false;
+      m_first_instruction_only = true;
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
@@ -774,6 +787,7 @@ private:
     std::string m_module;
     std::vector<std::string> m_symbols;
     bool m_regex;
+    bool m_first_instruction_only;
   };
 
   CommandOptions m_options;
@@ -883,13 +897,13 @@ bool CommandObjectFrameRecognizerAdd::DoExecute(Args &command,
     auto func =
         RegularExpressionSP(new RegularExpression(m_options.m_symbols.front()));
     GetSelectedOrDummyTarget().GetFrameRecognizerManager().AddRecognizer(
-        recognizer_sp, module, func);
+        recognizer_sp, module, func, m_options.m_first_instruction_only);
   } else {
     auto module = ConstString(m_options.m_module);
     std::vector<ConstString> symbols(m_options.m_symbols.begin(),
                                      m_options.m_symbols.end());
     GetSelectedOrDummyTarget().GetFrameRecognizerManager().AddRecognizer(
-        recognizer_sp, module, symbols);
+        recognizer_sp, module, symbols, m_options.m_first_instruction_only);
   }
 #endif
 

@@ -300,6 +300,7 @@ KEYWORD(if                          , KEYALL)
 KEYWORD(inline                      , KEYC99|KEYCXX|KEYGNU)
 KEYWORD(int                         , KEYALL)
 KEYWORD(_ExtInt                     , KEYALL)
+KEYWORD(_BitInt                     , KEYALL)
 KEYWORD(long                        , KEYALL)
 KEYWORD(register                    , KEYALL)
 KEYWORD(restrict                    , KEYC99)
@@ -438,6 +439,7 @@ TYPE_TRAIT_2(__builtin_types_compatible_p, TypeCompatible, KEYNOCXX)
 KEYWORD(__builtin_va_arg            , KEYALL)
 KEYWORD(__extension__               , KEYALL)
 KEYWORD(__float128                  , KEYALL)
+KEYWORD(__ibm128                    , KEYALL)
 KEYWORD(__imag                      , KEYALL)
 KEYWORD(__int128                    , KEYALL)
 KEYWORD(__label__                   , KEYALL)
@@ -827,10 +829,11 @@ PRAGMA_ANNOTATION(pragma_redefine_extname)
 // handles them.
 PRAGMA_ANNOTATION(pragma_fp_contract)
 
-// Annotation for #pragma STDC FENV_ACCESS
+// Annotations for #pragma STDC FENV_ACCESS and #pragma fenv_access (MS compat)
 // The lexer produces these so that they only take effect when the parser
 // handles them.
 PRAGMA_ANNOTATION(pragma_fenv_access)
+PRAGMA_ANNOTATION(pragma_fenv_access_ms)
 
 // Annotation for #pragma STDC FENV_ROUND
 // The lexer produces these so that they only take effect when the parser

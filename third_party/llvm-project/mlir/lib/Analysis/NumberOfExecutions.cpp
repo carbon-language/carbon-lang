@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Analysis/NumberOfExecutions.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/Matchers.h"
 #include "mlir/IR/RegionKindInterface.h"
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
@@ -53,7 +52,7 @@ static void computeRegionBlockNumberOfExecutions(
   // Query RegionBranchOpInterface interface if it is available.
   if (auto regionInterface = dyn_cast<RegionBranchOpInterface>(parentOp)) {
     SmallVector<Attribute, 4> operands(parentOp->getNumOperands());
-    for (auto operandIt : llvm::enumerate(parentOp->getOperands()))
+    for (const auto &operandIt : llvm::enumerate(parentOp->getOperands()))
       matchPattern(operandIt.value(), m_Constant(&operands[operandIt.index()]));
 
     regionInterface.getNumRegionInvocations(operands, numRegionsInvocations);

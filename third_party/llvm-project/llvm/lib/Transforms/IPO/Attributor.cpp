@@ -22,6 +22,7 @@
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/LazyValueInfo.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Analysis/MustExecute.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -202,9 +203,12 @@ bool AA::isDynamicallyUnique(Attributor &A, const AbstractAttribute &QueryingAA,
   return NoRecurseAA.isAssumedNoRecurse();
 }
 
-Constant *AA::getInitialValueForObj(Value &Obj, Type &Ty) {
+Constant *AA::getInitialValueForObj(Value &Obj, Type &Ty,
+                                    const TargetLibraryInfo *TLI) {
   if (isa<AllocaInst>(Obj))
     return UndefValue::get(&Ty);
+  if (isAllocationFn(&Obj, TLI))
+    return getInitialValueOfAllocation(&cast<CallBase>(Obj), TLI, &Ty);
   auto *GV = dyn_cast<GlobalVariable>(&Obj);
   if (!GV || !GV->hasLocalLinkage())
     return nullptr;
@@ -316,7 +320,8 @@ bool AA::getPotentialCopiesOfStoredValue(
           dbgs() << "Underlying object is a valid nullptr, giving up.\n";);
       return false;
     }
-    if (!isa<AllocaInst>(Obj) && !isa<GlobalVariable>(Obj)) {
+    if (!isa<AllocaInst>(Obj) && !isa<GlobalVariable>(Obj) &&
+        !isNoAliasCall(Obj)) {
       LLVM_DEBUG(dbgs() << "Underlying object is not supported yet: " << *Obj
                         << "\n";);
       return false;
@@ -382,30 +387,30 @@ static bool addIfNotExistent(LLVMContext &Ctx, const Attribute &Attr,
 
   if (Attr.isEnumAttribute()) {
     Attribute::AttrKind Kind = Attr.getKindAsEnum();
-    if (Attrs.hasAttribute(AttrIdx, Kind))
+    if (Attrs.hasAttributeAtIndex(AttrIdx, Kind))
       if (!ForceReplace &&
-          isEqualOrWorse(Attr, Attrs.getAttribute(AttrIdx, Kind)))
+          isEqualOrWorse(Attr, Attrs.getAttributeAtIndex(AttrIdx, Kind)))
         return false;
-    Attrs = Attrs.addAttribute(Ctx, AttrIdx, Attr);
+    Attrs = Attrs.addAttributeAtIndex(Ctx, AttrIdx, Attr);
     return true;
   }
   if (Attr.isStringAttribute()) {
     StringRef Kind = Attr.getKindAsString();
-    if (Attrs.hasAttribute(AttrIdx, Kind))
+    if (Attrs.hasAttributeAtIndex(AttrIdx, Kind))
       if (!ForceReplace &&
-          isEqualOrWorse(Attr, Attrs.getAttribute(AttrIdx, Kind)))
+          isEqualOrWorse(Attr, Attrs.getAttributeAtIndex(AttrIdx, Kind)))
         return false;
-    Attrs = Attrs.addAttribute(Ctx, AttrIdx, Attr);
+    Attrs = Attrs.addAttributeAtIndex(Ctx, AttrIdx, Attr);
     return true;
   }
   if (Attr.isIntAttribute()) {
     Attribute::AttrKind Kind = Attr.getKindAsEnum();
-    if (Attrs.hasAttribute(AttrIdx, Kind))
+    if (Attrs.hasAttributeAtIndex(AttrIdx, Kind))
       if (!ForceReplace &&
-          isEqualOrWorse(Attr, Attrs.getAttribute(AttrIdx, Kind)))
+          isEqualOrWorse(Attr, Attrs.getAttributeAtIndex(AttrIdx, Kind)))
         return false;
-    Attrs = Attrs.removeAttribute(Ctx, AttrIdx, Kind);
-    Attrs = Attrs.addAttribute(Ctx, AttrIdx, Attr);
+    Attrs = Attrs.removeAttributeAtIndex(Ctx, AttrIdx, Kind);
+    Attrs = Attrs.addAttributeAtIndex(Ctx, AttrIdx, Attr);
     return true;
   }
 
@@ -658,9 +663,9 @@ bool IRPosition::getAttrsFromIRAttr(Attribute::AttrKind AK,
   else
     AttrList = getAssociatedFunction()->getAttributes();
 
-  bool HasAttr = AttrList.hasAttribute(getAttrIdx(), AK);
+  bool HasAttr = AttrList.hasAttributeAtIndex(getAttrIdx(), AK);
   if (HasAttr)
-    Attrs.push_back(AttrList.getAttribute(getAttrIdx(), AK));
+    Attrs.push_back(AttrList.getAttributeAtIndex(getAttrIdx(), AK));
   return HasAttr;
 }
 
@@ -741,6 +746,7 @@ void IRPosition::verify() {
     assert((CBContext == nullptr) &&
            "'call site argument' position must not have CallBaseContext!");
     Use *U = getAsUsePtr();
+    (void)U; // Silence unused variable warning.
     assert(U && "Expected use for a 'call site argument' position!");
     assert(isa<CallBase>(U->getUser()) &&
            "Expected call base user for a 'call site argument' position!");
@@ -999,10 +1005,11 @@ bool Attributor::isAssumedDead(const BasicBlock &BB,
   return false;
 }
 
-bool Attributor::checkForAllUses(function_ref<bool(const Use &, bool &)> Pred,
-                                 const AbstractAttribute &QueryingAA,
-                                 const Value &V, bool CheckBBLivenessOnly,
-                                 DepClassTy LivenessDepClass) {
+bool Attributor::checkForAllUses(
+    function_ref<bool(const Use &, bool &)> Pred,
+    const AbstractAttribute &QueryingAA, const Value &V,
+    bool CheckBBLivenessOnly, DepClassTy LivenessDepClass,
+    function_ref<bool(const Use &OldU, const Use &NewU)> EquivalentUseCB) {
 
   // Check the trivial case first as it catches void values.
   if (V.use_empty())
@@ -1053,8 +1060,15 @@ bool Attributor::checkForAllUses(function_ref<bool(const Use &, bool &)> Pred,
                             << PotentialCopies.size()
                             << " potential copies instead!\n");
           for (Value *PotentialCopy : PotentialCopies)
-            for (const Use &U : PotentialCopy->uses())
-              Worklist.push_back(&U);
+            for (const Use &CopyUse : PotentialCopy->uses()) {
+              if (EquivalentUseCB && !EquivalentUseCB(*U, CopyUse)) {
+                LLVM_DEBUG(dbgs() << "[Attributor] Potential copy was "
+                                     "rejected by the equivalence call back: "
+                                  << *CopyUse << "!\n");
+                return false;
+              }
+              Worklist.push_back(&CopyUse);
+            }
           continue;
         }
       }
@@ -1123,6 +1137,10 @@ bool Attributor::checkForAllCallSites(function_ref<bool(AbstractCallSite)> Pred,
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U.getUser())) {
       if (CE->isCast() && CE->getType()->isPointerTy() &&
           CE->getType()->getPointerElementType()->isFunctionTy()) {
+        LLVM_DEBUG(
+            dbgs() << "[Attributor] Use, is constant cast expression, add "
+                   << CE->getNumUses()
+                   << " uses of that expression instead!\n");
         for (const Use &CEU : CE->uses())
           Uses.push_back(&CEU);
         continue;
@@ -1143,9 +1161,13 @@ bool Attributor::checkForAllCallSites(function_ref<bool(AbstractCallSite)> Pred,
     const Use *EffectiveUse =
         ACS.isCallbackCall() ? &ACS.getCalleeUseForCallback() : &U;
     if (!ACS.isCallee(EffectiveUse)) {
-      if (!RequireAllCallSites)
+      if (!RequireAllCallSites) {
+        LLVM_DEBUG(dbgs() << "[Attributor] User " << *EffectiveUse->getUser()
+                          << " is not a call of " << Fn.getName()
+                          << ", skip use\n");
         continue;
-      LLVM_DEBUG(dbgs() << "[Attributor] User " << EffectiveUse->getUser()
+      }
+      LLVM_DEBUG(dbgs() << "[Attributor] User " << *EffectiveUse->getUser()
                         << " is an invalid use of " << Fn.getName() << "\n");
       return false;
     }
@@ -1414,6 +1436,16 @@ void Attributor::runTillFixpoint() {
 
   } while (!Worklist.empty() && (IterationCounter++ < MaxFixedPointIterations ||
                                  VerifyMaxFixpointIterations));
+
+  if (IterationCounter > MaxFixedPointIterations && !Worklist.empty()) {
+    auto Remark = [&](OptimizationRemarkMissed ORM) {
+      return ORM << "Attributor did not reach a fixpoint after "
+                 << ore::NV("Iterations", MaxFixedPointIterations)
+                 << " iterations.";
+    };
+    Function *F = Worklist.front()->getIRPosition().getAssociatedFunction();
+    emitRemark<OptimizationRemarkMissed>(F, "FixedPoint", Remark);
+  }
 
   LLVM_DEBUG(dbgs() << "\n[Attributor] Fixpoint iteration done after: "
                     << IterationCounter << "/" << MaxFixpointIterations
@@ -2121,12 +2153,10 @@ bool Attributor::shouldSeedAttribute(AbstractAttribute &AA) {
   bool Result = true;
 #ifndef NDEBUG
   if (SeedAllowList.size() != 0)
-    Result =
-        std::count(SeedAllowList.begin(), SeedAllowList.end(), AA.getName());
+    Result = llvm::is_contained(SeedAllowList, AA.getName());
   Function *Fn = AA.getAnchorScope();
   if (FunctionSeedAllowList.size() != 0 && Fn)
-    Result &= std::count(FunctionSeedAllowList.begin(),
-                         FunctionSeedAllowList.end(), Fn->getName());
+    Result &= llvm::is_contained(FunctionSeedAllowList, Fn->getName());
 #endif
   return Result;
 }
@@ -2484,6 +2514,9 @@ void Attributor::identifyDefaultAbstractAttributes(Function &F) {
   // Every function can be "readnone/argmemonly/inaccessiblememonly/...".
   getOrCreateAAFor<AAMemoryLocation>(FPos);
 
+  // Every function can track active assumptions.
+  getOrCreateAAFor<AAAssumptionInfo>(FPos);
+
   // Every function might be applicable for Heap-To-Stack conversion.
   if (EnableHeapToStack)
     getOrCreateAAFor<AAHeapToStack>(FPos);
@@ -2569,6 +2602,7 @@ void Attributor::identifyDefaultAbstractAttributes(Function &F) {
   auto CallSitePred = [&](Instruction &I) -> bool {
     auto &CB = cast<CallBase>(I);
     IRPosition CBRetPos = IRPosition::callsite_returned(CB);
+    IRPosition CBFnPos = IRPosition::callsite_function(CB);
 
     // Call sites might be dead if they do not have side effects and no live
     // users. The return value might be dead if there are no live users.
@@ -2579,6 +2613,9 @@ void Attributor::identifyDefaultAbstractAttributes(Function &F) {
     //       the call/callee.
     if (!Callee)
       return true;
+
+    // Every call site can track active assumptions.
+    getOrCreateAAFor<AAAssumptionInfo>(CBFnPos);
 
     // Skip declarations except if annotations on their call sites were
     // explicitly requested.
@@ -2592,7 +2629,7 @@ void Attributor::identifyDefaultAbstractAttributes(Function &F) {
       getOrCreateAAFor<AAValueSimplify>(CBRetPos);
     }
 
-    for (int I = 0, E = CB.getNumArgOperands(); I < E; ++I) {
+    for (int I = 0, E = CB.arg_size(); I < E; ++I) {
 
       IRPosition CBArgPos = IRPosition::callsite_argument(CB, I);
 

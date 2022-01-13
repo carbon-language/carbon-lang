@@ -13,6 +13,9 @@
 #ifndef _OMPTARGET_TARGET_INTERFACE_H_
 #define _OMPTARGET_TARGET_INTERFACE_H_
 
+#include <stdint.h>
+
+#include "DeviceEnvironment.h"
 #include "target_impl.h"
 
 // Calls to the NVPTX layer (assuming 1D layout)
@@ -20,8 +23,8 @@ EXTERN int __kmpc_get_hardware_thread_id_in_block();
 EXTERN int GetBlockIdInKernel();
 EXTERN NOINLINE int __kmpc_get_hardware_num_blocks();
 EXTERN NOINLINE int __kmpc_get_hardware_num_threads_in_block();
+EXTERN unsigned __kmpc_get_warp_size();
 EXTERN unsigned GetWarpId();
-EXTERN unsigned GetWarpSize();
 EXTERN unsigned GetLaneId();
 
 // Atomics
@@ -69,5 +72,7 @@ EXTERN void __kmpc_impl_free(void *);
 
 // Barrier until num_threads arrive.
 EXTERN void __kmpc_impl_named_sync(uint32_t num_threads);
+
+extern DeviceEnvironmentTy omptarget_device_environment;
 
 #endif // _OMPTARGET_TARGET_INTERFACE_H_

@@ -632,7 +632,7 @@ static void createSyntheticSymbols() {
     // __table_base) from the environment and use these as the offset at
     // which to load our static data and function table.
     // See:
-    // https://github.com/WebAssembly/tool-conventions/blob/master/DynamicLinking.md
+    // https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
     auto *globalType = is64 ? &globalTypeI64 : &globalTypeI32;
     WasmSym::memoryBase = createUndefinedGlobal("__memory_base", globalType);
     WasmSym::tableBase = createUndefinedGlobal("__table_base", globalType);
@@ -651,7 +651,7 @@ static void createSyntheticSymbols() {
     WasmSym::stackPointer->markLive();
   }
 
-  if (config->sharedMemory && !config->relocatable) {
+  if (config->sharedMemory) {
     WasmSym::tlsBase = createGlobalVariable("__tls_base", true);
     WasmSym::tlsSize = createGlobalVariable("__tls_size", false);
     WasmSym::tlsAlign = createGlobalVariable("__tls_align", false);
@@ -684,7 +684,7 @@ static void createOptionalSymbols() {
 
   // For non-shared memory programs we still need to define __tls_base since we
   // allow object files built with TLS to be linked into single threaded
-  // programs, and such object files can contains refernced to this symbol.
+  // programs, and such object files can contain references to this symbol.
   //
   // However, in this case __tls_base is immutable and points directly to the
   // start of the `.tdata` static segment.
@@ -947,8 +947,6 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
     }
   }
 
-  createOptionalSymbols();
-
   if (errorCount())
     return;
 
@@ -972,9 +970,11 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
 
   // Do link-time optimization if given files are LLVM bitcode files.
   // This compiles bitcode files into real object files.
-  symtab->addCombinedLTOObject();
+  symtab->compileBitcodeFiles();
   if (errorCount())
     return;
+
+  createOptionalSymbols();
 
   // Resolve any variant symbols that were created due to signature
   // mismatchs.

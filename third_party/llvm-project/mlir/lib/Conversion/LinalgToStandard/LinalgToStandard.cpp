@@ -10,7 +10,7 @@
 
 #include "../PassDetail.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/SCF.h"
@@ -50,11 +50,11 @@ static FlatSymbolRefAttr getLibraryCallSymbolRef(Operation *op,
   }
 
   // fnName is a dynamic std::string, unique it via a SymbolRefAttr.
-  FlatSymbolRefAttr fnNameAttr = rewriter.getSymbolRefAttr(fnName);
+  FlatSymbolRefAttr fnNameAttr =
+      SymbolRefAttr::get(rewriter.getContext(), fnName);
   auto module = op->getParentOfType<ModuleOp>();
-  if (module.lookupSymbol(fnName)) {
+  if (module.lookupSymbol(fnNameAttr.getAttr()))
     return fnNameAttr;
-  }
 
   SmallVector<Type, 4> inputTypes(extractOperandTypes(op));
   assert(op->getNumResults() == 0 &&
@@ -184,9 +184,10 @@ struct ConvertLinalgToStandardPass
 void ConvertLinalgToStandardPass::runOnOperation() {
   auto module = getOperation();
   ConversionTarget target(getContext());
-  target.addLegalDialect<AffineDialect, memref::MemRefDialect, scf::SCFDialect,
+  target.addLegalDialect<AffineDialect, arith::ArithmeticDialect,
+                         memref::MemRefDialect, scf::SCFDialect,
                          StandardOpsDialect>();
-  target.addLegalOp<ModuleOp, FuncOp, ReturnOp, linalg::RangeOp>();
+  target.addLegalOp<ModuleOp, FuncOp, ReturnOp>();
   RewritePatternSet patterns(&getContext());
   populateLinalgToStandardConversionPatterns(patterns);
   if (failed(applyFullConversion(module, target, std::move(patterns))))

@@ -37,7 +37,6 @@ class MemorySSAUpdater;
 class OptimizationRemarkEmitter;
 class PredIteratorCache;
 class ScalarEvolution;
-class ScalarEvolutionExpander;
 class SCEV;
 class SCEVExpander;
 class TargetLibraryInfo;
@@ -348,6 +347,18 @@ bool canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                         SinkAndHoistLICMFlags *LICMFlags = nullptr,
                         OptimizationRemarkEmitter *ORE = nullptr);
 
+/// Returns the comparison predicate used when expanding a min/max reduction.
+CmpInst::Predicate getMinMaxReductionPredicate(RecurKind RK);
+
+/// See RecurrenceDescriptor::isSelectCmpPattern for a description of the
+/// pattern we are trying to match. In this pattern we are only ever selecting
+/// between two values: 1) an initial PHI start value, and 2) a loop invariant
+/// value. This function uses \p LoopExitInst to determine 2), which we then use
+/// to select between \p Left and \p Right. Any lane value in \p Left that
+/// matches 2) will be merged into \p Right.
+Value *createSelectCmpOp(IRBuilderBase &Builder, Value *StartVal, RecurKind RK,
+                         Value *Left, Value *Right);
+
 /// Returns a Min/Max operation corresponding to MinMaxRecurrenceKind.
 /// The Builder's fast-math-flags must be set to propagate the expected values.
 Value *createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
@@ -355,14 +366,12 @@ Value *createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
 
 /// Generates an ordered vector reduction using extracts to reduce the value.
 Value *getOrderedReduction(IRBuilderBase &Builder, Value *Acc, Value *Src,
-                           unsigned Op, RecurKind MinMaxKind = RecurKind::None,
-                           ArrayRef<Value *> RedOps = None);
+                           unsigned Op, RecurKind MinMaxKind = RecurKind::None);
 
 /// Generates a vector reduction using shufflevectors to reduce the value.
 /// Fast-math-flags are propagated using the IRBuilder's setting.
 Value *getShuffleReduction(IRBuilderBase &Builder, Value *Src, unsigned Op,
-                           RecurKind MinMaxKind = RecurKind::None,
-                           ArrayRef<Value *> RedOps = None);
+                           RecurKind MinMaxKind = RecurKind::None);
 
 /// Create a target reduction of the given vector. The reduction operation
 /// is described by the \p Opcode parameter. min/max reductions require
@@ -372,15 +381,24 @@ Value *getShuffleReduction(IRBuilderBase &Builder, Value *Src, unsigned Op,
 /// Fast-math-flags are propagated using the IRBuilder's setting.
 Value *createSimpleTargetReduction(IRBuilderBase &B,
                                    const TargetTransformInfo *TTI, Value *Src,
-                                   RecurKind RdxKind,
-                                   ArrayRef<Value *> RedOps = None);
+                                   RecurKind RdxKind);
+
+/// Create a target reduction of the given vector \p Src for a reduction of the
+/// kind RecurKind::SelectICmp or RecurKind::SelectFCmp. The reduction operation
+/// is described by \p Desc.
+Value *createSelectCmpTargetReduction(IRBuilderBase &B,
+                                      const TargetTransformInfo *TTI,
+                                      Value *Src,
+                                      const RecurrenceDescriptor &Desc,
+                                      PHINode *OrigPhi);
 
 /// Create a generic target reduction using a recurrence descriptor \p Desc
 /// The target is queried to determine if intrinsics or shuffle sequences are
 /// required to implement the reduction.
 /// Fast-math-flags are propagated using the RecurrenceDescriptor.
 Value *createTargetReduction(IRBuilderBase &B, const TargetTransformInfo *TTI,
-                             const RecurrenceDescriptor &Desc, Value *Src);
+                             const RecurrenceDescriptor &Desc, Value *Src,
+                             PHINode *OrigPhi = nullptr);
 
 /// Create an ordered reduction intrinsic using the given recurrence
 /// descriptor \p Desc.
@@ -473,12 +491,8 @@ Loop *cloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
                 LoopInfo *LI, LPPassManager *LPM);
 
 /// Add code that checks at runtime if the accessed arrays in \p PointerChecks
-/// overlap.
-///
-/// Returns a pair of instructions where the first element is the first
-/// instruction generated in possibly a sequence of instructions and the
-/// second value is the final comparator value or NULL if no check is needed.
-std::pair<Instruction *, Instruction *>
+/// overlap. Returns the final comparator value or NULL if no check is needed.
+Value *
 addRuntimeChecks(Instruction *Loc, Loop *TheLoop,
                  const SmallVectorImpl<RuntimePointerCheck> &PointerChecks,
                  SCEVExpander &Expander);

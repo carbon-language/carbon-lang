@@ -4,7 +4,6 @@ static_library("MC") {
     "//llvm/include/llvm/Config:config",
     "//llvm/lib/BinaryFormat",
     "//llvm/lib/DebugInfo/CodeView",
-    "//llvm/lib/ProfileData",
     "//llvm/lib/Support",
   ]
   public_deps = [
@@ -19,6 +18,7 @@ static_library("MC") {
     "MCAsmInfoCOFF.cpp",
     "MCAsmInfoDarwin.cpp",
     "MCAsmInfoELF.cpp",
+    "MCAsmInfoGOFF.cpp",
     "MCAsmInfoWasm.cpp",
     "MCAsmInfoXCOFF.cpp",
     "MCAsmMacro.cpp",
@@ -72,6 +72,7 @@ static_library("MC") {
     "MachObjectWriter.cpp",
     "StringTableBuilder.cpp",
     "SubtargetFeature.cpp",
+    "TargetRegistry.cpp",
     "WasmObjectWriter.cpp",
     "WinCOFFObjectWriter.cpp",
     "XCOFFObjectWriter.cpp",

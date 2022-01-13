@@ -35,18 +35,21 @@ public:
   bool LoadSubCommand(llvm::StringRef cmd_name,
                       const lldb::CommandObjectSP &command_obj) override;
 
+  llvm::Error LoadUserSubcommand(llvm::StringRef cmd_name,
+                                 const lldb::CommandObjectSP &command_obj,
+                                 bool can_replace) override;
+
+  llvm::Error RemoveUserSubcommand(llvm::StringRef cmd_name, bool multiword_okay);
+
   void GenerateHelpText(Stream &output_stream) override;
 
   lldb::CommandObjectSP GetSubcommandSP(llvm::StringRef sub_cmd,
                                         StringList *matches = nullptr) override;
 
+  lldb::CommandObjectSP GetSubcommandSPExact(llvm::StringRef sub_cmd) override;
+
   CommandObject *GetSubcommandObject(llvm::StringRef sub_cmd,
                                      StringList *matches = nullptr) override;
-
-  void AproposAllSubCommands(llvm::StringRef prefix,
-                             llvm::StringRef search_word,
-                             StringList &commands_found,
-                             StringList &commands_help) override;
 
   bool WantsRawCommandString() override { return false; }
 
@@ -101,11 +104,6 @@ public:
 
   CommandObject *GetSubcommandObject(llvm::StringRef sub_cmd,
                                      StringList *matches = nullptr) override;
-
-  void AproposAllSubCommands(llvm::StringRef prefix,
-                             llvm::StringRef search_word,
-                             StringList &commands_found,
-                             StringList &commands_help) override;
 
   bool LoadSubCommand(llvm::StringRef cmd_name,
                       const lldb::CommandObjectSP &command_obj) override;

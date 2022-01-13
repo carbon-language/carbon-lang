@@ -256,9 +256,9 @@ private:
   bool wasRun;
 public:
   static char ID;
-  explicit FunctionPassManagerImpl() :
-    Pass(PT_PassManager, ID), PMDataManager(),
-    PMTopLevelManager(new FPPassManager()), wasRun(false) {}
+  explicit FunctionPassManagerImpl()
+      : Pass(PT_PassManager, ID), PMTopLevelManager(new FPPassManager()),
+        wasRun(false) {}
 
   /// \copydoc FunctionPassManager::add()
   void add(Pass *P) {
@@ -387,8 +387,7 @@ namespace {
 class MPPassManager : public Pass, public PMDataManager {
 public:
   static char ID;
-  explicit MPPassManager() :
-    Pass(PT_PassManager, ID), PMDataManager() { }
+  explicit MPPassManager() : Pass(PT_PassManager, ID) {}
 
   // Delete on the fly managers.
   ~MPPassManager() override {
@@ -478,9 +477,8 @@ class PassManagerImpl : public Pass,
 
 public:
   static char ID;
-  explicit PassManagerImpl() :
-    Pass(PT_PassManager, ID), PMDataManager(),
-                              PMTopLevelManager(new MPPassManager()) {}
+  explicit PassManagerImpl()
+      : Pass(PT_PassManager, ID), PMTopLevelManager(new MPPassManager()) {}
 
   /// \copydoc PassManager::add()
   void add(Pass *P) {
@@ -886,9 +884,8 @@ void PMDataManager::recordAvailableAnalysis(Pass *P) {
   // implements as well.
   const PassInfo *PInf = TPM->findAnalysisPassInfo(PI);
   if (!PInf) return;
-  const std::vector<const PassInfo*> &II = PInf->getInterfacesImplemented();
-  for (unsigned i = 0, e = II.size(); i != e; ++i)
-    AvailableAnalysis[II[i]->getTypeInfo()] = P;
+  for (const PassInfo *PI : PInf->getInterfacesImplemented())
+    AvailableAnalysis[PI->getTypeInfo()] = P;
 }
 
 // Return true if P preserves high level analysis used by other
@@ -1013,10 +1010,9 @@ void PMDataManager::freePass(Pass *P, StringRef Msg,
 
     // Remove all interfaces this pass implements, for which it is also
     // listed as the available implementation.
-    const std::vector<const PassInfo*> &II = PInf->getInterfacesImplemented();
-    for (unsigned i = 0, e = II.size(); i != e; ++i) {
-      DenseMap<AnalysisID, Pass*>::iterator Pos =
-        AvailableAnalysis.find(II[i]->getTypeInfo());
+    for (const PassInfo *PI : PInf->getInterfacesImplemented()) {
+      DenseMap<AnalysisID, Pass *>::iterator Pos =
+          AvailableAnalysis.find(PI->getTypeInfo());
       if (Pos != AvailableAnalysis.end() && Pos->second == P)
         AvailableAnalysis.erase(Pos);
     }
@@ -1351,7 +1347,7 @@ void FunctionPassManager::add(Pass *P) {
 ///
 bool FunctionPassManager::run(Function &F) {
   handleAllErrors(F.materialize(), [&](ErrorInfoBase &EIB) {
-    report_fatal_error("Error reading bitcode file: " + EIB.message());
+    report_fatal_error(Twine("Error reading bitcode file: ") + EIB.message());
   });
   return FPM->run(F);
 }

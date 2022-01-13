@@ -1,12 +1,13 @@
 import lldb
 from lldbsuite.test.lldbtest import *
 from lldbsuite.test.decorators import *
-from gdbclientutils import *
-
+from lldbsuite.test.gdbclientutils import *
+from lldbsuite.test.lldbgdbclient import GDBRemoteTestBase
 
 class TestWriteMemory(GDBRemoteTestBase):
 
-    @skipIfReproducer # SBProcess::WriteMemory is not instrumented.
+    mydir = TestBase.compute_mydir(__file__)
+
     def test(self):
 
         class MyResponder(MockGDBServerResponder):

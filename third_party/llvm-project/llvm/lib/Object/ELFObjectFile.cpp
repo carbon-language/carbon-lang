@@ -15,6 +15,7 @@
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ELFTypes.h"
 #include "llvm/Object/Error.h"
@@ -25,7 +26,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/RISCVAttributeParser.h"
 #include "llvm/Support/RISCVAttributes.h"
-#include "llvm/Support/TargetRegistry.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -682,7 +682,7 @@ readDynsymVersionsImpl(const ELFFile<ELFT> &EF,
 
   std::vector<VersionEntry> Ret;
   size_t I = 0;
-  for (auto It = Symbols.begin(), E = Symbols.end(); It != E; ++It) {
+  for (const ELFSymbolRef &Sym : Symbols) {
     ++I;
     Expected<const typename ELFT::Versym *> VerEntryOrErr =
         EF.template getEntry<typename ELFT::Versym>(*VerSec, I);
@@ -691,7 +691,7 @@ readDynsymVersionsImpl(const ELFFile<ELFT> &EF,
                          " from " + describe(EF, *VerSec) + ": " +
                          toString(VerEntryOrErr.takeError()));
 
-    Expected<uint32_t> FlagsOrErr = It->getFlags();
+    Expected<uint32_t> FlagsOrErr = Sym.getFlags();
     if (!FlagsOrErr)
       return createError("unable to read flags for symbol with index " +
                          Twine(I) + ": " + toString(FlagsOrErr.takeError()));

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple arm64-apple-ios9 -fobjc-runtime=ios-9.0 -fobjc-arc -O -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10 -fobjc-runtime=ios-9.0 -fobjc-arc -O -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK
 
 @class A;
 
@@ -10,7 +11,7 @@ void test_assign() {
 }
 // CHECK-LABEL: define{{.*}} void @test_assign()
 // CHECK:         [[X:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A:.*]]* @makeA() [ "clang.arc.attachedcall"(i64 1) ]
+// CHECK:         [[T0:%.*]] = call [[A:.*]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.unsafeClaimAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    store i8* [[T1]], i8** [[X]]
@@ -25,7 +26,7 @@ void test_assign_assign() {
 // CHECK-LABEL: define{{.*}} void @test_assign_assign()
 // CHECK:         [[X:%.*]] = alloca i8*
 // CHECK:         [[Y:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 1) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.unsafeClaimAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    store i8* [[T1]], i8** [[Y]]
@@ -44,7 +45,7 @@ void test_strong_assign_assign() {
 // CHECK-LABEL: define{{.*}} void @test_strong_assign_assign()
 // CHECK:         [[X:%.*]] = alloca i8*
 // CHECK:         [[Y:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 0) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.retainAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    store i8* [[T1]], i8** [[Y]]
@@ -67,7 +68,7 @@ void test_assign_strong_assign() {
 // CHECK-LABEL: define{{.*}} void @test_assign_strong_assign()
 // CHECK:         [[X:%.*]] = alloca i8*
 // CHECK:         [[Y:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 0) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.retainAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    [[OLD:%.*]] = load i8*, i8** [[Y]]
@@ -87,7 +88,7 @@ void test_init() {
 }
 // CHECK-LABEL: define{{.*}} void @test_init()
 // CHECK:         [[X:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 1) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.unsafeClaimAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    store i8* [[T1]], i8** [[X]]
@@ -102,7 +103,7 @@ void test_init_assignment() {
 // CHECK-LABEL: define{{.*}} void @test_init_assignment()
 // CHECK:         [[X:%.*]] = alloca i8*
 // CHECK:         [[Y:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 1) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.unsafeClaimAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    store i8* [[T1]], i8** [[X]]
@@ -120,7 +121,7 @@ void test_strong_init_assignment() {
 // CHECK-LABEL: define{{.*}} void @test_strong_init_assignment()
 // CHECK:         [[X:%.*]] = alloca i8*
 // CHECK:         [[Y:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 0) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.retainAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    store i8* [[T1]], i8** [[X]]
@@ -140,7 +141,7 @@ void test_init_strong_assignment() {
 // CHECK-LABEL: define{{.*}} void @test_init_strong_assignment()
 // CHECK:         [[X:%.*]] = alloca i8*
 // CHECK:         [[Y:%.*]] = alloca i8*
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 0) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.retainAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
 // CHECK-NEXT:    [[OLD:%.*]] = load i8*, i8** [[X]]
@@ -159,7 +160,7 @@ void test_ignored() {
   makeA();
 }
 // CHECK-LABEL: define{{.*}} void @test_ignored()
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 1) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.unsafeClaimAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    ret void
 
@@ -167,7 +168,7 @@ void test_cast_to_void() {
   (void) makeA();
 }
 // CHECK-LABEL: define{{.*}} void @test_cast_to_void()
-// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i64 1) ]
+// CHECK:         [[T0:%.*]] = call [[A]]* @makeA() [ "clang.arc.attachedcall"(i8* (i8*)* @llvm.objc.unsafeClaimAutoreleasedReturnValue) ]
 // CHECK-NEXT:    call void (...) @llvm.objc.clang.arc.noop.use({{.*}} [[T0]])
 // CHECK-NEXT:    ret void
 

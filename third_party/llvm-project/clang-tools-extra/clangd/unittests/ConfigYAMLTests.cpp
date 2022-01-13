@@ -67,6 +67,7 @@ Diagnostics:
     CheckOptions:
       IgnoreMacros: true
       example-check.ExampleOption: 0
+  UnusedIncludes: Strict
   )yaml";
   auto Results = Fragment::parseYAML(YAML, "config.yaml", Diags.callback());
   EXPECT_THAT(Diags.Diagnostics, IsEmpty());
@@ -83,6 +84,8 @@ Diagnostics:
   EXPECT_THAT(Results[3].Diagnostics.ClangTidy.CheckOptions,
               ElementsAre(PairVal("IgnoreMacros", "true"),
                           PairVal("example-check.ExampleOption", "0")));
+  EXPECT_TRUE(Results[3].Diagnostics.UnusedIncludes);
+  EXPECT_EQ("Strict", *Results[3].Diagnostics.UnusedIncludes.getValue());
 }
 
 TEST(ParseYAML, Locations) {
@@ -212,6 +215,36 @@ Completion:
   ASSERT_EQ(Results.size(), 1u);
   EXPECT_THAT(Results[0].Completion.AllScopes, testing::Eq(llvm::None));
 }
+
+TEST(ParseYAML, ShowAKA) {
+  CapturedDiags Diags;
+  Annotations YAML(R"yaml(
+Hover:
+  ShowAKA: True
+  )yaml");
+  auto Results =
+      Fragment::parseYAML(YAML.code(), "config.yaml", Diags.callback());
+  ASSERT_THAT(Diags.Diagnostics, IsEmpty());
+  ASSERT_EQ(Results.size(), 1u);
+  EXPECT_THAT(Results[0].Hover.ShowAKA, llvm::ValueIs(Val(true)));
+}
+
+TEST(ParseYAML, InlayHints) {
+  CapturedDiags Diags;
+  Annotations YAML(R"yaml(
+InlayHints:
+  Enabled: No
+  ParameterNames: Yes
+  )yaml");
+  auto Results =
+      Fragment::parseYAML(YAML.code(), "config.yaml", Diags.callback());
+  ASSERT_THAT(Diags.Diagnostics, IsEmpty());
+  ASSERT_EQ(Results.size(), 1u);
+  EXPECT_THAT(Results[0].InlayHints.Enabled, llvm::ValueIs(Val(false)));
+  EXPECT_THAT(Results[0].InlayHints.ParameterNames, llvm::ValueIs(Val(true)));
+  EXPECT_EQ(Results[0].InlayHints.DeducedTypes, llvm::None);
+}
+
 } // namespace
 } // namespace config
 } // namespace clangd

@@ -38,10 +38,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-extern char &MIRCanonicalizerID;
-} // namespace llvm
-
 #define DEBUG_TYPE "mir-canonicalizer"
 
 static cl::opt<unsigned>
@@ -332,8 +328,8 @@ static bool propagateLocalCopies(MachineBasicBlock *MBB) {
       continue;
 
     std::vector<MachineOperand *> Uses;
-    for (auto UI = MRI.use_begin(Dst); UI != MRI.use_end(); ++UI)
-      Uses.push_back(&*UI);
+    for (MachineOperand &MO : MRI.use_operands(Dst))
+      Uses.push_back(&MO);
     for (auto *MO : Uses)
       MO->setReg(Src);
 

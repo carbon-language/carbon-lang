@@ -41,7 +41,7 @@ struct TestPrintDefUsePass
 
       // Print information about the user of each of the result.
       llvm::outs() << "Has " << op->getNumResults() << " results:\n";
-      for (auto indexedResult : llvm::enumerate(op->getResults())) {
+      for (const auto &indexedResult : llvm::enumerate(op->getResults())) {
         Value result = indexedResult.value();
         llvm::outs() << "  - Result " << indexedResult.index();
         if (result.use_empty()) {
@@ -63,7 +63,7 @@ struct TestPrintDefUsePass
     });
   }
 };
-} // end anonymous namespace
+} // namespace
 
 namespace mlir {
 void registerTestPrintDefUsePass() { PassRegistration<TestPrintDefUsePass>(); }

@@ -182,8 +182,7 @@ static void handleYAMLDiag(const SMDiagnostic &Diag, void *Context) {
 MIRParserImpl::MIRParserImpl(std::unique_ptr<MemoryBuffer> Contents,
                              StringRef Filename, LLVMContext &Context,
                              std::function<void(Function &)> Callback)
-    : SM(),
-      Context(Context),
+    : Context(Context),
       In(SM.getMemoryBuffer(SM.AddNewSourceBuffer(std::move(Contents), SMLoc()))
              ->getBuffer(),
          nullptr, handleYAMLDiag, this),
@@ -350,17 +349,32 @@ void MIRParserImpl::computeFunctionProperties(MachineFunction &MF) {
 
   bool HasPHI = false;
   bool HasInlineAsm = false;
+  bool AllTiedOpsRewritten = true, HasTiedOps = false;
   for (const MachineBasicBlock &MBB : MF) {
     for (const MachineInstr &MI : MBB) {
       if (MI.isPHI())
         HasPHI = true;
       if (MI.isInlineAsm())
         HasInlineAsm = true;
+      for (unsigned I = 0; I < MI.getNumOperands(); ++I) {
+        const MachineOperand &MO = MI.getOperand(I);
+        if (!MO.isReg() || !MO.getReg())
+          continue;
+        unsigned DefIdx;
+        if (MO.isUse() && MI.isRegTiedToDefOperand(I, &DefIdx)) {
+          HasTiedOps = true;
+          if (MO.getReg() != MI.getOperand(DefIdx).getReg())
+            AllTiedOpsRewritten = false;
+        }
+      }
     }
   }
   if (!HasPHI)
     Properties.set(MachineFunctionProperties::Property::NoPHIs);
   MF.setHasInlineAsm(HasInlineAsm);
+
+  if (HasTiedOps && AllTiedOpsRewritten)
+    Properties.set(MachineFunctionProperties::Property::TiedOpsRewritten);
 
   if (isSSA(MF))
     Properties.set(MachineFunctionProperties::Property::IsSSA);
@@ -454,6 +468,12 @@ MIRParserImpl::initializeMachineFunction(const yaml::MachineFunction &YamlMF,
     MF.getProperties().set(MachineFunctionProperties::Property::Selected);
   if (YamlMF.FailedISel)
     MF.getProperties().set(MachineFunctionProperties::Property::FailedISel);
+  if (YamlMF.FailsVerification)
+    MF.getProperties().set(
+        MachineFunctionProperties::Property::FailsVerification);
+  if (YamlMF.TracksDebugUserValues)
+    MF.getProperties().set(
+        MachineFunctionProperties::Property::TracksDebugUserValues);
 
   PerFunctionMIParsingState PFS(MF, SM, IRSlots, *Target);
   if (parseRegisterInfo(PFS, YamlMF))

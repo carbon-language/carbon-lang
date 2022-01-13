@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1
 ! Tests for the ASSOCIATED() and NULL() intrinsics
 subroutine assoc()
 
@@ -28,13 +27,18 @@ subroutine assoc()
     pureFunc = 343
   end function pureFunc
 
-  elemental integer function elementalFunc()
-    elementalFunc = 343
+  elemental integer function elementalFunc(n)
+    integer, value :: n
+    elementalFunc = n
   end function elementalFunc
 
   subroutine subr(i)
     integer :: i
   end subroutine subr
+
+  subroutine subrCannotBeCalledfromImplicit(i)
+    integer :: i(:)
+  end subroutine subrCannotBeCalledfromImplicit
 
   subroutine test()
     integer :: intVar
@@ -145,9 +149,9 @@ subroutine assoc()
     intProcPointer1 => subProc
     !ERROR: Function pointer 'intprocpointer1' may not be associated with subroutine designator 'subproc'
     lvar = associated(intProcPointer1, subProc)
-    !ERROR: Procedure pointer 'implicitprocpointer' with implicit interface may not be associated with procedure designator 'subr' with explicit interface
-    implicitProcPointer => subr
-    !ERROR: Procedure pointer 'implicitprocpointer' with implicit interface may not be associated with procedure designator 'subr' with explicit interface
-    lvar = associated(implicitProcPointer, subr)
+    implicitProcPointer => subr ! OK for an implicit point to point to an explicit proc
+    lvar = associated(implicitProcPointer, subr) ! OK
+    !ERROR: Procedure pointer 'implicitprocpointer' with implicit interface may not be associated with procedure designator 'subrcannotbecalledfromimplicit' with explicit interface that cannot be called via an implicit interface
+    lvar = associated(implicitProcPointer, subrCannotBeCalledFromImplicit)
   end subroutine test
 end subroutine assoc

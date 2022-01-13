@@ -43,7 +43,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
               namespace ns1 { struct S {}; }
               ^auto v = ns1::S{};
           )cpp",
-          "struct ns1::S",
+          "ns1::S",
       },
       {
           R"cpp( // decltype on struct
@@ -63,7 +63,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
             ns1::S& j = i;
             ^decltype(auto) k = j;
           )cpp",
-          "struct ns1::S &",
+          "ns1::S &",
       },
       {
           R"cpp( // auto on template class
@@ -71,7 +71,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
               template<typename T> class Foo {};
               ^auto v = Foo<X>();
           )cpp",
-          "class Foo<class X>",
+          "Foo<class X>",
       },
       {
           R"cpp( // auto on initializer list.
@@ -177,8 +177,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
             using Bar = Foo;
             ^auto x = Bar();
           )cpp",
-          // FIXME: it'd be nice if this resolved to the alias instead
-          "struct Foo",
+          "Bar",
       },
   };
   for (Test T : Tests) {
@@ -426,6 +425,29 @@ TEST(ClangdAST, GetAttributes) {
               Each(implicitAttr()));
   ASSERT_THAT(getAttributes(DynTypedNode::create(*FooIf->getThen())),
               Contains(attrKind(attr::Unlikely)));
+}
+
+TEST(ClangdAST, HasReservedName) {
+  ParsedAST AST = TestTU::withCode(R"cpp(
+    void __foo();
+    namespace std {
+      inline namespace __1 { class error_code; }
+      namespace __detail { int secret; }
+    }
+  )cpp")
+                      .build();
+
+  EXPECT_TRUE(hasReservedName(findUnqualifiedDecl(AST, "__foo")));
+  EXPECT_FALSE(
+      hasReservedScope(*findUnqualifiedDecl(AST, "__foo").getDeclContext()));
+
+  EXPECT_FALSE(hasReservedName(findUnqualifiedDecl(AST, "error_code")));
+  EXPECT_FALSE(hasReservedScope(
+      *findUnqualifiedDecl(AST, "error_code").getDeclContext()));
+
+  EXPECT_FALSE(hasReservedName(findUnqualifiedDecl(AST, "secret")));
+  EXPECT_TRUE(
+      hasReservedScope(*findUnqualifiedDecl(AST, "secret").getDeclContext()));
 }
 
 } // namespace

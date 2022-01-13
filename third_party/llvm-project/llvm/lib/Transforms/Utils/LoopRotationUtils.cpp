@@ -103,6 +103,7 @@ static void InsertNewValueIntoMap(ValueToValueMapTy &VM, Value *K, Value *V) {
 static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
                                             BasicBlock *OrigPreheader,
                                             ValueToValueMapTy &ValueMap,
+                                            ScalarEvolution *SE,
                                 SmallVectorImpl<PHINode*> *InsertedPHIs) {
   // Remove PHI node entries that are no longer live.
   BasicBlock::iterator I, E = OrigHeader->end();
@@ -125,19 +126,15 @@ static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
     // The value now exits in two versions: the initial value in the preheader
     // and the loop "next" value in the original header.
     SSA.Initialize(OrigHeaderVal->getType(), OrigHeaderVal->getName());
+    // Force re-computation of OrigHeaderVal, as some users now need to use the
+    // new PHI node.
+    if (SE)
+      SE->forgetValue(OrigHeaderVal);
     SSA.AddAvailableValue(OrigHeader, OrigHeaderVal);
     SSA.AddAvailableValue(OrigPreheader, OrigPreHeaderVal);
 
     // Visit each use of the OrigHeader instruction.
-    for (Value::use_iterator UI = OrigHeaderVal->use_begin(),
-                             UE = OrigHeaderVal->use_end();
-         UI != UE;) {
-      // Grab the use before incrementing the iterator.
-      Use &U = *UI;
-
-      // Increment the iterator before removing the use from the list.
-      ++UI;
-
+    for (Use &U : llvm::make_early_inc_range(OrigHeaderVal->uses())) {
       // SSAUpdater can't handle a non-PHI use in the same block as an
       // earlier def. We can easily handle those cases manually.
       Instruction *UserInst = cast<Instruction>(U.getUser());
@@ -399,9 +396,8 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
               D->getExpression()};
     };
     SmallDenseSet<DbgIntrinsicHash, 8> DbgIntrinsics;
-    for (auto I = std::next(OrigPreheader->rbegin()), E = OrigPreheader->rend();
-         I != E; ++I) {
-      if (auto *DII = dyn_cast<DbgVariableIntrinsic>(&*I))
+    for (Instruction &I : llvm::drop_begin(llvm::reverse(*OrigPreheader))) {
+      if (auto *DII = dyn_cast<DbgVariableIntrinsic>(&I))
         DbgIntrinsics.insert(makeHash(DII));
       else
         break;
@@ -563,7 +559,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     SmallVector<PHINode*, 2> InsertedPHIs;
     // If there were any uses of instructions in the duplicated block outside the
     // loop, update them, inserting PHI nodes as required
-    RewriteUsesOfClonedInstructions(OrigHeader, OrigPreheader, ValueMap,
+    RewriteUsesOfClonedInstructions(OrigHeader, OrigPreheader, ValueMap, SE,
                                     &InsertedPHIs);
 
     // Attach dbg.value intrinsics to the new phis if that phi uses a value that
@@ -621,7 +617,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
       // one predecessor. Note that Exit could be an exit block for multiple
       // nested loops, causing both of the edges to now be critical and need to
       // be split.
-      SmallVector<BasicBlock *, 4> ExitPreds(pred_begin(Exit), pred_end(Exit));
+      SmallVector<BasicBlock *, 4> ExitPreds(predecessors(Exit));
       bool SplitLatchEdge = false;
       for (BasicBlock *ExitPred : ExitPreds) {
         // We only need to split loop exit edges.

@@ -109,7 +109,7 @@ public:
         const Decl *D,
         const IdentifierNamingCheck::HungarianNotationOption &HNOption) const;
 
-    const std::string getDataTypePrefix(
+    std::string getDataTypePrefix(
         StringRef TypeName, const NamedDecl *ND,
         const IdentifierNamingCheck::HungarianNotationOption &HNOption) const;
 
@@ -186,12 +186,12 @@ public:
 
 private:
   llvm::Optional<FailureInfo>
-  GetDeclFailureInfo(const NamedDecl *Decl,
+  getDeclFailureInfo(const NamedDecl *Decl,
                      const SourceManager &SM) const override;
   llvm::Optional<FailureInfo>
-  GetMacroFailureInfo(const Token &MacroNameTok,
+  getMacroFailureInfo(const Token &MacroNameTok,
                       const SourceManager &SM) const override;
-  DiagInfo GetDiagInfo(const NamingCheckId &ID,
+  DiagInfo getDiagInfo(const NamingCheckId &ID,
                        const NamingCheckFailure &Failure) const override;
 
   const FileStyle &getStyleForFile(StringRef FileName) const;

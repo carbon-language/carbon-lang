@@ -896,22 +896,22 @@ int main (int argc, char **argv) {
 // CHECK1-NEXT:    [[ARGC_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK1-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK1-NEXT:    store i64 [[ARGC]], i64* [[ARGC_ADDR]], align 8
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[ARGC_ADDR]] to i32*
-// CHECK1-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i1 false, i1 true, i1 true)
+// CHECK1-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i8 1, i1 true, i1 true)
 // CHECK1-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK1-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK1:       user_code.entry:
-// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
-// CHECK1-NEXT:    [[ARGC1:%.*]] = call i8* @__kmpc_alloc_shared(i64 4)
+// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
+// CHECK1-NEXT:    [[ARGC1:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i64 4)
 // CHECK1-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC1]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP1]], i32* [[ARGC_ON_STACK]], align 4
 // CHECK1-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK1-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK1-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK1-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR1:[0-9]+]]
+// CHECK1-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR2:[0-9]+]]
 // CHECK1-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC1]], i64 4)
-// CHECK1-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK1-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK1-NEXT:    ret void
 // CHECK1:       worker.exit:
 // CHECK1-NEXT:    ret void
@@ -937,21 +937,21 @@ int main (int argc, char **argv) {
 // CHECK1-NEXT:    [[ARGC_ADDR:%.*]] = alloca i8**, align 8
 // CHECK1-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK1-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK1-NEXT:    store i8** [[ARGC]], i8*** [[ARGC_ADDR]], align 8
-// CHECK1-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i1 false, i1 true, i1 true)
+// CHECK1-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i8 1, i1 true, i1 true)
 // CHECK1-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK1-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK1:       user_code.entry:
 // CHECK1-NEXT:    [[TMP1:%.*]] = load i8**, i8*** [[ARGC_ADDR]], align 8
-// CHECK1-NEXT:    [[ARGC1:%.*]] = call i8* @__kmpc_alloc_shared(i64 8)
+// CHECK1-NEXT:    [[ARGC1:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i64 8)
 // CHECK1-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC1]] to i8***
 // CHECK1-NEXT:    store i8** [[TMP1]], i8*** [[ARGC_ON_STACK]], align 8
 // CHECK1-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK1-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK1-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK1-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR1]]
+// CHECK1-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR2]]
 // CHECK1-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC1]], i64 8)
-// CHECK1-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK1-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK1-NEXT:    ret void
 // CHECK1:       worker.exit:
 // CHECK1-NEXT:    ret void
@@ -977,21 +977,21 @@ int main (int argc, char **argv) {
 // CHECK2-NEXT:    [[ARGC_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK2-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK2-NEXT:    store i32 [[ARGC]], i32* [[ARGC_ADDR]], align 4
-// CHECK2-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i1 false, i1 true, i1 true)
+// CHECK2-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i8 1, i1 true, i1 true)
 // CHECK2-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK2-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK2:       user_code.entry:
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[ARGC_ADDR]], align 4
-// CHECK2-NEXT:    [[ARGC1:%.*]] = call i8* @__kmpc_alloc_shared(i32 4)
+// CHECK2-NEXT:    [[ARGC1:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i32 4)
 // CHECK2-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC1]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP1]], i32* [[ARGC_ON_STACK]], align 4
 // CHECK2-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK2-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK2-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK2-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR1:[0-9]+]]
+// CHECK2-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR2:[0-9]+]]
 // CHECK2-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC1]], i32 4)
-// CHECK2-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK2-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK2-NEXT:    ret void
 // CHECK2:       worker.exit:
 // CHECK2-NEXT:    ret void
@@ -1017,21 +1017,21 @@ int main (int argc, char **argv) {
 // CHECK2-NEXT:    [[ARGC_ADDR:%.*]] = alloca i8**, align 4
 // CHECK2-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK2-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK2-NEXT:    store i8** [[ARGC]], i8*** [[ARGC_ADDR]], align 4
-// CHECK2-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i1 false, i1 true, i1 true)
+// CHECK2-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i8 1, i1 true, i1 true)
 // CHECK2-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK2-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK2:       user_code.entry:
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i8**, i8*** [[ARGC_ADDR]], align 4
-// CHECK2-NEXT:    [[ARGC1:%.*]] = call i8* @__kmpc_alloc_shared(i32 4)
+// CHECK2-NEXT:    [[ARGC1:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i32 4)
 // CHECK2-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC1]] to i8***
 // CHECK2-NEXT:    store i8** [[TMP1]], i8*** [[ARGC_ON_STACK]], align 4
 // CHECK2-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK2-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK2-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK2-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR1]]
+// CHECK2-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR2]]
 // CHECK2-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC1]], i32 4)
-// CHECK2-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK2-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK2-NEXT:    ret void
 // CHECK2:       worker.exit:
 // CHECK2-NEXT:    ret void
@@ -1059,26 +1059,26 @@ int main (int argc, char **argv) {
 // CHECK3-NEXT:    [[ARGC_ADDR:%.*]] = alloca i64, align 8
 // CHECK3-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK3-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK3-NEXT:    store i64 [[A]], i64* [[A_ADDR]], align 8
 // CHECK3-NEXT:    store i64 [[B]], i64* [[B_ADDR]], align 8
 // CHECK3-NEXT:    store i64 [[ARGC]], i64* [[ARGC_ADDR]], align 8
 // CHECK3-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK3-NEXT:    [[CONV1:%.*]] = bitcast i64* [[B_ADDR]] to i32*
 // CHECK3-NEXT:    [[CONV2:%.*]] = bitcast i64* [[ARGC_ADDR]] to i32*
-// CHECK3-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i1 false, i1 true, i1 true)
+// CHECK3-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i8 1, i1 true, i1 true)
 // CHECK3-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK3-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK3:       user_code.entry:
-// CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
-// CHECK3-NEXT:    [[ARGC3:%.*]] = call i8* @__kmpc_alloc_shared(i64 4)
+// CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
+// CHECK3-NEXT:    [[ARGC3:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i64 4)
 // CHECK3-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC3]] to i32*
 // CHECK3-NEXT:    store i32 [[TMP1]], i32* [[ARGC_ON_STACK]], align 4
 // CHECK3-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK3-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK3-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR1:[0-9]+]]
+// CHECK3-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR2:[0-9]+]]
 // CHECK3-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC3]], i64 4)
-// CHECK3-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK3-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK3-NEXT:    ret void
 // CHECK3:       worker.exit:
 // CHECK3-NEXT:    ret void
@@ -1106,25 +1106,25 @@ int main (int argc, char **argv) {
 // CHECK3-NEXT:    [[ARGC_ADDR:%.*]] = alloca i8**, align 8
 // CHECK3-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK3-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK3-NEXT:    store i64 [[A]], i64* [[A_ADDR]], align 8
 // CHECK3-NEXT:    store i64 [[B]], i64* [[B_ADDR]], align 8
 // CHECK3-NEXT:    store i8** [[ARGC]], i8*** [[ARGC_ADDR]], align 8
 // CHECK3-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK3-NEXT:    [[CONV1:%.*]] = bitcast i64* [[B_ADDR]] to i32*
-// CHECK3-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i1 false, i1 true, i1 true)
+// CHECK3-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i8 1, i1 true, i1 true)
 // CHECK3-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK3-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK3:       user_code.entry:
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i8**, i8*** [[ARGC_ADDR]], align 8
-// CHECK3-NEXT:    [[ARGC2:%.*]] = call i8* @__kmpc_alloc_shared(i64 8)
+// CHECK3-NEXT:    [[ARGC2:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i64 8)
 // CHECK3-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC2]] to i8***
 // CHECK3-NEXT:    store i8** [[TMP1]], i8*** [[ARGC_ON_STACK]], align 8
 // CHECK3-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK3-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK3-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR1]]
+// CHECK3-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR2]]
 // CHECK3-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC2]], i64 8)
-// CHECK3-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK3-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK3-NEXT:    ret void
 // CHECK3:       worker.exit:
 // CHECK3-NEXT:    ret void
@@ -1152,23 +1152,23 @@ int main (int argc, char **argv) {
 // CHECK4-NEXT:    [[ARGC_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK4-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[B]], i32* [[B_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[ARGC]], i32* [[ARGC_ADDR]], align 4
-// CHECK4-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i1 false, i1 true, i1 true)
+// CHECK4-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1:[0-9]+]], i8 1, i1 true, i1 true)
 // CHECK4-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK4-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK4:       user_code.entry:
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[ARGC_ADDR]], align 4
-// CHECK4-NEXT:    [[ARGC1:%.*]] = call i8* @__kmpc_alloc_shared(i32 4)
+// CHECK4-NEXT:    [[ARGC1:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i32 4)
 // CHECK4-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC1]] to i32*
 // CHECK4-NEXT:    store i32 [[TMP1]], i32* [[ARGC_ON_STACK]], align 4
 // CHECK4-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK4-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK4-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR1:[0-9]+]]
+// CHECK4-NEXT:    call void @__omp_outlined__(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i32* [[ARGC_ON_STACK]]) #[[ATTR2:[0-9]+]]
 // CHECK4-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC1]], i32 4)
-// CHECK4-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK4-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK4-NEXT:    ret void
 // CHECK4:       worker.exit:
 // CHECK4-NEXT:    ret void
@@ -1196,23 +1196,23 @@ int main (int argc, char **argv) {
 // CHECK4-NEXT:    [[ARGC_ADDR:%.*]] = alloca i8**, align 4
 // CHECK4-NEXT:    [[DOTZERO_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[DOTTHREADID_TEMP_:%.*]] = alloca i32, align 4
-// CHECK4-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[B]], i32* [[B_ADDR]], align 4
 // CHECK4-NEXT:    store i8** [[ARGC]], i8*** [[ARGC_ADDR]], align 4
-// CHECK4-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i1 false, i1 true, i1 true)
+// CHECK4-NEXT:    [[TMP0:%.*]] = call i32 @__kmpc_target_init(%struct.ident_t* @[[GLOB1]], i8 1, i1 true, i1 true)
 // CHECK4-NEXT:    [[EXEC_USER_CODE:%.*]] = icmp eq i32 [[TMP0]], -1
 // CHECK4-NEXT:    br i1 [[EXEC_USER_CODE]], label [[USER_CODE_ENTRY:%.*]], label [[WORKER_EXIT:%.*]]
 // CHECK4:       user_code.entry:
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i8**, i8*** [[ARGC_ADDR]], align 4
-// CHECK4-NEXT:    [[ARGC1:%.*]] = call i8* @__kmpc_alloc_shared(i32 4)
+// CHECK4-NEXT:    [[ARGC1:%.*]] = call align 8 i8* @__kmpc_alloc_shared(i32 4)
 // CHECK4-NEXT:    [[ARGC_ON_STACK:%.*]] = bitcast i8* [[ARGC1]] to i8***
 // CHECK4-NEXT:    store i8** [[TMP1]], i8*** [[ARGC_ON_STACK]], align 4
 // CHECK4-NEXT:    [[TMP2:%.*]] = call i32 @__kmpc_global_thread_num(%struct.ident_t* @[[GLOB1]])
+// CHECK4-NEXT:    store i32 0, i32* [[DOTZERO_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[TMP2]], i32* [[DOTTHREADID_TEMP_]], align 4
-// CHECK4-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR1]]
+// CHECK4-NEXT:    call void @__omp_outlined__1(i32* [[DOTTHREADID_TEMP_]], i32* [[DOTZERO_ADDR]], i8*** [[ARGC_ON_STACK]]) #[[ATTR2]]
 // CHECK4-NEXT:    call void @__kmpc_free_shared(i8* [[ARGC1]], i32 4)
-// CHECK4-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i1 false, i1 true)
+// CHECK4-NEXT:    call void @__kmpc_target_deinit(%struct.ident_t* @[[GLOB1]], i8 1, i1 true)
 // CHECK4-NEXT:    ret void
 // CHECK4:       worker.exit:
 // CHECK4-NEXT:    ret void

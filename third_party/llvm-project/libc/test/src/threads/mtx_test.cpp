@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "include/threads.h"
+#include "src/threads/mtx_destroy.h"
 #include "src/threads/mtx_init.h"
 #include "src/threads/mtx_lock.h"
 #include "src/threads/mtx_unlock.h"
@@ -63,14 +64,16 @@ TEST(LlvmLibcMutexTest, RelayCounter) {
   int retval = 123;
   __llvm_libc::thrd_join(&thread, &retval);
   ASSERT_EQ(retval, 0);
+
+  __llvm_libc::mtx_destroy(&mutex);
 }
 
 mtx_t start_lock, step_lock;
-bool start, step;
+bool started, step;
 
 int stepper(void *arg) {
   __llvm_libc::mtx_lock(&start_lock);
-  start = true;
+  started = true;
   __llvm_libc::mtx_unlock(&start_lock);
 
   __llvm_libc::mtx_lock(&step_lock);
@@ -89,7 +92,7 @@ TEST(LlvmLibcMutexTest, WaitAndStep) {
   // step. Once we ensure that the thread is blocked, we unblock it.
   // After unblocking, we then verify that the thread was indeed unblocked.
   step = false;
-  start = false;
+  started = false;
   ASSERT_EQ(__llvm_libc::mtx_lock(&step_lock), static_cast<int>(thrd_success));
 
   thrd_t thread;
@@ -99,7 +102,7 @@ TEST(LlvmLibcMutexTest, WaitAndStep) {
     // Make sure the thread actually started.
     ASSERT_EQ(__llvm_libc::mtx_lock(&start_lock),
               static_cast<int>(thrd_success));
-    bool s = start;
+    bool s = started;
     ASSERT_EQ(__llvm_libc::mtx_unlock(&start_lock),
               static_cast<int>(thrd_success));
     if (s)
@@ -126,6 +129,9 @@ TEST(LlvmLibcMutexTest, WaitAndStep) {
   int retval = 123;
   __llvm_libc::thrd_join(&thread, &retval);
   ASSERT_EQ(retval, 0);
+
+  __llvm_libc::mtx_destroy(&start_lock);
+  __llvm_libc::mtx_destroy(&step_lock);
 }
 
 static constexpr int THREAD_COUNT = 10;
@@ -179,4 +185,7 @@ TEST(LlvmLibcMutexTest, MultipleWaiters) {
   }
 
   ASSERT_EQ(wait_count, 0);
+
+  __llvm_libc::mtx_destroy(&multiple_waiter_lock);
+  __llvm_libc::mtx_destroy(&counter_lock);
 }

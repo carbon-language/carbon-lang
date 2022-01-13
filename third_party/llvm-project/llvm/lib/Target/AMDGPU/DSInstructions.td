@@ -89,7 +89,6 @@ class DS_Real <DS_Pseudo ps> :
                     !if(!or(ps.has_data0, ps.has_gws_data0), data0{9}, 0));
 }
 
-
 // DS Pseudo instructions
 
 class DS_0A1D_NORET<string opName, RegisterClass rc = VGPR_32>
@@ -428,11 +427,10 @@ defm DS_AND_B32       : DS_1A1D_NORET_mc<"ds_and_b32">;
 defm DS_OR_B32        : DS_1A1D_NORET_mc<"ds_or_b32">;
 defm DS_XOR_B32       : DS_1A1D_NORET_mc<"ds_xor_b32">;
 
-let SubtargetPredicate = HasLDSFPAtomics in {
+let SubtargetPredicate = HasLDSFPAtomicAdd in {
 defm DS_ADD_F32       : DS_1A1D_NORET_mc<"ds_add_f32">;
 }
 
-// FIXME: Are these really present pre-gfx8?
 defm DS_MIN_F32       : DS_1A1D_NORET_mc<"ds_min_f32">;
 defm DS_MAX_F32       : DS_1A1D_NORET_mc<"ds_max_f32">;
 
@@ -493,7 +491,7 @@ defm DS_MAX_F64       : DS_1A1D_NORET_mc<"ds_max_f64", VReg_64>;
 
 defm DS_ADD_RTN_U32   : DS_1A1D_RET_mc<"ds_add_rtn_u32", VGPR_32, "ds_add_u32">;
 
-let SubtargetPredicate = HasLDSFPAtomics in {
+let SubtargetPredicate = HasLDSFPAtomicAdd in {
 defm DS_ADD_RTN_F32   : DS_1A1D_RET_mc<"ds_add_rtn_f32", VGPR_32, "ds_add_f32">;
 }
 defm DS_SUB_RTN_U32   : DS_1A1D_RET_mc<"ds_sub_rtn_u32", VGPR_32, "ds_sub_u32">;
@@ -665,7 +663,7 @@ def DS_BPERMUTE_B32 : DS_1A1D_PERMUTE <"ds_bpermute_b32",
 
 } // let SubtargetPredicate = isGFX8Plus
 
-let SubtargetPredicate = HasLDSFPAtomics, OtherPredicates = [HasDsSrc2Insts] in {
+let SubtargetPredicate = HasLDSFPAtomicAdd, OtherPredicates = [HasDsSrc2Insts] in {
 def DS_ADD_SRC2_F32 : DS_1A<"ds_add_src2_f32">;
 }
 
@@ -715,6 +713,10 @@ foreach vt = Reg32Types.types in {
 defm : DSReadPat_mc <DS_READ_B32, vt, "load_local">;
 }
 
+defm : DSReadPat_mc <DS_READ_U8, i16, "atomic_load_8_local">;
+defm : DSReadPat_mc <DS_READ_U8, i32, "atomic_load_8_local">;
+defm : DSReadPat_mc <DS_READ_U16, i16, "atomic_load_16_local">;
+defm : DSReadPat_mc <DS_READ_U16, i32, "atomic_load_16_local">;
 defm : DSReadPat_mc <DS_READ_B32, i32, "atomic_load_32_local">;
 defm : DSReadPat_mc <DS_READ_B64, i64, "atomic_load_64_local">;
 
@@ -775,6 +777,10 @@ foreach vt = Reg32Types.types in {
 defm : DSWritePat_mc <DS_WRITE_B32, vt, "store_local">;
 }
 
+defm : DSAtomicWritePat_mc <DS_WRITE_B8, i16, "atomic_store_local_8">;
+defm : DSAtomicWritePat_mc <DS_WRITE_B8, i32, "atomic_store_local_8">;
+defm : DSAtomicWritePat_mc <DS_WRITE_B16, i16, "atomic_store_local_16">;
+defm : DSAtomicWritePat_mc <DS_WRITE_B16, i32, "atomic_store_local_16">;
 defm : DSAtomicWritePat_mc <DS_WRITE_B32, i32, "atomic_store_local_32">;
 defm : DSAtomicWritePat_mc <DS_WRITE_B64, i64, "atomic_store_local_64">;
 
@@ -933,11 +939,11 @@ defm : DSAtomicRetPat_mc<DS_MIN_RTN_I32, i32, "atomic_load_min">;
 defm : DSAtomicRetPat_mc<DS_MAX_RTN_I32, i32, "atomic_load_max">;
 defm : DSAtomicRetPat_mc<DS_MIN_RTN_U32, i32, "atomic_load_umin">;
 defm : DSAtomicRetPat_mc<DS_MAX_RTN_U32, i32, "atomic_load_umax">;
-defm : DSAtomicCmpXChg_mc<DS_CMPST_RTN_B32, i32, "atomic_cmp_swap">;
-
-let SubtargetPredicate = HasLDSFPAtomics in {
 defm : DSAtomicRetPat_mc<DS_MIN_RTN_F32, f32, "atomic_load_fmin">;
 defm : DSAtomicRetPat_mc<DS_MAX_RTN_F32, f32, "atomic_load_fmax">;
+defm : DSAtomicCmpXChg_mc<DS_CMPST_RTN_B32, i32, "atomic_cmp_swap">;
+
+let SubtargetPredicate = HasLDSFPAtomicAdd in {
 defm : DSAtomicRetPat_mc<DS_ADD_RTN_F32, f32, "atomic_load_fadd">;
 }
 
@@ -954,6 +960,8 @@ defm : DSAtomicRetPat_mc<DS_MIN_RTN_I64, i64, "atomic_load_min">;
 defm : DSAtomicRetPat_mc<DS_MAX_RTN_I64, i64, "atomic_load_max">;
 defm : DSAtomicRetPat_mc<DS_MIN_RTN_U64, i64, "atomic_load_umin">;
 defm : DSAtomicRetPat_mc<DS_MAX_RTN_U64, i64, "atomic_load_umax">;
+defm : DSAtomicRetPat_mc<DS_MIN_RTN_F64, f64, "atomic_load_fmin">;
+defm : DSAtomicRetPat_mc<DS_MAX_RTN_F64, f64, "atomic_load_fmax">;
 
 defm : DSAtomicCmpXChg_mc<DS_CMPST_RTN_B64, i64, "atomic_cmp_swap">;
 

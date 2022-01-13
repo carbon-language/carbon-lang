@@ -188,8 +188,8 @@ static isl::union_set getUnrollIsolatedSetOptions(isl::ctx Ctx) {
 /// @return        The modified map.
 static isl::map permuteDimensions(isl::map Map, isl::dim DimType,
                                   unsigned DstPos, unsigned SrcPos) {
-  assert((isl_size)DstPos < Map.dim(DimType).release() &&
-         (isl_size)SrcPos < Map.dim(DimType).release());
+  assert(DstPos < unsignedFromIslSize(Map.dim(DimType)) &&
+         SrcPos < unsignedFromIslSize(Map.dim(DimType)));
   if (DstPos == SrcPos)
     return Map;
   isl::id DimId;
@@ -229,7 +229,7 @@ static bool isMatMulOperandAcc(isl::set Domain, isl::map AccMap, int &FirstPos,
   isl::space Space = AccMap.get_space();
   isl::map Universe = isl::map::universe(Space);
 
-  if (Space.dim(isl::dim::out).release() != 2)
+  if (unsignedFromIslSize(Space.dim(isl::dim::out)) != 2)
     return false;
 
   // MatMul has the form:
@@ -317,7 +317,7 @@ static bool containsOnlyMatrMultAcc(isl::map PartialSchedule,
                                     MatMulInfoTy &MMI) {
   auto InputDimId = PartialSchedule.get_tuple_id(isl::dim::in);
   auto *Stmt = static_cast<ScopStmt *>(InputDimId.get_user());
-  isl_size OutDimNum = PartialSchedule.range_tuple_dim().release();
+  unsigned OutDimNum = unsignedFromIslSize(PartialSchedule.range_tuple_dim());
   assert(OutDimNum > 2 && "In case of the matrix multiplication the loop nest "
                           "and, consequently, the corresponding scheduling "
                           "functions have at least three dimensions.");
@@ -333,8 +333,8 @@ static bool containsOnlyMatrMultAcc(isl::map PartialSchedule,
     auto *MemAccessPtr = *MemA;
     if (MemAccessPtr->isLatestArrayKind() && MemAccessPtr != MMI.WriteToC &&
         !isMatMulNonScalarReadAccess(MemAccessPtr, MMI) &&
-        !(MemAccessPtr->isStrideZero(MapI)) &&
-        MemAccessPtr->isStrideZero(MapJ) && MemAccessPtr->isStrideZero(MapK))
+        !(MemAccessPtr->isStrideZero(MapI) &&
+          MemAccessPtr->isStrideZero(MapJ) && MemAccessPtr->isStrideZero(MapK)))
       return false;
   }
   return true;
@@ -363,7 +363,7 @@ static bool containsOnlyMatMulDep(isl::map Schedule, const Dependences *D,
   auto DomainSpace = Schedule.get_space().domain();
   auto Space = DomainSpace.map_from_domain_and_range(DomainSpace);
   auto Deltas = Dep.extract_map(Space).deltas();
-  isl_size DeltasDimNum = Deltas.dim(isl::dim::set).release();
+  int DeltasDimNum = unsignedFromIslSize(Deltas.dim(isl::dim::set));
   for (int i = 0; i < DeltasDimNum; i++) {
     auto Val = Deltas.plain_get_val_if_fixed(isl::dim::set, i);
     Pos = Pos < 0 && Val.is_one() ? i : Pos;
@@ -727,9 +727,10 @@ static isl::schedule_node optimizePackedB(isl::schedule_node Node,
   ScopStmt *CopyStmt = S->addScopStmt(AccRelB, AccRelPackedB, Domain);
   MMI.B->setNewAccessRelation(AccRelPackedB);
 
+  unsigned Dim = unsignedFromIslSize(MapOldIndVar.range_tuple_dim());
+  assert(Dim >= 2);
   // Insert into the schedule tree.
-  isl::map ExtMap = MapOldIndVar.project_out(
-      isl::dim::out, 2, MapOldIndVar.range_tuple_dim().release() - 2);
+  isl::map ExtMap = MapOldIndVar.project_out(isl::dim::out, 2, Dim - 2);
   ExtMap = ExtMap.reverse();
   ExtMap = ExtMap.fix_si(isl::dim::out, MMI.i, 0);
   ExtMap = ExtMap.intersect_range(Domain);
@@ -870,9 +871,9 @@ getInductionVariablesSubstitution(isl::schedule_node Node,
   auto Child = Node.child(0);
   auto UnMapOldIndVar = Child.get_prefix_schedule_union_map();
   auto MapOldIndVar = isl::map::from_union_map(UnMapOldIndVar);
-  if (MapOldIndVar.range_tuple_dim().release() > 9)
-    return MapOldIndVar.project_out(
-        isl::dim::out, 0, MapOldIndVar.range_tuple_dim().release() - 9);
+  unsigned Dim = unsignedFromIslSize(MapOldIndVar.range_tuple_dim());
+  if (Dim > 9u)
+    return MapOldIndVar.project_out(isl::dim::out, 0, Dim - 9);
   return MapOldIndVar;
 }
 
@@ -896,7 +897,8 @@ isolateAndUnrollMatMulInnerLoops(isl::schedule_node Node,
   isl::schedule_node Child = Node.child(0);
   isl::union_map UnMapOldIndVar = Child.get_prefix_schedule_relation();
   isl::set Prefix = isl::map::from_union_map(UnMapOldIndVar).range();
-  isl_size Dims = Prefix.tuple_dim().release();
+  unsigned Dims = unsignedFromIslSize(Prefix.tuple_dim());
+  assert(Dims >= 1);
   Prefix = Prefix.project_out(isl::dim::set, Dims - 1, 1);
   Prefix = getPartialTilePrefixes(Prefix, MicroKernelParams.Nr);
   Prefix = getPartialTilePrefixes(Prefix, MicroKernelParams.Mr);
@@ -913,20 +915,6 @@ isolateAndUnrollMatMulInnerLoops(isl::schedule_node Node,
   Node = Node.as<isl::schedule_node_band>().set_ast_build_options(Options);
   Node = Node.child(0).child(0).child(0);
   return Node;
-}
-
-/// Mark @p BasePtr with "Inter iteration alias-free" mark node.
-///
-/// @param Node The child of the mark node to be inserted.
-/// @param BasePtr The pointer to be marked.
-/// @return The modified isl_schedule_node.
-static isl::schedule_node markInterIterationAliasFree(isl::schedule_node Node,
-                                                      Value *BasePtr) {
-  if (!BasePtr)
-    return Node;
-
-  auto Id = isl::id::alloc(Node.ctx(), "Inter iteration alias-free", BasePtr);
-  return Node.insert_mark(Id).child(0);
 }
 
 /// Insert "Loop Vectorizer Disabled" mark node.
@@ -954,8 +942,8 @@ getBandNodeWithOriginDimOrder(isl::schedule_node Node) {
   auto Domain = Node.get_universe_domain();
   assert(isl_union_set_n_set(Domain.get()) == 1);
   if (Node.get_schedule_depth().release() != 0 ||
-      (isl::set(Domain).tuple_dim().release() !=
-       isl_schedule_node_band_n_member(Node.get())))
+      (unsignedFromIslSize(isl::set(Domain).tuple_dim()) !=
+       unsignedFromIslSize(Node.as<isl::schedule_node_band>().n_member())))
     return Node;
   Node = isl::manage(isl_schedule_node_delete(Node.copy()));
   auto PartialSchedulePwAff = Domain.identity_union_pw_multi_aff();
@@ -970,8 +958,6 @@ static isl::schedule_node optimizeMatMulPattern(isl::schedule_node Node,
                                                 const TargetTransformInfo *TTI,
                                                 MatMulInfoTy &MMI) {
   assert(TTI && "The target transform info should be provided.");
-  Node = markInterIterationAliasFree(
-      Node, MMI.WriteToC->getLatestScopArrayInfo()->getBasePtr());
   int DimOutNum = isl_schedule_node_band_n_member(Node.get());
   assert(DimOutNum > 2 && "In case of the matrix multiplication the loop nest "
                           "and, consequently, the corresponding scheduling "

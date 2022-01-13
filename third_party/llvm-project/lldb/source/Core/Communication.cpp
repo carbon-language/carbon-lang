@@ -176,8 +176,8 @@ size_t Communication::Write(const void *src, size_t src_len,
 
   std::lock_guard<std::mutex> guard(m_write_mutex);
   LLDB_LOG(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_COMMUNICATION),
-           "{0} Communication::Write (src = {1}, src_len = %" PRIu64
-           ") connection = {2}",
+           "{0} Communication::Write (src = {1}, src_len = {2}"
+           ") connection = {3}",
            this, src, (uint64_t)src_len, connection_sp.get());
 
   if (connection_sp)
@@ -187,6 +187,16 @@ size_t Communication::Write(const void *src, size_t src_len,
     error_ptr->SetErrorString("Invalid connection.");
   status = eConnectionStatusNoConnection;
   return 0;
+}
+
+size_t Communication::WriteAll(const void *src, size_t src_len,
+                               ConnectionStatus &status, Status *error_ptr) {
+  size_t total_written = 0;
+  do
+    total_written += Write(static_cast<const char *>(src) + total_written,
+                           src_len - total_written, status, error_ptr);
+  while (status == eConnectionStatusSuccess && total_written < src_len);
+  return total_written;
 }
 
 bool Communication::StartReadThread(Status *error_ptr) {

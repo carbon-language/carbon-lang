@@ -240,7 +240,7 @@ EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD,
     return true;
 
   const ClassVectorTy &Classes = I->second;
-  if (llvm::find(Classes, RD) == Classes.end())
+  if (!llvm::is_contained(Classes, RD))
     return true;
 
   // There is already an empty class of the same type at this offset.
@@ -1538,7 +1538,7 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   TypeInfo FieldInfo = Context.getTypeInfo(D->getType());
   uint64_t StorageUnitSize = FieldInfo.Width;
   unsigned FieldAlign = FieldInfo.Align;
-  bool AlignIsRequired = FieldInfo.AlignIsRequired;
+  bool AlignIsRequired = FieldInfo.isAlignRequired();
 
   // UnfilledBitsInLastUnit is the difference between the end of the
   // last allocated bitfield (i.e. the first bit offset available for
@@ -1889,7 +1889,7 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
 
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
 
-  bool AlignIsRequired = false;
+  AlignRequirementKind AlignRequirement = AlignRequirementKind::None;
   CharUnits FieldSize;
   CharUnits FieldAlign;
   // The amount of this class's dsize occupied by the field.
@@ -1904,7 +1904,7 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     // aligned appropriately for their element type.
     EffectiveFieldSize = FieldSize =
         IsIncompleteArrayType ? CharUnits::Zero() : TI.Width;
-    AlignIsRequired = TI.AlignIsRequired;
+    AlignRequirement = TI.AlignRequirement;
   };
 
   if (D->getType()->isIncompleteArrayType()) {
@@ -1954,7 +1954,7 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
 
           // Since the combination of -mms-bitfields together with structs
           // like max_align_t (which contains a long double) for mingw is
-          // quite comon (and GCC handles it silently), just handle it
+          // quite common (and GCC handles it silently), just handle it
           // silently there. For other targets that have ms_struct enabled
           // (most probably via a pragma or attribute), trigger a diagnostic
           // that defaults to an error.
@@ -1968,6 +1968,19 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     }
   }
 
+  // When used as part of a typedef, or together with a 'packed' attribute, the
+  // 'aligned' attribute can be used to decrease alignment. In that case, it
+  // overrides any computed alignment we have, and there is no need to upgrade
+  // the alignment.
+  auto alignedAttrCanDecreaseAIXAlignment = [AlignRequirement, FieldPacked] {
+    // Enum alignment sources can be safely ignored here, because this only
+    // helps decide whether we need the AIX alignment upgrade, which only
+    // applies to floating-point types.
+    return AlignRequirement == AlignRequirementKind::RequiredByTypedef ||
+           (AlignRequirement == AlignRequirementKind::RequiredByRecord &&
+            FieldPacked);
+  };
+
   // The AIX `power` alignment rules apply the natural alignment of the
   // "first member" if it is of a floating-point data type (or is an aggregate
   // whose recursively "first" member or element is such a type). The alignment
@@ -1978,7 +1991,7 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   // and zero-width bit-fields count as prior members; members of empty class
   // types marked `no_unique_address` are not considered to be prior members.
   CharUnits PreferredAlign = FieldAlign;
-  if (DefaultsToAIXPowerAlignment && !AlignIsRequired &&
+  if (DefaultsToAIXPowerAlignment && !alignedAttrCanDecreaseAIXAlignment() &&
       (FoundFirstNonOverlappingEmptyFieldForAIX || IsNaturalAlign)) {
     auto performBuiltinTypeAlignmentUpgrade = [&](const BuiltinType *BTy) {
       if (BTy->getKind() == BuiltinType::Double ||
@@ -1989,12 +2002,13 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
       }
     };
 
-    const Type *Ty = D->getType()->getBaseElementTypeUnsafe();
-    if (const ComplexType *CTy = Ty->getAs<ComplexType>()) {
-      performBuiltinTypeAlignmentUpgrade(CTy->getElementType()->castAs<BuiltinType>());
-    } else if (const BuiltinType *BTy = Ty->getAs<BuiltinType>()) {
+    const Type *BaseTy = D->getType()->getBaseElementTypeUnsafe();
+    if (const ComplexType *CTy = BaseTy->getAs<ComplexType>()) {
+      performBuiltinTypeAlignmentUpgrade(
+          CTy->getElementType()->castAs<BuiltinType>());
+    } else if (const BuiltinType *BTy = BaseTy->getAs<BuiltinType>()) {
       performBuiltinTypeAlignmentUpgrade(BTy);
-    } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    } else if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
       const RecordDecl *RD = RT->getDecl();
       assert(RD && "Expected non-null RecordDecl.");
       const ASTRecordLayout &FieldRecord = Context.getASTRecordLayout(RD);
@@ -2617,7 +2631,7 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
   // Track zero-sized subobjects here where it's already available.
   EndsWithZeroSizedObject = Layout.endsWithZeroSizedObject();
   // Respect required alignment, this is necessary because we may have adjusted
-  // the alignment in the case of pragam pack.  Note that the required alignment
+  // the alignment in the case of pragma pack.  Note that the required alignment
   // doesn't actually apply to the struct alignment at this point.
   Alignment = std::max(Alignment, Info.Alignment);
   RequiredAlignment = std::max(RequiredAlignment, Layout.getRequiredAlignment());
@@ -3077,7 +3091,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   for (const CXXBaseSpecifier &VBase : RD->vbases()) {
     const CXXRecordDecl *BaseDecl = VBase.getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
-    bool HasVtordisp = HasVtorDispSet.count(BaseDecl) > 0;
+    bool HasVtordisp = HasVtorDispSet.contains(BaseDecl);
     // Insert padding between two bases if the left first one is zero sized or
     // contains a zero sized subobject and the right is zero sized or one leads
     // with a zero sized base.  The padding between virtual bases is 4
@@ -3390,6 +3404,7 @@ uint64_t ASTContext::getFieldOffset(const ValueDecl *VD) const {
 uint64_t ASTContext::lookupFieldBitOffset(const ObjCInterfaceDecl *OID,
                                           const ObjCImplementationDecl *ID,
                                           const ObjCIvarDecl *Ivar) const {
+  Ivar = Ivar->getCanonicalDecl();
   const ObjCInterfaceDecl *Container = Ivar->getContainingInterface();
 
   // FIXME: We should eliminate the need to have ObjCImplementationDecl passed

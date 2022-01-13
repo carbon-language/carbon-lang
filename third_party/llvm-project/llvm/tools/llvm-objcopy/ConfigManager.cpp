@@ -11,6 +11,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/BinaryFormat/COFF.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/CRC.h"
@@ -39,7 +40,7 @@ enum ObjcopyID {
 #include "ObjcopyOpts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info ObjcopyInfoTable[] = {
+const opt::OptTable::Info ObjcopyInfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {OBJCOPY_##PREFIX,                                                           \
@@ -79,7 +80,7 @@ enum InstallNameToolID {
 #include "InstallNameToolOpts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info InstallNameToolInfoTable[] = {
+const opt::OptTable::Info InstallNameToolInfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {INSTALL_NAME_TOOL_##PREFIX,                                                 \
@@ -116,7 +117,7 @@ enum BitcodeStripID {
 #include "BitcodeStripOpts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info BitcodeStripInfoTable[] = {
+const opt::OptTable::Info BitcodeStripInfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {BITCODE_STRIP_##PREFIX,                                                     \
@@ -153,7 +154,7 @@ enum StripID {
 #include "StripOpts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info StripInfoTable[] = {
+const opt::OptTable::Info StripInfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {STRIP_##PREFIX, NAME,       HELPTEXT,                                       \
@@ -559,27 +560,21 @@ static Expected<NewSymbolInfo> parseNewSymbolInfo(StringRef FlagValue) {
 }
 
 Expected<const ELFConfig &> ConfigManager::getELFConfig() const {
-  if (Common.StripSwiftSymbols || Common.KeepUndefined)
-    return createStringError(llvm::errc::invalid_argument,
-                             "option not supported by llvm-objcopy for ELF");
-
   return ELF;
 }
 
 Expected<const COFFConfig &> ConfigManager::getCOFFConfig() const {
-  if (Common.AllowBrokenLinks || !Common.SplitDWO.empty() ||
-      !Common.SymbolsPrefix.empty() || !Common.AllocSectionsPrefix.empty() ||
-      !Common.DumpSection.empty() || !Common.KeepSection.empty() ||
-      ELF.NewSymbolVisibility || !Common.SymbolsToGlobalize.empty() ||
+  if (!Common.SplitDWO.empty() || !Common.SymbolsPrefix.empty() ||
+      !Common.AllocSectionsPrefix.empty() || !Common.DumpSection.empty() ||
+      !Common.KeepSection.empty() || !Common.SymbolsToGlobalize.empty() ||
       !Common.SymbolsToKeep.empty() || !Common.SymbolsToLocalize.empty() ||
       !Common.SymbolsToWeaken.empty() || !Common.SymbolsToKeepGlobal.empty() ||
       !Common.SectionsToRename.empty() || !Common.SetSectionAlignment.empty() ||
-      Common.ExtractDWO || Common.LocalizeHidden || Common.PreserveDates ||
-      Common.StripDWO || Common.StripNonAlloc || Common.StripSections ||
-      Common.StripSwiftSymbols || Common.KeepUndefined || Common.Weaken ||
+      Common.ExtractDWO || Common.PreserveDates || Common.StripDWO ||
+      Common.StripNonAlloc || Common.StripSections || Common.Weaken ||
       Common.DecompressDebugSections ||
       Common.DiscardMode == DiscardType::Locals ||
-      !Common.SymbolsToAdd.empty() || Common.EntryExpr) {
+      !Common.SymbolsToAdd.empty()) {
     return createStringError(llvm::errc::invalid_argument,
                              "option not supported by llvm-objcopy for COFF");
   }
@@ -588,19 +583,18 @@ Expected<const COFFConfig &> ConfigManager::getCOFFConfig() const {
 }
 
 Expected<const MachOConfig &> ConfigManager::getMachOConfig() const {
-  if (Common.AllowBrokenLinks || !Common.SplitDWO.empty() ||
-      !Common.SymbolsPrefix.empty() || !Common.AllocSectionsPrefix.empty() ||
-      !Common.KeepSection.empty() || ELF.NewSymbolVisibility ||
+  if (!Common.SplitDWO.empty() || !Common.SymbolsPrefix.empty() ||
+      !Common.AllocSectionsPrefix.empty() || !Common.KeepSection.empty() ||
       !Common.SymbolsToGlobalize.empty() || !Common.SymbolsToKeep.empty() ||
       !Common.SymbolsToLocalize.empty() || !Common.SymbolsToWeaken.empty() ||
       !Common.SymbolsToKeepGlobal.empty() || !Common.SectionsToRename.empty() ||
       !Common.UnneededSymbolsToRemove.empty() ||
       !Common.SetSectionAlignment.empty() || !Common.SetSectionFlags.empty() ||
-      Common.ExtractDWO || Common.LocalizeHidden || Common.PreserveDates ||
-      Common.StripAllGNU || Common.StripDWO || Common.StripNonAlloc ||
-      Common.StripSections || Common.Weaken || Common.DecompressDebugSections ||
-      Common.StripUnneeded || Common.DiscardMode == DiscardType::Locals ||
-      !Common.SymbolsToAdd.empty() || Common.EntryExpr) {
+      Common.ExtractDWO || Common.PreserveDates || Common.StripAllGNU ||
+      Common.StripDWO || Common.StripNonAlloc || Common.StripSections ||
+      Common.Weaken || Common.DecompressDebugSections || Common.StripUnneeded ||
+      Common.DiscardMode == DiscardType::Locals ||
+      !Common.SymbolsToAdd.empty()) {
     return createStringError(llvm::errc::invalid_argument,
                              "option not supported by llvm-objcopy for MachO");
   }
@@ -612,8 +606,7 @@ Expected<const WasmConfig &> ConfigManager::getWasmConfig() const {
   if (!Common.AddGnuDebugLink.empty() || Common.ExtractPartition ||
       !Common.SplitDWO.empty() || !Common.SymbolsPrefix.empty() ||
       !Common.AllocSectionsPrefix.empty() ||
-      Common.DiscardMode != DiscardType::None || ELF.NewSymbolVisibility ||
-      !Common.SymbolsToAdd.empty() || !Common.RPathToAdd.empty() ||
+      Common.DiscardMode != DiscardType::None || !Common.SymbolsToAdd.empty() ||
       !Common.SymbolsToGlobalize.empty() || !Common.SymbolsToLocalize.empty() ||
       !Common.SymbolsToKeep.empty() || !Common.SymbolsToRemove.empty() ||
       !Common.UnneededSymbolsToRemove.empty() ||
@@ -683,7 +676,9 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
 
   ConfigManager ConfigMgr;
   CommonConfig &Config = ConfigMgr.Common;
+  COFFConfig &COFFConfig = ConfigMgr.COFF;
   ELFConfig &ELFConfig = ConfigMgr.ELF;
+  MachOConfig &MachOConfig = ConfigMgr.MachO;
   Config.InputFilename = Positional[0];
   Config.OutputFilename = Positional[Positional.size() == 1 ? 0 : 1];
   if (InputArgs.hasArg(OBJCOPY_target) &&
@@ -738,6 +733,46 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
       return createStringError(errc::invalid_argument,
                                "'%s' is not a valid symbol visibility",
                                VisibilityStr.str().c_str());
+  }
+
+  for (const auto *Arg : InputArgs.filtered(OBJCOPY_subsystem)) {
+    StringRef Subsystem, Version;
+    std::tie(Subsystem, Version) = StringRef(Arg->getValue()).split(':');
+    COFFConfig.Subsystem =
+        StringSwitch<unsigned>(Subsystem.lower())
+            .Case("boot_application",
+                  COFF::IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION)
+            .Case("console", COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
+            .Case("efi_application", COFF::IMAGE_SUBSYSTEM_EFI_APPLICATION)
+            .Case("efi_boot_service_driver",
+                  COFF::IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+            .Case("efi_rom", COFF::IMAGE_SUBSYSTEM_EFI_ROM)
+            .Case("efi_runtime_driver",
+                  COFF::IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+            .Case("native", COFF::IMAGE_SUBSYSTEM_NATIVE)
+            .Case("posix", COFF::IMAGE_SUBSYSTEM_POSIX_CUI)
+            .Case("windows", COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
+            .Default(COFF::IMAGE_SUBSYSTEM_UNKNOWN);
+    if (*COFFConfig.Subsystem == COFF::IMAGE_SUBSYSTEM_UNKNOWN)
+      return createStringError(errc::invalid_argument,
+                               "'%s' is not a valid subsystem",
+                               Subsystem.str().c_str());
+    if (!Version.empty()) {
+      StringRef Major, Minor;
+      std::tie(Major, Minor) = Version.split('.');
+      unsigned Number;
+      if (Major.getAsInteger(10, Number))
+        return createStringError(errc::invalid_argument,
+                                 "'%s' is not a valid subsystem major version",
+                                 Major.str().c_str());
+      COFFConfig.MajorSubsystemVersion = Number;
+      Number = 0;
+      if (!Minor.empty() && Minor.getAsInteger(10, Number))
+        return createStringError(errc::invalid_argument,
+                                 "'%s' is not a valid subsystem minor version",
+                                 Minor.str().c_str());
+      COFFConfig.MinorSubsystemVersion = Number;
+    }
   }
 
   Config.OutputFormat = StringSwitch<FileFormat>(OutputFormat)
@@ -887,6 +922,17 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
           "bad format for --add-section: missing file name");
     Config.AddSection.push_back(ArgValue);
   }
+  for (auto Arg : InputArgs.filtered(OBJCOPY_update_section)) {
+    StringRef ArgValue(Arg->getValue());
+    if (!ArgValue.contains('='))
+      return createStringError(errc::invalid_argument,
+                               "bad format for --update-section: missing '='");
+    if (ArgValue.split("=").second.empty())
+      return createStringError(
+          errc::invalid_argument,
+          "bad format for --update-section: missing file name");
+    Config.UpdateSection.push_back(ArgValue);
+  }
   for (auto *Arg : InputArgs.filtered(OBJCOPY_dump_section)) {
     StringRef Value(Arg->getValue());
     if (Value.split('=').second.empty())
@@ -905,7 +951,7 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
   Config.ExtractDWO = InputArgs.hasArg(OBJCOPY_extract_dwo);
   Config.ExtractMainPartition =
       InputArgs.hasArg(OBJCOPY_extract_main_partition);
-  Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
+  ELFConfig.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   Config.Weaken = InputArgs.hasArg(OBJCOPY_weaken);
   if (InputArgs.hasArg(OBJCOPY_discard_all, OBJCOPY_discard_locals))
     Config.DiscardMode =
@@ -913,13 +959,13 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
             ? DiscardType::All
             : DiscardType::Locals;
   Config.OnlyKeepDebug = InputArgs.hasArg(OBJCOPY_only_keep_debug);
-  Config.KeepFileSymbols = InputArgs.hasArg(OBJCOPY_keep_file_symbols);
-  Config.KeepUndefined = InputArgs.hasArg(OBJCOPY_keep_undefined);
+  ELFConfig.KeepFileSymbols = InputArgs.hasArg(OBJCOPY_keep_file_symbols);
+  MachOConfig.KeepUndefined = InputArgs.hasArg(OBJCOPY_keep_undefined);
   Config.DecompressDebugSections =
       InputArgs.hasArg(OBJCOPY_decompress_debug_sections);
   if (Config.DiscardMode == DiscardType::All) {
     Config.StripDebug = true;
-    Config.KeepFileSymbols = true;
+    ELFConfig.KeepFileSymbols = true;
   }
   for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
     if (Error E = Config.SymbolsToLocalize.addMatcher(NameOrPattern::create(
@@ -993,7 +1039,7 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
     Config.SymbolsToAdd.push_back(*SymInfo);
   }
 
-  Config.AllowBrokenLinks = InputArgs.hasArg(OBJCOPY_allow_broken_links);
+  ELFConfig.AllowBrokenLinks = InputArgs.hasArg(OBJCOPY_allow_broken_links);
 
   Config.DeterministicArchives = InputArgs.hasFlag(
       OBJCOPY_enable_deterministic_archives,
@@ -1013,16 +1059,16 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
         return createStringError(
             EAddr.getError(), "bad entry point address: '%s'", Arg->getValue());
 
-      Config.EntryExpr = [EAddr](uint64_t) { return *EAddr; };
+      ELFConfig.EntryExpr = [EAddr](uint64_t) { return *EAddr; };
     } else if (Arg->getOption().matches(OBJCOPY_change_start)) {
       auto EIncr = getAsInteger<int64_t>(Arg->getValue());
       if (!EIncr)
         return createStringError(EIncr.getError(),
                                  "bad entry point increment: '%s'",
                                  Arg->getValue());
-      auto Expr = Config.EntryExpr ? std::move(Config.EntryExpr)
-                                   : [](uint64_t A) { return A; };
-      Config.EntryExpr = [Expr, EIncr](uint64_t EAddr) {
+      auto Expr = ELFConfig.EntryExpr ? std::move(ELFConfig.EntryExpr)
+                                      : [](uint64_t A) { return A; };
+      ELFConfig.EntryExpr = [Expr, EIncr](uint64_t EAddr) {
         return Expr(EAddr) + *EIncr;
       };
     }
@@ -1057,6 +1103,7 @@ objcopy::parseInstallNameToolOptions(ArrayRef<const char *> ArgsArr) {
   DriverConfig DC;
   ConfigManager ConfigMgr;
   CommonConfig &Config = ConfigMgr.Common;
+  MachOConfig &MachOConfig = ConfigMgr.MachO;
   InstallNameToolOptTable T;
   unsigned MissingArgumentIndex, MissingArgumentCount;
   llvm::opt::InputArgList InputArgs =
@@ -1087,27 +1134,27 @@ objcopy::parseInstallNameToolOptions(ArrayRef<const char *> ArgsArr) {
   }
 
   for (auto Arg : InputArgs.filtered(INSTALL_NAME_TOOL_add_rpath))
-    Config.RPathToAdd.push_back(Arg->getValue());
+    MachOConfig.RPathToAdd.push_back(Arg->getValue());
 
   for (auto *Arg : InputArgs.filtered(INSTALL_NAME_TOOL_prepend_rpath))
-    Config.RPathToPrepend.push_back(Arg->getValue());
+    MachOConfig.RPathToPrepend.push_back(Arg->getValue());
 
   for (auto Arg : InputArgs.filtered(INSTALL_NAME_TOOL_delete_rpath)) {
     StringRef RPath = Arg->getValue();
 
     // Cannot add and delete the same rpath at the same time.
-    if (is_contained(Config.RPathToAdd, RPath))
+    if (is_contained(MachOConfig.RPathToAdd, RPath))
       return createStringError(
           errc::invalid_argument,
           "cannot specify both -add_rpath '%s' and -delete_rpath '%s'",
           RPath.str().c_str(), RPath.str().c_str());
-    if (is_contained(Config.RPathToPrepend, RPath))
+    if (is_contained(MachOConfig.RPathToPrepend, RPath))
       return createStringError(
           errc::invalid_argument,
           "cannot specify both -prepend_rpath '%s' and -delete_rpath '%s'",
           RPath.str().c_str(), RPath.str().c_str());
 
-    Config.RPathsToRemove.insert(RPath);
+    MachOConfig.RPathsToRemove.insert(RPath);
   }
 
   for (auto *Arg : InputArgs.filtered(INSTALL_NAME_TOOL_rpath)) {
@@ -1118,51 +1165,52 @@ objcopy::parseInstallNameToolOptions(ArrayRef<const char *> ArgsArr) {
 
     // Cannot specify duplicate -rpath entries
     auto It1 = find_if(
-        Config.RPathsToUpdate,
+        MachOConfig.RPathsToUpdate,
         [&Match](const DenseMap<StringRef, StringRef>::value_type &OldNew) {
           return Match(OldNew.getFirst()) || Match(OldNew.getSecond());
         });
-    if (It1 != Config.RPathsToUpdate.end())
+    if (It1 != MachOConfig.RPathsToUpdate.end())
       return createStringError(errc::invalid_argument,
                                "cannot specify both -rpath '" +
                                    It1->getFirst() + "' '" + It1->getSecond() +
                                    "' and -rpath '" + Old + "' '" + New + "'");
 
     // Cannot specify the same rpath under both -delete_rpath and -rpath
-    auto It2 = find_if(Config.RPathsToRemove, Match);
-    if (It2 != Config.RPathsToRemove.end())
+    auto It2 = find_if(MachOConfig.RPathsToRemove, Match);
+    if (It2 != MachOConfig.RPathsToRemove.end())
       return createStringError(errc::invalid_argument,
                                "cannot specify both -delete_rpath '" + *It2 +
                                    "' and -rpath '" + Old + "' '" + New + "'");
 
     // Cannot specify the same rpath under both -add_rpath and -rpath
-    auto It3 = find_if(Config.RPathToAdd, Match);
-    if (It3 != Config.RPathToAdd.end())
+    auto It3 = find_if(MachOConfig.RPathToAdd, Match);
+    if (It3 != MachOConfig.RPathToAdd.end())
       return createStringError(errc::invalid_argument,
                                "cannot specify both -add_rpath '" + *It3 +
                                    "' and -rpath '" + Old + "' '" + New + "'");
 
     // Cannot specify the same rpath under both -prepend_rpath and -rpath.
-    auto It4 = find_if(Config.RPathToPrepend, Match);
-    if (It4 != Config.RPathToPrepend.end())
+    auto It4 = find_if(MachOConfig.RPathToPrepend, Match);
+    if (It4 != MachOConfig.RPathToPrepend.end())
       return createStringError(errc::invalid_argument,
                                "cannot specify both -prepend_rpath '" + *It4 +
                                    "' and -rpath '" + Old + "' '" + New + "'");
 
-    Config.RPathsToUpdate.insert({Old, New});
+    MachOConfig.RPathsToUpdate.insert({Old, New});
   }
 
   if (auto *Arg = InputArgs.getLastArg(INSTALL_NAME_TOOL_id)) {
-    Config.SharedLibId = Arg->getValue();
-    if (Config.SharedLibId->empty())
+    MachOConfig.SharedLibId = Arg->getValue();
+    if (MachOConfig.SharedLibId->empty())
       return createStringError(errc::invalid_argument,
                                "cannot specify an empty id");
   }
 
   for (auto *Arg : InputArgs.filtered(INSTALL_NAME_TOOL_change))
-    Config.InstallNamesToUpdate.insert({Arg->getValue(0), Arg->getValue(1)});
+    MachOConfig.InstallNamesToUpdate.insert(
+        {Arg->getValue(0), Arg->getValue(1)});
 
-  Config.RemoveAllRpaths =
+  MachOConfig.RemoveAllRpaths =
       InputArgs.hasArg(INSTALL_NAME_TOOL_delete_all_rpaths);
 
   SmallVector<StringRef, 2> Positional;
@@ -1281,6 +1329,8 @@ objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
 
   ConfigManager ConfigMgr;
   CommonConfig &Config = ConfigMgr.Common;
+  ELFConfig &ELFConfig = ConfigMgr.ELF;
+  MachOConfig &MachOConfig = ConfigMgr.MachO;
 
   if (InputArgs.hasArg(STRIP_regex) && InputArgs.hasArg(STRIP_wildcard))
     return createStringError(errc::invalid_argument,
@@ -1292,7 +1342,7 @@ objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
                                     : InputArgs.hasArg(STRIP_wildcard)
                                           ? MatchStyle::Wildcard
                                           : MatchStyle::Literal;
-  Config.AllowBrokenLinks = InputArgs.hasArg(STRIP_allow_broken_links);
+  ELFConfig.AllowBrokenLinks = InputArgs.hasArg(STRIP_allow_broken_links);
   Config.StripDebug = InputArgs.hasArg(STRIP_strip_debug);
 
   if (InputArgs.hasArg(STRIP_discard_all, STRIP_discard_locals))
@@ -1305,10 +1355,10 @@ objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
   if (auto Arg = InputArgs.getLastArg(STRIP_strip_all, STRIP_no_strip_all))
     Config.StripAll = Arg->getOption().getID() == STRIP_strip_all;
   Config.StripAllGNU = InputArgs.hasArg(STRIP_strip_all_gnu);
-  Config.StripSwiftSymbols = InputArgs.hasArg(STRIP_strip_swift_symbols);
+  MachOConfig.StripSwiftSymbols = InputArgs.hasArg(STRIP_strip_swift_symbols);
   Config.OnlyKeepDebug = InputArgs.hasArg(STRIP_only_keep_debug);
-  Config.KeepFileSymbols = InputArgs.hasArg(STRIP_keep_file_symbols);
-  Config.KeepUndefined = InputArgs.hasArg(STRIP_keep_undefined);
+  ELFConfig.KeepFileSymbols = InputArgs.hasArg(STRIP_keep_file_symbols);
+  MachOConfig.KeepUndefined = InputArgs.hasArg(STRIP_keep_undefined);
 
   for (auto Arg : InputArgs.filtered(STRIP_keep_section))
     if (Error E = Config.KeepSection.addMatcher(NameOrPattern::create(
@@ -1337,7 +1387,7 @@ objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
 
   if (Config.DiscardMode == DiscardType::All) {
     Config.StripDebug = true;
-    Config.KeepFileSymbols = true;
+    ELFConfig.KeepFileSymbols = true;
   }
 
   Config.DeterministicArchives =

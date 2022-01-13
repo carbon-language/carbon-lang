@@ -14,8 +14,7 @@ func @complex_create(%real: f32, %imag: f32) -> complex<f32> {
 // CHECK-SAME:    (%[[CPLX:.*]]: complex<f32>)
 // CHECK-NEXT:    %[[CAST0:.*]] = builtin.unrealized_conversion_cast %[[CPLX]] : complex<f32> to !llvm.struct<(f32, f32)>
 // CHECK-NEXT:    %[[REAL:.*]] = llvm.extractvalue %[[CAST0]][0] : !llvm.struct<(f32, f32)>
-// CHECK-NEXT:    %[[CAST1:.*]] = builtin.unrealized_conversion_cast %[[CPLX]] : complex<f32> to !llvm.struct<(f32, f32)>
-// CHECK-NEXT:    %[[IMAG:.*]] = llvm.extractvalue %[[CAST1]][1] : !llvm.struct<(f32, f32)>
+// CHECK-NEXT:    %[[IMAG:.*]] = llvm.extractvalue %[[CAST0]][1] : !llvm.struct<(f32, f32)>
 func @complex_extract(%cplx: complex<f32>) {
   %real1 = complex.re %cplx : complex<f32>
   %imag1 = complex.im %cplx : complex<f32>
@@ -33,11 +32,11 @@ func @complex_extract(%cplx: complex<f32>) {
 // CHECK:         %[[C1:.*]] = llvm.insertvalue %[[C_REAL]], %[[C0]][0] : !llvm.struct<(f64, f64)>
 // CHECK:         %[[C2:.*]] = llvm.insertvalue %[[C_IMAG]], %[[C1]][1] : !llvm.struct<(f64, f64)>
 func @complex_addition() {
-  %a_re = constant 1.2 : f64
-  %a_im = constant 3.4 : f64
+  %a_re = arith.constant 1.2 : f64
+  %a_im = arith.constant 3.4 : f64
   %a = complex.create %a_re, %a_im : complex<f64>
-  %b_re = constant 5.6 : f64
-  %b_im = constant 7.8 : f64
+  %b_re = arith.constant 5.6 : f64
+  %b_im = arith.constant 7.8 : f64
   %b = complex.create %b_re, %b_im : complex<f64>
   %c = complex.add %a, %b : complex<f64>
   return
@@ -54,11 +53,11 @@ func @complex_addition() {
 // CHECK:         %[[C1:.*]] = llvm.insertvalue %[[C_REAL]], %[[C0]][0] : !llvm.struct<(f64, f64)>
 // CHECK:         %[[C2:.*]] = llvm.insertvalue %[[C_IMAG]], %[[C1]][1] : !llvm.struct<(f64, f64)>
 func @complex_substraction() {
-  %a_re = constant 1.2 : f64
-  %a_im = constant 3.4 : f64
+  %a_re = arith.constant 1.2 : f64
+  %a_im = arith.constant 3.4 : f64
   %a = complex.create %a_re, %a_im : complex<f64>
-  %b_re = constant 5.6 : f64
-  %b_im = constant 7.8 : f64
+  %b_re = arith.constant 5.6 : f64
+  %b_im = arith.constant 7.8 : f64
   %b = complex.create %b_re, %b_im : complex<f64>
   %c = complex.sub %a, %b : complex<f64>
   return
@@ -70,8 +69,8 @@ func @complex_div(%lhs: complex<f32>, %rhs: complex<f32>) -> complex<f32> {
   %div = complex.div %lhs, %rhs : complex<f32>
   return %div : complex<f32>
 }
-// CHECK: %[[CASTED_LHS:.*]] = builtin.unrealized_conversion_cast %[[LHS]] : complex<f32> to ![[C_TY:.*>]]
-// CHECK: %[[CASTED_RHS:.*]] = builtin.unrealized_conversion_cast %[[RHS]] : complex<f32> to ![[C_TY]]
+// CHECK-DAG: %[[CASTED_LHS:.*]] = builtin.unrealized_conversion_cast %[[LHS]] : complex<f32> to ![[C_TY:.*>]]
+// CHECK-DAG: %[[CASTED_RHS:.*]] = builtin.unrealized_conversion_cast %[[RHS]] : complex<f32> to ![[C_TY]]
 
 // CHECK: %[[LHS_RE:.*]] = llvm.extractvalue %[[CASTED_LHS]][0] : ![[C_TY]]
 // CHECK: %[[LHS_IM:.*]] = llvm.extractvalue %[[CASTED_LHS]][1] : ![[C_TY]]
@@ -106,8 +105,8 @@ func @complex_mul(%lhs: complex<f32>, %rhs: complex<f32>) -> complex<f32> {
   %mul = complex.mul %lhs, %rhs : complex<f32>
   return %mul : complex<f32>
 }
-// CHECK: %[[CASTED_LHS:.*]] = builtin.unrealized_conversion_cast %[[LHS]] : complex<f32> to ![[C_TY:.*>]]
-// CHECK: %[[CASTED_RHS:.*]] = builtin.unrealized_conversion_cast %[[RHS]] : complex<f32> to ![[C_TY]]
+// CHECK-DAG: %[[CASTED_LHS:.*]] = builtin.unrealized_conversion_cast %[[LHS]] : complex<f32> to ![[C_TY:.*>]]
+// CHECK-DAG: %[[CASTED_RHS:.*]] = builtin.unrealized_conversion_cast %[[RHS]] : complex<f32> to ![[C_TY]]
 
 // CHECK: %[[LHS_RE:.*]] = llvm.extractvalue %[[CASTED_LHS]][0] : ![[C_TY]]
 // CHECK: %[[LHS_IM:.*]] = llvm.extractvalue %[[CASTED_LHS]][1] : ![[C_TY]]

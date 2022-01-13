@@ -73,6 +73,8 @@ mlir::getReassociationIndicesForReshape(ShapedType sourceType,
     // definition is folding unit-dimensions with the result being scalar type.
     // So only append the `currIndices` if reassociation map is not empty.
     if (targetDim == targetShape.size()) {
+      while (sourceDim < sourceShape.size())
+        currIndices.push_back(sourceDim++);
       if (!reassociationMap.empty() && !currIndices.empty())
         reassociationMap.back().append(currIndices.begin(), currIndices.end());
       // Break out of the loops. We should be done here.
@@ -213,7 +215,7 @@ ArrayAttr mlir::getReassociationIndicesAttribute(
     OpBuilder &b, ArrayRef<ReassociationIndices> reassociation) {
   SmallVector<Attribute, 4> reassociationAttr =
       llvm::to_vector<4>(llvm::map_range(
-          reassociation, [&](ReassociationIndices indices) -> Attribute {
+          reassociation, [&](const ReassociationIndices &indices) -> Attribute {
             return b.getI64ArrayAttr(indices).cast<Attribute>();
           }));
   return b.getArrayAttr(reassociationAttr);
@@ -251,7 +253,7 @@ bool mlir::isReassociationValid(ArrayRef<AffineMap> reassociation,
     return true;
   unsigned nDims = reassociation[0].getNumDims();
   unsigned nextExpectedDim = 0;
-  for (auto it : llvm::enumerate(reassociation)) {
+  for (const auto &it : llvm::enumerate(reassociation)) {
     auto m = it.value();
     if (m.getNumDims() != nDims || m.getNumSymbols() != 0) {
       if (invalidIndex)

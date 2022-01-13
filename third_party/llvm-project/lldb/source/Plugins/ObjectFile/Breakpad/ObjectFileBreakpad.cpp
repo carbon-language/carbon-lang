@@ -56,11 +56,6 @@ void ObjectFileBreakpad::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-ConstString ObjectFileBreakpad::GetPluginNameStatic() {
-  static ConstString g_name("breakpad");
-  return g_name;
-}
-
 ObjectFile *ObjectFileBreakpad::CreateInstance(
     const ModuleSP &module_sp, DataBufferSP &data_sp, offset_t data_offset,
     const FileSpec *file, offset_t file_offset, offset_t length) {
@@ -121,9 +116,10 @@ bool ObjectFileBreakpad::ParseHeader() {
   return true;
 }
 
-Symtab *ObjectFileBreakpad::GetSymtab() {
-  // TODO
-  return nullptr;
+void ObjectFileBreakpad::ParseSymtab(Symtab &symtab) {
+  // Nothing to do for breakpad files, all information is parsed as debug info
+  // which means "lldb_private::Function" objects are used, or symbols are added
+  // by the SymbolFileBreakpad::AddSymbols(...) function in the symbol file.
 }
 
 void ObjectFileBreakpad::CreateSections(SectionList &unified_section_list) {
@@ -153,9 +149,9 @@ void ObjectFileBreakpad::CreateSections(SectionList &unified_section_list) {
     std::tie(line, text) = text.split('\n');
 
     llvm::Optional<Record::Kind> next_section = Record::classify(line);
-    if (next_section == Record::Line) {
-      // Line records logically belong to the preceding Func record, so we put
-      // them in the same section.
+    if (next_section == Record::Line || next_section == Record::Inline) {
+      // Line/Inline records logically belong to the preceding Func record, so
+      // we put them in the same section.
       next_section = Record::Func;
     }
     if (next_section == current_section)

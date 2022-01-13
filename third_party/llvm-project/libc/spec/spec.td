@@ -77,6 +77,8 @@ def OnceFlagTypePtr : PtrType<OnceFlagType>;
 def CallOnceFuncType : NamedType<"__call_once_func_t">;
 def MtxTType : NamedType<"mtx_t">;
 def MtxTTypePtr : PtrType<MtxTType>;
+def CndTType : NamedType<"cnd_t">;
+def CndTTypePtr : PtrType<CndTType>;
 def ThrdStartTType : NamedType<"thrd_start_t">;
 def ThrdTType : NamedType<"thrd_t">;
 def ThrdTTypePtr : PtrType<ThrdTType>;
@@ -88,6 +90,9 @@ def DoublePtr : PtrType<DoubleType>;
 def SigHandlerT : NamedType<"__sighandler_t">;
 
 def TimeTType : NamedType<"time_t">;
+
+def BSearchCompareT : NamedType<"__bsearchcompare_t">;
+def QSortCompareT : NamedType<"__qsortcompare_t">;
 
 //added because __assert_fail needs it.
 def UnsignedType : NamedType<"unsigned">;

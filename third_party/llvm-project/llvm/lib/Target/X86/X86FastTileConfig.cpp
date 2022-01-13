@@ -44,6 +44,7 @@ class X86FastTileConfig : public MachineFunctionPass {
   const TargetRegisterInfo *TRI = nullptr;
   const TargetInstrInfo *TII = nullptr;
   MachineRegisterInfo *MRI = nullptr;
+  X86MachineFunctionInfo *X86FI = nullptr;
 
   MachineInstr *getTileConfigPoint();
   void tileConfig();
@@ -55,8 +56,6 @@ public:
   bool isTileLoad(MachineInstr &MI);
   bool isTileStore(MachineInstr &MI);
   bool isAMXInstr(MachineInstr &MI);
-  void getTileStoreShape(MachineInstr &MI,
-                         SmallVector<MachineOperand *> &ShapedTiles);
 
   MachineInstr *getKeyAMXInstr(MachineInstr *MI);
   void getTileShapesCfg(MachineInstr *MI,
@@ -133,11 +132,7 @@ bool X86FastTileConfig::isAMXInstr(MachineInstr &MI) {
   if (MI.getOpcode() == X86::PLDTILECFGV || MI.isDebugInstr())
     return false;
 
-  for (MachineOperand &MO : MI.operands())
-    if (isTilePhysReg(MO))
-      return true;
-
-  return false;
+  return llvm::any_of(MI.operands(), isTilePhysReg);
 }
 
 MachineInstr *X86FastTileConfig::getKeyAMXInstr(MachineInstr *MI) {
@@ -289,6 +284,8 @@ bool X86FastTileConfig::fastTileConfig() {
     if (!CFGs.empty())
       Changed = true;
   }
+  if (Changed)
+    X86FI->setHasVirtualTileReg(true);
   return Changed;
 }
 
@@ -298,6 +295,7 @@ bool X86FastTileConfig::runOnMachineFunction(MachineFunction &MFunc) {
   ST = &MFunc.getSubtarget<X86Subtarget>();
   TRI = ST->getRegisterInfo();
   TII = MFunc.getSubtarget().getInstrInfo();
+  X86FI = MFunc.getInfo<X86MachineFunctionInfo>();
 
   return fastTileConfig();
 }

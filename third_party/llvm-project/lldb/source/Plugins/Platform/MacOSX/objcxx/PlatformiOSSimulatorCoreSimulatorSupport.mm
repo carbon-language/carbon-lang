@@ -110,12 +110,10 @@ CoreSimulatorSupport::Device::State CoreSimulatorSupport::Device::GetState() {
 
 CoreSimulatorSupport::ModelIdentifier::ModelIdentifier(const std::string &mi)
     : m_family(), m_versions() {
-  bool any = false;
   bool first_digit = false;
   unsigned int val = 0;
 
   for (char c : mi) {
-    any = true;
     if (::isdigit(c)) {
       if (!first_digit)
         first_digit = true;
@@ -401,8 +399,8 @@ static Status HandleFileAction(ProcessLaunchInfo &launch_info,
     case FileAction::eFileActionOpen: {
       FileSpec file_spec = file_action->GetFileSpec();
       if (file_spec) {
-        const int master_fd = launch_info.GetPTY().GetPrimaryFileDescriptor();
-        if (master_fd != PseudoTerminal::invalid_fd) {
+        const int primary_fd = launch_info.GetPTY().GetPrimaryFileDescriptor();
+        if (primary_fd != PseudoTerminal::invalid_fd) {
           // Check in case our file action open wants to open the secondary
           FileSpec secondary_spec(launch_info.GetPTY().GetSecondaryName());
           if (file_spec == secondary_spec) {

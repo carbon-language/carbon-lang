@@ -1,4 +1,4 @@
-//===- M68kDisassembler.cpp - Disassembler for M68k -------------*- C++ -*-===//
+//===-- M68kDisassembler.cpp - Disassembler for M68k ------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -21,7 +21,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -451,7 +451,8 @@ void M68kDisassembler::decodeImm(MCInst &Instr, unsigned Bead,
     llvm_unreachable("invalid imm");
   }
 
-  Scratch = (Scratch << NumToRead) | Reader.readBits(NumToRead);
+  Scratch = (NumToRead < 32) ? (Scratch << NumToRead) : 0;
+  Scratch |= Reader.readBits(NumToRead);
 }
 
 DecodeStatus M68kDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,

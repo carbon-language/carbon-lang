@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/Operation.h"
@@ -26,7 +25,7 @@ static void updateFuncOp(FuncOp func,
   // Collect information about the results will become appended arguments.
   SmallVector<Type, 6> erasedResultTypes;
   SmallVector<unsigned, 6> erasedResultIndices;
-  for (auto resultType : llvm::enumerate(functionType.getResults())) {
+  for (const auto &resultType : llvm::enumerate(functionType.getResults())) {
     if (resultType.value().isa<BaseMemRefType>()) {
       erasedResultIndices.push_back(resultType.index());
       erasedResultTypes.push_back(resultType.value());
@@ -71,7 +70,7 @@ static void updateReturnOps(FuncOp func,
     }
     OpBuilder builder(op);
     for (auto t : llvm::zip(copyIntoOutParams, appendedEntryArgs))
-      builder.create<linalg::CopyOp>(op.getLoc(), std::get<0>(t),
+      builder.create<memref::CopyOp>(op.getLoc(), std::get<0>(t),
                                      std::get<1>(t));
     builder.create<ReturnOp>(op.getLoc(), keepAsReturnOperands);
     op.erase();
@@ -110,7 +109,7 @@ static LogicalResult updateCalls(ModuleOp module) {
     newOperands.append(outParams.begin(), outParams.end());
     auto newResultTypes = llvm::to_vector<6>(llvm::map_range(
         replaceWithNewCallResults, [](Value v) { return v.getType(); }));
-    auto newCall = builder.create<CallOp>(op.getLoc(), op.calleeAttr(),
+    auto newCall = builder.create<CallOp>(op.getLoc(), op.getCalleeAttr(),
                                           newResultTypes, newOperands);
     for (auto t : llvm::zip(replaceWithNewCallResults, newCall.getResults()))
       std::get<0>(t).replaceAllUsesWith(std::get<1>(t));
@@ -137,7 +136,7 @@ struct BufferResultsToOutParamsPass
       return signalPassFailure();
   }
 };
-} // end anonymous namespace
+} // namespace
 
 std::unique_ptr<Pass> mlir::createBufferResultsToOutParamsPass() {
   return std::make_unique<BufferResultsToOutParamsPass>();

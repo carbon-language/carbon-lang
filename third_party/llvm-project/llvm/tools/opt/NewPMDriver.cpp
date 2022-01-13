@@ -137,6 +137,7 @@ extern cl::opt<std::string> ProfileFile;
 extern cl::opt<CSPGOKind> CSPGOKindFlag;
 extern cl::opt<std::string> CSProfileGenFile;
 extern cl::opt<bool> DisableBasicAA;
+extern cl::opt<bool> PrintPipelinePasses;
 } // namespace llvm
 
 static cl::opt<std::string>
@@ -343,9 +344,7 @@ bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
         if (Name == "asan-pipeline") {
           MPM.addPass(
               RequireAnalysisPass<ASanGlobalsMetadataAnalysis, Module>());
-          MPM.addPass(
-              createModuleToFunctionPassAdaptor(AddressSanitizerPass(Opts)));
-          MPM.addPass(ModuleAddressSanitizerPass());
+          MPM.addPass(ModuleAddressSanitizerPass(Opts));
           return true;
         } else if (Name == "asan-function-pipeline") {
           MPM.addPass(
@@ -472,6 +471,17 @@ bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
 
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
+
+  // Print a textual, '-passes=' compatible, representation of pipeline if
+  // requested.
+  if (PrintPipelinePasses) {
+    MPM.printPipeline(outs(), [&PIC](StringRef ClassName) {
+      auto PassName = PIC.getPassNameForClassName(ClassName);
+      return PassName.empty() ? ClassName : PassName;
+    });
+    outs() << "\n";
+    return true;
+  }
 
   // Now that we have all of the passes ready, run them.
   MPM.run(M, MAM);

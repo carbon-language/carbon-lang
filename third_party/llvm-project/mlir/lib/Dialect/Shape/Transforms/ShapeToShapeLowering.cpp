@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Shape/IR/Shape.h"
 #include "mlir/Dialect/Shape/Transforms/Passes.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
@@ -38,7 +39,7 @@ NumElementsOpConverter::matchAndRewrite(NumElementsOp op,
                    ->materializeConstant(rewriter, rewriter.getIndexAttr(1),
                                          valueType, loc)
                    ->getResult(0);
-  ReduceOp reduce = rewriter.create<ReduceOp>(loc, op.shape(), init);
+  ReduceOp reduce = rewriter.create<ReduceOp>(loc, op.getShape(), init);
 
   // Generate reduce operator.
   Block *body = reduce.getBody();
@@ -47,7 +48,7 @@ NumElementsOpConverter::matchAndRewrite(NumElementsOp op,
                                   body->getArgument(2));
   b.create<shape::YieldOp>(loc, product);
 
-  rewriter.replaceOp(op, reduce.result());
+  rewriter.replaceOp(op, reduce.getResult());
   return success();
 }
 
@@ -65,7 +66,8 @@ void ShapeToShapeLowering::runOnFunction() {
   populateShapeRewritePatterns(patterns);
 
   ConversionTarget target(getContext());
-  target.addLegalDialect<ShapeDialect, StandardOpsDialect>();
+  target.addLegalDialect<arith::ArithmeticDialect, ShapeDialect,
+                         StandardOpsDialect>();
   target.addIllegalOp<NumElementsOp>();
   if (failed(mlir::applyPartialConversion(getFunction(), target,
                                           std::move(patterns))))

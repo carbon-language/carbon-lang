@@ -47,6 +47,8 @@ def LLVM_Dialect : Dialect {
     /// Name of the target triple attribute.
     static StringRef getTargetTripleAttrName() { return "llvm.target_triple"; }
   }];
+
+  let emitAccessorPrefix = kEmitAccessorPrefix_Prefixed;
 }
 
 //===----------------------------------------------------------------------===//
@@ -55,7 +57,7 @@ def LLVM_Dialect : Dialect {
 
 // LLVM dialect type.
 def LLVM_Type : DialectType<LLVM_Dialect,
-                            CPred<"::mlir::LLVM::isCompatibleType($_self)">,
+                            CPred<"::mlir::LLVM::isCompatibleOuterType($_self)">,
                             "LLVM dialect-compatible type">;
 
 // Type constraint accepting LLVM token type.
@@ -92,12 +94,12 @@ class LLVM_PointerTo<Type pointee> : Type<
   "LLVM pointer to " # pointee.summary>;
 
 // Type constraints accepting LLVM pointer type to integer of a specific width.
-class LLVM_IntPtrBase<int width> : Type<
+class LLVM_IntPtrBase<int width, int addressSpace = 0> : Type<
   LLVM_PointerTo<I<width>>.predicate,
   "LLVM pointer to " # I<width>.summary>,
   BuildableType<"::mlir::LLVM::LLVMPointerType::get("
                 "::mlir::IntegerType::get($_builder.getContext(), "
-                # width #"))">;
+                # width #"), "# addressSpace #")">;
 
 def LLVM_i8Ptr : LLVM_IntPtrBase<8>;
 
@@ -255,7 +257,7 @@ def LLVM_IntrPatterns {
 class LLVM_IntrOpBase<Dialect dialect, string opName, string enumName,
                       list<int> overloadedResults, list<int> overloadedOperands,
                       list<OpTrait> traits, int numResults,
-                      bit requiresAccessGroup = 0>
+                      bit requiresAccessGroup = 0, bit requiresAliasScope = 0>
     : LLVM_OpBase<dialect, opName, traits>,
       Results<!if(!gt(numResults, 0), (outs LLVM_Type:$res), (outs))> {
   string resultPattern = !if(!gt(numResults, 1),
@@ -276,6 +278,9 @@ class LLVM_IntrOpBase<Dialect dialect, string opName, string enumName,
     }] # !if(!gt(requiresAccessGroup, 0),
       "moduleTranslation.setAccessGroupsMetadata(op, inst);",
       "(void) inst;")
+    # !if(!gt(requiresAliasScope, 0),
+      "moduleTranslation.setAliasScopeMetadata(op, inst);",
+      "(void) inst;")
     # !if(!gt(numResults, 0), "$res = inst;", "");
 }
 
@@ -283,10 +288,11 @@ class LLVM_IntrOpBase<Dialect dialect, string opName, string enumName,
 // the intrinsic into the LLVM dialect and prefixes its name with "intr.".
 class LLVM_IntrOp<string mnem, list<int> overloadedResults,
                   list<int> overloadedOperands, list<OpTrait> traits,
-                  int numResults, bit requiresAccessGroup = 0>
+                  int numResults, bit requiresAccessGroup = 0,
+                  bit requiresAliasScope = 0>
     : LLVM_IntrOpBase<LLVM_Dialect, "intr." # mnem, !subst(".", "_", mnem),
                       overloadedResults, overloadedOperands, traits,
-                      numResults, requiresAccessGroup>;
+                      numResults, requiresAccessGroup, requiresAliasScope>;
 
 // Base class for LLVM intrinsic operations returning no results. Places the
 // intrinsic into the LLVM dialect and prefixes its name with "intr.".

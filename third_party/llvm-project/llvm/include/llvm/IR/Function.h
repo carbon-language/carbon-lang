@@ -48,6 +48,7 @@ typedef unsigned ID;
 
 class AssemblyAnnotationWriter;
 class Constant;
+struct DenormalMode;
 class DISubprogram;
 class LLVMContext;
 class Module;
@@ -58,7 +59,8 @@ class User;
 class BranchProbabilityInfo;
 class BlockFrequencyInfo;
 
-class Function : public GlobalObject, public ilist_node<Function> {
+class LLVM_EXTERNAL_VISIBILITY Function : public GlobalObject,
+                                          public ilist_node<Function> {
 public:
   using BasicBlockListType = SymbolTableList<BasicBlock>;
 
@@ -245,33 +247,22 @@ public:
     setValueSubclassData((getSubclassDataFromValue() & 0xc00f) | (ID << 4));
   }
 
-  enum ProfileCountType { PCT_Invalid, PCT_Real, PCT_Synthetic };
+  enum ProfileCountType { PCT_Real, PCT_Synthetic };
 
   /// Class to represent profile counts.
   ///
   /// This class represents both real and synthetic profile counts.
   class ProfileCount {
   private:
-    uint64_t Count;
-    ProfileCountType PCT;
-    static ProfileCount Invalid;
+    uint64_t Count = 0;
+    ProfileCountType PCT = PCT_Real;
 
   public:
-    ProfileCount() : Count(-1), PCT(PCT_Invalid) {}
     ProfileCount(uint64_t Count, ProfileCountType PCT)
         : Count(Count), PCT(PCT) {}
-    bool hasValue() const { return PCT != PCT_Invalid; }
     uint64_t getCount() const { return Count; }
     ProfileCountType getType() const { return PCT; }
     bool isSynthetic() const { return PCT == PCT_Synthetic; }
-    explicit operator bool() { return hasValue(); }
-    bool operator!() const { return !hasValue(); }
-    // Update the count retaining the same profile count type.
-    ProfileCount &setCount(uint64_t C) {
-      Count = C;
-      return *this;
-    }
-    static ProfileCount getInvalid() { return ProfileCount(-1, PCT_Invalid); }
   };
 
   /// Set the entry count for this function.
@@ -291,7 +282,7 @@ public:
   ///
   /// Entry count is the number of times the function was executed.
   /// When AllowSynthetic is false, only pgo_data will be returned.
-  ProfileCount getEntryCount(bool AllowSynthetic = false) const;
+  Optional<ProfileCount> getEntryCount(bool AllowSynthetic = false) const;
 
   /// Return true if the function is annotated with profile data.
   ///
@@ -327,8 +318,9 @@ public:
   /// Set the attribute list for this Function.
   void setAttributes(AttributeList Attrs) { AttributeSets = Attrs; }
 
+  // TODO: remove non-AtIndex versions of these methods.
   /// adds the attribute to the list of attributes.
-  void addAttribute(unsigned i, Attribute Attr);
+  void addAttributeAtIndex(unsigned i, Attribute Attr);
 
   /// Add function attributes to this function.
   void addFnAttr(Attribute::AttrKind Kind);
@@ -345,6 +337,12 @@ public:
   /// Add return value attributes to this function.
   void addRetAttr(Attribute::AttrKind Kind);
 
+  /// Add return value attributes to this function.
+  void addRetAttr(Attribute Attr);
+
+  /// Add return value attributes to this function.
+  void addRetAttrs(const AttrBuilder &Attrs);
+
   /// adds the attribute to the list of attributes for the given arg.
   void addParamAttr(unsigned ArgNo, Attribute::AttrKind Kind);
 
@@ -355,10 +353,10 @@ public:
   void addParamAttrs(unsigned ArgNo, const AttrBuilder &Attrs);
 
   /// removes the attribute from the list of attributes.
-  void removeAttribute(unsigned i, Attribute::AttrKind Kind);
+  void removeAttributeAtIndex(unsigned i, Attribute::AttrKind Kind);
 
   /// removes the attribute from the list of attributes.
-  void removeAttribute(unsigned i, StringRef Kind);
+  void removeAttributeAtIndex(unsigned i, StringRef Kind);
 
   /// Remove function attributes from this function.
   void removeFnAttr(Attribute::AttrKind Kind);
@@ -366,7 +364,7 @@ public:
   /// Remove function attribute from this function.
   void removeFnAttr(StringRef Kind);
 
-  void removeFnAttrs(const AttrBuilder &Attrs);
+  void removeFnAttrs(const AttributeMask &Attrs);
 
   /// removes the attribute from the return value list of attributes.
   void removeRetAttr(Attribute::AttrKind Kind);
@@ -375,7 +373,7 @@ public:
   void removeRetAttr(StringRef Kind);
 
   /// removes the attributes from the return value list of attributes.
-  void removeRetAttrs(const AttrBuilder &Attrs);
+  void removeRetAttrs(const AttributeMask &Attrs);
 
   /// removes the attribute from the list of attributes.
   void removeParamAttr(unsigned ArgNo, Attribute::AttrKind Kind);
@@ -384,7 +382,7 @@ public:
   void removeParamAttr(unsigned ArgNo, StringRef Kind);
 
   /// removes the attribute from the list of attributes.
-  void removeParamAttrs(unsigned ArgNo, const AttrBuilder &Attrs);
+  void removeParamAttrs(unsigned ArgNo, const AttributeMask &Attrs);
 
   /// Return true if the function has the attribute.
   bool hasFnAttribute(Attribute::AttrKind Kind) const;
@@ -399,10 +397,10 @@ public:
   bool hasParamAttribute(unsigned ArgNo, Attribute::AttrKind Kind) const;
 
   /// gets the attribute from the list of attributes.
-  Attribute getAttribute(unsigned i, Attribute::AttrKind Kind) const;
+  Attribute getAttributeAtIndex(unsigned i, Attribute::AttrKind Kind) const;
 
   /// gets the attribute from the list of attributes.
-  Attribute getAttribute(unsigned i, StringRef Kind) const;
+  Attribute getAttributeAtIndex(unsigned i, StringRef Kind) const;
 
   /// Return the attribute for the given attribute kind.
   Attribute getFnAttribute(Attribute::AttrKind Kind) const;
@@ -436,7 +434,7 @@ public:
   /// Extract the alignment for a call or parameter (0=unknown).
   /// FIXME: Remove this function once transition to Align is over.
   /// Use getParamAlign() instead.
-  unsigned getParamAlignment(unsigned ArgNo) const {
+  uint64_t getParamAlignment(unsigned ArgNo) const {
     if (const auto MA = getParamAlign(ArgNo))
       return MA->value();
     return 0;
@@ -468,6 +466,11 @@ public:
   /// Extract the byref type for a parameter.
   Type *getParamByRefType(unsigned ArgNo) const {
     return AttributeSets.getParamByRefType(ArgNo);
+  }
+
+  /// Extract the preallocated type for a parameter.
+  Type *getParamPreallocatedType(unsigned ArgNo) const {
+    return AttributeSets.getParamPreallocatedType(ArgNo);
   }
 
   /// Extract the number of dereferenceable bytes for a parameter.
@@ -506,10 +509,10 @@ public:
   }
 
   /// Determine if the function does not access or only writes memory.
-  bool doesNotReadMemory() const {
+  bool onlyWritesMemory() const {
     return doesNotAccessMemory() || hasFnAttribute(Attribute::WriteOnly);
   }
-  void setDoesNotReadMemory() {
+  void setOnlyWritesMemory() {
     addFnAttr(Attribute::WriteOnly);
   }
 
@@ -846,13 +849,14 @@ public:
   /// hasAddressTaken - returns true if there are any uses of this function
   /// other than direct calls or invokes to it, or blockaddress expressions.
   /// Optionally passes back an offending user for diagnostic purposes,
-  /// ignores callback uses, assume like pointer annotation calls, and
-  /// references in llvm.used and llvm.compiler.used variables.
-  ///
+  /// ignores callback uses, assume like pointer annotation calls, references in
+  /// llvm.used and llvm.compiler.used variables, and operand bundle
+  /// "clang.arc.attachedcall".
   bool hasAddressTaken(const User ** = nullptr,
                        bool IgnoreCallbackUses = false,
                        bool IgnoreAssumeLikeCalls = true,
-                       bool IngoreLLVMUsed = false) const;
+                       bool IngoreLLVMUsed = false,
+                       bool IgnoreARCAttachedCall = false) const;
 
   /// isDefTriviallyDead - Return true if it is trivially safe to remove
   /// this function definition from the module (because it isn't externally

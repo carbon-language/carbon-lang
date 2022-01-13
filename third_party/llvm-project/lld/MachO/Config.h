@@ -121,6 +121,8 @@ struct Configuration {
   bool timeTraceEnabled = false;
   bool dataConst = false;
   bool dedupLiterals = true;
+  bool omitDebugInfo = false;
+  bool warnDylibInstallName = false;
   uint32_t headerPad;
   uint32_t dylibCompatibilityVersion = 0;
   uint32_t dylibCurrentVersion = 0;
@@ -147,6 +149,7 @@ struct Configuration {
   bool deadStripDylibs = false;
   bool demangle = false;
   bool deadStrip = false;
+  bool errorForArchMismatch = false;
   PlatformInfo platformInfo;
   NamespaceKind namespaceKind = NamespaceKind::twolevel;
   UndefinedSymbolTreatment undefinedSymbolTreatment =
@@ -174,6 +177,8 @@ struct Configuration {
 
   bool zeroModTime = false;
 
+  llvm::StringRef osoPrefix;
+
   llvm::MachO::Architecture arch() const { return platformInfo.target.Arch; }
 
   llvm::MachO::PlatformKind platform() const {
@@ -195,7 +200,14 @@ struct SymbolPriorityEntry {
   llvm::DenseMap<llvm::StringRef, size_t> objectFiles;
 };
 
-extern Configuration *config;
+// Whether to force-load an archive.
+enum class ForceLoad {
+  Default, // Apply -all_load or -ObjC behaviors if those flags are enabled
+  Yes,     // Always load the archive, regardless of other flags
+  No,      // Never load the archive, regardless of other flags
+};
+
+extern std::unique_ptr<Configuration> config;
 
 } // namespace macho
 } // namespace lld

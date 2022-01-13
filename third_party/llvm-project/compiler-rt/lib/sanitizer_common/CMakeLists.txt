@@ -18,7 +18,6 @@ set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_mac.cpp
   sanitizer_mutex.cpp
   sanitizer_netbsd.cpp
-  sanitizer_persistent_allocator.cpp
   sanitizer_platform_limits_freebsd.cpp
   sanitizer_platform_limits_linux.cpp
   sanitizer_platform_limits_netbsd.cpp
@@ -35,6 +34,7 @@ set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_solaris.cpp
   sanitizer_stoptheworld_fuchsia.cpp
   sanitizer_stoptheworld_mac.cpp
+  sanitizer_stoptheworld_win.cpp
   sanitizer_suppressions.cpp
   sanitizer_tls_get_addr.cpp
   sanitizer_thread_registry.cpp
@@ -74,6 +74,7 @@ set(SANITIZER_COVERAGE_SOURCES
 set(SANITIZER_SYMBOLIZER_SOURCES
   sanitizer_allocator_report.cpp
   sanitizer_chained_origin_depot.cpp
+  sanitizer_stack_store.cpp
   sanitizer_stackdepot.cpp
   sanitizer_stacktrace.cpp
   sanitizer_stacktrace_libcdep.cpp
@@ -99,9 +100,9 @@ set(SANITIZER_IMPL_HEADERS
   sancov_flags.inc
   sanitizer_addrhashmap.h
   sanitizer_allocator.h
-  sanitizer_allocator_bytemap.h
   sanitizer_allocator_checks.h
   sanitizer_allocator_combined.h
+  sanitizer_allocator_dlsym.h
   sanitizer_allocator_interface.h
   sanitizer_allocator_internal.h
   sanitizer_allocator_local_cache.h
@@ -132,12 +133,15 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_dbghelp.h
   sanitizer_deadlock_detector.h
   sanitizer_deadlock_detector_interface.h
+  sanitizer_dense_map.h
+  sanitizer_dense_map_info.h
   sanitizer_errno.h
   sanitizer_errno_codes.h
   sanitizer_file.h
   sanitizer_flag_parser.h
   sanitizer_flags.h
   sanitizer_flags.inc
+  sanitizer_flat_map.h
   sanitizer_freebsd.h
   sanitizer_fuchsia.h
   sanitizer_getauxval.h
@@ -145,16 +149,17 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_interceptors_ioctl_netbsd.inc
   sanitizer_interface_internal.h
   sanitizer_internal_defs.h
+  sanitizer_leb128.h
   sanitizer_lfstack.h
   sanitizer_libc.h
   sanitizer_libignore.h
   sanitizer_linux.h
   sanitizer_list.h
   sanitizer_local_address_space_view.h
+  sanitizer_lzw.h
   sanitizer_mac.h
   sanitizer_malloc_mac.inc
   sanitizer_mutex.h
-  sanitizer_persistent_allocator.h
   sanitizer_placement_new.h
   sanitizer_platform.h
   sanitizer_platform_interceptors.h
@@ -168,6 +173,7 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_report_decorator.h
   sanitizer_ring_buffer.h
   sanitizer_signal_interceptors.inc
+  sanitizer_stack_store.h
   sanitizer_stackdepot.h
   sanitizer_stackdepotbase.h
   sanitizer_stacktrace.h

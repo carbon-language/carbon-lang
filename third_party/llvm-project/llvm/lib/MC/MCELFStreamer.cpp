@@ -29,10 +29,10 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolELF.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <cstdint>
@@ -88,10 +88,10 @@ void MCELFStreamer::mergeFragment(MCDataFragment *DF,
   DF->getContents().append(EF->getContents().begin(), EF->getContents().end());
 }
 
-void MCELFStreamer::InitSections(bool NoExecStack) {
+void MCELFStreamer::initSections(bool NoExecStack, const MCSubtargetInfo &STI) {
   MCContext &Ctx = getContext();
   SwitchSection(Ctx.getObjectFileInfo()->getTextSection());
-  emitCodeAlignment(Ctx.getObjectFileInfo()->getTextSectionAlignment());
+  emitCodeAlignment(Ctx.getObjectFileInfo()->getTextSectionAlignment(), &STI);
 
   if (NoExecStack)
     SwitchSection(Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx));
@@ -326,7 +326,7 @@ void MCELFStreamer::emitCommonSymbol(MCSymbol *S, uint64_t Size,
     SwitchSection(P.first, P.second);
   } else {
     if(Symbol->declareCommon(Size, ByteAlignment))
-      report_fatal_error("Symbol: " + Symbol->getName() +
+      report_fatal_error(Twine("Symbol: ") + Symbol->getName() +
                          " redeclared as different type");
   }
 
@@ -501,7 +501,7 @@ void MCELFStreamer::finalizeCGProfileEntry(const MCSymbolRefExpr *&SRE,
               *MCOffset, "BFD_RELOC_NONE", SRE, SRE->getLoc(),
               *getContext().getSubtargetInfo()))
     report_fatal_error("Relocation for CG Profile could not be created: " +
-                       Err->second);
+                       Twine(Err->second));
 }
 
 void MCELFStreamer::finalizeCGProfile() {
@@ -646,8 +646,6 @@ void MCELFStreamer::emitBundleAlignMode(unsigned AlignPow2) {
 void MCELFStreamer::emitBundleLock(bool AlignToEnd) {
   MCSection &Sec = *getCurrentSectionOnly();
 
-  // Sanity checks
-  //
   if (!getAssembler().isBundlingEnabled())
     report_fatal_error(".bundle_lock forbidden when bundling is disabled");
 
@@ -667,7 +665,6 @@ void MCELFStreamer::emitBundleLock(bool AlignToEnd) {
 void MCELFStreamer::emitBundleUnlock() {
   MCSection &Sec = *getCurrentSectionOnly();
 
-  // Sanity checks
   if (!getAssembler().isBundlingEnabled())
     report_fatal_error(".bundle_unlock forbidden when bundling is disabled");
   else if (!isBundleLocked())

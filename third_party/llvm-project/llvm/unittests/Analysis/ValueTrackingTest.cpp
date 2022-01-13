@@ -12,6 +12,7 @@
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -1597,6 +1598,32 @@ TEST_F(ComputeKnownBitsTest, ComputeKnownBitsAddWithRange) {
   EXPECT_EQ(Known.getMaxValue(), 131071);
 }
 
+TEST_F(ComputeKnownBitsTest, ComputeKnownBitsUnknownVScale) {
+  Module M("", Context);
+  IRBuilder<> Builder(Context);
+  Function *TheFn =
+      Intrinsic::getDeclaration(&M, Intrinsic::vscale, {Builder.getInt32Ty()});
+  CallInst *CI = Builder.CreateCall(TheFn, {}, {}, "");
+
+  KnownBits Known = computeKnownBits(CI, M.getDataLayout(), /* Depth */ 0);
+  // There is no parent function so we cannot look up the vscale_range
+  // attribute to determine the number of bits.
+  EXPECT_EQ(Known.One.getZExtValue(), 0u);
+  EXPECT_EQ(Known.Zero.getZExtValue(), 0u);
+
+  BasicBlock *BB = BasicBlock::Create(Context);
+  BB->getInstList().push_back(CI);
+  Known = computeKnownBits(CI, M.getDataLayout(), /* Depth */ 0);
+  // There is no parent function so we cannot look up the vscale_range
+  // attribute to determine the number of bits.
+  EXPECT_EQ(Known.One.getZExtValue(), 0u);
+  EXPECT_EQ(Known.Zero.getZExtValue(), 0u);
+
+  CI->removeFromParent();
+  delete CI;
+  delete BB;
+}
+
 // 512 + [32, 64) doesn't produce overlapping bits.
 // Make sure we get all the individual bits properly.
 TEST_F(ComputeKnownBitsTest, ComputeKnownBitsAddWithRangeNoOverlap) {
@@ -1682,6 +1709,20 @@ TEST_F(ComputeKnownBitsTest, ComputeKnownBitsGEPWithRangeNoOverlap) {
   // with the masks of zeros and ones, not the ranges.
   EXPECT_EQ(Known.getMinValue(), 544);
   EXPECT_EQ(Known.getMaxValue(), 575);
+}
+
+TEST_F(ComputeKnownBitsTest, ComputeKnownBitsCrash) {
+  parseAssembly(
+      "@g.a = external global i16, align 1\n"
+      "define i16 @test(i16 %i) {\n"
+      "entry:\n"
+      "  %0 = icmp slt i16 sub (i16 0, i16 trunc (i32 udiv (i32 ptrtoint (i16* @g.a to i32), i32 -1) to i16)), 0\n"
+      "  %A = select i1 %0, i16 trunc (i32 udiv (i32 ptrtoint (i16* @g.a to i32), i32 -1) to i16), i16 sub (i16 0, i16 trunc (i32 udiv (i32 ptrtoint (i16* @g.a to i32), i32 -1) to i16))\n"
+      "  ret i16 %A\n"
+      "}\n");
+  AssumptionCache AC(*F);
+  KnownBits Known = computeKnownBits(
+      A, M->getDataLayout(), /* Depth */ 0, &AC, F->front().getTerminator());
 }
 
 class IsBytewiseValueTest : public ValueTrackingTest,
@@ -1959,11 +2000,11 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
 
     AssumptionCache AC(*F);
     Value *Stride = &*F->arg_begin();
-    ConstantRange CR1 = computeConstantRange(Stride, true, &AC, nullptr);
+    ConstantRange CR1 = computeConstantRange(Stride, false, true, &AC, nullptr);
     EXPECT_TRUE(CR1.isFullSet());
 
     Instruction *I = &findInstructionByName(F, "stride.plus.one");
-    ConstantRange CR2 = computeConstantRange(Stride, true, &AC, I);
+    ConstantRange CR2 = computeConstantRange(Stride, false, true, &AC, I);
     EXPECT_EQ(5, CR2.getLower());
     EXPECT_EQ(10, CR2.getUpper());
   }
@@ -1993,7 +2034,7 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
     AssumptionCache AC(*F);
     Value *Stride = &*F->arg_begin();
     Instruction *I = &findInstructionByName(F, "stride.plus.one");
-    ConstantRange CR = computeConstantRange(Stride, true, &AC, I);
+    ConstantRange CR = computeConstantRange(Stride, false, true, &AC, I);
     EXPECT_EQ(99, *CR.getSingleElement());
   }
 
@@ -2031,12 +2072,12 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
     AssumptionCache AC(*F);
     Value *Stride = &*F->arg_begin();
     Instruction *GT2 = &findInstructionByName(F, "gt.2");
-    ConstantRange CR = computeConstantRange(Stride, true, &AC, GT2);
+    ConstantRange CR = computeConstantRange(Stride, false, true, &AC, GT2);
     EXPECT_EQ(5, CR.getLower());
     EXPECT_EQ(0, CR.getUpper());
 
     Instruction *I = &findInstructionByName(F, "stride.plus.one");
-    ConstantRange CR2 = computeConstantRange(Stride, true, &AC, I);
+    ConstantRange CR2 = computeConstantRange(Stride, false, true, &AC, I);
     EXPECT_EQ(50, CR2.getLower());
     EXPECT_EQ(100, CR2.getUpper());
   }
@@ -2064,7 +2105,7 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
     Value *Stride = &*F->arg_begin();
 
     Instruction *I = &findInstructionByName(F, "stride.plus.one");
-    ConstantRange CR = computeConstantRange(Stride, true, &AC, I);
+    ConstantRange CR = computeConstantRange(Stride, false, true, &AC, I);
     EXPECT_TRUE(CR.isEmptySet());
   }
 
@@ -2092,8 +2133,8 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
     Value *X2 = &*std::next(F->arg_begin());
 
     Instruction *I = &findInstructionByName(F, "stride.plus.one");
-    ConstantRange CR1 = computeConstantRange(X1, true, &AC, I);
-    ConstantRange CR2 = computeConstantRange(X2, true, &AC, I);
+    ConstantRange CR1 = computeConstantRange(X1, false, true, &AC, I);
+    ConstantRange CR2 = computeConstantRange(X2, false, true, &AC, I);
 
     EXPECT_EQ(5, CR1.getLower());
     EXPECT_EQ(0, CR1.getUpper());
@@ -2103,7 +2144,7 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
 
     // Check the depth cutoff results in a conservative result (full set) by
     // passing Depth == MaxDepth == 6.
-    ConstantRange CR3 = computeConstantRange(X2, true, &AC, I, 6);
+    ConstantRange CR3 = computeConstantRange(X2, false, true, &AC, I, nullptr, 6);
     EXPECT_TRUE(CR3.isFullSet());
   }
   {
@@ -2124,7 +2165,7 @@ TEST_F(ValueTrackingTest, ComputeConstantRange) {
     Value *X2 = &*std::next(F->arg_begin());
 
     Instruction *I = &findInstructionByName(F, "stride.plus.one");
-    ConstantRange CR1 = computeConstantRange(X2, true, &AC, I);
+    ConstantRange CR1 = computeConstantRange(X2, false, true, &AC, I);
     // If we don't know the value of x.2, we don't know the value of x.1.
     EXPECT_TRUE(CR1.isFullSet());
   }
@@ -2253,6 +2294,22 @@ const FindAllocaForValueTestParams FindAllocaForValueTests[] = {
         br i1 %cond, label %bb1, label %exit
 
       exit:
+        ret void
+      })",
+     false, false},
+    {R"(
+      declare i32* @retptr(i32* returned)
+      define void @test(i1 %cond) {
+        %a = alloca i32
+        %r = call i32* @retptr(i32* %a)
+        ret void
+      })",
+     true, true},
+    {R"(
+      declare i32* @fun(i32*)
+      define void @test(i1 %cond) {
+        %a = alloca i32
+        %r = call i32* @fun(i32* %a)
         ret void
       })",
      false, false},

@@ -7,8 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
-#include "mlir/Dialect/Linalg/IR/LinalgTypes.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Passes.h"
 #include "mlir/Dialect/StandardOps/Transforms/FuncConversions.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
@@ -17,6 +16,7 @@
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include <iterator>
 #include <memory>
+#include <utility>
 
 using namespace mlir;
 using namespace mlir::linalg;
@@ -24,15 +24,14 @@ using namespace mlir::linalg;
 static Value sourceMaterializationCallback(OpBuilder &builder, Type type,
                                            ValueRange inputs, Location loc) {
   assert(inputs.size() == 1);
+  auto inputType = inputs[0].getType();
+  if (inputType.isa<TensorType>())
+    return nullptr;
+
   // A detensored value is converted back by creating a new tensor from its
   // element(s).
-  auto createNewTensorOp = builder.create<tensor::FromElementsOp>(
-      loc, inputs[0].getType(), inputs[0]);
-
-  // FromElementsOp results in a tensor<1xdtype>, we need to reshape that to
-  // a tensor<dtype> instead.
-  return builder.create<linalg::TensorCollapseShapeOp>(
-      loc, type, createNewTensorOp, ArrayRef<ReassociationExprs>{});
+  return builder.create<tensor::FromElementsOp>(
+      loc, RankedTensorType::get({}, inputType), inputs[0]);
 }
 
 namespace {
@@ -60,7 +59,7 @@ class DetensorizeGenericOp : public OpConversionPattern<GenericOp> {
 public:
   using OpConversionPattern::OpConversionPattern;
   LogicalResult
-  matchAndRewrite(GenericOp op, ArrayRef<Value> operands,
+  matchAndRewrite(GenericOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     Block *originalBlock = op->getBlock();
 
@@ -70,7 +69,7 @@ public:
 
     // Split the op's region before the op. This way, we have a clear insertion
     // point in which the op can be inlined.
-    Block *newBlock = originalBlock->splitBlock(op);
+    Block *newBlock = rewriter.splitBlock(originalBlock, Block::iterator(op));
     rewriter.inlineRegionBefore(op.region(), newBlock);
     // Now that op's region is inlined, the operands of its YieldOp are mapped
     // to the materialized target values. Therefore, we can replace the op's
@@ -78,7 +77,7 @@ public:
     rewriter.replaceOp(op, yieldOp->getOperands());
 
     // No need for these intermediate blocks, merge them into 1.
-    rewriter.mergeBlocks(opEntryBlock, originalBlock, operands);
+    rewriter.mergeBlocks(opEntryBlock, originalBlock, adaptor.getOperands());
     rewriter.mergeBlocks(newBlock, originalBlock, {});
 
     rewriter.eraseOp(&*Block::iterator(yieldOp));
@@ -90,11 +89,12 @@ public:
 /// A conversion pattern for detensoring internal (non-entry) blocks within a
 /// function.
 struct FunctionNonEntryBlockConversion : public ConversionPattern {
-  FunctionNonEntryBlockConversion(StringRef functionLikeOpName,
-                                  MLIRContext *ctx, TypeConverter &converter,
+  FunctionNonEntryBlockConversion(MLIRContext *ctx, TypeConverter &converter,
                                   DenseSet<BlockArgument> blockArgsToDetensor)
-      : ConversionPattern(converter, functionLikeOpName, /*benefit=*/1, ctx),
-        blockArgsToDetensor(blockArgsToDetensor) {}
+      : ConversionPattern(converter, MatchTraitOpTypeTag(),
+                          TypeID::get<OpTrait::FunctionLike>(), /*benefit=*/1,
+                          ctx),
+        blockArgsToDetensor(std::move(blockArgsToDetensor)) {}
 
   LogicalResult
   matchAndRewrite(Operation *op, ArrayRef<Value> operands,
@@ -157,44 +157,9 @@ public:
   }
 };
 
-/// Canonicalizes the pattern of the form
-///
-/// %tensor = tensor.from_elements(%element) : (i32) -> tensor<1xi32>
-/// %reshaped_tensor = linalg.tensor_collapse_shape %tensor []
-///     : tensor<1xi32> into tensor<i32>
-/// %extracted_element = tensor.extract %reshaped_tensor[] : tensor<i32>
-///
-/// to just %element.
-struct ExtractFromReshapeFromElements
-    : public OpRewritePattern<tensor::ExtractOp> {
-  using OpRewritePattern<tensor::ExtractOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(tensor::ExtractOp extract,
-                                PatternRewriter &rewriter) const final {
-    if (!extract.indices().empty())
-      return failure();
-
-    auto tensorReshape =
-        extract.tensor().getDefiningOp<TensorCollapseShapeOp>();
-    if (tensorReshape == nullptr)
-      return failure();
-
-    auto tensorFromElements =
-        tensorReshape.getOperand()
-            .getDefiningOp<mlir::tensor::FromElementsOp>();
-    if (tensorFromElements == nullptr)
-      return failure();
-
-    rewriter.replaceOp(extract, tensorFromElements.getOperand(0));
-    return success();
-  }
-};
-
 /// @see LinalgDetensorize in Linalg/Passes.td for more details.
 struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
   LinalgDetensorize() = default;
-  LinalgDetensorize(const LinalgDetensorize &pass)
-      : LinalgDetensorizeBase<LinalgDetensorize>() {}
 
   class CostModel {
   public:
@@ -221,7 +186,7 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
     ///     ins(%6, %6 : tensor<i32>, tensor<i32>)
     ///     outs(%7 : tensor<i32>) {
     ///     ^bb0(%arg0: i32, %arg1: i32, %arg2: i32):
-    ///       %9 = addi %arg0, %arg1 : i32
+    ///       %9 = arith.addi %arg0, %arg1 : i32
     ///       linalg.yield %9 : i32
     ///   } -> tensor<i32>
     ///   %10 = "some.op"(%9)
@@ -232,7 +197,8 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
     /// detensored, then:
     /// - opsToDetensor should be = {linalg.generic{add}}.
     /// - blockArgsToDetensor should be = {bb1 -> {0}, bb2 -> {0}}.
-    virtual void compute(FuncOp func, DetensorizeTypeConverter typeConverter,
+    virtual void compute(Operation *func,
+                         DetensorizeTypeConverter typeConverter,
                          DenseSet<Operation *> &opsToDetensor,
                          DenseSet<BlockArgument> &blockArgsToDetensor) = 0;
 
@@ -272,38 +238,29 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
 
   /// Detensorize linalg ops involved in control-flow within a function.
   ///
-  /// This model starts from CondBranchOps within a function. For each cond_br,
-  /// the model then walks the use-def chain for the branch's condition
-  /// backwards in order to understand where the condition's value comes from.
-  /// If the condition value is (indirectly) computed by a linalg op that can be
-  /// detensored, the model then continues walking the use-def chain in order to
-  /// understand where the linalg op's operands come from. This leads to
-  /// discovering a "detensoring component". A detensoring component is the set
-  /// of operations + block arguments that are involved in control-flow AND can
-  /// be detensored.
-  ///
-  /// For examples where this model succeeds to discover a detensoring
-  /// component, see:
-  /// - test/Dialect/Linalg/detensorize_while.mlir
-  /// - test/Dialect/Linalg/detesorize_while_pure_cf.mlir.
-  ///
-  /// For an example where this model marks control-flow as "non-detensorable",
-  /// see:
-  /// - test/Dialect/Linalg/detensorize_while_failure.mlir
-  class PureControlFlowDetectionModel : public CostModel {
+  /// This model starts from BranchOps and CondBranchOps within a function. For
+  /// each such branch, the model then walks the use-def chain for the branch's
+  /// condition backwards in order to understand where the condition's value
+  /// comes from. If the condition value is (indirectly) computed by a linalg op
+  /// that can be detensored, the model then continues walking the use-def chain
+  /// in order to understand where the linalg op's operands come from. This
+  /// leads to discovering a "detensoring component". A detensoring component is
+  /// the set of operations + block arguments that are involved in control-flow
+  /// AND can be detensored.
+  class ControlFlowDetectionModel : public CostModel {
   public:
-    void compute(FuncOp func, DetensorizeTypeConverter typeConverter,
+    void compute(Operation *func, DetensorizeTypeConverter typeConverter,
                  DenseSet<Operation *> &opsToDetensor,
                  DenseSet<BlockArgument> &blockArgsToDetensor) override {
       SmallVector<Value> workList;
 
-      func.walk([&](CondBranchOp condBr) {
+      func->walk([&](CondBranchOp condBr) {
         for (auto operand : condBr.getOperands()) {
           workList.push_back(operand);
         }
       });
 
-      func.walk([&](BranchOp br) {
+      func->walk([&](BranchOp br) {
         for (auto operand : br.getOperands()) {
           workList.push_back(operand);
         }
@@ -376,19 +333,19 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
 
           for (PredecessorIterator pred = ownerBlock->pred_begin();
                pred != ownerBlock->pred_end(); ++pred) {
-            BranchOpInterface terminator =
+            BranchOpInterface predTerminator =
                 dyn_cast<BranchOpInterface>((*pred)->getTerminator());
 
             // TODO: For now, we give up if any of the control-flow components
             // in a function is not detensorable. Fix that.
-            if (!terminator) {
+            if (!predTerminator) {
               opsToDetensor.clear();
               blockArgsToDetensor.clear();
               return;
             }
 
             auto ownerBlockOperands =
-                terminator.getSuccessorOperands(pred.getSuccessorIndex());
+                predTerminator.getSuccessorOperands(pred.getSuccessorIndex());
 
             if (!ownerBlockOperands || ownerBlockOperands->empty())
               continue;
@@ -418,12 +375,10 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
           if (opsToDetensor.count(genericOp))
             continue;
 
-          // TODO: For now, we give up if any of the control-flow components
-          // in a function is not detensorable. Fix that.
+          // The op should not be detensored, give up on it but continue with
+          // discovering the rest of the control-flow component.
           if (!shouldBeDetensored(genericOp, typeConverter)) {
-            opsToDetensor.clear();
-            blockArgsToDetensor.clear();
-            return;
+            continue;
           }
 
           opsToDetensor.insert(genericOp);
@@ -452,27 +407,71 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
           for (Value scalarOpOperand : currentItemDefiningOp->getOperands())
             workList.push_back(scalarOpOperand);
       }
+
+      // Since the cost model gives up on some ops (see the details of step 2.2
+      // above), block arguments that correspond to the values produced by those
+      // ops should not be detensored as well.
+
+      DenseSet<BlockArgument> blockArgsToRemove;
+
+      for (auto &blockArg : blockArgsToDetensor) {
+        Block *block = blockArg.getParentBlock();
+
+        // For the potentially detensorable block argument, find the
+        // correpsonding operands in predecessor blocks.
+        for (PredecessorIterator pred = block->pred_begin();
+             pred != block->pred_end(); ++pred) {
+          BranchOpInterface terminator =
+              dyn_cast<BranchOpInterface>((*pred)->getTerminator());
+          auto blockOperands =
+              terminator.getSuccessorOperands(pred.getSuccessorIndex());
+
+          if (!blockOperands || blockOperands->empty())
+            continue;
+
+          Operation *definingOp =
+              terminator
+                  ->getOperand(blockOperands->getBeginOperandIndex() +
+                               blockArg.getArgNumber())
+                  .getDefiningOp();
+
+          // If the operand is defined by a GenericOp that will not be
+          // detensored, then do not detensor the corresponding block argument.
+          if (dyn_cast_or_null<GenericOp>(definingOp) &&
+              opsToDetensor.count(definingOp) == 0) {
+            blockArgsToRemove.insert(blockArg);
+            break;
+          }
+        }
+      }
+
+      for (auto &blockArg : blockArgsToRemove) {
+        blockArgsToDetensor.erase(blockArg);
+      }
     }
   };
 
   /// Detensorize everything that can detensored.
   class AggressiveDetensoringModel : public CostModel {
   public:
-    void compute(FuncOp func, DetensorizeTypeConverter typeConverter,
+    void compute(Operation *func, DetensorizeTypeConverter typeConverter,
                  DenseSet<Operation *> &opsToDetensor,
                  DenseSet<BlockArgument> &blockArgsToDetensor) override {
-      func.walk([&](GenericOp genericOp) {
+      func->walk([&](GenericOp genericOp) {
         if (shouldBeDetensored(genericOp, typeConverter))
           opsToDetensor.insert(genericOp);
       });
 
-      for (Block &block : llvm::drop_begin(func.getBody(), 1))
+      for (Block &block :
+           llvm::drop_begin(function_like_impl::getFunctionBody(func), 1))
         for (BlockArgument blockArgument : block.getArguments())
           blockArgsToDetensor.insert(blockArgument);
     }
   };
 
-  void runOnFunction() override {
+  void runOnOperation() override {
+    assert(getOperation()->hasTrait<OpTrait::FunctionLike>() &&
+           "DetensorizePass can only be run on FunctionLike operations");
     MLIRContext *context = &getContext();
     DetensorizeTypeConverter typeConverter;
     RewritePatternSet patterns(context);
@@ -483,12 +482,12 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
 
     if (aggressiveMode.getValue()) {
       AggressiveDetensoringModel costModel;
-      costModel.compute(getFunction(), typeConverter, opsToDetensor,
+      costModel.compute(getOperation(), typeConverter, opsToDetensor,
                         blockArgsToDetensor);
 
     } else {
-      PureControlFlowDetectionModel costModel;
-      costModel.compute(getFunction(), typeConverter, opsToDetensor,
+      ControlFlowDetectionModel costModel;
+      costModel.compute(getOperation(), typeConverter, opsToDetensor,
                         blockArgsToDetensor);
     }
 
@@ -498,24 +497,23 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
     target.addDynamicallyLegalOp<GenericOp>(
         [&](GenericOp op) { return !opsToDetensor.count(op); });
 
-    target.addDynamicallyLegalOp<FuncOp>([&](FuncOp op) {
+    target.markUnknownOpDynamicallyLegal([&](Operation *op) {
       // A function is legal if all of its non-entry blocks are legal. We
       // don't legalize the entry block (i.e. the function's signature)
       // since detensoring can't happen along external calling convention
       // boundaries, which we conservatively approximate as all function
       // signatures.
-      return llvm::all_of(llvm::drop_begin(op.getBody(), 1), [&](Block &block) {
-        if (llvm::any_of(blockArgsToDetensor, [&](BlockArgument blockArgument) {
-              return blockArgument.getOwner() == &block &&
-                     !typeConverter.isLegal(blockArgument.getType());
-            })) {
-          return false;
-        }
-        return true;
-      });
-    });
+      if (op->hasTrait<OpTrait::FunctionLike>()) {
+        auto &body = function_like_impl::getFunctionBody(op);
+        return llvm::all_of(llvm::drop_begin(body, 1), [&](Block &block) {
+          return !llvm::any_of(
+              blockArgsToDetensor, [&](BlockArgument blockArgument) {
+                return blockArgument.getOwner() == &block &&
+                       !typeConverter.isLegal(blockArgument.getType());
+              });
+        });
+      }
 
-    target.markUnknownOpDynamicallyLegal([&](Operation *op) {
       if (isNotBranchOpInterfaceOrReturnLikeOp(op) ||
           isLegalForReturnOpTypeConversionPattern(op, typeConverter,
                                                   /*returnOpAlwaysLegal*/ true))
@@ -537,8 +535,7 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
     });
 
     patterns.insert<DetensorizeGenericOp>(typeConverter, context);
-    patterns.insert<FunctionNonEntryBlockConversion>(FuncOp::getOperationName(),
-                                                     context, typeConverter,
+    patterns.insert<FunctionNonEntryBlockConversion>(context, typeConverter,
                                                      blockArgsToDetensor);
     // Since non-entry block arguments get detensorized, we also need to
     // update the control flow inside the function to reflect the correct
@@ -552,20 +549,16 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
     populateBranchOpInterfaceTypeConversionPattern(patterns, typeConverter,
                                                    shouldConvertBranchOperand);
 
-    if (failed(applyFullConversion(getFunction(), target, std::move(patterns))))
+    if (failed(
+            applyFullConversion(getOperation(), target, std::move(patterns))))
       signalPassFailure();
 
     RewritePatternSet canonPatterns(context);
-    canonPatterns.add<ExtractFromReshapeFromElements>(context);
-    if (failed(applyPatternsAndFoldGreedily(getFunction(),
+    tensor::FromElementsOp::getCanonicalizationPatterns(canonPatterns, context);
+    if (failed(applyPatternsAndFoldGreedily(getOperation(),
                                             std::move(canonPatterns))))
       signalPassFailure();
   }
-
-  Option<bool> aggressiveMode{
-      *this, "aggressive-mode",
-      llvm::cl::desc("Detensorize all ops that qualify for detensoring along "
-                     "with branch operands and basic-block arguments.")};
 };
 } // namespace
 

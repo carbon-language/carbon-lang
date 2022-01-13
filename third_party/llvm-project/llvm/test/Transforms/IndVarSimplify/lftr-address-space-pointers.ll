@@ -7,7 +7,7 @@ define void @ptriv_as2(i8 addrspace(2)* %base, i32 %n) nounwind {
 ; CHECK-LABEL: @ptriv_as2(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[IDX_TRUNC:%.*]] = trunc i32 [[N:%.*]] to i8
-; CHECK-NEXT:    [[ADD_PTR:%.*]] = getelementptr inbounds i8, i8 addrspace(2)* [[BASE:%.*]], i8 [[IDX_TRUNC]]
+; CHECK-NEXT:    [[ADD_PTR:%.*]] = getelementptr i8, i8 addrspace(2)* [[BASE:%.*]], i8 [[IDX_TRUNC]]
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp ult i8 addrspace(2)* [[BASE]], [[ADD_PTR]]
 ; CHECK-NEXT:    br i1 [[CMP1]], label [[FOR_BODY_PREHEADER:%.*]], label [[FOR_END:%.*]]
 ; CHECK:       for.body.preheader:
@@ -17,7 +17,7 @@ define void @ptriv_as2(i8 addrspace(2)* %base, i32 %n) nounwind {
 ; CHECK-NEXT:    [[SUB_PTR_LHS_CAST:%.*]] = ptrtoint i8 addrspace(2)* [[P_02]] to i8
 ; CHECK-NEXT:    [[SUB_PTR_RHS_CAST:%.*]] = ptrtoint i8 addrspace(2)* [[BASE]] to i8
 ; CHECK-NEXT:    [[SUB_PTR_SUB:%.*]] = sub i8 [[SUB_PTR_LHS_CAST]], [[SUB_PTR_RHS_CAST]]
-; CHECK-NEXT:    store i8 [[SUB_PTR_SUB]], i8 addrspace(2)* [[P_02]]
+; CHECK-NEXT:    store i8 [[SUB_PTR_SUB]], i8 addrspace(2)* [[P_02]], align 1
 ; CHECK-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds i8, i8 addrspace(2)* [[P_02]], i32 1
 ; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8 addrspace(2)* [[INCDEC_PTR]], [[ADD_PTR]]
 ; CHECK-NEXT:    br i1 [[EXITCOND]], label [[FOR_BODY]], label [[FOR_END_LOOPEXIT:%.*]]
@@ -53,7 +53,7 @@ define void @ptriv_as3(i8 addrspace(3)* %base, i32 %n) nounwind {
 ; CHECK-LABEL: @ptriv_as3(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[IDX_TRUNC:%.*]] = trunc i32 [[N:%.*]] to i16
-; CHECK-NEXT:    [[ADD_PTR:%.*]] = getelementptr inbounds i8, i8 addrspace(3)* [[BASE:%.*]], i16 [[IDX_TRUNC]]
+; CHECK-NEXT:    [[ADD_PTR:%.*]] = getelementptr i8, i8 addrspace(3)* [[BASE:%.*]], i16 [[IDX_TRUNC]]
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp ult i8 addrspace(3)* [[BASE]], [[ADD_PTR]]
 ; CHECK-NEXT:    br i1 [[CMP1]], label [[FOR_BODY_PREHEADER:%.*]], label [[FOR_END:%.*]]
 ; CHECK:       for.body.preheader:
@@ -64,7 +64,7 @@ define void @ptriv_as3(i8 addrspace(3)* %base, i32 %n) nounwind {
 ; CHECK-NEXT:    [[SUB_PTR_RHS_CAST:%.*]] = ptrtoint i8 addrspace(3)* [[BASE]] to i16
 ; CHECK-NEXT:    [[SUB_PTR_SUB:%.*]] = sub i16 [[SUB_PTR_LHS_CAST]], [[SUB_PTR_RHS_CAST]]
 ; CHECK-NEXT:    [[CONV:%.*]] = trunc i16 [[SUB_PTR_SUB]] to i8
-; CHECK-NEXT:    store i8 [[CONV]], i8 addrspace(3)* [[P_02]]
+; CHECK-NEXT:    store i8 [[CONV]], i8 addrspace(3)* [[P_02]], align 1
 ; CHECK-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds i8, i8 addrspace(3)* [[P_02]], i32 1
 ; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8 addrspace(3)* [[INCDEC_PTR]], [[ADD_PTR]]
 ; CHECK-NEXT:    br i1 [[EXITCOND]], label [[FOR_BODY]], label [[FOR_END_LOOPEXIT:%.*]]

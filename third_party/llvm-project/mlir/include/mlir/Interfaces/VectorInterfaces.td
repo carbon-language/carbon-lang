@@ -134,7 +134,7 @@ def VectorTransferOpInterface : OpInterface<"VectorTransferOpInterface"> {
       /*args=*/(ins),
       /*methodBody=*/"",
       /*defaultImplementation=*/[{
-        for (unsigned i = 0; i < $_op.permutation_map().getNumResults(); ++i) {
+        for (unsigned i = 0, rank = getTransferRank(); i < rank; ++i) {
           if ($_op.isBroadcastDim(i))
             return true;
         }

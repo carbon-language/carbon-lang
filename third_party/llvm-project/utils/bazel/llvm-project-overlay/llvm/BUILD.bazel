@@ -174,6 +174,8 @@ cc_library(
         "lib/Support/*.cpp",
         "lib/Support/*.h",
         "lib/Support/*.inc",
+        # To avoid a dependency cycle.
+        "include/llvm/Option/*.h",
     ]) + select({
         "@bazel_tools//src/conditions:windows": glob([
             "lib/Support/Windows/*.h",
@@ -187,10 +189,10 @@ cc_library(
     hdrs = glob([
         "include/llvm/Support/**/*.h",
         "include/llvm/ADT/*.h",
-        "include/llvm/MC/*.h",  # TODO(maskray): Fix the layering issue.
     ]) + [
         "include/llvm-c/Core.h",
         "include/llvm-c/DataTypes.h",
+        "include/llvm-c/Deprecated.h",
         "include/llvm-c/DisassemblerTypes.h",
         "include/llvm-c/Error.h",
         "include/llvm-c/ErrorHandling.h",
@@ -205,6 +207,12 @@ cc_library(
     includes = ["include"],
     linkopts = select({
         "@bazel_tools//src/conditions:windows": [],
+        "@bazel_tools//src/conditions:freebsd": [
+            "-pthread",
+            "-lexecinfo",
+            "-ldl",
+            "-lm",
+        ],
         "//conditions:default": [
             "-pthread",
             "-ldl",
@@ -390,6 +398,20 @@ cc_library(
 )
 
 cc_library(
+    name = "Debuginfod",
+    srcs = glob([
+        "lib/Debuginfod/*.cpp",
+    ]),
+    hdrs = glob([
+        "include/llvm/Debuginfod/*.h",
+    ]),
+    copts = llvm_copts,
+    deps = [
+        ":Support",
+    ],
+)
+
+cc_library(
     name = "MC",
     srcs = glob([
         "lib/MC/*.cpp",
@@ -404,7 +426,6 @@ cc_library(
     deps = [
         ":BinaryFormat",
         ":DebugInfoCodeView",
-        ":ProfileData",
         ":Support",
         ":config",
         ":ir_headers",
@@ -441,6 +462,7 @@ cc_library(
         ":DebugInfo",
         ":DebugInfoDWARF",
         ":DebugInfoPDB",
+        ":Debuginfod",
         ":Demangle",
         ":Object",
         ":Support",
@@ -452,6 +474,11 @@ cc_library(
     srcs = glob([
         "utils/TableGen/*.cpp",
         "utils/TableGen/GlobalISel/*.cpp",
+
+        # Some tablegen sources include headers from MC, so these have to be
+        # listed here. MC uses headers produced by tablegen, so it cannot be a
+        # regular dependency.
+        "include/llvm/MC/*.h",
 
         # We have to include these headers here as well as in the `hdrs` below
         # to allow the `.cpp` files to use file-relative-inclusion to find
@@ -592,7 +619,10 @@ gentbl(
     tbl_outs = [("-gen-attrs", "include/llvm/IR/Attributes.inc")],
     tblgen = ":llvm-tblgen",
     td_file = "include/llvm/IR/Attributes.td",
-    td_srcs = ["include/llvm/IR/Attributes.td"],
+    td_srcs = [
+        "include/llvm/IR/Attributes.td",
+        "include/llvm/IR/AttributesAMDGPU.td",
+    ],
 )
 
 cc_library(
@@ -809,6 +839,7 @@ cc_library(
     copts = llvm_copts,
     deps = [
         ":Core",
+        ":DebugInfoDWARF",
         ":Support",
         ":config",
     ],
@@ -837,22 +868,11 @@ cc_library(
             "lib/Analysis/*.h",
             "lib/Analysis/*.def",
         ],
-        exclude = [
-            # TODO(mtrofin): Add these files to the build.
-            "lib/Analysis/MLInlineAdvisor.cpp",
-            "lib/Analysis/DevelopmentModeInlineAdvisor.cpp",
-            "lib/Analysis/ReleaseModeModelRunner.cpp",
-            "lib/Analysis/TFUtils.cpp",
-        ],
     ),
     hdrs = glob(
         [
             "include/llvm/Analysis/*.h",
             "include/llvm/Analysis/Utils/*.h",
-        ],
-        exclude = [
-            # TODO(mtrofin): Add this file to the build.
-            "include/llvm/Analysis/Utils/TFUtils.h",
         ],
     ) + [
         "include/llvm-c/Analysis.h",
@@ -1155,6 +1175,7 @@ cc_library(
     deps = [
         ":Analysis",
         ":Core",
+        ":Scalar",
         ":Support",
         ":TransformUtils",
     ],
@@ -2266,6 +2287,7 @@ cc_library(
     name = "OrcTargetProcess",
     srcs = glob([
         "lib/ExecutionEngine/Orc/TargetProcess/*.cpp",
+        "lib/ExecutionEngine/Orc/TargetProcess/*.h",
     ]),
     hdrs = glob([
         "include/llvm/ExecutionEngine/Orc/TargetProcess/*.h",
@@ -3088,7 +3110,9 @@ cc_binary(
     name = "llvm-mca",
     srcs = glob([
         "tools/llvm-mca/*.cpp",
+        "tools/llvm-mca/*.h",
         "tools/llvm-mca/Views/*.cpp",
+        "tools/llvm-mca/Views/*.h",
     ]),
     copts = llvm_copts,
     stamp = 0,
@@ -3560,6 +3584,7 @@ cc_binary(
     includes = ["tools/llvm-reduce"],
     stamp = 0,
     deps = [
+        ":AllTargetsAsmParsers",
         ":AllTargetsCodeGens",
         ":BitReader",
         ":Core",
@@ -3683,6 +3708,7 @@ cc_binary(
     deps = [
         ":DebugInfoDWARF",
         ":DebugInfoPDB",
+        ":Debuginfod",
         ":Object",
         ":Option",
         ":Support",
@@ -4015,9 +4041,7 @@ cc_binary(
     srcs = glob([
         "tools/lli/ChildTarget/*.cpp",
         "tools/lli/ChildTarget/*.h",
-    ]) + [
-        "tools/lli/RemoteJITUtils.h",
-    ],
+    ]),
     copts = llvm_copts,
     # The tests load code into this binary that expect to see symbols
     # from libstdc++ such as __cxa_begin_catch and _ZTIi. The latter
@@ -4180,6 +4204,45 @@ cc_binary(
         ":Object",
         ":Support",
         ":TextAPI",
+    ],
+)
+
+gentbl(
+    name = "TLICheckerOptsTableGen",
+    strip_include_prefix = "tools/llvm-tli-checker",
+    tbl_outs = [(
+        "-gen-opt-parser-defs",
+        "tools/llvm-tli-checker/Opts.inc",
+    )],
+    tblgen = ":llvm-tblgen",
+    td_file = "tools/llvm-tli-checker/Opts.td",
+    td_srcs = ["include/llvm/Option/OptParser.td"],
+)
+
+cc_binary(
+    name = "llvm-tli-checker",
+    testonly = True,
+    srcs = glob([
+        "tools/llvm-tli-checker/*.cpp",
+        "tools/llvm-tli-checker/*.h",
+    ]),
+    copts = llvm_copts,
+    stamp = 0,
+    deps = [
+        ":Analysis",
+        ":BinaryFormat",
+        ":BitReader",
+        ":BitstreamReader",
+        ":Core",
+        ":Demangle",
+        ":MC",
+        ":MCParser",
+        ":Object",
+        ":Option",
+        ":Remarks",
+        ":Support",
+        ":TextAPI",
+        ":TLICheckerOptsTableGen",
     ],
 )
 

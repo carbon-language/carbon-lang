@@ -24,8 +24,6 @@
 using namespace mlir;
 using namespace detail;
 
-DialectAsmParser::~DialectAsmParser() {}
-
 //===----------------------------------------------------------------------===//
 // DialectRegistry
 //===----------------------------------------------------------------------===//
@@ -34,7 +32,7 @@ DialectRegistry::DialectRegistry() { insert<BuiltinDialect>(); }
 
 void DialectRegistry::addDialectInterface(
     StringRef dialectName, TypeID interfaceTypeID,
-    DialectInterfaceAllocatorFunction allocator) {
+    const DialectInterfaceAllocatorFunction &allocator) {
   assert(allocator && "unexpected null interface allocation function");
   auto it = registry.find(dialectName.str());
   assert(it != registry.end() &&
@@ -59,7 +57,7 @@ void DialectRegistry::addDialectInterface(
 
 void DialectRegistry::addObjectInterface(
     StringRef dialectName, TypeID objectID, TypeID interfaceTypeID,
-    ObjectInterfaceAllocatorFunction allocator) {
+    const ObjectInterfaceAllocatorFunction &allocator) {
   assert(allocator && "unexpected null interface allocation function");
 
   auto it = registry.find(dialectName.str());
@@ -90,7 +88,7 @@ DialectRegistry::getDialectAllocator(StringRef name) const {
 }
 
 void DialectRegistry::insert(TypeID typeID, StringRef name,
-                             DialectAllocatorFunction ctor) {
+                             const DialectAllocatorFunction &ctor) {
   auto inserted = registry.insert(
       std::make_pair(std::string(name), std::make_pair(typeID, ctor)));
   if (!inserted.second && inserted.first->second.first != typeID) {
@@ -126,7 +124,7 @@ Dialect::Dialect(StringRef name, MLIRContext *context, TypeID id)
   assert(isValidNamespace(name) && "invalid dialect namespace");
 }
 
-Dialect::~Dialect() {}
+Dialect::~Dialect() = default;
 
 /// Verify an attribute from this dialect on the argument at 'argIndex' for
 /// the region at 'regionIndex' on the given operation. Returns failure if
@@ -158,7 +156,7 @@ Attribute Dialect::parseAttribute(DialectAsmParser &parser, Type type) const {
 Type Dialect::parseType(DialectAsmParser &parser) const {
   // If this dialect allows unknown types, then represent this with OpaqueType.
   if (allowsUnknownTypes()) {
-    Identifier ns = Identifier::get(getNamespace(), getContext());
+    StringAttr ns = StringAttr::get(getContext(), getNamespace());
     return OpaqueType::get(ns, parser.getFullSymbolSpec());
   }
 
@@ -172,15 +170,15 @@ Dialect::getParseOperationHook(StringRef opName) const {
   return None;
 }
 
-LogicalResult Dialect::printOperation(Operation *op,
-                                      OpAsmPrinter &printer) const {
+llvm::unique_function<void(Operation *, OpAsmPrinter &printer)>
+Dialect::getOperationPrinter(Operation *op) const {
   assert(op->getDialect() == this &&
          "Dialect hook invoked on non-dialect owned operation");
-  return failure();
+  return nullptr;
 }
 
 /// Utility function that returns if the given string is a valid dialect
-/// namespace.
+/// namespace
 bool Dialect::isValidNamespace(StringRef str) {
   llvm::Regex dialectNameRegex("^[a-zA-Z_][a-zA-Z_0-9\\$]*$");
   return dialectNameRegex.match(str);
@@ -198,7 +196,7 @@ void Dialect::addInterface(std::unique_ptr<DialectInterface> interface) {
 // Dialect Interface
 //===----------------------------------------------------------------------===//
 
-DialectInterface::~DialectInterface() {}
+DialectInterface::~DialectInterface() = default;
 
 DialectInterfaceCollectionBase::DialectInterfaceCollectionBase(
     MLIRContext *ctx, TypeID interfaceKind) {
@@ -210,7 +208,7 @@ DialectInterfaceCollectionBase::DialectInterfaceCollectionBase(
   }
 }
 
-DialectInterfaceCollectionBase::~DialectInterfaceCollectionBase() {}
+DialectInterfaceCollectionBase::~DialectInterfaceCollectionBase() = default;
 
 /// Get the interface for the dialect of given operation, or null if one
 /// is not registered.

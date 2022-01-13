@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -convert-scf-to-std -convert-vector-to-llvm -convert-std-to-llvm | \
+// RUN: mlir-opt %s -convert-scf-to-std -convert-vector-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
@@ -35,13 +35,13 @@ func @vector_outerproduct_vec_2x3_acc(%x : !vector_type_X,
 }
 
 func @entry() {
-  %f0 = constant 0.0: f32
-  %f1 = constant 1.0: f32
-  %f2 = constant 2.0: f32
-  %f3 = constant 3.0: f32
-  %f4 = constant 4.0: f32
-  %f5 = constant 5.0: f32
-  %f10 = constant 10.0: f32
+  %f0 = arith.constant 0.0: f32
+  %f1 = arith.constant 1.0: f32
+  %f2 = arith.constant 2.0: f32
+  %f3 = arith.constant 3.0: f32
+  %f4 = arith.constant 4.0: f32
+  %f5 = arith.constant 5.0: f32
+  %f10 = arith.constant 10.0: f32
 
   // Simple case, splat scalars into vectors, then take outer product.
   %v = call @vector_outerproduct_splat_8x8(%f1, %f2, %f10)

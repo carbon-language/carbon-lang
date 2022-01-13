@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Hoisting.h"
 #include "mlir/Pass/Pass.h"
 
@@ -22,7 +22,7 @@ namespace {
 struct TestLinalgHoisting
     : public PassWrapper<TestLinalgHoisting, FunctionPass> {
   TestLinalgHoisting() = default;
-  TestLinalgHoisting(const TestLinalgHoisting &pass) {}
+  TestLinalgHoisting(const TestLinalgHoisting &pass) : PassWrapper(pass) {}
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<AffineDialect>();
   }
@@ -38,7 +38,7 @@ struct TestLinalgHoisting
       llvm::cl::desc("Test hoisting transfer_read/transfer_write pairs"),
       llvm::cl::init(false)};
 };
-} // end anonymous namespace
+} // namespace
 
 void TestLinalgHoisting::runOnFunction() {
   if (testHoistRedundantTransfers) {

@@ -29,8 +29,6 @@
 ; CHECK:          .name:           test_kernel
 ; CHECK:          .symbol:         test_kernel.kd
 
-declare <2 x i64> @__ockl_hostcall_internal(i8*, i32, i64, i64, i64, i64, i64, i64, i64, i64)
-
 define amdgpu_kernel void @test_kernel(i8 %a) #0
     !kernel_arg_addr_space !1 !kernel_arg_access_qual !2 !kernel_arg_type !3
     !kernel_arg_base_type !3 !kernel_arg_type_qual !4 {
@@ -41,7 +39,7 @@ define amdgpu_kernel void @test_kernel(i8 %a) #0
 ; CHECK-NEXT: - 1
 ; CHECK-NEXT: - 0
 
-attributes #0 = { "amdgpu-implicitarg-num-bytes"="48" }
+attributes #0 = { optnone noinline "amdgpu-implicitarg-num-bytes"="48" }
 
 !1 = !{i32 0}
 !2 = !{!"none"}
@@ -50,5 +48,8 @@ attributes #0 = { "amdgpu-implicitarg-num-bytes"="48" }
 
 !opencl.ocl.version = !{!90}
 !90 = !{i32 2, i32 0}
+
+!llvm.module.flags = !{!0}
+!0 = !{i32 1, !"amdgpu_hostcall", i32 1}
 
 ; PARSER: AMDGPU HSA Metadata Parser Test: PASS

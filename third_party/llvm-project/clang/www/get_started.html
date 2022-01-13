@@ -19,7 +19,7 @@
 options.  This should get you up and running with the minimum of muss and fuss.
 If you like what you see, please consider <a href="get_involved.html">getting
 involved</a> with the Clang community.  If you run into problems, please file
-bugs in <a href="https://bugs.llvm.org/">LLVM Bugzilla</a>.</p>
+bugs on <a href="https://github.com/llvm/llvm-project/issues">the LLVM bug tracker</a>.</p>
 
 <h2 id="download">Release Clang Versions</h2>
 
@@ -206,7 +206,7 @@ second build directory next to it for running the tests with these steps:</p>
   <li><tt>set CC=cl</tt> (necessary to force CMake to choose MSVC over mingw GCC
     if you have it installed)</li>
   <li><tt>set CXX=cl</tt></li>
-  <li><tt>cmake -GNinja ..\llvm</tt></li>
+  <li><tt>cmake -GNinja -DLLVM_ENABLE_PROJECTS=clang ..\llvm</tt></li>
   <li><tt>ninja clang</tt> This will build just clang.</li>
   <li><tt>ninja check-clang</tt> This will run the clang tests.</li>
 </ol>

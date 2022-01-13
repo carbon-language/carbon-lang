@@ -375,7 +375,7 @@ static void printIndexStats() {
         ExitOnErr(getModuleSummaryIndexForFile(Filename));
     // Skip files without a module summary.
     if (!Index)
-      report_fatal_error(Filename + " does not contain an index");
+      report_fatal_error(Twine(Filename) + " does not contain an index");
 
     unsigned Calls = 0, Refs = 0, Functions = 0, Alias = 0, Globals = 0;
     for (auto &Summaries : *Index) {
@@ -487,6 +487,10 @@ static void createCombinedModuleSummaryIndex() {
         ExitOnErr(errorOrToExpected(MemoryBuffer::getFileOrSTDIN(Filename)));
     ExitOnErr(readModuleSummaryIndex(*MB, CombinedIndex, NextModuleId++));
   }
+  // In order to use this index for testing, specifically import testing, we
+  // need to update any indirect call edges created from SamplePGO, so that they
+  // point to the correct GUIDs.
+  updateIndirectCalls(CombinedIndex);
   std::error_code EC;
   assert(!OutputFilename.empty());
   raw_fd_ostream OS(OutputFilename + ".thinlto.bc", EC,
@@ -1059,7 +1063,7 @@ int main(int argc, char **argv) {
     CodeGen.addMustPreserveSymbol(KeptDSOSyms[i]);
 
   // Set cpu and attrs strings for the default target/subtarget.
-  CodeGen.setCpu(codegen::getMCPU().c_str());
+  CodeGen.setCpu(codegen::getMCPU());
 
   CodeGen.setOptLevel(OptLevel - '0');
   CodeGen.setAttrs(codegen::getMAttrs());
@@ -1093,8 +1097,7 @@ int main(int argc, char **argv) {
         error("writing merged module failed.");
     }
 
-    auto AddStream =
-        [&](size_t Task) -> std::unique_ptr<lto::NativeObjectStream> {
+    auto AddStream = [&](size_t Task) -> std::unique_ptr<CachedFileStream> {
       std::string PartFilename = OutputFilename;
       if (Parallelism != 1)
         PartFilename += "." + utostr(Task);
@@ -1104,7 +1107,7 @@ int main(int argc, char **argv) {
           std::make_unique<raw_fd_ostream>(PartFilename, EC, sys::fs::OF_None);
       if (EC)
         error("error opening the file '" + PartFilename + "': " + EC.message());
-      return std::make_unique<lto::NativeObjectStream>(std::move(S));
+      return std::make_unique<CachedFileStream>(std::move(S));
     };
 
     if (!CodeGen.compileOptimized(AddStream, Parallelism))

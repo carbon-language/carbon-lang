@@ -106,12 +106,7 @@ void ProcessWindows::Initialize() {
 
 void ProcessWindows::Terminate() {}
 
-lldb_private::ConstString ProcessWindows::GetPluginNameStatic() {
-  static ConstString g_name("windows");
-  return g_name;
-}
-
-const char *ProcessWindows::GetPluginDescriptionStatic() {
+llvm::StringRef ProcessWindows::GetPluginDescriptionStatic() {
   return "Process plugin for Windows";
 }
 
@@ -141,14 +136,6 @@ size_t ProcessWindows::PutSTDIN(const char *buf, size_t buf_size,
   error.SetErrorString("PutSTDIN unsupported on Windows");
   return 0;
 }
-
-// ProcessInterface protocol.
-
-lldb_private::ConstString ProcessWindows::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ProcessWindows::GetPluginVersion() { return 1; }
 
 Status ProcessWindows::EnableBreakpointSite(BreakpointSite *bp_site) {
   if (bp_site->HardwareRequired())
@@ -438,8 +425,29 @@ void ProcessWindows::RefreshStateAfterStop() {
   case EXCEPTION_BREAKPOINT: {
     RegisterContextSP register_context = stop_thread->GetRegisterContext();
 
-    // The current EIP is AFTER the BP opcode, which is one byte.
-    uint64_t pc = register_context->GetPC() - 1;
+    int breakpoint_size = 1;
+    switch (GetTarget().GetArchitecture().GetMachine()) {
+    case llvm::Triple::aarch64:
+      breakpoint_size = 4;
+      break;
+
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+      breakpoint_size = 2;
+      break;
+
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      breakpoint_size = 1;
+      break;
+
+    default:
+      LLDB_LOG(log, "Unknown breakpoint size for architecture");
+      break;
+    }
+
+    // The current PC is AFTER the BP opcode, on all architectures.
+    uint64_t pc = register_context->GetPC() - breakpoint_size;
 
     BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
     if (site) {
@@ -611,7 +619,7 @@ lldb::addr_t ProcessWindows::GetImageInfoAddress() {
 DynamicLoaderWindowsDYLD *ProcessWindows::GetDynamicLoader() {
   if (m_dyld_up.get() == NULL)
     m_dyld_up.reset(DynamicLoader::FindPlugin(
-        this, DynamicLoaderWindowsDYLD::GetPluginNameStatic().GetCString()));
+        this, DynamicLoaderWindowsDYLD::GetPluginNameStatic()));
   return static_cast<DynamicLoaderWindowsDYLD *>(m_dyld_up.get());
 }
 

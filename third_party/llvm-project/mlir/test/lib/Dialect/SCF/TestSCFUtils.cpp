@@ -10,9 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/SCF/Transforms.h"
 #include "mlir/Dialect/SCF/Utils.h"
+#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
@@ -57,21 +59,26 @@ public:
 };
 
 class TestSCFIfUtilsPass
-    : public PassWrapper<TestSCFIfUtilsPass, FunctionPass> {
+    : public PassWrapper<TestSCFIfUtilsPass, OperationPass<ModuleOp>> {
 public:
   StringRef getArgument() const final { return "test-scf-if-utils"; }
   StringRef getDescription() const final { return "test scf.if utils"; }
   explicit TestSCFIfUtilsPass() = default;
 
-  void runOnFunction() override {
+  void runOnOperation() override {
     int count = 0;
-    FuncOp func = getFunction();
-    func.walk([&](scf::IfOp ifOp) {
+    getOperation().walk([&](scf::IfOp ifOp) {
       auto strCount = std::to_string(count++);
       FuncOp thenFn, elseFn;
       OpBuilder b(ifOp);
-      outlineIfOp(b, ifOp, &thenFn, std::string("outlined_then") + strCount,
-                  &elseFn, std::string("outlined_else") + strCount);
+      IRRewriter rewriter(b);
+      if (failed(outlineIfOp(rewriter, ifOp, &thenFn,
+                             std::string("outlined_then") + strCount, &elseFn,
+                             std::string("outlined_else") + strCount))) {
+        this->signalPassFailure();
+        return WalkResult::interrupt();
+      }
+      return WalkResult::advance();
     });
   }
 };
@@ -107,6 +114,10 @@ public:
             std::make_pair(op, unsigned(attrStage.getInt()));
       }
     });
+  }
+
+  void getDependentDialects(DialectRegistry &registry) const override {
+    registry.insert<arith::ArithmeticDialect, StandardOpsDialect>();
   }
 
   void runOnFunction() override {

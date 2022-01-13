@@ -15,7 +15,7 @@
 
 namespace llvm {
 class RecordKeeper;
-} // end namespace llvm
+} // namespace llvm
 
 namespace mlir {
 
@@ -64,9 +64,10 @@ private:
 ///   // At namespace scope.
 ///   static GenRegistration Print("print", "Print records", [](...){...});
 struct GenRegistration {
-  GenRegistration(StringRef arg, StringRef description, GenFunction function);
+  GenRegistration(StringRef arg, StringRef description,
+                  const GenFunction &function);
 };
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_TABLEGEN_GENINFO_H_

@@ -312,8 +312,7 @@ public:
 
   template <typename ExcludePredicate>
   bool removeBindings(const ExcludePredicate &Predicate) {
-    Bindings.erase(std::remove_if(Bindings.begin(), Bindings.end(), Predicate),
-                   Bindings.end());
+    llvm::erase_if(Bindings, Predicate);
     return !Bindings.empty();
   }
 
@@ -1028,31 +1027,29 @@ private:
                           BoundNodesTreeBuilder *Builder) const {
     // DeducedType does not have declarations of its own, so
     // match the deduced type instead.
-    const Type *EffectiveType = &Node;
     if (const auto *S = dyn_cast<DeducedType>(&Node)) {
-      EffectiveType = S->getDeducedType().getTypePtrOrNull();
-      if (!EffectiveType)
-        return false;
+      QualType DT = S->getDeducedType();
+      return !DT.isNull() ? matchesSpecialized(*DT, Finder, Builder) : false;
     }
 
     // First, for any types that have a declaration, extract the declaration and
     // match on it.
-    if (const auto *S = dyn_cast<TagType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<TagType>(&Node)) {
       return matchesDecl(S->getDecl(), Finder, Builder);
     }
-    if (const auto *S = dyn_cast<InjectedClassNameType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<InjectedClassNameType>(&Node)) {
       return matchesDecl(S->getDecl(), Finder, Builder);
     }
-    if (const auto *S = dyn_cast<TemplateTypeParmType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<TemplateTypeParmType>(&Node)) {
       return matchesDecl(S->getDecl(), Finder, Builder);
     }
-    if (const auto *S = dyn_cast<TypedefType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<TypedefType>(&Node)) {
       return matchesDecl(S->getDecl(), Finder, Builder);
     }
-    if (const auto *S = dyn_cast<UnresolvedUsingType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<UnresolvedUsingType>(&Node)) {
       return matchesDecl(S->getDecl(), Finder, Builder);
     }
-    if (const auto *S = dyn_cast<ObjCObjectType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<ObjCObjectType>(&Node)) {
       return matchesDecl(S->getInterface(), Finder, Builder);
     }
 
@@ -1064,14 +1061,14 @@ private:
     //   template<typename T> struct X { T t; } class A {}; X<A> a;
     // The following matcher will match, which otherwise would not:
     //   fieldDecl(hasType(pointerType())).
-    if (const auto *S = dyn_cast<SubstTemplateTypeParmType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<SubstTemplateTypeParmType>(&Node)) {
       return matchesSpecialized(S->getReplacementType(), Finder, Builder);
     }
 
     // For template specialization types, we want to match the template
     // declaration, as long as the type is still dependent, and otherwise the
     // declaration of the instantiated tag type.
-    if (const auto *S = dyn_cast<TemplateSpecializationType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<TemplateSpecializationType>(&Node)) {
       if (!S->isTypeAlias() && S->isSugared()) {
         // If the template is non-dependent, we want to match the instantiated
         // tag type.
@@ -1090,7 +1087,13 @@ private:
     // FIXME: We desugar elaborated types. This makes the assumption that users
     // do never want to match on whether a type is elaborated - there are
     // arguments for both sides; for now, continue desugaring.
-    if (const auto *S = dyn_cast<ElaboratedType>(EffectiveType)) {
+    if (const auto *S = dyn_cast<ElaboratedType>(&Node)) {
+      return matchesSpecialized(S->desugar(), Finder, Builder);
+    }
+    // Similarly types found via using declarations.
+    // These are *usually* meaningless sugar, and this matches the historical
+    // behavior prior to the introduction of UsingType.
+    if (const auto *S = dyn_cast<UsingType>(&Node)) {
       return matchesSpecialized(S->desugar(), Finder, Builder);
     }
     return false;
@@ -2249,11 +2252,7 @@ public:
 
   bool matchesNode(const T &Node) const override {
     Optional<StringRef> OptOpName = getOpName(Node);
-    if (!OptOpName)
-      return false;
-    return llvm::any_of(Names, [OpName = *OptOpName](const std::string &Name) {
-      return Name == OpName;
-    });
+    return OptOpName && llvm::is_contained(Names, *OptOpName);
   }
 
 private:
@@ -2307,6 +2306,26 @@ bool matchesAnyBase(const CXXRecordDecl &Node,
 std::shared_ptr<llvm::Regex> createAndVerifyRegex(StringRef Regex,
                                                   llvm::Regex::RegexFlags Flags,
                                                   StringRef MatcherID);
+
+inline bool
+MatchTemplateArgLocAt(const DeclRefExpr &Node, unsigned int Index,
+                      internal::Matcher<TemplateArgumentLoc> InnerMatcher,
+                      internal::ASTMatchFinder *Finder,
+                      internal::BoundNodesTreeBuilder *Builder) {
+  llvm::ArrayRef<TemplateArgumentLoc> ArgLocs = Node.template_arguments();
+  return Index < ArgLocs.size() &&
+         InnerMatcher.matches(ArgLocs[Index], Finder, Builder);
+}
+
+inline bool
+MatchTemplateArgLocAt(const TemplateSpecializationTypeLoc &Node,
+                      unsigned int Index,
+                      internal::Matcher<TemplateArgumentLoc> InnerMatcher,
+                      internal::ASTMatchFinder *Finder,
+                      internal::BoundNodesTreeBuilder *Builder) {
+  return !Node.isNull() && Index < Node.getNumArgs() &&
+         InnerMatcher.matches(Node.getArgLoc(Index), Finder, Builder);
+}
 
 } // namespace internal
 

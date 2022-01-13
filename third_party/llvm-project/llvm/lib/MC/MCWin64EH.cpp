@@ -144,8 +144,8 @@ static void EmitRuntimeFunction(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
 
   streamer.emitValueToAlignment(4);
-  EmitSymbolRefWithOfs(streamer, info->Function, info->Begin);
-  EmitSymbolRefWithOfs(streamer, info->Function, info->End);
+  EmitSymbolRefWithOfs(streamer, info->Begin, info->Begin);
+  EmitSymbolRefWithOfs(streamer, info->Begin, info->End);
   streamer.emitValue(MCSymbolRefExpr::create(info->Symbol,
                                              MCSymbolRefExpr::VK_COFF_IMGREL32,
                                              context), 4);
@@ -351,7 +351,7 @@ static uint32_t ARM64CountOfUnwindCodes(ArrayRef<WinEH::Instruction> Insns) {
 // Unwind opcode encodings and restrictions are documented at
 // https://docs.microsoft.com/en-us/cpp/build/arm64-exception-handling
 static void ARM64EmitUnwindCode(MCStreamer &streamer, const MCSymbol *begin,
-                                WinEH::Instruction &inst) {
+                                const WinEH::Instruction &inst) {
   uint8_t b, reg;
   switch (static_cast<Win64EH::UnwindOpcodes>(inst.Operation)) {
   default:
@@ -1050,10 +1050,8 @@ static void ARM64EmitUnwindInfo(MCStreamer &streamer, WinEH::FrameInfo *info,
   // Emit epilog unwind instructions
   for (auto &I : info->EpilogMap) {
     auto &EpilogInstrs = I.second;
-    for (uint32_t i = 0; i < EpilogInstrs.size(); i++) {
-      WinEH::Instruction inst = EpilogInstrs[i];
+    for (const WinEH::Instruction &inst : EpilogInstrs)
       ARM64EmitUnwindCode(streamer, info->Begin, inst);
-    }
   }
 
   int32_t BytesMod = CodeWords * 4 - TotalCodeBytes;
@@ -1073,7 +1071,7 @@ static void ARM64EmitRuntimeFunction(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
 
   streamer.emitValueToAlignment(4);
-  EmitSymbolRefWithOfs(streamer, info->Function, info->Begin);
+  EmitSymbolRefWithOfs(streamer, info->Begin, info->Begin);
   if (info->PackedInfo)
     streamer.emitInt32(info->PackedInfo);
   else

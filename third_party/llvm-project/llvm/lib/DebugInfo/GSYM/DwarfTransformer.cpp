@@ -392,11 +392,11 @@ void DwarfTransformer::handleDie(raw_ostream &OS, CUInfo &CUI, DWARFDie Die) {
         if (Range.LowPC != 0) {
           if (!Gsym.isQuiet()) {
             // Unexpected invalid address, emit a warning
-            Log << "warning: DIE has an address range whose start address is "
-                   "not in any executable sections ("
-                << *Gsym.GetValidTextRanges()
-                << ") and will not be processed:\n";
-            Die.dump(Log, 0, DIDumpOptions::getForSingleDIE());
+            OS << "warning: DIE has an address range whose start address is "
+                  "not in any executable sections ("
+               << *Gsym.GetValidTextRanges()
+               << ") and will not be processed:\n";
+            Die.dump(OS, 0, DIDumpOptions::getForSingleDIE());
           }
         }
         break;
@@ -531,7 +531,7 @@ llvm::Error DwarfTransformer::verify(StringRef GsymPath) {
             << LR->Locations.size() << "\n";
         Log << "    " << NumDwarfInlineInfos << " DWARF frames:\n";
         for (size_t Idx = 0; Idx < NumDwarfInlineInfos; ++Idx) {
-          const auto dii = DwarfInlineInfos.getFrame(Idx);
+          const auto &dii = DwarfInlineInfos.getFrame(Idx);
           Log << "    [" << Idx << "]: " << dii.FunctionName << " @ "
               << dii.FileName << ':' << dii.Line << '\n';
         }
@@ -551,7 +551,7 @@ llvm::Error DwarfTransformer::verify(StringRef GsymPath) {
             ++Idx) {
         const auto &gii = LR->Locations[Idx];
         if (Idx < NumDwarfInlineInfos) {
-          const auto dii = DwarfInlineInfos.getFrame(Idx);
+          const auto &dii = DwarfInlineInfos.getFrame(Idx);
           gsymFilename = LR->getSourceFile(Idx);
           // Verify function name
           if (dii.FunctionName.find(gii.Name.str()) != 0)

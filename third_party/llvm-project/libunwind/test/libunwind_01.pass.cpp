@@ -1,3 +1,6 @@
+// TODO: Investigate these failures on x86_64 macOS back deployment
+// UNSUPPORTED: target=x86_64-apple-darwin{{.+}}
+
 #include <libunwind.h>
 #include <stdlib.h>
 #include <string.h>

@@ -33,6 +33,7 @@ class DialectAsmParser;
 class DialectAsmPrinter;
 class ComplexType;
 class FloatType;
+class ValueRange;
 } // namespace mlir
 
 namespace fir {
@@ -57,15 +58,23 @@ bool isa_std_type(mlir::Type t);
 bool isa_fir_or_std_type(mlir::Type t);
 
 /// Is `t` a FIR dialect type that implies a memory (de)reference?
-bool isa_ref_type(mlir::Type t);
+inline bool isa_ref_type(mlir::Type t) {
+  return t.isa<ReferenceType>() || t.isa<PointerType>() || t.isa<HeapType>() ||
+         t.isa<fir::LLVMPointerType>();
+}
+
+/// Is `t` a boxed type?
+inline bool isa_box_type(mlir::Type t) {
+  return t.isa<BoxType>() || t.isa<BoxCharType>() || t.isa<BoxProcType>();
+}
 
 /// Is `t` a type that is always trivially pass-by-reference? Specifically, this
 /// is testing if `t` is a ReferenceType or any box type. Compare this to
 /// conformsWithPassByRef(), which includes pointers and allocatables.
-bool isa_passbyref_type(mlir::Type t);
-
-/// Is `t` a boxed type?
-bool isa_box_type(mlir::Type t);
+inline bool isa_passbyref_type(mlir::Type t) {
+  return t.isa<ReferenceType>() || isa_box_type(t) ||
+         t.isa<mlir::FunctionType>();
+}
 
 /// Is `t` a type that can conform to be pass-by-reference? Depending on the
 /// context, these types may simply demote to pass-by-reference or a reference
@@ -74,8 +83,14 @@ inline bool conformsWithPassByRef(mlir::Type t) {
   return isa_ref_type(t) || isa_box_type(t);
 }
 
+/// Is `t` a derived (record) type?
+inline bool isa_derived(mlir::Type t) { return t.isa<fir::RecordType>(); }
+
 /// Is `t` a FIR dialect aggregate type?
-bool isa_aggregate(mlir::Type t);
+inline bool isa_aggregate(mlir::Type t) {
+  return t.isa<SequenceType>() || fir::isa_derived(t) ||
+         t.isa<mlir::TupleType>();
+}
 
 /// Extract the `Type` pointed to from a FIR memory reference type. If `t` is
 /// not a memory reference type, then returns a null `Type`.
@@ -109,16 +124,57 @@ inline bool isa_complex(mlir::Type t) {
   return t.isa<fir::ComplexType>() || t.isa<mlir::ComplexType>();
 }
 
+/// Is `t` a CHARACTER type? Does not check the length.
+inline bool isa_char(mlir::Type t) { return t.isa<fir::CharacterType>(); }
+
+/// Is `t` a CHARACTER type with a LEN other than 1?
 inline bool isa_char_string(mlir::Type t) {
   if (auto ct = t.dyn_cast_or_null<fir::CharacterType>())
     return ct.getLen() != fir::CharacterType::singleton();
   return false;
 }
 
-/// Is `t` a box type for which it is not possible to deduce the box size.
+/// Is `t` a box type for which it is not possible to deduce the box size?
 /// It is not possible to deduce the size of a box that describes an entity
 /// of unknown rank or type.
 bool isa_unknown_size_box(mlir::Type t);
+
+/// Returns true iff `t` is a fir.char type and has an unknown length.
+inline bool characterWithDynamicLen(mlir::Type t) {
+  if (auto charTy = t.dyn_cast<fir::CharacterType>())
+    return charTy.hasDynamicLen();
+  return false;
+}
+
+/// Returns true iff `seqTy` has either an unknown shape or a non-constant shape
+/// (where rank > 0).
+inline bool sequenceWithNonConstantShape(fir::SequenceType seqTy) {
+  return seqTy.hasUnknownShape() || !seqTy.hasConstantShape();
+}
+
+/// Returns true iff the type `t` does not have a constant size.
+bool hasDynamicSize(mlir::Type t);
+
+/// If `t` is a SequenceType return its element type, otherwise return `t`.
+inline mlir::Type unwrapSequenceType(mlir::Type t) {
+  if (auto seqTy = t.dyn_cast<fir::SequenceType>())
+    return seqTy.getEleTy();
+  return t;
+}
+
+inline mlir::Type unwrapRefType(mlir::Type t) {
+  if (auto eleTy = dyn_cast_ptrEleTy(t))
+    return eleTy;
+  return t;
+}
+
+/// If `t` conforms with a pass-by-reference type (box, ref, ptr, etc.) then
+/// return the element type of `t`. Otherwise, return `t`.
+inline mlir::Type unwrapPassByRefType(mlir::Type t) {
+  if (auto eleTy = dyn_cast_ptrOrBoxEleTy(t))
+    return eleTy;
+  return t;
+}
 
 #ifndef NDEBUG
 // !fir.ptr<X> and !fir.heap<X> where X is !fir.ptr, !fir.heap, or !fir.ref
@@ -127,6 +183,11 @@ inline bool singleIndirectionLevel(mlir::Type ty) {
   return !fir::isa_ref_type(ty);
 }
 #endif
+
+/// Apply the components specified by `path` to `rootTy` to determine the type
+/// of the resulting component element. `rootTy` should be an aggregate type.
+/// Returns null on error.
+mlir::Type applyPathToType(mlir::Type rootTy, mlir::ValueRange path);
 
 } // namespace fir
 

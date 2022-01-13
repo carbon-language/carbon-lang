@@ -218,8 +218,8 @@ int main() {
 // CHECK1-NEXT:    store i8* [[TMP0]], i8** [[DOTADDR]], align 8
 // CHECK1-NEXT:    br label [[ARRAYDESTROY_BODY:%.*]]
 // CHECK1:       arraydestroy.body:
-// CHECK1-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([[STRUCT_S:%.*]], %struct.S* getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0), i64 2), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
-// CHECK1-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
+// CHECK1-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i64 1, i64 0), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
+// CHECK1-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
 // CHECK1-NEXT:    call void @_ZN1SIfED1Ev(%struct.S* nonnull align 4 dereferenceable(4) [[ARRAYDESTROY_ELEMENT]]) #[[ATTR2]]
 // CHECK1-NEXT:    [[ARRAYDESTROY_DONE:%.*]] = icmp eq %struct.S* [[ARRAYDESTROY_ELEMENT]], getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0)
 // CHECK1-NEXT:    br i1 [[ARRAYDESTROY_DONE]], label [[ARRAYDESTROY_DONE1:%.*]], label [[ARRAYDESTROY_BODY]]
@@ -345,11 +345,11 @@ int main() {
 // CHECK1-NEXT:    [[TMP1:%.*]] = load [2 x %struct.S]*, [2 x %struct.S]** [[S_ARR_ADDR]], align 8
 // CHECK1-NEXT:    [[TMP2:%.*]] = load %struct.S*, %struct.S** [[VAR_ADDR]], align 8
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[SIVAR_ADDR]] to i32*
-// CHECK1-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV2:%.*]] = bitcast i64* [[T_VAR_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP3]], i32* [[CONV2]], align 4
 // CHECK1-NEXT:    [[TMP4:%.*]] = load i64, i64* [[T_VAR_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK1-NEXT:    [[CONV3:%.*]] = bitcast i64* [[SIVAR_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP5]], i32* [[CONV3]], align 4
 // CHECK1-NEXT:    [[TMP6:%.*]] = load i64, i64* [[SIVAR_CASTED]], align 8
@@ -446,7 +446,7 @@ int main() {
 // CHECK1-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP14]], 1
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i32 0, [[MUL]]
 // CHECK1-NEXT:    store i32 [[ADD]], i32* [[I]], align 4
-// CHECK1-NEXT:    [[TMP15:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP15:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[TMP16:%.*]] = load i32, i32* [[I]], align 4
 // CHECK1-NEXT:    [[IDXPROM:%.*]] = sext i32 [[TMP16]] to i64
 // CHECK1-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [2 x i32], [2 x i32]* [[VEC2]], i64 0, i64 [[IDXPROM]]
@@ -458,9 +458,9 @@ int main() {
 // CHECK1-NEXT:    [[TMP19:%.*]] = bitcast %struct.S* [[VAR5]] to i8*
 // CHECK1-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 [[TMP18]], i8* align 4 [[TMP19]], i64 4, i1 false)
 // CHECK1-NEXT:    [[TMP20:%.*]] = load i32, i32* [[I]], align 4
-// CHECK1-NEXT:    [[TMP21:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP21:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK1-NEXT:    [[ADD10:%.*]] = add nsw i32 [[TMP21]], [[TMP20]]
-// CHECK1-NEXT:    store i32 [[ADD10]], i32* [[CONV1]], align 8
+// CHECK1-NEXT:    store i32 [[ADD10]], i32* [[CONV1]], align 4
 // CHECK1-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK1:       omp.body.continue:
 // CHECK1-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -694,7 +694,7 @@ int main() {
 // CHECK1-NEXT:    [[TMP1:%.*]] = load [2 x %struct.S.0]*, [2 x %struct.S.0]** [[S_ARR_ADDR]], align 8
 // CHECK1-NEXT:    [[TMP2:%.*]] = load %struct.S.0*, %struct.S.0** [[VAR_ADDR]], align 8
 // CHECK1-NEXT:    store %struct.S.0* [[TMP2]], %struct.S.0** [[TMP]], align 8
-// CHECK1-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[T_VAR_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP3]], i32* [[CONV1]], align 4
 // CHECK1-NEXT:    [[TMP4:%.*]] = load i64, i64* [[T_VAR_CASTED]], align 8
@@ -794,7 +794,7 @@ int main() {
 // CHECK1-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP15]], 1
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i32 0, [[MUL]]
 // CHECK1-NEXT:    store i32 [[ADD]], i32* [[I]], align 4
-// CHECK1-NEXT:    [[TMP16:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP16:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[TMP17:%.*]] = load i32, i32* [[I]], align 4
 // CHECK1-NEXT:    [[IDXPROM:%.*]] = sext i32 [[TMP17]] to i64
 // CHECK1-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [2 x i32], [2 x i32]* [[VEC2]], i64 0, i64 [[IDXPROM]]
@@ -1008,8 +1008,8 @@ int main() {
 // CHECK2-NEXT:    store i8* [[TMP0]], i8** [[DOTADDR]], align 8
 // CHECK2-NEXT:    br label [[ARRAYDESTROY_BODY:%.*]]
 // CHECK2:       arraydestroy.body:
-// CHECK2-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([[STRUCT_S:%.*]], %struct.S* getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0), i64 2), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
-// CHECK2-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
+// CHECK2-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i64 1, i64 0), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
+// CHECK2-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
 // CHECK2-NEXT:    call void @_ZN1SIfED1Ev(%struct.S* nonnull align 4 dereferenceable(4) [[ARRAYDESTROY_ELEMENT]]) #[[ATTR2]]
 // CHECK2-NEXT:    [[ARRAYDESTROY_DONE:%.*]] = icmp eq %struct.S* [[ARRAYDESTROY_ELEMENT]], getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0)
 // CHECK2-NEXT:    br i1 [[ARRAYDESTROY_DONE]], label [[ARRAYDESTROY_DONE1:%.*]], label [[ARRAYDESTROY_BODY]]
@@ -1135,11 +1135,11 @@ int main() {
 // CHECK2-NEXT:    [[TMP1:%.*]] = load [2 x %struct.S]*, [2 x %struct.S]** [[S_ARR_ADDR]], align 8
 // CHECK2-NEXT:    [[TMP2:%.*]] = load %struct.S*, %struct.S** [[VAR_ADDR]], align 8
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[SIVAR_ADDR]] to i32*
-// CHECK2-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV2:%.*]] = bitcast i64* [[T_VAR_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP3]], i32* [[CONV2]], align 4
 // CHECK2-NEXT:    [[TMP4:%.*]] = load i64, i64* [[T_VAR_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK2-NEXT:    [[CONV3:%.*]] = bitcast i64* [[SIVAR_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP5]], i32* [[CONV3]], align 4
 // CHECK2-NEXT:    [[TMP6:%.*]] = load i64, i64* [[SIVAR_CASTED]], align 8
@@ -1236,7 +1236,7 @@ int main() {
 // CHECK2-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP14]], 1
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i32 0, [[MUL]]
 // CHECK2-NEXT:    store i32 [[ADD]], i32* [[I]], align 4
-// CHECK2-NEXT:    [[TMP15:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP15:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[TMP16:%.*]] = load i32, i32* [[I]], align 4
 // CHECK2-NEXT:    [[IDXPROM:%.*]] = sext i32 [[TMP16]] to i64
 // CHECK2-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [2 x i32], [2 x i32]* [[VEC2]], i64 0, i64 [[IDXPROM]]
@@ -1248,9 +1248,9 @@ int main() {
 // CHECK2-NEXT:    [[TMP19:%.*]] = bitcast %struct.S* [[VAR5]] to i8*
 // CHECK2-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 [[TMP18]], i8* align 4 [[TMP19]], i64 4, i1 false)
 // CHECK2-NEXT:    [[TMP20:%.*]] = load i32, i32* [[I]], align 4
-// CHECK2-NEXT:    [[TMP21:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP21:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK2-NEXT:    [[ADD10:%.*]] = add nsw i32 [[TMP21]], [[TMP20]]
-// CHECK2-NEXT:    store i32 [[ADD10]], i32* [[CONV1]], align 8
+// CHECK2-NEXT:    store i32 [[ADD10]], i32* [[CONV1]], align 4
 // CHECK2-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK2:       omp.body.continue:
 // CHECK2-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -1484,7 +1484,7 @@ int main() {
 // CHECK2-NEXT:    [[TMP1:%.*]] = load [2 x %struct.S.0]*, [2 x %struct.S.0]** [[S_ARR_ADDR]], align 8
 // CHECK2-NEXT:    [[TMP2:%.*]] = load %struct.S.0*, %struct.S.0** [[VAR_ADDR]], align 8
 // CHECK2-NEXT:    store %struct.S.0* [[TMP2]], %struct.S.0** [[TMP]], align 8
-// CHECK2-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP3:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[T_VAR_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP3]], i32* [[CONV1]], align 4
 // CHECK2-NEXT:    [[TMP4:%.*]] = load i64, i64* [[T_VAR_CASTED]], align 8
@@ -1584,7 +1584,7 @@ int main() {
 // CHECK2-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP15]], 1
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i32 0, [[MUL]]
 // CHECK2-NEXT:    store i32 [[ADD]], i32* [[I]], align 4
-// CHECK2-NEXT:    [[TMP16:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP16:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[TMP17:%.*]] = load i32, i32* [[I]], align 4
 // CHECK2-NEXT:    [[IDXPROM:%.*]] = sext i32 [[TMP17]] to i64
 // CHECK2-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [2 x i32], [2 x i32]* [[VEC2]], i64 0, i64 [[IDXPROM]]
@@ -1798,8 +1798,8 @@ int main() {
 // CHECK3-NEXT:    store i8* [[TMP0]], i8** [[DOTADDR]], align 4
 // CHECK3-NEXT:    br label [[ARRAYDESTROY_BODY:%.*]]
 // CHECK3:       arraydestroy.body:
-// CHECK3-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([[STRUCT_S:%.*]], %struct.S* getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0), i32 2), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
-// CHECK3-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i32 -1
+// CHECK3-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i64 1, i32 0), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
+// CHECK3-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i32 -1
 // CHECK3-NEXT:    call void @_ZN1SIfED1Ev(%struct.S* nonnull align 4 dereferenceable(4) [[ARRAYDESTROY_ELEMENT]]) #[[ATTR2]]
 // CHECK3-NEXT:    [[ARRAYDESTROY_DONE:%.*]] = icmp eq %struct.S* [[ARRAYDESTROY_ELEMENT]], getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0)
 // CHECK3-NEXT:    br i1 [[ARRAYDESTROY_DONE]], label [[ARRAYDESTROY_DONE1:%.*]], label [[ARRAYDESTROY_BODY]]
@@ -2572,8 +2572,8 @@ int main() {
 // CHECK4-NEXT:    store i8* [[TMP0]], i8** [[DOTADDR]], align 4
 // CHECK4-NEXT:    br label [[ARRAYDESTROY_BODY:%.*]]
 // CHECK4:       arraydestroy.body:
-// CHECK4-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([[STRUCT_S:%.*]], %struct.S* getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0), i32 2), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
-// CHECK4-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i32 -1
+// CHECK4-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i64 1, i32 0), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
+// CHECK4-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i32 -1
 // CHECK4-NEXT:    call void @_ZN1SIfED1Ev(%struct.S* nonnull align 4 dereferenceable(4) [[ARRAYDESTROY_ELEMENT]]) #[[ATTR2]]
 // CHECK4-NEXT:    [[ARRAYDESTROY_DONE:%.*]] = icmp eq %struct.S* [[ARRAYDESTROY_ELEMENT]], getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0)
 // CHECK4-NEXT:    br i1 [[ARRAYDESTROY_DONE]], label [[ARRAYDESTROY_DONE1:%.*]], label [[ARRAYDESTROY_BODY]]
@@ -3346,8 +3346,8 @@ int main() {
 // CHECK9-NEXT:    store i8* [[TMP0]], i8** [[DOTADDR]], align 8
 // CHECK9-NEXT:    br label [[ARRAYDESTROY_BODY:%.*]]
 // CHECK9:       arraydestroy.body:
-// CHECK9-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([[STRUCT_S:%.*]], %struct.S* getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0), i64 2), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
-// CHECK9-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
+// CHECK9-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i64 1, i64 0), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
+// CHECK9-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
 // CHECK9-NEXT:    call void @_ZN1SIfED1Ev(%struct.S* nonnull align 4 dereferenceable(4) [[ARRAYDESTROY_ELEMENT]]) #[[ATTR2]]
 // CHECK9-NEXT:    [[ARRAYDESTROY_DONE:%.*]] = icmp eq %struct.S* [[ARRAYDESTROY_ELEMENT]], getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0)
 // CHECK9-NEXT:    br i1 [[ARRAYDESTROY_DONE]], label [[ARRAYDESTROY_DONE1:%.*]], label [[ARRAYDESTROY_BODY]]
@@ -3407,7 +3407,7 @@ int main() {
 // CHECK9-NEXT:    [[CONV1:%.*]] = bitcast i64* [[G1_ADDR]] to i32*
 // CHECK9-NEXT:    [[CONV2:%.*]] = bitcast i64* [[SIVAR_ADDR]] to i32*
 // CHECK9-NEXT:    store i32* [[CONV1]], i32** [[TMP]], align 8
-// CHECK9-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV3:%.*]] = bitcast i64* [[G_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP0]], i32* [[CONV3]], align 4
 // CHECK9-NEXT:    [[TMP1:%.*]] = load i64, i64* [[G_CASTED]], align 8
@@ -3416,7 +3416,7 @@ int main() {
 // CHECK9-NEXT:    [[CONV4:%.*]] = bitcast i64* [[G1_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP3]], i32* [[CONV4]], align 4
 // CHECK9-NEXT:    [[TMP4:%.*]] = load i64, i64* [[G1_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK9-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK9-NEXT:    [[CONV5:%.*]] = bitcast i64* [[SIVAR_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP5]], i32* [[CONV5]], align 4
 // CHECK9-NEXT:    [[TMP6:%.*]] = load i64, i64* [[SIVAR_CASTED]], align 8
@@ -3481,10 +3481,10 @@ int main() {
 // CHECK9-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP7]], 1
 // CHECK9-NEXT:    [[ADD:%.*]] = add nsw i32 0, [[MUL]]
 // CHECK9-NEXT:    store i32 [[ADD]], i32* [[I]], align 4
-// CHECK9-NEXT:    store i32 1, i32* [[CONV]], align 8
+// CHECK9-NEXT:    store i32 1, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[TMP8:%.*]] = load i32*, i32** [[TMP]], align 8
 // CHECK9-NEXT:    store volatile i32 1, i32* [[TMP8]], align 4
-// CHECK9-NEXT:    store i32 2, i32* [[CONV2]], align 8
+// CHECK9-NEXT:    store i32 2, i32* [[CONV2]], align 4
 // CHECK9-NEXT:    [[TMP9:%.*]] = getelementptr inbounds [[CLASS_ANON_0]], %class.anon.0* [[REF_TMP]], i32 0, i32 0
 // CHECK9-NEXT:    store i32* [[CONV]], i32** [[TMP9]], align 8
 // CHECK9-NEXT:    [[TMP10:%.*]] = getelementptr inbounds [[CLASS_ANON_0]], %class.anon.0* [[REF_TMP]], i32 0, i32 1
@@ -3603,8 +3603,8 @@ int main() {
 // CHECK10-NEXT:    store i8* [[TMP0]], i8** [[DOTADDR]], align 8
 // CHECK10-NEXT:    br label [[ARRAYDESTROY_BODY:%.*]]
 // CHECK10:       arraydestroy.body:
-// CHECK10-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([[STRUCT_S:%.*]], %struct.S* getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0), i64 2), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
-// CHECK10-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
+// CHECK10-NEXT:    [[ARRAYDESTROY_ELEMENTPAST:%.*]] = phi %struct.S* [ getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i64 1, i64 0), [[ENTRY:%.*]] ], [ [[ARRAYDESTROY_ELEMENT:%.*]], [[ARRAYDESTROY_BODY]] ]
+// CHECK10-NEXT:    [[ARRAYDESTROY_ELEMENT]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[ARRAYDESTROY_ELEMENTPAST]], i64 -1
 // CHECK10-NEXT:    call void @_ZN1SIfED1Ev(%struct.S* nonnull align 4 dereferenceable(4) [[ARRAYDESTROY_ELEMENT]]) #[[ATTR2]]
 // CHECK10-NEXT:    [[ARRAYDESTROY_DONE:%.*]] = icmp eq %struct.S* [[ARRAYDESTROY_ELEMENT]], getelementptr inbounds ([2 x %struct.S], [2 x %struct.S]* @s_arr, i32 0, i32 0)
 // CHECK10-NEXT:    br i1 [[ARRAYDESTROY_DONE]], label [[ARRAYDESTROY_DONE1:%.*]], label [[ARRAYDESTROY_BODY]]
@@ -3664,7 +3664,7 @@ int main() {
 // CHECK10-NEXT:    [[CONV1:%.*]] = bitcast i64* [[G1_ADDR]] to i32*
 // CHECK10-NEXT:    [[CONV2:%.*]] = bitcast i64* [[SIVAR_ADDR]] to i32*
 // CHECK10-NEXT:    store i32* [[CONV1]], i32** [[TMP]], align 8
-// CHECK10-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV3:%.*]] = bitcast i64* [[G_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP0]], i32* [[CONV3]], align 4
 // CHECK10-NEXT:    [[TMP1:%.*]] = load i64, i64* [[G_CASTED]], align 8
@@ -3673,7 +3673,7 @@ int main() {
 // CHECK10-NEXT:    [[CONV4:%.*]] = bitcast i64* [[G1_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP3]], i32* [[CONV4]], align 4
 // CHECK10-NEXT:    [[TMP4:%.*]] = load i64, i64* [[G1_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK10-NEXT:    [[TMP5:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK10-NEXT:    [[CONV5:%.*]] = bitcast i64* [[SIVAR_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP5]], i32* [[CONV5]], align 4
 // CHECK10-NEXT:    [[TMP6:%.*]] = load i64, i64* [[SIVAR_CASTED]], align 8
@@ -3738,10 +3738,10 @@ int main() {
 // CHECK10-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP7]], 1
 // CHECK10-NEXT:    [[ADD:%.*]] = add nsw i32 0, [[MUL]]
 // CHECK10-NEXT:    store i32 [[ADD]], i32* [[I]], align 4
-// CHECK10-NEXT:    store i32 1, i32* [[CONV]], align 8
+// CHECK10-NEXT:    store i32 1, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[TMP8:%.*]] = load i32*, i32** [[TMP]], align 8
 // CHECK10-NEXT:    store volatile i32 1, i32* [[TMP8]], align 4
-// CHECK10-NEXT:    store i32 2, i32* [[CONV2]], align 8
+// CHECK10-NEXT:    store i32 2, i32* [[CONV2]], align 4
 // CHECK10-NEXT:    [[TMP9:%.*]] = getelementptr inbounds [[CLASS_ANON_0]], %class.anon.0* [[REF_TMP]], i32 0, i32 0
 // CHECK10-NEXT:    store i32* [[CONV]], i32** [[TMP9]], align 8
 // CHECK10-NEXT:    [[TMP10:%.*]] = getelementptr inbounds [[CLASS_ANON_0]], %class.anon.0* [[REF_TMP]], i32 0, i32 1
@@ -3779,5 +3779,4 @@ int main() {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    call void @__tgt_register_requires(i64 1)
 // CHECK10-NEXT:    ret void
-//
 //

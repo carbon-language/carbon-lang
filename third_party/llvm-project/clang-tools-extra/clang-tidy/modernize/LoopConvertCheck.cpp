@@ -304,8 +304,8 @@ StatementMatcher makePseudoArrayLoopMatcher() {
 static const Expr *getContainerFromBeginEndCall(const Expr *Init, bool IsBegin,
                                                 bool *IsArrow, bool IsReverse) {
   // FIXME: Maybe allow declaration/initialization outside of the for loop.
-  const auto *TheCall =
-      dyn_cast_or_null<CXXMemberCallExpr>(digThroughConstructors(Init));
+  const auto *TheCall = dyn_cast_or_null<CXXMemberCallExpr>(
+      digThroughConstructorsConversions(Init));
   if (!TheCall || TheCall->getNumArgs() != 0)
     return nullptr;
 
@@ -829,7 +829,7 @@ bool LoopConvertCheck::isConvertible(ASTContext *Context,
   } else if (FixerKind == LFK_PseudoArray) {
     // This call is required to obtain the container.
     const auto *EndCall = Nodes.getNodeAs<CXXMemberCallExpr>(EndCallName);
-    if (!EndCall || !dyn_cast<MemberExpr>(EndCall->getCallee()))
+    if (!EndCall || !isa<MemberExpr>(EndCall->getCallee()))
       return false;
   }
   return true;

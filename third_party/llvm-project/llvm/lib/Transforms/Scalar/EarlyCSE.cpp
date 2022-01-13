@@ -293,7 +293,7 @@ static unsigned getHashValueImpl(SimpleValue Val) {
   // TODO: Extend this to handle intrinsics with >2 operands where the 1st
   //       2 operands are commutative.
   auto *II = dyn_cast<IntrinsicInst>(Inst);
-  if (II && II->isCommutative() && II->getNumArgOperands() == 2) {
+  if (II && II->isCommutative() && II->arg_size() == 2) {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
     if (LHS > RHS)
       std::swap(LHS, RHS);
@@ -363,7 +363,7 @@ static bool isEqualImpl(SimpleValue LHS, SimpleValue RHS) {
   auto *LII = dyn_cast<IntrinsicInst>(LHSI);
   auto *RII = dyn_cast<IntrinsicInst>(RHSI);
   if (LII && RII && LII->getIntrinsicID() == RII->getIntrinsicID() &&
-      LII->isCommutative() && LII->getNumArgOperands() == 2) {
+      LII->isCommutative() && LII->arg_size() == 2) {
     return LII->getArgOperand(0) == RII->getArgOperand(1) &&
            LII->getArgOperand(1) == RII->getArgOperand(0);
   }
@@ -827,10 +827,13 @@ private:
                         const ParseMemoryInst &Later);
 
   Value *getOrCreateResult(Value *Inst, Type *ExpectedType) const {
+    // TODO: We could insert relevant casts on type mismatch here.
     if (auto *LI = dyn_cast<LoadInst>(Inst))
-      return LI;
-    if (auto *SI = dyn_cast<StoreInst>(Inst))
-      return SI->getValueOperand();
+      return LI->getType() == ExpectedType ? LI : nullptr;
+    else if (auto *SI = dyn_cast<StoreInst>(Inst)) {
+      Value *V = SI->getValueOperand();
+      return V->getType() == ExpectedType ? V : nullptr;
+    }
     assert(isa<IntrinsicInst>(Inst) && "Instruction not supported");
     auto *II = cast<IntrinsicInst>(Inst);
     if (isHandledNonTargetIntrinsic(II->getIntrinsicID()))
@@ -1265,6 +1268,12 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       continue;
     }
 
+    // Skip pseudoprobe intrinsics, for the same reason as assume intrinsics.
+    if (match(&Inst, m_Intrinsic<Intrinsic::pseudoprobe>())) {
+      LLVM_DEBUG(dbgs() << "EarlyCSE skipping pseudoprobe: " << Inst << '\n');
+      continue;
+    }
+
     // We can skip all invariant.start intrinsics since they only read memory,
     // and we can forward values across it. For invariant starts without
     // invariant ends, we can use the fact that the invariantness never ends to
@@ -1360,8 +1369,16 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
           LLVM_DEBUG(dbgs() << "Skipping due to debug counter\n");
           continue;
         }
-        if (auto *I = dyn_cast<Instruction>(V))
-          I->andIRFlags(&Inst);
+        if (auto *I = dyn_cast<Instruction>(V)) {
+          // If I being poison triggers UB, there is no need to drop those
+          // flags. Otherwise, only retain flags present on both I and Inst.
+          // TODO: Currently some fast-math flags are not treated as
+          // poison-generating even though they should. Until this is fixed,
+          // always retain flags present on both I and Inst for floating point
+          // instructions.
+          if (isa<FPMathOperator>(I) || (I->hasPoisonGeneratingFlags() && !programUndefinedIfPoison(I)))
+            I->andIRFlags(&Inst);
+        }
         Inst.replaceAllUsesWith(V);
         salvageKnowledge(&Inst, &AC);
         removeMSSA(Inst);
@@ -1640,6 +1657,16 @@ PreservedAnalyses EarlyCSEPass::run(Function &F,
   if (UseMemorySSA)
     PA.preserve<MemorySSAAnalysis>();
   return PA;
+}
+
+void EarlyCSEPass::printPipeline(
+    raw_ostream &OS, function_ref<StringRef(StringRef)> MapClassName2PassName) {
+  static_cast<PassInfoMixin<EarlyCSEPass> *>(this)->printPipeline(
+      OS, MapClassName2PassName);
+  OS << "<";
+  if (UseMemorySSA)
+    OS << "memssa";
+  OS << ">";
 }
 
 namespace {

@@ -1,4 +1,4 @@
-//===- TestVectorToVectorConversion.cpp - Test VectorTransfers lowering ---===//
+//===- TestVectorTransforms.cpp - Test Vector transforms and lowerings ----===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -10,28 +10,34 @@
 
 #include "mlir/Analysis/SliceAnalysis.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
+#include "mlir/Dialect/Linalg/Passes.h"
+#include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
-#include "mlir/Dialect/Vector/VectorOps.h"
 #include "mlir/Dialect/Vector/VectorTransforms.h"
 #include "mlir/Pass/Pass.h"
+#include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 using namespace mlir;
+using namespace mlir::linalg;
 using namespace mlir::vector;
+
 namespace {
 
-struct TestVectorToVectorConversion
-    : public PassWrapper<TestVectorToVectorConversion, FunctionPass> {
-  TestVectorToVectorConversion() = default;
-  TestVectorToVectorConversion(const TestVectorToVectorConversion &pass) {}
+struct TestVectorToVectorLowering
+    : public PassWrapper<TestVectorToVectorLowering, FunctionPass> {
+  TestVectorToVectorLowering() = default;
+  TestVectorToVectorLowering(const TestVectorToVectorLowering &pass)
+      : PassWrapper(pass) {}
   StringRef getArgument() const final {
-    return "test-vector-to-vector-conversion";
+    return "test-vector-to-vector-lowering";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns between ops in the vector dialect";
+    return "Test lowering patterns between ops in the vector dialect";
   }
 
   void getDependentDialects(DialectRegistry &registry) const override {
@@ -59,7 +65,7 @@ struct TestVectorToVectorConversion
 private:
   // Return the target shape based on op type.
   static Optional<SmallVector<int64_t, 4>> getShape(Operation *op) {
-    if (isa<AddFOp, SelectOp, CmpFOp>(op))
+    if (isa<arith::AddFOp, SelectOp, arith::CmpFOp>(op))
       return SmallVector<int64_t, 4>(2, 2);
     if (isa<vector::ContractionOp>(op))
       return SmallVector<int64_t, 4>(3, 2);
@@ -90,31 +96,27 @@ private:
   }
 
   static LogicalResult filter(Operation *op) {
-    return success(isa<AddFOp, SelectOp, CmpFOp, ContractionOp, TransferReadOp,
-                       TransferWriteOp>(op));
+    return success(isa<arith::AddFOp, SelectOp, arith::CmpFOp, ContractionOp,
+                       TransferReadOp, TransferWriteOp>(op));
   }
 };
 
-struct TestVectorContractionConversion
-    : public PassWrapper<TestVectorContractionConversion, FunctionPass> {
+struct TestVectorContractionLowering
+    : public PassWrapper<TestVectorContractionLowering, FunctionPass> {
   StringRef getArgument() const final {
-    return "test-vector-contraction-conversion";
+    return "test-vector-contraction-lowering";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns that lower contract ops in the vector "
+    return "Test lowering patterns that lower contract ops in the vector "
            "dialect";
   }
-  TestVectorContractionConversion() = default;
-  TestVectorContractionConversion(const TestVectorContractionConversion &pass) {
-  }
+  TestVectorContractionLowering() = default;
+  TestVectorContractionLowering(const TestVectorContractionLowering &pass)
+      : PassWrapper(pass) {}
 
   Option<bool> lowerToFlatMatrix{
       *this, "vector-lower-matrix-intrinsics",
       llvm::cl::desc("Lower vector.contract to llvm.intr.matrix.multiply"),
-      llvm::cl::init(false)};
-  Option<bool> lowerToFlatTranspose{
-      *this, "vector-flat-transpose",
-      llvm::cl::desc("Lower 2-D vector.transpose to vector.flat_transpose"),
       llvm::cl::init(false)};
   Option<bool> lowerToOuterProduct{
       *this, "vector-outerproduct",
@@ -159,14 +161,88 @@ struct TestVectorContractionConversion
     VectorContractLowering contractLowering = VectorContractLowering::Dot;
     if (lowerToFlatMatrix)
       contractLowering = VectorContractLowering::Matmul;
-    VectorTransposeLowering transposeLowering =
-        VectorTransposeLowering::EltWise;
-    if (lowerToFlatTranspose)
-      transposeLowering = VectorTransposeLowering::Flat;
-    VectorTransformsOptions options{contractLowering, transposeLowering};
+    VectorMultiReductionLowering vectorMultiReductionLowering =
+        VectorMultiReductionLowering::InnerParallel;
+    VectorTransformsOptions options{contractLowering,
+                                    vectorMultiReductionLowering,
+                                    VectorTransposeLowering()};
+    populateVectorBroadcastLoweringPatterns(patterns);
     populateVectorContractLoweringPatterns(patterns, options);
-    populateVectorTransposeLoweringPatterns(patterns, options);
+    populateVectorMaskOpLoweringPatterns(patterns);
+    populateVectorShapeCastLoweringPatterns(patterns);
     (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
+  }
+};
+
+struct TestVectorTransposeLowering
+    : public PassWrapper<TestVectorTransposeLowering, FunctionPass> {
+  StringRef getArgument() const final {
+    return "test-vector-transpose-lowering";
+  }
+  StringRef getDescription() const final {
+    return "Test lowering patterns that lower contract ops in the vector "
+           "dialect";
+  }
+  TestVectorTransposeLowering() = default;
+  TestVectorTransposeLowering(const TestVectorTransposeLowering &pass)
+      : PassWrapper(pass) {}
+
+  Option<bool> lowerToEltwise{
+      *this, "eltwise",
+      llvm::cl::desc("Lower 2-D vector.transpose to eltwise insert/extract"),
+      llvm::cl::init(false)};
+  Option<bool> lowerToFlatTranspose{
+      *this, "flat",
+      llvm::cl::desc("Lower 2-D vector.transpose to vector.flat_transpose"),
+      llvm::cl::init(false)};
+  Option<bool> lowerToShuffleTranspose{
+      *this, "shuffle",
+      llvm::cl::desc("Lower 2-D vector.transpose to shape_cast + shuffle"),
+      llvm::cl::init(false)};
+  Option<bool> lowerToAvx2{
+      *this, "avx2",
+      llvm::cl::desc("Lower vector.transpose to avx2-specific patterns"),
+      llvm::cl::init(false)};
+
+  void getDependentDialects(DialectRegistry &registry) const override {
+    registry.insert<LLVM::LLVMDialect>();
+  }
+
+  void runOnFunction() override {
+    RewritePatternSet patterns(&getContext());
+
+    // Test on one pattern in isolation.
+    // Explicitly disable shape_cast lowering.
+    LinalgVectorLoweringOptions options = LinalgVectorLoweringOptions()
+                                              .enableVectorTransposeLowering()
+                                              .enableShapeCastLowering(false);
+    if (lowerToEltwise) {
+      options = options.setVectorTransformsOptions(
+          VectorTransformsOptions().setVectorTransposeLowering(
+              VectorTransposeLowering::EltWise));
+    }
+    if (lowerToFlatTranspose) {
+      options = options.setVectorTransformsOptions(
+          VectorTransformsOptions().setVectorTransposeLowering(
+              VectorTransposeLowering::Flat));
+    }
+    if (lowerToShuffleTranspose) {
+      options = options.setVectorTransformsOptions(
+          VectorTransformsOptions().setVectorTransposeLowering(
+              VectorTransposeLowering::Shuffle));
+    }
+    if (lowerToAvx2) {
+      options = options.enableAVX2Lowering().setAVX2LoweringOptions(
+          x86vector::avx2::LoweringOptions().setTransposeOptions(
+              x86vector::avx2::TransposeLoweringOptions()
+                  .lower4x8xf32()
+                  .lower8x8xf32()));
+    }
+
+    OpPassManager dynamicPM("builtin.func");
+    dynamicPM.addPass(createLinalgStrategyLowerVectorsPass(options));
+    if (failed(runPipeline(dynamicPM, getFunction())))
+      return signalPassFailure();
   }
 };
 
@@ -176,11 +252,12 @@ struct TestVectorUnrollingPatterns
     return "test-vector-unrolling-patterns";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns to unroll contract ops in the vector "
+    return "Test lowering patterns to unroll contract ops in the vector "
            "dialect";
   }
   TestVectorUnrollingPatterns() = default;
-  TestVectorUnrollingPatterns(const TestVectorUnrollingPatterns &pass) {}
+  TestVectorUnrollingPatterns(const TestVectorUnrollingPatterns &pass)
+      : PassWrapper(pass) {}
   void runOnFunction() override {
     MLIRContext *ctx = &getContext();
     RewritePatternSet patterns(ctx);
@@ -188,7 +265,7 @@ struct TestVectorUnrollingPatterns
         patterns, UnrollVectorOptions()
                       .setNativeShape(ArrayRef<int64_t>{2, 2})
                       .setFilterConstraint([](Operation *op) {
-                        return success(isa<AddFOp, vector::FMAOp>(op));
+                        return success(isa<arith::AddFOp, vector::FMAOp>(op));
                       }));
 
     if (unrollBasedOnType) {
@@ -235,11 +312,12 @@ struct TestVectorDistributePatterns
     return "test-vector-distribute-patterns";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns to distribute vector ops in the vector "
+    return "Test lowering patterns to distribute vector ops in the vector "
            "dialect";
   }
   TestVectorDistributePatterns() = default;
-  TestVectorDistributePatterns(const TestVectorDistributePatterns &pass) {}
+  TestVectorDistributePatterns(const TestVectorDistributePatterns &pass)
+      : PassWrapper(pass) {}
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<VectorDialect>();
     registry.insert<AffineDialect>();
@@ -252,7 +330,7 @@ struct TestVectorDistributePatterns
     MLIRContext *ctx = &getContext();
     RewritePatternSet patterns(ctx);
     FuncOp func = getFunction();
-    func.walk([&](AddFOp op) {
+    func.walk([&](arith::AddFOp op) {
       OpBuilder builder(op);
       if (auto vecType = op.getType().dyn_cast<VectorType>()) {
         SmallVector<int64_t, 2> mul;
@@ -289,10 +367,11 @@ struct TestVectorToLoopPatterns
     : public PassWrapper<TestVectorToLoopPatterns, FunctionPass> {
   StringRef getArgument() const final { return "test-vector-to-forloop"; }
   StringRef getDescription() const final {
-    return "Test conversion patterns to break up a vector op into a for loop";
+    return "Test lowering patterns to break up a vector op into a for loop";
   }
   TestVectorToLoopPatterns() = default;
-  TestVectorToLoopPatterns(const TestVectorToLoopPatterns &pass) {}
+  TestVectorToLoopPatterns(const TestVectorToLoopPatterns &pass)
+      : PassWrapper(pass) {}
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<VectorDialect>();
     registry.insert<AffineDialect>();
@@ -305,29 +384,22 @@ struct TestVectorToLoopPatterns
     MLIRContext *ctx = &getContext();
     RewritePatternSet patterns(ctx);
     FuncOp func = getFunction();
-    func.walk([&](AddFOp op) {
+    func.walk([&](arith::AddFOp op) {
       // Check that the operation type can be broken down into a loop.
       VectorType type = op.getType().dyn_cast<VectorType>();
       if (!type || type.getRank() != 1 ||
           type.getNumElements() % multiplicity != 0)
         return mlir::WalkResult::advance();
       auto filterAlloc = [](Operation *op) {
-        if (isa<ConstantOp, memref::AllocOp, CallOp>(op))
-          return false;
-        return true;
+        return !isa<arith::ConstantOp, memref::AllocOp, CallOp>(op);
       };
       auto dependentOps = getSlice(op, filterAlloc);
       // Create a loop and move instructions from the Op slice into the loop.
       OpBuilder builder(op);
-      auto zero = builder.create<ConstantOp>(
-          op.getLoc(), builder.getIndexType(),
-          builder.getIntegerAttr(builder.getIndexType(), 0));
-      auto one = builder.create<ConstantOp>(
-          op.getLoc(), builder.getIndexType(),
-          builder.getIntegerAttr(builder.getIndexType(), 1));
-      auto numIter = builder.create<ConstantOp>(
-          op.getLoc(), builder.getIndexType(),
-          builder.getIntegerAttr(builder.getIndexType(), multiplicity));
+      auto zero = builder.create<arith::ConstantIndexOp>(op.getLoc(), 0);
+      auto one = builder.create<arith::ConstantIndexOp>(op.getLoc(), 1);
+      auto numIter =
+          builder.create<arith::ConstantIndexOp>(op.getLoc(), multiplicity);
       auto forOp = builder.create<scf::ForOp>(op.getLoc(), zero, numIter, one);
       for (Operation *it : dependentOps) {
         it->moveBefore(forOp.getBody()->getTerminator());
@@ -357,7 +429,7 @@ struct TestVectorTransferUnrollingPatterns
     return "test-vector-transfer-unrolling-patterns";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns to unroll transfer ops in the vector "
+    return "Test lowering patterns to unroll transfer ops in the vector "
            "dialect";
   }
   void runOnFunction() override {
@@ -383,12 +455,13 @@ struct TestVectorTransferFullPartialSplitPatterns
     return "test-vector-transfer-full-partial-split";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns to split "
+    return "Test lowering patterns to split "
            "transfer ops via scf.if + linalg ops";
   }
   TestVectorTransferFullPartialSplitPatterns() = default;
   TestVectorTransferFullPartialSplitPatterns(
-      const TestVectorTransferFullPartialSplitPatterns &pass) {}
+      const TestVectorTransferFullPartialSplitPatterns &pass)
+      : PassWrapper(pass) {}
 
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<AffineDialect, linalg::LinalgDialect, memref::MemRefDialect,
@@ -425,13 +498,13 @@ struct TestVectorTransferOpt
 struct TestVectorTransferLoweringPatterns
     : public PassWrapper<TestVectorTransferLoweringPatterns, FunctionPass> {
   void getDependentDialects(DialectRegistry &registry) const override {
-    registry.insert<memref::MemRefDialect>();
+    registry.insert<tensor::TensorDialect, memref::MemRefDialect>();
   }
   StringRef getArgument() const final {
     return "test-vector-transfer-lowering-patterns";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns to lower transfer ops to other vector ops";
+    return "Test lowering patterns to lower transfer ops to other vector ops";
   }
   void runOnFunction() override {
     RewritePatternSet patterns(&getContext());
@@ -446,7 +519,8 @@ struct TestVectorMultiReductionLoweringPatterns
                          FunctionPass> {
   TestVectorMultiReductionLoweringPatterns() = default;
   TestVectorMultiReductionLoweringPatterns(
-      const TestVectorMultiReductionLoweringPatterns &pass) {}
+      const TestVectorMultiReductionLoweringPatterns &pass)
+      : PassWrapper(pass) {}
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<memref::MemRefDialect>();
   }
@@ -454,7 +528,7 @@ struct TestVectorMultiReductionLoweringPatterns
     return "test-vector-multi-reduction-lowering-patterns";
   }
   StringRef getDescription() const final {
-    return "Test conversion patterns to lower vector.multi_reduction to other "
+    return "Test lowering patterns to lower vector.multi_reduction to other "
            "vector ops";
   }
   Option<bool> useOuterReductions{
@@ -463,19 +537,102 @@ struct TestVectorMultiReductionLoweringPatterns
       llvm::cl::init(false)};
   void runOnFunction() override {
     RewritePatternSet patterns(&getContext());
-    populateVectorMultiReductionLoweringPatterns(patterns, !useOuterReductions);
+    populateVectorMultiReductionLoweringPatterns(
+        patterns, useOuterReductions
+                      ? vector::VectorMultiReductionLowering::InnerParallel
+                      : vector::VectorMultiReductionLowering::InnerReduction);
     (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
   }
 };
 
-} // end anonymous namespace
+struct TestVectorTransferCollapseInnerMostContiguousDims
+    : public PassWrapper<TestVectorTransferCollapseInnerMostContiguousDims,
+                         FunctionPass> {
+  TestVectorTransferCollapseInnerMostContiguousDims() = default;
+  TestVectorTransferCollapseInnerMostContiguousDims(
+      const TestVectorTransferCollapseInnerMostContiguousDims &pass) = default;
+
+  void getDependentDialects(DialectRegistry &registry) const override {
+    registry.insert<memref::MemRefDialect, AffineDialect>();
+  }
+
+  StringRef getArgument() const final {
+    return "test-vector-transfer-collapse-inner-most-dims";
+  }
+
+  StringRef getDescription() const final {
+    return "Test lowering patterns that reducedes the rank of the vector "
+           "transfer memory and vector operands.";
+  }
+
+  void runOnFunction() override {
+    RewritePatternSet patterns(&getContext());
+    populateVectorTransferCollapseInnerMostContiguousDimsPatterns(patterns);
+    (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
+  }
+};
+
+struct TestVectorReduceToContractPatternsPatterns
+    : public PassWrapper<TestVectorReduceToContractPatternsPatterns,
+                         FunctionPass> {
+  StringRef getArgument() const final {
+    return "test-vector-reduction-to-contract-patterns";
+  }
+  StringRef getDescription() const final {
+    return "Test patterns to convert multireduce op to contract and combine "
+           "broadcast/transpose to contract";
+  }
+  void runOnFunction() override {
+    RewritePatternSet patterns(&getContext());
+    populateVectorReductionToContractPatterns(patterns);
+    (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
+  }
+};
+
+struct TestVectorTransferDropUnitDimsPatterns
+    : public PassWrapper<TestVectorTransferDropUnitDimsPatterns, FunctionPass> {
+  StringRef getArgument() const final {
+    return "test-vector-transfer-drop-unit-dims-patterns";
+  }
+  void getDependentDialects(DialectRegistry &registry) const override {
+    registry.insert<memref::MemRefDialect>();
+  }
+  void runOnFunction() override {
+    RewritePatternSet patterns(&getContext());
+    populateVectorTransferDropUnitDimsPatterns(patterns);
+    (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
+  }
+};
+
+struct TestFlattenVectorTransferPatterns
+    : public PassWrapper<TestFlattenVectorTransferPatterns, FunctionPass> {
+  StringRef getArgument() const final {
+    return "test-vector-transfer-flatten-patterns";
+  }
+  StringRef getDescription() const final {
+    return "Test patterns to rewrite contiguous row-major N-dimensional "
+           "vector.transfer_{read,write} ops into 1D transfers";
+  }
+  void getDependentDialects(DialectRegistry &registry) const override {
+    registry.insert<memref::MemRefDialect>();
+  }
+  void runOnFunction() override {
+    RewritePatternSet patterns(&getContext());
+    populateFlattenVectorTransferPatterns(patterns);
+    (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
+  }
+};
+
+} // namespace
 
 namespace mlir {
 namespace test {
-void registerTestVectorConversions() {
-  PassRegistration<TestVectorToVectorConversion>();
+void registerTestVectorLowerings() {
+  PassRegistration<TestVectorToVectorLowering>();
 
-  PassRegistration<TestVectorContractionConversion>();
+  PassRegistration<TestVectorContractionLowering>();
+
+  PassRegistration<TestVectorTransposeLowering>();
 
   PassRegistration<TestVectorUnrollingPatterns>();
 
@@ -492,6 +649,14 @@ void registerTestVectorConversions() {
   PassRegistration<TestVectorTransferLoweringPatterns>();
 
   PassRegistration<TestVectorMultiReductionLoweringPatterns>();
+
+  PassRegistration<TestVectorTransferCollapseInnerMostContiguousDims>();
+
+  PassRegistration<TestVectorReduceToContractPatternsPatterns>();
+
+  PassRegistration<TestVectorTransferDropUnitDimsPatterns>();
+
+  PassRegistration<TestFlattenVectorTransferPatterns>();
 }
 } // namespace test
 } // namespace mlir

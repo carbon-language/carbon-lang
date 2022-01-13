@@ -19,9 +19,6 @@ else
 fi
 generator="Unix Makefiles"
 
-# Base SVN URL for the sources.
-Base_url="http://llvm.org/svn/llvm-project"
-
 Release=""
 Release_no_dot=""
 RC=""
@@ -310,7 +307,7 @@ function check_program_exists() {
   fi
 }
 
-if [ "$System" != "Darwin" -a "$System" != "SunOS" ]; then
+if [ "$System" != "Darwin" ] && [ "$System" != "SunOS" ] && [ "$System" != "AIX" ]; then
   check_program_exists 'chrpath'
 fi
 
@@ -389,13 +386,17 @@ function configure_llvmCore() {
     echo "#" env CC="$c_compiler" CXX="$cxx_compiler" \
         cmake -G "$generator" \
         -DCMAKE_BUILD_TYPE=$BuildType -DLLVM_ENABLE_ASSERTIONS=$Assertions \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DLLVM_ENABLE_PROJECTS="$project_list" \
+        -DLLVM_LIT_ARGS="-j $NumJobs" \
         $ExtraConfigureFlags $BuildDir/llvm-project/llvm \
         2>&1 | tee $LogDir/llvm.configure-Phase$Phase-$Flavor.log
     env CC="$c_compiler" CXX="$cxx_compiler" \
         cmake -G "$generator" \
         -DCMAKE_BUILD_TYPE=$BuildType -DLLVM_ENABLE_ASSERTIONS=$Assertions \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DLLVM_ENABLE_PROJECTS="$project_list" \
+        -DLLVM_LIT_ARGS="-j $NumJobs" \
         $ExtraConfigureFlags $BuildDir/llvm-project/llvm \
         2>&1 | tee $LogDir/llvm.configure-Phase$Phase-$Flavor.log
 
@@ -460,7 +461,7 @@ function test_llvmCore() {
 # Clean RPATH. Libtool adds the build directory to the search path, which is
 # not necessary --- and even harmful --- for the binary packages we release.
 function clean_RPATH() {
-  if [ "$System" = "Darwin" -o "$System" = "SunOS" ]; then
+  if [ "$System" = "Darwin" ] || [ "$System" = "SunOS" ] || [ "$System" = "AIX" ]; then
     return
   fi
   local InstallPath="$1"

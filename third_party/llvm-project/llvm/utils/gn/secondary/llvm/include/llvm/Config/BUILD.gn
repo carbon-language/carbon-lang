@@ -72,7 +72,7 @@ write_cmake_config("config") {
   input = "config.h.cmake"
   output = "$target_gen_dir/config.h"
   values = [
-    "BUG_REPORT_URL=https://bugs.llvm.org/",
+    "BUG_REPORT_URL=https://github.com/llvm/llvm-project/issues/",
     "ENABLE_BACKTRACES=1",
     "ENABLE_CRASH_OVERRIDES=1",
     "BACKTRACE_HEADER=execinfo.h",
@@ -119,7 +119,8 @@ write_cmake_config("config") {
     "LLVM_TARGET_TRIPLE_ENV=",
     "LLVM_VERSION_INFO=",
     "LLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO=1",
-    "PACKAGE_BUGREPORT=https://bugs.llvm.org/",
+    "LLVM_WINDOWS_PREFER_FORWARD_SLASH=",
+    "PACKAGE_BUGREPORT=https://github.com/llvm/llvm-project/issues/",
     "PACKAGE_NAME=LLVM",
     "PACKAGE_STRING=LLVM ${llvm_version}git",
     "PACKAGE_VERSION=${llvm_version}git",
@@ -131,6 +132,9 @@ write_cmake_config("config") {
     # This is both in llvm-config.h and config.h; llvm-config.h doesn't
     # define it if it's not set while config.h defines it to empty in that case.
     "LLVM_DEFAULT_TARGET_TRIPLE=$llvm_target_triple",
+
+    # FIXME: Set to 1 on mac once the 10.14 SDK is in common use.
+    "LLVM_SUPPORT_XCODE_SIGNPOSTS=",
   ]
 
   if (current_os == "linux" || current_os == "android") {
@@ -139,7 +143,6 @@ write_cmake_config("config") {
       "HAVE_LINK_H=1",
       "HAVE_LSEEK64=1",
       "HAVE_MALLINFO=1",
-      "HAVE_POSIX_FALLOCATE=1",
       "HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC=1",
     ]
   } else {
@@ -148,7 +151,6 @@ write_cmake_config("config") {
       "HAVE_LINK_H=",
       "HAVE_LSEEK64=",
       "HAVE_MALLINFO=",
-      "HAVE_POSIX_FALLOCATE=",
       "HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC=",
     ]
   }
@@ -325,7 +327,10 @@ write_cmake_config("llvm-config") {
   input = "llvm-config.h.cmake"
   output = "$target_gen_dir/llvm-config.h"
   values = [
+    "LLVM_BUILD_LLVM_DYLIB=",
+    "LLVM_BUILD_SHARED_LIBS=",
     "LLVM_DEFAULT_TARGET_TRIPLE=$llvm_target_triple",
+    "LLVM_ENABLE_CURL=",
     "LLVM_ENABLE_DUMP=",
     "LLVM_ENABLE_NEW_PASS_MANAGER=1",
     "LLVM_FORCE_ENABLE_STATS=",
@@ -341,10 +346,6 @@ write_cmake_config("llvm-config") {
     "LLVM_NATIVE_TARGETINFO=1",
     "LLVM_NATIVE_TARGETMC=1",
     "LLVM_NATIVE_TARGETMCA=1",
-
-    # FIXME: Set to 1 on mac once the 10.14 SDK is in common use.
-    "LLVM_SUPPORT_XCODE_SIGNPOSTS=",
-
     "LLVM_USE_INTEL_JITEVENTS=",
     "LLVM_USE_OPROFILE=",
     "LLVM_USE_PERF=",

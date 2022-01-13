@@ -31,7 +31,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
-#include "llvm/Transforms/InstCombine/InstCombineWorklist.h"
 #include "llvm/Transforms/InstCombine/InstCombiner.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include <cassert>
@@ -39,10 +38,11 @@
 #include <cstdint>
 #include <utility>
 
+#define DEBUG_TYPE "instcombine"
+#include "llvm/Transforms/Utils/InstructionWorklist.h"
+
 using namespace llvm;
 using namespace PatternMatch;
-
-#define DEBUG_TYPE "instcombine"
 
 /// The specific integer value is used in a context where it is known to be
 /// non-zero.  If this allows us to simplify the computation, do so and return
@@ -107,14 +107,19 @@ static Value *foldMulSelectToNegate(BinaryOperator &I,
   // mul (select Cond, 1, -1), OtherOp --> select Cond, OtherOp, -OtherOp
   // mul OtherOp, (select Cond, 1, -1) --> select Cond, OtherOp, -OtherOp
   if (match(&I, m_c_Mul(m_OneUse(m_Select(m_Value(Cond), m_One(), m_AllOnes())),
-                        m_Value(OtherOp))))
-    return Builder.CreateSelect(Cond, OtherOp, Builder.CreateNeg(OtherOp));
-
+                        m_Value(OtherOp)))) {
+    bool HasAnyNoWrap = I.hasNoSignedWrap() || I.hasNoUnsignedWrap();
+    Value *Neg = Builder.CreateNeg(OtherOp, "", false, HasAnyNoWrap);
+    return Builder.CreateSelect(Cond, OtherOp, Neg);
+  }
   // mul (select Cond, -1, 1), OtherOp --> select Cond, -OtherOp, OtherOp
   // mul OtherOp, (select Cond, -1, 1) --> select Cond, -OtherOp, OtherOp
   if (match(&I, m_c_Mul(m_OneUse(m_Select(m_Value(Cond), m_AllOnes(), m_One())),
-                        m_Value(OtherOp))))
-    return Builder.CreateSelect(Cond, Builder.CreateNeg(OtherOp), OtherOp);
+                        m_Value(OtherOp)))) {
+    bool HasAnyNoWrap = I.hasNoSignedWrap() || I.hasNoUnsignedWrap();
+    Value *Neg = Builder.CreateNeg(OtherOp, "", false, HasAnyNoWrap);
+    return Builder.CreateSelect(Cond, Neg, OtherOp);
+  }
 
   // fmul (select Cond, 1.0, -1.0), OtherOp --> select Cond, OtherOp, -OtherOp
   // fmul OtherOp, (select Cond, 1.0, -1.0) --> select Cond, OtherOp, -OtherOp
@@ -564,6 +569,16 @@ Instruction *InstCombinerImpl::visitFMul(BinaryOperator &I) {
         return replaceInstUsesWith(I, NewPow);
       }
 
+      // powi(x, y) * powi(x, z) -> powi(x, y + z)
+      if (match(Op0, m_Intrinsic<Intrinsic::powi>(m_Value(X), m_Value(Y))) &&
+          match(Op1, m_Intrinsic<Intrinsic::powi>(m_Specific(X), m_Value(Z))) &&
+          Y->getType() == Z->getType()) {
+        auto *YZ = Builder.CreateAdd(Y, Z);
+        auto *NewPow = Builder.CreateIntrinsic(
+            Intrinsic::powi, {X->getType(), YZ->getType()}, {X, YZ}, &I);
+        return replaceInstUsesWith(I, NewPow);
+      }
+
       // exp(X) * exp(Y) -> exp(X + Y)
       if (match(Op0, m_Intrinsic<Intrinsic::exp>(m_Value(X))) &&
           match(Op1, m_Intrinsic<Intrinsic::exp>(m_Value(Y)))) {
@@ -706,11 +721,11 @@ static bool isMultiple(const APInt &C1, const APInt &C2, APInt &Quotient,
   assert(C1.getBitWidth() == C2.getBitWidth() && "Constant widths not equal");
 
   // Bail if we will divide by zero.
-  if (C2.isNullValue())
+  if (C2.isZero())
     return false;
 
   // Bail if we would divide INT_MIN by -1.
-  if (IsSigned && C1.isMinSignedValue() && C2.isAllOnesValue())
+  if (IsSigned && C1.isMinSignedValue() && C2.isAllOnes())
     return false;
 
   APInt Remainder(C1.getBitWidth(), /*val=*/0ULL, IsSigned);
@@ -739,6 +754,15 @@ Instruction *InstCombinerImpl::commonIDivTransforms(BinaryOperator &I) {
   // This does not apply for fdiv.
   if (simplifyDivRemOfSelectWithZeroOp(I))
     return &I;
+
+  // If the divisor is a select-of-constants, try to constant fold all div ops:
+  // C / (select Cond, TrueC, FalseC) --> select Cond, (C / TrueC), (C / FalseC)
+  // TODO: Adapt simplifyDivRemOfSelectWithZeroOp to allow this and other folds.
+  if (match(Op0, m_ImmConstant()) &&
+      match(Op1, m_Select(m_Value(), m_ImmConstant(), m_ImmConstant()))) {
+    if (Instruction *R = FoldOpIntoSelect(I, cast<SelectInst>(Op1)))
+      return R;
+  }
 
   const APInt *C2;
   if (match(Op1, m_APInt(C2))) {
@@ -778,11 +802,12 @@ Instruction *InstCombinerImpl::commonIDivTransforms(BinaryOperator &I) {
     }
 
     if ((IsSigned && match(Op0, m_NSWShl(m_Value(X), m_APInt(C1))) &&
-         *C1 != C1->getBitWidth() - 1) ||
-        (!IsSigned && match(Op0, m_NUWShl(m_Value(X), m_APInt(C1))))) {
+         C1->ult(C1->getBitWidth() - 1)) ||
+        (!IsSigned && match(Op0, m_NUWShl(m_Value(X), m_APInt(C1))) &&
+         C1->ult(C1->getBitWidth()))) {
       APInt Quotient(C1->getBitWidth(), /*val=*/0ULL, IsSigned);
       APInt C1Shifted = APInt::getOneBitSet(
-          C1->getBitWidth(), static_cast<unsigned>(C1->getLimitedValue()));
+          C1->getBitWidth(), static_cast<unsigned>(C1->getZExtValue()));
 
       // (X << C1) / C2 -> X / (C2 >> C1) if C2 is a multiple of 1 << C1.
       if (isMultiple(*C2, C1Shifted, Quotient, IsSigned)) {
@@ -803,7 +828,7 @@ Instruction *InstCombinerImpl::commonIDivTransforms(BinaryOperator &I) {
       }
     }
 
-    if (!C2->isNullValue()) // avoid X udiv 0
+    if (!C2->isZero()) // avoid X udiv 0
       if (Instruction *FoldedDiv = foldBinOpIntoSelectOrPhi(I))
         return FoldedDiv;
   }
@@ -1444,6 +1469,15 @@ Instruction *InstCombinerImpl::commonIRemTransforms(BinaryOperator &I) {
   // Handle cases involving: rem X, (select Cond, Y, Z)
   if (simplifyDivRemOfSelectWithZeroOp(I))
     return &I;
+
+  // If the divisor is a select-of-constants, try to constant fold all rem ops:
+  // C % (select Cond, TrueC, FalseC) --> select Cond, (C % TrueC), (C % FalseC)
+  // TODO: Adapt simplifyDivRemOfSelectWithZeroOp to allow this and other folds.
+  if (match(Op0, m_ImmConstant()) &&
+      match(Op1, m_Select(m_Value(), m_ImmConstant(), m_ImmConstant()))) {
+    if (Instruction *R = FoldOpIntoSelect(I, cast<SelectInst>(Op1)))
+      return R;
+  }
 
   if (isa<Constant>(Op1)) {
     if (Instruction *Op0I = dyn_cast<Instruction>(Op0)) {

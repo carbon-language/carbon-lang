@@ -9,8 +9,8 @@
 #include "../../runtime/namelist.h"
 #include "CrashHandlerFixture.h"
 #include "tools.h"
-#include "../../runtime/descriptor.h"
-#include "../../runtime/io-api.h"
+#include "flang/Runtime/descriptor.h"
+#include "flang/Runtime/io-api.h"
 #include <algorithm>
 #include <cinttypes>
 #include <complex>
@@ -159,6 +159,34 @@ TEST(NamelistTests, Subscripts) {
   std::string got{out, sizeof out};
   static const std::string expect{"&JUSTA A= 0 2 0 0 0 1/                  "};
   EXPECT_EQ(got, expect);
+}
+
+TEST(NamelistTests, ShortArrayInput) {
+  OwningPtr<Descriptor> aDesc{
+      MakeArray<TypeCategory::Integer, static_cast<int>(sizeof(int))>(
+          std::vector<int>{2}, std::vector<int>(2, -1))};
+  OwningPtr<Descriptor> bDesc{
+      MakeArray<TypeCategory::Integer, static_cast<int>(sizeof(int))>(
+          std::vector<int>{2}, std::vector<int>(2, -2))};
+  const NamelistGroup::Item items[]{{"a", *aDesc}, {"b", *bDesc}};
+  const NamelistGroup group{"nl", 2, items};
+  // Two 12-character lines of internal input
+  static char t1[]{"&nl a = 1 b "
+                   " = 2 /      "};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
+  SubscriptValue shape{2};
+  internalDesc.Establish(1, 12, t1, 1, &shape, CFI_attribute_pointer);
+  auto inCookie{IONAME(BeginInternalArrayListInput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(InputNamelist)(inCookie, group));
+  auto inStatus{IONAME(EndIoStatement)(inCookie)};
+  ASSERT_EQ(inStatus, 0) << "Failed namelist input subscripts, status "
+                         << static_cast<int>(inStatus);
+  EXPECT_EQ(*aDesc->ZeroBasedIndexedElement<int>(0), 1);
+  EXPECT_EQ(*aDesc->ZeroBasedIndexedElement<int>(1), -1);
+  EXPECT_EQ(*bDesc->ZeroBasedIndexedElement<int>(0), 2);
+  EXPECT_EQ(*bDesc->ZeroBasedIndexedElement<int>(1), -2);
 }
 
 // TODO: Internal NAMELIST error tests

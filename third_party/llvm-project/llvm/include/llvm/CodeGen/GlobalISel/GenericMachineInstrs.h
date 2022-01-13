@@ -206,6 +206,26 @@ public:
   }
 };
 
+/// Represents a G_IMPLICIT_DEF.
+class GImplicitDef : public GenericMachineInstr {
+public:
+  static bool classof(const MachineInstr *MI) {
+    return MI->getOpcode() == TargetOpcode::G_IMPLICIT_DEF;
+  }
+};
+
+/// Represents a G_SELECT.
+class GSelect : public GenericMachineInstr {
+public:
+  Register getCondReg() const { return getReg(1); }
+  Register getTrueReg() const { return getReg(2); }
+  Register getFalseReg() const { return getReg(3); }
+
+  static bool classof(const MachineInstr *MI) {
+    return MI->getOpcode() == TargetOpcode::G_SELECT;
+  }
+};
+
 } // namespace llvm
 
 #endif // LLVM_CODEGEN_GLOBALISEL_GENERICMACHINEINSTRS_H

@@ -15,8 +15,6 @@
 #define LLVM_CODEGEN_GLOBALISEL_LEGALIZERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/None.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -40,7 +38,6 @@ class LegalizerHelper;
 class MachineInstr;
 class MachineRegisterInfo;
 class MCInstrInfo;
-class GISelChangeObserver;
 
 namespace LegalizeActions {
 enum LegalizeAction : std::uint8_t {
@@ -60,7 +57,10 @@ enum LegalizeAction : std::uint8_t {
 
   /// The (vector) operation should be implemented by splitting it into
   /// sub-vectors where the operation is legal. For example a <8 x s64> add
-  /// might be implemented as 4 separate <2 x s64> adds.
+  /// might be implemented as 4 separate <2 x s64> adds. There can be a leftover
+  /// if there are not enough elements for last sub-vector e.g. <7 x s64> add
+  /// will be implemented as 3 separate <2 x s64> adds and one s64 add. Leftover
+  /// types can be avoided by doing MoreElements first.
   FewerElements,
 
   /// The (vector) operation should be implemented by widening the input
@@ -113,6 +113,14 @@ struct LegalityQuery {
     LLT MemoryTy;
     uint64_t AlignInBits;
     AtomicOrdering Ordering;
+
+    MemDesc() = default;
+    MemDesc(LLT MemoryTy, uint64_t AlignInBits, AtomicOrdering Ordering)
+        : MemoryTy(MemoryTy), AlignInBits(AlignInBits), Ordering(Ordering) {}
+    MemDesc(const MachineMemOperand &MMO)
+        : MemoryTy(MMO.getMemoryType()),
+          AlignInBits(MMO.getAlign().value() * 8),
+          Ordering(MMO.getSuccessOrdering()) {}
   };
 
   /// Operations which require memory can use this to place requirements on the
@@ -293,6 +301,10 @@ LegalityPredicate scalarOrEltNarrowerThan(unsigned TypeIdx, unsigned Size);
 /// type that's wider than the given size.
 LegalityPredicate scalarOrEltWiderThan(unsigned TypeIdx, unsigned Size);
 
+/// True iff the specified type index is a scalar whose size is not a multiple
+/// of Size.
+LegalityPredicate sizeNotMultipleOf(unsigned TypeIdx, unsigned Size);
+
 /// True iff the specified type index is a scalar whose size is not a power of
 /// 2.
 LegalityPredicate sizeNotPow2(unsigned TypeIdx);
@@ -347,6 +359,11 @@ LegalizeMutation changeElementSizeTo(unsigned TypeIdx, unsigned FromTypeIdx);
 /// Widen the scalar type or vector element type for the given type index to the
 /// next power of 2.
 LegalizeMutation widenScalarOrEltToNextPow2(unsigned TypeIdx, unsigned Min = 0);
+
+/// Widen the scalar type or vector element type for the given type index to
+/// next multiple of \p Size.
+LegalizeMutation widenScalarOrEltToNextMultipleOf(unsigned TypeIdx,
+                                                  unsigned Size);
 
 /// Add more elements to the type for the given type index to the next power of
 /// 2.
@@ -539,7 +556,7 @@ class LegalizeRuleSet {
   }
 
 public:
-  LegalizeRuleSet() : AliasOf(0), IsAliasedByAnother(false), Rules() {}
+  LegalizeRuleSet() : AliasOf(0), IsAliasedByAnother(false) {}
 
   bool isAliasedByAnother() { return IsAliasedByAnother; }
   void setIsAliasedByAnother() { IsAliasedByAnother = true; }
@@ -828,6 +845,16 @@ public:
         LegalizeMutations::widenScalarOrEltToNextPow2(TypeIdx, MinSize));
   }
 
+  /// Widen the scalar to the next multiple of Size. No effect if the
+  /// type is not a scalar or is a multiple of Size.
+  LegalizeRuleSet &widenScalarToNextMultipleOf(unsigned TypeIdx,
+                                               unsigned Size) {
+    using namespace LegalityPredicates;
+    return actionIf(
+        LegalizeAction::WidenScalar, sizeNotMultipleOf(typeIdx(TypeIdx), Size),
+        LegalizeMutations::widenScalarOrEltToNextMultipleOf(TypeIdx, Size));
+  }
+
   /// Widen the scalar or vector element type to the next power of two that is
   /// at least MinSize.  No effect if the scalar size is a power of two.
   LegalizeRuleSet &widenScalarOrEltToNextPow2(unsigned TypeIdx,
@@ -1025,6 +1052,26 @@ public:
               TypeIdx, LLT::fixed_vector(MinElements, VecTy.getElementType()));
         });
   }
+
+  /// Set number of elements to nearest larger multiple of NumElts.
+  LegalizeRuleSet &alignNumElementsTo(unsigned TypeIdx, const LLT EltTy,
+                                      unsigned NumElts) {
+    typeIdx(TypeIdx);
+    return actionIf(
+        LegalizeAction::MoreElements,
+        [=](const LegalityQuery &Query) {
+          LLT VecTy = Query.Types[TypeIdx];
+          return VecTy.isVector() && VecTy.getElementType() == EltTy &&
+                 (VecTy.getNumElements() % NumElts != 0);
+        },
+        [=](const LegalityQuery &Query) {
+          LLT VecTy = Query.Types[TypeIdx];
+          unsigned NewSize = alignTo(VecTy.getNumElements(), NumElts);
+          return std::make_pair(
+              TypeIdx, LLT::fixed_vector(NewSize, VecTy.getElementType()));
+        });
+  }
+
   /// Limit the number of elements in EltTy vectors to at most MaxElements.
   LegalizeRuleSet &clampMaxNumElements(unsigned TypeIdx, const LLT EltTy,
                                        unsigned MaxElements) {
@@ -1058,6 +1105,19 @@ public:
     const LLT EltTy = MinTy.getElementType();
     return clampMinNumElements(TypeIdx, EltTy, MinTy.getNumElements())
         .clampMaxNumElements(TypeIdx, EltTy, MaxTy.getNumElements());
+  }
+
+  /// Express \p EltTy vectors strictly using vectors with \p NumElts elements
+  /// (or scalars when \p NumElts equals 1).
+  /// First pad with undef elements to nearest larger multiple of \p NumElts.
+  /// Then perform split with all sub-instructions having the same type.
+  /// Using clampMaxNumElements (non-strict) can result in leftover instruction
+  /// with different type (fewer elements then \p NumElts or scalar).
+  /// No effect if the type is not a vector.
+  LegalizeRuleSet &clampMaxNumElementsStrict(unsigned TypeIdx, const LLT EltTy,
+                                             unsigned NumElts) {
+    return alignNumElementsTo(TypeIdx, EltTy, NumElts)
+        .clampMaxNumElements(TypeIdx, EltTy, NumElts);
   }
 
   /// Fallback on the previous implementation. This should only be used while

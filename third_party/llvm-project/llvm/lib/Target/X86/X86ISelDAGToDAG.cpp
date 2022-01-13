@@ -80,9 +80,9 @@ namespace {
     bool NegateIndex = false;
 
     X86ISelAddressMode()
-        : BaseType(RegBase), Base_FrameIndex(0), Scale(1), IndexReg(), Disp(0),
-          Segment(), GV(nullptr), CP(nullptr), BlockAddr(nullptr), ES(nullptr),
-          MCSym(nullptr), JT(-1), SymbolFlags(X86II::MO_NO_FLAG) {}
+        : BaseType(RegBase), Base_FrameIndex(0), Scale(1), Disp(0), GV(nullptr),
+          CP(nullptr), BlockAddr(nullptr), ES(nullptr), MCSym(nullptr), JT(-1),
+          SymbolFlags(X86II::MO_NO_FLAG) {}
 
     bool hasSymbolicDisplacement() const {
       return GV != nullptr || CP != nullptr || ES != nullptr ||
@@ -216,6 +216,8 @@ namespace {
     bool matchAdd(SDValue &N, X86ISelAddressMode &AM, unsigned Depth);
     bool matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                  unsigned Depth);
+    bool matchVectorAddressRecursively(SDValue N, X86ISelAddressMode &AM,
+                                       unsigned Depth);
     bool matchAddressBase(SDValue N, X86ISelAddressMode &AM);
     bool selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
@@ -336,10 +338,9 @@ namespace {
         return false;
 
       // Walk all the users of the immediate.
-      for (SDNode::use_iterator UI = N->use_begin(),
-           UE = N->use_end(); (UI != UE) && (UseCount < 2); ++UI) {
-
-        SDNode *User = *UI;
+      for (const SDNode *User : N->uses()) {
+        if (UseCount >= 2)
+          break;
 
         // This user is already selected. Count it as a legitimate use and
         // move on.
@@ -433,6 +434,18 @@ namespace {
       return getI8Imm((Index * VecVT.getScalarSizeInBits()) / VecWidth, DL);
     }
 
+    SDValue getPermuteVINSERTCommutedImmediate(SDNode *N, unsigned VecWidth,
+                                               const SDLoc &DL) {
+      assert(VecWidth == 128 && "Unexpected vector width");
+      uint64_t Index = N->getConstantOperandVal(2);
+      MVT VecVT = N->getSimpleValueType(0);
+      uint64_t InsertIdx = (Index * VecVT.getScalarSizeInBits()) / VecWidth;
+      assert((InsertIdx == 0 || InsertIdx == 1) && "Bad insertf128 index");
+      // vinsert(0,sub,vec) -> [sub0][vec1] -> vperm2x128(0x30,vec,sub)
+      // vinsert(1,sub,vec) -> [vec0][sub0] -> vperm2x128(0x02,vec,sub)
+      return getI8Imm(InsertIdx ? 0x02 : 0x30, DL);
+    }
+
     // Helper to detect unneeded and instructions on shift amounts. Called
     // from PatFrags in tablegen.
     bool isUnneededShiftMask(SDNode *N, unsigned Width) const {
@@ -504,8 +517,9 @@ namespace {
     bool tryShiftAmountMod(SDNode *N);
     bool tryShrinkShlLogicImm(SDNode *N);
     bool tryVPTERNLOG(SDNode *N);
-    bool matchVPTERNLOG(SDNode *Root, SDNode *ParentA, SDNode *ParentBC,
-                        SDValue A, SDValue B, SDValue C, uint8_t Imm);
+    bool matchVPTERNLOG(SDNode *Root, SDNode *ParentA, SDNode *ParentB,
+                        SDNode *ParentC, SDValue A, SDValue B, SDValue C,
+                        uint8_t Imm);
     bool tryVPTESTM(SDNode *Root, SDValue Setcc, SDValue Mask);
     bool tryMatchBitSelect(SDNode *N);
 
@@ -877,19 +891,34 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
       continue;
     }
 
-    /// Convert vector increment or decrement to sub/add with an all-ones
-    /// constant:
-    /// add X, <1, 1...> --> sub X, <-1, -1...>
-    /// sub X, <1, 1...> --> add X, <-1, -1...>
-    /// The all-ones vector constant can be materialized using a pcmpeq
-    /// instruction that is commonly recognized as an idiom (has no register
-    /// dependency), so that's better/smaller than loading a splat 1 constant.
+    // Convert vector increment or decrement to sub/add with an all-ones
+    // constant:
+    // add X, <1, 1...> --> sub X, <-1, -1...>
+    // sub X, <1, 1...> --> add X, <-1, -1...>
+    // The all-ones vector constant can be materialized using a pcmpeq
+    // instruction that is commonly recognized as an idiom (has no register
+    // dependency), so that's better/smaller than loading a splat 1 constant.
+    //
+    // But don't do this if it would inhibit a potentially profitable load
+    // folding opportunity for the other operand. That only occurs with the
+    // intersection of:
+    // (1) The other operand (op0) is load foldable.
+    // (2) The op is an add (otherwise, we are *creating* an add and can still
+    //     load fold the other op).
+    // (3) The target has AVX (otherwise, we have a destructive add and can't
+    //     load fold the other op without killing the constant op).
+    // (4) The constant 1 vector has multiple uses (so it is profitable to load
+    //     into a register anyway).
+    auto mayPreventLoadFold = [&]() {
+      return X86::mayFoldLoad(N->getOperand(0), *Subtarget) &&
+             N->getOpcode() == ISD::ADD && Subtarget->hasAVX() &&
+             !N->getOperand(1).hasOneUse();
+    };
     if ((N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
-        N->getSimpleValueType(0).isVector()) {
-
+        N->getSimpleValueType(0).isVector() && !mayPreventLoadFold()) {
       APInt SplatVal;
       if (X86::isConstantSplat(N->getOperand(1), SplatVal) &&
-          SplatVal.isOneValue()) {
+          SplatVal.isOne()) {
         SDLoc DL(N);
 
         MVT VT = N->getSimpleValueType(0);
@@ -2467,10 +2496,18 @@ bool X86DAGToDAGISel::matchAddressBase(SDValue N, X86ISelAddressMode &AM) {
   return false;
 }
 
-/// Helper for selectVectorAddr. Handles things that can be folded into a
-/// gather scatter address. The index register and scale should have already
-/// been handled.
-bool X86DAGToDAGISel::matchVectorAddress(SDValue N, X86ISelAddressMode &AM) {
+bool X86DAGToDAGISel::matchVectorAddressRecursively(SDValue N,
+                                                    X86ISelAddressMode &AM,
+                                                    unsigned Depth) {
+  SDLoc dl(N);
+  LLVM_DEBUG({
+    dbgs() << "MatchVectorAddress: ";
+    AM.dump(CurDAG);
+  });
+  // Limit recursion.
+  if (Depth > 5)
+    return matchAddressBase(N, AM);
+
   // TODO: Support other operations.
   switch (N.getOpcode()) {
   case ISD::Constant: {
@@ -2483,9 +2520,39 @@ bool X86DAGToDAGISel::matchVectorAddress(SDValue N, X86ISelAddressMode &AM) {
     if (!matchWrapper(N, AM))
       return false;
     break;
+  case ISD::ADD: {
+    // Add an artificial use to this node so that we can keep track of
+    // it if it gets CSE'd with a different node.
+    HandleSDNode Handle(N);
+
+    X86ISelAddressMode Backup = AM;
+    if (!matchVectorAddressRecursively(N.getOperand(0), AM, Depth + 1) &&
+        !matchVectorAddressRecursively(Handle.getValue().getOperand(1), AM,
+                                       Depth + 1))
+      return false;
+    AM = Backup;
+
+    // Try again after commuting the operands.
+    if (!matchVectorAddressRecursively(Handle.getValue().getOperand(1), AM,
+                                       Depth + 1) &&
+        !matchVectorAddressRecursively(Handle.getValue().getOperand(0), AM,
+                                       Depth + 1))
+      return false;
+    AM = Backup;
+
+    N = Handle.getValue();
+    break;
+  }
   }
 
   return matchAddressBase(N, AM);
+}
+
+/// Helper for selectVectorAddr. Handles things that can be folded into a
+/// gather/scatter address. The index register and scale should have already
+/// been handled.
+bool X86DAGToDAGISel::matchVectorAddress(SDValue N, X86ISelAddressMode &AM) {
+  return matchVectorAddressRecursively(N, AM, 0);
 }
 
 bool X86DAGToDAGISel::selectVectorAddr(MemSDNode *Parent, SDValue BasePtr,
@@ -3390,16 +3457,24 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     return false;
 
   SDValue NBits;
+  bool NegateNBits;
 
   // If we have BMI2's BZHI, we are ok with muti-use patterns.
   // Else, if we only have BMI1's BEXTR, we require one-use.
-  const bool CanHaveExtraUses = Subtarget->hasBMI2();
-  auto checkUses = [CanHaveExtraUses](SDValue Op, unsigned NUses) {
-    return CanHaveExtraUses ||
+  const bool AllowExtraUsesByDefault = Subtarget->hasBMI2();
+  auto checkUses = [AllowExtraUsesByDefault](SDValue Op, unsigned NUses,
+                                             Optional<bool> AllowExtraUses) {
+    return AllowExtraUses.getValueOr(AllowExtraUsesByDefault) ||
            Op.getNode()->hasNUsesOfValue(NUses, Op.getResNo());
   };
-  auto checkOneUse = [checkUses](SDValue Op) { return checkUses(Op, 1); };
-  auto checkTwoUse = [checkUses](SDValue Op) { return checkUses(Op, 2); };
+  auto checkOneUse = [checkUses](SDValue Op,
+                                 Optional<bool> AllowExtraUses = None) {
+    return checkUses(Op, 1, AllowExtraUses);
+  };
+  auto checkTwoUse = [checkUses](SDValue Op,
+                                 Optional<bool> AllowExtraUses = None) {
+    return checkUses(Op, 2, AllowExtraUses);
+  };
 
   auto peekThroughOneUseTruncation = [checkOneUse](SDValue V) {
     if (V->getOpcode() == ISD::TRUNCATE && checkOneUse(V)) {
@@ -3412,8 +3487,8 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
   };
 
   // a) x & ((1 << nbits) + (-1))
-  auto matchPatternA = [checkOneUse, peekThroughOneUseTruncation,
-                        &NBits](SDValue Mask) -> bool {
+  auto matchPatternA = [checkOneUse, peekThroughOneUseTruncation, &NBits,
+                        &NegateNBits](SDValue Mask) -> bool {
     // Match `add`. Must only have one use!
     if (Mask->getOpcode() != ISD::ADD || !checkOneUse(Mask))
       return false;
@@ -3427,6 +3502,7 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     if (!isOneConstant(M0->getOperand(0)))
       return false;
     NBits = M0->getOperand(1);
+    NegateNBits = false;
     return true;
   };
 
@@ -3439,7 +3515,7 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
 
   // b) x & ~(-1 << nbits)
   auto matchPatternB = [checkOneUse, isAllOnes, peekThroughOneUseTruncation,
-                        &NBits](SDValue Mask) -> bool {
+                        &NBits, &NegateNBits](SDValue Mask) -> bool {
     // Match `~()`. Must only have one use!
     if (Mask.getOpcode() != ISD::XOR || !checkOneUse(Mask))
       return false;
@@ -3454,32 +3530,35 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     if (!isAllOnes(M0->getOperand(0)))
       return false;
     NBits = M0->getOperand(1);
+    NegateNBits = false;
     return true;
   };
 
-  // Match potentially-truncated (bitwidth - y)
-  auto matchShiftAmt = [checkOneUse, &NBits](SDValue ShiftAmt,
-                                             unsigned Bitwidth) {
-    // Skip over a truncate of the shift amount.
-    if (ShiftAmt.getOpcode() == ISD::TRUNCATE) {
-      ShiftAmt = ShiftAmt.getOperand(0);
-      // The trunc should have been the only user of the real shift amount.
-      if (!checkOneUse(ShiftAmt))
-        return false;
-    }
-    // Match the shift amount as: (bitwidth - y). It should go away, too.
-    if (ShiftAmt.getOpcode() != ISD::SUB)
-      return false;
-    auto *V0 = dyn_cast<ConstantSDNode>(ShiftAmt.getOperand(0));
+  // Try to match potentially-truncated shift amount as `(bitwidth - y)`,
+  // or leave the shift amount as-is, but then we'll have to negate it.
+  auto canonicalizeShiftAmt = [&NBits, &NegateNBits](SDValue ShiftAmt,
+                                                     unsigned Bitwidth) {
+    NBits = ShiftAmt;
+    NegateNBits = true;
+    // Skip over a truncate of the shift amount, if any.
+    if (NBits.getOpcode() == ISD::TRUNCATE)
+      NBits = NBits.getOperand(0);
+    // Try to match the shift amount as (bitwidth - y). It should go away, too.
+    // If it doesn't match, that's fine, we'll just negate it ourselves.
+    if (NBits.getOpcode() != ISD::SUB)
+      return;
+    auto *V0 = dyn_cast<ConstantSDNode>(NBits.getOperand(0));
     if (!V0 || V0->getZExtValue() != Bitwidth)
-      return false;
-    NBits = ShiftAmt.getOperand(1);
-    return true;
+      return;
+    NBits = NBits.getOperand(1);
+    NegateNBits = false;
   };
 
+  // c) x &  (-1 >> z)  but then we'll have to subtract z from bitwidth
+  //   or
   // c) x &  (-1 >> (32 - y))
-  auto matchPatternC = [checkOneUse, peekThroughOneUseTruncation,
-                        matchShiftAmt](SDValue Mask) -> bool {
+  auto matchPatternC = [checkOneUse, peekThroughOneUseTruncation, &NegateNBits,
+                        canonicalizeShiftAmt](SDValue Mask) -> bool {
     // The mask itself may be truncated.
     Mask = peekThroughOneUseTruncation(Mask);
     unsigned Bitwidth = Mask.getSimpleValueType().getSizeInBits();
@@ -3493,27 +3572,39 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     // The shift amount should not be used externally.
     if (!checkOneUse(M1))
       return false;
-    return matchShiftAmt(M1, Bitwidth);
+    canonicalizeShiftAmt(M1, Bitwidth);
+    // Pattern c. is non-canonical, and is expanded into pattern d. iff there
+    // is no extra use of the mask. Clearly, there was one since we are here.
+    // But at the same time, if we need to negate the shift amount,
+    // then we don't want the mask to stick around, else it's unprofitable.
+    return !NegateNBits;
   };
 
   SDValue X;
 
+  // d) x << z >> z  but then we'll have to subtract z from bitwidth
+  //   or
   // d) x << (32 - y) >> (32 - y)
-  auto matchPatternD = [checkOneUse, checkTwoUse, matchShiftAmt,
+  auto matchPatternD = [checkOneUse, checkTwoUse, canonicalizeShiftAmt,
+                        AllowExtraUsesByDefault, &NegateNBits,
                         &X](SDNode *Node) -> bool {
     if (Node->getOpcode() != ISD::SRL)
       return false;
     SDValue N0 = Node->getOperand(0);
-    if (N0->getOpcode() != ISD::SHL || !checkOneUse(N0))
+    if (N0->getOpcode() != ISD::SHL)
       return false;
     unsigned Bitwidth = N0.getSimpleValueType().getSizeInBits();
     SDValue N1 = Node->getOperand(1);
     SDValue N01 = N0->getOperand(1);
     // Both of the shifts must be by the exact same value.
-    // There should not be any uses of the shift amount outside of the pattern.
-    if (N1 != N01 || !checkTwoUse(N1))
+    if (N1 != N01)
       return false;
-    if (!matchShiftAmt(N1, Bitwidth))
+    canonicalizeShiftAmt(N1, Bitwidth);
+    // There should not be any external uses of the inner shift / shift amount.
+    // Note that while we are generally okay with external uses given BMI2,
+    // iff we need to negate the shift amount, we are not okay with extra uses.
+    const bool AllowExtraUses = AllowExtraUsesByDefault && !NegateNBits;
+    if (!checkOneUse(N0, AllowExtraUses) || !checkTwoUse(N1, AllowExtraUses))
       return false;
     X = N0->getOperand(0);
     return true;
@@ -3538,6 +3629,11 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
   } else if (!matchPatternD(Node))
     return false;
 
+  // If we need to negate the shift amount, require BMI2 BZHI support.
+  // It's just too unprofitable for BMI1 BEXTR.
+  if (NegateNBits && !Subtarget->hasBMI2())
+    return false;
+
   SDLoc DL(Node);
 
   // Truncate the shift amount.
@@ -3552,10 +3648,20 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
 
   SDValue SRIdxVal = CurDAG->getTargetConstant(X86::sub_8bit, DL, MVT::i32);
   insertDAGNode(*CurDAG, SDValue(Node, 0), SRIdxVal);
-  NBits = SDValue(
-      CurDAG->getMachineNode(TargetOpcode::INSERT_SUBREG, DL, MVT::i32, ImplDef,
-                             NBits, SRIdxVal), 0);
+  NBits = SDValue(CurDAG->getMachineNode(TargetOpcode::INSERT_SUBREG, DL,
+                                         MVT::i32, ImplDef, NBits, SRIdxVal),
+                  0);
   insertDAGNode(*CurDAG, SDValue(Node, 0), NBits);
+
+  // We might have matched the amount of high bits to be cleared,
+  // but we want the amount of low bits to be kept, so negate it then.
+  if (NegateNBits) {
+    SDValue BitWidthC = CurDAG->getConstant(NVT.getSizeInBits(), DL, MVT::i32);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), BitWidthC);
+
+    NBits = CurDAG->getNode(ISD::SUB, DL, MVT::i32, BitWidthC, NBits);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), NBits);
+  }
 
   if (Subtarget->hasBMI2()) {
     // Great, just emit the the BZHI..
@@ -4043,11 +4149,11 @@ bool X86DAGToDAGISel::tryShrinkShlLogicImm(SDNode *N) {
 }
 
 bool X86DAGToDAGISel::matchVPTERNLOG(SDNode *Root, SDNode *ParentA,
-                                     SDNode *ParentBC, SDValue A, SDValue B,
-                                     SDValue C, uint8_t Imm) {
-  assert(A.isOperandOf(ParentA));
-  assert(B.isOperandOf(ParentBC));
-  assert(C.isOperandOf(ParentBC));
+                                     SDNode *ParentB, SDNode *ParentC,
+                                     SDValue A, SDValue B, SDValue C,
+                                     uint8_t Imm) {
+  assert(A.isOperandOf(ParentA) && B.isOperandOf(ParentB) &&
+         C.isOperandOf(ParentC) && "Incorrect parent node");
 
   auto tryFoldLoadOrBCast =
       [this](SDNode *Root, SDNode *P, SDValue &L, SDValue &Base, SDValue &Scale,
@@ -4075,7 +4181,7 @@ bool X86DAGToDAGISel::matchVPTERNLOG(SDNode *Root, SDNode *ParentA,
 
   bool FoldedLoad = false;
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (tryFoldLoadOrBCast(Root, ParentBC, C, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
+  if (tryFoldLoadOrBCast(Root, ParentC, C, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
     FoldedLoad = true;
   } else if (tryFoldLoadOrBCast(Root, ParentA, A, Tmp0, Tmp1, Tmp2, Tmp3,
                                 Tmp4)) {
@@ -4088,7 +4194,7 @@ bool X86DAGToDAGISel::matchVPTERNLOG(SDNode *Root, SDNode *ParentA,
     if (OldImm & 0x10) Imm |= 0x02;
     if (OldImm & 0x08) Imm |= 0x40;
     if (OldImm & 0x40) Imm |= 0x08;
-  } else if (tryFoldLoadOrBCast(Root, ParentBC, B, Tmp0, Tmp1, Tmp2, Tmp3,
+  } else if (tryFoldLoadOrBCast(Root, ParentB, B, Tmp0, Tmp1, Tmp2, Tmp3,
                                 Tmp4)) {
     FoldedLoad = true;
     std::swap(B, C);
@@ -4166,7 +4272,6 @@ bool X86DAGToDAGISel::matchVPTERNLOG(SDNode *Root, SDNode *ParentA,
 }
 
 // Try to match two logic ops to a VPTERNLOG.
-// FIXME: Handle inverted inputs?
 // FIXME: Handle more complex patterns that use an operand more than once?
 bool X86DAGToDAGISel::tryVPTERNLOG(SDNode *N) {
   MVT NVT = N->getSimpleValueType(0);
@@ -4209,12 +4314,31 @@ bool X86DAGToDAGISel::tryVPTERNLOG(SDNode *N) {
 
   SDValue B = FoldableOp.getOperand(0);
   SDValue C = FoldableOp.getOperand(1);
+  SDNode *ParentA = N;
+  SDNode *ParentB = FoldableOp.getNode();
+  SDNode *ParentC = FoldableOp.getNode();
 
   // We can build the appropriate control immediate by performing the logic
   // operation we're matching using these constants for A, B, and C.
-  const uint8_t TernlogMagicA = 0xf0;
-  const uint8_t TernlogMagicB = 0xcc;
-  const uint8_t TernlogMagicC = 0xaa;
+  uint8_t TernlogMagicA = 0xf0;
+  uint8_t TernlogMagicB = 0xcc;
+  uint8_t TernlogMagicC = 0xaa;
+
+  // Some of the inputs may be inverted, peek through them and invert the
+  // magic values accordingly.
+  // TODO: There may be a bitcast before the xor that we should peek through.
+  auto PeekThroughNot = [](SDValue &Op, SDNode *&Parent, uint8_t &Magic) {
+    if (Op.getOpcode() == ISD::XOR && Op.hasOneUse() &&
+        ISD::isBuildVectorAllOnes(Op.getOperand(1).getNode())) {
+      Magic = ~Magic;
+      Parent = Op.getNode();
+      Op = Op.getOperand(0);
+    }
+  };
+
+  PeekThroughNot(A, ParentA, TernlogMagicA);
+  PeekThroughNot(B, ParentB, TernlogMagicB);
+  PeekThroughNot(C, ParentC, TernlogMagicC);
 
   uint8_t Imm;
   switch (FoldableOp.getOpcode()) {
@@ -4238,7 +4362,7 @@ bool X86DAGToDAGISel::tryVPTERNLOG(SDNode *N) {
   case ISD::XOR: Imm ^= TernlogMagicA; break;
   }
 
-  return matchVPTERNLOG(N, N, FoldableOp.getNode(), A, B, C, Imm);
+  return matchVPTERNLOG(N, ParentA, ParentB, ParentC, A, B, C, Imm);
 }
 
 /// If the high bits of an 'and' operand are known zero, try setting the
@@ -4298,7 +4422,7 @@ bool X86DAGToDAGISel::shrinkAndImmediate(SDNode *And) {
 
   // Check if the mask is -1. In that case, this is an unnecessary instruction
   // that escaped earlier analysis.
-  if (NegMaskVal.isAllOnesValue()) {
+  if (NegMaskVal.isAllOnes()) {
     ReplaceNode(And, And0.getNode());
     return true;
   }
@@ -4575,7 +4699,7 @@ bool X86DAGToDAGISel::tryMatchBitSelect(SDNode *N) {
   ReplaceNode(N, Ternlog.getNode());
 
   return matchVPTERNLOG(Ternlog.getNode(), Ternlog.getNode(), Ternlog.getNode(),
-                        A, B, C, 0xCA);
+                        Ternlog.getNode(), A, B, C, 0xCA);
 }
 
 void X86DAGToDAGISel::Select(SDNode *Node) {
@@ -4810,7 +4934,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
 
   case X86ISD::VPTERNLOG: {
     uint8_t Imm = cast<ConstantSDNode>(Node->getOperand(3))->getZExtValue();
-    if (matchVPTERNLOG(Node, Node, Node, Node->getOperand(0),
+    if (matchVPTERNLOG(Node, Node, Node, Node, Node->getOperand(0),
                        Node->getOperand(1), Node->getOperand(2), Imm))
       return;
     break;

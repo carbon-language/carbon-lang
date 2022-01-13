@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBMemoryRegionInfo.h"
-#include "SBReproducerPrivate.h"
+#include "lldb/Utility/ReproducerInstrumentation.h"
 #include "Utils.h"
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBError.h"
@@ -22,14 +22,31 @@ SBMemoryRegionInfo::SBMemoryRegionInfo() : m_opaque_up(new MemoryRegionInfo()) {
   LLDB_RECORD_CONSTRUCTOR_NO_ARGS(SBMemoryRegionInfo);
 }
 
+SBMemoryRegionInfo::SBMemoryRegionInfo(const char *name, lldb::addr_t begin,
+                                       lldb::addr_t end, uint32_t permissions,
+                                       bool mapped, bool stack_memory)
+    : SBMemoryRegionInfo() {
+  LLDB_RECORD_CONSTRUCTOR(
+      SBMemoryRegionInfo,
+      (const char *, lldb::addr_t, lldb::addr_t, uint32_t, bool, bool), name,
+      begin, end, permissions, mapped, stack_memory);
+  m_opaque_up->SetName(name);
+  m_opaque_up->GetRange().SetRangeBase(begin);
+  m_opaque_up->GetRange().SetRangeEnd(end);
+  m_opaque_up->SetLLDBPermissions(permissions);
+  m_opaque_up->SetMapped(mapped ? MemoryRegionInfo::eYes
+                                : MemoryRegionInfo::eNo);
+  m_opaque_up->SetIsStackMemory(stack_memory ? MemoryRegionInfo::eYes
+                                             : MemoryRegionInfo::eNo);
+}
+
 SBMemoryRegionInfo::SBMemoryRegionInfo(const MemoryRegionInfo *lldb_object_ptr)
     : m_opaque_up(new MemoryRegionInfo()) {
   if (lldb_object_ptr)
     ref() = *lldb_object_ptr;
 }
 
-SBMemoryRegionInfo::SBMemoryRegionInfo(const SBMemoryRegionInfo &rhs)
-    : m_opaque_up() {
+SBMemoryRegionInfo::SBMemoryRegionInfo(const SBMemoryRegionInfo &rhs) {
   LLDB_RECORD_CONSTRUCTOR(SBMemoryRegionInfo,
                           (const lldb::SBMemoryRegionInfo &), rhs);
   m_opaque_up = clone(rhs.m_opaque_up);
@@ -43,7 +60,7 @@ operator=(const SBMemoryRegionInfo &rhs) {
 
   if (this != &rhs)
     m_opaque_up = clone(rhs.m_opaque_up);
-  return LLDB_RECORD_RESULT(*this);
+  return *this;
 }
 
 SBMemoryRegionInfo::~SBMemoryRegionInfo() = default;
@@ -168,40 +185,4 @@ bool SBMemoryRegionInfo::GetDescription(SBStream &description) {
   strm.Printf("]");
 
   return true;
-}
-
-namespace lldb_private {
-namespace repro {
-
-template <>
-void RegisterMethods<SBMemoryRegionInfo>(Registry &R) {
-  LLDB_REGISTER_CONSTRUCTOR(SBMemoryRegionInfo, ());
-  LLDB_REGISTER_CONSTRUCTOR(SBMemoryRegionInfo,
-                            (const lldb::SBMemoryRegionInfo &));
-  LLDB_REGISTER_METHOD(
-      const lldb::SBMemoryRegionInfo &,
-      SBMemoryRegionInfo, operator=,(const lldb::SBMemoryRegionInfo &));
-  LLDB_REGISTER_METHOD(void, SBMemoryRegionInfo, Clear, ());
-  LLDB_REGISTER_METHOD_CONST(
-      bool,
-      SBMemoryRegionInfo, operator==,(const lldb::SBMemoryRegionInfo &));
-  LLDB_REGISTER_METHOD_CONST(
-      bool,
-      SBMemoryRegionInfo, operator!=,(const lldb::SBMemoryRegionInfo &));
-  LLDB_REGISTER_METHOD(lldb::addr_t, SBMemoryRegionInfo, GetRegionBase, ());
-  LLDB_REGISTER_METHOD(lldb::addr_t, SBMemoryRegionInfo, GetRegionEnd, ());
-  LLDB_REGISTER_METHOD(bool, SBMemoryRegionInfo, IsReadable, ());
-  LLDB_REGISTER_METHOD(bool, SBMemoryRegionInfo, IsWritable, ());
-  LLDB_REGISTER_METHOD(bool, SBMemoryRegionInfo, IsExecutable, ());
-  LLDB_REGISTER_METHOD(bool, SBMemoryRegionInfo, IsMapped, ());
-  LLDB_REGISTER_METHOD(const char *, SBMemoryRegionInfo, GetName, ());
-  LLDB_REGISTER_METHOD(bool, SBMemoryRegionInfo, GetDescription,
-                       (lldb::SBStream &));
-  LLDB_REGISTER_METHOD(bool, SBMemoryRegionInfo, HasDirtyMemoryPageList, ());
-  LLDB_REGISTER_METHOD(uint32_t, SBMemoryRegionInfo, GetNumDirtyPages, ());
-  LLDB_REGISTER_METHOD(lldb::addr_t, SBMemoryRegionInfo, GetDirtyPageAddressAtIndex, (uint32_t));
-  LLDB_REGISTER_METHOD(int, SBMemoryRegionInfo, GetPageSize, ());
-}
-
-}
 }

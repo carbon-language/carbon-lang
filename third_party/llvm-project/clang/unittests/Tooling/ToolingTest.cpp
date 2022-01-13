@@ -6,6 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Tooling/Tooling.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclGroup.h"
@@ -15,14 +16,14 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CompilationDatabase.h"
-#include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "gtest/gtest.h"
 #include <algorithm>
@@ -222,6 +223,70 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   InMemoryFileSystem->addFile("def/module.map", 0,
                               llvm::MemoryBuffer::getMemBuffer("\n"));
   EXPECT_TRUE(Invocation.run());
+}
+
+TEST(ToolInvocation, DiagnosticsEngineProperlyInitializedForCC1Construction) {
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> OverlayFileSystem(
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem()));
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new llvm::vfs::InMemoryFileSystem);
+  OverlayFileSystem->pushOverlay(InMemoryFileSystem);
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions(), OverlayFileSystem));
+
+  std::vector<std::string> Args;
+  Args.push_back("tool-executable");
+  // Unknown warning option will result in a warning.
+  Args.push_back("-fexpensive-optimizations");
+  // Argument that will suppress the warning above.
+  Args.push_back("-Wno-ignored-optimization-argument");
+  Args.push_back("-E");
+  Args.push_back("test.cpp");
+
+  clang::tooling::ToolInvocation Invocation(
+      Args, std::make_unique<SyntaxOnlyAction>(), Files.get());
+  InMemoryFileSystem->addFile("test.cpp", 0,
+                              llvm::MemoryBuffer::getMemBuffer(""));
+  TextDiagnosticBuffer Consumer;
+  Invocation.setDiagnosticConsumer(&Consumer);
+  EXPECT_TRUE(Invocation.run());
+  // Check that the warning was ignored due to the '-Wno-xxx' argument.
+  EXPECT_EQ(std::distance(Consumer.warn_begin(), Consumer.warn_end()), 0u);
+}
+
+TEST(ToolInvocation, CustomDiagnosticOptionsOverwriteParsedOnes) {
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> OverlayFileSystem(
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem()));
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new llvm::vfs::InMemoryFileSystem);
+  OverlayFileSystem->pushOverlay(InMemoryFileSystem);
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions(), OverlayFileSystem));
+
+  std::vector<std::string> Args;
+  Args.push_back("tool-executable");
+  // Unknown warning option will result in a warning.
+  Args.push_back("-fexpensive-optimizations");
+  // Argument that will suppress the warning above.
+  Args.push_back("-Wno-ignored-optimization-argument");
+  Args.push_back("-E");
+  Args.push_back("test.cpp");
+
+  clang::tooling::ToolInvocation Invocation(
+      Args, std::make_unique<SyntaxOnlyAction>(), Files.get());
+  InMemoryFileSystem->addFile("test.cpp", 0,
+                              llvm::MemoryBuffer::getMemBuffer(""));
+  TextDiagnosticBuffer Consumer;
+  Invocation.setDiagnosticConsumer(&Consumer);
+
+  // Inject custom `DiagnosticOptions` for command-line parsing.
+  auto DiagOpts = llvm::makeIntrusiveRefCnt<DiagnosticOptions>();
+  Invocation.setDiagnosticOptions(&*DiagOpts);
+
+  EXPECT_TRUE(Invocation.run());
+  // Check that the warning was issued during command-line parsing due to the
+  // custom `DiagnosticOptions` without '-Wno-xxx'.
+  EXPECT_EQ(std::distance(Consumer.warn_begin(), Consumer.warn_end()), 1u);
 }
 
 struct DiagnosticConsumerExpectingSourceManager : public DiagnosticConsumer {

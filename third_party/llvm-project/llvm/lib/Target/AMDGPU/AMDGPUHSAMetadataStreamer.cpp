@@ -113,7 +113,7 @@ MetadataStreamerV2::getAddressSpaceQualifier(
 
 ValueKind MetadataStreamerV2::getValueKind(Type *Ty, StringRef TypeQual,
                                            StringRef BaseTypeName) const {
-  if (TypeQual.find("pipe") != StringRef::npos)
+  if (TypeQual.contains("pipe"))
     return ValueKind::Pipe;
 
   return StringSwitch<ValueKind>(BaseTypeName)
@@ -201,10 +201,11 @@ MetadataStreamerV2::getHSACodeProps(const MachineFunction &MF,
   Align MaxKernArgAlign;
   HSACodeProps.mKernargSegmentSize = STM.getKernArgSegmentSize(F,
                                                                MaxKernArgAlign);
+  HSACodeProps.mKernargSegmentAlign =
+    std::max(MaxKernArgAlign, Align(4)).value();
+
   HSACodeProps.mGroupSegmentFixedSize = ProgramInfo.LDSSize;
   HSACodeProps.mPrivateSegmentFixedSize = ProgramInfo.ScratchSize;
-  HSACodeProps.mKernargSegmentAlign =
-      std::max(MaxKernArgAlign, Align(4)).value();
   HSACodeProps.mWavefrontSize = STM.getWavefrontSize();
   HSACodeProps.mNumSGPRs = ProgramInfo.NumSGPR;
   HSACodeProps.mNumVGPRs = ProgramInfo.NumVGPR;
@@ -279,11 +280,12 @@ void MetadataStreamerV2::emitKernelAttrs(const Function &Func) {
   }
 }
 
-void MetadataStreamerV2::emitKernelArgs(const Function &Func) {
+void MetadataStreamerV2::emitKernelArgs(const Function &Func,
+                                        const GCNSubtarget &ST) {
   for (auto &Arg : Func.args())
     emitKernelArg(Arg);
 
-  emitHiddenKernelArgs(Func);
+  emitHiddenKernelArgs(Func, ST);
 }
 
 void MetadataStreamerV2::emitKernelArg(const Argument &Arg) {
@@ -380,10 +382,9 @@ void MetadataStreamerV2::emitKernelArg(const DataLayout &DL, Type *Ty,
   }
 }
 
-void MetadataStreamerV2::emitHiddenKernelArgs(const Function &Func) {
-  int HiddenArgNumBytes =
-      getIntegerAttribute(Func, "amdgpu-implicitarg-num-bytes", 0);
-
+void MetadataStreamerV2::emitHiddenKernelArgs(const Function &Func,
+                                              const GCNSubtarget &ST) {
+  unsigned HiddenArgNumBytes = ST.getImplicitArgNumBytes(Func);
   if (!HiddenArgNumBytes)
     return;
 
@@ -464,11 +465,12 @@ void MetadataStreamerV2::emitKernel(const MachineFunction &MF,
   HSAMetadata.mKernels.push_back(Kernel::Metadata());
   auto &Kernel = HSAMetadata.mKernels.back();
 
+  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
   Kernel.mName = std::string(Func.getName());
   Kernel.mSymbolName = (Twine(Func.getName()) + Twine("@kd")).str();
   emitKernelLanguage(Func);
   emitKernelAttrs(Func);
-  emitKernelArgs(Func);
+  emitKernelArgs(Func, ST);
   HSAMetadata.mKernels.back().mCodeProps = CodeProps;
   HSAMetadata.mKernels.back().mDebugProps = DebugProps;
 }
@@ -533,7 +535,7 @@ MetadataStreamerV3::getAddressSpaceQualifier(unsigned AddressSpace) const {
 
 StringRef MetadataStreamerV3::getValueKind(Type *Ty, StringRef TypeQual,
                                            StringRef BaseTypeName) const {
-  if (TypeQual.find("pipe") != StringRef::npos)
+  if (TypeQual.contains("pipe"))
     return "pipe";
 
   return StringSwitch<StringRef>(BaseTypeName)
@@ -672,13 +674,14 @@ void MetadataStreamerV3::emitKernelAttrs(const Function &Func,
 }
 
 void MetadataStreamerV3::emitKernelArgs(const Function &Func,
+                                        const GCNSubtarget &ST,
                                         msgpack::MapDocNode Kern) {
   unsigned Offset = 0;
   auto Args = HSAMetadataDoc->getArrayNode();
   for (auto &Arg : Func.args())
     emitKernelArg(Arg, Offset, Args);
 
-  emitHiddenKernelArgs(Func, Offset, Args);
+  emitHiddenKernelArgs(Func, ST, Offset, Args);
 
   Kern[".args"] = Args;
 }
@@ -790,15 +793,15 @@ void MetadataStreamerV3::emitKernelArg(
 }
 
 void MetadataStreamerV3::emitHiddenKernelArgs(const Function &Func,
+                                              const GCNSubtarget &ST,
                                               unsigned &Offset,
                                               msgpack::ArrayDocNode Args) {
-  int HiddenArgNumBytes =
-      getIntegerAttribute(Func, "amdgpu-implicitarg-num-bytes", 0);
-
+  unsigned HiddenArgNumBytes = ST.getImplicitArgNumBytes(Func);
   if (!HiddenArgNumBytes)
     return;
 
-  auto &DL = Func.getParent()->getDataLayout();
+  const Module *M = Func.getParent();
+  auto &DL = M->getDataLayout();
   auto Int64Ty = Type::getInt64Ty(Func.getContext());
 
   if (HiddenArgNumBytes >= 8)
@@ -814,16 +817,16 @@ void MetadataStreamerV3::emitHiddenKernelArgs(const Function &Func,
   auto Int8PtrTy =
       Type::getInt8PtrTy(Func.getContext(), AMDGPUAS::GLOBAL_ADDRESS);
 
-  // Emit "printf buffer" argument if printf is used, otherwise emit dummy
-  // "none" argument.
+  // Emit "printf buffer" argument if printf is used, emit "hostcall buffer"
+  // if "hostcall" module flag is set, otherwise emit dummy "none" argument.
   if (HiddenArgNumBytes >= 32) {
-    if (Func.getParent()->getNamedMetadata("llvm.printf.fmts"))
+    if (M->getNamedMetadata("llvm.printf.fmts"))
       emitKernelArg(DL, Int8PtrTy, Align(8), "hidden_printf_buffer", Offset,
                     Args);
-    else if (Func.getParent()->getFunction("__ockl_hostcall_internal")) {
+    else if (M->getModuleFlag("amdgpu_hostcall")) {
       // The printf runtime binding pass should have ensured that hostcall and
       // printf are not used in the same module.
-      assert(!Func.getParent()->getNamedMetadata("llvm.printf.fmts"));
+      assert(!M->getNamedMetadata("llvm.printf.fmts"));
       emitKernelArg(DL, Int8PtrTy, Align(8), "hidden_hostcall_buffer", Offset,
                     Args);
     } else
@@ -866,6 +869,8 @@ MetadataStreamerV3::getHSAKernelProps(const MachineFunction &MF,
       Kern.getDocument()->getNode(ProgramInfo.LDSSize);
   Kern[".private_segment_fixed_size"] =
       Kern.getDocument()->getNode(ProgramInfo.ScratchSize);
+
+  // FIXME: The metadata treats the minimum as 16?
   Kern[".kernarg_segment_align"] =
       Kern.getDocument()->getNode(std::max(Align(4), MaxKernArgAlign).value());
   Kern[".wavefront_size"] =
@@ -908,6 +913,7 @@ void MetadataStreamerV3::emitKernel(const MachineFunction &MF,
                                     const SIProgramInfo &ProgramInfo) {
   auto &Func = MF.getFunction();
   auto Kern = getHSAKernelProps(MF, ProgramInfo);
+  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
 
   assert(Func.getCallingConv() == CallingConv::AMDGPU_KERNEL ||
          Func.getCallingConv() == CallingConv::SPIR_KERNEL);
@@ -921,7 +927,7 @@ void MetadataStreamerV3::emitKernel(const MachineFunction &MF,
         (Twine(Func.getName()) + Twine(".kd")).str(), /*Copy=*/true);
     emitKernelLanguage(Func, Kern);
     emitKernelAttrs(Func, Kern);
-    emitKernelArgs(Func, Kern);
+    emitKernelArgs(Func, ST, Kern);
   }
 
   Kernels.push_back(Kern);

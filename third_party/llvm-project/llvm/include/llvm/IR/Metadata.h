@@ -707,6 +707,15 @@ struct AAMDNodes {
     Result.NoAlias = NoAlias;
     return Result;
   }
+
+  /// Given two sets of AAMDNodes applying to potentially different locations,
+  /// determine the best AAMDNodes that apply to both.
+  AAMDNodes merge(const AAMDNodes &Other) const;
+
+  /// Determine the best AAMDNodes after concatenating two different locations
+  /// together. Different from `merge`, where different locations should
+  /// overlap each other, `concat` puts non-overlapping locations together.
+  AAMDNodes concat(const AAMDNodes &Other) const;
 };
 
 // Specialize DenseMapInfo for AAMDNodes.
@@ -897,6 +906,7 @@ struct TempMDNodeDeleter {
 class MDNode : public Metadata {
   friend class ReplaceableMetadataImpl;
   friend class LLVMContextImpl;
+  friend class DIArgList;
 
   unsigned NumOperands;
   unsigned NumUnresolved;
@@ -1027,6 +1037,31 @@ public:
   replaceWithDistinct(std::unique_ptr<T, TempMDNodeDeleter> N) {
     return cast<T>(N.release()->replaceWithDistinctImpl());
   }
+
+  /// Print in tree shape.
+  ///
+  /// Prints definition of \c this in tree shape.
+  ///
+  /// If \c M is provided, metadata nodes will be numbered canonically;
+  /// otherwise, pointer addresses are substituted.
+  /// @{
+  void printTree(raw_ostream &OS, const Module *M = nullptr) const;
+  void printTree(raw_ostream &OS, ModuleSlotTracker &MST,
+                 const Module *M = nullptr) const;
+  /// @}
+
+  /// User-friendly dump in tree shape.
+  ///
+  /// If \c M is provided, metadata nodes will be numbered canonically;
+  /// otherwise, pointer addresses are substituted.
+  ///
+  /// Note: this uses an explicit overload instead of default arguments so that
+  /// the nullptr version is easy to call from a debugger.
+  ///
+  /// @{
+  void dumpTree() const;
+  void dumpTree(const Module *M) const;
+  /// @}
 
 private:
   MDNode *replaceWithPermanentImpl();

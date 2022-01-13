@@ -120,9 +120,8 @@ public:
   // if there is not such an opcode.
   virtual unsigned getUnindexedOpcode(unsigned Opc) const = 0;
 
-  MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
-                                      MachineInstr &MI,
-                                      LiveVariables *LV) const override;
+  MachineInstr *convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
+                                      LiveIntervals *LIS) const override;
 
   virtual const ARMBaseRegisterInfo &getRegisterInfo() const = 0;
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
@@ -289,15 +288,15 @@ public:
   /// compares against in CmpValue. Return true if the comparison instruction
   /// can be analyzed.
   bool analyzeCompare(const MachineInstr &MI, Register &SrcReg,
-                      Register &SrcReg2, int &CmpMask,
-                      int &CmpValue) const override;
+                      Register &SrcReg2, int64_t &CmpMask,
+                      int64_t &CmpValue) const override;
 
   /// optimizeCompareInstr - Convert the instruction to set the zero flag so
   /// that we can remove a "comparison with zero"; Remove a redundant CMP
   /// instruction if the flags can be updated in the same way by an earlier
   /// instruction such as SUB.
   bool optimizeCompareInstr(MachineInstr &CmpInstr, Register SrcReg,
-                            Register SrcReg2, int CmpMask, int CmpValue,
+                            Register SrcReg2, int64_t CmpMask, int64_t CmpValue,
                             const MachineRegisterInfo *MRI) const override;
 
   bool analyzeSelect(const MachineInstr &MI,
@@ -350,6 +349,8 @@ public:
                                    bool OutlineFromLinkOnceODRs) const override;
   outliner::OutlinedFunction getOutliningCandidateInfo(
       std::vector<outliner::Candidate> &RepeatedSequenceLocs) const override;
+  void mergeOutliningCandidateAttributes(
+      Function &F, std::vector<outliner::Candidate> &Candidates) const override;
   outliner::InstrType getOutliningType(MachineBasicBlock::iterator &MIT,
                                        unsigned Flags) const override;
   bool isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
@@ -376,31 +377,26 @@ private:
   /// constructing an outlined call if one exists. Returns 0 otherwise.
   unsigned findRegisterToSaveLRTo(const outliner::Candidate &C) const;
 
-  // Adds an instruction which saves the link register on top of the stack into
-  /// the MachineBasicBlock \p MBB at position \p It.
-  void saveLROnStack(MachineBasicBlock &MBB,
-                     MachineBasicBlock::iterator It) const;
+  /// Adds an instruction which saves the link register on top of the stack into
+  /// the MachineBasicBlock \p MBB at position \p It. If \p Auth is true,
+  /// compute and store an authentication code alongiside the link register.
+  /// If \p CFI is true, emit CFI instructions.
+  void saveLROnStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator It,
+                     bool CFI, bool Auth) const;
 
   /// Adds an instruction which restores the link register from the top the
-  /// stack into the MachineBasicBlock \p MBB at position \p It.
+  /// stack into the MachineBasicBlock \p MBB at position \p It. If \p Auth is
+  /// true, restore an authentication code and authenticate LR.
+  /// If \p CFI is true, emit CFI instructions.
   void restoreLRFromStack(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator It) const;
-
-  /// Emit CFI instructions into the MachineBasicBlock \p MBB at position \p It,
-  /// for the case when the LR is saved on the stack.
-  void emitCFIForLRSaveOnStack(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator It) const;
+                          MachineBasicBlock::iterator It, bool CFI,
+                          bool Auth) const;
 
   /// Emit CFI instructions into the MachineBasicBlock \p MBB at position \p It,
   /// for the case when the LR is saved in the register \p Reg.
   void emitCFIForLRSaveToReg(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator It,
                              Register Reg) const;
-
-  /// Emit CFI instructions into the MachineBasicBlock \p MBB at position \p It,
-  /// after the LR is was restored from the stack.
-  void emitCFIForLRRestoreFromStack(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator It) const;
 
   /// Emit CFI instructions into the MachineBasicBlock \p MBB at position \p It,
   /// after the LR is was restored from a register.
@@ -878,19 +874,23 @@ inline bool isLegalAddressImm(unsigned Opcode, int Imm,
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   switch (AddrMode) {
   case ARMII::AddrModeT2_i7:
-    return std::abs(Imm) < (((1 << 7) * 1) - 1);
+    return std::abs(Imm) < ((1 << 7) * 1);
   case ARMII::AddrModeT2_i7s2:
-    return std::abs(Imm) < (((1 << 7) * 2) - 1) && Imm % 2 == 0;
+    return std::abs(Imm) < ((1 << 7) * 2) && Imm % 2 == 0;
   case ARMII::AddrModeT2_i7s4:
-    return std::abs(Imm) < (((1 << 7) * 4) - 1) && Imm % 4 == 0;
+    return std::abs(Imm) < ((1 << 7) * 4) && Imm % 4 == 0;
   case ARMII::AddrModeT2_i8:
-    return std::abs(Imm) < (((1 << 8) * 1) - 1);
-  case ARMII::AddrMode2:
-    return std::abs(Imm) < (((1 << 12) * 1) - 1);
-  case ARMII::AddrModeT2_i12:
-    return Imm >= 0 && Imm < (((1 << 12) * 1) - 1);
+    return std::abs(Imm) < ((1 << 8) * 1);
+  case ARMII::AddrModeT2_i8pos:
+    return Imm >= 0 && Imm < ((1 << 8) * 1);
+  case ARMII::AddrModeT2_i8neg:
+    return Imm < 0 && -Imm < ((1 << 8) * 1);
   case ARMII::AddrModeT2_i8s4:
-    return std::abs(Imm) < (((1 << 8) * 4) - 1) && Imm % 4 == 0;
+    return std::abs(Imm) < ((1 << 8) * 4) && Imm % 4 == 0;
+  case ARMII::AddrModeT2_i12:
+    return Imm >= 0 && Imm < ((1 << 12) * 1);
+  case ARMII::AddrMode2:
+    return std::abs(Imm) < ((1 << 12) * 1);
   default:
     llvm_unreachable("Unhandled Addressing mode");
   }

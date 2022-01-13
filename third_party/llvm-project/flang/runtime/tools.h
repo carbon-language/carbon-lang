@@ -9,11 +9,11 @@
 #ifndef FORTRAN_RUNTIME_TOOLS_H_
 #define FORTRAN_RUNTIME_TOOLS_H_
 
-#include "cpp-type.h"
-#include "descriptor.h"
-#include "memory.h"
 #include "terminator.h"
 #include "flang/Common/long-double.h"
+#include "flang/Runtime/cpp-type.h"
+#include "flang/Runtime/descriptor.h"
+#include "flang/Runtime/memory.h"
 #include <functional>
 #include <map>
 #include <type_traits>
@@ -333,6 +333,13 @@ std::optional<std::pair<TypeCategory, int>> inline constexpr GetResultType(
   }
   return std::nullopt;
 }
+
+// Accumulate floating-point results in (at least) double precision
+template <TypeCategory CAT, int KIND>
+using AccumulationType = CppTypeFor<CAT,
+    CAT == TypeCategory::Real || CAT == TypeCategory::Complex
+        ? std::max(KIND, static_cast<int>(sizeof(double)))
+        : KIND>;
 
 } // namespace Fortran::runtime
 #endif // FORTRAN_RUNTIME_TOOLS_H_

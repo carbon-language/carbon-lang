@@ -131,8 +131,6 @@ void ExecuteOp::build(OpBuilder &builder, OperationState &result,
 }
 
 static void print(OpAsmPrinter &p, ExecuteOp op) {
-  p << op.getOperationName();
-
   // [%tokens,...]
   if (!op.dependencies().empty())
     p << " [" << op.dependencies() << "]";
@@ -160,7 +158,6 @@ static ParseResult parseExecuteOp(OpAsmParser &parser, OperationState &result) {
 
   // Sizes of parsed variadic operands, will be updated below after parsing.
   int32_t numDependencies = 0;
-  int32_t numOperands = 0;
 
   auto tokenTy = TokenType::get(ctx);
 
@@ -181,38 +178,27 @@ static ParseResult parseExecuteOp(OpAsmParser &parser, OperationState &result) {
   SmallVector<Type, 4> valueTypes;
   SmallVector<Type, 4> unwrappedTypes;
 
-  if (succeeded(parser.parseOptionalLParen())) {
-    auto argsLoc = parser.getCurrentLocation();
+  // Parse a single instance of `%value as %unwrapped : !async.value<!type>`.
+  auto parseAsyncValueArg = [&]() -> ParseResult {
+    if (parser.parseOperand(valueArgs.emplace_back()) ||
+        parser.parseKeyword("as") ||
+        parser.parseOperand(unwrappedArgs.emplace_back()) ||
+        parser.parseColonType(valueTypes.emplace_back()))
+      return failure();
 
-    // Parse a single instance of `%value as %unwrapped : !async.value<!type>`.
-    auto parseAsyncValueArg = [&]() -> ParseResult {
-      if (parser.parseOperand(valueArgs.emplace_back()) ||
-          parser.parseKeyword("as") ||
-          parser.parseOperand(unwrappedArgs.emplace_back()) ||
-          parser.parseColonType(valueTypes.emplace_back()))
-        return failure();
+    auto valueTy = valueTypes.back().dyn_cast<ValueType>();
+    unwrappedTypes.emplace_back(valueTy ? valueTy.getValueType() : Type());
 
-      auto valueTy = valueTypes.back().dyn_cast<ValueType>();
-      unwrappedTypes.emplace_back(valueTy ? valueTy.getValueType() : Type());
+    return success();
+  };
 
-      return success();
-    };
+  auto argsLoc = parser.getCurrentLocation();
+  if (parser.parseCommaSeparatedList(OpAsmParser::Delimiter::OptionalParen,
+                                     parseAsyncValueArg) ||
+      parser.resolveOperands(valueArgs, valueTypes, argsLoc, result.operands))
+    return failure();
 
-    // If the next token is `)` skip async value arguments parsing.
-    if (failed(parser.parseOptionalRParen())) {
-      do {
-        if (parseAsyncValueArg())
-          return failure();
-      } while (succeeded(parser.parseOptionalComma()));
-
-      if (parser.parseRParen() ||
-          parser.resolveOperands(valueArgs, valueTypes, argsLoc,
-                                 result.operands))
-        return failure();
-    }
-
-    numOperands = valueArgs.size();
-  }
+  int32_t numOperands = valueArgs.size();
 
   // Add derived `operand_segment_sizes` attribute based on parsed operands.
   auto operandSegmentSizes = DenseIntElementsAttr::get(
@@ -352,14 +338,13 @@ static LogicalResult verify(AwaitOp op) {
 #define GET_TYPEDEF_CLASSES
 #include "mlir/Dialect/Async/IR/AsyncOpsTypes.cpp.inc"
 
-void ValueType::print(DialectAsmPrinter &printer) const {
-  printer << getMnemonic();
+void ValueType::print(AsmPrinter &printer) const {
   printer << "<";
   printer.printType(getValueType());
   printer << '>';
 }
 
-Type ValueType::parse(mlir::MLIRContext *, mlir::DialectAsmParser &parser) {
+Type ValueType::parse(mlir::AsmParser &parser) {
   Type ty;
   if (parser.parseLess() || parser.parseType(ty) || parser.parseGreater()) {
     parser.emitError(parser.getNameLoc(), "failed to parse async value type");
@@ -380,8 +365,7 @@ Type AsyncDialect::parseType(DialectAsmParser &parser) const {
   if (parser.parseKeyword(&typeTag))
     return Type();
   Type genType;
-  auto parseResult = generatedTypeParser(parser.getBuilder().getContext(),
-                                         parser, typeTag, genType);
+  auto parseResult = generatedTypeParser(parser, typeTag, genType);
   if (parseResult.hasValue())
     return genType;
   parser.emitError(parser.getNameLoc(), "unknown async type: ") << typeTag;

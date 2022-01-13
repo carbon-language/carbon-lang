@@ -47,7 +47,7 @@ static ParseResult parseROCDLMubufLoadOp(OpAsmParser &parser,
       parser.addTypeToList(type, result.types))
     return failure();
 
-  MLIRContext *context = parser.getBuilder().getContext();
+  MLIRContext *context = parser.getContext();
   auto int32Ty = IntegerType::get(context, 32);
   auto int1Ty = IntegerType::get(context, 1);
   auto i32x4Ty = LLVM::getFixedVectorType(int32Ty, 4);
@@ -66,7 +66,7 @@ static ParseResult parseROCDLMubufStoreOp(OpAsmParser &parser,
   if (parser.parseOperandList(ops, 6) || parser.parseColonType(type))
     return failure();
 
-  MLIRContext *context = parser.getBuilder().getContext();
+  MLIRContext *context = parser.getContext();
   auto int32Ty = IntegerType::get(context, 32);
   auto int1Ty = IntegerType::get(context, 1);
   auto i32x4Ty = LLVM::getFixedVectorType(int32Ty, 4);
@@ -96,7 +96,7 @@ void ROCDLDialect::initialize() {
 LogicalResult ROCDLDialect::verifyOperationAttribute(Operation *op,
                                                      NamedAttribute attr) {
   // Kernel function attribute should be attached to functions.
-  if (attr.first == ROCDLDialect::getKernelFuncAttrName()) {
+  if (attr.getName() == ROCDLDialect::getKernelFuncAttrName()) {
     if (!isa<LLVM::LLVMFuncOp>(op)) {
       return op->emitError() << "'" << ROCDLDialect::getKernelFuncAttrName()
                              << "' attribute attached to unexpected op";

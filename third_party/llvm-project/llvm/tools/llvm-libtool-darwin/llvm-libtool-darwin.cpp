@@ -25,6 +25,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/TextAPI/Architecture.h"
 #include <map>
+#include <type_traits>
 
 using namespace llvm;
 using namespace llvm::object;
@@ -205,246 +206,272 @@ static uint64_t getCPUID(uint32_t CPUType, uint32_t CPUSubtype) {
   }
 }
 
-// Check that a file's architecture [FileCPUType, FileCPUSubtype]
-// matches the architecture specified under -arch_only flag.
-static bool acceptFileArch(uint32_t FileCPUType, uint32_t FileCPUSubtype,
-                           const Config &C) {
-  if (C.ArchCPUType != FileCPUType)
-    return false;
+// MembersData is an organized collection of members.
+struct MembersData {
+  // MembersPerArchitectureMap is a mapping from CPU architecture to a list of
+  // members.
+  MembersPerArchitectureMap MembersPerArchitecture;
+  std::vector<std::unique_ptr<MemoryBuffer>> FileBuffers;
 
-  switch (C.ArchCPUType) {
-  case MachO::CPU_TYPE_ARM:
-  case MachO::CPU_TYPE_ARM64_32:
-  case MachO::CPU_TYPE_X86_64:
-    return C.ArchCPUSubtype == FileCPUSubtype;
+  static_assert(!std::is_copy_constructible<NewArchiveMember>::value,
+                "MembersPerArchitecture has a dependency on FileBuffers so it "
+                "should not be able to be copied on its own without "
+                "FileBuffers.");
+  static_assert(!std::is_copy_assignable<NewArchiveMember>::value,
+                "MembersPerArchitecture has a dependency on FileBuffers so it "
+                "should not be able to be copied on its own without "
+                "FileBuffers.");
+};
 
-  case MachO::CPU_TYPE_ARM64:
-    if (C.ArchCPUSubtype == MachO::CPU_SUBTYPE_ARM64_ALL)
-      return FileCPUSubtype == MachO::CPU_SUBTYPE_ARM64_ALL ||
-             FileCPUSubtype == MachO::CPU_SUBTYPE_ARM64_V8;
-    else
+// MembersBuilder collects and organizes all members from the files provided by
+// the user.
+class MembersBuilder {
+public:
+  MembersBuilder(const Config &C) : C(C) {}
+
+  Expected<MembersData> build() {
+    for (StringRef FileName : InputFiles)
+      if (Error E = addMember(FileName))
+        return std::move(E);
+
+    if (!ArchType.empty()) {
+      uint64_t ArchCPUID = getCPUID(C.ArchCPUType, C.ArchCPUSubtype);
+      if (Data.MembersPerArchitecture.find(ArchCPUID) ==
+          Data.MembersPerArchitecture.end())
+        return createStringError(std::errc::invalid_argument,
+                                 "no library created (no object files in input "
+                                 "files matching -arch_only %s)",
+                                 ArchType.c_str());
+    }
+    return std::move(Data);
+  }
+
+private:
+  // Check that a file's architecture [FileCPUType, FileCPUSubtype]
+  // matches the architecture specified under -arch_only flag.
+  bool acceptFileArch(uint32_t FileCPUType, uint32_t FileCPUSubtype) {
+    if (C.ArchCPUType != FileCPUType)
+      return false;
+
+    switch (C.ArchCPUType) {
+    case MachO::CPU_TYPE_ARM:
+    case MachO::CPU_TYPE_ARM64_32:
+    case MachO::CPU_TYPE_X86_64:
       return C.ArchCPUSubtype == FileCPUSubtype;
 
-  default:
-    return true;
+    case MachO::CPU_TYPE_ARM64:
+      if (C.ArchCPUSubtype == MachO::CPU_SUBTYPE_ARM64_ALL)
+        return FileCPUSubtype == MachO::CPU_SUBTYPE_ARM64_ALL ||
+               FileCPUSubtype == MachO::CPU_SUBTYPE_ARM64_V8;
+      else
+        return C.ArchCPUSubtype == FileCPUSubtype;
+
+    default:
+      return true;
+    }
   }
-}
 
-static Error verifyAndAddMachOObject(MembersPerArchitectureMap &Members,
-                                     NewArchiveMember Member, const Config &C) {
-  auto MBRef = Member.Buf->getMemBufferRef();
-  Expected<std::unique_ptr<object::ObjectFile>> ObjOrErr =
-      object::ObjectFile::createObjectFile(MBRef);
+  Error verifyAndAddMachOObject(NewArchiveMember Member) {
+    auto MBRef = Member.Buf->getMemBufferRef();
+    Expected<std::unique_ptr<object::ObjectFile>> ObjOrErr =
+        object::ObjectFile::createObjectFile(MBRef);
 
-  // Throw error if not a valid object file.
-  if (!ObjOrErr)
-    return createFileError(Member.MemberName, ObjOrErr.takeError());
+    // Throw error if not a valid object file.
+    if (!ObjOrErr)
+      return createFileError(Member.MemberName, ObjOrErr.takeError());
 
-  // Throw error if not in Mach-O format.
-  if (!isa<object::MachOObjectFile>(**ObjOrErr))
-    return createStringError(std::errc::invalid_argument,
-                             "'%s': format not supported",
-                             Member.MemberName.data());
+    // Throw error if not in Mach-O format.
+    if (!isa<object::MachOObjectFile>(**ObjOrErr))
+      return createStringError(std::errc::invalid_argument,
+                               "'%s': format not supported",
+                               Member.MemberName.data());
 
-  auto *O = dyn_cast<MachOObjectFile>(ObjOrErr->get());
-  uint32_t FileCPUType, FileCPUSubtype;
-  std::tie(FileCPUType, FileCPUSubtype) = MachO::getCPUTypeFromArchitecture(
-      MachO::getArchitectureFromName(O->getArchTriple().getArchName()));
+    auto *O = dyn_cast<MachOObjectFile>(ObjOrErr->get());
+    uint32_t FileCPUType, FileCPUSubtype;
+    std::tie(FileCPUType, FileCPUSubtype) = MachO::getCPUTypeFromArchitecture(
+        MachO::getArchitectureFromName(O->getArchTriple().getArchName()));
 
-  // If -arch_only is specified then skip this file if it doesn't match
-  // the architecture specified.
-  if (!ArchType.empty() && !acceptFileArch(FileCPUType, FileCPUSubtype, C)) {
+    // If -arch_only is specified then skip this file if it doesn't match
+    // the architecture specified.
+    if (!ArchType.empty() && !acceptFileArch(FileCPUType, FileCPUSubtype)) {
+      return Error::success();
+    }
+
+    if (!NoWarningForNoSymbols && O->symbols().empty())
+      WithColor::warning() << Member.MemberName + " has no symbols\n";
+
+    uint64_t FileCPUID = getCPUID(FileCPUType, FileCPUSubtype);
+    Data.MembersPerArchitecture[FileCPUID].push_back(std::move(Member));
     return Error::success();
   }
 
-  if (!NoWarningForNoSymbols && O->symbols().empty())
-    WithColor::warning() << Member.MemberName + " has no symbols\n";
+  Error verifyAndAddIRObject(NewArchiveMember Member) {
+    auto MBRef = Member.Buf->getMemBufferRef();
+    Expected<std::unique_ptr<object::IRObjectFile>> IROrErr =
+        object::IRObjectFile::create(MBRef, LLVMCtx);
 
-  uint64_t FileCPUID = getCPUID(FileCPUType, FileCPUSubtype);
-  Members[FileCPUID].push_back(std::move(Member));
-  return Error::success();
-}
+    // Throw error if not a valid IR object file.
+    if (!IROrErr)
+      return createFileError(Member.MemberName, IROrErr.takeError());
 
-static Error verifyAndAddIRObject(MembersPerArchitectureMap &Members,
-                                  NewArchiveMember Member, const Config &C) {
-  auto MBRef = Member.Buf->getMemBufferRef();
-  Expected<std::unique_ptr<object::IRObjectFile>> IROrErr =
-      object::IRObjectFile::create(MBRef, LLVMCtx);
+    Triple TT = Triple(IROrErr->get()->getTargetTriple());
 
-  // Throw error if not a valid IR object file.
-  if (!IROrErr)
-    return createFileError(Member.MemberName, IROrErr.takeError());
+    Expected<uint32_t> FileCPUTypeOrErr = MachO::getCPUType(TT);
+    if (!FileCPUTypeOrErr)
+      return FileCPUTypeOrErr.takeError();
 
-  Triple TT = Triple(IROrErr->get()->getTargetTriple());
+    Expected<uint32_t> FileCPUSubTypeOrErr = MachO::getCPUSubType(TT);
+    if (!FileCPUSubTypeOrErr)
+      return FileCPUSubTypeOrErr.takeError();
 
-  Expected<uint32_t> FileCPUTypeOrErr = MachO::getCPUType(TT);
-  if (!FileCPUTypeOrErr)
-    return FileCPUTypeOrErr.takeError();
+    // If -arch_only is specified then skip this file if it doesn't match
+    // the architecture specified.
+    if (!ArchType.empty() &&
+        !acceptFileArch(*FileCPUTypeOrErr, *FileCPUSubTypeOrErr)) {
+      return Error::success();
+    }
 
-  Expected<uint32_t> FileCPUSubTypeOrErr = MachO::getCPUSubType(TT);
-  if (!FileCPUSubTypeOrErr)
-    return FileCPUSubTypeOrErr.takeError();
-
-  // If -arch_only is specified then skip this file if it doesn't match
-  // the architecture specified.
-  if (!ArchType.empty() &&
-      !acceptFileArch(*FileCPUTypeOrErr, *FileCPUSubTypeOrErr, C)) {
+    uint64_t FileCPUID = getCPUID(*FileCPUTypeOrErr, *FileCPUSubTypeOrErr);
+    Data.MembersPerArchitecture[FileCPUID].push_back(std::move(Member));
     return Error::success();
   }
 
-  uint64_t FileCPUID = getCPUID(*FileCPUTypeOrErr, *FileCPUSubTypeOrErr);
-  Members[FileCPUID].push_back(std::move(Member));
-  return Error::success();
-}
+  Error addChildMember(const object::Archive::Child &M) {
+    Expected<NewArchiveMember> NewMemberOrErr =
+        NewArchiveMember::getOldMember(M, C.Deterministic);
+    if (!NewMemberOrErr)
+      return NewMemberOrErr.takeError();
+    auto &NewMember = *NewMemberOrErr;
 
-static Error addChildMember(MembersPerArchitectureMap &Members,
-                            const object::Archive::Child &M, const Config &C) {
-  Expected<NewArchiveMember> NMOrErr =
-      NewArchiveMember::getOldMember(M, C.Deterministic);
-  if (!NMOrErr)
-    return NMOrErr.takeError();
+    file_magic Magic = identify_magic(NewMember.Buf->getBuffer());
 
-  file_magic Magic = identify_magic(NMOrErr->Buf->getBuffer());
+    if (Magic == file_magic::bitcode)
+      return verifyAndAddIRObject(std::move(NewMember));
 
-  if (Magic == file_magic::bitcode)
-    return verifyAndAddIRObject(Members, std::move(*NMOrErr), C);
-
-  if (Error E = verifyAndAddMachOObject(Members, std::move(*NMOrErr), C))
-    return E;
-
-  return Error::success();
-}
-
-static Error processArchive(MembersPerArchitectureMap &Members,
-                            object::Archive &Lib, StringRef FileName,
-                            const Config &C) {
-  Error Err = Error::success();
-  for (const object::Archive::Child &Child : Lib.children(Err))
-    if (Error E = addChildMember(Members, Child, C))
-      return createFileError(FileName, std::move(E));
-  if (Err)
-    return createFileError(FileName, std::move(Err));
-
-  return Error::success();
-}
-
-static Error
-addArchiveMembers(MembersPerArchitectureMap &Members,
-                  std::vector<std::unique_ptr<MemoryBuffer>> &ArchiveBuffers,
-                  NewArchiveMember NM, StringRef FileName, const Config &C) {
-  Expected<std::unique_ptr<Archive>> LibOrErr =
-      object::Archive::create(NM.Buf->getMemBufferRef());
-  if (!LibOrErr)
-    return createFileError(FileName, LibOrErr.takeError());
-
-  if (Error E = processArchive(Members, **LibOrErr, FileName, C))
-    return E;
-
-  // Update vector ArchiveBuffers with the MemoryBuffers to transfer
-  // ownership.
-  ArchiveBuffers.push_back(std::move(NM.Buf));
-  return Error::success();
-}
-
-static Error addUniversalMembers(
-    MembersPerArchitectureMap &Members,
-    std::vector<std::unique_ptr<MemoryBuffer>> &UniversalBuffers,
-    NewArchiveMember NM, StringRef FileName, const Config &C) {
-  Expected<std::unique_ptr<MachOUniversalBinary>> BinaryOrErr =
-      MachOUniversalBinary::create(NM.Buf->getMemBufferRef());
-  if (!BinaryOrErr)
-    return createFileError(FileName, BinaryOrErr.takeError());
-
-  auto *UO = BinaryOrErr->get();
-  for (const MachOUniversalBinary::ObjectForArch &O : UO->objects()) {
-
-    Expected<std::unique_ptr<MachOObjectFile>> MachOObjOrErr =
-        O.getAsObjectFile();
-    if (MachOObjOrErr) {
-      NewArchiveMember NewMember =
-          NewArchiveMember(MachOObjOrErr->get()->getMemoryBufferRef());
-      NewMember.MemberName = sys::path::filename(NewMember.MemberName);
-
-      if (Error E = verifyAndAddMachOObject(Members, std::move(NewMember), C))
-        return E;
-      continue;
-    }
-
-    Expected<std::unique_ptr<IRObjectFile>> IRObjectOrError =
-        O.getAsIRObject(LLVMCtx);
-    if (IRObjectOrError) {
-      // A universal file member can be a MachOObjectFile, an IRObject or an
-      // Archive. In case we can successfully cast the member as an IRObject, it
-      // is safe to throw away the error generated due to casting the object as
-      // a MachOObjectFile.
-      consumeError(MachOObjOrErr.takeError());
-
-      NewArchiveMember NewMember =
-          NewArchiveMember(IRObjectOrError->get()->getMemoryBufferRef());
-      NewMember.MemberName = sys::path::filename(NewMember.MemberName);
-
-      if (Error E = verifyAndAddIRObject(Members, std::move(NewMember), C))
-        return E;
-      continue;
-    }
-
-    Expected<std::unique_ptr<Archive>> ArchiveOrError = O.getAsArchive();
-    if (ArchiveOrError) {
-      // A universal file member can be a MachOObjectFile, an IRObject or an
-      // Archive. In case we can successfully cast the member as an Archive, it
-      // is safe to throw away the error generated due to casting the object as
-      // a MachOObjectFile.
-      consumeError(MachOObjOrErr.takeError());
-      consumeError(IRObjectOrError.takeError());
-
-      if (Error E = processArchive(Members, **ArchiveOrError, FileName, C))
-        return E;
-      continue;
-    }
-
-    Error CombinedError = joinErrors(
-        ArchiveOrError.takeError(),
-        joinErrors(IRObjectOrError.takeError(), MachOObjOrErr.takeError()));
-    return createFileError(FileName, std::move(CombinedError));
+    return verifyAndAddMachOObject(std::move(NewMember));
   }
 
-  // Update vector UniversalBuffers with the MemoryBuffers to transfer
-  // ownership.
-  UniversalBuffers.push_back(std::move(NM.Buf));
-  return Error::success();
-}
+  Error processArchive(object::Archive &Lib, StringRef FileName) {
+    Error Err = Error::success();
+    for (const object::Archive::Child &Child : Lib.children(Err))
+      if (Error E = addChildMember(Child))
+        return createFileError(FileName, std::move(E));
+    if (Err)
+      return createFileError(FileName, std::move(Err));
 
-static Error addMember(MembersPerArchitectureMap &Members,
-                       std::vector<std::unique_ptr<MemoryBuffer>> &FileBuffers,
-                       StringRef FileName, const Config &C) {
-  Expected<NewArchiveMember> NMOrErr =
-      NewArchiveMember::getFile(FileName, C.Deterministic);
-  if (!NMOrErr)
-    return createFileError(FileName, NMOrErr.takeError());
+    return Error::success();
+  }
 
-  // For regular archives, use the basename of the object path for the member
-  // name.
-  NMOrErr->MemberName = sys::path::filename(NMOrErr->MemberName);
-  file_magic Magic = identify_magic(NMOrErr->Buf->getBuffer());
+  Error addArchiveMembers(NewArchiveMember NewMember, StringRef FileName) {
+    Expected<std::unique_ptr<Archive>> LibOrErr =
+        object::Archive::create(NewMember.Buf->getMemBufferRef());
+    if (!LibOrErr)
+      return createFileError(FileName, LibOrErr.takeError());
 
-  // Flatten archives.
-  if (Magic == file_magic::archive)
-    return addArchiveMembers(Members, FileBuffers, std::move(*NMOrErr),
-                             FileName, C);
+    if (Error E = processArchive(**LibOrErr, FileName))
+      return E;
 
-  // Flatten universal files.
-  if (Magic == file_magic::macho_universal_binary)
-    return addUniversalMembers(Members, FileBuffers, std::move(*NMOrErr),
-                               FileName, C);
+    // Update vector FileBuffers with the MemoryBuffers to transfer
+    // ownership.
+    Data.FileBuffers.push_back(std::move(NewMember.Buf));
+    return Error::success();
+  }
 
-  // Bitcode files.
-  if (Magic == file_magic::bitcode)
-    return verifyAndAddIRObject(Members, std::move(*NMOrErr), C);
+  Error addUniversalMembers(NewArchiveMember NewMember, StringRef FileName) {
+    Expected<std::unique_ptr<MachOUniversalBinary>> BinaryOrErr =
+        MachOUniversalBinary::create(NewMember.Buf->getMemBufferRef());
+    if (!BinaryOrErr)
+      return createFileError(FileName, BinaryOrErr.takeError());
 
-  if (Error E = verifyAndAddMachOObject(Members, std::move(*NMOrErr), C))
-    return E;
-  return Error::success();
-}
+    auto *UO = BinaryOrErr->get();
+    for (const MachOUniversalBinary::ObjectForArch &O : UO->objects()) {
+
+      Expected<std::unique_ptr<MachOObjectFile>> MachOObjOrErr =
+          O.getAsObjectFile();
+      if (MachOObjOrErr) {
+        NewArchiveMember NewMember =
+            NewArchiveMember(MachOObjOrErr->get()->getMemoryBufferRef());
+        NewMember.MemberName = sys::path::filename(NewMember.MemberName);
+
+        if (Error E = verifyAndAddMachOObject(std::move(NewMember)))
+          return E;
+        continue;
+      }
+
+      Expected<std::unique_ptr<IRObjectFile>> IRObjectOrError =
+          O.getAsIRObject(LLVMCtx);
+      if (IRObjectOrError) {
+        // A universal file member can be a MachOObjectFile, an IRObject or an
+        // Archive. In case we can successfully cast the member as an IRObject,
+        // it is safe to throw away the error generated due to casting the
+        // object as a MachOObjectFile.
+        consumeError(MachOObjOrErr.takeError());
+
+        NewArchiveMember NewMember =
+            NewArchiveMember(IRObjectOrError->get()->getMemoryBufferRef());
+        NewMember.MemberName = sys::path::filename(NewMember.MemberName);
+
+        if (Error E = verifyAndAddIRObject(std::move(NewMember)))
+          return E;
+        continue;
+      }
+
+      Expected<std::unique_ptr<Archive>> ArchiveOrError = O.getAsArchive();
+      if (ArchiveOrError) {
+        // A universal file member can be a MachOObjectFile, an IRObject or an
+        // Archive. In case we can successfully cast the member as an Archive,
+        // it is safe to throw away the error generated due to casting the
+        // object as a MachOObjectFile.
+        consumeError(MachOObjOrErr.takeError());
+        consumeError(IRObjectOrError.takeError());
+
+        if (Error E = processArchive(**ArchiveOrError, FileName))
+          return E;
+        continue;
+      }
+
+      Error CombinedError = joinErrors(
+          ArchiveOrError.takeError(),
+          joinErrors(IRObjectOrError.takeError(), MachOObjOrErr.takeError()));
+      return createFileError(FileName, std::move(CombinedError));
+    }
+
+    // Update vector FileBuffers with the MemoryBuffers to transfer
+    // ownership.
+    Data.FileBuffers.push_back(std::move(NewMember.Buf));
+    return Error::success();
+  }
+
+  Error addMember(StringRef FileName) {
+    Expected<NewArchiveMember> NewMemberOrErr =
+        NewArchiveMember::getFile(FileName, C.Deterministic);
+    if (!NewMemberOrErr)
+      return createFileError(FileName, NewMemberOrErr.takeError());
+    auto &NewMember = *NewMemberOrErr;
+
+    // For regular archives, use the basename of the object path for the member
+    // name.
+    NewMember.MemberName = sys::path::filename(NewMember.MemberName);
+    file_magic Magic = identify_magic(NewMember.Buf->getBuffer());
+
+    // Flatten archives.
+    if (Magic == file_magic::archive)
+      return addArchiveMembers(std::move(NewMember), FileName);
+
+    // Flatten universal files.
+    if (Magic == file_magic::macho_universal_binary)
+      return addUniversalMembers(std::move(NewMember), FileName);
+
+    // Bitcode files.
+    if (Magic == file_magic::bitcode)
+      return verifyAndAddIRObject(std::move(NewMember));
+
+    return verifyAndAddMachOObject(std::move(NewMember));
+  }
+
+  MembersData Data;
+  const Config &C;
+};
 
 static Expected<SmallVector<Slice, 2>>
 buildSlices(ArrayRef<OwningBinary<Archive>> OutputBinaries) {
@@ -461,61 +488,49 @@ buildSlices(ArrayRef<OwningBinary<Archive>> OutputBinaries) {
 }
 
 static Error createStaticLibrary(const Config &C) {
-  MembersPerArchitectureMap NewMembers;
-  std::vector<std::unique_ptr<MemoryBuffer>> FileBuffers;
-  for (StringRef FileName : InputFiles)
-    if (Error E = addMember(NewMembers, FileBuffers, FileName, C))
-      return E;
+  MembersBuilder Builder(C);
+  auto DataOrError = Builder.build();
+  if (auto Error = DataOrError.takeError())
+    return Error;
 
-  if (!ArchType.empty()) {
-    uint64_t ArchCPUID = getCPUID(C.ArchCPUType, C.ArchCPUSubtype);
-    if (NewMembers.find(ArchCPUID) == NewMembers.end())
-      return createStringError(std::errc::invalid_argument,
-                               "no library created (no object files in input "
-                               "files matching -arch_only %s)",
-                               ArchType.c_str());
-  }
+  const auto &NewMembers = DataOrError->MembersPerArchitecture;
 
   if (NewMembers.size() == 1) {
-    if (Error E =
-            writeArchive(OutputFile, NewMembers.begin()->second,
-                         /*WriteSymtab=*/true,
-                         /*Kind=*/object::Archive::K_DARWIN, C.Deterministic,
-                         /*Thin=*/false))
-      return E;
-  } else {
-    SmallVector<OwningBinary<Archive>, 2> OutputBinaries;
-    for (const std::pair<const uint64_t, std::vector<NewArchiveMember>> &M :
-         NewMembers) {
-      Expected<std::unique_ptr<MemoryBuffer>> OutputBufferOrErr =
-          writeArchiveToBuffer(M.second,
-                               /*WriteSymtab=*/true,
-                               /*Kind=*/object::Archive::K_DARWIN,
-                               C.Deterministic,
-                               /*Thin=*/false);
-      if (!OutputBufferOrErr)
-        return OutputBufferOrErr.takeError();
-      std::unique_ptr<MemoryBuffer> &OutputBuffer = OutputBufferOrErr.get();
-
-      Expected<std::unique_ptr<Archive>> ArchiveOrError =
-          Archive::create(OutputBuffer->getMemBufferRef());
-      if (!ArchiveOrError)
-        return ArchiveOrError.takeError();
-      std::unique_ptr<Archive> &A = ArchiveOrError.get();
-
-      OutputBinaries.push_back(
-          OwningBinary<Archive>(std::move(A), std::move(OutputBuffer)));
-    }
-
-    Expected<SmallVector<Slice, 2>> Slices = buildSlices(OutputBinaries);
-    if (!Slices)
-      return Slices.takeError();
-
-    llvm::stable_sort(*Slices);
-    if (Error E = writeUniversalBinary(*Slices, OutputFile))
-      return E;
+    return writeArchive(OutputFile, NewMembers.begin()->second,
+                        /*WriteSymtab=*/true,
+                        /*Kind=*/object::Archive::K_DARWIN, C.Deterministic,
+                        /*Thin=*/false);
   }
-  return Error::success();
+
+  SmallVector<OwningBinary<Archive>, 2> OutputBinaries;
+  for (const std::pair<const uint64_t, std::vector<NewArchiveMember>> &M :
+       NewMembers) {
+    Expected<std::unique_ptr<MemoryBuffer>> OutputBufferOrErr =
+        writeArchiveToBuffer(M.second,
+                             /*WriteSymtab=*/true,
+                             /*Kind=*/object::Archive::K_DARWIN,
+                             C.Deterministic,
+                             /*Thin=*/false);
+    if (!OutputBufferOrErr)
+      return OutputBufferOrErr.takeError();
+    std::unique_ptr<MemoryBuffer> &OutputBuffer = OutputBufferOrErr.get();
+
+    Expected<std::unique_ptr<Archive>> ArchiveOrError =
+        Archive::create(OutputBuffer->getMemBufferRef());
+    if (!ArchiveOrError)
+      return ArchiveOrError.takeError();
+    std::unique_ptr<Archive> &A = ArchiveOrError.get();
+
+    OutputBinaries.push_back(
+        OwningBinary<Archive>(std::move(A), std::move(OutputBuffer)));
+  }
+
+  Expected<SmallVector<Slice, 2>> Slices = buildSlices(OutputBinaries);
+  if (!Slices)
+    return Slices.takeError();
+
+  llvm::stable_sort(*Slices);
+  return writeUniversalBinary(*Slices, OutputFile);
 }
 
 static Expected<Config> parseCommandLine(int Argc, char **Argv) {

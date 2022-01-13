@@ -31,23 +31,17 @@ ORC_RT_INTERFACE void *__orc_rt_macho_jit_dlsym(void *dso_handle,
 namespace __orc_rt {
 namespace macho {
 
-struct MachOPerObjectSectionsToRegister {
-  ExecutorAddressRange EHFrameSection;
-  ExecutorAddressRange ThreadDataSection;
-};
-
 struct MachOJITDylibInitializers {
-  using SectionList = std::vector<ExecutorAddressRange>;
+  using SectionList = std::vector<ExecutorAddrRange>;
 
   MachOJITDylibInitializers() = default;
-  MachOJITDylibInitializers(std::string Name,
-                            ExecutorAddress MachOHeaderAddress)
+  MachOJITDylibInitializers(std::string Name, ExecutorAddr MachOHeaderAddress)
       : Name(std::move(Name)),
         MachOHeaderAddress(std::move(MachOHeaderAddress)) {}
 
   std::string Name;
-  ExecutorAddress MachOHeaderAddress;
-  ExecutorAddress ObjCImageInfoAddress;
+  ExecutorAddr MachOHeaderAddress;
+  ExecutorAddr ObjCImageInfoAddress;
 
   std::unordered_map<std::string, SectionList> InitSections;
 };
@@ -68,38 +62,12 @@ enum dlopen_mode : int {
 
 } // end namespace macho
 
-using SPSMachOPerObjectSectionsToRegister =
-    SPSTuple<SPSExecutorAddressRange, SPSExecutorAddressRange>;
-
-template <>
-class SPSSerializationTraits<SPSMachOPerObjectSectionsToRegister,
-                             macho::MachOPerObjectSectionsToRegister> {
-
-public:
-  static size_t size(const macho::MachOPerObjectSectionsToRegister &MOPOSR) {
-    return SPSMachOPerObjectSectionsToRegister::AsArgList::size(
-        MOPOSR.EHFrameSection, MOPOSR.ThreadDataSection);
-  }
-
-  static bool serialize(SPSOutputBuffer &OB,
-                        const macho::MachOPerObjectSectionsToRegister &MOPOSR) {
-    return SPSMachOPerObjectSectionsToRegister::AsArgList::serialize(
-        OB, MOPOSR.EHFrameSection, MOPOSR.ThreadDataSection);
-  }
-
-  static bool deserialize(SPSInputBuffer &IB,
-                          macho::MachOPerObjectSectionsToRegister &MOPOSR) {
-    return SPSMachOPerObjectSectionsToRegister::AsArgList::deserialize(
-        IB, MOPOSR.EHFrameSection, MOPOSR.ThreadDataSection);
-  }
-};
-
-using SPSNamedExecutorAddressRangeSequenceMap =
-    SPSSequence<SPSTuple<SPSString, SPSExecutorAddressRangeSequence>>;
+using SPSNamedExecutorAddrRangeSequenceMap =
+    SPSSequence<SPSTuple<SPSString, SPSExecutorAddrRangeSequence>>;
 
 using SPSMachOJITDylibInitializers =
-    SPSTuple<SPSString, SPSExecutorAddress, SPSExecutorAddress,
-             SPSNamedExecutorAddressRangeSequenceMap>;
+    SPSTuple<SPSString, SPSExecutorAddr, SPSExecutorAddr,
+             SPSNamedExecutorAddrRangeSequenceMap>;
 
 using SPSMachOJITDylibInitializerSequence =
     SPSSequence<SPSMachOJITDylibInitializers>;

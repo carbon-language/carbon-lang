@@ -46,7 +46,6 @@ class GlobalValue;
 class DataLayout;
 class FunctionType;
 class LLVMContext;
-class OpenMPIRBuilder;
 class IndexedInstrProfReader;
 }
 
@@ -55,17 +54,13 @@ class ASTContext;
 class AtomicType;
 class FunctionDecl;
 class IdentifierInfo;
-class ObjCMethodDecl;
 class ObjCImplementationDecl;
-class ObjCCategoryImplDecl;
-class ObjCProtocolDecl;
 class ObjCEncodeExpr;
 class BlockExpr;
 class CharUnits;
 class Decl;
 class Expr;
 class Stmt;
-class InitListExpr;
 class StringLiteral;
 class NamedDecl;
 class ValueDecl;
@@ -78,13 +73,10 @@ class AnnotateAttr;
 class CXXDestructorDecl;
 class Module;
 class CoverageSourceInfo;
-class TargetAttr;
 class InitSegAttr;
-struct ParsedTargetAttr;
 
 namespace CodeGen {
 
-class CallArgList;
 class CodeGenFunction;
 class CodeGenTBAA;
 class CGCXXABI;
@@ -93,8 +85,6 @@ class CGObjCRuntime;
 class CGOpenCLRuntime;
 class CGOpenMPRuntime;
 class CGCUDARuntime;
-class BlockFieldFlags;
-class FunctionArgList;
 class CoverageMappingModuleGen;
 class TargetCodeGenInfo;
 
@@ -311,7 +301,7 @@ private:
   const TargetInfo &Target;
   std::unique_ptr<CGCXXABI> ABI;
   llvm::LLVMContext &VMContext;
-  std::string ModuleNameHash = "";
+  std::string ModuleNameHash;
 
   std::unique_ptr<CodeGenTBAA> TBAA;
 
@@ -880,6 +870,9 @@ public:
                                     bool DontDefer = false,
                                     ForDefinition_t IsForDefinition
                                       = NotForDefinition);
+
+  // Return the function body address of the given function.
+  llvm::Constant *GetFunctionStart(const ValueDecl *Decl);
 
   /// Get the address of the RTTI descriptor for the given type.
   llvm::Constant *GetAddrOfRTTIDescriptor(QualType Ty, bool ForEH = false);
@@ -1500,6 +1493,7 @@ private:
   void EmitAliasDefinition(GlobalDecl GD);
   void emitIFuncDefinition(GlobalDecl GD);
   void emitCPUDispatchDefinition(GlobalDecl GD);
+  void EmitTargetClonesResolver(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitObjCIvarInitializations(ObjCImplementationDecl *D);
 

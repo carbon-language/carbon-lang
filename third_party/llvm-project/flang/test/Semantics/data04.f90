@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1
 !Testing data constraints : C876, C877
 module m
   integer :: first
@@ -66,6 +65,10 @@ module m
       type(large) :: largeNumberArray(i)
       type(large) :: largeArray(5)
       character :: name(i)
+      type small
+        real :: x
+      end type
+      type(small), pointer :: sp
       !C877
       !ERROR: Default-initialized 'largenumber' must not be initialized in a DATA statement
       DATA(largeNumber % numsArray(j) % headOfTheList, j = 1, 10) / 10 * NULL() /
@@ -93,6 +96,8 @@ module m
       !C876
       !ERROR: Automatic variable 'name' must not be initialized in a DATA statement
       DATA name( : 2) / 'Ancd' /
+      !ERROR: Target of pointer 'sp' must not be initialized in a DATA statement
+      DATA sp%x / 1.0 /
     end
   end
 

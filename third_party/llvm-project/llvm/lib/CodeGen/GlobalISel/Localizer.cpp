@@ -92,9 +92,8 @@ bool Localizer::localizeInterBlock(MachineFunction &MF,
     // Check if all the users of MI are local.
     // We are going to invalidation the list of use operands, so we
     // can't use range iterator.
-    for (auto MOIt = MRI->use_begin(Reg), MOItEnd = MRI->use_end();
-         MOIt != MOItEnd;) {
-      MachineOperand &MOUse = *MOIt++;
+    for (MachineOperand &MOUse :
+         llvm::make_early_inc_range(MRI->use_operands(Reg))) {
       // Check if the use is already local.
       MachineBasicBlock *InsertMBB;
       LLVM_DEBUG(MachineInstr &MIUse = *MOUse.getParent();
@@ -131,8 +130,7 @@ bool Localizer::localizeInterBlock(MachineFunction &MF,
                             LocalizedMI);
 
         // Set a new register for the definition.
-        Register NewReg = MRI->createGenericVirtualRegister(MRI->getType(Reg));
-        MRI->setRegClassOrRegBank(NewReg, MRI->getRegClassOrRegBank(Reg));
+        Register NewReg = MRI->cloneVirtualRegister(Reg);
         LocalizedMI->getOperand(0).setReg(NewReg);
         NewVRegIt =
             MBBWithLocalDef.insert(std::make_pair(MBBAndReg, NewReg)).first;

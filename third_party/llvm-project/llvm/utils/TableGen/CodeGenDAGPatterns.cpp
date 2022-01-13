@@ -451,12 +451,15 @@ static Iter max_if(Iter B, Iter E, Pred P, Less L) {
 }
 
 /// Make sure that for each type in Small, there exists a larger type in Big.
-bool TypeInfer::EnforceSmallerThan(TypeSetByHwMode &Small,
-                                   TypeSetByHwMode &Big) {
+bool TypeInfer::EnforceSmallerThan(TypeSetByHwMode &Small, TypeSetByHwMode &Big,
+                                   bool SmallIsVT) {
   ValidateOnExit _1(Small, *this), _2(Big, *this);
   if (TP.hasError())
     return false;
   bool Changed = false;
+
+  assert((!SmallIsVT || !Small.empty()) &&
+         "Small should not be empty for SDTCisVTSmallerThanOp");
 
   if (Small.empty())
     Changed |= EnforceAny(Small);
@@ -476,7 +479,9 @@ bool TypeInfer::EnforceSmallerThan(TypeSetByHwMode &Small,
     TypeSetByHwMode::SetType &S = Small.get(M);
     TypeSetByHwMode::SetType &B = Big.get(M);
 
-    if (any_of(S, isIntegerOrPtr) && any_of(S, isIntegerOrPtr)) {
+    assert((!SmallIsVT || !S.empty()) && "Expected non-empty type");
+
+    if (any_of(S, isIntegerOrPtr) && any_of(B, isIntegerOrPtr)) {
       auto NotInt = [](MVT VT) { return !isIntegerOrPtr(VT); };
       Changed |= berase_if(S, NotInt);
       Changed |= berase_if(B, NotInt);
@@ -484,6 +489,11 @@ bool TypeInfer::EnforceSmallerThan(TypeSetByHwMode &Small,
       auto NotFP = [](MVT VT) { return !isFloatingPoint(VT); };
       Changed |= berase_if(S, NotFP);
       Changed |= berase_if(B, NotFP);
+    } else if (SmallIsVT && B.empty()) {
+      // B is empty and since S is a specific VT, it will never be empty. Don't
+      // report this as a change, just clear S and continue. This prevents an
+      // infinite loop.
+      S.clear();
     } else if (S.empty() || B.empty()) {
       Changed = !S.empty() || !B.empty();
       S.clear();
@@ -1573,7 +1583,7 @@ static TreePatternNode *getOperandNum(unsigned OpNo, TreePatternNode *N,
     OS << "Invalid operand number in type constraint "
            << (OpNo+NumResults) << " ";
     N->print(OS);
-    PrintFatalError(OS.str());
+    PrintFatalError(S);
   }
 
   return N->getChild(OpNo);
@@ -1612,20 +1622,22 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     unsigned OResNo = 0;
     TreePatternNode *OtherNode =
       getOperandNum(x.SDTCisSameAs_Info.OtherOperandNum, N, NodeInfo, OResNo);
-    return NodeToApply->UpdateNodeType(ResNo, OtherNode->getExtType(OResNo),TP)|
-           OtherNode->UpdateNodeType(OResNo,NodeToApply->getExtType(ResNo),TP);
+    return (int)NodeToApply->UpdateNodeType(ResNo,
+                                            OtherNode->getExtType(OResNo), TP) |
+           (int)OtherNode->UpdateNodeType(OResNo,
+                                          NodeToApply->getExtType(ResNo), TP);
   }
   case SDTCisVTSmallerThanOp: {
     // The NodeToApply must be a leaf node that is a VT.  OtherOperandNum must
     // have an integer type that is smaller than the VT.
     if (!NodeToApply->isLeaf() ||
         !isa<DefInit>(NodeToApply->getLeafValue()) ||
-        !static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef()
+        !cast<DefInit>(NodeToApply->getLeafValue())->getDef()
                ->isSubClassOf("ValueType")) {
       TP.error(N->getOperator()->getName() + " expects a VT operand!");
       return false;
     }
-    DefInit *DI = static_cast<DefInit*>(NodeToApply->getLeafValue());
+    DefInit *DI = cast<DefInit>(NodeToApply->getLeafValue());
     const CodeGenTarget &T = TP.getDAGPatterns().getTargetInfo();
     auto VVT = getValueTypeByHwMode(DI->getDef(), T.getHwModes());
     TypeSetByHwMode TypeListTmp(VVT);
@@ -1635,7 +1647,8 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       getOperandNum(x.SDTCisVTSmallerThanOp_Info.OtherOperandNum, N, NodeInfo,
                     OResNo);
 
-    return TI.EnforceSmallerThan(TypeListTmp, OtherNode->getExtType(OResNo));
+    return TI.EnforceSmallerThan(TypeListTmp, OtherNode->getExtType(OResNo),
+                                 /*SmallIsVT*/ true);
   }
   case SDTCisOpSmallerThanOp: {
     unsigned BResNo = 0;
@@ -2255,7 +2268,9 @@ static TypeSetByHwMode getImplicitType(Record *R, unsigned ResNo,
     assert(ResNo == 0 && "FIXME: ComplexPattern with multiple results?");
     if (NotRegisters)
       return TypeSetByHwMode(); // Unknown.
-    return TypeSetByHwMode(CDP.getComplexPattern(R).getValueType());
+    Record *T = CDP.getComplexPattern(R).getValueType();
+    const CodeGenHwModes &CGH = CDP.getTargetInfo().getHwModes();
+    return TypeSetByHwMode(getValueTypeByHwMode(T, CGH));
   }
   if (R->isSubClassOf("PointerLikeRegClass")) {
     assert(ResNo == 0 && "Regclass can only have one result!");
@@ -2659,6 +2674,22 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
   if (getOperator()->isSubClassOf("ComplexPattern")) {
     bool MadeChange = false;
+
+    if (!NotRegisters) {
+      assert(Types.size() == 1 && "ComplexPatterns only produce one result!");
+      Record *T = CDP.getComplexPattern(getOperator()).getValueType();
+      const CodeGenHwModes &CGH = CDP.getTargetInfo().getHwModes();
+      const ValueTypeByHwMode VVT = getValueTypeByHwMode(T, CGH);
+      // TODO: AArch64 and AMDGPU use ComplexPattern<untyped, ...> and then
+      // exclusively use those as non-leaf nodes with explicit type casts, so
+      // for backwards compatibility we do no inference in that case. This is
+      // not supported when the ComplexPattern is used as a leaf value,
+      // however; this inconsistency should be resolved, either by adding this
+      // case there or by altering the backends to not do this (e.g. using Any
+      // instead may work).
+      if (!VVT.isSimple() || VVT.getSimple() != MVT::Untyped)
+        MadeChange |= UpdateNodeType(0, VVT, TP);
+    }
 
     for (unsigned i = 0; i < getNumChildren(); ++i)
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
@@ -3819,7 +3850,7 @@ void CodeGenDAGPatterns::parseInstructionPattern(
     InstInputs.erase(OpName);   // It occurred, remove from map.
 
     if (InVal->isLeaf() && isa<DefInit>(InVal->getLeafValue())) {
-      Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
+      Record *InRec = cast<DefInit>(InVal->getLeafValue())->getDef();
       if (!checkOperandClass(Op, InRec))
         I.error("Operand $" + OpName + "'s register class disagrees"
                  " between the operand and pattern");

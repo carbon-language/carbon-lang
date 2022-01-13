@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1
 ! Test 15.7 (C1583-C1590, C1592-C1599) constraints and restrictions
 ! for pure procedures.
 ! (C1591 is tested in call11.f90; C1594 in call12.f90.)
@@ -185,7 +184,6 @@ module m
   pure subroutine s14
     integer :: img, nimgs, i[*], tmp
                                    ! implicit sync all
-    !ERROR: Procedure 'this_image' referenced in pure subprogram 's14' must be pure too
     img = this_image()
     nimgs = num_images()
     i = img                       ! i is ready to use

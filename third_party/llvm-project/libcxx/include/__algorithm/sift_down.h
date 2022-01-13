@@ -21,8 +21,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Compare, class _RandomAccessIterator>
 _LIBCPP_CONSTEXPR_AFTER_CXX11 void
-__sift_down(_RandomAccessIterator __first, _RandomAccessIterator /*__last*/,
-            _Compare __comp,
+__sift_down(_RandomAccessIterator __first, _Compare __comp,
             typename iterator_traits<_RandomAccessIterator>::difference_type __len,
             _RandomAccessIterator __start)
 {
@@ -38,7 +37,7 @@ __sift_down(_RandomAccessIterator __first, _RandomAccessIterator /*__last*/,
     __child = 2 * __child + 1;
     _RandomAccessIterator __child_i = __first + __child;
 
-    if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + 1))) {
+    if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + difference_type(1)))) {
         // right-child exists and is greater than left-child
         ++__child_i;
         ++__child;
@@ -46,7 +45,7 @@ __sift_down(_RandomAccessIterator __first, _RandomAccessIterator /*__last*/,
 
     // check if we are in heap-order
     if (__comp(*__child_i, *__start))
-        // we are, __start is larger than it's largest child
+        // we are, __start is larger than its largest child
         return;
 
     value_type __top(_VSTD::move(*__start));
@@ -63,7 +62,7 @@ __sift_down(_RandomAccessIterator __first, _RandomAccessIterator /*__last*/,
         __child = 2 * __child + 1;
         __child_i = __first + __child;
 
-        if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + 1))) {
+        if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + difference_type(1)))) {
             // right-child exists and is greater than left-child
             ++__child_i;
             ++__child;

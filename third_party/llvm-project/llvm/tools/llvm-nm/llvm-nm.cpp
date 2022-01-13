@@ -31,6 +31,7 @@
 #include "llvm/Object/TapiFile.h"
 #include "llvm/Object/TapiUniversal.h"
 #include "llvm/Object/Wasm.h"
+#include "llvm/Object/XCOFFObjectFile.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
@@ -64,7 +65,7 @@ enum ID {
 #include "Opts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info InfoTable[] = {
+const opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {                                                                            \
@@ -126,6 +127,20 @@ static bool MultipleFiles = false;
 static bool HadError = false;
 
 static StringRef ToolName;
+
+static void warn(Error Err, Twine FileName, Twine Context = Twine()) {
+  assert(Err);
+
+  // Flush the standard output so that the warning isn't interleaved with other
+  // output if stdout and stderr are writing to the same place.
+  outs().flush();
+
+  handleAllErrors(std::move(Err), [&](const ErrorInfoBase &EI) {
+    WithColor::warning(errs(), ToolName)
+        << FileName << ": " << (Context.str().empty() ? "" : Context + ": ")
+        << EI.message() << "\n";
+  });
+}
 
 static void error(Twine Message, Twine Path = Twine()) {
   HadError = true;
@@ -246,6 +261,9 @@ static char isSymbolList64Bit(SymbolicFile &Obj) {
     return Triple(IRObj->getTargetTriple()).isArch64Bit();
   if (isa<COFFObjectFile>(Obj) || isa<COFFImportFile>(Obj))
     return false;
+  if (XCOFFObjectFile *XCOFFObj = dyn_cast<XCOFFObjectFile>(&Obj))
+    return XCOFFObj->is64Bit();
+
   if (isa<WasmObjectFile>(Obj))
     return false;
   if (TapiFile *Tapi = dyn_cast<TapiFile>(&Obj))
@@ -530,7 +548,7 @@ struct DarwinStabName {
   uint8_t NType;
   const char *Name;
 };
-static const struct DarwinStabName DarwinStabNames[] = {
+const struct DarwinStabName DarwinStabNames[] = {
     {MachO::N_GSYM, "GSYM"},
     {MachO::N_FNAME, "FNAME"},
     {MachO::N_FUN, "FUN"},
@@ -599,22 +617,16 @@ static void darwinPrintStab(MachOObjectFile *MachO, const NMSymbol &S) {
     outs() << format("   %02x", NType);
 }
 
-static Optional<std::string> demangle(StringRef Name, bool StripUnderscore) {
-  if (StripUnderscore && !Name.empty() && Name[0] == '_')
-    Name = Name.substr(1);
+static Optional<std::string> demangle(const std::string &Name,
+                                      bool StripUnderscore) {
+  const char *Mangled = Name.c_str();
+  if (StripUnderscore && Mangled[0] == '_')
+    Mangled = Mangled + 1;
 
-  if (!Name.startswith("_Z"))
-    return None;
-
-  int Status;
-  char *Undecorated =
-      itaniumDemangle(Name.str().c_str(), nullptr, nullptr, &Status);
-  if (Status != 0)
-    return None;
-
-  std::string S(Undecorated);
-  free(Undecorated);
-  return S;
+  std::string Demangled;
+  if (nonMicrosoftDemangle(Mangled, Demangled))
+    return Demangled;
+  return None;
 }
 
 static bool symbolIsDefined(const NMSymbol &Sym) {
@@ -903,6 +915,42 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
   return '?';
 }
 
+static char getSymbolNMTypeChar(XCOFFObjectFile &Obj, symbol_iterator I) {
+  Expected<uint32_t> TypeOrErr = I->getType();
+  if (!TypeOrErr) {
+    warn(TypeOrErr.takeError(), Obj.getFileName(),
+         "for symbol with index " +
+             Twine(Obj.getSymbolIndex(I->getRawDataRefImpl().p)));
+    return '?';
+  }
+
+  uint32_t SymType = *TypeOrErr;
+
+  if (SymType == SymbolRef::ST_File)
+    return 'f';
+
+  // If the I->getSection() call would return an error, the earlier I->getType()
+  // call will already have returned the same error first.
+  section_iterator SecIter = cantFail(I->getSection());
+
+  if (SecIter == Obj.section_end())
+    return '?';
+
+  if (Obj.isDebugSection(SecIter->getRawDataRefImpl()))
+    return 'N';
+
+  if (SecIter->isText())
+    return 't';
+
+  if (SecIter->isData())
+    return 'd';
+
+  if (SecIter->isBSS())
+    return 'b';
+
+  return '?';
+}
+
 static char getSymbolNMTypeChar(COFFImportFile &Obj) {
   switch (Obj.getCOFFImportHeader()->getType()) {
   case COFF::IMPORT_CODE:
@@ -1051,6 +1099,8 @@ static char getNMSectionTagAndName(SymbolicFile &Obj, basic_symbol_iterator I,
     Ret = getSymbolNMTypeChar(*IR, I);
   else if (COFFObjectFile *COFF = dyn_cast<COFFObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*COFF, I);
+  else if (XCOFFObjectFile *XCOFF = dyn_cast<XCOFFObjectFile>(&Obj))
+    Ret = getSymbolNMTypeChar(*XCOFF, I);
   else if (COFFImportFile *COFFImport = dyn_cast<COFFImportFile>(&Obj))
     Ret = getSymbolNMTypeChar(*COFFImport);
   else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj))
@@ -1637,6 +1687,11 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
       S.Address = 0;
       if (isa<ELFObjectFileBase>(&Obj))
         S.Size = ELFSymbolRef(Sym).getSize();
+
+      if (const XCOFFObjectFile *XCOFFObj =
+              dyn_cast<const XCOFFObjectFile>(&Obj))
+        S.Size = XCOFFObj->getSymbolSize(Sym.getRawDataRefImpl());
+
       if (PrintAddress && isa<ObjectFile>(Obj)) {
         SymbolRef SymRef(Sym);
         Expected<uint64_t> AddressOrErr = SymRef.getAddress();

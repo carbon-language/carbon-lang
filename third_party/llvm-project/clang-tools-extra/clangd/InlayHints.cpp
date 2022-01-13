@@ -6,25 +6,31 @@
 //
 //===----------------------------------------------------------------------===//
 #include "InlayHints.h"
+#include "Config.h"
 #include "HeuristicResolver.h"
 #include "ParsedAST.h"
-#include "support/Logger.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 namespace clangd {
+namespace {
+
+// For now, inlay hints are always anchored at the left or right of their range.
+enum class HintSide { Left, Right };
 
 class InlayHintVisitor : public RecursiveASTVisitor<InlayHintVisitor> {
 public:
-  InlayHintVisitor(std::vector<InlayHint> &Results, ParsedAST &AST)
-      : Results(Results), AST(AST.getASTContext()),
+  InlayHintVisitor(std::vector<InlayHint> &Results, ParsedAST &AST,
+                   const Config &Cfg, llvm::Optional<Range> RestrictRange)
+      : Results(Results), AST(AST.getASTContext()), Cfg(Cfg),
+        RestrictRange(std::move(RestrictRange)),
         MainFileID(AST.getSourceManager().getMainFileID()),
         Resolver(AST.getHeuristicResolver()),
-        TypeHintPolicy(this->AST.getPrintingPolicy()) {
+        TypeHintPolicy(this->AST.getPrintingPolicy()),
+        StructuredBindingPolicy(this->AST.getPrintingPolicy()) {
     bool Invalid = false;
     llvm::StringRef Buf =
         AST.getSourceManager().getBufferData(MainFileID, &Invalid);
@@ -33,14 +39,15 @@ public:
     TypeHintPolicy.SuppressScope = true; // keep type names short
     TypeHintPolicy.AnonymousTagLocations =
         false; // do not print lambda locations
-    // Print canonical types. Otherwise, SuppressScope would result in
-    // things like "metafunction<args>::type" being shorted to just "type",
-    // which is useless. This is particularly important for structured
-    // bindings that use the tuple_element protocol, where the non-canonical
-    // types would be "tuple_element<I, A>::type".
-    // Note, for "auto", we would often prefer sugared types, but the AST
-    // doesn't currently retain them in DeducedType anyways.
-    TypeHintPolicy.PrintCanonicalTypes = true;
+
+    // For structured bindings, print canonical types. This is important because
+    // for bindings that use the tuple_element protocol, the non-canonical types
+    // would be "tuple_element<I, A>::type".
+    // For "auto", we often prefer sugared types.
+    // Not setting PrintCanonicalTypes for "auto" allows
+    // SuppressDefaultTemplateArgs (set by default) to have an effect.
+    StructuredBindingPolicy = TypeHintPolicy;
+    StructuredBindingPolicy.PrintCanonicalTypes = true;
   }
 
   bool VisitCXXConstructExpr(CXXConstructExpr *E) {
@@ -59,6 +66,9 @@ public:
   }
 
   bool VisitCallExpr(CallExpr *E) {
+    if (!Cfg.InlayHints.Parameters)
+      return true;
+
     // Do not show parameter hints for operator calls written using operator
     // syntax or user-defined literals. (Among other reasons, the resulting
     // hints can look awkard, e.g. the expression can itself be a function
@@ -86,7 +96,7 @@ public:
       QualType Deduced = AT->getDeducedType();
       if (!Deduced.isNull()) {
         addTypeHint(D->getFunctionTypeLoc().getRParenLoc(), D->getReturnType(),
-                    "-> ");
+                    /*Prefix=*/"-> ");
       }
     }
 
@@ -98,7 +108,8 @@ public:
     // but show hints for the individual bindings.
     if (auto *DD = dyn_cast<DecompositionDecl>(D)) {
       for (auto *Binding : DD->bindings()) {
-        addTypeHint(Binding->getLocation(), Binding->getType(), ": ");
+        addTypeHint(Binding->getLocation(), Binding->getType(), /*Prefix=*/": ",
+                    StructuredBindingPolicy);
       }
       return true;
     }
@@ -110,7 +121,7 @@ public:
         // (e.g. for `const auto& x = 42`, print `const int&`).
         // Alternatively, we could place the hint on the `auto`
         // (and then just print the type deduced for the `auto`).
-        addTypeHint(D->getLocation(), D->getType(), ": ");
+        addTypeHint(D->getLocation(), D->getType(), /*Prefix=*/": ");
       }
     }
     return true;
@@ -128,7 +139,7 @@ private:
   // the entire argument list likely appears in the main file and can be hinted.
   void processCall(SourceLocation Anchor, const FunctionDecl *Callee,
                    llvm::ArrayRef<const Expr *const> Args) {
-    if (Args.size() == 0 || !Callee)
+    if (!Cfg.InlayHints.Parameters || Args.size() == 0 || !Callee)
       return;
 
     // If the anchor location comes from a macro defintion, there's nowhere to
@@ -157,8 +168,9 @@ private:
       if (!shouldHint(Args[I], Name))
         continue;
 
-      addInlayHint(Args[I]->getSourceRange(), InlayHintKind::ParameterHint,
-                   Name.str() + ": ");
+      addInlayHint(Args[I]->getSourceRange(), HintSide::Left,
+                   InlayHintKind::ParameterHint, /*Prefix=*/"", Name,
+                   /*Suffix=*/": ");
     }
   }
 
@@ -310,43 +322,97 @@ private:
     return Result;
   }
 
-  void addInlayHint(SourceRange R, InlayHintKind Kind, llvm::StringRef Label) {
+  // We pass HintSide rather than SourceLocation because we want to ensure 
+  // it is in the same file as the common file range.
+  void addInlayHint(SourceRange R, HintSide Side, InlayHintKind Kind,
+                    llvm::StringRef Prefix, llvm::StringRef Label,
+                    llvm::StringRef Suffix) {
+    // We shouldn't get as far as adding a hint if the category is disabled.
+    // We'd like to disable as much of the analysis as possible above instead.
+    // Assert in debug mode but add a dynamic check in production.
+    assert(Cfg.InlayHints.Enabled && "Shouldn't get here if disabled!");
+    switch (Kind) {
+#define CHECK_KIND(Enumerator, ConfigProperty)                                 \
+  case InlayHintKind::Enumerator:                                              \
+    assert(Cfg.InlayHints.ConfigProperty &&                                    \
+           "Shouldn't get here if kind is disabled!");                         \
+    if (!Cfg.InlayHints.ConfigProperty)                                        \
+      return;                                                                  \
+    break
+      CHECK_KIND(ParameterHint, Parameters);
+      CHECK_KIND(TypeHint, DeducedTypes);
+#undef CHECK_KIND
+    }
+
     auto FileRange =
         toHalfOpenFileRange(AST.getSourceManager(), AST.getLangOpts(), R);
     if (!FileRange)
+      return;
+    Range LSPRange{
+        sourceLocToPosition(AST.getSourceManager(), FileRange->getBegin()),
+        sourceLocToPosition(AST.getSourceManager(), FileRange->getEnd())};
+    Position LSPPos = Side == HintSide::Left ? LSPRange.start : LSPRange.end;
+    if (RestrictRange &&
+        (LSPPos < RestrictRange->start || !(LSPPos < RestrictRange->end)))
       return;
     // The hint may be in a file other than the main file (for example, a header
     // file that was included after the preamble), do not show in that case.
     if (!AST.getSourceManager().isWrittenInMainFile(FileRange->getBegin()))
       return;
-    Results.push_back(InlayHint{
-        Range{
-            sourceLocToPosition(AST.getSourceManager(), FileRange->getBegin()),
-            sourceLocToPosition(AST.getSourceManager(), FileRange->getEnd())},
-        Kind, Label.str()});
+    Results.push_back(
+        InlayHint{LSPPos, LSPRange, Kind, (Prefix + Label + Suffix).str()});
   }
 
   void addTypeHint(SourceRange R, QualType T, llvm::StringRef Prefix) {
-    // Do not print useless "NULL TYPE" hint.
-    if (!T.getTypePtrOrNull())
+    addTypeHint(R, T, Prefix, TypeHintPolicy);
+  }
+
+  void addTypeHint(SourceRange R, QualType T, llvm::StringRef Prefix,
+                   const PrintingPolicy &Policy) {
+    if (!Cfg.InlayHints.DeducedTypes || T.isNull())
       return;
 
-    addInlayHint(R, InlayHintKind::TypeHint,
-                 std::string(Prefix) + T.getAsString(TypeHintPolicy));
+    std::string TypeName = T.getAsString(Policy);
+    if (TypeName.length() < TypeNameLimit)
+      addInlayHint(R, HintSide::Right, InlayHintKind::TypeHint, Prefix,
+                   TypeName, /*Suffix=*/"");
   }
 
   std::vector<InlayHint> &Results;
   ASTContext &AST;
+  const Config &Cfg;
+  llvm::Optional<Range> RestrictRange;
   FileID MainFileID;
   StringRef MainFileBuf;
   const HeuristicResolver *Resolver;
+  // We want to suppress default template arguments, but otherwise print
+  // canonical types. Unfortunately, they're conflicting policies so we can't
+  // have both. For regular types, suppressing template arguments is more
+  // important, whereas printing canonical types is crucial for structured
+  // bindings, so we use two separate policies. (See the constructor where
+  // the policies are initialized for more details.)
   PrintingPolicy TypeHintPolicy;
+  PrintingPolicy StructuredBindingPolicy;
+
+  static const size_t TypeNameLimit = 32;
 };
 
-std::vector<InlayHint> inlayHints(ParsedAST &AST) {
+} // namespace
+
+std::vector<InlayHint> inlayHints(ParsedAST &AST,
+                                  llvm::Optional<Range> RestrictRange) {
   std::vector<InlayHint> Results;
-  InlayHintVisitor Visitor(Results, AST);
+  const auto &Cfg = Config::current();
+  if (!Cfg.InlayHints.Enabled)
+    return Results;
+  InlayHintVisitor Visitor(Results, AST, Cfg, std::move(RestrictRange));
   Visitor.TraverseAST(AST.getASTContext());
+
+  // De-duplicate hints. Duplicates can sometimes occur due to e.g. explicit
+  // template instantiations.
+  llvm::sort(Results);
+  Results.erase(std::unique(Results.begin(), Results.end()), Results.end());
+
   return Results;
 }
 

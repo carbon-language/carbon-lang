@@ -56,7 +56,11 @@ Non-comprehensive list of changes in this release
 Changes to the LLVM IR
 ----------------------
 
-* ...
+* Using the legacy pass manager for the optimization pipeline is deprecated and
+  will be removed after LLVM 14. In the meantime, only minimal effort will be
+  made to maintain the legacy pass manager for the optimization pipeline.
+* Max allowed integer type was reduced from 2^24-1 bits to 2^23 bits.
+* Max allowed alignment was increased from 2^29 to 2^32.
 
 Changes to building LLVM
 ------------------------
@@ -69,12 +73,17 @@ Changes to TableGen
 Changes to the AArch64 Backend
 ------------------------------
 
-* ...
+* Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures.
+* The compiler now recognises the "tune-cpu" function attribute to support
+  the use of the -mtune frontend flag. This allows certain scheduling features
+  and optimisations to be enabled independently of the architecture. If the
+  "tune-cpu" attribute is absent it tunes according to the "target-cpu".
 
 Changes to the ARM Backend
 --------------------------
 
-During this release ...
+* Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures.
+* Added support for the Armv8.1-M PACBTI-M extension.
 
 Changes to the MIPS Target
 --------------------------
@@ -120,7 +129,8 @@ Changes to the OCaml bindings
 Changes to the C API
 --------------------
 
-* ...
+* ``LLVMSetInstDebugLocation`` has been deprecated in favor of the more general
+  ``LLVMAddMetadataToInst``.
 
 Changes to the Go bindings
 --------------------------
@@ -143,10 +153,19 @@ During this release ...
 Changes to the LLVM tools
 ---------------------------------
 
-* ...
+* llvm-cov: `-name-allowlist` is now accepted in addition to `-name-whitelist`.
+  `-name-whitelist` is marked as deprecated and to be removed in future
+  releases.
 
 Changes to LLDB
 ---------------------------------
+
+* A change in Clang's type printing has changed the way LLDB names array types
+  (from ``int [N]`` to ``int[N]``) - LLDB pretty printer type name matching
+  code may need to be updated to handle this.
+* The ``memory read`` command now ignores non-address bits in start and end
+  addresses. In addition, non-address bits will not be shown in the addresses
+  in the output.
 
 Changes to Sanitizers
 ---------------------

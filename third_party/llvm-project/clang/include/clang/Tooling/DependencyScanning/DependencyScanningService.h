@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLING_DEPENDENCY_SCANNING_SERVICE_H
-#define LLVM_CLANG_TOOLING_DEPENDENCY_SCANNING_SERVICE_H
+#ifndef LLVM_CLANG_TOOLING_DEPENDENCYSCANNING_DEPENDENCYSCANNINGSERVICE_H
+#define LLVM_CLANG_TOOLING_DEPENDENCYSCANNING_DEPENDENCYSCANNINGSERVICE_H
 
 #include "clang/Tooling/DependencyScanning/DependencyScanningFilesystem.h"
 
@@ -48,7 +48,8 @@ class DependencyScanningService {
 public:
   DependencyScanningService(ScanningMode Mode, ScanningOutputFormat Format,
                             bool ReuseFileManager = true,
-                            bool SkipExcludedPPRanges = true);
+                            bool SkipExcludedPPRanges = true,
+                            bool OptimizeArgs = false);
 
   ScanningMode getMode() const { return Mode; }
 
@@ -57,6 +58,8 @@ public:
   bool canReuseFileManager() const { return ReuseFileManager; }
 
   bool canSkipExcludedPPRanges() const { return SkipExcludedPPRanges; }
+
+  bool canOptimizeArgs() const { return OptimizeArgs; }
 
   DependencyScanningFilesystemSharedCache &getSharedCache() {
     return SharedCache;
@@ -70,6 +73,8 @@ private:
   /// ranges by bumping the buffer pointer in the lexer instead of lexing the
   /// tokens in the range until reaching the corresponding directive.
   const bool SkipExcludedPPRanges;
+  /// Whether to optimize the modules' command-line arguments.
+  const bool OptimizeArgs;
   /// The global file system cache.
   DependencyScanningFilesystemSharedCache SharedCache;
 };
@@ -78,4 +83,4 @@ private:
 } // end namespace tooling
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLING_DEPENDENCY_SCANNING_SERVICE_H
+#endif // LLVM_CLANG_TOOLING_DEPENDENCYSCANNING_DEPENDENCYSCANNINGSERVICE_H

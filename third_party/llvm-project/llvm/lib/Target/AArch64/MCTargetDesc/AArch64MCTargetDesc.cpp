@@ -26,9 +26,9 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -239,8 +239,8 @@ void AArch64_MC::initLLVMToCVRegMapping(MCRegisterInfo *MRI) {
       {codeview::RegisterId::ARM64_Q31, AArch64::Q31},
 
   };
-  for (unsigned I = 0; I < array_lengthof(RegMap); ++I)
-    MRI->mapLLVMRegToCVReg(RegMap[I].Reg, static_cast<int>(RegMap[I].CVReg));
+  for (const auto &I : RegMap)
+    MRI->mapLLVMRegToCVReg(I.Reg, static_cast<int>(I.CVReg));
 }
 
 static MCRegisterInfo *createAArch64MCRegisterInfo(const Triple &Triple) {

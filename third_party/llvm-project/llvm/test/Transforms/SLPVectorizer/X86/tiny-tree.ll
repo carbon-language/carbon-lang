@@ -166,19 +166,21 @@ define void @tiny_tree_not_fully_vectorizable2(float* noalias nocapture %dst, fl
 ; CHECK-NEXT:    [[DST_ADDR_022:%.*]] = phi float* [ [[ADD_PTR8:%.*]], [[FOR_BODY]] ], [ [[DST:%.*]], [[ENTRY]] ]
 ; CHECK-NEXT:    [[SRC_ADDR_021:%.*]] = phi float* [ [[ADD_PTR:%.*]], [[FOR_BODY]] ], [ [[SRC:%.*]], [[ENTRY]] ]
 ; CHECK-NEXT:    [[TMP0:%.*]] = load float, float* [[SRC_ADDR_021]], align 4
-; CHECK-NEXT:    store float [[TMP0]], float* [[DST_ADDR_022]], align 4
 ; CHECK-NEXT:    [[ARRAYIDX2:%.*]] = getelementptr inbounds float, float* [[SRC_ADDR_021]], i64 4
 ; CHECK-NEXT:    [[TMP1:%.*]] = load float, float* [[ARRAYIDX2]], align 4
 ; CHECK-NEXT:    [[ARRAYIDX3:%.*]] = getelementptr inbounds float, float* [[DST_ADDR_022]], i64 1
-; CHECK-NEXT:    store float [[TMP1]], float* [[ARRAYIDX3]], align 4
 ; CHECK-NEXT:    [[ARRAYIDX4:%.*]] = getelementptr inbounds float, float* [[SRC_ADDR_021]], i64 2
-; CHECK-NEXT:    [[TMP2:%.*]] = load float, float* [[ARRAYIDX4]], align 4
 ; CHECK-NEXT:    [[ARRAYIDX5:%.*]] = getelementptr inbounds float, float* [[DST_ADDR_022]], i64 2
-; CHECK-NEXT:    store float [[TMP2]], float* [[ARRAYIDX5]], align 4
 ; CHECK-NEXT:    [[ARRAYIDX6:%.*]] = getelementptr inbounds float, float* [[SRC_ADDR_021]], i64 3
-; CHECK-NEXT:    [[TMP3:%.*]] = load float, float* [[ARRAYIDX6]], align 4
+; CHECK-NEXT:    [[TMP2:%.*]] = bitcast float* [[ARRAYIDX4]] to <2 x float>*
+; CHECK-NEXT:    [[TMP3:%.*]] = load <2 x float>, <2 x float>* [[TMP2]], align 4
 ; CHECK-NEXT:    [[ARRAYIDX7:%.*]] = getelementptr inbounds float, float* [[DST_ADDR_022]], i64 3
-; CHECK-NEXT:    store float [[TMP3]], float* [[ARRAYIDX7]], align 4
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <4 x float> poison, float [[TMP0]], i32 0
+; CHECK-NEXT:    [[TMP5:%.*]] = insertelement <4 x float> [[TMP4]], float [[TMP1]], i32 1
+; CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> poison, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[TMP7:%.*]] = shufflevector <4 x float> [[TMP5]], <4 x float> [[TMP6]], <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+; CHECK-NEXT:    [[TMP8:%.*]] = bitcast float* [[DST_ADDR_022]] to <4 x float>*
+; CHECK-NEXT:    store <4 x float> [[TMP7]], <4 x float>* [[TMP8]], align 4
 ; CHECK-NEXT:    [[ADD_PTR]] = getelementptr inbounds float, float* [[SRC_ADDR_021]], i64 [[I_023]]
 ; CHECK-NEXT:    [[ADD_PTR8]] = getelementptr inbounds float, float* [[DST_ADDR_022]], i64 [[I_023]]
 ; CHECK-NEXT:    [[INC]] = add i64 [[I_023]], 1
@@ -305,5 +307,45 @@ define void @tiny_vector_gather(i32 *%a, i32 *%v1, i32 *%v2) {
   store i32 %1, i32* %ptr6, align 8
   %ptr7 = getelementptr inbounds i32, i32* %a, i64 7
   store i32 %2, i32* %ptr7, align 4
+  ret void
+}
+
+define void @tiny_vector_with_diff_opcode(i16 *%a, i16 *%v1) {
+; CHECK-LABEL: @tiny_vector_with_diff_opcode(
+; CHECK-NEXT:    [[TMP1:%.*]] = load i16, i16* [[V1:%.*]], align 4
+; CHECK-NEXT:    [[TMP2:%.*]] = trunc i64 undef to i16
+; CHECK-NEXT:    [[PTR0:%.*]] = getelementptr inbounds i16, i16* [[A:%.*]], i64 0
+; CHECK-NEXT:    [[PTR1:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 1
+; CHECK-NEXT:    [[PTR2:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 2
+; CHECK-NEXT:    [[PTR3:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 3
+; CHECK-NEXT:    [[PTR4:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 4
+; CHECK-NEXT:    [[PTR5:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 5
+; CHECK-NEXT:    [[PTR6:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 6
+; CHECK-NEXT:    [[PTR7:%.*]] = getelementptr inbounds i16, i16* [[A]], i64 7
+; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <8 x i16> poison, i16 [[TMP1]], i32 0
+; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <8 x i16> [[TMP3]], i16 [[TMP2]], i32 1
+; CHECK-NEXT:    [[SHUFFLE:%.*]] = shufflevector <8 x i16> [[TMP4]], <8 x i16> poison, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
+; CHECK-NEXT:    [[TMP5:%.*]] = bitcast i16* [[PTR0]] to <8 x i16>*
+; CHECK-NEXT:    store <8 x i16> [[SHUFFLE]], <8 x i16>* [[TMP5]], align 16
+; CHECK-NEXT:    ret void
+;
+  %1 = load i16, i16* %v1, align 4
+  %2 = trunc i64 undef to i16
+  %ptr0 = getelementptr inbounds i16, i16* %a, i64 0
+  store i16 %1, i16* %ptr0, align 16
+  %ptr1 = getelementptr inbounds i16, i16* %a, i64 1
+  store i16 %2, i16* %ptr1, align 4
+  %ptr2 = getelementptr inbounds i16, i16* %a, i64 2
+  store i16 %1, i16* %ptr2, align 8
+  %ptr3 = getelementptr inbounds i16, i16* %a, i64 3
+  store i16 %2, i16* %ptr3, align 4
+  %ptr4 = getelementptr inbounds i16, i16* %a, i64 4
+  store i16 %1, i16* %ptr4, align 16
+  %ptr5 = getelementptr inbounds i16, i16* %a, i64 5
+  store i16 %2, i16* %ptr5, align 4
+  %ptr6 = getelementptr inbounds i16, i16* %a, i64 6
+  store i16 %1, i16* %ptr6, align 8
+  %ptr7 = getelementptr inbounds i16, i16* %a, i64 7
+  store i16 %2, i16* %ptr7, align 4
   ret void
 }

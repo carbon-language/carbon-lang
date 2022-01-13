@@ -93,7 +93,7 @@ set(devicertl_common_directory
 set(devicertl_nvptx_directory
   ${devicertl_base_directory}/nvptx)
 
-set(all_capabilities 35 37 50 52 53 60 61 62 70 72 75 80)
+set(all_capabilities 35 37 50 52 53 60 61 62 70 72 75 80 86)
 
 set(LIBOMPTARGET_NVPTX_COMPUTE_CAPABILITIES ${all_capabilities} CACHE STRING
   "List of CUDA Compute Capabilities to be used to compile the NVPTX device RTL.")
@@ -173,6 +173,7 @@ set(bc_flags -S -x c++ -O1 -std=c++14
              -I${devicertl_base_directory}
              -I${devicertl_common_directory}/include
              -I${devicertl_nvptx_directory}/src
+             -I${devicertl_base_directory}/../include
              ${LIBOMPTARGET_LLVM_INCLUDE_DIRS_NVPTX})
 
 if(${LIBOMPTARGET_NVPTX_DEBUG})

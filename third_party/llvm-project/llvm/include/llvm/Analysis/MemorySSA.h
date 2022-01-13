@@ -106,7 +106,6 @@
 
 namespace llvm {
 
-class AllocaInst;
 class Function;
 class Instruction;
 class MemoryAccess;
@@ -783,21 +782,22 @@ public:
   /// dominates Use \p B.
   bool dominates(const MemoryAccess *A, const Use &B) const;
 
+  enum class VerificationLevel { Fast, Full };
   /// Verify that MemorySSA is self consistent (IE definitions dominate
   /// all uses, uses appear in the right places).  This is used by unit tests.
-  void verifyMemorySSA() const;
+  void verifyMemorySSA(VerificationLevel = VerificationLevel::Fast) const;
 
   /// Used in various insertion functions to specify whether we are talking
   /// about the beginning or end of a block.
   enum InsertionPlace { Beginning, End, BeforeTerminator };
 
 protected:
-  // Used by Memory SSA annotater, dumpers, and wrapper pass
-  friend class MemorySSAAnnotatedWriter;
+  // Used by Memory SSA dumpers and wrapper pass
   friend class MemorySSAPrinterLegacyPass;
   friend class MemorySSAUpdater;
 
-  void verifyOrderingDominationAndDefUses(Function &F) const;
+  void verifyOrderingDominationAndDefUses(
+      Function &F, VerificationLevel = VerificationLevel::Fast) const;
   void verifyDominationNumbers(const Function &F) const;
   void verifyPrevDefInPhis(Function &F) const;
 
@@ -895,6 +895,13 @@ private:
   unsigned NextID;
 };
 
+/// Enables verification of MemorySSA.
+///
+/// The checks which this flag enables is exensive and disabled by default
+/// unless `EXPENSIVE_CHECKS` is defined.  The flag `-verify-memoryssa` can be
+/// used to selectively enable the verification without re-compilation.
+extern bool VerifyMemorySSA;
+
 // Internal MemorySSA utils, for use by MemorySSA classes and walkers
 class MemorySSAUtil {
 protected:
@@ -949,6 +956,17 @@ class MemorySSAPrinterPass : public PassInfoMixin<MemorySSAPrinterPass> {
 
 public:
   explicit MemorySSAPrinterPass(raw_ostream &OS) : OS(OS) {}
+
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+};
+
+/// Printer pass for \c MemorySSA via the walker.
+class MemorySSAWalkerPrinterPass
+    : public PassInfoMixin<MemorySSAWalkerPrinterPass> {
+  raw_ostream &OS;
+
+public:
+  explicit MemorySSAWalkerPrinterPass(raw_ostream &OS) : OS(OS) {}
 
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };

@@ -23,7 +23,6 @@ set(ASAN_UNITTEST_HEADERS
 set(ASAN_UNITTEST_COMMON_CFLAGS
   ${COMPILER_RT_UNITTEST_CFLAGS}
   ${COMPILER_RT_GTEST_CFLAGS}
-  ${COMPILER_RT_ASAN_SHADOW_SCALE_LLVM_FLAG}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/asan
@@ -52,7 +51,6 @@ list(APPEND ASAN_UNITTEST_COMMON_LINK_FLAGS -g)
 
 # Use -D instead of definitions to please custom compile command.
 list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
-  ${COMPILER_RT_ASAN_SHADOW_SCALE_FLAG}
   -DASAN_HAS_IGNORELIST=1
   -DASAN_HAS_EXCEPTIONS=1
   -DASAN_UAR=0
@@ -163,6 +161,13 @@ set(ASAN_BENCHMARKS_SOURCES
 function(add_asan_tests arch test_runtime)
   cmake_parse_arguments(TEST "" "KIND" "CFLAGS" ${ARGN})
 
+  # The Lit files are configured once per architecture and static/dynamic
+  # selection. Each configuration expects the test binaries in a corresponding
+  # subdirectory. Generate subdirectory names based on the architecture name.
+  string(TOUPPER ${arch} ARCH_UPPER_CASE)
+  set(CONFIG_NAME ${ARCH_UPPER_CASE}${OS_NAME}Config)
+  set(CONFIG_NAME_DYNAMIC ${ARCH_UPPER_CASE}${OS_NAME}DynamicConfig)
+
   # Closure to keep the values.
   function(generate_asan_tests test_objects test_suite testname)
     generate_compiler_rt_tests(${test_objects} ${test_suite} ${testname} ${arch}
@@ -177,7 +182,7 @@ function(add_asan_tests arch test_runtime)
   set(ASAN_INST_TEST_OBJECTS)
   generate_asan_tests(ASAN_INST_TEST_OBJECTS AsanUnitTests
     "Asan-${arch}${TEST_KIND}-Test"
-    SUBDIR "default"
+    SUBDIR "${CONFIG_NAME}"
     LINK_FLAGS ${ASAN_UNITTEST_INSTRUMENTED_LINK_FLAGS}
     SOURCES ${ASAN_INST_TEST_SOURCES}
     CFLAGS ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} ${TEST_CFLAGS})
@@ -191,7 +196,7 @@ function(add_asan_tests arch test_runtime)
       set(ASAN_DYNAMIC_TEST_OBJECTS)
       generate_asan_tests(ASAN_DYNAMIC_TEST_OBJECTS
         AsanDynamicUnitTests "${dynamic_test_name}"
-        SUBDIR "dynamic"
+        SUBDIR "${CONFIG_NAME_DYNAMIC}"
         CFLAGS ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -D_MT -D_DLL
         SOURCES ${ASAN_INST_TEST_SOURCES}
         LINK_FLAGS ${ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINK_FLAGS}
@@ -201,7 +206,7 @@ function(add_asan_tests arch test_runtime)
 
       # Otherwise, reuse ASAN_INST_TEST_OBJECTS.
       add_compiler_rt_test(AsanDynamicUnitTests "${dynamic_test_name}" "${arch}"
-        SUBDIR "dynamic"
+        SUBDIR "${CONFIG_NAME_DYNAMIC}"
         OBJECTS ${ASAN_INST_TEST_OBJECTS}
         DEPS asan ${ASAN_INST_TEST_OBJECTS}
         LINK_FLAGS ${ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINK_FLAGS}
@@ -213,7 +218,7 @@ function(add_asan_tests arch test_runtime)
   set(ASAN_NOINST_TEST_OBJECTS)
   generate_asan_tests(ASAN_NOINST_TEST_OBJECTS
     AsanUnitTests "Asan-${arch}${TEST_KIND}-Noinst-Test"
-    SUBDIR "default"
+    SUBDIR "${CONFIG_NAME}"
     CFLAGS ${ASAN_UNITTEST_COMMON_CFLAGS}
     LINK_FLAGS ${ASAN_UNITTEST_NOINST_LINK_FLAGS}
     SOURCES ${ASAN_NOINST_TEST_SOURCES}
@@ -222,7 +227,7 @@ function(add_asan_tests arch test_runtime)
   set(ASAN_BENCHMARK_OBJECTS)
   generate_asan_tests(ASAN_BENCHMARK_OBJECTS
     AsanBenchmarks "Asan-${arch}${TEST_KIND}-Benchmark"
-    SUBDIR "default"
+    SUBDIR "${CONFIG_NAME}"
     CFLAGS ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS}
     SOURCES ${ASAN_BENCHMARKS_SOURCES}
     LINK_FLAGS ${ASAN_UNITTEST_INSTRUMENTED_LINK_FLAGS})
@@ -256,6 +261,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
       set(ASAN_TEST_RUNTIME_OBJECTS
         $<TARGET_OBJECTS:RTAsan.${arch}>
         $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
+        $<TARGET_OBJECTS:RTAsan_static.${arch}>
         $<TARGET_OBJECTS:RTInterception.${arch}>
         $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
         $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
@@ -281,6 +287,7 @@ if(ANDROID)
     # Test w/o ASan instrumentation. Link it with ASan statically.
     add_executable(AsanNoinstTest # FIXME: .arch?
       $<TARGET_OBJECTS:RTAsan.${arch}>
+      $<TARGET_OBJECTS:RTAsan_static.${arch}>
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>

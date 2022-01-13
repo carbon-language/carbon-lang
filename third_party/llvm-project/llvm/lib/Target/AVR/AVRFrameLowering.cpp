@@ -111,9 +111,8 @@ void AVRFrameLowering::emitPrologue(MachineFunction &MF,
       .setMIFlag(MachineInstr::FrameSetup);
 
   // Mark the FramePtr as live-in in every block except the entry.
-  for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
-       I != E; ++I) {
-    I->addLiveIn(AVR::R29R28);
+  for (MachineBasicBlock &MBBJ : llvm::drop_begin(MF)) {
+    MBBJ.addLiveIn(AVR::R29R28);
   }
 
   if (!FrameSize) {
@@ -248,8 +247,8 @@ bool AVRFrameLowering::spillCalleeSavedRegisters(
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   AVRMachineFunctionInfo *AVRFI = MF.getInfo<AVRMachineFunctionInfo>();
 
-  for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i - 1].getReg();
+  for (const CalleeSavedInfo &I : llvm::reverse(CSI)) {
+    unsigned Reg = I.getReg();
     bool IsNotLiveIn = !MBB.isLiveIn(Reg);
 
     assert(TRI->getRegSizeInBits(*TRI->getMinimalPhysRegClass(Reg)) == 8 &&
@@ -304,16 +303,16 @@ static void fixStackStores(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
                            const TargetInstrInfo &TII, Register FP) {
   // Iterate through the BB until we hit a call instruction or we reach the end.
-  for (auto I = MI, E = MBB.end(); I != E && !I->isCall();) {
-    MachineBasicBlock::iterator NextMI = std::next(I);
-    MachineInstr &MI = *I;
-    unsigned Opcode = I->getOpcode();
+  for (MachineInstr &MI :
+       llvm::make_early_inc_range(llvm::make_range(MI, MBB.end()))) {
+    if (MI.isCall())
+      break;
+
+    unsigned Opcode = MI.getOpcode();
 
     // Only care of pseudo store instructions where SP is the base pointer.
-    if (Opcode != AVR::STDSPQRr && Opcode != AVR::STDWSPQRr) {
-      I = NextMI;
+    if (Opcode != AVR::STDSPQRr && Opcode != AVR::STDWSPQRr)
       continue;
-    }
 
     assert(MI.getOperand(0).getReg() == AVR::SP &&
            "Invalid register, should be SP!");
@@ -325,8 +324,6 @@ static void fixStackStores(MachineBasicBlock &MBB,
 
     MI.setDesc(TII.get(STOpc));
     MI.getOperand(0).setReg(FP);
-
-    I = NextMI;
   }
 }
 
@@ -361,13 +358,13 @@ MachineBasicBlock::iterator AVRFrameLowering::eliminateCallFramePseudoInstr(
       // values, etc) is tricky and thus left to be optimized in the future.
       BuildMI(MBB, MI, DL, TII.get(AVR::SPREAD), AVR::R31R30).addReg(AVR::SP);
 
-      MachineInstr *New = BuildMI(MBB, MI, DL, TII.get(AVR::SUBIWRdK), AVR::R31R30)
-                              .addReg(AVR::R31R30, RegState::Kill)
-                              .addImm(Amount);
+      MachineInstr *New =
+          BuildMI(MBB, MI, DL, TII.get(AVR::SUBIWRdK), AVR::R31R30)
+              .addReg(AVR::R31R30, RegState::Kill)
+              .addImm(Amount);
       New->getOperand(3).setIsDead();
 
-      BuildMI(MBB, MI, DL, TII.get(AVR::SPWRITE), AVR::SP)
-          .addReg(AVR::R31R30);
+      BuildMI(MBB, MI, DL, TII.get(AVR::SPWRITE), AVR::SP).addReg(AVR::R31R30);
 
       // Make sure the remaining stack stores are converted to real store
       // instructions.
@@ -536,4 +533,3 @@ char AVRDynAllocaSR::ID = 0;
 FunctionPass *createAVRDynAllocaSRPass() { return new AVRDynAllocaSR(); }
 
 } // end of namespace llvm
-

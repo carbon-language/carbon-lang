@@ -135,6 +135,31 @@ static cl::opt<bool> DisableGEPConstOperand(
 namespace {
 class InlineCostCallAnalyzer;
 
+/// This function behaves more like CallBase::hasFnAttr: when it looks for the
+/// requested attribute, it check both the call instruction and the called
+/// function (if it's available and operand bundles don't prohibit that).
+Attribute getFnAttr(CallBase &CB, StringRef AttrKind) {
+  Attribute CallAttr = CB.getFnAttr(AttrKind);
+  if (CallAttr.isValid())
+    return CallAttr;
+
+  // Operand bundles override attributes on the called function, but don't
+  // override attributes directly present on the call instruction.
+  if (!CB.isFnAttrDisallowedByOpBundle(AttrKind))
+    if (const Function *F = CB.getCalledFunction())
+      return F->getFnAttribute(AttrKind);
+
+  return {};
+}
+
+Optional<int> getStringFnAttrAsInt(CallBase &CB, StringRef AttrKind) {
+  Attribute Attr = getFnAttr(CB, AttrKind);
+  int AttrValue;
+  if (Attr.getValueAsString().getAsInteger(10, AttrValue))
+    return None;
+  return AttrValue;
+}
+
 // This struct is used to store information about inline cost of a
 // particular instruction
 struct InstructionCostDetail {
@@ -235,6 +260,10 @@ protected:
   /// Called the analysis engine determines load elimination won't happen.
   virtual void onDisableLoadElimination() {}
 
+  /// Called when we visit a CallBase, before the analysis starts. Return false
+  /// to stop further processing of the instruction.
+  virtual bool onCallBaseVisitStart(CallBase &Call) { return true; }
+
   /// Called to account for a call.
   virtual void onCallPenalty() {}
 
@@ -333,6 +362,10 @@ protected:
   /// whenever we simplify away the stores that would otherwise cause them to be
   /// loads.
   bool EnableLoadElimination;
+
+  /// Whether we allow inlining for recursive call.
+  bool AllowRecursiveCall;
+
   SmallPtrSet<Value *, 16> LoadAddrSet;
 
   AllocaInst *getSROAArgForValueOrNull(Value *V) const {
@@ -354,6 +387,7 @@ protected:
   bool simplifyCallSite(Function *F, CallBase &Call);
   template <typename Callable>
   bool simplifyInstruction(Instruction &I, Callable Evaluate);
+  bool simplifyIntrinsicCallIsConstant(CallBase &CB);
   ConstantInt *stripAndComputeInBoundsConstantOffsets(Value *&V);
 
   /// Return true if the given argument to the function being considered for
@@ -421,7 +455,8 @@ public:
                OptimizationRemarkEmitter *ORE = nullptr)
       : TTI(TTI), GetAssumptionCache(GetAssumptionCache), GetBFI(GetBFI),
         PSI(PSI), F(Callee), DL(F.getParent()->getDataLayout()), ORE(ORE),
-        CandidateCall(Call), EnableLoadElimination(true) {}
+        CandidateCall(Call), EnableLoadElimination(true),
+        AllowRecursiveCall(false) {}
 
   InlineResult analyze();
 
@@ -510,6 +545,9 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
   // sense that it's not weighted by profile counts at all.
   int ColdSize = 0;
 
+  // Whether inlining is decided by cost-threshold analysis.
+  bool DecidedByCostThreshold = false;
+
   // Whether inlining is decided by cost-benefit analysis.
   bool DecidedByCostBenefit = false;
 
@@ -558,6 +596,22 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
     addCost(LoadEliminationCost);
     LoadEliminationCost = 0;
   }
+
+  bool onCallBaseVisitStart(CallBase &Call) override {
+    if (Optional<int> AttrCallThresholdBonus =
+            getStringFnAttrAsInt(Call, "call-threshold-bonus"))
+      Threshold += *AttrCallThresholdBonus;
+
+    if (Optional<int> AttrCallCost =
+            getStringFnAttrAsInt(Call, "call-inline-cost")) {
+      addCost(*AttrCallCost);
+      // Prevent further processing of the call since we want to override its
+      // inline cost, not just add to it.
+      return false;
+    }
+    return true;
+  }
+
   void onCallPenalty() override { addCost(CallPenalty); }
   void onCallArgumentSetup(const CallBase &Call) override {
     // Pay the price of the argument setup. We account for the average 1
@@ -717,7 +771,7 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
 
     // Make sure we have a nonzero entry count.
     auto EntryCount = F.getEntryCount();
-    if (!EntryCount || !EntryCount.getCount())
+    if (!EntryCount || !EntryCount->getCount())
       return false;
 
     BlockFrequencyInfo *CalleeBFI = &(GetBFI(F));
@@ -763,7 +817,7 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
         if (BranchInst *BI = dyn_cast<BranchInst>(&I)) {
           // Count a conditional branch as savings if it becomes unconditional.
           if (BI->isConditional() &&
-              dyn_cast_or_null<ConstantInt>(
+              isa_and_nonnull<ConstantInt>(
                   SimplifiedValues.lookup(BI->getCondition()))) {
             CurrentSavings += InlineConstants::InstrCost;
           }
@@ -783,8 +837,8 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
 
     // Compute the cycle savings per call.
     auto EntryProfileCount = F.getEntryCount();
-    assert(EntryProfileCount.hasValue() && EntryProfileCount.getCount());
-    auto EntryCount = EntryProfileCount.getCount();
+    assert(EntryProfileCount.hasValue() && EntryProfileCount->getCount());
+    auto EntryCount = EntryProfileCount->getCount();
     CycleSavings += EntryCount / 2;
     CycleSavings = CycleSavings.udiv(EntryCount);
 
@@ -847,6 +901,14 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
     else if (NumVectorInstructions <= NumInstructions / 2)
       Threshold -= VectorBonus / 2;
 
+    if (Optional<int> AttrCost =
+            getStringFnAttrAsInt(CandidateCall, "function-inline-cost"))
+      Cost = *AttrCost;
+
+    if (Optional<int> AttrThreshold =
+            getStringFnAttrAsInt(CandidateCall, "function-inline-threshold"))
+      Threshold = *AttrThreshold;
+
     if (auto Result = costBenefitAnalysis()) {
       DecidedByCostBenefit = true;
       if (Result.getValue())
@@ -855,14 +917,24 @@ class InlineCostCallAnalyzer final : public CallAnalyzer {
         return InlineResult::failure("Cost over threshold.");
     }
 
-    if (IgnoreThreshold || Cost < std::max(1, Threshold))
+    if (IgnoreThreshold)
       return InlineResult::success();
-    return InlineResult::failure("Cost over threshold.");
+
+    DecidedByCostThreshold = true;
+    return Cost < std::max(1, Threshold)
+               ? InlineResult::success()
+               : InlineResult::failure("Cost over threshold.");
   }
+
   bool shouldStop() override {
+    if (IgnoreThreshold || ComputeFullInlineCost)
+      return false;
     // Bail out the moment we cross the threshold. This means we'll under-count
     // the cost, but only when undercounting doesn't matter.
-    return !IgnoreThreshold && Cost >= Threshold && !ComputeFullInlineCost;
+    if (Cost < Threshold)
+      return false;
+    DecidedByCostThreshold = true;
+    return true;
   }
 
   void onLoadEliminationOpportunity() override {
@@ -930,7 +1002,9 @@ public:
         Params(Params), Threshold(Params.DefaultThreshold),
         BoostIndirectCalls(BoostIndirect), IgnoreThreshold(IgnoreThreshold),
         CostBenefitAnalysisEnabled(isCostBenefitAnalysisEnabled()),
-        Writer(this) {}
+        Writer(this) {
+    AllowRecursiveCall = Params.AllowRecursiveCall.getValue();
+  }
 
   /// Annotation Writer for instruction details
   InlineCostAnnotationWriter Writer;
@@ -939,7 +1013,7 @@ public:
 
   // Prints the same analysis as dump(), but its definition is not dependent
   // on the build.
-  void print();
+  void print(raw_ostream &OS);
 
   Optional<InstructionCostDetail> getCostDetails(const Instruction *I) {
     if (InstructionCostDetailMap.find(I) != InstructionCostDetailMap.end())
@@ -952,6 +1026,7 @@ public:
   int getCost() const { return Cost; }
   Optional<CostBenefitPair> getCostBenefitPair() { return CostBenefit; }
   bool wasDecidedByCostBenefit() const { return DecidedByCostBenefit; }
+  bool wasDecidedByCostThreshold() const { return DecidedByCostThreshold; }
 };
 
 class InlineCostFeaturesAnalyzer final : public CallAnalyzer {
@@ -1310,7 +1385,7 @@ bool CallAnalyzer::visitPHI(PHINode &I) {
   // Or could we skip the getPointerSizeInBits call completely? As far as I can
   // see the ZeroOffset is used as a dummy value, so we can probably use any
   // bit width for the ZeroOffset?
-  APInt ZeroOffset = APInt::getNullValue(DL.getPointerSizeInBits(0));
+  APInt ZeroOffset = APInt::getZero(DL.getPointerSizeInBits(0));
   bool CheckSROA = I.getType()->isPointerTy();
 
   // Track the constant or pointer with constant offset we've seen so far.
@@ -1468,6 +1543,27 @@ bool CallAnalyzer::simplifyInstruction(Instruction &I, Callable Evaluate) {
   if (!C)
     return false;
   SimplifiedValues[&I] = C;
+  return true;
+}
+
+/// Try to simplify a call to llvm.is.constant.
+///
+/// Duplicate the argument checking from CallAnalyzer::simplifyCallSite since
+/// we expect calls of this specific intrinsic to be infrequent.
+///
+/// FIXME: Given that we know CB's parent (F) caller
+/// (CandidateCall->getParent()->getParent()), we might be able to determine
+/// whether inlining F into F's caller would change how the call to
+/// llvm.is.constant would evaluate.
+bool CallAnalyzer::simplifyIntrinsicCallIsConstant(CallBase &CB) {
+  Value *Arg = CB.getArgOperand(0);
+  auto *C = dyn_cast<Constant>(Arg);
+
+  if (!C)
+    C = dyn_cast_or_null<Constant>(SimplifiedValues.lookup(Arg));
+
+  Type *RT = CB.getFunctionType()->getReturnType();
+  SimplifiedValues[&CB] = ConstantInt::get(RT, C ? 1 : 0);
   return true;
 }
 
@@ -1799,8 +1895,8 @@ void InlineCostCallAnalyzer::updateThreshold(CallBase &Call, Function &Callee) {
   SingleBBBonus = Threshold * SingleBBBonusPercent / 100;
   VectorBonus = Threshold * VectorBonusPercent / 100;
 
-  bool OnlyOneCallAndLocalLinkage =
-      F.hasLocalLinkage() && F.hasOneUse() && &F == Call.getCalledFunction();
+  bool OnlyOneCallAndLocalLinkage = F.hasLocalLinkage() && F.hasOneLiveUse() &&
+                                    &F == Call.getCalledFunction();
   // If there is only one call of the function, and it has internal linkage,
   // the cost of inlining it drops dramatically. It may seem odd to update
   // Cost in updateThreshold, but the bonus depends on the logic in this method.
@@ -2029,6 +2125,9 @@ bool CallAnalyzer::simplifyCallSite(Function *F, CallBase &Call) {
 }
 
 bool CallAnalyzer::visitCallBase(CallBase &Call) {
+  if (!onCallBaseVisitStart(Call))
+    return true;
+
   if (Call.hasFnAttr(Attribute::ReturnsTwice) &&
       !F.hasFnAttribute(Attribute::ReturnsTwice)) {
     // This aborts the entire analysis.
@@ -2091,6 +2190,8 @@ bool CallAnalyzer::visitCallBase(CallBase &Call) {
       if (auto *SROAArg = getSROAArgForValueOrNull(II->getOperand(0)))
         SROAArgValues[II] = SROAArg;
       return true;
+    case Intrinsic::is_constant:
+      return simplifyIntrinsicCallIsConstant(Call);
     }
   }
 
@@ -2098,7 +2199,8 @@ bool CallAnalyzer::visitCallBase(CallBase &Call) {
     // This flag will fully abort the analysis, so don't bother with anything
     // else.
     IsRecursiveCall = true;
-    return false;
+    if (!AllowRecursiveCall)
+      return false;
   }
 
   if (TTI.isLoweredToCall(F)) {
@@ -2123,7 +2225,7 @@ bool CallAnalyzer::visitBranchInst(BranchInst &BI) {
   // inliner more regular and predictable. Interestingly, conditional branches
   // which will fold away are also free.
   return BI.isUnconditional() || isa<ConstantInt>(BI.getCondition()) ||
-         dyn_cast_or_null<ConstantInt>(
+         isa_and_nonnull<ConstantInt>(
              SimplifiedValues.lookup(BI.getCondition()));
 }
 
@@ -2305,11 +2407,8 @@ CallAnalyzer::analyzeBlock(BasicBlock *BB,
     // inlining due to debug symbols. Eventually, the number of unsimplified
     // instructions shouldn't factor into the cost computation, but until then,
     // hack around it here.
-    if (isa<DbgInfoIntrinsic>(I))
-      continue;
-
-    // Skip pseudo-probes.
-    if (isa<PseudoProbeInst>(I))
+    // Similarly, skip pseudo-probes.
+    if (I.isDebugOrPseudoInst())
       continue;
 
     // Skip ephemeral values.
@@ -2336,7 +2435,7 @@ CallAnalyzer::analyzeBlock(BasicBlock *BB,
     using namespace ore;
     // If the visit this instruction detected an uninlinable pattern, abort.
     InlineResult IR = InlineResult::success();
-    if (IsRecursiveCall)
+    if (IsRecursiveCall && !AllowRecursiveCall)
       IR = InlineResult::failure("recursive");
     else if (ExposesReturnsTwice)
       IR = InlineResult::failure("exposes returns twice");
@@ -2398,7 +2497,7 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
 
   unsigned AS = V->getType()->getPointerAddressSpace();
   unsigned IntPtrWidth = DL.getIndexSizeInBits(AS);
-  APInt Offset = APInt::getNullValue(IntPtrWidth);
+  APInt Offset = APInt::getZero(IntPtrWidth);
 
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
@@ -2601,7 +2700,7 @@ InlineResult CallAnalyzer::analyze() {
     onBlockAnalyzed(BB);
   }
 
-  bool OnlyOneCallAndLocalLinkage = F.hasLocalLinkage() && F.hasOneUse() &&
+  bool OnlyOneCallAndLocalLinkage = F.hasLocalLinkage() && F.hasOneLiveUse() &&
                                     &F == CandidateCall.getCalledFunction();
   // If this is a noduplicate call, we can still inline as long as
   // inlining this would cause the removal of the caller (so the instruction
@@ -2612,10 +2711,10 @@ InlineResult CallAnalyzer::analyze() {
   return finalizeAnalysis();
 }
 
-void InlineCostCallAnalyzer::print() {
-#define DEBUG_PRINT_STAT(x) dbgs() << "      " #x ": " << x << "\n"
+void InlineCostCallAnalyzer::print(raw_ostream &OS) {
+#define DEBUG_PRINT_STAT(x) OS << "      " #x ": " << x << "\n"
   if (PrintInstructionComments)
-    F.print(dbgs(), &Writer);
+    F.print(OS, &Writer);
   DEBUG_PRINT_STAT(NumConstantArgs);
   DEBUG_PRINT_STAT(NumConstantOffsetPtrArgs);
   DEBUG_PRINT_STAT(NumAllocaArgs);
@@ -2634,7 +2733,7 @@ void InlineCostCallAnalyzer::print() {
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 /// Dump stats about this call's analysis.
-LLVM_DUMP_METHOD void InlineCostCallAnalyzer::dump() { print(); }
+LLVM_DUMP_METHOD void InlineCostCallAnalyzer::dump() { print(dbgs()); }
 #endif
 
 /// Test that there are no attribute conflicts between Caller and Callee
@@ -2849,13 +2948,13 @@ InlineCost llvm::getInlineCost(
       return InlineCost::getNever("cost over benefit", CA.getCostBenefitPair());
   }
 
-  // Check if there was a reason to force inlining or no inlining.
-  if (!ShouldInline.isSuccess() && CA.getCost() < CA.getThreshold())
-    return InlineCost::getNever(ShouldInline.getFailureReason());
-  if (ShouldInline.isSuccess() && CA.getCost() >= CA.getThreshold())
-    return InlineCost::getAlways("empty function");
+  if (CA.wasDecidedByCostThreshold())
+    return InlineCost::get(CA.getCost(), CA.getThreshold());
 
-  return llvm::InlineCost::get(CA.getCost(), CA.getThreshold());
+  // No details on how the decision was made, simply return always or never.
+  return ShouldInline.isSuccess()
+             ? InlineCost::getAlways("empty function")
+             : InlineCost::getNever(ShouldInline.getFailureReason());
 }
 
 InlineResult llvm::isInlineViable(Function &F) {
@@ -3028,7 +3127,8 @@ InlineCostAnnotationPrinterPass::run(Function &F,
         ICCA.analyze();
         OS << "      Analyzing call of " << CalledFunction->getName()
            << "... (caller:" << CI->getCaller()->getName() << ")\n";
-        ICCA.print();
+        ICCA.print(OS);
+        OS << "\n";
       }
     }
   }

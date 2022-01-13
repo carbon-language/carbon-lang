@@ -110,12 +110,23 @@ namespace llvm {
     DisableWithDiag // Disable the abort but emit a diagnostic on failure.
   };
 
+  /// Indicates when and how the Swift async frame pointer bit should be set.
+  enum class SwiftAsyncFramePointerMode {
+    /// Determine whether to set the bit statically or dynamically based
+    /// on the deployment target.
+    DeploymentBased,
+    /// Always set the bit.
+    Always,
+    /// Never set the bit.
+    Never,
+  };
+
   class TargetOptions {
   public:
     TargetOptions()
         : UnsafeFPMath(false), NoInfsFPMath(false), NoNaNsFPMath(false),
           NoTrappingFPMath(true), NoSignedZerosFPMath(false),
-          EnableAIXExtendedAltivecABI(false),
+          ApproxFuncFPMath(false), EnableAIXExtendedAltivecABI(false),
           HonorSignDependentRoundingFPMathOption(false), NoZerosInBSS(false),
           GuaranteedTailCallOpt(false), StackSymbolOrdering(true),
           EnableFastISel(false), EnableGlobalISel(false), UseInitArray(false),
@@ -129,7 +140,7 @@ namespace llvm {
           EnableMachineFunctionSplitter(false), SupportsDefaultOutlining(false),
           EmitAddrsig(false), EmitCallSiteInfo(false),
           SupportsDebugEntryValues(false), EnableDebugEntryValues(false),
-          PseudoProbeForProfiling(false), ValueTrackingVariableLocations(false),
+          ValueTrackingVariableLocations(false),
           ForceDwarfFrameSection(false), XRayOmitFunctionIndex(false),
           DebugStrictDwarf(false),
           FPDenormalMode(DenormalMode::IEEE, DenormalMode::IEEE) {}
@@ -172,9 +183,15 @@ namespace llvm {
     /// argument or result as insignificant.
     unsigned NoSignedZerosFPMath : 1;
 
+    /// ApproxFuncFPMath - This flag is enabled when the
+    /// -enable-approx-func-fp-math is specified on the command line. This
+    /// specifies that optimizations are allowed to substitute math functions
+    /// with approximate calculations
+    unsigned ApproxFuncFPMath : 1;
+
     /// EnableAIXExtendedAltivecABI - This flag returns true when -vec-extabi is
     /// specified. The code generator is then able to use both volatile and
-    /// nonvolitle vector regisers. When false, the code generator only uses
+    /// nonvolitle vector registers. When false, the code generator only uses
     /// volatile vector registers which is the default setting on AIX.
     unsigned EnableAIXExtendedAltivecABI : 1;
 
@@ -218,6 +235,11 @@ namespace llvm {
     /// EnableGlobalISelAbort - Control abort behaviour when global instruction
     /// selection fails to lower/select an instruction.
     GlobalISelAbortMode GlobalISelAbort = GlobalISelAbortMode::Enable;
+
+    /// Control when and how the Swift async frame pointer bit should
+    /// be set.
+    SwiftAsyncFramePointerMode SwiftAsyncFramePointer =
+        SwiftAsyncFramePointerMode::Always;
 
     /// UseInitArray - Use .init_array instead of .ctors for static
     /// constructors.
@@ -304,9 +326,6 @@ namespace llvm {
     /// NOTE: There are targets that still do not support the debug entry values
     /// production.
     bool ShouldEmitDebugEntryValues() const;
-
-    /// Emit pseudo probes into the binary for sample profiling
-    unsigned PseudoProbeForProfiling : 1;
 
     // When set to true, use experimental new debug variable location tracking,
     // which seeks to follow the values of variables rather than their location,
@@ -399,6 +418,11 @@ namespace llvm {
 
     /// Machine level options.
     MCTargetOptions MCOptions;
+
+    /// Stores the filename/path of the final .o/.obj file, to be written in the
+    /// debug information. This is used for emitting the CodeView S_OBJNAME
+    /// record.
+    std::string ObjectFilenameForDebug;
   };
 
 } // End llvm namespace

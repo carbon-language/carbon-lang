@@ -109,11 +109,11 @@ public:
   uint64_t getImageBase() const;
 
   // True if _GLOBAL_OFFSET_TABLE_ is relative to .got.plt, false if .got.
-  bool gotBaseSymInGotPlt = true;
+  bool gotBaseSymInGotPlt = false;
 
+  static constexpr RelType noneRel = 0;
   RelType copyRel;
   RelType gotRel;
-  RelType noneRel;
   RelType pltRel;
   RelType relativeRel;
   RelType iRelativeRel;
@@ -188,6 +188,7 @@ template <class ELFT> TargetInfo *getMipsTargetInfo();
 struct ErrorPlace {
   InputSectionBase *isec;
   std::string loc;
+  std::string srcLoc;
 };
 
 // Returns input section and corresponding source string for the given location.
@@ -211,10 +212,6 @@ unsigned getPPCDFormOp(unsigned secondaryOp);
 // to the local entry-point.
 unsigned getPPC64GlobalEntryToLocalEntryOffset(uint8_t stOther);
 
-// Returns true if a relocation is a small code model relocation that accesses
-// the .toc section.
-bool isPPC64SmallCodeModelTocReloc(RelType type);
-
 // Write a prefixed instruction, which is a 4-byte prefix followed by a 4-byte
 // instruction (regardless of endianness). Therefore, the prefix is always in
 // lower memory than the instruction.
@@ -223,6 +220,16 @@ void writePrefixedInstruction(uint8_t *loc, uint64_t insn);
 void addPPC64SaveRestore();
 uint64_t getPPC64TocBase();
 uint64_t getAArch64Page(uint64_t expr);
+
+class AArch64Relaxer {
+  bool safeToRelaxAdrpLdr = true;
+
+public:
+  explicit AArch64Relaxer(ArrayRef<Relocation> relocs);
+
+  bool tryRelaxAdrpLdr(const Relocation &adrpRel, const Relocation &ldrRel,
+                       uint64_t secAddr, uint8_t *buf) const;
+};
 
 extern const TargetInfo *target;
 TargetInfo *getTarget();

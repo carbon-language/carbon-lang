@@ -221,6 +221,34 @@ def POSIX : StandardSpec<"POSIX"> {
     [], // Enumerations
     [
         FunctionSpec<
+            "memccpy",
+            RetValSpec<VoidPtr>,
+            [ArgSpec<VoidRestrictedPtr>,
+             ArgSpec<ConstVoidRestrictedPtr>,
+             ArgSpec<IntType>,
+             ArgSpec<SizeTType>]
+        >,
+        FunctionSpec<
+            "mempcpy",
+            RetValSpec<VoidPtr>,
+            [ArgSpec<VoidRestrictedPtr>,
+             ArgSpec<ConstVoidRestrictedPtr>,
+             ArgSpec<SizeTType>]
+        >,
+        FunctionSpec<
+            "stpcpy",
+            RetValSpec<CharPtr>,
+            [ArgSpec<RestrictedCharPtr>,
+             ArgSpec<ConstRestrictedCharPtr>]
+        >,
+        FunctionSpec<
+            "stpncpy",
+            RetValSpec<CharPtr>,
+            [ArgSpec<RestrictedCharPtr>,
+             ArgSpec<ConstRestrictedCharPtr>,
+             ArgSpec<SizeTType>]
+        >,
+        FunctionSpec<
             "strnlen",
              RetValSpec<SizeTType>,
              [ArgSpec<ConstCharPtr>, ArgSpec<SizeTType>]

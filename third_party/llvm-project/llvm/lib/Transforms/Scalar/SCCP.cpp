@@ -101,8 +101,7 @@ static bool tryToReplaceWithConstant(SCCPSolver &Solver, Value *V) {
   Constant *Const = nullptr;
   if (V->getType()->isStructTy()) {
     std::vector<ValueLatticeElement> IVs = Solver.getStructLatticeValueFor(V);
-    if (any_of(IVs,
-               [](const ValueLatticeElement &LV) { return isOverdefined(LV); }))
+    if (llvm::any_of(IVs, isOverdefined))
       return false;
     std::vector<Constant *> ConstVals;
     auto *ST = cast<StructType>(V->getType());
@@ -487,7 +486,7 @@ bool llvm::runIPSCCP(
       // inaccessiblemem_or_argmemonly attributes do not hold any longer. Remove
       // them from both the function and callsites.
       if (ReplacedPointerArg) {
-        AttrBuilder AttributesToRemove;
+        AttributeMask AttributesToRemove;
         AttributesToRemove.addAttribute(Attribute::ArgMemOnly);
         AttributesToRemove.addAttribute(Attribute::InaccessibleMemOrArgMemOnly);
         F.removeFnAttrs(AttributesToRemove);
@@ -500,6 +499,7 @@ bool llvm::runIPSCCP(
           CB->removeFnAttrs(AttributesToRemove);
         }
       }
+      MadeChanges |= ReplacedPointerArg;
     }
 
     SmallPtrSet<Value *, 32> InsertedValues;
@@ -539,14 +539,13 @@ bool llvm::runIPSCCP(
       DTU.deleteBB(DeadBB);
 
     for (BasicBlock &BB : F) {
-      for (BasicBlock::iterator BI = BB.begin(), E = BB.end(); BI != E;) {
-        Instruction *Inst = &*BI++;
-        if (Solver.getPredicateInfoFor(Inst)) {
-          if (auto *II = dyn_cast<IntrinsicInst>(Inst)) {
+      for (Instruction &Inst : llvm::make_early_inc_range(BB)) {
+        if (Solver.getPredicateInfoFor(&Inst)) {
+          if (auto *II = dyn_cast<IntrinsicInst>(&Inst)) {
             if (II->getIntrinsicID() == Intrinsic::ssa_copy) {
               Value *Op = II->getOperand(0);
-              Inst->replaceAllUsesWith(Op);
-              Inst->eraseFromParent();
+              Inst.replaceAllUsesWith(Op);
+              Inst.eraseFromParent();
             }
           }
         }

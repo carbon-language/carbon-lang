@@ -57,6 +57,24 @@ def testAttrEq():
     print("a1 == None:", a1 == None)
 
 
+# CHECK-LABEL: TEST: testAttrHash
+@run
+def testAttrHash():
+  with Context():
+    a1 = Attribute.parse('"attr1"')
+    a2 = Attribute.parse('"attr2"')
+    a3 = Attribute.parse('"attr1"')
+    # CHECK: hash(a1) == hash(a3): True
+    print("hash(a1) == hash(a3):", a1.__hash__() == a3.__hash__())
+
+    s = set()
+    s.add(a1)
+    s.add(a2)
+    s.add(a3)
+    # CHECK: len(s): 2
+    print("len(s): ", len(s))
+
+
 # CHECK-LABEL: TEST: testAttrCast
 @run
 def testAttrCast():
@@ -65,6 +83,18 @@ def testAttrCast():
     a2 = Attribute(a1)
     # CHECK: a1 == a2: True
     print("a1 == a2:", a1 == a2)
+
+
+# CHECK-LABEL: TEST: testAttrIsInstance
+@run
+def testAttrIsInstance():
+  with Context():
+    a1 = Attribute.parse("42")
+    a2 = Attribute.parse("[42]")
+    assert IntegerAttr.isinstance(a1)
+    assert not IntegerAttr.isinstance(a2)
+    assert not ArrayAttr.isinstance(a1)
+    assert ArrayAttr.isinstance(a2)
 
 
 # CHECK-LABEL: TEST: testAttrEqDoesNotRaise
@@ -306,6 +336,12 @@ def testDictAttr():
     # CHECK: "string"
     print(a['stringattr'])
 
+    # CHECK: True
+    print('stringattr' in a)
+
+    # CHECK: False
+    print('not_in_dict' in a)
+
     # Check that exceptions are raised as expected.
     try:
       _ = a['does_not_exist']
@@ -320,6 +356,9 @@ def testDictAttr():
       pass
     else:
       assert False, "expected IndexError on accessing an out-of-bounds attribute"
+
+    # CHECK "empty: {}"
+    print("empty: ", DictAttr.get())
 
 
 # CHECK-LABEL: TEST: testTypeAttr
@@ -383,3 +422,8 @@ def testArrayAttr():
       # CHECK: Error: Invalid attribute when attempting to create an ArrayAttribute
       print("Error: ", e)
 
+  with Context():
+    array = ArrayAttr.get([StringAttr.get("a"), StringAttr.get("b")])
+    array = array + [StringAttr.get("c")]
+    # CHECK: concat: ["a", "b", "c"]
+    print("concat: ", array)

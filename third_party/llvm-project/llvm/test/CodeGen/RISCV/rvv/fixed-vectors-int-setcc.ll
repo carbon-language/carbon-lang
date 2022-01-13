@@ -10,12 +10,12 @@ define void @seteq_vv_v16i8(<16 x i8>* %x, <16 x i8>* %y) {
 ; CHECK-LABEL: seteq_vv_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vle8.v v26, (a1)
-; CHECK-NEXT:    vmseq.vv v0, v25, v26
-; CHECK-NEXT:    vmv.v.i v25, 0
-; CHECK-NEXT:    vmerge.vim v25, v25, -1, v0
-; CHECK-NEXT:    vse8.v v25, (a0)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v9, (a1)
+; CHECK-NEXT:    vmseq.vv v0, v8, v9
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, -1, v0
+; CHECK-NEXT:    vse8.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = load <16 x i8>, <16 x i8>* %y
@@ -28,14 +28,14 @@ define void @seteq_vv_v16i8(<16 x i8>* %x, <16 x i8>* %y) {
 define void @setne_vv_v32i8(<32 x i8>* %x, <32 x i8>* %y) {
 ; CHECK-LABEL: setne_vv_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 32
+; CHECK-NEXT:    li a2, 32
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vle8.v v28, (a1)
-; CHECK-NEXT:    vmsne.vv v0, v26, v28
-; CHECK-NEXT:    vmv.v.i v26, 0
-; CHECK-NEXT:    vmerge.vim v26, v26, 1, v0
-; CHECK-NEXT:    vse8.v v26, (a0)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v10, (a1)
+; CHECK-NEXT:    vmsne.vv v0, v8, v10
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, 1, v0
+; CHECK-NEXT:    vse8.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = load <32 x i8>, <32 x i8>* %y
@@ -48,12 +48,12 @@ define void @setne_vv_v32i8(<32 x i8>* %x, <32 x i8>* %y) {
 define void @setgt_vv_v64i8(<64 x i8>* %x, <64 x i8>* %y, <64 x i1>* %z) {
 ; CHECK-LABEL: setgt_vv_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 64
+; CHECK-NEXT:    li a3, 64
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vle8.v v8, (a1)
-; CHECK-NEXT:    vmslt.vv v25, v8, v28
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v12, (a1)
+; CHECK-NEXT:    vmslt.vv v16, v12, v8
+; CHECK-NEXT:    vsm.v v16, (a2)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = load <64 x i8>, <64 x i8>* %y
@@ -65,12 +65,12 @@ define void @setgt_vv_v64i8(<64 x i8>* %x, <64 x i8>* %y, <64 x i1>* %z) {
 define void @setlt_vv_v128i8(<128 x i8>* %x, <128 x i8>* %y, <128 x i1>* %z) {
 ; CHECK-LABEL: setlt_vv_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 128
+; CHECK-NEXT:    li a3, 128
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
 ; CHECK-NEXT:    vle8.v v16, (a1)
-; CHECK-NEXT:    vmslt.vv v25, v8, v16
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vmslt.vv v24, v8, v16
+; CHECK-NEXT:    vsm.v v24, (a2)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = load <128 x i8>, <128 x i8>* %y
@@ -83,10 +83,10 @@ define void @setge_vv_v8i8(<8 x i8>* %x, <8 x i8>* %y, <8 x i1>* %z) {
 ; CHECK-LABEL: setge_vv_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vle8.v v26, (a1)
-; CHECK-NEXT:    vmsle.vv v25, v26, v25
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v9, (a1)
+; CHECK-NEXT:    vmsle.vv v8, v9, v8
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = load <8 x i8>, <8 x i8>* %y
@@ -99,10 +99,10 @@ define void @setle_vv_v16i8(<16 x i8>* %x, <16 x i8>* %y, <16 x i1>* %z) {
 ; CHECK-LABEL: setle_vv_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vle8.v v26, (a1)
-; CHECK-NEXT:    vmsle.vv v25, v25, v26
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v9, (a1)
+; CHECK-NEXT:    vmsle.vv v8, v8, v9
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = load <16 x i8>, <16 x i8>* %y
@@ -114,12 +114,12 @@ define void @setle_vv_v16i8(<16 x i8>* %x, <16 x i8>* %y, <16 x i1>* %z) {
 define void @setugt_vv_v32i8(<32 x i8>* %x, <32 x i8>* %y, <32 x i1>* %z) {
 ; CHECK-LABEL: setugt_vv_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 32
+; CHECK-NEXT:    li a3, 32
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vle8.v v28, (a1)
-; CHECK-NEXT:    vmsltu.vv v25, v28, v26
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v10, (a1)
+; CHECK-NEXT:    vmsltu.vv v12, v10, v8
+; CHECK-NEXT:    vsm.v v12, (a2)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = load <32 x i8>, <32 x i8>* %y
@@ -131,12 +131,12 @@ define void @setugt_vv_v32i8(<32 x i8>* %x, <32 x i8>* %y, <32 x i1>* %z) {
 define void @setult_vv_v64i8(<64 x i8>* %x, <64 x i8>* %y, <64 x i1>* %z) {
 ; CHECK-LABEL: setult_vv_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 64
+; CHECK-NEXT:    li a3, 64
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vle8.v v8, (a1)
-; CHECK-NEXT:    vmsltu.vv v25, v28, v8
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v12, (a1)
+; CHECK-NEXT:    vmsltu.vv v16, v8, v12
+; CHECK-NEXT:    vsm.v v16, (a2)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = load <64 x i8>, <64 x i8>* %y
@@ -148,12 +148,12 @@ define void @setult_vv_v64i8(<64 x i8>* %x, <64 x i8>* %y, <64 x i1>* %z) {
 define void @setuge_vv_v128i8(<128 x i8>* %x, <128 x i8>* %y, <128 x i1>* %z) {
 ; CHECK-LABEL: setuge_vv_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 128
+; CHECK-NEXT:    li a3, 128
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
 ; CHECK-NEXT:    vle8.v v16, (a1)
-; CHECK-NEXT:    vmsleu.vv v25, v16, v8
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vmsleu.vv v24, v16, v8
+; CHECK-NEXT:    vsm.v v24, (a2)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = load <128 x i8>, <128 x i8>* %y
@@ -166,10 +166,10 @@ define void @setule_vv_v8i8(<8 x i8>* %x, <8 x i8>* %y, <8 x i1>* %z) {
 ; CHECK-LABEL: setule_vv_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vle8.v v26, (a1)
-; CHECK-NEXT:    vmsleu.vv v25, v25, v26
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vle8.v v9, (a1)
+; CHECK-NEXT:    vmsleu.vv v8, v8, v9
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = load <8 x i8>, <8 x i8>* %y
@@ -182,9 +182,9 @@ define void @seteq_vx_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 ; CHECK-LABEL: seteq_vx_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmseq.vx v25, v25, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmseq.vx v8, v8, a1
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = insertelement <16 x i8> undef, i8 %y, i32 0
@@ -197,11 +197,11 @@ define void @seteq_vx_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 define void @setne_vx_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 ; CHECK-LABEL: setne_vx_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 32
+; CHECK-NEXT:    li a3, 32
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vmsne.vx v25, v26, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsne.vx v10, v8, a1
+; CHECK-NEXT:    vsm.v v10, (a2)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = insertelement <32 x i8> undef, i8 %y, i32 0
@@ -214,11 +214,11 @@ define void @setne_vx_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 define void @setgt_vx_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 ; CHECK-LABEL: setgt_vx_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 64
+; CHECK-NEXT:    li a3, 64
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vmsgt.vx v25, v28, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsgt.vx v12, v8, a1
+; CHECK-NEXT:    vsm.v v12, (a2)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = insertelement <64 x i8> undef, i8 %y, i32 0
@@ -231,11 +231,11 @@ define void @setgt_vx_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 define void @setlt_vx_v128i8(<128 x i8>* %x, i8 %y, <128 x i1>* %z) {
 ; CHECK-LABEL: setlt_vx_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 128
+; CHECK-NEXT:    li a3, 128
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
-; CHECK-NEXT:    vmslt.vx v25, v8, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vmslt.vx v16, v8, a1
+; CHECK-NEXT:    vsm.v v16, (a2)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = insertelement <128 x i8> undef, i8 %y, i32 0
@@ -249,10 +249,10 @@ define void @setge_vx_v8i8(<8 x i8>* %x, i8 %y, <8 x i1>* %z) {
 ; CHECK-LABEL: setge_vx_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmv.v.x v26, a1
-; CHECK-NEXT:    vmsle.vv v25, v26, v25
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmv.v.x v9, a1
+; CHECK-NEXT:    vmsle.vv v8, v9, v8
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = insertelement <8 x i8> undef, i8 %y, i32 0
@@ -266,9 +266,9 @@ define void @setle_vx_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 ; CHECK-LABEL: setle_vx_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmsle.vx v25, v25, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsle.vx v8, v8, a1
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = insertelement <16 x i8> undef, i8 %y, i32 0
@@ -281,11 +281,11 @@ define void @setle_vx_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 define void @setugt_vx_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 ; CHECK-LABEL: setugt_vx_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 32
+; CHECK-NEXT:    li a3, 32
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vmsgtu.vx v25, v26, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsgtu.vx v10, v8, a1
+; CHECK-NEXT:    vsm.v v10, (a2)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = insertelement <32 x i8> undef, i8 %y, i32 0
@@ -298,11 +298,11 @@ define void @setugt_vx_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 define void @setult_vx_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 ; CHECK-LABEL: setult_vx_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 64
+; CHECK-NEXT:    li a3, 64
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vmsltu.vx v25, v28, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsltu.vx v12, v8, a1
+; CHECK-NEXT:    vsm.v v12, (a2)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = insertelement <64 x i8> undef, i8 %y, i32 0
@@ -315,12 +315,12 @@ define void @setult_vx_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 define void @setuge_vx_v128i8(<128 x i8>* %x, i8 %y, <128 x i1>* %z) {
 ; CHECK-LABEL: setuge_vx_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 128
+; CHECK-NEXT:    li a3, 128
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
 ; CHECK-NEXT:    vmv.v.x v16, a1
-; CHECK-NEXT:    vmsleu.vv v25, v16, v8
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vmsleu.vv v24, v16, v8
+; CHECK-NEXT:    vsm.v v24, (a2)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = insertelement <128 x i8> undef, i8 %y, i32 0
@@ -334,9 +334,9 @@ define void @setule_vx_v8i8(<8 x i8>* %x, i8 %y, <8 x i1>* %z) {
 ; CHECK-LABEL: setule_vx_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmsleu.vx v25, v25, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsleu.vx v8, v8, a1
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = insertelement <8 x i8> undef, i8 %y, i32 0
@@ -350,9 +350,9 @@ define void @seteq_xv_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 ; CHECK-LABEL: seteq_xv_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmseq.vx v25, v25, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmseq.vx v8, v8, a1
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = insertelement <16 x i8> undef, i8 %y, i32 0
@@ -365,11 +365,11 @@ define void @seteq_xv_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 define void @setne_xv_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 ; CHECK-LABEL: setne_xv_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 32
+; CHECK-NEXT:    li a3, 32
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vmsne.vx v25, v26, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsne.vx v10, v8, a1
+; CHECK-NEXT:    vsm.v v10, (a2)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = insertelement <32 x i8> undef, i8 %y, i32 0
@@ -382,11 +382,11 @@ define void @setne_xv_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 define void @setgt_xv_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 ; CHECK-LABEL: setgt_xv_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 64
+; CHECK-NEXT:    li a3, 64
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vmslt.vx v25, v28, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmslt.vx v12, v8, a1
+; CHECK-NEXT:    vsm.v v12, (a2)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = insertelement <64 x i8> undef, i8 %y, i32 0
@@ -399,11 +399,11 @@ define void @setgt_xv_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 define void @setlt_xv_v128i8(<128 x i8>* %x, i8 %y, <128 x i1>* %z) {
 ; CHECK-LABEL: setlt_xv_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 128
+; CHECK-NEXT:    li a3, 128
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
-; CHECK-NEXT:    vmsgt.vx v25, v8, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vmsgt.vx v16, v8, a1
+; CHECK-NEXT:    vsm.v v16, (a2)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = insertelement <128 x i8> undef, i8 %y, i32 0
@@ -417,9 +417,9 @@ define void @setge_xv_v8i8(<8 x i8>* %x, i8 %y, <8 x i1>* %z) {
 ; CHECK-LABEL: setge_xv_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmsle.vx v25, v25, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsle.vx v8, v8, a1
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = insertelement <8 x i8> undef, i8 %y, i32 0
@@ -433,10 +433,10 @@ define void @setle_xv_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 ; CHECK-LABEL: setle_xv_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmv.v.x v26, a1
-; CHECK-NEXT:    vmsle.vv v25, v26, v25
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmv.v.x v9, a1
+; CHECK-NEXT:    vmsle.vv v8, v9, v8
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = insertelement <16 x i8> undef, i8 %y, i32 0
@@ -449,11 +449,11 @@ define void @setle_xv_v16i8(<16 x i8>* %x, i8 %y, <16 x i1>* %z) {
 define void @setugt_xv_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 ; CHECK-LABEL: setugt_xv_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 32
+; CHECK-NEXT:    li a3, 32
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vmsltu.vx v25, v26, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsltu.vx v10, v8, a1
+; CHECK-NEXT:    vsm.v v10, (a2)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = insertelement <32 x i8> undef, i8 %y, i32 0
@@ -466,11 +466,11 @@ define void @setugt_xv_v32i8(<32 x i8>* %x, i8 %y, <32 x i1>* %z) {
 define void @setult_xv_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 ; CHECK-LABEL: setult_xv_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 64
+; CHECK-NEXT:    li a3, 64
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vmsgtu.vx v25, v28, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsgtu.vx v12, v8, a1
+; CHECK-NEXT:    vsm.v v12, (a2)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = insertelement <64 x i8> undef, i8 %y, i32 0
@@ -483,11 +483,11 @@ define void @setult_xv_v64i8(<64 x i8>* %x, i8 %y, <64 x i1>* %z) {
 define void @setuge_xv_v128i8(<128 x i8>* %x, i8 %y, <128 x i1>* %z) {
 ; CHECK-LABEL: setuge_xv_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a3, zero, 128
+; CHECK-NEXT:    li a3, 128
 ; CHECK-NEXT:    vsetvli zero, a3, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
-; CHECK-NEXT:    vmsleu.vx v25, v8, a1
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vmsleu.vx v16, v8, a1
+; CHECK-NEXT:    vsm.v v16, (a2)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = insertelement <128 x i8> undef, i8 %y, i32 0
@@ -501,10 +501,10 @@ define void @setule_xv_v8i8(<8 x i8>* %x, i8 %y, <8 x i1>* %z) {
 ; CHECK-LABEL: setule_xv_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmv.v.x v26, a1
-; CHECK-NEXT:    vmsleu.vv v25, v26, v25
-; CHECK-NEXT:    vse1.v v25, (a2)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmv.v.x v9, a1
+; CHECK-NEXT:    vmsleu.vv v8, v9, v8
+; CHECK-NEXT:    vsm.v v8, (a2)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = insertelement <8 x i8> undef, i8 %y, i32 0
@@ -518,9 +518,9 @@ define void @seteq_vi_v16i8(<16 x i8>* %x, <16 x i1>* %z) {
 ; CHECK-LABEL: seteq_vi_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmseq.vi v25, v25, 0
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmseq.vi v8, v8, 0
+; CHECK-NEXT:    vsm.v v8, (a1)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = insertelement <16 x i8> undef, i8 0, i32 0
@@ -533,11 +533,11 @@ define void @seteq_vi_v16i8(<16 x i8>* %x, <16 x i1>* %z) {
 define void @setne_vi_v32i8(<32 x i8>* %x, <32 x i1>* %z) {
 ; CHECK-LABEL: setne_vi_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 32
+; CHECK-NEXT:    li a2, 32
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    vmsne.vi v25, v26, 0
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsne.vi v10, v8, 0
+; CHECK-NEXT:    vsm.v v10, (a1)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = insertelement <32 x i8> undef, i8 0, i32 0
@@ -550,11 +550,11 @@ define void @setne_vi_v32i8(<32 x i8>* %x, <32 x i1>* %z) {
 define void @setgt_vi_v64i8(<64 x i8>* %x, <64 x i1>* %z) {
 ; CHECK-LABEL: setgt_vi_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 64
+; CHECK-NEXT:    li a2, 64
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vmsgt.vx v25, v28, zero
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsgt.vx v12, v8, zero
+; CHECK-NEXT:    vsm.v v12, (a1)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = insertelement <64 x i8> undef, i8 0, i32 0
@@ -567,11 +567,11 @@ define void @setgt_vi_v64i8(<64 x i8>* %x, <64 x i1>* %z) {
 define void @setlt_vi_v128i8(<128 x i8>* %x, <128 x i1>* %z) {
 ; CHECK-LABEL: setlt_vi_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 128
+; CHECK-NEXT:    li a2, 128
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
-; CHECK-NEXT:    vmsle.vi v25, v8, -1
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vmsle.vi v16, v8, -1
+; CHECK-NEXT:    vsm.v v16, (a1)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = insertelement <128 x i8> undef, i8 0, i32 0
@@ -585,9 +585,9 @@ define void @setge_vi_v8i8(<8 x i8>* %x, <8 x i1>* %z) {
 ; CHECK-LABEL: setge_vi_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmsgt.vi v25, v25, -1
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsgt.vi v8, v8, -1
+; CHECK-NEXT:    vsm.v v8, (a1)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = insertelement <8 x i8> undef, i8 0, i32 0
@@ -601,9 +601,9 @@ define void @setle_vi_v16i8(<16 x i8>* %x, <16 x i1>* %z) {
 ; CHECK-LABEL: setle_vi_v16i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmsle.vi v25, v25, 0
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsle.vi v8, v8, 0
+; CHECK-NEXT:    vsm.v v8, (a1)
 ; CHECK-NEXT:    ret
   %a = load <16 x i8>, <16 x i8>* %x
   %b = insertelement <16 x i8> undef, i8 0, i32 0
@@ -616,12 +616,12 @@ define void @setle_vi_v16i8(<16 x i8>* %x, <16 x i1>* %z) {
 define void @setugt_vi_v32i8(<32 x i8>* %x, <32 x i1>* %z) {
 ; CHECK-LABEL: setugt_vi_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 32
+; CHECK-NEXT:    li a2, 32
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m2, ta, mu
-; CHECK-NEXT:    vle8.v v26, (a0)
-; CHECK-NEXT:    addi a0, zero, 5
-; CHECK-NEXT:    vmsgtu.vx v25, v26, a0
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    li a0, 5
+; CHECK-NEXT:    vmsgtu.vx v10, v8, a0
+; CHECK-NEXT:    vsm.v v10, (a1)
 ; CHECK-NEXT:    ret
   %a = load <32 x i8>, <32 x i8>* %x
   %b = insertelement <32 x i8> undef, i8 5, i32 0
@@ -634,11 +634,11 @@ define void @setugt_vi_v32i8(<32 x i8>* %x, <32 x i1>* %z) {
 define void @setult_vi_v64i8(<64 x i8>* %x, <64 x i1>* %z) {
 ; CHECK-LABEL: setult_vi_v64i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 64
+; CHECK-NEXT:    li a2, 64
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m4, ta, mu
-; CHECK-NEXT:    vle8.v v28, (a0)
-; CHECK-NEXT:    vmsleu.vi v25, v28, 4
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsleu.vi v12, v8, 4
+; CHECK-NEXT:    vsm.v v12, (a1)
 ; CHECK-NEXT:    ret
   %a = load <64 x i8>, <64 x i8>* %x
   %b = insertelement <64 x i8> undef, i8 5, i32 0
@@ -651,11 +651,11 @@ define void @setult_vi_v64i8(<64 x i8>* %x, <64 x i1>* %z) {
 define void @setuge_vi_v128i8(<128 x i8>* %x, <128 x i1>* %z) {
 ; CHECK-LABEL: setuge_vi_v128i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addi a2, zero, 128
+; CHECK-NEXT:    li a2, 128
 ; CHECK-NEXT:    vsetvli zero, a2, e8, m8, ta, mu
 ; CHECK-NEXT:    vle8.v v8, (a0)
-; CHECK-NEXT:    vmsgtu.vi v25, v8, 4
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vmsgtu.vi v16, v8, 4
+; CHECK-NEXT:    vsm.v v16, (a1)
 ; CHECK-NEXT:    ret
   %a = load <128 x i8>, <128 x i8>* %x
   %b = insertelement <128 x i8> undef, i8 5, i32 0
@@ -669,9 +669,9 @@ define void @setule_vi_v8i8(<8 x i8>* %x, <8 x i1>* %z) {
 ; CHECK-LABEL: setule_vi_v8i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e8, mf2, ta, mu
-; CHECK-NEXT:    vle8.v v25, (a0)
-; CHECK-NEXT:    vmsleu.vi v25, v25, 5
-; CHECK-NEXT:    vse1.v v25, (a1)
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    vmsleu.vi v8, v8, 5
+; CHECK-NEXT:    vsm.v v8, (a1)
 ; CHECK-NEXT:    ret
   %a = load <8 x i8>, <8 x i8>* %x
   %b = insertelement <8 x i8> undef, i8 5, i32 0
@@ -685,12 +685,12 @@ define void @seteq_vv_v8i16(<8 x i16>* %x, <8 x i16>* %y) {
 ; CHECK-LABEL: seteq_vv_v8i16:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e16, m1, ta, mu
-; CHECK-NEXT:    vle16.v v25, (a0)
-; CHECK-NEXT:    vle16.v v26, (a1)
-; CHECK-NEXT:    vmseq.vv v0, v25, v26
-; CHECK-NEXT:    vmv.v.i v25, 0
-; CHECK-NEXT:    vmerge.vim v25, v25, -1, v0
-; CHECK-NEXT:    vse16.v v25, (a0)
+; CHECK-NEXT:    vle16.v v8, (a0)
+; CHECK-NEXT:    vle16.v v9, (a1)
+; CHECK-NEXT:    vmseq.vv v0, v8, v9
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, -1, v0
+; CHECK-NEXT:    vse16.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <8 x i16>, <8 x i16>* %x
   %b = load <8 x i16>, <8 x i16>* %y
@@ -704,12 +704,12 @@ define void @setne_vv_v4i32(<4 x i32>* %x, <4 x i32>* %y) {
 ; CHECK-LABEL: setne_vv_v4i32:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
-; CHECK-NEXT:    vle32.v v25, (a0)
-; CHECK-NEXT:    vle32.v v26, (a1)
-; CHECK-NEXT:    vmsne.vv v0, v25, v26
-; CHECK-NEXT:    vmv.v.i v25, 0
-; CHECK-NEXT:    vmerge.vim v25, v25, -1, v0
-; CHECK-NEXT:    vse32.v v25, (a0)
+; CHECK-NEXT:    vle32.v v8, (a0)
+; CHECK-NEXT:    vle32.v v9, (a1)
+; CHECK-NEXT:    vmsne.vv v0, v8, v9
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, -1, v0
+; CHECK-NEXT:    vse32.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <4 x i32>, <4 x i32>* %x
   %b = load <4 x i32>, <4 x i32>* %y
@@ -723,12 +723,12 @@ define void @setgt_vv_v2i64(<2 x i64>* %x, <2 x i64>* %y) {
 ; CHECK-LABEL: setgt_vv_v2i64:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 2, e64, m1, ta, mu
-; CHECK-NEXT:    vle64.v v25, (a0)
-; CHECK-NEXT:    vle64.v v26, (a1)
-; CHECK-NEXT:    vmslt.vv v0, v26, v25
-; CHECK-NEXT:    vmv.v.i v25, 0
-; CHECK-NEXT:    vmerge.vim v25, v25, -1, v0
-; CHECK-NEXT:    vse64.v v25, (a0)
+; CHECK-NEXT:    vle64.v v8, (a0)
+; CHECK-NEXT:    vle64.v v9, (a1)
+; CHECK-NEXT:    vmslt.vv v0, v9, v8
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, -1, v0
+; CHECK-NEXT:    vse64.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <2 x i64>, <2 x i64>* %x
   %b = load <2 x i64>, <2 x i64>* %y
@@ -742,12 +742,12 @@ define void @setlt_vv_v16i16(<16 x i16>* %x, <16 x i16>* %y) {
 ; CHECK-LABEL: setlt_vv_v16i16:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 16, e16, m2, ta, mu
-; CHECK-NEXT:    vle16.v v26, (a0)
-; CHECK-NEXT:    vle16.v v28, (a1)
-; CHECK-NEXT:    vmslt.vv v0, v26, v28
-; CHECK-NEXT:    vmv.v.i v26, 0
-; CHECK-NEXT:    vmerge.vim v26, v26, 1, v0
-; CHECK-NEXT:    vse16.v v26, (a0)
+; CHECK-NEXT:    vle16.v v8, (a0)
+; CHECK-NEXT:    vle16.v v10, (a1)
+; CHECK-NEXT:    vmslt.vv v0, v8, v10
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, 1, v0
+; CHECK-NEXT:    vse16.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <16 x i16>, <16 x i16>* %x
   %b = load <16 x i16>, <16 x i16>* %y
@@ -761,12 +761,12 @@ define void @setugt_vv_v8i32(<8 x i32>* %x, <8 x i32>* %y) {
 ; CHECK-LABEL: setugt_vv_v8i32:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 8, e32, m2, ta, mu
-; CHECK-NEXT:    vle32.v v26, (a0)
-; CHECK-NEXT:    vle32.v v28, (a1)
-; CHECK-NEXT:    vmsltu.vv v0, v28, v26
-; CHECK-NEXT:    vmv.v.i v26, 0
-; CHECK-NEXT:    vmerge.vim v26, v26, 1, v0
-; CHECK-NEXT:    vse32.v v26, (a0)
+; CHECK-NEXT:    vle32.v v8, (a0)
+; CHECK-NEXT:    vle32.v v10, (a1)
+; CHECK-NEXT:    vmsltu.vv v0, v10, v8
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, 1, v0
+; CHECK-NEXT:    vse32.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <8 x i32>, <8 x i32>* %x
   %b = load <8 x i32>, <8 x i32>* %y
@@ -780,12 +780,12 @@ define void @setult_vv_v4i64(<4 x i64>* %x, <4 x i64>* %y) {
 ; CHECK-LABEL: setult_vv_v4i64:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 4, e64, m2, ta, mu
-; CHECK-NEXT:    vle64.v v26, (a0)
-; CHECK-NEXT:    vle64.v v28, (a1)
-; CHECK-NEXT:    vmsltu.vv v0, v26, v28
-; CHECK-NEXT:    vmv.v.i v26, 0
-; CHECK-NEXT:    vmerge.vim v26, v26, 1, v0
-; CHECK-NEXT:    vse64.v v26, (a0)
+; CHECK-NEXT:    vle64.v v8, (a0)
+; CHECK-NEXT:    vle64.v v10, (a1)
+; CHECK-NEXT:    vmsltu.vv v0, v8, v10
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vmerge.vim v8, v8, 1, v0
+; CHECK-NEXT:    vse64.v v8, (a0)
 ; CHECK-NEXT:    ret
   %a = load <4 x i64>, <4 x i64>* %x
   %b = load <4 x i64>, <4 x i64>* %y

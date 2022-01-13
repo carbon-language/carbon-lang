@@ -43,7 +43,7 @@ set(X86 i386)
 set(X86_64 x86_64)
 set(MIPS32 mips mipsel)
 set(MIPS64 mips64 mips64el)
-set(PPC32 powerpc)
+set(PPC32 powerpc powerpcspe)
 set(PPC64 powerpc64 powerpc64le)
 set(RISCV32 riscv32)
 set(RISCV64 riscv64)
@@ -83,7 +83,8 @@ if(APPLE)
     execute_process(COMMAND
         /usr/libexec/PlistBuddy -c "Print :SupportedTargets:${os}:Archs" ${sdk_path}/SDKSettings.plist
       OUTPUT_VARIABLE SDK_SUPPORTED_ARCHS
-      RESULT_VARIABLE PLIST_ERROR)
+      RESULT_VARIABLE PLIST_ERROR
+      ERROR_QUIET)
     if (PLIST_ERROR EQUAL 0 AND
         SDK_SUPPORTED_ARCHS MATCHES " ${arch}\n")
       message(STATUS "Found ${arch} support in ${sdk_path}/SDKSettings.plist")

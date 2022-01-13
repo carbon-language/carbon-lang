@@ -33,6 +33,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Option/ArgList.h"
@@ -44,7 +45,6 @@
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/WithColor.h"
@@ -917,10 +917,10 @@ static void PrintRelocationEntries(const MachOObjectFile *O,
           else {
             SymbolRef Symbol = *O->getSymbolByIndex(r_symbolnum);
             Expected<StringRef> SymNameNext = Symbol.getName();
-            const char *name = NULL;
+            const char *name = nullptr;
             if (SymNameNext)
               name = SymNameNext->data();
-            if (name == NULL)
+            if (name == nullptr)
               outs() << format("?(%d)\n", r_symbolnum);
             else
               outs() << name << "\n";
@@ -10053,6 +10053,10 @@ static void PrintLinkEditDataCommand(MachO::linkedit_data_command ld,
     outs() << "      cmd LC_DYLIB_CODE_SIGN_DRS\n";
   else if (ld.cmd == MachO::LC_LINKER_OPTIMIZATION_HINT)
     outs() << "      cmd LC_LINKER_OPTIMIZATION_HINT\n";
+  else if (ld.cmd == MachO::LC_DYLD_EXPORTS_TRIE)
+    outs() << "      cmd LC_DYLD_EXPORTS_TRIE\n";
+  else if (ld.cmd == MachO::LC_DYLD_CHAINED_FIXUPS)
+    outs() << "      cmd LC_DYLD_CHAINED_FIXUPS\n";
   else
     outs() << "      cmd " << ld.cmd << " (?)\n";
   outs() << "  cmdsize " << ld.cmdsize;
@@ -10196,7 +10200,9 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t filetype,
                Command.C.cmd == MachO::LC_FUNCTION_STARTS ||
                Command.C.cmd == MachO::LC_DATA_IN_CODE ||
                Command.C.cmd == MachO::LC_DYLIB_CODE_SIGN_DRS ||
-               Command.C.cmd == MachO::LC_LINKER_OPTIMIZATION_HINT) {
+               Command.C.cmd == MachO::LC_LINKER_OPTIMIZATION_HINT ||
+               Command.C.cmd == MachO::LC_DYLD_EXPORTS_TRIE ||
+               Command.C.cmd == MachO::LC_DYLD_CHAINED_FIXUPS) {
       MachO::linkedit_data_command Ld =
           Obj->getLinkeditDataLoadCommand(Command);
       PrintLinkEditDataCommand(Ld, Buf.size());

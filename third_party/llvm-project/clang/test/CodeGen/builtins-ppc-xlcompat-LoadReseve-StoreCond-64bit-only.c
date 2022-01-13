@@ -3,14 +3,14 @@
 // RUN: FileCheck %s --check-prefix=CHECK32-ERROR
 // RUN: %clang_cc1 -O2 -triple=powerpc64-unknown-aix -emit-llvm %s -o - | \
 // RUN: FileCheck %s --check-prefix=CHECK64
-// RUN: %clang_cc1 -O2 -triple=powerpc64le-unknown-unknown -emit-llvm %s \
+// RUN: %clang_cc1 -O2 -triple=powerpc64le-unknown-linux-gnu -emit-llvm %s \
 // RUN:  -o - | FileCheck %s --check-prefix=CHECK64
-// RUN: %clang_cc1 -O2 -triple=powerpc64-unknown-unknown -emit-llvm %s \
+// RUN: %clang_cc1 -O2 -triple=powerpc64-unknown-linux-gnu -emit-llvm %s \
 // RUN:  -o - | FileCheck %s --check-prefix=CHECK64
 
 long test_ldarx(volatile long* a) {
   // CHECK64-LABEL: @test_ldarx
-  // CHECK64: %0 = tail call i64 asm sideeffect "ldarx $0, ${1:y}", "=r,*Z,~{memory}"(i64* %a)
+  // CHECK64: %0 = tail call i64 asm sideeffect "ldarx $0, ${1:y}", "=r,*Z,~{memory}"(i64* elementtype(i64) %a)
   // CHECK32-ERROR: error: this builtin is only available on 64-bit targets
   return __ldarx(a);
 }

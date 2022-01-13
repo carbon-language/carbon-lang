@@ -13,8 +13,11 @@
 
 #include "AArch64RegisterBankInfo.h"
 #include "AArch64InstrInfo.h"
+#include "AArch64RegisterInfo.h"
+#include "MCTargetDesc/AArch64MCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
@@ -271,6 +274,7 @@ AArch64RegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
   case AArch64::WSeqPairsClassRegClassID:
   case AArch64::XSeqPairsClassRegClassID:
   case AArch64::MatrixIndexGPR32_12_15RegClassID:
+  case AArch64::GPR64_with_sub_32_in_MatrixIndexGPR32_12_15RegClassID:
     return getRegBank(AArch64::GPRRegBankID);
   case AArch64::CCRRegClassID:
     return getRegBank(AArch64::CCRegBankID);
@@ -426,6 +430,8 @@ static bool isPreISelGenericFloatingPointOpcode(unsigned Opc) {
   case TargetOpcode::G_INTRINSIC_ROUND:
   case TargetOpcode::G_FMAXNUM:
   case TargetOpcode::G_FMINNUM:
+  case TargetOpcode::G_FMAXIMUM:
+  case TargetOpcode::G_FMINIMUM:
     return true;
   }
   return false;
@@ -596,6 +602,8 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case TargetOpcode::G_FSUB:
   case TargetOpcode::G_FMUL:
   case TargetOpcode::G_FDIV:
+  case TargetOpcode::G_FMAXIMUM:
+  case TargetOpcode::G_FMINIMUM:
     return getSameKindOfOperandsMapping(MI);
   case TargetOpcode::G_FPEXT: {
     LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
@@ -751,24 +759,33 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // for the greedy mode the cost of the cross bank copy will
     // offset this number.
     // FIXME: Should be derived from the scheduling model.
-    if (OpRegBankIdx[0] != PMI_FirstGPR)
+    if (OpRegBankIdx[0] != PMI_FirstGPR) {
       Cost = 2;
-    else
-      // Check if that load feeds fp instructions.
-      // In that case, we want the default mapping to be on FPR
-      // instead of blind map every scalar to GPR.
-      for (const MachineInstr &UseMI :
-           MRI.use_nodbg_instructions(MI.getOperand(0).getReg())) {
-        // If we have at least one direct use in a FP instruction,
-        // assume this was a floating point load in the IR.
-        // If it was not, we would have had a bitcast before
-        // reaching that instruction.
-        // Int->FP conversion operations are also captured in onlyDefinesFP().
-        if (onlyUsesFP(UseMI, MRI, TRI) || onlyDefinesFP(UseMI, MRI, TRI)) {
-          OpRegBankIdx[0] = PMI_FirstFPR;
-          break;
-        }
-      }
+      break;
+    }
+
+    if (cast<GLoad>(MI).isAtomic()) {
+      // Atomics always use GPR destinations. Don't refine any further.
+      OpRegBankIdx[0] = PMI_FirstGPR;
+      break;
+    }
+
+    // Check if that load feeds fp instructions.
+    // In that case, we want the default mapping to be on FPR
+    // instead of blind map every scalar to GPR.
+    if (any_of(MRI.use_nodbg_instructions(MI.getOperand(0).getReg()),
+               [&](const MachineInstr &UseMI) {
+                 // If we have at least one direct use in a FP instruction,
+                 // assume this was a floating point load in the IR. If it was
+                 // not, we would have had a bitcast before reaching that
+                 // instruction.
+                 //
+                 // Int->FP conversion operations are also captured in
+                 // onlyDefinesFP().
+                 return onlyUsesFP(UseMI, MRI, TRI) ||
+                        onlyDefinesFP(UseMI, MRI, TRI);
+               }))
+      OpRegBankIdx[0] = PMI_FirstFPR;
     break;
   case TargetOpcode::G_STORE:
     // Check if that store is fed by fp instructions.

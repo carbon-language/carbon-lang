@@ -36,6 +36,8 @@ using namespace llvm;
 #define DEBUG_TYPE "loop-delete"
 
 STATISTIC(NumDeleted, "Number of loops deleted");
+STATISTIC(NumBackedgesBroken,
+          "Number of loops for which we managed to break the backedge");
 
 static cl::opt<bool> EnableSymbolicExecution(
     "loop-deletion-enable-symbolic-execution", cl::Hidden, cl::init(true),
@@ -191,6 +193,20 @@ getValueOnFirstIteration(Value *V, DenseMap<Value *, Value *> &FirstIterValue,
     Value *RHS =
         getValueOnFirstIteration(BO->getOperand(1), FirstIterValue, SQ);
     FirstIterV = SimplifyBinOp(BO->getOpcode(), LHS, RHS, SQ);
+  } else if (auto *Cmp = dyn_cast<ICmpInst>(V)) {
+    Value *LHS =
+        getValueOnFirstIteration(Cmp->getOperand(0), FirstIterValue, SQ);
+    Value *RHS =
+        getValueOnFirstIteration(Cmp->getOperand(1), FirstIterValue, SQ);
+    FirstIterV = SimplifyICmpInst(Cmp->getPredicate(), LHS, RHS, SQ);
+  } else if (auto *Select = dyn_cast<SelectInst>(V)) {
+    Value *Cond =
+        getValueOnFirstIteration(Select->getCondition(), FirstIterValue, SQ);
+    if (auto *C = dyn_cast<ConstantInt>(Cond)) {
+      auto *Selected = C->isAllOnesValue() ? Select->getTrueValue()
+                                           : Select->getFalseValue();
+      FirstIterV = getValueOnFirstIteration(Selected, FirstIterValue, SQ);
+    }
   }
   if (!FirstIterV)
     FirstIterV = V;
@@ -314,22 +330,20 @@ static bool canProveExitOnFirstIteration(Loop *L, DominatorTree &DT,
     }
 
     using namespace PatternMatch;
-    ICmpInst::Predicate Pred;
-    Value *LHS, *RHS;
+    Value *Cond;
     BasicBlock *IfTrue, *IfFalse;
     auto *Term = BB->getTerminator();
-    if (match(Term, m_Br(m_ICmp(Pred, m_Value(LHS), m_Value(RHS)),
+    if (match(Term, m_Br(m_Value(Cond),
                          m_BasicBlock(IfTrue), m_BasicBlock(IfFalse)))) {
-      if (!LHS->getType()->isIntegerTy()) {
+      auto *ICmp = dyn_cast<ICmpInst>(Cond);
+      if (!ICmp || !ICmp->getType()->isIntegerTy()) {
         MarkAllSuccessorsLive(BB);
         continue;
       }
 
       // Can we prove constant true or false for this condition?
-      LHS = getValueOnFirstIteration(LHS, FirstIterValue, SQ);
-      RHS = getValueOnFirstIteration(RHS, FirstIterValue, SQ);
-      auto *KnownCondition = SimplifyICmpInst(Pred, LHS, RHS, SQ);
-      if (!KnownCondition) {
+      auto *KnownCondition = getValueOnFirstIteration(ICmp, FirstIterValue, SQ);
+      if (KnownCondition == ICmp) {
         // Failed to simplify.
         MarkAllSuccessorsLive(BB);
         continue;
@@ -393,14 +407,25 @@ breakBackedgeIfNotTaken(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   if (!L->getLoopLatch())
     return LoopDeletionResult::Unmodified;
 
-  auto *BTC = SE.getBackedgeTakenCount(L);
-  if (!isa<SCEVCouldNotCompute>(BTC) && SE.isKnownNonZero(BTC))
-    return LoopDeletionResult::Unmodified;
-  if (!BTC->isZero() && !canProveExitOnFirstIteration(L, DT, LI))
-    return LoopDeletionResult::Unmodified;
+  auto *BTC = SE.getSymbolicMaxBackedgeTakenCount(L);
+  if (BTC->isZero()) {
+    // SCEV knows this backedge isn't taken!
+    breakLoopBackedge(L, DT, SE, LI, MSSA);
+    ++NumBackedgesBroken;
+    return LoopDeletionResult::Deleted;
+  }
 
-  breakLoopBackedge(L, DT, SE, LI, MSSA);
-  return LoopDeletionResult::Deleted;
+  // If SCEV leaves open the possibility of a zero trip count, see if
+  // symbolically evaluating the first iteration lets us prove the backedge
+  // unreachable.
+  if (isa<SCEVCouldNotCompute>(BTC) || !SE.isKnownNonZero(BTC))
+    if (canProveExitOnFirstIteration(L, DT, LI)) {
+      breakLoopBackedge(L, DT, SE, LI, MSSA);
+      ++NumBackedgesBroken;
+      return LoopDeletionResult::Deleted;
+    }
+
+  return LoopDeletionResult::Unmodified;
 }
 
 /// Remove a loop if it is dead.

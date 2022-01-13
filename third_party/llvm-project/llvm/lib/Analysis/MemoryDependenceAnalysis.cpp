@@ -594,7 +594,7 @@ MemDepResult MemoryDependenceResults::getSimplePointerDependencyFrom(
     // turn into undef.  Note that we can bypass the allocation itself when
     // looking for a clobber in many cases; that's an alias property and is
     // handled by BasicAA.
-    if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, &TLI)) {
+    if (isa<AllocaInst>(Inst) || isNoAliasCall(Inst)) {
       const Value *AccessPtr = getUnderlyingObject(MemLoc.Ptr);
       if (AccessPtr == Inst || BatchAA.isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
@@ -1481,11 +1481,11 @@ void MemoryDependenceResults::removeCachedNonLocalPointerDependencies(
   // instructions from the reverse map.
   NonLocalDepInfo &PInfo = It->second.NonLocalDeps;
 
-  for (unsigned i = 0, e = PInfo.size(); i != e; ++i) {
-    Instruction *Target = PInfo[i].getResult().getInst();
+  for (const NonLocalDepEntry &DE : PInfo) {
+    Instruction *Target = DE.getResult().getInst();
     if (!Target)
       continue; // Ignore non-local dep results.
-    assert(Target->getParent() == PInfo[i].getBB());
+    assert(Target->getParent() == DE.getBB());
 
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     RemoveFromReverseMap(ReverseNonLocalPtrDeps, Target, P);

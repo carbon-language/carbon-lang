@@ -38,7 +38,7 @@ define i8* @test_simplify2() {
 
 define void @test_simplify3(i8* %dst) {
 ; CHECK-LABEL: @test_simplify3(
-; CHECK-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* noundef nonnull align 1 dereferenceable(80) [[DST:%.*]], i8* noundef nonnull align 1 dereferenceable(6) getelementptr inbounds ([6 x i8], [6 x i8]* @hello, i32 0, i32 0), i32 6, i1 false)
+; CHECK-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* noundef nonnull align 1 dereferenceable(6) [[DST:%.*]], i8* noundef nonnull align 1 dereferenceable(6) getelementptr inbounds ([6 x i8], [6 x i8]* @hello, i32 0, i32 0), i32 6, i1 false)
 ; CHECK-NEXT:    ret void
 ;
   %src = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
@@ -54,6 +54,15 @@ define i8* @test_no_simplify1() {
   %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [32 x i8], [32 x i8]* @b, i32 0, i32 0
   %ret = call i8* @stpcpy(i8* %dst, i8* %src)
+  ret i8* %ret
+}
+
+define i8* @test_no_simplify2(i8* %dst, i8* %src) {
+; CHECK-LABEL: @test_no_simplify2(
+; CHECK-NEXT:    %ret = musttail call i8* @stpcpy(i8* %dst, i8* %src)
+; CHECK-NEXT:    ret i8* %ret
+;
+  %ret = musttail call i8* @stpcpy(i8* %dst, i8* %src)
   ret i8* %ret
 }
 

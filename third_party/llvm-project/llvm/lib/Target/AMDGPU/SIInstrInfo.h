@@ -272,11 +272,10 @@ public:
 
   MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const override;
 
-  unsigned insertIndirectBranch(MachineBasicBlock &MBB,
-                                MachineBasicBlock &NewDestBB,
-                                const DebugLoc &DL,
-                                int64_t BrOffset,
-                                RegScavenger *RS = nullptr) const override;
+  void insertIndirectBranch(MachineBasicBlock &MBB,
+                            MachineBasicBlock &NewDestBB,
+                            MachineBasicBlock &RestoreBB, const DebugLoc &DL,
+                            int64_t BrOffset, RegScavenger *RS) const override;
 
   bool analyzeBranchImpl(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator I,
@@ -316,6 +315,14 @@ public:
                           Register DstReg, ArrayRef<MachineOperand> Cond,
                           Register TrueReg, Register FalseReg) const;
 
+  bool analyzeCompare(const MachineInstr &MI, Register &SrcReg,
+                      Register &SrcReg2, int64_t &CmpMask,
+                      int64_t &CmpValue) const override;
+
+  bool optimizeCompareInstr(MachineInstr &CmpInstr, Register SrcReg,
+                            Register SrcReg2, int64_t CmpMask, int64_t CmpValue,
+                            const MachineRegisterInfo *MRI) const override;
+
   unsigned getAddressSpaceForPseudoSourceKind(
              unsigned Kind) const override;
 
@@ -323,16 +330,15 @@ public:
   areMemAccessesTriviallyDisjoint(const MachineInstr &MIa,
                                   const MachineInstr &MIb) const override;
 
-  bool isFoldableCopy(const MachineInstr &MI) const;
+  static bool isFoldableCopy(const MachineInstr &MI);
 
   bool FoldImmediate(MachineInstr &UseMI, MachineInstr &DefMI, Register Reg,
                      MachineRegisterInfo *MRI) const final;
 
   unsigned getMachineCSELookAheadLimit() const override { return 500; }
 
-  MachineInstr *convertToThreeAddress(MachineFunction::iterator &MBB,
-                                      MachineInstr &MI,
-                                      LiveVariables *LV) const override;
+  MachineInstr *convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
+                                      LiveIntervals *LIS) const override;
 
   bool isSchedulingBoundary(const MachineInstr &MI,
                             const MachineBasicBlock *MBB,
@@ -1037,6 +1043,10 @@ public:
   ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const MachineFunction &MF) const override;
 
+  ScheduleHazardRecognizer *
+  CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
+                                 const ScheduleDAGMI *DAG) const override;
+
   bool isBasicBlockPrologue(const MachineInstr &MI) const override;
 
   MachineInstr *createPHIDestinationCopy(MachineBasicBlock &MBB,
@@ -1120,6 +1130,8 @@ public:
   }
 
   static unsigned getDSShaderTypeValue(const MachineFunction &MF);
+
+  const TargetSchedModel &getSchedModel() const { return SchedModel; }
 };
 
 /// \brief Returns true if a reg:subreg pair P has a TRC class

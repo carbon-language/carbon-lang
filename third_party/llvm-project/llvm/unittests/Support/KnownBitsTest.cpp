@@ -166,7 +166,7 @@ TEST(KnownBitsTest, BinaryExhaustive) {
           KnownMulHU.One &= Res;
           KnownMulHU.Zero &= ~Res;
 
-          if (!N2.isNullValue()) {
+          if (!N2.isZero()) {
             Res = N1.udiv(N2);
             KnownUDiv.One &= Res;
             KnownUDiv.Zero &= ~Res;
@@ -266,6 +266,23 @@ TEST(KnownBitsTest, BinaryExhaustive) {
       EXPECT_TRUE(ComputedAShr.Zero.isSubsetOf(KnownAShr.Zero));
       EXPECT_TRUE(ComputedAShr.One.isSubsetOf(KnownAShr.One));
     });
+  });
+
+  // Also test 'unary' binary cases where the same argument is repeated.
+  ForeachKnownBits(Bits, [&](const KnownBits &Known) {
+    KnownBits KnownMul(Bits);
+    KnownMul.Zero.setAllBits();
+    KnownMul.One.setAllBits();
+
+    ForeachNumInKnownBits(Known, [&](const APInt &N) {
+      APInt Res = N * N;
+      KnownMul.One &= Res;
+      KnownMul.Zero &= ~Res;
+    });
+
+    KnownBits ComputedMul = KnownBits::mul(Known, Known, /*SelfMultiply*/ true);
+    EXPECT_TRUE(ComputedMul.Zero.isSubsetOf(KnownMul.Zero));
+    EXPECT_TRUE(ComputedMul.One.isSubsetOf(KnownMul.One));
   });
 }
 
@@ -414,6 +431,28 @@ TEST(KnownBitsTest, GetSignedMinMaxVal) {
   });
 }
 
+TEST(KnownBitsTest, CountMaxActiveBits) {
+  unsigned Bits = 4;
+  ForeachKnownBits(Bits, [&](const KnownBits &Known) {
+    unsigned Expected = 0;
+    ForeachNumInKnownBits(Known, [&](const APInt &N) {
+      Expected = std::max(Expected, N.getActiveBits());
+    });
+    EXPECT_EQ(Expected, Known.countMaxActiveBits());
+  });
+}
+
+TEST(KnownBitsTest, CountMaxSignificantBits) {
+  unsigned Bits = 4;
+  ForeachKnownBits(Bits, [&](const KnownBits &Known) {
+    unsigned Expected = 0;
+    ForeachNumInKnownBits(Known, [&](const APInt &N) {
+      Expected = std::max(Expected, N.getSignificantBits());
+    });
+    EXPECT_EQ(Expected, Known.countMaxSignificantBits());
+  });
+}
+
 TEST(KnownBitsTest, SExtOrTrunc) {
   const unsigned NarrowerSize = 4;
   const unsigned BaseSize = 6;
@@ -447,8 +486,8 @@ TEST(KnownBitsTest, SExtInReg) {
   unsigned Bits = 4;
   for (unsigned FromBits = 1; FromBits <= Bits; ++FromBits) {
     ForeachKnownBits(Bits, [&](const KnownBits &Known) {
-      APInt CommonOne = APInt::getAllOnesValue(Bits);
-      APInt CommonZero = APInt::getAllOnesValue(Bits);
+      APInt CommonOne = APInt::getAllOnes(Bits);
+      APInt CommonZero = APInt::getAllOnes(Bits);
       unsigned ExtBits = Bits - FromBits;
       ForeachNumInKnownBits(Known, [&](const APInt &N) {
         APInt Ext = N << ExtBits;

@@ -15,6 +15,7 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/IR/OptBisect.h"
 #include "llvm/IR/PassTimingInfo.h"
+#include "llvm/IR/PrintPasses.h"
 #include "llvm/IR/StructuralHash.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
@@ -29,8 +30,7 @@ using namespace llvm;
 
 char RGPassManager::ID = 0;
 
-RGPassManager::RGPassManager()
-  : FunctionPass(ID), PMDataManager() {
+RGPassManager::RGPassManager() : FunctionPass(ID) {
   RI = nullptr;
   CurrentRegion = nullptr;
 }
@@ -187,6 +187,8 @@ public:
   }
 
   bool runOnRegion(Region *R, RGPassManager &RGM) override {
+    if (!isFunctionInPrintList(R->getEntry()->getParent()->getName()))
+      return false;
     Out << Banner;
     for (const auto *BB : R->blocks()) {
       if (BB)

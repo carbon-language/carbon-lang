@@ -46,6 +46,7 @@ Getting Started with libc++
    Status/Format
    Status/Ranges
    Status/Spaceship
+   Status/Zip
 
 
 .. toctree::
@@ -103,8 +104,9 @@ velocity, libc++ drops support for older compilers as newer ones are released.
 ============ =============== ========================== =====================
 Compiler     Versions        Restrictions               Support policy
 ============ =============== ========================== =====================
-Clang        11, 12                                     latest two stable releases per `LLVM's release page <https://releases.llvm.org>`_
+Clang        12, 13                                     latest two stable releases per `LLVM's release page <https://releases.llvm.org>`_
 AppleClang   12                                         latest stable release per `Xcode's release page <https://developer.apple.com/documentation/xcode-release-notes>`_
+Open XL      17.1 (AIX)                                 latest stable release per `Open XL's documentation page <https://www.ibm.com/docs/en/openxl-c-and-cpp-aix>`_
 GCC          11              In C++11 or later only     latest stable release per `GCC's release page <https://gcc.gnu.org/releases.html>`_
 ============ =============== ========================== =====================
 
@@ -116,7 +118,8 @@ Target platform Target architecture       Notes
 macOS 10.9+     i386, x86_64, arm64       Building the shared library itself requires targetting macOS 10.11+
 FreeBSD 10+     i386, x86_64, arm
 Linux           i386, x86_64, arm, arm64
-Windows         x86_64
+Windows         x86_64                    Both MSVC and MinGW style environments
+AIX             powerpc, powerpc64
 =============== ========================= ============================
 
 Generally speaking, libc++ should work on any platform that provides a fairly complete
@@ -155,7 +158,7 @@ This list contains known issues with libc++
 
 A full list of currently open libc++ bugs can be `found here`__.
 
-.. __:  https://bugs.llvm.org/buglist.cgi?component=All%20Bugs&product=libc%2B%2B&query_format=advanced&resolution=---&order=changeddate%20DESC%2Cassigned_to%20DESC%2Cbug_status%2Cpriority%2Cbug_id&list_id=74184
+.. __:  https://github.com/llvm/llvm-project/labels/libc%2B%2B
 
 
 Design Documents
@@ -175,6 +178,7 @@ Design Documents
    DesignDocs/NoexceptPolicy
    DesignDocs/ThreadingSupportAPI
    DesignDocs/UniquePtrTrivialAbi
+   DesignDocs/UnspecifiedBehaviorRandomization
    DesignDocs/VisibilityMacros
 
 
@@ -195,7 +199,7 @@ and `Getting started with LLVM <https://llvm.org/docs/GettingStarted.html>`__.
 **Bug Reports**
 
 If you think you've found a bug in libc++, please report it using
-the `LLVM Bugzilla`_. If you're not sure, you
+the `LLVM bug tracker`_. If you're not sure, you
 can post a message to the `libcxx-dev mailing list`_ or on IRC.
 
 **Patches**
@@ -214,7 +218,7 @@ Quick Links
 ===========
 * `LLVM Homepage <https://llvm.org/>`_
 * `libc++abi Homepage <http://libcxxabi.llvm.org/>`_
-* `LLVM Bugzilla <https://bugs.llvm.org/>`_
+* `LLVM bug tracker <https://github.com/llvm/llvm-project/labels/libc++/>`_
 * `libcxx-commits Mailing List`_
 * `libcxx-dev Mailing List`_
 * `Browse libc++ Sources <https://github.com/llvm/llvm-project/tree/main/libcxx/>`_

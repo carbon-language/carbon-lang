@@ -285,9 +285,8 @@ R600TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 
       NewMI = BuildMI(*BB, I, BB->findDebugLoc(I),
                       TII->get(R600::getLDSNoRetOp(MI.getOpcode())));
-      for (unsigned i = 1, e = MI.getNumOperands(); i < e; ++i) {
-        NewMI.add(MI.getOperand(i));
-      }
+      for (const MachineOperand &MO : llvm::drop_begin(MI.operands()))
+        NewMI.add(MO);
     } else {
       return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
     }
@@ -336,7 +335,9 @@ R600TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
         *BB, MI, R600::MOV, MI.getOperand(0).getReg(), R600::ALU_LITERAL_X);
     int Idx = TII->getOperandIdx(*MIB, R600::OpName::literal);
     //TODO: Ugh this is rather ugly
-    MIB->getOperand(Idx) = MI.getOperand(1);
+    const MachineOperand &MO = MI.getOperand(1);
+    MIB->getOperand(Idx).ChangeToGA(MO.getGlobal(), MO.getOffset(),
+                                    MO.getTargetFlags());
     break;
   }
 
@@ -828,7 +829,7 @@ SDValue R600TargetLowering::LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
 
 bool R600TargetLowering::isZero(SDValue Op) const {
   if(ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Op)) {
-    return Cst->isNullValue();
+    return Cst->isZero();
   } else if(ConstantFPSDNode *CstFP = dyn_cast<ConstantFPSDNode>(Op)){
     return CstFP->isZero();
   } else {
@@ -924,7 +925,7 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
       std::swap(LHS, RHS);
       CC = DAG.getCondCode(CCSwapped);
     } else {
-      // Try inverting the conditon and then swapping the operands
+      // Try inverting the condition and then swapping the operands
       ISD::CondCode CCInv = ISD::getSetCCInverse(CCOpcode, CompareVT);
       CCSwapped = ISD::getSetCCSwappedOperands(CCInv);
       if (isCondCodeLegal(CCSwapped, CompareVT.getSimpleVT())) {

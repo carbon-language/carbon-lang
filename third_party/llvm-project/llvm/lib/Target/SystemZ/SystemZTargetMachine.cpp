@@ -21,8 +21,8 @@
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Transforms/Scalar.h"
 #include <string>
@@ -84,8 +84,9 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
   // 128-bit floats are aligned only to 64 bits.
   Ret += "-f128:64";
 
-  // When using the vector ABI, 128-bit vectors are also aligned to 64 bits.
-  if (VectorABI)
+  // When using the vector ABI on Linux, 128-bit vectors are also aligned to 64
+  // bits. On z/OS, vector types are always aligned to 64 bits.
+  if (VectorABI || TT.isOSzOS())
     Ret += "-v128:64";
 
   // We prefer 16 bits of aligned for all globals; see above.
@@ -284,7 +285,7 @@ void SystemZPassConfig::addPreEmitPass() {
   // vector instructions will be shortened into opcodes that compare
   // elimination recognizes.
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()), false);
+    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()));
 
   // We eliminate comparisons here rather than earlier because some
   // transformations can change the set of available CC values and we
@@ -310,7 +311,7 @@ void SystemZPassConfig::addPreEmitPass() {
   // between the comparison and the branch, but it isn't clear whether
   // preventing that would be a win or not.
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createSystemZElimComparePass(getSystemZTargetMachine()), false);
+    addPass(createSystemZElimComparePass(getSystemZTargetMachine()));
   addPass(createSystemZLongBranchPass(getSystemZTargetMachine()));
 
   // Do final scheduling after all other optimizations, to get an

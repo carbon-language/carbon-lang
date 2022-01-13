@@ -77,12 +77,6 @@ struct Global {
   wasm::WasmInitExpr InitExpr;
 };
 
-struct Tag {
-  uint32_t Index;
-  uint32_t Attribute;
-  uint32_t SigIndex;
-};
-
 struct Import {
   StringRef Module;
   StringRef Field;
@@ -92,7 +86,7 @@ struct Import {
     Global GlobalImport;
     Table TableImport;
     Limits Memory;
-    Tag TagImport;
+    uint32_t TagIndex;
   };
 };
 
@@ -199,12 +193,23 @@ struct CustomSection : Section {
   yaml::BinaryRef Payload;
 };
 
+struct DylinkImportInfo {
+  StringRef Module;
+  StringRef Field;
+  SymbolFlags Flags;
+};
+
+struct DylinkExportInfo {
+  StringRef Name;
+  SymbolFlags Flags;
+};
+
 struct DylinkSection : CustomSection {
-  DylinkSection() : CustomSection("dylink") {}
+  DylinkSection() : CustomSection("dylink.0") {}
 
   static bool classof(const Section *S) {
     auto C = dyn_cast<CustomSection>(S);
-    return C && C->Name == "dylink";
+    return C && C->Name == "dylink.0";
   }
 
   uint32_t MemorySize;
@@ -212,6 +217,8 @@ struct DylinkSection : CustomSection {
   uint32_t TableSize;
   uint32_t TableAlignment;
   std::vector<StringRef> Needed;
+  std::vector<DylinkImportInfo> ImportInfo;
+  std::vector<DylinkExportInfo> ExportInfo;
 };
 
 struct NameSection : CustomSection {
@@ -323,7 +330,7 @@ struct TagSection : Section {
     return S->Type == wasm::WASM_SEC_TAG;
   }
 
-  std::vector<Tag> Tags;
+  std::vector<uint32_t> TagTypes;
 };
 
 struct GlobalSection : Section {
@@ -425,7 +432,8 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::SymbolInfo)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::InitFunction)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::ComdatEntry)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::Comdat)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::Tag)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::DylinkImportInfo)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::WasmYAML::DylinkExportInfo)
 
 namespace llvm {
 namespace yaml {
@@ -570,8 +578,12 @@ template <> struct ScalarEnumerationTraits<WasmYAML::RelocType> {
   static void enumeration(IO &IO, WasmYAML::RelocType &Kind);
 };
 
-template <> struct MappingTraits<WasmYAML::Tag> {
-  static void mapping(IO &IO, WasmYAML::Tag &Tag);
+template <> struct MappingTraits<WasmYAML::DylinkImportInfo> {
+  static void mapping(IO &IO, WasmYAML::DylinkImportInfo &Info);
+};
+
+template <> struct MappingTraits<WasmYAML::DylinkExportInfo> {
+  static void mapping(IO &IO, WasmYAML::DylinkExportInfo &Info);
 };
 
 } // end namespace yaml

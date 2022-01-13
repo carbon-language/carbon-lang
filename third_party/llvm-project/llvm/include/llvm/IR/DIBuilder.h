@@ -181,7 +181,7 @@ namespace llvm {
                                      DIFile *File);
 
     /// Create a single enumerator value.
-    DIEnumerator *createEnumerator(StringRef Name, APSInt Value);
+    DIEnumerator *createEnumerator(StringRef Name, const APSInt &Value);
     DIEnumerator *createEnumerator(StringRef Name, uint64_t Val,
                                    bool IsUnsigned = false);
 
@@ -219,11 +219,12 @@ namespace llvm {
     /// \param AlignInBits       Alignment. (optional)
     /// \param DWARFAddressSpace DWARF address space. (optional)
     /// \param Name              Pointer type name. (optional)
-    DIDerivedType *createPointerType(DIType *PointeeTy, uint64_t SizeInBits,
-                                     uint32_t AlignInBits = 0,
-                                     Optional<unsigned> DWARFAddressSpace =
-                                         None,
-                                     StringRef Name = "");
+    /// \param Annotations       Member annotations.
+    DIDerivedType *
+    createPointerType(DIType *PointeeTy, uint64_t SizeInBits,
+                      uint32_t AlignInBits = 0,
+                      Optional<unsigned> DWARFAddressSpace = None,
+                      StringRef Name = "", DINodeArray Annotations = nullptr);
 
     /// Create debugging information entry for a pointer to member.
     /// \param PointeeTy Type pointed to by this pointer.
@@ -250,9 +251,11 @@ namespace llvm {
     /// \param LineNo      Line number.
     /// \param Context     The surrounding context for the typedef.
     /// \param AlignInBits Alignment. (optional)
+    /// \param Annotations Annotations. (optional)
     DIDerivedType *createTypedef(DIType *Ty, StringRef Name, DIFile *File,
                                  unsigned LineNo, DIScope *Context,
-                                 uint32_t AlignInBits = 0);
+                                 uint32_t AlignInBits = 0,
+                                 DINodeArray Annotations = nullptr);
 
     /// Create debugging information entry for a 'friend'.
     DIDerivedType *createFriend(DIType *Ty, DIType *FriendTy);
@@ -695,7 +698,6 @@ namespace llvm {
     /// variable which has a complex address expression for its address.
     /// \param Addr        An array of complex address operations.
     DIExpression *createExpression(ArrayRef<uint64_t> Addr = None);
-    DIExpression *createExpression(ArrayRef<int64_t> Addr);
 
     /// Create an expression for a variable that does not have an address, but
     /// does have a constant value.
@@ -827,29 +829,35 @@ namespace llvm {
                                        unsigned Line, unsigned Col);
 
     /// Create a descriptor for an imported module.
-    /// \param Context The scope this module is imported into
-    /// \param NS      The namespace being imported here.
-    /// \param File    File where the declaration is located.
-    /// \param Line    Line number of the declaration.
+    /// \param Context        The scope this module is imported into
+    /// \param NS             The namespace being imported here.
+    /// \param File           File where the declaration is located.
+    /// \param Line           Line number of the declaration.
+    /// \param Elements       Renamed elements.
     DIImportedEntity *createImportedModule(DIScope *Context, DINamespace *NS,
-                                           DIFile *File, unsigned Line);
+                                           DIFile *File, unsigned Line,
+                                           DINodeArray Elements = nullptr);
 
     /// Create a descriptor for an imported module.
     /// \param Context The scope this module is imported into.
     /// \param NS      An aliased namespace.
     /// \param File    File where the declaration is located.
     /// \param Line    Line number of the declaration.
+    /// \param Elements       Renamed elements.
     DIImportedEntity *createImportedModule(DIScope *Context,
                                            DIImportedEntity *NS, DIFile *File,
-                                           unsigned Line);
+                                           unsigned Line,
+                                           DINodeArray Elements = nullptr);
 
     /// Create a descriptor for an imported module.
-    /// \param Context The scope this module is imported into.
-    /// \param M       The module being imported here
-    /// \param File    File where the declaration is located.
-    /// \param Line    Line number of the declaration.
+    /// \param Context        The scope this module is imported into.
+    /// \param M              The module being imported here
+    /// \param File           File where the declaration is located.
+    /// \param Line           Line number of the declaration.
+    /// \param Elements       Renamed elements.
     DIImportedEntity *createImportedModule(DIScope *Context, DIModule *M,
-                                           DIFile *File, unsigned Line);
+                                           DIFile *File, unsigned Line,
+                                           DINodeArray Elements = nullptr);
 
     /// Create a descriptor for an imported function.
     /// \param Context The scope this module is imported into.
@@ -857,9 +865,11 @@ namespace llvm {
     ///                variable.
     /// \param File    File where the declaration is located.
     /// \param Line    Line number of the declaration.
+    /// \param Elements       Renamed elements.
     DIImportedEntity *createImportedDeclaration(DIScope *Context, DINode *Decl,
                                                 DIFile *File, unsigned Line,
-                                                StringRef Name = "");
+                                                StringRef Name = "",
+                                                DINodeArray Elements = nullptr);
 
     /// Insert a new llvm.dbg.declare intrinsic call.
     /// \param Storage     llvm::Value of the variable

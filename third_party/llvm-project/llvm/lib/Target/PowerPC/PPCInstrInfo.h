@@ -393,7 +393,9 @@ public:
                              MachineInstr &NewMI1,
                              MachineInstr &NewMI2) const override;
 
-  void setSpecialOperandAttr(MachineInstr &MI, uint16_t Flags) const override;
+  // PowerPC specific version of setSpecialOperandAttr that copies Flags to MI
+  // and clears nuw, nsw, and exact flags.
+  void setSpecialOperandAttr(MachineInstr &MI, uint16_t Flags) const;
 
   bool isCoalescableExtInstr(const MachineInstr &MI,
                              Register &SrcReg, Register &DstReg,
@@ -524,10 +526,11 @@ public:
   // Comparison optimization.
 
   bool analyzeCompare(const MachineInstr &MI, Register &SrcReg,
-                      Register &SrcReg2, int &Mask, int &Value) const override;
+                      Register &SrcReg2, int64_t &Mask,
+                      int64_t &Value) const override;
 
   bool optimizeCompareInstr(MachineInstr &CmpInstr, Register SrcReg,
-                            Register SrcReg2, int Mask, int Value,
+                            Register SrcReg2, int64_t Mask, int64_t Value,
                             const MachineRegisterInfo *MRI) const override;
 
 

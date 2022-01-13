@@ -286,6 +286,7 @@ defm : X86WriteRes<WriteFMaskedStore64Y, [ZnAGU,ZnFPU01], 5, [1,2], 2>;
 defm : X86WriteRes<WriteFMove,         [ZnFPU], 1, [1], 1>;
 defm : X86WriteRes<WriteFMoveX,        [ZnFPU], 1, [1], 1>;
 defm : X86WriteRes<WriteFMoveY,        [ZnFPU], 1, [1], 1>;
+defm : X86WriteResUnsupported<WriteFMoveZ>;
 
 defm : ZnWriteResFpuPair<WriteFAdd,      [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFAddX,     [ZnFPU0],  3>;
@@ -404,6 +405,7 @@ defm : X86WriteRes<WriteVecMaskedStore64Y, [ZnAGU,ZnFPU01], 5, [1,2], 2>;
 defm : X86WriteRes<WriteVecMove,         [ZnFPU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecMoveX,        [ZnFPU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecMoveY,        [ZnFPU], 2, [1], 2>;
+defm : X86WriteResUnsupported<WriteVecMoveZ>;
 defm : X86WriteRes<WriteVecMoveToGpr,    [ZnFPU2], 2, [1], 1>;
 defm : X86WriteRes<WriteVecMoveFromGpr,  [ZnFPU2], 3, [1], 1>;
 defm : X86WriteRes<WriteEMMS,            [ZnFPU], 2, [1], 1>;
@@ -697,7 +699,7 @@ def : InstRW<[WriteMicrocoded], (instregex "CALL(16|32)m")>;
 def ZnWriteRET : SchedWriteRes<[ZnALU03]> {
   let NumMicroOps = 2;
 }
-def : InstRW<[ZnWriteRET], (instregex "RET(L|Q|W)", "LRET(L|Q|W)",
+def : InstRW<[ZnWriteRET], (instregex "RET(16|32|64)", "LRET(16|32|64)",
                             "IRET(16|32|64)")>;
 
 //-- Logic instructions --//
@@ -1000,12 +1002,12 @@ def ZnWriteFPU12Ym : SchedWriteRes<[ZnAGU, ZnFPU12]> {
   let NumMicroOps = 2;
 }
 
-def : InstRW<[ZnWriteFPU12], (instrs MMX_PACKSSDWirr,
-                                     MMX_PACKSSWBirr,
-                                     MMX_PACKUSWBirr)>;
-def : InstRW<[ZnWriteFPU12m], (instrs MMX_PACKSSDWirm,
-                                      MMX_PACKSSWBirm,
-                                      MMX_PACKUSWBirm)>;
+def : InstRW<[ZnWriteFPU12], (instrs MMX_PACKSSDWrr,
+                                     MMX_PACKSSWBrr,
+                                     MMX_PACKUSWBrr)>;
+def : InstRW<[ZnWriteFPU12m], (instrs MMX_PACKSSDWrm,
+                                      MMX_PACKSSWBrm,
+                                      MMX_PACKUSWBrm)>;
 
 def ZnWriteFPU013 : SchedWriteRes<[ZnFPU013]> ;
 def ZnWriteFPU013Y : SchedWriteRes<[ZnFPU013]> {
@@ -1305,15 +1307,15 @@ def ZnWriteCVTPS2PIr: SchedWriteRes<[ZnFPU3]> {
 }
 // CVT(T)PS2PI.
 // mm,x.
-def : InstRW<[ZnWriteCVTPS2PIr], (instregex "MMX_CVT(T?)PS2PIirr")>;
+def : InstRW<[ZnWriteCVTPS2PIr], (instregex "MMX_CVT(T?)PS2PIrr")>;
 
 // CVTPI2PD.
 // x,mm.
-def : InstRW<[ZnWriteCVTPS2PDr], (instrs MMX_CVTPI2PDirr)>;
+def : InstRW<[ZnWriteCVTPS2PDr], (instrs MMX_CVTPI2PDrr)>;
 
 // CVT(T)PD2PI.
 // mm,x.
-def : InstRW<[ZnWriteCVTPS2PIr], (instregex "MMX_CVT(T?)PD2PIirr")>;
+def : InstRW<[ZnWriteCVTPS2PIr], (instregex "MMX_CVT(T?)PD2PIrr")>;
 
 def ZnWriteCVSTSI2SSr: SchedWriteRes<[ZnFPU3]> {
   let Latency = 5;
