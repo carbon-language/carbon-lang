@@ -1,4 +1,4 @@
-//===-- Passes.td - TOSA optimization pass declarations ----*- tablegen -*-===//
+//===-- Passes.td - TOSA pass declarations ----*- tablegen -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the optimization passes for the TOSA Dialect in MLIR.
+// This file declares the passes for the TOSA Dialect in MLIR.
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,6 +41,16 @@ def TosaMakeBroadcastable : FunctionPass<"tosa-make-broadcastable"> {
   }];
 
   let constructor = "createTosaMakeBroadcastablePass()";
+}
+
+def TosaOptionalDecompositions : FunctionPass<"tosa-optional-decompositions"> {
+  let summary = "Applies Tosa operations optional decompositions";
+  let description = [{
+    Pass to apply the Tosa operations decompositions 
+    exposed as populate functions in include/mlir/Dialect/Tosa/Transforms/Passes.h
+  }];
+
+  let constructor = "tosa::createTosaOptionalDecompositions()";
 }
 
 #endif // MLIR_DIALECT_TOSA_TRANSFORMS_PASSES

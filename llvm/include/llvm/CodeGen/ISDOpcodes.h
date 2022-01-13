@@ -482,10 +482,6 @@ enum NodeType {
   /// Returns platform specific canonical encoding of a floating point number.
   FCANONICALIZE,
 
-  /// Performs check of floating point number property, defined by IEEE-754. The
-  /// only operand is the floating point value to check. Returns boolean value.
-  ISNAN,
-
   /// BUILD_VECTOR(ELT0, ELT1, ELT2, ELT3,...) - Return a fixed-width vector
   /// with the specified, possibly variable, elements. The types of the
   /// operands must match the vector element type, except that integer types
@@ -801,6 +797,10 @@ enum NodeType {
   /// The scalar width of the type given in operand 1 must be equal to, or
   /// smaller than, the scalar result type width. It may end up being smaller
   /// than the result width as a result of integer type legalization.
+  ///
+  /// After converting to the scalar integer type in operand 1, the value is
+  /// extended to the result VT. FP_TO_SINT_SAT sign extends and FP_TO_UINT_SAT
+  /// zero extends.
   FP_TO_SINT_SAT,
   FP_TO_UINT_SAT,
 
@@ -1264,12 +1264,23 @@ static const int FIRST_TARGET_STRICTFP_OPCODE = BUILTIN_OP_END + 400;
 /// be used with SelectionDAG::getMemIntrinsicNode.
 static const int FIRST_TARGET_MEMORY_OPCODE = BUILTIN_OP_END + 500;
 
+/// Whether this is bitwise logic opcode.
+inline bool isBitwiseLogicOp(unsigned Opcode) {
+  return Opcode == ISD::AND || Opcode == ISD::OR || Opcode == ISD::XOR;
+}
+
 /// Get underlying scalar opcode for VECREDUCE opcode.
 /// For example ISD::AND for ISD::VECREDUCE_AND.
 NodeType getVecReduceBaseOpcode(unsigned VecReduceOpcode);
 
 /// Whether this is a vector-predicated Opcode.
 bool isVPOpcode(unsigned Opcode);
+
+/// Whether this is a vector-predicated binary operation opcode.
+bool isVPBinaryOp(unsigned Opcode);
+
+/// Whether this is a vector-predicated reduction opcode.
+bool isVPReduction(unsigned Opcode);
 
 /// The operand position of the vector mask.
 Optional<unsigned> getVPMaskIdx(unsigned Opcode);

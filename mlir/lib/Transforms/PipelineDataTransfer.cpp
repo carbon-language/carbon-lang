@@ -38,7 +38,7 @@ struct PipelineDataTransfer
   std::vector<AffineForOp> forOps;
 };
 
-} // end anonymous namespace
+} // namespace
 
 /// Creates a pass to pipeline explicit movement of data across levels of the
 /// memory hierarchy.
@@ -74,9 +74,7 @@ static bool doubleBuffer(Value oldMemRef, AffineForOp forOp) {
     SmallVector<int64_t, 4> newShape(1 + oldMemRefType.getRank());
     newShape[0] = 2;
     std::copy(oldShape.begin(), oldShape.end(), newShape.begin() + 1);
-    return MemRefType::Builder(oldMemRefType)
-        .setShape(newShape)
-        .setAffineMaps({});
+    return MemRefType::Builder(oldMemRefType).setShape(newShape).setLayout({});
   };
 
   auto oldMemRefType = oldMemRef.getType().cast<MemRefType>();
@@ -86,7 +84,7 @@ static bool doubleBuffer(Value oldMemRef, AffineForOp forOp) {
   OpBuilder bOuter(forOp);
   // Put together alloc operands for any dynamic dimensions of the memref.
   SmallVector<Value, 4> allocOperands;
-  for (auto dim : llvm::enumerate(oldMemRefType.getShape())) {
+  for (const auto &dim : llvm::enumerate(oldMemRefType.getShape())) {
     if (dim.value() == ShapedType::kDynamicSize)
       allocOperands.push_back(bOuter.createOrFold<memref::DimOp>(
           forOp.getLoc(), oldMemRef, dim.index()));
@@ -112,7 +110,7 @@ static bool doubleBuffer(Value oldMemRef, AffineForOp forOp) {
           /*indexRemap=*/AffineMap(),
           /*extraOperands=*/{},
           /*symbolOperands=*/{},
-          /*domInstFilter=*/&*forOp.getBody()->begin()))) {
+          /*domOpFilter=*/&*forOp.getBody()->begin()))) {
     LLVM_DEBUG(
         forOp.emitError("memref replacement for double buffering failed"));
     ivModTwoOp.erase();
@@ -193,7 +191,7 @@ static void findMatchingStartFinishInsts(
     // Check for dependence with outgoing DMAs. Doing this conservatively.
     // TODO: use the dependence analysis to check for
     // dependences between an incoming and outgoing DMA in the same iteration.
-    auto it = outgoingDmaOps.begin();
+    auto *it = outgoingDmaOps.begin();
     for (; it != outgoingDmaOps.end(); ++it) {
       if (it->getDstMemRef() == dmaStartOp.getSrcMemRef())
         break;

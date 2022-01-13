@@ -260,7 +260,7 @@ private:
     }
 
     bool isDestinationArgument(unsigned ArgNum) const {
-      return (llvm::find(DstArgs, ArgNum) != DstArgs.end());
+      return llvm::is_contained(DstArgs, ArgNum);
     }
 
     static bool isTaintedOrPointsToTainted(const Expr *E,
@@ -435,7 +435,6 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
           .Case("getch", {{}, {ReturnValueIndex}})
           .Case("getchar", {{}, {ReturnValueIndex}})
           .Case("getchar_unlocked", {{}, {ReturnValueIndex}})
-          .Case("getenv", {{}, {ReturnValueIndex}})
           .Case("gets", {{}, {0, ReturnValueIndex}})
           .Case("scanf", {{}, {}, VariadicType::Dst, 1})
           .Case("socket", {{},
@@ -468,6 +467,16 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
 
   if (!Rule.isNull())
     return Rule;
+
+  // `getenv` returns taint only in untrusted environments.
+  if (FData.FullName == "getenv") {
+    if (C.getAnalysisManager()
+            .getAnalyzerOptions()
+            .ShouldAssumeControlledEnvironment)
+      return {};
+    return {{}, {ReturnValueIndex}};
+  }
+
   assert(FData.FDecl);
 
   // Check if it's one of the memory setting/copying functions.
@@ -505,7 +514,7 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
     if (OneOf("snprintf"))
       return {{1}, {0, ReturnValueIndex}, VariadicType::Src, 3};
     if (OneOf("sprintf"))
-      return {{}, {0, ReturnValueIndex}, VariadicType::Src, 2};
+      return {{1}, {0, ReturnValueIndex}, VariadicType::Src, 2};
     if (OneOf("strcpy", "stpcpy", "strcat"))
       return {{1}, {0, ReturnValueIndex}};
     if (OneOf("bcopy"))
@@ -780,7 +789,7 @@ bool GenericTaintChecker::isStdin(const Expr *E, CheckerContext &C) {
   // variable named stdin with the proper type.
   if (const auto *D = dyn_cast_or_null<VarDecl>(DeclReg->getDecl())) {
     D = D->getCanonicalDecl();
-    if ((D->getName().find("stdin") != StringRef::npos) && D->isExternC()) {
+    if (D->getName().contains("stdin") && D->isExternC()) {
       const auto *PtrTy = dyn_cast<PointerType>(D->getType().getTypePtr());
       if (PtrTy && PtrTy->getPointeeType().getCanonicalType() ==
                        C.getASTContext().getFILEType().getCanonicalType())
@@ -807,7 +816,7 @@ static bool getPrintfFormatArgumentNum(const CallEvent &Call,
   }
 
   // Or if a function is named setproctitle (this is a heuristic).
-  if (C.getCalleeName(FDecl).find("setproctitle") != StringRef::npos) {
+  if (C.getCalleeName(FDecl).contains("setproctitle")) {
     ArgNum = 0;
     return true;
   }

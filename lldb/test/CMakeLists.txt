@@ -69,10 +69,6 @@ if(TARGET lldb-vscode)
   add_lldb_test_dependency(lldb-vscode)
 endif()
 
-if(TARGET lldb-instr)
-  add_lldb_test_dependency(lldb-instr)
-endif()
-
 if(TARGET liblldb)
   add_lldb_test_dependency(liblldb)
 endif()
@@ -117,27 +113,23 @@ if(TARGET clang)
       endif()
     else()
       # We require libcxx for the test suite, so if we aren't building it,
-      # try to provide a helpful error about how to resolve the situation.
+      # provide a helpful error about how to resolve the situation.
       if(NOT TARGET cxx AND NOT libcxx IN_LIST LLVM_ENABLE_RUNTIMES)
-        if(LLVM_ENABLE_PROJECTS STREQUAL "")
-          # If `LLVM_ENABLE_PROJECTS` is not being used (implying that we are
-          # using the old layout), suggest checking it out.
-          message(FATAL_ERROR
-            "LLDB test suite requires libc++, but it is currently disabled. "
-            "Please checkout `libcxx` in `llvm/projects` or disable tests "
-            "via `LLDB_INCLUDE_TESTS=OFF`.")
-        else()
-          # If `LLVM_ENABLE_PROJECTS` is being used, suggest adding it.
-          message(FATAL_ERROR
-            "LLDB test suite requires libc++, but it is currently disabled. "
-            "Please add `libcxx` to `LLVM_ENABLE_PROJECTS` or "
-            "`LLVM_ENABLE_RUNTIMES`, or disable tests via "
-            "`LLDB_INCLUDE_TESTS=OFF`.")
-        endif()
+        message(FATAL_ERROR
+          "LLDB test suite requires libc++, but it is currently disabled. "
+          "Please add `libcxx` to `LLVM_ENABLE_RUNTIMES` or disable tests via "
+          "`LLDB_INCLUDE_TESTS=OFF`.")
       endif()
-      add_lldb_test_dependency(cxx)
     endif()
   endif()
+
+  # Add libc++ dependency for libc++-specific tests. This is an optional
+  # dependency as it's also possible to run the libc++ tests against the libc++
+  # installed on the system.
+  if (TARGET cxx)
+    add_lldb_test_dependency(cxx)
+  endif()
+
 endif()
 
 if (LLDB_BUILT_STANDALONE)

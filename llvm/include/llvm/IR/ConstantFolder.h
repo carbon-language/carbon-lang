@@ -32,13 +32,39 @@ public:
   explicit ConstantFolder() = default;
 
   //===--------------------------------------------------------------------===//
+  // Value-based folders.
+  //
+  // Return an existing value or a constant if the operation can be simplified.
+  // Otherwise return nullptr.
+  //===--------------------------------------------------------------------===//
+  Value *FoldAdd(Value *LHS, Value *RHS, bool HasNUW = false,
+                 bool HasNSW = false) const override {
+    auto *LC = dyn_cast<Constant>(LHS);
+    auto *RC = dyn_cast<Constant>(RHS);
+    if (LC && RC)
+      return ConstantExpr::getAdd(LC, RC, HasNUW, HasNSW);
+    return nullptr;
+  }
+
+  Value *FoldOr(Value *LHS, Value *RHS) const override {
+    auto *LC = dyn_cast<Constant>(LHS);
+    auto *RC = dyn_cast<Constant>(RHS);
+    if (LC && RC)
+      return ConstantExpr::getOr(LC, RC);
+    return nullptr;
+  }
+
+  Value *FoldICmp(CmpInst::Predicate P, Value *LHS, Value *RHS) const override {
+    auto *LC = dyn_cast<Constant>(LHS);
+    auto *RC = dyn_cast<Constant>(RHS);
+    if (LC && RC)
+      return ConstantExpr::getCompare(P, LC, RC);
+    return nullptr;
+  }
+
+  //===--------------------------------------------------------------------===//
   // Binary Operators
   //===--------------------------------------------------------------------===//
-
-  Constant *CreateAdd(Constant *LHS, Constant *RHS,
-                      bool HasNUW = false, bool HasNSW = false) const override {
-    return ConstantExpr::getAdd(LHS, RHS, HasNUW, HasNSW);
-  }
 
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const override {
     return ConstantExpr::getFAdd(LHS, RHS);
@@ -107,7 +133,7 @@ public:
     return ConstantExpr::getAnd(LHS, RHS);
   }
 
-  Constant *CreateOr(Constant *LHS, Constant *RHS) const override {
+  Constant *CreateOr(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getOr(LHS, RHS);
   }
 
@@ -235,11 +261,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Compare Instructions
   //===--------------------------------------------------------------------===//
-
-  Constant *CreateICmp(CmpInst::Predicate P, Constant *LHS,
-                       Constant *RHS) const override {
-    return ConstantExpr::getCompare(P, LHS, RHS);
-  }
 
   Constant *CreateFCmp(CmpInst::Predicate P, Constant *LHS,
                        Constant *RHS) const override {

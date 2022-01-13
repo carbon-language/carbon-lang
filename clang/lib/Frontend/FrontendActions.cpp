@@ -842,7 +842,7 @@ void PrintPreprocessedAction::ExecuteAction() {
       const char *next = (cur != end) ? cur + 1 : end;
 
       // Limit ourselves to only scanning 256 characters into the source
-      // file.  This is mostly a sanity check in case the file has no
+      // file.  This is mostly a check in case the file has no
       // newlines whatsoever.
       if (end - cur > 256)
         end = cur + 256;
@@ -992,4 +992,18 @@ void PrintDependencyDirectivesSourceMinimizerAction::ExecuteAction() {
     return;
   }
   llvm::outs() << Output;
+}
+
+void GetDependenciesByModuleNameAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  Preprocessor &PP = CI.getPreprocessor();
+  SourceManager &SM = PP.getSourceManager();
+  FileID MainFileID = SM.getMainFileID();
+  SourceLocation FileStart = SM.getLocForStartOfFile(MainFileID);
+  SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
+  IdentifierInfo *ModuleID = PP.getIdentifierInfo(ModuleName);
+  Path.push_back(std::make_pair(ModuleID, FileStart));
+  auto ModResult = CI.loadModule(FileStart, Path, Module::Hidden, false);
+  PPCallbacks *CB = PP.getPPCallbacks();
+  CB->moduleImport(SourceLocation(), Path, ModResult);
 }

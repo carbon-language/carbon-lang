@@ -54,15 +54,11 @@ private:
 
   bool useNativeFunc(const StringRef F) const;
 
-  // Return a pointer (pointer expr) to the function if function defintion with
+  // Return a pointer (pointer expr) to the function if function definition with
   // "FuncName" exists. It may create a new function prototype in pre-link mode.
   FunctionCallee getFunction(Module *M, const FuncInfo &fInfo);
 
-  // Replace a normal function with its native version.
-  bool replaceWithNative(CallInst *CI, const FuncInfo &FInfo);
-
-  bool parseFunctionName(const StringRef& FMangledName,
-                         FuncInfo *FInfo=nullptr /*out*/);
+  bool parseFunctionName(const StringRef &FMangledName, FuncInfo &FInfo);
 
   bool TDOFold(CallInst *CI, const FuncInfo &FInfo);
 
@@ -87,27 +83,9 @@ private:
   bool sincosUseNative(CallInst *aCI, const FuncInfo &FInfo);
 
   // evaluate calls if calls' arguments are constants.
-  bool evaluateScalarMathFunc(FuncInfo &FInfo, double& Res0,
+  bool evaluateScalarMathFunc(const FuncInfo &FInfo, double& Res0,
     double& Res1, Constant *copr0, Constant *copr1, Constant *copr2);
-  bool evaluateCall(CallInst *aCI, FuncInfo &FInfo);
-
-  // exp
-  bool fold_exp(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
-
-  // exp2
-  bool fold_exp2(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
-
-  // exp10
-  bool fold_exp10(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
-
-  // log
-  bool fold_log(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
-
-  // log2
-  bool fold_log2(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
-
-  // log10
-  bool fold_log10(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
+  bool evaluateCall(CallInst *aCI, const FuncInfo &FInfo);
 
   // sqrt
   bool fold_sqrt(CallInst *CI, IRBuilder<> &B, const FuncInfo &FInfo);
@@ -116,7 +94,8 @@ private:
   bool fold_sincos(CallInst * CI, IRBuilder<> &B, AliasAnalysis * AA);
 
   // __read_pipe/__write_pipe
-  bool fold_read_write_pipe(CallInst *CI, IRBuilder<> &B, FuncInfo &FInfo);
+  bool fold_read_write_pipe(CallInst *CI, IRBuilder<> &B,
+                            const FuncInfo &FInfo);
 
   // llvm.amdgcn.wavefrontsize
   bool fold_wavefrontsize(CallInst *CI, IRBuilder<> &B);
@@ -125,7 +104,7 @@ private:
   BasicBlock::iterator getEntryIns(CallInst * UI);
   // Insert an Alloc instruction.
   AllocaInst* insertAlloca(CallInst * UI, IRBuilder<> &B, const char *prefix);
-  // Get a scalar native builtin signle argument FP function
+  // Get a scalar native builtin single argument FP function
   FunctionCallee getNativeFunction(Module *M, const FuncInfo &FInfo);
 
 protected:
@@ -466,9 +445,9 @@ FunctionCallee AMDGPULibCalls::getFunction(Module *M, const FuncInfo &fInfo) {
                        : AMDGPULibFunc::getFunction(M, fInfo);
 }
 
-bool AMDGPULibCalls::parseFunctionName(const StringRef& FMangledName,
-                                    FuncInfo *FInfo) {
-  return AMDGPULibFunc::parse(FMangledName, *FInfo);
+bool AMDGPULibCalls::parseFunctionName(const StringRef &FMangledName,
+                                       FuncInfo &FInfo) {
+  return AMDGPULibFunc::parse(FMangledName, FInfo);
 }
 
 bool AMDGPULibCalls::isUnsafeMath(const CallInst *CI) const {
@@ -529,7 +508,7 @@ bool AMDGPULibCalls::useNative(CallInst *aCI) {
   Function *Callee = aCI->getCalledFunction();
 
   FuncInfo FInfo;
-  if (!parseFunctionName(Callee->getName(), &FInfo) || !FInfo.isMangled() ||
+  if (!parseFunctionName(Callee->getName(), FInfo) || !FInfo.isMangled() ||
       FInfo.getPrefix() != AMDGPULibFunc::NOPFX ||
       getArgType(FInfo) == AMDGPULibFunc::F64 || !HasNative(FInfo.getId()) ||
       !(AllNative || useNativeFunc(FInfo.getName()))) {
@@ -558,7 +537,7 @@ bool AMDGPULibCalls::useNative(CallInst *aCI) {
 // for such cases where N is the size in bytes of the type (N = 1, 2, 4, 8, ...,
 // 128). The same for __read_pipe_4, write_pipe_2, and write_pipe_4.
 bool AMDGPULibCalls::fold_read_write_pipe(CallInst *CI, IRBuilder<> &B,
-                                          FuncInfo &FInfo) {
+                                          const FuncInfo &FInfo) {
   auto *Callee = CI->getCalledFunction();
   if (!Callee->isDeclaration())
     return false;
@@ -567,7 +546,7 @@ bool AMDGPULibCalls::fold_read_write_pipe(CallInst *CI, IRBuilder<> &B,
   auto *M = Callee->getParent();
   auto &Ctx = M->getContext();
   std::string Name = std::string(Callee->getName());
-  auto NumArg = CI->getNumArgOperands();
+  auto NumArg = CI->arg_size();
   if (NumArg != 4 && NumArg != 6)
     return false;
   auto *PacketSize = CI->getArgOperand(NumArg - 2);
@@ -584,7 +563,7 @@ bool AMDGPULibCalls::fold_read_write_pipe(CallInst *CI, IRBuilder<> &B,
     PtrElemTy = Type::getIntNTy(Ctx, Size * 8);
   else
     PtrElemTy = FixedVectorType::get(Type::getInt64Ty(Ctx), Size / 8);
-  unsigned PtrArgLoc = CI->getNumArgOperands() - 3;
+  unsigned PtrArgLoc = CI->arg_size() - 3;
   auto PtrArg = CI->getArgOperand(PtrArgLoc);
   unsigned PtrArgAS = PtrArg->getType()->getPointerAddressSpace();
   auto *PtrTy = llvm::PointerType::get(PtrElemTy, PtrArgAS);
@@ -623,7 +602,8 @@ bool AMDGPULibCalls::fold(CallInst *CI, AliasAnalysis *AA) {
   Function *Callee = CI->getCalledFunction();
 
   // Ignore indirect calls.
-  if (Callee == 0) return false;
+  if (Callee == nullptr)
+    return false;
 
   BasicBlock *BB = CI->getParent();
   LLVMContext &Context = CI->getParent()->getContext();
@@ -644,11 +624,11 @@ bool AMDGPULibCalls::fold(CallInst *CI, AliasAnalysis *AA) {
   }
 
   FuncInfo FInfo;
-  if (!parseFunctionName(Callee->getName(), &FInfo))
+  if (!parseFunctionName(Callee->getName(), FInfo))
     return false;
 
   // Further check the number of arguments to see if they match.
-  if (CI->getNumArgOperands() != FInfo.getNumArgs())
+  if (CI->arg_size() != FInfo.getNumArgs())
     return false;
 
   if (TDOFold(CI, FInfo))
@@ -660,7 +640,7 @@ bool AMDGPULibCalls::fold(CallInst *CI, AliasAnalysis *AA) {
   if (isUnsafeMath(CI) && evaluateCall(CI, FInfo))
     return true;
 
-  // Specilized optimizations for each function call
+  // Specialized optimizations for each function call
   switch (FInfo.getId()) {
   case AMDGPULibFunc::EI_RECIP:
     // skip vector function
@@ -775,27 +755,6 @@ bool AMDGPULibCalls::TDOFold(CallInst *CI, const FuncInfo &FInfo) {
     }
   }
 
-  return false;
-}
-
-bool AMDGPULibCalls::replaceWithNative(CallInst *CI, const FuncInfo &FInfo) {
-  Module *M = CI->getModule();
-  if (getArgType(FInfo) != AMDGPULibFunc::F32 ||
-      FInfo.getPrefix() != AMDGPULibFunc::NOPFX ||
-      !HasNative(FInfo.getId()))
-    return false;
-
-  AMDGPULibFunc nf = FInfo;
-  nf.setPrefix(AMDGPULibFunc::NATIVE);
-  if (FunctionCallee FPExpr = getFunction(M, nf)) {
-    LLVM_DEBUG(dbgs() << "AMDIC: " << *CI << " ---> ");
-
-    CI->setCalledFunction(FPExpr);
-
-    LLVM_DEBUG(dbgs() << *CI << '\n');
-
-    return true;
-  }
   return false;
 }
 
@@ -1231,7 +1190,7 @@ bool AMDGPULibCalls::fold_fma_mad(CallInst *CI, IRBuilder<> &B,
   return false;
 }
 
-// Get a scalar native builtin signle argument FP function
+// Get a scalar native builtin single argument FP function
 FunctionCallee AMDGPULibCalls::getNativeFunction(Module *M,
                                                  const FuncInfo &FInfo) {
   if (getArgType(FInfo) == AMDGPULibFunc::F64 || !HasNative(FInfo.getId()))
@@ -1371,8 +1330,7 @@ bool AMDGPULibCalls::fold_wavefrontsize(CallInst *CI, IRBuilder<> &B) {
   StringRef CPU = TM->getTargetCPU();
   StringRef Features = TM->getTargetFeatureString();
   if ((CPU.empty() || CPU.equals_insensitive("generic")) &&
-      (Features.empty() ||
-       Features.find_insensitive("wavefrontsize") == StringRef::npos))
+      (Features.empty() || !Features.contains_insensitive("wavefrontsize")))
     return false;
 
   Function *F = CI->getParent()->getParent();
@@ -1403,14 +1361,14 @@ AllocaInst* AMDGPULibCalls::insertAlloca(CallInst *UI, IRBuilder<> &B,
   Function *UCallee = UI->getCalledFunction();
   Type *RetType = UCallee->getReturnType();
   B.SetInsertPoint(&*ItNew);
-  AllocaInst *Alloc = B.CreateAlloca(RetType, 0,
-    std::string(prefix) + UI->getName());
+  AllocaInst *Alloc =
+      B.CreateAlloca(RetType, nullptr, std::string(prefix) + UI->getName());
   Alloc->setAlignment(
       Align(UCallee->getParent()->getDataLayout().getTypeAllocSize(RetType)));
   return Alloc;
 }
 
-bool AMDGPULibCalls::evaluateScalarMathFunc(FuncInfo &FInfo,
+bool AMDGPULibCalls::evaluateScalarMathFunc(const FuncInfo &FInfo,
                                             double& Res0, double& Res1,
                                             Constant *copr0, Constant *copr1,
                                             Constant *copr2) {
@@ -1605,8 +1563,8 @@ bool AMDGPULibCalls::evaluateScalarMathFunc(FuncInfo &FInfo,
   return false;
 }
 
-bool AMDGPULibCalls::evaluateCall(CallInst *aCI, FuncInfo &FInfo) {
-  int numArgs = (int)aCI->getNumArgOperands();
+bool AMDGPULibCalls::evaluateCall(CallInst *aCI, const FuncInfo &FInfo) {
+  int numArgs = (int)aCI->arg_size();
   if (numArgs > 3)
     return false;
 
@@ -1725,7 +1683,8 @@ bool AMDGPUSimplifyLibCalls::runOnFunction(Function &F) {
 
       // Ignore indirect calls.
       Function *Callee = CI->getCalledFunction();
-      if (Callee == 0) continue;
+      if (Callee == nullptr)
+        continue;
 
       LLVM_DEBUG(dbgs() << "AMDIC: try folding " << *CI << "\n";
                  dbgs().flush());
@@ -1758,7 +1717,7 @@ PreservedAnalyses AMDGPUSimplifyLibCallsPass::run(Function &F,
 
       // Ignore indirect calls.
       Function *Callee = CI->getCalledFunction();
-      if (Callee == 0)
+      if (Callee == nullptr)
         continue;
 
       LLVM_DEBUG(dbgs() << "AMDIC: try folding " << *CI << "\n";
@@ -1784,9 +1743,10 @@ bool AMDGPUUseNativeCalls::runOnFunction(Function &F) {
 
       // Ignore indirect calls.
       Function *Callee = CI->getCalledFunction();
-      if (Callee == 0) continue;
+      if (Callee == nullptr)
+        continue;
 
-      if(Simplifier.useNative(CI))
+      if (Simplifier.useNative(CI))
         Changed = true;
     }
   }
@@ -1812,7 +1772,7 @@ PreservedAnalyses AMDGPUUseNativeCallsPass::run(Function &F,
 
       // Ignore indirect calls.
       Function *Callee = CI->getCalledFunction();
-      if (Callee == 0)
+      if (Callee == nullptr)
         continue;
 
       if (Simplifier.useNative(CI))

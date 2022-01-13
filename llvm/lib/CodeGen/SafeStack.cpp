@@ -147,7 +147,7 @@ class SafeStack {
   ///
   /// 16 seems like a reasonable upper bound on the alignment of objects that we
   /// might expect to appear on the stack on most common targets.
-  enum { StackAlignment = 16 };
+  static constexpr uint64_t StackAlignment = 16;
 
   /// Return the value of the stack canary.
   Value *getStackGuard(IRBuilder<> &IRB, Function &F);
@@ -220,6 +220,8 @@ public:
   // Returns whether the function was changed.
   bool run();
 };
+
+constexpr uint64_t SafeStack::StackAlignment;
 
 uint64_t SafeStack::getStaticAllocaAllocationSize(const AllocaInst* AI) {
   uint64_t Size = DL.getTypeAllocSize(AI->getAllocatedType());
@@ -519,8 +521,7 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
   StackLayout SSL(StackAlignment);
   if (StackGuardSlot) {
     Type *Ty = StackGuardSlot->getAllocatedType();
-    unsigned Align =
-        std::max(DL.getPrefTypeAlignment(Ty), StackGuardSlot->getAlignment());
+    Align Align = std::max(DL.getPrefTypeAlign(Ty), StackGuardSlot->getAlign());
     SSL.addObject(StackGuardSlot, getStaticAllocaAllocationSize(StackGuardSlot),
                   Align, SSC.getFullLiveRange());
   }
@@ -532,8 +533,9 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
       Size = 1; // Don't create zero-sized stack objects.
 
     // Ensure the object is properly aligned.
-    unsigned Align = std::max((unsigned)DL.getPrefTypeAlignment(Ty),
-                              Arg->getParamAlignment());
+    Align Align = DL.getPrefTypeAlign(Ty);
+    if (auto A = Arg->getParamAlign())
+      Align = std::max(Align, *A);
     SSL.addObject(Arg, Size, Align, SSC.getFullLiveRange());
   }
 
@@ -544,25 +546,24 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
       Size = 1; // Don't create zero-sized stack objects.
 
     // Ensure the object is properly aligned.
-    unsigned Align =
-        std::max((unsigned)DL.getPrefTypeAlignment(Ty), AI->getAlignment());
+    Align Align = std::max(DL.getPrefTypeAlign(Ty), AI->getAlign());
 
     SSL.addObject(AI, Size, Align,
                   ClColoring ? SSC.getLiveRange(AI) : NoColoringRange);
   }
 
   SSL.computeLayout();
-  unsigned FrameAlignment = SSL.getFrameAlignment();
+  Align FrameAlignment = SSL.getFrameAlignment();
 
   // FIXME: tell SSL that we start at a less-then-MaxAlignment aligned location
   // (AlignmentSkew).
   if (FrameAlignment > StackAlignment) {
     // Re-align the base pointer according to the max requested alignment.
-    assert(isPowerOf2_32(FrameAlignment));
     IRB.SetInsertPoint(BasePointer->getNextNode());
     BasePointer = cast<Instruction>(IRB.CreateIntToPtr(
-        IRB.CreateAnd(IRB.CreatePtrToInt(BasePointer, IntPtrTy),
-                      ConstantInt::get(IntPtrTy, ~uint64_t(FrameAlignment - 1))),
+        IRB.CreateAnd(
+            IRB.CreatePtrToInt(BasePointer, IntPtrTy),
+            ConstantInt::get(IntPtrTy, ~(FrameAlignment.value() - 1))),
         StackPtrTy));
   }
 
@@ -676,9 +677,9 @@ void SafeStack::moveDynamicAllocasToUnsafeStack(
     SP = IRB.CreateSub(SP, Size);
 
     // Align the SP value to satisfy the AllocaInst, type and stack alignments.
-    unsigned Align = std::max(
-        std::max((unsigned)DL.getPrefTypeAlignment(Ty), AI->getAlignment()),
-        (unsigned)StackAlignment);
+    uint64_t Align =
+        std::max(std::max(DL.getPrefTypeAlignment(Ty), AI->getAlignment()),
+                 StackAlignment);
 
     assert(isPowerOf2_32(Align));
     Value *NewTop = IRB.CreateIntToPtr(
@@ -701,9 +702,8 @@ void SafeStack::moveDynamicAllocasToUnsafeStack(
 
   if (!DynamicAllocas.empty()) {
     // Now go through the instructions again, replacing stacksave/stackrestore.
-    for (inst_iterator It = inst_begin(&F), Ie = inst_end(&F); It != Ie;) {
-      Instruction *I = &*(It++);
-      auto II = dyn_cast<IntrinsicInst>(I);
+    for (Instruction &I : llvm::make_early_inc_range(instructions(&F))) {
+      auto *II = dyn_cast<IntrinsicInst>(&I);
       if (!II)
         continue;
 

@@ -55,36 +55,36 @@ using namespace llvm::ELF;
 
 LLDB_PLUGIN_DEFINE(ObjectFileELF)
 
-namespace {
-
 // ELF note owner definitions
-const char *const LLDB_NT_OWNER_FREEBSD = "FreeBSD";
-const char *const LLDB_NT_OWNER_GNU = "GNU";
-const char *const LLDB_NT_OWNER_NETBSD = "NetBSD";
-const char *const LLDB_NT_OWNER_NETBSDCORE = "NetBSD-CORE";
-const char *const LLDB_NT_OWNER_OPENBSD = "OpenBSD";
-const char *const LLDB_NT_OWNER_ANDROID = "Android";
-const char *const LLDB_NT_OWNER_CORE = "CORE";
-const char *const LLDB_NT_OWNER_LINUX = "LINUX";
+static const char *const LLDB_NT_OWNER_FREEBSD = "FreeBSD";
+static const char *const LLDB_NT_OWNER_GNU = "GNU";
+static const char *const LLDB_NT_OWNER_NETBSD = "NetBSD";
+static const char *const LLDB_NT_OWNER_NETBSDCORE = "NetBSD-CORE";
+static const char *const LLDB_NT_OWNER_OPENBSD = "OpenBSD";
+static const char *const LLDB_NT_OWNER_ANDROID = "Android";
+static const char *const LLDB_NT_OWNER_CORE = "CORE";
+static const char *const LLDB_NT_OWNER_LINUX = "LINUX";
 
 // ELF note type definitions
-const elf_word LLDB_NT_FREEBSD_ABI_TAG = 0x01;
-const elf_word LLDB_NT_FREEBSD_ABI_SIZE = 4;
+static const elf_word LLDB_NT_FREEBSD_ABI_TAG = 0x01;
+static const elf_word LLDB_NT_FREEBSD_ABI_SIZE = 4;
 
-const elf_word LLDB_NT_GNU_ABI_TAG = 0x01;
-const elf_word LLDB_NT_GNU_ABI_SIZE = 16;
+static const elf_word LLDB_NT_GNU_ABI_TAG = 0x01;
+static const elf_word LLDB_NT_GNU_ABI_SIZE = 16;
 
-const elf_word LLDB_NT_GNU_BUILD_ID_TAG = 0x03;
+static const elf_word LLDB_NT_GNU_BUILD_ID_TAG = 0x03;
 
-const elf_word LLDB_NT_NETBSD_IDENT_TAG = 1;
-const elf_word LLDB_NT_NETBSD_IDENT_DESCSZ = 4;
-const elf_word LLDB_NT_NETBSD_IDENT_NAMESZ = 7;
-const elf_word LLDB_NT_NETBSD_PROCINFO = 1;
+static const elf_word LLDB_NT_NETBSD_IDENT_TAG = 1;
+static const elf_word LLDB_NT_NETBSD_IDENT_DESCSZ = 4;
+static const elf_word LLDB_NT_NETBSD_IDENT_NAMESZ = 7;
+static const elf_word LLDB_NT_NETBSD_PROCINFO = 1;
 
 // GNU ABI note OS constants
-const elf_word LLDB_NT_GNU_ABI_OS_LINUX = 0x00;
-const elf_word LLDB_NT_GNU_ABI_OS_HURD = 0x01;
-const elf_word LLDB_NT_GNU_ABI_OS_SOLARIS = 0x02;
+static const elf_word LLDB_NT_GNU_ABI_OS_LINUX = 0x00;
+static const elf_word LLDB_NT_GNU_ABI_OS_HURD = 0x01;
+static const elf_word LLDB_NT_GNU_ABI_OS_SOLARIS = 0x02;
+
+namespace {
 
 //===----------------------------------------------------------------------===//
 /// \class ELFRelocation
@@ -125,6 +125,7 @@ private:
 
   RelocUnion reloc;
 };
+} // end anonymous namespace
 
 ELFRelocation::ELFRelocation(unsigned type) {
   if (type == DT_REL || type == SHT_REL)
@@ -207,8 +208,6 @@ unsigned ELFRelocation::RelocAddend64(const ELFRelocation &rel) {
   else
     return rel.reloc.get<ELFRela *>()->r_addend;
 }
-
-} // end anonymous namespace
 
 static user_id_t SegmentID(size_t PHdrIndex) {
   return ~user_id_t(PHdrIndex);
@@ -333,15 +332,6 @@ void ObjectFileELF::Initialize() {
 
 void ObjectFileELF::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
-}
-
-lldb_private::ConstString ObjectFileELF::GetPluginNameStatic() {
-  static ConstString g_name("elf");
-  return g_name;
-}
-
-const char *ObjectFileELF::GetPluginDescriptionStatic() {
-  return "ELF object file reader.";
 }
 
 ObjectFile *ObjectFileELF::CreateInstance(const lldb::ModuleSP &module_sp,
@@ -634,12 +624,6 @@ size_t ObjectFileELF::GetModuleSpecifications(
   return specs.GetSize() - initial_count;
 }
 
-// PluginInterface protocol
-lldb_private::ConstString ObjectFileELF::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ObjectFileELF::GetPluginVersion() { return m_plugin_version; }
 // ObjectFile protocol
 
 ObjectFileELF::ObjectFileELF(const lldb::ModuleSP &module_sp,
@@ -2703,154 +2687,131 @@ unsigned ObjectFileELF::RelocateDebugSections(const ELFSectionHeader *rel_hdr,
   return 0;
 }
 
-Symtab *ObjectFileELF::GetSymtab() {
+void ObjectFileELF::ParseSymtab(Symtab &lldb_symtab) {
   ModuleSP module_sp(GetModule());
   if (!module_sp)
-    return nullptr;
+    return;
 
-  Progress progress(llvm::formatv("Parsing symbol table for {0}",
-                                  m_file.GetFilename().AsCString("<Unknown>")));
+  Progress progress(
+      llvm::formatv("Parsing symbol table for {0}",
+                    m_file.GetFilename().AsCString("<Unknown>")));
+  ElapsedTime elapsed(module_sp->GetSymtabParseTime());
 
   // We always want to use the main object file so we (hopefully) only have one
   // cached copy of our symtab, dynamic sections, etc.
   ObjectFile *module_obj_file = module_sp->GetObjectFile();
   if (module_obj_file && module_obj_file != this)
-    return module_obj_file->GetSymtab();
+    return module_obj_file->ParseSymtab(lldb_symtab);
 
-  if (m_symtab_up == nullptr) {
-    SectionList *section_list = module_sp->GetSectionList();
-    if (!section_list)
-      return nullptr;
+  SectionList *section_list = module_sp->GetSectionList();
+  if (!section_list)
+    return;
 
-    uint64_t symbol_id = 0;
-    std::lock_guard<std::recursive_mutex> guard(module_sp->GetMutex());
+  uint64_t symbol_id = 0;
 
-    // Sharable objects and dynamic executables usually have 2 distinct symbol
-    // tables, one named ".symtab", and the other ".dynsym". The dynsym is a
-    // smaller version of the symtab that only contains global symbols. The
-    // information found in the dynsym is therefore also found in the symtab,
-    // while the reverse is not necessarily true.
-    Section *symtab =
-        section_list->FindSectionByType(eSectionTypeELFSymbolTable, true).get();
-    if (symtab) {
-      m_symtab_up = std::make_unique<Symtab>(symtab->GetObjectFile());
-      symbol_id += ParseSymbolTable(m_symtab_up.get(), symbol_id, symtab);
-    }
+  // Sharable objects and dynamic executables usually have 2 distinct symbol
+  // tables, one named ".symtab", and the other ".dynsym". The dynsym is a
+  // smaller version of the symtab that only contains global symbols. The
+  // information found in the dynsym is therefore also found in the symtab,
+  // while the reverse is not necessarily true.
+  Section *symtab =
+      section_list->FindSectionByType(eSectionTypeELFSymbolTable, true).get();
+  if (symtab)
+    symbol_id += ParseSymbolTable(&lldb_symtab, symbol_id, symtab);
 
-    // The symtab section is non-allocable and can be stripped, while the
-    // .dynsym section which should always be always be there. To support the
-    // minidebuginfo case we parse .dynsym when there's a .gnu_debuginfo
-    // section, nomatter if .symtab was already parsed or not. This is because
-    // minidebuginfo normally removes the .symtab symbols which have their
-    // matching .dynsym counterparts.
-    if (!symtab ||
-        GetSectionList()->FindSectionByName(ConstString(".gnu_debugdata"))) {
-      Section *dynsym =
-          section_list->FindSectionByType(eSectionTypeELFDynamicSymbols, true)
-              .get();
-      if (dynsym) {
-        if (!m_symtab_up)
-          m_symtab_up = std::make_unique<Symtab>(dynsym->GetObjectFile());
-        symbol_id += ParseSymbolTable(m_symtab_up.get(), symbol_id, dynsym);
-      }
-    }
-
-    // DT_JMPREL
-    //      If present, this entry's d_ptr member holds the address of
-    //      relocation
-    //      entries associated solely with the procedure linkage table.
-    //      Separating
-    //      these relocation entries lets the dynamic linker ignore them during
-    //      process initialization, if lazy binding is enabled. If this entry is
-    //      present, the related entries of types DT_PLTRELSZ and DT_PLTREL must
-    //      also be present.
-    const ELFDynamic *symbol = FindDynamicSymbol(DT_JMPREL);
-    if (symbol) {
-      // Synthesize trampoline symbols to help navigate the PLT.
-      addr_t addr = symbol->d_ptr;
-      Section *reloc_section =
-          section_list->FindSectionContainingFileAddress(addr).get();
-      if (reloc_section) {
-        user_id_t reloc_id = reloc_section->GetID();
-        const ELFSectionHeaderInfo *reloc_header =
-            GetSectionHeaderByIndex(reloc_id);
-        if (reloc_header) {
-          if (m_symtab_up == nullptr)
-            m_symtab_up =
-                std::make_unique<Symtab>(reloc_section->GetObjectFile());
-
-          ParseTrampolineSymbols(m_symtab_up.get(), symbol_id, reloc_header,
-                                 reloc_id);
-        }
-      }
-    }
-
-    if (DWARFCallFrameInfo *eh_frame =
-            GetModule()->GetUnwindTable().GetEHFrameInfo()) {
-      if (m_symtab_up == nullptr)
-        m_symtab_up = std::make_unique<Symtab>(this);
-      ParseUnwindSymbols(m_symtab_up.get(), eh_frame);
-    }
-
-    // If we still don't have any symtab then create an empty instance to avoid
-    // do the section lookup next time.
-    if (m_symtab_up == nullptr)
-      m_symtab_up = std::make_unique<Symtab>(this);
-
-    // In the event that there's no symbol entry for the entry point we'll
-    // artificially create one. We delegate to the symtab object the figuring
-    // out of the proper size, this will usually make it span til the next
-    // symbol it finds in the section. This means that if there are missing
-    // symbols the entry point might span beyond its function definition.
-    // We're fine with this as it doesn't make it worse than not having a
-    // symbol entry at all.
-    if (CalculateType() == eTypeExecutable) {
-      ArchSpec arch = GetArchitecture();
-      auto entry_point_addr = GetEntryPointAddress();
-      bool is_valid_entry_point =
-          entry_point_addr.IsValid() && entry_point_addr.IsSectionOffset();
-      addr_t entry_point_file_addr = entry_point_addr.GetFileAddress();
-      if (is_valid_entry_point && !m_symtab_up->FindSymbolContainingFileAddress(
-                                      entry_point_file_addr)) {
-        uint64_t symbol_id = m_symtab_up->GetNumSymbols();
-        // Don't set the name for any synthetic symbols, the Symbol
-        // object will generate one if needed when the name is accessed
-        // via accessors.
-        SectionSP section_sp = entry_point_addr.GetSection();
-        Symbol symbol(
-            /*symID=*/symbol_id,
-            /*name=*/llvm::StringRef(), // Name will be auto generated.
-            /*type=*/eSymbolTypeCode,
-            /*external=*/true,
-            /*is_debug=*/false,
-            /*is_trampoline=*/false,
-            /*is_artificial=*/true,
-            /*section_sp=*/section_sp,
-            /*offset=*/0,
-            /*size=*/0, // FDE can span multiple symbols so don't use its size.
-            /*size_is_valid=*/false,
-            /*contains_linker_annotations=*/false,
-            /*flags=*/0);
-        // When the entry point is arm thumb we need to explicitly set its
-        // class address to reflect that. This is important because expression
-        // evaluation relies on correctly setting a breakpoint at this
-        // address.
-        if (arch.GetMachine() == llvm::Triple::arm &&
-            (entry_point_file_addr & 1)) {
-          symbol.GetAddressRef().SetOffset(entry_point_addr.GetOffset() ^ 1);
-          m_address_class_map[entry_point_file_addr ^ 1] =
-              AddressClass::eCodeAlternateISA;
-        } else {
-          m_address_class_map[entry_point_file_addr] = AddressClass::eCode;
-        }
-        m_symtab_up->AddSymbol(symbol);
-      }
-    }
-
-    m_symtab_up->CalculateSymbolSizes();
+  // The symtab section is non-allocable and can be stripped, while the
+  // .dynsym section which should always be always be there. To support the
+  // minidebuginfo case we parse .dynsym when there's a .gnu_debuginfo
+  // section, nomatter if .symtab was already parsed or not. This is because
+  // minidebuginfo normally removes the .symtab symbols which have their
+  // matching .dynsym counterparts.
+  if (!symtab ||
+      GetSectionList()->FindSectionByName(ConstString(".gnu_debugdata"))) {
+    Section *dynsym =
+        section_list->FindSectionByType(eSectionTypeELFDynamicSymbols, true)
+            .get();
+    if (dynsym)
+      symbol_id += ParseSymbolTable(&lldb_symtab, symbol_id, dynsym);
   }
 
-  return m_symtab_up.get();
+  // DT_JMPREL
+  //      If present, this entry's d_ptr member holds the address of
+  //      relocation
+  //      entries associated solely with the procedure linkage table.
+  //      Separating
+  //      these relocation entries lets the dynamic linker ignore them during
+  //      process initialization, if lazy binding is enabled. If this entry is
+  //      present, the related entries of types DT_PLTRELSZ and DT_PLTREL must
+  //      also be present.
+  const ELFDynamic *symbol = FindDynamicSymbol(DT_JMPREL);
+  if (symbol) {
+    // Synthesize trampoline symbols to help navigate the PLT.
+    addr_t addr = symbol->d_ptr;
+    Section *reloc_section =
+        section_list->FindSectionContainingFileAddress(addr).get();
+    if (reloc_section) {
+      user_id_t reloc_id = reloc_section->GetID();
+      const ELFSectionHeaderInfo *reloc_header =
+          GetSectionHeaderByIndex(reloc_id);
+      if (reloc_header)
+        ParseTrampolineSymbols(&lldb_symtab, symbol_id, reloc_header, reloc_id);
+    }
+  }
+
+  if (DWARFCallFrameInfo *eh_frame =
+          GetModule()->GetUnwindTable().GetEHFrameInfo()) {
+    ParseUnwindSymbols(&lldb_symtab, eh_frame);
+  }
+
+  // In the event that there's no symbol entry for the entry point we'll
+  // artificially create one. We delegate to the symtab object the figuring
+  // out of the proper size, this will usually make it span til the next
+  // symbol it finds in the section. This means that if there are missing
+  // symbols the entry point might span beyond its function definition.
+  // We're fine with this as it doesn't make it worse than not having a
+  // symbol entry at all.
+  if (CalculateType() == eTypeExecutable) {
+    ArchSpec arch = GetArchitecture();
+    auto entry_point_addr = GetEntryPointAddress();
+    bool is_valid_entry_point =
+        entry_point_addr.IsValid() && entry_point_addr.IsSectionOffset();
+    addr_t entry_point_file_addr = entry_point_addr.GetFileAddress();
+    if (is_valid_entry_point && !lldb_symtab.FindSymbolContainingFileAddress(
+                                    entry_point_file_addr)) {
+      uint64_t symbol_id = lldb_symtab.GetNumSymbols();
+      // Don't set the name for any synthetic symbols, the Symbol
+      // object will generate one if needed when the name is accessed
+      // via accessors.
+      SectionSP section_sp = entry_point_addr.GetSection();
+      Symbol symbol(
+          /*symID=*/symbol_id,
+          /*name=*/llvm::StringRef(), // Name will be auto generated.
+          /*type=*/eSymbolTypeCode,
+          /*external=*/true,
+          /*is_debug=*/false,
+          /*is_trampoline=*/false,
+          /*is_artificial=*/true,
+          /*section_sp=*/section_sp,
+          /*offset=*/0,
+          /*size=*/0, // FDE can span multiple symbols so don't use its size.
+          /*size_is_valid=*/false,
+          /*contains_linker_annotations=*/false,
+          /*flags=*/0);
+      // When the entry point is arm thumb we need to explicitly set its
+      // class address to reflect that. This is important because expression
+      // evaluation relies on correctly setting a breakpoint at this
+      // address.
+      if (arch.GetMachine() == llvm::Triple::arm &&
+          (entry_point_file_addr & 1)) {
+        symbol.GetAddressRef().SetOffset(entry_point_addr.GetOffset() ^ 1);
+        m_address_class_map[entry_point_file_addr ^ 1] =
+            AddressClass::eCodeAlternateISA;
+      } else {
+        m_address_class_map[entry_point_file_addr] = AddressClass::eCode;
+      }
+      lldb_symtab.AddSymbol(symbol);
+    }
+  }
 }
 
 void ObjectFileELF::RelocateSection(lldb_private::Section *section)

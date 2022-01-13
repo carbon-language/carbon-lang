@@ -130,8 +130,12 @@ NativeProcessFreeBSD::Factory::Attach(
 
 NativeProcessFreeBSD::Extension
 NativeProcessFreeBSD::Factory::GetSupportedExtensions() const {
-  return Extension::multiprocess | Extension::fork | Extension::vfork |
-         Extension::pass_signals | Extension::auxv | Extension::libraries_svr4;
+  return
+#if defined(PT_COREDUMP)
+      Extension::savecore |
+#endif
+      Extension::multiprocess | Extension::fork | Extension::vfork |
+      Extension::pass_signals | Extension::auxv | Extension::libraries_svr4;
 }
 
 // Public Instance Methods
@@ -1008,4 +1012,37 @@ void NativeProcessFreeBSD::MonitorClone(::pid_t child_pid, bool is_vfork,
       SetState(StateType::eStateInvalid);
     }
   }
+}
+
+llvm::Expected<std::string>
+NativeProcessFreeBSD::SaveCore(llvm::StringRef path_hint) {
+#if defined(PT_COREDUMP)
+  using namespace llvm::sys::fs;
+
+  llvm::SmallString<128> path{path_hint};
+  Status error;
+  struct ptrace_coredump pc = {};
+
+  // Try with the suggested path first.  If there is no suggested path or it
+  // failed to open, use a temporary file.
+  if (path.empty() ||
+      openFile(path, pc.pc_fd, CD_CreateNew, FA_Write, OF_None)) {
+    if (std::error_code errc =
+            createTemporaryFile("lldb", "core", pc.pc_fd, path))
+      return llvm::createStringError(errc, "Unable to create a temporary file");
+  }
+  error = PtraceWrapper(PT_COREDUMP, GetID(), &pc, sizeof(pc));
+
+  std::error_code close_err = closeFile(pc.pc_fd);
+  if (error.Fail())
+    return error.ToError();
+  if (close_err)
+    return llvm::createStringError(
+        close_err, "Unable to close the core dump after writing");
+  return path.str().str();
+#else // !defined(PT_COREDUMP)
+  return llvm::createStringError(
+      llvm::inconvertibleErrorCode(),
+      "PT_COREDUMP not supported in the FreeBSD version used to build LLDB");
+#endif
 }

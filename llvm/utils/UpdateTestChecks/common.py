@@ -7,12 +7,6 @@ import re
 import subprocess
 import sys
 
-if sys.version_info[0] > 2:
-  class string:
-    expandtabs = str.expandtabs
-else:
-  import string
-
 ##### Common utilities for update_*test_checks.py
 
 
@@ -147,16 +141,31 @@ def should_add_line_to_output(input_line, prefix_set, skip_global_checks = False
 
   return True
 
+# Perform lit-like substitutions
+def getSubstitutions(sourcepath):
+  sourcedir = os.path.dirname(sourcepath)
+  return [('%s', sourcepath),
+          ('%S', sourcedir),
+          ('%p', sourcedir),
+          ('%{pathsep}', os.pathsep)]
+
+def applySubstitutions(s, substitutions):
+  for a,b in substitutions:
+    s = s.replace(a, b)
+  return s
+
 # Invoke the tool that is being tested.
 def invoke_tool(exe, cmd_args, ir, preprocess_cmd=None, verbose=False):
   with open(ir) as ir_file:
+    substitutions = getSubstitutions(ir)
+
     # TODO Remove the str form which is used by update_test_checks.py and
     # update_llc_test_checks.py
     # The safer list form is used by update_cc_test_checks.py
     if preprocess_cmd:
       # Allow pre-processing the IR file (e.g. using sed):
       assert isinstance(preprocess_cmd, str)  # TODO: use a list instead of using shell
-      preprocess_cmd = preprocess_cmd.replace('%s', ir).strip()
+      preprocess_cmd = applySubstitutions(preprocess_cmd, substitutions).strip()
       if verbose:
         print('Pre-processing input file: ', ir, " with command '",
               preprocess_cmd, "'", sep="", file=sys.stderr)
@@ -165,12 +174,17 @@ def invoke_tool(exe, cmd_args, ir, preprocess_cmd=None, verbose=False):
         pp = subprocess.Popen(preprocess_cmd, shell=True, stdin=devnull,
                               stdout=subprocess.PIPE)
         ir_file = pp.stdout
+
     if isinstance(cmd_args, list):
-      stdout = subprocess.check_output([exe] + cmd_args, stdin=ir_file)
+      args = [applySubstitutions(a, substitutions) for a in cmd_args]
+      stdout = subprocess.check_output([exe] + args, stdin=ir_file)
     else:
-      stdout = subprocess.check_output(exe + ' ' + cmd_args,
+      stdout = subprocess.check_output(exe + ' ' + applySubstitutions(cmd_args, substitutions),
                                        shell=True, stdin=ir_file)
     if sys.version_info[0] > 2:
+      # FYI, if you crashed here with a decode error, your run line probably
+      # results in bitcode or other binary format being written to the pipe.
+      # For an opt test, you probably want to add -S or -disable-output.
       stdout = stdout.decode()
   # Fix line endings to unix CR style.
   return stdout.replace('\r\n', '\n')
@@ -249,7 +263,7 @@ def scrub_body(body):
   # whitespace in place.
   body = SCRUB_WHITESPACE_RE.sub(r' ', body)
   # Expand the tabs used for indentation.
-  body = string.expandtabs(body, 2)
+  body = str.expandtabs(body, 2)
   # Strip trailing whitespace.
   body = SCRUB_TRAILING_WHITESPACE_TEST_RE.sub(r'', body)
   return body

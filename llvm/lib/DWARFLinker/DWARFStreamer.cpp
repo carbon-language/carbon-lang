@@ -21,8 +21,8 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/MC/MCTargetOptionsCommandFlags.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
 
 namespace llvm {
@@ -531,9 +531,7 @@ void DwarfStreamer::emitLineTableForUnit(MCDwarfLineTableParams Params,
 
   unsigned RowsSinceLastSequence = 0;
 
-  for (unsigned Idx = 0; Idx < Rows.size(); ++Idx) {
-    auto &Row = Rows[Idx];
-
+  for (DWARFDebugLine::Row &Row : Rows) {
     int64_t AddressDelta;
     if (Address == -1ULL) {
       MS->emitIntValue(dwarf::DW_LNS_extended_op, 1);

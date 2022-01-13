@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1 -fopenmp
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1 -fopenmp
 ! OpenMP Version 5.0
 ! 2.11.3 allocate Directive 
 ! A type parameter inquiry cannot appear in an allocate directive.
@@ -17,19 +16,19 @@ use omp_lib
   CHARACTER(LEN=32) :: w
   INTEGER, DIMENSION(:), ALLOCATABLE :: y
   
-  !ERROR: A type parameter inquiry cannot appear in an ALLOCATE directive
+  !ERROR: A type parameter inquiry cannot appear on the ALLOCATE directive
   !$omp allocate(x%KIND)
   
-  !ERROR: A type parameter inquiry cannot appear in an ALLOCATE directive
+  !ERROR: A type parameter inquiry cannot appear on the ALLOCATE directive
   !$omp allocate(w%LEN)
 
-  !ERROR: A type parameter inquiry cannot appear in an ALLOCATE directive
+  !ERROR: A type parameter inquiry cannot appear on the ALLOCATE directive
   !$omp allocate(y%KIND)
   
-  !ERROR: A type parameter inquiry cannot appear in an ALLOCATE directive
+  !ERROR: A type parameter inquiry cannot appear on the ALLOCATE directive
   !$omp allocate(my_var%kind_param)
  
-  !ERROR: A type parameter inquiry cannot appear in an ALLOCATE directive
+  !ERROR: A type parameter inquiry cannot appear on the ALLOCATE directive
   !$omp allocate(my_var%len_param)
 
 end subroutine allocate

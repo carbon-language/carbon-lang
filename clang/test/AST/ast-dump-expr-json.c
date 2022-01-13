@@ -110,6 +110,7 @@ void PrimaryExpressions(int a) {
 // using --filters=FunctionDecl
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 118,
@@ -271,6 +272,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT: }
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 151,
@@ -320,7 +322,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "a",
-// CHECK-NEXT:    "mangledName": "a",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int"
 // CHECK-NEXT:    }
@@ -530,6 +531,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT: }
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 199,
@@ -579,7 +581,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "a",
-// CHECK-NEXT:    "mangledName": "a",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int"
 // CHECK-NEXT:    }
@@ -964,6 +965,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT: }
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 252,
@@ -1013,7 +1015,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "a",
-// CHECK-NEXT:    "mangledName": "a",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int"
 // CHECK-NEXT:    }
@@ -1040,7 +1041,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "b",
-// CHECK-NEXT:    "mangledName": "b",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int"
 // CHECK-NEXT:    }
@@ -3336,6 +3336,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT: }
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 646,
@@ -3386,7 +3387,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "a",
-// CHECK-NEXT:    "mangledName": "a",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int"
 // CHECK-NEXT:    }
@@ -3413,7 +3413,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "b",
-// CHECK-NEXT:    "mangledName": "b",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int *"
 // CHECK-NEXT:    }
@@ -4004,6 +4003,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT: }
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 861,
@@ -4053,7 +4053,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "a",
-// CHECK-NEXT:    "mangledName": "a",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int *"
 // CHECK-NEXT:    }
@@ -4080,7 +4079,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "b",
-// CHECK-NEXT:    "mangledName": "b",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "desugaredQualType": "struct S",
 // CHECK-NEXT:     "qualType": "struct S"
@@ -4108,7 +4106,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "c",
-// CHECK-NEXT:    "mangledName": "c",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "struct S *"
 // CHECK-NEXT:    }
@@ -4689,7 +4686,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:         }
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "type": {
-// CHECK-NEXT:         "qualType": "int [4]"
+// CHECK-NEXT:         "qualType": "int[4]"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "lvalue",
 // CHECK-NEXT:        "inner": [
@@ -4709,7 +4706,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:           }
 // CHECK-NEXT:          },
 // CHECK-NEXT:          "type": {
-// CHECK-NEXT:           "qualType": "int [4]"
+// CHECK-NEXT:           "qualType": "int[4]"
 // CHECK-NEXT:          },
 // CHECK-NEXT:          "valueCategory": "prvalue",
 // CHECK-NEXT:          "inner": [
@@ -4901,6 +4898,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT: }
 
 
+// CHECK-NOT: {{^}}Dumping
 // CHECK:  "kind": "FunctionDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "offset": 1079,
@@ -4950,7 +4948,6 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "isUsed": true,
 // CHECK-NEXT:    "name": "a",
-// CHECK-NEXT:    "mangledName": "a",
 // CHECK-NEXT:    "type": {
 // CHECK-NEXT:     "qualType": "int"
 // CHECK-NEXT:    }
@@ -5106,7 +5103,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:         }
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "type": {
-// CHECK-NEXT:         "qualType": "char [2]"
+// CHECK-NEXT:         "qualType": "char[2]"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "lvalue",
 // CHECK-NEXT:        "value": "\"a\""
@@ -5151,7 +5148,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:         }
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "type": {
-// CHECK-NEXT:         "qualType": "int [2]"
+// CHECK-NEXT:         "qualType": "int[2]"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "lvalue",
 // CHECK-NEXT:        "value": "L\"a\""
@@ -5196,7 +5193,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:         }
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "type": {
-// CHECK-NEXT:         "qualType": "char [2]"
+// CHECK-NEXT:         "qualType": "char[2]"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "lvalue",
 // CHECK-NEXT:        "value": "u8\"a\""
@@ -5241,7 +5238,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:         }
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "type": {
-// CHECK-NEXT:         "qualType": "unsigned int [2]"
+// CHECK-NEXT:         "qualType": "unsigned int[2]"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "lvalue",
 // CHECK-NEXT:        "value": "U\"a\""
@@ -5286,7 +5283,7 @@ void PrimaryExpressions(int a) {
 // CHECK-NEXT:         }
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "type": {
-// CHECK-NEXT:         "qualType": "unsigned short [2]"
+// CHECK-NEXT:         "qualType": "unsigned short[2]"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "lvalue",
 // CHECK-NEXT:        "value": "u\"a\""

@@ -17,6 +17,8 @@
 
 #include <dlfcn.h>
 
+DLWRAP_INITIALIZE();
+
 DLWRAP_INTERNAL(hsa_init, 0);
 
 DLWRAP(hsa_status_string, 2);
@@ -29,6 +31,7 @@ DLWRAP(hsa_signal_store_relaxed, 2);
 DLWRAP(hsa_signal_store_screlease, 2);
 DLWRAP(hsa_signal_wait_scacquire, 5);
 DLWRAP(hsa_queue_create, 8);
+DLWRAP(hsa_queue_destroy, 1);
 DLWRAP(hsa_queue_load_read_index_scacquire, 1);
 DLWRAP(hsa_queue_add_write_index_relaxed, 2);
 DLWRAP(hsa_memory_copy, 3);
@@ -46,6 +49,8 @@ DLWRAP(hsa_amd_memory_pool_free, 1);
 DLWRAP(hsa_amd_memory_async_copy, 8);
 DLWRAP(hsa_amd_memory_pool_get_info, 3);
 DLWRAP(hsa_amd_agents_allow_access, 4);
+DLWRAP(hsa_amd_memory_lock, 5);
+DLWRAP(hsa_amd_memory_unlock, 1);
 DLWRAP(hsa_amd_memory_fill, 3);
 DLWRAP(hsa_amd_register_system_event_handler, 2);
 

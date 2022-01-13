@@ -33,6 +33,7 @@ namespace llvm {
 
 // Forward declarations.
 class DiagnosticPrinter;
+class CallInst;
 class Function;
 class Instruction;
 class InstructionCost;
@@ -195,10 +196,9 @@ public:
   /// \p The function that is concerned by this stack size diagnostic.
   /// \p The computed stack size.
   DiagnosticInfoResourceLimit(const Function &Fn, const char *ResourceName,
-                              uint64_t ResourceSize,
+                              uint64_t ResourceSize, uint64_t ResourceLimit,
                               DiagnosticSeverity Severity = DS_Warning,
-                              DiagnosticKind Kind = DK_ResourceLimit,
-                              uint64_t ResourceLimit = 0)
+                              DiagnosticKind Kind = DK_ResourceLimit)
       : DiagnosticInfo(Kind, Severity), Fn(Fn), ResourceName(ResourceName),
         ResourceSize(ResourceSize), ResourceLimit(ResourceLimit) {}
 
@@ -219,10 +219,10 @@ class DiagnosticInfoStackSize : public DiagnosticInfoResourceLimit {
   void anchor() override;
 public:
   DiagnosticInfoStackSize(const Function &Fn, uint64_t StackSize,
-                          DiagnosticSeverity Severity = DS_Warning,
-                          uint64_t StackLimit = 0)
-      : DiagnosticInfoResourceLimit(Fn, "stack frame size", StackSize, Severity,
-                                    DK_StackSize, StackLimit) {}
+                          uint64_t StackLimit,
+                          DiagnosticSeverity Severity = DS_Warning)
+      : DiagnosticInfoResourceLimit(Fn, "stack frame size", StackSize,
+                                    StackLimit, Severity, DK_StackSize) {}
 
   uint64_t getStackSize() const { return getResourceSize(); }
   uint64_t getStackLimit() const { return getResourceLimit(); }
@@ -1071,15 +1071,20 @@ public:
   }
 };
 
+void diagnoseDontCall(const CallInst &CI);
+
 class DiagnosticInfoDontCall : public DiagnosticInfo {
   StringRef CalleeName;
+  StringRef Note;
   unsigned LocCookie;
 
 public:
-  DiagnosticInfoDontCall(StringRef CalleeName, unsigned LocCookie)
-      : DiagnosticInfo(DK_DontCall, DS_Error), CalleeName(CalleeName),
+  DiagnosticInfoDontCall(StringRef CalleeName, StringRef Note,
+                         DiagnosticSeverity DS, unsigned LocCookie)
+      : DiagnosticInfo(DK_DontCall, DS), CalleeName(CalleeName), Note(Note),
         LocCookie(LocCookie) {}
   StringRef getFunctionName() const { return CalleeName; }
+  StringRef getNote() const { return Note; }
   unsigned getLocCookie() const { return LocCookie; }
   void print(DiagnosticPrinter &DP) const override;
   static bool classof(const DiagnosticInfo *DI) {

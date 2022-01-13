@@ -9,6 +9,13 @@
 #ifndef _LIBCPP___RANGES_TRANSFORM_VIEW_H
 #define _LIBCPP___RANGES_TRANSFORM_VIEW_H
 
+#include <__compare/three_way_comparable.h>
+#include <__concepts/constructible.h>
+#include <__concepts/convertible_to.h>
+#include <__concepts/copyable.h>
+#include <__concepts/derived_from.h>
+#include <__concepts/equality_comparable.h>
+#include <__concepts/invocable.h>
 #include <__config>
 #include <__functional/bind_back.h>
 #include <__functional/invoke.h>
@@ -27,7 +34,6 @@
 #include <__utility/forward.h>
 #include <__utility/in_place.h>
 #include <__utility/move.h>
-#include <concepts>
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -40,11 +46,15 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 namespace ranges {
 
+template<class _Fn, class _View>
+concept __regular_invocable_with_range_ref =
+  regular_invocable<_Fn, range_reference_t<_View>>;
+
 template<class _View, class _Fn>
 concept __transform_view_constraints =
-           view<_View> && is_object_v<_Fn> &&
-           regular_invocable<_Fn&, range_reference_t<_View>> &&
-           __referenceable<invoke_result_t<_Fn&, range_reference_t<_View>>>;
+  view<_View> && is_object_v<_Fn> &&
+  regular_invocable<_Fn&, range_reference_t<_View>> &&
+  __referenceable<invoke_result_t<_Fn&, range_reference_t<_View>>>;
 
 template<input_range _View, copy_constructible _Fn>
   requires __transform_view_constraints<_View, _Fn>
@@ -76,7 +86,7 @@ public:
   _LIBCPP_HIDE_FROM_ABI
   constexpr __iterator<true> begin() const
     requires range<const _View> &&
-             regular_invocable<const _Fn&, range_reference_t<const _View>>
+             __regular_invocable_with_range_ref<const _Fn&, const _View>
   {
     return __iterator<true>(*this, ranges::begin(__base_));
   }
@@ -94,14 +104,14 @@ public:
   _LIBCPP_HIDE_FROM_ABI
   constexpr __sentinel<true> end() const
     requires range<const _View> &&
-             regular_invocable<const _Fn&, range_reference_t<const _View>>
+             __regular_invocable_with_range_ref<const _Fn&, const _View>
   {
     return __sentinel<true>(ranges::end(__base_));
   }
   _LIBCPP_HIDE_FROM_ABI
   constexpr __iterator<true> end() const
     requires common_range<const _View> &&
-             regular_invocable<const _Fn&, range_reference_t<const _View>>
+             __regular_invocable_with_range_ref<const _Fn&, const _View>
   {
     return __iterator<true>(*this, ranges::end(__base_));
   }
@@ -297,13 +307,12 @@ public:
     return __x.__current_ >= __y.__current_;
   }
 
-// TODO: Fix this as soon as soon as three_way_comparable is implemented.
-//   _LIBCPP_HIDE_FROM_ABI
-//   friend constexpr auto operator<=>(const __iterator& __x, const __iterator& __y)
-//     requires random_access_range<_Base> && three_way_comparable<iterator_t<_Base>>
-//   {
-//     return __x.__current_ <=> __y.__current_;
-//   }
+  _LIBCPP_HIDE_FROM_ABI
+  friend constexpr auto operator<=>(const __iterator& __x, const __iterator& __y)
+    requires random_access_range<_Base> && three_way_comparable<iterator_t<_Base>>
+  {
+    return __x.__current_ <=> __y.__current_;
+  }
 
   _LIBCPP_HIDE_FROM_ABI
   friend constexpr __iterator operator+(__iterator __i, difference_type __n)

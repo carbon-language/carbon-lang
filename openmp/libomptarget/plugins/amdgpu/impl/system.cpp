@@ -46,22 +46,6 @@ typedef struct {
 } Elf_Note;
 #endif
 
-// The following include file and following structs/enums
-// have been replicated on a per-use basis below. For example,
-// llvm::AMDGPU::HSAMD::Kernel::Metadata has several fields,
-// but we may care only about kernargSegmentSize_ for now, so
-// we just include that field in our KernelMD implementation. We
-// chose this approach to replicate in order to avoid forcing
-// a dependency on LLVM_INCLUDE_DIR just to compile the runtime.
-// #include "llvm/Support/AMDGPUMetadata.h"
-// typedef llvm::AMDGPU::HSAMD::Metadata CodeObjectMD;
-// typedef llvm::AMDGPU::HSAMD::Kernel::Metadata KernelMD;
-// typedef llvm::AMDGPU::HSAMD::Kernel::Arg::Metadata KernelArgMD;
-// using llvm::AMDGPU::HSAMD::AccessQualifier;
-// using llvm::AMDGPU::HSAMD::AddressSpaceQualifier;
-// using llvm::AMDGPU::HSAMD::ValueKind;
-// using llvm::AMDGPU::HSAMD::ValueType;
-
 class KernelArgMD {
 public:
   enum class ValueKind {
@@ -78,45 +62,17 @@ public:
   };
 
   KernelArgMD()
-      : name_(std::string()), typeName_(std::string()), size_(0), offset_(0),
-        align_(0), valueKind_(ValueKind::Unknown) {}
+      : name_(std::string()),  size_(0), offset_(0),
+        valueKind_(ValueKind::Unknown) {}
 
   // fields
   std::string name_;
-  std::string typeName_;
   uint32_t size_;
   uint32_t offset_;
-  uint32_t align_;
   ValueKind valueKind_;
 };
 
-class KernelMD {
-public:
-  KernelMD() : kernargSegmentSize_(0ull) {}
-
-  // fields
-  uint64_t kernargSegmentSize_;
-};
-
 static const std::map<std::string, KernelArgMD::ValueKind> ArgValueKind = {
-    //    Including only those fields that are relevant to the runtime.
-    //    {"ByValue", KernelArgMD::ValueKind::ByValue},
-    //    {"GlobalBuffer", KernelArgMD::ValueKind::GlobalBuffer},
-    //    {"DynamicSharedPointer",
-    //    KernelArgMD::ValueKind::DynamicSharedPointer},
-    //    {"Sampler", KernelArgMD::ValueKind::Sampler},
-    //    {"Image", KernelArgMD::ValueKind::Image},
-    //    {"Pipe", KernelArgMD::ValueKind::Pipe},
-    //    {"Queue", KernelArgMD::ValueKind::Queue},
-    {"HiddenGlobalOffsetX", KernelArgMD::ValueKind::HiddenGlobalOffsetX},
-    {"HiddenGlobalOffsetY", KernelArgMD::ValueKind::HiddenGlobalOffsetY},
-    {"HiddenGlobalOffsetZ", KernelArgMD::ValueKind::HiddenGlobalOffsetZ},
-    {"HiddenNone", KernelArgMD::ValueKind::HiddenNone},
-    {"HiddenPrintfBuffer", KernelArgMD::ValueKind::HiddenPrintfBuffer},
-    {"HiddenDefaultQueue", KernelArgMD::ValueKind::HiddenDefaultQueue},
-    {"HiddenCompletionAction", KernelArgMD::ValueKind::HiddenCompletionAction},
-    {"HiddenMultiGridSyncArg", KernelArgMD::ValueKind::HiddenMultiGridSyncArg},
-    {"HiddenHostcallBuffer", KernelArgMD::ValueKind::HiddenHostcallBuffer},
     // v3
     //    {"by_value", KernelArgMD::ValueKind::ByValue},
     //    {"global_buffer", KernelArgMD::ValueKind::GlobalBuffer},
@@ -177,12 +133,7 @@ hsa_status_t callbackEvent(const hsa_amd_event_t *event, void *data) {
 }
 
 hsa_status_t atl_init_gpu_context() {
-  hsa_status_t err;
-  err = hsa_init();
-  if (err != HSA_STATUS_SUCCESS)
-    return HSA_STATUS_ERROR;
-
-  err = hsa_amd_register_system_event_handler(callbackEvent, NULL);
+  hsa_status_t err = hsa_amd_register_system_event_handler(callbackEvent, NULL);
   if (err != HSA_STATUS_SUCCESS) {
     printf("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
            "Registering the system for memory faults", get_error_string(err));
@@ -359,10 +310,6 @@ int populate_kernelArgMD(msgpack::byte_range args_element,
       foronly_string(value, [&](size_t N, const unsigned char *str) {
         kernelarg->name_ = std::string(str, str + N);
       });
-    } else if (message_is_string(key, ".type_name")) {
-      foronly_string(value, [&](size_t N, const unsigned char *str) {
-        kernelarg->typeName_ = std::string(str, str + N);
-      });
     } else if (message_is_string(key, ".size")) {
       foronly_unsigned(value, [&](uint64_t x) { kernelarg->size_ = x; });
     } else if (message_is_string(key, ".offset")) {
@@ -434,7 +381,7 @@ static hsa_status_t get_code_object_custom_metadata(
       return HSA_STATUS_ERROR_INVALID_CODE_OBJECT;
     }
 
-    atl_kernel_info_t info = {0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}, {}};
+    atl_kernel_info_t info = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     uint64_t sgpr_count, vgpr_count, sgpr_spill_count, vgpr_spill_count;
     msgpack_errors += map_lookup_uint64_t(element, ".sgpr_count", &sgpr_count);
@@ -499,8 +446,6 @@ static hsa_status_t get_code_object_custom_metadata(
         return HSA_STATUS_ERROR_INVALID_CODE_OBJECT;
       }
 
-      info.num_args = argsSize;
-
       for (size_t i = 0; i < argsSize; ++i) {
         KernelArgMD lcArg;
 
@@ -518,36 +463,32 @@ static hsa_status_t get_code_object_custom_metadata(
                  "iterate args map in kernel args metadata");
           return HSA_STATUS_ERROR_INVALID_CODE_OBJECT;
         }
-        // populate info with sizes and offsets
-        info.arg_sizes.push_back(lcArg.size_);
         // v3 has offset field and not align field
         size_t new_offset = lcArg.offset_;
         size_t padding = new_offset - offset;
         offset = new_offset;
-        info.arg_offsets.push_back(lcArg.offset_);
-        DEBUG_PRINT("Arg[%lu] \"%s\" (%u, %u)\n", i, lcArg.name_.c_str(),
-                    lcArg.size_, lcArg.offset_);
+        DP("Arg[%lu] \"%s\" (%u, %u)\n", i, lcArg.name_.c_str(), lcArg.size_,
+           lcArg.offset_);
         offset += lcArg.size_;
 
         // check if the arg is a hidden/implicit arg
         // this logic assumes that all hidden args are 8-byte aligned
         if (!isImplicit(lcArg.valueKind_)) {
+          info.explicit_argument_count++;
           kernel_explicit_args_size += lcArg.size_;
         } else {
+          info.implicit_argument_count++;
           hasHiddenArgs = true;
         }
         kernel_explicit_args_size += padding;
       }
     }
 
-    // add size of implicit args, e.g.: offset x, y and z and pipe pointer, but
-    // in ATMI, do not count the compiler set implicit args, but set your own
-    // implicit args by discounting the compiler set implicit args
+    // TODO: Probably don't want this arithmetic 
     info.kernel_segment_size =
-        (hasHiddenArgs ? kernel_explicit_args_size : kernel_segment_size) +
-        sizeof(impl_implicit_args_t);
-    DEBUG_PRINT("[%s: kernarg seg size] (%lu --> %u)\n", kernelName.c_str(),
-                kernel_segment_size, info.kernel_segment_size);
+        (hasHiddenArgs ? kernel_explicit_args_size : kernel_segment_size);
+    DP("[%s: kernarg seg size] (%lu --> %u)\n", kernelName.c_str(),
+       kernel_segment_size, info.kernel_segment_size);
 
     // kernel received, now add it to the kernel info table
     KernelInfoTable[kernelName] = info;
@@ -571,7 +512,7 @@ populate_InfoTables(hsa_executable_symbol_t symbol,
            "Symbol info extraction", get_error_string(err));
     return err;
   }
-  DEBUG_PRINT("Exec Symbol type: %d\n", type);
+  DP("Exec Symbol type: %d\n", type);
   if (type == HSA_SYMBOL_KIND_KERNEL) {
     err = hsa_executable_symbol_get_info(
         symbol, HSA_EXECUTABLE_SYMBOL_INFO_NAME_LENGTH, &name_length);
@@ -597,12 +538,8 @@ populate_InfoTables(hsa_executable_symbol_t symbol,
     // because the non-ROCr custom code object parsing is called before
     // iterating over the code object symbols using ROCr
     if (KernelInfoTable.find(kernelName) == KernelInfoTable.end()) {
-      if (HSA_STATUS_ERROR_INVALID_CODE_OBJECT != HSA_STATUS_SUCCESS) {
-        printf("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
-               "Finding the entry kernel info table",
-               get_error_string(HSA_STATUS_ERROR_INVALID_CODE_OBJECT));
-        exit(1);
-      }
+      DP("amdgpu internal consistency error\n");
+      return HSA_STATUS_ERROR;
     }
     // found, so assign and update
     info = KernelInfoTable[kernelName];
@@ -636,11 +573,10 @@ populate_InfoTables(hsa_executable_symbol_t symbol,
       return err;
     }
 
-    DEBUG_PRINT(
-        "Kernel %s --> %lx symbol %u group segsize %u pvt segsize %u bytes "
-        "kernarg\n",
-        kernelName.c_str(), info.kernel_object, info.group_segment_size,
-        info.private_segment_size, info.kernel_segment_size);
+    DP("Kernel %s --> %lx symbol %u group segsize %u pvt segsize %u bytes "
+       "kernarg\n",
+       kernelName.c_str(), info.kernel_object, info.group_segment_size,
+       info.private_segment_size, info.kernel_segment_size);
 
     // assign it back to the kernel info table
     KernelInfoTable[kernelName] = info;
@@ -681,12 +617,11 @@ populate_InfoTables(hsa_executable_symbol_t symbol,
       return err;
     }
 
-    DEBUG_PRINT("Symbol %s = %p (%u bytes)\n", name, (void *)info.addr,
-                info.size);
+    DP("Symbol %s = %p (%u bytes)\n", name, (void *)info.addr, info.size);
     SymbolInfoTable[std::string(name)] = info;
     free(name);
   } else {
-    DEBUG_PRINT("Symbol is an indirect function\n");
+    DP("Symbol is an indirect function\n");
   }
   return HSA_STATUS_SUCCESS;
 }
@@ -730,9 +665,8 @@ hsa_status_t RegisterModuleFromMemory(
       err = get_code_object_custom_metadata(module_bytes, module_size,
                                             KernelInfoTable);
       if (err != HSA_STATUS_SUCCESS) {
-        DEBUG_PRINT("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
-                    "Getting custom code object metadata",
-                    get_error_string(err));
+        DP("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
+           "Getting custom code object metadata", get_error_string(err));
         continue;
       }
 
@@ -741,8 +675,8 @@ hsa_status_t RegisterModuleFromMemory(
       err = hsa_code_object_deserialize(module_bytes, module_size, NULL,
                                         &code_object);
       if (err != HSA_STATUS_SUCCESS) {
-        DEBUG_PRINT("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
-                    "Code Object Deserialization", get_error_string(err));
+        DP("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
+           "Code Object Deserialization", get_error_string(err));
         continue;
       }
       assert(0 != code_object.handle);
@@ -763,8 +697,8 @@ hsa_status_t RegisterModuleFromMemory(
       err =
           hsa_executable_load_code_object(executable, agent, code_object, NULL);
       if (err != HSA_STATUS_SUCCESS) {
-        DEBUG_PRINT("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
-                    "Loading the code object", get_error_string(err));
+        DP("[%s:%d] %s failed: %s\n", __FILE__, __LINE__,
+           "Loading the code object", get_error_string(err));
         continue;
       }
 
@@ -772,7 +706,7 @@ hsa_status_t RegisterModuleFromMemory(
     }
     module_load_success = true;
   } while (0);
-  DEBUG_PRINT("Modules loaded successful? %d\n", module_load_success);
+  DP("Modules loaded successful? %d\n", module_load_success);
   if (module_load_success) {
     /* Freeze the executable; it can now be queried for symbols.  */
     err = hsa_executable_freeze(executable, "");

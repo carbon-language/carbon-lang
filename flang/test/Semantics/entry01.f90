@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1
 ! Tests valid and invalid ENTRY statements
 
 module m1
@@ -56,7 +55,6 @@ subroutine subr(goodarg1)
   common /badarg3/ x
   namelist /badarg4/ x
   !ERROR: A dummy argument must not be initialized
-  !ERROR: A dummy argument may not have the SAVE attribute
   integer :: badarg5 = 2
   entry okargs(goodarg1, goodarg2)
   !ERROR: RESULT(br1) may appear only in a function

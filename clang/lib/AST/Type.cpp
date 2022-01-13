@@ -194,7 +194,7 @@ void ConstantArrayType::Profile(llvm::FoldingSetNodeID &ID,
   ID.AddInteger(ArraySize.getZExtValue());
   ID.AddInteger(SizeMod);
   ID.AddInteger(TypeQuals);
-  ID.AddBoolean(SizeExpr != 0);
+  ID.AddBoolean(SizeExpr != nullptr);
   if (SizeExpr)
     SizeExpr->Profile(ID, Context, true);
 }
@@ -338,25 +338,25 @@ VectorType::VectorType(TypeClass tc, QualType vecType, unsigned nElements,
   VectorTypeBits.NumElements = nElements;
 }
 
-ExtIntType::ExtIntType(bool IsUnsigned, unsigned NumBits)
-    : Type(ExtInt, QualType{}, TypeDependence::None), IsUnsigned(IsUnsigned),
+BitIntType::BitIntType(bool IsUnsigned, unsigned NumBits)
+    : Type(BitInt, QualType{}, TypeDependence::None), IsUnsigned(IsUnsigned),
       NumBits(NumBits) {}
 
-DependentExtIntType::DependentExtIntType(const ASTContext &Context,
+DependentBitIntType::DependentBitIntType(const ASTContext &Context,
                                          bool IsUnsigned, Expr *NumBitsExpr)
-    : Type(DependentExtInt, QualType{},
+    : Type(DependentBitInt, QualType{},
            toTypeDependence(NumBitsExpr->getDependence())),
       Context(Context), ExprAndUnsigned(NumBitsExpr, IsUnsigned) {}
 
-bool DependentExtIntType::isUnsigned() const {
+bool DependentBitIntType::isUnsigned() const {
   return ExprAndUnsigned.getInt();
 }
 
-clang::Expr *DependentExtIntType::getNumBitsExpr() const {
+clang::Expr *DependentBitIntType::getNumBitsExpr() const {
   return ExprAndUnsigned.getPointer();
 }
 
-void DependentExtIntType::Profile(llvm::FoldingSetNodeID &ID,
+void DependentBitIntType::Profile(llvm::FoldingSetNodeID &ID,
                                   const ASTContext &Context, bool IsUnsigned,
                                   Expr *NumBitsExpr) {
   ID.AddBoolean(IsUnsigned);
@@ -819,6 +819,13 @@ QualType ObjCObjectType::stripObjCKindOfTypeAndQuals(
                                getTypeArgsAsWritten(),
                                /*protocols=*/{},
                                /*isKindOf=*/false);
+}
+
+ObjCInterfaceDecl *ObjCInterfaceType::getDecl() const {
+  ObjCInterfaceDecl *Canon = Decl->getCanonicalDecl();
+  if (ObjCInterfaceDecl *Def = Canon->getDefinition())
+    return Def;
+  return Canon;
 }
 
 const ObjCObjectPointerType *ObjCObjectPointerType::stripObjCKindOfTypeAndQuals(
@@ -1885,7 +1892,7 @@ DeducedType *Type::getContainedDeducedType() const {
 }
 
 bool Type::hasAutoForTrailingReturnType() const {
-  return dyn_cast_or_null<FunctionType>(
+  return isa_and_nonnull<FunctionType>(
       GetContainedDeducedTypeVisitor(true).Visit(this));
 }
 
@@ -1925,7 +1932,7 @@ bool Type::isIntegralType(const ASTContext &Ctx) const {
     if (const auto *ET = dyn_cast<EnumType>(CanonicalType))
       return ET->getDecl()->isComplete();
 
-  return isExtIntType();
+  return isBitIntType();
 }
 
 bool Type::isIntegralOrUnscopedEnumerationType() const {
@@ -1933,7 +1940,7 @@ bool Type::isIntegralOrUnscopedEnumerationType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::Int128;
 
-  if (isExtIntType())
+  if (isBitIntType())
     return true;
 
   return isUnscopedEnumerationType();
@@ -2016,7 +2023,9 @@ bool Type::isSignedIntegerType() const {
       return ET->getDecl()->getIntegerType()->isSignedIntegerType();
   }
 
-  if (const ExtIntType *IT = dyn_cast<ExtIntType>(CanonicalType))
+  if (const auto *IT = dyn_cast<BitIntType>(CanonicalType))
+    return IT->isSigned();
+  if (const auto *IT = dyn_cast<DependentBitIntType>(CanonicalType))
     return IT->isSigned();
 
   return false;
@@ -2033,9 +2042,10 @@ bool Type::isSignedIntegerOrEnumerationType() const {
       return ET->getDecl()->getIntegerType()->isSignedIntegerType();
   }
 
-  if (const ExtIntType *IT = dyn_cast<ExtIntType>(CanonicalType))
+  if (const auto *IT = dyn_cast<BitIntType>(CanonicalType))
     return IT->isSigned();
-
+  if (const auto *IT = dyn_cast<DependentBitIntType>(CanonicalType))
+    return IT->isSigned();
 
   return false;
 }
@@ -2063,7 +2073,9 @@ bool Type::isUnsignedIntegerType() const {
       return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
   }
 
-  if (const ExtIntType *IT = dyn_cast<ExtIntType>(CanonicalType))
+  if (const auto *IT = dyn_cast<BitIntType>(CanonicalType))
+    return IT->isUnsigned();
+  if (const auto *IT = dyn_cast<DependentBitIntType>(CanonicalType))
     return IT->isUnsigned();
 
   return false;
@@ -2080,7 +2092,9 @@ bool Type::isUnsignedIntegerOrEnumerationType() const {
       return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
   }
 
-  if (const ExtIntType *IT = dyn_cast<ExtIntType>(CanonicalType))
+  if (const auto *IT = dyn_cast<BitIntType>(CanonicalType))
+    return IT->isUnsigned();
+  if (const auto *IT = dyn_cast<DependentBitIntType>(CanonicalType))
     return IT->isUnsigned();
 
   return false;
@@ -2097,7 +2111,7 @@ bool Type::hasUnsignedIntegerRepresentation() const {
 bool Type::isFloatingType() const {
   if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Half &&
-           BT->getKind() <= BuiltinType::Float128;
+           BT->getKind() <= BuiltinType::Ibm128;
   if (const auto *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isFloatingType();
   return false;
@@ -2119,16 +2133,16 @@ bool Type::isRealFloatingType() const {
 bool Type::isRealType() const {
   if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Float128;
+           BT->getKind() <= BuiltinType::Ibm128;
   if (const auto *ET = dyn_cast<EnumType>(CanonicalType))
       return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
-  return isExtIntType();
+  return isBitIntType();
 }
 
 bool Type::isArithmeticType() const {
   if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Float128 &&
+           BT->getKind() <= BuiltinType::Ibm128 &&
            BT->getKind() != BuiltinType::BFloat16;
   if (const auto *ET = dyn_cast<EnumType>(CanonicalType))
     // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
@@ -2138,7 +2152,7 @@ bool Type::isArithmeticType() const {
     // false for scoped enumerations since that will disable any
     // unwanted implicit conversions.
     return !ET->getDecl()->isScoped() && ET->getDecl()->isComplete();
-  return isa<ComplexType>(CanonicalType) || isExtIntType();
+  return isa<ComplexType>(CanonicalType) || isBitIntType();
 }
 
 Type::ScalarTypeKind Type::getScalarTypeKind() const {
@@ -2167,7 +2181,7 @@ Type::ScalarTypeKind Type::getScalarTypeKind() const {
     if (CT->getElementType()->isRealFloatingType())
       return STK_FloatingComplex;
     return STK_IntegralComplex;
-  } else if (isExtIntType()) {
+  } else if (isBitIntType()) {
     return STK_Integral;
   }
 
@@ -2374,7 +2388,7 @@ bool QualType::isCXX98PODType(const ASTContext &Context) const {
   case Type::MemberPointer:
   case Type::Vector:
   case Type::ExtVector:
-  case Type::ExtInt:
+  case Type::BitInt:
     return true;
 
   case Type::Enum:
@@ -2785,7 +2799,6 @@ bool Type::isSpecifierType() const {
   case DependentTemplateSpecialization:
   case ObjCInterface:
   case ObjCObject:
-  case ObjCObjectPointer: // FIXME: object pointers aren't really specifiers
     return true;
   default:
     return false;
@@ -3030,6 +3043,8 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
     return "_Float16";
   case Float128:
     return "__float128";
+  case Ibm128:
+    return "__ibm128";
   case WChar_S:
   case WChar_U:
     return Policy.MSWChar ? "__wchar_t" : "wchar_t";
@@ -3040,7 +3055,7 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case Char32:
     return "char32_t";
   case NullPtr:
-    return "nullptr_t";
+    return "std::nullptr_t";
   case Overload:
     return "<overloaded function type>";
   case BoundMember:
@@ -3392,6 +3407,17 @@ QualType TypedefType::desugar() const {
   return getDecl()->getUnderlyingType();
 }
 
+UsingType::UsingType(const UsingShadowDecl *Found, QualType Underlying,
+                     QualType Canon)
+    : Type(Using, Canon, Underlying->getDependence()),
+      Found(const_cast<UsingShadowDecl *>(Found)) {
+  assert(Underlying == getUnderlyingType());
+}
+
+QualType UsingType::getUnderlyingType() const {
+  return QualType(cast<TypeDecl>(Found->getTargetDecl())->getTypeForDecl(), 0);
+}
+
 QualType MacroQualifiedType::desugar() const { return getUnderlyingType(); }
 
 QualType MacroQualifiedType::getModifiedType() const {
@@ -3505,7 +3531,7 @@ bool RecordType::hasConstFields() const {
         return true;
       FieldTy = FieldTy.getCanonicalType();
       if (const auto *FieldRecTy = FieldTy->getAs<RecordType>()) {
-        if (llvm::find(RecordTypeList, FieldRecTy) == RecordTypeList.end())
+        if (!llvm::is_contained(RecordTypeList, FieldRecTy))
           RecordTypeList.push_back(FieldRecTy);
       }
     }
@@ -3757,8 +3783,8 @@ public:
 
   friend CachedProperties merge(CachedProperties L, CachedProperties R) {
     Linkage MergedLinkage = minLinkage(L.L, R.L);
-    return CachedProperties(MergedLinkage,
-                         L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
+    return CachedProperties(MergedLinkage, L.hasLocalOrUnnamedType() ||
+                                               R.hasLocalOrUnnamedType());
   }
 };
 
@@ -3841,7 +3867,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
     // here in error recovery.
     return CachedProperties(ExternalLinkage, false);
 
-  case Type::ExtInt:
+  case Type::BitInt:
   case Type::Builtin:
     // C++ [basic.link]p8:
     //   A type is said to have linkage if and only if:
@@ -3941,7 +3967,7 @@ LinkageInfo LinkageComputer::computeTypeLinkageInfo(const Type *T) {
     assert(T->isInstantiationDependentType());
     return LinkageInfo::external();
 
-  case Type::ExtInt:
+  case Type::BitInt:
   case Type::Builtin:
     return LinkageInfo::external();
 
@@ -4161,8 +4187,8 @@ bool Type::canHaveNullability(bool ResultIfUnknown) const {
   case Type::ObjCInterface:
   case Type::Atomic:
   case Type::Pipe:
-  case Type::ExtInt:
-  case Type::DependentExtInt:
+  case Type::BitInt:
+  case Type::DependentBitInt:
     return false;
   }
   llvm_unreachable("bad type kind!");
@@ -4392,10 +4418,10 @@ void clang::FixedPointValueToString(SmallVectorImpl<char> &Str,
 }
 
 AutoType::AutoType(QualType DeducedAsType, AutoTypeKeyword Keyword,
-                   TypeDependence ExtraDependence,
+                   TypeDependence ExtraDependence, QualType Canon,
                    ConceptDecl *TypeConstraintConcept,
                    ArrayRef<TemplateArgument> TypeConstraintArgs)
-    : DeducedType(Auto, DeducedAsType, ExtraDependence) {
+    : DeducedType(Auto, DeducedAsType, ExtraDependence, Canon) {
   AutoTypeBits.Keyword = (unsigned)Keyword;
   AutoTypeBits.NumArgs = TypeConstraintArgs.size();
   this->TypeConstraintConcept = TypeConstraintConcept;

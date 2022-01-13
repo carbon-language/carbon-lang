@@ -3,7 +3,7 @@
 modernize-use-default-member-init
 =================================
 
-This check converts a default constructor's member initializers into the new
+This check converts constructors' member initializers into the new
 default member initializers in C++11. Other member initializers that match the
 default member initializer are removed. This can reduce repeated code or allow
 use of '= default'.
@@ -36,7 +36,7 @@ Options
 
 .. option:: UseAssignment
 
-   If this option is set to `true` (default is `false`), the check will initialise
+   If this option is set to `true` (default is `false`), the check will initialize
    members with an assignment. For example:
 
 .. code-block:: c++

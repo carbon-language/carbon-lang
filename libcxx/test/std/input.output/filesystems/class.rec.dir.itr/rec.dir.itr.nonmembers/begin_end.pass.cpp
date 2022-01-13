@@ -8,6 +8,8 @@
 
 // UNSUPPORTED: c++03
 
+// XFAIL: LIBCXX-AIX-FIXME
+
 // <filesystem>
 
 // class recursive_directory_iterator
@@ -30,12 +32,16 @@ TEST_SUITE(recursive_directory_iterator_begin_end_tests)
 
 TEST_CASE(test_function_signatures)
 {
-    recursive_directory_iterator d; ((void)d);
+    recursive_directory_iterator d;
 
     ASSERT_SAME_TYPE(decltype(begin(d)), recursive_directory_iterator);
+    ASSERT_SAME_TYPE(decltype(begin(std::move(d))), recursive_directory_iterator);
+    ASSERT_NOEXCEPT(begin(d));
     ASSERT_NOEXCEPT(begin(std::move(d)));
 
     ASSERT_SAME_TYPE(decltype(end(d)), recursive_directory_iterator);
+    ASSERT_SAME_TYPE(decltype(end(std::move(d))), recursive_directory_iterator);
+    ASSERT_NOEXCEPT(end(d));
     ASSERT_NOEXCEPT(end(std::move(d)));
 }
 

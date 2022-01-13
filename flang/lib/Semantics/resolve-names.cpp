@@ -459,9 +459,8 @@ public:
   Scope &currScope() { return DEREF(currScope_); }
   // The enclosing host procedure if current scope is in an internal procedure
   Scope *GetHostProcedure();
-  // The enclosing scope, skipping blocks and derived types.
-  // TODO: Will return the scope of a FORALL or implied DO loop; is this ok?
-  // If not, should call FindProgramUnitContaining() instead.
+  // The innermost enclosing program unit scope, ignoring BLOCK and other
+  // construct scopes.
   Scope &InclusiveScope();
   // The enclosing scope, skipping derived types.
   Scope &NonDerivedTypeScope();
@@ -1577,8 +1576,8 @@ void AttrsVisitor::SetBindNameOn(Symbol &symbol) {
   if (!attrs_ || !attrs_->test(Attr::BIND_C)) {
     return;
   }
-  std::optional<std::string> label{evaluate::GetScalarConstantValue<
-      evaluate::Type<TypeCategory::Character, 1>>(bindName_)};
+  std::optional<std::string> label{
+      evaluate::GetScalarConstantValue<evaluate::Ascii>(bindName_)};
   // 18.9.2(2): discard leading and trailing blanks, ignore if all blank
   if (label) {
     auto first{label->find_first_not_of(" ")};
@@ -2015,12 +2014,21 @@ void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
   context().SetError(symbol, msg1.isFatal());
 }
 
-// T may be `Scope` or `const Scope`
+// This is essentially GetProgramUnitContaining(), but it can return
+// a mutable Scope &, it ignores statement functions, and it fails
+// gracefully for error recovery (returning the original Scope).
 template <typename T> static T &GetInclusiveScope(T &scope) {
   for (T *s{&scope}; !s->IsGlobal(); s = &s->parent()) {
-    if (s->kind() != Scope::Kind::Block && !s->IsDerivedType() &&
-        !s->IsStmtFunction()) {
-      return *s;
+    switch (s->kind()) {
+    case Scope::Kind::Module:
+    case Scope::Kind::MainProgram:
+    case Scope::Kind::Subprogram:
+    case Scope::Kind::BlockData:
+      if (!s->IsStmtFunction()) {
+        return *s;
+      }
+      break;
+    default:;
     }
   }
   return scope;
@@ -2030,7 +2038,14 @@ Scope &ScopeHandler::InclusiveScope() { return GetInclusiveScope(currScope()); }
 
 Scope *ScopeHandler::GetHostProcedure() {
   Scope &parent{InclusiveScope().parent()};
-  return parent.kind() == Scope::Kind::Subprogram ? &parent : nullptr;
+  switch (parent.kind()) {
+  case Scope::Kind::Subprogram:
+    return &parent;
+  case Scope::Kind::MainProgram:
+    return &parent;
+  default:
+    return nullptr;
+  }
 }
 
 Scope &ScopeHandler::NonDerivedTypeScope() {
@@ -2408,7 +2423,7 @@ void ScopeHandler::MakeExternal(Symbol &symbol) {
 bool ModuleVisitor::Pre(const parser::Only &x) {
   std::visit(common::visitors{
                  [&](const Indirection<parser::GenericSpec> &generic) {
-                   const GenericSpecInfo &genericSpecInfo{generic.value()};
+                   GenericSpecInfo genericSpecInfo{generic.value()};
                    AddUseOnly(genericSpecInfo.symbolName());
                    AddUse(genericSpecInfo);
                  },
@@ -3757,7 +3772,7 @@ Symbol &DeclarationVisitor::DeclareUnknownEntity(
 
 bool DeclarationVisitor::HasCycle(
     const Symbol &procSymbol, const ProcInterface &interface) {
-  OrderedSymbolSet procsInCycle;
+  SourceOrderedSymbolSet procsInCycle;
   procsInCycle.insert(procSymbol);
   const ProcInterface *thisInterface{&interface};
   bool haveInterface{true};
@@ -4209,17 +4224,7 @@ void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
               "POINTER or ALLOCATABLE"_err_en_US);
         }
       }
-      if (!coarraySpec().empty()) { // C747
-        if (IsTeamType(derived)) {
-          Say("A coarray component may not be of type TEAM_TYPE from "
-              "ISO_FORTRAN_ENV"_err_en_US);
-        } else {
-          if (IsIsoCType(derived)) {
-            Say("A coarray component may not be of type C_PTR or C_FUNPTR from "
-                "ISO_C_BINDING"_err_en_US);
-          }
-        }
-      }
+      // TODO: This would be more appropriate in CheckDerivedType()
       if (auto it{FindCoarrayUltimateComponent(*derived)}) { // C748
         std::string ultimateName{it.BuildResultDesignatorName()};
         // Strip off the leading "%"
@@ -4973,7 +4978,7 @@ bool DeclarationVisitor::PassesLocalityChecks(
         "Finalizable variable '%s' not allowed in a locality-spec"_err_en_US);
     return false;
   }
-  if (IsCoarray(symbol)) { // C1128
+  if (evaluate::IsCoarray(symbol)) { // C1128
     SayWithDecl(
         name, symbol, "Coarray '%s' not allowed in a locality-spec"_err_en_US);
     return false;
@@ -5390,7 +5395,7 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
 }
 
 // Sets InDataStmt flag on a variable (or misidentified function) in a DATA
-// statement so that the predicate IsStaticallyInitialized() will be true
+// statement so that the predicate IsInitialized() will be true
 // during semantic analysis before the symbol's initializer is constructed.
 bool ConstructVisitor::Pre(const parser::DataIDoObject &x) {
   std::visit(

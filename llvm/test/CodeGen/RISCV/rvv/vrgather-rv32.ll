@@ -10,8 +10,8 @@ define <vscale x 1 x i8> @intrinsic_vrgather_vv_nxv1i8_nxv1i8_nxv1i8(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv1i8_nxv1i8_nxv1i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, mf8, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i8> @llvm.riscv.vrgather.vv.nxv1i8.i32(
@@ -27,12 +27,13 @@ declare <vscale x 1 x i8> @llvm.riscv.vrgather.vv.mask.nxv1i8.i32(
   <vscale x 1 x i8>,
   <vscale x 1 x i8>,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x i8> @intrinsic_vrgather_mask_vv_nxv1i8_nxv1i8_nxv1i8(<vscale x 1 x i8> %0, <vscale x 1 x i8> %1, <vscale x 1 x i8> %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv1i8_nxv1i8_nxv1i8:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, mf8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, mf8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -41,7 +42,7 @@ entry:
     <vscale x 1 x i8> %1,
     <vscale x 1 x i8> %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x i8> %a
 }
@@ -55,8 +56,8 @@ define <vscale x 2 x i8> @intrinsic_vrgather_vv_nxv2i8_nxv2i8_nxv2i8(<vscale x 2
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv2i8_nxv2i8_nxv2i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i8> @llvm.riscv.vrgather.vv.nxv2i8.i32(
@@ -72,12 +73,13 @@ declare <vscale x 2 x i8> @llvm.riscv.vrgather.vv.mask.nxv2i8.i32(
   <vscale x 2 x i8>,
   <vscale x 2 x i8>,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x i8> @intrinsic_vrgather_mask_vv_nxv2i8_nxv2i8_nxv2i8(<vscale x 2 x i8> %0, <vscale x 2 x i8> %1, <vscale x 2 x i8> %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv2i8_nxv2i8_nxv2i8:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -86,7 +88,7 @@ entry:
     <vscale x 2 x i8> %1,
     <vscale x 2 x i8> %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x i8> %a
 }
@@ -100,8 +102,8 @@ define <vscale x 4 x i8> @intrinsic_vrgather_vv_nxv4i8_nxv4i8_nxv4i8(<vscale x 4
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv4i8_nxv4i8_nxv4i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i8> @llvm.riscv.vrgather.vv.nxv4i8.i32(
@@ -117,12 +119,13 @@ declare <vscale x 4 x i8> @llvm.riscv.vrgather.vv.mask.nxv4i8.i32(
   <vscale x 4 x i8>,
   <vscale x 4 x i8>,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x i8> @intrinsic_vrgather_mask_vv_nxv4i8_nxv4i8_nxv4i8(<vscale x 4 x i8> %0, <vscale x 4 x i8> %1, <vscale x 4 x i8> %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv4i8_nxv4i8_nxv4i8:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -131,7 +134,7 @@ entry:
     <vscale x 4 x i8> %1,
     <vscale x 4 x i8> %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x i8> %a
 }
@@ -145,8 +148,8 @@ define <vscale x 8 x i8> @intrinsic_vrgather_vv_nxv8i8_nxv8i8_nxv8i8(<vscale x 8
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv8i8_nxv8i8_nxv8i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m1, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i8> @llvm.riscv.vrgather.vv.nxv8i8.i32(
@@ -162,12 +165,13 @@ declare <vscale x 8 x i8> @llvm.riscv.vrgather.vv.mask.nxv8i8.i32(
   <vscale x 8 x i8>,
   <vscale x 8 x i8>,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x i8> @intrinsic_vrgather_mask_vv_nxv8i8_nxv8i8_nxv8i8(<vscale x 8 x i8> %0, <vscale x 8 x i8> %1, <vscale x 8 x i8> %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv8i8_nxv8i8_nxv8i8:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -176,7 +180,7 @@ entry:
     <vscale x 8 x i8> %1,
     <vscale x 8 x i8> %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x i8> %a
 }
@@ -190,8 +194,8 @@ define <vscale x 16 x i8> @intrinsic_vrgather_vv_nxv16i8_nxv16i8_nxv16i8(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv16i8_nxv16i8_nxv16i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m2, ta, mu
-; CHECK-NEXT:    vrgather.vv v26, v8, v10
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vv v12, v8, v10
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i8> @llvm.riscv.vrgather.vv.nxv16i8.i32(
@@ -207,12 +211,13 @@ declare <vscale x 16 x i8> @llvm.riscv.vrgather.vv.mask.nxv16i8.i32(
   <vscale x 16 x i8>,
   <vscale x 16 x i8>,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x i8> @intrinsic_vrgather_mask_vv_nxv16i8_nxv16i8_nxv16i8(<vscale x 16 x i8> %0, <vscale x 16 x i8> %1, <vscale x 16 x i8> %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv16i8_nxv16i8_nxv16i8:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v10, v12, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -221,7 +226,7 @@ entry:
     <vscale x 16 x i8> %1,
     <vscale x 16 x i8> %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x i8> %a
 }
@@ -235,8 +240,8 @@ define <vscale x 32 x i8> @intrinsic_vrgather_vv_nxv32i8_nxv32i8_nxv32i8(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv32i8_nxv32i8_nxv32i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m4, ta, mu
-; CHECK-NEXT:    vrgather.vv v28, v8, v12
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vv v16, v8, v12
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x i8> @llvm.riscv.vrgather.vv.nxv32i8.i32(
@@ -252,12 +257,13 @@ declare <vscale x 32 x i8> @llvm.riscv.vrgather.vv.mask.nxv32i8.i32(
   <vscale x 32 x i8>,
   <vscale x 32 x i8>,
   <vscale x 32 x i1>,
+  i32,
   i32);
 
 define <vscale x 32 x i8> @intrinsic_vrgather_mask_vv_nxv32i8_nxv32i8_nxv32i8(<vscale x 32 x i8> %0, <vscale x 32 x i8> %1, <vscale x 32 x i8> %2, <vscale x 32 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv32i8_nxv32i8_nxv32i8:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v12, v16, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -266,7 +272,7 @@ entry:
     <vscale x 32 x i8> %1,
     <vscale x 32 x i8> %2,
     <vscale x 32 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 32 x i8> %a
 }
@@ -281,7 +287,7 @@ define <vscale x 64 x i8> @intrinsic_vrgather_vv_nxv64i8_nxv64i8_nxv64i8(<vscale
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v24, v8, v16
-; CHECK-NEXT:    vmv8r.v v8, v24
+; CHECK-NEXT:    vmv.v.v v8, v24
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 64 x i8> @llvm.riscv.vrgather.vv.nxv64i8.i32(
@@ -297,13 +303,14 @@ declare <vscale x 64 x i8> @llvm.riscv.vrgather.vv.mask.nxv64i8.i32(
   <vscale x 64 x i8>,
   <vscale x 64 x i8>,
   <vscale x 64 x i1>,
+  i32,
   i32);
 
 define <vscale x 64 x i8> @intrinsic_vrgather_mask_vv_nxv64i8_nxv64i8_nxv64i8(<vscale x 64 x i8> %0, <vscale x 64 x i8> %1, <vscale x 64 x i8> %2, <vscale x 64 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv64i8_nxv64i8_nxv64i8:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vl8r.v v24, (a0)
-; CHECK-NEXT:    vsetvli zero, a1, e8, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v16, v24, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -312,7 +319,7 @@ entry:
     <vscale x 64 x i8> %1,
     <vscale x 64 x i8> %2,
     <vscale x 64 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 64 x i8> %a
 }
@@ -326,8 +333,8 @@ define <vscale x 1 x i16> @intrinsic_vrgather_vv_nxv1i16_nxv1i16_nxv1i16(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv1i16_nxv1i16_nxv1i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i16> @llvm.riscv.vrgather.vv.nxv1i16.i32(
@@ -343,12 +350,13 @@ declare <vscale x 1 x i16> @llvm.riscv.vrgather.vv.mask.nxv1i16.i32(
   <vscale x 1 x i16>,
   <vscale x 1 x i16>,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x i16> @intrinsic_vrgather_mask_vv_nxv1i16_nxv1i16_nxv1i16(<vscale x 1 x i16> %0, <vscale x 1 x i16> %1, <vscale x 1 x i16> %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv1i16_nxv1i16_nxv1i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -357,7 +365,7 @@ entry:
     <vscale x 1 x i16> %1,
     <vscale x 1 x i16> %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x i16> %a
 }
@@ -371,8 +379,8 @@ define <vscale x 2 x i16> @intrinsic_vrgather_vv_nxv2i16_nxv2i16_nxv2i16(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv2i16_nxv2i16_nxv2i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i16> @llvm.riscv.vrgather.vv.nxv2i16.i32(
@@ -388,12 +396,13 @@ declare <vscale x 2 x i16> @llvm.riscv.vrgather.vv.mask.nxv2i16.i32(
   <vscale x 2 x i16>,
   <vscale x 2 x i16>,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x i16> @intrinsic_vrgather_mask_vv_nxv2i16_nxv2i16_nxv2i16(<vscale x 2 x i16> %0, <vscale x 2 x i16> %1, <vscale x 2 x i16> %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv2i16_nxv2i16_nxv2i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -402,7 +411,7 @@ entry:
     <vscale x 2 x i16> %1,
     <vscale x 2 x i16> %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x i16> %a
 }
@@ -416,8 +425,8 @@ define <vscale x 4 x i16> @intrinsic_vrgather_vv_nxv4i16_nxv4i16_nxv4i16(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv4i16_nxv4i16_nxv4i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i16> @llvm.riscv.vrgather.vv.nxv4i16.i32(
@@ -433,12 +442,13 @@ declare <vscale x 4 x i16> @llvm.riscv.vrgather.vv.mask.nxv4i16.i32(
   <vscale x 4 x i16>,
   <vscale x 4 x i16>,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x i16> @intrinsic_vrgather_mask_vv_nxv4i16_nxv4i16_nxv4i16(<vscale x 4 x i16> %0, <vscale x 4 x i16> %1, <vscale x 4 x i16> %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv4i16_nxv4i16_nxv4i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -447,7 +457,7 @@ entry:
     <vscale x 4 x i16> %1,
     <vscale x 4 x i16> %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x i16> %a
 }
@@ -461,8 +471,8 @@ define <vscale x 8 x i16> @intrinsic_vrgather_vv_nxv8i16_nxv8i16_nxv8i16(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv8i16_nxv8i16_nxv8i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
-; CHECK-NEXT:    vrgather.vv v26, v8, v10
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vv v12, v8, v10
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i16> @llvm.riscv.vrgather.vv.nxv8i16.i32(
@@ -478,12 +488,13 @@ declare <vscale x 8 x i16> @llvm.riscv.vrgather.vv.mask.nxv8i16.i32(
   <vscale x 8 x i16>,
   <vscale x 8 x i16>,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x i16> @intrinsic_vrgather_mask_vv_nxv8i16_nxv8i16_nxv8i16(<vscale x 8 x i16> %0, <vscale x 8 x i16> %1, <vscale x 8 x i16> %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv8i16_nxv8i16_nxv8i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v10, v12, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -492,7 +503,7 @@ entry:
     <vscale x 8 x i16> %1,
     <vscale x 8 x i16> %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x i16> %a
 }
@@ -506,8 +517,8 @@ define <vscale x 16 x i16> @intrinsic_vrgather_vv_nxv16i16_nxv16i16_nxv16i16(<vs
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv16i16_nxv16i16_nxv16i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
-; CHECK-NEXT:    vrgather.vv v28, v8, v12
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vv v16, v8, v12
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i16> @llvm.riscv.vrgather.vv.nxv16i16.i32(
@@ -523,12 +534,13 @@ declare <vscale x 16 x i16> @llvm.riscv.vrgather.vv.mask.nxv16i16.i32(
   <vscale x 16 x i16>,
   <vscale x 16 x i16>,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x i16> @intrinsic_vrgather_mask_vv_nxv16i16_nxv16i16_nxv16i16(<vscale x 16 x i16> %0, <vscale x 16 x i16> %1, <vscale x 16 x i16> %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv16i16_nxv16i16_nxv16i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v12, v16, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -537,7 +549,7 @@ entry:
     <vscale x 16 x i16> %1,
     <vscale x 16 x i16> %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x i16> %a
 }
@@ -552,7 +564,7 @@ define <vscale x 32 x i16> @intrinsic_vrgather_vv_nxv32i16_nxv32i16_nxv32i16(<vs
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v24, v8, v16
-; CHECK-NEXT:    vmv8r.v v8, v24
+; CHECK-NEXT:    vmv.v.v v8, v24
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x i16> @llvm.riscv.vrgather.vv.nxv32i16.i32(
@@ -568,13 +580,14 @@ declare <vscale x 32 x i16> @llvm.riscv.vrgather.vv.mask.nxv32i16.i32(
   <vscale x 32 x i16>,
   <vscale x 32 x i16>,
   <vscale x 32 x i1>,
+  i32,
   i32);
 
 define <vscale x 32 x i16> @intrinsic_vrgather_mask_vv_nxv32i16_nxv32i16_nxv32i16(<vscale x 32 x i16> %0, <vscale x 32 x i16> %1, <vscale x 32 x i16> %2, <vscale x 32 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv32i16_nxv32i16_nxv32i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vl8re16.v v24, (a0)
-; CHECK-NEXT:    vsetvli zero, a1, e16, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v16, v24, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -583,7 +596,7 @@ entry:
     <vscale x 32 x i16> %1,
     <vscale x 32 x i16> %2,
     <vscale x 32 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 32 x i16> %a
 }
@@ -597,8 +610,8 @@ define <vscale x 1 x i32> @intrinsic_vrgather_vv_nxv1i32_nxv1i32_nxv1i32(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv1i32_nxv1i32_nxv1i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i32> @llvm.riscv.vrgather.vv.nxv1i32.i32(
@@ -614,12 +627,13 @@ declare <vscale x 1 x i32> @llvm.riscv.vrgather.vv.mask.nxv1i32.i32(
   <vscale x 1 x i32>,
   <vscale x 1 x i32>,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x i32> @intrinsic_vrgather_mask_vv_nxv1i32_nxv1i32_nxv1i32(<vscale x 1 x i32> %0, <vscale x 1 x i32> %1, <vscale x 1 x i32> %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv1i32_nxv1i32_nxv1i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -628,7 +642,7 @@ entry:
     <vscale x 1 x i32> %1,
     <vscale x 1 x i32> %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x i32> %a
 }
@@ -642,8 +656,8 @@ define <vscale x 2 x i32> @intrinsic_vrgather_vv_nxv2i32_nxv2i32_nxv2i32(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv2i32_nxv2i32_nxv2i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i32> @llvm.riscv.vrgather.vv.nxv2i32.i32(
@@ -659,12 +673,13 @@ declare <vscale x 2 x i32> @llvm.riscv.vrgather.vv.mask.nxv2i32.i32(
   <vscale x 2 x i32>,
   <vscale x 2 x i32>,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x i32> @intrinsic_vrgather_mask_vv_nxv2i32_nxv2i32_nxv2i32(<vscale x 2 x i32> %0, <vscale x 2 x i32> %1, <vscale x 2 x i32> %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv2i32_nxv2i32_nxv2i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -673,7 +688,7 @@ entry:
     <vscale x 2 x i32> %1,
     <vscale x 2 x i32> %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x i32> %a
 }
@@ -687,8 +702,8 @@ define <vscale x 4 x i32> @intrinsic_vrgather_vv_nxv4i32_nxv4i32_nxv4i32(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv4i32_nxv4i32_nxv4i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
-; CHECK-NEXT:    vrgather.vv v26, v8, v10
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vv v12, v8, v10
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i32> @llvm.riscv.vrgather.vv.nxv4i32.i32(
@@ -704,12 +719,13 @@ declare <vscale x 4 x i32> @llvm.riscv.vrgather.vv.mask.nxv4i32.i32(
   <vscale x 4 x i32>,
   <vscale x 4 x i32>,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x i32> @intrinsic_vrgather_mask_vv_nxv4i32_nxv4i32_nxv4i32(<vscale x 4 x i32> %0, <vscale x 4 x i32> %1, <vscale x 4 x i32> %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv4i32_nxv4i32_nxv4i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v10, v12, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -718,7 +734,7 @@ entry:
     <vscale x 4 x i32> %1,
     <vscale x 4 x i32> %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x i32> %a
 }
@@ -732,8 +748,8 @@ define <vscale x 8 x i32> @intrinsic_vrgather_vv_nxv8i32_nxv8i32_nxv8i32(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv8i32_nxv8i32_nxv8i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
-; CHECK-NEXT:    vrgather.vv v28, v8, v12
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vv v16, v8, v12
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i32> @llvm.riscv.vrgather.vv.nxv8i32.i32(
@@ -749,12 +765,13 @@ declare <vscale x 8 x i32> @llvm.riscv.vrgather.vv.mask.nxv8i32.i32(
   <vscale x 8 x i32>,
   <vscale x 8 x i32>,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x i32> @intrinsic_vrgather_mask_vv_nxv8i32_nxv8i32_nxv8i32(<vscale x 8 x i32> %0, <vscale x 8 x i32> %1, <vscale x 8 x i32> %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv8i32_nxv8i32_nxv8i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v12, v16, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -763,7 +780,7 @@ entry:
     <vscale x 8 x i32> %1,
     <vscale x 8 x i32> %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x i32> %a
 }
@@ -778,7 +795,7 @@ define <vscale x 16 x i32> @intrinsic_vrgather_vv_nxv16i32_nxv16i32_nxv16i32(<vs
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v24, v8, v16
-; CHECK-NEXT:    vmv8r.v v8, v24
+; CHECK-NEXT:    vmv.v.v v8, v24
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i32> @llvm.riscv.vrgather.vv.nxv16i32.i32(
@@ -794,13 +811,14 @@ declare <vscale x 16 x i32> @llvm.riscv.vrgather.vv.mask.nxv16i32.i32(
   <vscale x 16 x i32>,
   <vscale x 16 x i32>,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x i32> @intrinsic_vrgather_mask_vv_nxv16i32_nxv16i32_nxv16i32(<vscale x 16 x i32> %0, <vscale x 16 x i32> %1, <vscale x 16 x i32> %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv16i32_nxv16i32_nxv16i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vl8re32.v v24, (a0)
-; CHECK-NEXT:    vsetvli zero, a1, e32, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v16, v24, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -809,7 +827,7 @@ entry:
     <vscale x 16 x i32> %1,
     <vscale x 16 x i32> %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x i32> %a
 }
@@ -823,8 +841,8 @@ define <vscale x 1 x half> @intrinsic_vrgather_vv_nxv1f16_nxv1f16_nxv1i16(<vscal
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv1f16_nxv1f16_nxv1i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x half> @llvm.riscv.vrgather.vv.nxv1f16.i32(
@@ -840,12 +858,13 @@ declare <vscale x 1 x half> @llvm.riscv.vrgather.vv.mask.nxv1f16.i32(
   <vscale x 1 x half>,
   <vscale x 1 x i16>,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x half> @intrinsic_vrgather_mask_vv_nxv1f16_nxv1f16_nxv1i16(<vscale x 1 x half> %0, <vscale x 1 x half> %1, <vscale x 1 x i16> %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv1f16_nxv1f16_nxv1i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -854,7 +873,7 @@ entry:
     <vscale x 1 x half> %1,
     <vscale x 1 x i16> %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x half> %a
 }
@@ -868,8 +887,8 @@ define <vscale x 2 x half> @intrinsic_vrgather_vv_nxv2f16_nxv2f16_nxv2i16(<vscal
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv2f16_nxv2f16_nxv2i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x half> @llvm.riscv.vrgather.vv.nxv2f16.i32(
@@ -885,12 +904,13 @@ declare <vscale x 2 x half> @llvm.riscv.vrgather.vv.mask.nxv2f16.i32(
   <vscale x 2 x half>,
   <vscale x 2 x i16>,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x half> @intrinsic_vrgather_mask_vv_nxv2f16_nxv2f16_nxv2i16(<vscale x 2 x half> %0, <vscale x 2 x half> %1, <vscale x 2 x i16> %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv2f16_nxv2f16_nxv2i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -899,7 +919,7 @@ entry:
     <vscale x 2 x half> %1,
     <vscale x 2 x i16> %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x half> %a
 }
@@ -913,8 +933,8 @@ define <vscale x 4 x half> @intrinsic_vrgather_vv_nxv4f16_nxv4f16_nxv4i16(<vscal
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv4f16_nxv4f16_nxv4i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x half> @llvm.riscv.vrgather.vv.nxv4f16.i32(
@@ -930,12 +950,13 @@ declare <vscale x 4 x half> @llvm.riscv.vrgather.vv.mask.nxv4f16.i32(
   <vscale x 4 x half>,
   <vscale x 4 x i16>,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x half> @intrinsic_vrgather_mask_vv_nxv4f16_nxv4f16_nxv4i16(<vscale x 4 x half> %0, <vscale x 4 x half> %1, <vscale x 4 x i16> %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv4f16_nxv4f16_nxv4i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -944,7 +965,7 @@ entry:
     <vscale x 4 x half> %1,
     <vscale x 4 x i16> %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x half> %a
 }
@@ -958,8 +979,8 @@ define <vscale x 8 x half> @intrinsic_vrgather_vv_nxv8f16_nxv8f16_nxv8i16(<vscal
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv8f16_nxv8f16_nxv8i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
-; CHECK-NEXT:    vrgather.vv v26, v8, v10
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vv v12, v8, v10
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x half> @llvm.riscv.vrgather.vv.nxv8f16.i32(
@@ -975,12 +996,13 @@ declare <vscale x 8 x half> @llvm.riscv.vrgather.vv.mask.nxv8f16.i32(
   <vscale x 8 x half>,
   <vscale x 8 x i16>,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x half> @intrinsic_vrgather_mask_vv_nxv8f16_nxv8f16_nxv8i16(<vscale x 8 x half> %0, <vscale x 8 x half> %1, <vscale x 8 x i16> %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv8f16_nxv8f16_nxv8i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v10, v12, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -989,7 +1011,7 @@ entry:
     <vscale x 8 x half> %1,
     <vscale x 8 x i16> %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x half> %a
 }
@@ -1003,8 +1025,8 @@ define <vscale x 16 x half> @intrinsic_vrgather_vv_nxv16f16_nxv16f16_nxv16i16(<v
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv16f16_nxv16f16_nxv16i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
-; CHECK-NEXT:    vrgather.vv v28, v8, v12
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vv v16, v8, v12
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x half> @llvm.riscv.vrgather.vv.nxv16f16.i32(
@@ -1020,12 +1042,13 @@ declare <vscale x 16 x half> @llvm.riscv.vrgather.vv.mask.nxv16f16.i32(
   <vscale x 16 x half>,
   <vscale x 16 x i16>,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x half> @intrinsic_vrgather_mask_vv_nxv16f16_nxv16f16_nxv16i16(<vscale x 16 x half> %0, <vscale x 16 x half> %1, <vscale x 16 x i16> %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv16f16_nxv16f16_nxv16i16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v12, v16, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1034,7 +1057,7 @@ entry:
     <vscale x 16 x half> %1,
     <vscale x 16 x i16> %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x half> %a
 }
@@ -1049,7 +1072,7 @@ define <vscale x 32 x half> @intrinsic_vrgather_vv_nxv32f16_nxv32f16_nxv32i16(<v
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v24, v8, v16
-; CHECK-NEXT:    vmv8r.v v8, v24
+; CHECK-NEXT:    vmv.v.v v8, v24
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x half> @llvm.riscv.vrgather.vv.nxv32f16.i32(
@@ -1065,13 +1088,14 @@ declare <vscale x 32 x half> @llvm.riscv.vrgather.vv.mask.nxv32f16.i32(
   <vscale x 32 x half>,
   <vscale x 32 x i16>,
   <vscale x 32 x i1>,
+  i32,
   i32);
 
 define <vscale x 32 x half> @intrinsic_vrgather_mask_vv_nxv32f16_nxv32f16_nxv32i16(<vscale x 32 x half> %0, <vscale x 32 x half> %1, <vscale x 32 x i16> %2, <vscale x 32 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv32f16_nxv32f16_nxv32i16:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vl8re16.v v24, (a0)
-; CHECK-NEXT:    vsetvli zero, a1, e16, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v16, v24, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1080,7 +1104,7 @@ entry:
     <vscale x 32 x half> %1,
     <vscale x 32 x i16> %2,
     <vscale x 32 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 32 x half> %a
 }
@@ -1094,8 +1118,8 @@ define <vscale x 1 x float> @intrinsic_vrgather_vv_nxv1f32_nxv1f32_nxv1i32(<vsca
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv1f32_nxv1f32_nxv1i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv1r.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x float> @llvm.riscv.vrgather.vv.nxv1f32.i32(
@@ -1111,12 +1135,13 @@ declare <vscale x 1 x float> @llvm.riscv.vrgather.vv.mask.nxv1f32.i32(
   <vscale x 1 x float>,
   <vscale x 1 x i32>,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x float> @intrinsic_vrgather_mask_vv_nxv1f32_nxv1f32_nxv1i32(<vscale x 1 x float> %0, <vscale x 1 x float> %1, <vscale x 1 x i32> %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv1f32_nxv1f32_nxv1i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1125,7 +1150,7 @@ entry:
     <vscale x 1 x float> %1,
     <vscale x 1 x i32> %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x float> %a
 }
@@ -1139,8 +1164,8 @@ define <vscale x 2 x float> @intrinsic_vrgather_vv_nxv2f32_nxv2f32_nxv2i32(<vsca
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv2f32_nxv2f32_nxv2i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x float> @llvm.riscv.vrgather.vv.nxv2f32.i32(
@@ -1156,12 +1181,13 @@ declare <vscale x 2 x float> @llvm.riscv.vrgather.vv.mask.nxv2f32.i32(
   <vscale x 2 x float>,
   <vscale x 2 x i32>,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x float> @intrinsic_vrgather_mask_vv_nxv2f32_nxv2f32_nxv2i32(<vscale x 2 x float> %0, <vscale x 2 x float> %1, <vscale x 2 x i32> %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv2f32_nxv2f32_nxv2i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1170,7 +1196,7 @@ entry:
     <vscale x 2 x float> %1,
     <vscale x 2 x i32> %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x float> %a
 }
@@ -1184,8 +1210,8 @@ define <vscale x 4 x float> @intrinsic_vrgather_vv_nxv4f32_nxv4f32_nxv4i32(<vsca
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv4f32_nxv4f32_nxv4i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
-; CHECK-NEXT:    vrgather.vv v26, v8, v10
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vv v12, v8, v10
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x float> @llvm.riscv.vrgather.vv.nxv4f32.i32(
@@ -1201,12 +1227,13 @@ declare <vscale x 4 x float> @llvm.riscv.vrgather.vv.mask.nxv4f32.i32(
   <vscale x 4 x float>,
   <vscale x 4 x i32>,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x float> @intrinsic_vrgather_mask_vv_nxv4f32_nxv4f32_nxv4i32(<vscale x 4 x float> %0, <vscale x 4 x float> %1, <vscale x 4 x i32> %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv4f32_nxv4f32_nxv4i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v10, v12, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1215,7 +1242,7 @@ entry:
     <vscale x 4 x float> %1,
     <vscale x 4 x i32> %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x float> %a
 }
@@ -1229,8 +1256,8 @@ define <vscale x 8 x float> @intrinsic_vrgather_vv_nxv8f32_nxv8f32_nxv8i32(<vsca
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv8f32_nxv8f32_nxv8i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
-; CHECK-NEXT:    vrgather.vv v28, v8, v12
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vv v16, v8, v12
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x float> @llvm.riscv.vrgather.vv.nxv8f32.i32(
@@ -1246,12 +1273,13 @@ declare <vscale x 8 x float> @llvm.riscv.vrgather.vv.mask.nxv8f32.i32(
   <vscale x 8 x float>,
   <vscale x 8 x i32>,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x float> @intrinsic_vrgather_mask_vv_nxv8f32_nxv8f32_nxv8i32(<vscale x 8 x float> %0, <vscale x 8 x float> %1, <vscale x 8 x i32> %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv8f32_nxv8f32_nxv8i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v12, v16, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1260,7 +1288,7 @@ entry:
     <vscale x 8 x float> %1,
     <vscale x 8 x i32> %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x float> %a
 }
@@ -1275,7 +1303,7 @@ define <vscale x 16 x float> @intrinsic_vrgather_vv_nxv16f32_nxv16f32_nxv16i32(<
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v24, v8, v16
-; CHECK-NEXT:    vmv8r.v v8, v24
+; CHECK-NEXT:    vmv.v.v v8, v24
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x float> @llvm.riscv.vrgather.vv.nxv16f32.i32(
@@ -1291,13 +1319,14 @@ declare <vscale x 16 x float> @llvm.riscv.vrgather.vv.mask.nxv16f32.i32(
   <vscale x 16 x float>,
   <vscale x 16 x i32>,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x float> @intrinsic_vrgather_mask_vv_nxv16f32_nxv16f32_nxv16i32(<vscale x 16 x float> %0, <vscale x 16 x float> %1, <vscale x 16 x i32> %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv16f32_nxv16f32_nxv16i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vl8re32.v v24, (a0)
-; CHECK-NEXT:    vsetvli zero, a1, e32, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v16, v24, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1306,7 +1335,7 @@ entry:
     <vscale x 16 x float> %1,
     <vscale x 16 x i32> %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x float> %a
 }
@@ -1320,8 +1349,8 @@ define <vscale x 1 x double> @intrinsic_vrgather_vv_nxv1f64_nxv1f64_nxv1i64(<vsc
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv1f64_nxv1f64_nxv1i64:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m1, ta, mu
-; CHECK-NEXT:    vrgather.vv v25, v8, v9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vv v10, v8, v9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x double> @llvm.riscv.vrgather.vv.nxv1f64.i32(
@@ -1337,12 +1366,13 @@ declare <vscale x 1 x double> @llvm.riscv.vrgather.vv.mask.nxv1f64.i32(
   <vscale x 1 x double>,
   <vscale x 1 x i64>,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x double> @intrinsic_vrgather_mask_vv_nxv1f64_nxv1f64_nxv1i64(<vscale x 1 x double> %0, <vscale x 1 x double> %1, <vscale x 1 x i64> %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv1f64_nxv1f64_nxv1i64:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v9, v10, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1351,7 +1381,7 @@ entry:
     <vscale x 1 x double> %1,
     <vscale x 1 x i64> %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x double> %a
 }
@@ -1365,8 +1395,8 @@ define <vscale x 2 x double> @intrinsic_vrgather_vv_nxv2f64_nxv2f64_nxv2i64(<vsc
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv2f64_nxv2f64_nxv2i64:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m2, ta, mu
-; CHECK-NEXT:    vrgather.vv v26, v8, v10
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vv v12, v8, v10
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x double> @llvm.riscv.vrgather.vv.nxv2f64.i32(
@@ -1382,12 +1412,13 @@ declare <vscale x 2 x double> @llvm.riscv.vrgather.vv.mask.nxv2f64.i32(
   <vscale x 2 x double>,
   <vscale x 2 x i64>,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x double> @intrinsic_vrgather_mask_vv_nxv2f64_nxv2f64_nxv2i64(<vscale x 2 x double> %0, <vscale x 2 x double> %1, <vscale x 2 x i64> %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv2f64_nxv2f64_nxv2i64:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v10, v12, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1396,7 +1427,7 @@ entry:
     <vscale x 2 x double> %1,
     <vscale x 2 x i64> %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x double> %a
 }
@@ -1410,8 +1441,8 @@ define <vscale x 4 x double> @intrinsic_vrgather_vv_nxv4f64_nxv4f64_nxv4i64(<vsc
 ; CHECK-LABEL: intrinsic_vrgather_vv_nxv4f64_nxv4f64_nxv4i64:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m4, ta, mu
-; CHECK-NEXT:    vrgather.vv v28, v8, v12
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vv v16, v8, v12
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x double> @llvm.riscv.vrgather.vv.nxv4f64.i32(
@@ -1427,12 +1458,13 @@ declare <vscale x 4 x double> @llvm.riscv.vrgather.vv.mask.nxv4f64.i32(
   <vscale x 4 x double>,
   <vscale x 4 x i64>,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x double> @intrinsic_vrgather_mask_vv_nxv4f64_nxv4f64_nxv4i64(<vscale x 4 x double> %0, <vscale x 4 x double> %1, <vscale x 4 x i64> %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv4f64_nxv4f64_nxv4i64:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v12, v16, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1441,7 +1473,7 @@ entry:
     <vscale x 4 x double> %1,
     <vscale x 4 x i64> %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x double> %a
 }
@@ -1456,7 +1488,7 @@ define <vscale x 8 x double> @intrinsic_vrgather_vv_nxv8f64_nxv8f64_nxv8i64(<vsc
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v24, v8, v16
-; CHECK-NEXT:    vmv8r.v v8, v24
+; CHECK-NEXT:    vmv.v.v v8, v24
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x double> @llvm.riscv.vrgather.vv.nxv8f64.i32(
@@ -1472,13 +1504,14 @@ declare <vscale x 8 x double> @llvm.riscv.vrgather.vv.mask.nxv8f64.i32(
   <vscale x 8 x double>,
   <vscale x 8 x i64>,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x double> @intrinsic_vrgather_mask_vv_nxv8f64_nxv8f64_nxv8i64(<vscale x 8 x double> %0, <vscale x 8 x double> %1, <vscale x 8 x i64> %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vv_nxv8f64_nxv8f64_nxv8i64:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vl8re64.v v24, (a0)
-; CHECK-NEXT:    vsetvli zero, a1, e64, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e64, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vv v8, v16, v24, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1487,7 +1520,7 @@ entry:
     <vscale x 8 x double> %1,
     <vscale x 8 x i64> %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x double> %a
 }
@@ -1501,8 +1534,8 @@ define <vscale x 1 x i8> @intrinsic_vrgather_vx_nxv1i8_nxv1i8_i32(<vscale x 1 x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv1i8_nxv1i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, mf8, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i8> @llvm.riscv.vrgather.vx.nxv1i8.i32(
@@ -1518,12 +1551,13 @@ declare <vscale x 1 x i8> @llvm.riscv.vrgather.vx.mask.nxv1i8.i32(
   <vscale x 1 x i8>,
   i32,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x i8> @intrinsic_vrgather_mask_vx_nxv1i8_nxv1i8_i32(<vscale x 1 x i8> %0, <vscale x 1 x i8> %1, i32 %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv1i8_nxv1i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, mf8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, mf8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1532,7 +1566,7 @@ entry:
     <vscale x 1 x i8> %1,
     i32 %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x i8> %a
 }
@@ -1546,8 +1580,8 @@ define <vscale x 2 x i8> @intrinsic_vrgather_vx_nxv2i8_nxv2i8_i32(<vscale x 2 x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv2i8_nxv2i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i8> @llvm.riscv.vrgather.vx.nxv2i8.i32(
@@ -1563,12 +1597,13 @@ declare <vscale x 2 x i8> @llvm.riscv.vrgather.vx.mask.nxv2i8.i32(
   <vscale x 2 x i8>,
   i32,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x i8> @intrinsic_vrgather_mask_vx_nxv2i8_nxv2i8_i32(<vscale x 2 x i8> %0, <vscale x 2 x i8> %1, i32 %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv2i8_nxv2i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1577,7 +1612,7 @@ entry:
     <vscale x 2 x i8> %1,
     i32 %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x i8> %a
 }
@@ -1591,8 +1626,8 @@ define <vscale x 4 x i8> @intrinsic_vrgather_vx_nxv4i8_nxv4i8_i32(<vscale x 4 x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv4i8_nxv4i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i8> @llvm.riscv.vrgather.vx.nxv4i8.i32(
@@ -1608,12 +1643,13 @@ declare <vscale x 4 x i8> @llvm.riscv.vrgather.vx.mask.nxv4i8.i32(
   <vscale x 4 x i8>,
   i32,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x i8> @intrinsic_vrgather_mask_vx_nxv4i8_nxv4i8_i32(<vscale x 4 x i8> %0, <vscale x 4 x i8> %1, i32 %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv4i8_nxv4i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1622,7 +1658,7 @@ entry:
     <vscale x 4 x i8> %1,
     i32 %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x i8> %a
 }
@@ -1636,8 +1672,8 @@ define <vscale x 8 x i8> @intrinsic_vrgather_vx_nxv8i8_nxv8i8_i32(<vscale x 8 x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv8i8_nxv8i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, m1, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i8> @llvm.riscv.vrgather.vx.nxv8i8.i32(
@@ -1653,12 +1689,13 @@ declare <vscale x 8 x i8> @llvm.riscv.vrgather.vx.mask.nxv8i8.i32(
   <vscale x 8 x i8>,
   i32,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x i8> @intrinsic_vrgather_mask_vx_nxv8i8_nxv8i8_i32(<vscale x 8 x i8> %0, <vscale x 8 x i8> %1, i32 %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv8i8_nxv8i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1667,7 +1704,7 @@ entry:
     <vscale x 8 x i8> %1,
     i32 %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x i8> %a
 }
@@ -1681,8 +1718,8 @@ define <vscale x 16 x i8> @intrinsic_vrgather_vx_nxv16i8_nxv16i8_i32(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv16i8_nxv16i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, m2, ta, mu
-; CHECK-NEXT:    vrgather.vx v26, v8, a0
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vx v10, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i8> @llvm.riscv.vrgather.vx.nxv16i8.i32(
@@ -1698,12 +1735,13 @@ declare <vscale x 16 x i8> @llvm.riscv.vrgather.vx.mask.nxv16i8.i32(
   <vscale x 16 x i8>,
   i32,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x i8> @intrinsic_vrgather_mask_vx_nxv16i8_nxv16i8_i32(<vscale x 16 x i8> %0, <vscale x 16 x i8> %1, i32 %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv16i8_nxv16i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v10, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1712,7 +1750,7 @@ entry:
     <vscale x 16 x i8> %1,
     i32 %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x i8> %a
 }
@@ -1726,8 +1764,8 @@ define <vscale x 32 x i8> @intrinsic_vrgather_vx_nxv32i8_nxv32i8_i32(<vscale x 3
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv32i8_nxv32i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, m4, ta, mu
-; CHECK-NEXT:    vrgather.vx v28, v8, a0
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vx v12, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x i8> @llvm.riscv.vrgather.vx.nxv32i8.i32(
@@ -1743,12 +1781,13 @@ declare <vscale x 32 x i8> @llvm.riscv.vrgather.vx.mask.nxv32i8.i32(
   <vscale x 32 x i8>,
   i32,
   <vscale x 32 x i1>,
+  i32,
   i32);
 
 define <vscale x 32 x i8> @intrinsic_vrgather_mask_vx_nxv32i8_nxv32i8_i32(<vscale x 32 x i8> %0, <vscale x 32 x i8> %1, i32 %2, <vscale x 32 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv32i8_nxv32i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v12, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1757,7 +1796,7 @@ entry:
     <vscale x 32 x i8> %1,
     i32 %2,
     <vscale x 32 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 32 x i8> %a
 }
@@ -1772,7 +1811,7 @@ define <vscale x 64 x i8> @intrinsic_vrgather_vx_nxv64i8_nxv64i8_i32(<vscale x 6
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e8, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v16, v8, a0
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 64 x i8> @llvm.riscv.vrgather.vx.nxv64i8.i32(
@@ -1788,12 +1827,13 @@ declare <vscale x 64 x i8> @llvm.riscv.vrgather.vx.mask.nxv64i8.i32(
   <vscale x 64 x i8>,
   i32,
   <vscale x 64 x i1>,
+  i32,
   i32);
 
 define <vscale x 64 x i8> @intrinsic_vrgather_mask_vx_nxv64i8_nxv64i8_i32(<vscale x 64 x i8> %0, <vscale x 64 x i8> %1, i32 %2, <vscale x 64 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv64i8_nxv64i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e8, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e8, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v16, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1802,7 +1842,7 @@ entry:
     <vscale x 64 x i8> %1,
     i32 %2,
     <vscale x 64 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 64 x i8> %a
 }
@@ -1816,8 +1856,8 @@ define <vscale x 1 x i16> @intrinsic_vrgather_vx_nxv1i16_nxv1i16_i32(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv1i16_nxv1i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i16> @llvm.riscv.vrgather.vx.nxv1i16.i32(
@@ -1833,12 +1873,13 @@ declare <vscale x 1 x i16> @llvm.riscv.vrgather.vx.mask.nxv1i16.i32(
   <vscale x 1 x i16>,
   i32,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x i16> @intrinsic_vrgather_mask_vx_nxv1i16_nxv1i16_i32(<vscale x 1 x i16> %0, <vscale x 1 x i16> %1, i32 %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv1i16_nxv1i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1847,7 +1888,7 @@ entry:
     <vscale x 1 x i16> %1,
     i32 %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x i16> %a
 }
@@ -1861,8 +1902,8 @@ define <vscale x 2 x i16> @intrinsic_vrgather_vx_nxv2i16_nxv2i16_i32(<vscale x 2
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv2i16_nxv2i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i16> @llvm.riscv.vrgather.vx.nxv2i16.i32(
@@ -1878,12 +1919,13 @@ declare <vscale x 2 x i16> @llvm.riscv.vrgather.vx.mask.nxv2i16.i32(
   <vscale x 2 x i16>,
   i32,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x i16> @intrinsic_vrgather_mask_vx_nxv2i16_nxv2i16_i32(<vscale x 2 x i16> %0, <vscale x 2 x i16> %1, i32 %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv2i16_nxv2i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1892,7 +1934,7 @@ entry:
     <vscale x 2 x i16> %1,
     i32 %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x i16> %a
 }
@@ -1906,8 +1948,8 @@ define <vscale x 4 x i16> @intrinsic_vrgather_vx_nxv4i16_nxv4i16_i32(<vscale x 4
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv4i16_nxv4i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m1, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i16> @llvm.riscv.vrgather.vx.nxv4i16.i32(
@@ -1923,12 +1965,13 @@ declare <vscale x 4 x i16> @llvm.riscv.vrgather.vx.mask.nxv4i16.i32(
   <vscale x 4 x i16>,
   i32,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x i16> @intrinsic_vrgather_mask_vx_nxv4i16_nxv4i16_i32(<vscale x 4 x i16> %0, <vscale x 4 x i16> %1, i32 %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv4i16_nxv4i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1937,7 +1980,7 @@ entry:
     <vscale x 4 x i16> %1,
     i32 %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x i16> %a
 }
@@ -1951,8 +1994,8 @@ define <vscale x 8 x i16> @intrinsic_vrgather_vx_nxv8i16_nxv8i16_i32(<vscale x 8
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv8i16_nxv8i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m2, ta, mu
-; CHECK-NEXT:    vrgather.vx v26, v8, a0
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vx v10, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i16> @llvm.riscv.vrgather.vx.nxv8i16.i32(
@@ -1968,12 +2011,13 @@ declare <vscale x 8 x i16> @llvm.riscv.vrgather.vx.mask.nxv8i16.i32(
   <vscale x 8 x i16>,
   i32,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x i16> @intrinsic_vrgather_mask_vx_nxv8i16_nxv8i16_i32(<vscale x 8 x i16> %0, <vscale x 8 x i16> %1, i32 %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv8i16_nxv8i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v10, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -1982,7 +2026,7 @@ entry:
     <vscale x 8 x i16> %1,
     i32 %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x i16> %a
 }
@@ -1996,8 +2040,8 @@ define <vscale x 16 x i16> @intrinsic_vrgather_vx_nxv16i16_nxv16i16_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv16i16_nxv16i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m4, ta, mu
-; CHECK-NEXT:    vrgather.vx v28, v8, a0
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vx v12, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i16> @llvm.riscv.vrgather.vx.nxv16i16.i32(
@@ -2013,12 +2057,13 @@ declare <vscale x 16 x i16> @llvm.riscv.vrgather.vx.mask.nxv16i16.i32(
   <vscale x 16 x i16>,
   i32,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x i16> @intrinsic_vrgather_mask_vx_nxv16i16_nxv16i16_i32(<vscale x 16 x i16> %0, <vscale x 16 x i16> %1, i32 %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv16i16_nxv16i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v12, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2027,7 +2072,7 @@ entry:
     <vscale x 16 x i16> %1,
     i32 %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x i16> %a
 }
@@ -2042,7 +2087,7 @@ define <vscale x 32 x i16> @intrinsic_vrgather_vx_nxv32i16_nxv32i16_i32(<vscale 
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v16, v8, a0
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x i16> @llvm.riscv.vrgather.vx.nxv32i16.i32(
@@ -2058,12 +2103,13 @@ declare <vscale x 32 x i16> @llvm.riscv.vrgather.vx.mask.nxv32i16.i32(
   <vscale x 32 x i16>,
   i32,
   <vscale x 32 x i1>,
+  i32,
   i32);
 
 define <vscale x 32 x i16> @intrinsic_vrgather_mask_vx_nxv32i16_nxv32i16_i32(<vscale x 32 x i16> %0, <vscale x 32 x i16> %1, i32 %2, <vscale x 32 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv32i16_nxv32i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v16, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2072,7 +2118,7 @@ entry:
     <vscale x 32 x i16> %1,
     i32 %2,
     <vscale x 32 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 32 x i16> %a
 }
@@ -2086,8 +2132,8 @@ define <vscale x 1 x i32> @intrinsic_vrgather_vx_nxv1i32_nxv1i32_i32(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv1i32_nxv1i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i32> @llvm.riscv.vrgather.vx.nxv1i32.i32(
@@ -2103,12 +2149,13 @@ declare <vscale x 1 x i32> @llvm.riscv.vrgather.vx.mask.nxv1i32.i32(
   <vscale x 1 x i32>,
   i32,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x i32> @intrinsic_vrgather_mask_vx_nxv1i32_nxv1i32_i32(<vscale x 1 x i32> %0, <vscale x 1 x i32> %1, i32 %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv1i32_nxv1i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2117,7 +2164,7 @@ entry:
     <vscale x 1 x i32> %1,
     i32 %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x i32> %a
 }
@@ -2131,8 +2178,8 @@ define <vscale x 2 x i32> @intrinsic_vrgather_vx_nxv2i32_nxv2i32_i32(<vscale x 2
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv2i32_nxv2i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m1, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i32> @llvm.riscv.vrgather.vx.nxv2i32.i32(
@@ -2148,12 +2195,13 @@ declare <vscale x 2 x i32> @llvm.riscv.vrgather.vx.mask.nxv2i32.i32(
   <vscale x 2 x i32>,
   i32,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x i32> @intrinsic_vrgather_mask_vx_nxv2i32_nxv2i32_i32(<vscale x 2 x i32> %0, <vscale x 2 x i32> %1, i32 %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv2i32_nxv2i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2162,7 +2210,7 @@ entry:
     <vscale x 2 x i32> %1,
     i32 %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x i32> %a
 }
@@ -2176,8 +2224,8 @@ define <vscale x 4 x i32> @intrinsic_vrgather_vx_nxv4i32_nxv4i32_i32(<vscale x 4
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv4i32_nxv4i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m2, ta, mu
-; CHECK-NEXT:    vrgather.vx v26, v8, a0
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vx v10, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i32> @llvm.riscv.vrgather.vx.nxv4i32.i32(
@@ -2193,12 +2241,13 @@ declare <vscale x 4 x i32> @llvm.riscv.vrgather.vx.mask.nxv4i32.i32(
   <vscale x 4 x i32>,
   i32,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x i32> @intrinsic_vrgather_mask_vx_nxv4i32_nxv4i32_i32(<vscale x 4 x i32> %0, <vscale x 4 x i32> %1, i32 %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv4i32_nxv4i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v10, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2207,7 +2256,7 @@ entry:
     <vscale x 4 x i32> %1,
     i32 %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x i32> %a
 }
@@ -2221,8 +2270,8 @@ define <vscale x 8 x i32> @intrinsic_vrgather_vx_nxv8i32_nxv8i32_i32(<vscale x 8
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv8i32_nxv8i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m4, ta, mu
-; CHECK-NEXT:    vrgather.vx v28, v8, a0
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vx v12, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i32> @llvm.riscv.vrgather.vx.nxv8i32.i32(
@@ -2238,12 +2287,13 @@ declare <vscale x 8 x i32> @llvm.riscv.vrgather.vx.mask.nxv8i32.i32(
   <vscale x 8 x i32>,
   i32,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x i32> @intrinsic_vrgather_mask_vx_nxv8i32_nxv8i32_i32(<vscale x 8 x i32> %0, <vscale x 8 x i32> %1, i32 %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv8i32_nxv8i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v12, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2252,7 +2302,7 @@ entry:
     <vscale x 8 x i32> %1,
     i32 %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x i32> %a
 }
@@ -2267,7 +2317,7 @@ define <vscale x 16 x i32> @intrinsic_vrgather_vx_nxv16i32_nxv16i32_i32(<vscale 
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v16, v8, a0
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i32> @llvm.riscv.vrgather.vx.nxv16i32.i32(
@@ -2283,12 +2333,13 @@ declare <vscale x 16 x i32> @llvm.riscv.vrgather.vx.mask.nxv16i32.i32(
   <vscale x 16 x i32>,
   i32,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x i32> @intrinsic_vrgather_mask_vx_nxv16i32_nxv16i32_i32(<vscale x 16 x i32> %0, <vscale x 16 x i32> %1, i32 %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv16i32_nxv16i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v16, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2297,7 +2348,7 @@ entry:
     <vscale x 16 x i32> %1,
     i32 %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x i32> %a
 }
@@ -2311,8 +2362,8 @@ define <vscale x 1 x half> @intrinsic_vrgather_vx_nxv1f16_nxv1f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv1f16_nxv1f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x half> @llvm.riscv.vrgather.vx.nxv1f16.i32(
@@ -2328,12 +2379,13 @@ declare <vscale x 1 x half> @llvm.riscv.vrgather.vx.mask.nxv1f16.i32(
   <vscale x 1 x half>,
   i32,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x half> @intrinsic_vrgather_mask_vx_nxv1f16_nxv1f16_i32(<vscale x 1 x half> %0, <vscale x 1 x half> %1, i32 %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv1f16_nxv1f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2342,7 +2394,7 @@ entry:
     <vscale x 1 x half> %1,
     i32 %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x half> %a
 }
@@ -2356,8 +2408,8 @@ define <vscale x 2 x half> @intrinsic_vrgather_vx_nxv2f16_nxv2f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv2f16_nxv2f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x half> @llvm.riscv.vrgather.vx.nxv2f16.i32(
@@ -2373,12 +2425,13 @@ declare <vscale x 2 x half> @llvm.riscv.vrgather.vx.mask.nxv2f16.i32(
   <vscale x 2 x half>,
   i32,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x half> @intrinsic_vrgather_mask_vx_nxv2f16_nxv2f16_i32(<vscale x 2 x half> %0, <vscale x 2 x half> %1, i32 %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv2f16_nxv2f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2387,7 +2440,7 @@ entry:
     <vscale x 2 x half> %1,
     i32 %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x half> %a
 }
@@ -2401,8 +2454,8 @@ define <vscale x 4 x half> @intrinsic_vrgather_vx_nxv4f16_nxv4f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv4f16_nxv4f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m1, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x half> @llvm.riscv.vrgather.vx.nxv4f16.i32(
@@ -2418,12 +2471,13 @@ declare <vscale x 4 x half> @llvm.riscv.vrgather.vx.mask.nxv4f16.i32(
   <vscale x 4 x half>,
   i32,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x half> @intrinsic_vrgather_mask_vx_nxv4f16_nxv4f16_i32(<vscale x 4 x half> %0, <vscale x 4 x half> %1, i32 %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv4f16_nxv4f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2432,7 +2486,7 @@ entry:
     <vscale x 4 x half> %1,
     i32 %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x half> %a
 }
@@ -2446,8 +2500,8 @@ define <vscale x 8 x half> @intrinsic_vrgather_vx_nxv8f16_nxv8f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv8f16_nxv8f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m2, ta, mu
-; CHECK-NEXT:    vrgather.vx v26, v8, a0
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vx v10, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x half> @llvm.riscv.vrgather.vx.nxv8f16.i32(
@@ -2463,12 +2517,13 @@ declare <vscale x 8 x half> @llvm.riscv.vrgather.vx.mask.nxv8f16.i32(
   <vscale x 8 x half>,
   i32,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x half> @intrinsic_vrgather_mask_vx_nxv8f16_nxv8f16_i32(<vscale x 8 x half> %0, <vscale x 8 x half> %1, i32 %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv8f16_nxv8f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v10, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2477,7 +2532,7 @@ entry:
     <vscale x 8 x half> %1,
     i32 %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x half> %a
 }
@@ -2491,8 +2546,8 @@ define <vscale x 16 x half> @intrinsic_vrgather_vx_nxv16f16_nxv16f16_i32(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv16f16_nxv16f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m4, ta, mu
-; CHECK-NEXT:    vrgather.vx v28, v8, a0
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vx v12, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x half> @llvm.riscv.vrgather.vx.nxv16f16.i32(
@@ -2508,12 +2563,13 @@ declare <vscale x 16 x half> @llvm.riscv.vrgather.vx.mask.nxv16f16.i32(
   <vscale x 16 x half>,
   i32,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x half> @intrinsic_vrgather_mask_vx_nxv16f16_nxv16f16_i32(<vscale x 16 x half> %0, <vscale x 16 x half> %1, i32 %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv16f16_nxv16f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v12, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2522,7 +2578,7 @@ entry:
     <vscale x 16 x half> %1,
     i32 %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x half> %a
 }
@@ -2537,7 +2593,7 @@ define <vscale x 32 x half> @intrinsic_vrgather_vx_nxv32f16_nxv32f16_i32(<vscale
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v16, v8, a0
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x half> @llvm.riscv.vrgather.vx.nxv32f16.i32(
@@ -2553,12 +2609,13 @@ declare <vscale x 32 x half> @llvm.riscv.vrgather.vx.mask.nxv32f16.i32(
   <vscale x 32 x half>,
   i32,
   <vscale x 32 x i1>,
+  i32,
   i32);
 
 define <vscale x 32 x half> @intrinsic_vrgather_mask_vx_nxv32f16_nxv32f16_i32(<vscale x 32 x half> %0, <vscale x 32 x half> %1, i32 %2, <vscale x 32 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv32f16_nxv32f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e16, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v16, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2567,7 +2624,7 @@ entry:
     <vscale x 32 x half> %1,
     i32 %2,
     <vscale x 32 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 32 x half> %a
 }
@@ -2581,8 +2638,8 @@ define <vscale x 1 x float> @intrinsic_vrgather_vx_nxv1f32_nxv1f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv1f32_nxv1f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x float> @llvm.riscv.vrgather.vx.nxv1f32.i32(
@@ -2598,12 +2655,13 @@ declare <vscale x 1 x float> @llvm.riscv.vrgather.vx.mask.nxv1f32.i32(
   <vscale x 1 x float>,
   i32,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x float> @intrinsic_vrgather_mask_vx_nxv1f32_nxv1f32_i32(<vscale x 1 x float> %0, <vscale x 1 x float> %1, i32 %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv1f32_nxv1f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2612,7 +2670,7 @@ entry:
     <vscale x 1 x float> %1,
     i32 %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x float> %a
 }
@@ -2626,8 +2684,8 @@ define <vscale x 2 x float> @intrinsic_vrgather_vx_nxv2f32_nxv2f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv2f32_nxv2f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m1, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x float> @llvm.riscv.vrgather.vx.nxv2f32.i32(
@@ -2643,12 +2701,13 @@ declare <vscale x 2 x float> @llvm.riscv.vrgather.vx.mask.nxv2f32.i32(
   <vscale x 2 x float>,
   i32,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x float> @intrinsic_vrgather_mask_vx_nxv2f32_nxv2f32_i32(<vscale x 2 x float> %0, <vscale x 2 x float> %1, i32 %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv2f32_nxv2f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2657,7 +2716,7 @@ entry:
     <vscale x 2 x float> %1,
     i32 %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x float> %a
 }
@@ -2671,8 +2730,8 @@ define <vscale x 4 x float> @intrinsic_vrgather_vx_nxv4f32_nxv4f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv4f32_nxv4f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m2, ta, mu
-; CHECK-NEXT:    vrgather.vx v26, v8, a0
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vx v10, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x float> @llvm.riscv.vrgather.vx.nxv4f32.i32(
@@ -2688,12 +2747,13 @@ declare <vscale x 4 x float> @llvm.riscv.vrgather.vx.mask.nxv4f32.i32(
   <vscale x 4 x float>,
   i32,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x float> @intrinsic_vrgather_mask_vx_nxv4f32_nxv4f32_i32(<vscale x 4 x float> %0, <vscale x 4 x float> %1, i32 %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv4f32_nxv4f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v10, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2702,7 +2762,7 @@ entry:
     <vscale x 4 x float> %1,
     i32 %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x float> %a
 }
@@ -2716,8 +2776,8 @@ define <vscale x 8 x float> @intrinsic_vrgather_vx_nxv8f32_nxv8f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv8f32_nxv8f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m4, ta, mu
-; CHECK-NEXT:    vrgather.vx v28, v8, a0
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vx v12, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x float> @llvm.riscv.vrgather.vx.nxv8f32.i32(
@@ -2733,12 +2793,13 @@ declare <vscale x 8 x float> @llvm.riscv.vrgather.vx.mask.nxv8f32.i32(
   <vscale x 8 x float>,
   i32,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x float> @intrinsic_vrgather_mask_vx_nxv8f32_nxv8f32_i32(<vscale x 8 x float> %0, <vscale x 8 x float> %1, i32 %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv8f32_nxv8f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v12, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2747,7 +2808,7 @@ entry:
     <vscale x 8 x float> %1,
     i32 %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x float> %a
 }
@@ -2762,7 +2823,7 @@ define <vscale x 16 x float> @intrinsic_vrgather_vx_nxv16f32_nxv16f32_i32(<vscal
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v16, v8, a0
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x float> @llvm.riscv.vrgather.vx.nxv16f32.i32(
@@ -2778,12 +2839,13 @@ declare <vscale x 16 x float> @llvm.riscv.vrgather.vx.mask.nxv16f32.i32(
   <vscale x 16 x float>,
   i32,
   <vscale x 16 x i1>,
+  i32,
   i32);
 
 define <vscale x 16 x float> @intrinsic_vrgather_mask_vx_nxv16f32_nxv16f32_i32(<vscale x 16 x float> %0, <vscale x 16 x float> %1, i32 %2, <vscale x 16 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv16f32_nxv16f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e32, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v16, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2792,7 +2854,7 @@ entry:
     <vscale x 16 x float> %1,
     i32 %2,
     <vscale x 16 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 16 x float> %a
 }
@@ -2806,8 +2868,8 @@ define <vscale x 1 x double> @intrinsic_vrgather_vx_nxv1f64_nxv1f64_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv1f64_nxv1f64_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e64, m1, ta, mu
-; CHECK-NEXT:    vrgather.vx v25, v8, a0
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vx v9, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x double> @llvm.riscv.vrgather.vx.nxv1f64.i32(
@@ -2823,12 +2885,13 @@ declare <vscale x 1 x double> @llvm.riscv.vrgather.vx.mask.nxv1f64.i32(
   <vscale x 1 x double>,
   i32,
   <vscale x 1 x i1>,
+  i32,
   i32);
 
 define <vscale x 1 x double> @intrinsic_vrgather_mask_vx_nxv1f64_nxv1f64_i32(<vscale x 1 x double> %0, <vscale x 1 x double> %1, i32 %2, <vscale x 1 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv1f64_nxv1f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e64, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e64, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v9, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2837,7 +2900,7 @@ entry:
     <vscale x 1 x double> %1,
     i32 %2,
     <vscale x 1 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 1 x double> %a
 }
@@ -2851,8 +2914,8 @@ define <vscale x 2 x double> @intrinsic_vrgather_vx_nxv2f64_nxv2f64_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv2f64_nxv2f64_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e64, m2, ta, mu
-; CHECK-NEXT:    vrgather.vx v26, v8, a0
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vx v10, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x double> @llvm.riscv.vrgather.vx.nxv2f64.i32(
@@ -2868,12 +2931,13 @@ declare <vscale x 2 x double> @llvm.riscv.vrgather.vx.mask.nxv2f64.i32(
   <vscale x 2 x double>,
   i32,
   <vscale x 2 x i1>,
+  i32,
   i32);
 
 define <vscale x 2 x double> @intrinsic_vrgather_mask_vx_nxv2f64_nxv2f64_i32(<vscale x 2 x double> %0, <vscale x 2 x double> %1, i32 %2, <vscale x 2 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv2f64_nxv2f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e64, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e64, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v10, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2882,7 +2946,7 @@ entry:
     <vscale x 2 x double> %1,
     i32 %2,
     <vscale x 2 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 2 x double> %a
 }
@@ -2896,8 +2960,8 @@ define <vscale x 4 x double> @intrinsic_vrgather_vx_nxv4f64_nxv4f64_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vx_nxv4f64_nxv4f64_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e64, m4, ta, mu
-; CHECK-NEXT:    vrgather.vx v28, v8, a0
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vx v12, v8, a0
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x double> @llvm.riscv.vrgather.vx.nxv4f64.i32(
@@ -2913,12 +2977,13 @@ declare <vscale x 4 x double> @llvm.riscv.vrgather.vx.mask.nxv4f64.i32(
   <vscale x 4 x double>,
   i32,
   <vscale x 4 x i1>,
+  i32,
   i32);
 
 define <vscale x 4 x double> @intrinsic_vrgather_mask_vx_nxv4f64_nxv4f64_i32(<vscale x 4 x double> %0, <vscale x 4 x double> %1, i32 %2, <vscale x 4 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv4f64_nxv4f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e64, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e64, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v12, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2927,7 +2992,7 @@ entry:
     <vscale x 4 x double> %1,
     i32 %2,
     <vscale x 4 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 4 x double> %a
 }
@@ -2942,7 +3007,7 @@ define <vscale x 8 x double> @intrinsic_vrgather_vx_nxv8f64_nxv8f64_i32(<vscale 
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a1, e64, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v16, v8, a0
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x double> @llvm.riscv.vrgather.vx.nxv8f64.i32(
@@ -2958,12 +3023,13 @@ declare <vscale x 8 x double> @llvm.riscv.vrgather.vx.mask.nxv8f64.i32(
   <vscale x 8 x double>,
   i32,
   <vscale x 8 x i1>,
+  i32,
   i32);
 
 define <vscale x 8 x double> @intrinsic_vrgather_mask_vx_nxv8f64_nxv8f64_i32(<vscale x 8 x double> %0, <vscale x 8 x double> %1, i32 %2, <vscale x 8 x i1> %3, i32 %4) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vx_nxv8f64_nxv8f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a1, e64, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a1, e64, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vx v8, v16, a0, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -2972,7 +3038,7 @@ entry:
     <vscale x 8 x double> %1,
     i32 %2,
     <vscale x 8 x i1> %3,
-    i32 %4)
+    i32 %4, i32 1)
 
   ret <vscale x 8 x double> %a
 }
@@ -2981,8 +3047,8 @@ define <vscale x 1 x i8> @intrinsic_vrgather_vi_nxv1i8_nxv1i8_i32(<vscale x 1 x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv1i8_nxv1i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, mf8, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i8> @llvm.riscv.vrgather.vx.nxv1i8.i32(
@@ -2996,7 +3062,7 @@ entry:
 define <vscale x 1 x i8> @intrinsic_vrgather_mask_vi_nxv1i8_nxv1i8_i32(<vscale x 1 x i8> %0, <vscale x 1 x i8> %1, <vscale x 1 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv1i8_nxv1i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, mf8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, mf8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3005,7 +3071,7 @@ entry:
     <vscale x 1 x i8> %1,
     i32 9,
     <vscale x 1 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 1 x i8> %a
 }
@@ -3014,8 +3080,8 @@ define <vscale x 2 x i8> @intrinsic_vrgather_vi_nxv2i8_nxv2i8_i32(<vscale x 2 x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv2i8_nxv2i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i8> @llvm.riscv.vrgather.vx.nxv2i8.i32(
@@ -3029,7 +3095,7 @@ entry:
 define <vscale x 2 x i8> @intrinsic_vrgather_mask_vi_nxv2i8_nxv2i8_i32(<vscale x 2 x i8> %0, <vscale x 2 x i8> %1, <vscale x 2 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv2i8_nxv2i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3038,7 +3104,7 @@ entry:
     <vscale x 2 x i8> %1,
     i32 9,
     <vscale x 2 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 2 x i8> %a
 }
@@ -3047,8 +3113,8 @@ define <vscale x 4 x i8> @intrinsic_vrgather_vi_nxv4i8_nxv4i8_i32(<vscale x 4 x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv4i8_nxv4i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i8> @llvm.riscv.vrgather.vx.nxv4i8.i32(
@@ -3062,7 +3128,7 @@ entry:
 define <vscale x 4 x i8> @intrinsic_vrgather_mask_vi_nxv4i8_nxv4i8_i32(<vscale x 4 x i8> %0, <vscale x 4 x i8> %1, <vscale x 4 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv4i8_nxv4i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3071,7 +3137,7 @@ entry:
     <vscale x 4 x i8> %1,
     i32 9,
     <vscale x 4 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 4 x i8> %a
 }
@@ -3080,8 +3146,8 @@ define <vscale x 8 x i8> @intrinsic_vrgather_vi_nxv8i8_nxv8i8_i32(<vscale x 8 x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv8i8_nxv8i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m1, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i8> @llvm.riscv.vrgather.vx.nxv8i8.i32(
@@ -3095,7 +3161,7 @@ entry:
 define <vscale x 8 x i8> @intrinsic_vrgather_mask_vi_nxv8i8_nxv8i8_i32(<vscale x 8 x i8> %0, <vscale x 8 x i8> %1, <vscale x 8 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv8i8_nxv8i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3104,7 +3170,7 @@ entry:
     <vscale x 8 x i8> %1,
     i32 9,
     <vscale x 8 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 8 x i8> %a
 }
@@ -3113,8 +3179,8 @@ define <vscale x 16 x i8> @intrinsic_vrgather_vi_nxv16i8_nxv16i8_i32(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv16i8_nxv16i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m2, ta, mu
-; CHECK-NEXT:    vrgather.vi v26, v8, 9
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vi v10, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i8> @llvm.riscv.vrgather.vx.nxv16i8.i32(
@@ -3128,7 +3194,7 @@ entry:
 define <vscale x 16 x i8> @intrinsic_vrgather_mask_vi_nxv16i8_nxv16i8_i32(<vscale x 16 x i8> %0, <vscale x 16 x i8> %1, <vscale x 16 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv16i8_nxv16i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v10, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3137,7 +3203,7 @@ entry:
     <vscale x 16 x i8> %1,
     i32 9,
     <vscale x 16 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 16 x i8> %a
 }
@@ -3146,8 +3212,8 @@ define <vscale x 32 x i8> @intrinsic_vrgather_vi_nxv32i8_nxv32i8_i32(<vscale x 3
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv32i8_nxv32i8_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m4, ta, mu
-; CHECK-NEXT:    vrgather.vi v28, v8, 9
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vi v12, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x i8> @llvm.riscv.vrgather.vx.nxv32i8.i32(
@@ -3161,7 +3227,7 @@ entry:
 define <vscale x 32 x i8> @intrinsic_vrgather_mask_vi_nxv32i8_nxv32i8_i32(<vscale x 32 x i8> %0, <vscale x 32 x i8> %1, <vscale x 32 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv32i8_nxv32i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v12, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3170,7 +3236,7 @@ entry:
     <vscale x 32 x i8> %1,
     i32 9,
     <vscale x 32 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 32 x i8> %a
 }
@@ -3180,7 +3246,7 @@ define <vscale x 64 x i8> @intrinsic_vrgather_vi_nxv64i8_nxv64i8_i32(<vscale x 6
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e8, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v16, v8, 9
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 64 x i8> @llvm.riscv.vrgather.vx.nxv64i8.i32(
@@ -3194,7 +3260,7 @@ entry:
 define <vscale x 64 x i8> @intrinsic_vrgather_mask_vi_nxv64i8_nxv64i8_i32(<vscale x 64 x i8> %0, <vscale x 64 x i8> %1, <vscale x 64 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv64i8_nxv64i8_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e8, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e8, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v16, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3203,7 +3269,7 @@ entry:
     <vscale x 64 x i8> %1,
     i32 9,
     <vscale x 64 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 64 x i8> %a
 }
@@ -3212,8 +3278,8 @@ define <vscale x 1 x i16> @intrinsic_vrgather_vi_nxv1i16_nxv1i16_i32(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv1i16_nxv1i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i16> @llvm.riscv.vrgather.vx.nxv1i16.i32(
@@ -3227,7 +3293,7 @@ entry:
 define <vscale x 1 x i16> @intrinsic_vrgather_mask_vi_nxv1i16_nxv1i16_i32(<vscale x 1 x i16> %0, <vscale x 1 x i16> %1, <vscale x 1 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv1i16_nxv1i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3236,7 +3302,7 @@ entry:
     <vscale x 1 x i16> %1,
     i32 9,
     <vscale x 1 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 1 x i16> %a
 }
@@ -3245,8 +3311,8 @@ define <vscale x 2 x i16> @intrinsic_vrgather_vi_nxv2i16_nxv2i16_i32(<vscale x 2
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv2i16_nxv2i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i16> @llvm.riscv.vrgather.vx.nxv2i16.i32(
@@ -3260,7 +3326,7 @@ entry:
 define <vscale x 2 x i16> @intrinsic_vrgather_mask_vi_nxv2i16_nxv2i16_i32(<vscale x 2 x i16> %0, <vscale x 2 x i16> %1, <vscale x 2 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv2i16_nxv2i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3269,7 +3335,7 @@ entry:
     <vscale x 2 x i16> %1,
     i32 9,
     <vscale x 2 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 2 x i16> %a
 }
@@ -3278,8 +3344,8 @@ define <vscale x 4 x i16> @intrinsic_vrgather_vi_nxv4i16_nxv4i16_i32(<vscale x 4
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv4i16_nxv4i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i16> @llvm.riscv.vrgather.vx.nxv4i16.i32(
@@ -3293,7 +3359,7 @@ entry:
 define <vscale x 4 x i16> @intrinsic_vrgather_mask_vi_nxv4i16_nxv4i16_i32(<vscale x 4 x i16> %0, <vscale x 4 x i16> %1, <vscale x 4 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv4i16_nxv4i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3302,7 +3368,7 @@ entry:
     <vscale x 4 x i16> %1,
     i32 9,
     <vscale x 4 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 4 x i16> %a
 }
@@ -3311,8 +3377,8 @@ define <vscale x 8 x i16> @intrinsic_vrgather_vi_nxv8i16_nxv8i16_i32(<vscale x 8
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv8i16_nxv8i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
-; CHECK-NEXT:    vrgather.vi v26, v8, 9
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vi v10, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i16> @llvm.riscv.vrgather.vx.nxv8i16.i32(
@@ -3326,7 +3392,7 @@ entry:
 define <vscale x 8 x i16> @intrinsic_vrgather_mask_vi_nxv8i16_nxv8i16_i32(<vscale x 8 x i16> %0, <vscale x 8 x i16> %1, <vscale x 8 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv8i16_nxv8i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v10, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3335,7 +3401,7 @@ entry:
     <vscale x 8 x i16> %1,
     i32 9,
     <vscale x 8 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 8 x i16> %a
 }
@@ -3344,8 +3410,8 @@ define <vscale x 16 x i16> @intrinsic_vrgather_vi_nxv16i16_nxv16i16_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv16i16_nxv16i16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
-; CHECK-NEXT:    vrgather.vi v28, v8, 9
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vi v12, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i16> @llvm.riscv.vrgather.vx.nxv16i16.i32(
@@ -3359,7 +3425,7 @@ entry:
 define <vscale x 16 x i16> @intrinsic_vrgather_mask_vi_nxv16i16_nxv16i16_i32(<vscale x 16 x i16> %0, <vscale x 16 x i16> %1, <vscale x 16 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv16i16_nxv16i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v12, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3368,7 +3434,7 @@ entry:
     <vscale x 16 x i16> %1,
     i32 9,
     <vscale x 16 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 16 x i16> %a
 }
@@ -3378,7 +3444,7 @@ define <vscale x 32 x i16> @intrinsic_vrgather_vi_nxv32i16_nxv32i16_i32(<vscale 
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v16, v8, 9
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x i16> @llvm.riscv.vrgather.vx.nxv32i16.i32(
@@ -3392,7 +3458,7 @@ entry:
 define <vscale x 32 x i16> @intrinsic_vrgather_mask_vi_nxv32i16_nxv32i16_i32(<vscale x 32 x i16> %0, <vscale x 32 x i16> %1, <vscale x 32 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv32i16_nxv32i16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v16, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3401,7 +3467,7 @@ entry:
     <vscale x 32 x i16> %1,
     i32 9,
     <vscale x 32 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 32 x i16> %a
 }
@@ -3410,8 +3476,8 @@ define <vscale x 1 x i32> @intrinsic_vrgather_vi_nxv1i32_nxv1i32_i32(<vscale x 1
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv1i32_nxv1i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x i32> @llvm.riscv.vrgather.vx.nxv1i32.i32(
@@ -3425,7 +3491,7 @@ entry:
 define <vscale x 1 x i32> @intrinsic_vrgather_mask_vi_nxv1i32_nxv1i32_i32(<vscale x 1 x i32> %0, <vscale x 1 x i32> %1, <vscale x 1 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv1i32_nxv1i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3434,7 +3500,7 @@ entry:
     <vscale x 1 x i32> %1,
     i32 9,
     <vscale x 1 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 1 x i32> %a
 }
@@ -3443,8 +3509,8 @@ define <vscale x 2 x i32> @intrinsic_vrgather_vi_nxv2i32_nxv2i32_i32(<vscale x 2
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv2i32_nxv2i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x i32> @llvm.riscv.vrgather.vx.nxv2i32.i32(
@@ -3458,7 +3524,7 @@ entry:
 define <vscale x 2 x i32> @intrinsic_vrgather_mask_vi_nxv2i32_nxv2i32_i32(<vscale x 2 x i32> %0, <vscale x 2 x i32> %1, <vscale x 2 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv2i32_nxv2i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3467,7 +3533,7 @@ entry:
     <vscale x 2 x i32> %1,
     i32 9,
     <vscale x 2 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 2 x i32> %a
 }
@@ -3476,8 +3542,8 @@ define <vscale x 4 x i32> @intrinsic_vrgather_vi_nxv4i32_nxv4i32_i32(<vscale x 4
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv4i32_nxv4i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
-; CHECK-NEXT:    vrgather.vi v26, v8, 9
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vi v10, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x i32> @llvm.riscv.vrgather.vx.nxv4i32.i32(
@@ -3491,7 +3557,7 @@ entry:
 define <vscale x 4 x i32> @intrinsic_vrgather_mask_vi_nxv4i32_nxv4i32_i32(<vscale x 4 x i32> %0, <vscale x 4 x i32> %1, <vscale x 4 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv4i32_nxv4i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v10, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3500,7 +3566,7 @@ entry:
     <vscale x 4 x i32> %1,
     i32 9,
     <vscale x 4 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 4 x i32> %a
 }
@@ -3509,8 +3575,8 @@ define <vscale x 8 x i32> @intrinsic_vrgather_vi_nxv8i32_nxv8i32_i32(<vscale x 8
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv8i32_nxv8i32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
-; CHECK-NEXT:    vrgather.vi v28, v8, 9
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vi v12, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x i32> @llvm.riscv.vrgather.vx.nxv8i32.i32(
@@ -3524,7 +3590,7 @@ entry:
 define <vscale x 8 x i32> @intrinsic_vrgather_mask_vi_nxv8i32_nxv8i32_i32(<vscale x 8 x i32> %0, <vscale x 8 x i32> %1, <vscale x 8 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv8i32_nxv8i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v12, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3533,7 +3599,7 @@ entry:
     <vscale x 8 x i32> %1,
     i32 9,
     <vscale x 8 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 8 x i32> %a
 }
@@ -3543,7 +3609,7 @@ define <vscale x 16 x i32> @intrinsic_vrgather_vi_nxv16i32_nxv16i32_i32(<vscale 
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v16, v8, 9
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x i32> @llvm.riscv.vrgather.vx.nxv16i32.i32(
@@ -3557,7 +3623,7 @@ entry:
 define <vscale x 16 x i32> @intrinsic_vrgather_mask_vi_nxv16i32_nxv16i32_i32(<vscale x 16 x i32> %0, <vscale x 16 x i32> %1, <vscale x 16 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv16i32_nxv16i32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v16, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3566,7 +3632,7 @@ entry:
     <vscale x 16 x i32> %1,
     i32 9,
     <vscale x 16 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 16 x i32> %a
 }
@@ -3575,8 +3641,8 @@ define <vscale x 1 x half> @intrinsic_vrgather_vi_nxv1f16_nxv1f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv1f16_nxv1f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x half> @llvm.riscv.vrgather.vx.nxv1f16.i32(
@@ -3590,7 +3656,7 @@ entry:
 define <vscale x 1 x half> @intrinsic_vrgather_mask_vi_nxv1f16_nxv1f16_i32(<vscale x 1 x half> %0, <vscale x 1 x half> %1, <vscale x 1 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv1f16_nxv1f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3599,7 +3665,7 @@ entry:
     <vscale x 1 x half> %1,
     i32 9,
     <vscale x 1 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 1 x half> %a
 }
@@ -3608,8 +3674,8 @@ define <vscale x 2 x half> @intrinsic_vrgather_vi_nxv2f16_nxv2f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv2f16_nxv2f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x half> @llvm.riscv.vrgather.vx.nxv2f16.i32(
@@ -3623,7 +3689,7 @@ entry:
 define <vscale x 2 x half> @intrinsic_vrgather_mask_vi_nxv2f16_nxv2f16_i32(<vscale x 2 x half> %0, <vscale x 2 x half> %1, <vscale x 2 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv2f16_nxv2f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3632,7 +3698,7 @@ entry:
     <vscale x 2 x half> %1,
     i32 9,
     <vscale x 2 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 2 x half> %a
 }
@@ -3641,8 +3707,8 @@ define <vscale x 4 x half> @intrinsic_vrgather_vi_nxv4f16_nxv4f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv4f16_nxv4f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x half> @llvm.riscv.vrgather.vx.nxv4f16.i32(
@@ -3656,7 +3722,7 @@ entry:
 define <vscale x 4 x half> @intrinsic_vrgather_mask_vi_nxv4f16_nxv4f16_i32(<vscale x 4 x half> %0, <vscale x 4 x half> %1, <vscale x 4 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv4f16_nxv4f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3665,7 +3731,7 @@ entry:
     <vscale x 4 x half> %1,
     i32 9,
     <vscale x 4 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 4 x half> %a
 }
@@ -3674,8 +3740,8 @@ define <vscale x 8 x half> @intrinsic_vrgather_vi_nxv8f16_nxv8f16_i32(<vscale x 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv8f16_nxv8f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
-; CHECK-NEXT:    vrgather.vi v26, v8, 9
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vi v10, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x half> @llvm.riscv.vrgather.vx.nxv8f16.i32(
@@ -3689,7 +3755,7 @@ entry:
 define <vscale x 8 x half> @intrinsic_vrgather_mask_vi_nxv8f16_nxv8f16_i32(<vscale x 8 x half> %0, <vscale x 8 x half> %1, <vscale x 8 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv8f16_nxv8f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v10, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3698,7 +3764,7 @@ entry:
     <vscale x 8 x half> %1,
     i32 9,
     <vscale x 8 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 8 x half> %a
 }
@@ -3707,8 +3773,8 @@ define <vscale x 16 x half> @intrinsic_vrgather_vi_nxv16f16_nxv16f16_i32(<vscale
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv16f16_nxv16f16_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
-; CHECK-NEXT:    vrgather.vi v28, v8, 9
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vi v12, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x half> @llvm.riscv.vrgather.vx.nxv16f16.i32(
@@ -3722,7 +3788,7 @@ entry:
 define <vscale x 16 x half> @intrinsic_vrgather_mask_vi_nxv16f16_nxv16f16_i32(<vscale x 16 x half> %0, <vscale x 16 x half> %1, <vscale x 16 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv16f16_nxv16f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v12, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3731,7 +3797,7 @@ entry:
     <vscale x 16 x half> %1,
     i32 9,
     <vscale x 16 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 16 x half> %a
 }
@@ -3741,7 +3807,7 @@ define <vscale x 32 x half> @intrinsic_vrgather_vi_nxv32f16_nxv32f16_i32(<vscale
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v16, v8, 9
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 32 x half> @llvm.riscv.vrgather.vx.nxv32f16.i32(
@@ -3755,7 +3821,7 @@ entry:
 define <vscale x 32 x half> @intrinsic_vrgather_mask_vi_nxv32f16_nxv32f16_i32(<vscale x 32 x half> %0, <vscale x 32 x half> %1, <vscale x 32 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv32f16_nxv32f16_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e16, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e16, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v16, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3764,7 +3830,7 @@ entry:
     <vscale x 32 x half> %1,
     i32 9,
     <vscale x 32 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 32 x half> %a
 }
@@ -3773,8 +3839,8 @@ define <vscale x 1 x float> @intrinsic_vrgather_vi_nxv1f32_nxv1f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv1f32_nxv1f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv1r.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x float> @llvm.riscv.vrgather.vx.nxv1f32.i32(
@@ -3788,7 +3854,7 @@ entry:
 define <vscale x 1 x float> @intrinsic_vrgather_mask_vi_nxv1f32_nxv1f32_i32(<vscale x 1 x float> %0, <vscale x 1 x float> %1, <vscale x 1 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv1f32_nxv1f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, mf2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3797,7 +3863,7 @@ entry:
     <vscale x 1 x float> %1,
     i32 9,
     <vscale x 1 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 1 x float> %a
 }
@@ -3806,8 +3872,8 @@ define <vscale x 2 x float> @intrinsic_vrgather_vi_nxv2f32_nxv2f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv2f32_nxv2f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x float> @llvm.riscv.vrgather.vx.nxv2f32.i32(
@@ -3821,7 +3887,7 @@ entry:
 define <vscale x 2 x float> @intrinsic_vrgather_mask_vi_nxv2f32_nxv2f32_i32(<vscale x 2 x float> %0, <vscale x 2 x float> %1, <vscale x 2 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv2f32_nxv2f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3830,7 +3896,7 @@ entry:
     <vscale x 2 x float> %1,
     i32 9,
     <vscale x 2 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 2 x float> %a
 }
@@ -3839,8 +3905,8 @@ define <vscale x 4 x float> @intrinsic_vrgather_vi_nxv4f32_nxv4f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv4f32_nxv4f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
-; CHECK-NEXT:    vrgather.vi v26, v8, 9
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vi v10, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x float> @llvm.riscv.vrgather.vx.nxv4f32.i32(
@@ -3854,7 +3920,7 @@ entry:
 define <vscale x 4 x float> @intrinsic_vrgather_mask_vi_nxv4f32_nxv4f32_i32(<vscale x 4 x float> %0, <vscale x 4 x float> %1, <vscale x 4 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv4f32_nxv4f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v10, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3863,7 +3929,7 @@ entry:
     <vscale x 4 x float> %1,
     i32 9,
     <vscale x 4 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 4 x float> %a
 }
@@ -3872,8 +3938,8 @@ define <vscale x 8 x float> @intrinsic_vrgather_vi_nxv8f32_nxv8f32_i32(<vscale x
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv8f32_nxv8f32_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
-; CHECK-NEXT:    vrgather.vi v28, v8, 9
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vi v12, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x float> @llvm.riscv.vrgather.vx.nxv8f32.i32(
@@ -3887,7 +3953,7 @@ entry:
 define <vscale x 8 x float> @intrinsic_vrgather_mask_vi_nxv8f32_nxv8f32_i32(<vscale x 8 x float> %0, <vscale x 8 x float> %1, <vscale x 8 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv8f32_nxv8f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v12, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3896,7 +3962,7 @@ entry:
     <vscale x 8 x float> %1,
     i32 9,
     <vscale x 8 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 8 x float> %a
 }
@@ -3906,7 +3972,7 @@ define <vscale x 16 x float> @intrinsic_vrgather_vi_nxv16f32_nxv16f32_i32(<vscal
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v16, v8, 9
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 16 x float> @llvm.riscv.vrgather.vx.nxv16f32.i32(
@@ -3920,7 +3986,7 @@ entry:
 define <vscale x 16 x float> @intrinsic_vrgather_mask_vi_nxv16f32_nxv16f32_i32(<vscale x 16 x float> %0, <vscale x 16 x float> %1, <vscale x 16 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv16f32_nxv16f32_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e32, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e32, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v16, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3929,7 +3995,7 @@ entry:
     <vscale x 16 x float> %1,
     i32 9,
     <vscale x 16 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 16 x float> %a
 }
@@ -3938,8 +4004,8 @@ define <vscale x 1 x double> @intrinsic_vrgather_vi_nxv1f64_nxv1f64_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv1f64_nxv1f64_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m1, ta, mu
-; CHECK-NEXT:    vrgather.vi v25, v8, 9
-; CHECK-NEXT:    vmv1r.v v8, v25
+; CHECK-NEXT:    vrgather.vi v9, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v9
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 1 x double> @llvm.riscv.vrgather.vx.nxv1f64.i32(
@@ -3953,7 +4019,7 @@ entry:
 define <vscale x 1 x double> @intrinsic_vrgather_mask_vi_nxv1f64_nxv1f64_i32(<vscale x 1 x double> %0, <vscale x 1 x double> %1, <vscale x 1 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv1f64_nxv1f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m1, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m1, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v9, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3962,7 +4028,7 @@ entry:
     <vscale x 1 x double> %1,
     i32 9,
     <vscale x 1 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 1 x double> %a
 }
@@ -3971,8 +4037,8 @@ define <vscale x 2 x double> @intrinsic_vrgather_vi_nxv2f64_nxv2f64_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv2f64_nxv2f64_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m2, ta, mu
-; CHECK-NEXT:    vrgather.vi v26, v8, 9
-; CHECK-NEXT:    vmv2r.v v8, v26
+; CHECK-NEXT:    vrgather.vi v10, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v10
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 2 x double> @llvm.riscv.vrgather.vx.nxv2f64.i32(
@@ -3986,7 +4052,7 @@ entry:
 define <vscale x 2 x double> @intrinsic_vrgather_mask_vi_nxv2f64_nxv2f64_i32(<vscale x 2 x double> %0, <vscale x 2 x double> %1, <vscale x 2 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv2f64_nxv2f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m2, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m2, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v10, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -3995,7 +4061,7 @@ entry:
     <vscale x 2 x double> %1,
     i32 9,
     <vscale x 2 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 2 x double> %a
 }
@@ -4004,8 +4070,8 @@ define <vscale x 4 x double> @intrinsic_vrgather_vi_nxv4f64_nxv4f64_i32(<vscale 
 ; CHECK-LABEL: intrinsic_vrgather_vi_nxv4f64_nxv4f64_i32:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m4, ta, mu
-; CHECK-NEXT:    vrgather.vi v28, v8, 9
-; CHECK-NEXT:    vmv4r.v v8, v28
+; CHECK-NEXT:    vrgather.vi v12, v8, 9
+; CHECK-NEXT:    vmv.v.v v8, v12
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 4 x double> @llvm.riscv.vrgather.vx.nxv4f64.i32(
@@ -4019,7 +4085,7 @@ entry:
 define <vscale x 4 x double> @intrinsic_vrgather_mask_vi_nxv4f64_nxv4f64_i32(<vscale x 4 x double> %0, <vscale x 4 x double> %1, <vscale x 4 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv4f64_nxv4f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m4, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m4, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v12, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -4028,7 +4094,7 @@ entry:
     <vscale x 4 x double> %1,
     i32 9,
     <vscale x 4 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 4 x double> %a
 }
@@ -4038,7 +4104,7 @@ define <vscale x 8 x double> @intrinsic_vrgather_vi_nxv8f64_nxv8f64_i32(<vscale 
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    vsetvli zero, a0, e64, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v16, v8, 9
-; CHECK-NEXT:    vmv8r.v v8, v16
+; CHECK-NEXT:    vmv.v.v v8, v16
 ; CHECK-NEXT:    ret
 entry:
   %a = call <vscale x 8 x double> @llvm.riscv.vrgather.vx.nxv8f64.i32(
@@ -4052,7 +4118,7 @@ entry:
 define <vscale x 8 x double> @intrinsic_vrgather_mask_vi_nxv8f64_nxv8f64_i32(<vscale x 8 x double> %0, <vscale x 8 x double> %1, <vscale x 8 x i1> %2, i32 %3) nounwind {
 ; CHECK-LABEL: intrinsic_vrgather_mask_vi_nxv8f64_nxv8f64_i32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vsetvli zero, a0, e64, m8, tu, mu
+; CHECK-NEXT:    vsetvli zero, a0, e64, m8, ta, mu
 ; CHECK-NEXT:    vrgather.vi v8, v16, 9, v0.t
 ; CHECK-NEXT:    ret
 entry:
@@ -4061,7 +4127,7 @@ entry:
     <vscale x 8 x double> %1,
     i32 9,
     <vscale x 8 x i1> %2,
-    i32 %3)
+    i32 %3, i32 1)
 
   ret <vscale x 8 x double> %a
 }

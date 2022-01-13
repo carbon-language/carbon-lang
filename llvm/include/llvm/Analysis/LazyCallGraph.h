@@ -145,7 +145,7 @@ public:
     /// around but clear them.
     explicit operator bool() const;
 
-    /// Returnss the \c Kind of the edge.
+    /// Returns the \c Kind of the edge.
     Kind getKind() const;
 
     /// Test whether the edge represents a direct call to a function.
@@ -307,9 +307,9 @@ public:
 
   /// A node in the call graph.
   ///
-  /// This represents a single node. It's primary roles are to cache the list of
-  /// callees, de-duplicate and provide fast testing of whether a function is
-  /// a callee, and facilitate iteration of child nodes in the graph.
+  /// This represents a single node. Its primary roles are to cache the list of
+  /// callees, de-duplicate and provide fast testing of whether a function is a
+  /// callee, and facilitate iteration of child nodes in the graph.
   ///
   /// The node works much like an optional in order to lazily populate the
   /// edges of each node. Until populated, there are no edges. Once populated,
@@ -392,7 +392,7 @@ public:
 
     /// Internal helper to directly replace the function with a new one.
     ///
-    /// This is used to facilitate tranfsormations which need to replace the
+    /// This is used to facilitate transformations which need to replace the
     /// formal Function object but directly move the body and users from one to
     /// the other.
     void replaceFunction(Function &NewF);
@@ -419,7 +419,7 @@ public:
   /// outer structure. SCCs do not support mutation of the call graph, that
   /// must be done through the containing \c RefSCC in order to fully reason
   /// about the ordering and connections of the graph.
-  class SCC {
+  class LLVM_EXTERNAL_VISIBILITY SCC {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 
@@ -435,7 +435,7 @@ public:
       Nodes.clear();
     }
 
-    /// Print a short descrtiption useful for debugging or logging.
+    /// Print a short description useful for debugging or logging.
     ///
     /// We print the function names in the SCC wrapped in '()'s and skipping
     /// the middle functions if there are a large number.
@@ -467,9 +467,10 @@ public:
     /// Verify invariants about the SCC.
     ///
     /// This will attempt to validate all of the basic invariants within an
-    /// SCC, but not that it is a strongly connected componet per-se. Primarily
-    /// useful while building and updating the graph to check that basic
-    /// properties are in place rather than having inexplicable crashes later.
+    /// SCC, but not that it is a strongly connected component per se.
+    /// Primarily useful while building and updating the graph to check that
+    /// basic properties are in place rather than having inexplicable crashes
+    /// later.
     void verify();
 #endif
 
@@ -511,7 +512,7 @@ public:
 
     /// Provide a short name by printing this SCC to a std::string.
     ///
-    /// This copes with the fact that we don't have a name per-se for an SCC
+    /// This copes with the fact that we don't have a name per se for an SCC
     /// while still making the use of this in debugging and logging useful.
     std::string getName() const {
       std::string Name;
@@ -644,7 +645,7 @@ public:
 
     /// Provide a short name by printing this RefSCC to a std::string.
     ///
-    /// This copes with the fact that we don't have a name per-se for an RefSCC
+    /// This copes with the fact that we don't have a name per se for an RefSCC
     /// while still making the use of this in debugging and logging useful.
     std::string getName() const {
       std::string Name;
@@ -883,7 +884,9 @@ public:
     RefSCC *RC = nullptr;
 
     /// Build the begin iterator for a node.
-    postorder_ref_scc_iterator(LazyCallGraph &G) : G(&G), RC(getRC(G, 0)) {}
+    postorder_ref_scc_iterator(LazyCallGraph &G) : G(&G), RC(getRC(G, 0)) {
+      incrementUntilNonEmptyRefSCC();
+    }
 
     /// Build the end iterator for a node. This is selected purely by overload.
     postorder_ref_scc_iterator(LazyCallGraph &G, IsAtEndT /*Nonce*/) : G(&G) {}
@@ -898,6 +901,17 @@ public:
       return G.PostOrderRefSCCs[Index];
     }
 
+    // Keep incrementing until RC is non-empty (or null).
+    void incrementUntilNonEmptyRefSCC() {
+      while (RC && RC->size() == 0)
+        increment();
+    }
+
+    void increment() {
+      assert(RC && "Cannot increment the end iterator!");
+      RC = getRC(*G, G->RefSCCIndices.find(RC)->second + 1);
+    }
+
   public:
     bool operator==(const postorder_ref_scc_iterator &Arg) const {
       return G == Arg.G && RC == Arg.RC;
@@ -907,8 +921,8 @@ public:
 
     using iterator_facade_base::operator++;
     postorder_ref_scc_iterator &operator++() {
-      assert(RC && "Cannot increment the end iterator!");
-      RC = getRC(*G, G->RefSCCIndices.find(RC)->second + 1);
+      increment();
+      incrementUntilNonEmptyRefSCC();
       return *this;
     }
   };
@@ -1085,47 +1099,9 @@ public:
   /// updates that set with every constant visited.
   ///
   /// For each defined function, calls \p Callback with that function.
-  template <typename CallbackT>
   static void visitReferences(SmallVectorImpl<Constant *> &Worklist,
                               SmallPtrSetImpl<Constant *> &Visited,
-                              CallbackT Callback) {
-    while (!Worklist.empty()) {
-      Constant *C = Worklist.pop_back_val();
-
-      if (Function *F = dyn_cast<Function>(C)) {
-        if (!F->isDeclaration())
-          Callback(*F);
-        continue;
-      }
-
-      // The blockaddress constant expression is a weird special case, we can't
-      // generically walk its operands the way we do for all other constants.
-      if (BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
-        // If we've already visited the function referred to by the block
-        // address, we don't need to revisit it.
-        if (Visited.count(BA->getFunction()))
-          continue;
-
-        // If all of the blockaddress' users are instructions within the
-        // referred to function, we don't need to insert a cycle.
-        if (llvm::all_of(BA->users(), [&](User *U) {
-              if (Instruction *I = dyn_cast<Instruction>(U))
-                return I->getFunction() == BA->getFunction();
-              return false;
-            }))
-          continue;
-
-        // Otherwise we should go visit the referred to function.
-        Visited.insert(BA->getFunction());
-        Worklist.push_back(BA->getFunction());
-        continue;
-      }
-
-      for (Value *Op : C->operand_values())
-        if (Visited.insert(cast<Constant>(Op)).second)
-          Worklist.push_back(cast<Constant>(Op));
-    }
-  }
+                              function_ref<void(Function &)> Callback);
 
   ///@}
 
@@ -1227,7 +1203,7 @@ private:
   }
 };
 
-inline LazyCallGraph::Edge::Edge() : Value() {}
+inline LazyCallGraph::Edge::Edge() {}
 inline LazyCallGraph::Edge::Edge(Node &N, Kind K) : Value(&N, K) {}
 
 inline LazyCallGraph::Edge::operator bool() const {

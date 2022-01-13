@@ -93,12 +93,12 @@ private:
   void readSectionAddressType(OutputSection *cmd);
   OutputSection *readOverlaySectionDescription();
   OutputSection *readOutputSectionDescription(StringRef outSec);
-  std::vector<BaseCommand *> readOverlay();
-  std::vector<StringRef> readOutputSectionPhdrs();
+  SmallVector<SectionCommand *, 0> readOverlay();
+  SmallVector<StringRef, 0> readOutputSectionPhdrs();
   std::pair<uint64_t, uint64_t> readInputSectionFlags();
   InputSectionDescription *readInputSectionDescription(StringRef tok);
   StringMatcher readFilePatterns();
-  std::vector<SectionPattern> readInputSectionsList();
+  SmallVector<SectionPattern, 0> readInputSectionsList();
   InputSectionDescription *readInputSectionRules(StringRef filePattern,
                                                  uint64_t withFlags,
                                                  uint64_t withoutFlags);
@@ -113,7 +113,8 @@ private:
   Expr getPageSize();
 
   Expr readMemoryAssignment(StringRef, StringRef, StringRef);
-  std::pair<uint32_t, uint32_t> readMemoryAttributes();
+  void readMemoryAttributes(uint32_t &flags, uint32_t &invFlags,
+                            uint32_t &negFlags, uint32_t &negInvFlags);
 
   Expr combine(StringRef op, Expr l, Expr r);
   Expr readExpr();
@@ -124,14 +125,14 @@ private:
   Expr readParenExpr();
 
   // For parsing version script.
-  std::vector<SymbolVersion> readVersionExtern();
+  SmallVector<SymbolVersion, 0> readVersionExtern();
   void readAnonymousDeclaration();
   void readVersionDeclaration(StringRef verStr);
 
-  std::pair<std::vector<SymbolVersion>, std::vector<SymbolVersion>>
+  std::pair<SmallVector<SymbolVersion, 0>, SmallVector<SymbolVersion, 0>>
   readSymbols();
 
-  // True if a script being read is in a subdirectory specified by -sysroot.
+  // True if a script being read is in the --sysroot directory.
   bool isUnderSysroot = false;
 
   // A set to detect an INCLUDE() cycle.
@@ -180,8 +181,8 @@ static ExprValue bitOr(ExprValue a, ExprValue b) {
 
 void ScriptParser::readDynamicList() {
   expect("{");
-  std::vector<SymbolVersion> locals;
-  std::vector<SymbolVersion> globals;
+  SmallVector<SymbolVersion, 0> locals;
+  SmallVector<SymbolVersion, 0> globals;
   std::tie(locals, globals) = readSymbols();
   expect(";");
 
@@ -518,7 +519,7 @@ void ScriptParser::readSearchDir() {
 // sections that use the same virtual memory range and normally would trigger
 // linker's sections sanity check failures.
 // https://sourceware.org/binutils/docs/ld/Overlay-Description.html#Overlay-Description
-std::vector<BaseCommand *> ScriptParser::readOverlay() {
+SmallVector<SectionCommand *, 0> ScriptParser::readOverlay() {
   // VA and LMA expressions are optional, though for simplicity of
   // implementation we assume they are not. That is what OVERLAY was designed
   // for first of all: to allow sections with overlapping VAs at different LMAs.
@@ -528,7 +529,7 @@ std::vector<BaseCommand *> ScriptParser::readOverlay() {
   Expr lmaExpr = readParenExpr();
   expect("{");
 
-  std::vector<BaseCommand *> v;
+  SmallVector<SectionCommand *, 0> v;
   OutputSection *prev = nullptr;
   while (!errorCount() && !consume("}")) {
     // VA is the same for all sections. The LMAs are consecutive in memory
@@ -549,7 +550,7 @@ std::vector<BaseCommand *> ScriptParser::readOverlay() {
   // Here we want to create the Dot assignment command to achieve that.
   Expr moveDot = [=] {
     uint64_t max = 0;
-    for (BaseCommand *cmd : v)
+    for (SectionCommand *cmd : v)
       max = std::max(max, cast<OutputSection>(cmd)->size);
     return addrExpr().getValue() + max;
   };
@@ -565,11 +566,11 @@ void ScriptParser::readOverwriteSections() {
 
 void ScriptParser::readSections() {
   expect("{");
-  std::vector<BaseCommand *> v;
+  SmallVector<SectionCommand *, 0> v;
   while (!errorCount() && !consume("}")) {
     StringRef tok = next();
     if (tok == "OVERLAY") {
-      for (BaseCommand *cmd : readOverlay())
+      for (SectionCommand *cmd : readOverlay())
         v.push_back(cmd);
       continue;
     } else if (tok == "INCLUDE") {
@@ -577,7 +578,7 @@ void ScriptParser::readSections() {
       continue;
     }
 
-    if (BaseCommand *cmd = readAssignment(tok))
+    if (SectionCommand *cmd = readAssignment(tok))
       v.push_back(cmd);
     else
       v.push_back(readOutputSectionDescription(tok));
@@ -596,8 +597,8 @@ void ScriptParser::readSections() {
   else if (!consume("BEFORE"))
     setError("expected AFTER/BEFORE, but got '" + next() + "'");
   StringRef where = next();
-  std::vector<StringRef> names;
-  for (BaseCommand *cmd : v)
+  SmallVector<StringRef, 0> names;
+  for (SectionCommand *cmd : v)
     if (auto *os = dyn_cast<OutputSection>(cmd))
       names.push_back(os->name);
   if (!names.empty())
@@ -671,8 +672,8 @@ SortSectionPolicy ScriptParser::readSortKind() {
 // is parsed as ".foo", ".bar" with "a.o", and ".baz" with "b.o".
 // The semantics of that is section .foo in any file, section .bar in
 // any file but a.o, and section .baz in any file but b.o.
-std::vector<SectionPattern> ScriptParser::readInputSectionsList() {
-  std::vector<SectionPattern> ret;
+SmallVector<SectionPattern, 0> ScriptParser::readInputSectionsList() {
+  SmallVector<SectionPattern, 0> ret;
   while (!errorCount() && peek() != ")") {
     StringMatcher excludeFilePat;
     if (consume("EXCLUDE_FILE")) {
@@ -717,7 +718,7 @@ ScriptParser::readInputSectionRules(StringRef filePattern, uint64_t withFlags,
   while (!errorCount() && !consume(")")) {
     SortSectionPolicy outer = readSortKind();
     SortSectionPolicy inner = SortSectionPolicy::Default;
-    std::vector<SectionPattern> v;
+    SmallVector<SectionPattern, 0> v;
     if (outer != SortSectionPolicy::Default) {
       expect("(");
       inner = readSortKind();
@@ -848,7 +849,7 @@ OutputSection *ScriptParser::readOverlaySectionDescription() {
     uint64_t withoutFlags = 0;
     if (consume("INPUT_SECTION_FLAGS"))
       std::tie(withFlags, withoutFlags) = readInputSectionFlags();
-    cmd->sectionCommands.push_back(
+    cmd->commands.push_back(
         readInputSectionRules(next(), withFlags, withoutFlags));
   }
   return cmd;
@@ -884,9 +885,9 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef outSec) {
     if (tok == ";") {
       // Empty commands are allowed. Do nothing here.
     } else if (SymbolAssignment *assign = readAssignment(tok)) {
-      cmd->sectionCommands.push_back(assign);
+      cmd->commands.push_back(assign);
     } else if (ByteCommand *data = readByteCommand(tok)) {
-      cmd->sectionCommands.push_back(data);
+      cmd->commands.push_back(data);
     } else if (tok == "CONSTRUCTORS") {
       // CONSTRUCTORS is a keyword to make the linker recognize C++ ctors/dtors
       // by name. This is for very old file formats such as ECOFF/XCOFF.
@@ -903,7 +904,7 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef outSec) {
     } else if (tok == "INCLUDE") {
       readInclude();
     } else if (peek() == "(") {
-      cmd->sectionCommands.push_back(readInputSectionDescription(tok));
+      cmd->commands.push_back(readInputSectionDescription(tok));
     } else {
       // We have a file name and no input sections description. It is not a
       // commonly used syntax, but still acceptable. In that case, all sections
@@ -913,7 +914,7 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef outSec) {
       // case above.
       auto *isd = make<InputSectionDescription>(tok);
       isd->sectionPatterns.push_back({{}, StringMatcher("*")});
-      cmd->sectionCommands.push_back(isd);
+      cmd->commands.push_back(isd);
     }
   }
 
@@ -1429,8 +1430,9 @@ Expr ScriptParser::readPrimary() {
     return [=] { return *val; };
 
   // Tok is a symbol name.
-  tok = unquote(tok);
-  if (!isValidSymbolName(tok))
+  if (tok.startswith("\""))
+    tok = unquote(tok);
+  else if (!isValidSymbolName(tok))
     setError("malformed number: " + tok);
   script->referencedSymbols.push_back(tok);
   return [=] { return script->getSymbolValue(tok, location); };
@@ -1450,8 +1452,8 @@ Expr ScriptParser::readParenExpr() {
   return e;
 }
 
-std::vector<StringRef> ScriptParser::readOutputSectionPhdrs() {
-  std::vector<StringRef> phdrs;
+SmallVector<StringRef, 0> ScriptParser::readOutputSectionPhdrs() {
+  SmallVector<StringRef, 0> phdrs;
   while (!errorCount() && peek().startswith(":")) {
     StringRef tok = next();
     phdrs.push_back((tok.size() == 1) ? next() : tok.substr(1));
@@ -1492,8 +1494,8 @@ unsigned ScriptParser::readPhdrType() {
 
 // Reads an anonymous version declaration.
 void ScriptParser::readAnonymousDeclaration() {
-  std::vector<SymbolVersion> locals;
-  std::vector<SymbolVersion> globals;
+  SmallVector<SymbolVersion, 0> locals;
+  SmallVector<SymbolVersion, 0> globals;
   std::tie(locals, globals) = readSymbols();
   for (const SymbolVersion &pat : locals)
     config->versionDefinitions[VER_NDX_LOCAL].localPatterns.push_back(pat);
@@ -1507,8 +1509,8 @@ void ScriptParser::readAnonymousDeclaration() {
 // e.g. "VerStr { global: foo; bar; local: *; };".
 void ScriptParser::readVersionDeclaration(StringRef verStr) {
   // Read a symbol list.
-  std::vector<SymbolVersion> locals;
-  std::vector<SymbolVersion> globals;
+  SmallVector<SymbolVersion, 0> locals;
+  SmallVector<SymbolVersion, 0> globals;
   std::tie(locals, globals) = readSymbols();
 
   // Create a new version definition and add that to the global symbols.
@@ -1533,11 +1535,11 @@ bool elf::hasWildcard(StringRef s) {
 }
 
 // Reads a list of symbols, e.g. "{ global: foo; bar; local: *; };".
-std::pair<std::vector<SymbolVersion>, std::vector<SymbolVersion>>
+std::pair<SmallVector<SymbolVersion, 0>, SmallVector<SymbolVersion, 0>>
 ScriptParser::readSymbols() {
-  std::vector<SymbolVersion> locals;
-  std::vector<SymbolVersion> globals;
-  std::vector<SymbolVersion> *v = &globals;
+  SmallVector<SymbolVersion, 0> locals;
+  SmallVector<SymbolVersion, 0> globals;
+  SmallVector<SymbolVersion, 0> *v = &globals;
 
   while (!errorCount()) {
     if (consume("}"))
@@ -1552,7 +1554,7 @@ ScriptParser::readSymbols() {
     }
 
     if (consume("extern")) {
-      std::vector<SymbolVersion> ext = readVersionExtern();
+      SmallVector<SymbolVersion, 0> ext = readVersionExtern();
       v->insert(v->end(), ext.begin(), ext.end());
     } else {
       StringRef tok = next();
@@ -1568,14 +1570,14 @@ ScriptParser::readSymbols() {
 //
 // The last semicolon is optional. E.g. this is OK:
 // "extern "C++" { ns::*; "f(int, double)" };"
-std::vector<SymbolVersion> ScriptParser::readVersionExtern() {
+SmallVector<SymbolVersion, 0> ScriptParser::readVersionExtern() {
   StringRef tok = next();
   bool isCXX = tok == "\"C++\"";
   if (!isCXX && tok != "\"C\"")
     setError("Unknown language");
   expect("{");
 
-  std::vector<SymbolVersion> ret;
+  SmallVector<SymbolVersion, 0> ret;
   while (!errorCount() && peek() != "}") {
     StringRef tok = next();
     ret.push_back(
@@ -1613,9 +1615,11 @@ void ScriptParser::readMemory() {
     }
 
     uint32_t flags = 0;
+    uint32_t invFlags = 0;
     uint32_t negFlags = 0;
+    uint32_t negInvFlags = 0;
     if (consume("(")) {
-      std::tie(flags, negFlags) = readMemoryAttributes();
+      readMemoryAttributes(flags, invFlags, negFlags, negInvFlags);
       expect(")");
     }
     expect(":");
@@ -1625,7 +1629,8 @@ void ScriptParser::readMemory() {
     Expr length = readMemoryAssignment("LENGTH", "len", "l");
 
     // Add the memory region to the region map.
-    MemoryRegion *mr = make<MemoryRegion>(tok, origin, length, flags, negFlags);
+    MemoryRegion *mr = make<MemoryRegion>(tok, origin, length, flags, invFlags,
+                                          negFlags, negInvFlags);
     if (!script->memoryRegions.insert({tok, mr}).second)
       setError("region '" + tok + "' already defined");
   }
@@ -1634,30 +1639,34 @@ void ScriptParser::readMemory() {
 // This function parses the attributes used to match against section
 // flags when placing output sections in a memory region. These flags
 // are only used when an explicit memory region name is not used.
-std::pair<uint32_t, uint32_t> ScriptParser::readMemoryAttributes() {
-  uint32_t flags = 0;
-  uint32_t negFlags = 0;
+void ScriptParser::readMemoryAttributes(uint32_t &flags, uint32_t &invFlags,
+                                        uint32_t &negFlags,
+                                        uint32_t &negInvFlags) {
   bool invert = false;
 
   for (char c : next().lower()) {
-    uint32_t flag = 0;
-    if (c == '!')
+    if (c == '!') {
       invert = !invert;
-    else if (c == 'w')
-      flag = SHF_WRITE;
+      std::swap(flags, negFlags);
+      std::swap(invFlags, negInvFlags);
+      continue;
+    }
+    if (c == 'w')
+      flags |= SHF_WRITE;
     else if (c == 'x')
-      flag = SHF_EXECINSTR;
+      flags |= SHF_EXECINSTR;
     else if (c == 'a')
-      flag = SHF_ALLOC;
-    else if (c != 'r')
-      setError("invalid memory region attribute");
-
-    if (invert)
-      negFlags |= flag;
+      flags |= SHF_ALLOC;
+    else if (c == 'r')
+      invFlags |= SHF_WRITE;
     else
-      flags |= flag;
+      setError("invalid memory region attribute");
   }
-  return {flags, negFlags};
+
+  if (invert) {
+    std::swap(flags, negFlags);
+    std::swap(invFlags, negInvFlags);
+  }
 }
 
 void elf::readLinkerScript(MemoryBufferRef mb) {

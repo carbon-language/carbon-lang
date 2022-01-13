@@ -17,10 +17,9 @@
 #include "GCNSubtarget.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/Target/TargetMachine.h"
+#include <utility>
 
 namespace llvm {
-
-class ScheduleDAGMILive;
 
 //===----------------------------------------------------------------------===//
 // AMDGPU Target Machine (R600+)
@@ -36,7 +35,6 @@ protected:
 public:
   static bool EnableLateStructurizeCFG;
   static bool EnableFunctionCalls;
-  static bool EnableFixedFunctionABI;
   static bool EnableLowerModuleLDS;
 
   AMDGPUTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
@@ -63,6 +61,9 @@ public:
   bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
 
   unsigned getAssumedAddrSpace(const Value *V) const override;
+
+  std::pair<const Value *, unsigned>
+  getPredicatedAddrSpace(const Value *V) const override;
 };
 
 //===----------------------------------------------------------------------===//
@@ -124,7 +125,7 @@ public:
   std::unique_ptr<CSEConfigBase> getCSEConfig() const override;
 
   /// Check if a pass is enabled given \p Opt option. The option always
-  /// overrides defaults if explicitely used. Otherwise its default will
+  /// overrides defaults if explicitly used. Otherwise its default will
   /// be used given that a pass shall work at an optimization \p Level
   /// minimum.
   bool isPassEnabled(const cl::opt<bool> &Opt,

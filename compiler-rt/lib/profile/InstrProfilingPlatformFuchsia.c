@@ -52,7 +52,7 @@ static inline void lprofWrite(const char *fmt, ...) {
   int ret = vsnprintf(s, sizeof(s), fmt, ap);
   va_end(ap);
 
-  __sanitizer_log_write(s, ret + 1);
+  __sanitizer_log_write(s, ret);
 }
 
 struct lprofVMOWriterCtx {
@@ -178,9 +178,6 @@ void __llvm_profile_initialize(void) {
   /* Publish the VMO which contains profile data to the system. Note that this
    * also consumes the VMO handle. */
   __sanitizer_publish_data(ProfileSinkName, Vmo);
-
-  /* Use the dumpfile symbolizer markup element to write the name of VMO. */
-  lprofWrite("LLVM Profile: {{{dumpfile:%s:%s}}}\n", ProfileSinkName, VmoName);
 
   /* Update the profile fields based on the current mapping. */
   INSTR_PROF_PROFILE_COUNTER_BIAS_VAR =

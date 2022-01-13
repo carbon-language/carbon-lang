@@ -22,6 +22,7 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::wasm;
+using namespace lld::wasm;
 
 namespace lld {
 std::string toString(const wasm::Symbol &sym) {
@@ -33,9 +34,8 @@ std::string maybeDemangleSymbol(StringRef name) {
   // `main` in the case where we need to pass it arguments.
   if (name == "__main_argc_argv")
     return "main";
-  if (wasm::config->demangle)
-    return demangleItanium(name);
-  return std::string(name);
+
+  return demangle(name, config->demangle);
 }
 
 std::string toString(wasm::Symbol::Kind kind) {
@@ -58,6 +58,8 @@ std::string toString(wasm::Symbol::Kind kind) {
     return "UndefinedGlobal";
   case wasm::Symbol::UndefinedTableKind:
     return "UndefinedTable";
+  case wasm::Symbol::UndefinedTagKind:
+    return "UndefinedTag";
   case wasm::Symbol::LazyKind:
     return "LazyKind";
   case wasm::Symbol::SectionKind:
@@ -74,6 +76,7 @@ DefinedFunction *WasmSym::callDtors;
 DefinedFunction *WasmSym::initMemory;
 DefinedFunction *WasmSym::applyDataRelocs;
 DefinedFunction *WasmSym::applyGlobalRelocs;
+DefinedFunction *WasmSym::applyGlobalTLSRelocs;
 DefinedFunction *WasmSym::initTLS;
 DefinedFunction *WasmSym::startFunction;
 DefinedData *WasmSym::dsoHandle;
@@ -112,6 +115,8 @@ WasmSymbolType Symbol::getWasmType() const {
 const WasmSignature *Symbol::getSignature() const {
   if (auto* f = dyn_cast<FunctionSymbol>(this))
     return f->signature;
+  if (auto *t = dyn_cast<TagSymbol>(this))
+    return t->signature;
   if (auto *l = dyn_cast<LazySymbol>(this))
     return l->signature;
   return nullptr;
@@ -149,7 +154,7 @@ bool Symbol::isLive() const {
 void Symbol::markLive() {
   assert(!isDiscarded());
   referenced = true;
-  if (file != NULL && isDefined())
+  if (file != nullptr && isDefined())
     file->markLive();
   if (auto *g = dyn_cast<DefinedGlobal>(this))
     g->global->live = true;
@@ -205,6 +210,8 @@ bool Symbol::isHidden() const {
   return (flags & WASM_SYMBOL_VISIBILITY_MASK) == WASM_SYMBOL_VISIBILITY_HIDDEN;
 }
 
+bool Symbol::isTLS() const { return flags & WASM_SYMBOL_TLS; }
+
 void Symbol::setHidden(bool isHidden) {
   LLVM_DEBUG(dbgs() << "setHidden: " << name << " -> " << isHidden << "\n");
   flags &= ~WASM_SYMBOL_VISIBILITY_MASK;
@@ -216,7 +223,7 @@ void Symbol::setHidden(bool isHidden) {
 
 bool Symbol::isExported() const {
   // Shared libraries must export all weakly defined symbols
-  // in case they contain the version that will be chosed by
+  // in case they contain the version that will be chosen by
   // the dynamic linker.
   if (config->shared && isLive() && isDefined() && isWeak())
     return true;
@@ -298,6 +305,11 @@ uint32_t DefinedFunction::getExportedFunctionIndex() const {
 
 uint64_t DefinedData::getVA() const {
   LLVM_DEBUG(dbgs() << "getVA: " << getName() << "\n");
+  // In the shared memory case, TLS symbols are relative to the start of the TLS
+  // output segment (__tls_base).  When building without shared memory, TLS
+  // symbols absolute, just like non-TLS.
+  if (isTLS() && config->sharedMemory)
+    return getOutputSegmentOffset() + value;
   if (segment)
     return segment->getVA(value);
   return value;
@@ -366,7 +378,6 @@ bool TagSymbol::hasTagIndex() const {
 DefinedTag::DefinedTag(StringRef name, uint32_t flags, InputFile *file,
                        InputTag *tag)
     : TagSymbol(name, DefinedTagKind, flags, file,
-                tag ? &tag->getType() : nullptr,
                 tag ? &tag->signature : nullptr),
       tag(tag) {}
 

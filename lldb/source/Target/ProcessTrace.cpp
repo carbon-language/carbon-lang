@@ -19,12 +19,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ConstString ProcessTrace::GetPluginNameStatic() {
-  static ConstString g_name("trace");
-  return g_name;
-}
-
-const char *ProcessTrace::GetPluginDescriptionStatic() {
+llvm::StringRef ProcessTrace::GetPluginDescriptionStatic() {
   return "Trace process plug-in.";
 }
 
@@ -56,10 +51,6 @@ ProcessTrace::~ProcessTrace() {
   // destroy the broadcaster.
   Finalize();
 }
-
-ConstString ProcessTrace::GetPluginName() { return GetPluginNameStatic(); }
-
-uint32_t ProcessTrace::GetPluginVersion() { return 1; }
 
 void ProcessTrace::DidAttach(ArchSpec &process_arch) {
   ListenerSP listener_sp(

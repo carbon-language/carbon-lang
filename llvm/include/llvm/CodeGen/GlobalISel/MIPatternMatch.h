@@ -63,7 +63,7 @@ struct ConstantMatch {
   int64_t &CR;
   ConstantMatch(int64_t &C) : CR(C) {}
   bool match(const MachineRegisterInfo &MRI, Register Reg) {
-    if (auto MaybeCst = getConstantVRegSExtVal(Reg, MRI)) {
+    if (auto MaybeCst = getIConstantVRegSExtVal(Reg, MRI)) {
       CR = *MaybeCst;
       return true;
     }
@@ -73,21 +73,46 @@ struct ConstantMatch {
 
 inline ConstantMatch m_ICst(int64_t &Cst) { return ConstantMatch(Cst); }
 
-struct ICstRegMatch {
-  Register &CR;
-  ICstRegMatch(Register &C) : CR(C) {}
+struct GCstAndRegMatch {
+  Optional<ValueAndVReg> &ValReg;
+  GCstAndRegMatch(Optional<ValueAndVReg> &ValReg) : ValReg(ValReg) {}
   bool match(const MachineRegisterInfo &MRI, Register Reg) {
-    if (auto MaybeCst = getConstantVRegValWithLookThrough(
-            Reg, MRI, /*LookThroughInstrs*/ true,
-            /*HandleFConstants*/ false)) {
-      CR = MaybeCst->VReg;
-      return true;
-    }
-    return false;
+    ValReg = getIConstantVRegValWithLookThrough(Reg, MRI);
+    return ValReg ? true : false;
   }
 };
 
-inline ICstRegMatch m_ICst(Register &Reg) { return ICstRegMatch(Reg); }
+inline GCstAndRegMatch m_GCst(Optional<ValueAndVReg> &ValReg) {
+  return GCstAndRegMatch(ValReg);
+}
+
+struct GFCstAndRegMatch {
+  Optional<FPValueAndVReg> &FPValReg;
+  GFCstAndRegMatch(Optional<FPValueAndVReg> &FPValReg) : FPValReg(FPValReg) {}
+  bool match(const MachineRegisterInfo &MRI, Register Reg) {
+    FPValReg = getFConstantVRegValWithLookThrough(Reg, MRI);
+    return FPValReg ? true : false;
+  }
+};
+
+inline GFCstAndRegMatch m_GFCst(Optional<FPValueAndVReg> &FPValReg) {
+  return GFCstAndRegMatch(FPValReg);
+}
+
+struct GFCstOrSplatGFCstMatch {
+  Optional<FPValueAndVReg> &FPValReg;
+  GFCstOrSplatGFCstMatch(Optional<FPValueAndVReg> &FPValReg)
+      : FPValReg(FPValReg) {}
+  bool match(const MachineRegisterInfo &MRI, Register Reg) {
+    return (FPValReg = getFConstantSplat(Reg, MRI)) ||
+           (FPValReg = getFConstantVRegValWithLookThrough(Reg, MRI));
+  };
+};
+
+inline GFCstOrSplatGFCstMatch
+m_GFCstOrSplat(Optional<FPValueAndVReg> &FPValReg) {
+  return GFCstOrSplatGFCstMatch(FPValReg);
+}
 
 /// Matcher for a specific constant value.
 struct SpecificConstantMatch {
@@ -102,6 +127,43 @@ struct SpecificConstantMatch {
 /// Matches a constant equal to \p RequestedValue.
 inline SpecificConstantMatch m_SpecificICst(int64_t RequestedValue) {
   return SpecificConstantMatch(RequestedValue);
+}
+
+/// Matcher for a specific constant splat.
+struct SpecificConstantSplatMatch {
+  int64_t RequestedVal;
+  SpecificConstantSplatMatch(int64_t RequestedVal)
+      : RequestedVal(RequestedVal) {}
+  bool match(const MachineRegisterInfo &MRI, Register Reg) {
+    return isBuildVectorConstantSplat(Reg, MRI, RequestedVal,
+                                      /* AllowUndef */ false);
+  }
+};
+
+/// Matches a constant splat of \p RequestedValue.
+inline SpecificConstantSplatMatch m_SpecificICstSplat(int64_t RequestedValue) {
+  return SpecificConstantSplatMatch(RequestedValue);
+}
+
+/// Matcher for a specific constant or constant splat.
+struct SpecificConstantOrSplatMatch {
+  int64_t RequestedVal;
+  SpecificConstantOrSplatMatch(int64_t RequestedVal)
+      : RequestedVal(RequestedVal) {}
+  bool match(const MachineRegisterInfo &MRI, Register Reg) {
+    int64_t MatchedVal;
+    if (mi_match(Reg, MRI, m_ICst(MatchedVal)) && MatchedVal == RequestedVal)
+      return true;
+    return isBuildVectorConstantSplat(Reg, MRI, RequestedVal,
+                                      /* AllowUndef */ false);
+  }
+};
+
+/// Matches a \p RequestedValue constant or a constant splat of \p
+/// RequestedValue.
+inline SpecificConstantOrSplatMatch
+m_SpecificICstOrSplat(int64_t RequestedValue) {
+  return SpecificConstantOrSplatMatch(RequestedValue);
 }
 
 ///{
@@ -299,9 +361,9 @@ m_GAdd(const LHS &L, const RHS &R) {
 }
 
 template <typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, TargetOpcode::G_PTR_ADD, true>
+inline BinaryOp_match<LHS, RHS, TargetOpcode::G_PTR_ADD, false>
 m_GPtrAdd(const LHS &L, const RHS &R) {
-  return BinaryOp_match<LHS, RHS, TargetOpcode::G_PTR_ADD, true>(L, R);
+  return BinaryOp_match<LHS, RHS, TargetOpcode::G_PTR_ADD, false>(L, R);
 }
 
 template <typename LHS, typename RHS>
@@ -462,6 +524,11 @@ inline UnaryOp_match<SrcTy, TargetOpcode::G_FNEG> m_GFNeg(const SrcTy &Src) {
 template <typename SrcTy>
 inline UnaryOp_match<SrcTy, TargetOpcode::COPY> m_Copy(SrcTy &&Src) {
   return UnaryOp_match<SrcTy, TargetOpcode::COPY>(std::forward<SrcTy>(Src));
+}
+
+template <typename SrcTy>
+inline UnaryOp_match<SrcTy, TargetOpcode::G_FSQRT> m_GFSqrt(const SrcTy &Src) {
+  return UnaryOp_match<SrcTy, TargetOpcode::G_FSQRT>(Src);
 }
 
 // General helper for generic MI compares, i.e. G_ICMP and G_FCMP

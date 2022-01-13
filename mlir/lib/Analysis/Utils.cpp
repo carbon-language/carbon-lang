@@ -14,9 +14,10 @@
 #include "mlir/Analysis/Utils.h"
 #include "mlir/Analysis/AffineAnalysis.h"
 #include "mlir/Analysis/LoopAnalysis.h"
-#include "mlir/Analysis/PresburgerSet.h"
+#include "mlir/Analysis/Presburger/PresburgerSet.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/IR/AffineValueMap.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/IntegerSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -98,8 +99,8 @@ ComputationSliceState::getAsConstraints(FlatAffineValueConstraints *cst) {
     assert(cst->containsId(value) && "value expected to be present");
     if (isValidSymbol(value)) {
       // Check if the symbol is a constant.
-      if (auto cOp = value.getDefiningOp<ConstantIndexOp>())
-        cst->addBound(FlatAffineConstraints::EQ, value, cOp.getValue());
+      if (auto cOp = value.getDefiningOp<arith::ConstantIndexOp>())
+        cst->addBound(FlatAffineConstraints::EQ, value, cOp.value());
     } else if (auto loop = getForInductionVarOwner(value)) {
       if (failed(cst->addAffineForOpDomain(loop)))
         return failure();
@@ -150,7 +151,7 @@ void ComputationSliceState::dump() const {
 /// if both the src and the dst loops don't have the same bounds. Returns
 /// llvm::None if none of the above can be proven.
 Optional<bool> ComputationSliceState::isSliceMaximalFastCheck() const {
-  assert(lbs.size() == ubs.size() && lbs.size() && ivs.size() &&
+  assert(lbs.size() == ubs.size() && !lbs.empty() && !ivs.empty() &&
          "Unexpected number of lbs, ubs and ivs in slice");
 
   for (unsigned i = 0, end = lbs.size(); i < end; ++i) {
@@ -206,7 +207,8 @@ Optional<bool> ComputationSliceState::isSliceMaximalFastCheck() const {
 
     // Check if src and dst loop bounds are the same. If not, we can guarantee
     // that the slice is not maximal.
-    if (srcLbResult != dstLbResult || srcUbResult != dstUbResult)
+    if (srcLbResult != dstLbResult || srcUbResult != dstUbResult ||
+        srcLoop.getStep() != dstLoop.getStep())
       return false;
   }
 
@@ -517,8 +519,8 @@ LogicalResult MemRefRegion::compute(Operation *op, unsigned loopDepth,
       assert(isValidSymbol(symbol));
       // Check if the symbol is a constant.
       if (auto *op = symbol.getDefiningOp()) {
-        if (auto constOp = dyn_cast<ConstantIndexOp>(op)) {
-          cst.addBound(FlatAffineConstraints::EQ, symbol, constOp.getValue());
+        if (auto constOp = dyn_cast<arith::ConstantIndexOp>(op)) {
+          cst.addBound(FlatAffineConstraints::EQ, symbol, constOp.value());
         }
       }
     }
@@ -562,7 +564,7 @@ LogicalResult MemRefRegion::compute(Operation *op, unsigned loopDepth,
   for (auto id : ids) {
     AffineForOp iv;
     if ((iv = getForInductionVarOwner(id)) &&
-        llvm::is_contained(enclosingIVs, iv) == false) {
+        !llvm::is_contained(enclosingIVs, iv)) {
       cst.projectOut(id);
     }
   }
@@ -615,9 +617,7 @@ static unsigned getMemRefEltSizeInBytes(MemRefType memRefType) {
 Optional<int64_t> MemRefRegion::getRegionSize() {
   auto memRefType = memref.getType().cast<MemRefType>();
 
-  auto layoutMaps = memRefType.getAffineMaps();
-  if (layoutMaps.size() > 1 ||
-      (layoutMaps.size() == 1 && !layoutMaps[0].isIdentity())) {
+  if (!memRefType.getLayout().isIdentity()) {
     LLVM_DEBUG(llvm::dbgs() << "Non-identity layout map not yet supported\n");
     return false;
   }
@@ -817,15 +817,15 @@ mlir::computeSliceUnion(ArrayRef<Operation *> opsA, ArrayRef<Operation *> opsB,
   FlatAffineValueConstraints sliceUnionCst;
   assert(sliceUnionCst.getNumDimAndSymbolIds() == 0);
   std::vector<std::pair<Operation *, Operation *>> dependentOpPairs;
-  for (unsigned i = 0, numOpsA = opsA.size(); i < numOpsA; ++i) {
-    MemRefAccess srcAccess(opsA[i]);
-    for (unsigned j = 0, numOpsB = opsB.size(); j < numOpsB; ++j) {
-      MemRefAccess dstAccess(opsB[j]);
+  for (auto *i : opsA) {
+    MemRefAccess srcAccess(i);
+    for (auto *j : opsB) {
+      MemRefAccess dstAccess(j);
       if (srcAccess.memref != dstAccess.memref)
         continue;
       // Check if 'loopDepth' exceeds nesting depth of src/dst ops.
-      if ((!isBackwardSlice && loopDepth > getNestingDepth(opsA[i])) ||
-          (isBackwardSlice && loopDepth > getNestingDepth(opsB[j]))) {
+      if ((!isBackwardSlice && loopDepth > getNestingDepth(i)) ||
+          (isBackwardSlice && loopDepth > getNestingDepth(j))) {
         LLVM_DEBUG(llvm::dbgs() << "Invalid loop depth\n");
         return SliceComputationResult::GenericFailure;
       }
@@ -844,13 +844,12 @@ mlir::computeSliceUnion(ArrayRef<Operation *> opsA, ArrayRef<Operation *> opsB,
       }
       if (result.value == DependenceResult::NoDependence)
         continue;
-      dependentOpPairs.push_back({opsA[i], opsB[j]});
+      dependentOpPairs.emplace_back(i, j);
 
       // Compute slice bounds for 'srcAccess' and 'dstAccess'.
       ComputationSliceState tmpSliceState;
-      mlir::getComputationSliceState(opsA[i], opsB[j], &dependenceConstraints,
-                                     loopDepth, isBackwardSlice,
-                                     &tmpSliceState);
+      mlir::getComputationSliceState(i, j, &dependenceConstraints, loopDepth,
+                                     isBackwardSlice, &tmpSliceState);
 
       if (sliceUnionCst.getNumDimAndSymbolIds() == 0) {
         // Initialize 'sliceUnionCst' with the bounds computed in previous step.
@@ -1278,10 +1277,10 @@ bool MemRefAccess::operator==(const MemRefAccess &rhs) const {
 
 /// Returns the number of surrounding loops common to 'loopsA' and 'loopsB',
 /// where each lists loops from outer-most to inner-most in loop nest.
-unsigned mlir::getNumCommonSurroundingLoops(Operation &A, Operation &B) {
+unsigned mlir::getNumCommonSurroundingLoops(Operation &a, Operation &b) {
   SmallVector<AffineForOp, 4> loopsA, loopsB;
-  getLoopIVs(A, &loopsA);
-  getLoopIVs(B, &loopsB);
+  getLoopIVs(a, &loopsA);
+  getLoopIVs(b, &loopsB);
 
   unsigned minNumLoops = std::min(loopsA.size(), loopsB.size());
   unsigned numCommonLoops = 0;

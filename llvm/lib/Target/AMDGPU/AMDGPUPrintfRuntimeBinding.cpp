@@ -149,11 +149,11 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
   IRBuilder<> Builder(Ctx);
   Type *I32Ty = Type::getInt32Ty(Ctx);
   unsigned UniqID = 0;
-  // NB: This is important for this string size to be divizable by 4
+  // NB: This is important for this string size to be divisible by 4
   const char NonLiteralStr[4] = "???";
 
   for (auto CI : Printfs) {
-    unsigned NumOps = CI->getNumArgOperands();
+    unsigned NumOps = CI->arg_size();
 
     SmallString<16> OpConvSpecifiers;
     Value *Op = CI->getArgOperand(0);
@@ -201,10 +201,10 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
       std::string AStreamHolder;
       raw_string_ostream Sizes(AStreamHolder);
       int Sum = DWORD_ALIGN;
-      Sizes << CI->getNumArgOperands() - 1;
+      Sizes << CI->arg_size() - 1;
       Sizes << ':';
-      for (unsigned ArgCount = 1; ArgCount < CI->getNumArgOperands() &&
-                                  ArgCount <= OpConvSpecifiers.size();
+      for (unsigned ArgCount = 1;
+           ArgCount < CI->arg_size() && ArgCount <= OpConvSpecifiers.size();
            ArgCount++) {
         Value *Arg = CI->getArgOperand(ArgCount);
         Type *ArgType = Arg->getType();
@@ -280,10 +280,10 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
       }
       LLVM_DEBUG(dbgs() << "Printf format string in source = " << Str.str()
                         << '\n');
-      for (size_t I = 0; I < Str.size(); ++I) {
+      for (char C : Str) {
         // Rest of the C escape sequences (e.g. \') are handled correctly
         // by the MDParser
-        switch (Str[I]) {
+        switch (C) {
         case '\a':
           Sizes << "\\a";
           break;
@@ -308,7 +308,7 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
           Sizes << "\\72";
           break;
         default:
-          Sizes << Str[I];
+          Sizes << C;
           break;
         }
       }
@@ -330,7 +330,7 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
           M.getOrInsertFunction(StringRef("__printf_alloc"), FTy_alloc, Attr);
 
       LLVM_DEBUG(dbgs() << "Printf metadata = " << Sizes.str() << '\n');
-      std::string fmtstr = itostr(++UniqID) + ":" + Sizes.str().c_str();
+      std::string fmtstr = itostr(++UniqID) + ":" + Sizes.str();
       MDString *fmtStrArray = MDString::get(Ctx, fmtstr);
 
       // Instead of creating global variables, the
@@ -389,8 +389,8 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
 
       Type *Int32Ty = Type::getInt32Ty(Ctx);
       Type *Int64Ty = Type::getInt64Ty(Ctx);
-      for (unsigned ArgCount = 1; ArgCount < CI->getNumArgOperands() &&
-                                  ArgCount <= OpConvSpecifiers.size();
+      for (unsigned ArgCount = 1;
+           ArgCount < CI->arg_size() && ArgCount <= OpConvSpecifiers.size();
            ArgCount++) {
         Value *Arg = CI->getArgOperand(ArgCount);
         Type *ArgType = Arg->getType();
@@ -463,7 +463,7 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
             WhatToStore.push_back(Arg);
           }
         } else if (isa<FixedVectorType>(ArgType)) {
-          Type *IType = NULL;
+          Type *IType = nullptr;
           uint32_t EleCount = cast<FixedVectorType>(ArgType)->getNumElements();
           uint32_t EleSize = ArgType->getScalarSizeInBits();
           uint32_t TotalSize = EleCount * EleSize;
@@ -524,7 +524,7 @@ bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
           LLVM_DEBUG(dbgs() << "inserting store to printf buffer:\n"
                             << *StBuff << '\n');
           (void)StBuff;
-          if (I + 1 == E && ArgCount + 1 == CI->getNumArgOperands())
+          if (I + 1 == E && ArgCount + 1 == CI->arg_size())
             break;
           BufferIdx = GetElementPtrInst::Create(I8Ty, BufferIdx, BuffOffset,
                                                 "PrintBuffNextPtr", Brnch);

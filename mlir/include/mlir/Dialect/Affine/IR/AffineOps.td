@@ -13,7 +13,7 @@
 #ifndef AFFINE_OPS
 #define AFFINE_OPS
 
-include "mlir/Dialect/StandardOps/IR/StandardOpsBase.td"
+include "mlir/Dialect/Arithmetic/IR/ArithmeticBase.td"
 include "mlir/Dialect/Affine/IR/AffineMemoryOpInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/LoopLikeInterface.td"
@@ -23,6 +23,7 @@ def Affine_Dialect : Dialect {
   let name = "affine";
   let cppNamespace = "mlir";
   let hasConstantMaterializer = 1;
+  let dependentDialects = ["arith::ArithmeticDialect"];
 }
 
 // Base class for Affine dialect ops.
@@ -196,12 +197,12 @@ def AffineForOp : Affine_Op<"for",
      ```mlir
     func @reduce(%buffer: memref<1024xf32>) -> (f32) {
       // Initial sum set to 0.
-      %sum_0 = constant 0.0 : f32
+      %sum_0 = arith.constant 0.0 : f32
       // iter_args binds initial values to the loop's region arguments.
       %sum = affine.for %i = 0 to 10 step 2
           iter_args(%sum_iter = %sum_0) -> (f32) {
         %t = affine.load %buffer[%i] : memref<1024xf32>
-        %sum_next = addf %sum_iter, %t : f32
+        %sum_next = arith.addf %sum_iter, %t : f32
         // Yield current iteration sum to next iteration %sum_iter or to %sum
         // if final iteration.
         affine.yield %sum_next : f32
@@ -213,8 +214,8 @@ def AffineForOp : Affine_Op<"for",
     ```mlir
     %res:2 = affine.for %i = 0 to 128 iter_args(%arg0 = %init0, %arg1 = %init1)
                -> (index, index) {
-      %y0 = addi %arg0, %c1 : index
-      %y1 = addi %arg1, %c2 : index
+      %y0 = arith.addi %arg0, %c1 : index
+      %y1 = arith.addi %arg1, %c2 : index
       affine.yield %y0, %y1 : index, index
     }
     ```
@@ -265,6 +266,10 @@ def AffineForOp : Affine_Op<"for",
     /// Returns operands for the upper bound map.
     operand_range getUpperBoundOperands();
 
+    /// Returns operands for the lower and upper bound maps with the operands
+    /// for the lower bound map in front of those for the upper bound map.
+    operand_range getControlOperands();
+
     /// Returns information about the lower bound as a single object.
     AffineBound getLowerBound();
 
@@ -304,7 +309,7 @@ def AffineForOp : Affine_Op<"for",
     void setStep(int64_t step) {
       assert(step > 0 && "step has to be a positive integer constant");
       auto *context = getLowerBoundMap().getContext();
-      (*this)->setAttr(Identifier::get(getStepAttrName(), context),
+      (*this)->setAttr(StringAttr::get(context, getStepAttrName()),
                        IntegerAttr::get(IndexType::get(context), step));
     }
 
@@ -410,7 +415,7 @@ def AffineIfOp : Affine_Op<"if",
           %2 = load %I[%i - 1, %j - 1] : memref<10x10xf32>
           affine.yield %2
         } else {
-          %2 = constant 0.0 : f32
+          %2 = arith.constant 0.0 : f32
           affine.yield %2 : f32
         }
         affine.store %1, %O[%i, %j] : memref<12x12xf32>
@@ -652,7 +657,7 @@ def AffineParallelOp : Affine_Op<"parallel",
         %0 = affine.parallel (%kx, %ky) = (0, 0) to (2, 2) reduce ("addf") {
           %1 = affine.load %D[%x + %kx, %y + %ky] : memref<100x100xf32>
           %2 = affine.load %K[%kx, %ky] : memref<3x3xf32>
-          %3 = mulf %1, %2 : f32
+          %3 = arith.mulf %1, %2 : f32
           affine.yield %3 : f32
         }
         affine.store %0, O[%x, %y] : memref<98x98xf32>
@@ -686,9 +691,9 @@ def AffineParallelOp : Affine_Op<"parallel",
 
   let builders = [
     OpBuilder<(ins "TypeRange":$resultTypes,
-      "ArrayRef<AtomicRMWKind>":$reductions, "ArrayRef<int64_t>":$ranges)>,
+      "ArrayRef<arith::AtomicRMWKind>":$reductions, "ArrayRef<int64_t>":$ranges)>,
     OpBuilder<(ins "TypeRange":$resultTypes,
-      "ArrayRef<AtomicRMWKind>":$reductions, "ArrayRef<AffineMap>":$lbMaps,
+      "ArrayRef<arith::AtomicRMWKind>":$reductions, "ArrayRef<AffineMap>":$lbMaps,
       "ValueRange":$lbArgs, "ArrayRef<AffineMap>":$ubMaps, "ValueRange":$ubArgs,
       "ArrayRef<int64_t>":$steps)>
   ];
@@ -810,7 +815,7 @@ def AffinePrefetchOp : Affine_Op<"prefetch",
     NamedAttribute getAffineMapAttrForMemRef(Value mref) {
       assert(mref == memref() &&
              "Expected mref argument to match memref operand");
-      return {Identifier::get(getMapAttrName(), getContext()),
+      return {StringAttr::get(getContext(), getMapAttrName()),
         getAffineMapAttr()};
     }
 

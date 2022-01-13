@@ -20,9 +20,6 @@
 namespace llvm {
 
 class GCNSubtarget;
-class MachineFunction;
-class MachineInstr;
-class MachineInstrBuilder;
 class MachineMemOperand;
 
 class AMDGPUInstrInfo {
@@ -76,8 +73,8 @@ struct ImageDimIntrinsicInfo {
 };
 const ImageDimIntrinsicInfo *getImageDimIntrinsicInfo(unsigned Intr);
 
-const ImageDimIntrinsicInfo *getImageDimInstrinsicByBaseOpcode(unsigned BaseOpcode,
-                                                               unsigned Dim);
+const ImageDimIntrinsicInfo *
+getImageDimIntrinsicByBaseOpcode(unsigned BaseOpcode, unsigned Dim);
 
 } // end AMDGPU namespace
 } // End llvm namespace

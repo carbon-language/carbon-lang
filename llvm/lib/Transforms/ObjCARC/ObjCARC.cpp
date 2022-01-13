@@ -103,9 +103,8 @@ CallInst *BundledRetainClaimRVs::insertRVCallWithColors(
     Instruction *InsertPt, CallBase *AnnotatedCall,
     const DenseMap<BasicBlock *, ColorVector> &BlockColors) {
   IRBuilder<> Builder(InsertPt);
-  bool IsRetainRV = objcarc::hasAttachedCallOpBundle(AnnotatedCall, true);
-  Function *Func = EP.get(IsRetainRV ? ARCRuntimeEntryPointKind::RetainRV
-                                     : ARCRuntimeEntryPointKind::ClaimRV);
+  Function *Func = *objcarc::getAttachedARCFunction(AnnotatedCall);
+  assert(Func && "operand isn't a Function");
   Type *ParamTy = Func->getArg(0)->getType();
   Value *CallArg = Builder.CreateBitCast(AnnotatedCall, ParamTy);
   auto *Call =
@@ -115,16 +114,28 @@ CallInst *BundledRetainClaimRVs::insertRVCallWithColors(
 }
 
 BundledRetainClaimRVs::~BundledRetainClaimRVs() {
-  if (ContractPass) {
-    // At this point, we know that the annotated calls can't be tail calls as
-    // they are followed by marker instructions and retainRV/claimRV calls. Mark
-    // them as notail, so that the backend knows these calls can't be tail
-    // calls.
-    for (auto P : RVCalls)
-      if (auto *CI = dyn_cast<CallInst>(P.second))
+  for (auto P : RVCalls) {
+    if (ContractPass) {
+      CallBase *CB = P.second;
+      // At this point, we know that the annotated calls can't be tail calls
+      // as they are followed by marker instructions and retainRV/claimRV
+      // calls. Mark them as notail so that the backend knows these calls
+      // can't be tail calls.
+      if (auto *CI = dyn_cast<CallInst>(CB))
         CI->setTailCallKind(CallInst::TCK_NoTail);
-  } else {
-    for (auto P : RVCalls)
+
+      if (UseMarker) {
+        // Remove the retainRV/claimRV function operand from the operand bundle
+        // to reflect the fact that the backend is responsible for emitting only
+        // the marker instruction, but not the retainRV/claimRV call.
+        OperandBundleDef OB("clang.arc.attachedcall", None);
+        auto *NewCB = CallBase::Create(CB, OB, CB);
+        CB->replaceAllUsesWith(NewCB);
+        CB->eraseFromParent();
+      }
+    }
+
+    if (!ContractPass || !UseMarker)
       EraseInstruction(P.first);
   }
 

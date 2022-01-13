@@ -27,8 +27,8 @@ namespace mlir {
 /// 'Block' class.
 class alignas(8) Operation final
     : public llvm::ilist_node_with_parent<Operation, Block>,
-      private llvm::TrailingObjects<Operation, BlockOperand, Region,
-                                    detail::OperandStorage> {
+      private llvm::TrailingObjects<Operation, detail::OperandStorage,
+                                    BlockOperand, Region, OpOperand> {
 public:
   /// Create a new Operation with the specific fields.
   static Operation *create(Location location, OperationName name,
@@ -57,14 +57,14 @@ public:
   OperationName getName() { return name; }
 
   /// If this operation has a registered operation description, return it.
-  /// Otherwise return null.
-  const AbstractOperation *getAbstractOperation() {
-    return getName().getAbstractOperation();
+  /// Otherwise return None.
+  Optional<RegisteredOperationName> getRegisteredInfo() {
+    return getName().getRegisteredInfo();
   }
 
   /// Returns true if this operation has a registered operation description,
   /// otherwise false.
-  bool isRegistered() { return getAbstractOperation(); }
+  bool isRegistered() { return getName().isRegistered(); }
 
   /// Remove this operation from its parent block and delete it.
   void erase();
@@ -99,7 +99,7 @@ public:
   MLIRContext *getContext() { return location->getContext(); }
 
   /// Return the dialect this operation is associated with, or nullptr if the
-  /// associated dialect is not registered.
+  /// associated dialect is not loaded.
   Dialect *getDialect() { return getName().getDialect(); }
 
   /// The source location the operation was defined or derived from.
@@ -151,21 +151,8 @@ public:
 
   /// Replace all uses of results of this operation with the provided 'values'.
   template <typename ValuesT>
-  std::enable_if_t<!std::is_convertible<ValuesT, Operation *>::value>
-  replaceAllUsesWith(ValuesT &&values) {
-    assert(std::distance(values.begin(), values.end()) == getNumResults() &&
-           "expected 'values' to correspond 1-1 with the number of results");
-
-    auto valueIt = values.begin();
-    for (unsigned i = 0, e = getNumResults(); i != e; ++i)
-      getResult(i).replaceAllUsesWith(*(valueIt++));
-  }
-
-  /// Replace all uses of results of this operation with results of 'op'.
-  void replaceAllUsesWith(Operation *op) {
-    assert(getNumResults() == op->getNumResults());
-    for (unsigned i = 0, e = getNumResults(); i != e; ++i)
-      getResult(i).replaceAllUsesWith(op->getResult(i));
+  void replaceAllUsesWith(ValuesT &&values) {
+    getResults().replaceAllUsesWith(std::forward<ValuesT>(values));
   }
 
   /// Destroys this operation and its subclass data.
@@ -257,14 +244,19 @@ public:
   operand_iterator operand_end() { return getOperands().end(); }
 
   /// Returns an iterator on the underlying Value's.
-  operand_range getOperands() { return operand_range(this); }
+  operand_range getOperands() {
+    MutableArrayRef<OpOperand> operands = getOpOperands();
+    return OperandRange(operands.data(), operands.size());
+  }
 
   MutableArrayRef<OpOperand> getOpOperands() {
     return LLVM_LIKELY(hasOperandStorage) ? getOperandStorage().getOperands()
                                           : MutableArrayRef<OpOperand>();
   }
 
-  OpOperand &getOpOperand(unsigned idx) { return getOpOperands()[idx]; }
+  OpOperand &getOpOperand(unsigned idx) {
+    return getOperandStorage().getOperands()[idx];
+  }
 
   // Support operand type iteration.
   using operand_type_iterator = operand_range::type_iterator;
@@ -328,20 +320,22 @@ public:
   }
 
   /// Return the specified attribute if present, null otherwise.
-  Attribute getAttr(Identifier name) { return attrs.get(name); }
+  Attribute getAttr(StringAttr name) { return attrs.get(name); }
   Attribute getAttr(StringRef name) { return attrs.get(name); }
 
-  template <typename AttrClass> AttrClass getAttrOfType(Identifier name) {
+  template <typename AttrClass>
+  AttrClass getAttrOfType(StringAttr name) {
     return getAttr(name).dyn_cast_or_null<AttrClass>();
   }
-  template <typename AttrClass> AttrClass getAttrOfType(StringRef name) {
+  template <typename AttrClass>
+  AttrClass getAttrOfType(StringRef name) {
     return getAttr(name).dyn_cast_or_null<AttrClass>();
   }
 
   /// Return true if the operation has an attribute with the provided name,
   /// false otherwise.
-  bool hasAttr(Identifier name) { return static_cast<bool>(getAttr(name)); }
-  bool hasAttr(StringRef name) { return static_cast<bool>(getAttr(name)); }
+  bool hasAttr(StringAttr name) { return attrs.contains(name); }
+  bool hasAttr(StringRef name) { return attrs.contains(name); }
   template <typename AttrClass, typename NameT>
   bool hasAttrOfType(NameT &&name) {
     return static_cast<bool>(
@@ -350,19 +344,19 @@ public:
 
   /// If the an attribute exists with the specified name, change it to the new
   /// value. Otherwise, add a new attribute with the specified name/value.
-  void setAttr(Identifier name, Attribute value) {
+  void setAttr(StringAttr name, Attribute value) {
     NamedAttrList attributes(attrs);
     if (attributes.set(name, value) != value)
       attrs = attributes.getDictionary(getContext());
   }
   void setAttr(StringRef name, Attribute value) {
-    setAttr(Identifier::get(name, getContext()), value);
+    setAttr(StringAttr::get(getContext(), name), value);
   }
 
   /// Remove the attribute with the specified name if it exists. Return the
   /// attribute that was erased, or nullptr if there was no attribute with such
   /// name.
-  Attribute removeAttr(Identifier name) {
+  Attribute removeAttr(StringAttr name) {
     NamedAttrList attributes(attrs);
     Attribute removedAttr = attributes.erase(name);
     if (removedAttr)
@@ -370,7 +364,7 @@ public:
     return removedAttr;
   }
   Attribute removeAttr(StringRef name) {
-    return removeAttr(Identifier::get(name, getContext()));
+    return removeAttr(StringAttr::get(getContext(), name));
   }
 
   /// A utility iterator that filters out non-dialect attributes.
@@ -379,7 +373,7 @@ public:
                                      bool (*)(NamedAttribute)> {
     static bool filter(NamedAttribute attr) {
       // Dialect attributes are prefixed by the dialect name, like operations.
-      return attr.first.strref().count('.');
+      return attr.getName().strref().count('.');
     }
 
     explicit dialect_attr_iterator(ArrayRef<NamedAttribute>::iterator it,
@@ -413,7 +407,7 @@ public:
     NamedAttrList attrs;
     attrs.append(std::begin(dialectAttrs), std::end(dialectAttrs));
     for (auto attr : getAttrs())
-      if (!attr.first.strref().contains('.'))
+      if (!attr.getName().strref().contains('.'))
         attrs.push_back(attr);
     setAttrs(attrs.getDictionary(getContext()));
   }
@@ -474,16 +468,14 @@ public:
   /// Returns true if the operation was registered with a particular trait, e.g.
   /// hasTrait<OperandsAreSignlessIntegerLike>().
   template <template <typename T> class Trait> bool hasTrait() {
-    const AbstractOperation *abstractOp = getAbstractOperation();
-    return abstractOp ? abstractOp->hasTrait<Trait>() : false;
+    return name.hasTrait<Trait>();
   }
 
-  /// Returns true if the operation is *might* have the provided trait. This
+  /// Returns true if the operation *might* have the provided trait. This
   /// means that either the operation is unregistered, or it was registered with
   /// the provide trait.
   template <template <typename T> class Trait> bool mightHaveTrait() {
-    const AbstractOperation *abstractOp = getAbstractOperation();
-    return abstractOp ? abstractOp->hasTrait<Trait>() : true;
+    return name.mightHaveTrait<Trait>();
   }
 
   //===--------------------------------------------------------------------===//
@@ -709,20 +701,23 @@ private:
   friend class llvm::ilist_node_with_parent<Operation, Block>;
 
   // This stuff is used by the TrailingObjects template.
-  friend llvm::TrailingObjects<Operation, BlockOperand, Region,
-                               detail::OperandStorage>;
+  friend llvm::TrailingObjects<Operation, detail::OperandStorage, BlockOperand,
+                               Region, OpOperand>;
+  size_t numTrailingObjects(OverloadToken<detail::OperandStorage>) const {
+    return hasOperandStorage ? 1 : 0;
+  }
   size_t numTrailingObjects(OverloadToken<BlockOperand>) const {
     return numSuccs;
   }
   size_t numTrailingObjects(OverloadToken<Region>) const { return numRegions; }
 };
 
-inline raw_ostream &operator<<(raw_ostream &os, Operation &op) {
-  op.print(os, OpPrintingFlags().useLocalScope());
+inline raw_ostream &operator<<(raw_ostream &os, const Operation &op) {
+  const_cast<Operation &>(op).print(os, OpPrintingFlags().useLocalScope());
   return os;
 }
 
-} // end namespace mlir
+} // namespace mlir
 
 namespace llvm {
 /// Provide isa functionality for operation casts.
@@ -748,6 +743,6 @@ template <class T>
 struct cast_convert_val<T, ::mlir::Operation *, ::mlir::Operation *> {
   static T doit(::mlir::Operation *val) { return T(val); }
 };
-} // end namespace llvm
+} // namespace llvm
 
 #endif // MLIR_IR_OPERATION_H

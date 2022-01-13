@@ -23,6 +23,13 @@ class CCIfNotSubtarget<string F, CCAction A>
                        "(State.getMachineFunction().getSubtarget()).", F),
            A>;
 
+/// CCIfIsVarArgOnWin - Match if isVarArg on Windows 32bits.
+class CCIfIsVarArgOnWin<CCAction A>
+    : CCIf<"State.isVarArg() && "
+           "State.getMachineFunction().getSubtarget().getTargetTriple()."
+           "isWindowsMSVCEnvironment()",
+           A>;
+
 // Register classes for RegCall
 class RC_X86_RegCall {
   list<Register> GPR_8 = [];
@@ -266,7 +273,10 @@ def RetCC_X86_32_C : CallingConv<[
   // conv.
   CCIfInReg<CCIfSubtarget<"hasSSE2()",
     CCIfType<[f32, f64], CCAssignToReg<[XMM0,XMM1,XMM2]>>>>,
-  CCIfType<[f32,f64], CCAssignToReg<[FP0, FP1]>>,
+  CCIfSubtarget<"hasX87()",
+    CCIfType<[f32, f64], CCAssignToReg<[FP0, FP1]>>>,
+  CCIfNotSubtarget<"hasX87()",
+    CCIfType<[f32], CCAssignToReg<[EAX, EDX, ECX]>>>,
   CCIfType<[f16], CCAssignToReg<[XMM0,XMM1,XMM2]>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
@@ -771,6 +781,22 @@ def CC_X86_32_Vector_Common : CallingConv<[
            CCAssignToStack<64, 64>>
 ]>;
 
+/// CC_X86_Win32_Vector - In X86 Win32 calling conventions, extra vector
+/// values are spilled on the stack.
+def CC_X86_Win32_Vector : CallingConv<[
+  // Other SSE vectors get 16-byte stack slots that are 4-byte aligned.
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v8f16, v4f32, v2f64],
+           CCAssignToStack<16, 4>>,
+
+  // 256-bit AVX vectors get 32-byte stack slots that are 4-byte aligned.
+  CCIfType<[v32i8, v16i16, v8i32, v4i64, v16f16, v8f32, v4f64],
+           CCAssignToStack<32, 4>>,
+
+  // 512-bit AVX 512-bit vectors get 64-byte stack slots that are 4-byte aligned.
+  CCIfType<[v64i8, v32i16, v16i32, v8i64, v32f16, v16f32, v8f64],
+           CCAssignToStack<64, 4>>
+]>;
+
 // CC_X86_32_Vector_Standard - The first 3 vector arguments are passed in
 // vector registers
 def CC_X86_32_Vector_Standard : CallingConv<[
@@ -787,6 +813,7 @@ def CC_X86_32_Vector_Standard : CallingConv<[
   CCIfNotVarArg<CCIfType<[v64i8, v32i16, v16i32, v8i64, v32f16, v16f32, v8f64],
                 CCAssignToReg<[ZMM0, ZMM1, ZMM2]>>>,
 
+  CCIfIsVarArgOnWin<CCDelegateTo<CC_X86_Win32_Vector>>,
   CCDelegateTo<CC_X86_32_Vector_Common>
 ]>;
 
@@ -838,8 +865,8 @@ def CC_X86_32_Common : CallingConv<[
   // Doubles get 8-byte slots that are 4-byte aligned.
   CCIfType<[f64], CCAssignToStack<8, 4>>,
 
-  // Long doubles get slots whose size depends on the subtarget.
-  CCIfType<[f80], CCAssignToStack<0, 4>>,
+  // Long doubles get slots whose size and alignment depends on the subtarget.
+  CCIfType<[f80], CCAssignToStack<0, 0>>,
 
   // Boolean vectors of AVX-512 are passed in SIMD registers.
   // The call from AVX to AVX-512 function should work,

@@ -806,6 +806,8 @@ uint32_t ABIWindows_x86_64::GetGenericNum(llvm::StringRef reg) {
       .Case("rsp", LLDB_REGNUM_GENERIC_SP)
       .Case("rbp", LLDB_REGNUM_GENERIC_FP)
       .Case("rflags", LLDB_REGNUM_GENERIC_FLAGS)
+      // gdbserver uses eflags
+      .Case("eflags", LLDB_REGNUM_GENERIC_FLAGS)
       .Case("rcx", LLDB_REGNUM_GENERIC_ARG1)
       .Case("rdx", LLDB_REGNUM_GENERIC_ARG2)
       .Case("r8", LLDB_REGNUM_GENERIC_ARG3)
@@ -821,18 +823,3 @@ void ABIWindows_x86_64::Initialize() {
 void ABIWindows_x86_64::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
-
-lldb_private::ConstString ABIWindows_x86_64::GetPluginNameStatic() {
-  static ConstString g_name("windows-x86_64");
-  return g_name;
-}
-
-//------------------------------------------------------------------
-// PluginInterface protocol
-//------------------------------------------------------------------
-
-lldb_private::ConstString ABIWindows_x86_64::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ABIWindows_x86_64::GetPluginVersion() { return 1; }

@@ -11,9 +11,9 @@
 
 #include "Futex.h"
 
-#include "config/linux/syscall.h" // For syscall functions.
-#include "include/sys/syscall.h"  // For syscall numbers.
-#include "include/threads.h"      // For values like thrd_success etc.
+#include "include/sys/syscall.h"          // For syscall numbers.
+#include "include/threads.h"              // For values like thrd_success etc.
+#include "src/__support/OSUtil/syscall.h" // For syscall functions.
 
 #include <linux/futex.h> // For futex operations.
 #include <stdatomic.h>
@@ -106,6 +106,10 @@ struct Mutex {
     }
   }
 };
+
+static_assert(sizeof(Mutex) == sizeof(mtx_t),
+              "Sizes of internal representation of mutex and the public mtx_t "
+              "do not match.");
 
 class MutexLock {
   Mutex *mutex;

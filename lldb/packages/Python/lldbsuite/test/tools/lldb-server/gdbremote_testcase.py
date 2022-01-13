@@ -162,9 +162,6 @@ class GdbRemoteTestCaseBase(Base):
         self._verbose_log_handler = None
         TestBase.tearDown(self)
 
-    def build(self, *args, **kwargs):
-        self.buildDefault(*args, **kwargs)
-
     def getLocalServerLogFile(self):
         return self.getLogBasenameForCurrentTest() + "-server.log"
 
@@ -794,7 +791,7 @@ class GdbRemoteTestCaseBase(Base):
 
             if time.time() > timeout_time:
                 raise Exception(
-                    'timed out after {} seconds while waiting for theads: waiting for at least {} threads, found {}'.format(
+                    'timed out after {} seconds while waiting for threads: waiting for at least {} threads, found {}'.format(
                         self.DEFAULT_TIMEOUT, thread_count, actual_thread_count))
 
         return threads
@@ -860,6 +857,8 @@ class GdbRemoteTestCaseBase(Base):
         "fork-events",
         "vfork-events",
         "memory-tagging",
+        "qSaveCore",
+        "native-signals",
     ]
 
     def parse_qSupported_response(self, context):

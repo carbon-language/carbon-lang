@@ -13,9 +13,9 @@
 
 #include "format.h"
 #include "io-stmt.h"
-#include "main.h"
 #include "flang/Common/format.h"
 #include "flang/Decimal/decimal.h"
+#include "flang/Runtime/main.h"
 #include <algorithm>
 #include <limits>
 
@@ -359,6 +359,10 @@ int FormatControl<CONTEXT>::CueUpNextDataEdit(Context &context, bool stop) {
       context.AdvanceRecord(repeat && *repeat > 0 ? *repeat : 1);
     } else if (ch == '$' || ch == '\\') {
       context.mutableModes().nonAdvancing = true;
+    } else if (ch == '\t' || ch == '\v') {
+      // Tabs (extension)
+      // TODO: any other raw characters?
+      context.Emit(format_ + offset_ - 1, 1);
     } else {
       context.SignalError(IostatErrorInFormat,
           "Invalid character '%c' in FORMAT", static_cast<char>(ch));

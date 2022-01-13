@@ -47,6 +47,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/COFFImportFile.h"
@@ -71,7 +72,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/StringSaver.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
@@ -978,8 +978,8 @@ collectLocalBranchTargets(ArrayRef<uint8_t> Bytes, const MCInstrAnalysis *MIA,
                           const MCSubtargetInfo *STI, uint64_t SectionAddr,
                           uint64_t Start, uint64_t End,
                           std::unordered_map<uint64_t, std::string> &Labels) {
-  // So far only supports X86.
-  if (!STI->getTargetTriple().isX86())
+  // So far only supports PowerPC and X86.
+  if (!STI->getTargetTriple().isPPC() && !STI->getTargetTriple().isX86())
     return;
 
   Labels.clear();
@@ -999,8 +999,11 @@ collectLocalBranchTargets(ArrayRef<uint8_t> Bytes, const MCInstrAnalysis *MIA,
     if (Disassembled && MIA) {
       uint64_t Target;
       bool TargetKnown = MIA->evaluateBranch(Inst, Index, Size, Target);
+      // On PowerPC, if the address of a branch is the same as the target, it
+      // means that it's a function call. Do not mark the label for this case.
       if (TargetKnown && (Target >= Start && Target < End) &&
-          !Labels.count(Target))
+          !Labels.count(Target) &&
+          !(STI->getTargetTriple().isPPC() && Target == Index))
         Labels[Target] = ("L" + Twine(LabelCount++)).str();
     }
 
@@ -1285,6 +1288,10 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
     if (shouldAdjustVA(Section))
       VMAAdjustment = AdjustVMA;
 
+    // In executable and shared objects, r_offset holds a virtual address.
+    // Subtract SectionAddr from the r_offset field of a relocation to get
+    // the section offset.
+    uint64_t RelAdjustment = Obj->isRelocatableObject() ? 0 : SectionAddr;
     uint64_t Size;
     uint64_t Index;
     bool PrintedSection = false;
@@ -1431,7 +1438,8 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
             // For --reloc: print zero blocks patched by relocations, so that
             // relocations can be shown in the dump.
             if (RelCur != RelEnd)
-              MaxOffset = RelCur->getOffset() - Index;
+              MaxOffset = std::min(RelCur->getOffset() - RelAdjustment - Index,
+                                   MaxOffset);
 
             if (size_t N =
                     countSkippableZeroBytes(Bytes.slice(Index, MaxOffset))) {
@@ -1580,7 +1588,7 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         if (Obj->getArch() != Triple::hexagon) {
           // Print relocation for instruction and data.
           while (RelCur != RelEnd) {
-            uint64_t Offset = RelCur->getOffset();
+            uint64_t Offset = RelCur->getOffset() - RelAdjustment;
             // If this relocation is hidden, skip it.
             if (getHidden(*RelCur) || SectionAddr + Offset < StartAddress) {
               ++RelCur;
@@ -1769,7 +1777,9 @@ void objdump::printDynamicRelocations(const ObjectFile *Obj) {
     return;
 
   const auto *Elf = dyn_cast<ELFObjectFileBase>(Obj);
-  if (!Elf || Elf->getEType() != ELF::ET_DYN) {
+  if (!Elf || !any_of(Elf->sections(), [](const ELFSectionRef Sec) {
+        return Sec.getType() == ELF::SHT_DYNAMIC;
+      })) {
     reportError(Obj->getFileName(), "not a dynamic object");
     return;
   }
@@ -1778,7 +1788,12 @@ void objdump::printDynamicRelocations(const ObjectFile *Obj) {
   if (DynRelSec.empty())
     return;
 
-  outs() << "DYNAMIC RELOCATION RECORDS\n";
+  outs() << "\nDYNAMIC RELOCATION RECORDS\n";
+  const uint32_t OffsetPadding = (Obj->getBytesInAddress() > 4 ? 16 : 8);
+  const uint32_t TypePadding = 24;
+  outs() << left_justify("OFFSET", OffsetPadding) << ' '
+         << left_justify("TYPE", TypePadding) << " VALUE\n";
+
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "%016" PRIx64 : "%08" PRIx64;
   for (const SectionRef &Section : DynRelSec)
     for (const RelocationRef &Reloc : Section.relocations()) {
@@ -1788,8 +1803,8 @@ void objdump::printDynamicRelocations(const ObjectFile *Obj) {
       Reloc.getTypeName(RelocName);
       if (Error E = getRelocationValueString(Reloc, ValueStr))
         reportError(std::move(E), Obj->getFileName());
-      outs() << format(Fmt.data(), Address) << " " << RelocName << " "
-             << ValueStr << "\n";
+      outs() << format(Fmt.data(), Address) << ' '
+             << left_justify(RelocName, TypePadding) << ' ' << ValueStr << '\n';
     }
 }
 
@@ -2038,20 +2053,55 @@ void objdump::printSymbol(const ObjectFile *O, const SymbolRef &Symbol,
   } else if (Common) {
     outs() << "*COM*";
   } else if (Section == O->section_end()) {
-    outs() << "*UND*";
+    if (O->isXCOFF()) {
+      XCOFFSymbolRef XCOFFSym = dyn_cast<const XCOFFObjectFile>(O)->toSymbolRef(
+          Symbol.getRawDataRefImpl());
+      if (XCOFF::N_DEBUG == XCOFFSym.getSectionNumber())
+        outs() << "*DEBUG*";
+      else
+        outs() << "*UND*";
+    } else
+      outs() << "*UND*";
   } else {
     StringRef SegmentName = getSegmentName(MachO, *Section);
     if (!SegmentName.empty())
       outs() << SegmentName << ",";
     StringRef SectionName = unwrapOrError(Section->getName(), FileName);
     outs() << SectionName;
+    if (O->isXCOFF()) {
+      Optional<SymbolRef> SymRef = getXCOFFSymbolContainingSymbolRef(
+          dyn_cast<const XCOFFObjectFile>(O), Symbol);
+      if (SymRef) {
+
+        Expected<StringRef> NameOrErr = SymRef.getValue().getName();
+
+        if (NameOrErr) {
+          outs() << " (csect:";
+          std::string SymName(NameOrErr.get());
+
+          if (Demangle)
+            SymName = demangle(SymName);
+
+          if (SymbolDescription)
+            SymName = getXCOFFSymbolDescription(
+                createSymbolInfo(O, SymRef.getValue()), SymName);
+
+          outs() << ' ' << SymName;
+          outs() << ") ";
+        } else
+          reportWarning(toString(NameOrErr.takeError()), FileName);
+      }
+    }
   }
 
-  if (Common || O->isELF()) {
-    uint64_t Val =
-        Common ? Symbol.getAlignment() : ELFSymbolRef(Symbol).getSize();
-    outs() << '\t' << format(Fmt, Val);
-  }
+  if (Common)
+    outs() << '\t' << format(Fmt, static_cast<uint64_t>(Symbol.getAlignment()));
+  else if (O->isXCOFF())
+    outs() << '\t'
+           << format(Fmt, dyn_cast<const XCOFFObjectFile>(O)->getSymbolSize(
+                              Symbol.getRawDataRefImpl()));
+  else if (O->isELF())
+    outs() << '\t' << format(Fmt, ELFSymbolRef(Symbol).getSize());
 
   if (O->isELF()) {
     if (!SymbolVersions.empty()) {
@@ -2084,10 +2134,14 @@ void objdump::printSymbol(const ObjectFile *O, const SymbolRef &Symbol,
     outs() << " .hidden";
   }
 
+  std::string SymName(Name);
   if (Demangle)
-    outs() << ' ' << demangle(std::string(Name)) << '\n';
-  else
-    outs() << ' ' << Name << '\n';
+    SymName = demangle(SymName);
+
+  if (O->isXCOFF() && SymbolDescription)
+    SymName = getXCOFFSymbolDescription(createSymbolInfo(O, Symbol), SymName);
+
+  outs() << ' ' << SymName << '\n';
 }
 
 static void printUnwindInfo(const ObjectFile *O) {
@@ -2194,7 +2248,7 @@ static void printPrivateFileHeaders(const ObjectFile *O, bool OnlyFirst) {
     return;
   }
   if (O->isCOFF())
-    return printCOFFFileHeader(O);
+    return printCOFFFileHeader(cast<object::COFFObjectFile>(*O));
   if (O->isWasm())
     return printWasmFileHeader(O);
   if (O->isMachO()) {
@@ -2449,6 +2503,11 @@ static void parseIntArg(const llvm::opt::InputArgList &InputArgs, int ID,
   }
 }
 
+static void invalidArgValue(const opt::Arg *A) {
+  reportCmdLineError("'" + StringRef(A->getValue()) +
+                     "' is not a valid value for '" + A->getSpelling() + "'");
+}
+
 static std::vector<std::string>
 commaSeparatedValues(const llvm::opt::InputArgList &InputArgs, int ID) {
   std::vector<std::string> Values;
@@ -2522,8 +2581,11 @@ static void parseObjdumpOptions(const llvm::opt::InputArgList &InputArgs) {
       commaSeparatedValues(InputArgs, OBJDUMP_disassemble_symbols_EQ);
   DisassembleZeroes = InputArgs.hasArg(OBJDUMP_disassemble_zeroes);
   if (const opt::Arg *A = InputArgs.getLastArg(OBJDUMP_dwarf_EQ)) {
-    DwarfDumpType =
-        StringSwitch<DIDumpType>(A->getValue()).Case("frames", DIDT_DebugFrame);
+    DwarfDumpType = StringSwitch<DIDumpType>(A->getValue())
+                        .Case("frames", DIDT_DebugFrame)
+                        .Default(DIDT_Null);
+    if (DwarfDumpType == DIDT_Null)
+      invalidArgValue(A);
   }
   DynamicRelocations = InputArgs.hasArg(OBJDUMP_dynamic_reloc);
   FaultMapSection = InputArgs.hasArg(OBJDUMP_fault_map_section);
@@ -2560,7 +2622,10 @@ static void parseObjdumpOptions(const llvm::opt::InputArgList &InputArgs) {
   if (const opt::Arg *A = InputArgs.getLastArg(OBJDUMP_debug_vars_EQ)) {
     DbgVariables = StringSwitch<DebugVarsFormat>(A->getValue())
                        .Case("ascii", DVASCII)
-                       .Case("unicode", DVUnicode);
+                       .Case("unicode", DVUnicode)
+                       .Default(DVInvalid);
+    if (DbgVariables == DVInvalid)
+      invalidArgValue(A);
   }
   parseIntArg(InputArgs, OBJDUMP_debug_vars_indent_EQ, DbgIndent);
 
@@ -2650,7 +2715,7 @@ int main(int argc, char **argv) {
     return 0;
   }
   if (InputArgs.hasArg(HelpHiddenFlag)) {
-    T->printHelp(ToolName, /*show_hidden=*/true);
+    T->printHelp(ToolName, /*ShowHidden=*/true);
     return 0;
   }
 

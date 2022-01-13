@@ -693,15 +693,16 @@ public:
 /// An iterator over the \c LineCoverageStats objects for lines described by
 /// a \c CoverageData instance.
 class LineCoverageIterator
-    : public iterator_facade_base<
-          LineCoverageIterator, std::forward_iterator_tag, LineCoverageStats> {
+    : public iterator_facade_base<LineCoverageIterator,
+                                  std::forward_iterator_tag,
+                                  const LineCoverageStats> {
 public:
   LineCoverageIterator(const CoverageData &CD)
       : LineCoverageIterator(CD, CD.begin()->Line) {}
 
   LineCoverageIterator(const CoverageData &CD, unsigned Line)
       : CD(CD), WrappedSegment(nullptr), Next(CD.begin()), Ended(false),
-        Line(Line), Segments(), Stats() {
+        Line(Line) {
     this->operator++();
   }
 
@@ -710,8 +711,6 @@ public:
   }
 
   const LineCoverageStats &operator*() const { return Stats; }
-
-  LineCoverageStats &operator*() { return Stats; }
 
   LineCoverageIterator &operator++();
 

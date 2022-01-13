@@ -1,10 +1,13 @@
 import lldb
 from lldbsuite.test.lldbtest import *
 from lldbsuite.test.decorators import *
-from gdbclientutils import *
+from lldbsuite.test.gdbclientutils import *
+from lldbsuite.test.lldbgdbclient import GDBRemoteTestBase
 
 
 class TestMemoryRegionDirtyPages(GDBRemoteTestBase):
+
+    mydir = TestBase.compute_mydir(__file__)
 
     @skipIfXmlSupportMissing
     def test(self):
@@ -19,9 +22,9 @@ class TestMemoryRegionDirtyPages(GDBRemoteTestBase):
                 if addr == 0x100000000:
                     return "start:100000000;size:4000;permissions:rx;dirty-pages:;"
                 if addr == 0x100004000:
-                    return "start:100004000;size:4000;permissions:r;dirty-pages:0x100004000;"
+                    return "start:100004000;size:4000;permissions:r;dirty-pages:100004000;"
                 if addr == 0x1000a2000:
-                    return "start:1000a2000;size:5000;permissions:r;dirty-pages:0x1000a2000,0x1000a3000,0x1000a4000,0x1000a5000,0x1000a6000;"
+                    return "start:1000a2000;size:5000;permissions:r;dirty-pages:1000a2000,1000a3000,1000a4000,1000a5000,1000a6000;"
 
         self.server.responder = MyResponder()
         target = self.dbg.CreateTarget('')

@@ -28,8 +28,8 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define DEBUG_TYPE "avr-asm-printer"
@@ -144,9 +144,8 @@ bool AVRAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
 bool AVRAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           unsigned OpNum, const char *ExtraCode,
                                           raw_ostream &O) {
-  if (ExtraCode && ExtraCode[0]) {
-    llvm_unreachable("This branch is not implemented yet");
-  }
+  if (ExtraCode && ExtraCode[0])
+    return true; // Unknown modifier
 
   const MachineOperand &MO = MI->getOperand(OpNum);
   (void)MO;

@@ -10,6 +10,7 @@
 #define FORTRAN_OPTIMIZER_DIALECT_FIROPS_H
 
 #include "flang/Optimizer/Dialect/FIRType.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Interfaces/LoopLikeInterface.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
@@ -22,19 +23,14 @@ class FirEndOp;
 class DoLoopOp;
 class RealAttr;
 
-void buildCmpFOp(mlir::OpBuilder &builder, mlir::OperationState &result,
-                 mlir::CmpFPredicate predicate, mlir::Value lhs,
-                 mlir::Value rhs);
 void buildCmpCOp(mlir::OpBuilder &builder, mlir::OperationState &result,
-                 mlir::CmpFPredicate predicate, mlir::Value lhs,
+                 mlir::arith::CmpFPredicate predicate, mlir::Value lhs,
                  mlir::Value rhs);
 unsigned getCaseArgumentOffset(llvm::ArrayRef<mlir::Attribute> cases,
                                unsigned dest);
 DoLoopOp getForInductionVarOwner(mlir::Value val);
 bool isReferenceLike(mlir::Type type);
 mlir::ParseResult isValidCaseAttr(mlir::Attribute attr);
-mlir::ParseResult parseCmpfOp(mlir::OpAsmParser &parser,
-                              mlir::OperationState &result);
 mlir::ParseResult parseCmpcOp(mlir::OpAsmParser &parser,
                               mlir::OperationState &result);
 mlir::ParseResult parseSelector(mlir::OpAsmParser &parser,

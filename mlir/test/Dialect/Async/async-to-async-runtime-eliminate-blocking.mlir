@@ -12,11 +12,11 @@ func @simple_callee(%arg0: f32) -> (f32 {builtin.foo = "bar"}) {
 // CHECK: %[[HDL:.*]] = async.coro.begin %[[ID]]
 // CHECK: br ^[[ORIGINAL_ENTRY:.*]]
 // CHECK  ^[[ORIGINAL_ENTRY]]:
-// CHECK:   %[[VAL:.*]] = addf %[[ARG]], %[[ARG]] : f32
-  %0 = addf %arg0, %arg0 : f32
+// CHECK:   %[[VAL:.*]] = arith.addf %[[ARG]], %[[ARG]] : f32
+  %0 = arith.addf %arg0, %arg0 : f32
 // CHECK:   %[[VAL_STORAGE:.*]] = async.runtime.create : !async.value<f32>
   %1 = async.runtime.create: !async.value<f32>
-// CHECK:   async.runtime.store %[[VAL]], %[[VAL_STORAGE]] : !async.value<f32>
+// CHECK:   async.runtime.store %[[VAL]], %[[VAL_STORAGE]] : <f32>
   async.runtime.store %0, %1: !async.value<f32>
 // CHECK:   async.runtime.set_available %[[VAL_STORAGE]] : !async.value<f32>
   async.runtime.set_available %1: !async.value<f32>
@@ -32,13 +32,13 @@ func @simple_callee(%arg0: f32) -> (f32 {builtin.foo = "bar"}) {
 // CHECK:   cond_br %[[IS_ERROR]], ^[[BRANCH_ERROR:.*]], ^[[BRANCH_OK:.*]]
 
 // CHECK: ^[[BRANCH_OK]]:
-// CHECK:   %[[LOADED:.*]] = async.runtime.load %[[VAL_STORAGE]] : !async.value<f32>
-// CHECK:   %[[RETURNED:.*]] = mulf %[[ARG]], %[[LOADED]] : f32
-// CHECK:   async.runtime.store %[[RETURNED]], %[[RETURNED_STORAGE]] : !async.value<f32>
+// CHECK:   %[[LOADED:.*]] = async.runtime.load %[[VAL_STORAGE]] : <f32>
+// CHECK:   %[[RETURNED:.*]] = arith.mulf %[[ARG]], %[[LOADED]] : f32
+// CHECK:   async.runtime.store %[[RETURNED]], %[[RETURNED_STORAGE]] : <f32>
 // CHECK:   async.runtime.set_available %[[RETURNED_STORAGE]]
 // CHECK:   async.runtime.set_available %[[TOKEN]]
 // CHECK:   br ^[[CLEANUP]]
-  %3 = mulf %arg0, %2 : f32
+  %3 = arith.mulf %arg0, %2 : f32
   return %3: f32
 
 // CHECK: ^[[BRANCH_ERROR]]:
@@ -66,8 +66,8 @@ func @simple_caller() -> f32 {
 // CHECK: br ^[[ORIGINAL_ENTRY:.*]]
 // CHECK  ^[[ORIGINAL_ENTRY]]:
 
-// CHECK:   %[[CONSTANT:.*]] = constant
-  %c = constant 1.0 : f32
+// CHECK:   %[[CONSTANT:.*]] = arith.constant
+  %c = arith.constant 1.0 : f32
 // CHECK:   %[[RETURNED_TO_CALLER:.*]]:2 = call @simple_callee(%[[CONSTANT]]) : (f32) -> (!async.token, !async.value<f32>)
 // CHECK:   %[[SAVED:.*]] = async.coro.save %[[HDL]]
 // CHECK:   async.runtime.await_and_resume %[[RETURNED_TO_CALLER]]#0, %[[HDL]]
@@ -84,8 +84,8 @@ func @simple_caller() -> f32 {
 // CHECK:   cond_br %[[IS_VALUE_ERROR]], ^[[BRANCH_ERROR:.*]], ^[[BRANCH_VALUE_OK:.*]]
 
 // CHECK: ^[[BRANCH_VALUE_OK]]:
-// CHECK:   %[[LOADED:.*]] = async.runtime.load %[[RETURNED_TO_CALLER]]#1 : !async.value<f32>
-// CHECK:   async.runtime.store %[[LOADED]], %[[RETURNED_STORAGE]] : !async.value<f32>
+// CHECK:   %[[LOADED:.*]] = async.runtime.load %[[RETURNED_TO_CALLER]]#1 : <f32>
+// CHECK:   async.runtime.store %[[LOADED]], %[[RETURNED_STORAGE]] : <f32>
 // CHECK:   async.runtime.set_available %[[RETURNED_STORAGE]]
 // CHECK:   async.runtime.set_available %[[TOKEN]]
 // CHECK:   br ^[[CLEANUP]]
@@ -115,8 +115,8 @@ func @double_caller() -> f32 {
 // CHECK: br ^[[ORIGINAL_ENTRY:.*]]
 // CHECK  ^[[ORIGINAL_ENTRY]]:
 
-// CHECK:   %[[CONSTANT:.*]] = constant
-  %c = constant 1.0 : f32
+// CHECK:   %[[CONSTANT:.*]] = arith.constant
+  %c = arith.constant 1.0 : f32
 // CHECK:   %[[RETURNED_TO_CALLER_1:.*]]:2 = call @simple_callee(%[[CONSTANT]]) : (f32) -> (!async.token, !async.value<f32>)
 // CHECK:   %[[SAVED_1:.*]] = async.coro.save %[[HDL]]
 // CHECK:   async.runtime.await_and_resume %[[RETURNED_TO_CALLER_1]]#0, %[[HDL]]
@@ -133,7 +133,7 @@ func @double_caller() -> f32 {
 // CHECK:   cond_br %[[IS_VALUE_ERROR_1]], ^[[BRANCH_ERROR:.*]], ^[[BRANCH_VALUE_OK_1:.*]]
 
 // CHECK: ^[[BRANCH_VALUE_OK_1]]:
-// CHECK:   %[[LOADED_1:.*]] = async.runtime.load %[[RETURNED_TO_CALLER_1]]#1 : !async.value<f32>
+// CHECK:   %[[LOADED_1:.*]] = async.runtime.load %[[RETURNED_TO_CALLER_1]]#1 : <f32>
 // CHECK:   %[[RETURNED_TO_CALLER_2:.*]]:2 = call @simple_callee(%[[LOADED_1]]) : (f32) -> (!async.token, !async.value<f32>)
 // CHECK:   %[[SAVED_2:.*]] = async.coro.save %[[HDL]]
 // CHECK:   async.runtime.await_and_resume %[[RETURNED_TO_CALLER_2]]#0, %[[HDL]]
@@ -150,8 +150,8 @@ func @double_caller() -> f32 {
 // CHECK:   cond_br %[[IS_VALUE_ERROR_2]], ^[[BRANCH_ERROR:.*]], ^[[BRANCH_VALUE_OK_2:.*]]
 
 // CHECK: ^[[BRANCH_VALUE_OK_2]]:
-// CHECK:   %[[LOADED_2:.*]] = async.runtime.load %[[RETURNED_TO_CALLER_2]]#1 : !async.value<f32>
-// CHECK:   async.runtime.store %[[LOADED_2]], %[[RETURNED_STORAGE]] : !async.value<f32>
+// CHECK:   %[[LOADED_2:.*]] = async.runtime.load %[[RETURNED_TO_CALLER_2]]#1 : <f32>
+// CHECK:   async.runtime.store %[[LOADED_2]], %[[RETURNED_STORAGE]] : <f32>
 // CHECK:   async.runtime.set_available %[[RETURNED_STORAGE]]
 // CHECK:   async.runtime.set_available %[[TOKEN]]
 // CHECK:   br ^[[CLEANUP]]
@@ -311,8 +311,8 @@ return
 // CHECK-LABEL: func @caller_allowed_to_block
 // CHECK-SAME: () -> f32
 func @caller_allowed_to_block() -> f32 attributes { async.allowed_to_block } {
-// CHECK: %[[CONSTANT:.*]] = constant
-  %c = constant 1.0 : f32
+// CHECK: %[[CONSTANT:.*]] = arith.constant
+  %c = arith.constant 1.0 : f32
 // CHECK: %[[RETURNED_TO_CALLER:.*]]:2 = call @simple_callee(%[[CONSTANT]]) : (f32) -> (!async.token, !async.value<f32>)
 // CHECK: async.runtime.await %[[RETURNED_TO_CALLER]]#0
 // CHECK: async.runtime.await %[[RETURNED_TO_CALLER]]#1

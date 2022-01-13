@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple wasm32-unknown-unknown -target-feature +simd128 -target-feature +nontrapping-fptoint -target-feature +exception-handling -target-feature +bulk-memory -target-feature +atomics -flax-vector-conversions=none -O3 -emit-llvm -o - %s | FileCheck %s -check-prefixes WEBASSEMBLY,WEBASSEMBLY32
-// RUN: %clang_cc1 -triple wasm64-unknown-unknown -target-feature +simd128 -target-feature +nontrapping-fptoint -target-feature +exception-handling -target-feature +bulk-memory -target-feature +atomics -flax-vector-conversions=none -O3 -emit-llvm -o - %s | FileCheck %s -check-prefixes WEBASSEMBLY,WEBASSEMBLY64
+// RUN: %clang_cc1 -triple wasm32-unknown-unknown -target-feature +simd128 -target-feature +relaxed-simd -target-feature +nontrapping-fptoint -target-feature +exception-handling -target-feature +bulk-memory -target-feature +atomics -flax-vector-conversions=none -O3 -emit-llvm -o - %s | FileCheck %s -check-prefixes WEBASSEMBLY,WEBASSEMBLY32
+// RUN: %clang_cc1 -triple wasm64-unknown-unknown -target-feature +simd128 -target-feature +relaxed-simd -target-feature +nontrapping-fptoint -target-feature +exception-handling -target-feature +bulk-memory -target-feature +atomics -flax-vector-conversions=none -O3 -emit-llvm -o - %s | FileCheck %s -check-prefixes WEBASSEMBLY,WEBASSEMBLY64
 // RUN: not %clang_cc1 -triple wasm64-unknown-unknown -target-feature +nontrapping-fptoint -target-feature +exception-handling -target-feature +bulk-memory -target-feature +atomics -flax-vector-conversions=none -O3 -emit-llvm -o - %s 2>&1 | FileCheck %s -check-prefixes MISSING-SIMD
 
 // SIMD convenience types
@@ -674,5 +674,118 @@ i8x16 shuffle(i8x16 x, i8x16 y) {
   // WEBASSEMBLY-SAME: i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7,
   // WEBASSEMBLY-SAME: i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14,
   // WEBASSEMBLY-SAME: i32 15
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f32x4 fma_f32x4(f32x4 a, f32x4 b, f32x4 c) {
+  return __builtin_wasm_fma_f32x4(a, b, c);
+  // WEBASSEMBLY: call <4 x float> @llvm.wasm.fma.v4f32(
+  // WEBASSEMBLY-SAME: <4 x float> %a, <4 x float> %b, <4 x float> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f32x4 fms_f32x4(f32x4 a, f32x4 b, f32x4 c) {
+  return __builtin_wasm_fms_f32x4(a, b, c);
+  // WEBASSEMBLY: call <4 x float> @llvm.wasm.fms.v4f32(
+  // WEBASSEMBLY-SAME: <4 x float> %a, <4 x float> %b, <4 x float> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 fma_f64x2(f64x2 a, f64x2 b, f64x2 c) {
+  return __builtin_wasm_fma_f64x2(a, b, c);
+  // WEBASSEMBLY: call <2 x double> @llvm.wasm.fma.v2f64(
+  // WEBASSEMBLY-SAME: <2 x double> %a, <2 x double> %b, <2 x double> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 fms_f64x2(f64x2 a, f64x2 b, f64x2 c) {
+  return __builtin_wasm_fms_f64x2(a, b, c);
+  // WEBASSEMBLY: call <2 x double> @llvm.wasm.fms.v2f64(
+  // WEBASSEMBLY-SAME: <2 x double> %a, <2 x double> %b, <2 x double> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i8x16 laneselect_i8x16(i8x16 a, i8x16 b, i8x16 c) {
+  return __builtin_wasm_laneselect_i8x16(a, b, c);
+  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.laneselect.v16i8(
+  // WEBASSEMBLY-SAME: <16 x i8> %a, <16 x i8> %b, <16 x i8> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i16x8 laneselect_i16x8(i16x8 a, i16x8 b, i16x8 c) {
+  return __builtin_wasm_laneselect_i16x8(a, b, c);
+  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.laneselect.v8i16(
+  // WEBASSEMBLY-SAME: <8 x i16> %a, <8 x i16> %b, <8 x i16> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i32x4 laneselect_i32x4(i32x4 a, i32x4 b, i32x4 c) {
+  return __builtin_wasm_laneselect_i32x4(a, b, c);
+  // WEBASSEMBLY: call <4 x i32> @llvm.wasm.laneselect.v4i32(
+  // WEBASSEMBLY-SAME: <4 x i32> %a, <4 x i32> %b, <4 x i32> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i64x2 laneselect_i64x2(i64x2 a, i64x2 b, i64x2 c) {
+  return __builtin_wasm_laneselect_i64x2(a, b, c);
+  // WEBASSEMBLY: call <2 x i64> @llvm.wasm.laneselect.v2i64(
+  // WEBASSEMBLY-SAME: <2 x i64> %a, <2 x i64> %b, <2 x i64> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i8x16 relaxed_swizzle_i8x16(i8x16 x, i8x16 y) {
+  return __builtin_wasm_relaxed_swizzle_i8x16(x, y);
+  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.relaxed.swizzle(<16 x i8> %x, <16 x i8> %y)
+}
+
+f32x4 relaxed_min_f32x4(f32x4 a, f32x4 b) {
+  return __builtin_wasm_relaxed_min_f32x4(a, b);
+  // WEBASSEMBLY: call <4 x float> @llvm.wasm.relaxed.min.v4f32(
+  // WEBASSEMBLY-SAME: <4 x float> %a, <4 x float> %b)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f32x4 relaxed_max_f32x4(f32x4 a, f32x4 b) {
+  return __builtin_wasm_relaxed_max_f32x4(a, b);
+  // WEBASSEMBLY: call <4 x float> @llvm.wasm.relaxed.max.v4f32(
+  // WEBASSEMBLY-SAME: <4 x float> %a, <4 x float> %b)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 relaxed_min_f64x2(f64x2 a, f64x2 b) {
+  return __builtin_wasm_relaxed_min_f64x2(a, b);
+  // WEBASSEMBLY: call <2 x double> @llvm.wasm.relaxed.min.v2f64(
+  // WEBASSEMBLY-SAME: <2 x double> %a, <2 x double> %b)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 relaxed_max_f64x2(f64x2 a, f64x2 b) {
+  return __builtin_wasm_relaxed_max_f64x2(a, b);
+  // WEBASSEMBLY: call <2 x double> @llvm.wasm.relaxed.max.v2f64(
+  // WEBASSEMBLY-SAME: <2 x double> %a, <2 x double> %b)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i32x4 relaxed_trunc_s_i32x4_f32x4(f32x4 f) {
+  return __builtin_wasm_relaxed_trunc_s_i32x4_f32x4(f);
+  // WEBASSEMBLY: call <4 x i32> @llvm.wasm.relaxed.trunc.signed(<4 x float> %f)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+u32x4 relaxed_trunc_u_i32x4_f32x4(f32x4 f) {
+  return __builtin_wasm_relaxed_trunc_u_i32x4_f32x4(f);
+  // WEBASSEMBLY: call <4 x i32> @llvm.wasm.relaxed.trunc.unsigned(<4 x float> %f)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i32x4 relaxed_trunc_zero_s_i32x4_f64x2(f64x2 x) {
+  return __builtin_wasm_relaxed_trunc_zero_s_i32x4_f64x2(x);
+  // WEBASSEMBLY: call <4 x i32> @llvm.wasm.relaxed.trunc.zero.signed(<2 x double> %x)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+u32x4 relaxed_trunc_zero_u_i32x4_f64x2(f64x2 x) {
+  return __builtin_wasm_relaxed_trunc_zero_u_i32x4_f64x2(x);
+  // WEBASSEMBLY: call <4 x i32> @llvm.wasm.relaxed.trunc.zero.unsigned(<2 x double> %x)
   // WEBASSEMBLY-NEXT: ret
 }

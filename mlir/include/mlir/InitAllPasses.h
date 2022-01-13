@@ -16,7 +16,9 @@
 
 #include "mlir/Conversion/Passes.h"
 #include "mlir/Dialect/Affine/Passes.h"
+#include "mlir/Dialect/Arithmetic/Transforms/Passes.h"
 #include "mlir/Dialect/Async/Passes.h"
+#include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/Dialect/GPU/Passes.h"
 #include "mlir/Dialect/LLVMIR/Transforms/Passes.h"
 #include "mlir/Dialect/Linalg/Passes.h"
@@ -52,6 +54,8 @@ inline void registerAllPasses() {
   // Dialect passes
   registerAffinePasses();
   registerAsyncPasses();
+  arith::registerArithmeticPasses();
+  bufferization::registerBufferizationPasses();
   registerGPUPasses();
   registerGpuSerializeToCubinPass();
   registerGpuSerializeToHsacoPass();

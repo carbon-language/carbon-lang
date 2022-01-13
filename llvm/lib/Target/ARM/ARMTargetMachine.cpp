@@ -38,12 +38,12 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetParser.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/CFGuard.h"
@@ -92,6 +92,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeARMTarget() {
   initializeARMLoadStoreOptPass(Registry);
   initializeARMPreAllocLoadStoreOptPass(Registry);
   initializeARMParallelDSPPass(Registry);
+  initializeARMBranchTargetsPass(Registry);
   initializeARMConstantIslandsPass(Registry);
   initializeARMExecutionDomainFixPass(Registry);
   initializeARMExpandPseudoPass(Registry);
@@ -541,7 +542,6 @@ void ARMPassConfig::addPreSched2() {
       return !MF.getSubtarget<ARMSubtarget>().isThumb1Only();
     }));
   }
-  addPass(createMVEVPTBlockPass());
   addPass(createThumb2ITBlockPass());
 
   // Add both scheduling passes to give the subtarget an opportunity to pick
@@ -551,6 +551,7 @@ void ARMPassConfig::addPreSched2() {
     addPass(&PostRASchedulerID);
   }
 
+  addPass(createMVEVPTBlockPass());
   addPass(createARMIndirectThunks());
   addPass(createARMSLSHardeningPass());
 }
@@ -571,6 +572,7 @@ void ARMPassConfig::addPreEmitPass() {
 }
 
 void ARMPassConfig::addPreEmitPass2() {
+  addPass(createARMBranchTargetsPass());
   addPass(createARMConstantIslandPass());
   addPass(createARMLowOverheadLoopsPass());
 

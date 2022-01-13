@@ -340,7 +340,7 @@ void Sema::ActOnPragmaPack(SourceLocation PragmaLoc, PragmaMsStackAction Action,
 
     // pack(0) is like pack(), which just works out since that is what
     // we use 0 for in PackAttr.
-    if (Alignment->isTypeDependent() || Alignment->isValueDependent() || !Val ||
+    if (Alignment->isTypeDependent() || !Val ||
         !(*Val == 0 || Val->isPowerOf2()) || Val->getZExtValue() > 16) {
       Diag(PragmaLoc, diag::warn_pragma_pack_invalid_alignment);
       return; // Ignore
@@ -484,21 +484,6 @@ void Sema::ActOnPragmaFloatControl(SourceLocation Loc,
   switch (Value) {
   default:
     llvm_unreachable("invalid pragma float_control kind");
-  case PFC_Source:
-    PP.setCurrentFPEvalMethod(LangOptions::FEM_Source);
-    NewFPFeatures.setFPEvalMethodOverride(LangOptions::FEM_Source);
-    FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
-    break;
-  case PFC_Double:
-    PP.setCurrentFPEvalMethod(LangOptions::FEM_Double);
-    NewFPFeatures.setFPEvalMethodOverride(LangOptions::FEM_Double);
-    FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
-    break;
-  case PFC_Extended:
-    PP.setCurrentFPEvalMethod(LangOptions::FEM_Extended);
-    NewFPFeatures.setFPEvalMethodOverride(LangOptions::FEM_Extended);
-    FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
-    break;
   case PFC_Precise:
     NewFPFeatures.setFPPreciseEnabled(true);
     FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
@@ -807,7 +792,7 @@ attrMatcherRuleListToString(ArrayRef<attr::SubjectMatchRule> Rules) {
       OS << (I.index() == Rules.size() - 1 ? ", and " : ", ");
     OS << "'" << attr::getSubjectMatchRuleSpelling(I.value()) << "'";
   }
-  return OS.str();
+  return Result;
 }
 
 } // end anonymous namespace

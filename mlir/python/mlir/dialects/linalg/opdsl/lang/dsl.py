@@ -2,7 +2,7 @@
 #  See https://llvm.org/LICENSE.txt for license information.
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-from typing import Dict, List
+from typing import Dict, List, Sequence, Union
 
 from contextlib import contextmanager
 import functools
@@ -10,11 +10,15 @@ import inspect
 import threading
 
 from ..... import ir
+from ...._ods_common import get_op_result_or_value as _get_op_result_or_value, get_op_results_or_values as _get_op_results_or_values
 from .comprehension import *
 from .config import *
 from .emitter import *
 
 _CONTEXT = threading.local()
+
+StructuredOpOuts = Union[ir.Operation, ir.OpView, ir.OpResultList,
+                         Sequence[Union[ir.Value, ir.Operation, ir.OpView]]]
 
 
 @contextmanager
@@ -37,6 +41,15 @@ def current_op_def() -> LinalgOpDef:
         "but none is set. Did you mean to call this in an op definition?")
 
 
+def _prepare_structured_op_outs(outs: StructuredOpOuts) -> ValueList:
+  if isinstance(outs, (ir.Operation, ir.OpView)):
+    return _get_op_results_or_values(outs)
+  elif isinstance(outs, ir.OpResultList):
+    return outs
+
+  return [_get_op_result_or_value(o) for o in outs]
+
+
 class DefinedOpCallable:
   """Callable that wraps any defined op function."""
 
@@ -44,7 +57,8 @@ class DefinedOpCallable:
     self.op_name = op_name
     self.model = model
 
-  def __call__(self, *ins: ir.Value, outs: Sequence[ir.Value], **kwargs):
+  def __call__(self, *ins: Union[ir.Operation, ir.OpView, ir.Value],
+               outs: StructuredOpOuts, **kwargs):
     """Emits the corresponding op definition as IR.
 
     Most arguments are passed through to the underlying emitter. The following
@@ -73,17 +87,19 @@ class DefinedOpCallable:
         emit_generic or not ctx.is_registered_operation(fully_qualified_name))
 
     op_config = op_configs[0]
+    out_values = _prepare_structured_op_outs(outs)
+    in_values = [_get_op_result_or_value(i) for i in ins]
     if op_config.structured_op:
       if emit_generic:
         return emit_generic_structured_op(
-            op_config.structured_op, *ins, outs=outs, **kwargs)
+            op_config.structured_op, *in_values, outs=out_values, **kwargs)
       else:
         return emit_named_structured_op(
             op_config.structured_op,
             self.op_name,
             self.model.metadata.cpp_class_name,
-            *ins,
-            outs=outs,
+            *in_values,
+            outs=out_values,
             **kwargs)
 
     raise NotImplementedError(
@@ -97,7 +113,7 @@ def linalg_structured_op(dsl_func=None,
   if dsl_func is None:
     # Curry the keyword args in for delayed application.
     return functools.partial(
-        tc_def_op, op_name=op_name, op_class_name=op_class_name)
+        linalg_structured_op, op_name=op_name, op_class_name=op_class_name)
   # Determine default names by introspecting the function.
   if op_name is None:
     op_name = dsl_func.__name__
@@ -113,12 +129,13 @@ def linalg_structured_op(dsl_func=None,
   sig = inspect.signature(dsl_func)
   for param_name, param in sig.parameters.items():
     param_default = param.default
-    if isinstance(param_default, (TensorDef, ScalarDef, AttributeDef)):
+    if isinstance(param_default, (TensorDef, ScalarDef, IndexAttrDef)):
       tc_model.add_operand(param_name, param_default.operand_def)
     else:
-      raise ValueError(f"@tc_def_op function parameters must be defaulted as "
-                       f"TensorDef(...), ScalarDef(...), or AttributeDef(...): "
-                       f"Found {param_name}: {param_default}")
+      raise ValueError(
+          f"@linalg_structured_op function parameters must be defaulted as "
+          f"TensorDef(...), ScalarDef(...), or IndexAttrDef(...): "
+          f"Found {param_name}: {param_default}")
     dsl_func_args.append(param_default)
 
   # Invoke the DSL func to finish populating the model.

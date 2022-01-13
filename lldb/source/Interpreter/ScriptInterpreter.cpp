@@ -46,6 +46,10 @@ void ScriptInterpreter::CollectDataForWatchpointCommandCallback(
       "This script interpreter does not support watchpoint callbacks.");
 }
 
+StructuredData::DictionarySP ScriptInterpreter::GetInterpreterInfo() {
+  return nullptr;
+}
+
 bool ScriptInterpreter::LoadScriptingModule(const char *filename,
                                             const LoadScriptOptions &options,
                                             lldb_private::Status &error,
@@ -81,6 +85,14 @@ ScriptInterpreter::GetStatusFromSBError(const lldb::SBError &error) const {
     return *error.m_opaque_up.get();
 
   return Status();
+}
+
+llvm::Optional<MemoryRegionInfo>
+ScriptInterpreter::GetOpaqueTypeFromSBMemoryRegionInfo(
+    const lldb::SBMemoryRegionInfo &mem_region) const {
+  if (!mem_region.m_opaque_up)
+    return llvm::None;
+  return *mem_region.m_opaque_up.get();
 }
 
 lldb::ScriptLanguage

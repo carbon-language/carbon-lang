@@ -163,7 +163,7 @@ bool usesTriple(StringRef Buf) {
   for (line_iterator I(MemoryBufferRef(Buf, "ELFStub")); !I.is_at_eof(); ++I) {
     StringRef Line = (*I).trim();
     if (Line.startswith("Target:")) {
-      if (Line == "Target:" || (Line.find("{") != Line.npos)) {
+      if (Line == "Target:" || Line.contains("{")) {
         return false;
       }
     }
@@ -195,7 +195,7 @@ Expected<std::unique_ptr<IFSStub>> ifs::readIFSFromBuffer(StringRef Buf) {
 }
 
 Error ifs::writeIFSToOutputStream(raw_ostream &OS, const IFSStub &Stub) {
-  yaml::Output YamlOut(OS, NULL, /*WrapColumn =*/0);
+  yaml::Output YamlOut(OS, nullptr, /*WrapColumn =*/0);
   std::unique_ptr<IFSStubTriple> CopyStub(new IFSStubTriple(Stub));
   if (Stub.Target.Arch) {
     CopyStub->Target.ArchString = std::string(

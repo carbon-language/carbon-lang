@@ -1,7 +1,7 @@
 // RUN: mlir-opt %s \
 // RUN:   -convert-scf-to-std \
 // RUN:   -gpu-kernel-outlining \
-// RUN:   -pass-pipeline='gpu.module(strip-debuginfo,convert-gpu-to-rocdl,gpu-to-hsaco)' \
+// RUN:   -pass-pipeline='gpu.module(strip-debuginfo,convert-gpu-to-rocdl,gpu-to-hsaco{chip=%chip})' \
 // RUN:   -gpu-to-llvm \
 // RUN: | mlir-cpu-runner \
 // RUN:   --shared-libs=%linalg_test_lib_dir/libmlir_rocm_runtime%shlibext \
@@ -10,18 +10,18 @@
 // RUN: | FileCheck %s
 
 func @vectransferx2(%arg0 : memref<?xf32>, %arg1 : memref<?xf32>) {
-  %cst = constant 1 : index
+  %cst = arith.constant 1 : index
   gpu.launch blocks(%bx, %by, %bz) in (%grid_x = %cst, %grid_y = %cst, %grid_z = %cst)
              threads(%tx, %ty, %tz) in (%block_x = %cst, %block_y = %cst, %block_z = %cst) {
-    %f0 = constant 0.0: f32
-    %base = constant 0 : index
+    %f0 = arith.constant 0.0: f32
+    %base = arith.constant 0 : index
     %f = vector.transfer_read %arg0[%base], %f0
         {permutation_map = affine_map<(d0) -> (d0)>} :
       memref<?xf32>, vector<2xf32>
 
-    %c = addf %f, %f : vector<2xf32>
+    %c = arith.addf %f, %f : vector<2xf32>
 
-    %base1 = constant 1 : index
+    %base1 = arith.constant 1 : index
     vector.transfer_write %c, %arg1[%base1]
         {permutation_map = affine_map<(d0) -> (d0)>} :
       vector<2xf32>, memref<?xf32>
@@ -32,16 +32,16 @@ func @vectransferx2(%arg0 : memref<?xf32>, %arg1 : memref<?xf32>) {
 }
 
 func @vectransferx4(%arg0 : memref<?xf32>, %arg1 : memref<?xf32>) {
-  %cst = constant 1 : index
+  %cst = arith.constant 1 : index
   gpu.launch blocks(%bx, %by, %bz) in (%grid_x = %cst, %grid_y = %cst, %grid_z = %cst)
              threads(%tx, %ty, %tz) in (%block_x = %cst, %block_y = %cst, %block_z = %cst) {
-    %f0 = constant 0.0: f32
-    %base = constant 0 : index
+    %f0 = arith.constant 0.0: f32
+    %base = arith.constant 0 : index
     %f = vector.transfer_read %arg0[%base], %f0
         {permutation_map = affine_map<(d0) -> (d0)>} :
       memref<?xf32>, vector<4xf32>
 
-    %c = addf %f, %f : vector<4xf32>
+    %c = arith.addf %f, %f : vector<4xf32>
 
     vector.transfer_write %c, %arg1[%base]
         {permutation_map = affine_map<(d0) -> (d0)>} :
@@ -53,25 +53,25 @@ func @vectransferx4(%arg0 : memref<?xf32>, %arg1 : memref<?xf32>) {
 }
 
 func @main() {
-  %c0 = constant 0 : index
-  %c1 = constant 1 : index
-  %c4 = constant 4 : index
-  %cf1 = constant 1.0 : f32
-  %cf1dot23 = constant 1.23 : f32
+  %c0 = arith.constant 0 : index
+  %c1 = arith.constant 1 : index
+  %c4 = arith.constant 4 : index
+  %cf1 = arith.constant 1.0 : f32
+  %cf1dot23 = arith.constant 1.23 : f32
 
-  %arg0 = alloc() : memref<4xf32>
-  %arg1 = alloc() : memref<4xf32>
+  %arg0 = memref.alloc() : memref<4xf32>
+  %arg1 = memref.alloc() : memref<4xf32>
 
-  %22 = memref_cast %arg0 : memref<4xf32> to memref<?xf32>
-  %23 = memref_cast %arg1 : memref<4xf32> to memref<?xf32>
+  %22 = memref.cast %arg0 : memref<4xf32> to memref<?xf32>
+  %23 = memref.cast %arg1 : memref<4xf32> to memref<?xf32>
 
   scf.for %i = %c0 to %c4 step %c1 {
-    store %cf1dot23, %22[%i] : memref<?xf32>
-    store %cf1dot23, %23[%i] : memref<?xf32>
+    memref.store %cf1dot23, %22[%i] : memref<?xf32>
+    memref.store %cf1dot23, %23[%i] : memref<?xf32>
   }
 
-  %cast0 = memref_cast %22 : memref<?xf32> to memref<*xf32>
-  %cast1 = memref_cast %23 : memref<?xf32> to memref<*xf32>
+  %cast0 = memref.cast %22 : memref<?xf32> to memref<*xf32>
+  %cast1 = memref.cast %23 : memref<?xf32> to memref<*xf32>
 
   gpu.host_register %cast0 : memref<*xf32>
   gpu.host_register %cast1 : memref<*xf32>

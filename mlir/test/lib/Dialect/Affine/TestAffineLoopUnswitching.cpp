@@ -30,7 +30,7 @@ struct TestAffineLoopUnswitching
     return "Tests affine loop unswitching / if/else hoisting";
   }
   TestAffineLoopUnswitching() = default;
-  TestAffineLoopUnswitching(const TestAffineLoopUnswitching &pass) {}
+  TestAffineLoopUnswitching(const TestAffineLoopUnswitching &pass) = default;
 
   void runOnFunction() override;
 
@@ -38,7 +38,7 @@ struct TestAffineLoopUnswitching
   constexpr static unsigned kMaxIterations = 5;
 };
 
-} // end anonymous namespace
+} // namespace
 
 void TestAffineLoopUnswitching::runOnFunction() {
   // Each hoisting invalidates a lot of IR around. Just stop the walk after the

@@ -1,4 +1,4 @@
-//===--------------------- UnwindLevel1-gcc-ext.c -------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -109,7 +109,7 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
   // Create a mock exception object for force unwinding.
   _Unwind_Exception ex;
   memset(&ex, '\0', sizeof(ex));
-  ex.exception_class = 0x434C4E47554E5700; // CLNGUNW\0
+  strcpy((char *)&ex.exception_class, "CLNGUNW");
 #endif
 
   // walk each frame

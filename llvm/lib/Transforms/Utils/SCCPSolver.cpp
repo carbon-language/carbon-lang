@@ -540,8 +540,14 @@ void SCCPInstVisitor::markArgInFuncSpecialization(Function *F, Argument *A,
             E = F->arg_end();
        I != E; ++I, ++J)
     if (J != A && ValueState.count(I)) {
-      ValueState[J] = ValueState[I];
-      pushToWorkList(ValueState[J], J);
+      // Note: This previously looked like this:
+      // ValueState[J] = ValueState[I];
+      // This is incorrect because the DenseMap class may resize the underlying
+      // memory when inserting `J`, which will invalidate the reference to `I`.
+      // Instead, we make sure `J` exists, then set it to `I` afterwards.
+      auto &NewValue = ValueState[J];
+      NewValue = ValueState[I];
+      pushToWorkList(NewValue, J);
     }
 }
 
@@ -802,6 +808,9 @@ void SCCPInstVisitor::visitCastInst(CastInst &I) {
     return;
 
   ValueLatticeElement OpSt = getValueState(I.getOperand(0));
+  if (OpSt.isUnknownOrUndef())
+    return;
+
   if (Constant *OpC = getConstant(OpSt)) {
     // Fold the constant as we build.
     Constant *C = ConstantFoldCastOperand(I.getOpcode(), OpC, I.getType(), DL);
@@ -809,9 +818,14 @@ void SCCPInstVisitor::visitCastInst(CastInst &I) {
       return;
     // Propagate constant value
     markConstant(&I, C);
-  } else if (OpSt.isConstantRange() && I.getDestTy()->isIntegerTy()) {
+  } else if (I.getDestTy()->isIntegerTy()) {
     auto &LV = getValueState(&I);
-    ConstantRange OpRange = OpSt.getConstantRange();
+    ConstantRange OpRange =
+        OpSt.isConstantRange()
+            ? OpSt.getConstantRange()
+            : ConstantRange::getFull(
+                  I.getOperand(0)->getType()->getScalarSizeInBits());
+
     Type *DestTy = I.getDestTy();
     // Vectors where all elements have the same known constant range are treated
     // as a single constant range in the lattice. When bitcasting such vectors,
@@ -826,7 +840,7 @@ void SCCPInstVisitor::visitCastInst(CastInst &I) {
     ConstantRange Res =
         OpRange.castOp(I.getOpcode(), DL.getTypeSizeInBits(DestTy));
     mergeInValue(LV, &I, ValueLatticeElement::getRange(Res));
-  } else if (!OpSt.isUnknownOrUndef())
+  } else
     markOverdefined(&I);
 }
 
@@ -1183,10 +1197,10 @@ void SCCPInstVisitor::handleCallOverdefined(CallBase &CB) {
   // a declaration, maybe we can constant fold it.
   if (F && F->isDeclaration() && canConstantFoldCallTo(&CB, F)) {
     SmallVector<Constant *, 8> Operands;
-    for (auto AI = CB.arg_begin(), E = CB.arg_end(); AI != E; ++AI) {
-      if (AI->get()->getType()->isStructTy())
+    for (const Use &A : CB.args()) {
+      if (A.get()->getType()->isStructTy())
         return markOverdefined(&CB); // Can't handle struct args.
-      ValueLatticeElement State = getValueState(*AI);
+      ValueLatticeElement State = getValueState(A);
 
       if (State.isUnknownOrUndef())
         return; // Operands are not resolved yet.

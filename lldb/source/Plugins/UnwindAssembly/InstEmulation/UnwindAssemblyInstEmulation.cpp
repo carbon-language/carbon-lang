@@ -333,13 +333,6 @@ UnwindAssemblyInstEmulation::CreateInstance(const ArchSpec &arch) {
   return nullptr;
 }
 
-// PluginInterface protocol in UnwindAssemblyParser_x86
-ConstString UnwindAssemblyInstEmulation::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t UnwindAssemblyInstEmulation::GetPluginVersion() { return 1; }
-
 void UnwindAssemblyInstEmulation::Initialize() {
   PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                 GetPluginDescriptionStatic(), CreateInstance);
@@ -349,12 +342,7 @@ void UnwindAssemblyInstEmulation::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-ConstString UnwindAssemblyInstEmulation::GetPluginNameStatic() {
-  static ConstString g_name("inst-emulation");
-  return g_name;
-}
-
-const char *UnwindAssemblyInstEmulation::GetPluginDescriptionStatic() {
+llvm::StringRef UnwindAssemblyInstEmulation::GetPluginDescriptionStatic() {
   return "Instruction emulation based unwind information.";
 }
 

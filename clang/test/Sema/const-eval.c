@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-linux %s -Wno-tautological-pointer-compare -Wno-pointer-to-int-cast
+// RUN: %clang_cc1 -fsyntax-only -verify -triple powerpc64-ibm-aix-xcoff %s -Wno-tautological-pointer-compare -Wno-pointer-to-int-cast
 
 #define EVAL_EXPR(testno, expr) enum { test##testno = (expr) }; struct check_positive##testno { int a[test##testno]; };
 int x;
@@ -74,7 +75,7 @@ const _Bool constbool = 0;
 EVAL_EXPR(35, constbool)
 EVAL_EXPR(36, constbool)
 
-EVAL_EXPR(37, (1,2.0) == 2.0 ? 1 : -1)
+EVAL_EXPR(37, ((void)1,2.0) == 2.0 ? 1 : -1)
 EVAL_EXPR(38, __builtin_expect(1,1) == 1 ? 1 : -1)
 
 // PR7884

@@ -14,6 +14,7 @@
 #define LLVM_EXECUTIONENGINE_JITLINK_X86_64_H
 
 #include "llvm/ExecutionEngine/JITLink/JITLink.h"
+#include "llvm/ExecutionEngine/JITLink/TableManager.h"
 
 #include <limits>
 
@@ -324,6 +325,9 @@ enum EdgeKind_x86_64 : Edge::Kind {
   ///
   PCRel32TLVPLoadREXRelaxable,
 
+  /// TODO: Explain the generic edge kind
+  RequestTLSDescInGOTAndTransformToDelta32,
+
   /// A TLVP entry getter/constructor, transformed to
   /// Delta32ToTLVPLoadREXRelaxable.
   ///
@@ -346,14 +350,6 @@ enum EdgeKind_x86_64 : Edge::Kind {
 /// only.
 const char *getEdgeKindName(Edge::Kind K);
 
-/// Optimize the GOT and Stub relocations if the edge target address is in range
-/// 1. PCRel32GOTLoadRelaxable. For this edge kind, if the target is in range,
-/// then replace GOT load with lea
-/// 2. BranchPCRel32ToPtrJumpStubRelaxable. For this edge kind, if the target is
-/// in range, replace a indirect jump by plt stub with a direct jump to the
-/// target
-Error optimize_x86_64_GOTAndStubs(LinkGraph &G);
-
 /// Returns true if the given uint64_t value is in range for a uint32_t.
 inline bool isInRangeForImmU32(uint64_t Value) {
   return Value <= std::numeric_limits<uint32_t>::max();
@@ -372,18 +368,18 @@ inline Error applyFixup(LinkGraph &G, Block &B, const Edge &E,
 
   char *BlockWorkingMem = B.getAlreadyMutableContent().data();
   char *FixupPtr = BlockWorkingMem + E.getOffset();
-  JITTargetAddress FixupAddress = B.getAddress() + E.getOffset();
+  auto FixupAddress = B.getAddress() + E.getOffset();
 
   switch (E.getKind()) {
 
   case Pointer64: {
-    uint64_t Value = E.getTarget().getAddress() + E.getAddend();
+    uint64_t Value = E.getTarget().getAddress().getValue() + E.getAddend();
     *(ulittle64_t *)FixupPtr = Value;
     break;
   }
 
   case Pointer32: {
-    uint64_t Value = E.getTarget().getAddress() + E.getAddend();
+    uint64_t Value = E.getTarget().getAddress().getValue() + E.getAddend();
     if (LLVM_LIKELY(isInRangeForImmU32(Value)))
       *(ulittle32_t *)FixupPtr = Value;
     else
@@ -391,7 +387,7 @@ inline Error applyFixup(LinkGraph &G, Block &B, const Edge &E,
     break;
   }
   case Pointer32Signed: {
-    int64_t Value = E.getTarget().getAddress() + E.getAddend();
+    int64_t Value = E.getTarget().getAddress().getValue() + E.getAddend();
     if (LLVM_LIKELY(isInRangeForImmS32(Value)))
       *(little32_t *)FixupPtr = Value;
     else
@@ -487,8 +483,8 @@ extern const char PointerJumpStubContent[6];
 inline Symbol &createAnonymousPointer(LinkGraph &G, Section &PointerSection,
                                       Symbol *InitialTarget = nullptr,
                                       uint64_t InitialAddend = 0) {
-  auto &B =
-      G.createContentBlock(PointerSection, NullPointerContent, ~7ULL, 8, 0);
+  auto &B = G.createContentBlock(PointerSection, NullPointerContent,
+                                 orc::ExecutorAddr(~uint64_t(7)), 8, 0);
   if (InitialTarget)
     B.addEdge(Pointer64, 0, *InitialTarget, InitialAddend);
   return G.addAnonymousSymbol(B, 0, 8, false, false);
@@ -502,8 +498,8 @@ inline Symbol &createAnonymousPointer(LinkGraph &G, Section &PointerSection,
 ///   address: highest allowable: (~5U)
 inline Block &createPointerJumpStubBlock(LinkGraph &G, Section &StubSection,
                                          Symbol &PointerSymbol) {
-  auto &B =
-      G.createContentBlock(StubSection, PointerJumpStubContent, ~5ULL, 1, 0);
+  auto &B = G.createContentBlock(StubSection, PointerJumpStubContent,
+                                 orc::ExecutorAddr(~uint64_t(5)), 1, 0);
   B.addEdge(Delta32, 2, PointerSymbol, -4);
   return B;
 }
@@ -519,6 +515,112 @@ inline Symbol &createAnonymousPointerJumpStub(LinkGraph &G,
       createPointerJumpStubBlock(G, StubSection, PointerSymbol), 0, 6, true,
       false);
 }
+
+/// Global Offset Table Builder.
+class GOTTableManager : public TableManager<GOTTableManager> {
+public:
+  static StringRef getSectionName() { return "$__GOT"; }
+
+  bool visitEdge(LinkGraph &G, Block *B, Edge &E) {
+    Edge::Kind KindToSet = Edge::Invalid;
+    switch (E.getKind()) {
+    case x86_64::Delta64FromGOT: {
+      // we need to make sure that the GOT section exists, but don't otherwise
+      // need to fix up this edge
+      getGOTSection(G);
+      return false;
+    }
+    case x86_64::RequestGOTAndTransformToPCRel32GOTLoadREXRelaxable:
+      KindToSet = x86_64::PCRel32GOTLoadREXRelaxable;
+      break;
+    case x86_64::RequestGOTAndTransformToPCRel32GOTLoadRelaxable:
+      KindToSet = x86_64::PCRel32GOTLoadRelaxable;
+      break;
+    case x86_64::RequestGOTAndTransformToDelta64:
+      KindToSet = x86_64::Delta64;
+      break;
+    case x86_64::RequestGOTAndTransformToDelta64FromGOT:
+      KindToSet = x86_64::Delta64FromGOT;
+      break;
+    case x86_64::RequestGOTAndTransformToDelta32:
+      KindToSet = x86_64::Delta32;
+      break;
+    default:
+      return false;
+    }
+    assert(KindToSet != Edge::Invalid &&
+           "Fell through switch, but no new kind to set");
+    DEBUG_WITH_TYPE("jitlink", {
+      dbgs() << "  Fixing " << G.getEdgeKindName(E.getKind()) << " edge at "
+             << B->getFixupAddress(E) << " (" << B->getAddress() << " + "
+             << formatv("{0:x}", E.getOffset()) << ")\n";
+    });
+    E.setKind(KindToSet);
+    E.setTarget(getEntryForTarget(G, E.getTarget()));
+    return true;
+  }
+
+  Symbol &createEntry(LinkGraph &G, Symbol &Target) {
+    return createAnonymousPointer(G, getGOTSection(G), &Target);
+  }
+
+private:
+  Section &getGOTSection(LinkGraph &G) {
+    if (!GOTSection)
+      GOTSection = &G.createSection(getSectionName(), MemProt::Read);
+    return *GOTSection;
+  }
+
+  Section *GOTSection = nullptr;
+};
+
+/// Procedure Linkage Table Builder.
+class PLTTableManager : public TableManager<PLTTableManager> {
+public:
+  PLTTableManager(GOTTableManager &GOT) : GOT(GOT) {}
+
+  static StringRef getSectionName() { return "$__STUBS"; }
+
+  bool visitEdge(LinkGraph &G, Block *B, Edge &E) {
+    if (E.getKind() == x86_64::BranchPCRel32 && !E.getTarget().isDefined()) {
+      DEBUG_WITH_TYPE("jitlink", {
+        dbgs() << "  Fixing " << G.getEdgeKindName(E.getKind()) << " edge at "
+               << B->getFixupAddress(E) << " (" << B->getAddress() << " + "
+               << formatv("{0:x}", E.getOffset()) << ")\n";
+      });
+      // Set the edge kind to Branch32ToPtrJumpStubBypassable to enable it to
+      // be optimized when the target is in-range.
+      E.setKind(x86_64::BranchPCRel32ToPtrJumpStubBypassable);
+      E.setTarget(getEntryForTarget(G, E.getTarget()));
+      return true;
+    }
+    return false;
+  }
+
+  Symbol &createEntry(LinkGraph &G, Symbol &Target) {
+    return createAnonymousPointerJumpStub(G, getStubsSection(G),
+                                          GOT.getEntryForTarget(G, Target));
+  }
+
+public:
+  Section &getStubsSection(LinkGraph &G) {
+    if (!PLTSection)
+      PLTSection =
+          &G.createSection(getSectionName(), MemProt::Read | MemProt::Exec);
+    return *PLTSection;
+  }
+
+  GOTTableManager &GOT;
+  Section *PLTSection = nullptr;
+};
+
+/// Optimize the GOT and Stub relocations if the edge target address is in range
+/// 1. PCRel32GOTLoadRelaxable. For this edge kind, if the target is in range,
+/// then replace GOT load with lea
+/// 2. BranchPCRel32ToPtrJumpStubRelaxable. For this edge kind, if the target is
+/// in range, replace a indirect jump by plt stub with a direct jump to the
+/// target
+Error optimizeGOTAndStubAccesses(LinkGraph &G);
 
 } // namespace x86_64
 } // end namespace jitlink

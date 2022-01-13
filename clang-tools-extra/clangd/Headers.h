@@ -12,21 +12,98 @@
 #include "Protocol.h"
 #include "SourceCode.h"
 #include "index/Symbol.h"
+#include "support/Logger.h"
 #include "support/Path.h"
+#include "clang/Basic/FileEntry.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Format/Format.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/PPCallbacks.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Tooling/Inclusions/HeaderIncludes.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/FileSystem/UniqueID.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include <string>
 
 namespace clang {
+class Decl;
+class NamespaceDecl;
 namespace clangd {
+
+// clangd has a built-in database of standard library symbols.
+namespace stdlib {
+class Symbol;
+
+// A standard library header, such as <iostream>
+// Lightweight class, in fact just an index into a table.
+class Header {
+public:
+  static llvm::Optional<Header> named(llvm::StringRef Name);
+
+  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Header &H) {
+    return OS << H.name();
+  }
+  llvm::StringRef name() const;
+
+private:
+  Header(unsigned ID) : ID(ID) {}
+  unsigned ID;
+  friend Symbol;
+  friend llvm::DenseMapInfo<Header>;
+  friend bool operator==(const Header &L, const Header &R) {
+    return L.ID == R.ID;
+  }
+};
+
+// A top-level standard library symbol, such as std::vector
+// Lightweight class, in fact just an index into a table.
+class Symbol {
+public:
+  static llvm::Optional<Symbol> named(llvm::StringRef Scope,
+                                      llvm::StringRef Name);
+
+  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Symbol &S) {
+    return OS << S.scope() << S.name();
+  }
+  llvm::StringRef scope() const;
+  llvm::StringRef name() const;
+  // The preferred header for this symbol (e.g. the suggested insertion).
+  Header header() const;
+  // Some symbols may be provided my multiple headers.
+  llvm::SmallVector<Header> headers() const;
+
+private:
+  Symbol(unsigned ID) : ID(ID) {}
+  unsigned ID;
+  friend class Recognizer;
+  friend llvm::DenseMapInfo<Symbol>;
+  friend bool operator==(const Symbol &L, const Symbol &R) {
+    return L.ID == R.ID;
+  }
+};
+
+// A functor to find the stdlib::Symbol associated with a decl.
+//
+// For non-top-level decls (std::vector<int>::iterator), returns the top-level
+// symbol (std::vector).
+class Recognizer {
+public:
+  Recognizer();
+  llvm::Optional<Symbol> operator()(const Decl *D);
+
+private:
+  using NSSymbolMap = llvm::DenseMap<llvm::StringRef, unsigned>;
+  NSSymbolMap *namespaceSymbols(const NamespaceDecl *D);
+  llvm::DenseMap<const DeclContext *, NSSymbolMap *> NamespaceCache;
+};
+
+} // namespace stdlib
 
 /// Returns true if \p Include is literal include like "path" or <path>.
 bool isLiteralInclude(llvm::StringRef Include);
@@ -58,11 +135,13 @@ struct Inclusion {
   unsigned HashOffset = 0; // Byte offset from start of file to #.
   int HashLine = 0;        // Line number containing the directive, 0-indexed.
   SrcMgr::CharacteristicKind FileKind = SrcMgr::C_User;
+  llvm::Optional<unsigned> HeaderID;
+  bool BehindPragmaKeep = false; // Has IWYU pragma: keep right after.
 };
 llvm::raw_ostream &operator<<(llvm::raw_ostream &, const Inclusion &);
 bool operator==(const Inclusion &LHS, const Inclusion &RHS);
 
-// Contains information about one file in the build grpah and its direct
+// Contains information about one file in the build graph and its direct
 // dependencies. Doesn't own the strings it references (IncludeGraph is
 // self-contained).
 struct IncludeGraphNode {
@@ -112,7 +191,32 @@ operator|=(IncludeGraphNode::SourceFlag &A, IncludeGraphNode::SourceFlag B) {
 // in any non-preamble inclusions.
 class IncludeStructure {
 public:
-  std::vector<Inclusion> MainFileIncludes;
+  IncludeStructure() {
+    // Reserve HeaderID = 0 for the main file.
+    RealPathNames.emplace_back();
+  }
+
+  // Inserts a PPCallback and CommentHandler that visits all includes in the
+  // main file and populates the structure. It will also scan for IWYU pragmas
+  // in comments.
+  void collect(const CompilerInstance &CI);
+
+  // HeaderID identifies file in the include graph. It corresponds to a
+  // FileEntry rather than a FileID, but stays stable across preamble & main
+  // file builds.
+  enum class HeaderID : unsigned {};
+
+  llvm::Optional<HeaderID> getID(const FileEntry *Entry) const;
+  HeaderID getOrCreateID(const FileEntry *Entry);
+
+  StringRef getRealPath(HeaderID ID) const {
+    assert(static_cast<unsigned>(ID) <= RealPathNames.size());
+    return RealPathNames[static_cast<unsigned>(ID)];
+  }
+
+  bool isSelfContained(HeaderID ID) const {
+    return !NonSelfContained.contains(ID);
+  }
 
   // Return all transitively reachable files.
   llvm::ArrayRef<std::string> allHeaders() const { return RealPathNames; }
@@ -120,31 +224,40 @@ public:
   // Return all transitively reachable files, and their minimum include depth.
   // All transitive includes (absolute paths), with their minimum include depth.
   // Root --> 0, #included file --> 1, etc.
-  // Root is clang's name for a file, which may not be absolute.
-  // Usually it should be SM.getFileEntryForID(SM.getMainFileID())->getName().
-  llvm::StringMap<unsigned> includeDepth(llvm::StringRef Root) const;
+  // Root is the ID of the header being visited first.
+  llvm::DenseMap<HeaderID, unsigned>
+  includeDepth(HeaderID Root = MainFileID) const;
 
-  // This updates IncludeDepth(), but not MainFileIncludes.
-  void recordInclude(llvm::StringRef IncludingName,
-                     llvm::StringRef IncludedName,
-                     llvm::StringRef IncludedRealName);
+  // Maps HeaderID to the ids of the files included from it.
+  llvm::DenseMap<HeaderID, SmallVector<HeaderID>> IncludeChildren;
+
+  llvm::DenseMap<stdlib::Header, llvm::SmallVector<HeaderID>> StdlibHeaders;
+
+  std::vector<Inclusion> MainFileIncludes;
+
+  // We reserve HeaderID(0) for the main file and will manually check for that
+  // in getID and getOrCreateID because the UniqueID is not stable when the
+  // content of the main file changes.
+  static const HeaderID MainFileID = HeaderID(0u);
+
+  class RecordHeaders;
 
 private:
+  // MainFileEntry will be used to check if the queried file is the main file
+  // or not.
+  const FileEntry *MainFileEntry = nullptr;
+
+  std::vector<std::string> RealPathNames; // In HeaderID order.
+  // FileEntry::UniqueID is mapped to the internal representation (HeaderID).
   // Identifying files in a way that persists from preamble build to subsequent
   // builds is surprisingly hard. FileID is unavailable in InclusionDirective(),
-  // and RealPathName and UniqueID are not preserved in the preamble.
-  // We use the FileEntry::Name, which is stable, interned into a "file index".
-  // The paths we want to expose are the RealPathName, so store those too.
-  std::vector<std::string> RealPathNames; // In file index order.
-  unsigned fileIndex(llvm::StringRef Name);
-  llvm::StringMap<unsigned> NameToIndex; // Values are file indexes.
-  // Maps a file's index to that of the files it includes.
-  llvm::DenseMap<unsigned, llvm::SmallVector<unsigned>> IncludeChildren;
+  // and RealPathName and UniqueID are not preserved in
+  // the preamble.
+  llvm::DenseMap<llvm::sys::fs::UniqueID, HeaderID> UIDToIndex;
+  // Contains HeaderIDs of all non self-contained entries in the
+  // IncludeStructure.
+  llvm::DenseSet<HeaderID> NonSelfContained;
 };
-
-/// Returns a PPCallback that visits all inclusions in the main file.
-std::unique_ptr<PPCallbacks>
-collectIncludeStructureCallback(const SourceManager &SM, IncludeStructure *Out);
 
 // Calculates insertion edit for including a new header in a file.
 class IncludeInserter {
@@ -204,5 +317,62 @@ private:
 
 } // namespace clangd
 } // namespace clang
+
+namespace llvm {
+
+// Support HeaderIDs as DenseMap keys.
+template <> struct DenseMapInfo<clang::clangd::IncludeStructure::HeaderID> {
+  static inline clang::clangd::IncludeStructure::HeaderID getEmptyKey() {
+    return static_cast<clang::clangd::IncludeStructure::HeaderID>(-1);
+  }
+
+  static inline clang::clangd::IncludeStructure::HeaderID getTombstoneKey() {
+    return static_cast<clang::clangd::IncludeStructure::HeaderID>(-2);
+  }
+
+  static unsigned
+  getHashValue(const clang::clangd::IncludeStructure::HeaderID &Tag) {
+    return hash_value(static_cast<unsigned>(Tag));
+  }
+
+  static bool isEqual(const clang::clangd::IncludeStructure::HeaderID &LHS,
+                      const clang::clangd::IncludeStructure::HeaderID &RHS) {
+    return LHS == RHS;
+  }
+};
+
+template <> struct DenseMapInfo<clang::clangd::stdlib::Header> {
+  static inline clang::clangd::stdlib::Header getEmptyKey() {
+    return clang::clangd::stdlib::Header(-1);
+  }
+  static inline clang::clangd::stdlib::Header getTombstoneKey() {
+    return clang::clangd::stdlib::Header(-2);
+  }
+  static unsigned getHashValue(const clang::clangd::stdlib::Header &H) {
+    return hash_value(H.ID);
+  }
+  static bool isEqual(const clang::clangd::stdlib::Header &LHS,
+                      const clang::clangd::stdlib::Header &RHS) {
+    return LHS == RHS;
+  }
+};
+
+template <> struct DenseMapInfo<clang::clangd::stdlib::Symbol> {
+  static inline clang::clangd::stdlib::Symbol getEmptyKey() {
+    return clang::clangd::stdlib::Symbol(-1);
+  }
+  static inline clang::clangd::stdlib::Symbol getTombstoneKey() {
+    return clang::clangd::stdlib::Symbol(-2);
+  }
+  static unsigned getHashValue(const clang::clangd::stdlib::Symbol &S) {
+    return hash_value(S.ID);
+  }
+  static bool isEqual(const clang::clangd::stdlib::Symbol &LHS,
+                      const clang::clangd::stdlib::Symbol &RHS) {
+    return LHS == RHS;
+  }
+};
+
+} // namespace llvm
 
 #endif // LLVM_CLANG_TOOLS_EXTRA_CLANGD_HEADERS_H

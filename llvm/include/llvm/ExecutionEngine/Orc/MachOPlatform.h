@@ -16,7 +16,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
-#include "llvm/ExecutionEngine/Orc/LLVMSPSSerializers.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
 
@@ -27,22 +26,16 @@
 namespace llvm {
 namespace orc {
 
-struct MachOPerObjectSectionsToRegister {
-  ExecutorAddressRange EHFrameSection;
-  ExecutorAddressRange ThreadDataSection;
-};
-
 struct MachOJITDylibInitializers {
-  using SectionList = std::vector<ExecutorAddressRange>;
+  using SectionList = std::vector<ExecutorAddrRange>;
 
-  MachOJITDylibInitializers(std::string Name,
-                            ExecutorAddress MachOHeaderAddress)
+  MachOJITDylibInitializers(std::string Name, ExecutorAddr MachOHeaderAddress)
       : Name(std::move(Name)),
         MachOHeaderAddress(std::move(MachOHeaderAddress)) {}
 
   std::string Name;
-  ExecutorAddress MachOHeaderAddress;
-  ExecutorAddress ObjCImageInfoAddress;
+  ExecutorAddr MachOHeaderAddress;
+  ExecutorAddr ObjCImageInfoAddress;
 
   StringMap<SectionList> InitSections;
 };
@@ -155,14 +148,11 @@ private:
     using InitSymbolDepMap =
         DenseMap<MaterializationResponsibility *, JITLinkSymbolSet>;
 
-    void addInitializerSupportPasses(MaterializationResponsibility &MR,
-                                     jitlink::PassConfiguration &Config);
-
-    void addMachOHeaderSupportPasses(MaterializationResponsibility &MR,
-                                     jitlink::PassConfiguration &Config);
-
     void addEHAndTLVSupportPasses(MaterializationResponsibility &MR,
                                   jitlink::PassConfiguration &Config);
+
+    Error associateJITDylibHeaderSymbol(jitlink::LinkGraph &G,
+                                        MaterializationResponsibility &MR);
 
     Error preserveInitSections(jitlink::LinkGraph &G,
                                MaterializationResponsibility &MR);
@@ -173,6 +163,10 @@ private:
     Error registerInitSections(jitlink::LinkGraph &G, JITDylib &JD);
 
     Error fixTLVSectionsAndEdges(jitlink::LinkGraph &G, JITDylib &JD);
+
+    Error registerEHAndTLVSections(jitlink::LinkGraph &G);
+
+    Error registerEHSectionsPhase1(jitlink::LinkGraph &G);
 
     std::mutex PluginMutex;
     MachOPlatform &MP;
@@ -186,7 +180,7 @@ private:
   using SendDeinitializerSequenceFn =
       unique_function<void(Expected<MachOJITDylibDeinitializerSequence>)>;
 
-  using SendSymbolAddressFn = unique_function<void(Expected<ExecutorAddress>)>;
+  using SendSymbolAddressFn = unique_function<void(Expected<ExecutorAddr>)>;
 
   static bool supportedTarget(const Triple &TT);
 
@@ -209,31 +203,34 @@ private:
                           StringRef JDName);
 
   void rt_getDeinitializers(SendDeinitializerSequenceFn SendResult,
-                            ExecutorAddress Handle);
+                            ExecutorAddr Handle);
 
-  void rt_lookupSymbol(SendSymbolAddressFn SendResult, ExecutorAddress Handle,
+  void rt_lookupSymbol(SendSymbolAddressFn SendResult, ExecutorAddr Handle,
                        StringRef SymbolName);
 
   // Records the addresses of runtime symbols used by the platform.
   Error bootstrapMachORuntime(JITDylib &PlatformJD);
 
-  Error registerInitInfo(JITDylib &JD, ExecutorAddress ObjCImageInfoAddr,
+  Error registerInitInfo(JITDylib &JD, ExecutorAddr ObjCImageInfoAddr,
                          ArrayRef<jitlink::Section *> InitSections);
 
-  Error registerPerObjectSections(const MachOPerObjectSectionsToRegister &POSR);
-
   Expected<uint64_t> createPThreadKey();
+
+  enum PlatformState { BootstrapPhase1, BootstrapPhase2, Initialized };
 
   ExecutionSession &ES;
   ObjectLinkingLayer &ObjLinkingLayer;
 
   SymbolStringPtr MachOHeaderStartSymbol;
-  std::atomic<bool> RuntimeBootstrapped{false};
+  std::atomic<PlatformState> State{BootstrapPhase1};
 
-  ExecutorAddress orc_rt_macho_platform_bootstrap;
-  ExecutorAddress orc_rt_macho_platform_shutdown;
-  ExecutorAddress orc_rt_macho_register_object_sections;
-  ExecutorAddress orc_rt_macho_create_pthread_key;
+  ExecutorAddr orc_rt_macho_platform_bootstrap;
+  ExecutorAddr orc_rt_macho_platform_shutdown;
+  ExecutorAddr orc_rt_macho_register_ehframe_section;
+  ExecutorAddr orc_rt_macho_deregister_ehframe_section;
+  ExecutorAddr orc_rt_macho_register_thread_data_section;
+  ExecutorAddr orc_rt_macho_deregister_thread_data_section;
+  ExecutorAddr orc_rt_macho_create_pthread_key;
 
   DenseMap<JITDylib *, SymbolLookupSet> RegisteredInitSymbols;
 
@@ -241,46 +238,19 @@ private:
   // aggregating data from the jitlink.
   std::mutex PlatformMutex;
   DenseMap<JITDylib *, MachOJITDylibInitializers> InitSeqs;
-  std::vector<MachOPerObjectSectionsToRegister> BootstrapPOSRs;
 
-  DenseMap<JITTargetAddress, JITDylib *> HeaderAddrToJITDylib;
+  DenseMap<ExecutorAddr, JITDylib *> HeaderAddrToJITDylib;
   DenseMap<JITDylib *, uint64_t> JITDylibToPThreadKey;
 };
 
 namespace shared {
 
-using SPSMachOPerObjectSectionsToRegister =
-    SPSTuple<SPSExecutorAddressRange, SPSExecutorAddressRange>;
-
-template <>
-class SPSSerializationTraits<SPSMachOPerObjectSectionsToRegister,
-                             MachOPerObjectSectionsToRegister> {
-
-public:
-  static size_t size(const MachOPerObjectSectionsToRegister &MOPOSR) {
-    return SPSMachOPerObjectSectionsToRegister::AsArgList::size(
-        MOPOSR.EHFrameSection, MOPOSR.ThreadDataSection);
-  }
-
-  static bool serialize(SPSOutputBuffer &OB,
-                        const MachOPerObjectSectionsToRegister &MOPOSR) {
-    return SPSMachOPerObjectSectionsToRegister::AsArgList::serialize(
-        OB, MOPOSR.EHFrameSection, MOPOSR.ThreadDataSection);
-  }
-
-  static bool deserialize(SPSInputBuffer &IB,
-                          MachOPerObjectSectionsToRegister &MOPOSR) {
-    return SPSMachOPerObjectSectionsToRegister::AsArgList::deserialize(
-        IB, MOPOSR.EHFrameSection, MOPOSR.ThreadDataSection);
-  }
-};
-
-using SPSNamedExecutorAddressRangeSequenceMap =
-    SPSSequence<SPSTuple<SPSString, SPSExecutorAddressRangeSequence>>;
+using SPSNamedExecutorAddrRangeSequenceMap =
+    SPSSequence<SPSTuple<SPSString, SPSExecutorAddrRangeSequence>>;
 
 using SPSMachOJITDylibInitializers =
-    SPSTuple<SPSString, SPSExecutorAddress, SPSExecutorAddress,
-             SPSNamedExecutorAddressRangeSequenceMap>;
+    SPSTuple<SPSString, SPSExecutorAddr, SPSExecutorAddr,
+             SPSNamedExecutorAddrRangeSequenceMap>;
 
 using SPSMachOJITDylibInitializerSequence =
     SPSSequence<SPSMachOJITDylibInitializers>;

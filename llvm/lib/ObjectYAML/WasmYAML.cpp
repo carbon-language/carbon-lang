@@ -55,6 +55,8 @@ static void sectionMapping(IO &IO, WasmYAML::DylinkSection &Section) {
   IO.mapRequired("TableSize", Section.TableSize);
   IO.mapRequired("TableAlignment", Section.TableAlignment);
   IO.mapRequired("Needed", Section.Needed);
+  IO.mapOptional("ImportInfo", Section.ImportInfo);
+  IO.mapOptional("ExportInfo", Section.ExportInfo);
 }
 
 static void sectionMapping(IO &IO, WasmYAML::NameSection &Section) {
@@ -122,7 +124,7 @@ static void sectionMapping(IO &IO, WasmYAML::MemorySection &Section) {
 
 static void sectionMapping(IO &IO, WasmYAML::TagSection &Section) {
   commonSectionMapping(IO, Section);
-  IO.mapOptional("Tags", Section.Tags);
+  IO.mapOptional("TagTypes", Section.TagTypes);
 }
 
 static void sectionMapping(IO &IO, WasmYAML::GlobalSection &Section) {
@@ -177,7 +179,7 @@ void MappingTraits<std::unique_ptr<WasmYAML::Section>>::mapping(
     } else {
       IO.mapRequired("Name", SectionName);
     }
-    if (SectionName == "dylink") {
+    if (SectionName == "dylink" || SectionName == "dylink.0") {
       if (!IO.outputting())
         Section.reset(new WasmYAML::DylinkSection());
       sectionMapping(IO, *cast<WasmYAML::DylinkSection>(Section.get()));
@@ -391,14 +393,12 @@ void MappingTraits<WasmYAML::Import>::mapping(IO &IO,
   IO.mapRequired("Module", Import.Module);
   IO.mapRequired("Field", Import.Field);
   IO.mapRequired("Kind", Import.Kind);
-  if (Import.Kind == wasm::WASM_EXTERNAL_FUNCTION) {
+  if (Import.Kind == wasm::WASM_EXTERNAL_FUNCTION ||
+      Import.Kind == wasm::WASM_EXTERNAL_TAG) {
     IO.mapRequired("SigIndex", Import.SigIndex);
   } else if (Import.Kind == wasm::WASM_EXTERNAL_GLOBAL) {
     IO.mapRequired("GlobalType", Import.GlobalImport.Type);
     IO.mapRequired("GlobalMutable", Import.GlobalImport.Mutable);
-  } else if (Import.Kind == wasm::WASM_EXTERNAL_TAG) {
-    IO.mapRequired("TagAttribute", Import.TagImport.Attribute);
-    IO.mapRequired("TagSigIndex", Import.TagImport.SigIndex);
   } else if (Import.Kind == wasm::WASM_EXTERNAL_TABLE) {
     IO.mapRequired("Table", Import.TableImport);
   } else if (Import.Kind == wasm::WASM_EXTERNAL_MEMORY) {
@@ -525,10 +525,17 @@ void MappingTraits<WasmYAML::SymbolInfo>::mapping(IO &IO,
   }
 }
 
-void MappingTraits<WasmYAML::Tag>::mapping(IO &IO, WasmYAML::Tag &Tag) {
-  IO.mapRequired("Index", Tag.Index);
-  IO.mapRequired("Attribute", Tag.Attribute);
-  IO.mapRequired("SigIndex", Tag.SigIndex);
+void MappingTraits<WasmYAML::DylinkImportInfo>::mapping(
+    IO &IO, WasmYAML::DylinkImportInfo &Info) {
+  IO.mapRequired("Module", Info.Module);
+  IO.mapRequired("Field", Info.Field);
+  IO.mapRequired("Flags", Info.Flags);
+}
+
+void MappingTraits<WasmYAML::DylinkExportInfo>::mapping(
+    IO &IO, WasmYAML::DylinkExportInfo &Info) {
+  IO.mapRequired("Name", Info.Name);
+  IO.mapRequired("Flags", Info.Flags);
 }
 
 void ScalarBitSetTraits<WasmYAML::LimitFlags>::bitset(
@@ -561,6 +568,7 @@ void ScalarBitSetTraits<WasmYAML::SymbolFlags>::bitset(
   BCaseMask(EXPORTED, EXPORTED);
   BCaseMask(EXPLICIT_NAME, EXPLICIT_NAME);
   BCaseMask(NO_STRIP, NO_STRIP);
+  BCaseMask(TLS, TLS);
 #undef BCaseMask
 }
 

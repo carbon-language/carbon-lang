@@ -32,7 +32,7 @@ class ValueRange;
 namespace scf {
 class ForOp;
 class ParallelOp;
-} // end namespace scf
+} // namespace scf
 
 /// Unrolls this for operation completely if the trip count is known to be
 /// constant. Returns failure otherwise.
@@ -66,8 +66,10 @@ void getPerfectlyNestedLoops(SmallVectorImpl<AffineForOp> &nestedLoops,
 void getPerfectlyNestedLoops(SmallVectorImpl<scf::ForOp> &nestedLoops,
                              scf::ForOp root);
 
-/// Unrolls and jams this loop by the specified factor. Returns success if the
-/// loop is successfully unroll-jammed.
+/// Unrolls and jams this loop by the specified factor. `forOp` can be a loop
+/// with iteration arguments performing supported reductions and its inner loops
+/// can have iteration arguments. Returns success if the loop is successfully
+/// unroll-jammed.
 LogicalResult loopUnrollJamByFactor(AffineForOp forOp,
                                     uint64_t unrollJamFactor);
 
@@ -243,6 +245,14 @@ TileLoops extractFixedOuterLoops(scf::ForOp rootFOrOp, ArrayRef<int64_t> sizes);
 /// independent of any loop induction variable involved in the nest.
 void coalesceLoops(MutableArrayRef<scf::ForOp> loops);
 
+/// Replace a perfect nest of "for" loops with a single linearized loop. Assumes
+/// `loops` contains a list of perfectly nested loops outermost to innermost
+/// that are normalized (step one and lower bound of zero) and with bounds and
+/// steps independent of any loop induction variable involved in the nest.
+/// Coalescing affine.for loops is not always possible, i.e., the result may not
+/// be representable using affine.for.
+LogicalResult coalesceLoops(MutableArrayRef<AffineForOp> loops);
+
 /// Take the ParallelLoop and for each set of dimension indices, combine them
 /// into a single dimension. combinedDimensions must contain each index into
 /// loops exactly once.
@@ -313,6 +323,6 @@ separateFullTiles(MutableArrayRef<AffineForOp> nest,
 /// Move loop invariant code out of `looplike`.
 LogicalResult moveLoopInvariantCode(LoopLikeOpInterface looplike);
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_TRANSFORMS_LOOP_UTILS_H

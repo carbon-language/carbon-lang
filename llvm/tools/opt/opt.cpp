@@ -38,6 +38,7 @@
 #include "llvm/LinkAllIR.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Remarks/HotnessThresholdParser.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
@@ -46,7 +47,6 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/YAMLTraits.h"
@@ -102,9 +102,6 @@ static cl::opt<bool>
 Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
-PrintEachXForm("p", cl::desc("Print module after each transformation"));
-
-static cl::opt<bool>
 NoOutput("disable-output",
          cl::desc("Do not write result bitcode file"), cl::Hidden);
 
@@ -146,17 +143,7 @@ static cl::opt<bool>
     StripNamedMetadata("strip-named-metadata",
                        cl::desc("Strip module-level named metadata"));
 
-static cl::opt<bool>
-    DisableInline("disable-inlining",
-                  cl::desc("Do not run the inliner pass (legacy PM only)"));
 
-static cl::opt<bool>
-DisableOptimizations("disable-opt",
-                     cl::desc("Do not run any optimization passes"));
-
-static cl::opt<bool> StandardLinkOpts(
-    "std-link-opts",
-    cl::desc("Include the standard link time optimizations (legacy PM only)"));
 
 static cl::opt<bool>
     OptLevelO0("O0", cl::desc("Optimization level 0. Similar to clang -O0. "
@@ -368,9 +355,7 @@ static void AddOptimizationPasses(legacy::PassManagerBase &MPM,
   Builder.OptLevel = OptLevel;
   Builder.SizeLevel = SizeLevel;
 
-  if (DisableInline) {
-    // No inlining pass
-  } else if (OptLevel > 1) {
+  if (OptLevel > 1) {
     Builder.Inliner = createFunctionInliningPass(OptLevel, SizeLevel, false);
   } else {
     Builder.Inliner = createAlwaysInlinerLegacyPass();
@@ -416,17 +401,6 @@ static void AddOptimizationPasses(legacy::PassManagerBase &MPM,
 
   Builder.populateFunctionPassManager(FPM);
   Builder.populateModulePassManager(MPM);
-}
-
-static void AddStandardLinkPasses(legacy::PassManagerBase &PM) {
-  PassManagerBuilder Builder;
-  Builder.VerifyInput = true;
-  if (DisableOptimizations)
-    Builder.OptLevel = 0;
-
-  if (!DisableInline)
-    Builder.Inliner = createFunctionInliningPass();
-  Builder.populateLTOPassManager(PM);
 }
 
 //===----------------------------------------------------------------------===//
@@ -507,9 +481,10 @@ static bool shouldPinPassToLegacyPM(StringRef Pass) {
     return false;
 
   std::vector<StringRef> PassNamePrefix = {
-      "x86-",  "xcore-", "wasm-",    "systemz-", "ppc-",    "nvvm-",   "nvptx-",
-      "mips-", "lanai-", "hexagon-", "bpf-",     "avr-",    "thumb2-", "arm-",
-      "si-",   "gcn-",   "amdgpu-",  "aarch64-", "amdgcn-", "polly-"};
+      "x86-",    "xcore-", "wasm-",  "systemz-", "ppc-",    "nvvm-",
+      "nvptx-",  "mips-",  "lanai-", "hexagon-", "bpf-",    "avr-",
+      "thumb2-", "arm-",   "si-",    "gcn-",     "amdgpu-", "aarch64-",
+      "amdgcn-", "polly-", "riscv-"};
   std::vector<StringRef> PassNameContain = {"ehprepare"};
   std::vector<StringRef> PassNameExact = {
       "safe-stack",           "cost-model",
@@ -797,19 +772,32 @@ int main(int argc, char **argv) {
           << "Cannot specify passes via both -foo-pass and --passes=foo-pass\n";
       return 1;
     }
+    auto NumOLevel = OptLevelO0 + OptLevelO1 + OptLevelO2 + OptLevelO3 +
+                     OptLevelOs + OptLevelOz;
+    if (NumOLevel > 1) {
+      errs() << "Cannot specify multiple -O#\n";
+      return 1;
+    }
+    if (NumOLevel > 0 && PassPipeline.getNumOccurrences() > 0) {
+      errs() << "Cannot specify -O# and --passes=, use "
+                "-passes='default<O#>,other-pass'\n";
+      return 1;
+    }
+    std::string Pipeline = PassPipeline;
+
     SmallVector<StringRef, 4> Passes;
     if (OptLevelO0)
-      Passes.push_back("default<O0>");
+      Pipeline = "default<O0>";
     if (OptLevelO1)
-      Passes.push_back("default<O1>");
+      Pipeline = "default<O1>";
     if (OptLevelO2)
-      Passes.push_back("default<O2>");
+      Pipeline = "default<O2>";
     if (OptLevelO3)
-      Passes.push_back("default<O3>");
+      Pipeline = "default<O3>";
     if (OptLevelOs)
-      Passes.push_back("default<Os>");
+      Pipeline = "default<Os>";
     if (OptLevelOz)
-      Passes.push_back("default<Oz>");
+      Pipeline = "default<Oz>";
     for (const auto &P : PassList)
       Passes.push_back(P->getPassArgument());
     OutputKind OK = OK_NoOutput;
@@ -828,7 +816,7 @@ int main(int argc, char **argv) {
     // string. Hand off the rest of the functionality to the new code for that
     // layer.
     return runPassPipeline(argv[0], *M, TM.get(), &TLII, Out.get(),
-                           ThinLinkOut.get(), RemarksFile.get(), PassPipeline,
+                           ThinLinkOut.get(), RemarksFile.get(), Pipeline,
                            Passes, OK, VK, PreserveAssemblyUseListOrder,
                            PreserveBitcodeUseListOrder, EmitSummaryIndex,
                            EmitModuleHash, EnableDebugify)
@@ -909,12 +897,6 @@ int main(int argc, char **argv) {
 
   // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < PassList.size(); ++i) {
-    if (StandardLinkOpts &&
-        StandardLinkOpts.getPosition() < PassList.getPosition(i)) {
-      AddStandardLinkPasses(Passes);
-      StandardLinkOpts = false;
-    }
-
     if (OptLevelO0 && OptLevelO0.getPosition() < PassList.getPosition(i)) {
       AddOptimizationPasses(Passes, *FPasses, TM.get(), 0, 0);
       OptLevelO0 = false;
@@ -976,15 +958,6 @@ int main(int argc, char **argv) {
         }
       }
     }
-
-    if (PrintEachXForm)
-      Passes.add(
-          createPrintModulePass(errs(), "", PreserveAssemblyUseListOrder));
-  }
-
-  if (StandardLinkOpts) {
-    AddStandardLinkPasses(Passes);
-    StandardLinkOpts = false;
   }
 
   if (OptLevelO0)

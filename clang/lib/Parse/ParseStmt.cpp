@@ -374,8 +374,11 @@ Retry:
     return StmtError();
 
   case tok::annot_pragma_fenv_access:
+  case tok::annot_pragma_fenv_access_ms:
     ProhibitAttributes(Attrs);
-    Diag(Tok, diag::err_pragma_stdc_fenv_access_scope);
+    Diag(Tok, diag::err_pragma_file_or_compound_scope)
+        << (Kind == tok::annot_pragma_fenv_access ? "STDC FENV_ACCESS"
+                                                    : "fenv_access");
     ConsumeAnnotationToken();
     return StmtEmpty();
 
@@ -955,6 +958,7 @@ void Parser::ParseCompoundStatementLeadingPragmas() {
       HandlePragmaFP();
       break;
     case tok::annot_pragma_fenv_access:
+    case tok::annot_pragma_fenv_access_ms:
       HandlePragmaFEnvAccess();
       break;
     case tok::annot_pragma_fenv_round:
@@ -1064,7 +1068,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
     SourceLocation LabelLoc = ConsumeToken();
 
     SmallVector<Decl *, 8> DeclsInGroup;
-    while (1) {
+    while (true) {
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected) << tok::identifier;
         break;
@@ -1187,22 +1191,24 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 bool Parser::ParseParenExprOrCondition(StmtResult *InitStmt,
                                        Sema::ConditionResult &Cond,
                                        SourceLocation Loc,
-                                       Sema::ConditionKind CK,
+                                       Sema::ConditionKind CK, bool MissingOK,
                                        SourceLocation *LParenLoc,
                                        SourceLocation *RParenLoc) {
   BalancedDelimiterTracker T(*this, tok::l_paren);
   T.consumeOpen();
+  SourceLocation Start = Tok.getLocation();
 
-  if (getLangOpts().CPlusPlus)
-    Cond = ParseCXXCondition(InitStmt, Loc, CK);
-  else {
+  if (getLangOpts().CPlusPlus) {
+    Cond = ParseCXXCondition(InitStmt, Loc, CK, MissingOK);
+  } else {
     ExprResult CondExpr = ParseExpression();
 
     // If required, convert to a boolean value.
     if (CondExpr.isInvalid())
       Cond = Sema::ConditionError();
     else
-      Cond = Actions.ActOnCondition(getCurScope(), Loc, CondExpr.get(), CK);
+      Cond = Actions.ActOnCondition(getCurScope(), Loc, CondExpr.get(), CK,
+                                    MissingOK);
   }
 
   // If the parser was confused by the condition and we don't have a ')', try to
@@ -1216,7 +1222,16 @@ bool Parser::ParseParenExprOrCondition(StmtResult *InitStmt,
       return true;
   }
 
-  // Otherwise the condition is valid or the rparen is present.
+  if (Cond.isInvalid()) {
+    ExprResult CondExpr = Actions.CreateRecoveryExpr(
+        Start, Tok.getLocation() == Start ? Start : PrevTokLocation, {},
+        Actions.PreferredConditionType(CK));
+    if (!CondExpr.isInvalid())
+      Cond = Actions.ActOnCondition(getCurScope(), Loc, CondExpr.get(), CK,
+                                    MissingOK);
+  }
+
+  // Either the condition is valid or the rparen is present.
   T.consumeClose();
 
   if (LParenLoc != nullptr) {
@@ -1338,20 +1353,36 @@ struct MisleadingIndentationChecker {
 ///         'if' '(' expression ')' statement 'else' statement
 /// [C++]   'if' '(' condition ')' statement
 /// [C++]   'if' '(' condition ')' statement 'else' statement
+/// [C++23] 'if' '!' [opt] consteval compound-statement
+/// [C++23] 'if' '!' [opt] consteval compound-statement 'else' statement
 ///
 StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
   SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
 
   bool IsConstexpr = false;
+  bool IsConsteval = false;
+  SourceLocation NotLocation;
+  SourceLocation ConstevalLoc;
+
   if (Tok.is(tok::kw_constexpr)) {
     Diag(Tok, getLangOpts().CPlusPlus17 ? diag::warn_cxx14_compat_constexpr_if
                                         : diag::ext_constexpr_if);
     IsConstexpr = true;
     ConsumeToken();
-  }
+  } else {
+    if (Tok.is(tok::exclaim)) {
+      NotLocation = ConsumeToken();
+    }
 
-  if (Tok.isNot(tok::l_paren)) {
+    if (Tok.is(tok::kw_consteval)) {
+      Diag(Tok, getLangOpts().CPlusPlus2b ? diag::warn_cxx20_compat_consteval_if
+                                          : diag::ext_consteval_if);
+      IsConsteval = true;
+      ConstevalLoc = ConsumeToken();
+    }
+  }
+  if (!IsConsteval && (NotLocation.isValid() || Tok.isNot(tok::l_paren))) {
     Diag(Tok, diag::err_expected_lparen_after) << "if";
     SkipUntil(tok::semi);
     return StmtError();
@@ -1378,15 +1409,18 @@ StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
   Sema::ConditionResult Cond;
   SourceLocation LParen;
   SourceLocation RParen;
-  if (ParseParenExprOrCondition(&InitStmt, Cond, IfLoc,
-                                IsConstexpr ? Sema::ConditionKind::ConstexprIf
-                                            : Sema::ConditionKind::Boolean,
-                                &LParen, &RParen))
-    return StmtError();
-
   llvm::Optional<bool> ConstexprCondition;
-  if (IsConstexpr)
-    ConstexprCondition = Cond.getKnownValue();
+  if (!IsConsteval) {
+
+    if (ParseParenExprOrCondition(&InitStmt, Cond, IfLoc,
+                                  IsConstexpr ? Sema::ConditionKind::ConstexprIf
+                                              : Sema::ConditionKind::Boolean,
+                                  /*MissingOK=*/false, &LParen, &RParen))
+      return StmtError();
+
+    if (IsConstexpr)
+      ConstexprCondition = Cond.getKnownValue();
+  }
 
   bool IsBracedThen = Tok.is(tok::l_brace);
 
@@ -1418,10 +1452,17 @@ StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
   SourceLocation InnerStatementTrailingElseLoc;
   StmtResult ThenStmt;
   {
+    bool ShouldEnter = ConstexprCondition && !*ConstexprCondition;
+    Sema::ExpressionEvaluationContext Context =
+        Sema::ExpressionEvaluationContext::DiscardedStatement;
+    if (NotLocation.isInvalid() && IsConsteval) {
+      Context = Sema::ExpressionEvaluationContext::ImmediateFunctionContext;
+      ShouldEnter = true;
+    }
+
     EnterExpressionEvaluationContext PotentiallyDiscarded(
-        Actions, Sema::ExpressionEvaluationContext::DiscardedStatement, nullptr,
-        Sema::ExpressionEvaluationContextRecord::EK_Other,
-        /*ShouldEnter=*/ConstexprCondition && !*ConstexprCondition);
+        Actions, Context, nullptr,
+        Sema::ExpressionEvaluationContextRecord::EK_Other, ShouldEnter);
     ThenStmt = ParseStatement(&InnerStatementTrailingElseLoc);
   }
 
@@ -1456,11 +1497,17 @@ StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
                           Tok.is(tok::l_brace));
 
     MisleadingIndentationChecker MIChecker(*this, MSK_else, ElseLoc);
+    bool ShouldEnter = ConstexprCondition && *ConstexprCondition;
+    Sema::ExpressionEvaluationContext Context =
+        Sema::ExpressionEvaluationContext::DiscardedStatement;
+    if (NotLocation.isValid() && IsConsteval) {
+      Context = Sema::ExpressionEvaluationContext::ImmediateFunctionContext;
+      ShouldEnter = true;
+    }
 
     EnterExpressionEvaluationContext PotentiallyDiscarded(
-        Actions, Sema::ExpressionEvaluationContext::DiscardedStatement, nullptr,
-        Sema::ExpressionEvaluationContextRecord::EK_Other,
-        /*ShouldEnter=*/ConstexprCondition && *ConstexprCondition);
+        Actions, Context, nullptr,
+        Sema::ExpressionEvaluationContextRecord::EK_Other, ShouldEnter);
     ElseStmt = ParseStatement();
 
     if (ElseStmt.isUsable())
@@ -1488,14 +1535,40 @@ StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
     return StmtError();
   }
 
+  if (IsConsteval) {
+    auto IsCompoundStatement = [](const Stmt *S) {
+      if (const auto *Outer = dyn_cast_or_null<AttributedStmt>(S))
+        S = Outer->getSubStmt();
+      return isa_and_nonnull<clang::CompoundStmt>(S);
+    };
+
+    if (!IsCompoundStatement(ThenStmt.get())) {
+      Diag(ConstevalLoc, diag::err_expected_after) << "consteval"
+                                                   << "{";
+      return StmtError();
+    }
+    if (!ElseStmt.isUnset() && !IsCompoundStatement(ElseStmt.get())) {
+      Diag(ElseLoc, diag::err_expected_after) << "else"
+                                              << "{";
+      return StmtError();
+    }
+  }
+
   // Now if either are invalid, replace with a ';'.
   if (ThenStmt.isInvalid())
     ThenStmt = Actions.ActOnNullStmt(ThenStmtLoc);
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Actions.ActOnIfStmt(IfLoc, IsConstexpr, LParen, InitStmt.get(), Cond,
-                             RParen, ThenStmt.get(), ElseLoc, ElseStmt.get());
+  IfStatementKind Kind = IfStatementKind::Ordinary;
+  if (IsConstexpr)
+    Kind = IfStatementKind::Constexpr;
+  else if (IsConsteval)
+    Kind = NotLocation.isValid() ? IfStatementKind::ConstevalNegated
+                                 : IfStatementKind::ConstevalNonNegated;
+
+  return Actions.ActOnIfStmt(IfLoc, Kind, LParen, InitStmt.get(), Cond, RParen,
+                             ThenStmt.get(), ElseLoc, ElseStmt.get());
 }
 
 /// ParseSwitchStatement
@@ -1537,7 +1610,8 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   SourceLocation LParen;
   SourceLocation RParen;
   if (ParseParenExprOrCondition(&InitStmt, Cond, SwitchLoc,
-                                Sema::ConditionKind::Switch, &LParen, &RParen))
+                                Sema::ConditionKind::Switch,
+                                /*MissingOK=*/false, &LParen, &RParen))
     return StmtError();
 
   StmtResult Switch = Actions.ActOnStartOfSwitchStmt(
@@ -1627,7 +1701,8 @@ StmtResult Parser::ParseWhileStatement(SourceLocation *TrailingElseLoc) {
   SourceLocation LParen;
   SourceLocation RParen;
   if (ParseParenExprOrCondition(nullptr, Cond, WhileLoc,
-                                Sema::ConditionKind::Boolean, &LParen, &RParen))
+                                Sema::ConditionKind::Boolean,
+                                /*MissingOK=*/false, &LParen, &RParen))
     return StmtError();
 
   // C99 6.8.5p5 - In C99, the body of the while statement is a scope, even if
@@ -1718,10 +1793,18 @@ StmtResult Parser::ParseDoStatement() {
   // A do-while expression is not a condition, so can't have attributes.
   DiagnoseAndSkipCXX11Attributes();
 
+  SourceLocation Start = Tok.getLocation();
   ExprResult Cond = ParseExpression();
   // Correct the typos in condition before closing the scope.
   if (Cond.isUsable())
     Cond = Actions.CorrectDelayedTyposInExpr(Cond);
+  else {
+    if (!Tok.isOneOf(tok::r_paren, tok::r_square, tok::r_brace))
+      SkipUntil(tok::semi);
+    Cond = Actions.CreateRecoveryExpr(
+        Start, Start == Tok.getLocation() ? Start : PrevTokLocation, {},
+        Actions.getASTContext().BoolTy);
+  }
   T.consumeClose();
   DoScope.Exit();
 
@@ -1767,6 +1850,7 @@ bool Parser::isForRangeIdentifier() {
 /// [C++] for-init-statement:
 /// [C++]   expression-statement
 /// [C++]   simple-declaration
+/// [C++2b] alias-declaration
 ///
 /// [C++0x] for-range-declaration:
 /// [C++0x]   attribute-specifier-seq[opt] type-specifier-seq declarator
@@ -1872,36 +1956,42 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
       Diag(Tok, diag::warn_gcc_variable_decl_in_for_loop);
     }
-
-    // In C++0x, "for (T NS:a" might not be a typo for ::
-    bool MightBeForRangeStmt = getLangOpts().CPlusPlus;
-    ColonProtectionRAIIObject ColonProtection(*this, MightBeForRangeStmt);
-
-    SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
-    DeclGroupPtrTy DG = ParseSimpleDeclaration(
-        DeclaratorContext::ForInit, DeclEnd, attrs, false,
-        MightBeForRangeStmt ? &ForRangeInfo : nullptr);
-    FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
-    if (ForRangeInfo.ParsedForRangeDecl()) {
-      Diag(ForRangeInfo.ColonLoc, getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_for_range : diag::ext_for_range);
-      ForRangeInfo.LoopVar = FirstPart;
-      FirstPart = StmtResult();
-    } else if (Tok.is(tok::semi)) {  // for (int x = 4;
-      ConsumeToken();
-    } else if ((ForEach = isTokIdentifier_in())) {
-      Actions.ActOnForEachDeclStmt(DG);
-      // ObjC: for (id x in expr)
-      ConsumeToken(); // consume 'in'
-
-      if (Tok.is(tok::code_completion)) {
-        cutOffParsing();
-        Actions.CodeCompleteObjCForCollection(getCurScope(), DG);
-        return StmtError();
-      }
-      Collection = ParseExpression();
+    DeclGroupPtrTy DG;
+    if (Tok.is(tok::kw_using)) {
+      DG = ParseAliasDeclarationInInitStatement(DeclaratorContext::ForInit,
+                                                attrs);
     } else {
-      Diag(Tok, diag::err_expected_semi_for);
+      // In C++0x, "for (T NS:a" might not be a typo for ::
+      bool MightBeForRangeStmt = getLangOpts().CPlusPlus;
+      ColonProtectionRAIIObject ColonProtection(*this, MightBeForRangeStmt);
+
+      SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
+      DG = ParseSimpleDeclaration(
+          DeclaratorContext::ForInit, DeclEnd, attrs, false,
+          MightBeForRangeStmt ? &ForRangeInfo : nullptr);
+      FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
+      if (ForRangeInfo.ParsedForRangeDecl()) {
+        Diag(ForRangeInfo.ColonLoc, getLangOpts().CPlusPlus11
+                                        ? diag::warn_cxx98_compat_for_range
+                                        : diag::ext_for_range);
+        ForRangeInfo.LoopVar = FirstPart;
+        FirstPart = StmtResult();
+      } else if (Tok.is(tok::semi)) { // for (int x = 4;
+        ConsumeToken();
+      } else if ((ForEach = isTokIdentifier_in())) {
+        Actions.ActOnForEachDeclStmt(DG);
+        // ObjC: for (id x in expr)
+        ConsumeToken(); // consume 'in'
+
+        if (Tok.is(tok::code_completion)) {
+          cutOffParsing();
+          Actions.CodeCompleteObjCForCollection(getCurScope(), DG);
+          return StmtError();
+        }
+        Collection = ParseExpression();
+      } else {
+        Diag(Tok, diag::err_expected_semi_for);
+      }
     }
   } else {
     ProhibitAttributes(attrs);
@@ -1969,10 +2059,11 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
         // for-range-declaration next.
         bool MightBeForRangeStmt = !ForRangeInfo.ParsedForRangeDecl();
         ColonProtectionRAIIObject ColonProtection(*this, MightBeForRangeStmt);
-        SecondPart =
-            ParseCXXCondition(nullptr, ForLoc, Sema::ConditionKind::Boolean,
-                              MightBeForRangeStmt ? &ForRangeInfo : nullptr,
-                              /*EnterForConditionScope*/ true);
+        SecondPart = ParseCXXCondition(
+            nullptr, ForLoc, Sema::ConditionKind::Boolean,
+            // FIXME: recovery if we don't see another semi!
+            /*MissingOK=*/true, MightBeForRangeStmt ? &ForRangeInfo : nullptr,
+            /*EnterForConditionScope*/ true);
 
         if (ForRangeInfo.ParsedForRangeDecl()) {
           Diag(FirstPart.get() ? FirstPart.get()->getBeginLoc()
@@ -1996,9 +2087,9 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
         if (SecondExpr.isInvalid())
           SecondPart = Sema::ConditionError();
         else
-          SecondPart =
-              Actions.ActOnCondition(getCurScope(), ForLoc, SecondExpr.get(),
-                                     Sema::ConditionKind::Boolean);
+          SecondPart = Actions.ActOnCondition(
+              getCurScope(), ForLoc, SecondExpr.get(),
+              Sema::ConditionKind::Boolean, /*MissingOK=*/true);
       }
     }
   }
@@ -2038,6 +2129,9 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     Diag(CoawaitLoc, diag::err_for_co_await_not_range_for);
     CoawaitLoc = SourceLocation();
   }
+
+  if (CoawaitLoc.isValid() && getLangOpts().CPlusPlus20)
+    Diag(CoawaitLoc, diag::warn_deprecated_for_co_await);
 
   // We need to perform most of the semantic analysis for a C++0x for-range
   // statememt before parsing the body, in order to be able to deduce the type

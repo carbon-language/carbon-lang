@@ -22,7 +22,7 @@
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-NO-LINK-RUNTIME-LINUX %s
 //
-// CHECK-ASAN-NO-LINK-RUNTIME-LINUX-NOT: libclang_rt.asan
+// CHECK-ASAN-NO-LINK-RUNTIME-LINUX-NOT: libclang_rt.asan-x86_64
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux -fuse-ld=ld -fsanitize=address -shared-libsan \
@@ -148,8 +148,8 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-ANDROID %s
 //
 // CHECK-ASAN-ANDROID: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ASAN-ANDROID: "-pie"
 // CHECK-ASAN-ANDROID-NOT: "-lc"
-// CHECK-ASAN-ANDROID-NOT: "-pie"
 // CHECK-ASAN-ANDROID-NOT: "-lpthread"
 // CHECK-ASAN-ANDROID: libclang_rt.asan-arm-android.so"
 // CHECK-ASAN-ANDROID-NOT: "-lpthread"
@@ -171,8 +171,8 @@
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-ANDROID %s
 //
 // CHECK-UBSAN-ANDROID: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-UBSAN-ANDROID: "-pie"
 // CHECK-UBSAN-ANDROID-NOT: "-lc"
-// CHECK-UBSAN-ANDROID-NOT: "-pie"
 // CHECK-UBSAN-ANDROID-NOT: "-lpthread"
 // CHECK-UBSAN-ANDROID: libclang_rt.ubsan_standalone-arm-android.so"
 // CHECK-UBSAN-ANDROID-NOT: "-lpthread"
@@ -195,8 +195,8 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-ANDROID-X86 %s
 //
 // CHECK-ASAN-ANDROID-X86: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ASAN-ANDROID-X86: "-pie"
 // CHECK-ASAN-ANDROID-X86-NOT: "-lc"
-// CHECK-ASAN-ANDROID-X86-NOT: "-pie"
 // CHECK-ASAN-ANDROID-X86-NOT: "-lpthread"
 // CHECK-ASAN-ANDROID-X86: libclang_rt.asan-i686-android.so"
 // CHECK-ASAN-ANDROID-X86-NOT: "-lpthread"

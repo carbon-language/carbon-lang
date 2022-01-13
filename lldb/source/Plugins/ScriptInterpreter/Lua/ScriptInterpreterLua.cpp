@@ -148,6 +148,12 @@ ScriptInterpreterLua::ScriptInterpreterLua(Debugger &debugger)
 
 ScriptInterpreterLua::~ScriptInterpreterLua() = default;
 
+StructuredData::DictionarySP ScriptInterpreterLua::GetInterpreterInfo() {
+  auto info = std::make_shared<StructuredData::Dictionary>();
+  info->AddStringItem("language", "lua");
+  return info;
+}
+
 bool ScriptInterpreterLua::ExecuteOneLine(llvm::StringRef command,
                                           CommandReturnObject *result,
                                           const ExecuteScriptOptions &options) {
@@ -387,19 +393,8 @@ ScriptInterpreterLua::CreateInstance(Debugger &debugger) {
   return std::make_shared<ScriptInterpreterLua>(debugger);
 }
 
-lldb_private::ConstString ScriptInterpreterLua::GetPluginNameStatic() {
-  static ConstString g_name("script-lua");
-  return g_name;
-}
-
-const char *ScriptInterpreterLua::GetPluginDescriptionStatic() {
+llvm::StringRef ScriptInterpreterLua::GetPluginDescriptionStatic() {
   return "Lua script interpreter";
 }
-
-lldb_private::ConstString ScriptInterpreterLua::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ScriptInterpreterLua::GetPluginVersion() { return 1; }
 
 Lua &ScriptInterpreterLua::GetLua() { return *m_lua; }

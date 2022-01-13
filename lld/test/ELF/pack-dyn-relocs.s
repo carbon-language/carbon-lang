@@ -6,6 +6,10 @@
 // RUN: ld.lld -pie --pack-dyn-relocs=none %t.a32.o %t.a32.so -o %t2.a32
 // RUN: llvm-readobj -r %t2.a32 | FileCheck --check-prefix=UNPACKED32 %s
 
+// RUN: not ld.lld --pack-dyn-relocs=invalid %t.a32.o %t.a32.so -o /dev/null 2>&1 | FileCheck %s --check-prefix=UNKNOWN
+
+// UNKNOWN: unknown --pack-dyn-relocs format: invalid
+
 /// Unpacked should have the relative relocations in their natural order.
 /// UNPACKED32:          Section ({{.+}}) .rel.dyn {
 // UNPACKED32-NEXT:     0x30324 R_ARM_RELATIVE -
@@ -133,8 +137,8 @@
 // RELR32-HEADERS-NEXT:  EntrySize: 4
 
 // RELR32-HEADERS:       0x00000024 RELR                 [[ADDR]]
-// RELR32-HEADERS:       0x00000023 RELRSZ               0x8
-// RELR32-HEADERS:       0x00000025 RELRENT              0x4
+// RELR32-HEADERS:       0x00000023 RELRSZ               8 (bytes)
+// RELR32-HEADERS:       0x00000025 RELRENT              4 (bytes)
 
 /// SHT_RELR section contains address/bitmap entries
 /// encoding the offsets for relative relocation.
@@ -315,8 +319,8 @@
 // RELR64-HEADERS-NEXT:  EntrySize: 8
 
 // RELR64-HEADERS:       0x0000000000000024 RELR                 [[ADDR]]
-// RELR64-HEADERS:       0x0000000000000023 RELRSZ               0x10
-// RELR64-HEADERS:       0x0000000000000025 RELRENT              0x8
+// RELR64-HEADERS:       0x0000000000000023 RELRSZ               16 (bytes)
+// RELR64-HEADERS:       0x0000000000000025 RELRENT              8 (bytes)
 
 /// SHT_RELR section contains address/bitmap entries
 /// encoding the offsets for relative relocation.

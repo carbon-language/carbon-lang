@@ -31,9 +31,9 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolWasm.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -431,10 +431,10 @@ public:
 
   bool checkForP2AlignIfLoadStore(OperandVector &Operands, StringRef InstName) {
     // FIXME: there is probably a cleaner way to do this.
-    auto IsLoadStore = InstName.find(".load") != StringRef::npos ||
-                       InstName.find(".store") != StringRef::npos ||
-                       InstName.find("prefetch") != StringRef::npos;
-    auto IsAtomic = InstName.find("atomic.") != StringRef::npos;
+    auto IsLoadStore = InstName.contains(".load") ||
+                       InstName.contains(".store") ||
+                       InstName.contains("prefetch");
+    auto IsAtomic = InstName.contains("atomic.");
     if (IsLoadStore || IsAtomic) {
       // Parse load/store operands of the form: offset:p2align=align
       if (IsLoadStore && isNext(AsmToken::Colon)) {
@@ -450,7 +450,7 @@ public:
         // v128.{load,store}{8,16,32,64}_lane has both a memarg and a lane
         // index. We need to avoid parsing an extra alignment operand for the
         // lane index.
-        auto IsLoadStoreLane = InstName.find("_lane") != StringRef::npos;
+        auto IsLoadStoreLane = InstName.contains("_lane");
         if (IsLoadStoreLane && Operands.size() == 4)
           return false;
         // Alignment not specified (or atomics, must use default alignment).
@@ -571,7 +571,6 @@ public:
     // proper nesting.
     bool ExpectBlockType = false;
     bool ExpectFuncType = false;
-    bool ExpectHeapType = false;
     std::unique_ptr<WebAssemblyOperand> FunctionTable;
     if (Name == "block") {
       push(Block);
@@ -624,8 +623,6 @@ public:
       if (parseFunctionTableOperand(&FunctionTable))
         return true;
       ExpectFuncType = true;
-    } else if (Name == "ref.null") {
-      ExpectHeapType = true;
     }
 
     if (ExpectFuncType || (ExpectBlockType && Lexer.is(AsmToken::LParen))) {
@@ -669,15 +666,6 @@ public:
           if (BT == WebAssembly::BlockType::Invalid)
             return error("Unknown block type: ", Id);
           addBlockTypeOperand(Operands, NameLoc, BT);
-          Parser.Lex();
-        } else if (ExpectHeapType) {
-          auto HeapType = WebAssembly::parseHeapType(Id.getString());
-          if (HeapType == WebAssembly::HeapType::Invalid) {
-            return error("Expected a heap type: ", Id);
-          }
-          Operands.push_back(std::make_unique<WebAssemblyOperand>(
-              WebAssemblyOperand::Integer, Id.getLoc(), Id.getEndLoc(),
-              WebAssemblyOperand::IntOp{static_cast<int64_t>(HeapType)}));
           Parser.Lex();
         } else {
           // Assume this identifier is a label.
@@ -1114,6 +1102,8 @@ public:
 
   void onEndOfFunction(SMLoc ErrorLoc) {
     TC.endOfFunction(ErrorLoc);
+    // Reset the type checker state.
+    TC.Clear();
 
     // Automatically output a .size directive, so it becomes optional for the
     // user.

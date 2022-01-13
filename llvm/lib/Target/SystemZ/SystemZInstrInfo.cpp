@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -202,8 +203,8 @@ void SystemZInstrInfo::expandZExtPseudo(MachineInstr &MI, unsigned LowOpcode,
                Size, MI.getOperand(1).isKill(), MI.getOperand(1).isUndef());
 
   // Keep the remaining operands as-is.
-  for (unsigned I = 2; I < MI.getNumOperands(); ++I)
-    MIB.add(MI.getOperand(I));
+  for (const MachineOperand &MO : llvm::drop_begin(MI.operands(), 2))
+    MIB.add(MO);
 
   MI.eraseFromParent();
 }
@@ -514,8 +515,8 @@ unsigned SystemZInstrInfo::insertBranch(MachineBasicBlock &MBB,
 }
 
 bool SystemZInstrInfo::analyzeCompare(const MachineInstr &MI, Register &SrcReg,
-                                      Register &SrcReg2, int &Mask,
-                                      int &Value) const {
+                                      Register &SrcReg2, int64_t &Mask,
+                                      int64_t &Value) const {
   assert(MI.isCompare() && "Caller should have checked for a comparison");
 
   if (MI.getNumExplicitOperands() == 2 && MI.getOperand(0).isReg() &&
@@ -942,8 +943,9 @@ static void transferMIFlag(MachineInstr *OldMI, MachineInstr *NewMI,
     NewMI->setFlag(Flag);
 }
 
-MachineInstr *SystemZInstrInfo::convertToThreeAddress(
-    MachineFunction::iterator &MFI, MachineInstr &MI, LiveVariables *LV) const {
+MachineInstr *
+SystemZInstrInfo::convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
+                                        LiveIntervals *LIS) const {
   MachineBasicBlock *MBB = MI.getParent();
 
   // Try to convert an AND into an RISBG-type instruction.
@@ -984,6 +986,8 @@ MachineInstr *SystemZInstrInfo::convertToThreeAddress(
             LV->replaceKillInstruction(Op.getReg(), MI, *MIB);
         }
       }
+      if (LIS)
+        LIS->ReplaceMachineInstrInMaps(MI, *MIB);
       transferDeadCC(&MI, MIB);
       return MIB;
     }
@@ -1515,6 +1519,13 @@ unsigned SystemZInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     const char *AsmStr = MI.getOperand(0).getSymbolName();
     return getInlineAsmLength(AsmStr, *MF->getTarget().getMCAsmInfo());
   }
+  else if (MI.getOpcode() == SystemZ::PATCHPOINT)
+    return PatchPointOpers(&MI).getNumPatchBytes();
+  else if (MI.getOpcode() == SystemZ::STACKMAP)
+    return MI.getOperand(1).getImm();
+  else if (MI.getOpcode() == SystemZ::FENTRY_CALL)
+    return 6;
+
   return MI.getDesc().getSize();
 }
 
@@ -1923,7 +1934,7 @@ void SystemZInstrInfo::loadImmediate(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI,
                                      unsigned Reg, uint64_t Value) const {
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
-  unsigned Opcode;
+  unsigned Opcode = 0;
   if (isInt<16>(Value))
     Opcode = SystemZ::LGHI;
   else if (SystemZ::isImmLL(Value))
@@ -1931,11 +1942,23 @@ void SystemZInstrInfo::loadImmediate(MachineBasicBlock &MBB,
   else if (SystemZ::isImmLH(Value)) {
     Opcode = SystemZ::LLILH;
     Value >>= 16;
-  } else {
-    assert(isInt<32>(Value) && "Huge values not handled yet");
-    Opcode = SystemZ::LGFI;
   }
-  BuildMI(MBB, MBBI, DL, get(Opcode), Reg).addImm(Value);
+  else if (isInt<32>(Value))
+    Opcode = SystemZ::LGFI;
+  if (Opcode) {
+    BuildMI(MBB, MBBI, DL, get(Opcode), Reg).addImm(Value);
+    return;
+  }
+
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  assert (MRI.isSSA() &&  "Huge values only handled before reg-alloc .");
+  Register Reg0 = MRI.createVirtualRegister(&SystemZ::GR64BitRegClass);
+  Register Reg1 = MRI.createVirtualRegister(&SystemZ::GR64BitRegClass);
+  BuildMI(MBB, MBBI, DL, get(SystemZ::IMPLICIT_DEF), Reg0);
+  BuildMI(MBB, MBBI, DL, get(SystemZ::IIHF64), Reg1)
+    .addReg(Reg0).addImm(Value >> 32);
+  BuildMI(MBB, MBBI, DL, get(SystemZ::IILF64), Reg)
+    .addReg(Reg1).addImm(Value & ((uint64_t(1) << 32) - 1));
 }
 
 bool SystemZInstrInfo::verifyInstruction(const MachineInstr &MI,

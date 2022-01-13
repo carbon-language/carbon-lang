@@ -150,8 +150,7 @@ bool Lowerer::lowerEarlyIntrinsics(Function &F) {
   CoroIdInst *CoroId = nullptr;
   SmallVector<CoroFreeInst *, 4> CoroFrees;
   bool HasCoroSuspend = false;
-  for (auto IB = inst_begin(F), IE = inst_end(F); IB != IE;) {
-    Instruction &I = *IB++;
+  for (Instruction &I : llvm::make_early_inc_range(instructions(F))) {
     if (auto *CB = dyn_cast<CallBase>(&I)) {
       switch (CB->getIntrinsicID()) {
       default:
@@ -177,11 +176,14 @@ bool Lowerer::lowerEarlyIntrinsics(Function &F) {
         lowerCoroNoop(cast<IntrinsicInst>(&I));
         break;
       case Intrinsic::coro_id:
-        // Mark a function that comes out of the frontend that has a coro.id
-        // with a coroutine attribute.
         if (auto *CII = cast<CoroIdInst>(&I)) {
           if (CII->getInfo().isPreSplit()) {
-            F.addFnAttr(CORO_PRESPLIT_ATTR, UNPREPARED_FOR_SPLIT);
+            assert(F.hasFnAttribute(CORO_PRESPLIT_ATTR) &&
+                   F.getFnAttribute(CORO_PRESPLIT_ATTR).getValueAsString() ==
+                       UNPREPARED_FOR_SPLIT &&
+                   "The frontend uses Swtich-Resumed ABI should emit "
+                   "\"coroutine.presplit\" attribute with value \"0\" for the "
+                   "coroutine.");
             setCannotDuplicate(CII);
             CII->setCoroutineSelf();
             CoroId = cast<CoroIdInst>(&I);
@@ -191,6 +193,8 @@ bool Lowerer::lowerEarlyIntrinsics(Function &F) {
       case Intrinsic::coro_id_retcon:
       case Intrinsic::coro_id_retcon_once:
       case Intrinsic::coro_id_async:
+        // TODO: Remove the line once we support it in the corresponding
+        // frontend.
         F.addFnAttr(CORO_PRESPLIT_ATTR, PREPARED_FOR_SPLIT);
         break;
       case Intrinsic::coro_resume:

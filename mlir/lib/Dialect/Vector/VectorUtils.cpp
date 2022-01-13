@@ -13,6 +13,7 @@
 #include "mlir/Dialect/Vector/VectorUtils.h"
 #include "mlir/Analysis/LoopAnalysis.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
@@ -239,6 +240,13 @@ AffineMap mlir::getTransferMinorIdentityMap(ShapedType shapedType,
       shapedType.getElementType().dyn_cast<VectorType>();
   if (elementVectorType)
     elementVectorRank += elementVectorType.getRank();
+  // 0-d transfers are to/from tensor<t>/memref<t> and vector<1xt>.
+  // TODO: replace once we have 0-d vectors.
+  if (shapedType.getRank() == 0 &&
+      vectorType.getShape() == ArrayRef<int64_t>{1})
+    return AffineMap::get(
+        /*numDims=*/0, /*numSymbols=*/0,
+        getAffineConstantExpr(0, shapedType.getContext()));
   return AffineMap::getMinorIdentityMap(
       shapedType.getRank(), vectorType.getRank() - elementVectorRank,
       shapedType.getContext());
@@ -294,11 +302,7 @@ bool matcher::operatesOnSuperVectorsOf(Operation &op,
   // This could be useful information if we wanted to reshape at the level of
   // the vector type (but we would have to look at the compute and distinguish
   // between parallel, reduction and possibly other cases.
-  if (!ratio.hasValue()) {
-    return false;
-  }
-
-  return true;
+  return ratio.hasValue();
 }
 
 bool mlir::isDisjointTransferIndices(VectorTransferOpInterface transferA,
@@ -308,8 +312,8 @@ bool mlir::isDisjointTransferIndices(VectorTransferOpInterface transferA,
     return false;
   unsigned rankOffset = transferA.getLeadingShapedRank();
   for (unsigned i = 0, e = transferA.indices().size(); i < e; i++) {
-    auto indexA = transferA.indices()[i].getDefiningOp<ConstantOp>();
-    auto indexB = transferB.indices()[i].getDefiningOp<ConstantOp>();
+    auto indexA = transferA.indices()[i].getDefiningOp<arith::ConstantOp>();
+    auto indexB = transferB.indices()[i].getDefiningOp<arith::ConstantOp>();
     // If any of the indices are dynamic we cannot prove anything.
     if (!indexA || !indexB)
       continue;
@@ -354,4 +358,17 @@ bool mlir::checkSameValueWAW(vector::TransferWriteOp write,
          priorWrite.mask() == write.mask() &&
          priorWrite.getVectorType() == write.getVectorType() &&
          priorWrite.permutation_map() == write.permutation_map();
+}
+
+SmallVector<int64_t, 4> mlir::getI64SubArray(ArrayAttr arrayAttr,
+                                             unsigned dropFront,
+                                             unsigned dropBack) {
+  assert(arrayAttr.size() > dropFront + dropBack && "Out of bounds");
+  auto range = arrayAttr.getAsRange<IntegerAttr>();
+  SmallVector<int64_t, 4> res;
+  res.reserve(arrayAttr.size() - dropFront - dropBack);
+  for (auto it = range.begin() + dropFront, eit = range.end() - dropBack;
+       it != eit; ++it)
+    res.push_back((*it).getValue().getSExtValue());
+  return res;
 }

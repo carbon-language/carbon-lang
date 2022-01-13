@@ -14,6 +14,19 @@
 #include <mach/mach_time.h>
 #endif
 
+#ifndef TSAN_VECTORIZE
+#  define TSAN_VECTORIZE __SSE4_2__
+#endif
+
+#if TSAN_VECTORIZE
+#  include <emmintrin.h>
+#  include <smmintrin.h>
+#else
+struct __m128i {
+  unsigned long long x[2];
+};
+#endif
+
 // TSan-invisible barrier.
 // Tests use it to establish necessary execution order in a way that does not
 // interfere with tsan (does not establish synchronization between threads).
@@ -88,8 +101,10 @@ void AnnotateIgnoreSyncEnd(const char *f, int l);
 void AnnotateHappensBefore(const char *f, int l, void *addr);
 void AnnotateHappensAfter(const char *f, int l, void *addr);
 
-void AnnotateBenignRaceSized(const char *f, int l, void *mem, unsigned int size, const char *desc);
-void WTFAnnotateBenignRaceSized(const char *f, int l, void *mem, unsigned int size, const char *desc);
+void AnnotateBenignRaceSized(const char *f, int l, const volatile void *mem,
+                             unsigned int size, const char *desc);
+void WTFAnnotateBenignRaceSized(const char *f, int l, const volatile void *mem,
+                                unsigned int size, const char *desc);
 
 #ifdef __cplusplus
 }

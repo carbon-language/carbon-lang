@@ -49,22 +49,24 @@ namespace {
 struct LoopFusion : public AffineLoopFusionBase<LoopFusion> {
   LoopFusion() = default;
   LoopFusion(unsigned fastMemorySpace, uint64_t localBufSizeThresholdBytes,
-             bool maximalFusion) {
+             bool maximalFusion, enum FusionMode affineFusionMode) {
     this->fastMemorySpace = fastMemorySpace;
     this->localBufSizeThreshold = localBufSizeThresholdBytes / 1024;
     this->maximalFusion = maximalFusion;
+    this->affineFusionMode = affineFusionMode;
   }
 
   void runOnFunction() override;
 };
 
-} // end anonymous namespace
+} // namespace
 
 std::unique_ptr<OperationPass<FuncOp>>
 mlir::createLoopFusionPass(unsigned fastMemorySpace,
-                           uint64_t localBufSizeThreshold, bool maximalFusion) {
+                           uint64_t localBufSizeThreshold, bool maximalFusion,
+                           enum FusionMode affineFusionMode) {
   return std::make_unique<LoopFusion>(fastMemorySpace, localBufSizeThreshold,
-                                      maximalFusion);
+                                      maximalFusion, affineFusionMode);
 }
 
 namespace {
@@ -196,7 +198,7 @@ public:
   // The next unique identifier to use for newly created graph nodes.
   unsigned nextNodeId = 0;
 
-  MemRefDependenceGraph() {}
+  MemRefDependenceGraph() = default;
 
   // Initializes the dependence graph based on operations in 'f'.
   // Returns true on success, false otherwise.
@@ -299,14 +301,15 @@ public:
       memrefEdgeCount[value]--;
     }
     // Remove 'srcId' from 'inEdges[dstId]'.
-    for (auto it = inEdges[dstId].begin(); it != inEdges[dstId].end(); ++it) {
+    for (auto *it = inEdges[dstId].begin(); it != inEdges[dstId].end(); ++it) {
       if ((*it).id == srcId && (*it).value == value) {
         inEdges[dstId].erase(it);
         break;
       }
     }
     // Remove 'dstId' from 'outEdges[srcId]'.
-    for (auto it = outEdges[srcId].begin(); it != outEdges[srcId].end(); ++it) {
+    for (auto *it = outEdges[srcId].begin(); it != outEdges[srcId].end();
+         ++it) {
       if ((*it).id == dstId && (*it).value == value) {
         outEdges[srcId].erase(it);
         break;
@@ -724,7 +727,7 @@ void gatherEscapingMemrefs(unsigned id, MemRefDependenceGraph *mdg,
   }
 }
 
-} // end anonymous namespace
+} // namespace
 
 // Initializes the data dependence graph by walking operations in 'f'.
 // Assigns each node in the graph a node id based on program order in 'f'.
@@ -979,7 +982,7 @@ static Value createPrivateMemRef(AffineForOp forOp, Operation *srcStoreOpInst,
       replaceAllMemRefUsesWith(oldMemRef, newMemRef, {}, indexRemap,
                                /*extraOperands=*/outerIVs,
                                /*symbolOperands=*/{},
-                               /*domInstFilter=*/&*forOp.getBody()->begin());
+                               /*domOpFilter=*/&*forOp.getBody()->begin());
   assert(succeeded(res) &&
          "replaceAllMemrefUsesWith should always succeed here");
   (void)res;
@@ -1391,13 +1394,25 @@ public:
       worklist.push_back(node.id);
     }
   }
+  /// Run only sibling fusion on the `mdg`.
+  void runSiblingFusionOnly() {
+    fuseSiblingNodes();
+    eraseUnusedMemRefAllocations();
+  }
+
+  /// Run only producer/consumer fusion on the `mdg`.
+  void runProducerConsumerFusionOnly() {
+    fuseProducerConsumerNodes(
+        /*maxSrcUserCount=*/std::numeric_limits<unsigned>::max());
+    eraseUnusedMemRefAllocations();
+  }
 
   // Run the GreedyFusion pass.
   // *) First pass through the nodes fuses single-use producer nodes into their
   //    unique consumer.
   // *) Second pass fuses sibling nodes which share no dependence edges.
   // *) Third pass fuses any remaining producer nodes into their users.
-  void run() {
+  void runGreedyFusion() {
     // TODO: Run this repeatedly until a fixed-point is reached.
     fuseProducerConsumerNodes(/*maxSrcUserCount=*/1);
     fuseSiblingNodes();
@@ -1551,7 +1566,7 @@ public:
             // producer scenarios will still go through profitability analysis
             // if only one of the stores is involved the producer-consumer
             // relationship of the candidate loops.
-            assert(producerStores.size() > 0 && "Expected producer store");
+            assert(!producerStores.empty() && "Expected producer store");
             if (producerStores.size() > 1)
               LLVM_DEBUG(llvm::dbgs() << "Skipping profitability analysis. Not "
                                          "supported for this case\n");
@@ -1958,7 +1973,7 @@ public:
   }
 };
 
-} // end anonymous namespace
+} // namespace
 
 void LoopFusion::runOnFunction() {
   MemRefDependenceGraph g;
@@ -1971,5 +1986,11 @@ void LoopFusion::runOnFunction() {
   unsigned localBufSizeThresholdBytes = localBufSizeThreshold * 1024;
   GreedyFusion fusion(&g, localBufSizeThresholdBytes, fastMemorySpaceOpt,
                       maximalFusion, computeToleranceThreshold);
-  fusion.run();
+
+  if (affineFusionMode == FusionMode::ProducerConsumer)
+    fusion.runProducerConsumerFusionOnly();
+  else if (affineFusionMode == FusionMode::Sibling)
+    fusion.runSiblingFusionOnly();
+  else
+    fusion.runGreedyFusion();
 }

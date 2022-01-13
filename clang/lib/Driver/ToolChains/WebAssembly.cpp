@@ -63,7 +63,7 @@ void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
 
   CmdArgs.push_back("-m");
-  if (getToolChain().getTriple().isArch64Bit())
+  if (ToolChain.getTriple().isArch64Bit())
     CmdArgs.push_back("wasm64");
   else
     CmdArgs.push_back("wasm32");
@@ -76,7 +76,7 @@ void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   ToolChain.AddFilePathLibArgs(Args, CmdArgs);
 
   const char *Crt1 = "crt1.o";
-  const char *Entry = NULL;
+  const char *Entry = nullptr;
 
   // If crt1-command.o exists, it supports new-style commands, so use it.
   // Otherwise, use the old crt1.o. This is a temporary transition measure.
@@ -130,7 +130,7 @@ void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   // When optimizing, if wasm-opt is available, run it.
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
-    auto WasmOptPath = getToolChain().GetProgramPath("wasm-opt");
+    auto WasmOptPath = ToolChain.GetProgramPath("wasm-opt");
     if (WasmOptPath != "wasm-opt") {
       StringRef OOpt = "s";
       if (A->getOption().matches(options::OPT_O4) ||
@@ -201,7 +201,9 @@ bool WebAssembly::UseObjCMixedDispatch() const { return true; }
 
 bool WebAssembly::isPICDefault() const { return false; }
 
-bool WebAssembly::isPIEDefault() const { return false; }
+bool WebAssembly::isPIEDefault(const llvm::opt::ArgList &Args) const {
+  return false;
+}
 
 bool WebAssembly::isPICDefaultForced() const { return false; }
 

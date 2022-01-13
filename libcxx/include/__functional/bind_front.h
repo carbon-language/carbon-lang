@@ -11,8 +11,8 @@
 #define _LIBCPP___FUNCTIONAL_BIND_FRONT_H
 
 #include <__config>
-#include <__functional/perfect_forward.h>
 #include <__functional/invoke.h>
+#include <__functional/perfect_forward.h>
 #include <type_traits>
 #include <utility>
 
@@ -38,7 +38,7 @@ struct __bind_front_t : __perfect_forward<__bind_front_op, _Fn, _BoundArgs...> {
     using __perfect_forward<__bind_front_op, _Fn, _BoundArgs...>::__perfect_forward;
 };
 
-template <class _Fn, class... _Args, class = _EnableIf<
+template <class _Fn, class... _Args, class = enable_if_t<
     _And<
         is_constructible<decay_t<_Fn>, _Fn>,
         is_move_constructible<decay_t<_Fn>>,

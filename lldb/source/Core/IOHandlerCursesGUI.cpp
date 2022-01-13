@@ -78,8 +78,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-using llvm::None;
-using llvm::Optional;
 using llvm::StringRef;
 
 // we may want curses to be disabled for some builds for instance, windows
@@ -1034,7 +1032,7 @@ public:
   // navigates to the next or the previous field. This is particularly useful to
   // do in-field validation and error setting. Fields with internal navigation
   // should call this method on their fields.
-  virtual void FieldDelegateExitCallback() { return; }
+  virtual void FieldDelegateExitCallback() {}
 
   // Fields may have internal navigation, for instance, a List Field have
   // multiple internal elements, which needs to be navigated. To allow for this
@@ -1055,10 +1053,10 @@ public:
   virtual bool FieldDelegateOnLastOrOnlyElement() { return true; }
 
   // Select the first element in the field if multiple elements exists.
-  virtual void FieldDelegateSelectFirstElement() { return; }
+  virtual void FieldDelegateSelectFirstElement() {}
 
   // Select the last element in the field if multiple elements exists.
-  virtual void FieldDelegateSelectLastElement() { return; }
+  virtual void FieldDelegateSelectLastElement() {}
 
   // Returns true if the field has an error, false otherwise.
   virtual bool FieldDelegateHasError() { return false; }
@@ -1642,8 +1640,10 @@ public:
   std::vector<std::string> GetPossiblePluginNames() {
     std::vector<std::string> names;
     size_t i = 0;
-    while (auto name = PluginManager::GetPlatformPluginNameAtIndex(i++))
-      names.push_back(name);
+    for (llvm::StringRef name =
+             PluginManager::GetPlatformPluginNameAtIndex(i++);
+         !name.empty(); name = PluginManager::GetProcessPluginNameAtIndex(i++))
+      names.push_back(name.str());
     return names;
   }
 
@@ -1663,8 +1663,9 @@ public:
     names.push_back("<default>");
 
     size_t i = 0;
-    while (auto name = PluginManager::GetProcessPluginNameAtIndex(i++))
-      names.push_back(name);
+    for (llvm::StringRef name = PluginManager::GetProcessPluginNameAtIndex(i++);
+         !name.empty(); name = PluginManager::GetProcessPluginNameAtIndex(i++))
+      names.push_back(name.str());
     return names;
   }
 
@@ -1997,7 +1998,6 @@ public:
 
   void FieldDelegateSelectLastElement() override {
     m_selection_type = SelectionType::NewButton;
-    return;
   }
 
   int GetNumberOfFields() { return m_fields.size(); }
@@ -2289,7 +2289,7 @@ public:
 
   virtual std::string GetName() = 0;
 
-  virtual void UpdateFieldsVisibility() { return; }
+  virtual void UpdateFieldsVisibility() {}
 
   FieldDelegate *GetField(uint32_t field_index) {
     if (field_index < m_fields.size())
@@ -3762,13 +3762,11 @@ public:
   void SelectNext() {
     if (m_selected_match != m_delegate_sp->GetNumberOfMatches() - 1)
       m_selected_match++;
-    return;
   }
 
   void SelectPrevious() {
     if (m_selected_match != 0)
       m_selected_match--;
-    return;
   }
 
   void ExecuteCallback(Window &window) {
@@ -4605,9 +4603,7 @@ public:
   virtual void TreeDelegateDrawTreeItem(TreeItem &item, Window &window) = 0;
   virtual void TreeDelegateGenerateChildren(TreeItem &item) = 0;
   virtual void TreeDelegateUpdateSelection(TreeItem &root, int &selection_index,
-                                           TreeItem *&selected_item) {
-    return;
-  }
+                                           TreeItem *&selected_item) {}
   // This is invoked when a tree item is selected. If true is returned, the
   // views are updated.
   virtual bool TreeDelegateItemSelected(TreeItem &item) = 0;

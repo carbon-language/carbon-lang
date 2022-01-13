@@ -57,8 +57,6 @@ public:
   uint64_t GetMaxBacktraceDepth() const;
 };
 
-typedef std::shared_ptr<ThreadProperties> ThreadPropertiesSP;
-
 class Thread : public std::enable_shared_from_this<Thread>,
                public ThreadProperties,
                public UserID,
@@ -149,7 +147,7 @@ public:
 
   static void SettingsTerminate();
 
-  static const ThreadPropertiesSP &GetGlobalProperties();
+  static ThreadProperties &GetGlobalProperties();
 
   lldb::ProcessSP GetProcess() const { return m_process_wp.lock(); }
 
@@ -1017,7 +1015,8 @@ public:
 
   /// Discards the plans queued on the plan stack of the current thread.  This
   /// is
-  /// arbitrated by the "Master" ThreadPlans, using the "OkayToDiscard" call.
+  /// arbitrated by the "Controlling" ThreadPlans, using the "OkayToDiscard"
+  /// call.
   //  But if \a force is true, all thread plans are discarded.
   void DiscardThreadPlans(bool force);
 

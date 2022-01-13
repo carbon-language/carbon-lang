@@ -8,6 +8,7 @@
 
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/CommonFolders.h"
 #include "mlir/Dialect/StandardOps/Utils/Utils.h"
 #include "mlir/IR/AffineExpr.h"
@@ -93,83 +94,11 @@ struct StdInlinerInterface : public DialectInlinerInterface {
       valuesToRepl[it.index()].replaceAllUsesWith(it.value());
   }
 };
-} // end anonymous namespace
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // StandardOpsDialect
 //===----------------------------------------------------------------------===//
-
-/// A custom unary operation printer that omits the "std." prefix from the
-/// operation names.
-static void printStandardUnaryOp(Operation *op, OpAsmPrinter &p) {
-  assert(op->getNumOperands() == 1 && "unary op should have one operand");
-  assert(op->getNumResults() == 1 && "unary op should have one result");
-
-  int stdDotLen = StandardOpsDialect::getDialectNamespace().size() + 1;
-  p << op->getName().getStringRef().drop_front(stdDotLen) << ' '
-    << op->getOperand(0);
-  p.printOptionalAttrDict(op->getAttrs());
-  p << " : " << op->getOperand(0).getType();
-}
-
-/// A custom binary operation printer that omits the "std." prefix from the
-/// operation names.
-static void printStandardBinaryOp(Operation *op, OpAsmPrinter &p) {
-  assert(op->getNumOperands() == 2 && "binary op should have two operands");
-  assert(op->getNumResults() == 1 && "binary op should have one result");
-
-  // If not all the operand and result types are the same, just use the
-  // generic assembly form to avoid omitting information in printing.
-  auto resultType = op->getResult(0).getType();
-  if (op->getOperand(0).getType() != resultType ||
-      op->getOperand(1).getType() != resultType) {
-    p.printGenericOp(op);
-    return;
-  }
-
-  int stdDotLen = StandardOpsDialect::getDialectNamespace().size() + 1;
-  p << op->getName().getStringRef().drop_front(stdDotLen) << ' '
-    << op->getOperand(0) << ", " << op->getOperand(1);
-  p.printOptionalAttrDict(op->getAttrs());
-
-  // Now we can output only one type for all operands and the result.
-  p << " : " << op->getResult(0).getType();
-}
-
-/// A custom ternary operation printer that omits the "std." prefix from the
-/// operation names.
-static void printStandardTernaryOp(Operation *op, OpAsmPrinter &p) {
-  assert(op->getNumOperands() == 3 && "ternary op should have three operands");
-  assert(op->getNumResults() == 1 && "ternary op should have one result");
-
-  // If not all the operand and result types are the same, just use the
-  // generic assembly form to avoid omitting information in printing.
-  auto resultType = op->getResult(0).getType();
-  if (op->getOperand(0).getType() != resultType ||
-      op->getOperand(1).getType() != resultType ||
-      op->getOperand(2).getType() != resultType) {
-    p.printGenericOp(op);
-    return;
-  }
-
-  int stdDotLen = StandardOpsDialect::getDialectNamespace().size() + 1;
-  p << op->getName().getStringRef().drop_front(stdDotLen) << ' '
-    << op->getOperand(0) << ", " << op->getOperand(1) << ", "
-    << op->getOperand(2);
-  p.printOptionalAttrDict(op->getAttrs());
-
-  // Now we can output only one type for all operands and the result.
-  p << " : " << op->getResult(0).getType();
-}
-
-/// A custom cast operation printer that omits the "std." prefix from the
-/// operation names.
-static void printStandardCastOp(Operation *op, OpAsmPrinter &p) {
-  int stdDotLen = StandardOpsDialect::getDialectNamespace().size() + 1;
-  p << op->getName().getStringRef().drop_front(stdDotLen) << ' '
-    << op->getOperand(0) << " : " << op->getOperand(0).getType() << " to "
-    << op->getResult(0).getType();
-}
 
 void StandardOpsDialect::initialize() {
   addOperations<
@@ -184,127 +113,9 @@ void StandardOpsDialect::initialize() {
 Operation *StandardOpsDialect::materializeConstant(OpBuilder &builder,
                                                    Attribute value, Type type,
                                                    Location loc) {
+  if (arith::ConstantOp::isBuildableWith(value, type))
+    return builder.create<arith::ConstantOp>(loc, type, value);
   return builder.create<ConstantOp>(loc, type, value);
-}
-
-//===----------------------------------------------------------------------===//
-// Common cast compatibility check for vector types.
-//===----------------------------------------------------------------------===//
-
-/// This method checks for cast compatibility of vector types.
-/// If 'a' and 'b' are vector types, and they are cast compatible,
-/// it calls the 'areElementsCastCompatible' function to check for
-/// element cast compatibility.
-/// Returns 'true' if the vector types are cast compatible,  and 'false'
-/// otherwise.
-static bool areVectorCastSimpleCompatible(
-    Type a, Type b,
-    function_ref<bool(TypeRange, TypeRange)> areElementsCastCompatible) {
-  if (auto va = a.dyn_cast<VectorType>())
-    if (auto vb = b.dyn_cast<VectorType>())
-      return va.getShape().equals(vb.getShape()) &&
-             areElementsCastCompatible(va.getElementType(),
-                                       vb.getElementType());
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
-// AddFOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult AddFOp::fold(ArrayRef<Attribute> operands) {
-  return constFoldBinaryOp<FloatAttr>(
-      operands, [](APFloat a, APFloat b) { return a + b; });
-}
-
-//===----------------------------------------------------------------------===//
-// AddIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult AddIOp::fold(ArrayRef<Attribute> operands) {
-  /// addi(x, 0) -> x
-  if (matchPattern(rhs(), m_Zero()))
-    return lhs();
-
-  return constFoldBinaryOp<IntegerAttr>(operands,
-                                        [](APInt a, APInt b) { return a + b; });
-}
-
-/// Canonicalize a sum of a constant and (constant - something) to simply be
-/// a sum of constants minus something. This transformation does similar
-/// transformations for additions of a constant with a subtract/add of
-/// a constant. This may result in some operations being reordered (but should
-/// remain equivalent).
-struct AddConstantReorder : public OpRewritePattern<AddIOp> {
-  using OpRewritePattern<AddIOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(AddIOp addop,
-                                PatternRewriter &rewriter) const override {
-    for (int i = 0; i < 2; i++) {
-      APInt origConst;
-      APInt midConst;
-      if (matchPattern(addop.getOperand(i), m_ConstantInt(&origConst))) {
-        if (auto midAddOp = addop.getOperand(1 - i).getDefiningOp<AddIOp>()) {
-          for (int j = 0; j < 2; j++) {
-            if (matchPattern(midAddOp.getOperand(j),
-                             m_ConstantInt(&midConst))) {
-              auto nextConstant = rewriter.create<ConstantOp>(
-                  addop.getLoc(), rewriter.getIntegerAttr(
-                                      addop.getType(), origConst + midConst));
-              rewriter.replaceOpWithNewOp<AddIOp>(addop, nextConstant,
-                                                  midAddOp.getOperand(1 - j));
-              return success();
-            }
-          }
-        }
-        if (auto midSubOp = addop.getOperand(1 - i).getDefiningOp<SubIOp>()) {
-          if (matchPattern(midSubOp.getOperand(0), m_ConstantInt(&midConst))) {
-            auto nextConstant = rewriter.create<ConstantOp>(
-                addop.getLoc(),
-                rewriter.getIntegerAttr(addop.getType(), origConst + midConst));
-            rewriter.replaceOpWithNewOp<SubIOp>(addop, nextConstant,
-                                                midSubOp.getOperand(1));
-            return success();
-          }
-          if (matchPattern(midSubOp.getOperand(1), m_ConstantInt(&midConst))) {
-            auto nextConstant = rewriter.create<ConstantOp>(
-                addop.getLoc(),
-                rewriter.getIntegerAttr(addop.getType(), origConst - midConst));
-            rewriter.replaceOpWithNewOp<AddIOp>(addop, nextConstant,
-                                                midSubOp.getOperand(0));
-            return success();
-          }
-        }
-      }
-    }
-    return failure();
-  }
-};
-
-void AddIOp::getCanonicalizationPatterns(OwningRewritePatternList &results,
-                                         MLIRContext *context) {
-  results.insert<AddConstantReorder>(context);
-}
-
-//===----------------------------------------------------------------------===//
-// AndOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult AndOp::fold(ArrayRef<Attribute> operands) {
-  /// and(x, 0) -> 0
-  if (matchPattern(rhs(), m_Zero()))
-    return rhs();
-  /// and(x, allOnes) -> x
-  APInt intValue;
-  if (matchPattern(rhs(), m_ConstantInt(&intValue)) &&
-      intValue.isAllOnesValue())
-    return lhs();
-  /// and(x,x) -> x
-  if (lhs() == rhs())
-    return rhs();
-
-  return constFoldBinaryOp<IntegerAttr>(operands,
-                                        [](APInt a, APInt b) { return a & b; });
 }
 
 //===----------------------------------------------------------------------===//
@@ -313,93 +124,11 @@ OpFoldResult AndOp::fold(ArrayRef<Attribute> operands) {
 
 LogicalResult AssertOp::canonicalize(AssertOp op, PatternRewriter &rewriter) {
   // Erase assertion if argument is constant true.
-  if (matchPattern(op.arg(), m_One())) {
+  if (matchPattern(op.getArg(), m_One())) {
     rewriter.eraseOp(op);
     return success();
   }
   return failure();
-}
-
-//===----------------------------------------------------------------------===//
-// AtomicRMWOp
-//===----------------------------------------------------------------------===//
-
-static LogicalResult verify(AtomicRMWOp op) {
-  if (op.getMemRefType().getRank() != op.getNumOperands() - 2)
-    return op.emitOpError(
-        "expects the number of subscripts to be equal to memref rank");
-  switch (op.kind()) {
-  case AtomicRMWKind::addf:
-  case AtomicRMWKind::maxf:
-  case AtomicRMWKind::minf:
-  case AtomicRMWKind::mulf:
-    if (!op.value().getType().isa<FloatType>())
-      return op.emitOpError()
-             << "with kind '" << stringifyAtomicRMWKind(op.kind())
-             << "' expects a floating-point type";
-    break;
-  case AtomicRMWKind::addi:
-  case AtomicRMWKind::maxs:
-  case AtomicRMWKind::maxu:
-  case AtomicRMWKind::mins:
-  case AtomicRMWKind::minu:
-  case AtomicRMWKind::muli:
-    if (!op.value().getType().isa<IntegerType>())
-      return op.emitOpError()
-             << "with kind '" << stringifyAtomicRMWKind(op.kind())
-             << "' expects an integer type";
-    break;
-  default:
-    break;
-  }
-  return success();
-}
-
-/// Returns the identity value attribute associated with an AtomicRMWKind op.
-Attribute mlir::getIdentityValueAttr(AtomicRMWKind kind, Type resultType,
-                                     OpBuilder &builder, Location loc) {
-  switch (kind) {
-  case AtomicRMWKind::addf:
-  case AtomicRMWKind::addi:
-    return builder.getZeroAttr(resultType);
-  case AtomicRMWKind::muli:
-    return builder.getIntegerAttr(resultType, 1);
-  case AtomicRMWKind::mulf:
-    return builder.getFloatAttr(resultType, 1);
-  // TODO: Add remaining reduction operations.
-  default:
-    (void)emitOptionalError(loc, "Reduction operation type not supported");
-    break;
-  }
-  return nullptr;
-}
-
-/// Returns the identity value associated with an AtomicRMWKind op.
-Value mlir::getIdentityValue(AtomicRMWKind op, Type resultType,
-                             OpBuilder &builder, Location loc) {
-  Attribute attr = getIdentityValueAttr(op, resultType, builder, loc);
-  return builder.create<ConstantOp>(loc, attr);
-}
-
-/// Return the value obtained by applying the reduction operation kind
-/// associated with a binary AtomicRMWKind op to `lhs` and `rhs`.
-Value mlir::getReductionOp(AtomicRMWKind op, OpBuilder &builder, Location loc,
-                           Value lhs, Value rhs) {
-  switch (op) {
-  case AtomicRMWKind::addf:
-    return builder.create<AddFOp>(loc, lhs, rhs);
-  case AtomicRMWKind::addi:
-    return builder.create<AddIOp>(loc, lhs, rhs);
-  case AtomicRMWKind::mulf:
-    return builder.create<MulFOp>(loc, lhs, rhs);
-  case AtomicRMWKind::muli:
-    return builder.create<MulIOp>(loc, lhs, rhs);
-  // TODO: Add remaining reduction operations.
-  default:
-    (void)emitOptionalError(loc, "Reduction operation type not supported");
-    break;
-  }
-  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -422,7 +151,7 @@ void GenericAtomicRMWOp::build(OpBuilder &builder, OperationState &result,
 }
 
 static LogicalResult verify(GenericAtomicRMWOp op) {
-  auto &body = op.body();
+  auto &body = op.getRegion();
   if (body.getNumArguments() != 1)
     return op.emitOpError("expected single number of entry block arguments");
 
@@ -465,9 +194,9 @@ static ParseResult parseGenericAtomicRMWOp(OpAsmParser &parser,
 }
 
 static void print(OpAsmPrinter &p, GenericAtomicRMWOp op) {
-  p << op.getOperationName() << ' ' << op.memref() << "[" << op.indices()
-    << "] : " << op.memref().getType();
-  p.printRegion(op.body());
+  p << ' ' << op.getMemref() << "[" << op.getIndices()
+    << "] : " << op.getMemref().getType();
+  p.printRegion(op.getRegion());
   p.printOptionalAttrDict(op->getAttrs());
 }
 
@@ -477,59 +206,11 @@ static void print(OpAsmPrinter &p, GenericAtomicRMWOp op) {
 
 static LogicalResult verify(AtomicYieldOp op) {
   Type parentType = op->getParentOp()->getResultTypes().front();
-  Type resultType = op.result().getType();
+  Type resultType = op.getResult().getType();
   if (parentType != resultType)
     return op.emitOpError() << "types mismatch between yield op: " << resultType
                             << " and its parent: " << parentType;
   return success();
-}
-
-//===----------------------------------------------------------------------===//
-// BitcastOp
-//===----------------------------------------------------------------------===//
-
-bool BitcastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  assert(inputs.size() == 1 && outputs.size() == 1 &&
-         "bitcast op expects one operand and result");
-  Type a = inputs.front(), b = outputs.front();
-  if (a.isSignlessIntOrFloat() && b.isSignlessIntOrFloat())
-    return a.getIntOrFloatBitWidth() == b.getIntOrFloatBitWidth();
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
-}
-
-OpFoldResult BitcastOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 1 && "bitcastop expects 1 operand");
-
-  // Bitcast of bitcast
-  auto *sourceOp = getOperand().getDefiningOp();
-  if (auto sourceBitcast = dyn_cast_or_null<BitcastOp>(sourceOp)) {
-    setOperand(sourceBitcast.getOperand());
-    return getResult();
-  }
-
-  auto operand = operands[0];
-  if (!operand)
-    return {};
-
-  Type resType = getResult().getType();
-
-  if (auto denseAttr = operand.dyn_cast<DenseElementsAttr>())
-    return denseAttr.bitcast(resType.cast<ShapedType>().getElementType());
-
-  APInt bits;
-  if (auto floatAttr = operand.dyn_cast<FloatAttr>())
-    bits = floatAttr.getValue().bitcastToAPInt();
-  else if (auto intAttr = operand.dyn_cast<IntegerAttr>())
-    bits = intAttr.getValue();
-  else
-    return {};
-
-  if (resType.isa<IntegerType>())
-    return IntegerAttr::get(resType, bits);
-  if (auto resFloatType = resType.dyn_cast<FloatType>())
-    return FloatAttr::get(resType,
-                          APFloat(resFloatType.getFloatSemantics(), bits));
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -629,8 +310,6 @@ LogicalResult BranchOp::canonicalize(BranchOp op, PatternRewriter &rewriter) {
                  succeeded(simplifyPassThroughBr(op, rewriter)));
 }
 
-Block *BranchOp::getDest() { return getSuccessor(); }
-
 void BranchOp::setDest(Block *block) { return setSuccessor(block); }
 
 void BranchOp::eraseOperand(unsigned index) { (*this)->eraseOperand(index); }
@@ -638,10 +317,12 @@ void BranchOp::eraseOperand(unsigned index) { (*this)->eraseOperand(index); }
 Optional<MutableOperandRange>
 BranchOp::getMutableSuccessorOperands(unsigned index) {
   assert(index == 0 && "invalid successor index");
-  return destOperandsMutable();
+  return getDestOperandsMutable();
 }
 
-Block *BranchOp::getSuccessorForOperands(ArrayRef<Attribute>) { return dest(); }
+Block *BranchOp::getSuccessorForOperands(ArrayRef<Attribute>) {
+  return getDest();
+}
 
 //===----------------------------------------------------------------------===//
 // CallOp
@@ -717,162 +398,9 @@ static Type getI1SameShape(Type type) {
   if (type.isa<UnrankedTensorType>())
     return UnrankedTensorType::get(i1Type);
   if (auto vectorType = type.dyn_cast<VectorType>())
-    return VectorType::get(vectorType.getShape(), i1Type);
+    return VectorType::get(vectorType.getShape(), i1Type,
+                           vectorType.getNumScalableDims());
   return i1Type;
-}
-
-//===----------------------------------------------------------------------===//
-// CmpIOp
-//===----------------------------------------------------------------------===//
-
-static void buildCmpIOp(OpBuilder &build, OperationState &result,
-                        CmpIPredicate predicate, Value lhs, Value rhs) {
-  result.addOperands({lhs, rhs});
-  result.types.push_back(getI1SameShape(lhs.getType()));
-  result.addAttribute(CmpIOp::getPredicateAttrName(),
-                      build.getI64IntegerAttr(static_cast<int64_t>(predicate)));
-}
-
-// Compute `lhs` `pred` `rhs`, where `pred` is one of the known integer
-// comparison predicates.
-bool mlir::applyCmpPredicate(CmpIPredicate predicate, const APInt &lhs,
-                             const APInt &rhs) {
-  switch (predicate) {
-  case CmpIPredicate::eq:
-    return lhs.eq(rhs);
-  case CmpIPredicate::ne:
-    return lhs.ne(rhs);
-  case CmpIPredicate::slt:
-    return lhs.slt(rhs);
-  case CmpIPredicate::sle:
-    return lhs.sle(rhs);
-  case CmpIPredicate::sgt:
-    return lhs.sgt(rhs);
-  case CmpIPredicate::sge:
-    return lhs.sge(rhs);
-  case CmpIPredicate::ult:
-    return lhs.ult(rhs);
-  case CmpIPredicate::ule:
-    return lhs.ule(rhs);
-  case CmpIPredicate::ugt:
-    return lhs.ugt(rhs);
-  case CmpIPredicate::uge:
-    return lhs.uge(rhs);
-  }
-  llvm_unreachable("unknown comparison predicate");
-}
-
-// Returns true if the predicate is true for two equal operands.
-static bool applyCmpPredicateToEqualOperands(CmpIPredicate predicate) {
-  switch (predicate) {
-  case CmpIPredicate::eq:
-  case CmpIPredicate::sle:
-  case CmpIPredicate::sge:
-  case CmpIPredicate::ule:
-  case CmpIPredicate::uge:
-    return true;
-  case CmpIPredicate::ne:
-  case CmpIPredicate::slt:
-  case CmpIPredicate::sgt:
-  case CmpIPredicate::ult:
-  case CmpIPredicate::ugt:
-    return false;
-  }
-  llvm_unreachable("unknown comparison predicate");
-}
-
-// Constant folding hook for comparisons.
-OpFoldResult CmpIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "cmpi takes two arguments");
-
-  if (lhs() == rhs()) {
-    auto val = applyCmpPredicateToEqualOperands(getPredicate());
-    return BoolAttr::get(getContext(), val);
-  }
-
-  auto lhs = operands.front().dyn_cast_or_null<IntegerAttr>();
-  auto rhs = operands.back().dyn_cast_or_null<IntegerAttr>();
-  if (!lhs || !rhs)
-    return {};
-
-  auto val = applyCmpPredicate(getPredicate(), lhs.getValue(), rhs.getValue());
-  return BoolAttr::get(getContext(), val);
-}
-
-//===----------------------------------------------------------------------===//
-// CmpFOp
-//===----------------------------------------------------------------------===//
-
-static void buildCmpFOp(OpBuilder &build, OperationState &result,
-                        CmpFPredicate predicate, Value lhs, Value rhs) {
-  result.addOperands({lhs, rhs});
-  result.types.push_back(getI1SameShape(lhs.getType()));
-  result.addAttribute(CmpFOp::getPredicateAttrName(),
-                      build.getI64IntegerAttr(static_cast<int64_t>(predicate)));
-}
-
-/// Compute `lhs` `pred` `rhs`, where `pred` is one of the known floating point
-/// comparison predicates.
-bool mlir::applyCmpPredicate(CmpFPredicate predicate, const APFloat &lhs,
-                             const APFloat &rhs) {
-  auto cmpResult = lhs.compare(rhs);
-  switch (predicate) {
-  case CmpFPredicate::AlwaysFalse:
-    return false;
-  case CmpFPredicate::OEQ:
-    return cmpResult == APFloat::cmpEqual;
-  case CmpFPredicate::OGT:
-    return cmpResult == APFloat::cmpGreaterThan;
-  case CmpFPredicate::OGE:
-    return cmpResult == APFloat::cmpGreaterThan ||
-           cmpResult == APFloat::cmpEqual;
-  case CmpFPredicate::OLT:
-    return cmpResult == APFloat::cmpLessThan;
-  case CmpFPredicate::OLE:
-    return cmpResult == APFloat::cmpLessThan || cmpResult == APFloat::cmpEqual;
-  case CmpFPredicate::ONE:
-    return cmpResult != APFloat::cmpUnordered && cmpResult != APFloat::cmpEqual;
-  case CmpFPredicate::ORD:
-    return cmpResult != APFloat::cmpUnordered;
-  case CmpFPredicate::UEQ:
-    return cmpResult == APFloat::cmpUnordered || cmpResult == APFloat::cmpEqual;
-  case CmpFPredicate::UGT:
-    return cmpResult == APFloat::cmpUnordered ||
-           cmpResult == APFloat::cmpGreaterThan;
-  case CmpFPredicate::UGE:
-    return cmpResult == APFloat::cmpUnordered ||
-           cmpResult == APFloat::cmpGreaterThan ||
-           cmpResult == APFloat::cmpEqual;
-  case CmpFPredicate::ULT:
-    return cmpResult == APFloat::cmpUnordered ||
-           cmpResult == APFloat::cmpLessThan;
-  case CmpFPredicate::ULE:
-    return cmpResult == APFloat::cmpUnordered ||
-           cmpResult == APFloat::cmpLessThan || cmpResult == APFloat::cmpEqual;
-  case CmpFPredicate::UNE:
-    return cmpResult != APFloat::cmpEqual;
-  case CmpFPredicate::UNO:
-    return cmpResult == APFloat::cmpUnordered;
-  case CmpFPredicate::AlwaysTrue:
-    return true;
-  }
-  llvm_unreachable("unknown comparison predicate");
-}
-
-// Constant folding hook for comparisons.
-OpFoldResult CmpFOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "cmpf takes two arguments");
-
-  auto lhs = operands.front().dyn_cast_or_null<FloatAttr>();
-  auto rhs = operands.back().dyn_cast_or_null<FloatAttr>();
-
-  // TODO: We could actually do some intelligent things if we know only one
-  // of the operands, but it's inf or nan.
-  if (!lhs || !rhs)
-    return {};
-
-  auto val = applyCmpPredicate(getPredicate(), lhs.getValue(), rhs.getValue());
-  return IntegerAttr::get(IntegerType::get(getContext(), 1), APInt(1, val));
 }
 
 //===----------------------------------------------------------------------===//
@@ -895,7 +423,8 @@ struct SimplifyConstCondBranchPred : public OpRewritePattern<CondBranchOp> {
       rewriter.replaceOpWithNewOp<BranchOp>(condbr, condbr.getTrueDest(),
                                             condbr.getTrueOperands());
       return success();
-    } else if (matchPattern(condbr.getCondition(), m_Zero())) {
+    }
+    if (matchPattern(condbr.getCondition(), m_Zero())) {
       // False branch taken.
       rewriter.replaceOpWithNewOp<BranchOp>(condbr, condbr.getFalseDest(),
                                             condbr.getFalseOperands());
@@ -918,7 +447,7 @@ struct SimplifyPassThroughCondBranch : public OpRewritePattern<CondBranchOp> {
 
   LogicalResult matchAndRewrite(CondBranchOp condbr,
                                 PatternRewriter &rewriter) const override {
-    Block *trueDest = condbr.trueDest(), *falseDest = condbr.falseDest();
+    Block *trueDest = condbr.getTrueDest(), *falseDest = condbr.getFalseDest();
     ValueRange trueDestOperands = condbr.getTrueOperands();
     ValueRange falseDestOperands = condbr.getFalseOperands();
     SmallVector<Value, 4> trueDestOperandStorage, falseDestOperandStorage;
@@ -954,8 +483,8 @@ struct SimplifyCondBranchIdenticalSuccessors
                                 PatternRewriter &rewriter) const override {
     // Check that the true and false destinations are the same and have the same
     // operands.
-    Block *trueDest = condbr.trueDest();
-    if (trueDest != condbr.falseDest())
+    Block *trueDest = condbr.getTrueDest();
+    if (trueDest != condbr.getFalseDest())
       return failure();
 
     // If all of the operands match, no selects need to be generated.
@@ -1023,12 +552,12 @@ struct SimplifyCondBranchFromCondBranchOnSameCondition
       return failure();
 
     // Fold this branch to an unconditional branch.
-    if (currentBlock == predBranch.trueDest())
-      rewriter.replaceOpWithNewOp<BranchOp>(condbr, condbr.trueDest(),
-                                            condbr.trueDestOperands());
+    if (currentBlock == predBranch.getTrueDest())
+      rewriter.replaceOpWithNewOp<BranchOp>(condbr, condbr.getTrueDest(),
+                                            condbr.getTrueDestOperands());
     else
-      rewriter.replaceOpWithNewOp<BranchOp>(condbr, condbr.falseDest(),
-                                            condbr.falseDestOperands());
+      rewriter.replaceOpWithNewOp<BranchOp>(condbr, condbr.getFalseDest(),
+                                            condbr.getFalseDestOperands());
     return success();
   }
 };
@@ -1074,12 +603,12 @@ struct CondBranchTruthPropagation : public OpRewritePattern<CondBranchOp> {
     // op.
     if (condbr.getTrueDest()->getSinglePredecessor()) {
       for (OpOperand &use :
-           llvm::make_early_inc_range(condbr.condition().getUses())) {
+           llvm::make_early_inc_range(condbr.getCondition().getUses())) {
         if (use.getOwner()->getBlock() == condbr.getTrueDest()) {
           replaced = true;
 
           if (!constantTrue)
-            constantTrue = rewriter.create<mlir::ConstantOp>(
+            constantTrue = rewriter.create<arith::ConstantOp>(
                 condbr.getLoc(), ty, rewriter.getBoolAttr(true));
 
           rewriter.updateRootInPlace(use.getOwner(),
@@ -1089,12 +618,12 @@ struct CondBranchTruthPropagation : public OpRewritePattern<CondBranchOp> {
     }
     if (condbr.getFalseDest()->getSinglePredecessor()) {
       for (OpOperand &use :
-           llvm::make_early_inc_range(condbr.condition().getUses())) {
+           llvm::make_early_inc_range(condbr.getCondition().getUses())) {
         if (use.getOwner()->getBlock() == condbr.getFalseDest()) {
           replaced = true;
 
           if (!constantFalse)
-            constantFalse = rewriter.create<mlir::ConstantOp>(
+            constantFalse = rewriter.create<arith::ConstantOp>(
                 condbr.getLoc(), ty, rewriter.getBoolAttr(false));
 
           rewriter.updateRootInPlace(use.getOwner(),
@@ -1105,7 +634,7 @@ struct CondBranchTruthPropagation : public OpRewritePattern<CondBranchOp> {
     return success(replaced);
   }
 };
-} // end anonymous namespace
+} // namespace
 
 void CondBranchOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                                MLIRContext *context) {
@@ -1118,22 +647,22 @@ void CondBranchOp::getCanonicalizationPatterns(RewritePatternSet &results,
 Optional<MutableOperandRange>
 CondBranchOp::getMutableSuccessorOperands(unsigned index) {
   assert(index < getNumSuccessors() && "invalid successor index");
-  return index == trueIndex ? trueDestOperandsMutable()
-                            : falseDestOperandsMutable();
+  return index == trueIndex ? getTrueDestOperandsMutable()
+                            : getFalseDestOperandsMutable();
 }
 
 Block *CondBranchOp::getSuccessorForOperands(ArrayRef<Attribute> operands) {
   if (IntegerAttr condAttr = operands.front().dyn_cast_or_null<IntegerAttr>())
-    return condAttr.getValue().isOneValue() ? trueDest() : falseDest();
+    return condAttr.getValue().isOneValue() ? getTrueDest() : getFalseDest();
   return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
-// Constant*Op
+// ConstantOp
 //===----------------------------------------------------------------------===//
 
 static void print(OpAsmPrinter &p, ConstantOp &op) {
-  p << "constant ";
+  p << " ";
   p.printOptionalAttrDict(op->getAttrs(), /*elidedAttrs=*/{"value"});
 
   if (op->getAttrs().size() > 1)
@@ -1176,23 +705,6 @@ static LogicalResult verify(ConstantOp &op) {
     return op.emitOpError() << "requires attribute's type (" << value.getType()
                             << ") to match op's return type (" << type << ")";
 
-  if (auto intAttr = value.dyn_cast<IntegerAttr>()) {
-    if (type.isa<IndexType>() || value.isa<BoolAttr>())
-      return success();
-    IntegerType intType = type.cast<IntegerType>();
-    if (!intType.isSignless())
-      return op.emitOpError("requires integer result types to be signless");
-
-    // If the type has a known bitwidth we verify that the value can be
-    // represented with the given bitwidth.
-    unsigned bitwidth = intType.getWidth();
-    APInt intVal = intAttr.getValue();
-    if (!intVal.isSignedIntN(bitwidth) && !intVal.isIntN(bitwidth))
-      return op.emitOpError("requires 'value' to be an integer within the "
-                            "range of the integer result type");
-    return success();
-  }
-
   if (auto complexTy = type.dyn_cast<ComplexType>()) {
     auto arrayAttr = value.dyn_cast<ArrayAttr>();
     if (!complexTy || arrayAttr.size() != 2)
@@ -1208,18 +720,6 @@ static LogicalResult verify(ConstantOp &op) {
              << ") to match the element type of the op's return type ("
              << complexEltTy << ")";
     }
-    return success();
-  }
-
-  if (type.isa<FloatType>()) {
-    if (!value.isa<FloatAttr>())
-      return op.emitOpError("requires 'value' to be a floating point constant");
-    return success();
-  }
-
-  if (type.isa<ShapedType>()) {
-    if (!value.isa<ElementsAttr>())
-      return op.emitOpError("requires 'value' to be a shaped constant");
     return success();
   }
 
@@ -1256,22 +756,7 @@ OpFoldResult ConstantOp::fold(ArrayRef<Attribute> operands) {
 void ConstantOp::getAsmResultNames(
     function_ref<void(Value, StringRef)> setNameFn) {
   Type type = getType();
-  if (auto intCst = getValue().dyn_cast<IntegerAttr>()) {
-    IntegerType intTy = type.dyn_cast<IntegerType>();
-
-    // Sugar i1 constants with 'true' and 'false'.
-    if (intTy && intTy.getWidth() == 1)
-      return setNameFn(getResult(), (intCst.getInt() ? "true" : "false"));
-
-    // Otherwise, build a complex name with the value and type.
-    SmallString<32> specialNameBuffer;
-    llvm::raw_svector_ostream specialName(specialNameBuffer);
-    specialName << 'c' << intCst.getInt();
-    if (intTy)
-      specialName << '_' << type;
-    setNameFn(getResult(), specialName.str());
-
-  } else if (type.isa<FunctionType>()) {
+  if (type.isa<FunctionType>()) {
     setNameFn(getResult(), "f");
   } else {
     setNameFn(getResult(), "cst");
@@ -1287,10 +772,6 @@ bool ConstantOp::isBuildableWith(Attribute value, Type type) {
   // The attribute must have the same type as 'type'.
   if (!value.getType().isa<NoneType>() && value.getType() != type)
     return false;
-  // If the type is an integer type, it must be signless.
-  if (IntegerType integerTy = type.dyn_cast<IntegerType>())
-    if (!integerTy.isSignless())
-      return false;
   // Finally, check that the attribute kind is handled.
   if (auto arrAttr = value.dyn_cast<ArrayAttr>()) {
     auto complexTy = type.dyn_cast<ComplexType>();
@@ -1300,248 +781,7 @@ bool ConstantOp::isBuildableWith(Attribute value, Type type) {
     return arrAttr.size() == 2 && arrAttr[0].getType() == complexEltTy &&
            arrAttr[1].getType() == complexEltTy;
   }
-  return value.isa<IntegerAttr, FloatAttr, ElementsAttr, UnitAttr>();
-}
-
-void ConstantFloatOp::build(OpBuilder &builder, OperationState &result,
-                            const APFloat &value, FloatType type) {
-  ConstantOp::build(builder, result, type, builder.getFloatAttr(type, value));
-}
-
-bool ConstantFloatOp::classof(Operation *op) {
-  return ConstantOp::classof(op) && op->getResult(0).getType().isa<FloatType>();
-}
-
-/// ConstantIntOp only matches values whose result type is an IntegerType.
-bool ConstantIntOp::classof(Operation *op) {
-  return ConstantOp::classof(op) &&
-         op->getResult(0).getType().isSignlessInteger();
-}
-
-void ConstantIntOp::build(OpBuilder &builder, OperationState &result,
-                          int64_t value, unsigned width) {
-  Type type = builder.getIntegerType(width);
-  ConstantOp::build(builder, result, type, builder.getIntegerAttr(type, value));
-}
-
-/// Build a constant int op producing an integer with the specified type,
-/// which must be an integer type.
-void ConstantIntOp::build(OpBuilder &builder, OperationState &result,
-                          int64_t value, Type type) {
-  assert(type.isSignlessInteger() &&
-         "ConstantIntOp can only have signless integer type");
-  ConstantOp::build(builder, result, type, builder.getIntegerAttr(type, value));
-}
-
-/// ConstantIndexOp only matches values whose result type is Index.
-bool ConstantIndexOp::classof(Operation *op) {
-  return ConstantOp::classof(op) && op->getResult(0).getType().isIndex();
-}
-
-void ConstantIndexOp::build(OpBuilder &builder, OperationState &result,
-                            int64_t value) {
-  Type type = builder.getIndexType();
-  ConstantOp::build(builder, result, type, builder.getIntegerAttr(type, value));
-}
-
-// ---------------------------------------------------------------------------
-// DivFOp
-// ---------------------------------------------------------------------------
-
-OpFoldResult DivFOp::fold(ArrayRef<Attribute> operands) {
-  return constFoldBinaryOp<FloatAttr>(
-      operands, [](APFloat a, APFloat b) { return a / b; });
-}
-
-//===----------------------------------------------------------------------===//
-// FPExtOp
-//===----------------------------------------------------------------------===//
-
-bool FPExtOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (auto fa = a.dyn_cast<FloatType>())
-    if (auto fb = b.dyn_cast<FloatType>())
-      return fa.getWidth() < fb.getWidth();
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
-}
-
-//===----------------------------------------------------------------------===//
-// FPToSIOp
-//===----------------------------------------------------------------------===//
-
-bool FPToSIOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (a.isa<FloatType>() && b.isSignlessInteger())
-    return true;
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
-}
-
-//===----------------------------------------------------------------------===//
-// FPToUIOp
-//===----------------------------------------------------------------------===//
-
-bool FPToUIOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (a.isa<FloatType>() && b.isSignlessInteger())
-    return true;
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
-}
-
-//===----------------------------------------------------------------------===//
-// FPTruncOp
-//===----------------------------------------------------------------------===//
-
-bool FPTruncOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (auto fa = a.dyn_cast<FloatType>())
-    if (auto fb = b.dyn_cast<FloatType>())
-      return fa.getWidth() > fb.getWidth();
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
-}
-
-/// Perform safe const propagation for fptrunc, i.e. only propagate
-/// if FP value can be represented without precision loss or rounding.
-OpFoldResult FPTruncOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 1 && "unary operation takes one operand");
-
-  auto constOperand = operands.front();
-  if (!constOperand || !constOperand.isa<FloatAttr>())
-    return {};
-
-  // Convert to target type via 'double'.
-  double sourceValue =
-      constOperand.dyn_cast<FloatAttr>().getValue().convertToDouble();
-  auto targetAttr = FloatAttr::get(getType(), sourceValue);
-
-  // Propagate if constant's value does not change after truncation.
-  if (sourceValue == targetAttr.getValue().convertToDouble())
-    return targetAttr;
-
-  return {};
-}
-
-//===----------------------------------------------------------------------===//
-// IndexCastOp
-//===----------------------------------------------------------------------===//
-
-// Index cast is applicable from index to integer and backwards.
-bool IndexCastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (a.isa<ShapedType>() && b.isa<ShapedType>()) {
-    auto aShaped = a.cast<ShapedType>();
-    auto bShaped = b.cast<ShapedType>();
-
-    return (aShaped.getShape() == bShaped.getShape()) &&
-           areCastCompatible(aShaped.getElementType(),
-                             bShaped.getElementType());
-  }
-
-  return (a.isIndex() && b.isSignlessInteger()) ||
-         (a.isSignlessInteger() && b.isIndex());
-}
-
-OpFoldResult IndexCastOp::fold(ArrayRef<Attribute> cstOperands) {
-  // Fold IndexCast(IndexCast(x)) -> x
-  auto cast = getOperand().getDefiningOp<IndexCastOp>();
-  if (cast && cast.getOperand().getType() == getType())
-    return cast.getOperand();
-
-  // Fold IndexCast(constant) -> constant
-  // A little hack because we go through int.  Otherwise, the size
-  // of the constant might need to change.
-  if (auto value = cstOperands[0].dyn_cast_or_null<IntegerAttr>())
-    return IntegerAttr::get(getType(), value.getInt());
-
-  return {};
-}
-
-namespace {
-///  index_cast(sign_extend x) => index_cast(x)
-struct IndexCastOfSExt : public OpRewritePattern<IndexCastOp> {
-  using OpRewritePattern<IndexCastOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(IndexCastOp op,
-                                PatternRewriter &rewriter) const override {
-
-    if (auto extop = op.getOperand().getDefiningOp<SignExtendIOp>()) {
-      op.setOperand(extop.getOperand());
-      return success();
-    }
-    return failure();
-  }
-};
-
-} // namespace
-
-void IndexCastOp::getCanonicalizationPatterns(OwningRewritePatternList &results,
-                                              MLIRContext *context) {
-  results.insert<IndexCastOfSExt>(context);
-}
-
-//===----------------------------------------------------------------------===//
-// MulFOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult MulFOp::fold(ArrayRef<Attribute> operands) {
-  return constFoldBinaryOp<FloatAttr>(
-      operands, [](APFloat a, APFloat b) { return a * b; });
-}
-
-//===----------------------------------------------------------------------===//
-// MulIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult MulIOp::fold(ArrayRef<Attribute> operands) {
-  /// muli(x, 0) -> 0
-  if (matchPattern(rhs(), m_Zero()))
-    return rhs();
-  /// muli(x, 1) -> x
-  if (matchPattern(rhs(), m_One()))
-    return getOperand(0);
-
-  // TODO: Handle the overflow case.
-  return constFoldBinaryOp<IntegerAttr>(operands,
-                                        [](APInt a, APInt b) { return a * b; });
-}
-
-//===----------------------------------------------------------------------===//
-// OrOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult OrOp::fold(ArrayRef<Attribute> operands) {
-  /// or(x, 0) -> x
-  if (matchPattern(rhs(), m_Zero()))
-    return lhs();
-  /// or(x,x) -> x
-  if (lhs() == rhs())
-    return rhs();
-
-  return constFoldBinaryOp<IntegerAttr>(operands,
-                                        [](APInt a, APInt b) { return a | b; });
-}
-
-//===----------------------------------------------------------------------===//
-// RankOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult RankOp::fold(ArrayRef<Attribute> operands) {
-  // Constant fold rank when the rank of the operand is known.
-  auto type = getOperand().getType();
-  if (auto shapedType = type.dyn_cast<ShapedType>())
-    if (shapedType.hasRank())
-      return IntegerAttr::get(IndexType::get(getContext()),
-                              shapedType.getRank());
-  return IntegerAttr();
+  return value.isa<UnitAttr>();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1573,35 +813,72 @@ static LogicalResult verify(ReturnOp op) {
 // SelectOp
 //===----------------------------------------------------------------------===//
 
-// Transforms a select to a not, where relevant.
+// Transforms a select of a boolean to arithmetic operations
 //
-//  select %arg, %false, %true
+//  select %arg, %x, %y : i1
 //
 //  becomes
 //
-//  xor %arg, %true
-struct SelectToNot : public OpRewritePattern<SelectOp> {
+//  and(%arg, %x) or and(!%arg, %y)
+struct SelectI1Simplify : public OpRewritePattern<SelectOp> {
   using OpRewritePattern<SelectOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(SelectOp op,
                                 PatternRewriter &rewriter) const override {
-    if (!matchPattern(op.getTrueValue(), m_Zero()))
-      return failure();
-
-    if (!matchPattern(op.getFalseValue(), m_One()))
-      return failure();
-
     if (!op.getType().isInteger(1))
       return failure();
 
-    rewriter.replaceOpWithNewOp<XOrOp>(op, op.condition(), op.getFalseValue());
+    Value falseConstant =
+        rewriter.create<arith::ConstantIntOp>(op.getLoc(), true, 1);
+    Value notCondition = rewriter.create<arith::XOrIOp>(
+        op.getLoc(), op.getCondition(), falseConstant);
+
+    Value trueVal = rewriter.create<arith::AndIOp>(
+        op.getLoc(), op.getCondition(), op.getTrueValue());
+    Value falseVal = rewriter.create<arith::AndIOp>(op.getLoc(), notCondition,
+                                                    op.getFalseValue());
+    rewriter.replaceOpWithNewOp<arith::OrIOp>(op, trueVal, falseVal);
     return success();
+  }
+};
+
+//  select %arg, %c1, %c0 => extui %arg
+struct SelectToExtUI : public OpRewritePattern<SelectOp> {
+  using OpRewritePattern<SelectOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(SelectOp op,
+                                PatternRewriter &rewriter) const override {
+    // Cannot extui i1 to i1, or i1 to f32
+    if (!op.getType().isa<IntegerType>() || op.getType().isInteger(1))
+      return failure();
+
+    // select %x, c1, %c0 => extui %arg
+    if (matchPattern(op.getTrueValue(), m_One()))
+      if (matchPattern(op.getFalseValue(), m_Zero())) {
+        rewriter.replaceOpWithNewOp<arith::ExtUIOp>(op, op.getType(),
+                                                    op.getCondition());
+        return success();
+      }
+
+    // select %x, c0, %c1 => extui (xor %arg, true)
+    if (matchPattern(op.getTrueValue(), m_Zero()))
+      if (matchPattern(op.getFalseValue(), m_One())) {
+        rewriter.replaceOpWithNewOp<arith::ExtUIOp>(
+            op, op.getType(),
+            rewriter.create<arith::XOrIOp>(
+                op.getLoc(), op.getCondition(),
+                rewriter.create<arith::ConstantIntOp>(
+                    op.getLoc(), 1, op.getCondition().getType())));
+        return success();
+      }
+
+    return failure();
   }
 };
 
 void SelectOp::getCanonicalizationPatterns(OwningRewritePatternList &results,
                                            MLIRContext *context) {
-  results.insert<SelectToNot>(context);
+  results.insert<SelectI1Simplify, SelectToExtUI>(context);
 }
 
 OpFoldResult SelectOp::fold(ArrayRef<Attribute> operands) {
@@ -1620,28 +897,34 @@ OpFoldResult SelectOp::fold(ArrayRef<Attribute> operands) {
   if (matchPattern(condition, m_Zero()))
     return falseVal;
 
-  if (auto cmp = dyn_cast_or_null<CmpIOp>(condition.getDefiningOp())) {
-    auto pred = cmp.predicate();
-    if (pred == mlir::CmpIPredicate::eq || pred == mlir::CmpIPredicate::ne) {
-      auto cmpLhs = cmp.lhs();
-      auto cmpRhs = cmp.rhs();
+  // select %x, true, false => %x
+  if (getType().isInteger(1))
+    if (matchPattern(getTrueValue(), m_One()))
+      if (matchPattern(getFalseValue(), m_Zero()))
+        return condition;
 
-      // %0 = cmpi eq, %arg0, %arg1
+  if (auto cmp = dyn_cast_or_null<arith::CmpIOp>(condition.getDefiningOp())) {
+    auto pred = cmp.getPredicate();
+    if (pred == arith::CmpIPredicate::eq || pred == arith::CmpIPredicate::ne) {
+      auto cmpLhs = cmp.getLhs();
+      auto cmpRhs = cmp.getRhs();
+
+      // %0 = arith.cmpi eq, %arg0, %arg1
       // %1 = select %0, %arg0, %arg1 => %arg1
 
-      // %0 = cmpi ne, %arg0, %arg1
+      // %0 = arith.cmpi ne, %arg0, %arg1
       // %1 = select %0, %arg0, %arg1 => %arg0
 
       if ((cmpLhs == trueVal && cmpRhs == falseVal) ||
           (cmpRhs == trueVal && cmpLhs == falseVal))
-        return pred == mlir::CmpIPredicate::ne ? trueVal : falseVal;
+        return pred == arith::CmpIPredicate::ne ? trueVal : falseVal;
     }
   }
   return nullptr;
 }
 
 static void print(OpAsmPrinter &p, SelectOp op) {
-  p << "select " << op.getOperands();
+  p << " " << op.getOperands();
   p.printOptionalAttrDict(op->getAttrs());
   p << " : ";
   if (ShapedType condType = op.getCondition().getType().dyn_cast<ShapedType>())
@@ -1694,220 +977,6 @@ static LogicalResult verify(SelectOp op) {
 }
 
 //===----------------------------------------------------------------------===//
-// SignExtendIOp
-//===----------------------------------------------------------------------===//
-
-static LogicalResult verify(SignExtendIOp op) {
-  // Get the scalar type (which is either directly the type of the operand
-  // or the vector's/tensor's element type.
-  auto srcType = getElementTypeOrSelf(op.getOperand().getType());
-  auto dstType = getElementTypeOrSelf(op.getType());
-
-  // For now, index is forbidden for the source and the destination type.
-  if (srcType.isa<IndexType>())
-    return op.emitError() << srcType << " is not a valid operand type";
-  if (dstType.isa<IndexType>())
-    return op.emitError() << dstType << " is not a valid result type";
-
-  if (srcType.cast<IntegerType>().getWidth() >=
-      dstType.cast<IntegerType>().getWidth())
-    return op.emitError("result type ")
-           << dstType << " must be wider than operand type " << srcType;
-
-  return success();
-}
-
-OpFoldResult SignExtendIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 1 && "unary operation takes one operand");
-
-  if (!operands[0])
-    return {};
-
-  if (auto lhs = operands[0].dyn_cast<IntegerAttr>()) {
-    return IntegerAttr::get(
-        getType(), lhs.getValue().sext(getType().getIntOrFloatBitWidth()));
-  }
-
-  return {};
-}
-
-//===----------------------------------------------------------------------===//
-// SignedDivIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult SignedDivIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "binary operation takes two operands");
-
-  // Don't fold if it would overflow or if it requires a division by zero.
-  bool overflowOrDiv0 = false;
-  auto result = constFoldBinaryOp<IntegerAttr>(operands, [&](APInt a, APInt b) {
-    if (overflowOrDiv0 || !b) {
-      overflowOrDiv0 = true;
-      return a;
-    }
-    return a.sdiv_ov(b, overflowOrDiv0);
-  });
-
-  // Fold out division by one. Assumes all tensors of all ones are splats.
-  if (auto rhs = operands[1].dyn_cast_or_null<IntegerAttr>()) {
-    if (rhs.getValue() == 1)
-      return lhs();
-  } else if (auto rhs = operands[1].dyn_cast_or_null<SplatElementsAttr>()) {
-    if (rhs.getSplatValue<IntegerAttr>().getValue() == 1)
-      return lhs();
-  }
-
-  return overflowOrDiv0 ? Attribute() : result;
-}
-
-//===----------------------------------------------------------------------===//
-// SignedFloorDivIOp
-//===----------------------------------------------------------------------===//
-
-static APInt signedCeilNonnegInputs(APInt a, APInt b, bool &overflow) {
-  // Returns (a-1)/b + 1
-  APInt one(a.getBitWidth(), 1, true); // Signed value 1.
-  APInt val = a.ssub_ov(one, overflow).sdiv_ov(b, overflow);
-  return val.sadd_ov(one, overflow);
-}
-
-OpFoldResult SignedFloorDivIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "binary operation takes two operands");
-
-  // Don't fold if it would overflow or if it requires a division by zero.
-  bool overflowOrDiv0 = false;
-  auto result = constFoldBinaryOp<IntegerAttr>(operands, [&](APInt a, APInt b) {
-    if (overflowOrDiv0 || !b) {
-      overflowOrDiv0 = true;
-      return a;
-    }
-    unsigned bits = a.getBitWidth();
-    APInt zero = APInt::getNullValue(bits);
-    if (a.sge(zero) && b.sgt(zero)) {
-      // Both positive (or a is zero), return a / b.
-      return a.sdiv_ov(b, overflowOrDiv0);
-    } else if (a.sle(zero) && b.slt(zero)) {
-      // Both negative (or a is zero), return -a / -b.
-      APInt posA = zero.ssub_ov(a, overflowOrDiv0);
-      APInt posB = zero.ssub_ov(b, overflowOrDiv0);
-      return posA.sdiv_ov(posB, overflowOrDiv0);
-    } else if (a.slt(zero) && b.sgt(zero)) {
-      // A is negative, b is positive, return - ceil(-a, b).
-      APInt posA = zero.ssub_ov(a, overflowOrDiv0);
-      APInt ceil = signedCeilNonnegInputs(posA, b, overflowOrDiv0);
-      return zero.ssub_ov(ceil, overflowOrDiv0);
-    } else {
-      // A is positive, b is negative, return - ceil(a, -b).
-      APInt posB = zero.ssub_ov(b, overflowOrDiv0);
-      APInt ceil = signedCeilNonnegInputs(a, posB, overflowOrDiv0);
-      return zero.ssub_ov(ceil, overflowOrDiv0);
-    }
-  });
-
-  // Fold out floor division by one. Assumes all tensors of all ones are
-  // splats.
-  if (auto rhs = operands[1].dyn_cast_or_null<IntegerAttr>()) {
-    if (rhs.getValue() == 1)
-      return lhs();
-  } else if (auto rhs = operands[1].dyn_cast_or_null<SplatElementsAttr>()) {
-    if (rhs.getSplatValue<IntegerAttr>().getValue() == 1)
-      return lhs();
-  }
-
-  return overflowOrDiv0 ? Attribute() : result;
-}
-
-//===----------------------------------------------------------------------===//
-// SignedCeilDivIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult SignedCeilDivIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "binary operation takes two operands");
-
-  // Don't fold if it would overflow or if it requires a division by zero.
-  bool overflowOrDiv0 = false;
-  auto result = constFoldBinaryOp<IntegerAttr>(operands, [&](APInt a, APInt b) {
-    if (overflowOrDiv0 || !b) {
-      overflowOrDiv0 = true;
-      return a;
-    }
-    unsigned bits = a.getBitWidth();
-    APInt zero = APInt::getNullValue(bits);
-    if (a.sgt(zero) && b.sgt(zero)) {
-      // Both positive, return ceil(a, b).
-      return signedCeilNonnegInputs(a, b, overflowOrDiv0);
-    } else if (a.slt(zero) && b.slt(zero)) {
-      // Both negative, return ceil(-a, -b).
-      APInt posA = zero.ssub_ov(a, overflowOrDiv0);
-      APInt posB = zero.ssub_ov(b, overflowOrDiv0);
-      return signedCeilNonnegInputs(posA, posB, overflowOrDiv0);
-    } else if (a.slt(zero) && b.sgt(zero)) {
-      // A is negative, b is positive, return - ( -a / b).
-      APInt posA = zero.ssub_ov(a, overflowOrDiv0);
-      APInt div = posA.sdiv_ov(b, overflowOrDiv0);
-      return zero.ssub_ov(div, overflowOrDiv0);
-    } else {
-      // A is positive (or zero), b is negative, return - (a / -b).
-      APInt posB = zero.ssub_ov(b, overflowOrDiv0);
-      APInt div = a.sdiv_ov(posB, overflowOrDiv0);
-      return zero.ssub_ov(div, overflowOrDiv0);
-    }
-  });
-
-  // Fold out floor division by one. Assumes all tensors of all ones are
-  // splats.
-  if (auto rhs = operands[1].dyn_cast_or_null<IntegerAttr>()) {
-    if (rhs.getValue() == 1)
-      return lhs();
-  } else if (auto rhs = operands[1].dyn_cast_or_null<SplatElementsAttr>()) {
-    if (rhs.getSplatValue<IntegerAttr>().getValue() == 1)
-      return lhs();
-  }
-
-  return overflowOrDiv0 ? Attribute() : result;
-}
-
-//===----------------------------------------------------------------------===//
-// SignedRemIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult SignedRemIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "remi_signed takes two operands");
-
-  auto rhs = operands.back().dyn_cast_or_null<IntegerAttr>();
-  if (!rhs)
-    return {};
-  auto rhsValue = rhs.getValue();
-
-  // x % 1 = 0
-  if (rhsValue.isOneValue())
-    return IntegerAttr::get(rhs.getType(), APInt(rhsValue.getBitWidth(), 0));
-
-  // Don't fold if it requires division by zero.
-  if (rhsValue.isNullValue())
-    return {};
-
-  auto lhs = operands.front().dyn_cast_or_null<IntegerAttr>();
-  if (!lhs)
-    return {};
-  return IntegerAttr::get(lhs.getType(), lhs.getValue().srem(rhsValue));
-}
-
-//===----------------------------------------------------------------------===//
-// SIToFPOp
-//===----------------------------------------------------------------------===//
-
-// sitofp is applicable from integer types to float types.
-bool SIToFPOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (a.isSignlessInteger() && b.isa<FloatType>())
-    return true;
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
-}
-
-//===----------------------------------------------------------------------===//
 // SplatOp
 //===----------------------------------------------------------------------===//
 
@@ -1934,192 +1003,6 @@ OpFoldResult SplatOp::fold(ArrayRef<Attribute> operands) {
 
   // SplatElementsAttr::get treats single value for second arg as being a splat.
   return SplatElementsAttr::get(shapedType, {constOperand});
-}
-
-//===----------------------------------------------------------------------===//
-// SubFOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult SubFOp::fold(ArrayRef<Attribute> operands) {
-  return constFoldBinaryOp<FloatAttr>(
-      operands, [](APFloat a, APFloat b) { return a - b; });
-}
-
-//===----------------------------------------------------------------------===//
-// SubIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult SubIOp::fold(ArrayRef<Attribute> operands) {
-  // subi(x,x) -> 0
-  if (getOperand(0) == getOperand(1))
-    return Builder(getContext()).getZeroAttr(getType());
-  // subi(x,0) -> x
-  if (matchPattern(rhs(), m_Zero()))
-    return lhs();
-
-  return constFoldBinaryOp<IntegerAttr>(operands,
-                                        [](APInt a, APInt b) { return a - b; });
-}
-
-/// Canonicalize a sub of a constant and (constant +/- something) to simply be
-/// a single operation that merges the two constants.
-struct SubConstantReorder : public OpRewritePattern<SubIOp> {
-  using OpRewritePattern<SubIOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(SubIOp subOp,
-                                PatternRewriter &rewriter) const override {
-    APInt origConst;
-    APInt midConst;
-
-    if (matchPattern(subOp.getOperand(0), m_ConstantInt(&origConst))) {
-      if (auto midAddOp = subOp.getOperand(1).getDefiningOp<AddIOp>()) {
-        // origConst - (midConst + something) == (origConst - midConst) -
-        // something
-        for (int j = 0; j < 2; j++) {
-          if (matchPattern(midAddOp.getOperand(j), m_ConstantInt(&midConst))) {
-            auto nextConstant = rewriter.create<ConstantOp>(
-                subOp.getLoc(),
-                rewriter.getIntegerAttr(subOp.getType(), origConst - midConst));
-            rewriter.replaceOpWithNewOp<SubIOp>(subOp, nextConstant,
-                                                midAddOp.getOperand(1 - j));
-            return success();
-          }
-        }
-      }
-
-      if (auto midSubOp = subOp.getOperand(0).getDefiningOp<SubIOp>()) {
-        if (matchPattern(midSubOp.getOperand(0), m_ConstantInt(&midConst))) {
-          // (midConst - something) - origConst == (midConst - origConst) -
-          // something
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), midConst - origConst));
-          rewriter.replaceOpWithNewOp<SubIOp>(subOp, nextConstant,
-                                              midSubOp.getOperand(1));
-          return success();
-        }
-
-        if (matchPattern(midSubOp.getOperand(1), m_ConstantInt(&midConst))) {
-          // (something - midConst) - origConst == something - (origConst +
-          // midConst)
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), origConst + midConst));
-          rewriter.replaceOpWithNewOp<SubIOp>(subOp, midSubOp.getOperand(0),
-                                              nextConstant);
-          return success();
-        }
-      }
-
-      if (auto midSubOp = subOp.getOperand(1).getDefiningOp<SubIOp>()) {
-        if (matchPattern(midSubOp.getOperand(0), m_ConstantInt(&midConst))) {
-          // origConst - (midConst - something) == (origConst - midConst) +
-          // something
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), origConst - midConst));
-          rewriter.replaceOpWithNewOp<AddIOp>(subOp, nextConstant,
-                                              midSubOp.getOperand(1));
-          return success();
-        }
-
-        if (matchPattern(midSubOp.getOperand(1), m_ConstantInt(&midConst))) {
-          // origConst - (something - midConst) == (origConst + midConst) -
-          // something
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), origConst + midConst));
-          rewriter.replaceOpWithNewOp<SubIOp>(subOp, nextConstant,
-                                              midSubOp.getOperand(0));
-          return success();
-        }
-      }
-    }
-
-    if (matchPattern(subOp.getOperand(1), m_ConstantInt(&origConst))) {
-      if (auto midAddOp = subOp.getOperand(0).getDefiningOp<AddIOp>()) {
-        // (midConst + something) - origConst == (midConst - origConst) +
-        // something
-        for (int j = 0; j < 2; j++) {
-          if (matchPattern(midAddOp.getOperand(j), m_ConstantInt(&midConst))) {
-            auto nextConstant = rewriter.create<ConstantOp>(
-                subOp.getLoc(),
-                rewriter.getIntegerAttr(subOp.getType(), midConst - origConst));
-            rewriter.replaceOpWithNewOp<AddIOp>(subOp, nextConstant,
-                                                midAddOp.getOperand(1 - j));
-            return success();
-          }
-        }
-      }
-
-      if (auto midSubOp = subOp.getOperand(0).getDefiningOp<SubIOp>()) {
-        if (matchPattern(midSubOp.getOperand(0), m_ConstantInt(&midConst))) {
-          // (midConst - something) - origConst == (midConst - origConst) -
-          // something
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), midConst - origConst));
-          rewriter.replaceOpWithNewOp<SubIOp>(subOp, nextConstant,
-                                              midSubOp.getOperand(1));
-          return success();
-        }
-
-        if (matchPattern(midSubOp.getOperand(1), m_ConstantInt(&midConst))) {
-          // (something - midConst) - origConst == something - (midConst +
-          // origConst)
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), midConst + origConst));
-          rewriter.replaceOpWithNewOp<SubIOp>(subOp, midSubOp.getOperand(0),
-                                              nextConstant);
-          return success();
-        }
-      }
-
-      if (auto midSubOp = subOp.getOperand(1).getDefiningOp<SubIOp>()) {
-        if (matchPattern(midSubOp.getOperand(0), m_ConstantInt(&midConst))) {
-          // origConst - (midConst - something) == (origConst - midConst) +
-          // something
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), origConst - midConst));
-          rewriter.replaceOpWithNewOp<AddIOp>(subOp, nextConstant,
-                                              midSubOp.getOperand(1));
-          return success();
-        }
-        if (matchPattern(midSubOp.getOperand(1), m_ConstantInt(&midConst))) {
-          // origConst - (something - midConst) == (origConst - midConst) -
-          // something
-          auto nextConstant = rewriter.create<ConstantOp>(
-              subOp.getLoc(),
-              rewriter.getIntegerAttr(subOp.getType(), origConst - midConst));
-          rewriter.replaceOpWithNewOp<SubIOp>(subOp, nextConstant,
-                                              midSubOp.getOperand(0));
-          return success();
-        }
-      }
-    }
-    return failure();
-  }
-};
-
-void SubIOp::getCanonicalizationPatterns(OwningRewritePatternList &results,
-                                         MLIRContext *context) {
-  results.insert<SubConstantReorder>(context);
-}
-
-//===----------------------------------------------------------------------===//
-// UIToFPOp
-//===----------------------------------------------------------------------===//
-
-// uitofp is applicable from integer types to float types.
-bool UIToFPOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1)
-    return false;
-  Type a = inputs.front(), b = outputs.front();
-  if (a.isSignlessInteger() && b.isa<FloatType>())
-    return true;
-  return areVectorCastSimpleCompatible(a, b, areCastCompatible);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2159,13 +1042,12 @@ static ParseResult parseSwitchOpCases(
     SmallVectorImpl<Block *> &caseDestinations,
     SmallVectorImpl<SmallVector<OpAsmParser::OperandType>> &caseOperands,
     SmallVectorImpl<SmallVector<Type>> &caseOperandTypes) {
-  if (failed(parser.parseKeyword("default")) || failed(parser.parseColon()) ||
-      failed(parser.parseSuccessor(defaultDestination)))
+  if (parser.parseKeyword("default") || parser.parseColon() ||
+      parser.parseSuccessor(defaultDestination))
     return failure();
   if (succeeded(parser.parseOptionalLParen())) {
-    if (failed(parser.parseRegionArgumentList(defaultOperands)) ||
-        failed(parser.parseColonTypeList(defaultOperandTypes)) ||
-        failed(parser.parseRParen()))
+    if (parser.parseRegionArgumentList(defaultOperands) ||
+        parser.parseColonTypeList(defaultOperandTypes) || parser.parseRParen())
       return failure();
   }
 
@@ -2206,32 +1088,33 @@ static void printSwitchOpCases(
     OpAsmPrinter &p, SwitchOp op, Type flagType, Block *defaultDestination,
     OperandRange defaultOperands, TypeRange defaultOperandTypes,
     DenseIntElementsAttr caseValues, SuccessorRange caseDestinations,
-    OperandRangeRange caseOperands, TypeRangeRange caseOperandTypes) {
+    OperandRangeRange caseOperands, const TypeRangeRange &caseOperandTypes) {
   p << "  default: ";
   p.printSuccessorAndUseList(defaultDestination, defaultOperands);
 
   if (!caseValues)
     return;
 
-  for (int64_t i = 0, size = caseValues.size(); i < size; ++i) {
+  for (const auto &it : llvm::enumerate(caseValues.getValues<APInt>())) {
     p << ',';
     p.printNewline();
     p << "  ";
-    p << caseValues.getValue<APInt>(i).getLimitedValue();
+    p << it.value().getLimitedValue();
     p << ": ";
-    p.printSuccessorAndUseList(caseDestinations[i], caseOperands[i]);
+    p.printSuccessorAndUseList(caseDestinations[it.index()],
+                               caseOperands[it.index()]);
   }
   p.printNewline();
 }
 
 static LogicalResult verify(SwitchOp op) {
-  auto caseValues = op.case_values();
-  auto caseDestinations = op.caseDestinations();
+  auto caseValues = op.getCaseValues();
+  auto caseDestinations = op.getCaseDestinations();
 
   if (!caseValues && caseDestinations.empty())
     return success();
 
-  Type flagType = op.flag().getType();
+  Type flagType = op.getFlag().getType();
   Type caseValueType = caseValues->getType().getElementType();
   if (caseValueType != flagType)
     return op.emitOpError()
@@ -2250,22 +1133,22 @@ static LogicalResult verify(SwitchOp op) {
 Optional<MutableOperandRange>
 SwitchOp::getMutableSuccessorOperands(unsigned index) {
   assert(index < getNumSuccessors() && "invalid successor index");
-  return index == 0 ? defaultOperandsMutable()
+  return index == 0 ? getDefaultOperandsMutable()
                     : getCaseOperandsMutable(index - 1);
 }
 
 Block *SwitchOp::getSuccessorForOperands(ArrayRef<Attribute> operands) {
-  Optional<DenseIntElementsAttr> caseValues = case_values();
+  Optional<DenseIntElementsAttr> caseValues = getCaseValues();
 
   if (!caseValues)
-    return defaultDestination();
+    return getDefaultDestination();
 
-  SuccessorRange caseDests = caseDestinations();
+  SuccessorRange caseDests = getCaseDestinations();
   if (auto value = operands.front().dyn_cast_or_null<IntegerAttr>()) {
-    for (int64_t i = 0, size = case_values()->size(); i < size; ++i)
-      if (value == caseValues->getValue<IntegerAttr>(i))
-        return caseDests[i];
-    return defaultDestination();
+    for (const auto &it : llvm::enumerate(caseValues->getValues<APInt>()))
+      if (it.value() == value.getValue())
+        return caseDests[it.index()];
+    return getDefaultDestination();
   }
   return nullptr;
 }
@@ -2276,11 +1159,11 @@ Block *SwitchOp::getSuccessorForOperands(ArrayRef<Attribute> operands) {
 ///  -> br ^bb1
 static LogicalResult simplifySwitchWithOnlyDefault(SwitchOp op,
                                                    PatternRewriter &rewriter) {
-  if (!op.caseDestinations().empty())
+  if (!op.getCaseDestinations().empty())
     return failure();
 
-  rewriter.replaceOpWithNewOp<BranchOp>(op, op.defaultDestination(),
-                                        op.defaultOperands());
+  rewriter.replaceOpWithNewOp<BranchOp>(op, op.getDefaultDestination(),
+                                        op.getDefaultOperands());
   return success();
 }
 
@@ -2300,26 +1183,26 @@ dropSwitchCasesThatMatchDefault(SwitchOp op, PatternRewriter &rewriter) {
   SmallVector<ValueRange> newCaseOperands;
   SmallVector<APInt> newCaseValues;
   bool requiresChange = false;
-  auto caseValues = op.case_values();
-  auto caseDests = op.caseDestinations();
+  auto caseValues = op.getCaseValues();
+  auto caseDests = op.getCaseDestinations();
 
-  for (int64_t i = 0, size = caseValues->size(); i < size; ++i) {
-    if (caseDests[i] == op.defaultDestination() &&
-        op.getCaseOperands(i) == op.defaultOperands()) {
+  for (const auto &it : llvm::enumerate(caseValues->getValues<APInt>())) {
+    if (caseDests[it.index()] == op.getDefaultDestination() &&
+        op.getCaseOperands(it.index()) == op.getDefaultOperands()) {
       requiresChange = true;
       continue;
     }
-    newCaseDestinations.push_back(caseDests[i]);
-    newCaseOperands.push_back(op.getCaseOperands(i));
-    newCaseValues.push_back(caseValues->getValue<APInt>(i));
+    newCaseDestinations.push_back(caseDests[it.index()]);
+    newCaseOperands.push_back(op.getCaseOperands(it.index()));
+    newCaseValues.push_back(it.value());
   }
 
   if (!requiresChange)
     return failure();
 
-  rewriter.replaceOpWithNewOp<SwitchOp>(op, op.flag(), op.defaultDestination(),
-                                        op.defaultOperands(), newCaseValues,
-                                        newCaseDestinations, newCaseOperands);
+  rewriter.replaceOpWithNewOp<SwitchOp>(
+      op, op.getFlag(), op.getDefaultDestination(), op.getDefaultOperands(),
+      newCaseValues, newCaseDestinations, newCaseOperands);
   return success();
 }
 
@@ -2331,17 +1214,18 @@ dropSwitchCasesThatMatchDefault(SwitchOp op, PatternRewriter &rewriter) {
 /// ]
 /// -> br ^bb2
 static void foldSwitch(SwitchOp op, PatternRewriter &rewriter,
-                       APInt caseValue) {
-  auto caseValues = op.case_values();
-  for (int64_t i = 0, size = caseValues->size(); i < size; ++i) {
-    if (caseValues->getValue<APInt>(i) == caseValue) {
-      rewriter.replaceOpWithNewOp<BranchOp>(op, op.caseDestinations()[i],
-                                            op.getCaseOperands(i));
+                       const APInt &caseValue) {
+  auto caseValues = op.getCaseValues();
+  for (const auto &it : llvm::enumerate(caseValues->getValues<APInt>())) {
+    if (it.value() == caseValue) {
+      rewriter.replaceOpWithNewOp<BranchOp>(
+          op, op.getCaseDestinations()[it.index()],
+          op.getCaseOperands(it.index()));
       return;
     }
   }
-  rewriter.replaceOpWithNewOp<BranchOp>(op, op.defaultDestination(),
-                                        op.defaultOperands());
+  rewriter.replaceOpWithNewOp<BranchOp>(op, op.getDefaultDestination(),
+                                        op.getDefaultOperands());
 }
 
 /// switch %c_42 : i32, [
@@ -2353,7 +1237,7 @@ static void foldSwitch(SwitchOp op, PatternRewriter &rewriter,
 static LogicalResult simplifyConstSwitchValue(SwitchOp op,
                                               PatternRewriter &rewriter) {
   APInt caseValue;
-  if (!matchPattern(op.flag(), m_ConstantInt(&caseValue)))
+  if (!matchPattern(op.getFlag(), m_ConstantInt(&caseValue)))
     return failure();
 
   foldSwitch(op, rewriter, caseValue);
@@ -2376,8 +1260,8 @@ static LogicalResult simplifyPassThroughSwitch(SwitchOp op,
   SmallVector<Block *> newCaseDests;
   SmallVector<ValueRange> newCaseOperands;
   SmallVector<SmallVector<Value>> argStorage;
-  auto caseValues = op.case_values();
-  auto caseDests = op.caseDestinations();
+  auto caseValues = op.getCaseValues();
+  auto caseDests = op.getCaseDestinations();
   bool requiresChange = false;
   for (int64_t i = 0, size = caseValues->size(); i < size; ++i) {
     Block *caseDest = caseDests[i];
@@ -2390,8 +1274,8 @@ static LogicalResult simplifyPassThroughSwitch(SwitchOp op,
     newCaseOperands.push_back(caseOperands);
   }
 
-  Block *defaultDest = op.defaultDestination();
-  ValueRange defaultOperands = op.defaultOperands();
+  Block *defaultDest = op.getDefaultDestination();
+  ValueRange defaultOperands = op.getDefaultOperands();
   argStorage.emplace_back();
 
   if (succeeded(
@@ -2401,7 +1285,7 @@ static LogicalResult simplifyPassThroughSwitch(SwitchOp op,
   if (!requiresChange)
     return failure();
 
-  rewriter.replaceOpWithNewOp<SwitchOp>(op, op.flag(), defaultDest,
+  rewriter.replaceOpWithNewOp<SwitchOp>(op, op.getFlag(), defaultDest,
                                         defaultOperands, caseValues.getValue(),
                                         newCaseDests, newCaseOperands);
   return success();
@@ -2455,27 +1339,21 @@ simplifySwitchFromSwitchOnSameCondition(SwitchOp op,
   // and that it branches on the same condition and that this branch isn't the
   // default destination.
   auto predSwitch = dyn_cast<SwitchOp>(predecessor->getTerminator());
-  if (!predSwitch || op.flag() != predSwitch.flag() ||
-      predSwitch.defaultDestination() == currentBlock)
+  if (!predSwitch || op.getFlag() != predSwitch.getFlag() ||
+      predSwitch.getDefaultDestination() == currentBlock)
     return failure();
 
   // Fold this switch to an unconditional branch.
-  APInt caseValue;
-  bool isDefault = true;
-  SuccessorRange predDests = predSwitch.caseDestinations();
-  Optional<DenseIntElementsAttr> predCaseValues = predSwitch.case_values();
-  for (int64_t i = 0, size = predCaseValues->size(); i < size; ++i) {
-    if (currentBlock == predDests[i]) {
-      caseValue = predCaseValues->getValue<APInt>(i);
-      isDefault = false;
-      break;
-    }
+  SuccessorRange predDests = predSwitch.getCaseDestinations();
+  auto it = llvm::find(predDests, currentBlock);
+  if (it != predDests.end()) {
+    Optional<DenseIntElementsAttr> predCaseValues = predSwitch.getCaseValues();
+    foldSwitch(op, rewriter,
+               predCaseValues->getValues<APInt>()[it - predDests.begin()]);
+  } else {
+    rewriter.replaceOpWithNewOp<BranchOp>(op, op.getDefaultDestination(),
+                                          op.getDefaultOperands());
   }
-  if (isDefault)
-    rewriter.replaceOpWithNewOp<BranchOp>(op, op.defaultDestination(),
-                                          op.defaultOperands());
-  else
-    foldSwitch(op, rewriter, caseValue);
   return success();
 }
 
@@ -2512,41 +1390,41 @@ simplifySwitchFromDefaultSwitchOnSameCondition(SwitchOp op,
   // and that it branches on the same condition and that this branch is the
   // default destination.
   auto predSwitch = dyn_cast<SwitchOp>(predecessor->getTerminator());
-  if (!predSwitch || op.flag() != predSwitch.flag() ||
-      predSwitch.defaultDestination() != currentBlock)
+  if (!predSwitch || op.getFlag() != predSwitch.getFlag() ||
+      predSwitch.getDefaultDestination() != currentBlock)
     return failure();
 
   // Delete case values that are not possible here.
   DenseSet<APInt> caseValuesToRemove;
-  auto predDests = predSwitch.caseDestinations();
-  auto predCaseValues = predSwitch.case_values();
+  auto predDests = predSwitch.getCaseDestinations();
+  auto predCaseValues = predSwitch.getCaseValues();
   for (int64_t i = 0, size = predCaseValues->size(); i < size; ++i)
     if (currentBlock != predDests[i])
-      caseValuesToRemove.insert(predCaseValues->getValue<APInt>(i));
+      caseValuesToRemove.insert(predCaseValues->getValues<APInt>()[i]);
 
   SmallVector<Block *> newCaseDestinations;
   SmallVector<ValueRange> newCaseOperands;
   SmallVector<APInt> newCaseValues;
   bool requiresChange = false;
 
-  auto caseValues = op.case_values();
-  auto caseDests = op.caseDestinations();
-  for (int64_t i = 0, size = caseValues->size(); i < size; ++i) {
-    if (caseValuesToRemove.contains(caseValues->getValue<APInt>(i))) {
+  auto caseValues = op.getCaseValues();
+  auto caseDests = op.getCaseDestinations();
+  for (const auto &it : llvm::enumerate(caseValues->getValues<APInt>())) {
+    if (caseValuesToRemove.contains(it.value())) {
       requiresChange = true;
       continue;
     }
-    newCaseDestinations.push_back(caseDests[i]);
-    newCaseOperands.push_back(op.getCaseOperands(i));
-    newCaseValues.push_back(caseValues->getValue<APInt>(i));
+    newCaseDestinations.push_back(caseDests[it.index()]);
+    newCaseOperands.push_back(op.getCaseOperands(it.index()));
+    newCaseValues.push_back(it.value());
   }
 
   if (!requiresChange)
     return failure();
 
-  rewriter.replaceOpWithNewOp<SwitchOp>(op, op.flag(), op.defaultDestination(),
-                                        op.defaultOperands(), newCaseValues,
-                                        newCaseDestinations, newCaseOperands);
+  rewriter.replaceOpWithNewOp<SwitchOp>(
+      op, op.getFlag(), op.getDefaultDestination(), op.getDefaultOperands(),
+      newCaseValues, newCaseDestinations, newCaseOperands);
   return success();
 }
 
@@ -2558,216 +1436,6 @@ void SwitchOp::getCanonicalizationPatterns(RewritePatternSet &results,
       .add(&simplifyPassThroughSwitch)
       .add(&simplifySwitchFromSwitchOnSameCondition)
       .add(&simplifySwitchFromDefaultSwitchOnSameCondition);
-}
-
-//===----------------------------------------------------------------------===//
-// TruncateIOp
-//===----------------------------------------------------------------------===//
-
-static LogicalResult verify(TruncateIOp op) {
-  auto srcType = getElementTypeOrSelf(op.getOperand().getType());
-  auto dstType = getElementTypeOrSelf(op.getType());
-
-  if (srcType.isa<IndexType>())
-    return op.emitError() << srcType << " is not a valid operand type";
-  if (dstType.isa<IndexType>())
-    return op.emitError() << dstType << " is not a valid result type";
-
-  if (srcType.cast<IntegerType>().getWidth() <=
-      dstType.cast<IntegerType>().getWidth())
-    return op.emitError("operand type ")
-           << srcType << " must be wider than result type " << dstType;
-
-  return success();
-}
-
-OpFoldResult TruncateIOp::fold(ArrayRef<Attribute> operands) {
-  // trunci(zexti(a)) -> a
-  // trunci(sexti(a)) -> a
-  if (matchPattern(getOperand(), m_Op<ZeroExtendIOp>()) ||
-      matchPattern(getOperand(), m_Op<SignExtendIOp>()))
-    return getOperand().getDefiningOp()->getOperand(0);
-
-  assert(operands.size() == 1 && "unary operation takes one operand");
-
-  if (!operands[0])
-    return {};
-
-  if (auto lhs = operands[0].dyn_cast<IntegerAttr>()) {
-
-    return IntegerAttr::get(
-        getType(), lhs.getValue().trunc(getType().getIntOrFloatBitWidth()));
-  }
-
-  return {};
-}
-
-//===----------------------------------------------------------------------===//
-// UnsignedDivIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult UnsignedDivIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "binary operation takes two operands");
-
-  // Don't fold if it would require a division by zero.
-  bool div0 = false;
-  auto result = constFoldBinaryOp<IntegerAttr>(operands, [&](APInt a, APInt b) {
-    if (div0 || !b) {
-      div0 = true;
-      return a;
-    }
-    return a.udiv(b);
-  });
-
-  // Fold out division by one. Assumes all tensors of all ones are splats.
-  if (auto rhs = operands[1].dyn_cast_or_null<IntegerAttr>()) {
-    if (rhs.getValue() == 1)
-      return lhs();
-  } else if (auto rhs = operands[1].dyn_cast_or_null<SplatElementsAttr>()) {
-    if (rhs.getSplatValue<IntegerAttr>().getValue() == 1)
-      return lhs();
-  }
-
-  return div0 ? Attribute() : result;
-}
-
-//===----------------------------------------------------------------------===//
-// UnsignedRemIOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult UnsignedRemIOp::fold(ArrayRef<Attribute> operands) {
-  assert(operands.size() == 2 && "remi_unsigned takes two operands");
-
-  auto rhs = operands.back().dyn_cast_or_null<IntegerAttr>();
-  if (!rhs)
-    return {};
-  auto rhsValue = rhs.getValue();
-
-  // x % 1 = 0
-  if (rhsValue.isOneValue())
-    return IntegerAttr::get(rhs.getType(), APInt(rhsValue.getBitWidth(), 0));
-
-  // Don't fold if it requires division by zero.
-  if (rhsValue.isNullValue())
-    return {};
-
-  auto lhs = operands.front().dyn_cast_or_null<IntegerAttr>();
-  if (!lhs)
-    return {};
-  return IntegerAttr::get(lhs.getType(), lhs.getValue().urem(rhsValue));
-}
-
-//===----------------------------------------------------------------------===//
-// XOrOp
-//===----------------------------------------------------------------------===//
-
-OpFoldResult XOrOp::fold(ArrayRef<Attribute> operands) {
-  /// xor(x, 0) -> x
-  if (matchPattern(rhs(), m_Zero()))
-    return lhs();
-  /// xor(x,x) -> 0
-  if (lhs() == rhs())
-    return Builder(getContext()).getZeroAttr(getType());
-
-  return constFoldBinaryOp<IntegerAttr>(operands,
-                                        [](APInt a, APInt b) { return a ^ b; });
-}
-
-namespace {
-/// Replace a not of a comparison operation, for example: not(cmp eq A, B) =>
-/// cmp ne A, B. Note that a logical not is implemented as xor 1, val.
-struct NotICmp : public OpRewritePattern<XOrOp> {
-  using OpRewritePattern<XOrOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(XOrOp op,
-                                PatternRewriter &rewriter) const override {
-    // Commutative ops (such as xor) have the constant appear second, which
-    // we assume here.
-
-    APInt constValue;
-    if (!matchPattern(op.getOperand(1), m_ConstantInt(&constValue)))
-      return failure();
-
-    if (constValue != 1)
-      return failure();
-
-    auto prev = op.getOperand(0).getDefiningOp<CmpIOp>();
-    if (!prev)
-      return failure();
-
-    switch (prev.predicate()) {
-    case CmpIPredicate::eq:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::ne, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::ne:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::eq, prev.lhs(),
-                                          prev.rhs());
-      return success();
-
-    case CmpIPredicate::slt:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::sge, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::sle:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::sgt, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::sgt:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::sle, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::sge:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::slt, prev.lhs(),
-                                          prev.rhs());
-      return success();
-
-    case CmpIPredicate::ult:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::uge, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::ule:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::ugt, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::ugt:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::ule, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    case CmpIPredicate::uge:
-      rewriter.replaceOpWithNewOp<CmpIOp>(op, CmpIPredicate::ult, prev.lhs(),
-                                          prev.rhs());
-      return success();
-    }
-    return failure();
-  }
-};
-} // namespace
-
-void XOrOp::getCanonicalizationPatterns(OwningRewritePatternList &results,
-                                        MLIRContext *context) {
-  results.insert<NotICmp>(context);
-}
-
-//===----------------------------------------------------------------------===//
-// ZeroExtendIOp
-//===----------------------------------------------------------------------===//
-
-static LogicalResult verify(ZeroExtendIOp op) {
-  auto srcType = getElementTypeOrSelf(op.getOperand().getType());
-  auto dstType = getElementTypeOrSelf(op.getType());
-
-  if (srcType.isa<IndexType>())
-    return op.emitError() << srcType << " is not a valid operand type";
-  if (dstType.isa<IndexType>())
-    return op.emitError() << dstType << " is not a valid result type";
-
-  if (srcType.cast<IntegerType>().getWidth() >=
-      dstType.cast<IntegerType>().getWidth())
-    return op.emitError("result type ")
-           << dstType << " must be wider than operand type " << srcType;
-
-  return success();
 }
 
 //===----------------------------------------------------------------------===//

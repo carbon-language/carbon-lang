@@ -204,8 +204,6 @@ void test()
     test_true     <std::deque<               int>>();
 #ifdef _LIBCPP_VERSION
     test_true     <std::deque<const          int>>();
-    test_true     <std::deque<      volatile int>>();
-    test_true     <std::deque<const volatile int>>();
 #endif // _LIBCPP_VERSION
     test_true     <std::forward_list<int>>();
     test_true     <std::list<int>>();
@@ -227,8 +225,6 @@ void test()
     test_true     <std::stack<               int>>();
 #ifdef _LIBCPP_VERSION
     test_true     <std::stack<const          int>>();
-    test_true     <std::stack<      volatile int>>();
-    test_true     <std::stack<const volatile int>>();
 #endif // _LIBCPP_VERSION
     test_true     <std::queue<int>>();
     test_true     <std::priority_queue<int>>();
@@ -240,14 +236,18 @@ void test()
 
     // Strings
     test_true     <std::string>();
+#ifndef TEST_HAS_NO_WIDE_CHARACTERS
     test_true     <std::wstring>();
+#endif
     test_true     <std::u8string>();
     test_true     <std::u16string>();
     test_true     <std::u32string>();
 
     // String views
     test_true     <std::string_view>();
+#ifndef TEST_HAS_NO_WIDE_CHARACTERS
     test_true     <std::wstring_view>();
+#endif
     test_true     <std::u8string_view>();
     test_true     <std::u16string_view>();
     test_true     <std::u32string_view>();

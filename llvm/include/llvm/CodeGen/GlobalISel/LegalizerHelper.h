@@ -30,7 +30,6 @@
 namespace llvm {
 // Forward declarations.
 class LegalizerInfo;
-class Legalizer;
 class MachineRegisterInfo;
 class GISelChangeObserver;
 class LostDebugLocObserver;
@@ -192,6 +191,10 @@ private:
                     SmallVectorImpl<Register> &VRegs,
                     SmallVectorImpl<Register> &LeftoverVRegs);
 
+  /// Version which handles irregular sub-vector splits.
+  void extractVectorParts(Register Reg, unsigned NumElst,
+                          SmallVectorImpl<Register> &VRegs);
+
   /// Helper function to build a wide generic register \p DstReg of type \p
   /// RegTy from smaller parts. This will produce a G_MERGE_VALUES,
   /// G_BUILD_VECTOR, G_CONCAT_VECTORS, or sequence of G_INSERT as appropriate
@@ -204,6 +207,11 @@ private:
   void insertParts(Register DstReg, LLT ResultTy,
                    LLT PartTy, ArrayRef<Register> PartRegs,
                    LLT LeftoverTy = LLT(), ArrayRef<Register> LeftoverRegs = {});
+
+  /// Merge \p PartRegs with different types into \p DstReg.
+  void mergeMixedSubvectors(Register DstReg, ArrayRef<Register> PartRegs);
+
+  void appendVectorElts(SmallVectorImpl<Register> &Elts, Register Reg);
 
   /// Unmerge \p SrcReg into smaller sized values, and append them to \p
   /// Parts. The elements of \p Parts will be the greatest common divisor type
@@ -256,6 +264,20 @@ private:
                                         LLT SrcTy, LLT NarrowTy,
                                         unsigned ScalarOpc);
 
+  // Memcpy family legalization helpers.
+  LegalizeResult lowerMemset(MachineInstr &MI, Register Dst, Register Val,
+                             uint64_t KnownLen, Align Alignment,
+                             bool IsVolatile);
+  LegalizeResult lowerMemcpyInline(MachineInstr &MI, Register Dst, Register Src,
+                                   uint64_t KnownLen, Align DstAlign,
+                                   Align SrcAlign, bool IsVolatile);
+  LegalizeResult lowerMemcpy(MachineInstr &MI, Register Dst, Register Src,
+                             uint64_t KnownLen, uint64_t Limit, Align DstAlign,
+                             Align SrcAlign, bool IsVolatile);
+  LegalizeResult lowerMemmove(MachineInstr &MI, Register Dst, Register Src,
+                              uint64_t KnownLen, Align DstAlign, Align SrcAlign,
+                              bool IsVolatile);
+
 public:
   /// Return the alignment to use for a stack temporary object with the given
   /// type.
@@ -271,26 +293,18 @@ public:
   /// vector bounds.
   Register getVectorElementPointer(Register VecPtr, LLT VecTy, Register Index);
 
-  LegalizeResult fewerElementsVectorImplicitDef(MachineInstr &MI,
-                                                unsigned TypeIdx, LLT NarrowTy);
+  /// Handles most opcodes. Split \p MI into same instruction on sub-vectors or
+  /// scalars with \p NumElts elements (1 for scalar). Supports uneven splits:
+  /// there can be leftover sub-vector with fewer then \p NumElts or a leftover
+  /// scalar. To avoid this use moreElements first and set MI number of elements
+  /// to multiple of \p NumElts. Non-vector operands that should be used on all
+  /// sub-instructions without split are listed in \p NonVecOpIndices.
+  LegalizeResult fewerElementsVectorMultiEltType(
+      GenericMachineInstr &MI, unsigned NumElts,
+      std::initializer_list<unsigned> NonVecOpIndices = {});
 
-  /// Legalize a instruction with a vector type where each operand may have a
-  /// different element type. All type indexes must have the same number of
-  /// elements.
-  LegalizeResult fewerElementsVectorMultiEltType(MachineInstr &MI,
-                                                 unsigned TypeIdx, LLT NarrowTy);
-
-  LegalizeResult fewerElementsVectorCasts(MachineInstr &MI, unsigned TypeIdx,
-                                          LLT NarrowTy);
-
-  LegalizeResult
-  fewerElementsVectorCmp(MachineInstr &MI, unsigned TypeIdx, LLT NarrowTy);
-
-  LegalizeResult
-  fewerElementsVectorSelect(MachineInstr &MI, unsigned TypeIdx, LLT NarrowTy);
-
-  LegalizeResult fewerElementsVectorPhi(MachineInstr &MI,
-                                        unsigned TypeIdx, LLT NarrowTy);
+  LegalizeResult fewerElementsVectorPhi(GenericMachineInstr &MI,
+                                        unsigned NumElts);
 
   LegalizeResult moreElementsVectorPhi(MachineInstr &MI, unsigned TypeIdx,
                                        LLT MoreTy);
@@ -306,20 +320,7 @@ public:
                                                            unsigned TypeIdx,
                                                            LLT NarrowTy);
 
-  LegalizeResult fewerElementsVectorMulo(MachineInstr &MI, unsigned TypeIdx,
-                                         LLT NarrowTy);
-
   LegalizeResult reduceLoadStoreWidth(GLoadStore &MI, unsigned TypeIdx,
-                                      LLT NarrowTy);
-
-  /// Legalize an instruction by reducing the operation width, either by
-  /// narrowing the type of the operation or by reducing the number of elements
-  /// of a vector.
-  /// The used strategy (narrow vs. fewerElements) is decided by \p NarrowTy.
-  /// Narrow is used if the scalar type of \p NarrowTy and \p DstTy differ,
-  /// fewerElements is used when the scalar type is the same but the number of
-  /// elements between \p NarrowTy and \p DstTy differ.
-  LegalizeResult reduceOperationWidth(MachineInstr &MI, unsigned TypeIdx,
                                       LLT NarrowTy);
 
   LegalizeResult fewerElementsVectorSextInReg(MachineInstr &MI, unsigned TypeIdx,
@@ -402,8 +403,9 @@ public:
   LegalizeResult lowerDIVREM(MachineInstr &MI);
   LegalizeResult lowerAbsToAddXor(MachineInstr &MI);
   LegalizeResult lowerAbsToMaxNeg(MachineInstr &MI);
-  LegalizeResult lowerIsNaN(MachineInstr &MI);
   LegalizeResult lowerVectorReduction(MachineInstr &MI);
+  LegalizeResult lowerMemcpyInline(MachineInstr &MI);
+  LegalizeResult lowerMemCpyFamily(MachineInstr &MI, unsigned MaxLen = 0);
 };
 
 /// Helper function that creates a libcall to the given \p Name using the given

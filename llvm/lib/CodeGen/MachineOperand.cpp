@@ -250,6 +250,11 @@ void MachineOperand::ChangeToRegister(Register Reg, bool isDef, bool isImp,
   if (RegInfo && WasReg)
     RegInfo->removeRegOperandFromUseList(this);
 
+  // Ensure debug instructions set debug flag on register uses.
+  const MachineInstr *MI = getParent();
+  if (!isDef && MI && MI->isDebugInstr())
+    isDebug = true;
+
   // Change this to a register and set the reg#.
   assert(!(isDead && !isDef) && "Dead flag on non-def");
   assert(!(isKill && isDef) && "Kill flag on def");
@@ -1066,7 +1071,9 @@ void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
   // The Value and Offset may differ due to CSE. But the flags and size
   // should be the same.
   assert(MMO->getFlags() == getFlags() && "Flags mismatch!");
-  assert(MMO->getSize() == getSize() && "Size mismatch!");
+  assert((MMO->getSize() == ~UINT64_C(0) || getSize() == ~UINT64_C(0) ||
+          MMO->getSize() == getSize()) &&
+         "Size mismatch!");
 
   if (MMO->getBaseAlign() >= getBaseAlign()) {
     // Update the alignment value.

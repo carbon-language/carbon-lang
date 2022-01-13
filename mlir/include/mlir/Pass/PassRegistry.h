@@ -24,7 +24,7 @@ class Pass;
 
 namespace detail {
 class PassOptions;
-} // end namespace detail
+} // namespace detail
 
 /// A registry function that adds passes to the given pass manager. This should
 /// also parse options and return success() if parsing succeeded.
@@ -125,12 +125,6 @@ void registerPassPipeline(
 
 /// Register a specific dialect pass allocator function with the system,
 /// typically used through the PassRegistration template.
-/// Deprecated: please use the alternate version below.
-void registerPass(StringRef arg, StringRef description,
-                  const PassAllocatorFunction &function);
-
-/// Register a specific dialect pass allocator function with the system,
-/// typically used through the PassRegistration template.
 void registerPass(const PassAllocatorFunction &function);
 
 /// PassRegistration provides a global initializer that registers a Pass
@@ -149,17 +143,6 @@ template <typename ConcretePass> struct PassRegistration {
   }
   PassRegistration()
       : PassRegistration([] { return std::make_unique<ConcretePass>(); }) {}
-
-  /// Constructor below are deprecated.
-
-  PassRegistration(StringRef arg, StringRef description,
-                   const PassAllocatorFunction &constructor) {
-    registerPass(arg, description, constructor);
-  }
-
-  PassRegistration(StringRef arg, StringRef description)
-      : PassRegistration(arg, description,
-                         [] { return std::make_unique<ConcretePass>(); }) {}
 };
 
 /// PassPipelineRegistration provides a global initializer that registers a Pass
@@ -227,7 +210,7 @@ LogicalResult parsePassPipeline(StringRef pipeline, OpPassManager &pm,
 
 namespace detail {
 struct PassPipelineCLParserImpl;
-} // end namespace detail
+} // namespace detail
 
 /// This class implements a command-line parser for MLIR passes. It registers a
 /// cl option with a given argument and description. This parser will register
@@ -279,6 +262,6 @@ private:
   std::unique_ptr<detail::PassPipelineCLParserImpl> impl;
 };
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_PASS_PASSREGISTRY_H_

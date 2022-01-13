@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===------------------------- fstream ------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -187,6 +187,7 @@ typedef basic_fstream<wchar_t> wfstream;
 #include <cstdlib>
 #include <istream>
 #include <ostream>
+#include <version>
 
 #if !defined(_LIBCPP_HAS_NO_FILESYSTEM_LIBRARY)
 #   include <filesystem>

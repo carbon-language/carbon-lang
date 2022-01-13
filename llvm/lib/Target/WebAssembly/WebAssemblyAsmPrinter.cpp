@@ -42,8 +42,8 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolWasm.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -51,8 +51,6 @@ using namespace llvm;
 #define DEBUG_TYPE "asm-printer"
 
 extern cl::opt<bool> WasmKeepRegisters;
-extern cl::opt<bool> WasmEnableEmEH;
-extern cl::opt<bool> WasmEnableEmSjLj;
 
 //===----------------------------------------------------------------------===//
 // Helpers.
@@ -161,7 +159,7 @@ MCSymbolWasm *WebAssemblyAsmPrinter::getMCSymbolForFunction(
           "Emscripten EH/SjLj does not support multivalue returns: " +
           std::string(F->getName()) + ": " +
           WebAssembly::signatureToString(Sig);
-      report_fatal_error(Msg);
+      report_fatal_error(Twine(Msg));
     }
     WasmSym = cast<MCSymbolWasm>(
         GetExternalSymbolSymbol(getEmscriptenInvokeSymbolName(Sig)));
@@ -194,6 +192,13 @@ void WebAssemblyAsmPrinter::emitGlobalVariable(const GlobalVariable *GV) {
     wasm::ValType Type = WebAssembly::toValType(VT);
     Sym->setType(wasm::WASM_SYMBOL_TYPE_GLOBAL);
     Sym->setGlobalType(wasm::WasmGlobalType{uint8_t(Type), Mutable});
+  }
+
+  // If the GlobalVariable refers to a table, we handle it here instead of
+  // in emitExternalDecls
+  if (Sym->isTable()) {
+    getTargetStreamer()->emitTableType(Sym);
+    return;
   }
 
   emitVisibility(Sym, GV->getVisibility(), !GV->isDeclaration());
@@ -234,26 +239,32 @@ MCSymbol *WebAssemblyAsmPrinter::getOrCreateWasmSymbol(StringRef Name) {
     return WasmSym;
   }
 
+  if (Name.startswith("GCC_except_table")) {
+    WasmSym->setType(wasm::WASM_SYMBOL_TYPE_DATA);
+    return WasmSym;
+  }
+
   SmallVector<wasm::ValType, 4> Returns;
   SmallVector<wasm::ValType, 4> Params;
-  if (Name == "__cpp_exception") {
+  if (Name == "__cpp_exception" || Name == "__c_longjmp") {
     WasmSym->setType(wasm::WASM_SYMBOL_TYPE_TAG);
-    // We can't confirm its signature index for now because there can be
-    // imported exceptions. Set it to be 0 for now.
-    WasmSym->setTagType(
-        {wasm::WASM_TAG_ATTRIBUTE_EXCEPTION, /* SigIndex */ 0});
-    // We may have multiple C++ compilation units to be linked together, each of
-    // which defines the exception symbol. To resolve them, we declare them as
-    // weak.
-    WasmSym->setWeak(true);
+    // In static linking we define tag symbols in WasmException::endModule().
+    // But we may have multiple objects to be linked together, each of which
+    // defines the tag symbols. To resolve them, we declare them as weak. In
+    // dynamic linking we make tag symbols undefined in the backend, define it
+    // in JS, and feed them to each importing module.
+    if (!isPositionIndependent())
+      WasmSym->setWeak(true);
     WasmSym->setExternal(true);
 
-    // All C++ exceptions are assumed to have a single i32 (for wasm32) or i64
-    // (for wasm64) param type and void return type. The reaon is, all C++
-    // exception values are pointers, and to share the type section with
-    // functions, exceptions are assumed to have void return type.
-    Params.push_back(Subtarget.hasAddr64() ? wasm::ValType::I64
-                                           : wasm::ValType::I32);
+    // Currently both C++ exceptions and C longjmps have a single pointer type
+    // param. For C++ exceptions it is a pointer to an exception object, and for
+    // C longjmps it is pointer to a struct that contains a setjmp buffer and a
+    // longjmp return value. We may consider using multiple value parameters for
+    // longjmps later when multivalue support is ready.
+    wasm::ValType AddrType =
+        Subtarget.hasAddr64() ? wasm::ValType::I64 : wasm::ValType::I32;
+    Params.push_back(AddrType);
   } else { // Function symbols
     WasmSym->setType(wasm::WASM_SYMBOL_TYPE_FUNCTION);
     getLibcallSignature(Subtarget, Name, Returns, Params);
@@ -309,8 +320,9 @@ void WebAssemblyAsmPrinter::emitExternalDecls(const Module &M) {
       // will discard it later if it turns out not to be necessary.
       auto Signature = signatureFromMVTs(Results, Params);
       bool InvokeDetected = false;
-      auto *Sym = getMCSymbolForFunction(&F, WasmEnableEmEH || WasmEnableEmSjLj,
-                                         Signature.get(), InvokeDetected);
+      auto *Sym = getMCSymbolForFunction(
+          &F, WebAssembly::WasmEnableEmEH || WebAssembly::WasmEnableEmSjLj,
+          Signature.get(), InvokeDetected);
 
       // Multiple functions can be mapped to the same invoke symbol. For
       // example, two IR functions '__invoke_void_i8*' and '__invoke_void_i32'
@@ -496,6 +508,15 @@ void WebAssemblyAsmPrinter::EmitTargetFeatures(Module &M) {
   }
   // This pseudo-feature tells the linker whether shared memory would be safe
   EmitFeature("shared-mem");
+
+  // This is an "architecture", not a "feature", but we emit it as such for
+  // the benefit of tools like Binaryen and consistency with other producers.
+  // FIXME: Subtarget is null here, so can't Subtarget->hasAddr64() ?
+  if (M.getDataLayout().getPointerSize() == 8) {
+    // Can't use EmitFeature since "wasm-feature-memory64" is not a module
+    // flag.
+    EmittedFeatures.push_back({wasm::WASM_FEATURE_PREFIX_USED, "memory64"});
+  }
 
   if (EmittedFeatures.size() == 0)
     return;

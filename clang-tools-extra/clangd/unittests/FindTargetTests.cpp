@@ -342,6 +342,15 @@ TEST_F(TargetDeclTest, Types) {
   Flags.clear();
 
   Code = R"cpp(
+  template<template<typename> class ...T>
+  class C {
+    C<[[T...]]> foo;
+    };
+  )cpp";
+  EXPECT_DECLS("TemplateArgumentLoc", {"template <typename> class ...T"});
+  Flags.clear();
+
+  Code = R"cpp(
     struct S{};
     S X;
     [[decltype]](X) Y;
@@ -995,6 +1004,20 @@ TEST_F(TargetDeclTest, ObjC) {
     }
   )cpp";
   EXPECT_DECLS("ObjCPropertyRefExpr", "+ (id)sharedInstance");
+
+  Code = R"cpp(
+    @interface Foo
+    + ([[id]])sharedInstance;
+    @end
+  )cpp";
+  EXPECT_DECLS("TypedefTypeLoc");
+
+  Code = R"cpp(
+    @interface Foo
+    + ([[instancetype]])sharedInstance;
+    @end
+  )cpp";
+  EXPECT_DECLS("TypedefTypeLoc");
 }
 
 class FindExplicitReferencesTest : public ::testing::Test {

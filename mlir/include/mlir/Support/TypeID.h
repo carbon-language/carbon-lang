@@ -16,6 +16,7 @@
 
 #include "mlir/Support/LLVM.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 
 namespace mlir {
@@ -59,10 +60,12 @@ public:
   TypeID() : TypeID(get<void>()) {}
 
   /// Comparison operations.
-  bool operator==(const TypeID &other) const {
+  inline bool operator==(const TypeID &other) const {
     return storage == other.storage;
   }
-  bool operator!=(const TypeID &other) const { return !(*this == other); }
+  inline bool operator!=(const TypeID &other) const {
+    return !(*this == other);
+  }
 
   /// Construct a type info object for the given type T.
   template <typename T>
@@ -93,7 +96,7 @@ private:
 
 /// Enable hashing TypeID.
 inline ::llvm::hash_code hash_value(TypeID id) {
-  return llvm::hash_value(id.storage);
+  return DenseMapInfo<const TypeID::Storage *>::getHashValue(id.storage);
 }
 
 namespace detail {
@@ -135,7 +138,7 @@ TypeID TypeID::get() {
   return detail::TypeIDExported::get<Trait>();
 }
 
-} // end namespace mlir
+} // namespace mlir
 
 // Declare/define an explicit specialization for TypeID: this forces the
 // compiler to emit a strong definition for a class and controls which
@@ -165,11 +168,11 @@ TypeID TypeID::get() {
 
 namespace llvm {
 template <> struct DenseMapInfo<mlir::TypeID> {
-  static mlir::TypeID getEmptyKey() {
+  static inline mlir::TypeID getEmptyKey() {
     void *pointer = llvm::DenseMapInfo<void *>::getEmptyKey();
     return mlir::TypeID::getFromOpaquePointer(pointer);
   }
-  static mlir::TypeID getTombstoneKey() {
+  static inline mlir::TypeID getTombstoneKey() {
     void *pointer = llvm::DenseMapInfo<void *>::getTombstoneKey();
     return mlir::TypeID::getFromOpaquePointer(pointer);
   }
@@ -190,6 +193,6 @@ template <> struct PointerLikeTypeTraits<mlir::TypeID> {
   static constexpr int NumLowBitsAvailable = 3;
 };
 
-} // end namespace llvm
+} // namespace llvm
 
 #endif // MLIR_SUPPORT_TYPEID_H

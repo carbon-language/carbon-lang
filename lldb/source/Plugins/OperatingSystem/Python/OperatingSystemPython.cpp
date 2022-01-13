@@ -12,7 +12,6 @@
 
 #include "OperatingSystemPython.h"
 
-#include "Plugins/Process/Utility/DynamicRegisterInfo.h"
 #include "Plugins/Process/Utility/RegisterContextDummy.h"
 #include "Plugins/Process/Utility/RegisterContextMemory.h"
 #include "Plugins/Process/Utility/ThreadMemory.h"
@@ -66,12 +65,7 @@ OperatingSystem *OperatingSystemPython::CreateInstance(Process *process,
   return nullptr;
 }
 
-ConstString OperatingSystemPython::GetPluginNameStatic() {
-  static ConstString g_name("python");
-  return g_name;
-}
-
-const char *OperatingSystemPython::GetPluginDescriptionStatic() {
+llvm::StringRef OperatingSystemPython::GetPluginDescriptionStatic() {
   return "Operating system plug-in that gathers OS information from a python "
          "class that implements the necessary OperatingSystem functionality.";
 }
@@ -140,13 +134,6 @@ DynamicRegisterInfo *OperatingSystemPython::GetDynamicRegisterInfo() {
   }
   return m_register_info_up.get();
 }
-
-// PluginInterface protocol
-ConstString OperatingSystemPython::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t OperatingSystemPython::GetPluginVersion() { return 1; }
 
 bool OperatingSystemPython::UpdateThreadList(ThreadList &old_thread_list,
                                              ThreadList &core_thread_list,

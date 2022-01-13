@@ -20,6 +20,8 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 def SCF_Dialect : Dialect {
   let name = "scf";
   let cppNamespace = "::mlir::scf";
+  let dependentDialects = ["arith::ArithmeticDialect"];
+  let emitAccessorPrefix = kEmitAccessorPrefix_Prefixed;
 }
 
 // Base class for SCF dialect ops.
@@ -90,11 +92,11 @@ def ExecuteRegionOp : SCF_Op<"execute_region"> {
         cond_br %cond, ^bb1, ^bb2
 
       ^bb1:
-        %c1 = constant 1 : i64
+        %c1 = arith.constant 1 : i64
         br ^bb3(%c1 : i64)
 
       ^bb2:
-        %c2 = constant 2 : i64
+        %c2 = arith.constant 2 : i64
         br ^bb3(%c2 : i64)
 
       ^bb3(%x : i64):
@@ -122,7 +124,7 @@ def ForOp : SCF_Op<"for",
   let summary = "for operation";
   let description = [{
     The "scf.for" operation represents a loop taking 3 SSA value as operands
-    that represent the lower bound, upper bound and step respectively.  The
+    that represent the lower bound, upper bound and step respectively. The
     operation defines an SSA value for its induction variable. It has one
     region capturing the loop body. The induction variable is represented as an
     argument of this region. This SSA value always has type index, which is the
@@ -146,14 +148,17 @@ def ForOp : SCF_Op<"for",
     values after loop termination. The initial values of the variables are
     passed as additional SSA operands to the "scf.for" following the 3 loop
     control SSA values mentioned above (lower bound, upper bound and step). The
-    operation region has equivalent arguments for each variable representing
-    the value of the variable at the current iteration.
+    operation region has an argument for the induction variable, followed by
+    one argument for each loop-carried variable, representing the value of the
+    variable at the current iteration.
 
-    The region must terminate with a "scf.yield" that passes all the current
-    iteration variables to the next iteration, or to the "scf.for" result, if
-    at the last iteration. Note, that when the loop-carried variables are
-    present, calling ForOp::build will not insert the terminator implicitly.
-    The caller must insert "scf.yield" in that case.
+    The region must terminate with a "scf.yield" that passes the current
+    values of all loop-carried variables to the next iteration, or to the
+    "scf.for" result, if at the last iteration. The static type of a
+    loop-carried variable may not change with iterations; its runtime type is
+    allowed to change. Note, that when the loop-carried variables are present,
+    calling ForOp::build will not insert the terminator implicitly. The caller
+    must insert "scf.yield" in that case.
 
     "scf.for" results hold the final values after the last iteration.
     For example, to sum-reduce a memref:
@@ -162,12 +167,12 @@ def ForOp : SCF_Op<"for",
     func @reduce(%buffer: memref<1024xf32>, %lb: index,
                  %ub: index, %step: index) -> (f32) {
       // Initial sum set to 0.
-      %sum_0 = constant 0.0 : f32
+      %sum_0 = arith.constant 0.0 : f32
       // iter_args binds initial values to the loop's region arguments.
       %sum = scf.for %iv = %lb to %ub step %step
           iter_args(%sum_iter = %sum_0) -> (f32) {
         %t = load %buffer[%iv] : memref<1024xf32>
-        %sum_next = addf %sum_iter, %t : f32
+        %sum_next = arith.addf %sum_iter, %t : f32
         // Yield current iteration sum to next iteration %sum_iter or to %sum
         // if final iteration.
         scf.yield %sum_next : f32
@@ -186,14 +191,14 @@ def ForOp : SCF_Op<"for",
     ```mlir
     func @conditional_reduce(%buffer: memref<1024xf32>, %lb: index,
                              %ub: index, %step: index) -> (f32) {
-      %sum_0 = constant 0.0 : f32
-      %c0 = constant 0.0 : f32
+      %sum_0 = arith.constant 0.0 : f32
+      %c0 = arith.constant 0.0 : f32
       %sum = scf.for %iv = %lb to %ub step %step
           iter_args(%sum_iter = %sum_0) -> (f32) {
         %t = load %buffer[%iv] : memref<1024xf32>
-        %cond = cmpf "ugt", %t, %c0 : f32
+        %cond = arith.cmpf "ugt", %t, %c0 : f32
         %sum_next = scf.if %cond -> (f32) {
-          %new_sum = addf %sum_iter, %t : f32
+          %new_sum = arith.addf %sum_iter, %t : f32
           scf.yield %new_sum : f32
         } else {
           scf.yield %sum_iter : f32
@@ -387,20 +392,26 @@ def IfOp : SCF_Op<"if",
   let extraClassDeclaration = [{
     OpBuilder getThenBodyBuilder(OpBuilder::Listener *listener = nullptr) {
       Block* body = getBody(0);
-      return results().empty() ? OpBuilder::atBlockTerminator(body, listener)
-                               : OpBuilder::atBlockEnd(body, listener);
+      return getResults().empty() ? OpBuilder::atBlockTerminator(body, listener)
+                                  : OpBuilder::atBlockEnd(body, listener);
     }
     OpBuilder getElseBodyBuilder(OpBuilder::Listener *listener = nullptr) {
       Block* body = getBody(1);
-      return results().empty() ? OpBuilder::atBlockTerminator(body, listener)
-                               : OpBuilder::atBlockEnd(body, listener);
+      return getResults().empty() ? OpBuilder::atBlockTerminator(body, listener)
+                                  : OpBuilder::atBlockEnd(body, listener);
     }
     Block* thenBlock();
     YieldOp thenYield();
     Block* elseBlock();
     YieldOp elseYield();
-  }];
 
+    /// If the condition is a constant, returns 1 for the executed block and 0
+    /// for the other. Otherwise, returns `kUnknownNumRegionInvocations` for
+    /// both successors.
+    void getNumRegionInvocations(ArrayRef<Attribute> operands,
+                                 SmallVectorImpl<int64_t> &countPerRegion);
+  }];
+  let hasFolder = 1;
   let hasCanonicalizer = 1;
 }
 
@@ -443,12 +454,12 @@ def ParallelOp : SCF_Op<"parallel",
     Example:
 
     ```mlir
-    %init = constant 0.0 : f32
+    %init = arith.constant 0.0 : f32
     scf.parallel (%iv) = (%lb) to (%ub) step (%step) init (%init) -> f32 {
       %elem_to_reduce = load %buffer[%iv] : memref<100xf32>
       scf.reduce(%elem_to_reduce) : f32 {
         ^bb0(%lhs : f32, %rhs: f32):
-          %res = addf %lhs, %rhs : f32
+          %res = arith.addf %lhs, %rhs : f32
           scf.reduce.return %res : f32
       }
     }
@@ -478,8 +489,8 @@ def ParallelOp : SCF_Op<"parallel",
     ValueRange getInductionVars() {
       return getBody()->getArguments();
     }
-    unsigned getNumLoops() { return step().size(); }
-    unsigned getNumReductions() { return initVals().size(); }
+    unsigned getNumLoops() { return getStep().size(); }
+    unsigned getNumReductions() { return getInitVals().size(); }
   }];
 
   let hasCanonicalizer = 1;
@@ -513,10 +524,10 @@ def ReduceOp : SCF_Op<"reduce", [HasParent<"ParallelOp">]> {
     Example:
 
     ```mlir
-    %operand = constant 1.0 : f32
+    %operand = arith.constant 1.0 : f32
     scf.reduce(%operand) : f32 {
       ^bb0(%lhs : f32, %rhs: f32):
-        %res = addf %lhs, %rhs : f32
+        %res = arith.addf %lhs, %rhs : f32
         scf.reduce.return %res : f32
     }
     ```
@@ -675,6 +686,8 @@ def WhileOp : SCF_Op<"while",
   let extraClassDeclaration = [{
     OperandRange getSuccessorEntryOperands(unsigned index);
     ConditionOp getConditionOp();
+    YieldOp getYieldOp();
+    Block::BlockArgListType getBeforeArguments();
     Block::BlockArgListType getAfterArguments();
   }];
 

@@ -20,9 +20,7 @@ namespace clang {
 
 class DeclContext;
 class LangOptions;
-class SourceManager;
 class Stmt;
-class TagDecl;
 
 class PrinterHelper {
 public:
@@ -74,7 +72,8 @@ struct PrintingPolicy {
         MSWChar(LO.MicrosoftExt && !LO.WChar), IncludeNewlines(true),
         MSVCFormatting(false), ConstantsAsWritten(false),
         SuppressImplicitBase(false), FullyQualifiedName(false),
-        PrintCanonicalTypes(false), PrintInjectedClassNameWithArguments(true) {}
+        PrintCanonicalTypes(false), PrintInjectedClassNameWithArguments(true),
+        UsePreferredNames(true), AlwaysIncludeTypeForTemplateArgument(false) {}
 
   /// Adjust this printing policy for cases where it's known that we're
   /// printing C++ code (for instance, if AST dumping reaches a C++-only
@@ -272,6 +271,14 @@ struct PrintingPolicy {
   /// written. When a template argument is unnamed, printing it results in
   /// invalid C++ code.
   unsigned PrintInjectedClassNameWithArguments : 1;
+
+  /// Whether to use C++ template preferred_name attributes when printing
+  /// templates.
+  unsigned UsePreferredNames : 1;
+
+  /// Whether to use type suffixes (eg: 1U) on integral non-type template
+  /// parameters.
+  unsigned AlwaysIncludeTypeForTemplateArgument : 1;
 
   /// Callbacks to use to allow the behavior of printing to be customized.
   const PrintingCallbacks *Callbacks = nullptr;

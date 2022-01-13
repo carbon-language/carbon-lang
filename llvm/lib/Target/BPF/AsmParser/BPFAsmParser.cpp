@@ -19,8 +19,8 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -101,7 +101,7 @@ struct BPFOperand : public MCParsedAsmOperand {
     ImmOp Imm;
   };
 
-  BPFOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
+  BPFOperand(KindTy K) : Kind(K) {}
 
 public:
   BPFOperand(const BPFOperand &o) : MCParsedAsmOperand() {

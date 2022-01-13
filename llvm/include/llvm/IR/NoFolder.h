@@ -38,17 +38,25 @@ public:
   explicit NoFolder() = default;
 
   //===--------------------------------------------------------------------===//
+  // Value-based folders.
+  //
+  // Return an existing value or a constant if the operation can be simplified.
+  // Otherwise return nullptr.
+  //===--------------------------------------------------------------------===//
+  Value *FoldAdd(Value *LHS, Value *RHS, bool HasNUW = false,
+                 bool HasNSW = false) const override {
+    return nullptr;
+  }
+
+  Value *FoldOr(Value *LHS, Value *RHS) const override { return nullptr; }
+
+  Value *FoldICmp(CmpInst::Predicate P, Value *LHS, Value *RHS) const override {
+    return nullptr;
+  }
+
+  //===--------------------------------------------------------------------===//
   // Binary Operators
   //===--------------------------------------------------------------------===//
-
-  Instruction *CreateAdd(Constant *LHS, Constant *RHS,
-                         bool HasNUW = false,
-                         bool HasNSW = false) const override {
-    BinaryOperator *BO = BinaryOperator::CreateAdd(LHS, RHS);
-    if (HasNUW) BO->setHasNoUnsignedWrap();
-    if (HasNSW) BO->setHasNoSignedWrap();
-    return BO;
-  }
 
   Instruction *CreateFAdd(Constant *LHS, Constant *RHS) const override {
     return BinaryOperator::CreateFAdd(LHS, RHS);
@@ -134,10 +142,6 @@ public:
 
   Instruction *CreateAnd(Constant *LHS, Constant *RHS) const override {
     return BinaryOperator::CreateAnd(LHS, RHS);
-  }
-
-  Instruction *CreateOr(Constant *LHS, Constant *RHS) const override {
-    return BinaryOperator::CreateOr(LHS, RHS);
   }
 
   Instruction *CreateXor(Constant *LHS, Constant *RHS) const override {
@@ -269,11 +273,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Compare Instructions
   //===--------------------------------------------------------------------===//
-
-  Instruction *CreateICmp(CmpInst::Predicate P,
-                          Constant *LHS, Constant *RHS) const override {
-    return new ICmpInst(P, LHS, RHS);
-  }
 
   Instruction *CreateFCmp(CmpInst::Predicate P,
                           Constant *LHS, Constant *RHS) const override {

@@ -72,12 +72,12 @@ endif()
 append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG -fno-omit-frame-pointer LIBFUZZER_CFLAGS)
 
 if (CMAKE_CXX_FLAGS MATCHES "fsanitize-coverage")
-  list(APPEND LIBFUZZER_CFLAGS -fno-sanitize-coverage=trace-pc-guard,edge,trace-cmp,indirect-calls,8bit-counters)
+  list(APPEND LIBFUZZER_CFLAGS -fsanitize-coverage=0)
 endif()
 
 if(MSVC)
   # Silence warnings by turning off exceptions in MSVC headers and avoid an
-  # error by unecessarily defining thread_local when it isn't even used on
+  # error by unnecessarily defining thread_local when it isn't even used on
   # Windows.
   list(APPEND LIBFUZZER_CFLAGS -D_HAS_EXCEPTIONS=0)
 else()
@@ -162,7 +162,8 @@ if(OS_NAME MATCHES "Linux|Fuchsia" AND
       CMAKE_ARGS -DCMAKE_CXX_COMPILER_WORKS=ON
                  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                  -DLIBCXXABI_ENABLE_EXCEPTIONS=OFF
-                 -DLIBCXX_ABI_NAMESPACE=__Fuzzer)
+                 -DLIBCXX_ABI_NAMESPACE=__Fuzzer
+                 -DLIBCXX_ENABLE_EXCEPTIONS=OFF)
     target_compile_options(RTfuzzer.${arch} PRIVATE -isystem ${LIBCXX_${arch}_PREFIX}/include/c++/v1)
     add_dependencies(RTfuzzer.${arch} libcxx_fuzzer_${arch}-build)
     target_compile_options(RTfuzzer_main.${arch} PRIVATE -isystem ${LIBCXX_${arch}_PREFIX}/include/c++/v1)

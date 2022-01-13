@@ -55,22 +55,23 @@ static cl::opt<unsigned> PragmaVectorizeSCEVCheckThreshold(
     cl::desc("The maximum number of SCEV checks allowed with a "
              "vectorize(enable) pragma"));
 
-// FIXME: When scalable vectorization is stable enough, change the default
-// to SK_PreferFixedWidth.
-static cl::opt<LoopVectorizeHints::ScalableForceKind> ScalableVectorization(
-    "scalable-vectorization", cl::init(LoopVectorizeHints::SK_FixedWidthOnly),
-    cl::Hidden,
-    cl::desc("Control whether the compiler can use scalable vectors to "
-             "vectorize a loop"),
-    cl::values(
-        clEnumValN(LoopVectorizeHints::SK_FixedWidthOnly, "off",
-                   "Scalable vectorization is disabled."),
-        clEnumValN(LoopVectorizeHints::SK_PreferFixedWidth, "on",
-                   "Scalable vectorization is available, but favor fixed-width "
-                   "vectorization when the cost is inconclusive."),
-        clEnumValN(LoopVectorizeHints::SK_PreferScalable, "preferred",
-                   "Scalable vectorization is available and favored when the "
-                   "cost is inconclusive.")));
+static cl::opt<LoopVectorizeHints::ScalableForceKind>
+    ForceScalableVectorization(
+        "scalable-vectorization", cl::init(LoopVectorizeHints::SK_Unspecified),
+        cl::Hidden,
+        cl::desc("Control whether the compiler can use scalable vectors to "
+                 "vectorize a loop"),
+        cl::values(
+            clEnumValN(LoopVectorizeHints::SK_FixedWidthOnly, "off",
+                       "Scalable vectorization is disabled."),
+            clEnumValN(
+                LoopVectorizeHints::SK_PreferScalable, "preferred",
+                "Scalable vectorization is available and favored when the "
+                "cost is inconclusive."),
+            clEnumValN(
+                LoopVectorizeHints::SK_PreferScalable, "on",
+                "Scalable vectorization is available and favored when the "
+                "cost is inconclusive.")));
 
 /// Maximum vectorization interleave count.
 static const unsigned MaxInterleaveFactor = 16;
@@ -95,7 +96,8 @@ bool LoopVectorizeHints::Hint::validate(unsigned Val) {
 
 LoopVectorizeHints::LoopVectorizeHints(const Loop *L,
                                        bool InterleaveOnlyWhenForced,
-                                       OptimizationRemarkEmitter &ORE)
+                                       OptimizationRemarkEmitter &ORE,
+                                       const TargetTransformInfo *TTI)
     : Width("vectorize.width", VectorizerParams::VectorizationFactor, HK_WIDTH),
       Interleave("interleave.count", InterleaveOnlyWhenForced, HK_INTERLEAVE),
       Force("vectorize.enable", FK_Undefined, HK_FORCE),
@@ -110,14 +112,32 @@ LoopVectorizeHints::LoopVectorizeHints(const Loop *L,
   if (VectorizerParams::isInterleaveForced())
     Interleave.Value = VectorizerParams::VectorizationInterleave;
 
+  // If the metadata doesn't explicitly specify whether to enable scalable
+  // vectorization, then decide based on the following criteria (increasing
+  // level of priority):
+  //  - Target default
+  //  - Metadata width
+  //  - Force option (always overrides)
+  if ((LoopVectorizeHints::ScalableForceKind)Scalable.Value == SK_Unspecified) {
+    if (TTI)
+      Scalable.Value = TTI->enableScalableVectorization() ? SK_PreferScalable
+                                                          : SK_FixedWidthOnly;
+
+    if (Width.Value)
+      // If the width is set, but the metadata says nothing about the scalable
+      // property, then assume it concerns only a fixed-width UserVF.
+      // If width is not set, the flag takes precedence.
+      Scalable.Value = SK_FixedWidthOnly;
+  }
+
+  // If the flag is set to force any use of scalable vectors, override the loop
+  // hints.
+  if (ForceScalableVectorization.getValue() !=
+      LoopVectorizeHints::SK_Unspecified)
+    Scalable.Value = ForceScalableVectorization.getValue();
+
+  // Scalable vectorization is disabled if no preference is specified.
   if ((LoopVectorizeHints::ScalableForceKind)Scalable.Value == SK_Unspecified)
-    // If the width is set, but the metadata says nothing about the scalable
-    // property, then assume it concerns only a fixed-width UserVF.
-    // If width is not set, the flag takes precedence.
-    Scalable.Value = Width.Value ? SK_FixedWidthOnly : ScalableVectorization;
-  else if (ScalableVectorization == SK_FixedWidthOnly)
-    // If the flag is set to disable any use of scalable vectors, override the
-    // loop hint.
     Scalable.Value = SK_FixedWidthOnly;
 
   if (IsVectorized.Value != 1)
@@ -419,7 +439,8 @@ static bool hasOutsideLoopUser(const Loop *TheLoop, Instruction *Inst,
   return false;
 }
 
-int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) const {
+int LoopVectorizationLegality::isConsecutivePtr(Type *AccessTy,
+                                                Value *Ptr) const {
   const ValueToValueMap &Strides =
       getSymbolicStrides() ? *getSymbolicStrides() : ValueToValueMap();
 
@@ -428,7 +449,8 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) const {
                     llvm::shouldOptimizeForSize(TheLoop->getHeader(), PSI, BFI,
                                                 PGSOQueryType::IRPass);
   bool CanAddPredicate = !OptForSize;
-  int Stride = getPtrStride(PSE, Ptr, TheLoop, Strides, CanAddPredicate, false);
+  int Stride = getPtrStride(PSE, AccessTy, Ptr, TheLoop, Strides,
+                            CanAddPredicate, false);
   if (Stride == 1 || Stride == -1)
     return Stride;
   return 0;
@@ -747,7 +769,7 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       if (CI) {
         auto *SE = PSE.getSE();
         Intrinsic::ID IntrinID = getVectorIntrinsicIDForCall(CI, TLI);
-        for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
+        for (unsigned i = 0, e = CI->arg_size(); i != e; ++i)
           if (hasVectorInstrinsicScalarOpd(IntrinID, i)) {
             if (!SE->isLoopInvariant(PSE.getSCEV(CI->getOperand(i)), TheLoop)) {
               reportVectorizationFailure("Found unvectorizable intrinsic",
@@ -927,7 +949,7 @@ bool LoopVectorizationLegality::canVectorizeFPMath(
   }));
 }
 
-bool LoopVectorizationLegality::isInductionPhi(const Value *V) {
+bool LoopVectorizationLegality::isInductionPhi(const Value *V) const {
   Value *In0 = const_cast<Value *>(V);
   PHINode *PN = dyn_cast_or_null<PHINode>(In0);
   if (!PN)
@@ -936,16 +958,29 @@ bool LoopVectorizationLegality::isInductionPhi(const Value *V) {
   return Inductions.count(PN);
 }
 
-bool LoopVectorizationLegality::isCastedInductionVariable(const Value *V) {
+const InductionDescriptor *
+LoopVectorizationLegality::getIntOrFpInductionDescriptor(PHINode *Phi) const {
+  if (!isInductionPhi(Phi))
+    return nullptr;
+  auto &ID = getInductionVars().find(Phi)->second;
+  if (ID.getKind() == InductionDescriptor::IK_IntInduction ||
+      ID.getKind() == InductionDescriptor::IK_FpInduction)
+    return &ID;
+  return nullptr;
+}
+
+bool LoopVectorizationLegality::isCastedInductionVariable(
+    const Value *V) const {
   auto *Inst = dyn_cast<Instruction>(V);
   return (Inst && InductionCastsToIgnore.count(Inst));
 }
 
-bool LoopVectorizationLegality::isInductionVariable(const Value *V) {
+bool LoopVectorizationLegality::isInductionVariable(const Value *V) const {
   return isInductionPhi(V) || isCastedInductionVariable(V);
 }
 
-bool LoopVectorizationLegality::isFirstOrderRecurrence(const PHINode *Phi) {
+bool LoopVectorizationLegality::isFirstOrderRecurrence(
+    const PHINode *Phi) const {
   return FirstOrderRecurrences.count(Phi);
 }
 

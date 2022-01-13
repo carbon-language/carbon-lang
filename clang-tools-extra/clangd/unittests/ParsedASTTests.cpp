@@ -44,9 +44,11 @@ namespace clangd {
 namespace {
 
 using ::testing::AllOf;
+using ::testing::Contains;
 using ::testing::ElementsAre;
 using ::testing::ElementsAreArray;
 using ::testing::IsEmpty;
+using ::testing::UnorderedElementsAreArray;
 
 MATCHER_P(DeclNamed, Name, "") {
   if (NamedDecl *ND = dyn_cast<NamedDecl>(arg))
@@ -98,6 +100,8 @@ MATCHER_P(WithTemplateArgs, ArgName, "") {
 MATCHER_P(RangeIs, R, "") {
   return arg.beginOffset() == R.Begin && arg.endOffset() == R.End;
 }
+
+MATCHER_P(PragmaTrivia, P, "") { return arg.Trivia == P; }
 
 MATCHER(EqInc, "") {
   Inclusion Actual = testing::get<0>(arg);
@@ -357,7 +361,11 @@ TEST(ParsedASTTest, ReplayPreambleForTidyCheckers) {
         : HashOffset(SM.getDecomposedLoc(HashLoc).second), IncTok(IncludeTok),
           IncDirective(IncludeTok.getIdentifierInfo()->getName()),
           FileNameOffset(SM.getDecomposedLoc(FilenameRange.getBegin()).second),
-          FileName(FileName), IsAngled(IsAngled) {}
+          FileName(FileName), IsAngled(IsAngled) {
+      EXPECT_EQ(
+          toSourceCode(SM, FilenameRange.getAsRange()).drop_back().drop_front(),
+          FileName);
+    }
     size_t HashOffset;
     syntax::Token IncTok;
     llvm::StringRef IncDirective;
@@ -460,77 +468,6 @@ TEST(ParsedASTTest, ReplayPreambleForTidyCheckers) {
         Code.substr(FileRange.Begin - 1, FileRange.End - FileRange.Begin + 2));
     EXPECT_EQ(SkippedFiles[I].kind(), tok::header_name);
   }
-
-  TU.AdditionalFiles["a.h"] = "";
-  TU.AdditionalFiles["b.h"] = "";
-  TU.AdditionalFiles["c.h"] = "";
-  // Make sure replay logic works with patched preambles.
-  llvm::StringLiteral Baseline = R"cpp(
-    #include "a.h"
-    #include "c.h")cpp";
-  MockFS FS;
-  TU.Code = Baseline.str();
-  auto Inputs = TU.inputs(FS);
-  auto BaselinePreamble = TU.preamble();
-  ASSERT_TRUE(BaselinePreamble);
-
-  // First make sure we don't crash on various modifications to the preamble.
-  llvm::StringLiteral Cases[] = {
-      // clang-format off
-      // New include in middle.
-      R"cpp(
-        #include "a.h"
-        #include "b.h"
-        #include "c.h")cpp",
-      // New include at top.
-      R"cpp(
-        #include "b.h"
-        #include "a.h"
-        #include "c.h")cpp",
-      // New include at bottom.
-      R"cpp(
-        #include "a.h"
-        #include "c.h"
-        #include "b.h")cpp",
-      // Same size with a missing include.
-      R"cpp(
-        #include "a.h"
-        #include "b.h")cpp",
-      // Smaller with no new includes.
-      R"cpp(
-        #include "a.h")cpp",
-      // Smaller with a new includes.
-      R"cpp(
-        #include "b.h")cpp",
-      // clang-format on
-  };
-  for (llvm::StringLiteral Case : Cases) {
-    TU.Code = Case.str();
-
-    IgnoreDiagnostics Diags;
-    auto CI = buildCompilerInvocation(TU.inputs(FS), Diags);
-    auto PatchedAST = ParsedAST::build(testPath(TU.Filename), TU.inputs(FS),
-                                       std::move(CI), {}, BaselinePreamble);
-    ASSERT_TRUE(PatchedAST);
-    EXPECT_FALSE(PatchedAST->getDiagnostics());
-  }
-
-  // Then ensure correctness by making sure includes were seen only once.
-  // Note that we first see the includes from the patch, as preamble includes
-  // are replayed after exiting the built-in file.
-  Includes.clear();
-  TU.Code = R"cpp(
-    #include "a.h"
-    #include "b.h")cpp";
-  IgnoreDiagnostics Diags;
-  auto CI = buildCompilerInvocation(TU.inputs(FS), Diags);
-  auto PatchedAST = ParsedAST::build(testPath(TU.Filename), TU.inputs(FS),
-                                     std::move(CI), {}, BaselinePreamble);
-  ASSERT_TRUE(PatchedAST);
-  EXPECT_FALSE(PatchedAST->getDiagnostics());
-  EXPECT_THAT(Includes,
-              ElementsAre(WithFileName(testPath("__preamble_patch__.h")),
-                          WithFileName("b.h"), WithFileName("a.h")));
 }
 
 TEST(ParsedASTTest, PatchesAdditionalIncludes) {
@@ -562,7 +499,7 @@ TEST(ParsedASTTest, PatchesAdditionalIncludes) {
   auto EmptyPreamble =
       buildPreamble(testPath("foo.cpp"), *CI, Inputs, true, nullptr);
   ASSERT_TRUE(EmptyPreamble);
-  EXPECT_THAT(EmptyPreamble->Includes.MainFileIncludes, testing::IsEmpty());
+  EXPECT_THAT(EmptyPreamble->Includes.MainFileIncludes, IsEmpty());
 
   // Now build an AST using empty preamble and ensure patched includes worked.
   TU.Code = ModifiedContents.str();
@@ -576,18 +513,18 @@ TEST(ParsedASTTest, PatchesAdditionalIncludes) {
   EXPECT_THAT(PatchedAST->getIncludeStructure().MainFileIncludes,
               testing::Pointwise(
                   EqInc(), ExpectedAST.getIncludeStructure().MainFileIncludes));
-  auto StringMapToVector = [](const llvm::StringMap<unsigned> SM) {
-    std::vector<std::pair<std::string, unsigned>> Res;
-    for (const auto &E : SM)
-      Res.push_back({E.first().str(), E.second});
-    llvm::sort(Res);
-    return Res;
-  };
   // Ensure file proximity signals are correct.
-  EXPECT_EQ(StringMapToVector(PatchedAST->getIncludeStructure().includeDepth(
-                testPath("foo.cpp"))),
-            StringMapToVector(ExpectedAST.getIncludeStructure().includeDepth(
-                testPath("foo.cpp"))));
+  auto &SM = PatchedAST->getSourceManager();
+  auto &FM = SM.getFileManager();
+  // Copy so that we can use operator[] to get the children.
+  IncludeStructure Includes = PatchedAST->getIncludeStructure();
+  auto MainFE = FM.getFile(testPath("foo.cpp"));
+  ASSERT_TRUE(MainFE);
+  auto MainID = Includes.getID(*MainFE);
+  auto AuxFE = FM.getFile(testPath("sub/aux.h"));
+  ASSERT_TRUE(AuxFE);
+  auto AuxID = Includes.getID(*AuxFE);
+  EXPECT_THAT(Includes.IncludeChildren[*MainID], Contains(*AuxID));
 }
 
 TEST(ParsedASTTest, PatchesDeletedIncludes) {
@@ -620,18 +557,21 @@ TEST(ParsedASTTest, PatchesDeletedIncludes) {
   EXPECT_THAT(PatchedAST->getIncludeStructure().MainFileIncludes,
               testing::Pointwise(
                   EqInc(), ExpectedAST.getIncludeStructure().MainFileIncludes));
-  auto StringMapToVector = [](const llvm::StringMap<unsigned> SM) {
-    std::vector<std::pair<std::string, unsigned>> Res;
-    for (const auto &E : SM)
-      Res.push_back({E.first().str(), E.second});
-    llvm::sort(Res);
-    return Res;
-  };
   // Ensure file proximity signals are correct.
-  EXPECT_EQ(StringMapToVector(PatchedAST->getIncludeStructure().includeDepth(
-                testPath("foo.cpp"))),
-            StringMapToVector(ExpectedAST.getIncludeStructure().includeDepth(
-                testPath("foo.cpp"))));
+  auto &SM = ExpectedAST.getSourceManager();
+  auto &FM = SM.getFileManager();
+  // Copy so that we can getOrCreateID().
+  IncludeStructure Includes = ExpectedAST.getIncludeStructure();
+  auto MainFE = FM.getFile(testPath("foo.cpp"));
+  ASSERT_TRUE(MainFE);
+  auto MainID = Includes.getOrCreateID(*MainFE);
+  auto &PatchedFM = PatchedAST->getSourceManager().getFileManager();
+  IncludeStructure PatchedIncludes = PatchedAST->getIncludeStructure();
+  auto PatchedMainFE = PatchedFM.getFile(testPath("foo.cpp"));
+  ASSERT_TRUE(PatchedMainFE);
+  auto PatchedMainID = PatchedIncludes.getOrCreateID(*PatchedMainFE);
+  EXPECT_EQ(Includes.includeDepth(MainID)[MainID],
+            PatchedIncludes.includeDepth(PatchedMainID)[PatchedMainID]);
 }
 
 // Returns Code guarded by #ifndef guards
@@ -884,6 +824,27 @@ TEST(ParsedASTTest, HeaderGuardsImplIface) {
               ElementsAre(Diag("in included file: main file cannot be included "
                                "recursively when building a preamble")));
   EXPECT_FALSE(mainIsGuarded(AST));
+}
+
+TEST(ParsedASTTest, DiscoversPragmaMarks) {
+  TestTU TU;
+  TU.AdditionalFiles["Header.h"] = R"(
+    #pragma mark - Something API
+    int something();
+    #pragma mark Something else
+  )";
+  TU.Code = R"cpp(
+    #include "Header.h"
+    #pragma mark In Preamble
+    #pragma mark - Something Impl
+    int something() { return 1; }
+    #pragma mark End
+  )cpp";
+  auto AST = TU.build();
+
+  EXPECT_THAT(AST.getMarks(), ElementsAre(PragmaTrivia(" In Preamble"),
+                                          PragmaTrivia(" - Something Impl"),
+                                          PragmaTrivia(" End")));
 }
 
 } // namespace

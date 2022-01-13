@@ -508,7 +508,7 @@ void HexagonSplitDoubleRegs::collectIndRegsForLoop(const MachineLoop *L,
   while (CmpI->getOpcode() == Hexagon::C2_not)
     CmpI = MRI->getVRegDef(CmpI->getOperand(1).getReg());
 
-  int Mask = 0, Val = 0;
+  int64_t Mask = 0, Val = 0;
   bool OkCI = TII->analyzeCompare(*CmpI, CmpR1, CmpR2, Mask, Val);
   if (!OkCI)
     return;
@@ -578,8 +578,7 @@ void HexagonSplitDoubleRegs::collectIndRegs(LoopRegMap &IRM) {
     append_range(WorkQ, *WorkQ[i]);
 
   USet Rs;
-  for (unsigned i = 0, n = WorkQ.size(); i < n; ++i) {
-    MachineLoop *L = WorkQ[i];
+  for (MachineLoop *L : WorkQ) {
     Rs.clear();
     collectIndRegsForLoop(L, Rs);
     if (!Rs.empty())

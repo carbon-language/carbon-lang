@@ -21,12 +21,32 @@
 
 static cl::OptionCategory ProfGenCategory("ProfGen Options");
 
-static cl::list<std::string> PerfTraceFilenames(
-    "perfscript", cl::value_desc("perfscript"), cl::OneOrMore,
+static cl::opt<std::string> PerfScriptFilename(
+    "perfscript", cl::value_desc("perfscript"), cl::ZeroOrMore,
     llvm::cl::MiscFlags::CommaSeparated,
     cl::desc("Path of perf-script trace created by Linux perf tool with "
              "`script` command(the raw perf.data should be profiled with -b)"),
     cl::cat(ProfGenCategory));
+static cl::alias PSA("ps", cl::desc("Alias for --perfscript"),
+                     cl::aliasopt(PerfScriptFilename));
+
+static cl::opt<std::string> PerfDataFilename(
+    "perfdata", cl::value_desc("perfdata"), cl::ZeroOrMore,
+    llvm::cl::MiscFlags::CommaSeparated,
+    cl::desc("Path of raw perf data created by Linux perf tool (it should be "
+             "profiled with -b)"),
+    cl::cat(ProfGenCategory));
+static cl::alias PDA("pd", cl::desc("Alias for --perfdata"),
+                     cl::aliasopt(PerfDataFilename));
+
+static cl::opt<std::string> UnsymbolizedProfFilename(
+    "unsymbolized-profile", cl::value_desc("unsymbolized profile"),
+    cl::ZeroOrMore, llvm::cl::MiscFlags::CommaSeparated,
+    cl::desc("Path of the unsymbolized profile created by "
+             "`llvm-profgen` with `--skip-symbolization`"),
+    cl::cat(ProfGenCategory));
+static cl::alias UPA("up", cl::desc("Alias for --unsymbolized-profile"),
+                     cl::aliasopt(UnsymbolizedProfFilename));
 
 static cl::opt<std::string> BinaryPath(
     "binary", cl::value_desc("binary"), cl::Required,
@@ -35,25 +55,45 @@ static cl::opt<std::string> BinaryPath(
 
 extern cl::opt<bool> ShowDisassemblyOnly;
 extern cl::opt<bool> ShowSourceLocations;
+extern cl::opt<bool> SkipSymbolization;
 
 using namespace llvm;
 using namespace sampleprof;
 
 // Validate the command line input.
-static void validateCommandLine(StringRef BinaryPath,
-                                cl::list<std::string> &PerfTraceFilenames) {
-  // Allow the invalid perfscript if we only use to show binary disassembly.
+static void validateCommandLine() {
+  // Allow the missing perfscript if we only use to show binary disassembly.
   if (!ShowDisassemblyOnly) {
-    for (auto &File : PerfTraceFilenames) {
-      if (!llvm::sys::fs::exists(File)) {
-        std::string Msg = "Input perf script(" + File + ") doesn't exist!";
+    // Validate input profile is provided only once
+    uint16_t HasPerfData = PerfDataFilename.getNumOccurrences();
+    uint16_t HasPerfScript = PerfScriptFilename.getNumOccurrences();
+    uint16_t HasUnsymbolizedProfile =
+        UnsymbolizedProfFilename.getNumOccurrences();
+    uint16_t S = HasPerfData + HasPerfScript + HasUnsymbolizedProfile;
+    if (S != 1) {
+      std::string Msg =
+          S > 1
+              ? "`--perfscript`, `--perfdata` and `--unsymbolized-profile` "
+                "cannot be used together."
+              : "Perf input file is missing, please use one of `--perfscript`, "
+                "`--perfdata` and `--unsymbolized-profile` for the input.";
+      exitWithError(Msg);
+    }
+
+    auto CheckFileExists = [](bool H, StringRef File) {
+      if (H && !llvm::sys::fs::exists(File)) {
+        std::string Msg = "Input perf file(" + File.str() + ") doesn't exist.";
         exitWithError(Msg);
       }
-    }
+    };
+
+    CheckFileExists(HasPerfData, PerfDataFilename);
+    CheckFileExists(HasPerfScript, PerfScriptFilename);
+    CheckFileExists(HasUnsymbolizedProfile, UnsymbolizedProfFilename);
   }
 
   if (!llvm::sys::fs::exists(BinaryPath)) {
-    std::string Msg = "Input binary(" + BinaryPath.str() + ") doesn't exist!";
+    std::string Msg = "Input binary(" + BinaryPath + ") doesn't exist.";
     exitWithError(Msg);
   }
 
@@ -66,6 +106,21 @@ static void validateCommandLine(StringRef BinaryPath,
   }
 }
 
+static PerfInputFile getPerfInputFile() {
+  PerfInputFile File;
+  if (PerfDataFilename.getNumOccurrences()) {
+    File.InputFile = PerfDataFilename;
+    File.Format = PerfFormat::PerfData;
+  } else if (PerfScriptFilename.getNumOccurrences()) {
+    File.InputFile = PerfScriptFilename;
+    File.Format = PerfFormat::PerfScript;
+  } else if (UnsymbolizedProfFilename.getNumOccurrences()) {
+    File.InputFile = UnsymbolizedProfFilename;
+    File.Format = PerfFormat::UnsymbolizedProfile;
+  }
+  return File;
+}
+
 int main(int argc, const char *argv[]) {
   InitLLVM X(argc, argv);
 
@@ -76,7 +131,7 @@ int main(int argc, const char *argv[]) {
 
   cl::HideUnrelatedOptions({&ProfGenCategory, &getColorCategory()});
   cl::ParseCommandLineOptions(argc, argv, "llvm SPGO profile generator\n");
-  validateCommandLine(BinaryPath, PerfTraceFilenames);
+  validateCommandLine();
 
   // Load symbols and disassemble the code of a given binary.
   std::unique_ptr<ProfiledBinary> Binary =
@@ -84,13 +139,18 @@ int main(int argc, const char *argv[]) {
   if (ShowDisassemblyOnly)
     return EXIT_SUCCESS;
 
-  // Parse perf events and samples
+  PerfInputFile PerfFile = getPerfInputFile();
   std::unique_ptr<PerfReaderBase> Reader =
-      PerfReaderBase::create(Binary.get(), PerfTraceFilenames);
-  Reader->parsePerfTraces(PerfTraceFilenames);
+      PerfReaderBase::create(Binary.get(), PerfFile);
+  // Parse perf events and samples
+  Reader->parsePerfTraces();
 
-  std::unique_ptr<ProfileGenerator> Generator = ProfileGenerator::create(
-      Binary.get(), Reader->getSampleCounters(), Reader->getPerfScriptType());
+  if (SkipSymbolization)
+    return EXIT_SUCCESS;
+
+  std::unique_ptr<ProfileGeneratorBase> Generator =
+      ProfileGeneratorBase::create(Binary.get(), Reader->getSampleCounters(),
+                                   Reader->profileIsCSFlat());
   Generator->generateProfile();
   Generator->write();
 

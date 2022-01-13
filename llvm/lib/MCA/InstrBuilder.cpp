@@ -612,7 +612,7 @@ InstrBuilder::createInstrDescImpl(const MCInst &MCI) {
   LLVM_DEBUG(dbgs() << "\t\tMaxLatency=" << ID->MaxLatency << '\n');
   LLVM_DEBUG(dbgs() << "\t\tNumMicroOps=" << ID->NumMicroOps << '\n');
 
-  // Sanity check on the instruction descriptor.
+  // Validation check on the instruction descriptor.
   if (Error Err = verifyInstrDesc(*ID, MCI))
     return std::move(Err);
 
@@ -687,7 +687,7 @@ InstrBuilder::createInstruction(const MCInst &MCI) {
     if (IsDepBreaking) {
       // A mask of all zeroes means: explicit input operands are not
       // independent.
-      if (Mask.isNullValue()) {
+      if (Mask.isZero()) {
         if (!RD.isImplicitRead())
           RS.setIndependentFromDef();
       } else {

@@ -1,4 +1,4 @@
-//===------------------------------- unwind.h -----------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -27,9 +27,10 @@ typedef uint32_t _Unwind_EHT_Header;
 struct _Unwind_Control_Block;
 typedef struct _Unwind_Control_Block _Unwind_Control_Block;
 #define _Unwind_Exception _Unwind_Control_Block /* Alias */
+typedef uint8_t _Unwind_Exception_Class[8];
 
 struct _Unwind_Control_Block {
-  uint64_t exception_class;
+  _Unwind_Exception_Class exception_class;
   void (*exception_cleanup)(_Unwind_Reason_Code, _Unwind_Control_Block*);
 
   /* Unwinder cache, private fields for the unwinder's use */
@@ -86,10 +87,11 @@ extern void _Unwind_Resume(_Unwind_Exception *exception_object);
 extern void _Unwind_DeleteException(_Unwind_Exception *exception_object);
 
 typedef enum {
-  _UVRSC_CORE = 0, /* integer register */
-  _UVRSC_VFP = 1, /* vfp */
+  _UVRSC_CORE = 0,  /* integer register */
+  _UVRSC_VFP = 1,   /* vfp */
   _UVRSC_WMMXD = 3, /* Intel WMMX data register */
-  _UVRSC_WMMXC = 4 /* Intel WMMX control register */
+  _UVRSC_WMMXC = 4, /* Intel WMMX control register */
+  _UVRSC_PSEUDO = 5 /* Special purpose pseudo register */
 } _Unwind_VRS_RegClass;
 
 typedef enum {

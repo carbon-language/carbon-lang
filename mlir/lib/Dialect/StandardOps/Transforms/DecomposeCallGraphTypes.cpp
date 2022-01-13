@@ -61,13 +61,13 @@ struct DecomposeCallGraphTypesForFuncArgs
       DecomposeCallGraphTypesOpConversionPattern;
 
   LogicalResult
-  matchAndRewrite(FuncOp op, ArrayRef<Value> operands,
+  matchAndRewrite(FuncOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const final {
     auto functionType = op.getType();
 
     // Convert function arguments using the provided TypeConverter.
     TypeConverter::SignatureConversion conversion(functionType.getNumInputs());
-    for (auto argType : llvm::enumerate(functionType.getInputs())) {
+    for (const auto &argType : llvm::enumerate(functionType.getInputs())) {
       SmallVector<Type, 2> decomposedTypes;
       if (failed(typeConverter->convertType(argType.value(), decomposedTypes)))
         return failure();
@@ -106,10 +106,10 @@ struct DecomposeCallGraphTypesForReturnOp
   using DecomposeCallGraphTypesOpConversionPattern::
       DecomposeCallGraphTypesOpConversionPattern;
   LogicalResult
-  matchAndRewrite(ReturnOp op, ArrayRef<Value> operands,
+  matchAndRewrite(ReturnOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const final {
     SmallVector<Value, 2> newOperands;
-    for (Value operand : operands)
+    for (Value operand : adaptor.getOperands())
       decomposer.decomposeValue(rewriter, op.getLoc(), operand.getType(),
                                 operand, newOperands);
     rewriter.replaceOpWithNewOp<ReturnOp>(op, newOperands);
@@ -131,12 +131,12 @@ struct DecomposeCallGraphTypesForCallOp
       DecomposeCallGraphTypesOpConversionPattern;
 
   LogicalResult
-  matchAndRewrite(CallOp op, ArrayRef<Value> operands,
+  matchAndRewrite(CallOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const final {
 
     // Create the operands list of the new `CallOp`.
     SmallVector<Value, 2> newOperands;
-    for (Value operand : operands)
+    for (Value operand : adaptor.getOperands())
       decomposer.decomposeValue(rewriter, op.getLoc(), operand.getType(),
                                 operand, newOperands);
 
@@ -156,7 +156,7 @@ struct DecomposeCallGraphTypesForCallOp
         resultMapping.push_back(i);
     }
 
-    CallOp newCallOp = rewriter.create<CallOp>(op.getLoc(), op.getCallee(),
+    CallOp newCallOp = rewriter.create<CallOp>(op.getLoc(), op.getCalleeAttr(),
                                                newResultTypes, newOperands);
 
     // Build a replacement value for each result to replace its uses. If a

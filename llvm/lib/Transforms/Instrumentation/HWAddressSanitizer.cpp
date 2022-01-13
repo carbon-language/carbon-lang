@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 //
 /// \file
-/// This file is a part of HWAddressSanitizer, an address sanity checker
-/// based on tagged addressing.
+/// This file is a part of HWAddressSanitizer, an address basic correctness
+/// checker based on tagged addressing.
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Instrumentation/HWAddressSanitizer.h"
@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/StackSafetyAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -118,6 +119,12 @@ static cl::opt<bool>
     ClUseStackSafety("hwasan-use-stack-safety", cl::Hidden, cl::init(true),
                      cl::Hidden, cl::desc("Use Stack Safety analysis results"),
                      cl::Optional);
+
+static cl::opt<size_t> ClMaxLifetimes(
+    "hwasan-max-lifetimes-for-alloca", cl::Hidden, cl::init(3),
+    cl::ReallyHidden,
+    cl::desc("How many lifetime ends to handle for a single alloca."),
+    cl::Optional);
 
 static cl::opt<bool>
     ClUseAfterScope("hwasan-use-after-scope",
@@ -275,12 +282,18 @@ public:
 
   void untagPointerOperand(Instruction *I, Value *Addr);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
+
+  int64_t getAccessInfo(bool IsWrite, unsigned AccessSizeIndex);
+  void instrumentMemAccessOutline(Value *Ptr, bool IsWrite,
+                                  unsigned AccessSizeIndex,
+                                  Instruction *InsertBefore);
   void instrumentMemAccessInline(Value *Ptr, bool IsWrite,
                                  unsigned AccessSizeIndex,
                                  Instruction *InsertBefore);
+  bool ignoreMemIntrinsic(MemIntrinsic *MI);
   void instrumentMemIntrinsic(MemIntrinsic *MI);
   bool instrumentMemAccess(InterestingMemoryOperand &O);
-  bool ignoreAccess(Value *Ptr);
+  bool ignoreAccess(Instruction *Inst, Value *Ptr);
   void getInterestingMemoryOperands(
       Instruction *I, SmallVectorImpl<InterestingMemoryOperand> &Interesting);
 
@@ -288,6 +301,8 @@ public:
   void tagAlloca(IRBuilder<> &IRB, AllocaInst *AI, Value *Tag, size_t Size);
   Value *tagPointer(IRBuilder<> &IRB, Type *Ty, Value *PtrLong, Value *Tag);
   Value *untagPointer(IRBuilder<> &IRB, Value *PtrLong);
+  static bool isStandardLifetime(const AllocaInfo &AllocaInfo,
+                                 const DominatorTree &DT);
   bool instrumentStack(
       MapVector<AllocaInst *, AllocaInfo> &AllocasToInstrument,
       SmallVector<Instruction *, 4> &UnrecognizedLifetimes,
@@ -341,7 +356,7 @@ private:
     bool WithFrameRecord;
 
     void init(Triple &TargetTriple, bool InstrumentWithCalls);
-    unsigned getObjectAlignment() const { return 1U << Scale; }
+    uint64_t getObjectAlignment() const { return 1ULL << Scale; }
   };
 
   ShadowMapping Mapping;
@@ -494,6 +509,17 @@ PreservedAnalyses HWAddressSanitizerPass::run(Module &M,
   if (Modified)
     return PreservedAnalyses::none();
   return PreservedAnalyses::all();
+}
+void HWAddressSanitizerPass::printPipeline(
+    raw_ostream &OS, function_ref<StringRef(StringRef)> MapClassName2PassName) {
+  static_cast<PassInfoMixin<HWAddressSanitizerPass> *>(this)->printPipeline(
+      OS, MapClassName2PassName);
+  OS << "<";
+  if (Options.CompileKernel)
+    OS << "kernel;";
+  if (Options.Recover)
+    OS << "recover";
+  OS << ">";
 }
 
 void HWAddressSanitizer::createHwasanCtorComdat() {
@@ -759,7 +785,7 @@ Value *HWAddressSanitizer::getShadowNonTls(IRBuilder<> &IRB) {
   }
 }
 
-bool HWAddressSanitizer::ignoreAccess(Value *Ptr) {
+bool HWAddressSanitizer::ignoreAccess(Instruction *Inst, Value *Ptr) {
   // Do not instrument acesses from different address spaces; we cannot deal
   // with them.
   Type *PtrTy = cast<PointerType>(Ptr->getType()->getScalarType());
@@ -773,6 +799,12 @@ bool HWAddressSanitizer::ignoreAccess(Value *Ptr) {
   if (Ptr->isSwiftError())
     return true;
 
+  if (findAllocaForValue(Ptr)) {
+    if (!InstrumentStack)
+      return true;
+    if (SSI && SSI->stackAccessIsSafe(*Inst))
+      return true;
+  }
   return false;
 }
 
@@ -787,29 +819,29 @@ void HWAddressSanitizer::getInterestingMemoryOperands(
     return;
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    if (!ClInstrumentReads || ignoreAccess(LI->getPointerOperand()))
+    if (!ClInstrumentReads || ignoreAccess(I, LI->getPointerOperand()))
       return;
     Interesting.emplace_back(I, LI->getPointerOperandIndex(), false,
                              LI->getType(), LI->getAlign());
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-    if (!ClInstrumentWrites || ignoreAccess(SI->getPointerOperand()))
+    if (!ClInstrumentWrites || ignoreAccess(I, SI->getPointerOperand()))
       return;
     Interesting.emplace_back(I, SI->getPointerOperandIndex(), true,
                              SI->getValueOperand()->getType(), SI->getAlign());
   } else if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(I)) {
-    if (!ClInstrumentAtomics || ignoreAccess(RMW->getPointerOperand()))
+    if (!ClInstrumentAtomics || ignoreAccess(I, RMW->getPointerOperand()))
       return;
     Interesting.emplace_back(I, RMW->getPointerOperandIndex(), true,
                              RMW->getValOperand()->getType(), None);
   } else if (AtomicCmpXchgInst *XCHG = dyn_cast<AtomicCmpXchgInst>(I)) {
-    if (!ClInstrumentAtomics || ignoreAccess(XCHG->getPointerOperand()))
+    if (!ClInstrumentAtomics || ignoreAccess(I, XCHG->getPointerOperand()))
       return;
     Interesting.emplace_back(I, XCHG->getPointerOperandIndex(), true,
                              XCHG->getCompareOperand()->getType(), None);
   } else if (auto CI = dyn_cast<CallInst>(I)) {
-    for (unsigned ArgNo = 0; ArgNo < CI->getNumArgOperands(); ArgNo++) {
+    for (unsigned ArgNo = 0; ArgNo < CI->arg_size(); ArgNo++) {
       if (!ClInstrumentByval || !CI->isByValArgument(ArgNo) ||
-          ignoreAccess(CI->getArgOperand(ArgNo)))
+          ignoreAccess(I, CI->getArgOperand(ArgNo)))
         continue;
       Type *Ty = CI->getParamByValType(ArgNo);
       Interesting.emplace_back(I, ArgNo, false, Ty, Align(1));
@@ -856,29 +888,37 @@ Value *HWAddressSanitizer::memToShadow(Value *Mem, IRBuilder<> &IRB) {
   return IRB.CreateGEP(Int8Ty, ShadowBase, Shadow);
 }
 
+int64_t HWAddressSanitizer::getAccessInfo(bool IsWrite,
+                                          unsigned AccessSizeIndex) {
+  return (CompileKernel << HWASanAccessInfo::CompileKernelShift) +
+         (HasMatchAllTag << HWASanAccessInfo::HasMatchAllShift) +
+         (MatchAllTag << HWASanAccessInfo::MatchAllShift) +
+         (Recover << HWASanAccessInfo::RecoverShift) +
+         (IsWrite << HWASanAccessInfo::IsWriteShift) +
+         (AccessSizeIndex << HWASanAccessInfo::AccessSizeShift);
+}
+
+void HWAddressSanitizer::instrumentMemAccessOutline(Value *Ptr, bool IsWrite,
+                                                    unsigned AccessSizeIndex,
+                                                    Instruction *InsertBefore) {
+  assert(!UsePageAliases);
+  const int64_t AccessInfo = getAccessInfo(IsWrite, AccessSizeIndex);
+  IRBuilder<> IRB(InsertBefore);
+  Module *M = IRB.GetInsertBlock()->getParent()->getParent();
+  Ptr = IRB.CreateBitCast(Ptr, Int8PtrTy);
+  IRB.CreateCall(Intrinsic::getDeclaration(
+                     M, UseShortGranules
+                            ? Intrinsic::hwasan_check_memaccess_shortgranules
+                            : Intrinsic::hwasan_check_memaccess),
+                 {ShadowBase, Ptr, ConstantInt::get(Int32Ty, AccessInfo)});
+}
+
 void HWAddressSanitizer::instrumentMemAccessInline(Value *Ptr, bool IsWrite,
                                                    unsigned AccessSizeIndex,
                                                    Instruction *InsertBefore) {
   assert(!UsePageAliases);
-  const int64_t AccessInfo =
-      (CompileKernel << HWASanAccessInfo::CompileKernelShift) +
-      (HasMatchAllTag << HWASanAccessInfo::HasMatchAllShift) +
-      (MatchAllTag << HWASanAccessInfo::MatchAllShift) +
-      (Recover << HWASanAccessInfo::RecoverShift) +
-      (IsWrite << HWASanAccessInfo::IsWriteShift) +
-      (AccessSizeIndex << HWASanAccessInfo::AccessSizeShift);
+  const int64_t AccessInfo = getAccessInfo(IsWrite, AccessSizeIndex);
   IRBuilder<> IRB(InsertBefore);
-
-  if (OutlinedChecks) {
-    Module *M = IRB.GetInsertBlock()->getParent()->getParent();
-    Ptr = IRB.CreateBitCast(Ptr, Int8PtrTy);
-    IRB.CreateCall(Intrinsic::getDeclaration(
-                       M, UseShortGranules
-                              ? Intrinsic::hwasan_check_memaccess_shortgranules
-                              : Intrinsic::hwasan_check_memaccess),
-                   {ShadowBase, Ptr, ConstantInt::get(Int32Ty, AccessInfo)});
-    return;
-  }
 
   Value *PtrLong = IRB.CreatePointerCast(Ptr, IntptrTy);
   Value *PtrTag = IRB.CreateTrunc(IRB.CreateLShr(PtrLong, PointerTagShift),
@@ -955,6 +995,16 @@ void HWAddressSanitizer::instrumentMemAccessInline(Value *Ptr, bool IsWrite,
     cast<BranchInst>(CheckFailTerm)->setSuccessor(0, CheckTerm->getParent());
 }
 
+bool HWAddressSanitizer::ignoreMemIntrinsic(MemIntrinsic *MI) {
+  if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI)) {
+    return (!ClInstrumentWrites || ignoreAccess(MTI, MTI->getDest())) &&
+           (!ClInstrumentReads || ignoreAccess(MTI, MTI->getSource()));
+  }
+  if (isa<MemSetInst>(MI))
+    return !ClInstrumentWrites || ignoreAccess(MI, MI->getDest());
+  return false;
+}
+
 void HWAddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   IRBuilder<> IRB(MI);
   if (isa<MemTransferInst>(MI)) {
@@ -990,6 +1040,8 @@ bool HWAddressSanitizer::instrumentMemAccess(InterestingMemoryOperand &O) {
     if (InstrumentWithCalls) {
       IRB.CreateCall(HwasanMemoryAccessCallback[O.IsWrite][AccessSizeIndex],
                      IRB.CreatePointerCast(Addr, IntptrTy));
+    } else if (OutlinedChecks) {
+      instrumentMemAccessOutline(Addr, O.IsWrite, AccessSizeIndex, O.getInsn());
     } else {
       instrumentMemAccessInline(Addr, O.IsWrite, AccessSizeIndex, O.getInsn());
     }
@@ -1277,6 +1329,35 @@ bool HWAddressSanitizer::instrumentLandingPads(
   return true;
 }
 
+static bool
+maybeReachableFromEachOther(const SmallVectorImpl<IntrinsicInst *> &Insts,
+                            const DominatorTree &DT) {
+  // If we have too many lifetime ends, give up, as the algorithm below is N^2.
+  if (Insts.size() > ClMaxLifetimes)
+    return true;
+  for (size_t I = 0; I < Insts.size(); ++I) {
+    for (size_t J = 0; J < Insts.size(); ++J) {
+      if (I == J)
+        continue;
+      if (isPotentiallyReachable(Insts[I], Insts[J], nullptr, &DT))
+        return true;
+    }
+  }
+  return false;
+}
+
+// static
+bool HWAddressSanitizer::isStandardLifetime(const AllocaInfo &AllocaInfo,
+                                            const DominatorTree &DT) {
+  // An alloca that has exactly one start and end in every possible execution.
+  // If it has multiple ends, they have to be unreachable from each other, so
+  // at most one of them is actually used for each execution of the function.
+  return AllocaInfo.LifetimeStart.size() == 1 &&
+         (AllocaInfo.LifetimeEnd.size() == 1 ||
+          (AllocaInfo.LifetimeEnd.size() > 0 &&
+           !maybeReachableFromEachOther(AllocaInfo.LifetimeEnd, DT)));
+}
+
 bool HWAddressSanitizer::instrumentStack(
     MapVector<AllocaInst *, AllocaInfo> &AllocasToInstrument,
     SmallVector<Instruction *, 4> &UnrecognizedLifetimes,
@@ -1322,12 +1403,10 @@ bool HWAddressSanitizer::instrumentStack(
 
     size_t Size = getAllocaSizeInBytes(*AI);
     size_t AlignedSize = alignTo(Size, Mapping.getObjectAlignment());
-    bool StandardLifetime = UnrecognizedLifetimes.empty() &&
-                            Info.LifetimeStart.size() == 1 &&
-                            Info.LifetimeEnd.size() == 1;
+    bool StandardLifetime =
+        UnrecognizedLifetimes.empty() && isStandardLifetime(Info, GetDT());
     if (DetectUseAfterScope && StandardLifetime) {
       IntrinsicInst *Start = Info.LifetimeStart[0];
-      IntrinsicInst *End = Info.LifetimeEnd[0];
       IRB.SetInsertPoint(Start->getNextNode());
       auto TagEnd = [&](Instruction *Node) {
         IRB.SetInsertPoint(Node);
@@ -1335,8 +1414,11 @@ bool HWAddressSanitizer::instrumentStack(
         tagAlloca(IRB, AI, UARTag, AlignedSize);
       };
       tagAlloca(IRB, AI, Tag, Size);
-      if (!forAllReachableExits(GetDT(), GetPDT(), Start, End, RetVec, TagEnd))
-        End->eraseFromParent();
+      if (!forAllReachableExits(GetDT(), GetPDT(), Start, Info.LifetimeEnd,
+                                RetVec, TagEnd)) {
+        for (auto *End : Info.LifetimeEnd)
+          End->eraseFromParent();
+      }
     } else {
       tagAlloca(IRB, AI, Tag, Size);
       for (auto *RI : RetVec) {
@@ -1471,7 +1553,8 @@ bool HWAddressSanitizer::sanitizeFunction(
       getInterestingMemoryOperands(&Inst, OperandsToInstrument);
 
       if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&Inst))
-        IntrinToInstrument.push_back(MI);
+        if (!ignoreMemIntrinsic(MI))
+          IntrinToInstrument.push_back(MI);
     }
   }
 
@@ -1538,13 +1621,11 @@ bool HWAddressSanitizer::sanitizeFunction(
   // dynamic allocas.
   if (EntryIRB.GetInsertBlock() != &F.getEntryBlock()) {
     InsertPt = &*F.getEntryBlock().begin();
-    for (auto II = EntryIRB.GetInsertBlock()->begin(),
-              IE = EntryIRB.GetInsertBlock()->end();
-         II != IE;) {
-      Instruction *I = &*II++;
-      if (auto *AI = dyn_cast<AllocaInst>(I))
+    for (Instruction &I :
+         llvm::make_early_inc_range(*EntryIRB.GetInsertBlock())) {
+      if (auto *AI = dyn_cast<AllocaInst>(&I))
         if (isa<ConstantInt>(AI->getArraySize()))
-          I->moveBefore(InsertPt);
+          I.moveBefore(InsertPt);
     }
   }
 
@@ -1690,9 +1771,10 @@ void HWAddressSanitizer::instrumentGlobals() {
   Hasher.update(M.getSourceFileName());
   MD5::MD5Result Hash;
   Hasher.final(Hash);
-  uint8_t Tag = Hash[0] & TagMaskByte;
+  uint8_t Tag = Hash[0];
 
   for (GlobalVariable *GV : Globals) {
+    Tag &= TagMaskByte;
     // Skip tag 0 in order to avoid collisions with untagged memory.
     if (Tag == 0)
       Tag = 1;

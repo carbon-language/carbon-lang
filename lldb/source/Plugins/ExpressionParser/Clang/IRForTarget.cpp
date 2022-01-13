@@ -1255,7 +1255,7 @@ bool IRForTarget::MaybeHandleVariable(Value *llvm_value_ptr) {
       m_decl_map->AddValueToStruct(named_decl, lldb_private::ConstString(name),
                                    llvm_value_ptr, *value_size,
                                    value_alignment);
-  } else if (dyn_cast<llvm::Function>(llvm_value_ptr)) {
+  } else if (isa<llvm::Function>(llvm_value_ptr)) {
     LLDB_LOG(log, "Function pointers aren't handled right now");
 
     return false;
@@ -1303,7 +1303,7 @@ bool IRForTarget::MaybeHandleCallArguments(CallInst *Old) {
 
   LLDB_LOG(log, "MaybeHandleCallArguments({0})", PrintValue(Old));
 
-  for (unsigned op_index = 0, num_ops = Old->getNumArgOperands();
+  for (unsigned op_index = 0, num_ops = Old->arg_size();
        op_index < num_ops; ++op_index)
     // conservatively believe that this is a store
     if (!MaybeHandleVariable(Old->getArgOperand(op_index))) {

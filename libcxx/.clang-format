@@ -2,7 +2,8 @@ BasedOnStyle: LLVM
 
 ---
 Language: Cpp
-Standard: Cpp03
+Standard: c++20
+SpacesInAngles: Leave
 
 AlwaysBreakTemplateDeclarations: true
 PointerAlignment: Left
@@ -10,6 +11,9 @@ PointerAlignment: Left
 # Disable formatting options which may break tests.
 SortIncludes: false
 ReflowComments: false
+
+# libc++'s preferred indentions of preprocessor statements.
+IndentPPDirectives: AfterHash
 
 # libc++ has some long names so we need more than the 80 column limit imposed by LLVM style, for sensible formatting
 ColumnLimit: 120

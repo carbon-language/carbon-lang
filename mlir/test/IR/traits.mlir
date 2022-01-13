@@ -506,7 +506,7 @@ func @failedHasDominanceScopeOutsideDominanceFreeScope() -> () {
 // checked for dominance
 func @illegalInsideDominanceFreeScope() -> () {
   test.graph_region {
-    func @test() -> i1 {
+    builtin.func @test() -> i1 {
     ^bb1:
       // expected-error @+1 {{operand #0 does not dominate this use}}
       %2:3 = "bar"(%1) : (i64) -> (i1,i1,i1)
@@ -525,7 +525,7 @@ func @illegalInsideDominanceFreeScope() -> () {
 // checked for dominance
 func @illegalCDFGInsideDominanceFreeScope() -> () {
   test.graph_region {
-    func @test() -> i1 {
+    builtin.func @test() -> i1 {
     ^bb1:
       // expected-error @+1 {{operand #0 does not dominate this use}}
       %2:3 = "bar"(%1) : (i64) -> (i1,i1,i1)
@@ -563,4 +563,40 @@ func @graph_region_cant_have_blocks() {
   ^bb43:
     "terminator"() : () -> ()
   }
+}
+
+// -----
+
+// Check that we can query traits in types
+func @succeeded_type_traits() {
+  // CHECK: "test.result_type_with_trait"() : () -> !test.test_type_with_trait
+  "test.result_type_with_trait"() : () -> !test.test_type_with_trait
+  return
+}
+
+// -----
+
+// Check that we can query traits in types
+func @failed_type_traits() {
+  // expected-error@+1 {{result type should have trait 'TestTypeTrait'}}
+  "test.result_type_with_trait"() : () -> i32
+  return
+}
+
+// -----
+
+// Check that we can query traits in attributes
+func @succeeded_attr_traits() {
+  // CHECK: "test.attr_with_trait"() {attr = #test.attr_with_trait} : () -> ()
+  "test.attr_with_trait"() {attr = #test.attr_with_trait} : () -> ()
+  return
+}
+
+// -----
+
+// Check that we can query traits in attributes
+func @failed_attr_traits() {
+  // expected-error@+1 {{'attr' attribute should have trait 'TestAttrTrait'}}
+  "test.attr_with_trait"() {attr = 42 : i32} : () -> ()
+  return
 }

@@ -40,7 +40,6 @@ class LoadUsingPathsTestCase(TestBase):
     @skipIfWindows  # Windows doesn't have dlopen and friends, dynamic libraries work differently
     @expectedFlakeyNetBSD
     @expectedFailureAll(oslist=["linux"], archs=['arm'], bugnumber="llvm.org/pr45894")
-    @skipIfReproducer # FIXME: Unexpected packet during (passive) replay
     def test_load_using_paths(self):
         """Test that we can load a module by providing a set of search paths."""
         if self.platformIsDarwin():
@@ -66,7 +65,12 @@ class LoadUsingPathsTestCase(TestBase):
         # First try with no correct directories on the path, and make sure that doesn't blow up:
         token = process.LoadImageUsingPaths(lib_spec, paths, out_spec, error)
         self.assertEqual(token, lldb.LLDB_INVALID_IMAGE_TOKEN, "Only looked on the provided path.")
-
+        # Make sure we got some error back in this case.  Since we don't actually know what
+        # the error will look like, let's look for the absence of "unknown reasons".
+        error_str = error.description
+        self.assertNotEqual(len(error_str), 0, "Got an empty error string")
+        self.assertNotIn("unknown reasons", error_str, "Error string had unknown reasons")
+        
         # Now add the correct dir to the paths list and try again:
         paths.AppendString(self.hidden_dir)
         token = process.LoadImageUsingPaths(lib_spec, paths, out_spec, error)
@@ -122,8 +126,6 @@ class LoadUsingPathsTestCase(TestBase):
 
         process.UnloadImage(token)
 
-
-
         # Finally, passing in an absolute path should work like the basename:
         # This should NOT work because we've taken hidden_dir off the paths:
         abs_spec = lldb.SBFileSpec(os.path.join(self.hidden_dir, self.lib_name))
@@ -138,5 +140,3 @@ class LoadUsingPathsTestCase(TestBase):
 
         self.assertNotEqual(token, lldb.LLDB_INVALID_IMAGE_TOKEN, "Got a valid token")
         self.assertEqual(out_spec, lldb.SBFileSpec(self.hidden_lib), "Found the expected library")
-
-

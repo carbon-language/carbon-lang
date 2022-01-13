@@ -9,6 +9,7 @@
 #ifndef MLIR_IR_BUILTINTYPES_H
 #define MLIR_IR_BUILTINTYPES_H
 
+#include "BuiltinAttributeInterfaces.h"
 #include "SubElementInterfaces.h"
 
 namespace llvm {
@@ -19,9 +20,9 @@ namespace mlir {
 class AffineExpr;
 class AffineMap;
 class FloatType;
-class Identifier;
 class IndexType;
 class IntegerType;
+class StringAttr;
 class TypeRange;
 
 //===----------------------------------------------------------------------===//
@@ -182,7 +183,7 @@ public:
   unsigned getMemorySpaceAsInt() const;
 };
 
-} // end namespace mlir
+} // namespace mlir
 
 //===----------------------------------------------------------------------===//
 // Tablegen Type Declarations
@@ -198,23 +199,23 @@ public:
 #include "mlir/IR/BuiltinTypeInterfaces.h.inc"
 
 namespace mlir {
+
 //===----------------------------------------------------------------------===//
 // MemRefType
 //===----------------------------------------------------------------------===//
 
 /// This is a builder type that keeps local references to arguments. Arguments
-/// that are passed into the builder must out-live the builder.
+/// that are passed into the builder must outlive the builder.
 class MemRefType::Builder {
 public:
   // Build from another MemRefType.
   explicit Builder(MemRefType other)
       : shape(other.getShape()), elementType(other.getElementType()),
-        affineMaps(other.getAffineMaps()), memorySpace(other.getMemorySpace()) {
-  }
+        layout(other.getLayout()), memorySpace(other.getMemorySpace()) {}
 
   // Build from scratch.
   Builder(ArrayRef<int64_t> shape, Type elementType)
-      : shape(shape), elementType(elementType), affineMaps() {}
+      : shape(shape), elementType(elementType) {}
 
   Builder &setShape(ArrayRef<int64_t> newShape) {
     shape = newShape;
@@ -226,8 +227,8 @@ public:
     return *this;
   }
 
-  Builder &setAffineMaps(ArrayRef<AffineMap> newAffineMaps) {
-    affineMaps = newAffineMaps;
+  Builder &setLayout(MemRefLayoutAttrInterface newLayout) {
+    layout = newLayout;
     return *this;
   }
 
@@ -240,14 +241,128 @@ public:
   Builder &setMemorySpace(unsigned newMemorySpace);
 
   operator MemRefType() {
-    return MemRefType::get(shape, elementType, affineMaps, memorySpace);
+    return MemRefType::get(shape, elementType, layout, memorySpace);
   }
 
 private:
   ArrayRef<int64_t> shape;
   Type elementType;
-  ArrayRef<AffineMap> affineMaps;
+  MemRefLayoutAttrInterface layout;
   Attribute memorySpace;
+};
+
+//===----------------------------------------------------------------------===//
+// RankedTensorType
+//===----------------------------------------------------------------------===//
+
+/// This is a builder type that keeps local references to arguments. Arguments
+/// that are passed into the builder must outlive the builder.
+class RankedTensorType::Builder {
+public:
+  /// Build from another RankedTensorType.
+  explicit Builder(RankedTensorType other)
+      : shape(other.getShape()), elementType(other.getElementType()),
+        encoding(other.getEncoding()) {}
+
+  /// Build from scratch.
+  Builder(ArrayRef<int64_t> shape, Type elementType, Attribute encoding)
+      : shape(shape), elementType(elementType), encoding(encoding) {}
+
+  Builder &setShape(ArrayRef<int64_t> newShape) {
+    shape = newShape;
+    return *this;
+  }
+
+  Builder &setElementType(Type newElementType) {
+    elementType = newElementType;
+    return *this;
+  }
+
+  Builder &setEncoding(Attribute newEncoding) {
+    encoding = newEncoding;
+    return *this;
+  }
+
+  /// Erase a dim from shape @pos.
+  Builder &dropDim(unsigned pos) {
+    assert(pos < shape.size() && "overflow");
+    if (storage.empty())
+      storage.append(shape.begin(), shape.end());
+    storage.erase(storage.begin() + pos);
+    shape = {storage.data(), storage.size()};
+    return *this;
+  }
+
+  operator RankedTensorType() {
+    return RankedTensorType::get(shape, elementType, encoding);
+  }
+
+private:
+  ArrayRef<int64_t> shape;
+  // Owning shape data for copy-on-write operations.
+  SmallVector<int64_t> storage;
+  Type elementType;
+  Attribute encoding;
+};
+
+//===----------------------------------------------------------------------===//
+// VectorType
+//===----------------------------------------------------------------------===//
+
+/// This is a builder type that keeps local references to arguments. Arguments
+/// that are passed into the builder must outlive the builder.
+class VectorType::Builder {
+public:
+  /// Build from another VectorType.
+  explicit Builder(VectorType other)
+      : shape(other.getShape()), elementType(other.getElementType()),
+        numScalableDims(other.getNumScalableDims()) {}
+
+  /// Build from scratch.
+  Builder(ArrayRef<int64_t> shape, Type elementType,
+          unsigned numScalableDims = 0)
+      : shape(shape), elementType(elementType),
+        numScalableDims(numScalableDims) {}
+
+  Builder &setShape(ArrayRef<int64_t> newShape,
+                    unsigned newNumScalableDims = 0) {
+    numScalableDims = newNumScalableDims;
+    shape = newShape;
+    return *this;
+  }
+
+  Builder &setElementType(Type newElementType) {
+    elementType = newElementType;
+    return *this;
+  }
+
+  /// Erase a dim from shape @pos.
+  Builder &dropDim(unsigned pos) {
+    assert(pos < shape.size() && "overflow");
+    if (pos >= shape.size() - numScalableDims)
+      numScalableDims--;
+    if (storage.empty())
+      storage.append(shape.begin(), shape.end());
+    storage.erase(storage.begin() + pos);
+    shape = {storage.data(), storage.size()};
+    return *this;
+  }
+
+  /// In the particular case where the vector has a single dimension that we
+  /// drop, return the scalar element type.
+  // TODO: unify once we have a VectorType that supports 0-D.
+  operator Type() {
+    if (shape.empty())
+      return elementType;
+    return VectorType::get(shape, elementType, numScalableDims);
+  }
+
+private:
+  ArrayRef<int64_t> shape;
+  // Owning shape data for copy-on-write operations.
+  SmallVector<int64_t> storage;
+  Type elementType;
+  unsigned numScalableDims;
 };
 
 /// Given an `originalShape` and a `reducedShape` assumed to be a subset of
@@ -261,6 +376,25 @@ private:
 llvm::Optional<llvm::SmallDenseSet<unsigned>>
 computeRankReductionMask(ArrayRef<int64_t> originalShape,
                          ArrayRef<int64_t> reducedShape);
+
+/// Enum that captures information related to verifier error conditions on
+/// slice insert/extract type of ops.
+enum class SliceVerificationResult {
+  Success,
+  RankTooLarge,
+  SizeMismatch,
+  ElemTypeMismatch,
+  // Error codes to ops with a memory space and a layout annotation.
+  MemSpaceMismatch,
+  LayoutMismatch
+};
+
+/// Check if `originalType` can be rank reduced to `candidateReducedType` type
+/// by dropping some dimensions with static size `1`.
+/// Return `SliceVerificationResult::Success` on success or an appropriate error
+/// code.
+SliceVerificationResult isRankReducedType(ShapedType originalType,
+                                          ShapedType candidateReducedType);
 
 //===----------------------------------------------------------------------===//
 // Deferred Method Definitions
@@ -319,7 +453,7 @@ inline bool TensorType::classof(Type type) {
 //===----------------------------------------------------------------------===//
 
 /// Returns the strides of the MemRef if the layout map is in strided form.
-/// MemRefs with layout maps in strided form include:
+/// MemRefs with a layout map in strided form include:
 ///   1. empty or identity layout map, in which case the stride information is
 ///      the canonical form computed from sizes;
 ///   2. single affine map layout of the form `K + k0 * d0 + ... kn * dn`,
@@ -328,14 +462,13 @@ inline bool TensorType::classof(Type type) {
 /// A stride specification is a list of integer values that are either static
 /// or dynamic (encoded with getDynamicStrideOrOffset()). Strides encode the
 /// distance in the number of elements between successive entries along a
-/// particular dimension. For example, `memref<42x16xf32, (64 * d0 + d1)>`
-/// specifies a view into a non-contiguous memory region of `42` by `16` `f32`
-/// elements in which the distance between two consecutive elements along the
-/// outer dimension is `1` and the distance between two consecutive elements
-/// along the inner dimension is `64`.
+/// particular dimension.
 ///
-/// Returns whether a simple strided form can be extracted from the composition
-/// of the layout map.
+/// For example, `memref<42x16xf32, (64 * d0 + d1)>` specifies a view into a
+/// non-contiguous memory region of `42` by `16` `f32` elements in which the
+/// distance between two consecutive elements along the outer dimension is `1`
+/// and the distance between two consecutive elements along the inner dimension
+/// is `64`.
 ///
 /// The convention is that the strides for dimensions d0, .. dn appear in
 /// order to make indexing intuitive into the result.
@@ -406,6 +539,11 @@ bool isStrided(MemRefType t);
 /// Return null if the layout is not compatible with a strided layout.
 AffineMap getStridedLinearLayoutMap(MemRefType t);
 
-} // end namespace mlir
+/// Helper determining if a memref is static-shape and contiguous-row-major
+/// layout, while still allowing for an arbitrary offset (any static or
+/// dynamic value).
+bool isStaticShapeAndContiguousRowMajor(MemRefType memrefType);
+
+} // namespace mlir
 
 #endif // MLIR_IR_BUILTINTYPES_H

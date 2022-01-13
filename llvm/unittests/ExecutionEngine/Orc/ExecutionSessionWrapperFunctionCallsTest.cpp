@@ -18,8 +18,8 @@ using namespace llvm;
 using namespace llvm::orc;
 using namespace llvm::orc::shared;
 
-static llvm::orc::shared::detail::CWrapperFunctionResult
-addWrapper(const char *ArgData, size_t ArgSize) {
+static llvm::orc::shared::CWrapperFunctionResult addWrapper(const char *ArgData,
+                                                            size_t ArgSize) {
   return WrapperFunction<int32_t(int32_t, int32_t)>::handle(
              ArgData, ArgSize, [](int32_t X, int32_t Y) { return X + Y; })
       .release();
@@ -30,7 +30,7 @@ static void addAsyncWrapper(unique_function<void(int32_t)> SendResult,
   SendResult(X + Y);
 }
 
-static llvm::orc::shared::detail::CWrapperFunctionResult
+static llvm::orc::shared::CWrapperFunctionResult
 voidWrapper(const char *ArgData, size_t ArgSize) {
   return WrapperFunction<void()>::handle(ArgData, ArgSize, []() {}).release();
 }
@@ -40,22 +40,23 @@ TEST(ExecutionSessionWrapperFunctionCalls, RunWrapperTemplate) {
 
   int32_t Result;
   EXPECT_THAT_ERROR(ES.callSPSWrapper<int32_t(int32_t, int32_t)>(
-                        pointerToJITTargetAddress(addWrapper), Result, 2, 3),
+                        ExecutorAddr::fromPtr(addWrapper), Result, 2, 3),
                     Succeeded());
   EXPECT_EQ(Result, 5);
+  cantFail(ES.endSession());
 }
 
 TEST(ExecutionSessionWrapperFunctionCalls, RunVoidWrapperAsyncTemplate) {
   ExecutionSession ES(cantFail(SelfExecutorProcessControl::Create()));
 
   std::promise<MSVCPError> RP;
-  ES.callSPSWrapperAsync<void()>(
-      [&](Error SerializationErr) {
-        RP.set_value(std::move(SerializationErr));
-      },
-      pointerToJITTargetAddress(voidWrapper));
+  ES.callSPSWrapperAsync<void()>(ExecutorAddr::fromPtr(voidWrapper),
+                                 [&](Error SerializationErr) {
+                                   RP.set_value(std::move(SerializationErr));
+                                 });
   Error Err = RP.get_future().get();
   EXPECT_THAT_ERROR(std::move(Err), Succeeded());
+  cantFail(ES.endSession());
 }
 
 TEST(ExecutionSessionWrapperFunctionCalls, RunNonVoidWrapperAsyncTemplate) {
@@ -63,14 +64,16 @@ TEST(ExecutionSessionWrapperFunctionCalls, RunNonVoidWrapperAsyncTemplate) {
 
   std::promise<MSVCPExpected<int32_t>> RP;
   ES.callSPSWrapperAsync<int32_t(int32_t, int32_t)>(
+      ExecutorAddr::fromPtr(addWrapper),
       [&](Error SerializationErr, int32_t R) {
         if (SerializationErr)
           RP.set_value(std::move(SerializationErr));
         RP.set_value(std::move(R));
       },
-      pointerToJITTargetAddress(addWrapper), 2, 3);
+      2, 3);
   Expected<int32_t> Result = RP.get_future().get();
   EXPECT_THAT_EXPECTED(Result, HasValue(5));
+  cantFail(ES.endSession());
 }
 
 TEST(ExecutionSessionWrapperFunctionCalls, RegisterAsyncHandlerAndRun) {

@@ -67,30 +67,28 @@ Trace::FindPluginForPostMortemProcess(Debugger &debugger,
   if (!json::fromJSON(trace_session_file, json_session, root))
     return root.getError();
 
-  ConstString plugin_name(json_session.trace.type);
-  if (auto create_callback = PluginManager::GetTraceCreateCallback(plugin_name))
+  if (auto create_callback =
+          PluginManager::GetTraceCreateCallback(json_session.trace.type))
     return create_callback(trace_session_file, session_file_dir, debugger);
 
   return createInvalidPlugInError(json_session.trace.type);
 }
 
-Expected<lldb::TraceSP>
-Trace::FindPluginForLiveProcess(llvm::StringRef plugin_name, Process &process) {
+Expected<lldb::TraceSP> Trace::FindPluginForLiveProcess(llvm::StringRef name,
+                                                        Process &process) {
   if (!process.IsLiveDebugSession())
     return createStringError(inconvertibleErrorCode(),
                              "Can't trace non-live processes");
 
-  ConstString name(plugin_name);
   if (auto create_callback =
           PluginManager::GetTraceCreateCallbackForLiveProcess(name))
     return create_callback(process);
 
-  return createInvalidPlugInError(plugin_name);
+  return createInvalidPlugInError(name);
 }
 
 Expected<StringRef> Trace::FindPluginSchema(StringRef name) {
-  ConstString plugin_name(name);
-  StringRef schema = PluginManager::GetTraceSchema(plugin_name);
+  StringRef schema = PluginManager::GetTraceSchema(name);
   if (!schema.empty())
     return schema;
 
@@ -108,23 +106,21 @@ Error Trace::Stop() {
   if (!m_live_process)
     return createStringError(inconvertibleErrorCode(),
                              "Tracing requires a live process.");
-  return m_live_process->TraceStop(
-      TraceStopRequest(GetPluginName().AsCString()));
+  return m_live_process->TraceStop(TraceStopRequest(GetPluginName()));
 }
 
 Error Trace::Stop(llvm::ArrayRef<lldb::tid_t> tids) {
   if (!m_live_process)
     return createStringError(inconvertibleErrorCode(),
                              "Tracing requires a live process.");
-  return m_live_process->TraceStop(
-      TraceStopRequest(GetPluginName().AsCString(), tids));
+  return m_live_process->TraceStop(TraceStopRequest(GetPluginName(), tids));
 }
 
 Expected<std::string> Trace::GetLiveProcessState() {
   if (!m_live_process)
     return createStringError(inconvertibleErrorCode(),
                              "Tracing requires a live process.");
-  return m_live_process->TraceGetState(GetPluginName().AsCString());
+  return m_live_process->TraceGetState(GetPluginName());
 }
 
 Optional<size_t> Trace::GetLiveThreadBinaryDataSize(lldb::tid_t tid,
@@ -158,7 +154,7 @@ Trace::GetLiveThreadBinaryData(lldb::tid_t tid, llvm::StringRef kind) {
         "Tracing data \"%s\" is not available for thread %" PRIu64 ".",
         kind.data(), tid);
 
-  TraceGetBinaryDataRequest request{GetPluginName().AsCString(), kind.str(),
+  TraceGetBinaryDataRequest request{GetPluginName().str(), kind.str(),
                                     static_cast<int64_t>(tid), 0,
                                     static_cast<int64_t>(*size)};
   return m_live_process->TraceGetBinaryData(request);
@@ -175,8 +171,8 @@ Trace::GetLiveProcessBinaryData(llvm::StringRef kind) {
         inconvertibleErrorCode(),
         "Tracing data \"%s\" is not available for the process.", kind.data());
 
-  TraceGetBinaryDataRequest request{GetPluginName().AsCString(), kind.str(),
-                                    None, 0, static_cast<int64_t>(*size)};
+  TraceGetBinaryDataRequest request{GetPluginName().str(), kind.str(), None, 0,
+                                    static_cast<int64_t>(*size)};
   return m_live_process->TraceGetBinaryData(request);
 }
 

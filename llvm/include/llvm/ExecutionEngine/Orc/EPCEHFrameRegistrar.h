@@ -14,6 +14,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_EPCEHFRAMEREGISTRAR_H
 
 #include "llvm/ExecutionEngine/JITLink/EHFrameSupport.h"
+#include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
 
 namespace llvm {
 namespace orc {
@@ -33,20 +34,18 @@ public:
   /// Create a EPCEHFrameRegistrar with the given ExecutorProcessControl
   /// object and registration/deregistration function addresses.
   EPCEHFrameRegistrar(ExecutionSession &ES,
-                      JITTargetAddress RegisterEHFrameWrapperFnAddr,
-                      JITTargetAddress DeregisterEHFRameWrapperFnAddr)
+                      ExecutorAddr RegisterEHFrameWrapperFnAddr,
+                      ExecutorAddr DeregisterEHFRameWrapperFnAddr)
       : ES(ES), RegisterEHFrameWrapperFnAddr(RegisterEHFrameWrapperFnAddr),
         DeregisterEHFrameWrapperFnAddr(DeregisterEHFRameWrapperFnAddr) {}
 
-  Error registerEHFrames(JITTargetAddress EHFrameSectionAddr,
-                         size_t EHFrameSectionSize) override;
-  Error deregisterEHFrames(JITTargetAddress EHFrameSectionAddr,
-                           size_t EHFrameSectionSize) override;
+  Error registerEHFrames(ExecutorAddrRange EHFrameSection) override;
+  Error deregisterEHFrames(ExecutorAddrRange EHFrameSection) override;
 
 private:
   ExecutionSession &ES;
-  JITTargetAddress RegisterEHFrameWrapperFnAddr;
-  JITTargetAddress DeregisterEHFrameWrapperFnAddr;
+  ExecutorAddr RegisterEHFrameWrapperFnAddr;
+  ExecutorAddr DeregisterEHFrameWrapperFnAddr;
 };
 
 } // end namespace orc

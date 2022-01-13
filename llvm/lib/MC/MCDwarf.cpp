@@ -27,7 +27,6 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
@@ -66,29 +65,6 @@ MCSymbol *mcdwarf::emitListsTableHeaderStart(MCStreamer &S) {
   return End;
 }
 
-/// Manage the .debug_line_str section contents, if we use it.
-class llvm::MCDwarfLineStr {
-  MCSymbol *LineStrLabel = nullptr;
-  StringTableBuilder LineStrings{StringTableBuilder::DWARF};
-  bool UseRelocs = false;
-
-public:
-  /// Construct an instance that can emit .debug_line_str (for use in a normal
-  /// v5 line table).
-  explicit MCDwarfLineStr(MCContext &Ctx) {
-    UseRelocs = Ctx.getAsmInfo()->doesDwarfUseRelocationsAcrossSections();
-    if (UseRelocs)
-      LineStrLabel =
-          Ctx.getObjectFileInfo()->getDwarfLineStrSection()->getBeginSymbol();
-  }
-
-  /// Emit a reference to the string.
-  void emitRef(MCStreamer *MCOS, StringRef Path);
-
-  /// Emit the .debug_line_str section if appropriate.
-  void emitSection(MCStreamer *MCOS);
-};
-
 static inline uint64_t ScaleAddrDelta(MCContext &Context, uint64_t AddrDelta) {
   unsigned MinInsnLength = Context.getAsmInfo()->getMinInstAlignment();
   if (MinInsnLength == 1)
@@ -98,6 +74,13 @@ static inline uint64_t ScaleAddrDelta(MCContext &Context, uint64_t AddrDelta) {
     ;
   }
   return AddrDelta / MinInsnLength;
+}
+
+MCDwarfLineStr::MCDwarfLineStr(MCContext &Ctx) {
+  UseRelocs = Ctx.getAsmInfo()->doesDwarfUseRelocationsAcrossSections();
+  if (UseRelocs)
+    LineStrLabel =
+        Ctx.getObjectFileInfo()->getDwarfLineStrSection()->getBeginSymbol();
 }
 
 //
@@ -158,23 +141,58 @@ makeStartPlusIntExpr(MCContext &Ctx, const MCSymbol &Start, int IntVal) {
   return Res;
 }
 
+void MCLineSection::addEndEntry(MCSymbol *EndLabel) {
+  auto *Sec = &EndLabel->getSection();
+  // The line table may be empty, which we should skip adding an end entry.
+  // There are two cases:
+  // (1) MCAsmStreamer - emitDwarfLocDirective emits a location directive in
+  //     place instead of adding a line entry if the target has
+  //     usesDwarfFileAndLocDirectives.
+  // (2) MCObjectStreamer - if a function has incomplete debug info where
+  //     instructions don't have DILocations, the line entries are missing.
+  auto I = MCLineDivisions.find(Sec);
+  if (I != MCLineDivisions.end()) {
+    auto &Entries = I->second;
+    auto EndEntry = Entries.back();
+    EndEntry.setEndLabel(EndLabel);
+    Entries.push_back(EndEntry);
+  }
+}
+
 //
 // This emits the Dwarf line table for the specified section from the entries
 // in the LineSection.
 //
-static inline void emitDwarfLineTable(
+void MCDwarfLineTable::emitOne(
     MCStreamer *MCOS, MCSection *Section,
     const MCLineSection::MCDwarfLineEntryCollection &LineEntries) {
-  unsigned FileNum = 1;
-  unsigned LastLine = 1;
-  unsigned Column = 0;
-  unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
-  unsigned Isa = 0;
-  unsigned Discriminator = 0;
-  MCSymbol *LastLabel = nullptr;
+
+  unsigned FileNum, LastLine, Column, Flags, Isa, Discriminator;
+  MCSymbol *LastLabel;
+  auto init = [&]() {
+    FileNum = 1;
+    LastLine = 1;
+    Column = 0;
+    Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
+    Isa = 0;
+    Discriminator = 0;
+    LastLabel = nullptr;
+  };
+  init();
 
   // Loop through each MCDwarfLineEntry and encode the dwarf line number table.
+  bool EndEntryEmitted = false;
   for (const MCDwarfLineEntry &LineEntry : LineEntries) {
+    MCSymbol *Label = LineEntry.getLabel();
+    const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
+    if (LineEntry.IsEndEntry) {
+      MCOS->emitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, Label,
+                                     asmInfo->getCodePointerSize());
+      init();
+      EndEntryEmitted = true;
+      continue;
+    }
+
     int64_t LineDelta = static_cast<int64_t>(LineEntry.getLine()) - LastLine;
 
     if (FileNum != LineEntry.getFileNum()) {
@@ -212,12 +230,9 @@ static inline void emitDwarfLineTable(
     if (LineEntry.getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
       MCOS->emitInt8(dwarf::DW_LNS_set_epilogue_begin);
 
-    MCSymbol *Label = LineEntry.getLabel();
-
     // At this point we want to emit/create the sequence to encode the delta in
     // line numbers and the increment of the address from the previous Label
     // and the current Label.
-    const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
     MCOS->emitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
                                    asmInfo->getCodePointerSize());
 
@@ -227,7 +242,12 @@ static inline void emitDwarfLineTable(
   }
 
   // Generate DWARF line end entry.
-  MCOS->emitDwarfLineEndEntry(Section, LastLabel);
+  // We do not need this for DwarfDebug that explicitly terminates the line
+  // table using ranges whenever CU or section changes. However, the MC path
+  // does not track ranges nor terminate the line table. In that case,
+  // conservatively use the section end symbol to end the line table.
+  if (!EndEntryEmitted)
+    MCOS->emitDwarfLineEndEntry(Section, LastLabel);
 }
 
 //
@@ -522,7 +542,7 @@ void MCDwarfLineTable::emitCU(MCStreamer *MCOS, MCDwarfLineTableParams Params,
 
   // Put out the line tables.
   for (const auto &LineSec : MCLineSections.getMCLineEntries())
-    emitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
+    emitOne(MCOS, LineSec.first, LineSec.second);
 
   // This is the end of the section, so set the value of the symbol at the end
   // of this section (that was used in a previous expression).

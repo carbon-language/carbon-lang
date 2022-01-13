@@ -192,8 +192,8 @@ public:
       LLVMOrcMaterializationUnitMaterializeFunction Materialize,
       LLVMOrcMaterializationUnitDiscardFunction Discard,
       LLVMOrcMaterializationUnitDestroyFunction Destroy)
-      : llvm::orc::MaterializationUnit(std::move(InitialSymbolFlags),
-                                       std::move(InitSymbol)),
+      : llvm::orc::MaterializationUnit(
+            Interface(std::move(InitialSymbolFlags), std::move(InitSymbol))),
         Name(std::move(Name)), Ctx(Ctx), Materialize(Materialize),
         Discard(Discard), Destroy(Destroy) {}
 
@@ -611,12 +611,67 @@ LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(
       DynamicLibrarySearchGenerator::GetForCurrentProcess(GlobalPrefix, Pred);
 
   if (!ProcessSymsGenerator) {
-    *Result = 0;
+    *Result = nullptr;
     return wrap(ProcessSymsGenerator.takeError());
   }
 
   *Result = wrap(ProcessSymsGenerator->release());
   return LLVMErrorSuccess;
+}
+
+LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForPath(
+    LLVMOrcDefinitionGeneratorRef *Result, const char *FileName,
+    char GlobalPrefix, LLVMOrcSymbolPredicate Filter, void *FilterCtx) {
+  assert(Result && "Result can not be null");
+  assert(FileName && "FileName can not be null");
+  assert((Filter || !FilterCtx) &&
+         "if Filter is null then FilterCtx must also be null");
+
+  DynamicLibrarySearchGenerator::SymbolPredicate Pred;
+  if (Filter)
+    Pred = [=](const SymbolStringPtr &Name) -> bool {
+      return Filter(FilterCtx, wrap(OrcV2CAPIHelper::getRawPoolEntryPtr(Name)));
+    };
+
+  auto LibrarySymsGenerator =
+      DynamicLibrarySearchGenerator::Load(FileName, GlobalPrefix, Pred);
+
+  if (!LibrarySymsGenerator) {
+    *Result = nullptr;
+    return wrap(LibrarySymsGenerator.takeError());
+  }
+
+  *Result = wrap(LibrarySymsGenerator->release());
+  return LLVMErrorSuccess;
+}
+
+LLVMErrorRef LLVMOrcCreateStaticLibrarySearchGeneratorForPath(
+    LLVMOrcDefinitionGeneratorRef *Result, LLVMOrcObjectLayerRef ObjLayer,
+    const char *FileName, const char *TargetTriple) {
+  assert(Result && "Result can not be null");
+  assert(FileName && "Filename can not be null");
+  assert(ObjLayer && "ObjectLayer can not be null");
+
+  if (TargetTriple) {
+    auto TT = Triple(TargetTriple);
+    auto LibrarySymsGenerator =
+        StaticLibraryDefinitionGenerator::Load(*unwrap(ObjLayer), FileName, TT);
+    if (!LibrarySymsGenerator) {
+      *Result = nullptr;
+      return wrap(LibrarySymsGenerator.takeError());
+    }
+    *Result = wrap(LibrarySymsGenerator->release());
+    return LLVMErrorSuccess;
+  } else {
+    auto LibrarySymsGenerator =
+        StaticLibraryDefinitionGenerator::Load(*unwrap(ObjLayer), FileName);
+    if (!LibrarySymsGenerator) {
+      *Result = nullptr;
+      return wrap(LibrarySymsGenerator.takeError());
+    }
+    *Result = wrap(LibrarySymsGenerator->release());
+    return LLVMErrorSuccess;
+  }
 }
 
 LLVMOrcThreadSafeContextRef LLVMOrcCreateNewThreadSafeContext(void) {
@@ -657,7 +712,7 @@ LLVMErrorRef LLVMOrcJITTargetMachineBuilderDetectHost(
 
   auto JTMB = JITTargetMachineBuilder::detectHost();
   if (!JTMB) {
-    Result = 0;
+    Result = nullptr;
     return wrap(JTMB.takeError());
   }
 
@@ -821,7 +876,7 @@ LLVMErrorRef LLVMOrcCreateLLJIT(LLVMOrcLLJITRef *Result,
   LLVMOrcDisposeLLJITBuilder(Builder);
 
   if (!J) {
-    Result = 0;
+    Result = nullptr;
     return wrap(J.takeError());
   }
 

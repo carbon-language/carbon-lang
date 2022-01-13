@@ -333,7 +333,7 @@ struct MemRefRegion {
   Value memref;
 
   /// Read or write.
-  bool write;
+  bool write = false;
 
   /// If there is more than one load/store op associated with the region, the
   /// location information would correspond to one of those op's.
@@ -380,6 +380,6 @@ unsigned getInnermostCommonLoopDepth(
     ArrayRef<Operation *> ops,
     SmallVectorImpl<AffineForOp> *surroundingLoops = nullptr);
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_ANALYSIS_UTILS_H

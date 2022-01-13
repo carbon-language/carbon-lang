@@ -36,7 +36,7 @@ public:
 
     Function *InitOrFiniKernel = Function::createWithDefaultAttr(
         FunctionType::get(Type::getVoidTy(M.getContext()), false),
-        GlobalValue::InternalLinkage, 0, InitOrFiniKernelName, &M);
+        GlobalValue::ExternalLinkage, 0, InitOrFiniKernelName, &M);
     BasicBlock *InitOrFiniKernelBB =
         BasicBlock::Create(M.getContext(), "", InitOrFiniKernel);
     ReturnInst::Create(M.getContext(), InitOrFiniKernelBB);
@@ -52,8 +52,8 @@ public:
   bool createInitOrFiniKernel(Module &M, GlobalVariable *GV, bool IsCtor) {
     if (!GV)
       return false;
-    ConstantArray *GA = cast<ConstantArray>(GV->getInitializer());
-    if (GA->getNumOperands() == 0)
+    ConstantArray *GA = dyn_cast<ConstantArray>(GV->getInitializer());
+    if (!GA || GA->getNumOperands() == 0)
       return false;
     Function *InitOrFiniKernel = createInitOrFiniKernelFunction(M, IsCtor);
     IRBuilder<> IRB(InitOrFiniKernel->getEntryBlock().getTerminator());

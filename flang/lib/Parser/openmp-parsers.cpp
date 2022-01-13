@@ -203,6 +203,8 @@ TYPE_PARSER(
                  parenthesized(Parser<OmpMapClause>{}))) ||
     "MERGEABLE" >> construct<OmpClause>(construct<OmpClause::Mergeable>()) ||
     "NOGROUP" >> construct<OmpClause>(construct<OmpClause::Nogroup>()) ||
+    "NONTEMPORAL" >> construct<OmpClause>(construct<OmpClause::Nontemporal>(
+                         parenthesized(nonemptyList(name)))) ||
     "NOTINBRANCH" >>
         construct<OmpClause>(construct<OmpClause::Notinbranch>()) ||
     "NOWAIT" >> construct<OmpClause>(construct<OmpClause::Nowait>()) ||
@@ -467,7 +469,7 @@ TYPE_PARSER(startOmpLine >>
         verbatim("END CRITICAL"_tok), maybe(parenthesized(name)))) /
         endOmpLine)
 TYPE_PARSER(sourced(construct<OmpCriticalDirective>(verbatim("CRITICAL"_tok),
-                maybe(parenthesized(name)), maybe(Parser<OmpClause>{}))) /
+                maybe(parenthesized(name)), Parser<OmpClauseList>{})) /
     endOmpLine)
 
 TYPE_PARSER(construct<OpenMPCriticalConstruct>(

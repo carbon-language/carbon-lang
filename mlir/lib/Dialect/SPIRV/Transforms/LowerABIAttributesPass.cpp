@@ -156,7 +156,7 @@ public:
   using OpConversionPattern<spirv::FuncOp>::OpConversionPattern;
 
   LogicalResult
-  matchAndRewrite(spirv::FuncOp funcOp, ArrayRef<Value> operands,
+  matchAndRewrite(spirv::FuncOp funcOp, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override;
 };
 
@@ -168,7 +168,7 @@ class LowerABIAttributesPass final
 } // namespace
 
 LogicalResult ProcessInterfaceVarABI::matchAndRewrite(
-    spirv::FuncOp funcOp, ArrayRef<Value> operands,
+    spirv::FuncOp funcOp, OpAdaptor adaptor,
     ConversionPatternRewriter &rewriter) const {
   if (!funcOp->getAttrOfType<spirv::EntryPointABIAttr>(
           spirv::getEntryPointABIAttrName())) {
@@ -182,7 +182,7 @@ LogicalResult ProcessInterfaceVarABI::matchAndRewrite(
   auto indexType = typeConverter.getIndexType();
 
   auto attrName = spirv::getInterfaceVarABIAttrName();
-  for (auto argType : llvm::enumerate(funcOp.getType().getInputs())) {
+  for (const auto &argType : llvm::enumerate(funcOp.getType().getInputs())) {
     auto abiInfo = funcOp.getArgAttrOfType<spirv::InterfaceVarABIAttr>(
         argType.index(), attrName);
     if (!abiInfo) {

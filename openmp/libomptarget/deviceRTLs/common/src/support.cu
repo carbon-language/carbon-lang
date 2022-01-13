@@ -19,19 +19,18 @@
 // Execution Parameters
 ////////////////////////////////////////////////////////////////////////////////
 
-void setExecutionParameters(ExecutionMode EMode, RuntimeMode RMode) {
+void setExecutionParameters(OMPTgtExecModeFlags EMode,
+                            OMPTgtRuntimeModeFlags RMode) {
   execution_param = EMode;
   execution_param |= RMode;
 }
 
-bool isGenericMode() { return (execution_param & ModeMask) == Generic; }
+bool isGenericMode() { return execution_param & OMP_TGT_EXEC_MODE_GENERIC; }
 
-bool isRuntimeUninitialized() {
-  return (execution_param & RuntimeMask) == RuntimeUninitialized;
-}
+bool isRuntimeUninitialized() { return !isRuntimeInitialized(); }
 
 bool isRuntimeInitialized() {
-  return (execution_param & RuntimeMask) == RuntimeInitialized;
+  return execution_param & OMP_TGT_RUNTIME_INITIALIZED;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -226,5 +225,16 @@ void __kmp_invoke_microtask(kmp_int32 global_tid, kmp_int32 bound_tid, void *fn,
     __builtin_trap();
   }
 }
+
+namespace _OMP {
+/// Helper to keep code alive without introducing a performance penalty.
+__attribute__((used, weak, optnone)) void keepAlive() {
+  __kmpc_get_hardware_thread_id_in_block();
+  __kmpc_get_hardware_num_threads_in_block();
+  __kmpc_get_warp_size();
+  __kmpc_barrier_simple_spmd(nullptr, 0);
+  __kmpc_barrier_simple_generic(nullptr, 0);
+}
+} // namespace _OMP
 
 #pragma omp end declare target

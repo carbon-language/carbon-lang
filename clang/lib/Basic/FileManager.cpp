@@ -123,16 +123,16 @@ FileManager::getDirectoryRef(StringRef DirName, bool CacheFailure) {
       DirName != llvm::sys::path::root_path(DirName) &&
       llvm::sys::path::is_separator(DirName.back()))
     DirName = DirName.substr(0, DirName.size()-1);
-#ifdef _WIN32
-  // Fixing a problem with "clang C:test.c" on Windows.
-  // Stat("C:") does not recognize "C:" as a valid directory
-  std::string DirNameStr;
-  if (DirName.size() > 1 && DirName.back() == ':' &&
-      DirName.equals_insensitive(llvm::sys::path::root_name(DirName))) {
-    DirNameStr = DirName.str() + '.';
-    DirName = DirNameStr;
+  Optional<std::string> DirNameStr;
+  if (is_style_windows(llvm::sys::path::Style::native)) {
+    // Fixing a problem with "clang C:test.c" on Windows.
+    // Stat("C:") does not recognize "C:" as a valid directory
+    if (DirName.size() > 1 && DirName.back() == ':' &&
+        DirName.equals_insensitive(llvm::sys::path::root_name(DirName))) {
+      DirNameStr = DirName.str() + '.';
+      DirName = *DirNameStr;
+    }
   }
-#endif
 
   ++NumDirLookups;
 
@@ -276,6 +276,18 @@ FileManager::getFileRef(StringRef Filename, bool openFile, bool CacheFailure) {
   } else {
     // Name mismatch. We need a redirect. First grab the actual entry we want
     // to return.
+    //
+    // This redirection logic intentionally leaks the external name of a
+    // redirected file that uses 'use-external-name' in \a
+    // vfs::RedirectionFileSystem. This allows clang to report the external
+    // name to users (in diagnostics) and to tools that don't have access to
+    // the VFS (in debug info and dependency '.d' files).
+    //
+    // FIXME: This is pretty complicated. It's also inconsistent with how
+    // "real" filesystems behave and confuses parts of clang expect to see the
+    // name-as-accessed on the \a FileEntryRef. Maybe the returned \a
+    // FileEntryRef::getName() could return the accessed name unmodified, but
+    // make the external name available via a separate API.
     auto &Redirection =
         *SeenFileEntries
              .insert({Status.getName(), FileEntryRef::MapValue(UFE, DirInfo)})

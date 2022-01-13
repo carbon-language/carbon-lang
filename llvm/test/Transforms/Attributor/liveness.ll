@@ -527,13 +527,13 @@ define void @ub(i32* %0) {
 ; IS__TUNIT_NPM: Function Attrs: argmemonly nofree nosync nounwind willreturn writeonly
 ; IS__TUNIT_NPM-LABEL: define {{[^@]+}}@ub
 ; IS__TUNIT_NPM-SAME: (i32* nocapture nofree readnone [[TMP0:%.*]]) #[[ATTR8:[0-9]+]] {
-; IS__TUNIT_NPM-NEXT:    store i32 0, i32* undef, align 1073741824
+; IS__TUNIT_NPM-NEXT:    store i32 0, i32* undef, align 4294967296
 ; IS__TUNIT_NPM-NEXT:    ret void
 ;
 ; IS__CGSCC____: Function Attrs: argmemonly nofree norecurse nosync nounwind willreturn writeonly
 ; IS__CGSCC____-LABEL: define {{[^@]+}}@ub
 ; IS__CGSCC____-SAME: (i32* nocapture nofree readnone [[TMP0:%.*]]) #[[ATTR10:[0-9]+]] {
-; IS__CGSCC____-NEXT:    store i32 0, i32* undef, align 1073741824
+; IS__CGSCC____-NEXT:    store i32 0, i32* undef, align 4294967296
 ; IS__CGSCC____-NEXT:    ret void
 ;
   %poison = sub nuw i32 0, 1           ; Results in a poison value.
@@ -2432,9 +2432,9 @@ define internal void @dead_with_blockaddress_users(i32* nocapture %pc) nounwind 
 ; IS__CGSCC_OPM-NEXT:    [[INDIRECT_GOTO_DEST:%.*]] = load i8*, i8** [[INDIRECT_GOTO_DEST_IN]]
 ; IS__CGSCC_OPM-NEXT:    indirectbr i8* [[INDIRECT_GOTO_DEST]], [label [[LAB0]], label %end]
 ;
-; IS__CGSCC____: Function Attrs: nofree norecurse nosync nounwind readnone
+; IS__CGSCC____: Function Attrs: nounwind readonly
 ; IS__CGSCC____-LABEL: define {{[^@]+}}@dead_with_blockaddress_users
-; IS__CGSCC____-SAME: () #[[ATTR14:[0-9]+]] {
+; IS__CGSCC____-SAME: (i32* nocapture [[PC:%.*]]) #[[ATTR14:[0-9]+]] {
 ; IS__CGSCC____-NEXT:  entry:
 ; IS__CGSCC____-NEXT:    br label [[INDIRECTGOTO:%.*]]
 ; IS__CGSCC____:       lab0:
@@ -2444,7 +2444,11 @@ define internal void @dead_with_blockaddress_users(i32* nocapture %pc) nounwind 
 ; IS__CGSCC____-NEXT:    ret void
 ; IS__CGSCC____:       indirectgoto:
 ; IS__CGSCC____-NEXT:    [[INDVAR]] = phi i32 [ [[INDVAR_NEXT]], [[LAB0:%.*]] ], [ 0, [[ENTRY:%.*]] ]
-; IS__CGSCC____-NEXT:    indirectbr i8* undef, [label [[LAB0]], label %end]
+; IS__CGSCC____-NEXT:    [[PC_ADDR_0:%.*]] = getelementptr i32, i32* [[PC]], i32 [[INDVAR]]
+; IS__CGSCC____-NEXT:    [[TMP1_PN:%.*]] = load i32, i32* [[PC_ADDR_0]], align 4
+; IS__CGSCC____-NEXT:    [[INDIRECT_GOTO_DEST_IN:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* @dead_with_blockaddress_users.l, i32 0, i32 [[TMP1_PN]]
+; IS__CGSCC____-NEXT:    [[INDIRECT_GOTO_DEST:%.*]] = load i8*, i8** [[INDIRECT_GOTO_DEST_IN]], align 8
+; IS__CGSCC____-NEXT:    indirectbr i8* [[INDIRECT_GOTO_DEST]], [label [[LAB0]], label %end]
 ;
 entry:
   br label %indirectgoto
@@ -2473,33 +2477,59 @@ indirectgoto:                                     ; preds = %lab0, %entry
 @e = global %struct.a* null
 
 define i32 @main() {
-; CHECK-LABEL: define {{[^@]+}}@main() {
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[F:%.*]] = alloca i32, align 4
-; CHECK-NEXT:    br label [[FOR_COND_0:%.*]]
-; CHECK:       for.cond.0:
-; CHECK-NEXT:    [[G_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY_0:%.*]] ]
-; CHECK-NEXT:    [[CMP_0:%.*]] = icmp ult i32 [[G_0]], 100
-; CHECK-NEXT:    br i1 [[CMP_0]], label [[FOR_BODY_0]], label [[FOR_END_0:%.*]]
-; CHECK:       for.body.0:
-; CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[G_0]], 1
-; CHECK-NEXT:    br label [[FOR_COND_0]]
-; CHECK:       for.end.0:
-; CHECK-NEXT:    [[CALL:%.*]] = call i8* @malloc(i64 noundef 8)
-; CHECK-NEXT:    store i8* [[CALL]], i8** bitcast (%struct.a** @e to i8**), align 8
-; CHECK-NEXT:    [[B:%.*]] = bitcast i8* [[CALL]] to %struct.a**
-; CHECK-NEXT:    store %struct.a* null, %struct.a** [[B]], align 8
-; CHECK-NEXT:    br label [[FOR_COND_1:%.*]]
-; CHECK:       for.cond.1:
-; CHECK-NEXT:    [[G_1:%.*]] = phi i32 [ 0, [[FOR_END_0]] ], [ [[INC6:%.*]], [[FOR_BODY_1:%.*]] ]
-; CHECK-NEXT:    [[CMP_1:%.*]] = icmp ult i32 [[G_1]], 100
-; CHECK-NEXT:    br i1 [[CMP_1]], label [[FOR_BODY_1]], label [[FOR_END_1:%.*]]
-; CHECK:       for.body.1:
-; CHECK-NEXT:    [[CALL4:%.*]] = call i32 (i32*, ...) bitcast (i32 (i32)* @h to i32 (i32*, ...)*)(i32* nonnull [[F]])
-; CHECK-NEXT:    [[INC6]] = add nuw nsw i32 [[G_1]], 1
-; CHECK-NEXT:    br label [[FOR_COND_1]]
-; CHECK:       for.end.1:
-; CHECK-NEXT:    ret i32 0
+; NOT_CGSCC_NPM-LABEL: define {{[^@]+}}@main() {
+; NOT_CGSCC_NPM-NEXT:  entry:
+; NOT_CGSCC_NPM-NEXT:    [[F:%.*]] = alloca i32, align 4
+; NOT_CGSCC_NPM-NEXT:    br label [[FOR_COND_0:%.*]]
+; NOT_CGSCC_NPM:       for.cond.0:
+; NOT_CGSCC_NPM-NEXT:    [[G_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY_0:%.*]] ]
+; NOT_CGSCC_NPM-NEXT:    [[CMP_0:%.*]] = icmp ult i32 [[G_0]], 100
+; NOT_CGSCC_NPM-NEXT:    br i1 [[CMP_0]], label [[FOR_BODY_0]], label [[FOR_END_0:%.*]]
+; NOT_CGSCC_NPM:       for.body.0:
+; NOT_CGSCC_NPM-NEXT:    [[INC]] = add nuw nsw i32 [[G_0]], 1
+; NOT_CGSCC_NPM-NEXT:    br label [[FOR_COND_0]]
+; NOT_CGSCC_NPM:       for.end.0:
+; NOT_CGSCC_NPM-NEXT:    [[CALL:%.*]] = call i8* @malloc(i64 noundef 8)
+; NOT_CGSCC_NPM-NEXT:    store i8* [[CALL]], i8** bitcast (%struct.a** @e to i8**), align 8
+; NOT_CGSCC_NPM-NEXT:    [[B:%.*]] = bitcast i8* [[CALL]] to %struct.a**
+; NOT_CGSCC_NPM-NEXT:    store %struct.a* null, %struct.a** [[B]], align 8
+; NOT_CGSCC_NPM-NEXT:    br label [[FOR_COND_1:%.*]]
+; NOT_CGSCC_NPM:       for.cond.1:
+; NOT_CGSCC_NPM-NEXT:    [[G_1:%.*]] = phi i32 [ 0, [[FOR_END_0]] ], [ [[INC6:%.*]], [[FOR_BODY_1:%.*]] ]
+; NOT_CGSCC_NPM-NEXT:    [[CMP_1:%.*]] = icmp ult i32 [[G_1]], 100
+; NOT_CGSCC_NPM-NEXT:    br i1 [[CMP_1]], label [[FOR_BODY_1]], label [[FOR_END_1:%.*]]
+; NOT_CGSCC_NPM:       for.body.1:
+; NOT_CGSCC_NPM-NEXT:    [[CALL4:%.*]] = call i32 (i32*, ...) bitcast (i32 (i32)* @h to i32 (i32*, ...)*)(i32* nonnull [[F]])
+; NOT_CGSCC_NPM-NEXT:    [[INC6]] = add nuw nsw i32 [[G_1]], 1
+; NOT_CGSCC_NPM-NEXT:    br label [[FOR_COND_1]]
+; NOT_CGSCC_NPM:       for.end.1:
+; NOT_CGSCC_NPM-NEXT:    ret i32 0
+;
+; IS__CGSCC____-LABEL: define {{[^@]+}}@main() {
+; IS__CGSCC____-NEXT:  entry:
+; IS__CGSCC____-NEXT:    br label [[FOR_COND_0:%.*]]
+; IS__CGSCC____:       for.cond.0:
+; IS__CGSCC____-NEXT:    [[G_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY_0:%.*]] ]
+; IS__CGSCC____-NEXT:    [[CMP_0:%.*]] = icmp ult i32 [[G_0]], 100
+; IS__CGSCC____-NEXT:    br i1 [[CMP_0]], label [[FOR_BODY_0]], label [[FOR_END_0:%.*]]
+; IS__CGSCC____:       for.body.0:
+; IS__CGSCC____-NEXT:    [[INC]] = add nuw nsw i32 [[G_0]], 1
+; IS__CGSCC____-NEXT:    br label [[FOR_COND_0]]
+; IS__CGSCC____:       for.end.0:
+; IS__CGSCC____-NEXT:    [[CALL:%.*]] = call i8* @malloc(i64 noundef 8)
+; IS__CGSCC____-NEXT:    store i8* [[CALL]], i8** bitcast (%struct.a** @e to i8**), align 8
+; IS__CGSCC____-NEXT:    [[B:%.*]] = bitcast i8* [[CALL]] to %struct.a**
+; IS__CGSCC____-NEXT:    store %struct.a* null, %struct.a** [[B]], align 8
+; IS__CGSCC____-NEXT:    br label [[FOR_COND_1:%.*]]
+; IS__CGSCC____:       for.cond.1:
+; IS__CGSCC____-NEXT:    [[G_1:%.*]] = phi i32 [ 0, [[FOR_END_0]] ], [ [[INC6:%.*]], [[FOR_BODY_1:%.*]] ]
+; IS__CGSCC____-NEXT:    [[CMP_1:%.*]] = icmp ult i32 [[G_1]], 100
+; IS__CGSCC____-NEXT:    br i1 [[CMP_1]], label [[FOR_BODY_1]], label [[FOR_END_1:%.*]]
+; IS__CGSCC____:       for.body.1:
+; IS__CGSCC____-NEXT:    [[INC6]] = add nuw nsw i32 [[G_1]], 1
+; IS__CGSCC____-NEXT:    br label [[FOR_COND_1]]
+; IS__CGSCC____:       for.end.1:
+; IS__CGSCC____-NEXT:    ret i32 0
 ;
 entry:
   %f = alloca i32
@@ -2655,7 +2685,7 @@ declare void @llvm.lifetime.end.p0i8(i64 %0, i8* %1)
 ; IS__CGSCC____: attributes #[[ATTR11]] = { nofree norecurse noreturn nosync nounwind readnone }
 ; IS__CGSCC____: attributes #[[ATTR12]] = { nofree norecurse noreturn nosync nounwind readnone willreturn }
 ; IS__CGSCC____: attributes #[[ATTR13]] = { nofree nosync nounwind willreturn }
-; IS__CGSCC____: attributes #[[ATTR14]] = { nofree norecurse nosync nounwind readnone }
+; IS__CGSCC____: attributes #[[ATTR14]] = { nounwind readonly }
 ; IS__CGSCC____: attributes #[[ATTR15]] = { nofree nosync nounwind readnone willreturn }
 ; IS__CGSCC____: attributes #[[ATTR16:[0-9]+]] = { argmemonly nofree nosync nounwind willreturn }
 ; IS__CGSCC____: attributes #[[ATTR17]] = { nounwind willreturn }

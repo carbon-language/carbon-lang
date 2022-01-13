@@ -56,8 +56,7 @@ class WorkListMaintainer : public GISelChangeObserver {
   SmallPtrSet<const MachineInstr *, 4> CreatedInstrs;
 
 public:
-  WorkListMaintainer(WorkListTy &WorkList)
-      : GISelChangeObserver(), WorkList(WorkList) {}
+  WorkListMaintainer(WorkListTy &WorkList) : WorkList(WorkList) {}
   virtual ~WorkListMaintainer() {
   }
 
@@ -130,16 +129,15 @@ bool Combiner::combineMachineInstrs(MachineFunction &MF,
       WrapperObserver.addObserver(CSEInfo);
     RAIIDelegateInstaller DelInstall(MF, &WrapperObserver);
     for (MachineBasicBlock *MBB : post_order(&MF)) {
-      for (auto MII = MBB->rbegin(), MIE = MBB->rend(); MII != MIE;) {
-        MachineInstr *CurMI = &*MII;
-        ++MII;
+      for (MachineInstr &CurMI :
+           llvm::make_early_inc_range(llvm::reverse(*MBB))) {
         // Erase dead insts before even adding to the list.
-        if (isTriviallyDead(*CurMI, *MRI)) {
-          LLVM_DEBUG(dbgs() << *CurMI << "Is dead; erasing.\n");
-          CurMI->eraseFromParentAndMarkDBGValuesForRemoval();
+        if (isTriviallyDead(CurMI, *MRI)) {
+          LLVM_DEBUG(dbgs() << CurMI << "Is dead; erasing.\n");
+          CurMI.eraseFromParent();
           continue;
         }
-        WorkList.deferred_insert(CurMI);
+        WorkList.deferred_insert(&CurMI);
       }
     }
     WorkList.finalize();

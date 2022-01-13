@@ -28,7 +28,7 @@ std::string computeName(const FormatToken *NamespaceTok) {
   assert(NamespaceTok &&
          NamespaceTok->isOneOf(tok::kw_namespace, TT_NamespaceMacro) &&
          "expecting a namespace token");
-  std::string name = "";
+  std::string name;
   const FormatToken *Tok = NamespaceTok->getNextNonComment();
   if (NamespaceTok->is(TT_NamespaceMacro)) {
     // Collects all the non-comment tokens between opening parenthesis
@@ -180,9 +180,13 @@ getNamespaceToken(const AnnotatedLine *Line,
   if (NamespaceTok->is(tok::l_brace)) {
     // "namespace" keyword can be on the line preceding '{', e.g. in styles
     // where BraceWrapping.AfterNamespace is true.
-    if (StartLineIndex > 0)
+    if (StartLineIndex > 0) {
       NamespaceTok = AnnotatedLines[StartLineIndex - 1]->First;
+      if (AnnotatedLines[StartLineIndex - 1]->endsWith(tok::semi))
+        return nullptr;
+    }
   }
+
   return NamespaceTok->getNamespaceToken();
 }
 
@@ -220,7 +224,7 @@ std::pair<tooling::Replacements, unsigned> NamespaceEndCommentsFixer::analyze(
     return {Fixes, 0};
   }
 
-  std::string AllNamespaceNames = "";
+  std::string AllNamespaceNames;
   size_t StartLineIndex = SIZE_MAX;
   StringRef NamespaceTokenText;
   unsigned int CompactedNamespacesCount = 0;
@@ -256,7 +260,7 @@ std::pair<tooling::Replacements, unsigned> NamespaceEndCommentsFixer::analyze(
           // remove end comment, it will be merged in next one
           updateEndComment(EndCommentPrevTok, std::string(), SourceMgr, &Fixes);
         }
-        CompactedNamespacesCount++;
+        ++CompactedNamespacesCount;
         AllNamespaceNames = "::" + NamespaceName + AllNamespaceNames;
         continue;
       }

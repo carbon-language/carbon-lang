@@ -16,6 +16,12 @@
 // RUN:                     %s -emit-llvm -o - | FileCheck %s \
 // RUN:    --implicit-check-not "ext {{.*}}to i64"
 
+// The option isn't supported on ppc, no effect
+// RUN: %clang_cc1 -DD128 -triple powerpc64-ibm-aix-xcoff -fextend-arguments=64 \
+// RUN:                     %s -emit-llvm -o - | FileCheck %s \
+// RUN:    --implicit-check-not "ext {{.*}}to i64"
+
+
 int vararg(int, ...);
 void knr();
 
@@ -26,7 +32,7 @@ short s16;
 unsigned char u8;
 signed char s8;
 long long ll;
-_ExtInt(23) ei23;
+_BitInt(23) ei23;
 float ff;
 double dd;
 #ifdef D128

@@ -143,6 +143,8 @@ class LLVM_LIBRARY_VISIBILITY X86TargetInfo : public TargetInfo {
   bool HasSERIALIZE = false;
   bool HasTSXLDTRK = false;
   bool HasUINTR = false;
+  bool HasCRC32 = false;
+  bool HasX87 = false;
 
 protected:
   llvm::X86::CPUKind CPU = llvm::X86::CK_None;
@@ -166,7 +168,7 @@ public:
     return LongDoubleFormat == &llvm::APFloat::IEEEquad() ? "g" : "e";
   }
 
-  int getFPEvalMethod() const override {
+  unsigned getFloatEvalMethod() const override {
     // X87 evaluates with 80 bits "long double" precision.
     return SSELevel == NoSSE ? 2 : 0;
   }
@@ -411,8 +413,8 @@ public:
 
     // Use fpret for all types.
     RealTypeUsesObjCFPRet =
-        ((1 << TargetInfo::Float) | (1 << TargetInfo::Double) |
-         (1 << TargetInfo::LongDouble));
+        ((1 << (int)FloatModeKind::Float) | (1 << (int)FloatModeKind::Double) |
+         (1 << (int)FloatModeKind::LongDouble));
 
     // x86-32 has atomics up to 8 bytes
     MaxAtomicPromoteWidth = 64;
@@ -460,7 +462,7 @@ public:
 
   ArrayRef<Builtin::Info> getTargetBuiltins() const override;
 
-  bool hasExtIntType() const override { return true; }
+  bool hasBitIntType() const override { return true; }
 };
 
 class LLVM_LIBRARY_VISIBILITY NetBSDI386TargetInfo
@@ -469,12 +471,11 @@ public:
   NetBSDI386TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : NetBSDTargetInfo<X86_32TargetInfo>(Triple, Opts) {}
 
-  int getFPEvalMethod() const override {
-    unsigned Major, Minor, Micro;
-    getTriple().getOSVersion(Major, Minor, Micro);
+  unsigned getFloatEvalMethod() const override {
+    VersionTuple OsVersion = getTriple().getOSVersion();
     // New NetBSD uses the default rounding mode.
-    if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 26) || Major == 0)
-      return X86_32TargetInfo::getFPEvalMethod();
+    if (OsVersion >= VersionTuple(6, 99, 26) || OsVersion.getMajor() == 0)
+      return X86_32TargetInfo::getFloatEvalMethod();
     // NetBSD before 6.99.26 defaults to "double" rounding.
     return 1;
   }
@@ -532,11 +533,12 @@ public:
     DoubleAlign = LongLongAlign = 64;
     bool IsWinCOFF =
         getTriple().isOSWindows() && getTriple().isOSBinFormatCOFF();
-    resetDataLayout(IsWinCOFF ? "e-m:x-p:32:32-p270:32:32-p271:32:32-p272:64:"
-                                "64-i64:64-f80:32-n8:16:32-a:0:32-S32"
-                              : "e-m:e-p:32:32-p270:32:32-p271:32:32-p272:64:"
-                                "64-i64:64-f80:32-n8:16:32-a:0:32-S32",
-                    IsWinCOFF ? "_" : "");
+    bool IsMSVC = getTriple().isWindowsMSVCEnvironment();
+    std::string Layout = IsWinCOFF ? "e-m:x" : "e-m:e";
+    Layout += "-p:32:32-p270:32:32-p271:32:32-p272:64:64-i64:64-";
+    Layout += IsMSVC ? "f80:128" : "f80:32";
+    Layout += "-n8:16:32-a:0:32-S32";
+    resetDataLayout(Layout, IsWinCOFF ? "_" : "");
   }
 };
 
@@ -691,7 +693,7 @@ public:
                                         "64-i64:64-f80:128-n8:16:32:64-S128");
 
     // Use fpret only for long double.
-    RealTypeUsesObjCFPRet = (1 << TargetInfo::LongDouble);
+    RealTypeUsesObjCFPRet = (1 << (int)FloatModeKind::LongDouble);
 
     // Use fp2ret for _Complex long double.
     ComplexLongDoubleUsesFP2Ret = true;
@@ -767,7 +769,7 @@ public:
 
   ArrayRef<Builtin::Info> getTargetBuiltins() const override;
 
-  bool hasExtIntType() const override { return true; }
+  bool hasBitIntType() const override { return true; }
 };
 
 // x86-64 Windows target

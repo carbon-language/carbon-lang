@@ -933,6 +933,8 @@ uint32_t ABISysV_x86_64::GetGenericNum(llvm::StringRef name) {
       .Case("rsp", LLDB_REGNUM_GENERIC_SP)
       .Case("rbp", LLDB_REGNUM_GENERIC_FP)
       .Case("rflags", LLDB_REGNUM_GENERIC_FLAGS)
+      // gdbserver uses eflags
+      .Case("eflags", LLDB_REGNUM_GENERIC_FLAGS)
       .Case("rdi", LLDB_REGNUM_GENERIC_ARG1)
       .Case("rsi", LLDB_REGNUM_GENERIC_ARG2)
       .Case("rdx", LLDB_REGNUM_GENERIC_ARG3)
@@ -950,16 +952,3 @@ void ABISysV_x86_64::Initialize() {
 void ABISysV_x86_64::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
-
-lldb_private::ConstString ABISysV_x86_64::GetPluginNameStatic() {
-  static ConstString g_name("sysv-x86_64");
-  return g_name;
-}
-
-// PluginInterface protocol
-
-lldb_private::ConstString ABISysV_x86_64::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ABISysV_x86_64::GetPluginVersion() { return 1; }

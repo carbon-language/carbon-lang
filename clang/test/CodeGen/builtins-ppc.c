@@ -37,15 +37,12 @@ void test_builtin_ppc_flm() {
   res = __builtin_setflm(res);
 }
 
-void test_builtin_ppc_darn() {
-  volatile long res;
-  volatile int x;
-  // CHECK: call i64 @llvm.ppc.darn()
-  res = __builtin_darn();
+double test_builtin_unpack_ldbl(long double x) {
+  // CHECK: call double @llvm.ppc.unpack.longdouble(ppc_fp128 %0, i32 1)
+  return __builtin_unpack_longdouble(x, 1);
+}
 
-  // CHECK: call i64 @llvm.ppc.darnraw()
-  res = __builtin_darn_raw();
-
-  // CHECK: call i32 @llvm.ppc.darn32()
-  x = __builtin_darn_32();
+long double test_builtin_pack_ldbl(double x, double y) {
+  // CHECK: call ppc_fp128 @llvm.ppc.pack.longdouble(double %0, double %1)
+  return __builtin_pack_longdouble(x, y);
 }

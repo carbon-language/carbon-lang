@@ -14,6 +14,7 @@
 #include "WebAssemblyTargetMachine.h"
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
 #include "TargetInfo/WebAssemblyTargetInfo.h"
+#include "Utils/WebAssemblyUtilities.h"
 #include "WebAssembly.h"
 #include "WebAssemblyMachineFunctionInfo.h"
 #include "WebAssemblyTargetObjectFile.h"
@@ -24,7 +25,8 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/Function.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/LowerAtomic.h"
@@ -32,28 +34,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "wasm"
-
-// Emscripten's asm.js-style exception handling
-cl::opt<bool>
-    WasmEnableEmEH("enable-emscripten-cxx-exceptions",
-                   cl::desc("WebAssembly Emscripten-style exception handling"),
-                   cl::init(false));
-
-// Emscripten's asm.js-style setjmp/longjmp handling
-cl::opt<bool> WasmEnableEmSjLj(
-    "enable-emscripten-sjlj",
-    cl::desc("WebAssembly Emscripten-style setjmp/longjmp handling"),
-    cl::init(false));
-
-// Exception handling using wasm EH instructions
-cl::opt<bool> WasmEnableEH("wasm-enable-eh",
-                           cl::desc("WebAssembly exception handling"),
-                           cl::init(false));
-
-// setjmp/longjmp handling using wasm EH instrutions
-cl::opt<bool> WasmEnableSjLj("wasm-enable-sjlj",
-                             cl::desc("WebAssembly setjmp/longjmp handling"),
-                             cl::init(false));
 
 // A command-line option to keep implicit locals
 // for the purpose of testing with lit/llc ONLY.
@@ -133,12 +113,14 @@ WebAssemblyTargetMachine::WebAssemblyTargetMachine(
     : LLVMTargetMachine(
           T,
           TT.isArch64Bit()
-              ? (TT.isOSEmscripten()
-                     ? "e-m:e-p:64:64-i64:64-f128:64-n32:64-S128-ni:1:10:20"
-                     : "e-m:e-p:64:64-i64:64-n32:64-S128-ni:1:10:20")
-              : (TT.isOSEmscripten()
-                     ? "e-m:e-p:32:32-i64:64-f128:64-n32:64-S128-ni:1:10:20"
-                     : "e-m:e-p:32:32-i64:64-n32:64-S128-ni:1:10:20"),
+              ? (TT.isOSEmscripten() ? "e-m:e-p:64:64-p10:8:8-p20:8:8-i64:64-"
+                                       "f128:64-n32:64-S128-ni:1:10:20"
+                                     : "e-m:e-p:64:64-p10:8:8-p20:8:8-i64:64-"
+                                       "n32:64-S128-ni:1:10:20")
+              : (TT.isOSEmscripten() ? "e-m:e-p:32:32-p10:8:8-p20:8:8-i64:64-"
+                                       "f128:64-n32:64-S128-ni:1:10:20"
+                                     : "e-m:e-p:32:32-p10:8:8-p20:8:8-i64:64-"
+                                       "n32:64-S128-ni:1:10:20"),
           TT, CPU, FS, Options, getEffectiveRelocModel(RM, TT),
           getEffectiveCodeModel(CM, CodeModel::Large), OL),
       TLOF(new WebAssemblyTargetObjectFile()) {
@@ -366,8 +348,24 @@ FunctionPass *WebAssemblyPassConfig::createTargetRegisterAllocator(bool) {
   return nullptr; // No reg alloc
 }
 
-static void checkSanityForEHAndSjLj(const TargetMachine *TM) {
-  // Sanity checking related to -exception-model
+using WebAssembly::WasmEnableEH;
+using WebAssembly::WasmEnableEmEH;
+using WebAssembly::WasmEnableEmSjLj;
+using WebAssembly::WasmEnableSjLj;
+
+static void basicCheckForEHAndSjLj(TargetMachine *TM) {
+  // Before checking, we make sure TargetOptions.ExceptionModel is the same as
+  // MCAsmInfo.ExceptionsType. Normally these have to be the same, because clang
+  // stores the exception model info in LangOptions, which is later transferred
+  // to TargetOptions and MCAsmInfo. But when clang compiles bitcode directly,
+  // clang's LangOptions is not used and thus the exception model info is not
+  // correctly transferred to TargetOptions and MCAsmInfo, so we make sure we
+  // have the correct exception model in in WebAssemblyMCAsmInfo constructor.
+  // But in this case TargetOptions is still not updated, so we make sure they
+  // are the same.
+  TM->Options.ExceptionModel = TM->getMCAsmInfo()->getExceptionHandlingType();
+
+  // Basic Correctness checking related to -exception-model
   if (TM->Options.ExceptionModel != ExceptionHandling::None &&
       TM->Options.ExceptionModel != ExceptionHandling::Wasm)
     report_fatal_error("-exception-model should be either 'none' or 'wasm'");
@@ -429,7 +427,7 @@ void WebAssemblyPassConfig::addIRPasses() {
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createWebAssemblyOptimizeReturned());
 
-  checkSanityForEHAndSjLj(TM);
+  basicCheckForEHAndSjLj(TM);
 
   // If exception handling is not enabled and setjmp/longjmp handling is
   // enabled, we lower invokes into calls and delete unreachable landingpad
