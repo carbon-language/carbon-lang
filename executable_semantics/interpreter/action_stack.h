@@ -19,14 +19,17 @@ namespace Carbon {
 class ActionStack {
  public:
   // Constructs an empty ActionStack
-  ActionStack() = default;
+  explicit ActionStack(Scope globals) : globals_(std::move(globals)) {}
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Starts execution with `action` at the top of the stack, in the given scope.
-  // `action` must be an `ExpressionAction` or `PatternAction`.
-  void Start(std::unique_ptr<Action> action, Scope scope);
+  // Returns an Env containing the currently-defined global variables.
+  auto GlobalEnv() const -> Env { return globals_.values(); }
+
+  // Starts execution with `action` at the top of the stack. Cannot be called
+  // when IsEmpty() is false.
+  void Start(std::unique_ptr<Action> action);
 
   // True if the stack is empty.
   auto IsEmpty() const -> bool { return todo_.IsEmpty(); }
@@ -97,6 +100,7 @@ class ActionStack {
   // TODO: consider defining a non-nullable unique_ptr-like type to use here.
   Stack<std::unique_ptr<Action>> todo_;
   std::optional<Nonnull<const Value*>> result_;
+  mutable Scope globals_;
 };
 
 }  // namespace Carbon
