@@ -37,6 +37,10 @@ static constexpr std::string_view AnonymousName = "_";
   // Returns the name of an IdentifierExpression that names *this. If *this
   // is anonymous, returns AnonymousName.
   auto name() const -> std::string_view;
+
+  // If *this names a compile-time constant whose value is known, returns that
+  // value. Otherwise returns std::nullopt.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>>;
 */
 // NodeType must be derived from AstNode.
 //
@@ -70,7 +74,11 @@ class NamedEntityView {
         }),
         value_category_([](const AstNode& base) -> ValueCategory {
           return llvm::cast<NodeType>(base).value_category();
-        }) {
+        }),
+        constant_value_(
+            [](const AstNode& base) -> std::optional<Nonnull<const Value*>> {
+              return llvm::cast<NodeType>(base).constant_value();
+            }) {
     CHECK(node->name() != AnonymousName)
         << "Entity with no name used as NamedEntity: " << *node;
   }
@@ -94,6 +102,11 @@ class NamedEntityView {
     return value_category_(*base_);
   }
 
+  // Returns node->constant_value()
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_(*base_);
+  }
+
   friend auto operator==(const NamedEntityView& lhs, const NamedEntityView& rhs)
       -> bool {
     return lhs.base_ == rhs.base_;
@@ -114,6 +127,8 @@ class NamedEntityView {
   std::function<std::string_view(const AstNode&)> name_;
   std::function<const Value&(const AstNode&)> static_type_;
   std::function<ValueCategory(const AstNode&)> value_category_;
+  std::function<std::optional<Nonnull<const Value*>>(const AstNode&)>
+      constant_value_;
 };
 
 // Maps the names visible in a given scope to the entities they name.

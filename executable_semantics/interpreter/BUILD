@@ -130,6 +130,7 @@ cc_library(
         ":stack",
         "//common:check",
         "//common:ostream",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:pattern",

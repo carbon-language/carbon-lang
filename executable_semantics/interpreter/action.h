@@ -65,6 +65,7 @@ class Action {
     ExpressionAction,
     PatternAction,
     StatementAction,
+    DeclarationAction,
     ScopeAction,
   };
 
@@ -201,6 +202,24 @@ class StatementAction : public Action {
 
  private:
   Nonnull<const Statement*> statement_;
+};
+
+// Action which implements the run-time effects of executing a Declaration.
+// Does not produce a result.
+class DeclarationAction : public Action {
+ public:
+  explicit DeclarationAction(Nonnull<const Declaration*> declaration)
+      : Action(Kind::DeclarationAction), declaration_(declaration) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::DeclarationAction;
+  }
+
+  // The Declaration this Action executes.
+  auto declaration() const -> const Declaration& { return *declaration_; }
+
+ private:
+  Nonnull<const Declaration*> declaration_;
 };
 
 // Action which does nothing except introduce a new scope into the action

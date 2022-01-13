@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
@@ -24,19 +25,19 @@ namespace Carbon {
 class Interpreter {
  public:
   explicit Interpreter(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), globals_(arena), heap_(arena), trace_(trace) {}
+      : arena_(arena),
+        heap_(arena),
+        todo_(Scope(Env(arena_), &heap_)),
+        trace_(trace) {}
 
   // Interpret the whole program.
-  auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
-                     Nonnull<const Expression*> call_main) -> int;
+  auto InterpProgram(const AST& ast) -> int;
 
   // Interpret an expression at compile-time.
-  auto InterpExp(Env values, Nonnull<const Expression*> e)
-      -> Nonnull<const Value*>;
+  auto InterpExp(Nonnull<const Expression*> e) -> Nonnull<const Value*>;
 
   // Interpret a pattern at compile-time.
-  auto InterpPattern(Env values, Nonnull<const Pattern*> p)
-      -> Nonnull<const Value*>;
+  auto InterpPattern(Nonnull<const Pattern*> p) -> Nonnull<const Value*>;
 
   // Attempts to match `v` against the pattern `p`. If matching succeeds,
   // returns the bindings of pattern variables to their matched values.
@@ -48,7 +49,6 @@ class Interpreter {
     return heap_.AllocateValue(v);
   }
 
-  void InitEnv(const Declaration& d, Env* env);
   void PrintEnv(Env values, llvm::raw_ostream& out);
 
  private:
@@ -62,11 +62,16 @@ class Interpreter {
   void StepPattern();
   // State transition for statements.
   void StepStmt();
+  // State transition for declarations.
+  void StepDeclaration();
 
-  void InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs);
   auto CurrentEnv() -> Env;
   auto GetFromEnv(SourceLocation source_loc, const std::string& name)
       -> Address;
+
+  // Calls Step() repeatedly until there are no steps left to execute. Produces
+  // trace output if trace_steps is true.
+  void RunAllSteps(bool trace_steps);
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -82,22 +87,17 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
-  // Runs `action` in a scope consisting of `values`, and returns the result.
-  // `action` must produce a result. In other words, it must not be a
-  // StatementAction or ScopeAction.
-  //
-  // TODO: consider whether to use this->trace_ rather than a separate
-  // trace_steps parameter.
-  auto ExecuteAction(std::unique_ptr<Action> action, Env values,
-                     bool trace_steps) -> Nonnull<const Value*>;
+  // Runs `action` in an environment where the given constants are defined, and
+  // returns the result. `action` must produce a result. In other words, it must
+  // not be a StatementAction, ScopeAction, or DeclarationAction. Can only be
+  // called at compile time (before InterpProgram), and while `todo_` is empty.
+  auto RunCompileTimeAction(std::unique_ptr<Action> action)
+      -> Nonnull<const Value*>;
 
   Nonnull<Arena*> arena_;
 
-  // Globally-defined entities, such as functions, structs, or choices.
-  Env globals_;
-
-  ActionStack todo_;
   Heap heap_;
+  ActionStack todo_;
 
   // The underlying states of continuation values. All StackFragments created
   // during execution are tracked here, in order to safely deallocate the
