@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+import tempfile
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
 
@@ -42,6 +43,29 @@ class Rule(NamedTuple):
     # For genrules:
     # The outs attribute, as relative paths to the file.
     outs: Set[str]
+
+
+def install_buildozer() -> str:
+    # 4.2.4
+    buildozer_sha = "cdedcc0318b9c8919afb0167e30c1588fc990ffc"
+    args = [
+        "go",
+        "install",
+        f"github.com/bazelbuild/buildtools/buildozer@{buildozer_sha}",
+    ]
+    # Install to a cache.
+    env = os.environ.copy()
+    if "XDG_CACHE_HOME" in env:
+        cache_dir = Path(env["XDG_CACHE_HOME"])
+    else:
+        cache_dir = Path(tempfile.gettempdir())
+    cache_dir = cache_dir.joinpath("carbon-pre-commit-cache")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    env["GOPATH"] = str(cache_dir)
+    if "GOBIN" in env:
+        del env["GOBIN"]
+    subprocess.check_call(args, env=env)
+    return str(cache_dir.joinpath("bin", "buildozer"))
 
 
 def locate_bazel() -> str:
@@ -190,7 +214,8 @@ def get_missing_deps(
                             f"{', '.join(dep_choices)}"
                         )
                         ambiguous = True
-                    missing_deps.add(dep_choices.pop())
+                    # Use the single dep without removing it.
+                    missing_deps.add(next(iter(dep_choices)))
     return missing_deps, ambiguous
 
 
@@ -229,13 +254,23 @@ def main() -> None:
     if any_ambiguous:
         exit("Stopping due to ambiguous dependency choices.")
 
-    print("Fixing dependencies...")
-    SEPARATOR = "\n- "
-    for rule_name, missing_deps in sorted(all_missing_deps):
-        friendly_missing_deps = SEPARATOR.join(missing_deps)
-        print(f"Adding deps to {rule_name}:{SEPARATOR}{friendly_missing_deps}")
-        args = ["buildozer", f"add deps {' '.join(missing_deps)}", rule_name]
-        subprocess.check_call(args)
+    if all_missing_deps:
+        print("Checking buildozer availability...")
+        buildozer = install_buildozer()
+
+        print("Fixing dependencies...")
+        SEPARATOR = "\n- "
+        for rule_name, missing_deps in sorted(all_missing_deps):
+            friendly_missing_deps = SEPARATOR.join(missing_deps)
+            print(
+                f"Adding deps to {rule_name}:{SEPARATOR}{friendly_missing_deps}"
+            )
+            args = [
+                buildozer,
+                f"add deps {' '.join(missing_deps)}",
+                rule_name,
+            ]
+            subprocess.check_call(args)
 
     print("Done!")
 
