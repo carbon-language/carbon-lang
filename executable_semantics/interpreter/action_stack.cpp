@@ -39,7 +39,7 @@ void ActionStack::FinishAction() {
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-      FATAL() << "This kind of action must produce a result.";
+      FATAL() << "This kind of action must produce a result: " << *act;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
@@ -53,7 +53,7 @@ void ActionStack::FinishAction(Nonnull<const Value*> result) {
   switch (act->kind()) {
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
-      FATAL() << "This kind of Action cannot produce results.";
+      FATAL() << "This kind of Action cannot produce results: " << *act;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction at top of stack";
     case Action::Kind::ExpressionAction:
