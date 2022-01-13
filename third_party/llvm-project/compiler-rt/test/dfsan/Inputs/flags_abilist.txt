@@ -1,0 +1,10 @@
+fun:f=uninstrumented
+
+fun:main=uninstrumented
+fun:main=discard
+
+fun:dfsan_create_label=uninstrumented
+fun:dfsan_create_label=discard
+
+fun:dfsan_set_label=uninstrumented
+fun:dfsan_set_label=discard
