@@ -63,9 +63,9 @@ class Scope {
 // execution of a statement. Execution of an action is divided into a series of
 // steps, and the `pos` field typically counts the number of steps executed.
 //
-// Actions are typically owned by the ActionStack. They should not be allocated
-// on an Arena, because their lifetime is bounded, and their destruction can
-// have important side effects such as deallocating local variables.
+// They should be destroyed as soon as they are done executing, in order to
+// clean up the associated Carbon scope, and consequently they should not be
+// allocated on an Arena. Actions are typically owned by the ActionStack.
 //
 // The actual behavior of an Action step is defined by Interpreter::Step, not by
 // Action or its subclasses.
@@ -83,6 +83,8 @@ class Action {
 
   Action(const Value&) = delete;
   auto operator=(const Value&) -> Action& = delete;
+
+  virtual ~Action() = default;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -122,8 +124,6 @@ class Action {
 
   // Returns the scope associated with this Action, if any.
   auto scope() -> std::optional<Scope>& { return scope_; }
-
-  virtual ~Action() = default;
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the
