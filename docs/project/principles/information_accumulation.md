@@ -43,23 +43,6 @@ Different languages take different approaches to this problem. For example:
 -   In Swift, all information from the entire source file is available within
     that source file.
 
-It is problematic for the same entity to have different behaviors depending on
-which information about it is available. This can lead to a violation of
-[coherence](/docs/design/generics/goals.md#coherence) and program consistency.
-
-It is also problematic for both tools and human readers to make information
-available prior to its introduction in a source file.
-
--   For a human reader, this violates the literary principle that ideas should
-    be introduced before they are referenced.
--   For a tool, this makes it harder to reason about incomplete or invalid code
-    for which a prefix is valid, such as frequently happens while editing a
-    source file, and expands the scope of code that a tool must understand to
-    correctly interpret code.
--   This also makes it harder to use tools such as bisection to determine the
-    cause of an error, because any part of the source file could contribute to
-    an error.
-
 ## Principle
 
 In Carbon, information is accumulated incrementally within each source file.
@@ -120,4 +103,9 @@ enclosing class, like in C++.
 
 ## Alternatives considered
 
--   [Allow information to be used before it is provided](/proposals/p0875.md#strict-global-consistency)
+-   Allow information to be used before it is provided
+    [globally](/proposals/p0875.md#strict-global-consistency),
+    [within a file](/proposals/p0875.md#context-sensitive-local-consistency), or
+    [within a top-level declaration](/proposals/p0875.md#top-down-with-minimally-deferred-type-checking).
+-   [Do not allow inline method bodies to use members before they are declared](/proposals/p0875.md#strict-top-down)
+-   [Do not allow separate declaration and definition](/proposals/p0875.md#disallow-separate-declaration-and-definition)
