@@ -91,6 +91,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Termination rule](#termination-rule)
     -   [`final` impls](#final-impls)
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
+    -   [`weak` impls](#weak-impls)
     -   [Comparison to Rust](#comparison-to-rust)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -2230,8 +2231,8 @@ is resolved. Using that pattern in the explicit parameter list allows us to make
 `T` available earlier in the declaration so it can be passed as the argument to
 the parameterized interface `StackParameterized`.
 
-This approach is useful for the `ComparableTo(T)` interface, where a type might
-be comparable with multiple other types, and in fact interfaces for
+This approach is useful for the `ComparableWith(T)` interface, where a type
+might be comparable with multiple other types, and in fact interfaces for
 [operator overloads](#operator-overloading) more generally. Example:
 
 ```
@@ -3710,8 +3711,9 @@ In general, `X(T).F` can only mean one thing, regardless of `T`.
 **Concern:** The conditional conformance feature makes the question "is this
 interface implemented for this type" undecidable in general.
 [This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
-The acyclic restriction may eliminate this issue, otherwise we will likely need
-some heuristic like a limit on how many steps of recursion are allowed.
+The [acyclic restriction](#acyclic-rule) may eliminate this issue, otherwise we
+will likely need some heuristic like a limit on how many steps of recursion are
+allowed.
 
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
@@ -3968,7 +3970,7 @@ considered to form cycles with themselves:
 
 ```
 impl [T:! Printable] Optional(T) as Printable;
-impl [T:! Type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
+impl [T:! Type, U:! ComparableWith(T)] U as ComparableWith(Optional(T));
 ```
 
 **Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
@@ -4051,9 +4053,12 @@ selected to implement `D(i16)` for `i8`:
 
 In either case, we arrive at a contradiction.
 
-The workaround for this problem is to either split an interface in the cycle in
-two, with a blanket implementation of one from the other, or move some of the
-criteria into a [named constraint](#named-constraints).
+A possible workaround for this problem is to move some of the criteria into a
+[named constraint](#named-constraints). Another workaround would be to split an
+interface in the cycle in two, with a blanket implementation of one from the
+other. However, that generally leads to a situation where the interface
+implemented for types is not the same interface as used in constraints. Instead
+use [weak impls](#weak-impls).
 
 **Concern:** Cycles could be spread out across libraries with no dependencies
 between them. This means there can be problems created by a library that are
@@ -4222,6 +4227,50 @@ higher-priority impl is defined superseding a `final` impl.
     in the library with `ParameterType`, but that library must import the
     libraries defining `MyType` and `MyInterface`, and so will be able to see
     any `final` impls that might overlap.
+
+### `weak` impls
+
+Consider a blanket impl that is forbidden by the [acyclic rule](#acyclic-rule):
+
+```
+// If `T` implements `ComparableWith(U)`, then
+// `U` should implement `ComparableWith(T)`.
+external impl [U:! Type, T:! ComparableWith(U)]
+    U as ComparableWith(T) { ... }
+```
+
+This forms a cycle where whether `U as ComparableWith(T)` is implemented depends
+on whether `T as ComparableWith(U)` is implemented and the other way around. We
+could break this cycle by having one interface that type authors explicitly
+implement, and another interface that is just used for constraints. That pushes
+the complexity of solving this problem on all users of the interface, rather
+than on the author of the interface and the blanket impl.
+
+Instead, Carbon allows the library defining the interface to distinguish between
+implementations explicitly defined by the user, called _strong_ impls, and those
+implemented by a block of automatic implementation provided by the interface's
+library, called _weak_ impls.
+
+-   By default, impls are considered to be strong.
+-   By default, any constraint will accept either strong or weak impls.
+-   A strong constraint will only accept strong impls.
+-   Weak impls and strong constraints may only be defined in the library with
+    the interface.
+
+Impls may be marked weak using the `weak` keyword as a prefix. Constraints may
+be marked strong using the `strong` keyword.
+
+```
+// If `T` implements `ComparableWith(U)`, then
+// `U` should implement `ComparableWith(T)`.
+external weak impl [U:! Type, T:! strong ComparableWith(U)]
+    U as ComparableWith(T) { ... }
+```
+
+**FIXME:** Should strong impls be prioritized over weak impls? In general they
+are going to be low priority anyway since they will be blanket impls.
+
+**FIXME:** Should `weak` imply `external` or should you have two write both?
 
 ### Comparison to Rust
 

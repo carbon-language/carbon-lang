@@ -72,8 +72,10 @@ The following words are interpreted as keywords:
 -   `protected`
 -   `return`
 -   `returned`
+-   `strong`
 -   `var`
 -   `virtual`
+-   `weak`
 -   `where`
 -   `while`
 
