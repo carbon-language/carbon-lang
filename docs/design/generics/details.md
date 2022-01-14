@@ -4267,10 +4267,24 @@ external weak impl [U:! Type, T:! strong ComparableWith(U)]
     U as ComparableWith(T) { ... }
 ```
 
-**FIXME:** Should strong impls be prioritized over weak impls? In general they
-are going to be low priority anyway since they will be blanket impls.
+Note that marking an `impl` as `weak` does not change its prioritization. In
+general, a `weak` impl will be a blanket impl and so will naturally have a low
+priority based on its [type structure](#type-structure-of-an-impl-declaration).
 
-**FIXME:** Should `weak` imply `external` or should you have two write both?
+**FIXME:** Do we want to support making this example `ComparableWith`
+implementation `final`? This would be a way of forbidding having strong
+implementations of both `A as ComparableWith(B)` and `B as ComparableWith(A)` so
+we could guarantee that comparisons between those two types consistently use the
+same implementation no matter what order is used in the caller. Two concerns
+arise:
+
+-   It would naively seem to forbid the author of `MyType` from defining
+    `MyType as ComparableWith(MyType)`.
+-   It would creates a situation where two _independent_ libraries can define
+    parameterized implementations of the `ComparableWith` interface that
+    conflict.
+
+**FIXME:** Should `weak` imply `external` or should you have to write both?
 
 ### Comparison to Rust
 
@@ -4450,3 +4464,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+-   [#1027: Generic details 9: weak impls](https://github.com/carbon-language/carbon-lang/pull/1027)
