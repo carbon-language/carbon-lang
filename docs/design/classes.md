@@ -707,7 +707,7 @@ determined at compile time.
 To support circular references between class types, we allow
 [forward declaration](https://en.wikipedia.org/wiki/Forward_declaration) of
 types. Forward declarations end with semicolon `;` after the name of the class,
-instead of any `extends` caluse and the block of declarations in curly braces
+instead of any `extends` clause and the block of declarations in curly braces
 `{`...`}`. A type that is forward declared is considered incomplete until the
 end of a definition with the same name.
 
