@@ -49,6 +49,7 @@ The following words are interpreted as keywords:
 -   `else`
 -   `extends`
 -   `external`
+-   `final`
 -   `fn`
 -   `for`
 -   `friend`
