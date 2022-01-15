@@ -4271,6 +4271,16 @@ Note that marking an `impl` as `weak` does not change its prioritization. In
 general, a `weak` impl will be a blanket impl and so will naturally have a low
 priority based on its [type structure](#type-structure-of-an-impl-declaration).
 
+**Note:** A library with an interface could export the ability to use a strong
+constraints to other libraries by using a named constraint.
+
+```
+public interface ComparableWith(T:! Type) { ... }
+public constraint StrongComparableWith(T:! Type) {
+  extends strong ComparableWith(T);
+}
+```
+
 **FIXME:** Do we want to support making this example `ComparableWith`
 implementation `final`? This would be a way of forbidding having strong
 implementations of both `A as ComparableWith(B)` and `B as ComparableWith(A)` so
