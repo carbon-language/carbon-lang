@@ -4294,8 +4294,6 @@ arise:
     parameterized implementations of the `ComparableWith` interface that
     conflict.
 
-**FIXME:** Should `weak` imply `external` or should you have to write both?
-
 ### Comparison to Rust
 
 Rust has been designing a specialization feature, but it has not been completed.
