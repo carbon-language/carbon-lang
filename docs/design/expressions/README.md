@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Conversions and casts](#conversions-and-casts)
+-   [Operators](#operators)
 
 <!-- tocstop -->
 
@@ -45,3 +46,11 @@ fn Baz(n: i64) {
   Bar(n);
 }
 ```
+
+## Operators
+
+| Category | Operator                      | Syntax    | Function                                                            |
+| -------- | ----------------------------- | --------- | ------------------------------------------------------------------- |
+| Logical  | [`and`](logical_operators.md) | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`. |
+| Logical  | [`or`](logical_operators.md)  | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.  |
+| Logical  | [`not`](logical_operators.md) | `not x`   | Logical NOT: `true` if the operand is `false`.                      |
