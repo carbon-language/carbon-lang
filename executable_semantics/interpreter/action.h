@@ -24,6 +24,14 @@ namespace Carbon {
 // not compile-time constants.
 class DynamicScope {
  public:
+  // Returns a DynamicScope whose Get() operation for a given name returns the
+  // storage owned by the first entry in `scopes` that defines that name. This
+  // behavior is closely analogous to a `[&]` capture in C++, hence the name.
+  // `scopes` must contain at least one entry, and all entries must be backed
+  // by the same Heap.
+  static auto Capture(const std::vector<Nonnull<const DynamicScope*>>& scopes)
+      -> DynamicScope;
+
   // Constructs a DynamicScope that allocates storage in `heap`.
   explicit DynamicScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
 
@@ -49,14 +57,6 @@ class DynamicScope {
   // this scope.
   auto Get(NamedEntityView named_entity) const
       -> std::optional<Nonnull<const LValue*>>;
-
-  // Returns a DynamicScope whose Get() operation for a given name returns the
-  // storage owned by the first entry in `scopes` that defines that name. This
-  // behavior is closely analogous to a `[&]` capture in C++, hence the name.
-  // `scopes` must contain at least one entry, and all entries must be backed
-  // by the same Heap.
-  static auto Capture(const std::vector<Nonnull<const DynamicScope*>>& scopes)
-      -> DynamicScope;
 
  private:
   std::map<NamedEntityView, Nonnull<const LValue*>> locals_;

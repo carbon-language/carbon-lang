@@ -39,10 +39,9 @@ class Interpreter {
   // Attempts to match `v` against the pattern `p`, returning whether matching
   // is successful. If it is, populates **bindings with the variables bound by
   // the match; `bindings` should only be nullopt in contexts where `p`
-  // is not permitted to bind variables. If the match is unsuccessful,
-  // **bindings is left in an unspecified state, so it should typically be
-  // created for the PatternMatch call and then merged into an existing scope
-  // on success.
+  // is not permitted to bind variables. **bindings may be modified even if the
+  // match is unsuccessful, so it should typically be created for the
+  // PatternMatch call and then merged into an existing scope on success.
   [[nodiscard]] auto PatternMatch(
       Nonnull<const Value*> p, Nonnull<const Value*> v,
       SourceLocation source_loc, std::optional<Nonnull<DynamicScope*>> bindings)

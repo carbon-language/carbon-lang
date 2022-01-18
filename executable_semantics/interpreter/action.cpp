@@ -23,11 +23,13 @@ using llvm::cast;
 
 DynamicScope::DynamicScope(DynamicScope&& other) noexcept
     : locals_(std::move(other.locals_)),
+      // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_) {}
 
 auto DynamicScope::operator=(DynamicScope&& rhs) noexcept -> DynamicScope& {
   locals_ = std::move(rhs.locals_);
+  // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
   return *this;
@@ -59,6 +61,7 @@ void DynamicScope::Initialize(NamedEntityView named_entity,
 }
 
 void DynamicScope::Merge(DynamicScope other) {
+  CHECK(heap_ == other.heap_);
   locals_.merge(other.locals_);
   CHECK(other.locals_.empty())
       << "Duplicate definition of " << other.locals_.size()
@@ -66,7 +69,6 @@ void DynamicScope::Merge(DynamicScope other) {
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
-  CHECK(heap_ == other.heap_);
 }
 
 auto DynamicScope::Get(NamedEntityView named_entity) const
@@ -84,11 +86,11 @@ auto DynamicScope::Capture(
   CHECK(!scopes.empty());
   DynamicScope result(scopes.front()->heap_);
   for (Nonnull<const DynamicScope*> scope : scopes) {
+    CHECK(scope->heap_ == result.heap_);
     for (const auto& entry : scope->locals_) {
       // Intentionally disregards duplicates later in the vector.
       result.locals_.insert(entry);
     }
-    CHECK(scope->heap_ == result.heap_);
   }
   return result;
 }
