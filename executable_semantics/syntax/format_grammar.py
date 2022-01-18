@@ -92,7 +92,7 @@ def _clang_format(code: str, base_style: str, cols: int) -> str:
     return output.decode("utf-8")
 
 
-def _find_string_end(content: str, start: int, quote: int) -> int:
+def _find_string_end(content: str, start: int, quote: str) -> int:
     """Returns the end of a string, skipping escapes."""
     i = start
     while i < len(content):
