@@ -79,11 +79,13 @@ def _overlay_directories(repository_ctx):
         # Generate config_detected.bzl on Linux.
         llvm_path = overlay_path.get_child("llvm")
         gen_script_path = llvm_path.get_child("gen_config_detected.py")
+        # Delete the overlayed symlink to config_detected.bzl.
+        repository_ctx.delete("./llvm/config_detected.bzl")
         cmd = [
             python_bin,
             gen_script_path,
             "--target",
-            llvm_path.get_child("config_detected.bzl"),
+            "./llvm/config_detected.bzl",
         ]
         _run(repository_ctx, gen_script_path.basename, cmd)
 
