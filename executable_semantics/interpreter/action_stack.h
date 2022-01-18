@@ -24,7 +24,7 @@ class ActionStack {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // TODO: consider unifying with Print
+  // TODO: consider unifying with Print.
   void PrintScopes(llvm::raw_ostream& out) const;
 
   // Sets the heap that variables will be allocated on. Cannot be called at

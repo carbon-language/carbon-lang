@@ -59,8 +59,8 @@ void DynamicScope::Initialize(NamedEntityView named_entity,
 }
 
 void DynamicScope::Merge(DynamicScope other) {
-  locals_.merge(std::move(other.locals_));
-  CHECK(other.locals_.size() == 0)
+  locals_.merge(other.locals_);
+  CHECK(other.locals_.empty())
       << "Duplicate definition of " << other.locals_.size()
       << " names, including " << other.locals_.begin()->first.name();
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
@@ -81,6 +81,7 @@ auto DynamicScope::Get(NamedEntityView named_entity) const
 
 auto DynamicScope::Capture(
     const std::vector<Nonnull<const DynamicScope*>>& scopes) -> DynamicScope {
+  CHECK(!scopes.empty());
   DynamicScope result(scopes.front()->heap_);
   for (Nonnull<const DynamicScope*> scope : scopes) {
     for (const auto& entry : scope->locals_) {

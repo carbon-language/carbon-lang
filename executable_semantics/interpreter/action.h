@@ -31,13 +31,13 @@ class DynamicScope {
   DynamicScope(DynamicScope&&) noexcept;
   auto operator=(DynamicScope&&) noexcept -> DynamicScope&;
 
-  // Deallocates any allocations in this scope from `heap`
+  // Deallocates any allocations in this scope from `heap`.
   ~DynamicScope();
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Allocates storage for named_entity in `heap`, and initializes it with
+  // Allocates storage for `named_entity` in `heap`, and initializes it with
   // `value`.
   void Initialize(NamedEntityView named_entity, Nonnull<const Value*> value);
 

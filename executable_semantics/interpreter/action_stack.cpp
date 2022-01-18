@@ -74,7 +74,7 @@ auto ActionStack::ValueOfName(NamedEntityView named_entity,
       return *result;
     }
   }
-  // TODO: Move these errors to compile time and explain them more clearly
+  // TODO: Move these errors to compile time and explain them more clearly.
   FATAL_RUNTIME_ERROR(source_loc)
       << "could not find `" << named_entity.name() << "`";
 }
