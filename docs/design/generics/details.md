@@ -4290,7 +4290,7 @@ arise:
 
 -   It would naively seem to forbid the author of `MyType` from defining
     `MyType as ComparableWith(MyType)`.
--   It would creates a situation where two _independent_ libraries can define
+-   It would not prevent two _independent_ libraries from defining
     parameterized implementations of the `ComparableWith` interface that
     conflict.
 
