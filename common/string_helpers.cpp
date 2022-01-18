@@ -4,13 +4,22 @@
 
 #include "common/string_helpers.h"
 
+#include <algorithm>
+#include <optional>
+
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 
+namespace {
+
+constexpr llvm::StringRef TRIPLE_QUOTES = "\"\"\"";
+constexpr llvm::StringRef HORIZONTAL_WS = " \t";
+
 // Carbon only takes uppercase hex input.
-static auto FromHex(char c) -> std::optional<char> {
+auto FromHex(char c) -> std::optional<char> {
   if (c >= '0' && c <= '9') {
     return c - '0';
   }
@@ -20,7 +29,14 @@ static auto FromHex(char c) -> std::optional<char> {
   return std::nullopt;
 }
 
-auto UnescapeStringLiteral(llvm::StringRef source)
+// Creates an error instance with the specified `message`.
+llvm::Expected<std::string> MakeError(llvm::Twine message) {
+  return llvm::createStringError(llvm::inconvertibleErrorCode(), message);
+}
+
+}  // namespace
+
+auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string)
     -> std::optional<std::string> {
   std::string ret;
   ret.reserve(source.size());
@@ -74,6 +90,11 @@ auto UnescapeStringLiteral(llvm::StringRef source)
           }
           case 'u':
             FATAL() << "\\u is not yet supported in string literals";
+          case '\n':
+            if (!is_block_string) {
+              return std::nullopt;
+            }
+            break;
           default:
             // Unsupported.
             return std::nullopt;
@@ -93,6 +114,62 @@ auto UnescapeStringLiteral(llvm::StringRef source)
     ++i;
   }
   return ret;
+}
+
+auto ParseBlockStringLiteral(llvm::StringRef source)
+    -> llvm::Expected<std::string> {
+  llvm::SmallVector<llvm::StringRef> lines;
+  source.split(lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/true);
+  if (lines.size() < 2) {
+    return MakeError("Too few lines");
+  }
+
+  llvm::StringRef first = lines[0];
+  if (!first.consume_front(TRIPLE_QUOTES)) {
+    return MakeError("Should start with triple quotes: " + first);
+  }
+  first = first.rtrim(HORIZONTAL_WS);
+  // Remaining chars, if any, are a file type indicator.
+  if (first.find_first_of("\"#") != llvm::StringRef::npos ||
+      first.find_first_of(HORIZONTAL_WS) != llvm::StringRef::npos) {
+    return MakeError("Invalid characters in file type indicator: " + first);
+  }
+
+  llvm::StringRef last = lines[lines.size() - 1];
+  const size_t last_length = last.size();
+  last = last.ltrim(HORIZONTAL_WS);
+  const size_t indent = last_length - last.size();
+  if (last != TRIPLE_QUOTES) {
+    return MakeError("Should end with triple quotes: " + last);
+  }
+
+  std::string parsed;
+  for (size_t i = 1; i < lines.size() - 1; ++i) {
+    llvm::StringRef line = lines[i];
+    const size_t first_non_ws = line.find_first_not_of(HORIZONTAL_WS);
+    if (first_non_ws == llvm::StringRef::npos) {
+      // Empty or whitespace-only line.
+      line = "";
+    } else {
+      if (first_non_ws < indent) {
+        return MakeError("Wrong indent for line: " + line + ", expected " +
+                         llvm::Twine(indent));
+      }
+      line = line.drop_front(indent).rtrim(HORIZONTAL_WS);
+    }
+    // Unescaping with \n appended to handle things like \\<newline>.
+    llvm::SmallVector<char> buffer;
+    std::optional<std::string> unescaped = UnescapeStringLiteral(
+        (line + "\n").toStringRef(buffer), /*is_block_string=*/true);
+    if (!unescaped.has_value()) {
+      return MakeError("Invalid escaping in " + line);
+    }
+    // A \<newline> string collapses into nothing.
+    if (!unescaped->empty()) {
+      parsed.append(*unescaped);
+    }
+  }
+  return parsed;
 }
 
 }  // namespace Carbon

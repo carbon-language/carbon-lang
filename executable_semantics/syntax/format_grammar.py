@@ -92,14 +92,14 @@ def _clang_format(code: str, base_style: str, cols: int) -> str:
     return output.decode("utf-8")
 
 
-def _find_string_end(content: str, start: int) -> int:
+def _find_string_end(content: str, start: int, quote: int) -> int:
     """Returns the end of a string, skipping escapes."""
     i = start
     while i < len(content):
         c = content[i]
         if c == "\\":
             i += 1
-        elif c == '"':
+        elif c == quote:
             return i
         i += 1
     exit("failed to find end of string: %s" % content[start : start + 20])
@@ -113,9 +113,9 @@ def _find_brace_end(content: str, has_percent: bool, start: int) -> int:
     i = start
     while i < len(content):
         c = content[i]
-        if c == '"':
+        if c == '"' or c == "'":
             # Skip over strings.
-            i = _find_string_end(content, i + 1)
+            i = _find_string_end(content, i + 1, c)
         elif c == "/" and content[i + 1 : i + 2] == "/":
             # Skip over line comments.
             i = content.find("\n", i + 2)
@@ -287,9 +287,9 @@ def _parse_segments(
     table_segments: List[_Table] = []
     while i < len(content):
         c = content[i]
-        if c == '"':
+        if c == '"' or c == "'":
             # Skip over strings.
-            i = _find_string_end(content, i + 1)
+            i = _find_string_end(content, i + 1, c)
         elif c == "/" and content[i + 1 : i + 2] == "*":
             text_segment_start, i = _parse_comment(
                 content=content,
