@@ -58,6 +58,18 @@ class Scope {
   Nonnull<HeapAllocationInterface*> heap_;
 };
 
+// An Action represents the current state of a self-contained computation,
+// usually associated with some AST node, such as evaluation of an expression or
+// execution of a statement. Execution of an action is divided into a series of
+// steps, and the `pos` field typically counts the number of steps executed.
+//
+// They should be destroyed as soon as they are done executing, in order to
+// clean up the associated Carbon scope, and consequently they should not be
+// allocated on an Arena. Actions are typically owned by the ActionStack.
+//
+// The actual behavior of an Action step is defined by Interpreter::Step, not by
+// Action or its subclasses.
+// TODO: consider moving this logic to a virtual method `Step`.
 class Action {
  public:
   enum class Kind {
@@ -72,13 +84,37 @@ class Action {
   Action(const Value&) = delete;
   auto operator=(const Value&) -> Action& = delete;
 
-  void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
+  virtual ~Action() = default;
 
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  // Resets this Action to its initial state.
   void Clear() {
     CHECK(!scope_.has_value());
     pos_ = 0;
     results_.clear();
   }
+
+  // Returns the enumerator corresponding to the most-derived type of this
+  // object.
+  auto kind() const -> Kind { return kind_; }
+
+  // The position or state of the action. Starts at 0 and is typically
+  // incremented after each step.
+  auto pos() const -> int { return pos_; }
+  void set_pos(int pos) { this->pos_ = pos; }
+
+  // The results of any Actions spawned by this Action.
+  auto results() const -> const std::vector<Nonnull<const Value*>>& {
+    return results_;
+  }
+
+  // Appends `result` to `results`.
+  void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
+
+  // Returns the scope associated with this Action, if any.
+  auto scope() -> std::optional<Scope>& { return scope_; }
 
   // Associates this action with a new scope, with initial state `scope`.
   // Values that are local to this scope will be deallocated when this
@@ -88,36 +124,6 @@ class Action {
     CHECK(!scope_.has_value());
     scope_ = std::move(scope);
   }
-
-  // Returns the scope associated with this Action, if any.
-  auto scope() -> std::optional<Scope>& { return scope_; }
-
-  static void PrintList(const Stack<Nonnull<Action*>>& ls,
-                        llvm::raw_ostream& out);
-
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
-  // Returns the enumerator corresponding to the most-derived type of this
-  // object.
-  auto kind() const -> Kind { return kind_; }
-
-  // The position or state of the action. Starts at 0 and goes up to the number
-  // of subexpressions.
-  //
-  // pos indicates how many of the entries in the following `results` vector
-  // will be filled in the next time this action is active.
-  // For each i < pos, results[i] contains a pointer to a Value.
-  auto pos() const -> int { return pos_; }
-
-  void set_pos(int pos) { this->pos_ = pos; }
-
-  // Results from a subexpression.
-  auto results() const -> const std::vector<Nonnull<const Value*>>& {
-    return results_;
-  }
-
-  virtual ~Action() = default;
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the
