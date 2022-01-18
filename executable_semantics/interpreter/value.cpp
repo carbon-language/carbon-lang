@@ -139,12 +139,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*this);
-      if (placeholder.name().has_value()) {
-        out << *placeholder.name();
+      out << "Placeholder<";
+      if (placeholder.named_entity().has_value()) {
+        out << (*placeholder.named_entity()).name();
       } else {
         out << "_";
       }
-      out << ": " << placeholder.type();
+      out << ">";
       break;
     }
     case Value::Kind::AlternativeValue: {
@@ -255,6 +256,14 @@ void Value::Print(llvm::raw_ostream& out) const {
       out.write_escaped(cast<StringValue>(*this).value());
       out << "\"";
       break;
+    case Value::Kind::TypeOfClassType:
+      out << "typeof(" << cast<TypeOfClassType>(*this).class_type().name()
+          << ")";
+      break;
+    case Value::Kind::TypeOfChoiceType:
+      out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
+          << ")";
+      break;
   }
 }
 
@@ -350,6 +359,12 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
              &cast<VariableType>(*t2).binding();
+    case Value::Kind::TypeOfClassType:
+      return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
+                       &cast<TypeOfClassType>(*t2).class_type());
+    case Value::Kind::TypeOfChoiceType:
+      return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
+                       &cast<TypeOfChoiceType>(*t2).choice_type());
     default:
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
@@ -360,8 +375,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
 // Returns true if the two values are equal and returns false otherwise.
 //
 // This function implements the `==` operator of Carbon.
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
-                SourceLocation source_loc) -> bool {
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
   if (v1->kind() != v2->kind()) {
     return false;
   }
@@ -387,7 +401,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
         return false;
       }
       for (size_t i = 0; i < elements1.size(); ++i) {
-        if (!ValueEqual(elements1[i], elements2[i], source_loc)) {
+        if (!ValueEqual(elements1[i], elements2[i])) {
           return false;
         }
       }
@@ -400,7 +414,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       for (size_t i = 0; i < struct_v1.elements().size(); ++i) {
         CHECK(struct_v1.elements()[i].name == struct_v2.elements()[i].name);
         if (!ValueEqual(struct_v1.elements()[i].value,
-                        struct_v2.elements()[i].value, source_loc)) {
+                        struct_v2.elements()[i].value)) {
           return false;
         }
       }
@@ -420,6 +434,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:

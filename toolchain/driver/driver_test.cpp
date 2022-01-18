@@ -12,13 +12,12 @@
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
 /// A raw_ostream that makes it easy to repeatedly check streamed output.
 class RawTestOstream : public llvm::raw_ostream {
@@ -235,4 +234,4 @@ TEST(DriverTest, DumpParseTree) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

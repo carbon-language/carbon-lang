@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -19,18 +20,14 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using Carbon::Testing::DiagnosticMessage;
-using Carbon::Testing::ExpectedNode;
-using Carbon::Testing::MatchParseTreeNodes;
-using namespace Carbon::Testing::NodeMatchers;
+using ::testing::AtLeast;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::Ne;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
@@ -1175,5 +1172,25 @@ TEST_F(ParseTreeTest, ParenMatchRegression) {
                  MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, RecursionLimit) {
+  std::string code = "fn Foo() { return ";
+  code.append(10000, '(');
+  code.append(10000, ')');
+  code += "; }";
+  TokenizedBuffer tokens = GetTokenizedBuffer(code);
+  ASSERT_FALSE(tokens.HasErrors());
+  Testing::MockDiagnosticConsumer consumer;
+  // Recursion might be exceeded multiple times due to quirks in parse tree
+  // handling; we only need to be sure it's hit at least once for test
+  // correctness.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(llvm::formatv(
+          "Exceeded recursion limit ({0})", ParseTree::StackDepthLimit))))
+      .Times(AtLeast(1));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+}
+
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

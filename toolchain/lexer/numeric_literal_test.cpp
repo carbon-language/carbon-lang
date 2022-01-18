@@ -15,7 +15,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::_;
@@ -331,5 +331,11 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
   }
 }
 
+TEST_F(NumericLiteralTest, TooManyDigits) {
+  std::string long_number(2000, '1');
+  EXPECT_THAT(Parse(long_number), HasUnrecoverableError());
+  EXPECT_TRUE(error_tracker.SeenError());
+}
+
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

@@ -14,13 +14,13 @@
 namespace Carbon {
 
 namespace {
-struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
+struct EmptyDigitSequence : DiagnosticBase<EmptyDigitSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Empty digit sequence in numeric literal.";
 };
 
-struct InvalidDigit {
+struct InvalidDigit : DiagnosticBase<InvalidDigit> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
@@ -35,13 +35,13 @@ struct InvalidDigit {
   int radix;
 };
 
-struct InvalidDigitSeparator : SimpleDiagnostic<InvalidDigitSeparator> {
+struct InvalidDigitSeparator : DiagnosticBase<InvalidDigitSeparator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Misplaced digit separator in numeric literal.";
 };
 
-struct IrregularDigitSeparators {
+struct IrregularDigitSeparators : DiagnosticBase<IrregularDigitSeparators> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-irregular-digit-separators";
 
@@ -58,19 +58,19 @@ struct IrregularDigitSeparators {
   int radix;
 };
 
-struct UnknownBaseSpecifier : SimpleDiagnostic<UnknownBaseSpecifier> {
+struct UnknownBaseSpecifier : DiagnosticBase<UnknownBaseSpecifier> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Unknown base specifier in numeric literal.";
 };
 
-struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
+struct BinaryRealLiteral : DiagnosticBase<BinaryRealLiteral> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Binary real number literals are not supported.";
 };
 
-struct WrongRealLiteralExponent {
+struct WrongRealLiteralExponent : DiagnosticBase<WrongRealLiteralExponent> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
@@ -79,6 +79,21 @@ struct WrongRealLiteralExponent {
   }
 
   char expected;
+};
+
+struct TooManyDigits : DiagnosticBase<TooManyDigits> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
+
+  auto Format() -> std::string {
+    return llvm::formatv(
+               "Found a sequence of {0} digits, which is greater than the "
+               "limit of {1}.",
+               count, limit)
+        .str();
+  }
+
+  size_t count;
+  size_t limit;
 };
 }  // namespace
 
@@ -364,6 +379,21 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
   // Check that digit separators occur in exactly the expected positions.
   if (num_digit_separators) {
     CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
+  }
+
+  // llvm::getAsInteger is used for parsing, but it's quadratic and visibly slow
+  // on large integer values. This limit exists to avoid hitting those limits.
+  // Per https://github.com/carbon-language/carbon-lang/issues/980, it may be
+  // feasible to optimize integer parsing in order to address performance if
+  // this limit becomes an issue.
+  //
+  // 2^128 would be 39 decimal digits or 128 binary. In either case, this limit
+  // is far above the threshold for normal integers.
+  constexpr size_t DigitLimit = 1000;
+  if (text.size() > DigitLimit) {
+    emitter_.EmitError<TooManyDigits>(
+        text.begin(), {.count = text.size(), .limit = DigitLimit});
+    return {.ok = false};
   }
 
   return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};

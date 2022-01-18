@@ -17,10 +17,10 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void ActionStack::Start(std::unique_ptr<Action> action, Scope scope) {
+void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
+  CHECK(todo_.IsEmpty());
   todo_ = {};
-  todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(action));
 }
 
@@ -30,7 +30,7 @@ auto ActionStack::CurrentScope() const -> Scope& {
       return *action->scope();
     }
   }
-  FATAL() << "No current scope";
+  return globals_;
 }
 
 void ActionStack::FinishAction() {
@@ -39,12 +39,12 @@ void ActionStack::FinishAction() {
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-      FATAL() << "This kind of action must produce a result.";
+      FATAL() << "This kind of action must produce a result: " << *act;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
+    case Action::Kind::DeclarationAction:
       PopScopes();
-      CHECK(!IsEmpty());
   }
 }
 
@@ -52,7 +52,8 @@ void ActionStack::FinishAction(Nonnull<const Value*> result) {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::StatementAction:
-      FATAL() << "Statements cannot produce results.";
+    case Action::Kind::DeclarationAction:
+      FATAL() << "This kind of Action cannot produce results: " << *act;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction at top of stack";
     case Action::Kind::ExpressionAction:

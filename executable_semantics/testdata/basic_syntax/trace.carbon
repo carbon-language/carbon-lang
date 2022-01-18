@@ -13,7 +13,7 @@
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** type checking **********
 // CHECK: checking pattern (format_str: String)
-// CHECK: types: Print: fn (String) -> ()
+// CHECK: constants: Main: fun<Main>, Print: fun<Print>
 // CHECK: ********** type checking complete **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** starting execution **********
@@ -21,7 +21,7 @@
 // CHECK: ********** calling main function **********
 // CHECK: {
 // CHECK: stack:
-// CHECK: heap: fun<Print>, fun<Main>
+// CHECK: heap:
 // CHECK: }
 // CHECK: --- step exp Main() (<Main()>:0) --->
 // CHECK: result: 0

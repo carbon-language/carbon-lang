@@ -28,8 +28,8 @@ static void AddExposedNames(const Member& member,
   switch (member.kind()) {
     case MemberKind::FieldMember: {
       const auto& field = cast<FieldMember>(member);
-      if (field.binding().name().has_value()) {
-        enclosing_scope.Add(*field.binding().name(), &field.binding());
+      if (field.binding().name() != AnonymousName) {
+        enclosing_scope.Add(field.binding().name(), &field.binding());
       }
       break;
     }
@@ -56,8 +56,8 @@ static void AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::VariableDeclaration:
       auto& var = cast<VariableDeclaration>(declaration);
-      if (var.binding().name().has_value()) {
-        enclosing_scope.Add(*(var.binding().name()), &var.binding());
+      if (var.binding().name() != AnonymousName) {
+        enclosing_scope.Add(var.binding().name(), &var.binding());
       }
       return;
   }
@@ -158,8 +158,8 @@ static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
       ResolveNames(binding.type(), enclosing_scope);
-      if (binding.name().has_value()) {
-        enclosing_scope.Add(*binding.name(), &binding);
+      if (binding.name() != AnonymousName) {
+        enclosing_scope.Add(binding.name(), &binding);
       }
       break;
     }
@@ -241,7 +241,7 @@ static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
     }
     case StatementKind::Continuation: {
       auto& continuation = cast<Continuation>(statement);
-      enclosing_scope.Add(continuation.continuation_variable(), &continuation);
+      enclosing_scope.Add(continuation.name(), &continuation);
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
       ResolveNames(cast<Continuation>(statement).body(), continuation_scope);
@@ -330,9 +330,7 @@ void ResolveNames(AST& ast) {
   for (auto declaration : ast.declarations) {
     ResolveNames(*declaration, file_scope);
   }
-  if (ast.main_call.has_value()) {
-    ResolveNames(**ast.main_call, file_scope);
-  }
+  ResolveNames(**ast.main_call, file_scope);
 }
 
 }  // namespace Carbon

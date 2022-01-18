@@ -58,6 +58,8 @@ class Value {
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
+    TypeOfClassType,
+    TypeOfChoiceType,
   };
 
   Value(const Value&) = delete;
@@ -283,23 +285,24 @@ class TupleValue : public Value {
 // A binding placeholder value.
 class BindingPlaceholderValue : public Value {
  public:
-  // nullopt represents the `_` placeholder.
-  BindingPlaceholderValue(std::optional<std::string> name,
-                          Nonnull<const Value*> type)
+  // Represents the `_` placeholder.
+  explicit BindingPlaceholderValue() : Value(Kind::BindingPlaceholderValue) {}
+
+  // Represents a named placeholder.
+  explicit BindingPlaceholderValue(NamedEntityView named_entity)
       : Value(Kind::BindingPlaceholderValue),
-        name_(std::move(name)),
-        type_(type) {}
+        named_entity_(std::move(named_entity)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto name() const -> const std::optional<std::string>& { return name_; }
-  auto type() const -> const Value& { return *type_; }
+  auto named_entity() const -> const std::optional<NamedEntityView>& {
+    return named_entity_;
+  }
 
  private:
-  std::optional<std::string> name_;
-  Nonnull<const Value*> type_;
+  std::optional<NamedEntityView> named_entity_;
 };
 
 // The int type.
@@ -560,9 +563,46 @@ class StringValue : public Value {
   std::string value_;
 };
 
+// The type of an expression whose value is a class type. Currently there is no
+// way to explicitly name such a type in Carbon code, but we are tentatively
+// using `typeof(ClassName)` as the debug-printing format, in anticipation of
+// something like that becoming valid Carbon syntax.
+class TypeOfClassType : public Value {
+ public:
+  explicit TypeOfClassType(Nonnull<const NominalClassType*> class_type)
+      : Value(Kind::TypeOfClassType), class_type_(class_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfClassType;
+  }
+
+  auto class_type() const -> const NominalClassType& { return *class_type_; }
+
+ private:
+  Nonnull<const NominalClassType*> class_type_;
+};
+
+// The type of an expression whose value is a choice type. Currently there is no
+// way to explicitly name such a type in Carbon code, but we are tentatively
+// using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
+// something like that becoming valid Carbon syntax.
+class TypeOfChoiceType : public Value {
+ public:
+  explicit TypeOfChoiceType(Nonnull<const ChoiceType*> choice_type)
+      : Value(Kind::TypeOfChoiceType), choice_type_(choice_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfChoiceType;
+  }
+
+  auto choice_type() const -> const ChoiceType& { return *choice_type_; }
+
+ private:
+  Nonnull<const ChoiceType*> choice_type_;
+};
+
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
-                SourceLocation source_loc) -> bool;
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
 
 }  // namespace Carbon
 

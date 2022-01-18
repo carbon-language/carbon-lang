@@ -26,26 +26,6 @@ class TypeChecker {
   void TypeCheck(AST& ast);
 
  private:
-  using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
-
-  struct TypeCheckContext {
-    explicit TypeCheckContext(Nonnull<Arena*> arena)
-        : types(arena), values(arena) {}
-
-    // Symbol table mapping names of runtime entities to their type.
-    TypeEnv types;
-    // Symbol table mapping names of compile time entities to their value.
-    Env values;
-  };
-
-  struct TCResult {
-    explicit TCResult(TypeEnv types) : types(types) {}
-
-    TypeEnv types;
-  };
-
-  static void PrintTypeEnv(TypeEnv types, llvm::raw_ostream& out);
-
   // Perform type argument deduction, matching the parameter type `param`
   // against the argument type `arg`. Whenever there is an VariableType
   // in the parameter type, it is deduced to be the corresponding type
@@ -60,47 +40,39 @@ class TypeChecker {
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
   //
-  // `types` maps variable names to the type of their run-time value.
   // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  auto TypeCheckExp(Nonnull<Expression*> e, TypeEnv types, Env values)
-      -> TCResult;
+  void TypeCheckExp(Nonnull<Expression*> e);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
-  auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
-                        std::optional<Nonnull<const Value*>> expected)
-      -> TCResult;
+  void TypeCheckPattern(Nonnull<Pattern*> p,
+                        std::optional<Nonnull<const Value*>> expected);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d, const TypeEnv& types,
-                            const Env& values);
+  void TypeCheckDeclaration(Nonnull<Declaration*> d);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
-  auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values)
-      -> TCResult;
+  void TypeCheckStmt(Nonnull<Statement*> s);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`,
   // and may not traverse f->body() if `check_body` is false.
-  auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                    TypeEnv types, Env values, bool check_body)
-      -> TCResult;
+  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                    bool check_body);
 
-  auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
-                     Nonnull<Statement*> body, TypeEnv types, Env values)
-      -> Match::Clause;
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
+  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
 
-  auto TypeOfClassDecl(ClassDeclaration& class_decl, TypeEnv /*types*/,
-                       Env ct_top) -> Nonnull<const Value*>;
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
+  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
 
-  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
-  void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
+  void TopLevel(Nonnull<Declaration*> d);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
@@ -116,8 +88,17 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) -> Nonnull<const Value*>;
 
+  // Sets named_entity.constant_value() to `value`. Can be called multiple
+  // times on the same named_entity, so long as it is always called with
+  // the same value.
+  template <typename T>
+  void SetConstantValue(Nonnull<T*> named_entity, Nonnull<const Value*> value);
+
+  void PrintConstants(llvm::raw_ostream& out);
+
   Nonnull<Arena*> arena_;
   Interpreter interpreter_;
+  std::set<NamedEntityView> constants_;
 
   bool trace_;
 };

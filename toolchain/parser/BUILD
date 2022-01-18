@@ -16,6 +16,7 @@ cc_library(
 
 cc_test(
     name = "parse_node_kind_test",
+    size = "small",
     srcs = ["parse_node_kind_test.cpp"],
     deps = [
         ":parse_node_kind",
@@ -36,6 +37,7 @@ cc_library(
         ":parse_node_kind",
         ":precedence",
         "//common:check",
+        "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
@@ -50,6 +52,7 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":parse_tree",
+        "//common:check",
         "//toolchain/lexer:tokenized_buffer",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -58,6 +61,7 @@ cc_library(
 
 cc_test(
     name = "parse_tree_test",
+    size = "small",
     srcs = ["parse_tree_test.cpp"],
     deps = [
         ":parse_node_kind",
@@ -75,6 +79,7 @@ cc_test(
 
 cc_fuzz_test(
     name = "parse_tree_fuzzer",
+    size = "small",
     srcs = ["parse_tree_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
@@ -100,6 +105,7 @@ cc_library(
 
 cc_test(
     name = "precedence_test",
+    size = "small",
     srcs = ["precedence_test.cpp"],
     deps = [
         ":precedence",

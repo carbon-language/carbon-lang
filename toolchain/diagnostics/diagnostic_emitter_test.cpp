@@ -11,15 +11,10 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/mocks.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using Testing::DiagnosticAt;
-using Testing::DiagnosticLevel;
-using Testing::DiagnosticMessage;
-using Testing::DiagnosticShortName;
-
-struct FakeDiagnostic {
+struct FakeDiagnostic : DiagnosticBase<FakeDiagnostic> {
   static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
   // TODO: consider ways to put the Message into `format` to allow dynamic
   // selection of the message.
@@ -91,4 +86,4 @@ TEST(DiagTest, EmitWarnings) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

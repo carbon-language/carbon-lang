@@ -271,9 +271,6 @@ inline auto MatchParseTreeNodes(
       new ExpectedNodesMatcher(std::move(expected_nodes)));
 }
 
-// Node matchers. Intended to be brought in by 'using namespace'.
-namespace NodeMatchers {
-
 // Matcher argument for a node with errors.
 struct HasErrorTag {};
 inline constexpr HasErrorTag HasError;
@@ -318,7 +315,7 @@ auto MatchNode(Args... args) -> ExpectedNode {
   auto Match##kind(Args... args)->ExpectedNode {                 \
     return MatchNode(ParseNodeKind::kind(), std::move(args)...); \
   }
-#include "parse_node_kind.def"
+#include "toolchain/parser/parse_node_kind.def"
 
 // Helper for matching a designator `lhs.rhs`.
 inline auto MatchDesignator(ExpectedNode lhs, std::string rhs) -> ExpectedNode {
@@ -340,8 +337,6 @@ auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
       MatchDeclaredName(), MatchParameters(),
       MatchCodeBlock(std::move(args)..., MatchCodeBlockEnd()));
 }
-
-}  // namespace NodeMatchers
 
 }  // namespace Testing
 }  // namespace Carbon

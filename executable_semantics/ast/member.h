@@ -23,7 +23,7 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Member : public virtual AstNode {
+class Member : public AstNode {
  public:
   ~Member() override = 0;
 
@@ -43,13 +43,16 @@ class Member : public virtual AstNode {
   }
 
  protected:
-  Member() = default;
+  Member(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 };
 
 class FieldMember : public Member {
  public:
   FieldMember(SourceLocation source_loc, Nonnull<BindingPattern*> binding)
-      : AstNode(AstNodeKind::FieldMember, source_loc), binding_(binding) {}
+      : Member(AstNodeKind::FieldMember, source_loc), binding_(binding) {
+    CHECK(binding->name() != AnonymousName);
+  }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFieldMember(node->kind());
@@ -59,9 +62,6 @@ class FieldMember : public Member {
   auto binding() -> BindingPattern& { return *binding_; }
 
  private:
-  // TODO: split this into a non-optional name and a type, initialized by
-  // a constructor that takes a BindingPattern and handles errors like a
-  // missing name.
   Nonnull<BindingPattern*> binding_;
 };
 
