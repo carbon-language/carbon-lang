@@ -7,6 +7,8 @@
 """Generates config_detected.bzl on Linux."""
 
 import argparse
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -34,7 +36,7 @@ def _check_python_version():
     )
 
 
-def parse_arguments():
+def _parse_arguments():
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument(
       "--target", required=True, help="The path to config_detected.bzl."
@@ -44,9 +46,30 @@ def parse_arguments():
   return args
 
 
+def _detect_system_clang():
+  """Detects whether the system-provided clang can be used."""
+  # If the user provides an explicit `CC` environment variable, use that as
+  # the compiler. This should point at the `clang` executable to use.
+  cc = os.environ.get("CC")
+  if cc:
+    version_output = subprocess.check_output([cc, "--version"])
+    if "clang" not in version_output:
+      exit("The `CC` environment variable is not a Clang compiler.")
+    return cc
+
+  # Try looking on the path. We check for the specific versioned name and then
+  # the normal name.
+  system_clang = shutil.which("clang-13")
+  if not system_clang:
+    system_clang = shutil.which("clang")
+    if not system_clang:
+      exit("Unable to find a `clang` executable on the system path.")
+
+  return system_clang
+
 def main(args):
   with tempfile.TemporaryFile() as out:
-    cmd = ["clang++", "-x", "c++", "-"]
+    cmd = [_detect_system_clang(), "-x", "c++", "-"]
     p = subprocess.run(cmd, input=_CPP_FILE, encoding="utf-8")
     if p.returncode == 0:
       detected_config = '"HAVE_MALLINFO2=1"'
@@ -58,4 +81,4 @@ def main(args):
 
 if __name__ == "__main__":
   _check_python_version()
-  main(parse_arguments())
+  main(_parse_arguments())
