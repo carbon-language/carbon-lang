@@ -89,6 +89,13 @@ class Action {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Resets this Action to its initial state.
+  void Clear() {
+    CHECK(!scope_.has_value());
+    pos_ = 0;
+    results_.clear();
+  }
+
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
   auto kind() const -> Kind { return kind_; }
@@ -106,12 +113,8 @@ class Action {
   // Appends `result` to `results`.
   void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 
-  // Resets this Action to its initial state.
-  void Clear() {
-    CHECK(!scope_.has_value());
-    pos_ = 0;
-    results_.clear();
-  }
+  // Returns the scope associated with this Action, if any.
+  auto scope() -> std::optional<Scope>& { return scope_; }
 
   // Associates this action with a new scope, with initial state `scope`.
   // Values that are local to this scope will be deallocated when this
@@ -121,9 +124,6 @@ class Action {
     CHECK(!scope_.has_value());
     scope_ = std::move(scope);
   }
-
-  // Returns the scope associated with this Action, if any.
-  auto scope() -> std::optional<Scope>& { return scope_; }
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the
