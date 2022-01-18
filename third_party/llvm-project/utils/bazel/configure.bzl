@@ -31,7 +31,24 @@ DEFAULT_TARGETS = [
     "XCore",
 ]
 
+def _run(repository_ctx, label, cmd):
+    """Runs the specified command, handling failure on errors."""
+    exec_result = repository_ctx.execute(cmd, timeout = 20)
+
+    if exec_result.return_code != 0:
+        fail(("Failed to execute {label}: '{cmd}'\n" +
+              "Exited with code {return_code}\n" +
+              "stdout:\n{stdout}\n" +
+              "stderr:\n{stderr}\n").format(
+            label = label,
+            cmd = " ".join([str(arg) for arg in cmd]),
+            return_code = exec_result.return_code,
+            stdout = exec_result.stdout,
+            stderr = exec_result.stderr,
+        ))
+
 def _overlay_directories(repository_ctx):
+    """Overlays /utils/bazel/llvm-project-overlay directory over /."""
     src_path = repository_ctx.path(Label("//:WORKSPACE")).dirname
     bazel_path = src_path.get_child("utils").get_child("bazel")
     overlay_path = bazel_path.get_child("llvm-project-overlay")
@@ -56,18 +73,19 @@ def _overlay_directories(repository_ctx):
         "--target",
         ".",
     ]
-    exec_result = repository_ctx.execute(cmd, timeout = 20)
+    _run(repository_ctx, script_path.basename, cmd)
 
-    if exec_result.return_code != 0:
-        fail(("Failed to execute overlay script: '{cmd}'\n" +
-              "Exited with code {return_code}\n" +
-              "stdout:\n{stdout}\n" +
-              "stderr:\n{stderr}\n").format(
-            cmd = " ".join([str(arg) for arg in cmd]),
-            return_code = exec_result.return_code,
-            stdout = exec_result.stdout,
-            stderr = exec_result.stderr,
-        ))
+    if repository_ctx.os.name == "linux":
+        # Generate config_detected.bzl on Linux.
+        llvm_path = overlay_path.get_child("llvm")
+        gen_script_path = llvm_path.get_child("gen_config_detected.py")
+        cmd = [
+            python_bin,
+            gen_script_path,
+            "--target",
+            llvm_path.get_child("config_detected.bzl"),
+        ]
+        _run(repository_ctx, gen_script_path.basename, cmd)
 
 def _llvm_configure_impl(repository_ctx):
     _overlay_directories(repository_ctx)
