@@ -4290,9 +4290,8 @@ arise:
 
 -   It would naively seem to forbid the author of `MyType` from defining
     `MyType as ComparableWith(MyType)`.
--   It would not prevent two _independent_ libraries from defining
-    parameterized implementations of the `ComparableWith` interface that
-    conflict.
+-   It would not prevent two _independent_ libraries from defining parameterized
+    implementations of the `ComparableWith` interface that conflict.
 
 ### Comparison to Rust
 
