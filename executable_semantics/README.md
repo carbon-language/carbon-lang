@@ -89,9 +89,13 @@ To explain this boilerplate:
 -   The `RUN` lines indicate two commands for `lit` to execute using the file:
     one without `--trace` output, one with.
     -   Output is piped to `FileCheck` for verification.
-    -   `-allow-unused-prefixes` controls that output of the command without
-        `--trace` should _precisely_ match `CHECK` lines, whereas the command
-        with `--trace` will be a superset.
+    -   Setting `-allow-unused-prefixes` to false when processing the ordinary
+        output, and true when handling the `--trace` output, allows us to omit
+        the tracing output from the `CHECK` lines, while ensuring they cover all
+        non-tracing output.
+    -   Setting `-match-full-lines` in both cases indicates that each `CHECK`
+        line must match a complete output line, with no extra characters before
+        or after the `CHECK` pattern.
     -   `RUN:` will be followed by the `not` command when failure is expected.
         In particular, `RUN: not executable_semantics ...`.
     -   `%s` is a

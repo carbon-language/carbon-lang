@@ -22,6 +22,7 @@
 
 namespace Carbon {
 
+// TODO: Add documentation, including an example of the flow of interpretation.
 class Interpreter {
  public:
   explicit Interpreter(Nonnull<Arena*> arena, bool trace)
