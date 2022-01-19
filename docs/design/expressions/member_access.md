@@ -27,8 +27,8 @@ A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period. The name is found within a contextually-determined entity:
 
 -   In a member access expression, this is the entity preceding the period.
--   For a designator in a struct literal, the name is found or declared within
-    the struct.
+-   For a designator in a struct literal, the name is introduced as a member of
+    the struct type.
 
 A _member access expression_ allows a member of a value, type, interface,
 namespace, etc. to be accessed by specifying a qualified name for the member. A
@@ -37,9 +37,10 @@ form:
 
 > _member-access-expression_ ::= _expression_ `.` _word_
 
-or an _indirect qualified name_ of the form:
+or an _indirect_ member access of the form:
 
-> _member-access-expression_ ::= _expression_ `.` `(` _member-access-expression_ `)`
+> _member-access-expression_ ::= _expression_ `.` `(`
+> _member-access-expression_ > `)`
 
 The meaning of a qualified name in a member access expression depends on the
 first operand, which can be:
@@ -51,7 +52,7 @@ first operand, which can be:
 
 If the first operand is a package or namespace name, the member access must be
 direct. The _word_ must name a member of that package or namespace, and the
-result is the entity with that name.
+result is the package or namespace member with that name.
 
 An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
@@ -78,24 +79,24 @@ fn H() {
 When the first operand is not a package or namespace name, there are three
 remaining cases we wish to support:
 
--   The first operand is a type-of-type, and lookup should consider members of
-    that type-of-type. For example, `Addable.Add` should find the member
-    function `Add` of the interface `Addable`.
--   The first operand is a type, and lookup should consider members of that
-    type. For example, `i32.Least` should find the member constant `Least` of
-    the type `i32`.
 -   The first operand is a value, and lookup should consider members of the
     value's type; if that type is a type parameter, lookup should consider
     members of the type-of-type, treating the type parameter as an archetype.
+-   The first operand is a type, and lookup should consider members of that
+    type. For example, `i32.Least` should find the member constant `Least` of
+    the type `i32`.
+-   The first operand is a type-of-type, and lookup should consider members of
+    that type-of-type. For example, `Addable.Add` should find the member
+    function `Add` of the interface `Addable`.
 
 Note that because a type is a value, and a type-of-type is a type, these cases
 are overlapping and not entirely separable.
 
-For a direct member access, the word is [looked up](#type-members) in the
-following types:
+For a direct member access, the word is looked up in the following types:
 
 -   If the first operand can be evaluated and evaluates to a type, that type.
--   If the type of the first operand can be evaluated, that type.
+-   If the type of the first operand can be evaluated, that type. Results found
+    by this lookup are said to be [_immediate_ results](#member-access).
 -   If the type of the first operand is a generic type parameter, and the type
     of that generic type parameter can be evaluated, that type-of-type.
 
@@ -175,16 +176,16 @@ fn Use(a: A) {
 }
 
 class B {
+  impl as I {
+    fn F[me: Self]() {}
+  }
+  alias F = I.F;
+}
+class C {
   fn F[me: Self]() {}
   impl as I {
     alias F = Self.F;
   }
-}
-class C {
-  fn F[me: Self]() {}
-}
-impl C as I {
-  alias F = C.F;
 }
 
 fn UseBC(b: B, c: C) {
@@ -193,6 +194,13 @@ fn UseBC(b: B, c: C) {
 
   // OK, lookup in type and in type-of-type find the same entity.
   UseTemplate(c);
+
+  // Error, can't call `F[me: C]()` on `B` object.
+  b.(C.F)();
+
+  // Error, member access resolves `B.F` to the member `F` of `impl B as I`;
+  // can't call `F[me: B]()` on `C` object.
+  c.(B.F)();
 }
 ```
 
@@ -200,24 +208,29 @@ fn UseBC(b: B, c: C) {
 
 A member `M` is accessed within a value `V` as follows:
 
--   If `M` is a member of interface `I`, then the member of the corresponding
+-   _`impl` lookup:_ If `M` is a member of interface `I` and `V` does not
+    evaluate to a type-of-type, then the member of the corresponding
     `impl T as I` is looked up and used in the place of `M`, where `T` is `V` if
     `V` can be evaluated and evaluates to a type, and `T` is the type of `V`
-    otherwise.
+    otherwise. The resulting `impl` member is not an immediate result.
 
--   If the member is an instance member -- a field or a method -- and was either
-    named indirectly or was named directly within the type or type-of-type of
-    the value, the result is:
+-   `_Instance binding`: If the member is an instance member -- a field or a
+    method -- and is not an immediate result (as described above), `V` is
+    implicitly converted to the `me` type of the member, and the result is:
 
-    -   For a field member, the corresponding subobject within the value.
+    -   For a field member, the corresponding subobject within the converted
+        `V`.
     -   For a method, a _bound method_, which is a value `F` such that a
         function call `F(args)` behaves the same as a call to `M(args)` with the
         `me` parameter initialized by `V`.
 
--   Otherwise, the member access must be direct, and the result is the member,
-    but evaluating the member access expression still evaluates `V`. An
-    expression that names an instance member can only be used as the second
-    operand of a member access or as the target of an `alias` declaration.
+-   If instance binding is not performed, the result is the member, but
+    evaluating the member access expression still evaluates `V`. An expression
+    that names an instance member can only be used as the second operand of a
+    member access or as the target of an `alias` declaration.
+
+The first operand must be used in some way: an indirect access must result in
+either `impl` lookup, instance binding, or both.
 
 ```
 class A {
@@ -265,9 +278,19 @@ fn K(a: A) {
   a.(A.(I.J))();
 
   // Same as above, `a.(I.J)` is interpreted as `a.(A.(I.J))()`
-  // because `a` does not evaluate to a type.
+  // because `a` does not evaluate to a type. Performs impl lookup
+  // and then instance binding.
   a.(I.J)();
 }
+
+// OK, member `J` of interface I.
+alias X1 = I.J;
+// Error, indirect access doesn't perform impl lookup or instance binding.
+alias X2 = I.(I.J);
+// OK, member `J` of `impl A as I`.
+alias X3 = A.(I.J);
+// Error, indirect access doesn't perform impl lookup or instance binding.
+alias X4 = A.(A.(I.J));
 ```
 
 ## Precedence and associativity

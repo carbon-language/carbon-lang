@@ -53,8 +53,10 @@ or
 
 > _expression_ `.` `(` _member-access-expression_ `)`
 
-Qualified names refer to members of the entity named by the expression preceding
-the period. For example:
+Qualified names refer to members of an entity determined by the context in which
+the expression appears. For a member access, the entity is named by the
+expression preceding the period. In a struct literal, the entity is the struct
+type. For example:
 
 ```
 package Foo api;
@@ -67,10 +69,16 @@ fn G() {
   Foo.N.F();
 }
 
+// `.n` refers to the member `n` of `{.n: i32}`.
 fn H(a: {.n: i32}) -> i32 {
   // `a.n` is resolved to the member `{.n: i32}.n`,
   // and names the corresponding subobject of `a`.
   return a.n;
+}
+
+fn J() {
+  // `.n` refers to the member `n of `{.n: i32}`.
+  H({.n = 5 as i32});
 }
 ```
 
@@ -82,7 +90,7 @@ interface I { fn F[me: Self](); }
 class X {}
 impl X as I { fn F[me: Self]() {} }
 
-// x.I.F() would mean (x.I).F().
+// `x.I.F()` would mean `(x.I).F()`.
 fn Q(x: X) { x.(I.F)(); }
 ```
 
