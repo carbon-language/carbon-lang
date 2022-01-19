@@ -49,7 +49,7 @@ cc_library(
     ],
     # Disable warnings for generated code.
     copts = [
-        "-Wno-implicit-fallthrough",  # Needed to make yyinput() code compile.s
+        "-Wno-implicit-fallthrough",  # Needed to make yyinput() code compile.
         "-Wno-unneeded-internal-declaration",
         "-Wno-unused-function",
         "-Wno-writable-strings",
