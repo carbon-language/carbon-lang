@@ -40,7 +40,7 @@ form:
 or an _indirect_ member access of the form:
 
 > _member-access-expression_ ::= _expression_ `.` `(`
-> _member-access-expression_ > `)`
+> _member-access-expression_ `)`
 
 The meaning of a qualified name in a member access expression depends on the
 first operand, which can be:
