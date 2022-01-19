@@ -87,7 +87,8 @@ remaining cases we wish to support:
     the type `i32`.
 -   The first operand is a type-of-type, and lookup should consider members of
     that type-of-type. For example, `Addable.Add` should find the member
-    function `Add` of the interface `Addable`.
+    function `Add` of the interface `Addable`. Because a type-of-type is a type,
+    this is a special case of the previous bullet.
 
 Note that because a type is a value, and a type-of-type is a type, these cases
 are overlapping and not entirely separable.
@@ -148,6 +149,28 @@ If the value or type of the first operand depends on a template or generic
 parameter, the lookup is performed from a context where the value of that
 parameter is unknown. Evaluation of an expression involving the parameter may
 still succeed, but will result in a symbolic value involving that parameter.
+
+```
+class Generic(T:! Type) {
+  var field: T;
+}
+fn F[T:! Type](x: Generic(T)) -> T {
+  // OK, finds `Generic(T).field`.
+  return x.field;
+}
+
+class Template(template T:! Type) {
+  var field: T;
+}
+fn G[template T:! Type](x: Template(T)) -> T {
+  return x.field;
+}
+```
+
+> **TODO:** The behavior of `G` above is not yet fully decided. If class
+> templates can be specialized, then we cannot know the members of `Template(T)`
+> without knowing `T`, so this first lookup will find nothing. In any case, as
+> described below, the lookup will be performed again when `T` is known.
 
 If the value or type depends on any template parameters, the lookup is redone
 from a context where the values of those parameters are known, but where the
@@ -330,9 +353,9 @@ var n: i32 = 1 + X.Y;
 
 ## Alternatives considered
 
--   [...](/proposals/p0123.md#foo)
+-   [Constrained template name lookup alternatives](https://github.com/carbon-language/carbon-lang/issues/949)
 
 ## References
 
 -   Proposal
-    [#123: title](https://github.com/carbon-language/carbon-lang/pull/123)
+    [#989: member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
