@@ -54,7 +54,7 @@ directly within `or` without parentheses, nor the other way around.
 For example:
 
 ```carbon
-// ✅ Valid: Precedence is handled.
+// ✅ Valid: Operator precedence is unambiguous.
 if (n + m == 3 and not n < m) {
   ...
 }
@@ -92,20 +92,25 @@ if ((not cond1) == cond2) {
 another `not` expression; `not not b` is an error without parentheses.
 
 ```
-// ✅ Valid: Precedence is handled.
+// ✅ Valid: No associativity issues, and precedence is fine.
 if (not a and not b and not c) {
   ...
 }
-// ✅ Valid: Parentheses remove ambiguity.
+// The above is equivalent to:
+if ((not a) and (not b) and (not c)) {
+  ...
+}
+// ✅ Valid: Parentheses avoid the `not` associativity error.
 if (not (not a)) {
   ...
 }
 
-// ❌ Invalid: Combines `and` and `or` without parentheses.
+// ❌ Invalid: Associativity results in a `or` and `and` being at the same
+// level, which is invalid due to the precedence constraints.
 if (not a or not b and not c) {
   ...
 }
-// ❌ Invalid: `not not` requires parentheses.
+// ❌ Invalid: `not not` associativity requires parentheses.
 if (not not a) {
   ...
 }
