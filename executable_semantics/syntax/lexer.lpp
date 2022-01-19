@@ -273,8 +273,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 \"\"\" {
   std::string s(yytext);
-  char c = 0;
   for (;;) {
+    char c = 0;
     s.push_back(c = ReadChar(yyscanner, context));
     if (c != '"' && c != '\\') {
       continue;

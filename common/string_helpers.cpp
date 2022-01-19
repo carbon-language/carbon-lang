@@ -15,8 +15,8 @@ namespace Carbon {
 
 namespace {
 
-constexpr llvm::StringRef TRIPLE_QUOTES = "\"\"\"";
-constexpr llvm::StringRef HORIZONTAL_WS = " \t";
+constexpr llvm::StringRef TripleQuotes = "\"\"\"";
+constexpr llvm::StringRef HorizontalWhitespaceChars = " \t";
 
 // Carbon only takes uppercase hex input.
 auto FromHex(char c) -> std::optional<char> {
@@ -125,28 +125,29 @@ auto ParseBlockStringLiteral(llvm::StringRef source)
   }
 
   llvm::StringRef first = lines[0];
-  if (!first.consume_front(TRIPLE_QUOTES)) {
+  if (!first.consume_front(TripleQuotes)) {
     return MakeError("Should start with triple quotes: " + first);
   }
-  first = first.rtrim(HORIZONTAL_WS);
+  first = first.rtrim(HorizontalWhitespaceChars);
   // Remaining chars, if any, are a file type indicator.
   if (first.find_first_of("\"#") != llvm::StringRef::npos ||
-      first.find_first_of(HORIZONTAL_WS) != llvm::StringRef::npos) {
+      first.find_first_of(HorizontalWhitespaceChars) != llvm::StringRef::npos) {
     return MakeError("Invalid characters in file type indicator: " + first);
   }
 
   llvm::StringRef last = lines[lines.size() - 1];
   const size_t last_length = last.size();
-  last = last.ltrim(HORIZONTAL_WS);
+  last = last.ltrim(HorizontalWhitespaceChars);
   const size_t indent = last_length - last.size();
-  if (last != TRIPLE_QUOTES) {
+  if (last != TripleQuotes) {
     return MakeError("Should end with triple quotes: " + last);
   }
 
   std::string parsed;
   for (size_t i = 1; i < lines.size() - 1; ++i) {
     llvm::StringRef line = lines[i];
-    const size_t first_non_ws = line.find_first_not_of(HORIZONTAL_WS);
+    const size_t first_non_ws =
+        line.find_first_not_of(HorizontalWhitespaceChars);
     if (first_non_ws == llvm::StringRef::npos) {
       // Empty or whitespace-only line.
       line = "";
@@ -155,7 +156,7 @@ auto ParseBlockStringLiteral(llvm::StringRef source)
         return MakeError("Wrong indent for line: " + line + ", expected " +
                          llvm::Twine(indent));
       }
-      line = line.drop_front(indent).rtrim(HORIZONTAL_WS);
+      line = line.drop_front(indent).rtrim(HorizontalWhitespaceChars);
     }
     // Unescaping with \n appended to handle things like \\<newline>.
     llvm::SmallVector<char> buffer;
