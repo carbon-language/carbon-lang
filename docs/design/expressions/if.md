@@ -126,15 +126,13 @@ interface SymmetricCommonTypeWith(U:! Type) {
     where Self is ImplicitAs(.Self) and
           U is ImplicitAs(.Self);
 }
-impl [T:! Type, U:! CommonTypeWith(T)] T as SymmetricCommonTypeWith(U) {
-  let Result:! Type = U.Result;
-}
-impl [U:! Type, T:! CommonTypeWith(U)] T as SymmetricCommonTypeWith(U) {
-  let Result:! Type = T.Result;
-}
-impl [U:! Type, T:! CommonTypeWith(U) where U is CommonTypeWith(T)]
-    T as SymmetricCommonTypeWith(U) {
-  let Result:! Type = T.Result;
+match_first {
+  impl [T:! Type, U:! CommonTypeWith(T)] T as SymmetricCommonTypeWith(U) {
+    let Result:! Type = U.Result;
+  }
+  impl [U:! Type, T:! CommonTypeWith(U)] T as SymmetricCommonTypeWith(U) {
+    let Result:! Type = T.Result;
+  }
 }
 ```
 
@@ -175,8 +173,8 @@ other option.
 If `T` is the same type as `U`, the result is that type:
 
 ```
-impl [T:! Type] T as CommonTypeWith(T) {
-  final let Result:! Type = T;
+final impl [T:! Type] T as CommonTypeWith(T) {
+  let Result:! Type = T;
 }
 ```
 
