@@ -272,10 +272,13 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 \"\"\" {
+  // Block string literal.
   std::string s(yytext);
+  // Scans for the closing """, checking for possible escape sequences
+  // like \""".
   for (;;) {
-    char c = 0;
-    s.push_back(c = ReadChar(yyscanner, context));
+    char c = ReadChar(yyscanner, context);
+    s.push_back(c);
     if (c != '"' && c != '\\') {
       continue;
     }
@@ -285,12 +288,14 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       continue;
     }
 
-    s.push_back(c = ReadChar(yyscanner, context));
+    c = ReadChar(yyscanner, context);
+    s.push_back(c);
     if (c != '"') {
       continue;
     }
 
-    s.push_back(c = ReadChar(yyscanner, context));
+    c = ReadChar(yyscanner, context);
+    s.push_back(c);
     if (c == '"') {
       break;
     }

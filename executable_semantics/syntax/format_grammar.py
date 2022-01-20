@@ -92,9 +92,10 @@ def _clang_format(code: str, base_style: str, cols: int) -> str:
     return output.decode("utf-8")
 
 
-def _find_string_end(content: str, start: int, quote: str) -> int:
+def _find_string_end(content: str, start: int) -> int:
     """Returns the end of a string, skipping escapes."""
-    i = start
+    quote = content[start]
+    i = start + 1
     while i < len(content):
         c = content[i]
         if c == "\\":
@@ -115,7 +116,7 @@ def _find_brace_end(content: str, has_percent: bool, start: int) -> int:
         c = content[i]
         if c == '"' or c == "'":
             # Skip over strings.
-            i = _find_string_end(content, i + 1, c)
+            i = _find_string_end(content, i)
         elif c == "/" and content[i + 1 : i + 2] == "/":
             # Skip over line comments.
             i = content.find("\n", i + 2)
@@ -289,7 +290,7 @@ def _parse_segments(
         c = content[i]
         if c == '"' or c == "'":
             # Skip over strings.
-            i = _find_string_end(content, i + 1, c)
+            i = _find_string_end(content, i)
         elif c == "/" and content[i + 1 : i + 2] == "*":
             text_segment_start, i = _parse_comment(
                 content=content,

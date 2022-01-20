@@ -61,5 +61,6 @@ cc_test(
         ":string_helpers",
         "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TestingSupport",
     ],
 )

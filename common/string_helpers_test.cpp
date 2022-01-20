@@ -10,7 +10,10 @@
 #include <string>
 
 #include "llvm/Support/Error.h"
+#include "llvm/Testing/Support/Error.h"
 
+using ::llvm::FailedWithMessage;
+using ::llvm::HasValue;
 using ::testing::Eq;
 using ::testing::Optional;
 
@@ -55,103 +58,89 @@ TEST(UnescapeStringLiteral, Nul) {
 }
 
 TEST(ParseBlockStringLiteral, FailTooFewLines) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral("");
-  ASSERT_FALSE(!!parsed);
-  EXPECT_EQ("Too few lines", toString(parsed.takeError()));
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(""),
+                       FailedWithMessage("Too few lines"));
 }
 
 TEST(ParseBlockStringLiteral, FailNoLeadingTripleQuotes) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral("'a'\n");
-  ASSERT_FALSE(!!parsed);
-  EXPECT_EQ("Should start with triple quotes: 'a'",
-            toString(parsed.takeError()));
+  EXPECT_THAT_EXPECTED(
+      ParseBlockStringLiteral("'a'\n"),
+      FailedWithMessage("Should start with triple quotes: 'a'"));
 }
 
 TEST(ParseBlockStringLiteral, FailInvalideFiletypeIndicator) {
-  llvm::Expected<std::string> parsed =
-      ParseBlockStringLiteral("\"\"\"carbon file\n");
-  ASSERT_FALSE(!!parsed);
-  EXPECT_EQ("Invalid characters in file type indicator: carbon file",
-            toString(parsed.takeError()));
+  EXPECT_THAT_EXPECTED(
+      ParseBlockStringLiteral("\"\"\"carbon file\n"),
+      FailedWithMessage(
+          "Invalid characters in file type indicator: carbon file"));
 }
 
 TEST(ParseBlockStringLiteral, FailEndingTripleQuotes) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral("\"\"\"\n");
-  ASSERT_FALSE(!!parsed);
-  EXPECT_EQ("Should end with triple quotes: ", toString(parsed.takeError()));
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral("\"\"\"\n"),
+                       FailedWithMessage("Should end with triple quotes: "));
 }
 
 TEST(ParseBlockStringLiteral, FailWrongIndent) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(
+      ParseBlockStringLiteral(R"("""
      A block string literal
     with wrong indent
-     """)");
-  ASSERT_FALSE(!!parsed);
-  EXPECT_EQ("Wrong indent for line:     with wrong indent, expected 5",
-            toString(parsed.takeError()));
+     """)"),
+      FailedWithMessage(
+          "Wrong indent for line:     with wrong indent, expected 5"));
 }
 
 TEST(ParseBlockStringLiteral, FailInvalidEscaping) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      \q
-     """)");
-  ASSERT_FALSE(!!parsed);
-  EXPECT_EQ("Invalid escaping in \\q", toString(parsed.takeError()));
+     """)"),
+                       FailedWithMessage("Invalid escaping in \\q"));
 }
 
 TEST(ParseBlockStringLiteral, OkEmptyString) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
-""")");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ("", *parsed);
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+""")"),
+                       HasValue(""));
 }
 
 TEST(ParseBlockStringLiteral, OkOneLineString) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal
-)",
-            *parsed);
+     """)"),
+                       HasValue(R"(A block string literal
+)"));
 }
 
 TEST(ParseBlockStringLiteral, OkTwoLineString) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal
        with indent.
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal
+     """)"),
+                       HasValue(R"(A block string literal
   with indent.
-)",
-            *parsed);
+)"));
 }
 
 TEST(ParseBlockStringLiteral, OkWithFileTypeIndicator) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""carbon
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""carbon
      A block string literal
        with file type indicator.
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal
+     """)"),
+                       HasValue(R"(A block string literal
   with file type indicator.
-)",
-            *parsed);
+)"));
 }
 
 TEST(ParseBlockStringLiteral, OkWhitespaceAfterOpeningQuotes) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal
-)",
-            *parsed);
+     """)"),
+                       HasValue(R"(A block string literal
+)"));
 }
 
 TEST(ParseBlockStringLiteral, OkWithEmptyLines) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal
 
        with
@@ -159,54 +148,47 @@ TEST(ParseBlockStringLiteral, OkWithEmptyLines) {
        empty
 
        lines.
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal
+     """)"),
+                       HasValue(R"(A block string literal
 
   with
 
   empty
 
   lines.
-)",
-            *parsed);
+)"));
 }
 
 TEST(ParseBlockStringLiteral, OkWithSlashNewlineEscape) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal\
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ("A block string literal", *parsed);
+     """)"),
+                       HasValue("A block string literal"));
 }
 
 TEST(ParseBlockStringLiteral, OkWithDoubleSlashNewline) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal\\
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal\
-)",
-            *parsed);
+     """)"),
+                       HasValue(R"(A block string literal\
+)"));
 }
 
 TEST(ParseBlockStringLiteral, OkWithTripleSlashNewline) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal\\\
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ(R"(A block string literal\)", *parsed);
+     """)"),
+                       HasValue(R"(A block string literal\)"));
 }
 
 TEST(ParseBlockStringLiteral, OkMultipleSlashes) {
-  llvm::Expected<std::string> parsed = ParseBlockStringLiteral(R"("""
+  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
      A block string literal\
      \
      \
      \
-     """)");
-  ASSERT_TRUE(!!parsed) << "Unexpected error: " << toString(parsed.takeError());
-  EXPECT_EQ("A block string literal", *parsed);
+     """)"),
+                       HasValue("A block string literal"));
 }
 
 }  // namespace
