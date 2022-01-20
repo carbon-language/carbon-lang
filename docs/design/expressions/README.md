@@ -11,8 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Conversions and casts](#conversions-and-casts)
 -   [Operators](#operators)
+-   [Conversions and casts](#conversions-and-casts)
 
 <!-- tocstop -->
 
