@@ -87,9 +87,9 @@ possible syntaxes:
     -   The function must have precisely one `return` statement. That `return`
         statement's expression will then be used for type inference.
 -   Omission indicates that the return type is the empty tuple, `()`.
-    -   For example, `fn Sleep(seconds: i64);` is equivalent to
+    -   For example, `fn Sleep(seconds: i64);` is similar to
         `fn Sleep(seconds: i64) -> ();`.
-    -   This is similar to a `void` return in C++.
+    -   `()` is similar to a `void` return type in C++.
 
 ### `return` statements
 
@@ -130,7 +130,7 @@ contain a function's declaration while the `impl` file contains the definition.
 ## Function calls
 
 Function calls use a function's identifier to pass multiple expression arguments
-in place of parameters. For example:
+corresponding to the function signature's parameters. For example:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64 {
@@ -146,7 +146,7 @@ Here, `Add(1, 2)` is a function call expression. `Add` refers to the function
 definition's identifier. The parenthesized arguments `(1, 2)` are passed to the
 `a` and `b` parameters of `Add`.
 
-## Advanced functions
+## Functions in other features
 
 Other designs build upon basic function syntax to add advanced features:
 
