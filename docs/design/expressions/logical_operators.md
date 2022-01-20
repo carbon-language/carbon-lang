@@ -94,7 +94,7 @@ if (cond1 == (not cond2)) {
 another `not` expression; `not not b` is an error without parentheses.
 
 ```
-// ✅ Valid: No associativity issues, and precedence is fine.
+// ✅ Valid: `and` is left-associative, and precedence is fine.
 if (not a and not b and not c) {
   ...
 }
