@@ -99,7 +99,7 @@ if (not a and not b and not c) {
   ...
 }
 // The above is equivalent to:
-if ((not a) and (not b) and (not c)) {
+if ((not a) and ((not b) and (not c))) {
   ...
 }
 // ✅ Valid: Parentheses avoid the `not` associativity error.
