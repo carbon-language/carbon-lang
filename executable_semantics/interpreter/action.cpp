@@ -21,13 +21,13 @@ namespace Carbon {
 
 using llvm::cast;
 
-DynamicScope::DynamicScope(DynamicScope&& other) noexcept
+RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
     : locals_(std::move(other.locals_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_) {}
 
-auto DynamicScope::operator=(DynamicScope&& rhs) noexcept -> DynamicScope& {
+auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
@@ -35,13 +35,13 @@ auto DynamicScope::operator=(DynamicScope&& rhs) noexcept -> DynamicScope& {
   return *this;
 }
 
-DynamicScope::~DynamicScope() {
+RuntimeScope::~RuntimeScope() {
   for (AllocationId allocation : allocations_) {
     heap_->Deallocate(allocation);
   }
 }
 
-void DynamicScope::Print(llvm::raw_ostream& out) const {
+void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
   for (const auto& [named_entity, value] : locals_) {
@@ -50,7 +50,7 @@ void DynamicScope::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
-void DynamicScope::Initialize(NamedEntityView named_entity,
+void RuntimeScope::Initialize(NamedEntityView named_entity,
                               Nonnull<const Value*> value) {
   CHECK(!named_entity.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
@@ -60,7 +60,7 @@ void DynamicScope::Initialize(NamedEntityView named_entity,
   CHECK(success) << "Duplicate definition of " << named_entity.name();
 }
 
-void DynamicScope::Merge(DynamicScope other) {
+void RuntimeScope::Merge(RuntimeScope other) {
   CHECK(heap_ == other.heap_);
   locals_.merge(other.locals_);
   CHECK(other.locals_.empty())
@@ -71,7 +71,7 @@ void DynamicScope::Merge(DynamicScope other) {
   other.allocations_.clear();
 }
 
-auto DynamicScope::Get(NamedEntityView named_entity) const
+auto RuntimeScope::Get(NamedEntityView named_entity) const
     -> std::optional<Nonnull<const LValue*>> {
   auto it = locals_.find(named_entity);
   if (it != locals_.end()) {
@@ -81,11 +81,11 @@ auto DynamicScope::Get(NamedEntityView named_entity) const
   }
 }
 
-auto DynamicScope::Capture(
-    const std::vector<Nonnull<const DynamicScope*>>& scopes) -> DynamicScope {
+auto RuntimeScope::Capture(
+    const std::vector<Nonnull<const RuntimeScope*>>& scopes) -> RuntimeScope {
   CHECK(!scopes.empty());
-  DynamicScope result(scopes.front()->heap_);
-  for (Nonnull<const DynamicScope*> scope : scopes) {
+  RuntimeScope result(scopes.front()->heap_);
+  for (Nonnull<const RuntimeScope*> scope : scopes) {
     CHECK(scope->heap_ == result.heap_);
     for (const auto& entry : scope->locals_) {
       // Intentionally disregards duplicates later in the vector.

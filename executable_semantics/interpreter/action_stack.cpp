@@ -79,7 +79,7 @@ auto ActionStack::ValueOfName(NamedEntityView named_entity,
       << "could not find `" << named_entity.name() << "`";
 }
 
-void ActionStack::MergeScope(DynamicScope scope) {
+void ActionStack::MergeScope(RuntimeScope scope) {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
       action->scope()->Merge(std::move(scope));
@@ -95,7 +95,7 @@ void ActionStack::MergeScope(DynamicScope scope) {
 
 void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
                                      Nonnull<const Statement*> body) {
-  std::vector<Nonnull<const DynamicScope*>> scopes;
+  std::vector<Nonnull<const RuntimeScope*>> scopes;
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
       scopes.push_back(&*action->scope());
@@ -106,7 +106,7 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
   std::vector<std::unique_ptr<Action>> reversed_todo;
   reversed_todo.push_back(std::make_unique<StatementAction>(body));
   reversed_todo.push_back(
-      std::make_unique<ScopeAction>(DynamicScope::Capture(scopes)));
+      std::make_unique<ScopeAction>(RuntimeScope::Capture(scopes)));
   fragment.StoreReversed(std::move(reversed_todo));
 }
 
@@ -147,7 +147,7 @@ void ActionStack::Spawn(std::unique_ptr<Action> child) {
   todo_.Push(std::move(child));
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child, DynamicScope scope) {
+void ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope) {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));

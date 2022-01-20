@@ -44,7 +44,7 @@ class Interpreter {
   // PatternMatch call and then merged into an existing scope on success.
   [[nodiscard]] auto PatternMatch(
       Nonnull<const Value*> p, Nonnull<const Value*> v,
-      SourceLocation source_loc, std::optional<Nonnull<DynamicScope*>> bindings)
+      SourceLocation source_loc, std::optional<Nonnull<RuntimeScope*>> bindings)
       -> bool;
 
   // Support TypeChecker allocating values on the heap.

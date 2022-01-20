@@ -20,27 +20,27 @@
 
 namespace Carbon {
 
-// A DynamicScope manages and provides access to the storage for names that are
+// A RuntimeScope manages and provides access to the storage for names that are
 // not compile-time constants.
-class DynamicScope {
+class RuntimeScope {
  public:
-  // Returns a DynamicScope whose Get() operation for a given name returns the
+  // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
   // behavior is closely analogous to a `[&]` capture in C++, hence the name.
   // `scopes` must contain at least one entry, and all entries must be backed
   // by the same Heap.
-  static auto Capture(const std::vector<Nonnull<const DynamicScope*>>& scopes)
-      -> DynamicScope;
+  static auto Capture(const std::vector<Nonnull<const RuntimeScope*>>& scopes)
+      -> RuntimeScope;
 
-  // Constructs a DynamicScope that allocates storage in `heap`.
-  explicit DynamicScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
+  // Constructs a RuntimeScope that allocates storage in `heap`.
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
 
-  // Moving a DynamicScope transfers ownership of its allocations.
-  DynamicScope(DynamicScope&&) noexcept;
-  auto operator=(DynamicScope&&) noexcept -> DynamicScope&;
+  // Moving a RuntimeScope transfers ownership of its allocations.
+  RuntimeScope(RuntimeScope&&) noexcept;
+  auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
 
   // Deallocates any allocations in this scope from `heap`.
-  ~DynamicScope();
+  ~RuntimeScope();
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -51,7 +51,7 @@ class DynamicScope {
 
   // Transfers the names and allocations from `other` into *this. The two
   // scopes must not define the same name, and must be backed by the same Heap.
-  void Merge(DynamicScope other);
+  void Merge(RuntimeScope other);
 
   // Returns the local storage for named_entity, if it has storage local to
   // this scope.
@@ -90,13 +90,13 @@ class Action {
   // Values that are local to this scope will be deallocated when this
   // Action is completed or unwound. Can only be called once on a given
   // Action.
-  void StartScope(DynamicScope scope) {
+  void StartScope(RuntimeScope scope) {
     CHECK(!scope_.has_value());
     scope_ = std::move(scope);
   }
 
   // Returns the scope associated with this Action, if any.
-  auto scope() -> std::optional<DynamicScope>& { return scope_; }
+  auto scope() -> std::optional<RuntimeScope>& { return scope_; }
 
   static void PrintList(const Stack<Nonnull<Action*>>& ls,
                         llvm::raw_ostream& out);
@@ -133,7 +133,7 @@ class Action {
  private:
   int pos_ = 0;
   std::vector<Nonnull<const Value*>> results_;
-  std::optional<DynamicScope> scope_;
+  std::optional<RuntimeScope> scope_;
 
   const Kind kind_;
 };
@@ -234,7 +234,7 @@ class DeclarationAction : public Action {
 // with AST nodes.
 class ScopeAction : public Action {
  public:
-  explicit ScopeAction(DynamicScope scope) : Action(Kind::ScopeAction) {
+  explicit ScopeAction(RuntimeScope scope) : Action(Kind::ScopeAction) {
     StartScope(std::move(scope));
   }
 

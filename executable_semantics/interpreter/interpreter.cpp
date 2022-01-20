@@ -87,7 +87,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                                SourceLocation source_loc,
-                               std::optional<Nonnull<DynamicScope*>> bindings)
+                               std::optional<Nonnull<RuntimeScope*>> bindings)
     -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
@@ -459,7 +459,7 @@ void Interpreter::StepExp() {
                 cast<FunctionValue>(*act.results()[0]).declaration();
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type());
-            DynamicScope function_scope(&heap_);
+            RuntimeScope function_scope(&heap_);
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),
                                &function_scope));
@@ -620,7 +620,7 @@ void Interpreter::StepStmt() {
       if (act.pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-        act.StartScope(DynamicScope(&heap_));
+        act.StartScope(RuntimeScope(&heap_));
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&match_stmt.expression()));
       } else {
@@ -629,7 +629,7 @@ void Interpreter::StepStmt() {
           return todo_.FinishAction();
         }
         auto c = match_stmt.clauses()[clause_num];
-        DynamicScope matches(&heap_);
+        RuntimeScope matches(&heap_);
         if (PatternMatch(&c.pattern().value(),
                          Convert(act.results()[0], &c.pattern().static_type()),
                          stmt.source_loc(), &matches)) {
@@ -684,7 +684,7 @@ void Interpreter::StepStmt() {
       }
       // Initialize a scope when starting a block.
       if (act.pos() == 0) {
-        act.StartScope(DynamicScope(&heap_));
+        act.StartScope(RuntimeScope(&heap_));
       }
       // Process the next statement in the block. The position will be
       // incremented as part of Spawn.
@@ -706,7 +706,7 @@ void Interpreter::StepStmt() {
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
 
-        DynamicScope matches(&heap_);
+        RuntimeScope matches(&heap_);
         CHECK(PatternMatch(p, v, stmt.source_loc(), &matches))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
