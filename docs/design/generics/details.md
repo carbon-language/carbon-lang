@@ -4418,6 +4418,14 @@ interface Add(T:! Type = Self) {
 }
 ```
 
+There are a few reasons for this feature:
+
+-   When overriding would be inappropriate.
+-   Matching the functionality of non-virtual methods in base classes, so
+    interfaces can be a replacement for inheritance.
+-   Potentially reduce dynamic dispatch when using the interface in a
+    [`DynPtr`](#dynamic-types).
+
 Note that this applies to associated entities, not interface parameters.
 
 ## Future work
