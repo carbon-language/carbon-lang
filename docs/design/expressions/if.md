@@ -34,17 +34,23 @@ converted to a [common type](#finding-a-common-type), which is the type of the
 
 ## Syntax
 
-An `if` expression can appear anywhere a parenthesized expression can appear.
-The _value1_ and _value2_ expressions are arbitrary expressions. _value2_
-extends as far to the right as possible. An `if` expression can be parenthesized
-if the intent is for _value2_ to end earlier.
+`if` expressions have very low precedence, and cannot appear as the operand of
+any operator, except as the right-hand operand in an assignment. They can appear
+in other context where an expression is permitted, such as within parentheses,
+as the operand of a `return` statement, as an initializer, or in a
+comma-separated list such as a function call.
+
+The _value1_ and _value2_ expressions are arbitrary expressions, and can
+themselves be `if` expressions. _value2_ extends as far to the right as
+possible. An `if` expression can be parenthesized if the intent is for _value2_
+to end earlier.
 
 ```
-// OK, same as `3 * (if cond then (1 + 1) else (2 + (4 * 6)))`
-var a: i32 = 3 * if cond then 1 + 1 else 2 + 4 * 6;
+// OK, same as `if cond then (1 + 1) else (2 + (4 * 6))`
+var a: i32 = if cond then 1 + 1 else 2 + 4 * 6;
 
 // OK
-var b: i32 = 3 * (if cond then 1 + 1 else 2) + 4 * 6;
+var b: i32 = (if cond then 1 + 1 else 2) + 4 * 6;
 ```
 
 An `if` keyword at the start of a statement is always interpreted as an
