@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`return` statements](#return-statements)
 -   [Function declarations](#function-declarations)
 -   [Function calls](#function-calls)
--   [Advanced functions](#advanced-functions)
+-   [Functions in other features](#functions-in-other-features)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
