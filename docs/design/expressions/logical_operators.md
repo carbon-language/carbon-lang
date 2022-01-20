@@ -47,7 +47,7 @@ lowest precedence operators in that expression.
 These operators permit any reasonable operator that might be used to form a
 `bool` value as a subexpression. In particular, comparison operators such as `<`
 and `==` have higher precedence than `and` and `or`. However, the precedence of
-`and` and `or` is not directly comparable with each other, so they cannot be
+`and` and `or` is not directly comparable with each other, so they cannot both be
 used directly in an expression without parentheses.
 
 `not` is higher precedence than `and` and `or`, but its precedence is
