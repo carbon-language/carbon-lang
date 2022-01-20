@@ -72,16 +72,20 @@ if (cond1 and (cond2 or cond3)) {
   ...
 }
 
-// ❌ Invalid: `not` precedence relative to `==` prevents this use.
+// ✅ Valid: `not` is lower precedence than `==` so this is okay.
 if (not cond1 == cond2) {
   ...
 }
-// ❌ Invalid: Also doesn't work.
+// The above is equivalent to:
+if (not (cond1 == cond2)) {
+  ...
+}
+// ❌ Invalid: `not` precedence relative to `==` prevents this use.
 if (cond1 == not cond2) {
   ...
 }
-// ✅ Valid: Parentheses remove ambiguity.
-if ((not cond1) == cond2) {
+// ✅ Valid: Parentheses address precedence.
+if (cond1 == (not cond2)) {
   ...
 }
 ```
@@ -105,11 +109,6 @@ if (not (not a)) {
   ...
 }
 
-// ❌ Invalid: Associativity results in a `or` and `and` being at the same
-// level, which is invalid due to the precedence constraints.
-if (not a or not b and not c) {
-  ...
-}
 // ❌ Invalid: `not not` associativity requires parentheses.
 if (not not a) {
   ...

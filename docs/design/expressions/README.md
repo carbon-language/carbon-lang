@@ -49,8 +49,9 @@ fn Baz(n: i64) {
 
 ## Operators
 
-| Category | Operator                      | Syntax    | Function                                                            |
-| -------- | ----------------------------- | --------- | ------------------------------------------------------------------- |
-| Logical  | [`and`](logical_operators.md) | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`. |
-| Logical  | [`or`](logical_operators.md)  | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.  |
-| Logical  | [`not`](logical_operators.md) | `not x`   | Logical NOT: `true` if the operand is `false`.                      |
+| Category   | Operator                      | Syntax    | Function                                                            |
+| ---------- | ----------------------------- | --------- | ------------------------------------------------------------------- |
+| Conversion | [`as`](as_expression.md)      | `x as T`  | Converts the value `x` to the type `T`.                             |
+| Logical    | [`and`](logical_operators.md) | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`. |
+| Logical    | [`or`](logical_operators.md)  | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.  |
+| Logical    | [`not`](logical_operators.md) | `not x`   | Logical NOT: `true` if the operand is `false`.                      |
