@@ -35,12 +35,12 @@ namespace, etc. to be accessed by specifying a qualified name for the member. A
 member access expression is either a _direct_ member access expression of the
 form:
 
-> _member-access-expression_ ::= _expression_ `.` _word_
+-   _member-access-expression_ ::= _expression_ `.` _word_
 
 or an _indirect_ member access of the form:
 
-> _member-access-expression_ ::= _expression_ `.` `(`
-> _member-access-expression_ `)`
+-   _member-access-expression_ ::= _expression_ `.` `(`
+    _member-access-expression_ `)`
 
 The meaning of a qualified name in a member access expression depends on the
 first operand, which can be:
