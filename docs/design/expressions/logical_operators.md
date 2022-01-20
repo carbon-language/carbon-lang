@@ -40,21 +40,23 @@ Carbon provides three operators to support logical operations on `bool` values:
 
 ### Precedence
 
-`and`, `or`, and `not` have very low precedence. When an expression appearing as
-the condition of an `if` uses these operators unparenthesized, they are always
-the lowest precedence operators in that expression.
+`and` and `or` have very low precedence. When an expression appearing as the
+condition of an `if` uses these operators unparenthesized, they are always the
+lowest precedence operators in that expression.
 
 These operators permit any reasonable operator that might be used to form a
 `bool` value as a subexpression. In particular, comparison operators such as `<`
-and `==` have higher precedence than all logical operators.
+and `==` have higher precedence than all logical operators. However, the
+precedence of `and` and `or` is not directly comparable, so they cannot be used
+directly in an expression without parentheses.
 
-A `not` operator can be used within `and` and `or`, but `and` cannot be used
-directly within `or` without parentheses, nor the other way around.
+`not` is higher precedence than `and` and `or`, but its precedence is
+incomparable with most other operators, including comparison operators.
 
 For example:
 
 ```carbon
-// ✅ Valid: Operator precedence is unambiguous.
+// ✅ Valid: `and` is lower precedence than the `<` or `==` operators.
 if (n + m == 3 and not n < m) {
   ...
 }
@@ -63,28 +65,24 @@ if (((n + m) == 3) and (not (n < m))) {
   ...
 }
 
-// ❌ Invalid: Combines `and` and `or` without parentheses.
+// ❌ Invalid: `and` and `or` precedence is incomparable.
 if (cond1 and cond2 or cond3) {
   ...
 }
-// ✅ Valid: Parentheses remove ambiguity.
+// ✅ Valid: Parentheses avoid the precedence check.
 if (cond1 and (cond2 or cond3)) {
   ...
 }
 
-// ✅ Valid: `not` is lower precedence than `==` so this is okay.
+// ❌  Invalid: `not` precedence is incomparable with `==`.
 if (not cond1 == cond2) {
   ...
 }
-// The above is equivalent to:
-if (not (cond1 == cond2)) {
-  ...
-}
-// ❌ Invalid: `not` precedence relative to `==` prevents this use.
+// ❌  Invalid: `not` precedence is incomparable with `==`.
 if (cond1 == not cond2) {
   ...
 }
-// ✅ Valid: Parentheses address precedence.
+// ✅ Valid: Parentheses avoid the precedence check.
 if (cond1 == (not cond2)) {
   ...
 }
@@ -150,3 +148,5 @@ also customize how `and`, `or`, and `not` treats them.
 
 -   Proposal
     [#680: And, or, not](https://github.com/carbon-language/carbon-lang/pull/680).
+-   Proposal
+    [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702).
