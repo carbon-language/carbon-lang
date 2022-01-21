@@ -33,7 +33,7 @@ of an `if` statement.
 
 > **Note:** These conversions have not yet been decided.
 
-The _value1_ and _value2_ are converted to a
+The _value1_ and _value2_ are implicitly converted to their
 [common type](#finding-a-common-type), which is the type of the `if` expression.
 
 ## Syntax
@@ -99,18 +99,6 @@ _Note:_ It is required that both types implicitly convert to the common type.
 
 Some blanket `impl`s for `CommonTypeWith` are provided as part of the prelude.
 These are described in the following sections.
-
-When attempting to find a common type in an `if` expression:
-
--   If the operands are lvalues of types `A` and `B`, an attempt to find the
-    common type of `A*` and `B*` is made. If successful, the expression is
-    rewritten as
-
-    `*(if` _condition_ `then` `&(` _value1_ `)` `else` `&(` _value2_ `))`
-
--   Otherwise, or if the pointer types have no common type, the common types of
-    the operand types is determined, and both operands are converted to that
-    type.
 
 _Note:_ The same mechanism is expected to eventually be used to compute common
 types in other circumstances.
