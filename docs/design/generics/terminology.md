@@ -519,14 +519,15 @@ interface.
 
 ## Witness tables
 
-For witness tables, values passed to a generic parameter are compiled into a
-table of required functionality. That table is then filled in for a given
-passed-in type with references to the implementation on the original type. The
-generic is implemented using calls into entries in the witness table, which turn
-into calls to the original type. This doesn't necessarily imply a runtime
-indirection: it may be a purely compile-time separation of concerns. However, it
-insists on a full abstraction boundary between the generic user of a type and
-the concrete implementation.
+[Witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
+are an implementation strategy where values passed to a generic parameter are
+compiled into a table of required functionality. That table is then filled in
+for a given passed-in type with references to the implementation on the original
+type. The generic is implemented using calls into entries in the witness table,
+which turn into calls to the original type. This doesn't necessarily imply a
+runtime indirection: it may be a purely compile-time separation of concerns.
+However, it insists on a full abstraction boundary between the generic user of a
+type and the concrete implementation.
 
 A simple way to imagine a witness table is as a struct of function pointers, one
 per method in the interface. However, in practice, it's more complex because it

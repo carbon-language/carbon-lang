@@ -5,7 +5,6 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
 
-#include <map>
 #include <set>
 
 #include "common/ostream.h"
@@ -42,39 +41,37 @@ class TypeChecker {
   //
   // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  void TypeCheckExp(Nonnull<Expression*> e, Env values);
+  void TypeCheckExp(Nonnull<Expression*> e);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
-  void TypeCheckPattern(Nonnull<Pattern*> p, Env values,
+  void TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d, const Env& values);
+  void TypeCheckDeclaration(Nonnull<Declaration*> d);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
-  void TypeCheckStmt(Nonnull<Statement*> s, Env values);
+  void TypeCheckStmt(Nonnull<Statement*> s);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`,
   // and may not traverse f->body() if `check_body` is false.
-  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f, Env values,
+  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                     bool check_body);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
-  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                                 Env ct_top);
+  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
-  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                  Env ct_top);
+  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
 
-  void TopLevel(Nonnull<Declaration*> d, Nonnull<Env*> values);
+  void TopLevel(Nonnull<Declaration*> d);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
@@ -90,8 +87,17 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) -> Nonnull<const Value*>;
 
+  // Sets named_entity.constant_value() to `value`. Can be called multiple
+  // times on the same named_entity, so long as it is always called with
+  // the same value.
+  template <typename T>
+  void SetConstantValue(Nonnull<T*> named_entity, Nonnull<const Value*> value);
+
+  void PrintConstants(llvm::raw_ostream& out);
+
   Nonnull<Arena*> arena_;
   Interpreter interpreter_;
+  std::set<NamedEntityView> constants_;
 
   bool trace_;
 };

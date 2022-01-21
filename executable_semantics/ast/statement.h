@@ -344,6 +344,9 @@ class Continuation : public Statement {
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
  private:
   std::string name_;
