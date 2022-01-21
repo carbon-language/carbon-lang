@@ -275,7 +275,7 @@ file, including `Int` and `Bool`. These will likely be defined in a special
 ### Expressions
 
 > References: [Lexical conventions](lexical_conventions) and
-> [operators](operators.md)
+> [expressions](expressions/)
 >
 > **TODO:** References need to be evolved.
 
