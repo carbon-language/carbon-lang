@@ -28,9 +28,13 @@ An `if` expression is an expression of the form:
 
 > `if` _condition_ `then` _value1_ `else` _value2_
 
-The _condition_ is implicitly converted to `bool`. The _value1_ and _value2_ are
-converted to a [common type](#finding-a-common-type), which is the type of the
-`if` expression.
+The _condition_ is converted to a `bool` value in the same way as the condition
+of an `if` statement.
+
+> **Note:** These conversions have not yet been decided.
+
+The _value1_ and _value2_ are converted to a
+[common type](#finding-a-common-type), which is the type of the `if` expression.
 
 ## Syntax
 
