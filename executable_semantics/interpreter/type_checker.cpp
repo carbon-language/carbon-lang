@@ -732,9 +732,8 @@ void TypeChecker::TypeCheckPattern(
         if (IsConcreteType(type)) {
           ExpectType(p->source_loc(), "name binding", type, *expected);
         } else {
-          std::optional<Env> values = interpreter_.PatternMatch(
-              type, *expected, binding.type().source_loc());
-          if (values == std::nullopt) {
+          if (!interpreter_.PatternMatch(
+                  type, *expected, binding.type().source_loc(), std::nullopt)) {
             FATAL_COMPILATION_ERROR(binding.type().source_loc())
                 << "Type pattern '" << *type << "' does not match actual type '"
                 << **expected << "'";

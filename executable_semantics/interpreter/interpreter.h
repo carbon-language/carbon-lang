@@ -25,10 +25,7 @@ namespace Carbon {
 class Interpreter {
  public:
   explicit Interpreter(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena),
-        heap_(arena),
-        todo_(Scope(Env(arena_), &heap_)),
-        trace_(trace) {}
+      : arena_(arena), heap_(arena), trace_(trace) {}
 
   // Interpret the whole program.
   auto InterpProgram(const AST& ast) -> int;
@@ -39,17 +36,21 @@ class Interpreter {
   // Interpret a pattern at compile-time.
   auto InterpPattern(Nonnull<const Pattern*> p) -> Nonnull<const Value*>;
 
-  // Attempts to match `v` against the pattern `p`. If matching succeeds,
-  // returns the bindings of pattern variables to their matched values.
-  auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                    SourceLocation source_loc) -> std::optional<Env>;
+  // Attempts to match `v` against the pattern `p`, returning whether matching
+  // is successful. If it is, populates **bindings with the variables bound by
+  // the match; `bindings` should only be nullopt in contexts where `p`
+  // is not permitted to bind variables. **bindings may be modified even if the
+  // match is unsuccessful, so it should typically be created for the
+  // PatternMatch call and then merged into an existing scope on success.
+  [[nodiscard]] auto PatternMatch(
+      Nonnull<const Value*> p, Nonnull<const Value*> v,
+      SourceLocation source_loc, std::optional<Nonnull<RuntimeScope*>> bindings)
+      -> bool;
 
   // Support TypeChecker allocating values on the heap.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId {
     return heap_.AllocateValue(v);
   }
-
-  void PrintEnv(Env values, llvm::raw_ostream& out);
 
  private:
   void Step();
@@ -64,10 +65,6 @@ class Interpreter {
   void StepStmt();
   // State transition for declarations.
   void StepDeclaration();
-
-  auto CurrentEnv() -> Env;
-  auto GetFromEnv(SourceLocation source_loc, const std::string& name)
-      -> Address;
 
   // Calls Step() repeatedly until there are no steps left to execute. Produces
   // trace output if trace_steps is true.
