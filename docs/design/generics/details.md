@@ -1926,8 +1926,8 @@ class Point3D {
 Multiple assignments to associated constants may be joined using the `and`
 keyword. The list of assignments is subject to two restrictions:
 
--   An implementation of an interface can specify values for any
-    non-[`final`](#final-members) associated constant.
+-   An implementation of an interface cannot specify a value for a
+    [`final`](#final-members) associated constant.
 -   If an associated constant doesn't have a
     [default value](#interface-defaults), every implementation must specify its
     value.
