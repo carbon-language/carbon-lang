@@ -118,7 +118,7 @@ if (not not a) {
 > TODO: This should be addressed through a standard `bool` conversion design.
 
 The operand of `and`, `or`, or `not` is converted to a `bool` value in the same
-way as the condition of an `if` expression. In particular:
+way as the condition of an `if` statement. In particular:
 
 -   If we decide that certain values, such as pointers or integers, should not
     be usable as the condition of an `if` without an explicit comparison against
