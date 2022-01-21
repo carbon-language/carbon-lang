@@ -1901,9 +1901,8 @@ interface NSpacePoint {
 }
 ```
 
-An implementation of an interface must specify values for all associated
-constants that [do not have default values](#interface-defaults) with a
-[`where` clause](#where-constraints). For example, implementations of
+An implementation of an interface specifies values for associated constants with
+a [`where` clause](#where-constraints). For example, implementations of
 `NSpacePoint` for different types might have different values for `N`:
 
 ```
@@ -1924,7 +1923,14 @@ class Point3D {
 }
 ```
 
-Multiple assignments to associated types may be joined using the `and` keyword.
+Multiple assignments to associated constants may be joined using the `and`
+keyword. The list of assignments is subject to two restrictions:
+
+-   An implementation of an interface can specify values for any
+    non-[`final`](#final-members) associated constant.
+-   If an associated constant doesn't have a
+    [default value](#interface-defaults), every implementation must specify its
+    value.
 
 These values may be accessed as members of the type:
 
