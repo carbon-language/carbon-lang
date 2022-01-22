@@ -71,6 +71,7 @@ namespace N;
 fn N.F() {}
 
 fn G() {
+  // Same as `(Foo.N).F()`.
   // `Foo.N` names namespace `N` in package `Foo`.
   // `(Foo.N).F` names function `F` in namespace `N`.
   Foo.N.F();
