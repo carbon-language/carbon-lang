@@ -179,9 +179,9 @@ final impl [T:! Type] T as CommonTypeWith(T) {
 _Note:_ This rule is intended to be considered more specialized than the other
 rules in this document.
 
-`T.(CommonType(T)).Result` is always assumed to be `T`, even in contexts where
-`T` involves a generic parameter and so the result would normally be an unknown
-type whose type-of-type is `Type`.
+Because this `impl` is declared `final`, `T.(CommonType(T)).Result` is always
+assumed to be `T`, even in contexts where `T` involves a generic parameter and
+so the result would normally be an unknown type whose type-of-type is `Type`.
 
 ```
 fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
@@ -223,11 +223,17 @@ var also_my_string: auto = if cond then my_string else your_string;
 ## Alternatives considered
 
 -   [Provide no conditional expression](/proposals/p0911.md#no-conditional-expression)
--   [`cond ? expr1 : expr2`, like in C and C++](/proposals/p0911.md#use-c-syntax)
--   [`if (cond) expr1 else expr2`](/proposals/p0911.md#no-then)
--   [`if (cond) then expr1 else expr2`](/proposals/p0911.md#require-parentheses-around-the-condition)
--   [`(if cond then expr1 else expr2)`](/proposals/p0911.md#require-enclosing-parentheses)
+-   Use
+    [`cond ? expr1 : expr2`, like in C and C++](/proposals/p0911.md#use-c-syntax)
+    syntax
+-   Use [`if (cond) expr1 else expr2`](/proposals/p0911.md#no-then) syntax
+-   Use
+    [`if (cond) then expr1 else expr2`](/proposals/p0911.md#require-parentheses-around-the-condition)
+    syntax
+-   Allow
+    [`1 + if cond then expr1 else expr2`](/proposals/p0911.md#never-require-enclosing-parentheses)
 -   [Only require one `impl` to specify the common type if implicit conversions in both directions are possible](/proposals/p0911.md#implicit-conversions-in-both-directions)
+-   [Introduce special rules for lvalue conditionals](/proposals/p0911.md##support-lvalue-conditionals)
 
 ## References
 
