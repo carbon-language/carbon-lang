@@ -61,15 +61,15 @@ operand of a member access or as the target of an `alias` declaration.
 namespace N;
 fn N.F() {}
 
-// OK, can alias a namespace.
+// ✅ OK, can alias a namespace.
 alias M = N;
 fn G() { M.F(); }
 
-// Error: a namespace is not a value.
+// ❌ Error: a namespace is not a value.
 let M2:! auto = N;
 
 fn H() {
-  // Error: cannot perform indirect member access into a namespace.
+  // ❌ Error: cannot perform indirect member access into a namespace.
   N.(N.F());
 }
 ```
@@ -120,18 +120,18 @@ impl A as I {
   fn F[me: Self]() {}
 }
 fn Test(a: A) {
-  // OK, `x` found in type of `a`, namely `A`.
+  // ✅ OK, `x` found in type of `a`, namely `A`.
   a.x = 1;
-  // OK, `x` found in the type `A`.
+  // ✅ OK, `x` found in the type `A`.
   a.(A.x) = 1;
 
-  // OK, `F` found in type of `a`, namely `A`.
+  // ✅ OK, `F` found in type of `a`, namely `A`.
   a.F();
-  // OK, `F` found in the type `I`.
+  // ✅ OK, `F` found in the type `I`.
   a.(I.F)();
 }
 fn GenericTest[T: I](a: T) {
-  // OK, type of `a` is the type parameter `T`;
+  // ✅ OK, type of `a` is the type parameter `T`;
   // `F` found in the type of `T`, namely `I`.
   a.F();
 }
@@ -151,26 +151,27 @@ parameter is unknown. Evaluation of an expression involving the parameter may
 still succeed, but will result in a symbolic value involving that parameter.
 
 ```
-class Generic(T:! Type) {
+class GenericWrapper(T:! Type) {
   var field: T;
 }
-fn F[T:! Type](x: Generic(T)) -> T {
-  // OK, finds `Generic(T).field`.
+fn F[T:! Type](x: GenericWrapper(T)) -> T {
+  // ✅ OK, finds `GenericWrapper(T).field`.
   return x.field;
 }
 
-class Template(template T:! Type) {
+class TemplateWrapper(template T:! Type) {
   var field: T;
 }
-fn G[template T:! Type](x: Template(T)) -> T {
+fn G[template T:! Type](x: TemplateWrapper(T)) -> T {
   return x.field;
 }
 ```
 
 > **TODO:** The behavior of `G` above is not yet fully decided. If class
-> templates can be specialized, then we cannot know the members of `Template(T)`
-> without knowing `T`, so this first lookup will find nothing. In any case, as
-> described below, the lookup will be performed again when `T` is known.
+> templates can be specialized, then we cannot know the members of
+> `TemplateWrapper(T)` without knowing `T`, so this first lookup will find
+> nothing. In any case, as described below, the lookup will be performed again
+> when `T` is known.
 
 If the value or type depends on any template parameters, the lookup is redone
 from a context where the values of those parameters are known, but where the
@@ -181,49 +182,64 @@ the qualified name is invalid.
 The lookup for a member name never considers the values of any generic
 parameters that are in scope at the point where the member name appears.
 
-```
-class A { fn F[me: Self]() {} }
-interface I { fn F[me: Self](); }
-impl A as I { fn F[me: Self]() {} }
-fn UseDirect(a: A) { a.F(); }
-fn UseGeneric[T:! I](a: T) { a.F(); }
-fn UseTemplate[template T:! I](a: T) { a.F(); }
+```carbon
+class Cowboy { fn Draw[me: Self](); }
+interface Renderable { fn Draw[me: Self](); }
+impl Cowboy as Renderable { fn Draw[me: Self](); }
+fn DrawDirect(c: Cowboy) { c.Draw(); }
+fn DrawGeneric[T:! Renderable](c: T) { c.Draw(); }
+fn DrawTemplate[template T:! Renderable](c: T) { c.Draw(); }
 
-fn Use(a: A) {
-  // Calls member of `A`.
-  UseDirect(a);
-  // Calls member of `impl A as I`.
-  UseGeneric(a);
-  // Error: ambiguous.
-  UseTemplate(a);
+fn Draw(c: Cowboy) {
+  // ✅ Calls member of `Cowboy`.
+  DrawDirect(c);
+  // ✅ Calls member of `impl Cowboy as Renderable`.
+  DrawGeneric(c);
+  // ❌ Error: ambiguous.
+  DrawTemplate(c);
 }
 
-class B {
-  impl as I {
-    fn F[me: Self]() {}
+class RoundWidget {
+  impl as Renderable {
+    fn Draw[me: Self]();
   }
-  alias F = I.F;
+  alias Draw = Renderable.Draw;
 }
-class C {
-  fn F[me: Self]() {}
-  impl as I {
-    alias F = Self.F;
+
+class SquareWidget {
+  fn Draw[me: Self]() {}
+  impl as Renderable {
+    alias Draw = Self.Draw;
   }
 }
 
-fn UseBC(b: B, c: C) {
-  // OK, lookup in type and in type-of-type find the same entity.
-  UseTemplate(b);
+fn DrawWidget(r: RoundWidget, s: SquareWidget) {
+  // ✅ OK, lookup in type and in type-of-type find the same entity.
+  UseTemplate(r);
 
-  // OK, lookup in type and in type-of-type find the same entity.
-  UseTemplate(c);
+  // ✅ OK, lookup in type and in type-of-type find the same entity.
+  UseTemplate(s);
 
-  // Error, can't call `F[me: C]()` on `B` object.
-  b.(C.F)();
+  // ✅ OK, found in type.
+  r.Draw();
+  s.Draw();
 
-  // Error, member access resolves `B.F` to the member `F` of `impl B as I`;
-  // can't call `F[me: B]()` on `C` object.
-  c.(B.F)();
+  // ✅ OK, inner member access resolves `RoundWidget.Draw` to
+  // the member `Draw` of `impl RoundWidget as Renderable`,
+  // outer member access forms a bound member function.
+  r.(RoundWidget.Draw)();
+
+  // ✅ OK, inner member access names `SquareWidget.Draw`,
+  // outer member access forms a bound member function.
+  s.(SquareWidget.Draw)();
+
+  // ❌ Error, can't call `Draw[me: SquareWidget]()` on `RoundWidget` object.
+  r.(SquareWidget.Draw)();
+
+  // ❌ Error, inner member access resolves `RoundWidget.Draw` to
+  // the member `Draw` of `impl RoundWidget as Renderable`;
+  // can't call `Draw[me: RoundWidget]()` on `SquareWidget` object.
+  s.(RoundWidget.Draw)();
 }
 ```
 
@@ -263,27 +279,27 @@ class A {
   class B {};
 }
 fn H(a: A) {
-  // OK, calls `A.F` with `me` initialized by `a`.
+  // ✅ OK, calls `A.F` with `me` initialized by `a`.
   a.F();
 
-  // OK, same as above.
+  // ✅ OK, same as above.
   var bound_f: auto = a.F;
   bound_f();
 
-  // OK, calls `A.G`.
+  // ✅ OK, calls `A.G`.
   A.G();
-  // OK, evaluates expression `a` then calls `A.G`.
+  // ✅ OK, evaluates expression `a` then calls `A.G`.
   a.G();
 
-  // Error: name of instance member `A.v` can only be used in a
+  // ❌ Error: name of instance member `A.v` can only be used in a
   // member access or alias.
   A.v = 1;
-  // OK
+  // ✅ OK
   a.v = 1;
 
-  // OK
+  // ✅ OK
   let T:! Type = A.B;
-  // Error: value of `:!` binding is not constant because it
+  // ❌ Error: value of `:!` binding is not constant because it
   // refers to local variable `a`.
   let U:! Type = a.B;
 }
@@ -295,24 +311,24 @@ impl A as I {
   fn J[me: Self]() {}
 }
 fn K(a: A) {
-  // OK: `I.J` is the interface member.
+  // ✅ OK: `I.J` is the interface member.
   // `A.(I.J)` is the corresponding member of the `impl`.
   // `a.(A.(I.J))` is a bound member function naming that member.
   a.(A.(I.J))();
 
-  // Same as above, `a.(I.J)` is interpreted as `a.(A.(I.J))()`
+  // ✅ Same as above, `a.(I.J)` is interpreted as `a.(A.(I.J))()`
   // because `a` does not evaluate to a type. Performs impl lookup
   // and then instance binding.
   a.(I.J)();
 }
 
-// OK, member `J` of interface I.
+// ✅ OK, member `J` of interface I.
 alias X1 = I.J;
-// Error, indirect access doesn't perform impl lookup or instance binding.
+// ❌ Error, indirect access doesn't perform impl lookup or instance binding.
 alias X2 = I.(I.J);
-// OK, member `J` of `impl A as I`.
+// ✅ OK, member `J` of `impl A as I`.
 alias X3 = A.(I.J);
-// Error, indirect access doesn't perform impl lookup or instance binding.
+// ❌ Error, indirect access doesn't perform impl lookup or instance binding.
 alias X4 = A.(A.(I.J));
 ```
 
@@ -345,9 +361,9 @@ Member access has lower precedence than primary expressions, and higher
 precedence than all other expression forms.
 
 ```
-// OK, `*` has lower precedence than `.`.
+// ✅ OK, `*` has lower precedence than `.`.
 var p: A.B*;
-// OK, `1 + (X.Y)` not `(1 + X).Y`.
+// ✅ OK, `1 + (X.Y)` not `(1 + X).Y`.
 var n: i32 = 1 + X.Y;
 ```
 

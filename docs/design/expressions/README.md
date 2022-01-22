@@ -44,14 +44,21 @@ keyword and is not preceded by a period (`.`).
 ### Qualified names and member access
 
 A _qualified name_ is a word that is prefixed by a period. Qualified names
-appear as designators and in [member access](member_access.md) expressions of
-the form
+appear in the following contexts:
 
-> _expression_ `.` _word_
+-   [Designators](/docs/design/classes.md#literals): `.` _word_
+-   [Direct member access expressions](member_access.md): _expression_ `.`
+    _word_
 
-or
+```
+var x: auto = {.hello = 1, .world = 2};
+                ^^^^^       ^^^^^ qualified name
+               ^^^^^^      ^^^^^^ designator
 
-> _expression_ `.` `(` _member-access-expression_ `)`
+x.hello = x.world;
+  ^^^^^     ^^^^^ qualified name
+^^^^^^^   ^^^^^^^ member access expression
+```
 
 Qualified names refer to members of an entity determined by the context in which
 the expression appears. For a member access, the entity is named by the
@@ -83,7 +90,10 @@ fn J() {
 ```
 
 Member access expressions associate left-to-right. If the member name is more
-complex than a single _word_, parentheses are required:
+complex than a single _word_, an indirect member access expression can be used,
+with parentheses around the member name:
+
+-   _expression_ `.` `(` _member-access-expression_ `)`
 
 ```
 interface I { fn F[me: Self](); }
