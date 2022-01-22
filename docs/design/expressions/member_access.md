@@ -187,7 +187,7 @@ parameters that are in scope at the point where the member name appears.
 ```carbon
 class Cowboy { fn Draw[me: Self](); }
 interface Renderable { fn Draw[me: Self](); }
-impl Cowboy as Renderable { fn Draw[me: Self](); }
+external impl Cowboy as Renderable { fn Draw[me: Self](); }
 fn DrawDirect(c: Cowboy) { c.Draw(); }
 fn DrawGeneric[T:! Renderable](c: T) { c.Draw(); }
 fn DrawTemplate[template T:! Renderable](c: T) { c.Draw(); }
