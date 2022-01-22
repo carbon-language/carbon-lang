@@ -18,9 +18,9 @@ cc_test(
     deps = [
         ":semantics",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
+        "//toolchain/source:source_buffer",
         "@com_google_googletest//:gtest_main",
     ],
 )

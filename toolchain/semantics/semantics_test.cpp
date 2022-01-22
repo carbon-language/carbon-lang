@@ -9,9 +9,7 @@
 
 #include <optional>
 
-#include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/source/source_buffer.h"
