@@ -202,7 +202,7 @@ fn Draw(c: Cowboy) {
 }
 
 class RoundWidget {
-  impl as Renderable {
+  external impl as Renderable {
     fn Draw[me: Self]();
   }
   alias Draw = Renderable.Draw;
@@ -210,7 +210,7 @@ class RoundWidget {
 
 class SquareWidget {
   fn Draw[me: Self]() {}
-  impl as Renderable {
+  external impl as Renderable {
     alias Draw = Self.Draw;
   }
 }
