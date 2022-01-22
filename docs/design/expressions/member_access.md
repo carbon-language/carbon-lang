@@ -425,7 +425,7 @@ Member access has lower precedence than primary expressions, and higher
 precedence than all other expression forms.
 
 ```
-// ✅ OK, `*` has lower precedence than `.`.
+// ✅ OK, `*` has lower precedence than `.`. Same as `(A.B)*`.
 var p: A.B*;
 // ✅ OK, `1 + (X.Y)` not `(1 + X).Y`.
 var n: i32 = 1 + X.Y;
