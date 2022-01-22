@@ -5,8 +5,22 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "analyzer",
-    srcs = ["analyzer.cpp"],
-    hdrs = ["analyzer.h"],
+    name = "semantics",
+    srcs = ["semantics.cpp"],
+    hdrs = ["semantics.h"],
+    deps = ["//toolchain/parser:parse_tree"],
 )
 
+cc_test(
+    name = "semantics_test",
+    size = "small",
+    srcs = ["semantics_test.cpp"],
+    deps = [
+        ":semantics",
+        "//toolchain/parser:parse_tree",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
+        "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
