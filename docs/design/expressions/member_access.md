@@ -31,7 +31,7 @@ by a period. The name is found within a contextually-determined entity:
     the struct type.
 
 A _member access expression_ allows a member of a value, type, interface,
-namespace, etc. to be accessed by specifying a qualified name for the member. A
+namespace, and so on to be accessed by specifying a qualified name for the member. A
 member access expression is either a _direct_ member access expression of the
 form:
 
@@ -70,7 +70,7 @@ let M2:! auto = N;
 
 fn H() {
   // ❌ Error: cannot perform indirect member access into a namespace.
-  N.(N.F());
+  N.(N.F)();
 }
 ```
 
@@ -110,14 +110,14 @@ member being accessed.
 For example:
 
 ```
-class A {
-  var x: i32;
-}
 interface I {
   fn F[me: Self]();
 }
-impl A as I {
-  fn F[me: Self]() {}
+class A {
+  var x: i32;
+  impl as I {
+    fn F[me: Self]() {}
+  }
 }
 fn Test(a: A) {
   // ✅ OK, `x` found in type of `a`, namely `A`.
