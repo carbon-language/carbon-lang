@@ -58,19 +58,19 @@ An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
 
 ```
-namespace N;
-fn N.F() {}
+namespace MyNamespace;
+fn MyNamespace.Fn() {}
 
 // ✅ OK, can alias a namespace.
-alias M = N;
-fn G() { M.F(); }
+alias MyNS = MyNamespace;
+fn CallFn() { MyNS.Fn(); }
 
 // ❌ Error: a namespace is not a value.
-let M2:! auto = N;
+let MyNS2:! auto = MyNamespace;
 
-fn H() {
+fn CallFn2() {
   // ❌ Error: cannot perform indirect member access into a namespace.
-  N.(N.F)();
+  MyNamespace.(MyNamespace.Fn)();
 }
 ```
 
@@ -112,33 +112,37 @@ member being accessed.
 For example:
 
 ```
-interface I {
-  fn F[me: Self]();
+interface Printable {
+  fn Print[me: Self]();
 }
-class A {
+external impl i32 as Printable;
+class Point {
   var x: i32;
-  impl as I {
-    fn F[me: Self]() {}
-  }
+  var y: i32;
+  // Internal impl injects the name `Print` into class `Point`.
+  impl as Printable;
 }
-fn Test(a: A) {
-  // ✅ OK, `x` found in type of `a`, namely `A`.
-  a.x = 1;
-  // ✅ OK, `x` found in the type `A`.
-  a.(A.x) = 1;
 
-  // ✅ OK, `F` found in type of `a`, namely `A`.
-  a.F();
-  // ✅ OK, `F` found in the type `I`.
-  a.(I.F)();
+fn PrintPointTwice() {
+  var p: Point = {.x = 0, .y = 0};
+
+  // ✅ OK, `x` found in type of `p`, namely `Point`.
+  p.x = 1;
+  // ✅ OK, `y` found in the type `Point`.
+  p.(Point.y) = 1;
+
+  // ✅ OK, `Print` found in type of `p`, namely `Point`.
+  p.Print();
+  // ✅ OK, `Print` found in the type `Printable`.
+  p.(Printable.Print)();
 }
-fn GenericTest[T: I](a: T) {
+fn GenericPrint[T: Printable](a: T) {
   // ✅ OK, type of `a` is the type parameter `T`;
-  // `F` found in the type of `T`, namely `I`.
-  a.F();
+  // `Print` found in the type of `T`, namely `Printable`.
+  a.Print();
 }
-fn CallGenericTest(a: A) {
-  GenericTest(a);
+fn CallGenericPrint(p: Point) {
+  GenericPrint(p);
 }
 ```
 
@@ -249,6 +253,19 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
 
 A member `M` is accessed within a value `V` as follows:
 
+| Left of `.`  | Right of `.`                     | Result                                                                    |
+| ------------ | -------------------------------- | ------------------------------------------------------------------------- |
+| Non-type     | Member of type                   | Bound member of the object                                                |
+| Non-type     | Non-instance member of interface | The member of the matching `impl`                                         |
+| Non-type     | Instance member of interface     | Bound member of the object referring to the member of the matching `impl` |
+| Type         | Member of type                   | The member of the type                                                    |
+| Type         | Member of interface              | The member of the matching `impl`                                         |
+| Type-of-type | Member of interface              | The member of the interface                                               |
+
+Any other case is an error.
+
+In more detail, member access consists of the following steps:
+
 -   _`impl` lookup:_ If `M` is a member of an interface `I` and `V` does not
     evaluate to a type-of-type, then `M` is replaced by the corresponding member
     of an implementation of `I`.
@@ -314,17 +331,17 @@ A member `M` is accessed within a value `V` as follows:
         `me` parameter initialized by `V`.
 
         ```carbon
-        class C {
-          fn M[addr me: Self*](n: i32);
+        class Blob {
+          fn Mutate[addr me: Self*](n: i32);
         }
-        fn F(c: C) {
-          // ✅ OK, forms bound method `(c.M)` and calls it.
-          // This calls `C.M` with `me` initialized by `&c`
+        fn F(p: Blob*) {
+          // ✅ OK, forms bound method `((*p).M)` and calls it.
+          // This calls `Blob.Mutate` with `me` initialized by `&(*p)`
           // and `n` initialized by `5`.
-          c.M(5);
+          (*p).Mutate(5);
 
           // ✅ OK, same as above.
-          var bound_m: auto = c.M;
+          var bound_m: auto = (*p).Mutate;
           bound_m(5);
         }
         ```
