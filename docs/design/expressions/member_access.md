@@ -450,9 +450,11 @@ var n: i32 = 1 + X.Y;
 
 ## Alternatives considered
 
--   [Constrained template name lookup alternatives](https://github.com/carbon-language/carbon-lang/issues/949)
+-   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p0989.md#separate-syntax-for-static-versus-dynamic-access)
+-   [Use a different lookup rule for names in templates](/proposals/p0989.md#use-a-different-lookup-rule-in-templates)
 
 ## References
 
 -   Proposal
     [#989: member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+-   [Question for leads: constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
