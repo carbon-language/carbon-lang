@@ -221,10 +221,10 @@ class SquareWidget {
 
 fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ✅ OK, lookup in type and in type-of-type find the same entity.
-  UseTemplate(r);
+  DrawTemplate(r);
 
   // ✅ OK, lookup in type and in type-of-type find the same entity.
-  UseTemplate(s);
+  DrawTemplate(s);
 
   // ✅ OK, found in type.
   r.Draw();
