@@ -17,7 +17,7 @@ using ::llvm::HasValue;
 using ::testing::Eq;
 using ::testing::Optional;
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 TEST(UnescapeStringLiteral, Valid) {
@@ -192,4 +192,4 @@ TEST(ParseBlockStringLiteral, OkMultipleSlashes) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
