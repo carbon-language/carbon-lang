@@ -27,24 +27,32 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Tag types for selecting Interpreter constructors.
-struct CompileTimeTag {};
-struct RunTimeTag {};
+// Selects between compile-time and run-time behavior.
+enum class Phase { CompileTime, RunTime };
+
+// Constructs an ActionStack suitable for the specified phase.
+auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+  switch (phase) {
+    case Phase::CompileTime:
+      return ActionStack();
+    case Phase::RunTime:
+      return ActionStack(heap);
+  }
+}
 
 // An Interpreter represents an instance of the Carbon abstract machine. It
 // manages the state of the abstract machine, and executes the steps of Actions
 // passed to it.
 class Interpreter {
  public:
-  // Constructs a compile-time interpreter which allocates values on `arena`,
-  // and prints traces if `trace` is true.
-  explicit Interpreter(CompileTimeTag, Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), heap_(arena), trace_(trace) {}
-
-  // Constructs a run-time interpreter which allocates values on `arena`,
-  // and prints traces if `trace` is true.
-  explicit Interpreter(RunTimeTag, Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), heap_(arena), todo_(&heap_), trace_(trace) {}
+  // Constructs an Interpreter which allocates values on `arena`, and prints
+  // traces if `trace` is true. `phase` indicates whether it executes at
+  // compile time or run time.
+  explicit Interpreter(Phase phase, Nonnull<Arena*> arena, bool trace)
+      : arena_(arena),
+        heap_(arena),
+        todo_(MakeTodo(phase, &heap_)),
+        trace_(trace) {}
 
   ~Interpreter();
 
@@ -954,7 +962,7 @@ void Interpreter::RunAllSteps(std::unique_ptr<Action> action) {
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int {
-  Interpreter interpreter(RunTimeTag{}, arena, trace);
+  Interpreter interpreter(Phase::RunTime, arena, trace);
   if (trace) {
     llvm::outs() << "********** initializing globals **********\n";
   }
@@ -974,14 +982,14 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int {
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
     -> Nonnull<const Value*> {
-  Interpreter interpreter(CompileTimeTag{}, arena, trace);
+  Interpreter interpreter(Phase::CompileTime, arena, trace);
   interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e));
   return interpreter.result();
 }
 
 auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
     -> Nonnull<const Value*> {
-  Interpreter interpreter(CompileTimeTag{}, arena, trace);
+  Interpreter interpreter(Phase::CompileTime, arena, trace);
   interpreter.RunAllSteps(std::make_unique<PatternAction>(p));
   return interpreter.result();
 }
