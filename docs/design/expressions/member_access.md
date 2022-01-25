@@ -398,7 +398,7 @@ fn MemberAccess(n: i32) {
 
   // ✅ Same as above, `n.(Printable.Print)` is interpreted as
   // `n.(i32.(Printable.Print))()`
-  // because `a` does not evaluate to a type. Performs impl lookup
+  // because `n` does not evaluate to a type. Performs impl lookup
   // and then instance binding.
   n.(Printable.Print)();
 }
