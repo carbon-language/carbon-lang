@@ -143,9 +143,9 @@ these.
         loop bodies.
 -   For
     [internal linkage](https://google.github.io/styleguide/cppguide.html#Internal_Linkage)
-    of definitions, prefer `static` over anonymous namespaces. `static`
-    minimizes the context necessary to notice the internal linkage of a
-    definition.
+    of definitions of functions and variables, prefer `static` over anonymous
+    namespaces. `static` minimizes the context necessary to notice the internal
+    linkage of a definition.
     -   Anonymous namespaces are still necessary for classes and enums.
     -   Tests are an exception and should typically be wrapped with
         `namespace Carbon::Testing { namespace { ... } }` to keep everything
