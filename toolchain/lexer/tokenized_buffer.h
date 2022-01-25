@@ -246,14 +246,18 @@ class TokenizedBuffer {
   class TokenLocationTranslator
       : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
    public:
-    explicit TokenLocationTranslator(TokenizedBuffer& buffer)
-        : buffer_(&buffer) {}
+    explicit TokenLocationTranslator(TokenizedBuffer& buffer,
+                                     int* last_line_lexed_to_column)
+        : buffer_(&buffer),
+          last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given token into a diagnostic location.
     auto GetLocation(Token token) -> Diagnostic::Location override;
 
    private:
     TokenizedBuffer* buffer_;
+    // Passed to SourceBufferLocationTranslator.
+    int* last_line_lexed_to_column_;
   };
 
   // Lexes a buffer of source code into a tokenized buffer.
@@ -366,8 +370,10 @@ class TokenizedBuffer {
   class SourceBufferLocationTranslator
       : public DiagnosticLocationTranslator<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer)
-        : buffer_(&buffer) {}
+    explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer,
+                                            int* last_line_lexed_to_column)
+        : buffer_(&buffer),
+          last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given position within the source buffer into a diagnostic
     // location.
@@ -375,6 +381,9 @@ class TokenizedBuffer {
 
    private:
     TokenizedBuffer* buffer_;
+    // The last lexed column, for determining whether the last line should be
+    // checked for unlexed newlines. May be null after lexing is complete.
+    int* last_line_lexed_to_column_;
   };
 
   // Specifies minimum widths to use when printing a token's fields via
