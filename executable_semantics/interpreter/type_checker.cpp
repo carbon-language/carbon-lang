@@ -404,8 +404,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
       switch (aggregate_type.kind()) {
         case Value::Kind::TupleValue: {
           const auto& tuple_type = cast<TupleValue>(aggregate_type);
-          int i =
-              cast<IntValue>(*interpreter_.InterpExp(&index.offset())).value();
+          int i = cast<IntValue>(*InterpExp(&index.offset(), arena_, trace_))
+                      .value();
           if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
             FATAL_COMPILATION_ERROR(e->source_loc())
                 << "index " << i << " is out of range for type " << tuple_type;
@@ -443,7 +443,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
       for (auto& arg : struct_type.fields()) {
         TypeCheckExp(&arg.expression());
         ExpectIsConcreteType(arg.expression().source_loc(),
-                             interpreter_.InterpExp(&arg.expression()));
+                             InterpExp(&arg.expression(), arena_, trace_));
       }
       if (struct_type.fields().empty()) {
         // `{}` is the type of `{}`, just as `()` is the type of `()`.
@@ -667,9 +667,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
       ExpectIsConcreteType(fn.parameter().source_loc(),
-                           interpreter_.InterpExp(&fn.parameter()));
+                           InterpExp(&fn.parameter(), arena_, trace_));
       ExpectIsConcreteType(fn.return_type().source_loc(),
-                           interpreter_.InterpExp(&fn.return_type()));
+                           InterpExp(&fn.return_type(), arena_, trace_));
       SetStaticType(&fn, arena_->New<TypeType>());
       fn.set_value_category(ValueCategory::Let);
       return;
@@ -727,14 +727,14 @@ void TypeChecker::TypeCheckPattern(
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
       TypeCheckPattern(&binding.type(), std::nullopt);
-      Nonnull<const Value*> type = interpreter_.InterpPattern(&binding.type());
+      Nonnull<const Value*> type =
+          InterpPattern(&binding.type(), arena_, trace_);
       if (expected) {
         if (IsConcreteType(type)) {
           ExpectType(p->source_loc(), "name binding", type, *expected);
         } else {
-          std::optional<Env> values = interpreter_.PatternMatch(
-              type, *expected, binding.type().source_loc());
-          if (values == std::nullopt) {
+          if (!PatternMatch(type, *expected, binding.type().source_loc(),
+                            std::nullopt)) {
             FATAL_COMPILATION_ERROR(binding.type().source_loc())
                 << "Type pattern '" << *type << "' does not match actual type '"
                 << **expected << "'";
@@ -744,7 +744,7 @@ void TypeChecker::TypeCheckPattern(
       }
       ExpectIsConcreteType(binding.source_loc(), type);
       SetStaticType(&binding, type);
-      SetValue(&binding, interpreter_.InterpPattern(&binding));
+      SetValue(&binding, InterpPattern(&binding, arena_, trace_));
       return;
     }
     case PatternKind::TuplePattern: {
@@ -768,7 +768,7 @@ void TypeChecker::TypeCheckPattern(
         field_types.push_back(&field->static_type());
       }
       SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
-      SetValue(&tuple, interpreter_.InterpPattern(&tuple));
+      SetValue(&tuple, InterpPattern(&tuple, arena_, trace_));
       return;
     }
     case PatternKind::AlternativePattern: {
@@ -796,14 +796,14 @@ void TypeChecker::TypeCheckPattern(
       }
       TypeCheckPattern(&alternative.arguments(), *parameter_types);
       SetStaticType(&alternative, &choice_type);
-      SetValue(&alternative, interpreter_.InterpPattern(&alternative));
+      SetValue(&alternative, InterpPattern(&alternative, arena_, trace_));
       return;
     }
     case PatternKind::ExpressionPattern: {
       auto& expression = cast<ExpressionPattern>(*p).expression();
       TypeCheckExp(&expression);
       SetStaticType(p, &expression.static_type());
-      SetValue(p, interpreter_.InterpPattern(p));
+      SetValue(p, InterpPattern(p, arena_, trace_));
       return;
     }
   }
@@ -1001,7 +1001,7 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // new types into scope.
     TypeCheckExp(*return_expression);
     SetStaticType(&f->return_term(),
-                  interpreter_.InterpExp(*return_expression));
+                  InterpExp(*return_expression, arena_, trace_));
   } else if (f->return_term().is_omitted()) {
     SetStaticType(&f->return_term(), TupleValue::Empty());
   } else {
@@ -1066,7 +1066,7 @@ void TypeChecker::TypeCheckChoiceDeclaration(
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     TypeCheckExp(&alternative->signature());
-    auto signature = interpreter_.InterpExp(&alternative->signature());
+    auto signature = InterpExp(&alternative->signature(), arena_, trace_);
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
@@ -1109,7 +1109,7 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
             << "Type of a top-level variable must be an expression.";
       }
       Nonnull<const Value*> declared_type =
-          interpreter_.InterpExp(&binding_type->expression());
+          InterpExp(&binding_type->expression(), arena_, trace_);
       SetStaticType(&var, declared_type);
       ExpectType(var.source_loc(), "initializer of variable", declared_type,
                  &var.initializer().static_type());
@@ -1150,7 +1150,7 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d) {
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
       TypeCheckPattern(&var.binding(), std::nullopt);
-      Nonnull<const Value*> declared_type = interpreter_.InterpExp(&type);
+      Nonnull<const Value*> declared_type = InterpExp(&type, arena_, trace_);
       SetStaticType(&var, declared_type);
       break;
     }

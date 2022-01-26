@@ -115,9 +115,9 @@ class TokenizedBuffer::Lexer {
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(buffer),
-        translator_(buffer),
+        translator_(buffer, &current_column_),
         emitter_(translator_, consumer),
-        token_translator_(buffer),
+        token_translator_(buffer, &current_column_),
         token_emitter_(token_translator_, consumer),
         current_line_(buffer.AddLine({0, 0, 0})),
         current_line_info_(&buffer.GetLineInfo(current_line_)) {}
@@ -883,11 +883,12 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
 
   // Find the first line starting after the given location. Note that we can't
   // inspect `line.length` here because it is not necessarily correct for the
-  // final line.
+  // final line during lexing (but will be correct later for the parse tree).
   auto line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
-  bool incomplete_line_info = line_it == buffer_->line_infos_.end();
+  bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&
+                              line_it == buffer_->line_infos_.end();
 
   // Step back one line to find the line containing the given position.
   CHECK(line_it != buffer_->line_infos_.begin())
@@ -897,11 +898,12 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   int column_number = offset - line_it->start;
 
   // We might still be lexing the last line. If so, check to see if there are
-  // any newline characters between the start of this line and the given
-  // location.
-  if (incomplete_line_info) {
-    column_number = 0;
-    for (int64_t i = line_it->start; i != offset; ++i) {
+  // any newline characters between the position we've finished lexing up to
+  // and the given location.
+  if (incomplete_line_info && column_number > *last_line_lexed_to_column_) {
+    column_number = *last_line_lexed_to_column_;
+    for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
+         ++i) {
       if (buffer_->source_->Text()[i] == '\n') {
         ++line_number;
         column_number = 0;
@@ -927,7 +929,8 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return SourceBufferLocationTranslator(*buffer_).GetLocation(token_start);
+  return SourceBufferLocationTranslator(*buffer_, last_line_lexed_to_column_)
+      .GetLocation(token_start);
 }
 
 }  // namespace Carbon
