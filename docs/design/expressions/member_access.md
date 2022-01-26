@@ -11,10 +11,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Package and namespace members](#package-and-namespace-members)
--   [Lookup within values](#lookup-within-values)
-    -   [Templates and generics](#templates-and-generics)
--   [Member access](#member-access)
+-   [Member resolution](#member-resolution)
+    -   [Package and namespace members](#package-and-namespace-members)
+    -   [Lookup within values](#lookup-within-values)
+        -   [Templates and generics](#templates-and-generics)
+-   [`impl` lookup](#impl-lookup)
+-   [Instance binding](#instance-binding)
+-   [Non-instance members](#non-instance-members)
+-   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -32,23 +36,73 @@ by a period. The name is found within a contextually-determined entity:
 
 A _member access expression_ allows a member of a value, type, interface,
 namespace, and so on to be accessed by specifying a qualified name for the
-member. A member access expression is either a _direct_ member access expression
-of the form:
+member.
+
+A member access expression is either a _direct_ member access expression of the
+form:
 
 -   _member-access-expression_ ::= _expression_ `.` _word_
 
 or an _indirect_ member access of the form:
 
--   _member-access-expression_ ::= _expression_ `.` `(`
-    _member-access-expression_ `)`
+-   _member-access-expression_ ::= _expression_ `.` `(` _expression_ `)`
 
-The meaning of a qualified name in a member access expression depends on the
-first operand, which can be:
+The following kinds of member access expressions are supported:
 
--   A [package or namespace name](#package-and-namespace-members).
--   A [value of some type](#lookup-within-values).
+| Left of `.`  | Right of `.`                     | Result                                                                    |
+| ------------ | -------------------------------- | ------------------------------------------------------------------------- |
+| Non-type     | Non-instance member of type      | The member of the type                                                    |
+| Non-type     | Instance member of type          | Bound member of the object                                                |
+| Non-type     | Non-instance member of interface | The member of the matching `impl`                                         |
+| Non-type     | Instance member of interface     | Bound member of the object referring to the member of the matching `impl` |
+| Type         | Member of type                   | The member of the type                                                    |
+| Type         | Member of interface              | The member of the matching `impl`                                         |
+| Type-of-type | Member of interface              | The member of the interface                                               |
+| Namespace    | Member of namespace              | The member of the namespace                                               |
+| Package      | Member of package                | The member of the package                                                 |
 
-## Package and namespace members
+```carbon
+package Widgets api;
+interface Widget {
+  fn Grow[addr me: Self*](factor: f64);
+}
+class Cog {
+  var size: i32;
+  fn Make(size: i32) -> Self;
+  impl as Widgets.Widget;
+}
+
+fn GrowSomeCogs() {
+  var cog1: Cog = Cog.Make(1);
+  var cog2: Cog = cog1.Make(2);
+  let cog1_size: i32 = cog1.size;
+  cog1.Grow(1.5);
+  cog2.(Cog.Grow)(cog1_size as f64);
+  cog1.(Widget.Grow)(1.1);
+  cog2.(Widgets.Cog.(Widgets.Widget.Grow))(1.9);
+}
+```
+
+A member access expression is processed using the following steps:
+
+-   First, the name or parenthesized expression to the right of the `.` is
+    [resolved](#member-resolution) to a specific member entity, called `M` in
+    this document.
+-   Then, if necessary, [`impl` lookup](#impl-lookup) is performed to map from a
+    member of an interface to a member of the relevant `impl`, potentially
+    updating `M`.
+-   Then, if necessary, [instance binding](#instance-binding) is performed to
+    locate the member subobject corresponding to a field name or to build a
+    bound method object, producing the result of the member access expression.
+-   If [instance binding is not performed](#non-instance-members), the result is
+    `M`.
+
+## Member resolution
+
+The process of _member resolution_ determines which member `M` a member access
+expression is referring to.
+
+### Package and namespace members
 
 If the first operand is a package or namespace name, the member access must be
 direct. The _word_ must name a member of that package or namespace, and the
@@ -74,7 +128,7 @@ fn CallFn2() {
 }
 ```
 
-## Lookup within values
+### Lookup within values
 
 When the first operand is not a package or namespace name, there are three
 remaining cases we wish to support:
@@ -106,8 +160,9 @@ For a direct member access, the word is looked up in the following types:
 The results of these lookups are combined. If more than one distinct entity is
 found, the qualified name is invalid.
 
-For an indirect member access, the second operand is evaluated to determine the
-member being accessed.
+For an indirect member access, the second operand is evaluated as a constant to
+determine the member being accessed. The evaluation is required to succeed and
+to result in a member of a type or interface.
 
 For example:
 
@@ -146,10 +201,7 @@ fn CallGenericPrint(p: Point) {
 }
 ```
 
-The resulting member is then [accessed](#member-access) within the value denoted
-by the first operand.
-
-### Templates and generics
+#### Templates and generics
 
 If the value or type of the first operand depends on a template or generic
 parameter, the lookup is performed from a context where the value of that
@@ -249,139 +301,177 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
 }
 ```
 
-## Member access
+## `impl` lookup
 
-A member `M` is accessed within a value `V` as follows:
+When the second operand of a member access expression resolves to a member of an
+interface `I`, and the first operand is a value other than a type-of-type,
+_`impl` lookup_ is performed to map the member of the interface to the
+corresponding member of the relevant `impl`. The member of the `impl` replaces
+the member of the interface in all further processing of the member access
+expression.
 
-| Left of `.`  | Right of `.`                     | Result                                                                    |
-| ------------ | -------------------------------- | ------------------------------------------------------------------------- |
-| Non-type     | Member of type                   | Bound member of the object                                                |
-| Non-type     | Non-instance member of interface | The member of the matching `impl`                                         |
-| Non-type     | Instance member of interface     | Bound member of the object referring to the member of the matching `impl` |
-| Type         | Member of type                   | The member of the type                                                    |
-| Type         | Member of interface              | The member of the matching `impl`                                         |
-| Type-of-type | Member of interface              | The member of the interface                                               |
+```carbon
+interface Addable {
+  // #1
+  fn Add[me: Self](other: Self) -> Self;
+}
+struct Integer {
+  impl as Addable {
+    // #2
+    fn Add[me: Self](other: Self) -> Self;
+  }
+}
+fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
+  // Member resolution resolves the name `Add` to #1.
+  // `impl` lookup then locates the `impl Integer as Addable`,
+  // and determines that the member access refers to #2.
+  // Finally, instance binding will be performed as described later.
+  return a.Add(b);
+}
+```
 
-Any other case is an error.
+The type `T` that is expected to implement `I` depends on the first operand of
+the member access expression, `V`:
 
-In more detail, member access consists of the following steps:
-
--   _`impl` lookup:_ If `M` is a member of an interface `I` and `V` does not
-    evaluate to a type-of-type, then `M` is replaced by the corresponding member
-    of an implementation of `I`.
-
-    The type `T` that is expected to implement `I` is `V` if `V` can be
-    evaluated and evaluates to a type, and `T` is the type of `V` otherwise. The
-    appropriate `impl T as I` implementation is located. `M` is replaced by the
-    member of that `impl` that corresponds to `M`.
-
+-   If `V` can be evaluated and evaluates to a type, then `T` is `V`.
     ```carbon
-    interface I {
-      // #1
-      fn F[me: Self]() {}
-    }
-    class C {
-      impl as I {
-        // #2
-        fn F[me: C]() {}
-      }
-    }
-
-    // `M` is `I.F` and `V` is `I`. Because `V` is a type-of-type,
-    // `impl` lookup is not performed, and the alias binds to #1.
-    alias A1 = I.F;
-
-    // `M` is `I.F` and `V` is `C`. Because `V` is a type, `T` is `C`.
-    // `impl` lookup is performed, and the alias binds to #2.
-    alias A2 = C.F;
+    // `V` is `Integer`. `T` is `V`, which is `Integer`.
+    // Alias refers to #2.
+    alias AddIntegers = Integer.Add;
+    ```
+-   Otherwise, `T` is the type of `V`.
+    ```carbon
+    let a: Integer = {};
+    // `V` is `a`. `T` is the type of `V`, which is `Integer`.
+    // `a.Add` refers to #2.
+    let twice_a: Integer = a.Add(a);
     ```
 
-    Instance binding may also apply if the member is an instance member.
+The appropriate `impl T as I` implementation is located. The program is invalid
+if no such `impl` exists. When `T` or `I` depends on a generic parameter, a
+suitable constraint must be specified to ensure that such an `impl` will exist.
+When `T` or `I` depends on a template parameter, this check is deferred until
+the argument for the template parameter is known.
+
+`M` is replaced by the member of the `impl` that corresponds to `M`.
+
+```carbon
+interface I {
+  // #1
+  fn F[me: Self]() {}
+}
+class C {
+  impl as I {
+    // #2
+    fn F[me: C]() {}
+  }
+}
+
+// `M` is `I.F` and `V` is `I`. Because `V` is a type-of-type,
+// `impl` lookup is not performed, and the alias binds to #1.
+alias A1 = I.F;
+
+// `M` is `I.F` and `V` is `C`. Because `V` is a type, `T` is `C`.
+// `impl` lookup is performed, and the alias binds to #2.
+alias A2 = C.F;
+```
+
+[Instance binding](#instance-binding) may also apply if the member is an
+instance member.
+
+```carbon
+var c: C;
+// `M` is `I.F` and `V` is `c`. Because `V` is not a type, `T` is the
+// type of `c`, which is `C`. `impl` lookup is performed, and `M` is
+// replaced with #2. Then instance binding is performed.
+c.F();
+```
+
+## Instance binding
+
+If member resolution and `impl` lookup produce a member `M` that is an instance
+member -- that is, a field or a method -- and the first operand `V` of `.` is a
+value other than a type, then _instance binding_ is performed, as follows:
+
+-   For a field member in class `C`, `V` is required to be of type `C` or of a
+    type derived from `C`. The result is the corresponding subobject within `V`.
+    The result is an lvalue if `V` is an lvalue.
 
     ```carbon
-    var c: C;
-    // `M` is `I.F` and `V` is `c`. Because `V` is not a type, `T` is the
-    // type of `c`, which is `C`. `impl` lookup is performed, and `M` is
-    // replaced with #2. Then instance binding is performed.
-    c.F();
+    var dims: auto = {.width = 1, .height = 2};
+    // `dims.width` denotes the field `width` of the object `dims`.
+    Print(dims.width);
+    // `dims` is an lvalue, so `dims.height` is an lvalue.
+    dims.height = 3;
     ```
 
--   _Instance binding:_ If the member is an instance member -- a field or a
-    method -- and `V` does not evaluate to a type, then:
+-   For a method, `V` is converted to the recipient type, as follows. First, if
+    the method declares its recipient type with `addr`, then `V` is replaced by
+    `&V`. Then, `V` is implicitly converted to the declared `me` type.
 
-    -   For a field member in class `C`, `V` is required to be of type `C` or of
-        a type derived from `C`. The result is the corresponding subobject
-        within `V`. The result is an lvalue if `V` is an lvalue.
-
-        ```carbon
-        var dims: auto = {.width = 1, .height = 2};
-        // `dims.width` denotes the field `width` of the object `dims`.
-        Print(dims.width);
-        // `dims` is an lvalue, so `dims.height` is an lvalue.
-        dims.height = 3;
-        ```
-
-    -   For a method, `V` is converted to the recipient type, as follows. First,
-        if the method declares its recipient type with `addr`, then `V` is
-        replaced by `&V`. Then, `V` is implicitly converted to the declared `me`
-        type.
-
-        The result is a _bound method_, which is a value `F` such that a
-        function call `F(args)` behaves the same as a call to `M(args)` with the
-        `me` parameter initialized by `V`.
-
-        ```carbon
-        class Blob {
-          fn Mutate[addr me: Self*](n: i32);
-        }
-        fn F(p: Blob*) {
-          // ✅ OK, forms bound method `((*p).M)` and calls it.
-          // This calls `Blob.Mutate` with `me` initialized by `&(*p)`
-          // and `n` initialized by `5`.
-          (*p).Mutate(5);
-
-          // ✅ OK, same as above.
-          var bound_m: auto = (*p).Mutate;
-          bound_m(5);
-        }
-        ```
-
--   If instance binding is not performed, the result is the member, but
-    evaluating the member access expression still evaluates `V`. An expression
-    that names an instance member can only be used as the second operand of a
-    member access or as the target of an `alias` declaration.
+    The result is a _bound method_, which is a value `F` such that a function
+    call `F(args)` behaves the same as a call to `M(args)` with the `me`
+    parameter initialized by `V`.
 
     ```carbon
-    class C {
-      fn StaticMethod();
-      var field: i32;
-      class Nested {}
+    class Blob {
+      fn Mutate[addr me: Self*](n: i32);
     }
-    fn CallStaticMethod(c: C) {
-      // ✅ OK, calls `C.StaticMethod`.
-      C.StaticMethod();
+    fn F(p: Blob*) {
+      // ✅ OK, forms bound method `((*p).M)` and calls it.
+      // This calls `Blob.Mutate` with `me` initialized by `&(*p)`
+      // and `n` initialized by `5`.
+      (*p).Mutate(5);
 
-      // ✅ OK, evaluates expression `c` then calls `C.StaticMethod`.
-      c.StaticMethod();
-
-      // ❌ Error: name of instance member `C.field` can only be used in a
-      // member access or alias.
-      C.field = 1;
-      // ✅ OK, instance binding is performed by outer member access,
-      // same as `c.field = 1;`
-      c.(C.field) = 1;
-
-      // ✅ OK
-      let T:! Type = C.Nested;
-      // ❌ Error: value of `:!` binding is not constant because it
-      // refers to local variable `c`.
-      let U:! Type = c.Nested;
+      // ✅ OK, same as above.
+      var bound_m: auto = (*p).Mutate;
+      bound_m(5);
     }
     ```
 
-The first operand must be used in some way: a member access must either be
-direct, so the first operand is used for lookup, or must result in `impl`
-lookup, instance binding, or both.
+## Non-instance members
+
+If instance binding is not performed, the result is the member `M` determined by
+member resolution and `impl` lookup. Evaluating the member access expression
+evaluates `V` and discards the result.
+
+An expression that names an instance member, but for which instance binding is
+not performed, can only be used as the second operand of a member access or as
+the target of an `alias` declaration.
+
+```carbon
+class C {
+  fn StaticMethod();
+  var field: i32;
+  class Nested {}
+}
+fn CallStaticMethod(c: C) {
+  // ✅ OK, calls `C.StaticMethod`.
+  C.StaticMethod();
+
+  // ✅ OK, evaluates expression `c` then calls `C.StaticMethod`.
+  c.StaticMethod();
+
+  // ❌ Error: name of instance member `C.field` can only be used in a
+  // member access or alias.
+  C.field = 1;
+  // ✅ OK, instance binding is performed by outer member access,
+  // same as `c.field = 1;`
+  c.(C.field) = 1;
+
+  // ✅ OK
+  let T:! Type = C.Nested;
+  // ❌ Error: value of `:!` binding is not constant because it
+  // refers to local variable `c`.
+  let U:! Type = c.Nested;
+}
+```
+
+## Non-vacuous member access restriction
+
+The first operand of a member access expression must be used in some way: a
+member access must either be direct, so the first operand is used for lookup, or
+must result in `impl` lookup, instance binding, or both.
 
 ```
 interface Printable {
