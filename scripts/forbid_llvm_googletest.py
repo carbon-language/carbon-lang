@@ -4,7 +4,7 @@
 
 Carbon uses googletest directly, and it's a significantly more recent version
 than is provided by LLVM. Using both versions in the same binary leads to
-problems, so this detects dependnecies.
+problems, so this detects dependencies.
 
 We also have some dependency checking at //bazel/check_deps. This is a separate
 script because check_deps relies on being able to validate specific binaries
