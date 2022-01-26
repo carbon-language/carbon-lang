@@ -153,6 +153,11 @@ If any of the above lookups ever looks for members of a type parameter, it
 should consider members of the type-of-type, treating the type parameter as an
 archetype.
 
+**Note:** If lookup is performed into a type that involves a template parameter,
+the lookup will be performed both in the context of the template definition and
+in the context of the template instantiation, as described in
+[templates and generics](#templates-and-generics).
+
 For a direct member access, the word is looked up in the following types:
 
 -   If the first operand can be evaluated and evaluates to a type, that type.
@@ -246,7 +251,6 @@ parameters that are in scope at the point where the member name appears.
 ```carbon
 class Cowboy { fn Draw[me: Self](); }
 interface Renderable {
-  // #1
   fn Draw[me: Self]();
 }
 external impl Cowboy as Renderable { fn Draw[me: Self](); }
@@ -265,7 +269,6 @@ fn Draw(c: Cowboy) {
 
 class RoundWidget {
   external impl as Renderable {
-    // #2
     fn Draw[me: Self]();
   }
   // `Draw` names the member of the `Renderable` interface.
@@ -273,7 +276,6 @@ class RoundWidget {
 }
 
 class SquareWidget {
-  // #3
   fn Draw[me: Self]() {}
   external impl as Renderable {
     alias Draw = Self.Draw;
@@ -290,32 +292,6 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ✅ OK, found in type.
   r.Draw();
   s.Draw();
-
-  // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
-  // The outer member access then forms a bound member function that
-  // calls #2 on `r`.
-  r.(RoundWidget.Draw)();
-
-  // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #3.
-  // The outer member access then forms a bound member function that
-  // calls #3 on `s`.
-  s.(SquareWidget.Draw)();
-
-  // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #3.
-  // The outer member access fails because we can't call
-  // #3, `Draw[me: SquareWidget]()`, on a `RoundWidget` object `r`.
-  r.(SquareWidget.Draw)();
-
-  // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
-  // The outer member access fails because we can't call
-  // #2, `Draw[me: RoundWidget]()`, on a `SquareWidget` object `s`.
-  s.(RoundWidget.Draw)();
 }
 ```
 
@@ -332,18 +308,38 @@ expression.
 interface Addable {
   // #1
   fn Add[me: Self](other: Self) -> Self;
-}
-struct Integer {
-  impl as Addable {
-    // #2
-    fn Add[me: Self](other: Self) -> Self;
+  // #2
+  fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
+    // ...
   }
 }
+
+struct Integer {
+  impl as Addable {
+    // #3
+    fn Add[me: Self](other: Self) -> Self;
+    // #4, generated from default implementation for #2.
+    // fn Sum[...](...);
+  }
+}
+
+fn SumIntegers(v: Vector(Integer)) -> Integer {
+  // Member resolution resolves the name `Sum` to #2.
+  // `impl` lookup then locates the `impl Integer as Addable`,
+  // and determines that the member access refers to #4,
+  // which is then called.
+  return Integer.Sum(v);
+}
+
 fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
   // Member resolution resolves the name `Add` to #1.
   // `impl` lookup then locates the `impl Integer as Addable`,
-  // and determines that the member access refers to #2.
+  // and determines that the member access refers to #3.
   // Finally, instance binding will be performed as described later.
+  // This can be written more verbosely and explicitly as any of:
+  // -   `return a.(Integer.Add)(b);`
+  // -   `return a.(Addable.Add)(b);`
+  // -   `return a.(Integer.(Addable.Add))(b);`
   return a.Add(b);
 }
 ```
@@ -377,9 +373,10 @@ the argument for the template parameter is known.
 interface I {
   // #1
   fn F[me: Self]() {}
+  let N:! i32;
 }
 class C {
-  impl as I {
+  impl as I where .N = 5 {
     // #2
     fn F[me: C]() {}
   }
@@ -389,9 +386,17 @@ class C {
 // `impl` lookup is not performed, and the alias binds to #1.
 alias A1 = I.F;
 
-// `M` is `I.F` and `V` is `C`. Because `V` is a type, `T` is `C`.
-// `impl` lookup is performed, and the alias binds to #2.
+// `M` is `I.F` and `V` is `C`. Because `V` is a type, `impl`
+// lookup is performed with `T` being `C`, and the alias binds to #2.
 alias A2 = C.F;
+
+let c: C = {};
+
+// `M` is `I.N` and `V` is `c`. Because `V` is a non-type, `impl`
+// lookup is performed with `T` being the type of `c`, namely `C`, and
+// `M` becomes the associated constant from `impl C as I`.
+// The value of `Z` is 5.
+let Z: i32 = c.N;
 ```
 
 [Instance binding](#instance-binding) may also apply if the member is an
@@ -403,6 +408,87 @@ var c: C;
 // type of `c`, which is `C`. `impl` lookup is performed, and `M` is
 // replaced with #2. Then instance binding is performed.
 c.F();
+```
+
+**Note:** When an interface member is added to a class by an alias, `impl`
+lookup is not performed as part of handling the alias, but will happen when
+naming the interface member as a member of the class.
+
+```carbon
+interface Renderable {
+  // #1
+  fn Draw[me: Self]();
+}
+
+class RoundWidget {
+  external impl as Renderable {
+    // #2
+    fn Draw[me: Self]();
+  }
+  // `Draw` names the member of the `Renderable` interface.
+  alias Draw = Renderable.Draw;
+}
+
+class SquareWidget {
+  // #3
+  fn Draw[me: Self]() {}
+  external impl as Renderable {
+    alias Draw = Self.Draw;
+  }
+}
+
+fn DrawWidget(r: RoundWidget, s: SquareWidget) {
+  // ✅ OK: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
+  // The outer member access then forms a bound member function that
+  // calls #2 on `r`, as described below.
+  r.(RoundWidget.Draw)();
+
+  // ✅ OK: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `SquareWidget`, #3.
+  // The outer member access then forms a bound member function that
+  // calls #3 on `s`.
+  s.(SquareWidget.Draw)();
+
+  // ❌ Error: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `SquareWidget`, #3.
+  // The outer member access fails because we can't call
+  // #3, `Draw[me: SquareWidget]()`, on a `RoundWidget` object `r`.
+  r.(SquareWidget.Draw)();
+
+  // ❌ Error: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
+  // The outer member access fails because we can't call
+  // #2, `Draw[me: RoundWidget]()`, on a `SquareWidget` object `s`.
+  s.(RoundWidget.Draw)();
+}
+
+base class WidgetBase {
+  // ✅ OK, even though `WidgetBase` does not implement `Renderable`.
+  alias Draw = Renderable.Draw;
+  fn DrawAll[T:! Type](v: Vector(T)) {
+    for (var w: T in v) {
+      // ✅ OK if `T` implements `Renderable; calls `Renderable.Draw`.
+      // Unqualified lookup for `Draw` does not perform `impl` lookup.
+      w.(Draw)();
+      // ❌ Error: `Self.Draw` performs `impl` lookup, which fails
+      // because `WidgetBase` does not implement `Renderable`.
+      w.(Self.Draw)();
+    }
+  }
+}
+
+class TriangleWidget extends WidgetBase {
+  external impl as Renderable;
+}
+fn DrawTriangle(t: TriangleWidget) {
+  // ✅ OK: name `Draw` resolves to `Draw` member of `WidgetBase`, which
+  // is `Renderable.Draw`. Then impl lookup replaces that with `Draw`
+  // member of `impl TriangleWidget as Renderable`.
+  t.Draw();
+}
 ```
 
 ## Instance binding
@@ -423,13 +509,13 @@ value other than a type, then _instance binding_ is performed, as follows:
     dims.height = 3;
     ```
 
--   For a method, `V` is converted to the recipient type, as follows. First, if
-    the method declares its recipient type with `addr`, then `V` is replaced by
-    `&V`. Then, `V` is implicitly converted to the declared `me` type.
+-   For a method, the result is a _bound method_, which is a value `F` such that
+    a function call `F(args)` behaves the same as a call to `M(args)` with the
+    `me` parameter initialized by a corresponding recipient argument:
 
-    The result is a _bound method_, which is a value `F` such that a function
-    call `F(args)` behaves the same as a call to `M(args)` with the `me`
-    parameter initialized by `V`.
+    -   If the method declares its `me` parameter with `addr`, the recipient
+        argument is `&V`.
+    -   Otherwise, the recipient argument is `V`.
 
     ```carbon
     class Blob {
@@ -442,7 +528,7 @@ value other than a type, then _instance binding_ is performed, as follows:
       (*p).Mutate(5);
 
       // ✅ OK, same as above.
-      var bound_m: auto = (*p).Mutate;
+      let bound_m: auto = (*p).Mutate;
       bound_m(5);
     }
     ```
@@ -454,8 +540,8 @@ member resolution and `impl` lookup. Evaluating the member access expression
 evaluates `V` and discards the result.
 
 An expression that names an instance member, but for which instance binding is
-not performed, can only be used as the second operand of a member access or as
-the target of an `alias` declaration.
+not performed, can only be used as the second operand of an indirect member
+access or as the target of an `alias` declaration.
 
 ```carbon
 class C {
