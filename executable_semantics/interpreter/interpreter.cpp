@@ -31,7 +31,7 @@ namespace Carbon {
 enum class Phase { CompileTime, RunTime };
 
 // Constructs an ActionStack suitable for the specified phase.
-auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
   switch (phase) {
     case Phase::CompileTime:
       return ActionStack();
@@ -48,7 +48,7 @@ class Interpreter {
   // Constructs an Interpreter which allocates values on `arena`, and prints
   // traces if `trace` is true. `phase` indicates whether it executes at
   // compile time or run time.
-  explicit Interpreter(Phase phase, Nonnull<Arena*> arena, bool trace)
+  Interpreter(Phase phase, Nonnull<Arena*> arena, bool trace)
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
