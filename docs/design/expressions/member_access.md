@@ -47,19 +47,7 @@ or an _indirect_ member access of the form:
 
 -   _member-access-expression_ ::= _expression_ `.` `(` _expression_ `)`
 
-The following kinds of member access expressions are supported:
-
-| Left of `.`  | Right of `.`                     | Result                                                                    |
-| ------------ | -------------------------------- | ------------------------------------------------------------------------- |
-| Non-type     | Non-instance member of type      | The member of the type                                                    |
-| Non-type     | Instance member of type          | Bound member of the object                                                |
-| Non-type     | Non-instance member of interface | The member of the matching `impl`                                         |
-| Non-type     | Instance member of interface     | Bound member of the object referring to the member of the matching `impl` |
-| Type         | Member of type                   | The member of the type                                                    |
-| Type         | Member of interface              | The member of the matching `impl`                                         |
-| Type-of-type | Member of interface              | The member of the interface                                               |
-| Namespace    | Member of namespace              | The member of the namespace                                               |
-| Package      | Member of package                | The member of the package                                                 |
+For example:
 
 ```carbon
 package Widgets api;
@@ -96,6 +84,21 @@ A member access expression is processed using the following steps:
     bound method object, producing the result of the member access expression.
 -   If [instance binding is not performed](#non-instance-members), the result is
     `M`.
+
+The following kinds of member access expressions are supported, depending on the
+first operand of the `.` and the member that the second operand resolves to:
+
+| Left of `.`  | Right of `.`                     | Result                                                                    |
+| ------------ | -------------------------------- | ------------------------------------------------------------------------- |
+| Non-type     | Non-instance member of type      | The member of the type                                                    |
+| Non-type     | Instance member of type          | Bound member of the object                                                |
+| Non-type     | Non-instance member of interface | The member of the matching `impl`                                         |
+| Non-type     | Instance member of interface     | Bound member of the object referring to the member of the matching `impl` |
+| Type         | Member of type                   | The member of the type                                                    |
+| Type         | Member of interface              | The member of the matching `impl`                                         |
+| Type-of-type | Member of interface              | The member of the interface                                               |
+| Namespace    | Member of namespace              | The member of the namespace                                               |
+| Package      | Member of package                | The member of the package                                                 |
 
 ## Member resolution
 
@@ -242,7 +245,10 @@ parameters that are in scope at the point where the member name appears.
 
 ```carbon
 class Cowboy { fn Draw[me: Self](); }
-interface Renderable { fn Draw[me: Self](); }
+interface Renderable {
+  // #1
+  fn Draw[me: Self]();
+}
 external impl Cowboy as Renderable { fn Draw[me: Self](); }
 fn DrawDirect(c: Cowboy) { c.Draw(); }
 fn DrawGeneric[T:! Renderable](c: T) { c.Draw(); }
@@ -259,12 +265,15 @@ fn Draw(c: Cowboy) {
 
 class RoundWidget {
   external impl as Renderable {
+    // #2
     fn Draw[me: Self]();
   }
+  // `Draw` names the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
+  // #3
   fn Draw[me: Self]() {}
   external impl as Renderable {
     alias Draw = Self.Draw;
@@ -282,21 +291,30 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   r.Draw();
   s.Draw();
 
-  // ✅ OK, inner member access resolves `RoundWidget.Draw` to
-  // the member `Draw` of `impl RoundWidget as Renderable`,
-  // outer member access forms a bound member function.
+  // ✅ OK: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
+  // The outer member access then forms a bound member function that
+  // calls #2 on `r`.
   r.(RoundWidget.Draw)();
 
-  // ✅ OK, inner member access names `SquareWidget.Draw`,
-  // outer member access forms a bound member function.
+  // ✅ OK: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `SquareWidget`, #3.
+  // The outer member access then forms a bound member function that
+  // calls #3 on `s`.
   s.(SquareWidget.Draw)();
 
-  // ❌ Error, can't call `Draw[me: SquareWidget]()` on `RoundWidget` object.
+  // ❌ Error: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `SquareWidget`, #3.
+  // The outer member access fails because we can't call
+  // #3, `Draw[me: SquareWidget]()`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
-  // ❌ Error, inner member access resolves `RoundWidget.Draw` to
-  // the member `Draw` of `impl RoundWidget as Renderable`;
-  // can't call `Draw[me: RoundWidget]()` on `SquareWidget` object.
+  // ❌ Error: In the inner member access, the name `Draw` resolves to the
+  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
+  // The outer member access fails because we can't call
+  // #2, `Draw[me: RoundWidget]()`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 ```
