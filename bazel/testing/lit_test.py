@@ -53,20 +53,18 @@ def _normalize(relative_base, target):
 def main():
     parsed_args = _parse_args()
 
-    bin_dir = os.getcwd()
-
     # Figure out the actual path for the test_dir.
     relative_base = os.path.dirname(_normalize("", os.environ["TEST_TARGET"]))
     test_dir = os.path.join(
-        bin_dir, _normalize(relative_base, parsed_args.test_dir)
+        os.getcwd(), _normalize(relative_base, parsed_args.test_dir)
     )
 
     args = [
         os.path.join(os.environ["TEST_SRCDIR"], "llvm-project/llvm/lit"),
-        "--path=%s" % bin_dir,
         test_dir,
         "-sv",
     ]
+    print(args)
 
     # Run lit.
     p = subprocess.run(args=args + parsed_args.lit_args)
