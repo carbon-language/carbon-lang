@@ -27,6 +27,91 @@ using llvm::isa;
 
 namespace Carbon {
 
+// Selects between compile-time and run-time behavior.
+enum class Phase { CompileTime, RunTime };
+
+// Constructs an ActionStack suitable for the specified phase.
+static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+  switch (phase) {
+    case Phase::CompileTime:
+      return ActionStack();
+    case Phase::RunTime:
+      return ActionStack(heap);
+  }
+}
+
+// An Interpreter represents an instance of the Carbon abstract machine. It
+// manages the state of the abstract machine, and executes the steps of Actions
+// passed to it.
+class Interpreter {
+ public:
+  // Constructs an Interpreter which allocates values on `arena`, and prints
+  // traces if `trace` is true. `phase` indicates whether it executes at
+  // compile time or run time.
+  Interpreter(Phase phase, Nonnull<Arena*> arena, bool trace)
+      : arena_(arena),
+        heap_(arena),
+        todo_(MakeTodo(phase, &heap_)),
+        trace_(trace) {}
+
+  ~Interpreter();
+
+  // Runs all the steps of `action`.
+  void RunAllSteps(std::unique_ptr<Action> action);
+
+  // The result produced by the `action` argument of the most recent
+  // RunAllSteps call. Cannot be called if `action` was an action that doesn't
+  // produce results.
+  auto result() const -> Nonnull<const Value*> { return todo_.result(); }
+
+ private:
+  void Step();
+
+  // State transitions for expressions.
+  void StepExp();
+  // State transitions for lvalues.
+  void StepLvalue();
+  // State transitions for patterns.
+  void StepPattern();
+  // State transition for statements.
+  void StepStmt();
+  // State transition for declarations.
+  void StepDeclaration();
+
+  auto CreateStruct(const std::vector<FieldInitializer>& fields,
+                    const std::vector<Nonnull<const Value*>>& values)
+      -> Nonnull<const Value*>;
+
+  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
+                SourceLocation source_loc) -> Nonnull<const Value*>;
+
+  // Returns the result of converting `value` to type `destination_type`.
+  auto Convert(Nonnull<const Value*> value,
+               Nonnull<const Value*> destination_type) const
+      -> Nonnull<const Value*>;
+
+  void PrintState(llvm::raw_ostream& out);
+
+  Nonnull<Arena*> arena_;
+
+  Heap heap_;
+  ActionStack todo_;
+
+  // The underlying states of continuation values. All StackFragments created
+  // during execution are tracked here, in order to safely deallocate the
+  // contents of any non-completed continuations at the end of execution.
+  std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
+
+  bool trace_;
+};
+
+Interpreter::~Interpreter() {
+  // Clean up any remaining suspended continuations.
+  for (Nonnull<ContinuationValue::StackFragment*> fragment : stack_fragments_) {
+    fragment->Clear();
+  }
+}
+
 //
 // State Operations
 //
@@ -85,10 +170,9 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   return arena_->New<StructValue>(std::move(elements));
 }
 
-auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                               SourceLocation source_loc,
-                               std::optional<Nonnull<RuntimeScope*>> bindings)
-    -> bool {
+auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
+                  SourceLocation source_loc,
+                  std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       if (!bindings.has_value()) {
@@ -864,59 +948,50 @@ void Interpreter::Step() {
   }  // switch
 }
 
-void Interpreter::RunAllSteps(bool trace_steps) {
+void Interpreter::RunAllSteps(std::unique_ptr<Action> action) {
+  if (trace_) {
+    PrintState(llvm::outs());
+  }
+  todo_.Start(std::move(action));
   while (!todo_.IsEmpty()) {
     Step();
-    if (trace_steps) {
+    if (trace_) {
       PrintState(llvm::outs());
     }
   }
 }
 
-auto Interpreter::InterpProgram(const AST& ast) -> int {
-  todo_.SetHeap(&heap_);
-
-  if (trace_) {
+auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int {
+  Interpreter interpreter(Phase::RunTime, arena, trace);
+  if (trace) {
     llvm::outs() << "********** initializing globals **********\n";
   }
 
   for (Nonnull<Declaration*> declaration : ast.declarations) {
-    todo_.Start(std::make_unique<DeclarationAction>(declaration));
-    RunAllSteps(trace_);
+    interpreter.RunAllSteps(std::make_unique<DeclarationAction>(declaration));
   }
 
-  if (trace_) {
+  if (trace) {
     llvm::outs() << "********** calling main function **********\n";
-    PrintState(llvm::outs());
   }
 
-  todo_.Start(std::make_unique<ExpressionAction>(*ast.main_call));
-  RunAllSteps(trace_);
+  interpreter.RunAllSteps(std::make_unique<ExpressionAction>(*ast.main_call));
 
-  // Clean up any remaining suspended continuations.
-  for (Nonnull<ContinuationValue::StackFragment*> fragment : stack_fragments_) {
-    fragment->Clear();
-  }
-
-  return cast<IntValue>(*todo_.result()).value();
+  return cast<IntValue>(*interpreter.result()).value();
 }
 
-auto Interpreter::RunCompileTimeAction(std::unique_ptr<Action> action)
+auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
     -> Nonnull<const Value*> {
-  todo_.Start(std::move(action));
-  RunAllSteps(/*trace_steps=*/false);
-  CHECK(stack_fragments_.empty());
-  return todo_.result();
+  Interpreter interpreter(Phase::CompileTime, arena, trace);
+  interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e));
+  return interpreter.result();
 }
 
-auto Interpreter::InterpExp(Nonnull<const Expression*> e)
+auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
     -> Nonnull<const Value*> {
-  return RunCompileTimeAction(std::make_unique<ExpressionAction>(e));
-}
-
-auto Interpreter::InterpPattern(Nonnull<const Pattern*> p)
-    -> Nonnull<const Value*> {
-  return RunCompileTimeAction(std::make_unique<PatternAction>(p));
+  Interpreter interpreter(Phase::CompileTime, arena, trace);
+  interpreter.RunAllSteps(std::make_unique<PatternAction>(p));
+  return interpreter.result();
 }
 
 }  // namespace Carbon
