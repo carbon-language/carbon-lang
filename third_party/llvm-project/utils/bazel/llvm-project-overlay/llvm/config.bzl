@@ -4,8 +4,6 @@
 
 """Defines variables that use selects to configure LLVM based on platform."""
 
-load(":config_detected.bzl", "detected_linux_defines")
-
 def native_arch_defines(arch, triple):
     return [
         r'LLVM_NATIVE_ARCH=\"{}\"'.format(arch),
@@ -40,7 +38,7 @@ posix_defines = [
     "HAVE_UNISTD_H=1",
 ]
 
-linux_defines = posix_defines + detected_linux_defines + [
+linux_defines = posix_defines + [
     "_GNU_SOURCE",
     "HAVE_LINK_H=1",
     "HAVE_LSEEK64=1",
