@@ -41,13 +41,12 @@ class Heap : public HeapAllocationInterface {
   // Marks this allocation, and all of its sub-objects, as dead.
   void Deallocate(AllocationId allocation) override;
 
-  // Print the value at the given allocation to the stream `out`.
-  void PrintAllocation(AllocationId allocation, llvm::raw_ostream& out) const;
-
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
 
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  auto arena() const -> Arena& override { return *arena_; }
 
  private:
   // Signal an error if the allocation is no longer alive.

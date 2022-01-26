@@ -108,11 +108,22 @@ class GenericBinding : public AstNode {
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
 
  private:
   std::string name_;
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 // The syntactic representation of a function declaration's return type.
@@ -232,6 +243,16 @@ class FunctionDeclaration : public Declaration {
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
 
  private:
   std::string name_;
@@ -239,6 +260,7 @@ class FunctionDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class ClassDeclaration : public Declaration {
@@ -259,10 +281,21 @@ class ClassDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
 
  private:
   std::string name_;
   std::vector<Nonnull<Member*>> members_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class AlternativeSignature : public AstNode {
@@ -312,10 +345,21 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
 
  private:
   std::string name_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 // Global variable definition implements the Declaration concept.
