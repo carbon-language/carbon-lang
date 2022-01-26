@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
-by a period. The name is found within a contextually-determined entity:
+by a period. The name is found within a contextually determined entity:
 
 -   In a member access expression, this is the entity preceding the period.
 -   For a designator in a struct literal, the name is introduced as a member of
@@ -194,7 +194,7 @@ fn PrintPointTwice() {
   // ✅ OK, `Print` found in the type `Printable`.
   p.(Printable.Print)();
 }
-fn GenericPrint[T: Printable](a: T) {
+fn GenericPrint[T:! Printable](a: T) {
   // ✅ OK, type of `a` is the type parameter `T`;
   // `Print` found in the type of `T`, namely `Printable`.
   a.Print();
