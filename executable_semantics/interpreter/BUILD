@@ -110,6 +110,7 @@ cc_library(
     hdrs = ["heap_allocation_interface.h"],
     deps = [
         ":address",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
     ],
 )
@@ -130,6 +131,7 @@ cc_library(
         ":stack",
         "//common:check",
         "//common:ostream",
+        "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:pattern",
