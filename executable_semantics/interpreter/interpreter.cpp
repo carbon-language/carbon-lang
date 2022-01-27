@@ -23,18 +23,92 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
+using llvm::isa;
 
 namespace Carbon {
 
-//
-// Auxiliary Functions
-//
+// Selects between compile-time and run-time behavior.
+enum class Phase { CompileTime, RunTime };
 
-void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
-  llvm::ListSeparator sep;
-  for (const auto& [name, allocation] : values) {
-    out << sep << name << ": ";
-    heap_.PrintAllocation(allocation, out);
+// Constructs an ActionStack suitable for the specified phase.
+static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+  switch (phase) {
+    case Phase::CompileTime:
+      return ActionStack();
+    case Phase::RunTime:
+      return ActionStack(heap);
+  }
+}
+
+// An Interpreter represents an instance of the Carbon abstract machine. It
+// manages the state of the abstract machine, and executes the steps of Actions
+// passed to it.
+class Interpreter {
+ public:
+  // Constructs an Interpreter which allocates values on `arena`, and prints
+  // traces if `trace` is true. `phase` indicates whether it executes at
+  // compile time or run time.
+  Interpreter(Phase phase, Nonnull<Arena*> arena, bool trace)
+      : arena_(arena),
+        heap_(arena),
+        todo_(MakeTodo(phase, &heap_)),
+        trace_(trace) {}
+
+  ~Interpreter();
+
+  // Runs all the steps of `action`.
+  void RunAllSteps(std::unique_ptr<Action> action);
+
+  // The result produced by the `action` argument of the most recent
+  // RunAllSteps call. Cannot be called if `action` was an action that doesn't
+  // produce results.
+  auto result() const -> Nonnull<const Value*> { return todo_.result(); }
+
+ private:
+  void Step();
+
+  // State transitions for expressions.
+  void StepExp();
+  // State transitions for lvalues.
+  void StepLvalue();
+  // State transitions for patterns.
+  void StepPattern();
+  // State transition for statements.
+  void StepStmt();
+  // State transition for declarations.
+  void StepDeclaration();
+
+  auto CreateStruct(const std::vector<FieldInitializer>& fields,
+                    const std::vector<Nonnull<const Value*>>& values)
+      -> Nonnull<const Value*>;
+
+  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
+                SourceLocation source_loc) -> Nonnull<const Value*>;
+
+  // Returns the result of converting `value` to type `destination_type`.
+  auto Convert(Nonnull<const Value*> value,
+               Nonnull<const Value*> destination_type) const
+      -> Nonnull<const Value*>;
+
+  void PrintState(llvm::raw_ostream& out);
+
+  Nonnull<Arena*> arena_;
+
+  Heap heap_;
+  ActionStack todo_;
+
+  // The underlying states of continuation values. All StackFragments created
+  // during execution are tracked here, in order to safely deallocate the
+  // contents of any non-completed continuations at the end of execution.
+  std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
+
+  bool trace_;
+};
+
+Interpreter::~Interpreter() {
+  // Clean up any remaining suspended continuations.
+  for (Nonnull<ContinuationValue::StackFragment*> fragment : stack_fragments_) {
+    fragment->Clear();
   }
 }
 
@@ -42,24 +116,12 @@ void Interpreter::PrintEnv(Env values, llvm::raw_ostream& out) {
 // State Operations
 //
 
-auto Interpreter::CurrentEnv() -> Env { return todo_.CurrentScope().values(); }
-
-// Returns the given name from the environment, printing an error if not found.
-auto Interpreter::GetFromEnv(SourceLocation source_loc, const std::string& name)
-    -> Address {
-  std::optional<AllocationId> pointer = CurrentEnv().Get(name);
-  if (!pointer) {
-    FATAL_RUNTIME_ERROR(source_loc) << "could not find `" << name << "`";
-  }
-  return Address(*pointer);
-}
-
 void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "{\nstack: " << todo_;
   out << "\nheap: " << heap_;
   if (!todo_.IsEmpty()) {
     out << "\nvalues: ";
-    PrintEnv(CurrentEnv(), out);
+    todo_.PrintScopes(out);
   }
   out << "\n}\n";
 }
@@ -96,80 +158,6 @@ auto Interpreter::EvalPrim(Operator op,
   }
 }
 
-void Interpreter::InitEnv(const Declaration& d, Env* env) {
-  switch (d.kind()) {
-    case DeclarationKind::FunctionDeclaration: {
-      const auto& func_def = cast<FunctionDeclaration>(d);
-      Env new_env = *env;
-      // Bring the deduced parameters into scope.
-      for (Nonnull<const GenericBinding*> deduced :
-           func_def.deduced_parameters()) {
-        AllocationId a =
-            heap_.AllocateValue(arena_->New<VariableType>(deduced));
-        new_env.Set(deduced->name(), a);
-      }
-      Nonnull<const FunctionValue*> f = arena_->New<FunctionValue>(&func_def);
-      AllocationId a = heap_.AllocateValue(f);
-      env->Set(func_def.name(), a);
-      break;
-    }
-
-    case DeclarationKind::ClassDeclaration: {
-      const auto& class_decl = cast<ClassDeclaration>(d);
-      std::vector<NamedValue> fields;
-      std::vector<NamedValue> methods;
-      for (Nonnull<const Member*> m : class_decl.members()) {
-        switch (m->kind()) {
-          case MemberKind::FieldMember: {
-            const BindingPattern& binding = cast<FieldMember>(*m).binding();
-            const Expression& type_expression =
-                cast<ExpressionPattern>(binding.type()).expression();
-            auto type = InterpExp(Env(arena_), &type_expression);
-            fields.push_back({.name = binding.name(), .value = type});
-            break;
-          }
-        }
-      }
-      auto st = arena_->New<NominalClassType>(
-          class_decl.name(), std::move(fields), std::move(methods));
-      AllocationId a = heap_.AllocateValue(st);
-      env->Set(class_decl.name(), a);
-      break;
-    }
-
-    case DeclarationKind::ChoiceDeclaration: {
-      const auto& choice = cast<ChoiceDeclaration>(d);
-      std::vector<NamedValue> alts;
-      for (Nonnull<const AlternativeSignature*> alternative :
-           choice.alternatives()) {
-        auto t = InterpExp(Env(arena_), &alternative->signature());
-        alts.push_back({.name = alternative->name(), .value = t});
-      }
-      auto ct = arena_->New<ChoiceType>(choice.name(), std::move(alts));
-      AllocationId a = heap_.AllocateValue(ct);
-      env->Set(choice.name(), a);
-      break;
-    }
-
-    case DeclarationKind::VariableDeclaration: {
-      const auto& var = cast<VariableDeclaration>(d);
-      // Adds an entry in `globals` mapping the variable's name to the
-      // result of evaluating the initializer.
-      Nonnull<const Value*> v =
-          Convert(InterpExp(*env, &var.initializer()), &var.static_type());
-      AllocationId a = heap_.AllocateValue(v);
-      env->Set(var.binding().name(), a);
-      break;
-    }
-  }
-}
-
-void Interpreter::InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs) {
-  for (const auto d : fs) {
-    InitEnv(*d, &globals_);
-  }
-}
-
 auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
@@ -182,18 +170,21 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   return arena_->New<StructValue>(std::move(elements));
 }
 
-auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                               SourceLocation source_loc)
-    -> std::optional<Env> {
+auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
+                  SourceLocation source_loc,
+                  std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
-      const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      Env values(arena_);
-      if (placeholder.named_entity().has_value()) {
-        AllocationId a = heap_.AllocateValue(v);
-        values.Set(std::string(placeholder.named_entity()->name()), a);
+      if (!bindings.has_value()) {
+        // TODO: move this to typechecker.
+        FATAL_COMPILATION_ERROR(source_loc)
+            << "Name bindings are not supported in this context";
       }
-      return values;
+      const auto& placeholder = cast<BindingPlaceholderValue>(*p);
+      if (placeholder.named_entity().has_value()) {
+        (*bindings)->Initialize(*placeholder.named_entity(), v);
+      }
+      return true;
     }
     case Value::Kind::TupleValue:
       switch (v->kind()) {
@@ -205,18 +196,13 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                 << "arity mismatch in tuple pattern match:\n  pattern: "
                 << p_tup << "\n  value: " << v_tup;
           }
-          Env values(arena_);
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
-            std::optional<Env> matches = PatternMatch(
-                p_tup.elements()[i], v_tup.elements()[i], source_loc);
-            if (!matches) {
-              return std::nullopt;
-            }
-            for (const auto& [name, value] : *matches) {
-              values.Set(name, value);
+            if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
+                              source_loc, bindings)) {
+              return false;
             }
           }  // for
-          return values;
+          return true;
         }
         default:
           FATAL() << "expected a tuple value in pattern, not " << *v;
@@ -225,20 +211,14 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       const auto& p_struct = cast<StructValue>(*p);
       const auto& v_struct = cast<StructValue>(*v);
       CHECK(p_struct.elements().size() == v_struct.elements().size());
-      Env values(arena_);
       for (size_t i = 0; i < p_struct.elements().size(); ++i) {
         CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
-        std::optional<Env> matches =
-            PatternMatch(p_struct.elements()[i].value,
-                         v_struct.elements()[i].value, source_loc);
-        if (!matches) {
-          return std::nullopt;
-        }
-        for (const auto& [name, value] : *matches) {
-          values.Set(name, value);
+        if (!PatternMatch(p_struct.elements()[i].value,
+                          v_struct.elements()[i].value, source_loc, bindings)) {
+          return false;
         }
       }
-      return values;
+      return true;
     }
     case Value::Kind::AlternativeValue:
       switch (v->kind()) {
@@ -247,9 +227,10 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& v_alt = cast<AlternativeValue>(*v);
           if (p_alt.choice_name() != v_alt.choice_name() ||
               p_alt.alt_name() != v_alt.alt_name()) {
-            return std::nullopt;
+            return false;
           }
-          return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc);
+          return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc,
+                              bindings);
         }
         default:
           FATAL() << "expected a choice alternative in pattern, not " << *v;
@@ -259,35 +240,25 @@ auto Interpreter::PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::FunctionType: {
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
-          std::optional<Env> param_matches =
-              PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc);
-          if (!param_matches) {
-            return std::nullopt;
+          if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
+                            bindings)) {
+            return false;
           }
-          std::optional<Env> ret_matches = PatternMatch(
-              &p_fn.return_type(), &v_fn.return_type(), source_loc);
-          if (!ret_matches) {
-            return std::nullopt;
+          if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
+                            source_loc, bindings)) {
+            return false;
           }
-          Env values = *param_matches;
-          for (const auto& [name, value] : *ret_matches) {
-            values.Set(name, value);
-          }
-          return values;
+          return true;
         }
         default:
-          return std::nullopt;
+          return false;
       }
     case Value::Kind::AutoType:
       // `auto` matches any type, without binding any new names. We rely
       // on the typechecker to ensure that `v` is a type.
-      return Env(arena_);
+      return true;
     default:
-      if (ValueEqual(p, v)) {
-        return Env(arena_);
-      } else {
-        return std::nullopt;
-      }
+      return ValueEqual(p, v);
   }
 }
 
@@ -302,13 +273,10 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      CHECK(cast<IdentifierExpression>(exp).has_named_entity())
-          << "Identifier '" << exp << "' at " << exp.source_loc()
-          << " was not resolved";
-      Address pointer =
-          GetFromEnv(exp.source_loc(), cast<IdentifierExpression>(exp).name());
-      Nonnull<const Value*> v = arena_->New<LValue>(pointer);
-      return todo_.FinishAction(v);
+      Nonnull<const Value*> value = todo_.ValueOfName(
+          cast<IdentifierExpression>(exp).named_entity(), exp.source_loc());
+      CHECK(isa<LValue>(value)) << *value;
+      return todo_.FinishAction(value);
     }
     case ExpressionKind::FieldAccessExpression: {
       if (act.pos() == 0) {
@@ -517,12 +485,13 @@ void Interpreter::StepExp() {
     case ExpressionKind::IdentifierExpression: {
       CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
-      CHECK(ident.has_named_entity())
-          << "Identifier '" << exp << "' at " << exp.source_loc()
-          << " was not resolved";
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address pointer = GetFromEnv(exp.source_loc(), ident.name());
-      return todo_.FinishAction(heap_.Read(pointer, exp.source_loc()));
+      Nonnull<const Value*> value =
+          todo_.ValueOfName(ident.named_entity(), ident.source_loc());
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        value = heap_.Read(lvalue->address(), exp.source_loc());
+      }
+      return todo_.FinishAction(value);
     }
     case ExpressionKind::IntLiteral:
       CHECK(act.pos() == 0);
@@ -574,20 +543,15 @@ void Interpreter::StepExp() {
                 cast<FunctionValue>(*act.results()[0]).declaration();
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type());
-            std::optional<Env> matches =
-                PatternMatch(&function.param_pattern().value(), converted_args,
-                             exp.source_loc());
-            CHECK(matches.has_value())
-                << "internal error in call_function, pattern match failed";
-            Scope new_scope(globals_, &heap_);
-            for (const auto& [name, value] : *matches) {
-              new_scope.AddLocal(name, value);
-            }
+            RuntimeScope function_scope(&heap_);
+            CHECK(PatternMatch(&function.param_pattern().value(),
+                               converted_args, exp.source_loc(),
+                               &function_scope));
             CHECK(function.body().has_value())
                 << "Calling a function that's missing a body";
             return todo_.Spawn(
                 std::make_unique<StatementAction>(*function.body()),
-                std::move(new_scope));
+                std::move(function_scope));
           }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
@@ -740,7 +704,7 @@ void Interpreter::StepStmt() {
       if (act.pos() == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-        act.StartScope(Scope(CurrentEnv(), &heap_));
+        act.StartScope(RuntimeScope(&heap_));
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&match_stmt.expression()));
       } else {
@@ -749,17 +713,13 @@ void Interpreter::StepStmt() {
           return todo_.FinishAction();
         }
         auto c = match_stmt.clauses()[clause_num];
-        std::optional<Env> matches =
-            PatternMatch(&c.pattern().value(),
+        RuntimeScope matches(&heap_);
+        if (PatternMatch(&c.pattern().value(),
                          Convert(act.results()[0], &c.pattern().static_type()),
-                         stmt.source_loc());
-        if (matches) {  // We have a match, start the body.
+                         stmt.source_loc(), &matches)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
-
-          for (const auto& [name, value] : *matches) {
-            act.scope()->AddLocal(name, value);
-          }
+          todo_.MergeScope(std::move(matches));
           return todo_.Spawn(std::make_unique<StatementAction>(&c.statement()));
         } else {
           return todo_.RunAgain();
@@ -808,7 +768,7 @@ void Interpreter::StepStmt() {
       }
       // Initialize a scope when starting a block.
       if (act.pos() == 0) {
-        act.StartScope(Scope(CurrentEnv(), &heap_));
+        act.StartScope(RuntimeScope(&heap_));
       }
       // Process the next statement in the block. The position will be
       // incremented as part of Spawn.
@@ -830,14 +790,11 @@ void Interpreter::StepStmt() {
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
 
-        std::optional<Env> matches = PatternMatch(p, v, stmt.source_loc());
-        CHECK(matches)
+        RuntimeScope matches(&heap_);
+        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
-        for (const auto& [name, value] : *matches) {
-          Scope& current_scope = todo_.CurrentScope();
-          current_scope.AddLocal(name, value);
-        }
+        todo_.MergeScope(std::move(matches));
         return todo_.FinishAction();
       }
     }
@@ -913,21 +870,15 @@ void Interpreter::StepStmt() {
       }
     case StatementKind::Continuation: {
       CHECK(act.pos() == 0);
+      const auto& continuation = cast<Continuation>(stmt);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
       auto fragment = arena_->New<ContinuationValue::StackFragment>();
       stack_fragments_.push_back(fragment);
-      std::vector<std::unique_ptr<Action>> reversed_todo;
-      reversed_todo.push_back(
-          std::make_unique<StatementAction>(&cast<Continuation>(stmt).body()));
-      reversed_todo.push_back(
-          std::make_unique<ScopeAction>(Scope(CurrentEnv(), &heap_)));
-      fragment->StoreReversed(std::move(reversed_todo));
-      AllocationId continuation_address =
-          heap_.AllocateValue(arena_->New<ContinuationValue>(fragment));
+      todo_.InitializeFragment(*fragment, &continuation.body());
       // Bind the continuation object to the continuation variable
-      todo_.CurrentScope().AddLocal(cast<Continuation>(stmt).name(),
-                                    continuation_address);
+      todo_.Initialize(&cast<Continuation>(stmt),
+                       arena_->New<ContinuationValue>(fragment));
       return todo_.FinishAction();
     }
     case StatementKind::Run: {
@@ -948,6 +899,31 @@ void Interpreter::StepStmt() {
   }
 }
 
+void Interpreter::StepDeclaration() {
+  Action& act = todo_.CurrentAction();
+  const Declaration& decl = cast<DeclarationAction>(act).declaration();
+  if (trace_) {
+    llvm::outs() << "--- step declaration (" << decl.source_loc() << ") --->\n";
+  }
+  switch (decl.kind()) {
+    case DeclarationKind::VariableDeclaration: {
+      const auto& var_decl = cast<VariableDeclaration>(decl);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&var_decl.initializer()));
+      } else {
+        todo_.Initialize(&var_decl.binding(), act.results()[0]);
+        return todo_.FinishAction();
+      }
+    }
+    case DeclarationKind::FunctionDeclaration:
+    case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::ChoiceDeclaration:
+      // These declarations have no run-time effects.
+      return todo_.FinishAction();
+  }
+}
+
 // State transition.
 void Interpreter::Step() {
   Action& act = todo_.CurrentAction();
@@ -964,62 +940,58 @@ void Interpreter::Step() {
     case Action::Kind::StatementAction:
       StepStmt();
       break;
+    case Action::Kind::DeclarationAction:
+      StepDeclaration();
+      break;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction escaped ActionStack";
   }  // switch
 }
 
-auto Interpreter::ExecuteAction(std::unique_ptr<Action> action, Env values,
-                                bool trace_steps) -> Nonnull<const Value*> {
-  todo_.Start(std::move(action), Scope(values, &heap_));
-
+void Interpreter::RunAllSteps(std::unique_ptr<Action> action) {
+  if (trace_) {
+    PrintState(llvm::outs());
+  }
+  todo_.Start(std::move(action));
   while (!todo_.IsEmpty()) {
     Step();
-    if (trace_steps) {
+    if (trace_) {
       PrintState(llvm::outs());
     }
   }
-
-  // Clean up any remaining suspended continuations.
-  for (Nonnull<ContinuationValue::StackFragment*> fragment : stack_fragments_) {
-    fragment->Clear();
-  }
-
-  return todo_.result();
 }
 
-auto Interpreter::InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
-                                Nonnull<const Expression*> call_main) -> int {
-  // Check that the interpreter is in a clean state.
-  CHECK(globals_.IsEmpty());
-  CHECK(todo_.IsEmpty());
-
-  if (trace_) {
+auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int {
+  Interpreter interpreter(Phase::RunTime, arena, trace);
+  if (trace) {
     llvm::outs() << "********** initializing globals **********\n";
   }
-  InitGlobals(fs);
 
-  if (trace_) {
-    llvm::outs() << "********** calling main function **********\n";
-    PrintState(llvm::outs());
+  for (Nonnull<Declaration*> declaration : ast.declarations) {
+    interpreter.RunAllSteps(std::make_unique<DeclarationAction>(declaration));
   }
 
-  return cast<IntValue>(
-             *ExecuteAction(std::make_unique<ExpressionAction>(call_main),
-                            globals_, trace_))
-      .value();
+  if (trace) {
+    llvm::outs() << "********** calling main function **********\n";
+  }
+
+  interpreter.RunAllSteps(std::make_unique<ExpressionAction>(*ast.main_call));
+
+  return cast<IntValue>(*interpreter.result()).value();
 }
 
-auto Interpreter::InterpExp(Env values, Nonnull<const Expression*> e)
+auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
     -> Nonnull<const Value*> {
-  return ExecuteAction(std::make_unique<ExpressionAction>(e), values,
-                       /*trace_steps=*/false);
+  Interpreter interpreter(Phase::CompileTime, arena, trace);
+  interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e));
+  return interpreter.result();
 }
 
-auto Interpreter::InterpPattern(Env values, Nonnull<const Pattern*> p)
+auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
     -> Nonnull<const Value*> {
-  return ExecuteAction(std::make_unique<PatternAction>(p), values,
-                       /*trace_steps=*/false);
+  Interpreter interpreter(Phase::CompileTime, arena, trace);
+  interpreter.RunAllSteps(std::make_unique<PatternAction>(p));
+  return interpreter.result();
 }
 
 }  // namespace Carbon

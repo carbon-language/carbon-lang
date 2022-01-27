@@ -315,7 +315,7 @@ auto MatchNode(Args... args) -> ExpectedNode {
   auto Match##kind(Args... args)->ExpectedNode {                 \
     return MatchNode(ParseNodeKind::kind(), std::move(args)...); \
   }
-#include "parse_node_kind.def"
+#include "toolchain/parser/parse_node_kind.def"
 
 // Helper for matching a designator `lhs.rhs`.
 inline auto MatchDesignator(ExpectedNode lhs, std::string rhs) -> ExpectedNode {

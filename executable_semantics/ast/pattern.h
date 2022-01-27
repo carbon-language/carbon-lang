@@ -61,6 +61,7 @@ class Pattern : public AstNode {
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
   // The value of this pattern. Cannot be called before typechecking.
+  // TODO rename to avoid confusion with BindingPattern::constant_value
   auto value() const -> const Value& { return **value_; }
 
   // Sets the value of this pattern. Can only be called once, during
@@ -121,6 +122,10 @@ class BindingPattern : public Pattern {
   auto type() -> Pattern& { return *type_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
  private:
   std::string name_;
