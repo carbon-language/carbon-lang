@@ -27,10 +27,8 @@ auto StructValue::FindField(const std::string& name) const
   return std::nullopt;
 }
 
-namespace {
-
-auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-               const std::string& f, SourceLocation source_loc)
+static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                      const std::string& f, SourceLocation source_loc)
     -> Nonnull<const Value*> {
   switch (v->kind()) {
     case Value::Kind::StructValue: {
@@ -62,8 +60,6 @@ auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   }
 }
 
-}  // namespace
-
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
                      SourceLocation source_loc) const -> Nonnull<const Value*> {
   Nonnull<const Value*> value(this);
@@ -73,13 +69,11 @@ auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
   return value;
 }
 
-namespace {
-
-auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
-                  std::vector<std::string>::const_iterator path_begin,
-                  std::vector<std::string>::const_iterator path_end,
-                  Nonnull<const Value*> field_value, SourceLocation source_loc)
-    -> Nonnull<const Value*> {
+static auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
+                         std::vector<std::string>::const_iterator path_begin,
+                         std::vector<std::string>::const_iterator path_end,
+                         Nonnull<const Value*> field_value,
+                         SourceLocation source_loc) -> Nonnull<const Value*> {
   if (path_begin == path_end) {
     return field_value;
   }
@@ -119,8 +113,6 @@ auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
       FATAL() << "field access not allowed for value " << *value;
   }
 }
-
-}  // namespace
 
 auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,

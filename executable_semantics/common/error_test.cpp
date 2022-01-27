@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 TEST(ErrorTest, FatalProgramError) {
@@ -30,4 +30,4 @@ TEST(ErrorTest, FatalProgramErrorLine) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
