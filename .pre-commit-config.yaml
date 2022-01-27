@@ -67,6 +67,14 @@ repos:
     hooks:
       - id: prettier
   # Run linters last, as formatters and other checks may fix issues.
+  - repo: local
+    hooks:
+      - id: forbid-llvm-googletest
+        name: Checks for deps on LLVM's version of GoogleTest
+        entry: scripts/forbid_llvm_googletest.py
+        language: python
+        files: ^.*/BUILD$
+        pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
     rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
@@ -133,5 +141,6 @@ repos:
 exclude: |
   (?x)^(
       third_party/examples/.*/carbon/.*|
+      third_party/llvm-project/.*|
       .*/fuzzer_corpus/.*
   )$

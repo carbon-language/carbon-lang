@@ -9,3 +9,4 @@ crate
 inout
 pullrequest
 statics
+compiletime

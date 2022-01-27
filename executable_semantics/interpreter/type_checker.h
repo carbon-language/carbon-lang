@@ -20,7 +20,7 @@ namespace Carbon {
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
+      : arena_(arena), trace_(trace) {}
 
   void TypeCheck(AST& ast);
 
@@ -96,7 +96,6 @@ class TypeChecker {
   void PrintConstants(llvm::raw_ostream& out);
 
   Nonnull<Arena*> arena_;
-  Interpreter interpreter_;
   std::set<NamedEntityView> constants_;
 
   bool trace_;

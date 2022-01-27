@@ -18,22 +18,19 @@ namespace Carbon {
 // The stack of Actions currently being executed by the interpreter.
 class ActionStack {
  public:
-  // Constructs an empty ActionStack
+  // Constructs an empty compile-time ActionStack.
   ActionStack() = default;
+
+  // Constructs an empty run-time ActionStack that allocates global variables
+  // on `heap`.
+  explicit ActionStack(Nonnull<HeapAllocationInterface*> heap)
+      : globals_(RuntimeScope(heap)) {}
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // TODO: consider unifying with Print.
   void PrintScopes(llvm::raw_ostream& out) const;
-
-  // Sets the heap that variables will be allocated on. Cannot be called at
-  // run time, or when IsEmpty() is false, and marks the start of run time.
-  void SetHeap(Nonnull<HeapAllocationInterface*> heap) {
-    CHECK(todo_.IsEmpty());
-    CHECK(!globals_.has_value());
-    globals_ = RuntimeScope(heap);
-  }
 
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.

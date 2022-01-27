@@ -1,0 +1,14 @@
+import("//llvm/utils/unittest/unittest.gni")
+
+unittest("IPOTests") {
+  deps = [
+    "//llvm/lib/IR",
+    "//llvm/lib/Support",
+    "//llvm/lib/Transforms/IPO",
+  ]
+  sources = [
+    "AttributorTest.cpp",
+    "LowerTypeTests.cpp",
+    "WholeProgramDevirt.cpp",
+  ]
+}
