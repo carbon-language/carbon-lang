@@ -95,10 +95,15 @@ possible syntaxes:
 
 The [`return` statement](control_flow/return.md) is essential to function
 control flow. It ends the flow of the function and returns execution to the
-caller. The `return` statement must be used to end control flow of a function
-when a non-empty [return clause](#return-clause) is used. A `return` statement
-must have an expression argument if and only if there is a non-empty return
-clause.
+caller.
+
+When the [return clause](#return-clause) is omitted, the `return` statement has
+no expression argument, and function control flow implicitly ends after the last
+statement in the function's body as if `return;` were present.
+
+When the return clause is provided, including when it is `-> ()`, the `return`
+statement must have an expression that is convertible to the return type, and a
+`return` statement must be used to end control flow of the function.
 
 ## Function declarations
 
