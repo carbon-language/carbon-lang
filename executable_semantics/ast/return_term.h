@@ -16,7 +16,7 @@
 namespace Carbon {
 
 class Value;
-  
+
 // The syntactic representation of a function declaration's return type.
 // This syntax can take one of three forms:
 // - An _explicit_ term consists of `->` followed by a type expression.

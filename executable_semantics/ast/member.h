@@ -89,11 +89,11 @@ class MethodMember : public Member {
   auto return_term() -> ReturnTerm& { return return_term_; }
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
-  
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMethodMember(node->kind());
   }
-  
+
  private:
   std::string name_;
   Nonnull<TuplePattern*> param_pattern_;
