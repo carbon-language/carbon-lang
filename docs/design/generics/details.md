@@ -92,12 +92,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`final` impls](#final-impls)
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
     -   [Comparison to Rust](#comparison-to-rust)
+-   [Interface members with definitions](#interface-members-with-definitions)
+    -   [Interface defaults](#interface-defaults)
+    -   [`final` members](#final-members)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
         -   [Runtime type fields](#runtime-type-fields)
     -   [Abstract return types](#abstract-return-types)
-    -   [Interface defaults](#interface-defaults)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
     -   [Operator overloading](#operator-overloading)
@@ -4270,6 +4272,162 @@ differences between the Carbon and Rust plans:
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
 
+## Interface members with definitions
+
+Interfaces may provide definitions for members, such as a function body for an
+associated function or method or a value for an associated constant. If these
+definitions may be overridden in implementations, they are called "defaults."
+Otherwise they are called "final members."
+
+### Interface defaults
+
+An interface may provide a default implementation of methods in terms of other
+methods in the interface.
+
+```
+interface Vector {
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: f64) -> Self;
+  // Default definition of `Invert` calls `Scale`.
+  fn Invert[me: Self]() -> Self {
+    return me.Scale(-1.0);
+  }
+}
+```
+
+An impl of that interface for a type may omit a definition of `Invert` to use
+the default, or provide a definition to override the default.
+
+Interface defaults are helpful for [evolution](#evolution), as well as reducing
+boilerplate. Defaults address the gap between the minimum necessary for a type
+to provide the desired functionality of an interface and the breadth of API that
+developers desire. As an example, in Rust the
+[iterator trait](https://doc.rust-lang.org/std/iter/trait.Iterator.html) only
+has one required method but dozens of "provided methods" with defaults.
+
+Defaults may also be provided for associated constants, such as associated
+types, and interface parameters, using the `= <default value>` syntax.
+
+```
+interface Add(Right:! Type = Self) {
+  let Result:! Type = Self;
+  fn DoAdd[me: Self](right: Right) -> Result;
+}
+
+impl String as Add() {
+  // Right == Result == Self == String
+  fn DoAdd[me: Self](right: Self) -> Self;
+}
+```
+
+Note that `Self` is a legal default value for an associated type or type
+parameter. In this case the value of those names is not determined until `Self`
+is, so `Add()` is equivalent to the constraint:
+
+```
+// Equivalent to Add()
+constraint AddDefault {
+  extends Add(Self);
+}
+```
+
+Note also that the parenthesis are required after `Add`, even when all
+parameters are left as their default values.
+
+More generally, default expressions may reference other associated types or
+`Self` as parameters to type constructors. For example:
+
+```
+interface Iterator {
+  let Element:! Type;
+  let Pointer:! Type = Element*;
+}
+```
+
+Carbon does **not** support providing a default implementation of a required
+interface.
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  // ❌ Illegal: May not provide definition
+  //             for required interface.
+  impl PartialOrder {
+    fn PartialLess[me: Self](right: Self) -> Bool {
+      return me.TotalLess(right);
+    }
+  }
+}
+```
+
+The workaround for this restriction is to use a [blanket impl](#blanket-impls)
+instead:
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  impl PartialOrder;
+}
+
+external impl [T:! TotalOrder] T as PartialOrder {
+  fn PartialLess[me: Self](right: Self) -> Bool {
+    return me.TotalLess(right);
+  }
+}
+```
+
+Note that by the [orphan rule](#orphan-rule), this blanket impl must be defined
+in the same library as `PartialOrder`.
+
+**Comparison with other languages:** Rust supports specifying defaults for
+[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
+[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
+and
+[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
+Rust has found them valuable.
+
+### `final` members
+
+As an alternative to providing a definition of an interface member as a default,
+members marked with the `final` keyword will not allow that definition to be
+overridden in impls.
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  final fn TotalGreater[me: Self](right: Self) -> Bool {
+    return right.TotalLess(me);
+  }
+}
+
+class String {
+  impl as TotalOrder {
+    fn TotalLess[me: Self](right: Self) -> Bool { ... }
+    // ❌ Illegal: May not provide definition of final
+    //             method `TotalGreater`.
+    fn TotalGreater[me: Self](right: Self) -> Bool { ... }
+  }
+}
+
+interface Add(T:! Type = Self) {
+  // `AddWith` *always* equals `T`
+  final let AddWith:! Type = T;
+  // Has a *default* of `Self`
+  let Result:! Type = Self;
+  fn DoAdd[me: Self](right: AddWith) -> Result;
+}
+```
+
+There are a few reasons for this feature:
+
+-   When overriding would be inappropriate.
+-   Matching the functionality of non-virtual methods in base classes, so
+    interfaces can be a replacement for inheritance.
+-   Potentially reduce dynamic dispatch when using the interface in a
+    [`DynPtr`](#dynamic-types).
+
+Note that this applies to associated entities, not interface parameters.
+
 ## Future work
 
 ### Dynamic types
@@ -4304,17 +4462,6 @@ In Swift, there are discussions about implementing this feature under the name
 [3](https://forums.swift.org/t/se-0244-opaque-result-types/21252),
 [4](https://forums.swift.org/t/se-0244-opaque-result-types-reopened/22942),
 Swift is considering spelling this `<V: Collection> V` or `some Collection`.
-
-### Interface defaults
-
-Rust supports specifying defaults for
-[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
-[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
-[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
-We should support this too. It is helpful for evolution, as well as reducing
-boilerplate. Defaults address the gap between the minimum necessary for a type
-to provide the desired functionality of an interface and the breadth of API that
-user's desire.
 
 ### Evolution
 
@@ -4401,3 +4548,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+-   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
