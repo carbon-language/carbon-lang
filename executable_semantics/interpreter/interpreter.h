@@ -22,90 +22,32 @@
 
 namespace Carbon {
 
-class Interpreter {
- public:
-  explicit Interpreter(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena),
-        heap_(arena),
-        todo_(Scope(Env(arena_), &heap_)),
-        trace_(trace) {}
+// Interprets the program defined by `ast`, allocating values on `arena` and
+// printing traces if `trace` is true.
+auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int;
 
-  // Interpret the whole program.
-  auto InterpProgram(const AST& ast) -> int;
+// Interprets `e` at compile-time, allocating values on `arena` and
+// printing traces if `trace` is true.
+auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
+    -> Nonnull<const Value*>;
 
-  // Interpret an expression at compile-time.
-  auto InterpExp(Nonnull<const Expression*> e) -> Nonnull<const Value*>;
+// Interprets `p` at compile-time, allocating values on `arena` and
+// printing traces if `trace` is true.
+auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
+    -> Nonnull<const Value*>;
 
-  // Interpret a pattern at compile-time.
-  auto InterpPattern(Nonnull<const Pattern*> p) -> Nonnull<const Value*>;
-
-  // Attempts to match `v` against the pattern `p`. If matching succeeds,
-  // returns the bindings of pattern variables to their matched values.
-  auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                    SourceLocation source_loc) -> std::optional<Env>;
-
-  // Support TypeChecker allocating values on the heap.
-  auto AllocateValue(Nonnull<const Value*> v) -> AllocationId {
-    return heap_.AllocateValue(v);
-  }
-
-  void PrintEnv(Env values, llvm::raw_ostream& out);
-
- private:
-  void Step();
-
-  // State transitions for expressions.
-  void StepExp();
-  // State transitions for lvalues.
-  void StepLvalue();
-  // State transitions for patterns.
-  void StepPattern();
-  // State transition for statements.
-  void StepStmt();
-  // State transition for declarations.
-  void StepDeclaration();
-
-  auto CurrentEnv() -> Env;
-  auto GetFromEnv(SourceLocation source_loc, const std::string& name)
-      -> Address;
-
-  // Calls Step() repeatedly until there are no steps left to execute. Produces
-  // trace output if trace_steps is true.
-  void RunAllSteps(bool trace_steps);
-
-  auto CreateStruct(const std::vector<FieldInitializer>& fields,
-                    const std::vector<Nonnull<const Value*>>& values)
-      -> Nonnull<const Value*>;
-
-  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
-                SourceLocation source_loc) -> Nonnull<const Value*>;
-
-  // Returns the result of converting `value` to type `destination_type`.
-  auto Convert(Nonnull<const Value*> value,
-               Nonnull<const Value*> destination_type) const
-      -> Nonnull<const Value*>;
-
-  void PrintState(llvm::raw_ostream& out);
-
-  // Runs `action` in an environment where the given constants are defined, and
-  // returns the result. `action` must produce a result. In other words, it must
-  // not be a StatementAction, ScopeAction, or DeclarationAction. Can only be
-  // called at compile time (before InterpProgram), and while `todo_` is empty.
-  auto RunCompileTimeAction(std::unique_ptr<Action> action)
-      -> Nonnull<const Value*>;
-
-  Nonnull<Arena*> arena_;
-
-  Heap heap_;
-  ActionStack todo_;
-
-  // The underlying states of continuation values. All StackFragments created
-  // during execution are tracked here, in order to safely deallocate the
-  // contents of any non-completed continuations at the end of execution.
-  std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
-
-  bool trace_;
-};
+// Attempts to match `v` against the pattern `p`, returning whether matching
+// is successful. If it is, populates **bindings with the variables bound by
+// the match; `bindings` should only be nullopt in contexts where `p`
+// is not permitted to bind variables. **bindings may be modified even if the
+// match is unsuccessful, so it should typically be created for the
+// PatternMatch call and then merged into an existing scope on success.
+// TODO: consider moving this to a separate header.
+[[nodiscard]] auto PatternMatch(Nonnull<const Value*> p,
+                                Nonnull<const Value*> v,
+                                SourceLocation source_loc,
+                                std::optional<Nonnull<RuntimeScope*>> bindings)
+    -> bool;
 
 }  // namespace Carbon
 
