@@ -94,6 +94,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Comparison to Rust](#comparison-to-rust)
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
+        -   [Default implementation of required interface](#default-implementation-of-required-interface)
     -   [`final` members](#final-members)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -4344,6 +4345,15 @@ interface Iterator {
 }
 ```
 
+**Comparison with other languages:** Rust supports specifying defaults for
+[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
+[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
+and
+[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
+Rust has found them valuable.
+
+#### Default implementation of required interface
+
 Carbon does **not** support providing a default implementation of a required
 interface.
 
@@ -4378,13 +4388,6 @@ external impl [T:! TotalOrder] T as PartialOrder {
 
 Note that by the [orphan rule](#orphan-rule), this blanket impl must be defined
 in the same library as `PartialOrder`.
-
-**Comparison with other languages:** Rust supports specifying defaults for
-[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
-[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
-and
-[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
-Rust has found them valuable.
 
 ### `final` members
 
