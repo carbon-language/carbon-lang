@@ -1053,6 +1053,10 @@ void TypeChecker::TypeCheckClassDeclaration(
             {.name = binding.name(), .value = &binding.static_type()});
         break;
       }
+      case MemberKind::MethodMember: {
+	// TODO
+	break;
+      }
     }
   }
   SetStaticType(

@@ -33,6 +33,10 @@ static void AddExposedNames(const Member& member,
       }
       break;
     }
+    case MemberKind::MethodMember: {
+      // TODO
+      break;
+    }
   }
 }
 
@@ -261,6 +265,10 @@ static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
   switch (member.kind()) {
     case MemberKind::FieldMember:
       ResolveNames(cast<FieldMember>(member).binding(), enclosing_scope);
+      break;
+    case MemberKind::MethodMember:
+      // TODO
+      break;
   }
 }
 

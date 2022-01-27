@@ -77,6 +77,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
+        ":return_term",
         ":member",
         ":pattern",
         ":source_location",
@@ -89,6 +90,16 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "return_term",
+    hdrs = ["return_term.h"],
+    deps = [
+        ":source_location",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+    
 cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
@@ -125,7 +136,9 @@ cc_library(
     hdrs = ["member.h"],
     deps = [
         ":expression",
+        ":statement",
         ":pattern",
+	":return_term",
         ":source_location",
         "//common:ostream",
         "//executable_semantics/common:arena",

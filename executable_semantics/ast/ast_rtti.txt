@@ -52,3 +52,4 @@ abstract class Expression : AstNode;
   class UnimplementedExpression : Expression;
 abstract class Member : AstNode;
   class FieldMember : Member;
+  class MethodMember : Member;

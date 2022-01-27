@@ -6,11 +6,15 @@
 #define EXECUTABLE_SEMANTICS_AST_MEMBER_H_
 
 #include <string>
+#include <optional>
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/return_term.h"
+#include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/nonnull.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -63,6 +67,38 @@ class FieldMember : public Member {
 
  private:
   Nonnull<BindingPattern*> binding_;
+};
+
+class MethodMember : public Member {
+ public:
+  MethodMember(SourceLocation source_loc, std::string name,
+                      Nonnull<TuplePattern*> param_pattern,
+                      ReturnTerm return_term,
+                      std::optional<Nonnull<Block*>> body)
+    : Member(AstNodeKind::MethodMember, source_loc),
+      name_(std::move(name)),
+      param_pattern_(param_pattern),
+      return_term_(return_term),
+      body_(body)  {
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
+  auto param_pattern() -> TuplePattern& { return *param_pattern_; }
+  auto return_term() const -> const ReturnTerm& { return return_term_; }
+  auto return_term() -> ReturnTerm& { return return_term_; }
+  auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
+  auto body() -> std::optional<Nonnull<Block*>> { return body_; }
+  
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMethodMember(node->kind());
+  }
+  
+ private:
+  std::string name_;
+  Nonnull<TuplePattern*> param_pattern_;
+  ReturnTerm return_term_;
+  std::optional<Nonnull<Block*>> body_;
 };
 
 }  // namespace Carbon

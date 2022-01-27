@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
@@ -124,85 +125,6 @@ class GenericBinding : public AstNode {
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const Value*>> constant_value_;
-};
-
-// The syntactic representation of a function declaration's return type.
-// This syntax can take one of three forms:
-// - An _explicit_ term consists of `->` followed by a type expression.
-// - An _auto_ term consists of `-> auto`.
-// - An _omitted_ term consists of no tokens at all.
-// Each of these forms has a corresponding factory function.
-class ReturnTerm {
- public:
-  ReturnTerm(const ReturnTerm&) = default;
-  auto operator=(const ReturnTerm&) -> ReturnTerm& = default;
-
-  // Represents an omitted return term at `source_loc`.
-  static auto Omitted(SourceLocation source_loc) -> ReturnTerm {
-    return ReturnTerm(ReturnKind::Omitted, source_loc);
-  }
-
-  // Represents an auto return term at `source_loc`.
-  static auto Auto(SourceLocation source_loc) -> ReturnTerm {
-    return ReturnTerm(ReturnKind::Auto, source_loc);
-  }
-
-  // Represents an explicit return term with the given type expression.
-  static auto Explicit(Nonnull<Expression*> type_expression) -> ReturnTerm {
-    return ReturnTerm(type_expression);
-  }
-
-  // Returns true if this represents an omitted return term.
-  auto is_omitted() const -> bool { return kind_ == ReturnKind::Omitted; }
-
-  // Returns true if this represents an auto return term.
-  auto is_auto() const -> bool { return kind_ == ReturnKind::Auto; }
-
-  // If this represents an explicit return term, returns the type expression.
-  // Otherwise, returns nullopt.
-  auto type_expression() const -> std::optional<Nonnull<const Expression*>> {
-    return type_expression_;
-  }
-  auto type_expression() -> std::optional<Nonnull<Expression*>> {
-    return type_expression_;
-  }
-
-  // The static return type this term resolves to. Cannot be called before
-  // typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the value of static_type(). Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether static_type() has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
-
-  auto source_loc() const -> SourceLocation { return source_loc_; }
-
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
- private:
-  enum class ReturnKind { Omitted, Auto, Expression };
-
-  explicit ReturnTerm(ReturnKind kind, SourceLocation source_loc)
-      : kind_(kind), source_loc_(source_loc) {
-    CHECK(kind != ReturnKind::Expression);
-  }
-
-  explicit ReturnTerm(Nonnull<Expression*> type_expression)
-      : kind_(ReturnKind::Expression),
-        type_expression_(type_expression),
-        source_loc_(type_expression->source_loc()) {}
-
-  ReturnKind kind_;
-  std::optional<Nonnull<Expression*>> type_expression_;
-  std::optional<Nonnull<const Value*>> static_type_;
-
-  SourceLocation source_loc_;
 };
 
 class FunctionDeclaration : public Declaration {
