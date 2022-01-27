@@ -245,8 +245,10 @@ values of any generic parameters are still unknown. The lookup results from
 these two contexts are combined, and if more than one distinct entity is found,
 the qualified name is invalid.
 
-The lookup for a member name never considers the values of any generic
-parameters that are in scope at the point where the member name appears.
+**Note:** All lookups are done from a context where the values of any generic
+parameters that are in scope are unknown. Unlike for a template parameter, the
+actual value of a generic parameter never affects the result of member
+resolution.
 
 ```carbon
 class Cowboy { fn Draw[me: Self](); }
@@ -271,7 +273,6 @@ class RoundWidget {
   external impl as Renderable {
     fn Draw[me: Self]();
   }
-  // `Draw` names the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
 }
 
