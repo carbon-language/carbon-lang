@@ -10,10 +10,8 @@
 #include <string>
 
 #include "llvm/Support/Error.h"
-#include "llvm/Testing/Support/Error.h"
 
-using ::llvm::FailedWithMessage;
-using ::llvm::HasValue;
+using ::llvm::toString;
 using ::testing::Eq;
 using ::testing::Optional;
 
@@ -58,89 +56,91 @@ TEST(UnescapeStringLiteral, Nul) {
 }
 
 TEST(ParseBlockStringLiteral, FailTooFewLines) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(""),
-                       FailedWithMessage("Too few lines"));
+  EXPECT_THAT(toString(ParseBlockStringLiteral("").takeError()),
+              Eq("Too few lines"));
 }
 
 TEST(ParseBlockStringLiteral, FailNoLeadingTripleQuotes) {
-  EXPECT_THAT_EXPECTED(
-      ParseBlockStringLiteral("'a'\n"),
-      FailedWithMessage("Should start with triple quotes: 'a'"));
+  EXPECT_THAT(toString(ParseBlockStringLiteral("'a'\n").takeError()),
+              Eq("Should start with triple quotes: 'a'"));
 }
 
 TEST(ParseBlockStringLiteral, FailInvalideFiletypeIndicator) {
-  EXPECT_THAT_EXPECTED(
-      ParseBlockStringLiteral("\"\"\"carbon file\n"),
-      FailedWithMessage(
-          "Invalid characters in file type indicator: carbon file"));
+  EXPECT_THAT(
+      toString(ParseBlockStringLiteral("\"\"\"carbon file\n").takeError()),
+      Eq("Invalid characters in file type indicator: carbon file"));
 }
 
 TEST(ParseBlockStringLiteral, FailEndingTripleQuotes) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral("\"\"\"\n"),
-                       FailedWithMessage("Should end with triple quotes: "));
+  EXPECT_THAT(toString(ParseBlockStringLiteral("\"\"\"\n").takeError()),
+              Eq("Should end with triple quotes: "));
 }
 
 TEST(ParseBlockStringLiteral, FailWrongIndent) {
-  EXPECT_THAT_EXPECTED(
-      ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal
     with wrong indent
-     """)"),
-      FailedWithMessage(
-          "Wrong indent for line:     with wrong indent, expected 5"));
+     """)";
+  EXPECT_THAT(toString(ParseBlockStringLiteral(Input).takeError()),
+              Eq("Wrong indent for line:     with wrong indent, expected 5"));
 }
 
 TEST(ParseBlockStringLiteral, FailInvalidEscaping) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      \q
-     """)"),
-                       FailedWithMessage("Invalid escaping in \\q"));
+     """)";
+  EXPECT_THAT(toString(ParseBlockStringLiteral(Input).takeError()),
+              Eq("Invalid escaping in \\q"));
 }
 
 TEST(ParseBlockStringLiteral, OkEmptyString) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
-""")"),
-                       HasValue(""));
+  constexpr char Input[] = R"("""
+""")";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(""));
 }
 
 TEST(ParseBlockStringLiteral, OkOneLineString) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal
-     """)"),
-                       HasValue(R"(A block string literal
-)"));
+     """)";
+  constexpr char Expected[] = R"(A block string literal
+)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkTwoLineString) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal
        with indent.
-     """)"),
-                       HasValue(R"(A block string literal
+     """)";
+  constexpr char Expected[] = R"(A block string literal
   with indent.
-)"));
+)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkWithFileTypeIndicator) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""carbon
+  constexpr char Input[] = R"("""carbon
      A block string literal
        with file type indicator.
-     """)"),
-                       HasValue(R"(A block string literal
+     """)";
+  constexpr char Expected[] = R"(A block string literal
   with file type indicator.
-)"));
+)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkWhitespaceAfterOpeningQuotes) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal
-     """)"),
-                       HasValue(R"(A block string literal
-)"));
+     """)";
+  constexpr char Expected[] = R"(A block string literal
+)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkWithEmptyLines) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal
 
        with
@@ -148,47 +148,52 @@ TEST(ParseBlockStringLiteral, OkWithEmptyLines) {
        empty
 
        lines.
-     """)"),
-                       HasValue(R"(A block string literal
+     """)";
+  constexpr char Expected[] = R"(A block string literal
 
   with
 
   empty
 
   lines.
-)"));
+)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkWithSlashNewlineEscape) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal\
-     """)"),
-                       HasValue("A block string literal"));
+     """)";
+  constexpr char Expected[] = "A block string literal";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkWithDoubleSlashNewline) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal\\
-     """)"),
-                       HasValue(R"(A block string literal\
-)"));
+     """)";
+  constexpr char Expected[] = R"(A block string literal\
+)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkWithTripleSlashNewline) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal\\\
-     """)"),
-                       HasValue(R"(A block string literal\)"));
+     """)";
+  constexpr char Expected[] = R"(A block string literal\)";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 TEST(ParseBlockStringLiteral, OkMultipleSlashes) {
-  EXPECT_THAT_EXPECTED(ParseBlockStringLiteral(R"("""
+  constexpr char Input[] = R"("""
      A block string literal\
      \
      \
      \
-     """)"),
-                       HasValue("A block string literal"));
+     """)";
+  constexpr char Expected[] = "A block string literal";
+  EXPECT_THAT(ParseBlockStringLiteral(Input).get(), Eq(Expected));
 }
 
 }  // namespace
