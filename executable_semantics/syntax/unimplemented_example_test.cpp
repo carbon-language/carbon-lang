@@ -9,7 +9,7 @@
 #include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/parse_test_matchers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::ElementsAre;
@@ -33,4 +33,4 @@ TEST(UnimplementedExampleTest, VerifyPrecedence) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
