@@ -141,6 +141,15 @@ these.
         necessary to create a scope for a variable.
     -   Always break the line immediately after an open brace except for empty
         loop bodies.
+-   For
+    [internal linkage](https://google.github.io/styleguide/cppguide.html#Internal_Linkage)
+    of definitions of functions and variables, prefer `static` over anonymous
+    namespaces. `static` minimizes the context necessary to notice the internal
+    linkage of a definition.
+    -   Anonymous namespaces are still necessary for classes and enums.
+    -   Tests are an exception and should typically be wrapped with
+        `namespace Carbon::Testing { namespace { ... } }` to keep everything
+        internal.
 
 ### Copyable and movable types
 

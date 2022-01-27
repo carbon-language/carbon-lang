@@ -13,7 +13,7 @@
 #include "executable_semantics/common/arena.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using llvm::cast;
@@ -135,4 +135,4 @@ TEST_F(ExpressionTest, BinaryAsTuple) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
