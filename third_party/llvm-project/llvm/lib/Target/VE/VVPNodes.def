@@ -1,0 +1,70 @@
+//===-- VVPNodes.def - Lists & properties of VE Vector Predication Nodes --===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines all VVP_* SDNodes and their properties
+//
+//===----------------------------------------------------------------------===//
+
+/// HANDLE_VP_TO_VVP(VPOPC, VVPOPC)
+/// \p  VPOPC is the VP_* SDNode opcode.
+/// \p  VVPOPC is the VVP_* SDNode opcode.
+#ifndef HANDLE_VP_TO_VVP
+#define HANDLE_VP_TO_VVP(VPOPC, VVPOPC)
+#endif
+
+/// ADD_VVP_OP(VVPNAME,SDNAME)
+/// \p VVPName is a VVP SDNode operator.
+/// \p SDNAME is the generic SD opcode corresponding to \p VVPName.
+#ifndef ADD_VVP_OP
+#define ADD_VVP_OP(X, Y)
+#endif
+
+/// ADD_BINARY_VVP_OP(VVPNAME,SDNAME)
+/// \p VVPName is a VVP Binary operator.
+/// \p SDNAME is the generic SD opcode corresponding to \p VVPName.
+#ifndef ADD_BINARY_VVP_OP
+#define ADD_BINARY_VVP_OP(VVPNAME,VPNAME,SDNAME) \
+            ADD_VVP_OP(VVPNAME,SDNAME) \
+            HANDLE_VP_TO_VVP(VPNAME, VVPNAME)
+#endif
+
+#ifndef ADD_BINARY_VVP_OP_COMPACT
+#define ADD_BINARY_VVP_OP_COMPACT(NAME) \
+    ADD_BINARY_VVP_OP(VVP_##NAME,VP_##NAME,NAME)
+#endif
+
+// Integer arithmetic.
+ADD_BINARY_VVP_OP_COMPACT(ADD)
+ADD_BINARY_VVP_OP_COMPACT(SUB)
+ADD_BINARY_VVP_OP_COMPACT(MUL)
+ADD_BINARY_VVP_OP_COMPACT(UDIV)
+ADD_BINARY_VVP_OP_COMPACT(SDIV)
+
+ADD_BINARY_VVP_OP(VVP_SRA,VP_ASHR,SRA)
+ADD_BINARY_VVP_OP(VVP_SRL,VP_LSHR,SRL)
+ADD_BINARY_VVP_OP_COMPACT(SHL)
+
+ADD_BINARY_VVP_OP_COMPACT(AND)
+ADD_BINARY_VVP_OP_COMPACT(OR)
+ADD_BINARY_VVP_OP_COMPACT(XOR)
+
+// FP arithmetic.
+ADD_BINARY_VVP_OP_COMPACT(FADD)
+ADD_BINARY_VVP_OP_COMPACT(FSUB)
+ADD_BINARY_VVP_OP_COMPACT(FMUL)
+ADD_BINARY_VVP_OP_COMPACT(FDIV)
+
+// Shuffles.
+ADD_VVP_OP(VVP_SELECT,VSELECT)
+HANDLE_VP_TO_VVP(VP_SELECT, VVP_SELECT)
+HANDLE_VP_TO_VVP(VP_MERGE, VVP_SELECT)
+
+#undef ADD_BINARY_VVP_OP
+#undef ADD_BINARY_VVP_OP_COMPACT
+#undef ADD_VVP_OP
+#undef HANDLE_VP_TO_VVP
