@@ -1,0 +1,8 @@
+executable("llvm-cxxmap") {
+  deps = [
+    "//llvm/lib/IR",
+    "//llvm/lib/Support",
+    "//llvm/lib/Target:TargetsToBuild",
+  ]
+  sources = [ "llvm-cxxmap.cpp" ]
+}
