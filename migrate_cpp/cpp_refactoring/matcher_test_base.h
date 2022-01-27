@@ -13,7 +13,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "migrate_cpp/cpp_refactoring/matcher_manager.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // Matcher test framework.
 template <typename MatcherFactoryType>
@@ -61,6 +61,6 @@ class MatcherTestBase : public ::testing::Test {
   MatcherManager matchers;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
