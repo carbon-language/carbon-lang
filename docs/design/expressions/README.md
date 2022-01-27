@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
 
 <!-- tocstop -->
@@ -28,6 +29,17 @@ fn Foo(a: i32*) -> i32 {
 
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
+
+## Operators
+
+Most expressions are modeled as operators:
+
+| Category   | Operator                      | Syntax    | Function                                                            |
+| ---------- | ----------------------------- | --------- | ------------------------------------------------------------------- |
+| Conversion | [`as`](as_expressions.md)     | `x as T`  | Converts the value `x` to the type `T`.                             |
+| Logical    | [`and`](logical_operators.md) | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`. |
+| Logical    | [`or`](logical_operators.md)  | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.  |
+| Logical    | [`not`](logical_operators.md) | `not x`   | Logical NOT: `true` if the operand is `false`.                      |
 
 ## Conversions and casts
 
