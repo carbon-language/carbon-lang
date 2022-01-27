@@ -31,6 +31,6 @@ def lit_test(name, test_dir, data = None, **kwargs):
         srcs = ["//bazel/testing:lit_test.py"],
         main = "//bazel/testing:lit_test.py",
         data = data + native.glob([test_dir + "/**"]),
-        args = [test_dir, "--"],
+        args = [test_dir, native.package_name(), "--"],
         **kwargs
     )

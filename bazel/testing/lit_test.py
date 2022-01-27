@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 import os
+import shutil
 import subprocess
 
 _PASSTHROUGH_FLAGS = ["filter", "filter-out"]
@@ -19,6 +20,7 @@ def _parse_args():
     arg_parser.add_argument(
         "test_dir", help="The directory containing tests to run."
     )
+    arg_parser.add_argument("path")
     arg_parser.add_argument(
         "lit_args", nargs="*", help="Arguments to pass through to lit."
     )
@@ -52,6 +54,7 @@ def _normalize(relative_base, target):
 
 def main():
     parsed_args = _parse_args()
+    exit(parsed_args.path)
 
     # Figure out the actual path for the test_dir.
     relative_base = os.path.dirname(_normalize("", os.environ["TEST_TARGET"]))
