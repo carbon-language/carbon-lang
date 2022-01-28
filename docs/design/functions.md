@@ -147,7 +147,7 @@ fn Main() {
 ```
 
 Here, `Add(1, 2)` is a function call expression. `Add` refers to the function
-definition's identifier. The parenthesized arguments `(1, 2)` are passed to the
+definition's identifier. The parenthesized arguments `1` and `2` are passed to the
 `a` and `b` parameters of `Add`.
 
 ## Functions in other features
