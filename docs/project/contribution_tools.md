@@ -329,6 +329,10 @@ repositories. See the page for installation instructions.
 
 ### `rs-git-fsmonitor` and Watchman
 
+> **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
+> `pre-commit` deleting files. If you see files being deleted, disable
+> `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
+
 [rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
 monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
 git on large repositories, such as `carbon-lang` when submodules are synced.
