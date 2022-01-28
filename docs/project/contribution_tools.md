@@ -61,6 +61,8 @@ typical tool setup flow is:
         https://github.com/carbon-language/carbon-lang.
     -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
+    -   `git config core.fsmonitor rs-git-fsmonitor` to set up
+        [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 4.  Validate your installation by invoking `bazel test //...:all' from the
     project root. All tests should pass.
@@ -184,10 +186,10 @@ Our recommended way of installing is:
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
 compile and link Carbon as part of its build. Their source code are also
-provided in a [third_party subtree](/third_party/llvm-project) for incorporation
-into Carbon or Carbon tools as libraries. While the subtree tracks upstream
-LLVM, the project expects the LLVM 12 release (or newer) to be installed with
-Clang and other tools in your `PATH` for use in building Carbon itself.
+provided through git submodules for incorporation into Carbon or Carbon tools as
+libraries. While the source submodule tracks upstream LLVM, the project expects
+the LLVM 12 release (or newer) to be installed with Clang and other tools in
+your `PATH` for use in building Carbon itself.
 
 Our recommended way of installing is:
 
@@ -342,6 +344,7 @@ Our recommended way of installing is:
     ```bash
     brew install watchman
     cargo install --git https://github.com/jgavris/rs-git-fsmonitor.git
+
     # Configure the git repository to use fsmonitor.
     git config core.fsmonitor rs-git-fsmonitor
     ```
@@ -352,6 +355,7 @@ Our recommended way of installing is:
     brew tap jgavris/rs-git-fsmonitor \
       https://github.com/jgavris/rs-git-fsmonitor.git
     brew install rs-git-fsmonitor
+
     # Configure the git repository to use fsmonitor.
     git config core.fsmonitor rs-git-fsmonitor
     ```
