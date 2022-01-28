@@ -34,6 +34,7 @@ contributions.
     -   [GitHub](#github)
         -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
+    -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Visual Studio Code](#visual-studio-code)
