@@ -40,9 +40,9 @@ type `Int` and is initialized with the value `42`. These variable declarations
 (and function declarations) have a lot more power than what we're covering just
 yet, but this gives you the basic idea.
 
-If `auto` is used in place of the type, it will use
-[type inference](type_inference.md) to automatically determine the variable
-type.
+If `auto` is used in place of the type,
+[type inference](type_inference.md) is used to automatically determine the
+variable's type.
 
 While there can be global constants, there are no global variables.
 
