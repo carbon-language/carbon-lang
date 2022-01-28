@@ -127,10 +127,6 @@ corresponding definition. This includes the [return clause](#return-clause);
 even though an omitted return type has equivalent behavior to `-> ()`, the
 presence or omission must match.
 
-A function declaration can be called, and the function definition may be
-provided later in code; for example, the `api` file of a library will often
-contain a function's declaration while the `impl` file contains the definition.
-
 ## Function calls
 
 Function calls use a function's identifier to pass multiple expression arguments
