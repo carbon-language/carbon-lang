@@ -108,7 +108,7 @@ To explain this boilerplate:
         braces indicate a contained regular expression.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
-Useful commands are:
+### Useful commands
 
 -   `./update_checks.py` -- Updates expected output.
 -   `bazel test :executable_semantics_lit_test --test_output=errors` -- Runs
