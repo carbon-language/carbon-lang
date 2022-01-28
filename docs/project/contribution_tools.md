@@ -324,6 +324,37 @@ brew install github/gh/gh
 [GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
 repositories. See the page for installation instructions.
 
+### `rs-git-fsmonitor` and Watchman
+
+> **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
+> `pre-commit` deleting files. If you see files being deleted, disable
+> `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
+
+[rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
+monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
+git on large repositories, such as `carbon-lang` when submodules are synced.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    brew install watchman
+    cargo install --git https://github.com/jgavris/rs-git-fsmonitor.git
+    # Configure the git repository to use fsmonitor.
+    git config core.fsmonitor rs-git-fsmonitor
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew tap jgavris/rs-git-fsmonitor \
+      https://github.com/jgavris/rs-git-fsmonitor.git
+    brew install rs-git-fsmonitor
+    # Configure the git repository to use fsmonitor.
+    git config core.fsmonitor rs-git-fsmonitor
+    ```
+
 ### Vim
 
 #### vim-prettier
