@@ -84,8 +84,7 @@ The actual definition is a bit more complex than this, as described in
 [symmetry](#symmetry).
 
 The interface `CommonTypeWith` is used to customize the behavior of
-`CommonType`. The implementation `A as CommonTypeWith(B)` specifies the type
-that `A` would like to result from unifying `A` and `B`:
+`CommonType`:
 
 ```
 interface CommonTypeWith(U:! Type) {
@@ -95,8 +94,10 @@ interface CommonTypeWith(U:! Type) {
 }
 ```
 
-_Note:_ It is required that both types implicitly convert to the common type.
+The implementation `A as CommonTypeWith(B)` specifies the type
+that `A` would like to result from unifying `A` and `B` as its `Result`.
 
+_Note:_ It is required that both types implicitly convert to the common type.
 Some blanket `impl`s for `CommonTypeWith` are provided as part of the prelude.
 These are described in the following sections.
 
@@ -146,14 +147,17 @@ constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
 
 When computing the common type of `T` and `U`, if only one of the types provides
 a `CommonTypeWith` implementation, that determines the common type. If both
-types do, there is no common type, and the `CommonType` constraint is not met.
+types provide a `CommonTypeWith` implementation and their `Result` types are the same, that determines the common type. Otherwise, if both types provide implementations but their `Result` types differ, there is no common type, and the `CommonType` constraint is not met.
 For example, given:
 
 ```
-impl [T:! Type] MyX as CommonTypeWith(T) { // #1
+// Implementation #1
+impl [T:! Type] MyX as CommonTypeWith(T) {
   let Result:! Type = MyX;
 }
-impl [T:! Type] MyY as CommonTypeWith(T) { // #2
+
+// Implementation #2
+impl [T:! Type] MyY as CommonTypeWith(T) {
   let Result:! Type = MyY;
 }
 ```
