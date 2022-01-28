@@ -38,8 +38,7 @@ syntax is:
 
 A function with only a signature and no body is a function declaration, or
 forward declaration. When the body is a present, it's a function definition. The
-body introduces nested scopes which may contain local local variable
-declarations.
+body introduces nested scopes which may contain local variable declarations.
 
 ## Function definitions
 
