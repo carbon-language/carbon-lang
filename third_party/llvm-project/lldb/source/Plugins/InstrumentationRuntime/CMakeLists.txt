@@ -1,0 +1,4 @@
+add_subdirectory(ASan)
+add_subdirectory(MainThreadChecker)
+add_subdirectory(TSan)
+add_subdirectory(UBSan)
