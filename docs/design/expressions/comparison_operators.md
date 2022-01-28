@@ -115,13 +115,14 @@ when comparing `Int(n)` with `Unsigned(m)`.
 For example:
 
 ```carbon
-// The value of `compared` is `true` because `a` is less than `b`, even though
-// the result of a wrapping `i32` or `u32` comparison would be `false`.
+// ✅ Valid: Fits case #1. The value of `compared` is `true` because `a` is less
+// than `b`, even though the result of a wrapping `i32` or `u32` comparison
+// would be `false`.
 fn Compare(a: i32, b: u32) -> bool { return a < b; }
 let compared: bool = Compare(-1, 4_000_000_000);
 
-// This does not compile, because `i64` values in general (and 10^18 in
-// particular) are not exactly representable in the type `f32`.
+// ❌ Invalid: Doesn't fit case #3 because `i64` values in general are not
+// exactly representable in the type `f32`.
 let float: f32 = 1.0e18;
 let integer: i64 = 1_000_000_000_000_000_000;
 let eq: bool = float == integer;
@@ -134,10 +135,10 @@ these rules and are [discussed separately](#comparisons-with-constants).
 
 We support the following [implicit conversions](implicit_conversions.md):
 
--   from `Int(n)` to `Int(m)` if `m > n`,
--   from `Unsigned(n)` to `Int(m)` or `Unsigned(m)` if `m > n`,
--   from `Float(n)` to `Float(m)` if `m > n`, and
--   from `Int(n)` to `Float(m)` if `Float(m)` can represent all values of
+-   From `Int(n)` to `Int(m)` if `m > n`.
+-   From `Unsigned(n)` to `Int(m)` or `Unsigned(m)` if `m > n`.
+-   From `Float(n)` to `Float(m)` if `m > n`.
+-   From `Int(n)` to `Float(m)` if `Float(m)` can represent all values of
     `Int(n)`.
 
 These rules can be summarized as: a type `T` can be converted to `U` if every
