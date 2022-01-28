@@ -14,8 +14,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Precedence](#precedence)
     -   [Associativity](#associativity)
-    -   [Conversions](#conversions)
+    -   [Built-in comparisons and implicit conversions](#built-in-comparisons-and-implicit-conversions)
+        -   [Consistency with implicit conversions](#consistency-with-implicit-conversions)
+        -   [Comparisons with constants](#comparisons-with-constants)
+        -   [Performance](#performance)
     -   [Overloading](#overloading)
+    -   [Default implementations for basic types](#default-implementations-for-basic-types)
+-   [Open questions](#open-questions)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -35,7 +40,7 @@ standard mathematical meaning:
 | Relational | `>`      | `x > y`  | >                    | Less than                  |
 | Relational | `>=`     | `x >= y` | ≥                    | Less than or equal to      |
 
-Comparison operators all return a `bool`; they evalute to `true` when the
+Comparison operators all return a `bool`; they evaluate to `true` when the
 indicated comparison is true. All comparison operators are infix binary
 operators.
 
@@ -294,11 +299,11 @@ in general. That decision is left to a future proposal.
 
 ## Alternatives considered
 
--   [Alternative symbols](/proposals/p0702.m#alternative-symbols)
--   [Chained comparisons](/proposals/p0702.m#chained-comparisons-1)
--   [Convert operands like C++](/proposals/p0702.m#convert-operands-like-c)
--   [Provide a three-way comparison operator](/proposals/p0702.m#provide-a-three-way-comparison-operator)
--   [Allow comparisons as the operand of `not`](/proposals/p0702.m#allow-comparisons-as-the-operand-of-not)
+-   [Alternative symbols](/proposals/p0702.md#alternative-symbols)
+-   [Chained comparisons](/proposals/p0702.md#chained-comparisons-1)
+-   [Convert operands like C++](/proposals/p0702.md#convert-operands-like-c)
+-   [Provide a three-way comparison operator](/proposals/p0702.md#provide-a-three-way-comparison-operator)
+-   [Allow comparisons as the operand of `not`](/proposals/p0702.md#allow-comparisons-as-the-operand-of-not)
 
 ## References
 
