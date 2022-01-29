@@ -16,7 +16,8 @@ namespace Carbon {
 // Aggregate information about a function being analyzed.
 struct FunctionData {
   // The function declaration.
-  Nonnull<FunctionDeclaration*> declaration;
+  //Nonnull<FunctionDeclaration*> declaration;
+  ReturnTargetView declaration;
 
   // True if the function has a deduced return type, and we've already seen
   // a `return` statement in its body.
@@ -40,7 +41,7 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
             << "return is not within a function body";
       }
       const ReturnTerm& function_return =
-          (*function)->declaration->return_term();
+          (*function)->declaration.return_term();
       if (function_return.is_auto()) {
         if ((*function)->saw_return_in_auto) {
           FATAL_COMPILATION_ERROR(statement->source_loc())
@@ -112,13 +113,45 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
 
 void ResolveControlFlow(AST& ast) {
   for (auto declaration : ast.declarations) {
-    if (declaration->kind() != DeclarationKind::FunctionDeclaration) {
-      continue;
-    }
-    auto& function = cast<FunctionDeclaration>(*declaration);
-    if (function.body().has_value()) {
-      FunctionData data = {.declaration = &function};
-      ResolveControlFlow(*function.body(), std::nullopt, &data);
+    switch (declaration->kind()) {
+      case DeclarationKind::FunctionDeclaration: {
+	auto& function = cast<FunctionDeclaration>(*declaration);
+	if (function.body().has_value()) {
+	  FunctionData data = {.declaration = &function};
+	  ResolveControlFlow(*function.body(), std::nullopt, &data);
+	}
+	break;
+      }
+      case DeclarationKind::ClassDeclaration: {
+	auto& class_decl = cast<ClassDeclaration>(*declaration);
+	for (Nonnull<Member*> member : class_decl.members()) {
+	  switch (member->kind()) {
+	  case MemberKind::ClassFunctionMember: {
+	    auto& function = cast<ClassFunctionMember>(*member);
+	    if (function.body().has_value()) {
+	      FunctionData data = {.declaration = &function};
+	      ResolveControlFlow(*function.body(), std::nullopt, &data);
+	    }
+	    break;
+	  }
+	  case MemberKind::MethodMember: {
+	    auto& function = cast<MethodMember>(*member);
+	    if (function.body().has_value()) {
+	      FunctionData data = {.declaration = &function};
+	      ResolveControlFlow(*function.body(), std::nullopt, &data);
+	    }
+	    break;
+	  }
+	  case MemberKind::FieldMember:
+	    // do nothing
+	    break;
+	  }
+	}
+	break;
+      }
+      default:
+	// do nothing
+	break;
     }
   }
 }

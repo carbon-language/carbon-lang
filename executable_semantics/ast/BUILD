@@ -101,6 +101,15 @@ cc_library(
 )
 
 cc_library(
+    name = "return_target",
+    hdrs = ["return_target.h"],
+    deps = [
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
@@ -138,6 +147,7 @@ cc_library(
         ":expression",
         ":pattern",
         ":return_term",
+        ":return_target",
         ":source_location",
         ":statement",
         "//common:ostream",
@@ -220,6 +230,8 @@ cc_library(
     hdrs = ["statement.h"],
     deps = [
         ":ast_node",
+        ":return_term",
+        ":return_target",
         ":expression",
         ":pattern",
         ":source_location",

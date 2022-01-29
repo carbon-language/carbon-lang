@@ -55,6 +55,14 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
+    case Value::Kind::NominalClassType: {
+      const NominalClassType& class_type = cast<NominalClassType>(*v);
+      std::optional<Nonnull<const Value*>> fun = class_type.FindFunction(f);
+      if (fun == std::nullopt) {
+        FATAL_RUNTIME_ERROR(source_loc) << "class function " << f << " not in " << *v;
+      }
+      return *fun;
+    }
     default:
       FATAL() << "field access not allowed for value " << *v;
   }
@@ -179,6 +187,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionValue:
       out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
+    case Value::Kind::ClassFunctionValue:
+      out << "classfun<" << cast<ClassFunctionValue>(*this).declaration().name() << ">";
+      break;
     case Value::Kind::LValue:
       out << "ptr<" << cast<LValue>(*this).address() << ">";
       break;
@@ -227,9 +238,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "}";
       break;
     }
-    case Value::Kind::NominalClassType:
+    case Value::Kind::NominalClassType: {
       out << "class " << cast<NominalClassType>(*this).name();
       break;
+    }
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
@@ -384,6 +396,14 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
+    case Value::Kind::ClassFunctionValue: {
+      std::optional<Nonnull<const Statement*>> body1 =
+          cast<ClassFunctionValue>(*v1).declaration().body();
+      std::optional<Nonnull<const Statement*>> body2 =
+          cast<ClassFunctionValue>(*v2).declaration().body();
+      return body1.has_value() == body2.has_value() &&
+             (!body1.has_value() || *body1 == *body2);
+    }
     case Value::Kind::TupleValue: {
       const std::vector<Nonnull<const Value*>>& elements1 =
           cast<TupleValue>(*v1).elements();
@@ -446,6 +466,16 @@ auto ChoiceType::FindAlternative(std::string_view name) const
   for (const NamedValue& alternative : alternatives_) {
     if (alternative.name == name) {
       return alternative.value;
+    }
+  }
+  return std::nullopt;
+}
+
+auto NominalClassType::FindFunction(const std::string& name) const
+    -> std::optional<Nonnull<const Value*>> {
+  for (const NamedValue& fun : class_functions_) {
+    if (fun.name == name) {
+      return fun.value;
     }
   }
   return std::nullopt;

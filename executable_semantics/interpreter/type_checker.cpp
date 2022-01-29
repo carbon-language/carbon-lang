@@ -74,6 +74,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::ClassFunctionValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
@@ -164,7 +165,7 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
         case Value::Kind::NominalClassType:
           return FieldTypesImplicitlyConvertible(
               cast<StructType>(*source).fields(),
-              cast<NominalClassType>(*destination).fields());
+              cast<NominalClassType>(*destination).field_types());
         default:
           return false;
       }
@@ -313,6 +314,7 @@ void TypeChecker::ArgumentDeduction(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::ClassFunctionValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -378,6 +380,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::ClassFunctionValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -478,7 +481,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(aggregate_type);
           // Search for a field
-          for (auto& field : t_class.fields()) {
+          for (auto& field : t_class.field_types()) {
             if (access.field() == field.name) {
               SetStaticType(&access, field.value);
               access.set_value_category(access.aggregate().value_category());
@@ -486,7 +489,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
             }
           }
           // Search for a method
-          for (auto& method : t_class.methods()) {
+          for (auto& method : t_class.method_types()) {
             if (access.field() == method.name) {
               SetStaticType(&access, method.value);
               access.set_value_category(ValueCategory::Let);
@@ -514,10 +517,24 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
           access.set_value_category(ValueCategory::Let);
           return;
         }
+        case Value::Kind::TypeOfClassType: {
+          const NominalClassType& class_type =
+              cast<TypeOfClassType>(aggregate_type).class_type();
+          for (const auto& [field_name, field_type] : class_type.class_function_types()) {
+            if (access.field() == field_name) {
+              SetStaticType(&access, field_type);
+              access.set_value_category(access.aggregate().value_category());
+              return;
+            }
+          }
+          FATAL_COMPILATION_ERROR(access.source_loc())
+              << class_type << " does not have a class function named "
+              << access.field();
+	}
         default:
           FATAL_COMPILATION_ERROR(e->source_loc())
-              << "field access, expected a struct\n"
-              << *e;
+	    << "field access, unexpected " << aggregate_type
+	    << " in " << *e;
       }
     }
     case ExpressionKind::IdentifierExpression: {
@@ -1038,8 +1055,34 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 
 void TypeChecker::TypeCheckClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl) {
-  std::vector<NamedValue> fields;
-  std::vector<NamedValue> methods;
+  std::vector<NamedValue> field_types;
+  std::vector<NamedValue> class_function_types;
+  std::vector<NamedValue> class_functions;
+  std::vector<NamedValue> method_types;
+
+  // The class itself is initially incomplete, but still can be used
+  // in the type annotations on fields and methods.  Thus, we
+  // initially set it to an NominalClassType without any types for its
+  // members, or any class functions.
+  //
+  // An alternative would be use create an IncompleteClassType and
+  // then replace it with a NominalClassType, but the problem with
+  // that is the processing of the types of the fields and methods
+  // causes pointers (aliases) to the class type to be stored.  It
+  // would be painful to go a update all those pointers.
+
+  const auto& class_type =
+    arena_->New<NominalClassType>(class_decl->name(),
+				  field_types, class_function_types, class_functions,
+				  method_types);
+  SetConstantValue(class_decl, class_type);
+  SetStaticType(class_decl, arena_->New<TypeOfClassType>(class_type));
+
+  // First pass: process the field, class function, and method declarations
+  // but not the bodies of class functions or method declarations.
+  // The first pass also creates class function values for all the
+  // class functions.
+  
   for (Nonnull<Member*> m : class_decl->members()) {
     switch (m->kind()) {
       case MemberKind::FieldMember: {
@@ -1049,20 +1092,75 @@ void TypeChecker::TypeCheckClassDeclaration(
               << "Struct members must have names";
         }
         TypeCheckPattern(&binding, std::nullopt);
-        fields.push_back(
+        field_types.push_back(
             {.name = binding.name(), .value = &binding.static_type()});
         break;
       }
+      case MemberKind::ClassFunctionMember: {
+	auto& f = cast<ClassFunctionMember>(*m);
+	TuplePattern& param = f.param_pattern();
+	TypeCheckPattern(&param, std::nullopt);
+	if (std::optional<Nonnull<Expression*>> return_expression =
+		f.return_term().type_expression();
+	    return_expression.has_value()) {
+	  TypeCheckExp(*return_expression);
+	  SetStaticType(&f.return_term(),
+			InterpExp(*return_expression, arena_, trace_));
+	} else {
+	  FATAL_COMPILATION_ERROR(f.return_term().source_loc())
+	    << "Class function, return type missing.";
+	}
+	std::vector<Nonnull<const GenericBinding*>> deduced;
+	const auto& f_type =
+	  arena_->New<FunctionType>(deduced,
+				    &f.param_pattern().static_type(),
+				    &f.return_term().static_type());
+        class_function_types.push_back(
+                {.name = f.name(), .value = f_type});
+        class_functions.push_back(
+                {.name = f.name(), .value = arena_->New<ClassFunctionValue>(&f)});
+	break;
+      }
       case MemberKind::MethodMember: {
-	// TODO
+	FATAL() << "Unimplemented";
 	break;
       }
     }
   }
-  SetStaticType(
-      class_decl,
-      arena_->New<TypeOfClassType>(arena_->New<NominalClassType>(
-          class_decl->name(), std::move(fields), std::move(methods))));
+  if (trace_) {
+    llvm::outs() << "finished checking member declarations of class "
+		 << class_decl->name() << "\n";
+  }
+  
+  // The class is now complete. 
+  class_type->set_field_types(field_types);
+  class_type->set_class_function_types(class_function_types);
+  class_type->set_class_functions(class_functions);
+  class_type->set_method_types(method_types);
+
+  // Second pass: type check the bodies of the class functions and methods.
+
+  for (Nonnull<Member*> m : class_decl->members()) {
+    switch (m->kind()) {
+      case MemberKind::FieldMember:
+	// nothing to do here
+	break;
+      case MemberKind::ClassFunctionMember: {
+	auto& f = cast<ClassFunctionMember>(*m);
+	if (f.body().has_value()) {
+	  TypeCheckStmt(* f.body());
+	  if (f.return_term().is_omitted()) {
+	    ExpectReturnOnAllPaths(f.body(), f.source_loc());
+	  }
+	}
+	break;
+      }
+      case MemberKind::MethodMember: {
+	FATAL() << "Unimplemented";
+	break;
+      }
+    }
+  }
 }
 
 void TypeChecker::TypeCheckChoiceDeclaration(
@@ -1134,8 +1232,10 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d) {
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
       TypeCheckClassDeclaration(&class_decl);
-      const auto& type = cast<TypeOfClassType>(class_decl.static_type());
-      SetConstantValue(&class_decl, &type.class_type());
+      // Too late? -Jeremy
+      // Move the following to inside TypeCheckClassDeclaration
+      //const auto& type = cast<TypeOfClassType>(class_decl.static_type());
+      //SetConstantValue(&class_decl, &type.class_type());
       break;
     }
 

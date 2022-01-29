@@ -130,6 +130,7 @@ class GenericBinding : public AstNode {
 class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonReturnTarget = void;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,

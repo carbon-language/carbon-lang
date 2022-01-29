@@ -9,6 +9,8 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/return_term.h"
+#include "executable_semantics/ast/return_target.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/source_location.h"
@@ -177,19 +179,31 @@ class Return : public Statement {
   // Note that this function does not represent an edge in the tree
   // structure of the AST: the return value is not a child of this node,
   // but an ancestor.
+#if 0
   auto function() const -> const FunctionDeclaration& { return **function_; }
   auto function() -> FunctionDeclaration& { return **function_; }
+#else
+  auto function() const -> ReturnTargetView { return *function_; }
+  auto function() -> ReturnTargetView { return *function_; }
+#endif
 
   // Can only be called once, by ResolveControlFlow.
+#if 0
   void set_function(Nonnull<FunctionDeclaration*> function) {
     CHECK(!function_.has_value());
     function_ = function;
   }
+#else
+  void set_function(ReturnTargetView function) {
+    function_ = function;
+  }
+#endif
 
  private:
   Nonnull<Expression*> expression_;
   bool is_omitted_expression_;
-  std::optional<Nonnull<FunctionDeclaration*>> function_;
+  //std::optional<Nonnull<FunctionDeclaration*>> function_;
+  std::optional<ReturnTargetView> function_;
 };
 
 class While : public Statement {

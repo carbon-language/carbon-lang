@@ -33,6 +33,10 @@ static void AddExposedNames(const Member& member,
       }
       break;
     }
+    case MemberKind::ClassFunctionMember: {
+      // TODO
+      break;
+    }
     case MemberKind::MethodMember: {
       // TODO
       break;
@@ -266,9 +270,25 @@ static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
     case MemberKind::FieldMember:
       ResolveNames(cast<FieldMember>(member).binding(), enclosing_scope);
       break;
-    case MemberKind::MethodMember:
-      // TODO
+    case MemberKind::ClassFunctionMember: {
+      auto& function = cast<ClassFunctionMember>(member);
+      StaticScope function_scope;
+      function_scope.AddParent(&enclosing_scope);
+      ResolveNames(function.param_pattern(), function_scope);
+      if (function.return_term().type_expression().has_value()) {
+        ResolveNames(**function.return_term().type_expression(),
+                     function_scope);
+      }
+      if (function.body().has_value()) {
+        ResolveNames(**function.body(), function_scope);
+      }
       break;
+    }
+    case MemberKind::MethodMember: {
+      // TODO
+      FATAL() << "Unimplemented";
+      break;
+    }
   }
 }
 
@@ -297,6 +317,7 @@ static void ResolveNames(Declaration& declaration,
       auto& class_decl = cast<ClassDeclaration>(declaration);
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
+      class_scope.Add(class_decl.name(), &class_decl);
       for (Nonnull<Member*> member : class_decl.members()) {
         AddExposedNames(*member, class_scope);
       }

@@ -6,11 +6,12 @@
 #define EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
 
 #include <utility>
+#include <optional>
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
@@ -96,6 +97,18 @@ class ReturnTerm {
   SourceLocation source_loc_;
 };
 
-}
+class Block;
+  
+#if 0
+class ReturnTarget {
+ public:
+  virtual auto return_term() const -> const ReturnTerm&;
+  virtual auto return_term() -> ReturnTerm&;
+  virtual auto body() const -> std::optional<Nonnull<const Block*>>;
+  virtual auto body() -> std::optional<Nonnull<Block*>>;
+};
+#endif
+  
+}  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
