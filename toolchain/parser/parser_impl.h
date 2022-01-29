@@ -24,18 +24,19 @@ class ParseTree::Parser {
       -> ParseTree;
 
  private:
+  class ScopedStackStep;
   struct SubtreeStart;
 
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                   TokenDiagnosticEmitter& emitter);
 
   auto AtEndOfFile() -> bool {
-    return tokens.GetKind(*position) == TokenKind::EndOfFile();
+    return tokens_.GetKind(*position_) == TokenKind::EndOfFile();
   }
 
   // Gets the kind of the next token to be consumed.
   [[nodiscard]] auto NextTokenKind() const -> TokenKind {
-    return tokens.GetKind(*position);
+    return tokens_.GetKind(*position_);
   }
 
   // Tests whether the next token to be consumed is of the specified kind.
@@ -268,15 +269,19 @@ class ParseTree::Parser {
   // Parses a pattern.
   auto ParsePattern(PatternKind kind) -> llvm::Optional<Node>;
 
-  ParseTree& tree;
-  TokenizedBuffer& tokens;
-  TokenDiagnosticEmitter& emitter;
+  ParseTree& tree_;
+  TokenizedBuffer& tokens_;
+  TokenDiagnosticEmitter& emitter_;
 
   // The current position within the token buffer. Never equal to `end`.
-  TokenizedBuffer::TokenIterator position;
+  TokenizedBuffer::TokenIterator position_;
   // The end position of the token buffer. There will always be an `EndOfFile`
   // token between `position` (inclusive) and `end` (exclusive).
-  TokenizedBuffer::TokenIterator end;
+  TokenizedBuffer::TokenIterator end_;
+
+  // Managed through RETURN_IF_STACK_LIMITED, which should be invoked by all
+  // functions.
+  int stack_depth_ = 0;
 };
 
 }  // namespace Carbon

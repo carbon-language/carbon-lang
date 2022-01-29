@@ -4,10 +4,11 @@
 
 #include "toolchain/lexer/tokenized_buffer.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <iterator>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Sequence.h"
@@ -20,23 +21,16 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lexer/tokenized_buffer_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using ::Carbon::Testing::DiagnosticAt;
-using ::Carbon::Testing::DiagnosticMessage;
-using ::Carbon::Testing::ExpectedToken;
-using ::Carbon::Testing::HasTokens;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
-using ::testing::NotNull;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
-struct LexerTest : ::testing::Test {
-  llvm::SmallVector<SourceBuffer, 16> source_storage;
-
+class LexerTest : public ::testing::Test {
+ protected:
   auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
     source_storage.push_back(SourceBuffer::CreateFromText(text.str()));
     return source_storage.back();
@@ -47,6 +41,8 @@ struct LexerTest : ::testing::Test {
       -> TokenizedBuffer {
     return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
+
+  llvm::SmallVector<SourceBuffer, 16> source_storage;
 };
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {
@@ -1102,4 +1098,4 @@ TEST_F(LexerTest, PrintingAsYaml) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

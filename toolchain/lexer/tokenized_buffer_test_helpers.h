@@ -5,7 +5,8 @@
 #ifndef TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_
 #define TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_
 
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
+
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/YAMLParser.h"

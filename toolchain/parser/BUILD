@@ -16,12 +16,12 @@ cc_library(
 
 cc_test(
     name = "parse_node_kind_test",
+    size = "small",
     srcs = ["parse_node_kind_test.cpp"],
     deps = [
         ":parse_node_kind",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -36,6 +36,8 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":precedence",
+        "//common:check",
+        "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
@@ -50,36 +52,39 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":parse_tree",
+        "//common:check",
         "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
     ],
 )
 
 cc_test(
     name = "parse_tree_test",
+    size = "small",
     srcs = ["parse_tree_test.cpp"],
     deps = [
         ":parse_node_kind",
         ":parse_test_helpers",
         ":parse_tree",
+        "//common:ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
 cc_fuzz_test(
     name = "parse_tree_fuzzer",
+    size = "small",
     srcs = ["parse_tree_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":parse_tree",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lexer:tokenized_buffer",
@@ -92,6 +97,7 @@ cc_library(
     srcs = ["precedence.cpp"],
     hdrs = ["precedence.h"],
     deps = [
+        "//common:check",
         "//toolchain/lexer:token_kind",
         "@llvm-project//llvm:Support",
     ],
@@ -99,12 +105,11 @@ cc_library(
 
 cc_test(
     name = "precedence_test",
+    size = "small",
     srcs = ["precedence_test.cpp"],
     deps = [
         ":precedence",
         "//toolchain/lexer:token_kind",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
+        "@com_google_googletest//:gtest_main",
     ],
 )

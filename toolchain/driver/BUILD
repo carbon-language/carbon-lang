@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//bazel/testing:lit_test.bzl", "lit_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -22,20 +23,20 @@ cc_library(
 
 cc_test(
     name = "driver_test",
+    size = "small",
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
 cc_fuzz_test(
     name = "driver_fuzzer",
+    size = "small",
     srcs = ["driver_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
@@ -53,12 +54,12 @@ cc_binary(
     ],
 )
 
-# FIXME: No support for LLVM's lit-style command line & FileCheck tests.
-#
-#lit_test(
-#    name = "carbon_test.carbon",
-#    data = [
-#        ":carbon",
-#        "@llvm-project//llvm:FileCheck",
-#    ],
-#)
+lit_test(
+    name = "carbon_lit_test",
+    data = [
+        ":carbon",
+        "@llvm-project//llvm:FileCheck",
+        "@llvm-project//llvm:not",
+    ],
+    test_dir = "testdata",
+)

@@ -10,159 +10,44 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/interpreter/frame.h"
+#include "executable_semantics/interpreter/action.h"
+#include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/heap.h"
-#include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
-using Env = Dictionary<std::string, Address>;
+// Interprets the program defined by `ast`, allocating values on `arena` and
+// printing traces if `trace` is true.
+auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int;
 
-class Interpreter {
- public:
-  explicit Interpreter(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), globals_(arena), heap_(arena), trace_(trace) {}
+// Interprets `e` at compile-time, allocating values on `arena` and
+// printing traces if `trace` is true.
+auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
+    -> Nonnull<const Value*>;
 
-  // Interpret the whole program.
-  auto InterpProgram(llvm::ArrayRef<Nonnull<Declaration*>> fs,
-                     Nonnull<const Expression*> call_main) -> int;
+// Interprets `p` at compile-time, allocating values on `arena` and
+// printing traces if `trace` is true.
+auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
+    -> Nonnull<const Value*>;
 
-  // Interpret an expression at compile-time.
-  auto InterpExp(Env values, Nonnull<const Expression*> e)
-      -> Nonnull<const Value*>;
-
-  // Interpret a pattern at compile-time.
-  auto InterpPattern(Env values, Nonnull<const Pattern*> p)
-      -> Nonnull<const Value*>;
-
-  // Attempts to match `v` against the pattern `p`. If matching succeeds,
-  // returns the bindings of pattern variables to their matched values.
-  auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                    SourceLocation source_loc) -> std::optional<Env>;
-
-  // Support TypeChecker allocating values on the heap.
-  auto AllocateValue(Nonnull<const Value*> v) -> Address {
-    return heap_.AllocateValue(v);
-  }
-
-  void InitEnv(const Declaration& d, Env* env);
-  void PrintEnv(Env values, llvm::raw_ostream& out);
-
- private:
-  // State transition functions
-  //
-  // The `Step*` family of functions implement state transitions in the
-  // interpreter by executing a step of the Action at the top of the todo stack,
-  // and then returning a Transition that specifies how `state.stack` should be
-  // updated. `Transition` is a variant of several "transition types"
-  // representing the different kinds of state transition.
-
-  // Transition type which indicates that the current Action is now done.
-  struct Done {
-    // The value computed by the Action. Should always be nullopt for Statement
-    // Actions, and never null for any other kind of Action.
-    std::optional<Nonnull<const Value*>> result;
-  };
-
-  // Transition type which spawns a new Action on the todo stack above the
-  // current Action, and increments the current Action's position counter.
-  struct Spawn {
-    Nonnull<Action*> child;
-  };
-
-  // Transition type which spawns a new Action that replaces the current action
-  // on the todo stack.
-  struct Delegate {
-    Nonnull<Action*> delegate;
-  };
-
-  // Transition type which keeps the current Action at the top of the stack,
-  // and increments its position counter.
-  struct RunAgain {};
-
-  // Transition type which unwinds the `todo` and `scopes` stacks until it
-  // reaches a specified Action lower in the stack.
-  struct UnwindTo {
-    const Nonnull<Action*> new_top;
-  };
-
-  // Transition type which unwinds the entire current stack frame, and returns
-  // a specified value to the caller.
-  struct UnwindFunctionCall {
-    Nonnull<const Value*> return_val;
-  };
-
-  // Transition type which removes the current action from the top of the todo
-  // stack, then creates a new stack frame which calls the specified function
-  // with the specified arguments.
-  struct CallFunction {
-    Nonnull<const FunctionDeclaration*> function;
-    Nonnull<const Value*> args;
-    SourceLocation source_loc;
-  };
-
-  // Transition type which does nothing.
-  //
-  // TODO(geoffromer): This is a temporary placeholder during refactoring. All
-  // uses of this type should be replaced with meaningful transitions.
-  struct ManualTransition {};
-
-  using Transition =
-      std::variant<Done, Spawn, Delegate, RunAgain, UnwindTo,
-                   UnwindFunctionCall, CallFunction, ManualTransition>;
-
-  // Visitor which implements the behavior associated with each transition type.
-  class DoTransition;
-
-  void Step();
-
-  // State transitions for expressions.
-  auto StepExp() -> Transition;
-  // State transitions for lvalues.
-  auto StepLvalue() -> Transition;
-  // State transitions for patterns.
-  auto StepPattern() -> Transition;
-  // State transition for statements.
-  auto StepStmt() -> Transition;
-
-  void InitGlobals(llvm::ArrayRef<Nonnull<Declaration*>> fs);
-  auto CurrentEnv() -> Env;
-  auto GetFromEnv(SourceLocation source_loc, const std::string& name)
-      -> Address;
-
-  void DeallocateScope(Nonnull<Scope*> scope);
-  void DeallocateLocals(Nonnull<Frame*> frame);
-
-  auto CreateTuple(Nonnull<Action*> act, Nonnull<const Expression*> exp)
-      -> Nonnull<const Value*>;
-  auto CreateStruct(const std::vector<FieldInitializer>& fields,
-                    const std::vector<Nonnull<const Value*>>& values)
-      -> Nonnull<const Value*>;
-
-  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
-                SourceLocation source_loc) -> Nonnull<const Value*>;
-
-  void PatternAssignment(Nonnull<const Value*> pat, Nonnull<const Value*> val,
-                         SourceLocation source_loc);
-
-  void PrintState(llvm::raw_ostream& out);
-
-  Nonnull<Arena*> arena_;
-
-  // Globally-defined entities, such as functions, structs, or choices.
-  Env globals_;
-
-  Stack<Nonnull<Frame*>> stack_;
-  Heap heap_;
-  std::optional<Nonnull<const Value*>> program_value_;
-
-  bool trace_;
-};
+// Attempts to match `v` against the pattern `p`, returning whether matching
+// is successful. If it is, populates **bindings with the variables bound by
+// the match; `bindings` should only be nullopt in contexts where `p`
+// is not permitted to bind variables. **bindings may be modified even if the
+// match is unsuccessful, so it should typically be created for the
+// PatternMatch call and then merged into an existing scope on success.
+// TODO: consider moving this to a separate header.
+[[nodiscard]] auto PatternMatch(Nonnull<const Value*> p,
+                                Nonnull<const Value*> v,
+                                SourceLocation source_loc,
+                                std::optional<Nonnull<RuntimeScope*>> bindings)
+    -> bool;
 
 }  // namespace Carbon
 

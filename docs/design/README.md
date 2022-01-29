@@ -275,7 +275,7 @@ file, including `Int` and `Bool`. These will likely be defined in a special
 ### Expressions
 
 > References: [Lexical conventions](lexical_conventions) and
-> [operators](operators.md)
+> [expressions](expressions/)
 >
 > **TODO:** References need to be evolved.
 
@@ -301,23 +301,21 @@ Some common expressions in Carbon include:
 ### Functions
 
 > References: [Functions](functions.md)
->
-> **TODO:** References need to be evolved.
 
 Functions are the core unit of behavior. For example:
 
 ```carbon
-fn Sum(a: Int, b: Int) -> Int;
+fn Add(a: i64, b: i64) -> i64;
 ```
 
 Breaking this apart:
 
 -   `fn` is the keyword used to indicate a function.
--   Its name is `Sum`.
--   It accepts two `Int` parameters, `a` and `b`.
--   It returns an `Int` result.
+-   Its name is `Add`.
+-   It accepts two `i64` parameters, `a` and `b`.
+-   It returns an `i64` result.
 
-You would call this function like `Sum(1, 2)`.
+You would call this function like `Add(1, 2)`.
 
 ### Blocks and statements
 
@@ -354,8 +352,8 @@ work similarly to function parameters.
 For example:
 
 ```carbon
-fn Foo() {
-  var x: Int = 42;
+fn DoSomething() {
+  var x: i64 = 42;
 }
 ```
 
@@ -363,7 +361,7 @@ Breaking this apart:
 
 -   `var` is the keyword used to indicate a variable.
 -   Its name is `x`.
--   Its type is `Int`.
+-   Its type is `i64`.
 -   It is initialized with the value `42`.
 
 ### Lifetime and move semantics

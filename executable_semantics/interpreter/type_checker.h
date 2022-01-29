@@ -8,6 +8,7 @@
 #include <set>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
@@ -16,113 +17,61 @@
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, Nonnull<const Value*>>;
-
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), interpreter_(arena, trace), trace_(trace) {}
+      : arena_(arena), trace_(trace) {}
 
-  struct TypeCheckContext {
-    explicit TypeCheckContext(Nonnull<Arena*> arena)
-        : types(arena), values(arena) {}
-
-    // Symbol table mapping names of runtime entities to their type.
-    TypeEnv types;
-    // Symbol table mapping names of compile time entities to their value.
-    Env values;
-  };
-
-  void TypeCheck(Nonnull<Declaration*> d, const TypeEnv& types,
-                 const Env& values);
-
-  auto TopLevel(std::vector<Nonnull<Declaration*>>* fs) -> TypeCheckContext;
+  void TypeCheck(AST& ast);
 
  private:
-  // Context about the return type, which may be updated during type checking.
-  class ReturnTypeContext {
-   public:
-    // If orig_return_type is auto, deduced_return_type_ will be nullopt;
-    // otherwise, it's orig_return_type. is_auto_ is set accordingly.
-    ReturnTypeContext(Nonnull<const Value*> orig_return_type, bool is_omitted);
+  // Perform type argument deduction, matching the parameter type `param`
+  // against the argument type `arg`. Whenever there is an VariableType
+  // in the parameter type, it is deduced to be the corresponding type
+  // inside the argument type.
+  // The `deduced` parameter is an accumulator, that is, it holds the
+  // results so-far.
+  static void ArgumentDeduction(
+      SourceLocation source_loc,
+      std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& deduced,
+      Nonnull<const Value*> param, Nonnull<const Value*> arg);
 
-    auto is_auto() const -> bool { return is_auto_; }
-
-    auto deduced_return_type() const -> std::optional<Nonnull<const Value*>> {
-      return deduced_return_type_;
-    }
-    void set_deduced_return_type(Nonnull<const Value*> type) {
-      deduced_return_type_ = type;
-    }
-
-    auto is_omitted() const -> bool { return is_omitted_; }
-
-   private:
-    // Indicates an `auto` return type, as in `fn Foo() -> auto { return 0; }`.
-    const bool is_auto_;
-
-    // The actual return type. May be nullopt for an `auto` return type that has
-    // yet to be determined.
-    std::optional<Nonnull<const Value*>> deduced_return_type_;
-
-    // Indicates the return type was omitted and is implicitly the empty tuple,
-    // as in `fn Foo() {}`.
-    const bool is_omitted_;
-  };
-
-  struct TCResult {
-    explicit TCResult(TypeEnv types) : types(types) {}
-
-    TypeEnv types;
-  };
-
-  // TypeCheckExp performs semantic analysis on an expression.  It returns a new
-  // version of the expression, its type, and an updated environment which are
-  // bundled into a TCResult object.  The purpose of the updated environment is
-  // to bring pattern variables into scope, for example, in a match case.  The
-  // new version of the expression may include more information, for example,
-  // the type arguments deduced for the type parameters of a generic.
+  // Traverses the AST rooted at `e`, populating the static_type() of all nodes
+  // and ensuring they follow Carbon's typing rules.
   //
-  // e is the expression to be analyzed.
-  // types maps variable names to the type of their run-time value.
-  // values maps variable names to their compile-time values. It is not
+  // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  auto TypeCheckExp(Nonnull<Expression*> e, TypeEnv types, Env values)
-      -> TCResult;
+  void TypeCheckExp(Nonnull<Expression*> e);
 
-  // Equivalent to TypeCheckExp, but operates on Patterns instead of
-  // Expressions. `expected` is the type that this pattern is expected to have,
-  // if the surrounding context gives us that information. Otherwise, it is
-  // nullopt.
-  auto TypeCheckPattern(Nonnull<Pattern*> p, TypeEnv types, Env values,
-                        std::optional<Nonnull<const Value*>> expected)
-      -> TCResult;
-
-  // TypeCheckStmt performs semantic analysis on a statement.  It returns a new
-  // version of the statement and a new type environment.
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
-  // The ret_type parameter is used for analyzing return statements.  It is the
-  // declared return type of the enclosing function definition.  If the return
-  // type is "auto", then the return type is inferred from the first return
-  // statement.
-  auto TypeCheckStmt(Nonnull<Statement*> s, TypeEnv types, Env values,
-                     Nonnull<ReturnTypeContext*> return_type_context)
-      -> TCResult;
+  // `expected` is the type that this pattern is expected to have, if the
+  // surrounding context gives us that information. Otherwise, it is
+  // nullopt.
+  void TypeCheckPattern(Nonnull<Pattern*> p,
+                        std::optional<Nonnull<const Value*>> expected);
 
-  auto TypeCheckFunDef(FunctionDeclaration* f, TypeEnv types, Env values)
-      -> TCResult;
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
+  void TypeCheckDeclaration(Nonnull<Declaration*> d);
 
-  auto TypeCheckCase(Nonnull<const Value*> expected, Nonnull<Pattern*> pat,
-                     Nonnull<Statement*> body, TypeEnv types, Env values,
-                     Nonnull<ReturnTypeContext*> return_type_context)
-      -> Match::Clause;
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
+  //
+  // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
+  // where `f` is nearest enclosing FunctionDeclaration of `s`.
+  void TypeCheckStmt(Nonnull<Statement*> s);
 
-  auto TypeOfFunDef(TypeEnv types, Env values, FunctionDeclaration* fun_def)
-      -> Nonnull<const Value*>;
-  auto TypeOfClassDef(const ClassDefinition* sd, TypeEnv /*types*/, Env ct_top)
-      -> Nonnull<const Value*>;
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`,
+  // and may not traverse f->body() if `check_body` is false.
+  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                    bool check_body);
 
-  void TopLevel(Nonnull<Declaration*> d, TypeCheckContext* tops);
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
+  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
+  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
+
+  void TopLevel(Nonnull<Declaration*> d);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
@@ -134,11 +83,20 @@ class TypeChecker {
   void ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value);
 
-  auto Substitute(TypeEnv dict, Nonnull<const Value*> type)
-      -> Nonnull<const Value*>;
+  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
+                                 Nonnull<const Value*>>& dict,
+                  Nonnull<const Value*> type) -> Nonnull<const Value*>;
+
+  // Sets named_entity.constant_value() to `value`. Can be called multiple
+  // times on the same named_entity, so long as it is always called with
+  // the same value.
+  template <typename T>
+  void SetConstantValue(Nonnull<T*> named_entity, Nonnull<const Value*> value);
+
+  void PrintConstants(llvm::raw_ostream& out);
 
   Nonnull<Arena*> arena_;
-  Interpreter interpreter_;
+  std::set<NamedEntityView> constants_;
 
   bool trace_;
 };

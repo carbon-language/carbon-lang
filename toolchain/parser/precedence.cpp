@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include "common/check.h"
+
 namespace Carbon {
 
 namespace {
@@ -99,6 +101,7 @@ struct OperatorPriorityTable {
     bool changed = false;
     do {
       changed = false;
+      // NOLINTNEXTLINE(modernize-loop-convert)
       for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
         for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
           if (table[a][b] == OperatorPriority::LeftFirst) {
@@ -119,9 +122,8 @@ struct OperatorPriorityTable {
     for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
       for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
         if (table[a][b] == OperatorPriority::LeftFirst) {
-          if (table[b][a] == OperatorPriority::LeftFirst) {
-            throw "inconsistent lookup table entries";
-          }
+          CHECK(table[b][a] != OperatorPriority::LeftFirst)
+              << "inconsistent lookup table entries";
           table[b][a] = OperatorPriority::RightFirst;
         }
       }
@@ -163,16 +165,14 @@ struct OperatorPriorityTable {
   constexpr void ConsistencyCheck() {
     for (int8_t level = 0; level != NumPrecedenceLevels; ++level) {
       if (level != Highest) {
-        if (table[Highest][level] != OperatorPriority::LeftFirst ||
-            table[level][Highest] != OperatorPriority::RightFirst) {
-          throw "Highest is not highest priority";
-        }
+        CHECK(table[Highest][level] == OperatorPriority::LeftFirst &&
+              table[level][Highest] == OperatorPriority::RightFirst)
+            << "Highest is not highest priority";
       }
       if (level != Lowest) {
-        if (table[Lowest][level] != OperatorPriority::RightFirst ||
-            table[level][Lowest] != OperatorPriority::LeftFirst) {
-          throw "Lowest is not lowest priority";
-        }
+        CHECK(table[Lowest][level] == OperatorPriority::RightFirst &&
+              table[level][Lowest] == OperatorPriority::LeftFirst)
+            << "Lowest is not lowest priority";
       }
     }
   }
@@ -317,7 +317,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
     -> OperatorPriority {
   static constexpr OperatorPriorityTable Lookup;
-  return Lookup.table[left.level][right.level];
+  return Lookup.table[left.level_][right.level_];
 }
 
 }  // namespace Carbon

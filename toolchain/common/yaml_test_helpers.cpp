@@ -4,6 +4,7 @@
 
 #include "toolchain/common/yaml_test_helpers.h"
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/YAMLParser.h"
 
 namespace Carbon::Testing::Yaml {
@@ -71,7 +72,6 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
   // Variant visitor that prints the value in the form of code to recreate the
   // value.
   struct Printer {
-    std::ostream& out;
     auto operator()(NullValue) -> void { out << "Yaml::NullValue()"; }
     auto operator()(AliasValue) -> void { out << "Yaml::AliasValue()"; }
     auto operator()(ErrorValue) -> void { out << "Yaml::ErrorValue()"; }
@@ -102,6 +102,8 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
       }
       out << "}";
     }
+
+    std::ostream& out;
   };
   std::visit(Printer{os}, v);
   return os;
