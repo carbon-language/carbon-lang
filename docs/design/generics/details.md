@@ -4359,15 +4359,18 @@ Rust has found them valuable.
 
 #### Default implementation of required interface
 
-Carbon does **not** support providing a default implementation of a required
-interface.
+Carbon supports providing a default implementation of a
+[required interface](#interface-requiring-other-interfaces) in an interface, as
+long as the required interface is defined in the same library.
 
 ```
 interface TotalOrder {
   fn TotalLess[me: Self](right: Self) -> Bool;
-  // ❌ Illegal: May not provide definition
-  //             for required interface.
-  impl PartialOrder {
+  // `TotalOrder` requires `PartialOrder` to be implemented
+  // for `Self`, but provides a default definition.
+  // `TotalOrder` and `PartialOrder` must be defined in the
+  // same library.
+  impl as PartialOrder {
     fn PartialLess[me: Self](right: Self) -> Bool {
       return me.TotalLess(right);
     }
@@ -4375,13 +4378,74 @@ interface TotalOrder {
 }
 ```
 
-The workaround for this restriction is to use a [blanket impl](#blanket-impls)
-instead:
+This means that any implementation of `TotalOrder` for a type `Song` behaves as
+if it is immediately followed by an implementation of `PartialOrder` for `Song`
+using the default definition, unless there has already been an implementation of
+`PartialOrder` for `Song` declared earlier.
+
+```
+external impl Song as TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool { ... }
+}
+// as if followed by:
+// external impl Song as PartialOrder {
+//   fn PartialLess[me: Self](right: Self) -> Bool {
+//     return me.TotalLess(right);
+//   }
+// }
+```
+
+The resulting impl definition must be legal where it is instantiated, for
+example it must respect the [orphan rule](#orphan-rule), or the triggering impl
+is invalid.
+
+The resulting impl will be [external](#external-impl) unless both:
+
+-   the interface requirement uses `extends` instead of `impl as`, and
+-   the type implements the type type `Song` implements `TotalOrder` internally.
+
+```
+interface Hashable {
+  fn Hash[me: Self]() -> u64;
+  extends Equatable {
+    fn Equals[me: Self](rhs: Self) -> bool {
+      return me.Hash() == rhs.Hash();
+    }
+  }
+}
+
+class Song {
+  impl as Hashable {
+    fn Hash[me: Self]() -> u64 { ... }
+  }
+  // As if followed by *internal* impl of Equatable:
+  // impl as Equatable {
+  //   fn Equals[me: Self](rhs: Self) -> bool {
+  //     return me.Hash() == rhs.Hash();
+  //   }
+  // }
+}
+```
+
+Explicitly implementing `PartialOrder` for `Song` after it has been given a
+default definition is an error.
+
+```
+external impl Song as TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool { ... }
+}
+// ❌ Illegal: `PartialOrder` already implemented for `Song`
+//             using default definition from `Song as TotalOrder`.
+external impl Song as PartialOrder { ... }
+```
+
+You can achieve a similar effect as a default impl by using a
+[blanket impl](#blanket-impls) instead:
 
 ```
 interface TotalOrder {
   fn TotalLess[me: Self](right: Self) -> Bool;
-  impl PartialOrder;
+  impl as PartialOrder;
 }
 
 external impl [T:! TotalOrder] T as PartialOrder {
@@ -4391,8 +4455,28 @@ external impl [T:! TotalOrder] T as PartialOrder {
 }
 ```
 
-Note that by the [orphan rule](#orphan-rule), this blanket impl must be defined
-in the same library as `PartialOrder`.
+The difference between the two approaches is the prioritization of the resulting
+implementations. The default impl approach results in a type structure of
+`impl T as PartialOrder`, which has a higher priority than the blanket impl's
+type structure of `impl ? as PartialOrder`.
+
+FIXME: prioritization in `match_first` blocks
+
+If an interface provides multiple default impl definitions, or a default impl
+definition triggers another default impl to be instantiated, the default impls
+are instantiated in depth-first order following the order the default impls were
+declared in the triggering interface. Carbon has
+[a recursion limit to prevent this from defining an infinite collection of implementations](#termination-rule),
+as would happen in this case:
+
+```
+interface Infinite(T:! Type) {
+  impl as Infinite(T*) { }
+}
+```
+
+Implementations of required interfaces may not be marked `final`. Use `final`
+blanket impls instead.
 
 ### `final` members
 
