@@ -61,8 +61,6 @@ typical tool setup flow is:
         https://github.com/carbon-language/carbon-lang.
     -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
-    -   `git config core.fsmonitor rs-git-fsmonitor` to set up
-        [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 4.  Validate your installation by invoking `bazel test //...:all' from the
     project root. All tests should pass.
@@ -328,6 +326,10 @@ brew install github/gh/gh
 repositories. See the page for installation instructions.
 
 ### `rs-git-fsmonitor` and Watchman
+
+> **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
+> `pre-commit` deleting files. If you see files being deleted, disable
+> `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
 
 [rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
 monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
