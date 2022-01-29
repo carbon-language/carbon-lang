@@ -285,8 +285,18 @@ static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
       break;
     }
     case MemberKind::MethodMember: {
-      // TODO
-      FATAL() << "Unimplemented";
+      auto& method = cast<MethodMember>(member);
+      StaticScope method_scope;
+      method_scope.AddParent(&enclosing_scope);
+      ResolveNames(method.me_pattern(), method_scope);
+      ResolveNames(method.param_pattern(), method_scope);
+      if (method.return_term().type_expression().has_value()) {
+        ResolveNames(**method.return_term().type_expression(),
+                     method_scope);
+      }
+      if (method.body().has_value()) {
+        ResolveNames(**method.body(), method_scope);
+      }
       break;
     }
   }

@@ -75,6 +75,8 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::ClassFunctionValue:
+    case Value::Kind::MethodValue:
+    case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
@@ -315,6 +317,8 @@ void TypeChecker::ArgumentDeduction(
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::ClassFunctionValue:
+    case Value::Kind::MethodValue:
+    case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -381,6 +385,8 @@ auto TypeChecker::Substitute(
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::ClassFunctionValue:
+    case Value::Kind::MethodValue:
+    case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -1059,6 +1065,7 @@ void TypeChecker::TypeCheckClassDeclaration(
   std::vector<NamedValue> class_function_types;
   std::vector<NamedValue> class_functions;
   std::vector<NamedValue> method_types;
+  std::vector<NamedValue> methods;
 
   // The class itself is initially incomplete, but still can be used
   // in the type annotations on fields and methods.  Thus, we
@@ -1072,9 +1079,9 @@ void TypeChecker::TypeCheckClassDeclaration(
   // would be painful to go a update all those pointers.
 
   const auto& class_type =
-    arena_->New<NominalClassType>(class_decl->name(),
-				  field_types, class_function_types, class_functions,
-				  method_types);
+    arena_->New<NominalClassType>(class_decl->name(), field_types,
+				  class_function_types, class_functions,
+				  method_types, methods);
   SetConstantValue(class_decl, class_type);
   SetStaticType(class_decl, arena_->New<TypeOfClassType>(class_type));
 
@@ -1122,14 +1129,31 @@ void TypeChecker::TypeCheckClassDeclaration(
 	break;
       }
       case MemberKind::MethodMember: {
-	FATAL() << "Unimplemented";
+	auto& f = cast<MethodMember>(*m);
+	TypeCheckPattern(&f.me_pattern(), std::nullopt);
+	TypeCheckPattern(&f.param_pattern(), std::nullopt);
+	if (std::optional<Nonnull<Expression*>> return_expression =
+		f.return_term().type_expression();
+	    return_expression.has_value()) {
+	  TypeCheckExp(*return_expression);
+	  SetStaticType(&f.return_term(),
+			InterpExp(*return_expression, arena_, trace_));
+	} else {
+	  FATAL_COMPILATION_ERROR(f.return_term().source_loc())
+	    << "Class function, return type missing.";
+	}
+	std::vector<Nonnull<const GenericBinding*>> deduced;
+	const auto& f_type =
+	  arena_->New<FunctionType>(deduced,
+				    &f.param_pattern().static_type(),
+				    &f.return_term().static_type());
+        method_types.push_back(
+                {.name = f.name(), .value = f_type});
+        methods.push_back(
+                {.name = f.name(), .value = arena_->New<MethodValue>(&f)});
 	break;
       }
     }
-  }
-  if (trace_) {
-    llvm::outs() << "finished checking member declarations of class "
-		 << class_decl->name() << "\n";
   }
   
   // The class is now complete. 
@@ -1137,6 +1161,7 @@ void TypeChecker::TypeCheckClassDeclaration(
   class_type->set_class_function_types(class_function_types);
   class_type->set_class_functions(class_functions);
   class_type->set_method_types(method_types);
+  class_type->set_methods(methods);
 
   // Second pass: type check the bodies of the class functions and methods.
 
@@ -1156,7 +1181,13 @@ void TypeChecker::TypeCheckClassDeclaration(
 	break;
       }
       case MemberKind::MethodMember: {
-	FATAL() << "Unimplemented";
+	auto& f = cast<MethodMember>(*m);
+	if (f.body().has_value()) {
+	  TypeCheckStmt(* f.body());
+	  if (f.return_term().is_omitted()) {
+	    ExpectReturnOnAllPaths(f.body(), f.source_loc());
+	  }
+	}
 	break;
       }
     }

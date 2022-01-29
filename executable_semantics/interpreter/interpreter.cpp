@@ -340,6 +340,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::ClassFunctionValue:
+    case Value::Kind::MethodValue:
+    case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
@@ -553,6 +556,41 @@ void Interpreter::StepExp() {
                 std::make_unique<StatementAction>(*function.body()),
                 std::move(function_scope));
           }
+          case Value::Kind::ClassFunctionValue: {
+            const ClassFunctionMember& function =
+                cast<ClassFunctionValue>(*act.results()[0]).declaration();
+	    // Same logic as for the above case of FunctionValue.
+            Nonnull<const Value*> converted_args = Convert(
+                act.results()[1], &function.param_pattern().static_type());
+            RuntimeScope function_scope(&heap_);
+            CHECK(PatternMatch(&function.param_pattern().value(),
+                               converted_args, exp.source_loc(),
+                               &function_scope));
+            CHECK(function.body().has_value())
+                << "Calling a function that's missing a body";
+            return todo_.Spawn(
+                std::make_unique<StatementAction>(*function.body()),
+                std::move(function_scope));
+          }
+          case Value::Kind::BoundMethodValue: {
+	    const BoundMethodValue& m = cast<BoundMethodValue>(*act.results()[0]);
+            const MethodMember& method = m.declaration();
+            Nonnull<const Value*> converted_args = Convert(
+                act.results()[1], &method.param_pattern().static_type());
+            RuntimeScope method_scope(&heap_);
+            CHECK(PatternMatch(&method.me_pattern().value(),
+                               m.receiver(), exp.source_loc(),
+                               &method_scope));
+            CHECK(PatternMatch(&method.param_pattern().value(),
+                               converted_args, exp.source_loc(),
+                               &method_scope));
+            CHECK(method.body().has_value())
+                << "Calling a method that's missing a body";
+            return todo_.Spawn(
+                std::make_unique<StatementAction>(*method.body()),
+                std::move(method_scope));
+	    
+	  }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
                 << "in call, expected a function, not " << *act.results()[0];
@@ -863,7 +901,7 @@ void Interpreter::StepStmt() {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        const FunctionDeclaration& function = cast<Return>(stmt).function();
+        ReturnTargetView function = cast<Return>(stmt).function();
         return todo_.UnwindPast(
             *function.body(),
             Convert(act.results()[0], &function.return_term().static_type()));
