@@ -28,5 +28,8 @@ config.substitutions.append(
 )
 config.substitutions.append(("%{not}", fullpath("llvm-project/llvm/not")))
 config.substitutions.append(
-    ("%{FileCheck}", fullpath("llvm-project/llvm/FileCheck"))
+    (
+        "%{FileCheck}",
+        fullpath("llvm-project/llvm/FileCheck --dump-input-filter=all"),
+    )
 )
