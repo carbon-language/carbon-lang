@@ -94,8 +94,8 @@ interface CommonTypeWith(U:! Type) {
 }
 ```
 
-The implementation `A as CommonTypeWith(B)` specifies the type
-that `A` would like to result from unifying `A` and `B` as its `Result`.
+The implementation `A as CommonTypeWith(B)` specifies the type that `A` would
+like to result from unifying `A` and `B` as its `Result`.
 
 _Note:_ It is required that both types implicitly convert to the common type.
 Some blanket `impl`s for `CommonTypeWith` are provided as part of the prelude.
@@ -147,8 +147,10 @@ constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
 
 When computing the common type of `T` and `U`, if only one of the types provides
 a `CommonTypeWith` implementation, that determines the common type. If both
-types provide a `CommonTypeWith` implementation and their `Result` types are the same, that determines the common type. Otherwise, if both types provide implementations but their `Result` types differ, there is no common type, and the `CommonType` constraint is not met.
-For example, given:
+types provide a `CommonTypeWith` implementation and their `Result` types are the
+same, that determines the common type. Otherwise, if both types provide
+implementations but their `Result` types differ, there is no common type, and
+the `CommonType` constraint is not met. For example, given:
 
 ```
 // Implementation #1
@@ -233,7 +235,7 @@ var also_my_string: auto = if cond then my_string else your_string;
 -   Allow
     [`1 + if cond then expr1 else expr2`](/proposals/p0911.md#never-require-enclosing-parentheses)
 -   [Only require one `impl` to specify the common type if implicit conversions in both directions are possible](/proposals/p0911.md#implicit-conversions-in-both-directions)
--   [Introduce special rules for lvalue conditionals](/proposals/p0911.md##support-lvalue-conditionals)
+-   [Introduce special rules for lvalue conditionals](/proposals/p0911.md#support-lvalue-conditionals)
 
 ## References
 
