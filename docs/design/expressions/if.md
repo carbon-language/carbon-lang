@@ -166,10 +166,6 @@ impl [T:! Type] MyY as CommonTypeWith(T) {
 will select #2, but the constraints on `MyX as CommonType(MyY)` will not be met
 because result types differ.
 
-_Note:_ This `impl` is ambiguous with the other `impl`s described below.
-Additional `impl`s will be provided to resolve the ambiguity in favor of the
-other option.
-
 ### Same type
 
 If `T` is the same type as `U`, the result is that type:
