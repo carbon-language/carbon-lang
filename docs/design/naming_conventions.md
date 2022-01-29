@@ -10,56 +10,95 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
+-   [Details](#details)
+    -   [Constants](#constants)
+    -   [Carbon-provided item naming](#carbon-provided-item-naming)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
-## TODO
-
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
-
 ## Overview
 
-We would like to have widespread and consistent naming conventions across Carbon
-code to the extent possible. This is for the same core reason as naming
-conventions are provided in most major style guides. Even migrating existing C++
-code at-scale presents a significant opportunity to converge even more broadly
-and we're interested in pursuing this if viable.
+Our naming conventions are:
 
-Our current proposed naming convention, which we at least are attempting to
-follow within Carbon documentation in order to keep code samples as consistent
-as possible, is:
+-   For idiomatic Carbon code:
+    -   `UpperCamelCase` will be used when the named entity cannot have a
+        dynamically varying value. For example, functions, namespaces, or
+        compile-time constant values.
+    -   `lower_snake_case` will be used when the named entity's value won't be
+        known until runtime, such as for variables.
+-   For Carbon-provided features:
+    -   Keywords and type literals will use `lower_snake_case`.
+    -   Other code will use the guidelines for idiomatic Carbon code.
 
--   `UpperCamelCase` for names of compile-time resolved constants, such that
-    they can participate in the type system and type checking of the program.
-    Comple-time constants fall into two categories:
-    -   _Template_ constants that can be used in type checking, including
-        literals.
-    -   _Generic_ constants whose value is not used in type checking, but will
-        be used as part of code generation.
--   `lower_snake_case` for names of run-time resolved values.
+In other words:
 
-As an example, an integer that is a compile-time constant sufficient to use in
-the construction a compile-time array size might be named `N`, where an integer
-that is not available as part of the type system would be named `n`, even if it
-happened to be immutable or only take on a single value. Functions and most
-types will be in `UpperCamelCase`, but a type where only run-time type
-information queries are available would end up as `lower_snake_case`.
+| Item                      | Convention         | Explanation                                                                                |
+| ------------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| Packages                  | `UpperCamelCase`   | Used for compile-time lookup.                                                              |
+| Types                     | `UpperCamelCase`   | Resolved at compile-time.                                                                  |
+| Functions                 | `UpperCamelCase`   | Resolved at compile-time.                                                                  |
+| Methods                   | `UpperCamelCase`   | Methods, including virtual methods, are equivalent to functions.                           |
+| Generic parameters        | `UpperCamelCase`   | May vary based on inputs, but are ultimately resolved at compile-time.                     |
+| Compile-time constants    | `UpperCamelCase`   | Resolved at compile-time. See [constants](#constants) for more remarks.                    |
+| Variables                 | `lower_snake_case` | May be reassigned and thus require runtime information.                                    |
+| Member variables          | `lower_snake_case` | Behave like variables.                                                                     |
+| Keywords                  | `lower_snake_case` | Special, and developers can be expected to be comfortable with this casing cross-language. |
+| Type literals             | `lower_snake_case` | Equivalent to keywords.                                                                    |
+| Boolean type and literals | `lower_snake_case` | Equivalent to keywords.                                                                    |
+| Other Carbon types        | `UpperCamelCase`   | Behave like normal types.                                                                  |
+| `Self` and `Base`         | `UpperCamelCase`   | These are similar to type members on a class.                                              |
 
-We only use `UpperCamelCase` and `lower_snake_case` (skipping other variations
-on both snake-case and camel-case naming conventions) because these two have the
-most significant visual separation. For example, the value of adding
-`lowerCamelCase` for another set seems low given the small visual difference
-provided; in particular, one-word identifiers would have no difference.
+We only use `UpperCamelCase` and `lower_snake_case` in naming conventions in
+order to minimize the variation in rules.
 
-The rationale for the specific division between the two isn't a huge or
-fundamental concept, but it stems from a convention in Ruby where constants are
-named with a leading capital letter. The idea is that it mirrors the English
-language capitalization of proper nouns: the name of a constant refers to a
-_specific_ value that is precisely resolved at compile time, not just to _some_
-value. For example, there are many different _shires_ in Britain, but Frodo
-comes from the _Shire_ -- a specific fictional region.
+## Details
+
+### Constants
+
+Consider the following code:
+
+```carbon
+package Example;
+
+let CompileTimeConstant: i32 = 7;
+
+fn RuntimeFunction(runtime_constant: i32);
+```
+
+In this example, `CompileTimeConstant` has a singular value (`7`) which is known
+at compile-time. As such, it uses `UpperCamelCase`.
+
+On the other hand, `runtime_constant` may be constant within the function body,
+but it is assigned at runtime when `RuntimeFunction` is called. Its value is
+only known in a given runtime invocation of `RuntimeFunction`. As such, it uses
+`lower_snake_case`.
+
+### Carbon-provided item naming
+
+Carbon-provided items are split into a few categories:
+
+-   Keywords; for example, `for`, `fn`, and `var`.
+-   Type literals; for example, `i<digits>`, `u<digits>`, and `f<digits>`.
+-   Boolean type and literals; for example, `bool`, `true`, and `false`.
+    -   The separate categorization of booleans should not be taken as a rule
+        that only booleans would use lowercase; it's just the only example right
+        now.
+-   `Self` and `Base`.
+-   Other Carbon types; for example, `Int`, `UInt`, and `String`.
+
+Note that while other Carbon types currently use `UpperCamelCase`, that should
+not be inferred to mean that future Carbon types will do the same. The leads
+will make decisions on future naming.
+
+## Alternatives considered
+
+-   [Other naming conventions](/proposals/p0861.md#other-naming-conventions)
+-   [Other conventions for naming Carbon types](/proposals/p0861.md#other-conventions-for-naming-carbon-types)
+
+## References
+
+-   Proposal
+    [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)

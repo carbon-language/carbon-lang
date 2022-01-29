@@ -209,30 +209,18 @@ has not been selected yet.
 #### Naming conventions
 
 > References: [Naming conventions](naming_conventions.md)
->
-> **TODO:** References need to be evolved.
 
-Our current proposed naming convention are:
+Our naming conventions are:
 
--   `UpperCamelCase` for names of compile-time resolved constants, whether they
-    participate in the type system or not.
--   `lower_snake_case` for keywords and names of run-time resolved values.
-
-As a matter of style and consistency, we will follow these conventions where
-possible and encourage convergence.
-
-For example:
-
--   An integer that is a compile-time constant sufficient to use in the
-    construction a compile-time array size, such as a template function
-    parameter, might be named `N`.
--   A generic function parameter's value can't be used during type-checking, but
-    might still be named `N`, since it will be a constant available to the
-    compiler at code generation time.
--   Functions and most types will be in `UpperCamelCase`.
--   A type where only run-time type information queries are available would end
-    up as `lower_snake_case`.
--   A keyword like `import` uses `lower_snake_case`.
+-   For idiomatic Carbon code:
+    -   `UpperCamelCase` will be used when the named entity cannot have a
+        dynamically varying value. For example, functions, namespaces, or
+        compile-time constant values.
+    -   `lower_snake_case` will be used when the named entity's value won't be
+        known until runtime, such as for variables.
+-   For Carbon-provided features:
+    -   Keywords and type literals will use `lower_snake_case`.
+    -   Other code will use the conventions for idiomatic Carbon code.
 
 #### Aliases
 
