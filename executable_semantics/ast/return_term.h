@@ -97,18 +97,6 @@ class ReturnTerm {
   SourceLocation source_loc_;
 };
 
-class Block;
-  
-#if 0
-class ReturnTarget {
- public:
-  virtual auto return_term() const -> const ReturnTerm&;
-  virtual auto return_term() -> ReturnTerm&;
-  virtual auto body() const -> std::optional<Nonnull<const Block*>>;
-  virtual auto body() -> std::optional<Nonnull<Block*>>;
-};
-#endif
-  
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_

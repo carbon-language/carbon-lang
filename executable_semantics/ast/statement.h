@@ -179,25 +179,13 @@ class Return : public Statement {
   // Note that this function does not represent an edge in the tree
   // structure of the AST: the return value is not a child of this node,
   // but an ancestor.
-#if 0
-  auto function() const -> const FunctionDeclaration& { return **function_; }
-  auto function() -> FunctionDeclaration& { return **function_; }
-#else
   auto function() const -> ReturnTargetView { return *function_; }
   auto function() -> ReturnTargetView { return *function_; }
-#endif
 
   // Can only be called once, by ResolveControlFlow.
-#if 0
-  void set_function(Nonnull<FunctionDeclaration*> function) {
-    CHECK(!function_.has_value());
-    function_ = function;
-  }
-#else
   void set_function(ReturnTargetView function) {
     function_ = function;
   }
-#endif
 
  private:
   Nonnull<Expression*> expression_;

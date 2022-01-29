@@ -16,6 +16,8 @@
 
 namespace Carbon {
 
+class Block;
+  
 template <typename T, typename = void>
 static constexpr bool ImplementsReturnTarget = false;
 
