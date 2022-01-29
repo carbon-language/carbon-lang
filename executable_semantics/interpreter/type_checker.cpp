@@ -1263,10 +1263,6 @@ void TypeChecker::TopLevel(Nonnull<Declaration*> d) {
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
       TypeCheckClassDeclaration(&class_decl);
-      // Too late? -Jeremy
-      // Move the following to inside TypeCheckClassDeclaration
-      //const auto& type = cast<TypeOfClassType>(class_decl.static_type());
-      //SetConstantValue(&class_decl, &type.class_type());
       break;
     }
 

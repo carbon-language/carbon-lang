@@ -190,7 +190,6 @@ class Return : public Statement {
  private:
   Nonnull<Expression*> expression_;
   bool is_omitted_expression_;
-  //std::optional<Nonnull<FunctionDeclaration*>> function_;
   std::optional<ReturnTargetView> function_;
 };
 
