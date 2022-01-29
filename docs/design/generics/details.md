@@ -3951,7 +3951,7 @@ when they contain a mixture of type structures? There are three options:
     contained impls, which are then selected by their type structure.
 -   The compiler first picks the impl with the type pattern most favored for the
     query, and then picks the definition of the highest priority matching impl
-    in the same prioritization block block.
+    in the same prioritization block.
 -   All the impls in a prioritization block are required to have the same type
     structure, at a cost in expressivity.
 
