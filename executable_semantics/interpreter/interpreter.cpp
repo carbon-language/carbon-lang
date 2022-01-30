@@ -559,7 +559,7 @@ void Interpreter::StepExp() {
           case Value::Kind::ClassFunctionValue: {
             const ClassFunctionMember& function =
                 cast<ClassFunctionValue>(*act.results()[0]).declaration();
-	    // Same logic as for the above case of FunctionValue.
+            // Same logic as for the above case of FunctionValue.
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
@@ -573,24 +573,22 @@ void Interpreter::StepExp() {
                 std::move(function_scope));
           }
           case Value::Kind::BoundMethodValue: {
-	    const BoundMethodValue& m = cast<BoundMethodValue>(*act.results()[0]);
+            const BoundMethodValue& m =
+                cast<BoundMethodValue>(*act.results()[0]);
             const MethodMember& method = m.declaration();
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
             RuntimeScope method_scope(&heap_);
-            CHECK(PatternMatch(&method.me_pattern().value(),
-                               m.receiver(), exp.source_loc(),
-                               &method_scope));
-            CHECK(PatternMatch(&method.param_pattern().value(),
-                               converted_args, exp.source_loc(),
-                               &method_scope));
+            CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                               exp.source_loc(), &method_scope));
+            CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
+                               exp.source_loc(), &method_scope));
             CHECK(method.body().has_value())
                 << "Calling a method that's missing a body";
             return todo_.Spawn(
                 std::make_unique<StatementAction>(*method.body()),
                 std::move(method_scope));
-	    
-	  }
+          }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
                 << "in call, expected a function, not " << *act.results()[0];

@@ -25,11 +25,11 @@ void Member::Print(llvm::raw_ostream& out) const {
       out << "fn " << function.name() << " ";
       out << function.param_pattern() << function.return_term();
       if (function.body()) {
-	out << " {\n";
-	(*function.body())->Print(out);
-	out << "\n}\n";
+        out << " {\n";
+        (*function.body())->Print(out);
+        out << "\n}\n";
       } else {
-	out << ";\n";
+        out << ";\n";
       }
       break;
     }
@@ -39,11 +39,11 @@ void Member::Print(llvm::raw_ostream& out) const {
       out << method.me_pattern() << ".";
       out << method.param_pattern() << method.return_term();
       if (method.body()) {
-	out << " {\n";
-	(*method.body())->Print(out);
-	out << "\n}\n";
+        out << " {\n";
+        (*method.body())->Print(out);
+        out << "\n}\n";
       } else {
-	out << ";\n";
+        out << ";\n";
       }
       break;
     }

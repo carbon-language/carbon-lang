@@ -5,8 +5,8 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
 #define EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
 
-#include <utility>
 #include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/ostream.h"

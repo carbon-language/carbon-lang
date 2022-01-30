@@ -41,22 +41,24 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassValue: {
       // TODO: deal with const mismatch here. -Jeremy
-      NominalClassValue& object = (NominalClassValue&)cast<NominalClassValue>(*v);
+      NominalClassValue& object =
+          (NominalClassValue&)cast<NominalClassValue>(*v);
       // Look for a field
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(object.inits()).FindField(f);
       if (field == std::nullopt) {
-	// Look for a method in the object's class
-	const NominalClassType& class_type = cast<NominalClassType>(object.type());
-	std::optional<Nonnull<const Value*>> method = class_type.FindMethod(f);
-	if (method == std::nullopt) {
-	  FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v
-					  << " or its class " << class_type;
-	} else {
-	  // Found a method. Turn it into a bound method.
-	  const MethodValue& m = cast<MethodValue>(**method);
-	  return arena->New<BoundMethodValue>(&m.declaration(), &object);
-	}
+        // Look for a method in the object's class
+        const NominalClassType& class_type =
+            cast<NominalClassType>(object.type());
+        std::optional<Nonnull<const Value*>> method = class_type.FindMethod(f);
+        if (method == std::nullopt) {
+          FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v
+                                          << " or its class " << class_type;
+        } else {
+          // Found a method. Turn it into a bound method.
+          const MethodValue& m = cast<MethodValue>(**method);
+          return arena->New<BoundMethodValue>(&m.declaration(), &object);
+        }
       }
       return *field;
     }
@@ -72,7 +74,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const Value*>> fun = class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        FATAL_RUNTIME_ERROR(source_loc) << "class function " << f << " not in " << *v;
+        FATAL_RUNTIME_ERROR(source_loc)
+            << "class function " << f << " not in " << *v;
       }
       return *fun;
     }
@@ -201,13 +204,15 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::ClassFunctionValue:
-      out << "classfun<" << cast<ClassFunctionValue>(*this).declaration().name() << ">";
+      out << "classfun<" << cast<ClassFunctionValue>(*this).declaration().name()
+          << ">";
       break;
     case Value::Kind::MethodValue:
       out << "method<" << cast<MethodValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::BoundMethodValue:
-      out << "bound_method<" << cast<BoundMethodValue>(*this).declaration().name() << ">";
+      out << "bound_method<"
+          << cast<BoundMethodValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::LValue:
       out << "ptr<" << cast<LValue>(*this).address() << ">";
@@ -427,22 +432,18 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::MethodValue: {
       const MethodValue& m1 = cast<MethodValue>(*v1);
       const MethodValue& m2 = cast<MethodValue>(*v2);
-      std::optional<Nonnull<const Statement*>> body1 =
-          m1.declaration().body();
-      std::optional<Nonnull<const Statement*>> body2 =
-          m2.declaration().body();
+      std::optional<Nonnull<const Statement*>> body1 = m1.declaration().body();
+      std::optional<Nonnull<const Statement*>> body2 = m2.declaration().body();
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
     case Value::Kind::BoundMethodValue: {
       const BoundMethodValue& m1 = cast<BoundMethodValue>(*v1);
       const BoundMethodValue& m2 = cast<BoundMethodValue>(*v2);
-      std::optional<Nonnull<const Statement*>> body1 =
-          m1.declaration().body();
-      std::optional<Nonnull<const Statement*>> body2 =
-          m2.declaration().body();
-      return ValueEqual(m1.receiver(), m2.receiver())
-             && body1.has_value() == body2.has_value() &&
+      std::optional<Nonnull<const Statement*>> body1 = m1.declaration().body();
+      std::optional<Nonnull<const Statement*>> body2 = m2.declaration().body();
+      return ValueEqual(m1.receiver(), m2.receiver()) &&
+             body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
     case Value::Kind::TupleValue: {
@@ -531,5 +532,5 @@ auto NominalClassType::FindMethod(const std::string& name) const
   }
   return std::nullopt;
 }
-  
+
 }  // namespace Carbon

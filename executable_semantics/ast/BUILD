@@ -146,8 +146,8 @@ cc_library(
     deps = [
         ":expression",
         ":pattern",
-        ":return_term",
         ":return_target",
+        ":return_term",
         ":source_location",
         ":statement",
         "//common:ostream",
@@ -230,10 +230,10 @@ cc_library(
     hdrs = ["statement.h"],
     deps = [
         ":ast_node",
-        ":return_term",
-        ":return_target",
         ":expression",
         ":pattern",
+        ":return_target",
+        ":return_term",
         ":source_location",
         ":static_scope",
         ":value_category",

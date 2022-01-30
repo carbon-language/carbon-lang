@@ -291,8 +291,7 @@ static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
       ResolveNames(method.me_pattern(), method_scope);
       ResolveNames(method.param_pattern(), method_scope);
       if (method.return_term().type_expression().has_value()) {
-        ResolveNames(**method.return_term().type_expression(),
-                     method_scope);
+        ResolveNames(**method.return_term().type_expression(), method_scope);
       }
       if (method.body().has_value()) {
         ResolveNames(**method.body(), method_scope);

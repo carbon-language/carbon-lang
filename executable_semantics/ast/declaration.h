@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"

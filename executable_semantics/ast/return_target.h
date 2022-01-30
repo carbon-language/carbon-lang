@@ -17,7 +17,7 @@
 namespace Carbon {
 
 class Block;
-  
+
 template <typename T, typename = void>
 static constexpr bool ImplementsReturnTarget = false;
 
@@ -29,7 +29,6 @@ static constexpr bool
 // NodeType implements the ReturnTarget interface.
 class ReturnTargetView {
  public:
-  
   template <typename NodeType,
             typename = std::enable_if_t<ImplementsReturnTarget<NodeType>>>
   ReturnTargetView(Nonnull<const NodeType*> node)
@@ -45,7 +44,7 @@ class ReturnTargetView {
         }),
         body_([](const AstNode& base) -> std::optional<Nonnull<const Block*>> {
           return llvm::cast<NodeType>(base).body();
-        }) { }
+        }) {}
 
   ReturnTargetView(const ReturnTargetView&) = default;
   ReturnTargetView(ReturnTargetView&&) = default;
@@ -57,23 +56,27 @@ class ReturnTargetView {
 
   // Returns node->return_term()
   auto return_term() const -> const ReturnTerm& { return return_term_(*base_); }
-  auto return_term() -> ReturnTerm& { return return_term_mut_(*(AstNode*)base_); }
+  auto return_term() -> ReturnTerm& {
+    return return_term_mut_(*(AstNode*)base_);
+  }
 
   // Returns node->body()
-  auto body() const -> std::optional<Nonnull<const Block*>> { return body_(*base_); }
+  auto body() const -> std::optional<Nonnull<const Block*>> {
+    return body_(*base_);
+  }
 
-  friend auto operator==(const ReturnTargetView& lhs, const ReturnTargetView& rhs)
-      -> bool {
+  friend auto operator==(const ReturnTargetView& lhs,
+                         const ReturnTargetView& rhs) -> bool {
     return lhs.base_ == rhs.base_;
   }
 
-  friend auto operator!=(const ReturnTargetView& lhs, const ReturnTargetView& rhs)
-      -> bool {
+  friend auto operator!=(const ReturnTargetView& lhs,
+                         const ReturnTargetView& rhs) -> bool {
     return lhs.base_ != rhs.base_;
   }
 
-  friend auto operator<(const ReturnTargetView& lhs, const ReturnTargetView& rhs)
-      -> bool {
+  friend auto operator<(const ReturnTargetView& lhs,
+                        const ReturnTargetView& rhs) -> bool {
     return std::less<>()(lhs.base_, rhs.base_);
   }
 
@@ -84,6 +87,6 @@ class ReturnTargetView {
   std::function<std::optional<Nonnull<const Block*>>(const AstNode&)> body_;
 };
 
-}
+}  // namespace Carbon
 
-#endif // EXECUTABLE_SEMANTICS_AST_RETURN_TARGET_H_
+#endif  // EXECUTABLE_SEMANTICS_AST_RETURN_TARGET_H_

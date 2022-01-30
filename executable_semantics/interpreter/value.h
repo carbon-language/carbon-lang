@@ -159,15 +159,13 @@ class ClassFunctionValue : public Value {
 class MethodValue : public Value {
  public:
   explicit MethodValue(Nonnull<const MethodMember*> declaration)
-    : Value(Kind::MethodValue), declaration_(declaration) {}
+      : Value(Kind::MethodValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::MethodValue;
   }
 
-  auto declaration() const -> const MethodMember& {
-    return *declaration_;
-  }
+  auto declaration() const -> const MethodMember& { return *declaration_; }
 
  private:
   Nonnull<const MethodMember*> declaration_;
@@ -177,26 +175,24 @@ class MethodValue : public Value {
 class BoundMethodValue : public Value {
  public:
   explicit BoundMethodValue(Nonnull<const MethodMember*> declaration,
-			    Nonnull<Value*> receiver)
-    : Value(Kind::BoundMethodValue), declaration_(declaration), receiver_(receiver) {}
+                            Nonnull<Value*> receiver)
+      : Value(Kind::BoundMethodValue),
+        declaration_(declaration),
+        receiver_(receiver) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoundMethodValue;
   }
 
-  auto declaration() const -> const MethodMember& {
-    return *declaration_;
-  }
+  auto declaration() const -> const MethodMember& { return *declaration_; }
 
-  auto receiver() const -> Value* {
-    return receiver_;
-  }
-  
+  auto receiver() const -> Value* { return receiver_; }
+
  private:
   Nonnull<const MethodMember*> declaration_;
   Nonnull<Value*> receiver_;
 };
-  
+
 // The value of a location in memory.
 class LValue : public Value {
  public:
@@ -273,7 +269,7 @@ class NominalClassValue : public Value {
 
  private:
   Nonnull<const Value*> type_;
-  Nonnull<const Value*> inits_; // The initializing StructValue.
+  Nonnull<const Value*> inits_;  // The initializing StructValue.
 };
 
 // An alternative constructor value.
@@ -476,40 +472,54 @@ class StructType : public Value {
 class NominalClassType : public Value {
  public:
   NominalClassType(std::string name, std::vector<NamedValue> field_types,
-		   std::vector<NamedValue> class_function_types,
-		   std::vector<NamedValue> class_functions,
+                   std::vector<NamedValue> class_function_types,
+                   std::vector<NamedValue> class_functions,
                    std::vector<NamedValue> method_types,
-		   std::vector<NamedValue> methods)
+                   std::vector<NamedValue> methods)
       : Value(Kind::NominalClassType),
         name_(std::move(name)),
         field_types_(std::move(field_types)),
-	class_function_types_(std::move(class_function_types)),
-	class_functions_(std::move(class_functions)),
+        class_function_types_(std::move(class_function_types)),
+        class_functions_(std::move(class_functions)),
         method_types_(std::move(method_types)),
-	methods_(std::move(methods)){}
+        methods_(std::move(methods)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto field_types() const -> llvm::ArrayRef<NamedValue> { return field_types_; }
-  auto class_function_types() const -> llvm::ArrayRef<NamedValue>
-    { return class_function_types_; }
-  auto class_functions() const -> llvm::ArrayRef<NamedValue> { return class_functions_; }
-  auto method_types() const -> llvm::ArrayRef<NamedValue> { return method_types_; }
+  auto field_types() const -> llvm::ArrayRef<NamedValue> {
+    return field_types_;
+  }
+  auto class_function_types() const -> llvm::ArrayRef<NamedValue> {
+    return class_function_types_;
+  }
+  auto class_functions() const -> llvm::ArrayRef<NamedValue> {
+    return class_functions_;
+  }
+  auto method_types() const -> llvm::ArrayRef<NamedValue> {
+    return method_types_;
+  }
   auto methods() const -> llvm::ArrayRef<NamedValue> { return methods_; }
 
-  void set_field_types(const std::vector<NamedValue>& fields) { field_types_ = fields; }
-  void set_class_function_types(const std::vector<NamedValue>& class_function_types)
-    { class_function_types_ = class_function_types; }
-  void set_class_functions(const std::vector<NamedValue>& class_functions)
-    { class_functions_ = class_functions; }
-  void set_method_types(const std::vector<NamedValue>& method_types)
-    { method_types_ = method_types; }
-  void set_methods(const std::vector<NamedValue>& methods)
-    { methods_ = methods; }
-  
+  void set_field_types(const std::vector<NamedValue>& fields) {
+    field_types_ = fields;
+  }
+  void set_class_function_types(
+      const std::vector<NamedValue>& class_function_types) {
+    class_function_types_ = class_function_types;
+  }
+  void set_class_functions(const std::vector<NamedValue>& class_functions) {
+    class_functions_ = class_functions;
+  }
+  void set_method_types(const std::vector<NamedValue>& method_types) {
+    method_types_ = method_types;
+  }
+  void set_methods(const std::vector<NamedValue>& methods) {
+    methods_ = methods;
+  }
+
   // Returns the value of the class function named `name` in this class, or
   // nullopt if there is no such class function.
   auto FindFunction(const std::string& name) const
@@ -519,6 +529,7 @@ class NominalClassType : public Value {
   // nullopt if there is no such method.
   auto FindMethod(const std::string& name) const
       -> std::optional<Nonnull<const Value*>>;
+
  private:
   std::string name_;
   std::vector<NamedValue> field_types_;

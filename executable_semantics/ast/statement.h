@@ -9,10 +9,10 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/return_term.h"
-#include "executable_semantics/ast/return_target.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/return_target.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/ast/value_category.h"
@@ -183,9 +183,7 @@ class Return : public Statement {
   auto function() -> ReturnTargetView { return *function_; }
 
   // Can only be called once, by ResolveControlFlow.
-  void set_function(ReturnTargetView function) {
-    function_ = function;
-  }
+  void set_function(ReturnTargetView function) { function_ = function; }
 
  private:
   Nonnull<Expression*> expression_;

@@ -526,7 +526,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
         case Value::Kind::TypeOfClassType: {
           const NominalClassType& class_type =
               cast<TypeOfClassType>(aggregate_type).class_type();
-          for (const auto& [field_name, field_type] : class_type.class_function_types()) {
+          for (const auto& [field_name, field_type] :
+               class_type.class_function_types()) {
             if (access.field() == field_name) {
               SetStaticType(&access, field_type);
               access.set_value_category(access.aggregate().value_category());
@@ -536,11 +537,10 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
           FATAL_COMPILATION_ERROR(access.source_loc())
               << class_type << " does not have a class function named "
               << access.field();
-	}
+        }
         default:
           FATAL_COMPILATION_ERROR(e->source_loc())
-	    << "field access, unexpected " << aggregate_type
-	    << " in " << *e;
+              << "field access, unexpected " << aggregate_type << " in " << *e;
       }
     }
     case ExpressionKind::IdentifierExpression: {
@@ -1078,10 +1078,9 @@ void TypeChecker::TypeCheckClassDeclaration(
   // causes pointers (aliases) to the class type to be stored.  It
   // would be painful to go a update all those pointers.
 
-  const auto& class_type =
-    arena_->New<NominalClassType>(class_decl->name(), field_types,
-				  class_function_types, class_functions,
-				  method_types, methods);
+  const auto& class_type = arena_->New<NominalClassType>(
+      class_decl->name(), field_types, class_function_types, class_functions,
+      method_types, methods);
   SetConstantValue(class_decl, class_type);
   SetStaticType(class_decl, arena_->New<TypeOfClassType>(class_type));
 
@@ -1089,7 +1088,7 @@ void TypeChecker::TypeCheckClassDeclaration(
   // but not the bodies of class functions or method declarations.
   // The first pass also creates class function values for all the
   // class functions.
-  
+
   for (Nonnull<Member*> m : class_decl->members()) {
     switch (m->kind()) {
       case MemberKind::FieldMember: {
@@ -1104,59 +1103,55 @@ void TypeChecker::TypeCheckClassDeclaration(
         break;
       }
       case MemberKind::ClassFunctionMember: {
-	auto& f = cast<ClassFunctionMember>(*m);
-	TuplePattern& param = f.param_pattern();
-	TypeCheckPattern(&param, std::nullopt);
-	if (std::optional<Nonnull<Expression*>> return_expression =
-		f.return_term().type_expression();
-	    return_expression.has_value()) {
-	  TypeCheckExp(*return_expression);
-	  SetStaticType(&f.return_term(),
-			InterpExp(*return_expression, arena_, trace_));
-	} else {
-	  FATAL_COMPILATION_ERROR(f.return_term().source_loc())
-	    << "Class function, return type missing.";
-	}
-	std::vector<Nonnull<const GenericBinding*>> deduced;
-	const auto& f_type =
-	  arena_->New<FunctionType>(deduced,
-				    &f.param_pattern().static_type(),
-				    &f.return_term().static_type());
-        class_function_types.push_back(
-                {.name = f.name(), .value = f_type});
+        auto& f = cast<ClassFunctionMember>(*m);
+        TuplePattern& param = f.param_pattern();
+        TypeCheckPattern(&param, std::nullopt);
+        if (std::optional<Nonnull<Expression*>> return_expression =
+                f.return_term().type_expression();
+            return_expression.has_value()) {
+          TypeCheckExp(*return_expression);
+          SetStaticType(&f.return_term(),
+                        InterpExp(*return_expression, arena_, trace_));
+        } else {
+          FATAL_COMPILATION_ERROR(f.return_term().source_loc())
+              << "Class function, return type missing.";
+        }
+        std::vector<Nonnull<const GenericBinding*>> deduced;
+        const auto& f_type =
+            arena_->New<FunctionType>(deduced, &f.param_pattern().static_type(),
+                                      &f.return_term().static_type());
+        class_function_types.push_back({.name = f.name(), .value = f_type});
         class_functions.push_back(
-                {.name = f.name(), .value = arena_->New<ClassFunctionValue>(&f)});
-	break;
+            {.name = f.name(), .value = arena_->New<ClassFunctionValue>(&f)});
+        break;
       }
       case MemberKind::MethodMember: {
-	auto& f = cast<MethodMember>(*m);
-	TypeCheckPattern(&f.me_pattern(), std::nullopt);
-	TypeCheckPattern(&f.param_pattern(), std::nullopt);
-	if (std::optional<Nonnull<Expression*>> return_expression =
-		f.return_term().type_expression();
-	    return_expression.has_value()) {
-	  TypeCheckExp(*return_expression);
-	  SetStaticType(&f.return_term(),
-			InterpExp(*return_expression, arena_, trace_));
-	} else {
-	  FATAL_COMPILATION_ERROR(f.return_term().source_loc())
-	    << "Class function, return type missing.";
-	}
-	std::vector<Nonnull<const GenericBinding*>> deduced;
-	const auto& f_type =
-	  arena_->New<FunctionType>(deduced,
-				    &f.param_pattern().static_type(),
-				    &f.return_term().static_type());
-        method_types.push_back(
-                {.name = f.name(), .value = f_type});
+        auto& f = cast<MethodMember>(*m);
+        TypeCheckPattern(&f.me_pattern(), std::nullopt);
+        TypeCheckPattern(&f.param_pattern(), std::nullopt);
+        if (std::optional<Nonnull<Expression*>> return_expression =
+                f.return_term().type_expression();
+            return_expression.has_value()) {
+          TypeCheckExp(*return_expression);
+          SetStaticType(&f.return_term(),
+                        InterpExp(*return_expression, arena_, trace_));
+        } else {
+          FATAL_COMPILATION_ERROR(f.return_term().source_loc())
+              << "Class function, return type missing.";
+        }
+        std::vector<Nonnull<const GenericBinding*>> deduced;
+        const auto& f_type =
+            arena_->New<FunctionType>(deduced, &f.param_pattern().static_type(),
+                                      &f.return_term().static_type());
+        method_types.push_back({.name = f.name(), .value = f_type});
         methods.push_back(
-                {.name = f.name(), .value = arena_->New<MethodValue>(&f)});
-	break;
+            {.name = f.name(), .value = arena_->New<MethodValue>(&f)});
+        break;
       }
     }
   }
-  
-  // The class is now complete. 
+
+  // The class is now complete.
   class_type->set_field_types(field_types);
   class_type->set_class_function_types(class_function_types);
   class_type->set_class_functions(class_functions);
@@ -1168,27 +1163,27 @@ void TypeChecker::TypeCheckClassDeclaration(
   for (Nonnull<Member*> m : class_decl->members()) {
     switch (m->kind()) {
       case MemberKind::FieldMember:
-	// nothing to do here
-	break;
+        // nothing to do here
+        break;
       case MemberKind::ClassFunctionMember: {
-	auto& f = cast<ClassFunctionMember>(*m);
-	if (f.body().has_value()) {
-	  TypeCheckStmt(* f.body());
-	  if (f.return_term().is_omitted()) {
-	    ExpectReturnOnAllPaths(f.body(), f.source_loc());
-	  }
-	}
-	break;
+        auto& f = cast<ClassFunctionMember>(*m);
+        if (f.body().has_value()) {
+          TypeCheckStmt(*f.body());
+          if (f.return_term().is_omitted()) {
+            ExpectReturnOnAllPaths(f.body(), f.source_loc());
+          }
+        }
+        break;
       }
       case MemberKind::MethodMember: {
-	auto& f = cast<MethodMember>(*m);
-	if (f.body().has_value()) {
-	  TypeCheckStmt(* f.body());
-	  if (f.return_term().is_omitted()) {
-	    ExpectReturnOnAllPaths(f.body(), f.source_loc());
-	  }
-	}
-	break;
+        auto& f = cast<MethodMember>(*m);
+        if (f.body().has_value()) {
+          TypeCheckStmt(*f.body());
+          if (f.return_term().is_omitted()) {
+            ExpectReturnOnAllPaths(f.body(), f.source_loc());
+          }
+        }
+        break;
       }
     }
   }

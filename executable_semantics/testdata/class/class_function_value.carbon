@@ -12,9 +12,11 @@
 package ExecutableSemanticsTest api;
 
 class Point {
+
   fn Origin() -> Point {
     return {.x = 0, .y = 0};
   }
+
   var x: i32;
   var y: i32;
 }

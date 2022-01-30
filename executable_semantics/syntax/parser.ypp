@@ -683,21 +683,22 @@ member: VAR variable_declaration SEMICOLON
     { $$ = arena->New<FieldMember>(context.source_loc(), $2); }
 | FN identifier maybe_empty_tuple_pattern return_term block
     {
-      $$ = arena->New<ClassFunctionMember>(context.source_loc(), $2, $3, $4, $5);
+      $$ =
+          arena->New<ClassFunctionMember>(context.source_loc(), $2, $3, $4, $5);
     }
 | FN identifier maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      $$ = arena->New<ClassFunctionMember>(context.source_loc(), $2, $3, $4, std::nullopt);
+      $$ = arena->New<ClassFunctionMember>(context.source_loc(), $2, $3, $4,
+                                           std::nullopt);
     }
 | FN identifier LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
   maybe_empty_tuple_pattern return_term block
-    {
-      $$ = arena->New<MethodMember>(context.source_loc(), $2, $4, $6, $7, $8);
-    }
+    { $$ = arena->New<MethodMember>(context.source_loc(), $2, $4, $6, $7, $8); }
 | FN identifier LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
   maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      $$ = arena->New<MethodMember>(context.source_loc(), $2, $4, $6, $7, std::nullopt);
+      $$ = arena->New<MethodMember>(context.source_loc(), $2, $4, $6, $7,
+                                    std::nullopt);
     }
 ;
 member_list:

@@ -5,8 +5,8 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_MEMBER_H_
 #define EXECUTABLE_SEMANTICS_AST_MEMBER_H_
 
-#include <string>
 #include <optional>
+#include <string>
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
@@ -72,11 +72,11 @@ class FieldMember : public Member {
 class ClassFunctionMember : public Member {
  public:
   using ImplementsCarbonReturnTarget = void;
-  
+
   ClassFunctionMember(SourceLocation source_loc, std::string name,
-               Nonnull<TuplePattern*> param_pattern,
-	       ReturnTerm return_term,
-               std::optional<Nonnull<Block*>> body)
+                      Nonnull<TuplePattern*> param_pattern,
+                      ReturnTerm return_term,
+                      std::optional<Nonnull<Block*>> body)
       : Member(AstNodeKind::ClassFunctionMember, source_loc),
         name_(std::move(name)),
         param_pattern_(param_pattern),
@@ -105,11 +105,10 @@ class ClassFunctionMember : public Member {
 class MethodMember : public Member {
  public:
   using ImplementsCarbonReturnTarget = void;
-  
+
   MethodMember(SourceLocation source_loc, std::string name,
-	       Nonnull<BindingPattern*> me_pattern,
-               Nonnull<TuplePattern*> param_pattern,
-	       ReturnTerm return_term,
+               Nonnull<BindingPattern*> me_pattern,
+               Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
                std::optional<Nonnull<Block*>> body)
       : Member(AstNodeKind::MethodMember, source_loc),
         name_(std::move(name)),

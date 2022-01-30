@@ -16,7 +16,7 @@ namespace Carbon {
 // Aggregate information about a function being analyzed.
 struct FunctionData {
   // The function declaration.
-  //Nonnull<FunctionDeclaration*> declaration;
+  // Nonnull<FunctionDeclaration*> declaration;
   ReturnTargetView declaration;
 
   // True if the function has a deduced return type, and we've already seen
@@ -115,43 +115,43 @@ void ResolveControlFlow(AST& ast) {
   for (auto declaration : ast.declarations) {
     switch (declaration->kind()) {
       case DeclarationKind::FunctionDeclaration: {
-	auto& function = cast<FunctionDeclaration>(*declaration);
-	if (function.body().has_value()) {
-	  FunctionData data = {.declaration = &function};
-	  ResolveControlFlow(*function.body(), std::nullopt, &data);
-	}
-	break;
+        auto& function = cast<FunctionDeclaration>(*declaration);
+        if (function.body().has_value()) {
+          FunctionData data = {.declaration = &function};
+          ResolveControlFlow(*function.body(), std::nullopt, &data);
+        }
+        break;
       }
       case DeclarationKind::ClassDeclaration: {
-	auto& class_decl = cast<ClassDeclaration>(*declaration);
-	for (Nonnull<Member*> member : class_decl.members()) {
-	  switch (member->kind()) {
-	  case MemberKind::ClassFunctionMember: {
-	    auto& function = cast<ClassFunctionMember>(*member);
-	    if (function.body().has_value()) {
-	      FunctionData data = {.declaration = &function};
-	      ResolveControlFlow(*function.body(), std::nullopt, &data);
-	    }
-	    break;
-	  }
-	  case MemberKind::MethodMember: {
-	    auto& function = cast<MethodMember>(*member);
-	    if (function.body().has_value()) {
-	      FunctionData data = {.declaration = &function};
-	      ResolveControlFlow(*function.body(), std::nullopt, &data);
-	    }
-	    break;
-	  }
-	  case MemberKind::FieldMember:
-	    // do nothing
-	    break;
-	  }
-	}
-	break;
+        auto& class_decl = cast<ClassDeclaration>(*declaration);
+        for (Nonnull<Member*> member : class_decl.members()) {
+          switch (member->kind()) {
+            case MemberKind::ClassFunctionMember: {
+              auto& function = cast<ClassFunctionMember>(*member);
+              if (function.body().has_value()) {
+                FunctionData data = {.declaration = &function};
+                ResolveControlFlow(*function.body(), std::nullopt, &data);
+              }
+              break;
+            }
+            case MemberKind::MethodMember: {
+              auto& function = cast<MethodMember>(*member);
+              if (function.body().has_value()) {
+                FunctionData data = {.declaration = &function};
+                ResolveControlFlow(*function.body(), std::nullopt, &data);
+              }
+              break;
+            }
+            case MemberKind::FieldMember:
+              // do nothing
+              break;
+          }
+        }
+        break;
       }
       default:
-	// do nothing
-	break;
+        // do nothing
+        break;
     }
   }
 }
