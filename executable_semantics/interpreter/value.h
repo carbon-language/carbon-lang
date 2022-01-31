@@ -139,7 +139,7 @@ class FunctionValue : public Value {
 class BoundMethodValue : public Value {
  public:
   explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
-                            Nonnull<Value*> receiver)
+                            Nonnull<const Value*> receiver)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
         receiver_(receiver) {}
@@ -152,11 +152,11 @@ class BoundMethodValue : public Value {
     return *declaration_;
   }
 
-  auto receiver() const -> Value* { return receiver_; }
+  auto receiver() const -> Nonnull<const Value*> { return receiver_; }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
-  Nonnull<Value*> receiver_;
+  Nonnull<const Value*> receiver_;
 };
 
 // The value of a location in memory.

@@ -41,8 +41,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassValue: {
       // TODO: deal with const mismatch here. -Jeremy
-      NominalClassValue& object =
-          (NominalClassValue&)cast<NominalClassValue>(*v);
+      const NominalClassValue& object =
+          cast<NominalClassValue>(*v);
       // Look for a field
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(object.inits()).FindField(f);
