@@ -156,6 +156,7 @@ auto Interpreter::EvalPrim(Operator op,
     case Operator::Deref:
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
+      llvm::outs() << "******AddressOf debug: " << *args[0] << "\n";
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
   }
 }
@@ -315,13 +316,27 @@ void Interpreter::StepLvalue() {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
+    case ExpressionKind::PrimitiveOperatorExpression: {
+      const PrimitiveOperatorExpression& op = cast<PrimitiveOperatorExpression>(exp);
+      if (op.op() == Operator::Deref) {
+        if (act.pos() == 0) {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(op.arguments()[0]));
+        } else {
+          const PointerValue& res =  cast<PointerValue>(*act.results()[0]);
+          return todo_.FinishAction( arena_->New<LValue>(res.address()));
+        }
+      } else {
+        FATAL() << "Can't treat primitive operator expression as lvalue: " << exp;
+      }
+      break;
+    }
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::CallExpression:
-    case ExpressionKind::PrimitiveOperatorExpression:
     case ExpressionKind::IntTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
@@ -512,7 +527,11 @@ void Interpreter::StepExp() {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
-        return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        if (op.op() == Operator::AddressOf) {
+          return todo_.Spawn(std::make_unique<LValAction>(arg));
+        } else {
+          return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        }
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}

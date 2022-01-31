@@ -155,7 +155,7 @@ class LValue : public Value {
 class PointerValue : public Value {
  public:
   explicit PointerValue(Address value)
-      : Value(Kind::LValue), value_(std::move(value)) {}
+      : Value(Kind::PointerValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::PointerValue;

@@ -12,13 +12,9 @@
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
-  var x: i32 = 5;
-  x = 10; // changes x to 10
-  var p: i32* = &x;
-  *p = 7; // changes x to 7
-  var q: i32* = &*p;
-  *q = 0; // changes x to 0
-  var y: i32 = *p;
+  var x: auto = {.x = 10, .y = 1};
+  var p: i32* = &x.x;
+  *p = 0;
 
-  return y;
+  return x.x;
 }

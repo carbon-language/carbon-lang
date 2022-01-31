@@ -622,8 +622,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::AddressOf:
-          ExpectPointerType(e->source_loc(), "&", ts[0]);
-          SetStaticType(&op, &cast<PointerType>(*ts[0]).type());
+          SetStaticType(&op, arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Var);
           return;
       }

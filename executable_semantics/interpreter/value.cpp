@@ -188,8 +188,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::PointerValue:
+      out << "ptr<" << cast<PointerValue>(*this).address() << ">";
+      break;
     case Value::Kind::LValue:
-      out << "ptr<" << cast<LValue>(*this).address() << ">";
+      out << "lval<" << cast<LValue>(*this).address() << ">";
       break;
     case Value::Kind::BoolType:
       out << "Bool";
