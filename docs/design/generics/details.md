@@ -4457,23 +4457,24 @@ external impl [T:! TotalOrder] T as PartialOrder {
 
 The difference between the two approaches is the prioritization of the resulting
 implementations. The default impl approach results in a type structure of
-`impl T as PartialOrder`, which has a higher priority than the blanket impl's
+`impl Song as PartialOrder`, which has a higher priority than the blanket impl's
 type structure of `impl ? as PartialOrder`.
-
-FIXME: prioritization in `match_first` blocks
 
 If an interface provides multiple default impl definitions, or a default impl
 definition triggers another default impl to be instantiated, the default impls
 are instantiated in depth-first order following the order the default impls were
-declared in the triggering interface. Carbon has
-[a recursion limit to prevent this from defining an infinite collection of implementations](#termination-rule),
-as would happen in this case:
+declared in the triggering interface. There is a a recursion limit to prevent
+this from defining an infinite collection of implementations, like
+[with parameterized impls](#termination-rule), as would happen in this case:
 
 ```
 interface Infinite(T:! Type) {
   impl as Infinite(T*) { }
 }
 ```
+
+Default impls are prioritized immediately after the triggering impl in a
+`match_first` block, in the same order they are instantiated.
 
 Implementations of required interfaces may not be marked `final`. Use `final`
 blanket impls instead.
@@ -4650,3 +4651,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1034: Generic details 9: default impl](https://github.com/carbon-language/carbon-lang/pull/1034)
