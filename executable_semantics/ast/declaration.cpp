@@ -22,7 +22,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       out << "class " << class_decl.name() << " {\n";
-      for (Nonnull<Member*> m : class_decl.members()) {
+      for (Nonnull<Declaration*> m : class_decl.members()) {
         out << *m;
       }
       out << "}\n";
@@ -41,7 +41,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = cast<VariableDeclaration>(*this);
-      out << "var " << var.binding() << " = " << var.initializer() << "\n";
+      out << "var " << var.binding();
+      if (var.has_initializer()) {
+	out << " = " << var.initializer();
+      } 
+      out << ";\n";
       break;
     }
   }

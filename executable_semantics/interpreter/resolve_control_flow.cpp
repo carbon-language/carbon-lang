@@ -111,8 +111,7 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
   }
 }
 
-void ResolveControlFlow(AST& ast) {
-  for (auto declaration : ast.declarations) {
+void ResolveControlFlowDecl(Nonnull<Declaration*> declaration) {
     switch (declaration->kind()) {
       case DeclarationKind::FunctionDeclaration: {
         auto& function = cast<FunctionDeclaration>(*declaration);
@@ -124,35 +123,20 @@ void ResolveControlFlow(AST& ast) {
       }
       case DeclarationKind::ClassDeclaration: {
         auto& class_decl = cast<ClassDeclaration>(*declaration);
-        for (Nonnull<Member*> member : class_decl.members()) {
-          switch (member->kind()) {
-            case MemberKind::ClassFunctionMember: {
-              auto& function = cast<ClassFunctionMember>(*member);
-              if (function.body().has_value()) {
-                FunctionData data = {.declaration = &function};
-                ResolveControlFlow(*function.body(), std::nullopt, &data);
-              }
-              break;
-            }
-            case MemberKind::MethodMember: {
-              auto& function = cast<MethodMember>(*member);
-              if (function.body().has_value()) {
-                FunctionData data = {.declaration = &function};
-                ResolveControlFlow(*function.body(), std::nullopt, &data);
-              }
-              break;
-            }
-            case MemberKind::FieldMember:
-              // do nothing
-              break;
-          }
-        }
-        break;
+        for (Nonnull<Declaration*> member : class_decl.members()) {
+	  ResolveControlFlowDecl(member);
+	}
+	break;
       }
       default:
         // do nothing
         break;
     }
+}
+
+void ResolveControlFlow(AST& ast) {
+  for (auto declaration : ast.declarations) {
+    ResolveControlFlowDecl(declaration);
   }
 }
 

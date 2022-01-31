@@ -74,8 +74,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::ClassFunctionValue:
-    case Value::Kind::MethodValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
@@ -316,8 +314,6 @@ void TypeChecker::ArgumentDeduction(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::ClassFunctionValue:
-    case Value::Kind::MethodValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
@@ -384,8 +380,6 @@ auto TypeChecker::Substitute(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::ClassFunctionValue:
-    case Value::Kind::MethodValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
@@ -1013,6 +1007,11 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     SetStaticType(deduced, arena_->New<VariableType>(deduced));
     SetConstantValue(deduced, &deduced->static_type());
   }
+  if (f->is_method()) {
+    // Type check the receiver patter
+    TypeCheckPattern(&f->me_pattern(), std::nullopt);
+  }
+      
   // Type check the parameter pattern
   TypeCheckPattern(&f->param_pattern(), std::nullopt);
 
@@ -1089,65 +1088,34 @@ void TypeChecker::TypeCheckClassDeclaration(
   // The first pass also creates class function values for all the
   // class functions.
 
-  for (Nonnull<Member*> m : class_decl->members()) {
+  for (Nonnull<Declaration*> m : class_decl->members()) {
+    DeclareDeclaration(m);
     switch (m->kind()) {
-      case MemberKind::FieldMember: {
-        BindingPattern& binding = cast<FieldMember>(*m).binding();
-        if (binding.name() == AnonymousName) {
-          FATAL_COMPILATION_ERROR(binding.source_loc())
-              << "Struct members must have names";
-        }
-        TypeCheckPattern(&binding, std::nullopt);
-        field_types.push_back(
-            {.name = binding.name(), .value = &binding.static_type()});
-        break;
-      }
-      case MemberKind::ClassFunctionMember: {
-        auto& f = cast<ClassFunctionMember>(*m);
-        TuplePattern& param = f.param_pattern();
-        TypeCheckPattern(&param, std::nullopt);
-        if (std::optional<Nonnull<Expression*>> return_expression =
-                f.return_term().type_expression();
-            return_expression.has_value()) {
-          TypeCheckExp(*return_expression);
-          SetStaticType(&f.return_term(),
-                        InterpExp(*return_expression, arena_, trace_));
-        } else {
-          FATAL_COMPILATION_ERROR(f.return_term().source_loc())
-              << "Class function, return type missing.";
-        }
-        std::vector<Nonnull<const GenericBinding*>> deduced;
-        const auto& f_type =
-            arena_->New<FunctionType>(deduced, &f.param_pattern().static_type(),
-                                      &f.return_term().static_type());
-        class_function_types.push_back({.name = f.name(), .value = f_type});
-        class_functions.push_back(
-            {.name = f.name(), .value = arena_->New<ClassFunctionValue>(&f)});
-        break;
-      }
-      case MemberKind::MethodMember: {
-        auto& f = cast<MethodMember>(*m);
-        TypeCheckPattern(&f.me_pattern(), std::nullopt);
-        TypeCheckPattern(&f.param_pattern(), std::nullopt);
-        if (std::optional<Nonnull<Expression*>> return_expression =
-                f.return_term().type_expression();
-            return_expression.has_value()) {
-          TypeCheckExp(*return_expression);
-          SetStaticType(&f.return_term(),
-                        InterpExp(*return_expression, arena_, trace_));
-        } else {
-          FATAL_COMPILATION_ERROR(f.return_term().source_loc())
-              << "Class function, return type missing.";
-        }
-        std::vector<Nonnull<const GenericBinding*>> deduced;
-        const auto& f_type =
-            arena_->New<FunctionType>(deduced, &f.param_pattern().static_type(),
-                                      &f.return_term().static_type());
-        method_types.push_back({.name = f.name(), .value = f_type});
+    case DeclarationKind::FunctionDeclaration: {
+      const auto& func = cast<FunctionDeclaration>(*m);
+      Nonnull<const Value*> static_type = &func.static_type();
+      Nonnull<const Value*> value = arena_->New<FunctionValue>(&func);
+      if (func.is_method()) {
+        method_types.push_back(
+          {.name = func.name(), .value = static_type});
         methods.push_back(
-            {.name = f.name(), .value = arena_->New<MethodValue>(&f)});
-        break;
+          {.name = func.name(), .value = value});
+      } else {
+        class_function_types.push_back(
+	  {.name = func.name(), .value = static_type});
+        class_functions.push_back(
+	  {.name = func.name(), .value = value});
       }
+      break;
+    }
+    case DeclarationKind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(*m);
+      field_types.push_back(
+	{.name = var.binding().name(), .value = &var.binding().static_type()});
+      break;
+    }
+    default:
+      break;
     }
   }
 
@@ -1160,32 +1128,8 @@ void TypeChecker::TypeCheckClassDeclaration(
 
   // Second pass: type check the bodies of the class functions and methods.
 
-  for (Nonnull<Member*> m : class_decl->members()) {
-    switch (m->kind()) {
-      case MemberKind::FieldMember:
-        // nothing to do here
-        break;
-      case MemberKind::ClassFunctionMember: {
-        auto& f = cast<ClassFunctionMember>(*m);
-        if (f.body().has_value()) {
-          TypeCheckStmt(*f.body());
-          if (f.return_term().is_omitted()) {
-            ExpectReturnOnAllPaths(f.body(), f.source_loc());
-          }
-        }
-        break;
-      }
-      case MemberKind::MethodMember: {
-        auto& f = cast<MethodMember>(*m);
-        if (f.body().has_value()) {
-          TypeCheckStmt(*f.body());
-          if (f.return_term().is_omitted()) {
-            ExpectReturnOnAllPaths(f.body(), f.source_loc());
-          }
-        }
-        break;
-      }
-    }
+  for (Nonnull<Declaration*> m : class_decl->members()) {
+    TypeCheckDeclaration(m);
   }
 }
 
@@ -1203,7 +1147,7 @@ void TypeChecker::TypeCheckChoiceDeclaration(
 
 void TypeChecker::TypeCheck(AST& ast) {
   for (Nonnull<Declaration*> declaration : ast.declarations) {
-    TopLevel(declaration);
+    DeclareDeclaration(declaration);
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
     TypeCheckDeclaration(decl);
@@ -1228,7 +1172,9 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
       // Signals a type error if the initializing expression does not have
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
-      TypeCheckExp(&var.initializer());
+      if (var.has_initializer()) {
+	TypeCheckExp(&var.initializer());
+      }
       const auto* binding_type =
           dyn_cast<ExpressionPattern>(&var.binding().type());
       if (binding_type == nullptr) {
@@ -1239,14 +1185,16 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
       Nonnull<const Value*> declared_type =
           InterpExp(&binding_type->expression(), arena_, trace_);
       SetStaticType(&var, declared_type);
-      ExpectType(var.source_loc(), "initializer of variable", declared_type,
-                 &var.initializer().static_type());
+      if (var.has_initializer()) {
+	ExpectType(var.source_loc(), "initializer of variable", declared_type,
+		   &var.initializer().static_type());
+      }
       return;
     }
   }
 }
 
-void TypeChecker::TopLevel(Nonnull<Declaration*> d) {
+void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d) {
   switch (d->kind()) {
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<FunctionDeclaration>(*d);

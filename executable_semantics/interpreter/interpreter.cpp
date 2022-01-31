@@ -340,8 +340,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
-    case Value::Kind::ClassFunctionValue:
-    case Value::Kind::MethodValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
@@ -556,26 +554,10 @@ void Interpreter::StepExp() {
                 std::make_unique<StatementAction>(*function.body()),
                 std::move(function_scope));
           }
-          case Value::Kind::ClassFunctionValue: {
-            const ClassFunctionMember& function =
-                cast<ClassFunctionValue>(*act.results()[0]).declaration();
-            // Same logic as for the above case of FunctionValue.
-            Nonnull<const Value*> converted_args = Convert(
-                act.results()[1], &function.param_pattern().static_type());
-            RuntimeScope function_scope(&heap_);
-            CHECK(PatternMatch(&function.param_pattern().value(),
-                               converted_args, exp.source_loc(),
-                               &function_scope));
-            CHECK(function.body().has_value())
-                << "Calling a function that's missing a body";
-            return todo_.Spawn(
-                std::make_unique<StatementAction>(*function.body()),
-                std::move(function_scope));
-          }
           case Value::Kind::BoundMethodValue: {
             const BoundMethodValue& m =
                 cast<BoundMethodValue>(*act.results()[0]);
-            const MethodMember& method = m.declaration();
+            const FunctionDeclaration& method = m.declaration();
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
             RuntimeScope method_scope(&heap_);
@@ -944,12 +926,16 @@ void Interpreter::StepDeclaration() {
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&var_decl.initializer()));
+      if (var_decl.has_initializer()) {
+	if (act.pos() == 0) {
+	  return todo_.Spawn(
+	    std::make_unique<ExpressionAction>(&var_decl.initializer()));
+	} else {
+	  todo_.Initialize(&var_decl.binding(), act.results()[0]);
+	  return todo_.FinishAction();
+	}
       } else {
-        todo_.Initialize(&var_decl.binding(), act.results()[0]);
-        return todo_.FinishAction();
+	return todo_.FinishAction();
       }
     }
     case DeclarationKind::FunctionDeclaration:

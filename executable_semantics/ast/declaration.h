@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
@@ -35,8 +34,8 @@ class Declaration : public AstNode {
  public:
   ~Declaration() override = 0;
 
-  Declaration(const Member&) = delete;
-  auto operator=(const Member&) -> Declaration& = delete;
+  Declaration(const Declaration&) = delete;
+  auto operator=(const Declaration&) -> Declaration& = delete;
 
   void Print(llvm::raw_ostream& out) const override;
 
@@ -134,12 +133,14 @@ class FunctionDeclaration : public Declaration {
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
+		      std::optional<Nonnull<BindingPattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
+        me_pattern_(me_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body) {}
@@ -158,6 +159,8 @@ class FunctionDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
+  auto me_pattern() const -> const BindingPattern& { return **me_pattern_; }
+  auto me_pattern() -> BindingPattern& { return **me_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -177,9 +180,12 @@ class FunctionDeclaration : public Declaration {
     constant_value_ = value;
   }
 
+  bool is_method() const { return me_pattern_.has_value(); }
+  
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
+  std::optional<Nonnull<BindingPattern*>> me_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
@@ -191,7 +197,7 @@ class ClassDeclaration : public Declaration {
   using ImplementsCarbonNamedEntity = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
-                   std::vector<Nonnull<Member*>> members)
+                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
         members_(std::move(members)) {}
@@ -201,7 +207,7 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> { return members_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -217,7 +223,7 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<Nonnull<Member*>> members_;
+  std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const Value*>> constant_value_;
 };
 
@@ -290,7 +296,7 @@ class VariableDeclaration : public Declaration {
  public:
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
-                      Nonnull<Expression*> initializer)
+                      std::optional<Nonnull<Expression*>> initializer)
       : Declaration(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
         initializer_(initializer) {}
@@ -301,15 +307,17 @@ class VariableDeclaration : public Declaration {
 
   auto binding() const -> const BindingPattern& { return *binding_; }
   auto binding() -> BindingPattern& { return *binding_; }
-  auto initializer() const -> const Expression& { return *initializer_; }
-  auto initializer() -> Expression& { return *initializer_; }
+  auto initializer() const -> const Expression& { return **initializer_; }
+  auto initializer() -> Expression& { return **initializer_; }
 
+  bool has_initializer() const { return initializer_.has_value(); }
+  
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
   Nonnull<BindingPattern*> binding_;
-  Nonnull<Expression*> initializer_;
+  std::optional<Nonnull<Expression*>> initializer_;
 };
 
 }  // namespace Carbon

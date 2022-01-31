@@ -36,8 +36,6 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
-    ClassFunctionValue,
-    MethodValue,
     BoundMethodValue,
     LValue,
     BoolValue,
@@ -137,44 +135,10 @@ class FunctionValue : public Value {
   Nonnull<const FunctionDeclaration*> declaration_;
 };
 
-// A class function value.
-class ClassFunctionValue : public Value {
- public:
-  explicit ClassFunctionValue(Nonnull<const ClassFunctionMember*> declaration)
-      : Value(Kind::ClassFunctionValue), declaration_(declaration) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ClassFunctionValue;
-  }
-
-  auto declaration() const -> const ClassFunctionMember& {
-    return *declaration_;
-  }
-
- private:
-  Nonnull<const ClassFunctionMember*> declaration_;
-};
-
-// A method value.
-class MethodValue : public Value {
- public:
-  explicit MethodValue(Nonnull<const MethodMember*> declaration)
-      : Value(Kind::MethodValue), declaration_(declaration) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::MethodValue;
-  }
-
-  auto declaration() const -> const MethodMember& { return *declaration_; }
-
- private:
-  Nonnull<const MethodMember*> declaration_;
-};
-
 // A bound method value. It includes the receiver object.
 class BoundMethodValue : public Value {
  public:
-  explicit BoundMethodValue(Nonnull<const MethodMember*> declaration,
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
                             Nonnull<Value*> receiver)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
@@ -184,12 +148,12 @@ class BoundMethodValue : public Value {
     return value->kind() == Kind::BoundMethodValue;
   }
 
-  auto declaration() const -> const MethodMember& { return *declaration_; }
+  auto declaration() const -> const FunctionDeclaration& { return *declaration_; }
 
   auto receiver() const -> Value* { return receiver_; }
 
  private:
-  Nonnull<const MethodMember*> declaration_;
+  Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<Value*> receiver_;
 };
 

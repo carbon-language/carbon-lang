@@ -71,7 +71,9 @@ class TypeChecker {
   // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
   void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
 
-  void TopLevel(Nonnull<Declaration*> d);
+  // Establish the type of the declaration without deeply checking
+  // the declaration, such as checking the body of a function.
+  void DeclareDeclaration(Nonnull<Declaration*> d);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.

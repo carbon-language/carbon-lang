@@ -71,6 +71,7 @@ class FieldMember : public Member {
 
 class ClassFunctionMember : public Member {
  public:
+  using ImplementsCarbonNamedEntity = void;
   using ImplementsCarbonReturnTarget = void;
 
   ClassFunctionMember(SourceLocation source_loc, std::string name,
@@ -104,6 +105,7 @@ class ClassFunctionMember : public Member {
 
 class MethodMember : public Member {
  public:
+  using ImplementsCarbonNamedEntity = void;
   using ImplementsCarbonReturnTarget = void;
 
   MethodMember(SourceLocation source_loc, std::string name,
@@ -131,6 +133,12 @@ class MethodMember : public Member {
     return InheritsFromMethodMember(node->kind());
   }
 
+  /*
+  static_type() {}
+  value_category() {}
+  constant_value() {}
+  */
+  
  private:
   std::string name_;
   Nonnull<BindingPattern*> me_pattern_;

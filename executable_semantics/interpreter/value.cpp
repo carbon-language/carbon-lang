@@ -56,7 +56,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                           << " or its class " << class_type;
         } else {
           // Found a method. Turn it into a bound method.
-          const MethodValue& m = cast<MethodValue>(**method);
+          const FunctionValue& m = cast<FunctionValue>(**method);
           return arena->New<BoundMethodValue>(&m.declaration(), &object);
         }
       }
@@ -202,13 +202,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::FunctionValue:
       out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
-      break;
-    case Value::Kind::ClassFunctionValue:
-      out << "classfun<" << cast<ClassFunctionValue>(*this).declaration().name()
-          << ">";
-      break;
-    case Value::Kind::MethodValue:
-      out << "method<" << cast<MethodValue>(*this).declaration().name() << ">";
       break;
     case Value::Kind::BoundMethodValue:
       out << "bound_method<"
@@ -418,22 +411,6 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
           cast<FunctionValue>(*v1).declaration().body();
       std::optional<Nonnull<const Statement*>> body2 =
           cast<FunctionValue>(*v2).declaration().body();
-      return body1.has_value() == body2.has_value() &&
-             (!body1.has_value() || *body1 == *body2);
-    }
-    case Value::Kind::ClassFunctionValue: {
-      std::optional<Nonnull<const Statement*>> body1 =
-          cast<ClassFunctionValue>(*v1).declaration().body();
-      std::optional<Nonnull<const Statement*>> body2 =
-          cast<ClassFunctionValue>(*v2).declaration().body();
-      return body1.has_value() == body2.has_value() &&
-             (!body1.has_value() || *body1 == *body2);
-    }
-    case Value::Kind::MethodValue: {
-      const MethodValue& m1 = cast<MethodValue>(*v1);
-      const MethodValue& m2 = cast<MethodValue>(*v2);
-      std::optional<Nonnull<const Statement*>> body1 = m1.declaration().body();
-      std::optional<Nonnull<const Statement*>> body2 = m2.declaration().body();
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
