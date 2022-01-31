@@ -40,7 +40,6 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return *field;
     }
     case Value::Kind::NominalClassValue: {
-      // TODO: deal with const mismatch here. -Jeremy
       const NominalClassValue& object =
           cast<NominalClassValue>(*v);
       // Look for a field
