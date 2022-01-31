@@ -17,7 +17,7 @@ namespace Carbon {
 struct FunctionData {
   // The function declaration.
   // Nonnull<FunctionDeclaration*> declaration;
-  ReturnTargetView declaration;
+  Nonnull<FunctionDeclaration*> declaration;
 
   // True if the function has a deduced return type, and we've already seen
   // a `return` statement in its body.
@@ -41,7 +41,7 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
             << "return is not within a function body";
       }
       const ReturnTerm& function_return =
-          (*function)->declaration.return_term();
+          (*function)->declaration->return_term();
       if (function_return.is_auto()) {
         if ((*function)->saw_return_in_auto) {
           FATAL_COMPILATION_ERROR(statement->source_loc())
@@ -112,26 +112,26 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
 }
 
 void ResolveControlFlowDecl(Nonnull<Declaration*> declaration) {
-    switch (declaration->kind()) {
-      case DeclarationKind::FunctionDeclaration: {
-        auto& function = cast<FunctionDeclaration>(*declaration);
-        if (function.body().has_value()) {
-          FunctionData data = {.declaration = &function};
-          ResolveControlFlow(*function.body(), std::nullopt, &data);
-        }
-        break;
+  switch (declaration->kind()) {
+    case DeclarationKind::FunctionDeclaration: {
+      auto& function = cast<FunctionDeclaration>(*declaration);
+      if (function.body().has_value()) {
+        FunctionData data = {.declaration = &function};
+        ResolveControlFlow(*function.body(), std::nullopt, &data);
       }
-      case DeclarationKind::ClassDeclaration: {
-        auto& class_decl = cast<ClassDeclaration>(*declaration);
-        for (Nonnull<Declaration*> member : class_decl.members()) {
-	  ResolveControlFlowDecl(member);
-	}
-	break;
-      }
-      default:
-        // do nothing
-        break;
+      break;
     }
+    case DeclarationKind::ClassDeclaration: {
+      auto& class_decl = cast<ClassDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : class_decl.members()) {
+        ResolveControlFlowDecl(member);
+      }
+      break;
+    }
+    default:
+      // do nothing
+      break;
+  }
 }
 
 void ResolveControlFlow(AST& ast) {

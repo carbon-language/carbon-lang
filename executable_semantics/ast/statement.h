@@ -11,7 +11,6 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
-#include "executable_semantics/ast/return_target.h"
 #include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -179,16 +178,18 @@ class Return : public Statement {
   // Note that this function does not represent an edge in the tree
   // structure of the AST: the return value is not a child of this node,
   // but an ancestor.
-  auto function() const -> ReturnTargetView { return *function_; }
-  auto function() -> ReturnTargetView { return *function_; }
+  auto function() const -> const FunctionDeclaration& { return **function_; }
+  auto function() -> FunctionDeclaration& { return **function_; }
 
   // Can only be called once, by ResolveControlFlow.
-  void set_function(ReturnTargetView function) { function_ = function; }
+  void set_function(Nonnull<FunctionDeclaration*> function) {
+    function_ = function;
+  }
 
  private:
   Nonnull<Expression*> expression_;
   bool is_omitted_expression_;
-  std::optional<ReturnTargetView> function_;
+  std::optional<Nonnull<FunctionDeclaration*>> function_;
 };
 
 class While : public Statement {

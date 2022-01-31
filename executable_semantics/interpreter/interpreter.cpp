@@ -881,7 +881,7 @@ void Interpreter::StepStmt() {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        ReturnTargetView function = cast<Return>(stmt).function();
+        const FunctionDeclaration& function = cast<Return>(stmt).function();
         return todo_.UnwindPast(
             *function.body(),
             Convert(act.results()[0], &function.return_term().static_type()));
@@ -927,15 +927,15 @@ void Interpreter::StepDeclaration() {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
       if (var_decl.has_initializer()) {
-	if (act.pos() == 0) {
-	  return todo_.Spawn(
-	    std::make_unique<ExpressionAction>(&var_decl.initializer()));
-	} else {
-	  todo_.Initialize(&var_decl.binding(), act.results()[0]);
-	  return todo_.FinishAction();
-	}
+        if (act.pos() == 0) {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&var_decl.initializer()));
+        } else {
+          todo_.Initialize(&var_decl.binding(), act.results()[0]);
+          return todo_.FinishAction();
+        }
       } else {
-	return todo_.FinishAction();
+        return todo_.FinishAction();
       }
     }
     case DeclarationKind::FunctionDeclaration:
