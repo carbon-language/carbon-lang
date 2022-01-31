@@ -4387,9 +4387,11 @@ using the default definition, unless there has already been an implementation of
 external impl Song as TotalOrder {
   fn TotalLess[me: Self](right: Self) -> Bool { ... }
 }
-\```
+```
+
 Behaves as if it is followed by:
-\```
+
+```
 external impl Song as PartialOrder {
   fn PartialLess[me: Self](right: Self) -> Bool {
     return me.TotalLess(right);
@@ -4465,8 +4467,8 @@ type structure of `impl ? as PartialOrder`.
 If an interface provides multiple default impl definitions, or a default impl
 definition triggers another default impl to be instantiated, the default impls
 are instantiated in depth-first order following the order the default impls were
-declared in the triggering interface. There is a recursion limit to prevent
-this from defining an infinite collection of implementations, like
+declared in the triggering interface. There is a recursion limit to prevent this
+from defining an infinite collection of implementations, like
 [with parameterized impls](#termination-rule), as would happen in this case:
 
 ```
