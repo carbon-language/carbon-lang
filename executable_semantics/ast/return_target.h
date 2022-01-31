@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {

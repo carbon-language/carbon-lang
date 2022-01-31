@@ -104,6 +104,7 @@ cc_library(
     name = "return_target",
     hdrs = ["return_target.h"],
     deps = [
+        ":return_term",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
