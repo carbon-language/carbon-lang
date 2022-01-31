@@ -43,7 +43,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       const auto& var = cast<VariableDeclaration>(*this);
       out << "var " << var.binding();
       if (var.has_initializer()) {
-	out << " = " << var.initializer();
+        out << " = " << var.initializer();
       }
       out << ";\n";
       break;

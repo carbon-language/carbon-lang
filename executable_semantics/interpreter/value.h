@@ -148,7 +148,9 @@ class BoundMethodValue : public Value {
     return value->kind() == Kind::BoundMethodValue;
   }
 
-  auto declaration() const -> const FunctionDeclaration& { return *declaration_; }
+  auto declaration() const -> const FunctionDeclaration& {
+    return *declaration_;
+  }
 
   auto receiver() const -> Value* { return receiver_; }
 
