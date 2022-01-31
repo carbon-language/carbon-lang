@@ -1077,7 +1077,7 @@ void TypeChecker::TypeCheckClassDeclaration(
   // causes pointers (aliases) to the class type to be stored.  It
   // would be painful to go a update all those pointers.
 
-  const auto& class_type = arena_->New<NominalClassType>(
+  Nonnull<NominalClassType*> class_type = arena_->New<NominalClassType>(
       class_decl->name(), field_types, class_function_types, class_functions,
       method_types, methods);
   SetConstantValue(class_decl, class_type);
