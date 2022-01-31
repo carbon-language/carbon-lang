@@ -677,8 +677,8 @@ function_declaration:
     }
 | FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5, $6,
-                                           std::nullopt);
+      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
+                                           $6, std::nullopt);
     }
 ;
 variable_declaration: identifier COLON pattern
@@ -719,7 +719,10 @@ declaration:
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
 | VAR variable_declaration SEMICOLON
-    { $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, std::nullopt); }
+    {
+      $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
+                                           std::nullopt);
+      }
 | VAR variable_declaration EQUAL expression SEMICOLON
     { $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4); }
 ;
