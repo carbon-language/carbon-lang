@@ -4387,12 +4387,14 @@ using the default definition, unless there has already been an implementation of
 external impl Song as TotalOrder {
   fn TotalLess[me: Self](right: Self) -> Bool { ... }
 }
-// as if followed by:
-// external impl Song as PartialOrder {
-//   fn PartialLess[me: Self](right: Self) -> Bool {
-//     return me.TotalLess(right);
-//   }
-// }
+\```
+Behaves as if it is followed by:
+\```
+external impl Song as PartialOrder {
+  fn PartialLess[me: Self](right: Self) -> Bool {
+    return me.TotalLess(right);
+  }
+}
 ```
 
 The resulting impl definition must be legal where it is instantiated, for
@@ -4402,7 +4404,7 @@ is invalid.
 The resulting impl will be [external](#external-impl) unless both:
 
 -   the interface requirement uses `extends` instead of `impl as`, and
--   the type implements the type type `Song` implements `TotalOrder` internally.
+-   the type implements the original interface internally.
 
 ```
 interface Hashable {
@@ -4463,7 +4465,7 @@ type structure of `impl ? as PartialOrder`.
 If an interface provides multiple default impl definitions, or a default impl
 definition triggers another default impl to be instantiated, the default impls
 are instantiated in depth-first order following the order the default impls were
-declared in the triggering interface. There is a a recursion limit to prevent
+declared in the triggering interface. There is a recursion limit to prevent
 this from defining an infinite collection of implementations, like
 [with parameterized impls](#termination-rule), as would happen in this case:
 
