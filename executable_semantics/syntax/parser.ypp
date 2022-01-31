@@ -722,7 +722,7 @@ declaration:
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
                                            std::nullopt);
-      }
+    }
 | VAR variable_declaration EQUAL expression SEMICOLON
     { $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4); }
 ;
