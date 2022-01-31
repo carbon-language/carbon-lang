@@ -156,7 +156,6 @@ auto Interpreter::EvalPrim(Operator op,
     case Operator::Deref:
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
-      llvm::outs() << "******AddressOf debug: " << *args[0] << "\n";
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
   }
 }
