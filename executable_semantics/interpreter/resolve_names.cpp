@@ -8,7 +8,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"

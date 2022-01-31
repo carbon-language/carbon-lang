@@ -77,7 +77,6 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":member",
         ":pattern",
         ":return_term",
         ":source_location",
@@ -136,23 +135,6 @@ cc_test(
         ":paren_contents",
         "//executable_semantics/common:arena",
         "@com_google_googletest//:gtest_main",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "member",
-    srcs = ["member.cpp"],
-    hdrs = ["member.h"],
-    deps = [
-        ":expression",
-        ":pattern",
-        ":return_target",
-        ":return_term",
-        ":source_location",
-        ":statement",
-        "//common:ostream",
-        "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
 )
