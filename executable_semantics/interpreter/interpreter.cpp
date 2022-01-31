@@ -154,7 +154,9 @@ auto Interpreter::EvalPrim(Operator op,
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
-      FATAL() << "dereference not implemented yet";
+      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
+    case Operator::AddressOf:
+      return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
   }
 }
 
@@ -340,6 +342,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
