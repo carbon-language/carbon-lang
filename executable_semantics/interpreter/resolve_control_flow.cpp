@@ -16,7 +16,6 @@ namespace Carbon {
 // Aggregate information about a function being analyzed.
 struct FunctionData {
   // The function declaration.
-  // Nonnull<FunctionDeclaration*> declaration;
   Nonnull<FunctionDeclaration*> declaration;
 
   // True if the function has a deduced return type, and we've already seen

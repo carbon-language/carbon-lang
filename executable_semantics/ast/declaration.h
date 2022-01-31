@@ -129,11 +129,10 @@ class GenericBinding : public AstNode {
 class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonNamedEntity = void;
-  using ImplementsCarbonReturnTarget = void;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-		      std::optional<Nonnull<BindingPattern*>> me_pattern,
+                      std::optional<Nonnull<BindingPattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
@@ -181,7 +180,7 @@ class FunctionDeclaration : public Declaration {
   }
 
   bool is_method() const { return me_pattern_.has_value(); }
-  
+
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
@@ -207,7 +206,9 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> { return members_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
+    return members_;
+  }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -311,7 +312,7 @@ class VariableDeclaration : public Declaration {
   auto initializer() -> Expression& { return **initializer_; }
 
   bool has_initializer() const { return initializer_.has_value(); }
-  
+
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a

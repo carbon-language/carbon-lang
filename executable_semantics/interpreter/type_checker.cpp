@@ -1011,7 +1011,7 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // Type check the receiver patter
     TypeCheckPattern(&f->me_pattern(), std::nullopt);
   }
-      
+
   // Type check the parameter pattern
   TypeCheckPattern(&f->param_pattern(), std::nullopt);
 
@@ -1091,31 +1091,28 @@ void TypeChecker::TypeCheckClassDeclaration(
   for (Nonnull<Declaration*> m : class_decl->members()) {
     DeclareDeclaration(m);
     switch (m->kind()) {
-    case DeclarationKind::FunctionDeclaration: {
-      const auto& func = cast<FunctionDeclaration>(*m);
-      Nonnull<const Value*> static_type = &func.static_type();
-      Nonnull<const Value*> value = arena_->New<FunctionValue>(&func);
-      if (func.is_method()) {
-        method_types.push_back(
-          {.name = func.name(), .value = static_type});
-        methods.push_back(
-          {.name = func.name(), .value = value});
-      } else {
-        class_function_types.push_back(
-	  {.name = func.name(), .value = static_type});
-        class_functions.push_back(
-	  {.name = func.name(), .value = value});
+      case DeclarationKind::FunctionDeclaration: {
+        const auto& func = cast<FunctionDeclaration>(*m);
+        Nonnull<const Value*> static_type = &func.static_type();
+        Nonnull<const Value*> value = arena_->New<FunctionValue>(&func);
+        if (func.is_method()) {
+          method_types.push_back({.name = func.name(), .value = static_type});
+          methods.push_back({.name = func.name(), .value = value});
+        } else {
+          class_function_types.push_back(
+              {.name = func.name(), .value = static_type});
+          class_functions.push_back({.name = func.name(), .value = value});
+        }
+        break;
       }
-      break;
-    }
-    case DeclarationKind::VariableDeclaration: {
-      const auto& var = cast<VariableDeclaration>(*m);
-      field_types.push_back(
-	{.name = var.binding().name(), .value = &var.binding().static_type()});
-      break;
-    }
-    default:
-      break;
+      case DeclarationKind::VariableDeclaration: {
+        const auto& var = cast<VariableDeclaration>(*m);
+        field_types.push_back({.name = var.binding().name(),
+                               .value = &var.binding().static_type()});
+        break;
+      }
+      default:
+        break;
     }
   }
 
@@ -1173,7 +1170,7 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
       // the declared type of the variable, otherwise returns this
       // declaration with annotated types.
       if (var.has_initializer()) {
-	TypeCheckExp(&var.initializer());
+        TypeCheckExp(&var.initializer());
       }
       const auto* binding_type =
           dyn_cast<ExpressionPattern>(&var.binding().type());
@@ -1186,8 +1183,8 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
           InterpExp(&binding_type->expression(), arena_, trace_);
       SetStaticType(&var, declared_type);
       if (var.has_initializer()) {
-	ExpectType(var.source_loc(), "initializer of variable", declared_type,
-		   &var.initializer().static_type());
+        ExpectType(var.source_loc(), "initializer of variable", declared_type,
+                   &var.initializer().static_type());
       }
       return;
     }

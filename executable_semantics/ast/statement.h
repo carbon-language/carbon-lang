@@ -183,6 +183,7 @@ class Return : public Statement {
 
   // Can only be called once, by ResolveControlFlow.
   void set_function(Nonnull<FunctionDeclaration*> function) {
+    CHECK(!function_.has_value());
     function_ = function;
   }
 

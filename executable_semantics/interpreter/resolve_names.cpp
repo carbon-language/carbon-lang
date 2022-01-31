@@ -253,7 +253,7 @@ static void ResolveNames(Declaration& declaration,
         ResolveNames(binding->type(), function_scope);
       }
       if (function.is_method()) {
-	ResolveNames(function.me_pattern(), function_scope);
+        ResolveNames(function.me_pattern(), function_scope);
       }
       ResolveNames(function.param_pattern(), function_scope);
       if (function.return_term().type_expression().has_value()) {
@@ -298,7 +298,7 @@ static void ResolveNames(Declaration& declaration,
       auto& var = cast<VariableDeclaration>(declaration);
       ResolveNames(var.binding(), enclosing_scope);
       if (var.has_initializer()) {
-	ResolveNames(var.initializer(), enclosing_scope);
+        ResolveNames(var.initializer(), enclosing_scope);
       }
       break;
     }
