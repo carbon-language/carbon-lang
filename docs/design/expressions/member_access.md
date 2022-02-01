@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Package and namespace members](#package-and-namespace-members)
     -   [Lookup within values](#lookup-within-values)
         -   [Templates and generics](#templates-and-generics)
+        -   [Lookup ambiguity](#lookup-ambiguity)
 -   [`impl` lookup](#impl-lookup)
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
@@ -150,8 +151,7 @@ For a direct member access, the word is looked up in the following types:
 -   If the type of the first operand is a generic type parameter, and the type
     of that generic type parameter can be evaluated, that type-of-type.
 
-The results of these lookups are combined. If more than one distinct entity is
-found, the qualified name is invalid.
+The results of these lookups are [combined](#lookup-ambiguity).
 
 For an indirect member access, the second operand is evaluated as a constant to
 determine the member being accessed. The evaluation is required to succeed and
@@ -227,8 +227,7 @@ fn G[template T:! Type](x: TemplateWrapper(T)) -> T {
 If the value or type depends on any template parameters, the lookup is redone
 from a context where the values of those parameters are known, but where the
 values of any generic parameters are still unknown. The lookup results from
-these two contexts are combined, and if more than one distinct entity is found,
-the qualified name is invalid.
+these two contexts are [combined](#lookup-ambiguity).
 
 **Note:** All lookups are done from a context where the values of any generic
 parameters that are in scope are unknown. Unlike for a template parameter, the
@@ -280,6 +279,14 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   s.Draw();
 }
 ```
+
+#### Lookup ambiguity
+
+Multiple lookups can be performed when resolving a member access expression. If
+more than one member is found, after performing [`impl` lookup](#impl-lookup) if
+necessary, the lookup is ambiguous, and the program is invalid. Similarly, if no
+members are found, the program is invalid. Otherwise, the result of combining
+the lookup results is the unique member that was found.
 
 ## `impl` lookup
 
