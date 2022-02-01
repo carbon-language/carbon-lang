@@ -166,6 +166,7 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:pattern",
+        "//executable_semantics/ast:return_term",
         "//executable_semantics/ast:statement",
         "//executable_semantics/ast:static_scope",
         "//executable_semantics/common:arena",

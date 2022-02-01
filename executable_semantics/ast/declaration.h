@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"

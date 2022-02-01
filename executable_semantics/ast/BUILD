@@ -182,7 +182,6 @@ cc_library(
         ":source_location",
         ":value_category",
         "//common:check",
-        "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
     ],

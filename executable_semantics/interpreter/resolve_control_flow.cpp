@@ -5,6 +5,7 @@
 #include "executable_semantics/interpreter/resolve_control_flow.h"
 
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/Support/Casting.h"

@@ -10,13 +10,13 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
 
 namespace Carbon {
 
 class Value;
+class Expression;
 
 // The syntactic representation of a function declaration's return type.
 // This syntax can take one of three forms:
