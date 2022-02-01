@@ -591,7 +591,7 @@ fn MemberAccess(n: i32) {
   // `n.(i32.(Printable.Print))` is a bound member function naming that member.
   n.(i32.(Printable.Print))();
 
-  // ✅ Same as above, `n.(Printable.Print)` is interpreted as
+  // ✅ Same as above, `n.(Printable.Print)` is effectively interpreted as
   // `n.(T.(Printable.Print))()`, where `T` is the type of `n`,
   // because `n` does not evaluate to a type. Performs impl lookup
   // and then instance binding.
