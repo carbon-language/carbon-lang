@@ -17,20 +17,97 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void ActionStack::PrintScopes(llvm::raw_ostream& out) const {
+  llvm::ListSeparator sep(" :: ");
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      out << sep << *action->scope();
+    }
+  }
+  if (globals_.has_value()) {
+    out << sep << *globals_;
+  }
+  // TODO: should we print constants as well?
+}
+
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
   CHECK(todo_.IsEmpty());
-  todo_ = {};
   todo_.Push(std::move(action));
 }
 
-auto ActionStack::CurrentScope() const -> Scope& {
+void ActionStack::Initialize(NamedEntityView named_entity,
+                             Nonnull<const Value*> value) {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
-      return *action->scope();
+      action->scope()->Initialize(named_entity, value);
+      return;
     }
   }
-  return globals_;
+  globals_->Initialize(named_entity, value);
+}
+
+auto ActionStack::ValueOfName(NamedEntityView named_entity,
+                              SourceLocation source_loc) const
+    -> Nonnull<const Value*> {
+  if (std::optional<Nonnull<const Value*>> constant_value =
+          named_entity.constant_value();
+      constant_value.has_value()) {
+    return *constant_value;
+  }
+  for (const std::unique_ptr<Action>& action : todo_) {
+    // TODO: have static name resolution identify the scope of named_entity
+    // as an AstNode, and then perform lookup _only_ on the Action associated
+    // with that node. This will help keep unwanted dynamic-scoping behavior
+    // from sneaking in.
+    if (action->scope().has_value()) {
+      std::optional<Nonnull<const Value*>> result =
+          action->scope()->Get(named_entity);
+      if (result.has_value()) {
+        return *result;
+      }
+    }
+  }
+  if (globals_.has_value()) {
+    std::optional<Nonnull<const Value*>> result = globals_->Get(named_entity);
+    if (result.has_value()) {
+      return *result;
+    }
+  }
+  // TODO: Move these errors to compile time and explain them more clearly.
+  FATAL_RUNTIME_ERROR(source_loc)
+      << "could not find `" << named_entity.name() << "`";
+}
+
+void ActionStack::MergeScope(RuntimeScope scope) {
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      action->scope()->Merge(std::move(scope));
+      return;
+    }
+  }
+  if (globals_.has_value()) {
+    globals_->Merge(std::move(scope));
+    return;
+  }
+  FATAL() << "No current scope";
+}
+
+void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
+                                     Nonnull<const Statement*> body) {
+  std::vector<Nonnull<const RuntimeScope*>> scopes;
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      scopes.push_back(&*action->scope());
+    }
+  }
+  // We don't capture globals_ or constants_ because they're global.
+
+  std::vector<std::unique_ptr<Action>> reversed_todo;
+  reversed_todo.push_back(std::make_unique<StatementAction>(body));
+  reversed_todo.push_back(
+      std::make_unique<ScopeAction>(RuntimeScope::Capture(scopes)));
+  fragment.StoreReversed(std::move(reversed_todo));
 }
 
 void ActionStack::FinishAction() {
@@ -70,7 +147,7 @@ void ActionStack::Spawn(std::unique_ptr<Action> child) {
   todo_.Push(std::move(child));
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child, Scope scope) {
+void ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope) {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));

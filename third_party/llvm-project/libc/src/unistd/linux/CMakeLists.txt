@@ -1,0 +1,12 @@
+add_entrypoint_object(
+  write
+  SRCS
+    write.cpp
+  HDRS
+    ../write.h
+  DEPENDS
+    libc.include.unistd
+    libc.include.sys_syscall
+    libc.src.__support.OSUtil.osutil
+    libc.src.errno.__errno_location
+)

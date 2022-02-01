@@ -133,11 +133,6 @@ class IdentifierExpression : public Expression {
     named_entity_ = std::move(named_entity);
   }
 
-  // Returns true if set_named_entity has been called. Should be used only
-  // for debugging purposes.
-  // TODO: remove this once we no longer need the CHECKs that use it.
-  auto has_named_entity() const -> bool { return named_entity_.has_value(); }
-
  private:
   std::string name_;
   std::optional<NamedEntityView> named_entity_;

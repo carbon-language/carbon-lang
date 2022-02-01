@@ -1,0 +1,1 @@
+; RUN: llvm-ar -M  < %S/Inputs/mri-crlf.mri
