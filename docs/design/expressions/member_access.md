@@ -383,17 +383,17 @@ class C {
   }
 }
 
-// `M` is `I.F` and `V` is `I`. Because `V` is a type-of-type,
+// `V` is `I` and `M` is `I.F`. Because `V` is a type-of-type,
 // `impl` lookup is not performed, and the alias binds to #1.
 alias A1 = I.F;
 
-// `M` is `I.F` and `V` is `C`. Because `V` is a type, `impl`
+// `V` is `C` and `M` is `I.F`. Because `V` is a type, `impl`
 // lookup is performed with `T` being `C`, and the alias binds to #2.
 alias A2 = C.F;
 
 let c: C = {};
 
-// `M` is `I.N` and `V` is `c`. Because `V` is a non-type, `impl`
+// `V` is `c` and `M` is `I.N`. Because `V` is a non-type, `impl`
 // lookup is performed with `T` being the type of `c`, namely `C`, and
 // `M` becomes the associated constant from `impl C as I`.
 // The value of `Z` is 5.
@@ -405,7 +405,7 @@ instance member.
 
 ```carbon
 var c: C;
-// `M` is `I.F` and `V` is `c`. Because `V` is not a type, `T` is the
+// `V` is `c` and `M` is `I.F`. Because `V` is not a type, `T` is the
 // type of `c`, which is `C`. `impl` lookup is performed, and `M` is
 // replaced with #2. Then instance binding is performed.
 c.F();
@@ -443,7 +443,7 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
   // the member `Draw` of `impl RoundWidget as Renderable`, #2.
   // The outer member access then forms a bound member function that
-  // calls #2 on `r`, as described below.
+  // calls #2 on `r`, as described in "Instance binding".
   r.(RoundWidget.Draw)();
 
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
@@ -469,10 +469,12 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
 base class WidgetBase {
   // ✅ OK, even though `WidgetBase` does not implement `Renderable`.
   alias Draw = Renderable.Draw;
-  fn DrawAll[T:! Type](v: Vector(T)) {
+  fn DrawAll[T:! Renderable](v: Vector(T)) {
     for (var w: T in v) {
-      // ✅ OK if `T` implements `Renderable; calls `Renderable.Draw`.
+      // ✅ OK, `T` is known to implement `Renderable`.
       // Unqualified lookup for `Draw` does not perform `impl` lookup.
+      // Indirect member access expression performs `impl` lookup into
+      // `impl T as Renderable`.
       w.(Draw)();
       // ❌ Error: `Self.Draw` performs `impl` lookup, which fails
       // because `WidgetBase` does not implement `Renderable`.
