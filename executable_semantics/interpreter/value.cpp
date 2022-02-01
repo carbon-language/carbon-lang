@@ -48,7 +48,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         // Look for a method in the object's class
         const NominalClassType& class_type =
             cast<NominalClassType>(object.type());
-        std::optional<Nonnull<const Value*>> method = class_type.FindMethod(f);
+        std::optional<Nonnull<const Value*>> method =
+            class_type.FindFunction(f);
         if (method == std::nullopt) {
           FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v
                                           << " or its class " << class_type;
@@ -180,7 +181,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::NominalClassValue: {
       const auto& s = cast<NominalClassValue>(*this);
-      out << cast<NominalClassType>(s.type()).name() << s.inits();
+      out << cast<NominalClassType>(s.type()).declaration().name() << s.inits();
       break;
     }
     case Value::Kind::TupleValue: {
@@ -255,7 +256,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::NominalClassType: {
       const NominalClassType& class_type = cast<NominalClassType>(*this);
-      out << "class " << class_type.name();
+      out << "class " << class_type.declaration().name();
       break;
     }
     case Value::Kind::ChoiceType:
@@ -277,7 +278,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "\"";
       break;
     case Value::Kind::TypeOfClassType:
-      out << "typeof(" << cast<TypeOfClassType>(*this).class_type().name()
+      out << "typeof("
+          << cast<TypeOfClassType>(*this).class_type().declaration().name()
           << ")";
       break;
     case Value::Kind::TypeOfChoiceType:
@@ -353,8 +355,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return true;
     }
     case Value::Kind::NominalClassType:
-      return cast<NominalClassType>(*t1).name() ==
-             cast<NominalClassType>(*t2).name();
+      return cast<NominalClassType>(*t1).declaration().name() ==
+             cast<NominalClassType>(*t2).declaration().name();
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {
@@ -490,19 +492,59 @@ auto ChoiceType::FindAlternative(std::string_view name) const
 
 auto NominalClassType::FindFunction(const std::string& name) const
     -> std::optional<Nonnull<const Value*>> {
-  for (const NamedValue& fun : class_functions_) {
-    if (fun.name == name) {
-      return fun.value;
+  for (const auto& member : declaration().members()) {
+    switch (member->kind()) {
+      case DeclarationKind::FunctionDeclaration: {
+        const auto& fun = cast<FunctionDeclaration>(*member);
+        if (fun.name() == name) {
+          return fun.constant_value();
+        }
+        break;
+      }
+      default:
+        break;
     }
   }
   return std::nullopt;
 }
 
-auto NominalClassType::FindMethod(const std::string& name) const
-    -> std::optional<Nonnull<const Value*>> {
-  for (const NamedValue& fun : methods_) {
-    if (fun.name == name) {
-      return fun.value;
+auto NominalClassType::field_types() const -> std::vector<NamedValue> {
+  std::vector<NamedValue> field_types;
+  for (Nonnull<Declaration*> m : declaration().members()) {
+    switch (m->kind()) {
+      case DeclarationKind::VariableDeclaration: {
+        const auto& var = cast<VariableDeclaration>(*m);
+        field_types.push_back({.name = var.binding().name(),
+                               .value = &var.binding().static_type()});
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return field_types;
+}
+
+auto NominalClassType::FindMember(const std::string& name) const
+    -> std::optional<Nonnull<const Declaration*>> {
+  for (const auto& member : declaration().members()) {
+    switch (member->kind()) {
+      case DeclarationKind::FunctionDeclaration: {
+        const auto& fun = cast<FunctionDeclaration>(*member);
+        if (fun.name() == name) {
+          return &fun;
+        }
+        break;
+      }
+      case DeclarationKind::VariableDeclaration: {
+        const auto& var = cast<VariableDeclaration>(*member);
+        if (var.binding().name() == name) {
+          return &var;
+        }
+        break;
+      }
+      default:
+        break;
     }
   }
   return std::nullopt;

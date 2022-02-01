@@ -437,72 +437,28 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(std::string name, std::vector<NamedValue> field_types,
-                   std::vector<NamedValue> class_function_types,
-                   std::vector<NamedValue> class_functions,
-                   std::vector<NamedValue> method_types,
-                   std::vector<NamedValue> methods)
-      : Value(Kind::NominalClassType),
-        name_(std::move(name)),
-        field_types_(std::move(field_types)),
-        class_function_types_(std::move(class_function_types)),
-        class_functions_(std::move(class_functions)),
-        method_types_(std::move(method_types)),
-        methods_(std::move(methods)) {}
+  NominalClassType(Nonnull<const ClassDeclaration*> declaration)
+      : Value(Kind::NominalClassType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
-  auto name() const -> const std::string& { return name_; }
-  auto field_types() const -> llvm::ArrayRef<NamedValue> {
-    return field_types_;
-  }
-  auto class_function_types() const -> llvm::ArrayRef<NamedValue> {
-    return class_function_types_;
-  }
-  auto class_functions() const -> llvm::ArrayRef<NamedValue> {
-    return class_functions_;
-  }
-  auto method_types() const -> llvm::ArrayRef<NamedValue> {
-    return method_types_;
-  }
-  auto methods() const -> llvm::ArrayRef<NamedValue> { return methods_; }
+  auto declaration() const -> const ClassDeclaration& { return *declaration_; }
 
-  void set_field_types(const std::vector<NamedValue>& fields) {
-    field_types_ = fields;
-  }
-  void set_class_function_types(
-      const std::vector<NamedValue>& class_function_types) {
-    class_function_types_ = class_function_types;
-  }
-  void set_class_functions(const std::vector<NamedValue>& class_functions) {
-    class_functions_ = class_functions;
-  }
-  void set_method_types(const std::vector<NamedValue>& method_types) {
-    method_types_ = method_types;
-  }
-  void set_methods(const std::vector<NamedValue>& methods) {
-    methods_ = methods;
-  }
+  auto field_types() const -> std::vector<NamedValue>;
 
-  // Returns the value of the class function named `name` in this class, or
-  // nullopt if there is no such class function.
+  // Return the declaration of the member with the given name.
+  auto FindMember(const std::string& name) const
+      -> std::optional<Nonnull<const Declaration*>>;
+
+  // Returns the value of the function named `name` in this class, or
+  // nullopt if there is no such function.
   auto FindFunction(const std::string& name) const
       -> std::optional<Nonnull<const Value*>>;
 
-  // Returns the value of the method named `name` in this class, or
-  // nullopt if there is no such method.
-  auto FindMethod(const std::string& name) const
-      -> std::optional<Nonnull<const Value*>>;
-
  private:
-  std::string name_;
-  std::vector<NamedValue> field_types_;
-  std::vector<NamedValue> class_function_types_;
-  std::vector<NamedValue> class_functions_;
-  std::vector<NamedValue> method_types_;
-  std::vector<NamedValue> methods_;
+  Nonnull<const ClassDeclaration*> declaration_;
 };
 
 // A choice type.

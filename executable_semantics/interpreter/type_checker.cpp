@@ -480,25 +480,28 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(aggregate_type);
-          // Search for a field
-          for (auto& field : t_class.field_types()) {
-            if (access.field() == field.name) {
-              SetStaticType(&access, field.value);
-              access.set_value_category(access.aggregate().value_category());
-              return;
+          if (std::optional<Nonnull<const Declaration*>> member =
+                  t_class.FindMember(access.field());
+              member.has_value()) {
+            SetStaticType(&access, &(*member)->static_type());
+            switch ((*member)->kind()) {
+              case DeclarationKind::VariableDeclaration:
+                access.set_value_category(access.aggregate().value_category());
+                break;
+              case DeclarationKind::FunctionDeclaration:
+                access.set_value_category(ValueCategory::Let);  //??
+                break;
+              default:
+                FATAL() << "member " << access.field()
+                        << " is not a field or method";
+                break;
             }
+            return;
+          } else {
+            FATAL_COMPILATION_ERROR(e->source_loc())
+                << "class " << t_class.declaration().name()
+                << " does not have a field named " << access.field();
           }
-          // Search for a method
-          for (auto& method : t_class.method_types()) {
-            if (access.field() == method.name) {
-              SetStaticType(&access, method.value);
-              access.set_value_category(ValueCategory::Let);
-              return;
-            }
-          }
-          FATAL_COMPILATION_ERROR(e->source_loc())
-              << "class " << t_class.name() << " does not have a field named "
-              << access.field();
         }
         case Value::Kind::TypeOfChoiceType: {
           const ChoiceType& choice =
@@ -520,17 +523,17 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
         case Value::Kind::TypeOfClassType: {
           const NominalClassType& class_type =
               cast<TypeOfClassType>(aggregate_type).class_type();
-          for (const auto& [field_name, field_type] :
-               class_type.class_function_types()) {
-            if (access.field() == field_name) {
-              SetStaticType(&access, field_type);
-              access.set_value_category(access.aggregate().value_category());
-              return;
-            }
+          if (std::optional<Nonnull<const Declaration*>> member =
+                  class_type.FindMember(access.field());
+              member.has_value()) {
+            SetStaticType(&access, &(*member)->static_type());
+            access.set_value_category(access.aggregate().value_category());
+            return;
+          } else {
+            FATAL_COMPILATION_ERROR(access.source_loc())
+                << class_type << " does not have a class function named "
+                << access.field();
           }
-          FATAL_COMPILATION_ERROR(access.source_loc())
-              << class_type << " does not have a class function named "
-              << access.field();
         }
         default:
           FATAL_COMPILATION_ERROR(e->source_loc())
@@ -1060,71 +1063,23 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 
 void TypeChecker::TypeCheckClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl) {
-  std::vector<NamedValue> field_types;
-  std::vector<NamedValue> class_function_types;
-  std::vector<NamedValue> class_functions;
-  std::vector<NamedValue> method_types;
-  std::vector<NamedValue> methods;
-
-  // The class itself is initially incomplete, but still can be used
-  // in the type annotations on fields and methods.  Thus, we
-  // initially set it to an NominalClassType without any types for its
-  // members, or any class functions.
-  //
-  // An alternative would be use create an IncompleteClassType and
-  // then replace it with a NominalClassType, but the problem with
-  // that is the processing of the types of the fields and methods
-  // causes pointers (aliases) to the class type to be stored.  It
-  // would be painful to go a update all those pointers.
-
-  Nonnull<NominalClassType*> class_type = arena_->New<NominalClassType>(
-      class_decl->name(), field_types, class_function_types, class_functions,
-      method_types, methods);
+  // The declarations of the members may refer to the class, so we
+  // must set the constant value of the class and its static type
+  // before we start processing the members.
+  Nonnull<NominalClassType*> class_type =
+      arena_->New<NominalClassType>(class_decl);
   SetConstantValue(class_decl, class_type);
   SetStaticType(class_decl, arena_->New<TypeOfClassType>(class_type));
 
-  // First pass: process the field, class function, and method declarations
-  // but not the bodies of class functions or method declarations.
-  // The first pass also creates class function values for all the
-  // class functions.
-
+  // First pass: process the field, class function, and method
+  // declarations but not the bodies of class functions or method
+  // declarations.
   for (Nonnull<Declaration*> m : class_decl->members()) {
     DeclareDeclaration(m);
-    switch (m->kind()) {
-      case DeclarationKind::FunctionDeclaration: {
-        const auto& func = cast<FunctionDeclaration>(*m);
-        Nonnull<const Value*> static_type = &func.static_type();
-        Nonnull<const Value*> value = arena_->New<FunctionValue>(&func);
-        if (func.is_method()) {
-          method_types.push_back({.name = func.name(), .value = static_type});
-          methods.push_back({.name = func.name(), .value = value});
-        } else {
-          class_function_types.push_back(
-              {.name = func.name(), .value = static_type});
-          class_functions.push_back({.name = func.name(), .value = value});
-        }
-        break;
-      }
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        field_types.push_back({.name = var.binding().name(),
-                               .value = &var.binding().static_type()});
-        break;
-      }
-      default:
-        break;
-    }
   }
 
-  // The class is now complete.
-  class_type->set_field_types(field_types);
-  class_type->set_class_function_types(class_function_types);
-  class_type->set_class_functions(class_functions);
-  class_type->set_method_types(method_types);
-  class_type->set_methods(methods);
-
-  // Second pass: type check the bodies of the class functions and methods.
-
+  // Second pass: type check the bodies of the class functions and
+  // methods.
   for (Nonnull<Declaration*> m : class_decl->members()) {
     TypeCheckDeclaration(m);
   }

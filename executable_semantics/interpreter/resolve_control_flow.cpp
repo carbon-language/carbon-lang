@@ -111,7 +111,7 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
   }
 }
 
-void ResolveControlFlowDecl(Nonnull<Declaration*> declaration) {
+void ResolveControlFlow(Nonnull<Declaration*> declaration) {
   switch (declaration->kind()) {
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<FunctionDeclaration>(*declaration);
@@ -124,7 +124,7 @@ void ResolveControlFlowDecl(Nonnull<Declaration*> declaration) {
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : class_decl.members()) {
-        ResolveControlFlowDecl(member);
+        ResolveControlFlow(member);
       }
       break;
     }
@@ -136,7 +136,7 @@ void ResolveControlFlowDecl(Nonnull<Declaration*> declaration) {
 
 void ResolveControlFlow(AST& ast) {
   for (auto declaration : ast.declarations) {
-    ResolveControlFlowDecl(declaration);
+    ResolveControlFlow(declaration);
   }
 }
 
