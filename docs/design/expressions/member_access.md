@@ -85,21 +85,6 @@ A member access expression is processed using the following steps:
 -   If [instance binding is not performed](#non-instance-members), the result is
     `M`.
 
-The following kinds of member access expressions are supported, depending on the
-first operand of the `.` and the member that the second operand resolves to:
-
-| Left of `.`  | Right of `.`                     | Result                                                                    |
-| ------------ | -------------------------------- | ------------------------------------------------------------------------- |
-| Non-type     | Non-instance member of type      | The member of the type                                                    |
-| Non-type     | Instance member of type          | Bound member of the object                                                |
-| Non-type     | Non-instance member of interface | The member of the matching `impl`                                         |
-| Non-type     | Instance member of interface     | Bound member of the object referring to the member of the matching `impl` |
-| Type         | Member of type                   | The member of the type                                                    |
-| Type         | Member of interface              | The member of the matching `impl`                                         |
-| Type-of-type | Member of interface              | The member of the interface                                               |
-| Namespace    | Member of namespace              | The member of the namespace                                               |
-| Package      | Member of package                | The member of the package                                                 |
-
 ## Member resolution
 
 The process of _member resolution_ determines which member `M` a member access
