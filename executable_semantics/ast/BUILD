@@ -94,6 +94,8 @@ cc_library(
     hdrs = ["return_term.h"],
     deps = [
         ":source_location",
+        "//common:check",
+        "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],

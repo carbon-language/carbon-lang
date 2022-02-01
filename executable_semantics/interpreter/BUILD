@@ -149,6 +149,7 @@ cc_library(
         "//common:check",
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:return_term",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
