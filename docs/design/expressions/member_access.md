@@ -315,7 +315,7 @@ interface Addable {
   }
 }
 
-struct Integer {
+class Integer {
   impl as Addable {
     // #3
     fn Add[me: Self](other: Self) -> Self;
@@ -592,7 +592,7 @@ fn MemberAccess(n: i32) {
   n.(i32.(Printable.Print))();
 
   // ✅ Same as above, `n.(Printable.Print)` is interpreted as
-  // `n.(i32.(Printable.Print))()`
+  // `n.(T.(Printable.Print))()`, where `T` is the type of `n`,
   // because `n` does not evaluate to a type. Performs impl lookup
   // and then instance binding.
   n.(Printable.Print)();
