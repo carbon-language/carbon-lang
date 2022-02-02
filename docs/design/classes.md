@@ -676,9 +676,10 @@ for argument passing were decided in
 
 The declarations for nominal class types will have:
 
+-   an optional `abstract` or `base` prefix
 -   `class` introducer
 -   the name of the class
--   in the future, we will have optional modifiers for inheritance
+-   an optional `extends` followed by the name of the immediate base class
 -   `{`, an open curly brace
 -   a sequence of declarations
 -   `}`, a close curly brace
@@ -705,10 +706,13 @@ determined at compile time.
 
 To support circular references between class types, we allow
 [forward declaration](https://en.wikipedia.org/wiki/Forward_declaration) of
-types. A type that is forward declared is considered incomplete until the end of
-a definition with the same name.
+types. Forward declarations end with semicolon `;` after the name of the class,
+instead of any `extends` clause and the block of declarations in curly braces
+`{`...`}`. A type that is forward declared is considered incomplete until the
+end of a definition with the same name.
 
 ```
+// Forward declaration of `GraphNode`.
 class GraphNode;
 
 class GraphEdge {
@@ -719,6 +723,7 @@ class GraphEdge {
 class GraphNode {
   var edges: Vector(GraphEdge*);
 }
+// `GraphNode` is first complete here.
 ```
 
 **Open question:** What is specifically allowed and forbidden with an incomplete

@@ -41,7 +41,7 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = Interpreter(arena, trace).InterpProgram(ast);
+  int result = InterpProgram(ast, arena, trace);
   llvm::outs() << "result: " << result << "\n";
 }
 

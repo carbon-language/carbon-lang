@@ -17,4 +17,6 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: pre-commit/action@v2.0.2
         env:
-          SKIP: bazel-buildifier,clang-format-whole-file,fix-cc-deps
+          # bazel-buildifier relies on a locally installed copy.
+          # clang-format-whole-file has races in cache creation.
+          SKIP: bazel-buildifier,clang-format-whole-file

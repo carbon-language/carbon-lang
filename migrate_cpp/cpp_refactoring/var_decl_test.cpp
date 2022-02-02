@@ -6,7 +6,7 @@
 
 #include "migrate_cpp/cpp_refactoring/matcher_test_base.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 class VarDeclTest : public MatcherTestBase<VarDeclFactory> {};
@@ -254,4 +254,4 @@ TEST_F(VarDeclTest, Template) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

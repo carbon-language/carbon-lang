@@ -83,82 +83,100 @@ struct InvalidHorizontalWhitespaceInString
       "sequence in a string literal.";
 };
 
-// Find and return the opening characters of a multi-line string literal,
+static constexpr char MultiLineIndicator[] = R"(""")";
+
+// Return the number of opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
-static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  llvm::StringRef remaining = source_text;
-  if (!remaining.consume_front(R"(""")")) {
-    return llvm::StringRef();
+static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
+    -> int {
+  if (!source_text.startswith(MultiLineIndicator)) {
+    return 0;
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
-  remaining = remaining.drop_until(
-      [](char c) { return c == '"' || c == '#' || c == '\n'; });
-  if (!remaining.consume_front("\n")) {
-    return llvm::StringRef();
+  auto prefix_end =
+      source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
+  if (prefix_end == llvm::StringRef::npos || source_text[prefix_end] != '\n') {
+    return 0;
   }
 
-  return source_text.take_front(remaining.begin() - source_text.begin());
+  // Include the newline on return.
+  return prefix_end + 1;
 }
 
-// If source_text begins with a string literal token, extract and return
-// information on that token.
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
-  const char* begin = source_text.begin();
+  int64_t cursor = 0;
+  const int64_t source_text_size = source_text.size();
 
-  int hash_level = 0;
-  while (source_text.consume_front("#")) {
-    ++hash_level;
+  // Determine the number of hashes prefixing.
+  while (cursor < source_text_size && source_text[cursor] == '#') {
+    ++cursor;
   }
+  const int hash_level = cursor;
 
   llvm::SmallString<16> terminator("\"");
   llvm::SmallString<16> escape("\\");
 
-  llvm::StringRef multi_line_prefix =
-      TakeMultiLineStringLiteralPrefix(source_text);
-  bool multi_line = !multi_line_prefix.empty();
+  const int multi_line_prefix_size =
+      GetMultiLineStringLiteralPrefixSize(source_text.substr(hash_level));
+  const bool multi_line = multi_line_prefix_size > 0;
   if (multi_line) {
-    source_text = source_text.drop_front(multi_line_prefix.size());
-    terminator = R"(""")";
-  } else if (!source_text.consume_front("\"")) {
+    cursor += multi_line_prefix_size;
+    terminator = MultiLineIndicator;
+  } else if (cursor < source_text_size && source_text[cursor] == '"') {
+    ++cursor;
+  } else {
     return llvm::None;
   }
+
+  const int prefix_len = cursor;
 
   // The terminator and escape sequence marker require a number of '#'s
   // matching the leading sequence of '#'s.
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
-  const char* content_begin = source_text.begin();
-  const char* content_end = content_begin;
-  while (!source_text.consume_front(terminator)) {
-    // Let LexError figure out how to recover from an unterminated string
-    // literal.
-    if (source_text.empty()) {
-      return llvm::None;
+  for (; cursor < source_text_size; ++cursor) {
+    // This switch and loop structure relies on multi-character terminators and
+    // escape sequences starting with a predictable character and not containing
+    // embedded and unescaped terminators or newlines.
+    switch (source_text[cursor]) {
+      case '\\':
+        if (escape.size() == 1 ||
+            source_text.substr(cursor).startswith(escape)) {
+          cursor += escape.size();
+          // If there's either not a character following the escape, or it's a
+          // single-line string and the escaped character is a newline, we
+          // should stop here.
+          if (cursor >= source_text_size ||
+              (!multi_line && source_text[cursor] == '\n')) {
+            return llvm::None;
+          }
+        }
+        break;
+      case '\n':
+        if (!multi_line) {
+          return llvm::None;
+        }
+        break;
+      case '\"': {
+        if (terminator.size() == 1 ||
+            source_text.substr(cursor).startswith(terminator)) {
+          llvm::StringRef text =
+              source_text.substr(0, cursor + terminator.size());
+          llvm::StringRef content =
+              source_text.substr(prefix_len, cursor - prefix_len);
+          return LexedStringLiteral(text, content, hash_level, multi_line);
+        }
+        break;
+      }
     }
-
-    // Consume an escape sequence marker if present.
-    (void)source_text.consume_front(escape);
-
-    // Then consume one more character, either of the content or of an
-    // escape sequence. This can be a newline in a multi-line string literal.
-    // This relies on multi-character escape sequences not containing an
-    // embedded and unescaped terminator or newline.
-    if (!multi_line && source_text.startswith("\n")) {
-      return llvm::None;
-    }
-    source_text = source_text.substr(1);
-    content_end = source_text.begin();
   }
-
-  return LexedStringLiteral(
-      llvm::StringRef(begin, source_text.begin() - begin),
-      llvm::StringRef(content_begin, content_end - content_begin), hash_level,
-      multi_line);
+  // Let LexError figure out how to recover from an unterminated string
+  // literal.
+  return llvm::None;
 }
 
 // Given a string that contains at least one newline, find the indent (the

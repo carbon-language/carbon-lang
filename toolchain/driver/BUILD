@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//bazel/testing:lit_test.bzl", "lit_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -53,12 +54,12 @@ cc_binary(
     ],
 )
 
-# FIXME: No support for LLVM's lit-style command line & FileCheck tests.
-#
-#lit_test(
-#    name = "carbon_test.carbon",
-#    data = [
-#        ":carbon",
-#        "@llvm-project//llvm:FileCheck",
-#    ],
-#)
+lit_test(
+    name = "carbon_lit_test",
+    data = [
+        ":carbon",
+        "@llvm-project//llvm:FileCheck",
+        "@llvm-project//llvm:not",
+    ],
+    test_dir = "testdata",
+)

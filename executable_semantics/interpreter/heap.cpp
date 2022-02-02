@@ -55,16 +55,11 @@ void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
   for (size_t i = 0; i < values_.size(); ++i) {
     out << sep;
-    PrintAllocation(AllocationId(i), out);
+    if (!alive_[i]) {
+      out << "!!";
+    }
+    out << *values_[i];
   }
-}
-
-void Heap::PrintAllocation(AllocationId allocation,
-                           llvm::raw_ostream& out) const {
-  if (!alive_[allocation.index_]) {
-    out << "!!";
-  }
-  out << *values_[allocation.index_];
 }
 
 }  // namespace Carbon

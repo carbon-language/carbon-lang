@@ -110,6 +110,7 @@ cc_library(
     hdrs = ["heap_allocation_interface.h"],
     deps = [
         ":address",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
     ],
 )

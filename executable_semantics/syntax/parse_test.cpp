@@ -12,7 +12,7 @@
 
 #include "executable_semantics/common/arena.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 static constexpr std::string_view FileContents = R"(
@@ -30,4 +30,4 @@ TEST(ParseTest, ParseFromString) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
