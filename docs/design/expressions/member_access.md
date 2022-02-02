@@ -467,9 +467,8 @@ base class WidgetBase {
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
       // Then the indirect member access expression performs `impl` lookup
       // into `impl T as Renderable`, since `T` is known to implement
-      // `Renderable`. Finally, the member function is bound to `w` as 
+      // `Renderable`. Finally, the member function is bound to `w` as
       // described in "Instance binding".
-      w.(Draw)();      
       w.(Draw)();
       // ❌ Error: `Self.Draw` performs `impl` lookup, which fails
       // because `WidgetBase` does not implement `Renderable`.
