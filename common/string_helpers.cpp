@@ -13,13 +13,11 @@
 
 namespace Carbon {
 
-namespace {
-
-constexpr llvm::StringRef TripleQuotes = "\"\"\"";
-constexpr llvm::StringRef HorizontalWhitespaceChars = " \t";
+static constexpr llvm::StringRef TripleQuotes = "\"\"\"";
+static constexpr llvm::StringRef HorizontalWhitespaceChars = " \t";
 
 // Carbon only takes uppercase hex input.
-auto FromHex(char c) -> std::optional<char> {
+static auto FromHex(char c) -> std::optional<char> {
   if (c >= '0' && c <= '9') {
     return c - '0';
   }
@@ -30,11 +28,9 @@ auto FromHex(char c) -> std::optional<char> {
 }
 
 // Creates an error instance with the specified `message`.
-llvm::Expected<std::string> MakeError(llvm::Twine message) {
+static auto MakeError(llvm::Twine message) -> llvm::Expected<std::string> {
   return llvm::createStringError(llvm::inconvertibleErrorCode(), message);
 }
-
-}  // namespace
 
 auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string)
     -> std::optional<std::string> {

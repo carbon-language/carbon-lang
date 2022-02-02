@@ -1,0 +1,13 @@
+# RUN: yaml-bench -canonical %s | FileCheck %s
+# CHECK: ? !!str "strip"
+# CHECK: : !!str ""
+# CHECK: ? !!str "clip"
+# CHECK: : !!str ""
+# CHECK: ? !!str "keep"
+# CHECK: : !!str "\n"
+
+strip: >-
+
+clip: >
+
+keep: |+

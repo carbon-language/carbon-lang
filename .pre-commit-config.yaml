@@ -141,5 +141,6 @@ repos:
 exclude: |
   (?x)^(
       third_party/examples/.*/carbon/.*|
+      third_party/llvm-project/.*|
       .*/fuzzer_corpus/.*
   )$

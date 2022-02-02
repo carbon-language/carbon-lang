@@ -197,8 +197,8 @@ class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
-  // means all names of `Printable`, such as `F`, are included as a part
-  // of the `Song` API.
+  // without the keyword `external` means all names of `Printable`, such
+  // as `F`, are included as a part of the `Song` API.
   impl as Printable {
     // Could use `Self` in place of `Song` here.
     fn Print[me: Song]() { ... }
@@ -594,6 +594,15 @@ Constraints limit the types that the generic function can operate on, but
 increase the knowledge that may be used in the body of the function to operate
 on values of those types.
 
+Constraints are also used when implementing an interface to specify the values
+of associated types (and other associated constants).
+
+```
+class Vector(T:! Movable) {
+  impl as Stack where .ElementType = T { ... }
+}
+```
+
 ### Parameterized impls
 
 Implementations can be parameterized to apply to multiple types. Those
@@ -634,3 +643,4 @@ priority order in a prioritization block.
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+-   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
