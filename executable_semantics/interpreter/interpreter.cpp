@@ -317,16 +317,15 @@ void Interpreter::StepLvalue() {
     }
     case ExpressionKind::PrimitiveOperatorExpression: {
       const PrimitiveOperatorExpression& op = cast<PrimitiveOperatorExpression>(exp);
-      if (op.op() == Operator::Deref) {
-        if (act.pos() == 0) {
-          return todo_.Spawn(
-              std::make_unique<ExpressionAction>(op.arguments()[0]));
-        } else {
-          const PointerValue& res =  cast<PointerValue>(*act.results()[0]);
-          return todo_.FinishAction( arena_->New<LValue>(res.address()));
-        }
-      } else {
+      if (op.op() != Operator::Deref) {
         FATAL() << "Can't treat primitive operator expression as lvalue: " << exp;
+      }
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(op.arguments()[0]));
+      } else {
+        const PointerValue& res = cast<PointerValue>(*act.results()[0]);
+        return todo_.FinishAction(arena_->New<LValue>(res.address()));
       }
       break;
     }

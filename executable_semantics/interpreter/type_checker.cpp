@@ -622,8 +622,12 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::AddressOf:
+          if (op.arguments()[0]->value_category() != ValueCategory::Var) {
+            FATAL_COMPILATION_ERROR(op.arguments()[0]->source_loc()) <<
+                "Argument to " << ToString(op.op()) << " should be an lvalue.";
+          }
           SetStaticType(&op, arena_->New<PointerType>(ts[0]));
-          op.set_value_category(ValueCategory::Var);
+          op.set_value_category(ValueCategory::Let);
           return;
       }
       break;
