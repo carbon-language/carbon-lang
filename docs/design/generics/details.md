@@ -4494,7 +4494,45 @@ external impl bool as WithParam(i32) { }
 
 ##### Constraint weaker than default impl
 
-FIXME
+When specifying a default implementation, associated constants and types are
+assigned using a `where` clause. Those assignments are also the requirements for
+any type implementing the interface.
+
+```
+interface Required {
+  let A:! Type;
+}
+impl WithDefault {
+  // Types implementing `WithDefault` must implement
+  // `Required` with `Required.A` set to `i32`, which
+  // is also what the default implementation does.
+  impl as Required where .A = i32 { }
+}
+```
+
+It is possible to assign associated constants and types in the default
+implementation without also making them requirements by using
+[an adapter](#use-case-defining-an-impl-for-use-by-other-types), as in this
+example:
+
+```
+interface Required {
+  let A:! Type;
+  let B:! Type;
+}
+interface FewerConstraints;
+adapter ImplOfRequired(T:! FewerConstraints) for T;
+interface FewerConstraints {
+  // Types implementing `FewerConstraints` are required to
+  // implement `Required` with `Required.A` set to `i32`.
+  impl as Required where .A = i32 = ImplOfRequired(Self);
+}
+adapter ImplOfRequired(T:! FewerConstraints) for T {
+  // The default implementation of `Required` for
+  // `FewerConstraints` also sets `Required.B` to `bool`.
+  impl as Required where .A = i32 and .B = bool { }
+}
+```
 
 ##### Comparison to blanket impl
 
