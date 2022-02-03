@@ -4575,7 +4575,53 @@ than, the blanket impl approach.
 
 ##### Default impls for other types
 
-FIXME
+An interface define a default impl for a type other than `Self` by writing the
+name of that type between `impl` and `as`. Inside the definition of the default,
+`Self` continues to refer to the type implementing the outer interface, not the
+type the default is an implementation for.
+
+```
+interface CompareOp(T:! Type) {
+  fn Compare[me: Self](x: T) -> CompareResult;
+  impl T as CompareOp(Self) {
+    // `Self` means outer `Self` not `T`
+    fn Compare[me: T](x: Self) -> CompareResult {
+      return ReverseCompareResult(x.Compare(me));
+    }
+  }
+}
+
+external impl i32 as CompareOp(u32) {
+  fn Compare[me: Self](x: T) -> CompareResult { ... }
+}
+```
+
+Behaves as if it is followed by:
+
+```
+external impl u32 as CompareOp(i32) {
+  fn Compare[me: u32](x: i32) -> CompareResult {
+    return ReverseCompareResult(x.Compare(me));
+  }
+}
+```
+
+Observe that in this example, the default will be suppressed for any impl of
+`CompareOp` where `T` and `Self` are the same. If they are different, though,
+the default will always be used because it can not be overridden once the
+default is instantiated.
+
+Note that _if_ there was no default implementation, the _requirement_ that `T`
+implement `CompareOp(Self)` could be written in the interface's parameter list:
+
+```
+interface CompareOp(T:! CompareOp(Self)) {
+  fn Compare[me: Self](x: T) -> CompareResult;
+}
+```
+
+FIXME: Would this be allowed or is it invalid to use `CompareOp` as a parameter
+constraint in the definition of `CompareOp` itself?
 
 ##### Multiple default impls
 
