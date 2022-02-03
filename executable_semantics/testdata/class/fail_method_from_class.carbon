@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{executable_semantics} %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_method_from_class.carbon:29: GetX is not a class function
 
 package ExecutableSemanticsTest api;
 
@@ -26,6 +26,5 @@ class Point {
 }
 
 fn Main() -> i32 {
-  var p: Point = Point.Origin();
-  return p.GetX();
+  return Point.GetX();
 }

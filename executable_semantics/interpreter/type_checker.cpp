@@ -489,7 +489,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
                 access.set_value_category(access.aggregate().value_category());
                 break;
               case DeclarationKind::FunctionDeclaration:
-                access.set_value_category(ValueCategory::Let);  //??
+                access.set_value_category(ValueCategory::Let);
                 break;
               default:
                 FATAL() << "member " << access.field()
@@ -526,9 +526,21 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
           if (std::optional<Nonnull<const Declaration*>> member =
                   class_type.FindMember(access.field());
               member.has_value()) {
-            SetStaticType(&access, &(*member)->static_type());
-            access.set_value_category(access.aggregate().value_category());
-            return;
+            switch ((*member)->kind()) {
+              case DeclarationKind::FunctionDeclaration: {
+                const auto& func = cast<FunctionDeclaration>(*member);
+                if (func->is_method()) {
+                  break;
+                }
+                SetStaticType(&access, &(*member)->static_type());
+                access.set_value_category(ValueCategory::Let);
+                return;
+              }
+              default:
+                break;
+            }
+            FATAL_COMPILATION_ERROR(access.source_loc())
+                << access.field() << " is not a class function";
           } else {
             FATAL_COMPILATION_ERROR(access.source_loc())
                 << class_type << " does not have a class function named "
@@ -1058,6 +1070,7 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                     arena_->New<IntType>(), &f->return_term().static_type());
     // TODO: Check that main doesn't have any parameters.
   }
+  SetConstantValue(f, arena_->New<FunctionValue>(f));
   return;
 }
 
@@ -1094,6 +1107,7 @@ void TypeChecker::TypeCheckChoiceDeclaration(
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
+  SetConstantValue(choice, ct);
   SetStaticType(choice, arena_->New<TypeOfChoiceType>(ct));
 }
 
@@ -1151,7 +1165,6 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d) {
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<FunctionDeclaration>(*d);
       TypeCheckFunctionDeclaration(&func_def, /*check_body=*/false);
-      SetConstantValue(&func_def, arena_->New<FunctionValue>(&func_def));
       break;
     }
 
@@ -1164,8 +1177,6 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d) {
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(*d);
       TypeCheckChoiceDeclaration(&choice);
-      const auto& type = cast<TypeOfChoiceType>(choice.static_type());
-      SetConstantValue(&choice, &type.choice_type());
       break;
     }
 

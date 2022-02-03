@@ -15,7 +15,7 @@ class Point {
   fn Origin() -> Point {
     return {.x = 0, .y = 0};
   }
-  fn GetX{me: Point}() -> i32 {
+  fn GetX[me: Point]() -> i32 {
     return me.x;
   }
   var x: i32;

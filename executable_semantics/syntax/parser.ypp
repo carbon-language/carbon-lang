@@ -110,8 +110,8 @@
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
 %type <Nonnull<GenericBinding*>> generic_binding
-%type <std::vector<Nonnull<GenericBinding*>>> deduced_params
-%type <std::vector<Nonnull<GenericBinding*>>> deduced_param_list
+%type <std::vector<Nonnull<AstNode*>>> deduced_params
+%type <std::vector<Nonnull<AstNode*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <BisonWrap<ReturnTerm>> return_term
@@ -645,10 +645,10 @@ generic_binding:
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
 | generic_binding
     {
-      $$ = std::vector<Nonnull<GenericBinding*>>();
+      $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
 | generic_binding COMMA deduced_param_list
@@ -656,10 +656,20 @@ deduced_param_list:
       $$ = $3;
       $$.push_back($1);
     }
+| variable_declaration
+    {
+      $$ = std::vector<Nonnull<AstNode*>>();
+      $$.push_back($1);
+    }
+| variable_declaration COMMA deduced_param_list
+    {
+      $$ = $3;
+      $$.push_back($1);
+    }
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;

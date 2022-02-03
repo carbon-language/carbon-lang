@@ -68,6 +68,31 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
+// Look for the `me` parameter in the `deduced_parameters_`
+// and put it in the `me_pattern_`.
+void FunctionDeclaration::ResolveDeducedAndReceiver(
+    const std::vector<Nonnull<AstNode*>>& deduced_params) {
+  for (Nonnull<AstNode*> param : deduced_params) {
+    switch (param->kind()) {
+      case AstNodeKind::GenericBinding:
+        deduced_parameters_.push_back(&cast<GenericBinding>(*param));
+        break;
+      case AstNodeKind::BindingPattern: {
+        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
+        if (me_pattern_.has_value() || bp->name() != "me") {
+          FATAL_COMPILATION_ERROR(source_loc())
+              << "illegal binding pattern in implicit parameter list";
+        }
+        me_pattern_ = bp;
+        break;
+      }
+      default:
+        FATAL_COMPILATION_ERROR(source_loc())
+            << "illegal AST node in implicit parameter list";
+    }
+  }
+}
+
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   out << "fn " << name_ << " ";
   if (!deduced_parameters_.empty()) {

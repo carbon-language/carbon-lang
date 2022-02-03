@@ -48,15 +48,18 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         // Look for a method in the object's class
         const NominalClassType& class_type =
             cast<NominalClassType>(object.type());
-        std::optional<Nonnull<const Value*>> method =
+        std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
-        if (method == std::nullopt) {
+        if (func == std::nullopt) {
           FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v
                                           << " or its class " << class_type;
-        } else {
+        } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
-          const FunctionValue& m = cast<FunctionValue>(**method);
+          const FunctionValue& m = cast<FunctionValue>(**func);
           return arena->New<BoundMethodValue>(&m.declaration(), &object);
+        } else {
+          // Found a class function
+          return *func;
         }
       }
       return *field;
@@ -71,7 +74,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassType: {
       const NominalClassType& class_type = cast<NominalClassType>(*v);
-      std::optional<Nonnull<const Value*>> fun = class_type.FindFunction(f);
+      std::optional<Nonnull<const FunctionValue*>> fun =
+          class_type.FindFunction(f);
       if (fun == std::nullopt) {
         FATAL_RUNTIME_ERROR(source_loc)
             << "class function " << f << " not in " << *v;
@@ -491,13 +495,13 @@ auto ChoiceType::FindAlternative(std::string_view name) const
 }
 
 auto NominalClassType::FindFunction(const std::string& name) const
-    -> std::optional<Nonnull<const Value*>> {
+    -> std::optional<Nonnull<const FunctionValue*>> {
   for (const auto& member : declaration().members()) {
     switch (member->kind()) {
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
         if (fun.name() == name) {
-          return fun.constant_value();
+          return &cast<FunctionValue>(**fun.constant_value());
         }
         break;
       }
@@ -508,21 +512,25 @@ auto NominalClassType::FindFunction(const std::string& name) const
   return std::nullopt;
 }
 
-auto NominalClassType::field_types() const -> std::vector<NamedValue> {
-  std::vector<NamedValue> field_types;
-  for (Nonnull<Declaration*> m : declaration().members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        field_types.push_back({.name = var.binding().name(),
-                               .value = &var.binding().static_type()});
-        break;
+auto NominalClassType::field_types() const -> llvm::ArrayRef<NamedValue> {
+  if (!field_types_computed_) {
+    // This mutation shouldn't be externally visible.
+    NominalClassType* me = (NominalClassType*)this;
+    me->field_types_computed_ = true;
+    for (Nonnull<Declaration*> m : declaration().members()) {
+      switch (m->kind()) {
+        case DeclarationKind::VariableDeclaration: {
+          const auto& var = cast<VariableDeclaration>(*m);
+          me->field_types_.push_back({.name = var.binding().name(),
+                                      .value = &var.binding().static_type()});
+          break;
+        }
+        default:
+          break;
       }
-      default:
-        break;
     }
   }
-  return field_types;
+  return field_types_;
 }
 
 auto NominalClassType::FindMember(const std::string& name) const
