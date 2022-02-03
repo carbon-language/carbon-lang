@@ -95,6 +95,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
         -   [Default implementation of required interface](#default-implementation-of-required-interface)
+            -   [Overriding the default](#overriding-the-default)
+            -   [Constraint weaker than default impl](#constraint-weaker-than-default-impl)
+            -   [Comparison to blanket impl](#comparison-to-blanket-impl)
+            -   [Default impls for other types](#default-impls-for-other-types)
+            -   [Multiple default impls](#multiple-default-impls)
     -   [`final` members](#final-members)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -4378,10 +4383,9 @@ interface TotalOrder {
 }
 ```
 
-This means that any implementation of `TotalOrder` for a type `Song` behaves as
+This means that an implementation of `TotalOrder` for a type `Song` behaves as
 if it is immediately followed by an implementation of `PartialOrder` for `Song`
-using the default definition, unless there has already been an implementation of
-`PartialOrder` for `Song` declared earlier.
+using the default definition.
 
 ```
 external impl Song as TotalOrder {
@@ -4399,18 +4403,20 @@ external impl Song as PartialOrder {
 }
 ```
 
-The resulting impl definition must be legal where it is instantiated, for
+The resulting impl definition must be legal where it is instantiated. For
 example it must respect the [orphan rule](#orphan-rule), or the triggering impl
 is invalid.
 
-The resulting impl will be [external](#external-impl) unless both:
-
--   the interface requirement uses `extends` instead of `impl as`, and
--   the type implements the original interface internally.
+The resulting impl will be [external](#external-impl), but it is possible for it
+is still possible for its names to be available on the type. For example, if the
+interface requirement uses `extends` instead of `impl as`, then the names from
+the default impl will also be members of the requiring interfaces, and will be
+available if that interface is implemented internally.
 
 ```
 interface Hashable {
   fn Hash[me: Self]() -> u64;
+  // `extends` means `Equals` is a member of `Hashable`
   extends Equatable {
     fn Equals[me: Self](rhs: Self) -> bool {
       return me.Hash() == rhs.Hash();
@@ -4419,16 +4425,24 @@ interface Hashable {
 }
 
 class Song {
+  // Since `Song` implements `Hashable` internally, it has
+  // all the members of `Hashable`, including `Equals`.
   impl as Hashable {
     fn Hash[me: Self]() -> u64 { ... }
   }
-  // As if followed by *internal* impl of Equatable:
-  // impl as Equatable {
-  //   fn Equals[me: Self](rhs: Self) -> bool {
-  //     return me.Hash() == rhs.Hash();
-  //   }
-  // }
 }
+```
+
+##### Overriding the default
+
+The default definition is skipped if there has already been an implementation of
+`PartialOrder` for `Song` declared earlier.
+
+```
+external impl Song as PartialOrder { ... }
+external impl Song as TotalOrder { ... }
+// Default implementation of `PartialOrder` for `Song`
+// is ignored since one is already defined.
 ```
 
 Explicitly implementing `PartialOrder` for `Song` after it has been given a
@@ -4442,6 +4456,47 @@ external impl Song as TotalOrder {
 //             using default definition from `Song as TotalOrder`.
 external impl Song as PartialOrder { ... }
 ```
+
+The default definition can be suppressed by an implementation of the interface
+itself:
+
+```
+interface BothOrders(T:! Type, U:! Type) {
+  fn F[me: Self](x: T, y: U);
+  impl as BothOrders(U, T) {
+    fn F[me: Self](x: U, y: T) {
+      me.(BothOrders(T, U).F)(y, x);
+    }
+  }
+}
+
+// Default not triggered when T == U
+external impl bool as BothOrder(i32, i32) { ... }
+```
+
+The default definition can also be suppressed by an earlier instantiation of a
+default, for example if the required interface doesn't use all of the parameters
+of the requiring interface:
+
+```
+interface NoParam { }
+interface WithParam(T:! Type) {
+  impl as NoParam { }
+}
+
+external impl bool as WithParam(bool) { }
+// Triggers implementation of `bool as NoParam`
+
+external impl bool as WithParam(i32) { }
+// `bool` already implements `NoParam`, so default
+// implementation skipped.
+```
+
+##### Constraint weaker than default impl
+
+FIXME
+
+##### Comparison to blanket impl
 
 You can achieve a similar effect as a default impl by using a
 [blanket impl](#blanket-impls) instead:
@@ -4463,6 +4518,28 @@ The difference between the two approaches is the prioritization of the resulting
 implementations. The default impl approach results in a type structure of
 `impl Song as PartialOrder`, which has a higher priority than the blanket impl's
 type structure of `impl ? as PartialOrder`.
+
+A parameterized implementation of an interface with a default impl will result
+in a parameterized impl.
+
+```
+external impl [T:! TotalOrder] Vector(T) as TotalOrder { ... }
+```
+
+Behaves as if it is followed by:
+
+```
+external impl [T:! TotalOrder] Vector(T) as PartialOrder { ... }
+```
+
+Note that this is still more specific than, and therefore given higher priority
+than, the blanket impl approach.
+
+##### Default impls for other types
+
+FIXME
+
+##### Multiple default impls
 
 If an interface provides multiple default impl definitions, or a default impl
 definition triggers another default impl to be instantiated, the default impls
