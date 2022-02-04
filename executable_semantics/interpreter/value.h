@@ -438,17 +438,13 @@ class StructType : public Value {
 class NominalClassType : public Value {
  public:
   NominalClassType(Nonnull<const ClassDeclaration*> declaration)
-      : Value(Kind::NominalClassType),
-        declaration_(declaration),
-        field_types_computed_(false) {}
+      : Value(Kind::NominalClassType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
-
-  auto field_types() const -> llvm::ArrayRef<NamedValue>;
 
   // Return the declaration of the member with the given name.
   auto FindMember(const std::string& name) const
@@ -461,9 +457,9 @@ class NominalClassType : public Value {
 
  private:
   Nonnull<const ClassDeclaration*> declaration_;
-  bool field_types_computed_;
-  std::vector<NamedValue> field_types_;
 };
+
+auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
 
 // A choice type.
 class ChoiceType : public Value {

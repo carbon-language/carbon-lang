@@ -165,7 +165,7 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
         case Value::Kind::NominalClassType:
           return FieldTypesImplicitlyConvertible(
               cast<StructType>(*source).fields(),
-              cast<NominalClassType>(*destination).field_types());
+              FieldTypes(cast<NominalClassType>(*destination)));
         default:
           return false;
       }

@@ -512,25 +512,21 @@ auto NominalClassType::FindFunction(const std::string& name) const
   return std::nullopt;
 }
 
-auto NominalClassType::field_types() const -> llvm::ArrayRef<NamedValue> {
-  if (!field_types_computed_) {
-    // This mutation shouldn't be externally visible.
-    NominalClassType* me = (NominalClassType*)this;
-    me->field_types_computed_ = true;
-    for (Nonnull<Declaration*> m : declaration().members()) {
-      switch (m->kind()) {
-        case DeclarationKind::VariableDeclaration: {
-          const auto& var = cast<VariableDeclaration>(*m);
-          me->field_types_.push_back({.name = var.binding().name(),
-                                      .value = &var.binding().static_type()});
-          break;
-        }
-        default:
-          break;
+auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
+  std::vector<NamedValue> field_types;
+  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
+    switch (m->kind()) {
+      case DeclarationKind::VariableDeclaration: {
+        const auto& var = cast<VariableDeclaration>(*m);
+        field_types.push_back({.name = var.binding().name(),
+                               .value = &var.binding().static_type()});
+        break;
       }
+      default:
+        break;
     }
   }
-  return field_types_;
+  return field_types;
 }
 
 auto NominalClassType::FindMember(const std::string& name) const
