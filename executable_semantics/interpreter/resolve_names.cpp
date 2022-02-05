@@ -8,7 +8,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -21,20 +20,6 @@ namespace Carbon {
 // Adds the names exposed by the given AST node to enclosing_scope.
 static void AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope);
-static void AddExposedNames(const Member& member, StaticScope& enclosing_scope);
-
-static void AddExposedNames(const Member& member,
-                            StaticScope& enclosing_scope) {
-  switch (member.kind()) {
-    case MemberKind::FieldMember: {
-      const auto& field = cast<FieldMember>(member);
-      if (field.binding().name() != AnonymousName) {
-        enclosing_scope.Add(field.binding().name(), &field.binding());
-      }
-      break;
-    }
-  }
-}
 
 static void AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope) {
@@ -77,7 +62,6 @@ static void ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope);
 static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope);
 static void ResolveNames(Statement& statement, StaticScope& enclosing_scope);
-static void ResolveNames(Member& member, StaticScope& enclosing_scope);
 static void ResolveNames(Declaration& declaration,
                          StaticScope& enclosing_scope);
 
@@ -257,13 +241,6 @@ static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
   }
 }
 
-static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
-  switch (member.kind()) {
-    case MemberKind::FieldMember:
-      ResolveNames(cast<FieldMember>(member).binding(), enclosing_scope);
-  }
-}
-
 static void ResolveNames(Declaration& declaration,
                          StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
@@ -274,6 +251,9 @@ static void ResolveNames(Declaration& declaration,
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         function_scope.Add(binding->name(), binding);
         ResolveNames(binding->type(), function_scope);
+      }
+      if (function.is_method()) {
+        ResolveNames(function.me_pattern(), function_scope);
       }
       ResolveNames(function.param_pattern(), function_scope);
       if (function.return_term().type_expression().has_value()) {
@@ -289,10 +269,11 @@ static void ResolveNames(Declaration& declaration,
       auto& class_decl = cast<ClassDeclaration>(declaration);
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
-      for (Nonnull<Member*> member : class_decl.members()) {
+      class_scope.Add(class_decl.name(), &class_decl);
+      for (Nonnull<Declaration*> member : class_decl.members()) {
         AddExposedNames(*member, class_scope);
       }
-      for (Nonnull<Member*> member : class_decl.members()) {
+      for (Nonnull<Declaration*> member : class_decl.members()) {
         ResolveNames(*member, class_scope);
       }
       break;
@@ -316,7 +297,9 @@ static void ResolveNames(Declaration& declaration,
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
       ResolveNames(var.binding(), enclosing_scope);
-      ResolveNames(var.initializer(), enclosing_scope);
+      if (var.has_initializer()) {
+        ResolveNames(var.initializer(), enclosing_scope);
+      }
       break;
     }
   }

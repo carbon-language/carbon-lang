@@ -10,8 +10,9 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/member.h"
+#include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -34,8 +35,8 @@ class Declaration : public AstNode {
  public:
   ~Declaration() override = 0;
 
-  Declaration(const Member&) = delete;
-  auto operator=(const Member&) -> Declaration& = delete;
+  Declaration(const Declaration&) = delete;
+  auto operator=(const Declaration&) -> Declaration& = delete;
 
   void Print(llvm::raw_ostream& out) const override;
 
@@ -126,100 +127,24 @@ class GenericBinding : public AstNode {
   std::optional<Nonnull<const Value*>> constant_value_;
 };
 
-// The syntactic representation of a function declaration's return type.
-// This syntax can take one of three forms:
-// - An _explicit_ term consists of `->` followed by a type expression.
-// - An _auto_ term consists of `-> auto`.
-// - An _omitted_ term consists of no tokens at all.
-// Each of these forms has a corresponding factory function.
-class ReturnTerm {
- public:
-  ReturnTerm(const ReturnTerm&) = default;
-  auto operator=(const ReturnTerm&) -> ReturnTerm& = default;
-
-  // Represents an omitted return term at `source_loc`.
-  static auto Omitted(SourceLocation source_loc) -> ReturnTerm {
-    return ReturnTerm(ReturnKind::Omitted, source_loc);
-  }
-
-  // Represents an auto return term at `source_loc`.
-  static auto Auto(SourceLocation source_loc) -> ReturnTerm {
-    return ReturnTerm(ReturnKind::Auto, source_loc);
-  }
-
-  // Represents an explicit return term with the given type expression.
-  static auto Explicit(Nonnull<Expression*> type_expression) -> ReturnTerm {
-    return ReturnTerm(type_expression);
-  }
-
-  // Returns true if this represents an omitted return term.
-  auto is_omitted() const -> bool { return kind_ == ReturnKind::Omitted; }
-
-  // Returns true if this represents an auto return term.
-  auto is_auto() const -> bool { return kind_ == ReturnKind::Auto; }
-
-  // If this represents an explicit return term, returns the type expression.
-  // Otherwise, returns nullopt.
-  auto type_expression() const -> std::optional<Nonnull<const Expression*>> {
-    return type_expression_;
-  }
-  auto type_expression() -> std::optional<Nonnull<Expression*>> {
-    return type_expression_;
-  }
-
-  // The static return type this term resolves to. Cannot be called before
-  // typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the value of static_type(). Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether static_type() has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
-
-  auto source_loc() const -> SourceLocation { return source_loc_; }
-
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
- private:
-  enum class ReturnKind { Omitted, Auto, Expression };
-
-  explicit ReturnTerm(ReturnKind kind, SourceLocation source_loc)
-      : kind_(kind), source_loc_(source_loc) {
-    CHECK(kind != ReturnKind::Expression);
-  }
-
-  explicit ReturnTerm(Nonnull<Expression*> type_expression)
-      : kind_(ReturnKind::Expression),
-        type_expression_(type_expression),
-        source_loc_(type_expression->source_loc()) {}
-
-  ReturnKind kind_;
-  std::optional<Nonnull<Expression*>> type_expression_;
-  std::optional<Nonnull<const Value*>> static_type_;
-
-  SourceLocation source_loc_;
-};
-
 class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonNamedEntity = void;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<Nonnull<GenericBinding*>> deduced_params,
+                      std::vector<Nonnull<AstNode*>> deduced_params,
+                      std::optional<Nonnull<BindingPattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
-        deduced_parameters_(std::move(deduced_params)),
+        me_pattern_(me_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body) {}
+        body_(body) {
+    ResolveDeducedAndReceiver(deduced_params);
+  }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -235,6 +160,8 @@ class FunctionDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
+  auto me_pattern() const -> const BindingPattern& { return **me_pattern_; }
+  auto me_pattern() -> BindingPattern& { return **me_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -254,9 +181,13 @@ class FunctionDeclaration : public Declaration {
     constant_value_ = value;
   }
 
+  bool is_method() const { return me_pattern_.has_value(); }
+
  private:
+  void ResolveDeducedAndReceiver(const std::vector<Nonnull<AstNode*>>&);
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
+  std::optional<Nonnull<BindingPattern*>> me_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
@@ -268,7 +199,7 @@ class ClassDeclaration : public Declaration {
   using ImplementsCarbonNamedEntity = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
-                   std::vector<Nonnull<Member*>> members)
+                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
         members_(std::move(members)) {}
@@ -278,7 +209,9 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto members() const -> llvm::ArrayRef<Nonnull<Member*>> { return members_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
+    return members_;
+  }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -294,7 +227,7 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
-  std::vector<Nonnull<Member*>> members_;
+  std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const Value*>> constant_value_;
 };
 
@@ -367,7 +300,7 @@ class VariableDeclaration : public Declaration {
  public:
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
-                      Nonnull<Expression*> initializer)
+                      std::optional<Nonnull<Expression*>> initializer)
       : Declaration(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
         initializer_(initializer) {}
@@ -378,15 +311,17 @@ class VariableDeclaration : public Declaration {
 
   auto binding() const -> const BindingPattern& { return *binding_; }
   auto binding() -> BindingPattern& { return *binding_; }
-  auto initializer() const -> const Expression& { return *initializer_; }
-  auto initializer() -> Expression& { return *initializer_; }
+  auto initializer() const -> const Expression& { return **initializer_; }
+  auto initializer() -> Expression& { return **initializer_; }
+
+  bool has_initializer() const { return initializer_.has_value(); }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
   // missing name.
   Nonnull<BindingPattern*> binding_;
-  Nonnull<Expression*> initializer_;
+  std::optional<Nonnull<Expression*>> initializer_;
 };
 
 }  // namespace Carbon

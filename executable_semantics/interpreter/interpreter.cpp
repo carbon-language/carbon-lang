@@ -316,9 +316,11 @@ void Interpreter::StepLvalue() {
       }
     }
     case ExpressionKind::PrimitiveOperatorExpression: {
-      const PrimitiveOperatorExpression& op = cast<PrimitiveOperatorExpression>(exp);
+      const PrimitiveOperatorExpression& op =
+          cast<PrimitiveOperatorExpression>(exp);
       if (op.op() != Operator::Deref) {
-        FATAL() << "Can't treat primitive operator expression as lvalue: " << exp;
+        FATAL() << "Can't treat primitive operator expression as lvalue: "
+                << exp;
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
@@ -355,6 +357,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
@@ -572,6 +575,23 @@ void Interpreter::StepExp() {
             return todo_.Spawn(
                 std::make_unique<StatementAction>(*function.body()),
                 std::move(function_scope));
+          }
+          case Value::Kind::BoundMethodValue: {
+            const BoundMethodValue& m =
+                cast<BoundMethodValue>(*act.results()[0]);
+            const FunctionDeclaration& method = m.declaration();
+            Nonnull<const Value*> converted_args = Convert(
+                act.results()[1], &method.param_pattern().static_type());
+            RuntimeScope method_scope(&heap_);
+            CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                               exp.source_loc(), &method_scope));
+            CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
+                               exp.source_loc(), &method_scope));
+            CHECK(method.body().has_value())
+                << "Calling a method that's missing a body";
+            return todo_.Spawn(
+                std::make_unique<StatementAction>(*method.body()),
+                std::move(method_scope));
           }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
@@ -928,11 +948,15 @@ void Interpreter::StepDeclaration() {
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&var_decl.initializer()));
+      if (var_decl.has_initializer()) {
+        if (act.pos() == 0) {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&var_decl.initializer()));
+        } else {
+          todo_.Initialize(&var_decl.binding(), act.results()[0]);
+          return todo_.FinishAction();
+        }
       } else {
-        todo_.Initialize(&var_decl.binding(), act.results()[0]);
         return todo_.FinishAction();
       }
     }

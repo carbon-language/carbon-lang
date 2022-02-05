@@ -22,7 +22,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       out << "class " << class_decl.name() << " {\n";
-      for (Nonnull<Member*> m : class_decl.members()) {
+      for (Nonnull<Declaration*> m : class_decl.members()) {
         out << *m;
       }
       out << "}\n";
@@ -41,7 +41,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = cast<VariableDeclaration>(*this);
-      out << "var " << var.binding() << " = " << var.initializer() << "\n";
+      out << "var " << var.binding();
+      if (var.has_initializer()) {
+        out << " = " << var.initializer();
+      }
+      out << ";\n";
       break;
     }
   }
@@ -61,6 +65,31 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
     case ReturnKind::Expression:
       out << "-> " << **type_expression_;
       return;
+  }
+}
+
+// Look for the `me` parameter in the `deduced_parameters_`
+// and put it in the `me_pattern_`.
+void FunctionDeclaration::ResolveDeducedAndReceiver(
+    const std::vector<Nonnull<AstNode*>>& deduced_params) {
+  for (Nonnull<AstNode*> param : deduced_params) {
+    switch (param->kind()) {
+      case AstNodeKind::GenericBinding:
+        deduced_parameters_.push_back(&cast<GenericBinding>(*param));
+        break;
+      case AstNodeKind::BindingPattern: {
+        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
+        if (me_pattern_.has_value() || bp->name() != "me") {
+          FATAL_COMPILATION_ERROR(source_loc())
+              << "illegal binding pattern in implicit parameter list";
+        }
+        me_pattern_ = bp;
+        break;
+      }
+      default:
+        FATAL_COMPILATION_ERROR(source_loc())
+            << "illegal AST node in implicit parameter list";
+    }
   }
 }
 
