@@ -141,6 +141,7 @@
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  AMPERSAND
   AND
   API
   ARROW
@@ -214,7 +215,7 @@
 %nonassoc EQUAL_EQUAL
 %left PLUS MINUS
 %left BINARY_STAR
-%precedence NOT UNARY_MINUS PREFIX_STAR
+%precedence NOT UNARY_MINUS PREFIX_STAR AMPERSAND
 // We need to give the `UNARY_STAR` token a precedence, rather than overriding
 // the precedence of the `expression UNARY_STAR` rule below, because bison
 // compares the precedence of the final token (for a shift) to the precedence
@@ -365,6 +366,12 @@ expression:
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
           context.source_loc(), Operator::Deref,
+          std::vector<Nonnull<Expression*>>({$2}));
+    }
+| AMPERSAND expression
+    {
+      $$ = arena->New<PrimitiveOperatorExpression>(
+          context.source_loc(), Operator::AddressOf,
           std::vector<Nonnull<Expression*>>({$2}));
     }
 | expression tuple
