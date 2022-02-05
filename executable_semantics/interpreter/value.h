@@ -37,6 +37,7 @@ class Value {
     IntValue,
     FunctionValue,
     BoundMethodValue,
+    PointerValue,
     LValue,
     BoolValue,
     StructValue,
@@ -167,6 +168,22 @@ class LValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::LValue;
+  }
+
+  auto address() const -> const Address& { return value_; }
+
+ private:
+  Address value_;
+};
+
+// A pointer value
+class PointerValue : public Value {
+ public:
+  explicit PointerValue(Address value)
+      : Value(Kind::PointerValue), value_(std::move(value)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::PointerValue;
   }
 
   auto address() const -> const Address& { return value_; }
