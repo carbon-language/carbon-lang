@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 /* table-begin */
+AMPERSAND            "&"
 AND                  "and"
 API                  "api"
 ARROW                "->"
@@ -134,6 +135,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 %}
 
  /* table-begin */
+{AMPERSAND}           { return SIMPLE_TOKEN(AMPERSAND);           }
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {API}                 { return SIMPLE_TOKEN(API);                 }
 {ARROW}               { return SIMPLE_TOKEN(ARROW);               }

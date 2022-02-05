@@ -74,6 +74,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
@@ -313,6 +314,7 @@ void TypeChecker::ArgumentDeduction(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -378,6 +380,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
@@ -616,6 +619,14 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
         case Operator::Ptr:
           ExpectExactType(e->source_loc(), "*", arena_->New<TypeType>(), ts[0]);
           SetStaticType(&op, arena_->New<TypeType>());
+          op.set_value_category(ValueCategory::Let);
+          return;
+        case Operator::AddressOf:
+          if (op.arguments()[0]->value_category() != ValueCategory::Var) {
+            FATAL_COMPILATION_ERROR(op.arguments()[0]->source_loc()) <<
+                "Argument to " << ToString(op.op()) << " should be an lvalue.";
+          }
+          SetStaticType(&op, arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Let);
           return;
       }
