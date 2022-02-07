@@ -4404,6 +4404,10 @@ external impl Song as PartialOrder {
 }
 ```
 
+Note that it is the definition of a `TotalOrder` implementation that triggers
+the instantiation of `PartialOrder` for `Song`, a forward declaration of the
+implementation does not.
+
 The resulting impl definition must be legal where it is instantiated. For
 example it must respect the [orphan rule](#orphan-rule), or the triggering impl
 is invalid.
@@ -4434,16 +4438,22 @@ class Song {
 }
 ```
 
+Implementations of required interfaces may not be marked `final`. Use `final`
+blanket impls instead.
+
 ##### Overriding the default
 
 The default definition is skipped if there has already been an implementation of
 `PartialOrder` for `Song` declared earlier.
 
 ```
-external impl Song as PartialOrder { ... }
+// Forward declaration of `PartialOrder` is sufficient,
+// but a definition of `PartialOrder` would also suppress
+// it being generated as a default.
+external impl Song as PartialOrder;
 external impl Song as TotalOrder { ... }
 // Default implementation of `PartialOrder` for `Song`
-// is ignored since one is already defined.
+// is ignored since one has already been declared.
 ```
 
 Explicitly implementing `PartialOrder` for `Song` after it has been given a
@@ -4622,16 +4632,89 @@ interface CompareOp(T:! CompareOp(Self)) {
 ```
 
 FIXME: Would this be allowed or is it invalid to use `CompareOp` as a parameter
-constraint in the definition of `CompareOp` itself?
+constraint in the definition of `CompareOp` itself? Awkward since we aren't even
+done defining the parameter list yet, which would normally be required in a
+forward declaration. A forward declaration can't be declared for the same
+reason.
 
 ##### Multiple default impls
 
 If an interface provides multiple default impl definitions, or a default impl
 definition triggers another default impl to be instantiated, the default impls
 are instantiated in depth-first order following the order the default impls were
-declared in the triggering interface. There is a recursion limit to prevent this
-from defining an infinite collection of implementations, like
-[with parameterized impls](#termination-rule), as would happen in this case:
+declared in the triggering interface.
+
+```
+interface A {
+  fn F() -> i32;
+}
+interface B {
+  default impl as A {
+    fn F() -> i32 { return 0; }
+  }
+}
+interface C {
+  default impl as A {
+    fn F() -> i32 { return 1; }
+  }
+}
+interface D {
+  default impl as B { }
+  default impl as C { }
+}
+
+external impl i32 as D { }
+```
+
+Behaves as if it is followed by:
+
+```
+// `B` is listed before `C` in `D`, so the
+// default for `B` is defined first.
+external impl i32 as B { }
+// Depth-first order means, the default for
+// `A` from `B` will be used before `C`.
+external impl i32 as A {
+  fn F() -> i32 { return 0; }
+}
+// `C` is after `B` in `D`.
+external impl i32 as C { }
+// The default for `A` from `C` is ignored
+// since we already got a definition for `A`
+// from `B`.
+```
+
+An implementation of an interface can opt in to using a default defined by that
+interface using the `= default`, even if that default would otherwise be
+suppressed due to an earlier forward declaration. This is an error if a matching
+implementation has already been defined.
+
+```
+// Forward declaration suppresses default
+// implementations of `A`.
+external impl bool as A;
+// Does not trigger default definition of `A`.
+external impl bool as B { }
+external impl bool as C {
+  // Trigger default definition of `A`.
+  impl as A = default;
+}
+```
+
+FIXME: How to get the same behavior as `bool` of using the default for `A` from
+`C` when defining an implementation for `D`?
+
+```
+external impl f32 as D {
+  // What do I put here to get C's A instead of B's?
+  // Otherwise would like to use the defaults given
+  // by D for both B and C.
+}
+```
+
+There is a recursion limit to prevent this from defining an infinite collection
+of implementations, like [with parameterized impls](#termination-rule), as would
+happen in this case:
 
 ```
 interface Infinite(T:! Type) {
@@ -4641,9 +4724,6 @@ interface Infinite(T:! Type) {
 
 Default impls are prioritized immediately after the triggering impl in a
 `match_first` block, in the same order they are instantiated.
-
-Implementations of required interfaces may not be marked `final`. Use `final`
-blanket impls instead.
 
 ### `final` members
 
