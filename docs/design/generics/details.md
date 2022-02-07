@@ -4287,8 +4287,9 @@ differences between the Carbon and Rust plans:
 
 Interfaces may provide definitions for members, such as a function body for an
 associated function or method or a value for an associated constant. If these
-definitions may be overridden in implementations, they are called "defaults."
-Otherwise they are called "final members."
+definitions may be overridden in implementations, they are called "defaults" and
+marked with the `default` keyword. Otherwise they are called "final members" and
+marked with the `final` keyword.
 
 ### Interface defaults
 
@@ -4300,7 +4301,7 @@ interface Vector {
   fn Add[me: Self](b: Self) -> Self;
   fn Scale[me: Self](v: f64) -> Self;
   // Default definition of `Invert` calls `Scale`.
-  fn Invert[me: Self]() -> Self {
+  default fn Invert[me: Self]() -> Self {
     return me.Scale(-1.0);
   }
 }
@@ -4321,7 +4322,7 @@ types, and interface parameters, using the `= <default value>` syntax.
 
 ```
 interface Add(Right:! Type = Self) {
-  let Result:! Type = Self;
+  default let Result:! Type = Self;
   fn DoAdd[me: Self](right: Right) -> Result;
 }
 
@@ -4351,7 +4352,7 @@ More generally, default expressions may reference other associated types or
 ```
 interface Iterator {
   let Element:! Type;
-  let Pointer:! Type = Element*;
+  default let Pointer:! Type = Element*;
 }
 ```
 
@@ -4375,7 +4376,7 @@ interface TotalOrder {
   // for `Self`, but provides a default definition.
   // `TotalOrder` and `PartialOrder` must be defined in the
   // same library.
-  impl as PartialOrder {
+  default impl as PartialOrder {
     fn PartialLess[me: Self](right: Self) -> Bool {
       return me.TotalLess(right);
     }
@@ -4417,7 +4418,7 @@ available if that interface is implemented internally.
 interface Hashable {
   fn Hash[me: Self]() -> u64;
   // `extends` means `Equals` is a member of `Hashable`
-  extends Equatable {
+  default extends Equatable {
     fn Equals[me: Self](rhs: Self) -> bool {
       return me.Hash() == rhs.Hash();
     }
@@ -4463,7 +4464,7 @@ itself:
 ```
 interface BothOrders(T:! Type, U:! Type) {
   fn F[me: Self](x: T, y: U);
-  impl as BothOrders(U, T) {
+  default impl as BothOrders(U, T) {
     fn F[me: Self](x: U, y: T) {
       me.(BothOrders(T, U).F)(y, x);
     }
@@ -4481,7 +4482,7 @@ of the requiring interface:
 ```
 interface NoParam { }
 interface WithParam(T:! Type) {
-  impl as NoParam { }
+  default impl as NoParam { }
 }
 
 external impl bool as WithParam(bool) { }
@@ -4506,7 +4507,7 @@ impl WithDefault {
   // Types implementing `WithDefault` must implement
   // `Required` with `Required.A` set to `i32`, which
   // is also what the default implementation does.
-  impl as Required where .A = i32 { }
+  default impl as Required where .A = i32 { }
 }
 ```
 
@@ -4525,7 +4526,7 @@ adapter ImplOfRequired(T:! FewerConstraints) for T;
 interface FewerConstraints {
   // Types implementing `FewerConstraints` are required to
   // implement `Required` with `Required.A` set to `i32`.
-  impl as Required where .A = i32 = ImplOfRequired(Self);
+  default impl as Required where .A = i32 = ImplOfRequired(Self);
 }
 adapter ImplOfRequired(T:! FewerConstraints) for T {
   // The default implementation of `Required` for
@@ -4583,7 +4584,7 @@ type the default is an implementation for.
 ```
 interface CompareOp(T:! Type) {
   fn Compare[me: Self](x: T) -> CompareResult;
-  impl T as CompareOp(Self) {
+  default impl T as CompareOp(Self) {
     // `Self` means outer `Self` not `T`
     fn Compare[me: T](x: Self) -> CompareResult {
       return ReverseCompareResult(x.Compare(me));
@@ -4634,7 +4635,7 @@ from defining an infinite collection of implementations, like
 
 ```
 interface Infinite(T:! Type) {
-  impl as Infinite(T*) { }
+  default impl as Infinite(T*) { }
 }
 ```
 
