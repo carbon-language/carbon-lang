@@ -222,39 +222,6 @@ literal that cannot be represented in `i32`. Such comparisons would always be
 tautological. This decision should be revisited if it proves problematic in
 practice, for example in templated code where the literal is sometimes in range.
 
-#### Performance
-
-The choice to give correct results for signed and unsigned comparisons has a
-performance impact in practice, because it exposes operations that some
-processors do not currently directly support.
-[Sample microbenchmarks](https://quick-bench.com/q/1_xA8G_jXci_yeOKt0WgCc6eGN4)
-for implementations of several operations show the following performance on
-x86_64:
-
-| Operation   | Mathematical comparison time | C++ comparison time | Ratio |
-| ----------- | ---------------------------- | ------------------- | ----- |
-| `i64 < u64` | 1636                         | 798                 | 2.0x  |
-| `u64 < i64` | 1956                         | 798                 | 2.5x  |
-
-The execution times here are computed as operation time minus no-op time.
-
-The mixed-type operations typically have 2-2.5x the execution time of the
-same-type operations. However, this is a predictable performance change, and can
-be controlled by the developer by converting the operands to a suitable type
-prior to the conversion if a faster same-type comparison is preferred over a
-correct mixed-type comparison.
-
-The above comparison attempts to demonstrate a worst-case difference. In many
-cases, better code can be generated for the mixed-type comparison. For example,
-when
-[branching on the result of the comparison](https://quick-bench.com/q/mXJiHK3_RcCH4fgB88phQscLu88),
-the difference is significantly reduced:
-
-| Operation   | Mathematical comparison time | C++ comparison time | Ratio |
-| ----------- | ---------------------------- | ------------------- | ----- |
-| `i64 < u64` | 996                          | 991                 | 1.0x  |
-| `u64 < i64` | 1973                         | 997                 | 2.0x  |
-
 ### Overloading
 
 Separate interfaces will be provided to permit overloading equality and
