@@ -194,8 +194,9 @@ if (integer as f64 == float) {
 }
 ```
 
-The two kinds of mixed-type comparison may be [less efficient](#performance)
-than the other kinds due to the slightly wider domain.
+The two kinds of mixed-type comparison may be
+[less efficient](/proposals/p0702.md#performance) than the other kinds due to
+the slightly wider domain.
 
 Note that this approach diverges from C++, which would convert both operands to
 a common type first, sometimes performing a lossy conversion potentially giving
