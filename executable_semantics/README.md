@@ -111,8 +111,7 @@ To explain this boilerplate:
 ### Useful commands
 
 -   `./update_checks.py` -- Updates expected output.
--   `bazel test ... --test_output=errors` -- Runs tests and prints any
-    errors.
+-   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 
 ## Experimental feature: Delimited Continuations
 
