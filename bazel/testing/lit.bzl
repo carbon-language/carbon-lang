@@ -1,0 +1,37 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+"""Rule for a lit test."""
+
+def glob_lit_tests(driver, data, **kwargs):
+    """Runs `lit` on test_dir.
+
+    `lit` reference:
+      https://llvm.org/docs/CommandGuide/lit.html
+
+    To pass flags to `lit`, use `--test_arg`. For example:
+      bazel test :lit_test --test_arg=-v
+      bazel test :lit_test --test_arg=--filter=REGEXP
+
+    Args:
+      driver: The path to the lit config.
+      data: A list of tools to provide to the tests. These will be aliased for
+        execution.
+      **kwargs: Any additional parameters for the generated py_test.
+    """
+    test_files = native.glob(
+        ["**"],
+        exclude = ["BUILD", driver],
+        exclude_directories = 1,
+    )
+    data.append("@llvm-project//llvm:lit")
+    for f in test_files:
+        native.py_test(
+            name = "%s.test" % f,
+            srcs = ["//bazel/testing:lit_test.py"],
+            main = "//bazel/testing:lit_test.py",
+            data = data + [driver, f],
+            args = ["--package_name=%s" % native.package_name(), "--"],
+            **kwargs
+        )
