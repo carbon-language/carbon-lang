@@ -10,10 +10,6 @@ def glob_lit_tests(driver, data, **kwargs):
     `lit` reference:
       https://llvm.org/docs/CommandGuide/lit.html
 
-    To pass flags to `lit`, use `--test_arg`. For example:
-      bazel test :lit_test --test_arg=-v
-      bazel test :lit_test --test_arg=--filter=REGEXP
-
     Args:
       driver: The path to the lit config.
       data: A list of tools to provide to the tests. These will be aliased for
