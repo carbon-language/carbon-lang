@@ -17,7 +17,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Built-in comparisons and implicit conversions](#built-in-comparisons-and-implicit-conversions)
         -   [Consistency with implicit conversions](#consistency-with-implicit-conversions)
         -   [Comparisons with constants](#comparisons-with-constants)
-        -   [Performance](#performance)
     -   [Overloading](#overloading)
     -   [Default implementations for basic types](#default-implementations-for-basic-types)
 -   [Open questions](#open-questions)
