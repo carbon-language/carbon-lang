@@ -176,7 +176,7 @@ comparisons were permitted, the results could be surprising:
 // `i32` can exactly represent this value.
 var integer: i32 = 2_000_000_001;
 // This value is within the representable range for `f32`, but will be rounded
-// for `f32` precision.
+// to 2_000_000_000.0 due to the limited precision of `f32`.
 var float: f32 = 2_000_000_001.0;
 
 // ❌ Invalid: `f32` cannot exactly represent all values of `i32`.
@@ -185,8 +185,8 @@ if (integer == float) {
 }
 
 // ✅ Valid: An explicit cast to `f64` on either side makes the code valid, but
-// may still compare unequal because `float` will have an approximation of
-// 2,000,000,001 to fit into `f32`.
+// will compare unequal because `float` was rounded to 2_000_000_000.0
+// but `integer` will convert to exactly 2_000_000_001.0.
 if (integer == float as f64) {
   ...
 }
