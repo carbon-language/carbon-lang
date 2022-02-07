@@ -5,10 +5,10 @@
 load("//bazel/testing:lit.bzl", "glob_lit_tests")
 
 glob_lit_tests(
-    driver = "lit.cfg.py",
     data = [
         "//toolchain/driver:carbon",
         "@llvm-project//llvm:FileCheck",
         "@llvm-project//llvm:not",
     ],
+    driver = "lit.cfg.py",
 )
