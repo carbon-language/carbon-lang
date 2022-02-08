@@ -19,9 +19,6 @@ def _parse_args():
         "--package_name", help="The directory containing tests to run."
     )
     arg_parser.add_argument(
-        "--test_dir", help="The directory containing tests to run."
-    )
-    arg_parser.add_argument(
         "lit_args", nargs="*", help="Arguments to pass through to lit."
     )
     return arg_parser.parse_args()
@@ -32,10 +29,8 @@ def main():
 
     args = [
         str(Path(os.environ["TEST_SRCDIR"]).joinpath("llvm-project/llvm/lit")),
-        str(
-            Path.cwd().joinpath(parsed_args.package_name, parsed_args.test_dir)
-        ),
-        "-sv",
+        str(Path.cwd().joinpath(parsed_args.package_name)),
+        "-v",
     ]
 
     # Force tests to be explicit about command paths.

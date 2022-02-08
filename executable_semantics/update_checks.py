@@ -29,7 +29,7 @@ def _get_tests() -> Set[str]:
     tests = set()
     for root, _, files in os.walk(_TESTDATA):
         for f in files:
-            if f == "lit.cfg.py":
+            if f in {"lit.cfg.py", "BUILD"}:
                 # Ignore the lit config.
                 continue
             if os.path.splitext(f)[1] == ".carbon":
