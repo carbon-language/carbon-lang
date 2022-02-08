@@ -60,8 +60,10 @@ repos:
     rev: fb5e481f35f5a9b32a06ccfc28b8d6dda4525f75
     hooks:
       - id: bazel-buildifier
-      - id: clang-format-whole-file
-        types: [c++]
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: 1fc50313b6e8c2580c4736af57575e0b7de1501c # frozen: v13.0.0
+    hooks:
+      - id: clang-format
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: ea782651a7e32f40a3d13b76c79d5a2474ee8723 # frozen: v2.5.1
     hooks:
