@@ -5262,6 +5262,7 @@ Background:
     and pitches [1](https://forums.swift.org/t/variadic-generics/20320), 2
     [a](https://forums.swift.org/t/pitching-the-start-of-variadic-generics/51467)
     [b](https://gist.github.com/CodaFi/a461aca155b16cd4d05a2635e7d7a361)
+    [c](https://forums.swift.org/t/variadic-generics/54511)
 -   [C# `params` keyword](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/params)
 -   Rust
     [supports variadics by way of macros](https://doc.rust-lang.org/rust-by-example/macros/variadics.html),
