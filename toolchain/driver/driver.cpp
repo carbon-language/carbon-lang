@@ -5,7 +5,7 @@
 #include "toolchain/driver/driver.h"
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringExtras.h"
+#include  "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Error.h"
