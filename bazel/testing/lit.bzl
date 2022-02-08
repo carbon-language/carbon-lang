@@ -19,7 +19,6 @@ def glob_lit_tests(driver, data, test_file_exts, **kwargs):
     """
     test_files = native.glob(
         ["**"],
-        exclude = ["BUILD", driver],
         exclude_directories = 1,
     )
     data.append("@llvm-project//llvm:lit")
