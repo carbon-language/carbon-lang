@@ -36,11 +36,11 @@ We have two primary goals for 2022:
 
 By the end of 2022, the core Carbon language design should be substantially
 complete, including designs for expressions and statements, classes, generics
-and templates, and core built-in types and interfaces such as integers and
-pointers. The design choices made to reach this point are expected to be
-experimental, and many of them may need revisiting before we reach 1.0, but the
-broad shape of the language should be clear at this point, and it should be
-possible to write non-trivial Carbon programs.
+and templates, core built-in types and interfaces such as integers and pointers,
+and interoperability with C++. The design choices made to reach this point are
+expected to be experimental, and many of them may need revisiting before we
+reach 1.0, but the broad shape of the language should be clear at this point,
+and it should be possible to write non-trivial Carbon programs.
 
 An initial rough framework for the core standard library functionality should be
 provided, as necessary to support the core language components. A largely
@@ -59,7 +59,9 @@ to Carbon but also those able to evaluate and give us feedback.
 
 We don't expect Carbon to shift away from an experiment until after it becomes
 public and after we have been able to collect and incorporate a reasonable
-amount of feedback from the broader industry and community.
+amount of feedback from the broader industry and community. This feedback will
+be central in determining whether Carbon should continue past the experimental
+stage.
 
 ## Key results in 2022
 
@@ -76,7 +78,8 @@ include:
 
 -   Number of messages sent to Discord by author.
 -   Number of proposals by both author and reviewer.
--   Amount of time speaking in weekly sync meetings.
+-   People present in weekly sync meetings, and number of comments attributed to
+    them in the minutes.
 
 We are unlikely to be able to reach this goal until after we go public, so
 metrics should be tracked towards the end of the year rather than considering an
@@ -191,6 +194,8 @@ Some concrete goals that might show up in this time frame:
 -   Migration tooling sufficient to use with real-world libraries and systems.
     This might be used to help with self-hosting Carbon, as well as by initial
     early adopters evaluating Carbon.
+-   Create a foundation or similar organization to manage the Carbon project,
+    separate from any corporate entities that fund work on Carbon.
 
 ### Potential 2024-2025 goals: _ship_ 1.0 language & organization
 
