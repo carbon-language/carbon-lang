@@ -10,5 +10,6 @@ glob_lit_tests(
         "@llvm-project//llvm:FileCheck",
         "@llvm-project//llvm:not",
     ],
+    test_file_exts = ["carbon"],
     driver = "lit.cfg.py",
 )
