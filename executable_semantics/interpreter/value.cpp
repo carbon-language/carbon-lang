@@ -77,8 +77,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v
-                                          << " or its class " << class_type;
+          FATAL_RUNTIME_ERROR(source_loc)
+              << "member " << f << " not in " << *v << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);

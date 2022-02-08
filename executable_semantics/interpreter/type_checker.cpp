@@ -1136,21 +1136,9 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     TypeCheckExp(&deduced->type());
-    // Bring back the following and put it somewhere! -Jeremy
-    // auto t = interpreter_.InterpExp(values, deduced.type);
-#if 0
-    SetStaticType(deduced, arena_->New<VariableType>(deduced));
-    SetConstantValue(deduced, &deduced->static_type());
-#else
     SetConstantValue(deduced, arena_->New<VariableType>(deduced));
     SetStaticType(deduced, InterpExp(&deduced->type(), arena_, trace_));
-#endif
   }
-  if (f->is_method()) {
-    // Type check the receiver pattern
-    TypeCheckPattern(&f->me_pattern(), std::nullopt);
-  }
-
   if (f->is_method()) {
     // Type check the receiver patter
     TypeCheckPattern(&f->me_pattern(), std::nullopt);
