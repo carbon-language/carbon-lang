@@ -12,6 +12,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/generic_binding.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -23,6 +24,7 @@
 namespace Carbon {
 
 class Value;
+class VariableType;
 
 class Expression : public AstNode {
  public:
@@ -156,9 +158,13 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
+  auto variable() const -> std::optional<NamedEntityView> { return variable_; }
+  void set_variable(NamedEntityView var) { variable_ = var; }
+
  private:
   Nonnull<Expression*> aggregate_;
   std::string field_;
+  std::optional<NamedEntityView> variable_;
 };
 
 class IndexExpression : public Expression {
@@ -358,9 +364,13 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
+  auto impls() const -> const BindingMap& { return impls_; }
+  void set_impls(const BindingMap& impls) { impls_ = impls; }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
+  BindingMap impls_;
 };
 
 class FunctionTypeLiteral : public Expression {

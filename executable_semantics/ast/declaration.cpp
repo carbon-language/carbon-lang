@@ -15,6 +15,32 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+      out << "interface " << iface_decl.name() << " {\n";
+      for (Nonnull<Declaration*> m : iface_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+    case DeclarationKind::ImplementationDeclaration: {
+      const auto& impl_decl = cast<ImplementationDeclaration>(*this);
+      switch (impl_decl.kind()) {
+        case ImplKind::InternalImpl:
+          break;
+        case ImplKind::ExternalImpl:
+          out << "external ";
+          break;
+      }
+      out << "impl " << *impl_decl.impl_type() << " as "
+          << impl_decl.interface() << " {\n";
+      for (Nonnull<Declaration*> m : impl_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
@@ -63,6 +89,7 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
       out << "-> auto";
       return;
     case ReturnKind::Expression:
+      CHECK(type_expression_.has_value());
       out << "-> " << **type_expression_;
       return;
   }

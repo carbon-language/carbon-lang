@@ -9,9 +9,30 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
+
+class Field {
+ public:
+  Field(std::string name) : name_(name) {}
+  Field(std::string name, std::optional<NamedEntityView> type_var)
+      : name_(name), type_variable_(type_var) {}
+
+  auto name() const -> const std::string& { return name_; }
+  auto type_variable() const -> std::optional<NamedEntityView> {
+    return type_variable_;
+  }
+
+  void Print(llvm::raw_ostream& out) const { out << name_; }
+
+ private:
+  std::string name_;
+  // The type_variable_ is for member access inside a generic,
+  // and is needed to lookup the witness table.
+  std::optional<NamedEntityView> type_variable_;
+};
 
 // Given some initial Value, a FieldPath identifies a sub-Value within it,
 // in much the same way that a file path identifies a file within some
@@ -31,6 +52,7 @@ class FieldPath {
 
   // Constructs a FieldPath consisting of a single step.
   explicit FieldPath(std::string name) : components_({std::move(name)}) {}
+  explicit FieldPath(const Field& f) : components_({f}) {}
 
   FieldPath(const FieldPath&) = default;
   FieldPath(FieldPath&&) = default;
@@ -46,7 +68,7 @@ class FieldPath {
   }
 
   void Print(llvm::raw_ostream& out) const {
-    for (const std::string& component : components_) {
+    for (const Field& component : components_) {
       out << "." << component;
     }
   }
@@ -58,7 +80,7 @@ class FieldPath {
   // another Value, so its implementation details are tied to the implementation
   // details of Value.
   friend class Value;
-  std::vector<std::string> components_;
+  std::vector<Field> components_;
 };
 
 }  // namespace Carbon

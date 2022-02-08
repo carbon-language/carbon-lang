@@ -22,6 +22,8 @@
 namespace Carbon {
 
 class Action;
+class ActionStack;
+class Heap;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -52,6 +54,8 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    InterfaceType,
+    ImplType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -61,6 +65,7 @@ class Value {
     StringType,
     StringValue,
     TypeOfClassType,
+    TypeOfInterfaceType,
     TypeOfChoiceType,
   };
 
@@ -73,7 +78,8 @@ class Value {
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
   auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc) const -> Nonnull<const Value*>;
+                SourceLocation source_loc, const ActionStack& todo,
+                const Heap& heap) const -> Nonnull<const Value*>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
@@ -463,10 +469,6 @@ class NominalClassType : public Value {
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
 
-  // Return the declaration of the member with the given name.
-  auto FindMember(const std::string& name) const
-      -> std::optional<Nonnull<const Declaration*>>;
-
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
   auto FindFunction(const std::string& name) const
@@ -477,6 +479,44 @@ class NominalClassType : public Value {
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
+auto FindMember(const std::string& name,
+                llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const Declaration*>>;
+
+// An interface type.
+class InterfaceType : public Value {
+ public:
+  InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
+      : Value(Kind::InterfaceType), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::InterfaceType;
+  }
+
+  auto declaration() const -> const InterfaceDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const InterfaceDeclaration*> declaration_;
+};
+
+class ImplType : public Value {
+ public:
+  ImplType(Nonnull<const ImplementationDeclaration*> declaration)
+      : Value(Kind::ImplType), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ImplType;
+  }
+
+  auto declaration() const -> const ImplementationDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const ImplementationDeclaration*> declaration_;
+};
 
 // A choice type.
 class ChoiceType : public Value {
@@ -625,6 +665,21 @@ class TypeOfClassType : public Value {
 
  private:
   Nonnull<const NominalClassType*> class_type_;
+};
+
+class TypeOfInterfaceType : public Value {
+ public:
+  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
+      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfInterfaceType;
+  }
+
+  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
+
+ private:
+  Nonnull<const InterfaceType*> iface_type_;
 };
 
 // The type of an expression whose value is a choice type. Currently there is no
