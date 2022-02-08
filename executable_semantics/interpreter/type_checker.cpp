@@ -1151,6 +1151,11 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     TypeCheckPattern(&f->me_pattern(), std::nullopt);
   }
 
+  if (f->is_method()) {
+    // Type check the receiver patter
+    TypeCheckPattern(&f->me_pattern(), std::nullopt);
+  }
+
   // Type check the parameter pattern
   TypeCheckPattern(&f->param_pattern(), std::nullopt);
 

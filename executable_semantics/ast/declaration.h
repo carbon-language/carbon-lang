@@ -161,6 +161,7 @@ class ClassDeclaration : public Declaration {
 
   auto name() const -> const std::string& { return name_; }
   virtual auto GetName() const -> std::optional<std::string> { return name_; }
+
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }

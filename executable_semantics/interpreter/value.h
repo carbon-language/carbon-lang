@@ -479,6 +479,7 @@ class NominalClassType : public Value {
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
+// Return the declaration of the member with the given name.
 auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>>;
@@ -517,6 +518,8 @@ class ImplType : public Value {
  private:
   Nonnull<const ImplementationDeclaration*> declaration_;
 };
+
+auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
 
 // A choice type.
 class ChoiceType : public Value {

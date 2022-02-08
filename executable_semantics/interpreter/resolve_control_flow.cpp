@@ -144,6 +144,7 @@ void ResolveControlFlow(Nonnull<Declaration*> declaration) {
     }
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
+      // do nothing
       break;
   }
 }

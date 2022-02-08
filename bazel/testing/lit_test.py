@@ -47,7 +47,7 @@ def main():
         subprocess.check_call(args=args + parsed_args.lit_args, env=env)
     except subprocess.CalledProcessError as e:
         # Print without the stack trace.
-        print(e)
+        exit(e)
 
 
 if __name__ == "__main__":
