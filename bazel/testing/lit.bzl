@@ -24,8 +24,8 @@ def glob_lit_tests(driver, data, test_file_exts, **kwargs):
     )
     data.append("@llvm-project//llvm:lit")
     for f in test_files:
-        if f.split('.')[-1] not in test_file_exts:
-          continue
+        if f.split(".")[-1] not in test_file_exts:
+            continue
         native.py_test(
             name = "%s.test" % f,
             srcs = ["//bazel/testing:lit_test.py"],
