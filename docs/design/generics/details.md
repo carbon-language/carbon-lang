@@ -4310,6 +4310,19 @@ interface Vector {
 An impl of that interface for a type may omit a definition of `Invert` to use
 the default, or provide a definition to override the default.
 
+**FIXME:** A default function or method may also be defined out of line:
+
+```
+interface Vector {
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: f64) -> Self;
+  default fn Invert[me: Self]() -> Self;
+}
+fn Vector.Invert[me: Self]() -> Self {
+  return me.Scale(-1.0);
+}
+```
+
 Interface defaults are helpful for [evolution](#evolution), as well as reducing
 boilerplate. Defaults address the gap between the minimum necessary for a type
 to provide the desired functionality of an interface and the breadth of API that
