@@ -5327,7 +5327,18 @@ fn StaticStrCat[T:! GenericArray(ConvertibleToString)](args: T...) -> String {
 }
 
 fn DynamicStrCat(args: Array(DynPtr(ConvertibleToString))...) -> String {
-  // Same body as above, but only instantiated once and no loop unrolling.
+  // Only instantiated once.
+  var len: Int = 0;
+  for (var gr: DynPtr(ConvertibleToString) in args) {
+    len += gr->Length();
+  }
+  var result: String = "";
+  result.Reserve(len);
+  // Loop is not unrolled, `gr` has the same type across iterations
+  for (var gr: DynPtr(ConvertibleToString) in args) {
+    result += gr->ToString();
+  }
+  return result;
 }
 ```
 
