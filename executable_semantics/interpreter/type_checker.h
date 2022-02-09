@@ -59,10 +59,8 @@ class TypeChecker {
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
   void TypeCheckStmt(Nonnull<Statement*> s);
 
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`,
-  // and may not traverse f->body() if `check_body` is false.
-  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                    bool check_body);
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`.
+  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
   void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
@@ -79,6 +77,17 @@ class TypeChecker {
   // Establish the type of the declaration without deeply checking
   // the declaration, such as checking the body of a function.
   void DeclareDeclaration(Nonnull<Declaration*> d);
+
+  void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
+
+  void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+
+  void DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl);
+
+  void DeclareImplementationDeclaration(
+      Nonnull<ImplementationDeclaration*> impl_decl);
+
+  void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.

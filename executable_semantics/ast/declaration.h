@@ -369,7 +369,7 @@ class ImplementationDeclaration : public Declaration {
     return constant_value_;
   }
   void set_constant_value(Nonnull<const Value*> value) {
-    // CHECK(!constant_value_.has_value());
+    CHECK(!constant_value_.has_value());
     constant_value_ = value;
   }
 

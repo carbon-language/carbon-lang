@@ -25,16 +25,12 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Sets the static type of `*object`. Can be called multiple times on
-// the same node, so long as the types are the same on each call.
+// Sets the static type of `*object`.
 // T must have static_type, has_static_type, and set_static_type methods.
 template <typename T>
 static void SetStaticType(Nonnull<T*> object, Nonnull<const Value*> type) {
-  if (object->has_static_type()) {
-    CHECK(TypeEqual(&object->static_type(), type));
-  } else {
-    object->set_static_type(type);
-  }
+  CHECK(!object->has_static_type());
+  object->set_static_type(type);
 }
 
 static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
@@ -1128,10 +1124,9 @@ void TypeChecker::ExpectReturnOnAllPaths(
 
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
-void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                               bool check_body) {
+void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f) {
   if (trace_) {
-    llvm::outs() << "** checking function " << f->name() << "\n";
+    llvm::outs() << "** declaring function " << f->name() << "\n";
   }
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
@@ -1162,14 +1157,10 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     SetStaticType(&f->return_term(), TupleValue::Empty());
   } else {
     // We have to type-check the body in order to determine the return type.
-    check_body = true;
     if (!f->body().has_value()) {
       FATAL_COMPILATION_ERROR(f->return_term().source_loc())
           << "Function declaration has deduced return type but no body";
     }
-  }
-
-  if (f->body().has_value() && check_body) {
     TypeCheckStmt(*f->body());
     if (!f->return_term().is_omitted()) {
       ExpectReturnOnAllPaths(f->body(), f->source_loc());
@@ -1180,6 +1171,8 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   SetStaticType(f, arena_->New<FunctionType>(f->deduced_parameters(),
                                              &f->param_pattern().static_type(),
                                              &f->return_term().static_type()));
+  SetConstantValue(f, arena_->New<FunctionValue>(f));
+
   if (f->name() == "Main") {
     if (!f->return_term().type_expression().has_value()) {
       FATAL_COMPILATION_ERROR(f->return_term().source_loc())
@@ -1189,13 +1182,30 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                     arena_->New<IntType>(), &f->return_term().static_type());
     // TODO: Check that main doesn't have any parameters.
   }
-  SetConstantValue(f, arena_->New<FunctionValue>(f));
 
-  if (check_body) {
-    // Unset the deduced parameters, so they can be reused at runtime.
-    for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-      deduced->unset_constant_value();
+  if (trace_) {
+    llvm::outs() << "** finished declaring function " << f->name() << "\n";
+  }
+  return;
+}
+
+void TypeChecker::TypeCheckFunctionDeclaration(
+    Nonnull<FunctionDeclaration*> f) {
+  if (trace_) {
+    llvm::outs() << "** checking function " << f->name() << "\n";
+  }
+  // if f->return_term().is_auto(), the function body was already
+  // type checked in DeclareFunctionDeclaration
+  if (f->body().has_value() && !f->return_term().is_auto()) {
+    TypeCheckStmt(*f->body());
+    if (!f->return_term().is_omitted()) {
+      ExpectReturnOnAllPaths(f->body(), f->source_loc());
     }
+  }
+
+  // Unset the deduced parameters, so they can be reused at runtime.
+  for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
+    deduced->unset_constant_value();
   }
   if (trace_) {
     llvm::outs() << "** finished checking function " << f->name() << "\n";
@@ -1203,7 +1213,7 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   return;
 }
 
-void TypeChecker::TypeCheckClassDeclaration(
+void TypeChecker::DeclareClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl) {
   // The declarations of the members may refer to the class, so we
   // must set the constant value of the class and its static type
@@ -1213,23 +1223,19 @@ void TypeChecker::TypeCheckClassDeclaration(
   SetConstantValue(class_decl, class_type);
   SetStaticType(class_decl, arena_->New<TypeOfClassType>(class_type));
 
-  // TODO: check that the me parameter has the right type.
-
-  // First pass: process the field, class function, and method
-  // declarations but not the bodies of class functions or method
-  // declarations.
   for (Nonnull<Declaration*> m : class_decl->members()) {
     DeclareDeclaration(m);
   }
+}
 
-  // Second pass: type check the bodies of the class functions and
-  // methods.
+void TypeChecker::TypeCheckClassDeclaration(
+    Nonnull<ClassDeclaration*> class_decl) {
   for (Nonnull<Declaration*> m : class_decl->members()) {
     TypeCheckDeclaration(m);
   }
 }
 
-void TypeChecker::TypeCheckInterfaceDeclaration(
+void TypeChecker::DeclareInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl) {
   Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
   SetConstantValue(iface_decl, iface_type);
@@ -1244,15 +1250,19 @@ void TypeChecker::TypeCheckInterfaceDeclaration(
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     DeclareDeclaration(m);
   }
+}
+
+void TypeChecker::TypeCheckInterfaceDeclaration(
+    Nonnull<InterfaceDeclaration*> iface_decl) {
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     TypeCheckDeclaration(m);
   }
 }
 
-void TypeChecker::TypeCheckImplementationDeclaration(
+void TypeChecker::DeclareImplementationDeclaration(
     Nonnull<ImplementationDeclaration*> impl_decl) {
   if (trace_) {
-    llvm::outs() << "checking " << *impl_decl << "\n";
+    llvm::outs() << "declaring " << *impl_decl << "\n";
   }
   auto iface_type = InterpExp(&impl_decl->interface(), arena_, trace_);
   const auto& iface_decl = cast<InterfaceType>(*iface_type).declaration();
@@ -1270,9 +1280,6 @@ void TypeChecker::TypeCheckImplementationDeclaration(
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     DeclareDeclaration(m);
   }
-  for (Nonnull<Declaration*> m : impl_decl->members()) {
-    TypeCheckDeclaration(m);
-  }
   for (Nonnull<Declaration*> m : iface_decl.members()) {
     if (auto mem_name = m->GetName(); mem_name.has_value()) {
       if (auto mem = FindMember(*mem_name, impl_decl->members());
@@ -1289,21 +1296,27 @@ void TypeChecker::TypeCheckImplementationDeclaration(
       }
     }
   }
-  if (trace_) {
-    llvm::outs() << "impl is complete\n";
-  }
-
   Nonnull<ImplType*> impl_type = arena_->New<ImplType>(impl_decl);
   impl_decl->set_constant_value(impl_type);
-  // SetStaticType ?
+  if (trace_) {
+    llvm::outs() << "finished declaring impl\n";
+  }
+}
 
+void TypeChecker::TypeCheckImplementationDeclaration(
+    Nonnull<ImplementationDeclaration*> impl_decl) {
+  if (trace_) {
+    llvm::outs() << "checking " << *impl_decl << "\n";
+  }
+  for (Nonnull<Declaration*> m : impl_decl->members()) {
+    TypeCheckDeclaration(m);
+  }
   if (trace_) {
     llvm::outs() << "finished checking impl\n";
   }
 }
 
-void TypeChecker::TypeCheckChoiceDeclaration(
-    Nonnull<ChoiceDeclaration*> choice) {
+void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice) {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     TypeCheckExp(&alternative->signature());
@@ -1313,6 +1326,11 @@ void TypeChecker::TypeCheckChoiceDeclaration(
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
   SetConstantValue(choice, ct);
   SetStaticType(choice, arena_->New<TypeOfChoiceType>(ct));
+}
+
+void TypeChecker::TypeCheckChoiceDeclaration(
+    Nonnull<ChoiceDeclaration*> choice) {
+  // Nothing to do here, but perhaps that will change in the future?
 }
 
 void TypeChecker::TypeCheck(AST& ast) {
@@ -1336,8 +1354,7 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
       break;
     }
     case DeclarationKind::FunctionDeclaration:
-      TypeCheckFunctionDeclaration(&cast<FunctionDeclaration>(*d),
-                                   /*check_body=*/true);
+      TypeCheckFunctionDeclaration(&cast<FunctionDeclaration>(*d));
       return;
     case DeclarationKind::ClassDeclaration:
       TypeCheckClassDeclaration(&cast<ClassDeclaration>(*d));
@@ -1360,12 +1377,14 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d) {
         FATAL_COMPILATION_ERROR(var.source_loc())
             << "Type of a top-level variable must be an expression.";
       }
+#if 0
       Nonnull<const Value*> declared_type =
           InterpExp(&binding_type->expression(), arena_, trace_);
       SetStaticType(&var, declared_type);
+#endif
       if (var.has_initializer()) {
-        ExpectType(var.source_loc(), "initializer of variable", declared_type,
-                   &var.initializer().static_type());
+        ExpectType(var.source_loc(), "initializer of variable",
+                   &var.static_type(), &var.initializer().static_type());
       }
       return;
     }
@@ -1376,28 +1395,29 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d) {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*d);
-      TypeCheckInterfaceDeclaration(&iface_decl);
+      DeclareInterfaceDeclaration(&iface_decl);
       break;
     }
     case DeclarationKind::ImplementationDeclaration: {
-      // Nothing to do here? -Jeremy
+      auto& impl_decl = cast<ImplementationDeclaration>(*d);
+      DeclareImplementationDeclaration(&impl_decl);
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<FunctionDeclaration>(*d);
-      TypeCheckFunctionDeclaration(&func_def, /*check_body=*/false);
+      DeclareFunctionDeclaration(&func_def);
       break;
     }
 
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
-      TypeCheckClassDeclaration(&class_decl);
+      DeclareClassDeclaration(&class_decl);
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(*d);
-      TypeCheckChoiceDeclaration(&choice);
+      DeclareChoiceDeclaration(&choice);
       break;
     }
 
@@ -1420,12 +1440,9 @@ void TypeChecker::SetConstantValue(Nonnull<T*> named_entity,
                                    Nonnull<const Value*> value) {
   std::optional<Nonnull<const Value*>> old_value =
       named_entity->constant_value();
-  if (old_value.has_value()) {
-    CHECK(ValueEqual(*old_value, value));
-  } else {
-    named_entity->set_constant_value(value);
-    CHECK(constants_.insert(named_entity).second);
-  }
+  CHECK(!old_value.has_value());
+  named_entity->set_constant_value(value);
+  CHECK(constants_.insert(named_entity).second);
 }
 
 void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
