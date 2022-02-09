@@ -7,7 +7,7 @@ digraph {
   layout = dot
   rankdir = TB
   rank = "min"
-  node [shape="none" fontsize="12" height="0"
+  node [fontsize="12" height="0" margin=".15,.15"
         fontname="BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif"]
   edge [dir="none"]
 
