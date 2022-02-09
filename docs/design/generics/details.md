@@ -4425,8 +4425,8 @@ The resulting impl definition must be legal where it is instantiated. For
 example it must respect the [orphan rule](#orphan-rule), or the triggering impl
 is invalid.
 
-The resulting impl will be [external](#external-impl), but it is possible for it
-is still possible for its names to be available on the type. For example, if the
+The resulting impl will be [external](#external-impl), but it is possible for
+its names to be available on the type. For example, if the
 interface requirement uses `extends` instead of `impl as`, then the names from
 the default impl will also be members of the requiring interfaces, and will be
 available if that interface is implemented internally.
@@ -4599,7 +4599,7 @@ than, the blanket impl approach.
 
 ##### Default impls for other types
 
-An interface define a default impl for a type other than `Self` by writing the
+An interface can define a default impl for a type other than `Self` by writing the
 name of that type between `impl` and `as`. Inside the definition of the default,
 `Self` continues to refer to the type implementing the outer interface, not the
 type the default is an implementation for.
