@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/dictionary.h"
+#include "executable_semantics/interpreter/impl_scope.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
@@ -40,7 +41,7 @@ class TypeChecker {
   //
   // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  void TypeCheckExp(Nonnull<Expression*> e);
+  void TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
@@ -48,50 +49,62 @@ class TypeChecker {
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
   void TypeCheckPattern(Nonnull<Pattern*> p,
-                        std::optional<Nonnull<const Value*>> expected);
+                        std::optional<Nonnull<const Value*>> expected,
+                        const ImplScope& impl_scope);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
-  void TypeCheckStmt(Nonnull<Statement*> s);
+  void TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope);
 
   // Establish the type of the declaration without deeply checking
   // the declaration, such as checking the body of a function.
   // Dispatches to one of the following functions.
-  void DeclareDeclaration(Nonnull<Declaration*> d);
+  void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope);
 
-  void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
+  void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                  const ImplScope& enclosing_scope);
 
-  void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+  void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                               ImplScope& enclosing_scope);
 
-  void DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl);
+  void DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
+                                   ImplScope& enclosing_scope);
 
   void DeclareImplementationDeclaration(
-      Nonnull<ImplementationDeclaration*> impl_decl);
+      Nonnull<ImplementationDeclaration*> impl_decl,
+      ImplScope& enclosing_scope);
 
-  void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
+  void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                const ImplScope& enclosing_scope);
 
   // Deeply checks the declaration, such as the body of a function.
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d);
+  void TypeCheckDeclaration(Nonnull<Declaration*> d,
+                            const ImplScope& impl_scope);
 
   // Type check the body of the function.
-  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
+  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                    const ImplScope& impl_scope);
 
   // Type check all the members of the class.
-  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                                 const ImplScope& impl_scope);
 
   // Type check all the members of the interface.
-  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl);
+  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
+                                     const ImplScope& impl_scope);
 
   // Type check all the members of the implementation.
   void TypeCheckImplementationDeclaration(
-      Nonnull<ImplementationDeclaration*> impl_decl);
+      Nonnull<ImplementationDeclaration*> impl_decl,
+      const ImplScope& impl_scope);
 
   // This currently does nothing, but perhaps that will change in the future.
-  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
+  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                  const ImplScope& impl_scope);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
@@ -122,7 +135,6 @@ class TypeChecker {
 
   Nonnull<Arena*> arena_;
   std::set<NamedEntityView> constants_;
-  std::vector<Nonnull<const ImplementationDeclaration*>> impls_;
 
   bool trace_;
 };

@@ -329,11 +329,14 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplementationDeclaration : public Declaration {
  public:
+  using ImplementsCarbonNamedEntity = void;
+
   ImplementationDeclaration(SourceLocation source_loc, ImplKind kind,
                             Nonnull<Expression*> impl_type,
                             Nonnull<Expression*> interface,
                             std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplementationDeclaration, source_loc),
+        name_("impl"),
         kind_(kind),
         impl_type_(impl_type),
         interface_(interface),
@@ -362,6 +365,7 @@ class ImplementationDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
+  auto name() const -> const std::string& { return name_; }
   virtual auto GetName() const -> std::optional<std::string> {
     return std::nullopt;
   }
@@ -372,8 +376,10 @@ class ImplementationDeclaration : public Declaration {
     CHECK(!constant_value_.has_value());
     constant_value_ = value;
   }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
+  std::string name_;
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;  // TODO: make this optional
   std::optional<Nonnull<const Value*>> impl_type_value_;

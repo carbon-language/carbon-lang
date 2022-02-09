@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{executable_semantics} %s 2>&1 | \
+// RUN: %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_no_impl.carbon:31: could not find implementation of interface Vector for class Point
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
@@ -19,10 +19,22 @@ interface Vector {
 class Point {
   var x: i32;
   var y: i32;
+  impl Point as Vector {
+    fn Add[me: Point](b: Point) -> Point {
+        return {.x = me.x + b.x, .y = me.y + b.y};
+    }
+    fn Scale[me: Point](v: i32) -> Point {
+        return {.x = me.x * v, .y = me.y * v};
+    }
+  }
+}
+
+fn ScaleGeneric[T:! Vector](c: T, s: i32) -> T {
+  return c.Scale(s);
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
-  return a.Add(b).Scale(s);
+  return ScaleGeneric(a.Add(b), s);
 }
 
 fn Main() -> i32 {

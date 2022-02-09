@@ -574,10 +574,17 @@ void Interpreter::StepExp() {
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
             // Bring the impl witness tables into scope.
-            for (const auto& [bind, value] :
+            // change the impl's value to be a named entity? -Jeremy
+            for (const auto& [bind, impl_name] :
                  cast<CallExpression>(exp).impls()) {
               NamedEntityView named_ent(bind);
-              function_scope.Initialize(named_ent, value);
+              auto impl_value = todo_.ValueOfName(impl_name, exp.source_loc());
+              if (impl_value->kind() == Value::Kind::LValue) {
+                const LValue& lval = cast<LValue>(*impl_value);
+                impl_value =
+                    heap_.Read(lval.address(), exp.source_loc(), todo_);
+              }
+              function_scope.Initialize(named_ent, impl_value);
             }
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),

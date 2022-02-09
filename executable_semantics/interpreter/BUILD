@@ -159,8 +159,14 @@ cc_library(
 
 cc_library(
     name = "type_checker",
-    srcs = ["type_checker.cpp"],
-    hdrs = ["type_checker.h"],
+    srcs = [
+        "impl_scope.cpp",
+        "type_checker.cpp",
+    ],
+    hdrs = [
+        "impl_scope.h",
+        "type_checker.h",
+    ],
     deps = [
         ":action_and_value_and_heap",
         ":dictionary",

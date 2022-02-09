@@ -364,13 +364,19 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  auto impls() const -> const BindingMap& { return impls_; }
-  void set_impls(const BindingMap& impls) { impls_ = impls; }
+  auto impls() const
+      -> const std::map<Nonnull<const GenericBinding*>, NamedEntityView>& {
+    return impls_;
+  }
+  void set_impls(
+      const std::map<Nonnull<const GenericBinding*>, NamedEntityView>& impls) {
+    impls_ = impls;
+  }
 
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  BindingMap impls_;
+  std::map<Nonnull<const GenericBinding*>, NamedEntityView> impls_;
 };
 
 class FunctionTypeLiteral : public Expression {
