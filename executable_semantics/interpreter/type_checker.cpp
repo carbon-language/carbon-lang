@@ -1431,8 +1431,10 @@ void TypeChecker::SetConstantValue(Nonnull<T*> named_entity,
 void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
   for (const auto& named_entity : constants_) {
-    out << sep << named_entity.name() << ": "
-        << **named_entity.constant_value();
+    out << sep << named_entity.name();
+    if (named_entity.constant_value().has_value()) {
+      out << ": " << **named_entity.constant_value();
+    }
   }
 }
 
