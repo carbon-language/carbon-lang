@@ -336,7 +336,7 @@ class ImplementationDeclaration : public Declaration {
                             Nonnull<Expression*> interface,
                             std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplementationDeclaration, source_loc),
-        name_("impl"),
+        name_("__impl"),
         kind_(kind),
         impl_type_(impl_type),
         interface_(interface),
@@ -379,7 +379,8 @@ class ImplementationDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  std::string
+      name_;  // So that this can be a named entity. Otherwise not useful.
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;  // TODO: make this optional
   std::optional<Nonnull<const Value*>> impl_type_value_;

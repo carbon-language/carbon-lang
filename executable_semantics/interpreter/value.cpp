@@ -609,47 +609,10 @@ auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
 auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
-  for (const auto& member : members) {
-    switch (member->kind()) {
-      // The following code is repetitive :(
-      // Change to use GetName(). -Jeremy
-      case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
-        if (fun.name() == name) {
-          return &fun;
-        }
-        break;
-      }
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*member);
-        if (var.binding().name() == name) {
-          return &var;
-        }
-        break;
-      }
-      case DeclarationKind::ClassDeclaration: {
-        const auto& class_decl = cast<ClassDeclaration>(*member);
-        if (class_decl.name() == name) {
-          return &class_decl;
-        }
-        break;
-      }
-      case DeclarationKind::InterfaceDeclaration: {
-        const auto& iface_decl = cast<InterfaceDeclaration>(*member);
-        if (iface_decl.name() == name) {
-          return &iface_decl;
-        }
-        break;
-      }
-      case DeclarationKind::ChoiceDeclaration: {
-        const auto& choice_decl = cast<ChoiceDeclaration>(*member);
-        if (choice_decl.name() == name) {
-          return &choice_decl;
-        }
-        break;
-      }
-      case DeclarationKind::ImplementationDeclaration:
-        break;
+  for (auto member : members) {
+    if (auto mem_name = member->GetName(); mem_name.has_value()) {
+      if (*mem_name == name)
+        return member;
     }
   }
   return std::nullopt;

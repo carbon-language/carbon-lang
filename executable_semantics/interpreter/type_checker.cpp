@@ -405,7 +405,8 @@ auto TypeChecker::Substitute(
 void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope) {
   if (trace_) {
-    llvm::outs() << "checking expression " << *e << "\nconstants: ";
+    llvm::outs() << "checking expression " << *e;
+    llvm::outs() << "\nconstants: ";
     PrintConstants(llvm::outs());
     llvm::outs() << "\n";
   }
@@ -1262,6 +1263,7 @@ void TypeChecker::DeclareImplementationDeclaration(
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     DeclareDeclaration(m, enclosing_scope);
   }
+  // Check that the interface is satisfied by the impl members
   for (Nonnull<Declaration*> m : iface_decl.members()) {
     if (auto mem_name = m->GetName(); mem_name.has_value()) {
       if (auto mem = FindMember(*mem_name, impl_decl->members());

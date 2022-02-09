@@ -574,7 +574,6 @@ void Interpreter::StepExp() {
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
             // Bring the impl witness tables into scope.
-            // change the impl's value to be a named entity? -Jeremy
             for (const auto& [bind, impl_name] :
                  cast<CallExpression>(exp).impls()) {
               NamedEntityView named_ent(bind);
