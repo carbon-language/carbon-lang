@@ -34,6 +34,7 @@ def cc_fuzz_test(
     # Remove arguments which should only apply to the test.
     bin_kwargs = dict(kwargs)
     bin_kwargs.pop("size", None)
+
     # The fuzzer feature is required for fuzzer binaries.
     _append_if_not_present(bin_kwargs, "features", "fuzzer")
 
@@ -48,6 +49,7 @@ def cc_fuzz_test(
     test_kwargs = dict(kwargs)
     for k in ("args", "data", "deps", "features", "srcs"):
         test_kwargs.pop(k, None)
+
     # Tag as a fuzz_test for convenience.
     _append_if_not_present(test_kwargs, "tags", "fuzz_test")
 
