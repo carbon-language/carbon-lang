@@ -958,10 +958,6 @@ void Interpreter::StepDeclaration() {
     llvm::outs() << "--- step declaration (" << decl.source_loc() << ") --->\n";
   }
   switch (decl.kind()) {
-    case DeclarationKind::ImplementationDeclaration: {
-      FATAL() << "impls not implemented";
-      break;
-    }
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
       if (var_decl.has_initializer()) {
@@ -980,6 +976,7 @@ void Interpreter::StepDeclaration() {
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ImplementationDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

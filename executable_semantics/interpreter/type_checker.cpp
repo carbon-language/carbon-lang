@@ -401,38 +401,22 @@ auto TypeChecker::Substitute(
   }
 }
 
-// This will need to be changed to handle external impls
-// and especially imports of external impls.
-auto FindImplementation(Nonnull<const Value*> iface_type,
-                        Nonnull<const Value*> impl_type,
-                        SourceLocation source_loc) -> Nonnull<const Value*> {
+auto TypeChecker::FindImplementation(Nonnull<const Value*> iface_type,
+                                     Nonnull<const Value*> impl_type,
+                                     SourceLocation source_loc)
+    -> Nonnull<const Value*> {
   switch (iface_type->kind()) {
     case Value::Kind::InterfaceType: {
       const auto& iface = cast<InterfaceType>(*iface_type);
-      switch (impl_type->kind()) {
-        case Value::Kind::NominalClassType: {
-          const auto& class_type = cast<NominalClassType>(*impl_type);
-          for (Nonnull<Declaration*> member :
-               class_type.declaration().members()) {
-            switch (member->kind()) {
-              case DeclarationKind::ImplementationDeclaration: {
-                const auto& impl_decl =
-                    cast<ImplementationDeclaration>(*member);
-                if (TypeEqual(&iface, impl_decl.interface_type())) {
-                  return *impl_decl.constant_value();
-                }
-                break;
-              }
-              default:
-                break;
-            }
-          }
-          FATAL_COMPILATION_ERROR(source_loc)
-              << *impl_type << " does not implement " << *iface_type;
+      for (auto impl_decl : impls_) {
+        if (TypeEqual(&iface, impl_decl->interface_type()) &&
+            TypeEqual(impl_type, impl_decl->impl_type_value())) {
+          return *impl_decl->constant_value();
         }
-        default:
-          FATAL() << "impl lookup not yet implemented for " << *impl_type;
       }
+      FATAL_COMPILATION_ERROR(source_loc)
+          << *impl_type << " does not implement " << *iface_type;
+      break;
     }
     default:
       FATAL() << "expected an interface, not " << *iface_type;
@@ -1298,6 +1282,7 @@ void TypeChecker::DeclareImplementationDeclaration(
   }
   Nonnull<ImplType*> impl_type = arena_->New<ImplType>(impl_decl);
   impl_decl->set_constant_value(impl_type);
+  impls_.push_back(impl_decl);
   if (trace_) {
     llvm::outs() << "finished declaring impl\n";
   }

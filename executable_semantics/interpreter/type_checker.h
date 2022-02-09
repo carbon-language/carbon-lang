@@ -50,32 +50,15 @@ class TypeChecker {
   void TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected);
 
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d);
-
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
   void TypeCheckStmt(Nonnull<Statement*> s);
 
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`.
-  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
-
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
-  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
-
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
-  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl);
-
-  void TypeCheckImplementationDeclaration(
-      Nonnull<ImplementationDeclaration*> impl_decl);
-
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
-  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
-
   // Establish the type of the declaration without deeply checking
   // the declaration, such as checking the body of a function.
+  // Dispatches to one of the following functions.
   void DeclareDeclaration(Nonnull<Declaration*> d);
 
   void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
@@ -88,6 +71,27 @@ class TypeChecker {
       Nonnull<ImplementationDeclaration*> impl_decl);
 
   void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
+
+  // Deeply checks the declaration, such as the body of a function.
+  // Dispatches to one of the following functions.
+  // Assumes that DeclareDeclaration has already been invoked on `d`.
+  void TypeCheckDeclaration(Nonnull<Declaration*> d);
+
+  // Type check the body of the function.
+  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f);
+
+  // Type check all the members of the class.
+  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+
+  // Type check all the members of the interface.
+  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl);
+
+  // Type check all the members of the implementation.
+  void TypeCheckImplementationDeclaration(
+      Nonnull<ImplementationDeclaration*> impl_decl);
+
+  // This currently does nothing, but perhaps that will change in the future.
+  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
@@ -103,6 +107,11 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) -> Nonnull<const Value*>;
 
+  // Find the implementation of the given interface for the given type.
+  auto FindImplementation(Nonnull<const Value*> iface_type,
+                          Nonnull<const Value*> type, SourceLocation source_loc)
+      -> Nonnull<const Value*>;
+
   // Sets named_entity.constant_value() to `value`. Can be called multiple
   // times on the same named_entity, so long as it is always called with
   // the same value.
@@ -113,6 +122,7 @@ class TypeChecker {
 
   Nonnull<Arena*> arena_;
   std::set<NamedEntityView> constants_;
+  std::vector<Nonnull<const ImplementationDeclaration*>> impls_;
 
   bool trace_;
 };
