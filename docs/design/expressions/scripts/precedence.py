@@ -1,7 +1,5 @@
 """Generates the predence dot and svg files.
 
-Using this requires `dot` be locally installed.
-
 New operators should be added to Graph.write.
 """
 
