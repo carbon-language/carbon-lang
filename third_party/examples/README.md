@@ -10,3 +10,6 @@ This directory contains third-party examples of C++ libraries and how they might
 be ported to Carbon. The goal is to illustrate both how Carbon works using
 real-world code as well as relevant and expected steps when migrating from C++
 to Carbon.
+
+TODO: Example submodules need to be replaced
+([issue #1067](https://github.com/carbon-language/carbon-lang/issues/1067)).
