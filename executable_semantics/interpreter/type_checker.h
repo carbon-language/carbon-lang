@@ -31,10 +31,9 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  static void ArgumentDeduction(
-      SourceLocation source_loc,
-      std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& deduced,
-      Nonnull<const Value*> param, Nonnull<const Value*> arg);
+  static void ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
+                                Nonnull<const Value*> param,
+                                Nonnull<const Value*> arg);
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -67,6 +66,12 @@ class TypeChecker {
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
   void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+
+  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
+  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl);
+
+  void TypeCheckImplementationDeclaration(
+      Nonnull<ImplementationDeclaration*> impl_decl);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
   void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);

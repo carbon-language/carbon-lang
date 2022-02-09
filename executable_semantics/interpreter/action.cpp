@@ -52,6 +52,9 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
 
 void RuntimeScope::Initialize(NamedEntityView named_entity,
                               Nonnull<const Value*> value) {
+  // The following isn't true for type variables in generics... I set them
+  // during type checking to a VariableType. Then I initialize
+  // them again to the witness table at runtime.
   CHECK(!named_entity.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));

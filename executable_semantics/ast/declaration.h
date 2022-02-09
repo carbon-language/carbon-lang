@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/generic_binding.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
@@ -63,6 +64,8 @@ class Declaration : public AstNode {
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
+  virtual auto GetName() const -> std::optional<std::string> = 0;
+
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -72,59 +75,6 @@ class Declaration : public AstNode {
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
-};
-
-// TODO: expand the kinds of things that can be deduced parameters.
-//   For now, only generic parameters are supported.
-class GenericBinding : public AstNode {
- public:
-  using ImplementsCarbonNamedEntity = void;
-
-  GenericBinding(SourceLocation source_loc, std::string name,
-                 Nonnull<Expression*> type)
-      : AstNode(AstNodeKind::GenericBinding, source_loc),
-        name_(std::move(name)),
-        type_(type) {}
-
-  void Print(llvm::raw_ostream& out) const override;
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromGenericBinding(node->kind());
-  }
-
-  auto name() const -> const std::string& { return name_; }
-  auto type() const -> const Expression& { return *type_; }
-  auto type() -> Expression& { return *type_; }
-
-  // The static type of the binding. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the static type of the binding. Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
-
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
-
- private:
-  std::string name_;
-  Nonnull<Expression*> type_;
-  std::optional<Nonnull<const Value*>> static_type_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class FunctionDeclaration : public Declaration {
@@ -153,6 +103,7 @@ class FunctionDeclaration : public Declaration {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
+  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
@@ -209,6 +160,8 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
+  virtual auto GetName() const -> std::optional<std::string> { return name_; }
+
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
@@ -246,6 +199,7 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
+  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto signature() const -> const Expression& { return *signature_; }
   auto signature() -> Expression& { return *signature_; }
 
@@ -269,6 +223,7 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
+  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto alternatives() const
       -> llvm::ArrayRef<Nonnull<const AlternativeSignature*>> {
     return alternatives_;
@@ -309,6 +264,9 @@ class VariableDeclaration : public Declaration {
     return InheritsFromVariableDeclaration(node->kind());
   }
 
+  virtual auto GetName() const -> std::optional<std::string> {
+    return binding_->name();
+  }
   auto binding() const -> const BindingPattern& { return *binding_; }
   auto binding() -> BindingPattern& { return *binding_; }
   auto initializer() const -> const Expression& { return **initializer_; }
@@ -322,6 +280,107 @@ class VariableDeclaration : public Declaration {
   // missing name.
   Nonnull<BindingPattern*> binding_;
   std::optional<Nonnull<Expression*>> initializer_;
+};
+
+class InterfaceDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonNamedEntity = void;
+
+  InterfaceDeclaration(SourceLocation source_loc, std::string name,
+                       Nonnull<GenericBinding*> self,
+                       std::vector<Nonnull<Declaration*>> members)
+      : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
+        name_(std::move(name)),
+        members_(std::move(members)),
+        self_(self) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  virtual auto GetName() const -> std::optional<std::string> { return name_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
+    return members_;
+  }
+  auto self() const -> Nonnull<const GenericBinding*> { return self_; }
+  auto self() -> Nonnull<GenericBinding*> { return self_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+ private:
+  std::string name_;
+  std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<const Value*>> constant_value_;
+  Nonnull<GenericBinding*> self_;
+};
+
+enum class ImplKind { InternalImpl, ExternalImpl };
+
+class ImplementationDeclaration : public Declaration {
+ public:
+  ImplementationDeclaration(SourceLocation source_loc, ImplKind kind,
+                            Nonnull<Expression*> impl_type,
+                            Nonnull<Expression*> interface,
+                            std::vector<Nonnull<Declaration*>> members)
+      : Declaration(AstNodeKind::ImplementationDeclaration, source_loc),
+        kind_(kind),
+        impl_type_(impl_type),
+        interface_(interface),
+        members_(members) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromImplementationDeclaration(node->kind());
+  }
+  auto kind() const -> ImplKind { return kind_; }
+  auto impl_type() const -> Nonnull<Expression*> { return impl_type_; }
+  void set_impl_type_value(Nonnull<const Value*> impl_type) {
+    impl_type_value_ = impl_type;
+  }
+  auto impl_type_value() const -> Nonnull<const Value*> {
+    return *impl_type_value_;
+  }
+
+  auto interface() const -> const Expression& { return *interface_; }
+  auto interface() -> Expression& { return *interface_; }
+  void set_interface_type(Nonnull<const Value*> iface_type) {
+    interface_type_ = iface_type;
+  }
+  auto interface_type() const -> Nonnull<const Value*> {
+    return *interface_type_;
+  }
+  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
+    return members_;
+  }
+  virtual auto GetName() const -> std::optional<std::string> {
+    return std::nullopt;
+  }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+  void set_constant_value(Nonnull<const Value*> value) {
+    // CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+ private:
+  ImplKind kind_;
+  Nonnull<Expression*> impl_type_;  // TODO: make this optional
+  std::optional<Nonnull<const Value*>> impl_type_value_;
+  Nonnull<Expression*> interface_;
+  std::optional<Nonnull<const Value*>> interface_type_;
+  std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 }  // namespace Carbon

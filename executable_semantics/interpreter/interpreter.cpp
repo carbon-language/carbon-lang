@@ -154,7 +154,8 @@ auto Interpreter::EvalPrim(Operator op,
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
-      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
+      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc,
+                        todo_);
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
   }
@@ -371,6 +372,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::AutoType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::ImplType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -380,6 +383,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
       // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
       // have Value::dynamic_type.
@@ -497,8 +501,10 @@ void Interpreter::StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        return todo_.FinishAction(act.results()[0]->GetField(
-            arena_, FieldPath(access.field()), exp.source_loc()));
+        Field field(access.field(), access.variable());
+        auto member = act.results()[0]->GetField(
+            arena_, FieldPath(field), exp.source_loc(), todo_, heap_);
+        return todo_.FinishAction(member);
       }
     }
     case ExpressionKind::IdentifierExpression: {
@@ -508,7 +514,7 @@ void Interpreter::StepExp() {
       Nonnull<const Value*> value =
           todo_.ValueOfName(ident.named_entity(), ident.source_loc());
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
-        value = heap_.Read(lvalue->address(), exp.source_loc());
+        value = heap_.Read(lvalue->address(), exp.source_loc(), todo_);
       }
       return todo_.FinishAction(value);
     }
@@ -567,6 +573,12 @@ void Interpreter::StepExp() {
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
+            // Bring the impl witness tables into scope.
+            for (const auto& [bind, value] :
+                 cast<CallExpression>(exp).impls()) {
+              NamedEntityView named_ent(bind);
+              function_scope.Initialize(named_ent, value);
+            }
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),
                                &function_scope));
@@ -946,6 +958,10 @@ void Interpreter::StepDeclaration() {
     llvm::outs() << "--- step declaration (" << decl.source_loc() << ") --->\n";
   }
   switch (decl.kind()) {
+    case DeclarationKind::ImplementationDeclaration: {
+      FATAL() << "impls not implemented";
+      break;
+    }
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
       if (var_decl.has_initializer()) {
@@ -963,6 +979,7 @@ void Interpreter::StepDeclaration() {
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
+    case DeclarationKind::InterfaceDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

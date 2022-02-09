@@ -128,7 +128,22 @@ void ResolveControlFlow(Nonnull<Declaration*> declaration) {
       }
       break;
     }
-    default:
+    case DeclarationKind::InterfaceDeclaration: {
+      auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : iface_decl.members()) {
+        ResolveControlFlow(member);
+      }
+      break;
+    }
+    case DeclarationKind::ImplementationDeclaration: {
+      auto& impl_decl = cast<ImplementationDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : impl_decl.members()) {
+        ResolveControlFlow(member);
+      }
+      break;
+    }
+    case DeclarationKind::ChoiceDeclaration:
+    case DeclarationKind::VariableDeclaration:
       // do nothing
       break;
   }
