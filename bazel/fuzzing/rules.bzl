@@ -35,8 +35,10 @@ def cc_fuzz_test(
     bin_kwargs = dict(kwargs)
     bin_kwargs.pop("size", None)
 
-    # The fuzzer feature is required for fuzzer binaries.
-    _append_if_not_present(bin_kwargs, "features", "fuzzer")
+    # Ensure the binary is configured for fuzzing.
+    orig_features = bin_kwargs.setdefault("features", [])
+    if "features" not in orig_features:
+        bin_kwargs["features"] = orig_features + ["fuzzer"]
 
     # Provide an arg-less binary that can be run for testing specific files.
     bin_target = name + ".bin"
@@ -49,9 +51,6 @@ def cc_fuzz_test(
     test_kwargs = dict(kwargs)
     for k in ("args", "data", "deps", "features", "srcs"):
         test_kwargs.pop(k, None)
-
-    # Tag as a fuzz_test for convenience.
-    _append_if_not_present(test_kwargs, "tags", "fuzz_test")
 
     # Append the corpus files to the test arguments. When run on a list of
     # files rather than a directory, libFuzzer-based fuzzers will perform a
