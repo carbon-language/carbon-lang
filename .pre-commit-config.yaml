@@ -53,7 +53,7 @@ repos:
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: f1d4e742c91dd5179d742b0db9293c4472b765f8 # frozen: 21.12b0
+    rev: fc0be6eb1e2a96091e6f64009ee5e9081bf8b6c6 # frozen: 22.1.0
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
@@ -97,27 +97,12 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.carbon$'
+          - '\.(carbon|ypp)$'
           - ''
           - '// '
           - ''
           - --custom_format
-          - '\.lpp$'
-          - '/*'
-          - ''
-          - '*/'
-          - --custom_format
-          - '\.ypp$'
-          - ''
-          - '// '
-          - ''
-          - --custom_format
-          - '\.l$'
-          - '/*'
-          - ''
-          - '*/'
-          - --custom_format
-          - '\.y$'
+          - '\.(l|lpp|y)$'
           - '/*'
           - ''
           - '*/'
