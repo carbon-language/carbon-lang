@@ -110,6 +110,7 @@ cc_library(
     hdrs = ["heap_allocation_interface.h"],
     deps = [
         ":address",
+        "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
     ],
 )
@@ -148,6 +149,7 @@ cc_library(
         "//common:check",
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:return_term",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
@@ -164,8 +166,8 @@ cc_library(
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:member",
         "//executable_semantics/ast:pattern",
+        "//executable_semantics/ast:return_term",
         "//executable_semantics/ast:statement",
         "//executable_semantics/ast:static_scope",
         "//executable_semantics/common:arena",

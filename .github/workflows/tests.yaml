@@ -39,13 +39,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          submodules: true
 
       - name: Checkout branch
         if: github.event_name != 'pull_request_target'
         uses: actions/checkout@v2
-        with:
-          submodules: true
 
       # Setup Python and related tools.
       - uses: actions/setup-python@v2
@@ -128,8 +125,16 @@ jobs:
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
         run: bazelisk build -c ${{ matrix.build_mode }} //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
         run: bazelisk test -c ${{ matrix.build_mode }} //...:all

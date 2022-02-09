@@ -18,14 +18,19 @@ namespace Carbon {
 // The stack of Actions currently being executed by the interpreter.
 class ActionStack {
  public:
-  // Constructs an empty ActionStack
-  explicit ActionStack(Scope globals) : globals_(std::move(globals)) {}
+  // Constructs an empty compile-time ActionStack.
+  ActionStack() = default;
+
+  // Constructs an empty run-time ActionStack that allocates global variables
+  // on `heap`.
+  explicit ActionStack(Nonnull<HeapAllocationInterface*> heap)
+      : globals_(RuntimeScope(heap)) {}
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Returns an Env containing the currently-defined global variables.
-  auto GlobalEnv() const -> Env { return globals_.values(); }
+  // TODO: consider unifying with Print.
+  void PrintScopes(llvm::raw_ostream& out) const;
 
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.
@@ -38,13 +43,25 @@ class ActionStack {
   // ScopeAction.
   auto CurrentAction() -> Action& { return *todo_.Top(); }
 
-  // The scope that should be used to resolve name lookups in the current
-  // action.
-  auto CurrentScope() const -> Scope&;
+  // Allocates storage for `named_entity`, and initializes it to `value`.
+  void Initialize(NamedEntityView named_entity, Nonnull<const Value*> value);
+
+  // Returns the value bound to `named_entity`. If `named_entity` is a local
+  // variable, this will be an LValue.
+  auto ValueOfName(NamedEntityView named_entity,
+                   SourceLocation source_loc) const -> Nonnull<const Value*>;
+
+  // Merges `scope` into the innermost scope currently on the stack.
+  void MergeScope(RuntimeScope scope);
+
+  // Initializes `fragment` so that, when resumed, it begins execution of
+  // `body`.
+  void InitializeFragment(ContinuationValue::StackFragment& fragment,
+                          Nonnull<const Statement*> body);
 
   // The result produced by the `action` argument of the most recent
-  // `Start` call. *this must be empty, signifying that the action has been
-  // fully executed.
+  // Start call. Cannot be called if IsEmpty() is false, or if `action`
+  // was an action that doesn't produce results.
   auto result() const -> Nonnull<const Value*> { return *result_; }
 
   // The following methods, called "transition methods", update the state of
@@ -65,7 +82,7 @@ class ActionStack {
   // Advances the current action one step, and push `child` onto the stack.
   // If `scope` is specified, `child` will be executed in that scope.
   void Spawn(std::unique_ptr<Action> child);
-  void Spawn(std::unique_ptr<Action> child, Scope scope);
+  void Spawn(std::unique_ptr<Action> child, RuntimeScope scope);
 
   // Advances the current action one step.
   void RunAgain();
@@ -100,7 +117,7 @@ class ActionStack {
   // TODO: consider defining a non-nullable unique_ptr-like type to use here.
   Stack<std::unique_ptr<Action>> todo_;
   std::optional<Nonnull<const Value*>> result_;
-  mutable Scope globals_;
+  std::optional<RuntimeScope> globals_;
 };
 
 }  // namespace Carbon

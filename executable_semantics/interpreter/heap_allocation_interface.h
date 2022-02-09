@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
 
+#include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/address.h"
 
@@ -25,6 +26,9 @@ class HeapAllocationInterface {
 
   // Marks this allocation, and all of its sub-objects, as dead.
   virtual void Deallocate(AllocationId allocation) = 0;
+
+  // Returns the arena used to allocate the values in this heap.
+  virtual auto arena() const -> Arena& = 0;
 
  protected:
   HeapAllocationInterface() = default;

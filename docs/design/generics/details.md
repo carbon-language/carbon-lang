@@ -92,12 +92,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`final` impls](#final-impls)
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
     -   [Comparison to Rust](#comparison-to-rust)
+-   [Interface members with definitions](#interface-members-with-definitions)
+    -   [Interface defaults](#interface-defaults)
+    -   [`final` members](#final-members)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
         -   [Runtime type fields](#runtime-type-fields)
     -   [Abstract return types](#abstract-return-types)
-    -   [Interface defaults](#interface-defaults)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
     -   [Operator overloading](#operator-overloading)
@@ -110,6 +112,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
     -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
+    -   [Separate declaration and definition of impl](#separate-declaration-and-definition-of-impl)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -1898,13 +1901,13 @@ interface NSpacePoint {
 }
 ```
 
-Implementations of `NSpacePoint` for different types might have different values
-for `N`:
+An implementation of an interface specifies values for associated constants with
+a [`where` clause](#where-constraints). For example, implementations of
+`NSpacePoint` for different types might have different values for `N`:
 
 ```
 class Point2D {
-  impl as NSpacePoint {
-    let N:! i32 = 2;
+  impl as NSpacePoint where .N = 2 {
     fn Get[addr me: Self*](i: i32) -> f64 { ... }
     fn Set[addr me: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr me: Self*](value: Array(f64, 2)) { ... }
@@ -1912,8 +1915,7 @@ class Point2D {
 }
 
 class Point3D {
-  impl as NSpacePoint {
-    let N:! i32 = 3;
+  impl as NSpacePoint where .N = 3 {
     fn Get[addr me: Self*](i: i32) -> f64 { ... }
     fn Set[addr me: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr me: Self*](value: Array(f64, 3)) { ... }
@@ -1921,7 +1923,16 @@ class Point3D {
 }
 ```
 
-And these values may be accessed as members of the type:
+Multiple assignments to associated constants may be joined using the `and`
+keyword. The list of assignments is subject to two restrictions:
+
+-   An implementation of an interface cannot specify a value for a
+    [`final`](#final-members) associated constant.
+-   If an associated constant doesn't have a
+    [default value](#interface-defaults), every implementation must specify its
+    value.
+
+These values may be accessed as members of the type:
 
 ```
 Assert(Point2D.N == 2);
@@ -2019,9 +2030,8 @@ class DynamicArray(T:! Type) {
   fn Insert[addr me: Self*](pos: IteratorType, value: T);
   fn Remove[addr me: Self*](pos: IteratorType);
 
-  impl as StackAssociatedType {
-    // Set the associated type `ElementType` to `T`.
-    let ElementType:! Type = T;
+  // Set the associated type `ElementType` to `T`.
+  impl as StackAssociatedType where .ElementType = T {
     fn Push[addr me: Self*](value: ElementType) {
       me->Insert(me->End(), value);
     }
@@ -2440,6 +2450,10 @@ constraint Point2DInterface {
 }
 ```
 
+This syntax is also used to specify the values of
+[associated constants](#associated-constants) when implementing an interface for
+a type.
+
 **Concern:** Using `=` for this use case is not consistent with other `where`
 clauses that write a boolean expression that evaluates to `true` when the
 constraint is satisfied.
@@ -2483,6 +2497,9 @@ constraint IntStack {
   extends Stack where .ElementType = i32;
 }
 ```
+
+This syntax is also used to specify the values of
+[associated types](#associated-types) when implementing an interface for a type.
 
 ##### Equal generic types
 
@@ -3532,8 +3549,7 @@ lexically in the class' scope:
 
 ```
 class Vector(T:! Type) {
-  impl as Iterable {
-    let ElementType:! Type = T;
+  impl as Iterable where .ElementType = T {
     ...
   }
 }
@@ -3543,8 +3559,7 @@ This is equivalent to naming the type between `impl` and `as`:
 
 ```
 class Vector(T:! Type) {
-  impl Vector(T) as Iterable {
-    let ElementType:! Type = T;
+  impl Vector(T) as Iterable where .ElementType = T {
     ...
   }
 }
@@ -3554,13 +3569,13 @@ An impl may be declared [external](#external-impl) by adding an `external`
 keyword before `impl`. External impls may also be declared out-of-line:
 
 ```
-external impl [T:! Type] Vector(T) as Iterable {
-  let ElementType:! Type = T;
+external impl [T:! Type] Vector(T) as Iterable
+    where .ElementType = T {
   ...
 }
 // This syntax is also allowed:
-external impl Vector(T:! Type) as Iterable {
-  let ElementType:! Type = T;
+external impl Vector(T:! Type) as Iterable
+    where .ElementType = T {
   ...
 }
 ```
@@ -3756,9 +3771,8 @@ where blanket impls arise:
 -   `T` implements `CommonType(T)` for all `T`
 
     ```
-    external impl [T:! Type] T as CommonType(T) {
-      let Result:! auto = T;
-    }
+    external impl [T:! Type] T as CommonType(T)
+        where .Result = T { }
     ```
 
     This means that every type is the common type with itself.
@@ -3855,6 +3869,8 @@ parameters are replaced the declarations are normalized as follows:
     between the `impl` and `as` keywords if the type is left out.
 -   Pointer types `T*` are replaced with `Ptr(T)`.
 -   The `external` keyword is removed, if present.
+-   Any `where` clauses that are setting associated constants or types are
+    removed.
 
 The type structure will always contain a single interface name, which is the
 name of the interface being implemented, and some number of type names. Type
@@ -3935,7 +3951,7 @@ when they contain a mixture of type structures? There are three options:
     contained impls, which are then selected by their type structure.
 -   The compiler first picks the impl with the type pattern most favored for the
     query, and then picks the definition of the highest priority matching impl
-    in the same prioritization block block.
+    in the same prioritization block.
 -   All the impls in a prioritization block are required to have the same type
     structure, at a cost in expressivity.
 
@@ -3993,12 +4009,10 @@ interface True {}
 impl Y as True {}
 interface Z(T:! Type) { let Cond:! Type; }
 match_first {
-  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U) {
-    let Cond:! Type = N;
-  }
-  impl [T:! Type, U:! Type] T as Z(U) {
-    let Cond:! Type = Y;
-  }
+  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U)
+      where .Cond = N { }
+  impl [T:! Type, U:! Type] T as Z(U)
+      where .Cond = Y { }
 }
 ```
 
@@ -4024,15 +4038,12 @@ class B {}
 class C {}
 interface D(T:! Type) { let Cond:! Type; }
 match_first {
-  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U) {
-    let Cond:! Type = C;
-  }
-  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U) {
-    let Cond:! Type = B;
-  }
-  impl [T:! Type, U:! Type] T as D(U) {
-    let Cond:! Type = A;
-  }
+  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U)
+      where .Cond = C { }
+  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U)
+      where .Cond = B { }
+  impl [T:! Type, U:! Type] T as D(U)
+      where .Cond = A { }
 }
 ```
 
@@ -4119,15 +4130,13 @@ interface Deref {
 // Types implementing `Deref`
 class Ptr(T:! Type) {
   ...
-  external impl as Deref {
-    let Result:! Type = T;
+  external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
 class Optional(T:! Type) {
   ...
-  external impl as Deref {
-    let Result:! Type = T;
+  external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
@@ -4157,16 +4166,14 @@ To mark an impl as not able to be specialized, prefix it with the keyword
 class Ptr(T:! Type) {
   ...
   // Note: added `final`
-  final external impl as Deref {
-    let Result:! Type = T;
+  final external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
 class Optional(T:! Type) {
   ...
   // Note: added `final`
-  final external impl as Deref {
-    let Result:! Type = T;
+  final external impl as Deref where .Result = T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
@@ -4270,6 +4277,162 @@ differences between the Carbon and Rust plans:
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
 
+## Interface members with definitions
+
+Interfaces may provide definitions for members, such as a function body for an
+associated function or method or a value for an associated constant. If these
+definitions may be overridden in implementations, they are called "defaults."
+Otherwise they are called "final members."
+
+### Interface defaults
+
+An interface may provide a default implementation of methods in terms of other
+methods in the interface.
+
+```
+interface Vector {
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: f64) -> Self;
+  // Default definition of `Invert` calls `Scale`.
+  fn Invert[me: Self]() -> Self {
+    return me.Scale(-1.0);
+  }
+}
+```
+
+An impl of that interface for a type may omit a definition of `Invert` to use
+the default, or provide a definition to override the default.
+
+Interface defaults are helpful for [evolution](#evolution), as well as reducing
+boilerplate. Defaults address the gap between the minimum necessary for a type
+to provide the desired functionality of an interface and the breadth of API that
+developers desire. As an example, in Rust the
+[iterator trait](https://doc.rust-lang.org/std/iter/trait.Iterator.html) only
+has one required method but dozens of "provided methods" with defaults.
+
+Defaults may also be provided for associated constants, such as associated
+types, and interface parameters, using the `= <default value>` syntax.
+
+```
+interface Add(Right:! Type = Self) {
+  let Result:! Type = Self;
+  fn DoAdd[me: Self](right: Right) -> Result;
+}
+
+impl String as Add() {
+  // Right == Result == Self == String
+  fn DoAdd[me: Self](right: Self) -> Self;
+}
+```
+
+Note that `Self` is a legal default value for an associated type or type
+parameter. In this case the value of those names is not determined until `Self`
+is, so `Add()` is equivalent to the constraint:
+
+```
+// Equivalent to Add()
+constraint AddDefault {
+  extends Add(Self);
+}
+```
+
+Note also that the parenthesis are required after `Add`, even when all
+parameters are left as their default values.
+
+More generally, default expressions may reference other associated types or
+`Self` as parameters to type constructors. For example:
+
+```
+interface Iterator {
+  let Element:! Type;
+  let Pointer:! Type = Element*;
+}
+```
+
+Carbon does **not** support providing a default implementation of a required
+interface.
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  // ❌ Illegal: May not provide definition
+  //             for required interface.
+  impl PartialOrder {
+    fn PartialLess[me: Self](right: Self) -> Bool {
+      return me.TotalLess(right);
+    }
+  }
+}
+```
+
+The workaround for this restriction is to use a [blanket impl](#blanket-impls)
+instead:
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  impl PartialOrder;
+}
+
+external impl [T:! TotalOrder] T as PartialOrder {
+  fn PartialLess[me: Self](right: Self) -> Bool {
+    return me.TotalLess(right);
+  }
+}
+```
+
+Note that by the [orphan rule](#orphan-rule), this blanket impl must be defined
+in the same library as `PartialOrder`.
+
+**Comparison with other languages:** Rust supports specifying defaults for
+[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
+[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
+and
+[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
+Rust has found them valuable.
+
+### `final` members
+
+As an alternative to providing a definition of an interface member as a default,
+members marked with the `final` keyword will not allow that definition to be
+overridden in impls.
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> Bool;
+  final fn TotalGreater[me: Self](right: Self) -> Bool {
+    return right.TotalLess(me);
+  }
+}
+
+class String {
+  impl as TotalOrder {
+    fn TotalLess[me: Self](right: Self) -> Bool { ... }
+    // ❌ Illegal: May not provide definition of final
+    //             method `TotalGreater`.
+    fn TotalGreater[me: Self](right: Self) -> Bool { ... }
+  }
+}
+
+interface Add(T:! Type = Self) {
+  // `AddWith` *always* equals `T`
+  final let AddWith:! Type = T;
+  // Has a *default* of `Self`
+  let Result:! Type = Self;
+  fn DoAdd[me: Self](right: AddWith) -> Result;
+}
+```
+
+There are a few reasons for this feature:
+
+-   When overriding would be inappropriate.
+-   Matching the functionality of non-virtual methods in base classes, so
+    interfaces can be a replacement for inheritance.
+-   Potentially reduce dynamic dispatch when using the interface in a
+    [`DynPtr`](#dynamic-types).
+
+Note that this applies to associated entities, not interface parameters.
+
 ## Future work
 
 ### Dynamic types
@@ -4304,17 +4467,6 @@ In Swift, there are discussions about implementing this feature under the name
 [3](https://forums.swift.org/t/se-0244-opaque-result-types/21252),
 [4](https://forums.swift.org/t/se-0244-opaque-result-types-reopened/22942),
 Swift is considering spelling this `<V: Collection> V` or `some Collection`.
-
-### Interface defaults
-
-Rust supports specifying defaults for
-[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
-[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
-[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
-We should support this too. It is helpful for evolution, as well as reducing
-boilerplate. Defaults address the gap between the minimum necessary for a type
-to provide the desired functionality of an interface and the breadth of API that
-user's desire.
 
 ### Evolution
 
@@ -4392,6 +4544,14 @@ between multiple generic integer parameters. For example, if `J < K` and
 secondary syntactic concern about how to write this kind of constraint on a
 parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 
+### Separate declaration and definition of impl
+
+There is a desire to support a short declaration that a type implements an
+interface without giving a full definition of that implementation for API files.
+Everything needed for type checking is provided in the interface definition,
+except for the assignments to associated constants and types, and so those must
+be included in the declaration as well.
+
 ## References
 
 -   [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
@@ -4401,3 +4561,5 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+-   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
+-   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)

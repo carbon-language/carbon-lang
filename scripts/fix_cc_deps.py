@@ -55,11 +55,7 @@ def install_buildozer() -> str:
     ]
     # Install to a cache.
     env = os.environ.copy()
-    if "XDG_CACHE_HOME" in env:
-        cache_dir = Path(env["XDG_CACHE_HOME"])
-    else:
-        cache_dir = Path(tempfile.gettempdir())
-    cache_dir = cache_dir.joinpath("carbon-pre-commit-cache")
+    cache_dir = Path(tempfile.gettempdir()).joinpath("carbon-pre-commit-cache")
     cache_dir.mkdir(parents=True, exist_ok=True)
     env["GOPATH"] = str(cache_dir)
     if "GOBIN" in env:

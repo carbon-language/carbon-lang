@@ -97,6 +97,19 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "string_literal_benchmark",
+    testonly = 1,
+    srcs = ["string_literal_benchmark.cpp"],
+    deps = [
+        ":string_literal",
+        "//common:ostream",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_github_google_benchmark//:benchmark_main",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "string_literal_test",
     size = "small",

@@ -52,13 +52,3 @@ cc_binary(
         "@llvm-project//llvm:Support",
     ],
 )
-
-# FIXME: No support for LLVM's lit-style command line & FileCheck tests.
-#
-#lit_test(
-#    name = "carbon_test.carbon",
-#    data = [
-#        ":carbon",
-#        "@llvm-project//llvm:FileCheck",
-#    ],
-#)

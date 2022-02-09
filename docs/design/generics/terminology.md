@@ -519,14 +519,15 @@ interface.
 
 ## Witness tables
 
-For witness tables, values passed to a generic parameter are compiled into a
-table of required functionality. That table is then filled in for a given
-passed-in type with references to the implementation on the original type. The
-generic is implemented using calls into entries in the witness table, which turn
-into calls to the original type. This doesn't necessarily imply a runtime
-indirection: it may be a purely compile-time separation of concerns. However, it
-insists on a full abstraction boundary between the generic user of a type and
-the concrete implementation.
+[Witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
+are an implementation strategy where values passed to a generic parameter are
+compiled into a table of required functionality. That table is then filled in
+for a given passed-in type with references to the implementation on the original
+type. The generic is implemented using calls into entries in the witness table,
+which turn into calls to the original type. This doesn't necessarily imply a
+runtime indirection: it may be a purely compile-time separation of concerns.
+However, it insists on a full abstraction boundary between the generic user of a
+type and the concrete implementation.
 
 A simple way to imagine a witness table is as a struct of function pointers, one
 per method in the interface. However, in practice, it's more complex because it
@@ -654,11 +655,11 @@ class ListIterator(ElementType:! Type) {
 }
 class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
-  let IteratorType:! Iterator = ListIterator(ElementType);
-  fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
-    ...
+  impl as Container where .IteratorType = ListIterator(ElementType) {
+    fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
+      ...
+    }
   }
-  impl as Container;
 }
 ```
 
@@ -681,18 +682,9 @@ interface Addable(T:! Type) {
 An `i32` value might support addition with `i32`, `u16`, and `f64` values.
 
 ```
-impl i32 as Addable(i32) {
-  let ResultType:! Type = i32;
-  // ...
-}
-impl i32 as Addable(u16) {
-  let ResultType:! Type = i32;
-  // ...
-}
-impl i32 as Addable(f64) {
-  let ResultType:! Type = f64;
-  // ...
-}
+impl i32 as Addable(i32) where .ResultType = i32 { ... }
+impl i32 as Addable(u16) where .ResultType = i32 { ... }
+impl i32 as Addable(f64) where .ResultType = f64 { ... }
 ```
 
 To write a generic function requiring a parameter to be `Addable`, there needs
@@ -755,3 +747,4 @@ available in the body of the function.
 -   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+-   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)

@@ -21,24 +21,78 @@ namespace Carbon {
 
 using llvm::cast;
 
-Scope::Scope(Scope&& other) noexcept
-    : values_(other.values_),
-      locals_(std::exchange(other.locals_, {})),
+RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
+    : locals_(std::move(other.locals_)),
+      // To transfer ownership of other.allocations_, we have to empty it out.
+      allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_) {}
 
-auto Scope::operator=(Scope&& rhs) noexcept -> Scope& {
-  values_ = rhs.values_;
-  locals_ = std::exchange(rhs.locals_, {});
+auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
+  locals_ = std::move(rhs.locals_);
+  // To transfer ownership of rhs.allocations_, we have to empty it out.
+  allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
   return *this;
 }
 
-Scope::~Scope() {
-  for (const auto& l : locals_) {
-    std::optional<AllocationId> a = values_.Get(l);
-    CHECK(a.has_value());
-    heap_->Deallocate(*a);
+RuntimeScope::~RuntimeScope() {
+  for (AllocationId allocation : allocations_) {
+    heap_->Deallocate(allocation);
   }
+}
+
+void RuntimeScope::Print(llvm::raw_ostream& out) const {
+  out << "{";
+  llvm::ListSeparator sep;
+  for (const auto& [named_entity, value] : locals_) {
+    out << sep << named_entity.name() << ": " << *value;
+  }
+  out << "}";
+}
+
+void RuntimeScope::Initialize(NamedEntityView named_entity,
+                              Nonnull<const Value*> value) {
+  CHECK(!named_entity.constant_value().has_value());
+  CHECK(value->kind() != Value::Kind::LValue);
+  allocations_.push_back(heap_->AllocateValue(value));
+  auto [it, success] = locals_.insert(
+      {named_entity, heap_->arena().New<LValue>(Address(allocations_.back()))});
+  CHECK(success) << "Duplicate definition of " << named_entity.name();
+}
+
+void RuntimeScope::Merge(RuntimeScope other) {
+  CHECK(heap_ == other.heap_);
+  locals_.merge(other.locals_);
+  CHECK(other.locals_.empty())
+      << "Duplicate definition of " << other.locals_.size()
+      << " names, including " << other.locals_.begin()->first.name();
+  allocations_.insert(allocations_.end(), other.allocations_.begin(),
+                      other.allocations_.end());
+  other.allocations_.clear();
+}
+
+auto RuntimeScope::Get(NamedEntityView named_entity) const
+    -> std::optional<Nonnull<const LValue*>> {
+  auto it = locals_.find(named_entity);
+  if (it != locals_.end()) {
+    return it->second;
+  } else {
+    return std::nullopt;
+  }
+}
+
+auto RuntimeScope::Capture(
+    const std::vector<Nonnull<const RuntimeScope*>>& scopes) -> RuntimeScope {
+  CHECK(!scopes.empty());
+  RuntimeScope result(scopes.front()->heap_);
+  for (Nonnull<const RuntimeScope*> scope : scopes) {
+    CHECK(scope->heap_ == result.heap_);
+    for (const auto& entry : scope->locals_) {
+      // Intentionally disregards duplicates later in the vector.
+      result.locals_.insert(entry);
+    }
+  }
+  return result;
 }
 
 void Action::Print(llvm::raw_ostream& out) const {
@@ -69,14 +123,6 @@ void Action::Print(llvm::raw_ostream& out) const {
       out << sep << *result;
     }
     out << ")";
-  }
-}
-
-void Action::PrintList(const Stack<Nonnull<Action*>>& ls,
-                       llvm::raw_ostream& out) {
-  llvm::ListSeparator sep(" :: ");
-  for (const auto& action : ls) {
-    out << sep << *action;
   }
 }
 

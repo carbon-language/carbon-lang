@@ -50,6 +50,7 @@ The following words are interpreted as keywords:
 -   `else`
 -   `extends`
 -   `external`
+-   `final`
 -   `fn`
 -   `for`
 -   `friend`
@@ -72,6 +73,7 @@ The following words are interpreted as keywords:
 -   `protected`
 -   `return`
 -   `returned`
+-   `then`
 -   `var`
 -   `virtual`
 -   `where`

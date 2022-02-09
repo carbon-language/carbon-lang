@@ -11,7 +11,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
+-   [`if` expressions](#if-expressions)
 
 <!-- tocstop -->
 
@@ -29,6 +31,23 @@ fn Foo(a: i32*) -> i32 {
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
 
+## Operators
+
+Most expressions are modeled as operators:
+
+| Category   | Operator                        | Syntax    | Function                                                              |
+| ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
+| Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
+| Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
+| Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
+| Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
+| Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
+| Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
+| Comparison | [`<`](comparison_operators.md)  | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
+| Comparison | [`<=`](comparison_operators.md) | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
+| Comparison | [`>`](comparison_operators.md)  | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
+| Comparison | [`>=`](comparison_operators.md) | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
+
 ## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific
@@ -45,3 +64,15 @@ fn Baz(n: i64) {
   Bar(n);
 }
 ```
+
+## `if` expressions
+
+An [`if` expression](if.md) chooses between two expressions.
+
+```
+fn Run(args: Span(StringView)) {
+  var file: StringView = if args.size() > 1 then args[1] else "/dev/stdin";
+}
+```
+
+`if` expressions are analogous to `?:` ternary expressions in C and C++.

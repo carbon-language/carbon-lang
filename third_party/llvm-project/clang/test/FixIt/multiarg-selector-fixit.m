@@ -1,0 +1,15 @@
+// RUN: cp %s %t
+// RUN: %clang_cc1 -x objective-c -fixit %t
+// RUN: diff %t %s
+// rdar://15756038
+
+#define nil (void *)0
+
+@interface NSObject
+- (void)testDataSource:(id)object withMultipleArguments:(id)arguments;
+@end
+
+int main() {
+  id obj;
+  [obj TestDataSource:nil withMultipleArguments:nil];
+}
