@@ -6,13 +6,23 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import io
 import unittest
 
 from carbon.docs.design.expressions.scripts import precedence
 
 
-class TestGithubHelpers(unittest.TestCase):
-    def test_golden_dot(self):
+class PrecedenceTest(unittest.TestCase):
+    def test_golden(self):
         with open("docs/design/expressions/scripts/precedence.dot") as f:
             expected = f.read()
-        self.assertEqual(expected, precedence.Graph().source())
+
+        with io.StringIO() as buffer:
+            precedence.Graph(buffer).write()
+            actual = buffer.getvalue()
+
+        self.assertEqual(expected, actual)
+
+
+if __name__ == "__main__":
+    unittest.main()

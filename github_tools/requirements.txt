@@ -3,10 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Python dependencies, consumed by /WORKSPACE.
-
-# For /github_tools:
 gql >= 2.0.0, < 3.0.0
 PyGitHub
-
-# For /docs/design/expressions/scripts:
-graphviz

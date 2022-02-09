@@ -95,12 +95,27 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.(carbon|dot|ypp)$'
+          - '\.carbon$'
           - ''
           - '// '
           - ''
           - --custom_format
-          - '\.(l|lpp|y)$'
+          - '\.lpp$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.ypp$'
+          - ''
+          - '// '
+          - ''
+          - --custom_format
+          - '\.l$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.y$'
           - '/*'
           - ''
           - '*/'

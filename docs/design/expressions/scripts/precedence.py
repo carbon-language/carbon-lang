@@ -1,5 +1,7 @@
 """Generates the predence dot and svg files.
 
+Using this requires `dot` be locally installed.
+
 New operators should be added to Graph.write.
 """
 
@@ -12,9 +14,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 from enum import Enum
 import html
-from typing import List
+from pathlib import Path
+import subprocess
+import textwrap
+from typing import TextIO, List
 
-import graphviz  # type: ignore
+DOT_HEADER = """
+# Auto-generated using precedence.sh.
+digraph {
+  layout = dot
+  rankdir = TB
+  rank = "min"
+  node [shape="none" fontsize="12" height="0"
+        fontname="BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif"]
+  edge [dir="none"]
+
+"""
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,49 +39,46 @@ def parse_args() -> argparse.Namespace:
         "--dot_path",
         metavar="PATH",
         help="The path for the output .dot file.",
-        required=True,
     )
     parser.add_argument(
         "--svg_path",
         metavar="PATH",
         help="The path for the output .svg file.",
-        required=True,
     )
     return parser.parse_args()
 
 
 class Assoc(Enum):
-    """Associativity of operators, with shapes as values."""
-
     LEFT = "rarrow"
     RIGHT = "larrow"
-    NONE = "ellipse"
+    NONE = "rect"
 
 
 class Graph(object):
 
     _counter = 0
 
-    def __init__(self) -> None:
-        comment = __copyright__.strip()
-        comment += "\nAUTO-GENERATED: use precedence.sh."
-        # graphviz comments the first line but not later ones, so replace
-        # newlines with comment markers.
-        comment = comment.replace("\n", "\n// ")
-        self._dot = graphviz.Digraph(
-            comment=comment,
-            graph_attr={
-                "layout": "dot",
-                "rankdir": "TB",
-                "rank": "min",
-            },
-            node_attr={
-                "fontsize": "12",
-                "height": "0",
-                "fontname": "Segoe UI,Helvetica,Arial,sans-serif",
-            },
-            edge_attr={"dir": "none"},
+    def __init__(self, dot_file: TextIO) -> None:
+        self._dot_file = dot_file
+
+    def _make_op(self, ops: List[str], assoc: Assoc) -> str:
+        """Makes a node for an operator, or cluster of operators."""
+        self._counter = self._counter + 1
+        name = f"op{self._counter}"
+        label = "<br/>".join([html.escape(op) for op in ops])
+        self._dot_file.write(
+            f'  {name} [label=<{label}> shape="{assoc.value}"]\n'
         )
+        return name
+
+    def _make_edge(self, higher: str, lower: str) -> None:
+        """Makes an edge from a high predence op to a low precedence op."""
+        self._dot_file.write(f"  {higher} -> {lower}\n")
+
+    def write(self) -> None:
+        """Generates the actual precedence content."""
+        self._dot_file.write(textwrap.indent(__copyright__.lstrip("\n"), "# "))
+        self._dot_file.write(DOT_HEADER)
 
         parens = self._make_op(["(...)"], Assoc.NONE)
         op_as = self._make_op(["x as T"], Assoc.NONE)
@@ -83,35 +95,22 @@ class Graph(object):
         self._make_edge(op_as, ops_comp)
         self._make_edge(ops_comp, ops_and_or)
 
-    def _make_op(self, ops: List[str], assoc: Assoc) -> str:
-        """Makes a node for an operator, or cluster of operators."""
-        self._counter = self._counter + 1
-        name = f"op{self._counter}"
-        label = "<br/>".join([html.escape(op) for op in ops])
-        self._dot.node(
-            name,
-            f"<{label}>",
-            shape=assoc.value,
-        )
-        return name
-
-    def _make_edge(self, higher: str, lower: str) -> None:
-        """Makes an edge from a high predence op to a low precedence op."""
-        self._dot.edge(higher, lower)
-
-    def render(self, dot_path: str, image_path: str) -> None:
-        """Renders the graph, keeping the dot source file."""
-        self._dot.render(filename=dot_path, outfile=image_path)
-
-    def source(self) -> str:
-        """Returns the graph source for tests."""
-        return self.source()
+        self._dot_file.write("}\n")
 
 
 def main() -> None:
     parsed_args = parse_args()
-    print("Generating precedence graph...")
-    Graph().render(parsed_args.dot_path, parsed_args.svg_path)
+
+    dot_path = Path(parsed_args.dot_path)
+    print(f"Writing {dot_path}...")
+    with dot_path.open("w") as dot_file:
+        Graph(dot_file).write()
+
+    image_path = Path(parsed_args.svg_path)
+    print(f"Writing {image_path}...")
+    subprocess.check_call(
+        ["dot", "-Tsvg", f"-o{image_path}", dot_path],
+    )
     print("Done!")
 
 

@@ -1,19 +1,24 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// AUTO-GENERATED: use precedence.sh.
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Auto-generated using precedence.sh.
 digraph {
-	graph [layout=dot rank=min rankdir=TB]
-	node [fontname="Segoe UI,Helvetica,Arial,sans-serif" fontsize=12 height=0]
-	edge [dir=none]
-	op1 [label=<(...)> shape=ellipse]
-	op2 [label=<x as T> shape=ellipse]
-	op3 [label=<x and y<br/>x or y> shape=rarrow]
-	op4 [label=<not x> shape=ellipse]
-	op5 [label=<x == y<br/>x != y<br/>x &lt; y<br/>x &lt;= y<br/>x &gt; y<br/>x &gt;= y> shape=ellipse]
-	op1 -> op2
-	op1 -> op4
-	op4 -> op3
-	op2 -> op5
-	op5 -> op3
+  layout = dot
+  rankdir = TB
+  rank = "min"
+  node [shape="none" fontsize="12" height="0"
+        fontname="BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif"]
+  edge [dir="none"]
+
+  op1 [label=<(...)> shape="rect"]
+  op2 [label=<x as T> shape="rect"]
+  op3 [label=<x and y<br/>x or y> shape="rarrow"]
+  op4 [label=<not x> shape="rect"]
+  op5 [label=<x == y<br/>x != y<br/>x &lt; y<br/>x &lt;= y<br/>x &gt; y<br/>x &gt;= y> shape="rect"]
+  op1 -> op2
+  op1 -> op4
+  op4 -> op3
+  op2 -> op5
+  op5 -> op3
 }
