@@ -4,12 +4,6 @@
 
 """Rules for building fuzz tests."""
 
-def _append_if_not_present(kwargs, key, val):
-    """Adds val to a list in kwargs indicated by key."""
-    orig_list = kwargs.setdefault(key, [])
-    if val not in orig_list:
-        kwargs[key] = orig_list + [val]
-
 def cc_fuzz_test(
         name,
         corpus,
