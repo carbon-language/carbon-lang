@@ -120,11 +120,6 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) -> Nonnull<const Value*>;
 
-  // Find the implementation of the given interface for the given type.
-  auto FindImplementation(Nonnull<const Value*> iface_type,
-                          Nonnull<const Value*> type, SourceLocation source_loc)
-      -> Nonnull<const Value*>;
-
   // Sets named_entity.constant_value() to `value`. Can be called multiple
   // times on the same named_entity, so long as it is always called with
   // the same value.
