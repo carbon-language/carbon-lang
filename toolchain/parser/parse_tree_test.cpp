@@ -33,7 +33,7 @@ class ParseTreeTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
     source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
-    return source_storage.front();
+    return *source_storage.front();
   }
 
   auto GetTokenizedBuffer(llvm::Twine t) -> TokenizedBuffer& {
@@ -42,7 +42,7 @@ class ParseTreeTest : public ::testing::Test {
     return token_storage.front();
   }
 
-  std::forward_list<SourceBuffer> source_storage;
+  std::forward_list<llvm::Expected<SourceBuffer>> source_storage;
   std::forward_list<TokenizedBuffer> token_storage;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };

@@ -35,7 +35,7 @@ class SourceBuffer {
  public:
   static auto CreateFromText(llvm::Twine text,
                              llvm::StringRef filename = "/text")
-      -> SourceBuffer;
+      -> llvm::Expected<SourceBuffer>;
   static auto CreateFromFile(llvm::StringRef filename)
       -> llvm::Expected<SourceBuffer>;
 

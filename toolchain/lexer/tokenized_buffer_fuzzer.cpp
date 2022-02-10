@@ -38,8 +38,11 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   // The rest of the data is the source text.
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size), filename);
+  if (!source) {
+    return 0;
+  }
 
-  auto buffer = TokenizedBuffer::Lex(source, NullDiagnosticConsumer());
+  auto buffer = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
   if (buffer.HasErrors()) {
     return 0;
   }

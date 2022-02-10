@@ -15,17 +15,25 @@ namespace Carbon::Testing {
 namespace {
 
 TEST(SourceBufferTest, StringRep) {
-  SourceBuffer buffer =
-      SourceBuffer::CreateFromText(llvm::Twine("Hello") + " World");
+  auto buffer = SourceBuffer::CreateFromText(llvm::Twine("Hello") + " World");
+  ASSERT_TRUE(static_cast<bool>(buffer));
 
-  EXPECT_EQ("/text", buffer.Filename());
-  EXPECT_EQ("Hello World", buffer.Text());
+  EXPECT_EQ("/text", buffer->Filename());
+  EXPECT_EQ("Hello World", buffer->Text());
+}
 
-  // Give a custom filename.
-  auto buffer2 =
+TEST(SourceBufferTest, CustomFilename) {
+  auto buffer =
       SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
-  EXPECT_EQ("/custom/text", buffer2.Filename());
-  EXPECT_EQ("Hello World Again!", buffer2.Text());
+  ASSERT_TRUE(static_cast<bool>(buffer));
+  EXPECT_EQ("/custom/text", buffer->Filename());
+  EXPECT_EQ("Hello World Again!", buffer->Text());
+}
+
+TEST(SourceBufferTest, UnprintableFilename) {
+  auto buffer =
+      SourceBuffer::CreateFromText("Unused", llvm::StringRef("\0", 1));
+  ASSERT_FALSE(static_cast<bool>(buffer));
 }
 
 auto CreateTestFile(llvm::StringRef text) -> std::string {

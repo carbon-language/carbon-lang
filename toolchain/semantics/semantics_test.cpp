@@ -21,12 +21,12 @@ class ParseTreeTest : public ::testing::Test {
  protected:
   auto Analyze(llvm::Twine t) -> Semantics {
     source_buffer.emplace(SourceBuffer::CreateFromText(t.str()));
-    tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
+    tokenized_buffer = TokenizedBuffer::Lex(**source_buffer, consumer);
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     return Semantics::Analyze(*parse_tree, consumer);
   }
 
-  std::optional<SourceBuffer> source_buffer;
+  std::optional<llvm::Expected<SourceBuffer>> source_buffer;
   std::optional<TokenizedBuffer> tokenized_buffer;
   std::optional<ParseTree> parse_tree;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
