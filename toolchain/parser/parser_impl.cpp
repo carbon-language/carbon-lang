@@ -1090,7 +1090,8 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // LHS operaor is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
       emitter_.EmitError<OperatorRequiresParentheses>(*position_);
-      lhs = llvm::None;
+      // TODO: Return?
+      return llvm::None;
     } else {
       DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
                                        : OperatorFixity::Postfix);
