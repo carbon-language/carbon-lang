@@ -982,7 +982,7 @@ void Interpreter::StepDeclaration() {
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
-    case DeclarationKind::ImplementationDeclaration:
+    case DeclarationKind::ImplDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

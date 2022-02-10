@@ -72,9 +72,8 @@ class TypeChecker {
   void DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
                                    ImplScope& enclosing_scope);
 
-  void DeclareImplementationDeclaration(
-      Nonnull<ImplementationDeclaration*> impl_decl,
-      ImplScope& enclosing_scope);
+  void DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                              ImplScope& enclosing_scope);
 
   void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ImplScope& enclosing_scope);
@@ -98,9 +97,8 @@ class TypeChecker {
                                      const ImplScope& impl_scope);
 
   // Type check all the members of the implementation.
-  void TypeCheckImplementationDeclaration(
-      Nonnull<ImplementationDeclaration*> impl_decl,
-      const ImplScope& impl_scope);
+  void TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                                const ImplScope& impl_scope);
 
   // This currently does nothing, but perhaps that will change in the future.
   void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,

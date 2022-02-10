@@ -327,15 +327,15 @@ class InterfaceDeclaration : public Declaration {
 
 enum class ImplKind { InternalImpl, ExternalImpl };
 
-class ImplementationDeclaration : public Declaration {
+class ImplDeclaration : public Declaration {
  public:
   using ImplementsCarbonNamedEntity = void;
 
-  ImplementationDeclaration(SourceLocation source_loc, ImplKind kind,
-                            Nonnull<Expression*> impl_type,
-                            Nonnull<Expression*> interface,
-                            std::vector<Nonnull<Declaration*>> members)
-      : Declaration(AstNodeKind::ImplementationDeclaration, source_loc),
+  ImplDeclaration(SourceLocation source_loc, ImplKind kind,
+                  Nonnull<Expression*> impl_type,
+                  Nonnull<Expression*> interface,
+                  std::vector<Nonnull<Declaration*>> members)
+      : Declaration(AstNodeKind::ImplDeclaration, source_loc),
         name_("__impl"),
         kind_(kind),
         impl_type_(impl_type),
@@ -343,7 +343,7 @@ class ImplementationDeclaration : public Declaration {
         members_(members) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromImplementationDeclaration(node->kind());
+    return InheritsFromImplDeclaration(node->kind());
   }
   auto kind() const -> ImplKind { return kind_; }
   auto impl_type() const -> Nonnull<Expression*> { return impl_type_; }

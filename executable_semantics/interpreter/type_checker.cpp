@@ -1241,8 +1241,8 @@ void TypeChecker::TypeCheckInterfaceDeclaration(
   }
 }
 
-void TypeChecker::DeclareImplementationDeclaration(
-    Nonnull<ImplementationDeclaration*> impl_decl, ImplScope& enclosing_scope) {
+void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                                         ImplScope& enclosing_scope) {
   if (trace_) {
     llvm::outs() << "declaring " << *impl_decl << "\n";
   }
@@ -1287,9 +1287,8 @@ void TypeChecker::DeclareImplementationDeclaration(
   }
 }
 
-void TypeChecker::TypeCheckImplementationDeclaration(
-    Nonnull<ImplementationDeclaration*> impl_decl,
-    const ImplScope& impl_scope) {
+void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                                           const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking " << *impl_decl << "\n";
   }
@@ -1338,9 +1337,8 @@ void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                                     impl_scope);
       break;
     }
-    case DeclarationKind::ImplementationDeclaration: {
-      TypeCheckImplementationDeclaration(&cast<ImplementationDeclaration>(*d),
-                                         impl_scope);
+    case DeclarationKind::ImplDeclaration: {
+      TypeCheckImplDeclaration(&cast<ImplDeclaration>(*d), impl_scope);
       break;
     }
     case DeclarationKind::FunctionDeclaration:
@@ -1384,9 +1382,9 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       DeclareInterfaceDeclaration(&iface_decl, impl_scope);
       break;
     }
-    case DeclarationKind::ImplementationDeclaration: {
-      auto& impl_decl = cast<ImplementationDeclaration>(*d);
-      DeclareImplementationDeclaration(&impl_decl, impl_scope);
+    case DeclarationKind::ImplDeclaration: {
+      auto& impl_decl = cast<ImplDeclaration>(*d);
+      DeclareImplDeclaration(&impl_decl, impl_scope);
       break;
     }
     case DeclarationKind::FunctionDeclaration: {

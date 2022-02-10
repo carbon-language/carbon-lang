@@ -24,8 +24,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "}\n";
       break;
     }
-    case DeclarationKind::ImplementationDeclaration: {
-      const auto& impl_decl = cast<ImplementationDeclaration>(*this);
+    case DeclarationKind::ImplDeclaration: {
+      const auto& impl_decl = cast<ImplDeclaration>(*this);
       switch (impl_decl.kind()) {
         case ImplKind::InternalImpl:
           break;

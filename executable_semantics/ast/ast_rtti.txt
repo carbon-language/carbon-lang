@@ -15,7 +15,7 @@ abstract class Declaration : AstNode;
   class ChoiceDeclaration : Declaration;
   class VariableDeclaration : Declaration;
   class InterfaceDeclaration : Declaration;
-  class ImplementationDeclaration : Declaration;
+  class ImplDeclaration : Declaration;
 class GenericBinding : AstNode;
 class AlternativeSignature : AstNode;
 abstract class Statement : AstNode;

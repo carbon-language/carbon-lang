@@ -29,7 +29,7 @@ static void AddExposedNames(const Declaration& declaration,
       enclosing_scope.Add(iface_decl.name(), &iface_decl);
       break;
     }
-    case DeclarationKind::ImplementationDeclaration: {
+    case DeclarationKind::ImplDeclaration: {
       // Nothing to do here
       break;
     }
@@ -266,8 +266,8 @@ static void ResolveNames(Declaration& declaration,
       }
       break;
     }
-    case DeclarationKind::ImplementationDeclaration: {
-      auto& impl = cast<ImplementationDeclaration>(declaration);
+    case DeclarationKind::ImplDeclaration: {
+      auto& impl = cast<ImplDeclaration>(declaration);
       ResolveNames(impl.interface(), enclosing_scope);
       ResolveNames(*impl.impl_type(), enclosing_scope);
       for (Nonnull<Declaration*> member : impl.members()) {

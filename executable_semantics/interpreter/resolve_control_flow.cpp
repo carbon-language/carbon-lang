@@ -135,8 +135,8 @@ void ResolveControlFlow(Nonnull<Declaration*> declaration) {
       }
       break;
     }
-    case DeclarationKind::ImplementationDeclaration: {
-      auto& impl_decl = cast<ImplementationDeclaration>(*declaration);
+    case DeclarationKind::ImplDeclaration: {
+      auto& impl_decl = cast<ImplDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : impl_decl.members()) {
         ResolveControlFlow(member);
       }

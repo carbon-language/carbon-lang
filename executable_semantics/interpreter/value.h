@@ -504,19 +504,17 @@ class InterfaceType : public Value {
 
 class ImplType : public Value {
  public:
-  ImplType(Nonnull<const ImplementationDeclaration*> declaration)
+  ImplType(Nonnull<const ImplDeclaration*> declaration)
       : Value(Kind::ImplType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplType;
   }
 
-  auto declaration() const -> const ImplementationDeclaration& {
-    return *declaration_;
-  }
+  auto declaration() const -> const ImplDeclaration& { return *declaration_; }
 
  private:
-  Nonnull<const ImplementationDeclaration*> declaration_;
+  Nonnull<const ImplDeclaration*> declaration_;
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
