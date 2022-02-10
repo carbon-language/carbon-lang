@@ -51,15 +51,12 @@ repos:
         language: python
         files: ^.*/(BUILD|[^/]+\.(h|cpp))$
         pass_filenames: false
+
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
     rev: fc0be6eb1e2a96091e6f64009ee5e9081bf8b6c6 # frozen: 22.1.0
     hooks:
       - id: black
-  - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: fb5e481f35f5a9b32a06ccfc28b8d6dda4525f75
-    hooks:
-      - id: bazel-buildifier
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: 1fc50313b6e8c2580c4736af57575e0b7de1501c # frozen: v13.0.0
     hooks:
@@ -68,6 +65,14 @@ repos:
     rev: ea782651a7e32f40a3d13b76c79d5a2474ee8723 # frozen: v2.5.1
     hooks:
       - id: prettier
+  - repo: local
+    hooks:
+      - id: buildifier
+        name: Bazel buildifier
+        entry: scripts/buildifier.py
+        language: python
+        files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
+
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
     hooks:
