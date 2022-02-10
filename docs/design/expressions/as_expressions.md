@@ -172,7 +172,7 @@ interface As(Dest:! Type) {
 The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
-type `Type`. The program is invalid if `U` this conversion is not possible.
+type `Type`. The program is invalid if this conversion is not possible.
 
 ## Alternatives considered
 
