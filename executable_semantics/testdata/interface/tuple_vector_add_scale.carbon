@@ -36,8 +36,8 @@ fn AddAndScaleGeneric[T:! Vector](t: (T, T), s: i32) -> T {
 }
 
 fn Main() -> i32 {
-  var a: Point = {.x = 0, .y = 0};
+  var a: Point = {.x = 1, .y = 1};
   var b: Point = {.x = 2, .y = 3};
-  var p: Point = AddAndScaleGeneric((a, b), 3);
-  return p.x - 6;
+  var p: Point = AddAndScaleGeneric((a, b), 5);
+  return p.x - 15;
 }
