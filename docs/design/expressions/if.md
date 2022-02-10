@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Syntax](#syntax)
 -   [Semantics](#semantics)
 -   [Finding a common type](#finding-a-common-type)
-    -   [Symmetry](#symmetry)
+    -   [Commutativity and associativity](#commutativity-and-associativity)
     -   [Same type](#same-type)
     -   [Implicit conversions](#implicit-conversions)
 -   [Alternatives considered](#alternatives-considered)
@@ -50,10 +50,10 @@ possible. An `if` expression can be parenthesized if the intent is for _value2_
 to end earlier.
 
 ```
-// OK, same as `if cond then (1 + 1) else (2 + (4 * 6))`
+// ✅ OK, same as `if cond then (1 + 1) else (2 + (4 * 6))`
 var a: i32 = if cond then 1 + 1 else 2 + 4 * 6;
 
-// OK
+// ✅ OK
 var b: i32 = (if cond then 1 + 1 else 2) + 4 * 6;
 ```
 
@@ -70,27 +70,16 @@ the expression.
 
 ## Finding a common type
 
-The common type of two types `T` and `U` is `(T as CommonType(U)).Result`, where
-`CommonType` is the `Carbon.CommonType` constraint. `CommonType` is notionally
-defined as follows:
-
-```
-constraint CommonType(U:! CommonTypeWith(Self)) {
-  extend CommonTypeWith(U) where .Result == U.Result;
-}
-```
-
-The actual definition is a bit more complex than this, as described in
-[symmetry](#symmetry).
-
-The interface `CommonTypeWith` is used to customize the behavior of
-`CommonType`:
+The common type of two types `T` and `U` is `(T as CommonTypeWith(U)).Result`,
+where `CommonTypeWith` is the `Carbon.CommonTypeWith` constraint.
+`CommonTypeWith` is defined as follows:
 
 ```
 interface CommonTypeWith(U:! Type) {
-  let Result:! Type
-    where Self is ImplicitAs(.Self) and
-          U is ImplicitAs(.Self);
+  let Result:! Type where
+    Self is ImplicitAs(.Self) and
+    U is ImplicitAs(.Self);
+  impl U as CommonTypeWith(Self);
 }
 ```
 
@@ -104,69 +93,36 @@ These are described in the following sections.
 _Note:_ The same mechanism is expected to eventually be used to compute common
 types in other circumstances.
 
-### Symmetry
+### Commutativity and associativity
 
 The common type of `T` and `U` should always be the same as the common type of
-`U` and `T`. This is enforced in two steps:
-
--   A `SymmetricCommonTypeWith` interface implicitly provides a
-    `B as CommonTypeWith(A)` implementation whenever one doesn't exist but an
-    `A as CommonTypeWith(B)` implementation exists.
--   `CommonType` is defined in terms of `SymmetricCommonTypeWith`, and requires
-    that both `A as SymmetricCommonTypeWith(B)` and
-    `B as SymmetricCommonTypeWith(A)` produce the same type.
-
-The interface `SymmetricCommonTypeWith` is an implementation detail of the
-`CommonType` constraint. It is defined and implemented as follows:
+`U` and `T`. When implementing `CommonTypeWith`, you should ensure this by
+providing `impl`s in both directions:
 
 ```
-interface SymmetricCommonTypeWith(U:! Type) {
-  let Result:! Type
-    where Self is ImplicitAs(.Self) and
-          U is ImplicitAs(.Self);
+class Duration {};
+let ZeroType:! Type = // FIXME: type of 0 literal
+impl ZeroType as ImplicitAs(Duration) {
+  fn Convert[me: Self]() { return {}; }
 }
-match_first {
-  impl [T:! Type, U:! CommonTypeWith(T)] T as SymmetricCommonTypeWith(U) {
-    let Result:! Type = U.Result;
-  }
-  impl [U:! Type, T:! CommonTypeWith(U)] T as SymmetricCommonTypeWith(U) {
-    let Result:! Type = T.Result;
-  }
-}
+impl Duration as CommonTypeWith(ZeroType) where .Result = Duration {}
+impl ZeroType as CommonTypeWith(Duration) where .Result = Duration {}
+var d1: Duration;
+// ✅ OK, `0` is implicitly converted to `Duration`.
+var d2: Duration = if false then d1 else 0;
 ```
 
-The `SymmetricCommonTypeWith` interface is not exported, so user-defined `impl`s
-can't be defined, and only the two blanket `impl`s above are used. The
-`CommonType` constraint is then defined as follows:
+Additionally, `CommonTypeWith` is should be associative where feasible: the
+common type of (the common type of `T` and `U`) and `V` is expected to be the
+same as the common type of `T` and (the common type of `U` and `V`. However,
+this may not be possible to ensure in general: for example, if `T` and `V` come
+from different libraries that both depend on `U`, they may have no way to ensure
+that both queries produce the same result.
 
-```
-constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
-  extend SymmetricCommonTypeWith(U) where .Result == U.Result;
-}
-```
-
-When computing the common type of `T` and `U`, if only one of the types provides
-a `CommonTypeWith` implementation, that determines the common type. If both
-types provide a `CommonTypeWith` implementation and their `Result` types are the
-same, that determines the common type. Otherwise, if both types provide
-implementations but their `Result` types differ, there is no common type, and
-the `CommonType` constraint is not met. For example, given:
-
-```
-// Implementation #1
-impl [T:! Type] MyX as CommonTypeWith(T) {
-  let Result:! Type = MyX;
-}
-
-// Implementation #2
-impl [T:! Type] MyY as CommonTypeWith(T) {
-  let Result:! Type = MyY;
-}
-```
-
-`MyX as CommonTypeWith(MyY)` will select #1, and `MyY as CommonTypeWith(MyX)`
-will select #2, but the constraints on `MyX as CommonType(MyY)` will not be met
-because result types differ.
+In order to help you remember to define `CommonTypeWith` in both directions, the
+interface includes a constraint that a reverse `impl` exists. However, there is
+no static enforcement that the reverse `impl` provides the same type, nor any
+static enforcement of the associativity property.
 
 ### Same type
 
@@ -181,9 +137,10 @@ final impl [T:! Type] T as CommonTypeWith(T) {
 _Note:_ This rule is intended to be considered more specialized than the other
 rules in this document.
 
-Because this `impl` is declared `final`, `T.(CommonType(T)).Result` is always
-assumed to be `T`, even in contexts where `T` involves a generic parameter and
-so the result would normally be an unknown type whose type-of-type is `Type`.
+Because this `impl` is declared `final`, `T.(CommonTypeWith(T)).Result` is
+always assumed to be `T`, even in contexts where `T` involves a generic
+parameter and so the result would normally be an unknown type whose type-of-type
+is `Type`.
 
 ```
 fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
@@ -203,8 +160,8 @@ impl [T:! Type, U:! ImplicitAs(T)] T as CommonTypeWith(U) {
 ```
 
 _Note:_ If an implicit conversion is possible in both directions, and no more
-specific implementation exists, the constraints on `T as CommonType(U)` will not
-be met because `(T as CommonTypeWith(U)).Result` and
+specific implementation exists, the constraints on `T as CommonTypeWith(U)` will
+not be met because `(T as CommonTypeWith(U)).Result` and
 `(U as CommonTypeWith(T)).Result` will differ. In order to define a common type
 for such a case, `CommonTypeWith` implementations in both directions must be
 provided to override the blanket `impl`s in both directions:
