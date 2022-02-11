@@ -8,16 +8,13 @@ load("@rules_cc//cc:defs.bzl", "cc_test")
 
 def cc_fuzz_test(
         name,
-        corpus,
+        corpus = None,
         args = [],
         data = [],
         features = [],
         tags = [],
         **kwargs):
     """Macro for C++ fuzzing test.
-
-    In order to run tests on a single file, run the fuzzer binary under
-    bazel-bin directly. That will avoid the args being passed by bazel.
 
     Args:
         name: The main fuzz test rule name.
@@ -40,8 +37,9 @@ def cc_fuzz_test(
     # Append the corpus files to the test arguments. When run on a list of
     # files rather than a directory, libFuzzer-based fuzzers will perform a
     # regression test against the corpus.
-    data = data + corpus
-    args = args + ["$(location %s)" % file for file in corpus]
+    if corpus:
+        data = data + corpus
+        args = args + ["$(location %s)" % file for file in corpus]
 
     cc_test(
         name = name,

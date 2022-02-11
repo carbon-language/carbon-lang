@@ -923,9 +923,13 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
         expression = ParseCallExpression(start, !expression);
         break;
 
-      default: {
+      default:
         return expression;
-      }
+    }
+    // This is subject to an infinite loop if a child call fails, so monitor for
+    // that.
+    if (expression == llvm::None) {
+      return llvm::None;
     }
   }
 }
@@ -1090,8 +1094,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // LHS operaor is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
       emitter_.EmitError<OperatorRequiresParentheses>(*position_);
-      // TODO: Return?
-      return llvm::None;
+      lhs = llvm::None;
     } else {
       DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
                                        : OperatorFixity::Postfix);
