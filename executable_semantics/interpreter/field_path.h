@@ -14,26 +14,6 @@
 
 namespace Carbon {
 
-class Field {
- public:
-  Field(std::string name) : name_(name) {}
-  Field(std::string name, std::optional<NamedEntityView> type_var)
-      : name_(name), type_variable_(type_var) {}
-
-  auto name() const -> const std::string& { return name_; }
-  auto type_variable() const -> std::optional<NamedEntityView> {
-    return type_variable_;
-  }
-
-  void Print(llvm::raw_ostream& out) const { out << name_; }
-
- private:
-  std::string name_;
-  // The type_variable_ is for member access inside a generic,
-  // and is needed to lookup the witness table.
-  std::optional<NamedEntityView> type_variable_;
-};
-
 // Given some initial Value, a FieldPath identifies a sub-Value within it,
 // in much the same way that a file path identifies a file within some
 // directory. FieldPaths are relative rather than absolute: the initial
@@ -50,9 +30,39 @@ class FieldPath {
   // Constructs an empty FieldPath.
   FieldPath() = default;
 
+  // A single component of the FieldPath, which is typically the name
+  // of a field. However, inside a generic, when there is a field
+  // access on something of a generic type, e.g., `T`, then we also
+  // need a reference to it's generic binding (via a
+  // `NamedEntityView`) so that the interpreter can find its witness
+  // table, hence the addition `type_variable()` method.
+  class Component {
+   public:
+    explicit Component(std::string name) : name_(std::move(name)) {}
+    Component(std::string name, std::optional<NamedEntityView> type_var)
+        : name_(std::move(name)), type_variable_(type_var) {}
+
+    auto name() const -> const std::string& { return name_; }
+
+    // If the field access was on something whose type is generic,
+    // e.g. `T`, then type_variable() returns the `NamedEntityView`
+    // for the generic binding of `T`.
+    // Otherwise returns `std::nullopt`.
+    auto type_variable() const -> std::optional<NamedEntityView> {
+      return type_variable_;
+    }
+
+    void Print(llvm::raw_ostream& out) const { out << name_; }
+
+   private:
+    std::string name_;
+    std::optional<NamedEntityView> type_variable_;
+  };
+
   // Constructs a FieldPath consisting of a single step.
-  explicit FieldPath(std::string name) : components_({std::move(name)}) {}
-  explicit FieldPath(const Field& f) : components_({f}) {}
+  explicit FieldPath(std::string name)
+      : components_({Component(std::move(name))}) {}
+  explicit FieldPath(const Component& f) : components_({f}) {}
 
   FieldPath(const FieldPath&) = default;
   FieldPath(FieldPath&&) = default;
@@ -64,11 +74,11 @@ class FieldPath {
 
   // Appends `name` to the end of *this.
   auto Append(std::string name) -> void {
-    components_.push_back(std::move(name));
+    components_.push_back(Component(std::move(name)));
   }
 
   void Print(llvm::raw_ostream& out) const {
-    for (const Field& component : components_) {
+    for (const Component& component : components_) {
       out << "." << component;
     }
   }
@@ -80,7 +90,7 @@ class FieldPath {
   // another Value, so its implementation details are tied to the implementation
   // details of Value.
   friend class Value;
-  std::vector<Field> components_;
+  std::vector<Component> components_;
 };
 
 }  // namespace Carbon

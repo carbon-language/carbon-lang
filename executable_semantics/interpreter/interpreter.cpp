@@ -501,7 +501,7 @@ void Interpreter::StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        Field field(access.field(), access.variable());
+        FieldPath::Component field(access.field(), access.variable());
         auto member = act.results()[0]->GetField(
             arena_, FieldPath(field), exp.source_loc(), todo_, heap_);
         return todo_.FinishAction(member);

@@ -158,6 +158,12 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
+  // Inside a generic, when there is a field access on an expression whose
+  // type is a type variable, e.g. `T`, then we record that type
+  // variable in the field access expression during type checking
+  // so that in the interpreter we can use it to lookup it's witness table.
+  // If the field access is not on an expression whose type is a type variable
+  // (on a struct or class type), then `variable()` returns `std::nullopt`.
   auto variable() const -> std::optional<NamedEntityView> { return variable_; }
   void set_variable(NamedEntityView var) { variable_ = var; }
 
@@ -364,6 +370,12 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
+  // If the call is to a generic function, then the type checker
+  // finds an impl for each type parameter whose type is an interface,
+  // e.g. `T:! Vector`, storing the results in the call expression's
+  // `impls_` field. The interpreter, when performing a function call,
+  // uses the `impls_` to obtain witness tables for it to pass into
+  // the function.
   auto impls() const
       -> const std::map<Nonnull<const GenericBinding*>, EntityView>& {
     return impls_;

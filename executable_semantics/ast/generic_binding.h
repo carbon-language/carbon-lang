@@ -36,7 +36,6 @@ class GenericBinding : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
 
@@ -63,6 +62,9 @@ class GenericBinding : public AstNode {
     CHECK(!constant_value_.has_value());
     constant_value_ = value;
   }
+  // Unset the `constant_value()` after typechecking so that the
+  // generic binding can be used during interpretation to bind the
+  // witness table on the runtime stack.
   void unset_constant_value() { constant_value_ = std::nullopt; }
 
  private:

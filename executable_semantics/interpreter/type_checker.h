@@ -58,8 +58,11 @@ class TypeChecker {
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
   void TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope);
 
-  // Establish the type of the declaration without deeply checking
-  // the declaration, such as checking the body of a function.
+  // Establish the `static_type` and `constant_value` of the
+  // declaration and all of its nested declarations. This involves the
+  // compile-time interpretation of any type expressions in the
+  // declaration. It does not involve type checking statements and
+  // (runtime) expressions, as in the body of a function or a method.
   // Dispatches to one of the following functions.
   void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope);
 
@@ -78,7 +81,8 @@ class TypeChecker {
   void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ImplScope& enclosing_scope);
 
-  // Deeply checks the declaration, such as the body of a function.
+  // Checks the statements and (runtime) expressions within the
+  // declaration, such as the body of a function.
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
   void TypeCheckDeclaration(Nonnull<Declaration*> d,

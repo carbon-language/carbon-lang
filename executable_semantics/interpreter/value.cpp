@@ -30,9 +30,9 @@ auto StructValue::FindField(const std::string& name) const
 }
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                      const Field& field, SourceLocation source_loc,
-                      const ActionStack& todo, const Heap& heap)
-    -> Nonnull<const Value*> {
+                      const FieldPath::Component& field,
+                      SourceLocation source_loc, const ActionStack& todo,
+                      const Heap& heap) -> Nonnull<const Value*> {
   const std::string& f = field.name();
 
   if (field.type_variable().has_value()) {
@@ -117,17 +117,18 @@ auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
                      SourceLocation source_loc, const ActionStack& todo,
                      const Heap& heap) const -> Nonnull<const Value*> {
   Nonnull<const Value*> value(this);
-  for (const Field& field : path.components_) {
+  for (const FieldPath::Component& field : path.components_) {
     value = GetMember(arena, value, field, source_loc, todo, heap);
   }
   return value;
 }
 
-static auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
-                         std::vector<Field>::const_iterator path_begin,
-                         std::vector<Field>::const_iterator path_end,
-                         Nonnull<const Value*> field_value,
-                         SourceLocation source_loc) -> Nonnull<const Value*> {
+static auto SetFieldImpl(
+    Nonnull<Arena*> arena, Nonnull<const Value*> value,
+    std::vector<FieldPath::Component>::const_iterator path_begin,
+    std::vector<FieldPath::Component>::const_iterator path_end,
+    Nonnull<const Value*> field_value, SourceLocation source_loc)
+    -> Nonnull<const Value*> {
   if (path_begin == path_end) {
     return field_value;
   }
