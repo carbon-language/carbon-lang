@@ -77,9 +77,9 @@ def _get_hash(file: Path) -> str:
 def _download(url: str, local_path: Path) -> Optional[int]:
     """Downloads the URL to the path. Returns an HTTP error code on failure."""
     with urllib.request.urlopen(url) as response:
+        if response.code != 200:
+            return int(response.code)
         with local_path.open("wb") as f:
-            if response.code != 200:
-                return int(response.code)
             shutil.copyfileobj(response, f)
     return None
 
