@@ -31,20 +31,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Change the working directory to the repository root so that the remaining
-# operations reliably operate relative to that root.
-os.chdir(Path(__file__).parent.parent)
+import utils
+
+utils.chdir_repo_root()
 directory = Path.cwd()
 
 # We use the `BAZEL` environment variable if present. If not, then we try to
 # use `bazelisk` and then `bazel`.
-bazel = os.environ.get("BAZEL")
-if not bazel:
-    bazel = "bazelisk"
-    if not shutil.which(bazel):
-        bazel = "bazel"
-        if not shutil.which(bazel):
-            sys.exit("Unable to run Bazel")
+bazel = utils.locate_bazel()
 
 # Load compiler flags. We do this first in order to fail fast if not run from
 # the workspace root.
