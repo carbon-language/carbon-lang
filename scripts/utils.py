@@ -104,8 +104,8 @@ def cache_release_file(release: Release) -> str:
 
     # Download the file.
     url = f"{_URL}/{release.value}-{version}{ext}"
-    with urllib.request.urlopen(url) as response:
-        with local_path.open("wb") as f:
+    with local_path.open("wb") as f:
+        with urllib.request.urlopen(url) as response:
             shutil.copyfileobj(response, f)
     local_path.chmod(0o755)
 
