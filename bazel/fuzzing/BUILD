@@ -2,4 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-exports_files(["fuzz_test.sh"])
+# Empty BUILD file to allow access to Bazel extensions.
