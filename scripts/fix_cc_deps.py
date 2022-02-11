@@ -19,7 +19,7 @@ import subprocess
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
 
-import utils
+import utils  # type: ignore
 
 
 # Maps external repository names to a method translating bazel labels to file

@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 import platform
 import shutil
+import time
+from typing import Optional
 import urllib.request
 
 _URL = "https://github.com/bazelbuild/buildtools/releases/download/4.2.5/"
@@ -72,6 +74,16 @@ def _get_hash(file: Path) -> str:
     return digest.hexdigest()
 
 
+def _download(url: str, local_path: Path) -> Optional[int]:
+    """Downloads the URL to the path. Returns an HTTP error code on failure."""
+    with urllib.request.urlopen(url) as response:
+        with local_path.open("wb") as f:
+            if response.code != 200:
+                return int(response.code) 
+            shutil.copyfileobj(response, f)
+    return None
+
+
 def cache_release_file(release: Release) -> str:
     """Install a file to carbon-lang's cache.
 
@@ -104,9 +116,15 @@ def cache_release_file(release: Release) -> str:
 
     # Download the file.
     url = f"{_URL}/{release.value}-{version}{ext}"
-    with local_path.open("wb") as f:
-        with urllib.request.urlopen(url) as response:
-            shutil.copyfileobj(response, f)
+    retries = 5
+    while True:
+        err = _download(url, local_path)
+        if err is None:
+            break
+        retries -= 1
+        if retries == 0:
+            exit(f"Failed to download {release.value}-{version}: HTTP {err}.")
+        time.sleep(1)
     local_path.chmod(0o755)
 
     # Verify the downloaded hash.
