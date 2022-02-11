@@ -24,10 +24,88 @@ class Value;
 // The placeholder name exposed by anonymous NamedEntities.
 static constexpr std::string_view AnonymousName = "_";
 
-// True if NodeType::ImplementsCarbonNamedEntity is valid and names a type,
-// indicating that NodeType implements the NamedEntity interface, which means
-// it must define the following methods, with contracts as documented.
+// ImplementsEntity is true if NodeType::ImplementsCarbonEntity is valid and
+// names a type, indicating that NodeType implements the Entity interface,
+// defined below.
+
+template <typename NodeType, typename = void>
+static constexpr bool ImplementsEntity = false;
+
 /*
+  The Entity interface:
+
+  // If *this names a compile-time constant whose value is known, returns that
+  // value. Otherwise returns std::nullopt.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>>;
+
+  An implementing type must be derived from AstNode.
+*/
+// TODO: consider turning the above documentation into real code, as sketched
+// at https://godbolt.org/z/186oEozhc
+
+template <typename T>
+static constexpr bool ImplementsEntity<T, typename T::ImplementsCarbonEntity> =
+    true;
+
+// Non-owning type-erased wrapper around a const NodeType* `node`, where
+// NodeType implements the Entity interface.
+class EntityView {
+ public:
+  // REQUIRES: node->name() != AnonymousName
+  template <typename NodeType,
+            typename = std::enable_if_t<ImplementsEntity<NodeType>>>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  EntityView(Nonnull<const NodeType*> node)
+      // Type-erase NodeType, retaining a pointer to the base class AstNode
+      // and using std::function to encapsulate the ability to call
+      // the derived class's methods.
+      : base_(node),
+        constant_value_(
+            [](const AstNode& base) -> std::optional<Nonnull<const Value*>> {
+              return llvm::cast<NodeType>(base).constant_value();
+            }) {}
+
+  EntityView(const EntityView&) = default;
+  EntityView(EntityView&&) = default;
+  auto operator=(const EntityView&) -> EntityView& = default;
+  auto operator=(EntityView&&) -> EntityView& = default;
+
+  // Returns `node` as an instance of the base class AstNode.
+  auto base() const -> const AstNode& { return *base_; }
+
+  // Returns node->constant_value()
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_(*base_);
+  }
+
+  friend auto operator==(const EntityView& lhs, const EntityView& rhs) -> bool {
+    return lhs.base_ == rhs.base_;
+  }
+
+  friend auto operator!=(const EntityView& lhs, const EntityView& rhs) -> bool {
+    return lhs.base_ != rhs.base_;
+  }
+
+  friend auto operator<(const EntityView& lhs, const EntityView& rhs) -> bool {
+    return std::less<>()(lhs.base_, rhs.base_);
+  }
+
+ protected:
+  Nonnull<const AstNode*> base_;
+  std::function<std::optional<Nonnull<const Value*>>(const AstNode&)>
+      constant_value_;
+};
+
+// ImplementsNamedEntity is true if NodeType::ImplementsCarbonNamedEntity
+// is valid and names a type, indicating that NodeType implements the
+// NamedEntity interface, defined below.
+
+template <typename NodeType, typename = void>
+static constexpr bool ImplementsNamedEntity = false;
+
+/*
+  The NamedEntity interface (extends the Entity interface):
+
   // Returns the static type of an IdentifierExpression that names *this.
   auto static_type() const -> const Value&;
 
@@ -38,24 +116,20 @@ static constexpr std::string_view AnonymousName = "_";
   // is anonymous, returns AnonymousName.
   auto name() const -> std::string_view;
 
-  // If *this names a compile-time constant whose value is known, returns that
-  // value. Otherwise returns std::nullopt.
-  auto constant_value() const -> std::optional<Nonnull<const Value*>>;
 */
-// NodeType must be derived from AstNode.
-//
 // TODO: consider turning the above documentation into real code, as sketched
 // at https://godbolt.org/z/186oEozhc
-template <typename T, typename = void>
-static constexpr bool ImplementsNamedEntity = false;
 
 template <typename T>
 static constexpr bool
     ImplementsNamedEntity<T, typename T::ImplementsCarbonNamedEntity> = true;
 
-// Non-owning type-erased wrapper around a const NodeType* `node`, where
-// NodeType implements the NamedEntity interface.
-class NamedEntityView {
+// A NamedEntity is also an Entity.
+template <typename T>
+static constexpr bool
+    ImplementsEntity<T, typename T::ImplementsCarbonNamedEntity> = true;
+
+class NamedEntityView : public EntityView {
  public:
   // REQUIRES: node->name() != AnonymousName
   template <typename NodeType,
@@ -65,7 +139,7 @@ class NamedEntityView {
       // Type-erase NodeType, retaining a pointer to the base class AstNode
       // and using std::function to encapsulate the ability to call
       // the derived class's methods.
-      : base_(node),
+      : EntityView(node),
         name_([](const AstNode& base) -> std::string_view {
           return llvm::cast<NodeType>(base).name();
         }),
@@ -74,11 +148,7 @@ class NamedEntityView {
         }),
         value_category_([](const AstNode& base) -> ValueCategory {
           return llvm::cast<NodeType>(base).value_category();
-        }),
-        constant_value_(
-            [](const AstNode& base) -> std::optional<Nonnull<const Value*>> {
-              return llvm::cast<NodeType>(base).constant_value();
-            }) {
+        }) {
     CHECK(node->name() != AnonymousName)
         << "Entity with no name used as NamedEntity: " << *node;
   }
@@ -87,9 +157,6 @@ class NamedEntityView {
   NamedEntityView(NamedEntityView&&) = default;
   auto operator=(const NamedEntityView&) -> NamedEntityView& = default;
   auto operator=(NamedEntityView&&) -> NamedEntityView& = default;
-
-  // Returns `node` as an instance of the base class AstNode.
-  auto base() const -> const AstNode& { return *base_; }
 
   // Returns node->name()
   auto name() const -> std::string_view { return name_(*base_); }
@@ -102,33 +169,10 @@ class NamedEntityView {
     return value_category_(*base_);
   }
 
-  // Returns node->constant_value()
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_(*base_);
-  }
-
-  friend auto operator==(const NamedEntityView& lhs, const NamedEntityView& rhs)
-      -> bool {
-    return lhs.base_ == rhs.base_;
-  }
-
-  friend auto operator!=(const NamedEntityView& lhs, const NamedEntityView& rhs)
-      -> bool {
-    return lhs.base_ != rhs.base_;
-  }
-
-  friend auto operator<(const NamedEntityView& lhs, const NamedEntityView& rhs)
-      -> bool {
-    return std::less<>()(lhs.base_, rhs.base_);
-  }
-
  private:
-  Nonnull<const AstNode*> base_;
   std::function<std::string_view(const AstNode&)> name_;
   std::function<const Value&(const AstNode&)> static_type_;
   std::function<ValueCategory(const AstNode&)> value_category_;
-  std::function<std::optional<Nonnull<const Value*>>(const AstNode&)>
-      constant_value_;
 };
 
 // Maps the names visible in a given scope to the entities they name.

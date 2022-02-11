@@ -13,7 +13,7 @@ using llvm::cast;
 namespace Carbon {
 
 void ImplScope::Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-                    NamedEntityView impl) {
+                    EntityView impl) {
   impls_.push_back({.interface = iface, .type = type, .impl = impl});
 }
 
@@ -23,9 +23,8 @@ void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
 
 auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
                         Nonnull<const Value*> type,
-                        SourceLocation source_loc) const -> NamedEntityView {
-  std::optional<NamedEntityView> result =
-      TryResolve(iface_type, type, source_loc);
+                        SourceLocation source_loc) const -> EntityView {
+  std::optional<EntityView> result = TryResolve(iface_type, type, source_loc);
   if (!result.has_value()) {
     FATAL_COMPILATION_ERROR(source_loc) << "could not find implementation of "
                                         << *iface_type << " for " << *type;
@@ -36,9 +35,8 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
 auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                            Nonnull<const Value*> type,
                            SourceLocation source_loc) const
-    -> std::optional<NamedEntityView> {
-  std::optional<NamedEntityView> result =
-      ResolveHere(iface_type, type, source_loc);
+    -> std::optional<EntityView> {
+  std::optional<EntityView> result = ResolveHere(iface_type, type, source_loc);
   if (result.has_value()) {
     return result;
   }
@@ -57,7 +55,7 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
 auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
                             Nonnull<const Value*> impl_type,
                             SourceLocation source_loc) const
-    -> std::optional<NamedEntityView> {
+    -> std::optional<EntityView> {
   switch (iface_type->kind()) {
     case Value::Kind::InterfaceType: {
       const auto& iface = cast<InterfaceType>(*iface_type);

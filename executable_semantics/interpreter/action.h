@@ -47,7 +47,7 @@ class RuntimeScope {
 
   // Allocates storage for `named_entity` in `heap`, and initializes it with
   // `value`.
-  void Initialize(NamedEntityView named_entity, Nonnull<const Value*> value);
+  void Initialize(EntityView named_entity, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
   // scopes must not define the same name, and must be backed by the same Heap.
@@ -55,11 +55,11 @@ class RuntimeScope {
 
   // Returns the local storage for named_entity, if it has storage local to
   // this scope.
-  auto Get(NamedEntityView named_entity) const
+  auto Get(EntityView named_entity) const
       -> std::optional<Nonnull<const LValue*>>;
 
  private:
-  std::map<NamedEntityView, Nonnull<const LValue*>> locals_;
+  std::map<EntityView, Nonnull<const LValue*>> locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };

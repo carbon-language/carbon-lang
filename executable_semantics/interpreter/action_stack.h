@@ -48,8 +48,8 @@ class ActionStack {
 
   // Returns the value bound to `named_entity`. If `named_entity` is a local
   // variable, this will be an LValue.
-  auto ValueOfName(NamedEntityView named_entity,
-                   SourceLocation source_loc) const -> Nonnull<const Value*>;
+  auto ValueOfName(EntityView named_entity, SourceLocation source_loc) const
+      -> Nonnull<const Value*>;
 
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);

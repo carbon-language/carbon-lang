@@ -329,7 +329,7 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonEntity = void;
 
   ImplDeclaration(SourceLocation source_loc, ImplKind kind,
                   Nonnull<Expression*> impl_type,

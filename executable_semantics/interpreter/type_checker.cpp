@@ -568,7 +568,6 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               if (auto member =
                       FindMember(access.field(), iface_decl.members());
                   member.has_value()) {
-                // TODO: substitution of var_type for Self
                 const Value& member_type = (*member)->static_type();
                 std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
                     self_map;
@@ -732,7 +731,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             parameters = Substitute(deduced_args, parameters);
             return_type = Substitute(deduced_args, return_type);
-            std::map<Nonnull<const GenericBinding*>, NamedEntityView> impls;
+            std::map<Nonnull<const GenericBinding*>, EntityView> impls;
             for (Nonnull<const GenericBinding*> deduced_param :
                  fun_t.deduced()) {
               switch (deduced_param->static_type().kind()) {

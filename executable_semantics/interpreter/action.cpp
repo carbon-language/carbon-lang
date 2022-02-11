@@ -45,19 +45,19 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
   for (const auto& [named_entity, value] : locals_) {
-    out << sep << named_entity.name() << ": " << *value;
+    out << sep << named_entity.base() << ": " << *value;
   }
   out << "}";
 }
 
-void RuntimeScope::Initialize(NamedEntityView named_entity,
+void RuntimeScope::Initialize(EntityView named_entity,
                               Nonnull<const Value*> value) {
   CHECK(!named_entity.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
       {named_entity, heap_->arena().New<LValue>(Address(allocations_.back()))});
-  CHECK(success) << "Duplicate definition of " << named_entity.name();
+  CHECK(success) << "Duplicate definition of " << named_entity.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
@@ -65,13 +65,13 @@ void RuntimeScope::Merge(RuntimeScope other) {
   locals_.merge(other.locals_);
   CHECK(other.locals_.empty())
       << "Duplicate definition of " << other.locals_.size()
-      << " names, including " << other.locals_.begin()->first.name();
+      << " names, including " << other.locals_.begin()->first.base();
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
 }
 
-auto RuntimeScope::Get(NamedEntityView named_entity) const
+auto RuntimeScope::Get(EntityView named_entity) const
     -> std::optional<Nonnull<const LValue*>> {
   auto it = locals_.find(named_entity);
   if (it != locals_.end()) {

@@ -47,7 +47,7 @@ void ActionStack::Initialize(NamedEntityView named_entity,
   globals_->Initialize(named_entity, value);
 }
 
-auto ActionStack::ValueOfName(NamedEntityView named_entity,
+auto ActionStack::ValueOfName(EntityView named_entity,
                               SourceLocation source_loc) const
     -> Nonnull<const Value*> {
   if (std::optional<Nonnull<const Value*>> constant_value =
@@ -74,9 +74,9 @@ auto ActionStack::ValueOfName(NamedEntityView named_entity,
       return *result;
     }
   }
-  // TODO: Move these errors to compile time and explain them more clearly.
+  // TODO: Move these errors to name resolution and explain them more clearly.
   FATAL_RUNTIME_ERROR(source_loc)
-      << "could not find `" << named_entity.name() << "`";
+      << "could not find `" << named_entity.base() << "`";
 }
 
 void ActionStack::MergeScope(RuntimeScope scope) {
