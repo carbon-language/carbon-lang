@@ -1252,7 +1252,6 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_)
     llvm::outs() << "interface type: " << *iface_type << "\n";
   auto impl_type_value = InterpExp(impl_decl->impl_type(), arena_, trace_);
-  impl_decl->set_impl_type_value(impl_type_value);
   if (trace_)
     llvm::outs() << "impl type: " << *impl_type_value << "\n";
 

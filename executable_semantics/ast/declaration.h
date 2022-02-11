@@ -347,12 +347,6 @@ class ImplDeclaration : public Declaration {
   }
   auto kind() const -> ImplKind { return kind_; }
   auto impl_type() const -> Nonnull<Expression*> { return impl_type_; }
-  void set_impl_type_value(Nonnull<const Value*> impl_type) {
-    impl_type_value_ = impl_type;
-  }
-  auto impl_type_value() const -> Nonnull<const Value*> {
-    return *impl_type_value_;
-  }
 
   auto interface() const -> const Expression& { return *interface_; }
   auto interface() -> Expression& { return *interface_; }
@@ -383,7 +377,6 @@ class ImplDeclaration : public Declaration {
       name_;  // So that this can be a named entity. Otherwise not useful.
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;  // TODO: make this optional
-  std::optional<Nonnull<const Value*>> impl_type_value_;
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const Value*>> interface_type_;
   std::vector<Nonnull<Declaration*>> members_;
