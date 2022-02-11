@@ -24,9 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import json
-import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
