@@ -18,28 +18,8 @@ namespace Carbon::Testing {
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
-  // We need two bytes of data to compute a file name length.
-  if (size < 2) {
-    return 0;
-  }
-  uint16_t raw_filename_length;
-  std::memcpy(&raw_filename_length, data, 2);
-  data += 2;
-  size -= 2;
-  std::size_t filename_length = raw_filename_length;
-
-  // We need enough data to populate this filename length.
-  if (size < filename_length) {
-    return 0;
-  }
-  llvm::StringRef filename(reinterpret_cast<const char*>(data),
-                           filename_length);
-  data += filename_length;
-  size -= filename_length;
-
-  // The rest of the data is the source text.
   auto source = SourceBuffer::CreateFromText(
-      llvm::StringRef(reinterpret_cast<const char*>(data), size), filename);
+      llvm::StringRef(reinterpret_cast<const char*>(data), size));
   if (!source) {
     return 0;
   }
