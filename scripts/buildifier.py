@@ -15,8 +15,11 @@ import utils
 
 
 def main() -> None:
+    files = sys.argv[1:]
+    if not files:
+        return
     buildifier = utils.cache_release_file(utils.Release.BUILDIFIER)
-    subprocess.check_call([buildifier] + sys.argv[1:])
+    subprocess.check_call([buildifier] + files)
 
 
 if __name__ == "__main__":
