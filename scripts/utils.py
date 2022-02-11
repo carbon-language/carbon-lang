@@ -79,7 +79,7 @@ def _download(url: str, local_path: Path) -> Optional[int]:
     with urllib.request.urlopen(url) as response:
         with local_path.open("wb") as f:
             if response.code != 200:
-                return int(response.code) 
+                return int(response.code)
             shutil.copyfileobj(response, f)
     return None
 

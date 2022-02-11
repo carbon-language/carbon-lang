@@ -64,4 +64,3 @@ mypy_test(
     include_imports = True,
     deps = [":forbid_llvm_googletest"],
 )
-
