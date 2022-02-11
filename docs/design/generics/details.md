@@ -92,6 +92,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`final` impls](#final-impls)
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
     -   [Comparison to Rust](#comparison-to-rust)
+-   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
+    -   [Declaring interfaces](#declaring-interfaces)
+    -   [Declaring implementations](#declaring-implementations)
+    -   [Declaration examples](#declaration-examples)
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
@@ -4276,6 +4280,135 @@ differences between the Carbon and Rust plans:
     ambiguous which impl should be selected. Carbon instead has picked a total
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
+
+## Forward declarations and cyclic references
+
+Interfaces and their implementations may be forward declared and then later
+defined. This is needed to allow cyclic references, for example when declaring
+the edges and nodes of a graph.
+
+-   declaration is the first part of a forward declaration and a definition
+-   forward declarations = declaration + `;`
+-   definition = declaration + `{` body `}`
+-   between the first declaration and the end of the definition the interface or
+    implementation is called "incomplete"
+
+### Declaring interfaces
+
+An interface may be declared earlier in a file before it is defined.
+
+-   The definition must be in the same file as the declaration.
+-   Declaration includes the parameter list for the interface.
+-   declaration part of a forward declaration and the corresponding definition
+    must match
+-   The name of the interface may not be used until after the parameter list of
+    the declaration. In particular, may not use the name of the interface in the
+    parameter list. FIXME: Workaround.
+-   An incomplete interface may be used in constraints in declarations of types
+    or functions.
+-   Any name lookup into an incomplete interface is an error. For example, an
+    attempt to access a member of an interface using `MyInterface.MemberName` or
+    an attempt to define the body of a generic function using that interface as
+    a constraint is illegal.
+
+### Declaring implementations
+
+-   The definition must be in the same library as the declaration. They must
+    either be in the same file, or the declaration can be in the API file and
+    the definition in an impl file.
+-   If there is both a forward declaration and a definition, only the first
+    declaration must specify the assignment of associated constants with a
+    `where` clause. If later declarations repeat the `where` clause, it must
+    match.
+-   The keyword `external`, when it precedes `impl`, is part of the declaration
+    of the implementation and must match between a forward declaration and
+    definition.
+-   You may forward declare an implementation of a defined interface but not an
+    incomplete interface. It may be for any declared type, whether it is
+    incomplete or defined.
+-   Every internal implementation must be declared (or defined) inside the scope
+    of the class definition. It may also be declared before or defined
+    afterwards.
+
+### Declaration examples
+
+```
+// Forward declaration of interfaces
+interface Interface1;
+interface Interface2;
+interface Interface3;
+interface Interface4;
+interface Interface5;
+interface Interface6;
+
+// Forward declaration of class type
+class MyClass;
+
+// ❌ Illegal: Can't declare implementation of incomplete interface.
+// external impl MyClass as Interface1;
+
+// Definition of interfaces that were previously declared
+interface Interface1 {
+  let T1:! Type;
+}
+interface Interface2 {
+  let T2:! Type;
+}
+interface Interface3 {
+  let T3:! Type;
+}
+interface Interface4 {
+  let T4:! Type;
+}
+
+// Forward declaration of external implementations
+external impl MyClass as Interface1 where .T1 = i32;
+external impl MyClass as Interface2 where .T2 = bool;
+
+// Forward declaration of an internal implementation
+impl MyClass as Interface3 where .T3 = f32;
+impl MyClass as Interface4 where .T4 = String;
+
+interface Interface5 {
+  let T5:! Type;
+}
+interface Interface6 {
+  let T6:! Type;
+}
+
+// Definition of the previously declared class type
+class MyClass {
+  // Definition of previously declared external impl.
+  // Note: no need to repeat assignments to associated constants.
+  external impl as Interface1 { }
+
+  // Definition of previously declared internal impl.
+  // Note: allowed but not required to repeat `where` clause.
+  impl as Interface3  where .T3 = f32 { }
+
+  // Redeclaration of previously declared internal impl.
+  // Every internal implementation must be declared in
+  // the class definition.
+  impl as Interface4;
+
+  // Forward declaration of external implementation.
+  external impl MyClass as Interface5 where .T5 = u64;
+
+  // Forward declaration of internal implementation.
+  impl MyClass as Interface6 where .T6 = u8;
+}
+
+// It would be legal to move the following definitions from
+// the API file to the implementation file for this library.
+
+// Definition of previously declared external impls.
+external impl MyClass as Interface2 { }
+external impl MyClass as Interface5 { }
+
+// Definition of previously declared internal impls.
+impl MyClass as Interface4 { }
+impl MyClass as Interface6 { }
+```
 
 ## Interface members with definitions
 
