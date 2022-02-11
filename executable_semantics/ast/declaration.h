@@ -57,7 +57,10 @@ class Declaration : public AstNode {
 
   // Sets the static type of the declared entity. Can only be called once,
   // during typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // Returns whether the static type has been set. Should only be called
   // during typechecking: before typechecking it's guaranteed to be false,

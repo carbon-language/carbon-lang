@@ -26,14 +26,6 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Sets the static type of `*object`.
-// T must have static_type, has_static_type, and set_static_type methods.
-template <typename T>
-static void SetStaticType(Nonnull<T*> object, Nonnull<const Value*> type) {
-  CHECK(!object->has_static_type());
-  object->set_static_type(type);
-}
-
 static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
   // TODO: find some way to CHECK that `value` is identical to pattern->value(),
   // if it's already set. Unclear if `ValueEqual` is suitable, because it
@@ -91,7 +83,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::ImplType:
+    case Value::Kind::ImplValue:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -314,7 +306,7 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       ExpectType(source_loc, "argument deduction", param, arg);
       return;
     // The rest of these cases should never happen.
-    case Value::Kind::ImplType:
+    case Value::Kind::ImplValue:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -384,7 +376,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfChoiceType:
       return type;
     // The rest of these cases should never happen.
-    case Value::Kind::ImplType:
+    case Value::Kind::ImplValue:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -424,7 +416,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             FATAL_COMPILATION_ERROR(e->source_loc())
                 << "index " << i << " is out of range for type " << tuple_type;
           }
-          SetStaticType(&index, tuple_type.elements()[i]);
+          index.set_static_type(tuple_type.elements()[i]);
           index.set_value_category(index.aggregate().value_category());
           return;
         }
@@ -438,7 +430,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         TypeCheckExp(arg, impl_scope);
         arg_types.push_back(&arg->static_type());
       }
-      SetStaticType(e, arena_->New<TupleValue>(std::move(arg_types)));
+      e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
       e->set_value_category(ValueCategory::Let);
       return;
     }
@@ -448,7 +440,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         TypeCheckExp(&arg.expression(), impl_scope);
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
-      SetStaticType(e, arena_->New<StructType>(std::move(arg_types)));
+      e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
       e->set_value_category(ValueCategory::Let);
       return;
     }
@@ -464,9 +456,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         // This applies only if there are no fields, because (unlike with
         // tuples) non-empty struct types are syntactically disjoint
         // from non-empty struct values.
-        SetStaticType(&struct_type, arena_->New<StructType>());
+        struct_type.set_static_type(arena_->New<StructType>());
       } else {
-        SetStaticType(&struct_type, arena_->New<TypeType>());
+        struct_type.set_static_type(arena_->New<TypeType>());
       }
       e->set_value_category(ValueCategory::Let);
       return;
@@ -480,7 +472,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const auto& struct_type = cast<StructType>(aggregate_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
             if (access.field() == field_name) {
-              SetStaticType(&access, field_type);
+              access.set_static_type(field_type);
               access.set_value_category(access.aggregate().value_category());
               return;
             }
@@ -494,7 +486,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           if (std::optional<Nonnull<const Declaration*>> member =
                   FindMember(access.field(), t_class.declaration().members());
               member.has_value()) {
-            SetStaticType(&access, &(*member)->static_type());
+            access.set_static_type(&(*member)->static_type());
             switch ((*member)->kind()) {
               case DeclarationKind::VariableDeclaration:
                 access.set_value_category(access.aggregate().value_category());
@@ -524,10 +516,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 << "choice " << choice.name() << " does not have a field named "
                 << access.field();
           }
-          SetStaticType(&access,
-                        arena_->New<FunctionType>(
-                            std::vector<Nonnull<const GenericBinding*>>(),
-                            *parameter_types, &aggregate_type));
+          access.set_static_type(arena_->New<FunctionType>(
+              std::vector<Nonnull<const GenericBinding*>>(), *parameter_types,
+              &aggregate_type));
           access.set_value_category(ValueCategory::Let);
           return;
         }
@@ -543,7 +534,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 if (func->is_method()) {
                   break;
                 }
-                SetStaticType(&access, &(*member)->static_type());
+                access.set_static_type(&(*member)->static_type());
                 access.set_value_category(ValueCategory::Let);
                 return;
               }
@@ -573,7 +564,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     self_map;
                 self_map[iface_decl.self()] = &var_type;
                 auto inst_member_type = Substitute(self_map, &member_type);
-                SetStaticType(&access, inst_member_type);
+                access.set_static_type(inst_member_type);
                 access.set_variable(&var_type.binding());
                 return;
               } else {
@@ -607,17 +598,17 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               << "Function calls itself, but has a deduced return type";
         }
       }
-      SetStaticType(&ident, &ident.named_entity().static_type());
+      ident.set_static_type(&ident.named_entity().static_type());
       ident.set_value_category(ident.named_entity().value_category());
       return;
     }
     case ExpressionKind::IntLiteral:
       e->set_value_category(ValueCategory::Let);
-      SetStaticType(e, arena_->New<IntType>());
+      e->set_static_type(arena_->New<IntType>());
       return;
     case ExpressionKind::BoolLiteral:
       e->set_value_category(ValueCategory::Let);
-      SetStaticType(e, arena_->New<BoolType>());
+      e->set_static_type(arena_->New<BoolType>());
       return;
     case ExpressionKind::PrimitiveOperatorExpression: {
       auto& op = cast<PrimitiveOperatorExpression>(*e);
@@ -630,7 +621,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::Neg:
           ExpectExactType(e->source_loc(), "negation", arena_->New<IntType>(),
                           ts[0]);
-          SetStaticType(&op, arena_->New<IntType>());
+          op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Add:
@@ -638,7 +629,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           arena_->New<IntType>(), ts[0]);
           ExpectExactType(e->source_loc(), "addition(2)",
                           arena_->New<IntType>(), ts[1]);
-          SetStaticType(&op, arena_->New<IntType>());
+          op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Sub:
@@ -646,7 +637,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           arena_->New<IntType>(), ts[0]);
           ExpectExactType(e->source_loc(), "subtraction(2)",
                           arena_->New<IntType>(), ts[1]);
-          SetStaticType(&op, arena_->New<IntType>());
+          op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Mul:
@@ -654,7 +645,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           arena_->New<IntType>(), ts[0]);
           ExpectExactType(e->source_loc(), "multiplication(2)",
                           arena_->New<IntType>(), ts[1]);
-          SetStaticType(&op, arena_->New<IntType>());
+          op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::And:
@@ -662,7 +653,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           ts[0]);
           ExpectExactType(e->source_loc(), "&&(2)", arena_->New<BoolType>(),
                           ts[1]);
-          SetStaticType(&op, arena_->New<BoolType>());
+          op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Or:
@@ -670,27 +661,27 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           ts[0]);
           ExpectExactType(e->source_loc(), "||(2)", arena_->New<BoolType>(),
                           ts[1]);
-          SetStaticType(&op, arena_->New<BoolType>());
+          op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Not:
           ExpectExactType(e->source_loc(), "!", arena_->New<BoolType>(), ts[0]);
-          SetStaticType(&op, arena_->New<BoolType>());
+          op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Eq:
           ExpectExactType(e->source_loc(), "==", ts[0], ts[1]);
-          SetStaticType(&op, arena_->New<BoolType>());
+          op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::Deref:
           ExpectPointerType(e->source_loc(), "*", ts[0]);
-          SetStaticType(&op, &cast<PointerType>(*ts[0]).type());
+          op.set_static_type(&cast<PointerType>(*ts[0]).type());
           op.set_value_category(ValueCategory::Var);
           return;
         case Operator::Ptr:
           ExpectExactType(e->source_loc(), "*", arena_->New<TypeType>(), ts[0]);
-          SetStaticType(&op, arena_->New<TypeType>());
+          op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
           return;
         case Operator::AddressOf:
@@ -699,7 +690,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 << "Argument to " << ToString(op.op())
                 << " should be an lvalue.";
           }
-          SetStaticType(&op, arena_->New<PointerType>(ts[0]));
+          op.set_static_type(arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Let);
           return;
       }
@@ -755,7 +746,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             ExpectType(e->source_loc(), "call", parameters,
                        &call.argument().static_type());
           }
-          SetStaticType(&call, return_type);
+          call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
           return;
         }
@@ -773,12 +764,12 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                            InterpExp(&fn.parameter(), arena_, trace_));
       ExpectIsConcreteType(fn.return_type().source_loc(),
                            InterpExp(&fn.return_type(), arena_, trace_));
-      SetStaticType(&fn, arena_->New<TypeType>());
+      fn.set_static_type(arena_->New<TypeType>());
       fn.set_value_category(ValueCategory::Let);
       return;
     }
     case ExpressionKind::StringLiteral:
-      SetStaticType(e, arena_->New<StringType>());
+      e->set_static_type(arena_->New<StringType>());
       e->set_value_category(ValueCategory::Let);
       return;
     case ExpressionKind::IntrinsicExpression: {
@@ -793,7 +784,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           ExpectType(e->source_loc(), "__intrinsic_print argument",
                      arena_->New<StringType>(),
                      &intrinsic_exp.args().fields()[0]->static_type());
-          SetStaticType(e, TupleValue::Empty());
+          e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return;
       }
@@ -804,7 +795,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
       e->set_value_category(ValueCategory::Let);
-      SetStaticType(e, arena_->New<TypeType>());
+      e->set_static_type(arena_->New<TypeType>());
       return;
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << *e;
@@ -825,7 +816,7 @@ void TypeChecker::TypeCheckPattern(
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
-      SetStaticType(p, arena_->New<TypeType>());
+      p->set_static_type(arena_->New<TypeType>());
       return;
     }
     case PatternKind::BindingPattern: {
@@ -847,7 +838,7 @@ void TypeChecker::TypeCheckPattern(
         }
       }
       ExpectIsConcreteType(binding.source_loc(), type);
-      SetStaticType(&binding, type);
+      binding.set_static_type(type);
       SetValue(&binding, InterpPattern(&binding, arena_, trace_));
       return;
     }
@@ -871,7 +862,7 @@ void TypeChecker::TypeCheckPattern(
         TypeCheckPattern(field, expected_field_type, impl_scope);
         field_types.push_back(&field->static_type());
       }
-      SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
+      tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
       SetValue(&tuple, InterpPattern(&tuple, arena_, trace_));
       return;
     }
@@ -899,14 +890,14 @@ void TypeChecker::TypeCheckPattern(
             << "' is not an alternative of " << choice_type;
       }
       TypeCheckPattern(&alternative.arguments(), *parameter_types, impl_scope);
-      SetStaticType(&alternative, &choice_type);
+      alternative.set_static_type(&choice_type);
       SetValue(&alternative, InterpPattern(&alternative, arena_, trace_));
       return;
     }
     case PatternKind::ExpressionPattern: {
       auto& expression = cast<ExpressionPattern>(*p).expression();
       TypeCheckExp(&expression, impl_scope);
-      SetStaticType(p, &expression.static_type());
+      p->set_static_type(&expression.static_type());
       SetValue(p, InterpPattern(p, arena_, trace_));
       return;
     }
@@ -988,7 +979,7 @@ void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       TypeCheckExp(&ret.expression(), impl_scope);
       ReturnTerm& return_term = ret.function().return_term();
       if (return_term.is_auto()) {
-        SetStaticType(&return_term, &ret.expression().static_type());
+        return_term.set_static_type(&ret.expression().static_type());
       } else {
         ExpectType(s->source_loc(), "return", &return_term.static_type(),
                    &ret.expression().static_type());
@@ -998,7 +989,7 @@ void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     case StatementKind::Continuation: {
       auto& cont = cast<Continuation>(*s);
       TypeCheckStmt(&cont.body(), impl_scope);
-      SetStaticType(&cont, arena_->New<ContinuationType>());
+      cont.set_static_type(arena_->New<ContinuationType>());
       return;
     }
     case StatementKind::Run: {
@@ -1099,7 +1090,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     TypeCheckExp(&deduced->type(), impl_scope);
     SetConstantValue(deduced, arena_->New<VariableType>(deduced));
-    SetStaticType(deduced, InterpExp(&deduced->type(), arena_, trace_));
+    deduced->set_static_type(InterpExp(&deduced->type(), arena_, trace_));
   }
   if (f->is_method()) {
     // Type check the receiver patter
@@ -1118,10 +1109,10 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     TypeCheckExp(*return_expression, impl_scope);
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
-    SetStaticType(&f->return_term(),
-                  InterpExp(*return_expression, arena_, trace_));
+    f->return_term().set_static_type(
+        InterpExp(*return_expression, arena_, trace_));
   } else if (f->return_term().is_omitted()) {
-    SetStaticType(&f->return_term(), TupleValue::Empty());
+    f->return_term().set_static_type(TupleValue::Empty());
   } else {
     // We have to type-check the body in order to determine the return type.
     if (!f->body().has_value()) {
@@ -1142,9 +1133,9 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
 
   ExpectIsConcreteType(f->source_loc(), &f->return_term().static_type());
-  SetStaticType(f, arena_->New<FunctionType>(f->deduced_parameters(),
-                                             &f->param_pattern().static_type(),
-                                             &f->return_term().static_type()));
+  f->set_static_type(arena_->New<FunctionType>(
+      f->deduced_parameters(), &f->param_pattern().static_type(),
+      &f->return_term().static_type()));
   SetConstantValue(f, arena_->New<FunctionValue>(f));
 
   if (f->name() == "Main") {
@@ -1202,7 +1193,7 @@ void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   Nonnull<NominalClassType*> class_type =
       arena_->New<NominalClassType>(class_decl);
   SetConstantValue(class_decl, class_type);
-  SetStaticType(class_decl, arena_->New<TypeOfClassType>(class_type));
+  class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 
   for (Nonnull<Declaration*> m : class_decl->members()) {
     DeclareDeclaration(m, enclosing_scope);
@@ -1220,12 +1211,12 @@ void TypeChecker::DeclareInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& enclosing_scope) {
   Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
   SetConstantValue(iface_decl, iface_type);
-  SetStaticType(iface_decl, arena_->New<TypeOfInterfaceType>(iface_type));
+  iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
 
   // Process the Self parameter.
   TypeCheckExp(&iface_decl->self()->type(), enclosing_scope);
-  SetStaticType(iface_decl->self(),
-                arena_->New<VariableType>(iface_decl->self()));
+  iface_decl->self()->set_static_type(
+      arena_->New<VariableType>(iface_decl->self()));
   SetConstantValue(iface_decl->self(), &iface_decl->self()->static_type());
 
   for (Nonnull<Declaration*> m : iface_decl->members()) {
@@ -1245,19 +1236,15 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_) {
     llvm::outs() << "declaring " << *impl_decl << "\n";
   }
+  TypeCheckExp(&impl_decl->interface(), enclosing_scope);
   auto iface_type = InterpExp(&impl_decl->interface(), arena_, trace_);
   const auto& iface_decl = cast<InterfaceType>(*iface_type).declaration();
   impl_decl->set_interface_type(iface_type);
-  if (trace_)
-    llvm::outs() << "interface type: " << *iface_type << "\n";
-  auto impl_type_value = InterpExp(impl_decl->impl_type(), arena_, trace_);
-  if (trace_)
-    llvm::outs() << "impl type: " << *impl_type_value << "\n";
 
+  TypeCheckExp(impl_decl->impl_type(), enclosing_scope);
+  auto impl_type_value = InterpExp(impl_decl->impl_type(), arena_, trace_);
   enclosing_scope.Add(iface_type, impl_type_value, impl_decl);
-  if (trace_) {
-    llvm::outs() << "checking impl members\n";
-  }
+
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     DeclareDeclaration(m, enclosing_scope);
   }
@@ -1278,11 +1265,8 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       }
     }
   }
-  Nonnull<ImplType*> impl_type = arena_->New<ImplType>(impl_decl);
+  Nonnull<ImplValue*> impl_type = arena_->New<ImplValue>(impl_decl);
   impl_decl->set_constant_value(impl_type);
-  if (trace_) {
-    llvm::outs() << "finished declaring impl\n";
-  }
 }
 
 void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
@@ -1308,7 +1292,7 @@ void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   }
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
   SetConstantValue(choice, ct);
-  SetStaticType(choice, arena_->New<TypeOfChoiceType>(ct));
+  choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
 }
 
 void TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
@@ -1411,7 +1395,7 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
           cast<ExpressionPattern>(var.binding().type()).expression();
       TypeCheckPattern(&var.binding(), std::nullopt, impl_scope);
       Nonnull<const Value*> declared_type = InterpExp(&type, arena_, trace_);
-      SetStaticType(&var, declared_type);
+      var.set_static_type(declared_type);
       break;
     }
   }

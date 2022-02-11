@@ -41,8 +41,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         llvm::dyn_cast<LValue>(witness_addr)->address(), source_loc, todo);
 
     switch (witness->kind()) {
-      case Value::Kind::ImplType: {
-        const ImplType& impl_type = cast<ImplType>(*witness);
+      case Value::Kind::ImplValue: {
+        const ImplValue& impl_type = cast<ImplValue>(*witness);
         if (auto mem_decl = FindMember(f, impl_type.declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
@@ -53,7 +53,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         }
       }
       default:
-        FATAL() << "expected ImplType, not " << *witness;
+        FATAL() << "expected ImplValue, not " << *witness;
     }
   }
   switch (v->kind()) {
@@ -299,8 +299,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "interface " << iface_type.declaration().name();
       break;
     }
-    case Value::Kind::ImplType: {
-      const auto& impl_type = cast<ImplType>(*this);
+    case Value::Kind::ImplValue: {
+      const auto& impl_type = cast<ImplValue>(*this);
       out << "impl " << *impl_type.declaration().impl_type() << " as "
           << impl_type.declaration().interface();
       break;
@@ -463,8 +463,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
               << *t2;
-    case Value::Kind::ImplType:
-      FATAL() << "TypeEqual: unexpected ImplType";
+    case Value::Kind::ImplValue:
+      FATAL() << "TypeEqual: unexpected ImplValue";
       break;
     case Value::Kind::AutoType:
       FATAL() << "TypeEqual: unexpected AutoType";
@@ -540,7 +540,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::ImplType:
+    case Value::Kind::ImplValue:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:

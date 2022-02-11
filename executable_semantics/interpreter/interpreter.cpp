@@ -373,7 +373,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::ImplType:
+    case Value::Kind::ImplValue:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:

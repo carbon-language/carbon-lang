@@ -46,6 +46,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    ImplValue,
     IntType,
     BoolType,
     TypeType,
@@ -55,7 +56,6 @@ class Value {
     StructType,
     NominalClassType,
     InterfaceType,
-    ImplType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -502,13 +502,14 @@ class InterfaceType : public Value {
   Nonnull<const InterfaceDeclaration*> declaration_;
 };
 
-class ImplType : public Value {
+// The witness table for an impl.
+class ImplValue : public Value {
  public:
-  ImplType(Nonnull<const ImplDeclaration*> declaration)
-      : Value(Kind::ImplType), declaration_(declaration) {}
+  ImplValue(Nonnull<const ImplDeclaration*> declaration)
+      : Value(Kind::ImplValue), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ImplType;
+    return value->kind() == Kind::ImplValue;
   }
 
   auto declaration() const -> const ImplDeclaration& { return *declaration_; }

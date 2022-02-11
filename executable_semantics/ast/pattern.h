@@ -54,12 +54,10 @@ class Pattern : public AstNode {
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // The value of this pattern. Cannot be called before typechecking.
   // TODO rename to avoid confusion with BindingPattern::constant_value
