@@ -1263,7 +1263,7 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
   // Check that the interface is satisfied by the impl members
   for (Nonnull<Declaration*> m : iface_decl.members()) {
-    if (auto mem_name = m->GetName(); mem_name.has_value()) {
+    if (auto mem_name = GetName(*m); mem_name.has_value()) {
       if (auto mem = FindMember(*mem_name, impl_decl->members());
           mem.has_value()) {
         std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>

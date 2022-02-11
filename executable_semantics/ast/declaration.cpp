@@ -77,6 +77,23 @@ void Declaration::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto GetName(const Declaration& declaration) -> std::optional<std::string> {
+  switch (declaration.kind()) {
+    case DeclarationKind::FunctionDeclaration:
+      return cast<FunctionDeclaration>(declaration).name();
+    case DeclarationKind::ClassDeclaration:
+      return cast<ClassDeclaration>(declaration).name();
+    case DeclarationKind::ChoiceDeclaration:
+      return cast<ChoiceDeclaration>(declaration).name();
+    case DeclarationKind::InterfaceDeclaration:
+      return cast<InterfaceDeclaration>(declaration).name();
+    case DeclarationKind::VariableDeclaration:
+      return cast<VariableDeclaration>(declaration).binding().name();
+    case DeclarationKind::ImplDeclaration:
+      return std::nullopt;
+  }
+}
+
 void GenericBinding::Print(llvm::raw_ostream& out) const {
   out << name() << ":! " << type();
 }

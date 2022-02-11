@@ -64,8 +64,6 @@ class Declaration : public AstNode {
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
-  virtual auto GetName() const -> std::optional<std::string> = 0;
-
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -103,7 +101,6 @@ class FunctionDeclaration : public Declaration {
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
@@ -160,8 +157,6 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> { return name_; }
-
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
@@ -199,7 +194,6 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto signature() const -> const Expression& { return *signature_; }
   auto signature() -> Expression& { return *signature_; }
 
@@ -223,7 +217,6 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto alternatives() const
       -> llvm::ArrayRef<Nonnull<const AlternativeSignature*>> {
     return alternatives_;
@@ -264,9 +257,6 @@ class VariableDeclaration : public Declaration {
     return InheritsFromVariableDeclaration(node->kind());
   }
 
-  virtual auto GetName() const -> std::optional<std::string> {
-    return binding_->name();
-  }
   auto binding() const -> const BindingPattern& { return *binding_; }
   auto binding() -> BindingPattern& { return *binding_; }
   auto initializer() const -> const Expression& { return **initializer_; }
@@ -299,7 +289,6 @@ class InterfaceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> { return name_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
@@ -360,9 +349,6 @@ class ImplDeclaration : public Declaration {
     return members_;
   }
   auto name() const -> const std::string& { return name_; }
-  virtual auto GetName() const -> std::optional<std::string> {
-    return std::nullopt;
-  }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
@@ -382,6 +368,9 @@ class ImplDeclaration : public Declaration {
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const Value*>> constant_value_;
 };
+
+// Return the name of a declaration, if it has one.
+auto GetName(const Declaration&) -> std::optional<std::string>;
 
 }  // namespace Carbon
 

@@ -610,7 +610,7 @@ auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
   for (auto member : members) {
-    if (auto mem_name = member->GetName(); mem_name.has_value()) {
+    if (auto mem_name = GetName(*member); mem_name.has_value()) {
       if (*mem_name == name)
         return member;
     }
