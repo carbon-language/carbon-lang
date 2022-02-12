@@ -249,7 +249,8 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
                               .mantissa = IsUnsignedInteger(testcase.mantissa),
                               .exponent = IsSignedInteger(testcase.exponent)}))
         << testcase.token;
-    EXPECT_EQ(error_tracker.error_count() > 0, testcase.radix == 2) << testcase.token;
+    EXPECT_EQ(error_tracker.error_count() > 0, testcase.radix == 2)
+        << testcase.token;
   }
 }
 
