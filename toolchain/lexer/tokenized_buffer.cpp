@@ -551,7 +551,8 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   Lexer lexer(buffer, error_tracking_consumer);
 
   llvm::StringRef source_text = source.Text();
-  while (lexer.SkipWhitespace(source_text)) {
+  while (lexer.SkipWhitespace(source_text) &&
+         error_tracking_consumer.error_count() < LexErrorLimit) {
     // Each time we find non-whitespace characters, try each kind of token we
     // support lexing, from simplest to most complex.
     Lexer::LexResult result = lexer.LexSymbolToken(source_text);
@@ -576,7 +577,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
   lexer.AddEndOfFileToken();
 
-  if (error_tracking_consumer.SeenError()) {
+  if (error_tracking_consumer.error_count() > 0) {
     buffer.has_errors_ = true;
   }
 

@@ -1097,5 +1097,20 @@ TEST_F(LexerTest, PrintingAsYaml) {
                                                {"spelling", ""}}}}));
 }
 
+TEST_F(LexerTest, ManyErrors) {
+  // Input with tons errors should bail instead of timing out.
+  std::string code;
+  code.reserve(200000);
+  for (int i = 0; i < 100000; ++i) {
+    code += "x\1";
+  }
+  ErrorTrackingDiagnosticConsumer error_tracking_consumer(
+      ConsoleDiagnosticConsumer());
+  auto buffer = Lex(code, error_tracking_consumer);
+  ASSERT_TRUE(buffer.HasErrors());
+  EXPECT_EQ(error_tracking_consumer.error_count(),
+            TokenizedBuffer::LexErrorLimit);
+}
+
 }  // namespace
 }  // namespace Carbon::Testing

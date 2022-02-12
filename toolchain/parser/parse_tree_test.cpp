@@ -598,7 +598,7 @@ TEST_F(ParseTreeTest, OperatorWhitespaceErrors) {
     ErrorTrackingDiagnosticConsumer error_tracker(consumer);
     ParseTree tree = ParseTree::Parse(tokens, error_tracker);
     EXPECT_THAT(tree.HasErrors(), Eq(kind == Failed)) << input;
-    EXPECT_THAT(error_tracker.SeenError(), Eq(kind != Valid)) << input;
+    EXPECT_THAT(error_tracker.error_count() > 0, Eq(kind != Valid)) << input;
   }
 }
 
@@ -645,7 +645,7 @@ TEST_F(ParseTreeTest, IfNoElse) {
   ErrorTrackingDiagnosticConsumer error_tracker(consumer);
   ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_FALSE(error_tracker.SeenError());
+  EXPECT_EQ(error_tracker.error_count(), 0);
 
   EXPECT_THAT(
       tree,
@@ -680,7 +680,7 @@ TEST_F(ParseTreeTest, IfNoElseUnbraced) {
   ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   // The missing braces are invalid, but we should be able to recover.
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_GT(error_tracker.error_count(), 0);
 
   EXPECT_THAT(
       tree,
@@ -715,7 +715,7 @@ TEST_F(ParseTreeTest, IfElse) {
   ErrorTrackingDiagnosticConsumer error_tracker(consumer);
   ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_FALSE(error_tracker.SeenError());
+  EXPECT_EQ(error_tracker.error_count(), 0);
 
   EXPECT_THAT(
       tree,
@@ -782,7 +782,7 @@ TEST_F(ParseTreeTest, IfElseUnbraced) {
   ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   // The missing braces are invalid, but we should be able to recover.
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_GT(error_tracker.error_count(), 0);
 
   EXPECT_THAT(
       tree,
@@ -866,7 +866,7 @@ TEST_F(ParseTreeTest, WhileBreakContinue) {
   ErrorTrackingDiagnosticConsumer error_tracker(consumer);
   ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_FALSE(error_tracker.SeenError());
+  EXPECT_EQ(error_tracker.error_count(), 0);
 
   EXPECT_THAT(
       tree,
@@ -897,7 +897,7 @@ TEST_F(ParseTreeTest, WhileUnbraced) {
   ErrorTrackingDiagnosticConsumer error_tracker(consumer);
   ParseTree tree = ParseTree::Parse(tokens, error_tracker);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_GT(error_tracker.error_count(), 0);
 
   EXPECT_THAT(
       tree,
