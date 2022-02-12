@@ -4344,7 +4344,8 @@ interface Interface6;
 // Forward declaration of class type
 class MyClass;
 
-// ❌ Illegal: Can't declare implementation of incomplete interface.
+// ❌ Illegal: Can't declare implementation of incomplete
+//             interface.
 // external impl MyClass as Interface1;
 
 // Definition of interfaces that were previously declared
@@ -4379,11 +4380,13 @@ interface Interface6 {
 // Definition of the previously declared class type
 class MyClass {
   // Definition of previously declared external impl.
-  // Note: no need to repeat assignments to associated constants.
+  // Note: no need to repeat assignments to associated
+  // constants.
   external impl as Interface1 { }
 
   // Definition of previously declared internal impl.
-  // Note: allowed but not required to repeat `where` clause.
+  // Note: allowed but not required to repeat `where`
+  // clause.
   impl as Interface3  where .T3 = f32 { }
 
   // Redeclaration of previously declared internal impl.
@@ -4398,8 +4401,9 @@ class MyClass {
   impl MyClass as Interface6 where .T6 = u8;
 }
 
-// It would be legal to move the following definitions from
-// the API file to the implementation file for this library.
+// It would be legal to move the following definitions
+// from the API file to the implementation file for
+// this library.
 
 // Definition of previously declared external impls.
 external impl MyClass as Interface2 { }
@@ -4408,6 +4412,47 @@ external impl MyClass as Interface5 { }
 // Definition of previously declared internal impls.
 impl MyClass as Interface4 { }
 impl MyClass as Interface6 { }
+```
+
+Cyclic reference:
+
+```
+// Forward declaration of interface
+interface EdgeInterface;
+
+// Definition that only uses the declaration of `Edge`,
+// not its definition.
+interface NodeBootstrap {
+  let EdgeType:! EdgeInterface;
+  fn Edges[me: Self]() -> Vector(EdgeType);
+}
+
+// Now can define `EdgeInterface` in terms of
+// `NodeBootstrap`.
+interface EdgeInterface {
+  let NodeType:! NodeBootstrap where .EdgeType == Self;
+  fn Head[me: Self]() -> NodeType;
+}
+
+// Make `NodeInterface` a named constraint defined in
+// terms of `NodeBootstrap`, adding in constraints that
+// couldn't be written until `EdgeInterface` was defined.
+constraint NodeInterface {
+  extends NodeBootsrap where .EdgeType.NodeType == Self;
+}
+```
+
+Work around for the restriction about not being able to name an interface in its
+parameter list.
+
+```
+// Want to require that `T` satisfies `CommonType(Self)`,
+// but that can't be done in the parameter list.
+interface CommonType(T:! Type) {
+  let Result:! Type;
+  // Instead add the requirement inside the definition.
+  impl T as CommonType(Self);
+}
 ```
 
 ## Interface members with definitions
