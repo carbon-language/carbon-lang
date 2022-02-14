@@ -4459,8 +4459,9 @@ interface CommonType(T:! Type) {
 
 Interfaces may provide definitions for members, such as a function body for an
 associated function or method or a value for an associated constant. If these
-definitions may be overridden in implementations, they are called "defaults."
-Otherwise they are called "final members."
+definitions may be overridden in implementations, they are called "defaults" and
+prefixed with the `default` keyword. Otherwise they are called "final members"
+and prefixed with the `final` keyword.
 
 ### Interface defaults
 
@@ -4472,9 +4473,22 @@ interface Vector {
   fn Add[me: Self](b: Self) -> Self;
   fn Scale[me: Self](v: f64) -> Self;
   // Default definition of `Invert` calls `Scale`.
-  fn Invert[me: Self]() -> Self {
+  default fn Invert[me: Self]() -> Self {
     return me.Scale(-1.0);
   }
+}
+```
+
+A default function or method may also be defined out of line:
+
+```
+interface Vector {
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: f64) -> Self;
+  default fn Invert[me: Self]() -> Self;
+}
+fn Vector.Invert[me: Self]() -> Self {
+  return me.Scale(-1.0);
 }
 ```
 
@@ -4493,7 +4507,7 @@ types, and interface parameters, using the `= <default value>` syntax.
 
 ```
 interface Add(Right:! Type = Self) {
-  let Result:! Type = Self;
+  default let Result:! Type = Self;
   fn DoAdd[me: Self](right: Right) -> Result;
 }
 
@@ -4523,7 +4537,7 @@ More generally, default expressions may reference other associated types or
 ```
 interface Iterator {
   let Element:! Type;
-  let Pointer:! Type = Element*;
+  default let Pointer:! Type = Element*;
 }
 ```
 
