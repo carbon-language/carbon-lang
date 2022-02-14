@@ -13,9 +13,9 @@ py_library(
 # Bazel. We have a rule for it so we can type check it.
 py_binary(
     name = "create_compdb",
+    testonly = 1,
     srcs = ["create_compdb.py"],
     deps = [":scripts_utils"],
-    testonly = 1,
 )
 
 mypy_test(
@@ -28,9 +28,9 @@ mypy_test(
 # Bazel. We have a rule for it so we can type check it.
 py_binary(
     name = "fix_cc_deps",
+    testonly = 1,
     srcs = ["fix_cc_deps.py"],
     deps = [":scripts_utils"],
-    testonly = 1,
 )
 
 mypy_test(
@@ -43,9 +43,9 @@ mypy_test(
 # Bazel. We have a rule for it so we can type check it.
 py_binary(
     name = "forbid_llvm_googletest",
+    testonly = 1,
     srcs = ["forbid_llvm_googletest.py"],
     deps = [":scripts_utils"],
-    testonly = 1,
 )
 
 mypy_test(
@@ -58,9 +58,9 @@ mypy_test(
 # Bazel. We have a rule for it so we can type check it.
 py_binary(
     name = "run_buildifier",
+    testonly = 1,
     srcs = ["run_buildifier.py"],
     deps = [":scripts_utils"],
-    testonly = 1,
 )
 
 mypy_test(
