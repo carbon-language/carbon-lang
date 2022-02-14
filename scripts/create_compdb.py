@@ -29,14 +29,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-import utils  # type: ignore
+import scripts_utils  # type: ignore
 
-utils.chdir_repo_root()
+scripts_utils.chdir_repo_root()
 directory = Path.cwd()
 
 # We use the `BAZEL` environment variable if present. If not, then we try to
 # use `bazelisk` and then `bazel`.
-bazel = utils.locate_bazel()
+bazel = scripts_utils.locate_bazel()
 
 # Load compiler flags. We do this first in order to fail fast if not run from
 # the workspace root.

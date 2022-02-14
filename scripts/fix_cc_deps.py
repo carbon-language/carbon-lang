@@ -19,7 +19,7 @@ import subprocess
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
 
-import utils  # type: ignore
+import scripts_utils  # type: ignore
 
 
 # Maps external repository names to a method translating bazel labels to file
@@ -176,8 +176,8 @@ def get_missing_deps(
 
 
 def main() -> None:
-    utils.chdir_repo_root()
-    bazel = utils.locate_bazel()
+    scripts_utils.chdir_repo_root()
+    bazel = scripts_utils.locate_bazel()
 
     print("Querying bazel for Carbon targets...")
     carbon_rules = get_rules(bazel, "//...", False)
@@ -211,7 +211,7 @@ def main() -> None:
 
     if all_missing_deps:
         print("Checking buildozer availability...")
-        buildozer = utils.cache_release_file(utils.Release.BUILDOZER)
+        buildozer = scripts_utils.get_release(scripts_utils.Release.BUILDOZER)
 
         print("Fixing dependencies...")
         SEPARATOR = "\n- "

@@ -1,4 +1,4 @@
-"""Helpers for download cache management."""
+"""Utilities for scripts."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -84,7 +84,7 @@ def _download(url: str, local_path: Path) -> Optional[int]:
     return None
 
 
-def cache_release_file(release: Release) -> str:
+def get_release(release: Release) -> str:
     """Install a file to carbon-lang's cache.
 
     release: The release to cache.

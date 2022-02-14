@@ -69,7 +69,7 @@ repos:
     hooks:
       - id: buildifier
         name: Bazel buildifier
-        entry: scripts/buildifier.py
+        entry: scripts/run_buildifier.py
         language: python
         files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
 

@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import subprocess
 
-import utils  # type: ignore
+import scripts_utils  # type: ignore
 
 _MESSAGE = """\
 Dependencies on @llvm-project//llvm:gtest are forbidden, but a dependency path
@@ -34,9 +34,9 @@ dependencies on @llvm-project//llvm:gtest must be avoided.
 
 
 def main() -> None:
-    utils.chdir_repo_root()
+    scripts_utils.chdir_repo_root()
     args = [
-        utils.locate_bazel(),
+        scripts_utils.locate_bazel(),
         "query",
         "somepath(//..., @llvm-project//llvm:gtest)",
     ]

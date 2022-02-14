@@ -11,14 +11,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import subprocess
 import sys
 
-import utils  # type: ignore
+import scripts_utils  # type: ignore
 
 
 def main() -> None:
     files = sys.argv[1:]
     if not files:
         return
-    buildifier = utils.cache_release_file(utils.Release.BUILDIFIER)
+    buildifier = scripts_utils.get_release(scripts_utils.Release.BUILDIFIER)
     subprocess.check_call([buildifier] + files)
 
 
