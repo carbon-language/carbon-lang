@@ -491,7 +491,7 @@ class TokenizedBuffer::Lexer {
   }
 
   // Produces an error token for the current position. Assumes it's due to
-  // unrecognized characters, because anything else should ahve lexed
+  // unrecognized characters, because anything else should have lexed
   // previously.
   auto LexError(llvm::StringRef& source_text) -> LexResult {
     llvm::StringRef error_text = source_text.take_while([](char c) {
