@@ -57,6 +57,12 @@ struct UnrecognizedCharacters : DiagnosticBase<UnrecognizedCharacters> {
       "Encountered unrecognized characters while parsing.";
 };
 
+struct TooManyErrors : DiagnosticBase<TooManyErrors> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-too-many-errors";
+  static constexpr llvm::StringLiteral Message =
+      "Encountered too many errors while parsing.";
+};
+
 // TODO: Move Overload and VariantMatch somewhere more central.
 
 // Form an overload set from a list of functions. For example:
@@ -506,27 +512,38 @@ class TokenizedBuffer::Lexer {
       error_text = source_text.take_front(1);
     }
 
-    // Longer errors get to be two tokens.
-    error_text = error_text.substr(0, std::numeric_limits<int32_t>::max());
-    auto token = buffer_.AddToken(
-        {.kind = TokenKind::Error(),
-         .token_line = current_line_,
-         .column = current_column_,
-         .error_length = static_cast<int32_t>(error_text.size())});
     emitter_.EmitError<UnrecognizedCharacters>(error_text.begin());
-
-    current_column_ += error_text.size();
-    source_text = source_text.drop_front(error_text.size());
-    return token;
+    return AddErrorToken(source_text, error_text);
   }
 
-  auto AddEndOfFileToken() -> void {
+  void AddEndOfFileToken() {
     buffer_.AddToken({.kind = TokenKind::EndOfFile(),
                       .token_line = current_line_,
                       .column = current_column_});
   }
 
+  void AddTooManyErrors(llvm::StringRef source_text) {
+    emitter_.EmitError<TooManyErrors>(source_text.begin());
+    while (!source_text.empty()) {
+      AddErrorToken(source_text, source_text);
+    }
+  }
+
  private:
+  auto AddErrorToken(llvm::StringRef& source_text, llvm::StringRef error_text)
+      -> LexResult {
+    // Longer errors get to be multiple tokens.
+    error_text = error_text.take_front(std::numeric_limits<int32_t>::max());
+    auto result = buffer_.AddToken(
+        {.kind = TokenKind::Error(),
+         .token_line = current_line_,
+         .column = current_column_,
+         .error_length = static_cast<int32_t>(error_text.size())});
+    current_column_ += error_text.size();
+    source_text = source_text.drop_front(error_text.size());
+    return result;
+  }
+
   TokenizedBuffer& buffer_;
 
   SourceBufferLocationTranslator translator_;
@@ -551,8 +568,11 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   Lexer lexer(buffer, error_tracking_consumer);
 
   llvm::StringRef source_text = source.Text();
-  while (lexer.SkipWhitespace(source_text) &&
-         error_tracking_consumer.error_count() < LexErrorLimit) {
+  while (lexer.SkipWhitespace(source_text)) {
+    if (error_tracking_consumer.error_count() >= LexErrorLimit) {
+      lexer.AddTooManyErrors(source_text);
+      break;
+    }
     // Each time we find non-whitespace characters, try each kind of token we
     // support lexing, from simplest to most complex.
     Lexer::LexResult result = lexer.LexSymbolToken(source_text);
