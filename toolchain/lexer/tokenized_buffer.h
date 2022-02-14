@@ -260,9 +260,6 @@ class TokenizedBuffer {
     int* last_line_lexed_to_column_;
   };
 
-  // The maximum number of errors which will be processed during lexing.
-  static constexpr int LexErrorLimit = 1000;
-
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`

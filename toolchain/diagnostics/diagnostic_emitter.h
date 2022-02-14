@@ -180,19 +180,19 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
       : next_consumer_(&next_consumer) {}
 
   auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-    error_count_ += diagnostic.level == Diagnostic::Error;
+    seen_error_ |= diagnostic.level == Diagnostic::Error;
     next_consumer_->HandleDiagnostic(diagnostic);
   }
 
-  // Returns the number of errors seen since the last reset.
-  auto error_count() const -> int { return error_count_; }
+  // Returns whether we've seen an error since the last reset.
+  auto SeenError() const -> bool { return seen_error_; }
 
   // Reset whether we've seen an error.
-  auto Reset() -> void { error_count_ = false; }
+  auto Reset() -> void { seen_error_ = false; }
 
  private:
   DiagnosticConsumer* next_consumer_;
-  int error_count_ = 0;
+  bool seen_error_ = false;
 };
 
 }  // namespace Carbon

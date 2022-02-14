@@ -32,6 +32,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   if (size < filename_length) {
     return 0;
   }
+  // Ignore large inputs.
+  if (size > 100000) {
+    return 0;
+  }
   llvm::StringRef filename(reinterpret_cast<const char*>(data),
                            filename_length);
   data += filename_length;

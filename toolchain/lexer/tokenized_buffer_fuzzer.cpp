@@ -35,6 +35,11 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   data += filename_length;
   size -= filename_length;
 
+  // Ignore large inputs.
+  if (size > 100000) {
+    return 0;
+  }
+
   // The rest of the data is the source text.
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size), filename);
