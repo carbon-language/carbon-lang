@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
-<img src="docs/images/quicksort_snippet.png" align="right" width="534">
+<img src="docs/images/quicksort_snippet.png" align="right" width="575">
 
 **Fast and works with C++**
 
@@ -65,11 +65,11 @@ If you're already a C++ developer, Carbon should have a short learning curve. It
 is built out of a consistent set of language constructs that should feel
 familiar. C++ code like this:
 
-<img src="docs/images/cpp_example.png" width="760">
+<img src="docs/images/cpp_snippet.svg" width="760">
 
 can be mechanically transformed to Carbon, like so:
 
-<img src="docs/images/carbon_example.png" width="760">
+<img src="docs/images/carbon_snippet.svg" width="760">
 
 without loss of performance or readability. Yet, translating C++ to Carbon isn't
 necessary; you can call Carbon from C++ without overhead and the other way
@@ -77,7 +77,7 @@ around. You can port your library to Carbon, or write new Carbon on top of your
 existing C++ investment. Carbon won't add a sea of dependencies or slow down
 your performance-critical code. For example:
 
-<img src="docs/images/mixed_example.png" width="760">
+<img src="docs/images/mixed_snippet.svg" width="760">
 
 In terms of safety, any language that can seamlessly call C++ will not be
 perfectly safe in every dimension. However, Carbon's design encourages you to
